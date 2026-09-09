@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SendFlow"
+description = "A premium, mobile-first fintech landing page for SendFlow, a demo product simplifying transfers across Mobile Money networks and African borders."
+version = "1.0.0"
+id = "artifacts/sendflow"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26095
+
+[services.development]
+run = "pnpm --filter @workspace/sendflow run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sendflow", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/sendflow/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26095"
+BASE_PATH = "/"
