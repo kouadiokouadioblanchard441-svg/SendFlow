@@ -1,0 +1,1 @@
+- [Long JSX edits](long-jsx-edits.md) — Prefer inserting multiline sections around stable anchors over replacing very long one-line JSX blocks.
