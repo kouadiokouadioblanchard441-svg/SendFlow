@@ -407,18 +407,18 @@ function LandingPage() {
 
         <section id="features" className="px-5 py-24 sm:px-8 sm:py-32">
           <div className="mx-auto max-w-[1240px]">
-            <div className="reveal flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+            <div className="reveal flex flex-col justify-between gap-7 sm:flex-row sm:items-end">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]">02 / {isFrench ? 'Voir plus loin' : 'See further'}</p>
-                <h2 className="mt-4 max-w-[650px] text-4xl font-semibold leading-[.96] tracking-[-.065em] sm:text-6xl">
+                <p className="text-[12px] font-extrabold uppercase tracking-[.19em] text-[#5b21b6]">02 / {isFrench ? 'Voir plus loin' : 'See further'}</p>
+                <h2 className="mt-5 max-w-[760px] text-5xl font-extrabold leading-[.9] tracking-[-.075em] text-[#17131f] sm:text-7xl lg:text-8xl">
                   {isFrench ? (
-                    <>Votre argent,<br /><em className="font-serif font-normal text-[#6d35d8]">sans frontières mentales.</em></>
+                    <>Votre argent,<br /><em className="font-serif font-normal text-[#5b21b6]">sans frontières mentales.</em></>
                   ) : (
-                    <>Your money,<br /><em className="font-serif font-normal text-[#6d35d8]">without mental borders.</em></>
+                    <>Your money,<br /><em className="font-serif font-normal text-[#5b21b6]">without mental borders.</em></>
                   )}
                 </h2>
               </div>
-              <p className="max-w-[280px] text-[14px] leading-6 text-[#5e5766]">{isFrench ? 'Explorez la couverture et les connexions qui donnent vie à SendFlow.' : 'Explore the coverage and connections that bring SendFlow to life.'}</p>
+              <p className="max-w-[320px] text-[15px] font-semibold leading-7 text-[#30283b] sm:text-[17px]">{isFrench ? 'Explorez la couverture et les connexions qui donnent vie à SendFlow.' : 'Explore the coverage and connections that bring SendFlow to life.'}</p>
              </div>
              <div className="reveal mt-12 grid gap-4 sm:grid-cols-2">
                <div className="overflow-hidden rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
