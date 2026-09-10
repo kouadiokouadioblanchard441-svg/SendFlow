@@ -98,3 +98,87 @@ mtime_ms = 1788999664244
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/5011216e-a5c8-467b-b157-5c2036745e32/8486a774-ee05-4186-a09a-9ced474a51ba"
 storage_version_token = "1788999713355374"
 content_type = "image/png"
+
+[[outputs]]
+id = "UXGkZ7Ub7mOfd9dTTUEJr"
+uri = "file://attached_assets/generated_images/sendflow-section-network-3d.png"
+type = "image"
+title = "Visuel réseau interconnecté"
+description = "Illustration 3D pour la section Fonctionnalités."
+logical_id = "0bd73c76-49b9-4bbd-adca-d466a11e6375"
+content_hash = "sha256:d5966bcb9200b06cf69ce1eb7aecab10a54b8a3ba731c9a6eaa6b8c758e0c717"
+size = 1047742
+mtime_ms = 1789002744324
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/0bd73c76-49b9-4bbd-adca-d466a11e6375/77eb5bdc-fa10-40fe-9eea-d857463e1a47"
+storage_version_token = "1789002754528287"
+content_type = "image/png"
+
+[[outputs]]
+id = "Qcjcgd4i-S2GOtdchBgvw"
+uri = "file://attached_assets/generated_images/sendflow-section-how-it-works-3d.png"
+type = "image"
+title = "Visuel parcours de transfert"
+description = "Illustration 3D pour la section Comment ça marche."
+logical_id = "0abf0cc6-2714-4356-94da-4c8608a82b3e"
+content_hash = "sha256:4b48aedb5b311c299fb1d1ae336f29bc7c22fc7698a7943383318bf9b4eb5f75"
+size = 881558
+mtime_ms = 1789002746336
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/0abf0cc6-2714-4356-94da-4c8608a82b3e/15cf8b7f-2eb1-4122-ade5-9c0bb966cae9"
+storage_version_token = "1789002754997609"
+content_type = "image/png"
+
+[[outputs]]
+id = "JzpXP_UdL1yVpROrhbybi"
+uri = "file://attached_assets/generated_images/sendflow-section-international-3d.png"
+type = "image"
+title = "Visuel transferts internationaux"
+description = "Illustration 3D pour la section International."
+logical_id = "de204f4b-1190-4af3-8e33-2b107ea898ca"
+content_hash = "sha256:ec983a99900384f6e0991b42c2e79e5b178b4928cd93c117825b47fe7d8b4fc7"
+size = 1330485
+mtime_ms = 1789002742232
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/de204f4b-1190-4af3-8e33-2b107ea898ca/bc83ac2b-fdd9-46ce-a052-2f20e94d9859"
+storage_version_token = "1789002755478242"
+content_type = "image/png"
+
+[[outputs]]
+id = "LQZIufIucIcR6OssdlbKu"
+uri = "file://attached_assets/generated_images/sendflow-section-security-3d.png"
+type = "image"
+title = "Visuel sécurité SendFlow"
+description = "Illustration 3D pour la section Sécurité."
+logical_id = "e5eefd40-8a32-42c7-9af5-1e330373adbc"
+content_hash = "sha256:0fc68e1cf2f12ac29a2e2ded46218c2d406fa61369362a844faf1af14a9183a2"
+size = 1133121
+mtime_ms = 1789002744196
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/e5eefd40-8a32-42c7-9af5-1e330373adbc/cc27c53d-152f-4f08-b4bc-c4bdd1ef5a25"
+storage_version_token = "1789002755983160"
+content_type = "image/png"
+
+[[outputs]]
+id = "z7moH2Q59-FXAovyIk-hH"
+uri = "file://attached_assets/generated_images/sendflow-section-coverage-3d.png"
+type = "image"
+title = "Visuel couverture Afrique"
+description = "Illustration 3D pour la couverture africaine."
+logical_id = "71c4a6df-63b4-45aa-a895-3c4dcd00faea"
+content_hash = "sha256:7fa9bc337808df2c1e77f20c441254c430e3f27dbc9f0a64b91dbf85c1852d7a"
+size = 1357935
+mtime_ms = 1789002744996
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/71c4a6df-63b4-45aa-a895-3c4dcd00faea/c332e044-e58e-4ed4-9044-aeee5a58a93c"
+storage_version_token = "1789002756466090"
+content_type = "image/png"
+
+[[outputs]]
+id = "9oRkeIipWnmDLLBSd9yCn"
+uri = "file://attached_assets/generated_images/sendflow-section-download-3d.png"
+type = "image"
+title = "Visuel application mobile"
+description = "Illustration 3D pour la section téléchargement."
+logical_id = "53a8691f-ce2d-4c59-8f00-89dfb0d64b5d"
+content_hash = "sha256:fd00c3f0cdaf56444451d954ddf8d071b85bae02ff2eac051545b1cd8e520e93"
+size = 1027155
+mtime_ms = 1789002743572
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/53a8691f-ce2d-4c59-8f00-89dfb0d64b5d/5186115a-80fc-4e99-bf4d-90115577da90"
+storage_version_token = "1789002756911917"
+content_type = "image/png"
