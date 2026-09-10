@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
-import { ArrowDownRight, ArrowRight, Check, ChevronDown, Globe2, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { ArrowDownRight, ArrowRight, Check, ChevronDown, Facebook, Globe2, Instagram, Linkedin, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -95,6 +95,107 @@ const faqs: { q: Copy; a: Copy }[] = [
   { q: { fr: 'SendFlow possède-t-il un wallet ?', en: 'Does SendFlow have a wallet?' }, a: { fr: 'Non. SendFlow agit comme une couche de connexion entre réseaux, et non comme un wallet ou un compte financier.', en: 'No. SendFlow acts as a connection layer between networks, not as a wallet or financial account.' } },
 ];
 
+const footerAddresses = [
+  { flag: '🇨🇮', country: 'Côte d’Ivoire', address: 'Abidjan, Cocody Riviera Palmeraie' },
+  { flag: '🇧🇯', country: 'Bénin', address: 'Siège social : Ilot C/SB, Quartier Atrokpocodji, Maison Emile Eric Affognitode, Abomey-Calavi (Atlantique)' },
+];
+
+function RegulatorLogo() {
+  return (
+    <svg className="sendflow-regulator-logo" viewBox="0 0 250 78" role="img" aria-label="National Bank of Belgium Eurosystem">
+      <path d="M5 54V29c0-11 8-19 18-19 7 0 12 3 16 8 4-8 11-13 20-13 13 0 23 10 23 23v26H67V31c0-5-3-9-8-9s-9 4-9 9v23H37V31c0-5-3-9-8-9s-9 4-9 9v23H5Z" fill="#0b527f" />
+      <path d="M39 18c5-8 12-13 21-13 13 0 23 10 23 23v26H67V31c0-5-3-9-8-9-5 0-9 4-9 9v23H39V18Z" fill="#b6b9bc" opacity=".9" />
+      <text x="88" y="40" fill="#114e78" fontSize="24" fontWeight="700" letterSpacing="-1">National</text>
+      <text x="187" y="40" fill="#9ea2a6" fontSize="24" fontWeight="400" letterSpacing="-1">Bank</text>
+      <text x="164" y="53" fill="#114e78" fontSize="7" fontWeight="700" letterSpacing=".8">OF BELGIUM</text>
+      <text x="88" y="68" fill="#a0a3a7" fontSize="13" fontWeight="400">Eurosystem</text>
+    </svg>
+  );
+}
+
+function StoreBadge({ store, icon }: { store: string; icon: 'play' | 'apple' | 'gallery' }) {
+  return (
+    <div className="sendflow-store-badge" aria-label={`Disponible sur ${store}`}>
+      {icon === 'play' && <span className="sendflow-play-icon" aria-hidden="true">▶</span>}
+      {icon === 'apple' && <span className="sendflow-apple-icon" aria-hidden="true">●</span>}
+      {icon === 'gallery' && <span className="sendflow-gallery-icon" aria-hidden="true">▣</span>}
+      <span>
+        <small>{icon === 'gallery' ? 'DÉCOUVREZ-LE SUR' : icon === 'play' ? 'DISPONIBLE SUR' : 'Télécharger sur'}</small>
+        <strong>{store}</strong>
+      </span>
+    </div>
+  );
+}
+
+function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigate: (id: string) => void }) {
+  return (
+    <footer id="footer" className="sendflow-reference-footer">
+      <div className="sendflow-footer-inner">
+        <section className="sendflow-footer-regulator">
+          <p className="sendflow-footer-kicker">{isFrench ? 'Réglementé par :' : 'Regulated by:'}</p>
+          <RegulatorLogo />
+        </section>
+
+        <div className="sendflow-footer-link-groups">
+          <section>
+            <h3>{isFrench ? 'Produits' : 'Products'}</h3>
+            <button onClick={() => onNavigate('top')}>SendFlow Afrique</button>
+            <button onClick={() => onNavigate('international')}>SendFlow Europe</button>
+            <button onClick={() => onNavigate('features-cards')}>SendFlow Business</button>
+          </section>
+          <section>
+            <h3>{isFrench ? 'Assistance' : 'Support'}</h3>
+            <a href="mailto:support@sendflow.studio">Support@sendflow.studio</a>
+            <button onClick={() => onNavigate('join')}>{isFrench ? 'Parrainage' : 'Referral'}</button>
+          </section>
+          <section>
+            <h3>{isFrench ? 'Réglementation' : 'Regulation'}</h3>
+            <button onClick={() => onNavigate('security')}>{isFrench ? 'Politique de Confidentialité' : 'Privacy Policy'}</button>
+            <button onClick={() => onNavigate('faq')}>CGU SendFlow</button>
+            <button onClick={() => onNavigate('faq')}>CGU Europe</button>
+          </section>
+        </div>
+
+        <section className="sendflow-footer-addresses">
+          <h3>{isFrench ? 'Nos adresses' : 'Our offices'}</h3>
+          {footerAddresses.map((office) => (
+            <div className="sendflow-office" key={office.country}>
+              <span className="sendflow-office-flag" aria-hidden="true">{office.flag}</span>
+              <div><strong>{office.country}</strong><p>{office.address}</p></div>
+            </div>
+          ))}
+        </section>
+
+        <section className="sendflow-footer-downloads">
+          <div className="sendflow-store-row">
+            <StoreBadge store="Google Play" icon="play" />
+            <StoreBadge store="App Store" icon="apple" />
+          </div>
+          <StoreBadge store="AppGallery" icon="gallery" />
+        </section>
+
+        <div className="sendflow-footer-socials" aria-label="Réseaux sociaux">
+          <a href="#" aria-label="LinkedIn"><Linkedin size={20} strokeWidth={2.5} /></a>
+          <a href="#" aria-label="Facebook"><Facebook size={19} fill="currentColor" /></a>
+          <a href="#" aria-label="Instagram"><Instagram size={20} strokeWidth={2.5} /></a>
+        </div>
+
+        <div className="sendflow-footer-divider" />
+
+        <section className="sendflow-footer-legal">
+          <p>{isFrench ? 'SendFlow est une solution de technologie financière, développée et détenue par SendFlow Studio. Nous ne sommes pas une banque ; nos services s’appuient sur des partenariats avec des banques et des institutions financières dûment agréées.' : 'SendFlow is a financial technology solution developed and owned by SendFlow Studio. We are not a bank; our services rely on partnerships with duly licensed banks and financial institutions.'}</p>
+          <p>{isFrench ? 'Les services de paiement SendFlow sont proposés via des partenaires agréés dans les territoires où le service est disponible, conformément aux règles locales. Les conditions varient selon la destination, le réseau et le montant du transfert.' : 'SendFlow payment services are offered through licensed partners in territories where the service is available, in accordance with local rules. Conditions vary by destination, network, and transfer amount.'}</p>
+        </section>
+
+        <div className="sendflow-footer-bottom">
+          <span>© 2025 SendFlow Studio. {isFrench ? 'Tous droits réservés.' : 'All rights reserved.'}</span>
+          <div><button onClick={() => onNavigate('faq')}>{isFrench ? 'Confidentialité' : 'Privacy'}</button><button onClick={() => onNavigate('faq')}>{isFrench ? 'Mentions' : 'Legal'}</button></div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -125,6 +226,9 @@ function LandingPage() {
       if (entry.isIntersecting) entry.target.classList.add('reveal-visible');
     }), { threshold: .12 });
     elements.forEach((element) => observer.observe(element));
+    if (window.location.hash === '#footer') {
+      window.setTimeout(() => document.getElementById('footer')?.scrollIntoView(), 500);
+    }
     return () => observer.disconnect();
   }, []);
 
@@ -329,6 +433,7 @@ function LandingPage() {
         </section>
       </main>
 
+      <SendFlowFooter isFrench={isFrench} onNavigate={goTo} />
       <footer className="bg-[#211d2c] px-5 py-12 text-[#fbf8ef] sm:px-8 sm:py-16"><div className="mx-auto max-w-[1240px]"><div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_.6fr_.6fr_.8fr]"><div><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8cd4d] text-[#211d2c]"><ArrowDownRight size={17} strokeWidth={2.5} /></span><span className="text-[17px] font-bold tracking-[-.045em]">sendflow<span className="text-[#e8cd4d]">.</span></span></div><p className="mt-6 max-w-[280px] text-[13px] leading-6 text-[#bcb6c5]">{isFrench ? 'Une vision plus calme des mouvements d’argent en Afrique.' : 'A calmer vision for moving money across Africa.'}</p></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Explorer' : 'Explore'}</p><div className="mt-5 flex flex-col gap-3 text-[13px] text-[#bcb6c5]">{navItems.slice(0, 3).map((item) => <button key={item.id} onClick={() => goTo(item.id)} className="w-fit transition-colors hover:text-[#e8cd4d]" data-testid={`link-footer-${item.id}`}>{t(item.label, language)}</button>)}</div></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Projet' : 'Project'}</p><div className="mt-5 flex flex-col gap-3 text-[13px] text-[#bcb6c5]"><button onClick={() => goTo('security')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-security">{isFrench ? 'Notre approche' : 'Our approach'}</button><button onClick={() => goTo('faq')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-faq">{isFrench ? 'Questions' : 'Questions'}</button><button onClick={() => goTo('join')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-join">{isFrench ? 'Contact' : 'Contact'}</button></div></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Statut' : 'Status'}</p><div className="mt-5 flex items-center gap-2 text-[13px] text-[#bcb6c5]"><span className="h-2 w-2 rounded-full bg-[#9adacb]" />{isFrench ? 'Démo en évolution' : 'Demo in progress'}</div><button onClick={() => setLanguage(isFrench ? 'en' : 'fr')} className="mt-5 flex items-center gap-2 text-[12px] font-semibold text-[#e8cd4d]" data-testid="button-footer-language"><Globe2 size={14} /> {isFrench ? 'English version' : 'Version française'}</button></div></div><div className="mt-14 flex flex-col justify-between gap-4 border-t border-[#fbf8ef]/15 pt-5 text-[10px] text-[#8d8792] sm:flex-row"><span>© 2025 SendFlow Studio. {isFrench ? 'Projet conceptuel.' : 'Concept project.'}</span><span className="flex gap-4"><span>{isFrench ? 'Confidentialité' : 'Privacy'}</span><span>{isFrench ? 'Mentions' : 'Legal'}</span></span></div></div></footer>
     </div>
   );

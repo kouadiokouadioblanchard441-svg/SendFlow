@@ -226,8 +226,265 @@ button[data-testid="button-submit-email"] {
 }
 
 footer > div > div > div:last-child > div.mt-5,
-footer > div > div:last-child > span:first-child {
+footer:not(.sendflow-reference-footer) > div > div:last-child > span:first-child {
   display: none !important;
+}
+
+footer:not(.sendflow-reference-footer) {
+  display: none !important;
+}
+
+.sendflow-reference-footer {
+  background: #ffffff;
+  color: #202833;
+  padding: 76px 23px 30px;
+}
+
+.sendflow-footer-inner {
+  width: min(100%, 720px);
+  margin: 0 auto;
+}
+
+.sendflow-footer-regulator {
+  text-align: left;
+}
+
+.sendflow-footer-kicker {
+  margin: 0;
+  color: #202833;
+  font-size: 16px;
+  letter-spacing: .01em;
+}
+
+.sendflow-regulator-logo {
+  display: block;
+  width: 225px;
+  height: auto;
+  margin-top: 13px;
+}
+
+.sendflow-footer-link-groups {
+  display: grid;
+  gap: 34px;
+  margin-top: 22px;
+  text-align: center;
+}
+
+.sendflow-footer-link-groups section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+}
+
+.sendflow-footer-link-groups h3,
+.sendflow-footer-addresses h3 {
+  margin: 0 0 1px;
+  color: #92979c;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+.sendflow-footer-link-groups button,
+.sendflow-footer-link-groups a {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #202833;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sendflow-footer-link-groups button:hover,
+.sendflow-footer-link-groups a:hover,
+.sendflow-footer-bottom button:hover {
+  color: #6d35d8;
+}
+
+.sendflow-footer-addresses {
+  margin-top: 40px;
+}
+
+.sendflow-footer-addresses h3 {
+  margin-bottom: 22px;
+}
+
+.sendflow-office {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.sendflow-office-flag {
+  flex: 0 0 26px;
+  font-size: 25px;
+  line-height: 1.2;
+}
+
+.sendflow-office strong {
+  display: block;
+  color: #202833;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.sendflow-office p {
+  max-width: 520px;
+  margin: 3px 0 0;
+  color: #7d858d;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.sendflow-footer-downloads {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 42px;
+}
+
+.sendflow-store-row {
+  display: flex;
+  justify-content: center;
+  gap: 46px;
+  width: 100%;
+}
+
+.sendflow-store-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 142px;
+  height: 49px;
+  border: 1.5px solid #242a2f;
+  border-radius: 9px;
+  color: #202833;
+  text-align: left;
+}
+
+.sendflow-store-badge small {
+  display: block;
+  font-size: 7px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: .02em;
+}
+
+.sendflow-store-badge strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.sendflow-play-icon,
+.sendflow-apple-icon,
+.sendflow-gallery-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  color: #1d252d;
+  font-size: 21px;
+}
+
+.sendflow-apple-icon {
+  font-size: 25px;
+}
+
+.sendflow-gallery-icon {
+  border: 1px solid #1d252d;
+  border-radius: 4px;
+  font-size: 17px;
+}
+
+.sendflow-footer-socials {
+  display: flex;
+  justify-content: flex-end;
+  gap: 22px;
+  margin-top: 23px;
+  color: #7a838b;
+}
+
+.sendflow-footer-socials a {
+  display: inline-flex;
+  color: inherit;
+}
+
+.sendflow-footer-divider {
+  height: 1px;
+  margin-top: 23px;
+  background: #e3e5e7;
+}
+
+.sendflow-footer-legal {
+  margin-top: 23px;
+  color: #56616d;
+  font-size: 16px;
+  line-height: 1.55;
+  letter-spacing: .005em;
+}
+
+.sendflow-footer-legal p {
+  margin: 0 0 32px;
+}
+
+.sendflow-footer-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin-top: 8px;
+  color: #202833;
+  font-size: 15px;
+  text-align: center;
+}
+
+.sendflow-footer-bottom button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #202833;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sendflow-footer-bottom div {
+  display: flex;
+  gap: 22px;
+}
+
+@media (min-width: 640px) {
+  .sendflow-reference-footer {
+    padding: 96px 40px 34px;
+  }
+
+  .sendflow-footer-link-groups {
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+    gap: 30px;
+    margin-top: 44px;
+  }
+
+  .sendflow-footer-addresses {
+    margin-top: 64px;
+  }
+
+  .sendflow-footer-bottom {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
 }
 
 /* Keep footer columns aligned on one bottom baseline. */
