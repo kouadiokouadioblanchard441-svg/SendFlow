@@ -1,4 +1,5 @@
 kind = "web"
+videoAspectRatio = "9:16"
 previewPath = "/"
 title = "SendFlow"
 description = "A premium, mobile-first fintech landing page for SendFlow, a demo product simplifying transfers across Mobile Money networks and African borders."

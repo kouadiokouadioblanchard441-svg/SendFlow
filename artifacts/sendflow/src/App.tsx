@@ -9,7 +9,6 @@ import { LegalMentionsPage, PrivacyPage, TermsPage } from '@/pages/legal';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
-import heroGlobe from '@assets/generated_images/sendflow-earth-globe-transparent.png';
 import heroGlobalConnection from '@assets/file_000000003d2481f8a4200aa758aa64b9_1789047674015.png';
 import networkSectionArt from '@assets/generated_images/sendflow-section-network-3d-transparent.png';
 import howItWorksSectionArt from '@assets/generated_images/sendflow-section-how-it-works-3d-transparent.png';
@@ -43,6 +42,7 @@ import visibleDetailsIcon from './assets/sendflow-icon-visible-details.svg';
 import privateIcon from './assets/sendflow-icon-private.svg';
 
 const queryClient = new QueryClient();
+const heroVideoSrc = `${import.meta.env.BASE_URL}videos/sendflow-hero-globe-vertical.mp4`;
 
 type Language = 'fr' | 'en';
 type Copy = { fr: string; en: string };
@@ -314,6 +314,7 @@ function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [heroVideoFailed, setHeroVideoFailed] = useState(false);
 
   useEffect(() => {
     const elements = document.querySelectorAll('.reveal');
@@ -393,11 +394,6 @@ function LandingPage() {
                   </div>
                   {countries.filter((country) => heroCountryPositions[country.code]).map((country) => <div key={country.code} className={`absolute ${heroCountryPositions[country.code]} flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-2 py-1 text-[10px] font-bold text-[#211d2c] shadow-[0_8px_18px_rgba(20,30,80,.12)]`}><span className="text-sm leading-none">{country.flag}</span><span className="hidden sm:inline">{country.name}</span></div>)}
                 </div>
-                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-                  <span className="hero-globe-spin block h-32 w-32 sm:h-48 sm:w-48">
-                    <img src={heroGlobe} alt={isFrench ? 'Terre centrée sur l’Afrique' : 'Earth centered on Africa'} className="h-full w-full object-contain drop-shadow-[0_10px_16px_rgba(20,50,150,.22)]" />
-                  </span>
-                </div>
               </div>
               <h1 className="rise delay-1 mt-6 max-w-[760px] text-[clamp(3.7rem,9vw,7.6rem)] font-extrabold leading-[.88] tracking-[-.09em] text-[#17131f]">{isFrench ? <>L’argent circule.<br /><em className="font-serif font-normal text-[#5b21b6]">Les réseaux</em> aussi.</> : <>Money moves.<br /><em className="font-serif font-normal text-[#5b21b6]">Networks</em> do too.</>}</h1>
               <p className="rise delay-2 mt-8 max-w-[520px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{isFrench ? 'SendFlow simplifie vos transferts d’argent entre différents réseaux de paiement, localement et au-delà des frontières.' : 'SendFlow simplifies money transfers across different payment networks, locally and across borders.'}</p>
@@ -406,21 +402,31 @@ function LandingPage() {
                  <button onClick={() => goTo('features')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#6d35d8]/25 bg-white/80 px-5 py-3.5 text-[13px] font-bold text-[#211d2c] shadow-[0_10px_22px_rgba(45,37,53,.08)] transition-all hover:-translate-y-1 hover:border-[#6d35d8] hover:text-[#6d35d8] sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</button>
               </div>
             </div>
-              <div className="relative mx-auto aspect-[3/2] w-full max-w-[530px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]">
-               <img
-                 src={heroGlobalConnection}
-                 alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
-                  className="h-full w-full object-cover"
-               />
-                <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center rounded-full border border-[#6d35d8]/20 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.16)] backdrop-blur-sm" aria-label="SendFlow">
-                  <BrandLockup />
+               <div className="relative mx-auto aspect-[9/16] w-full max-w-[390px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]" data-testid="hero-video-slot">
+                <img
+                  src={heroGlobalConnection}
+                  alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
+                  className="hero-video-poster absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="pointer-events-none absolute left-5 top-8 z-10 opacity-80 drop-shadow-[0_3px_12px_rgba(255,255,255,.45)]">
+                  <img src={sendflowWordmark} alt="" className="h-6 w-auto object-contain" />
                 </div>
-                <div className="hero-globe-motion pointer-events-none absolute right-[4%] top-[3%] z-10 aspect-square w-[61%] rounded-full" aria-hidden="true">
-                  <img src={heroGlobe} alt="" className="hero-globe-motion__earth hero-globe-spin" />
-                  <span className="hero-globe-motion__meridian hero-globe-motion__meridian--wide" />
-                  <span className="hero-globe-motion__meridian hero-globe-motion__meridian--narrow" />
-                </div>
-            </div>
+                {!heroVideoFailed && (
+                  <video
+                    className="hero-video absolute inset-0 h-full w-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    poster={heroGlobalConnection}
+                    preload="metadata"
+                    onError={() => setHeroVideoFailed(true)}
+                    aria-label={isFrench ? 'Globe SendFlow en rotation derrière un personnage' : 'SendFlow globe rotating behind a character'}
+                  >
+                    <source src={heroVideoSrc} type="video/mp4" />
+                  </video>
+                )}
+             </div>
            </div>
          </section>
 
