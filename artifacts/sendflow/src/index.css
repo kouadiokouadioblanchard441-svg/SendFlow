@@ -235,6 +235,14 @@ button[data-testid="button-submit-email"] {
   mix-blend-mode: screen;
 }
 
+.hero-globe-motion__surface {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: center;
+  will-change: transform;
+}
+
 .hero-globe-motion__earth {
   position: absolute;
   inset: 5%;
@@ -245,6 +253,42 @@ button[data-testid="button-submit-email"] {
   filter: saturate(1.25) contrast(1.08);
   mix-blend-mode: screen;
   will-change: transform;
+}
+
+.hero-operator-badge {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  height: 25px;
+  min-width: 25px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(220, 229, 242, .95);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, .96);
+  padding: 4px 6px;
+  box-shadow: 0 6px 16px rgba(20, 35, 60, .2);
+  mix-blend-mode: normal;
+  animation: hero-operator-float 3.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.hero-operator-badge img {
+  height: 16px;
+  width: auto;
+  max-width: 31px;
+  object-fit: contain;
+}
+
+.hero-operator-badge > span {
+  color: #1769ff;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+@keyframes hero-operator-float {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -4px; }
 }
 
 .hero-globe-motion::before {

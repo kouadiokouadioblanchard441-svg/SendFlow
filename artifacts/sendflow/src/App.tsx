@@ -134,6 +134,14 @@ const operatorLogoMarks: Record<string, OperatorLogo> = {
   'M-Pesa': { mark: 'M-Pesa', background: '#f2f2f2', foreground: '#17131f', image: mpesaOperatorLogo },
 };
 
+const heroOperatorBadges = [
+  { network: 'Orange', position: 'left-[5%] top-[39%]' },
+  { network: 'MTN', position: 'left-[27%] top-[9%]' },
+  { network: 'Wave', position: 'right-[3%] top-[32%]' },
+  { network: 'Moov Africa', position: 'right-[9%] bottom-[17%]' },
+  { network: 'Airtel', position: 'left-[22%] bottom-[7%]' },
+];
+
 function OperatorRow({ network }: { network: string }) {
   const logo = operatorLogoMarks[network] ?? { mark: network.slice(0, 1).toUpperCase(), background: '#6d35d8', foreground: '#ffffff' };
   return (
@@ -415,8 +423,23 @@ function LandingPage() {
                  <div className="pointer-events-none absolute left-3 top-3 z-10 flex origin-top-left scale-[0.76] items-center rounded-full border border-[#6d35d8]/20 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.16)] backdrop-blur-sm sm:left-4 sm:top-4 sm:scale-[0.88]" aria-label="SendFlow">
                   <BrandLockup />
                 </div>
-                <div className="hero-globe-motion pointer-events-none absolute right-[4%] top-[3%] z-10 aspect-square w-[61%] rounded-full" aria-hidden="true">
-                  <img src={heroGlobe} alt="" className="hero-globe-motion__earth hero-globe-spin" />
+                 <div className="hero-globe-motion pointer-events-none absolute right-[4%] top-[3%] z-10 aspect-square w-[61%] rounded-full" aria-hidden="true">
+                   <div className="hero-globe-motion__surface hero-globe-spin">
+                     <img src={heroGlobe} alt="" className="hero-globe-motion__earth" />
+                     {heroOperatorBadges.map(({ network, position }, index) => {
+                       const logo = operatorLogoMarks[network];
+                       return (
+                         <span
+                           key={network}
+                           className={`hero-operator-badge ${position}`}
+                           style={{ animationDelay: `${index * -0.7}s` }}
+                           aria-label={`${network} logo`}
+                         >
+                           {logo.image ? <img src={logo.image} alt="" /> : <span>{logo.mark}</span>}
+                         </span>
+                       );
+                     })}
+                   </div>
                   <span className="hero-globe-motion__meridian hero-globe-motion__meridian--wide" />
                   <span className="hero-globe-motion__meridian hero-globe-motion__meridian--narrow" />
                 </div>
