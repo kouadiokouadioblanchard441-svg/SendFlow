@@ -8,6 +8,8 @@ import NotFound from '@/pages/not-found';
 import { LegalMentionsPage, PrivacyPage, TermsPage } from '@/pages/legal';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
+import heroGlobe from '@assets/generated_images/sendflow-earth-globe-transparent.png';
 import heroGlobalConnection from '@assets/file_000000003d2481f8a4200aa758aa64b9_1789047674015.png';
 import networkSectionArt from '@assets/generated_images/sendflow-section-network-3d-transparent.png';
 import howItWorksSectionArt from '@assets/generated_images/sendflow-section-how-it-works-3d-transparent.png';
@@ -41,7 +43,6 @@ import visibleDetailsIcon from './assets/sendflow-icon-visible-details.svg';
 import privateIcon from './assets/sendflow-icon-private.svg';
 
 const queryClient = new QueryClient();
-const heroVideoSrc = `${import.meta.env.BASE_URL}videos/sendflow-hero-globe-vertical.mp4`;
 
 type Language = 'fr' | 'en';
 type Copy = { fr: string; en: string };
@@ -313,7 +314,6 @@ function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const [heroVideoFailed, setHeroVideoFailed] = useState(false);
 
   useEffect(() => {
     const elements = document.querySelectorAll('.reveal');
