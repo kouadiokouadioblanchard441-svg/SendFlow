@@ -367,6 +367,8 @@ function App() {
               <Route path="/conditions-utilisation" component={TermsPage} />
               <Route path="/confidentialite" component={PrivacyPage} />
               <Route path="/mentions-legales" component={LegalMentionsPage} />
+              <Route path="/admin" component={LegacyAdminRedirect} />
+              <Route path="/admin/*" component={LegacyAdminRedirect} />
               <Route path="/panel/:token/:email" component={PanelRoute} />
               <Route component={NotFound} />
             </Switch>
@@ -384,6 +386,13 @@ function SignInPage() {
 
 function SignUpPage() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
+}
+
+function LegacyAdminRedirect() {
+  useEffect(() => {
+    window.location.replace(`${basePath}/`);
+  }, []);
+  return null;
 }
 
 function PanelUrlRequired() {

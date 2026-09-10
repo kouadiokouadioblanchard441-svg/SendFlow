@@ -47,8 +47,10 @@ const blockLegacyAdminPath = () => ({
         next();
         return;
       }
-      res.statusCode = 404;
-      res.end('Not Found');
+      const homePath = basePath.replace(/\/+$/, '') || '/';
+      res.statusCode = 302;
+      res.setHeader('Location', homePath);
+      res.end();
     });
   },
   configurePreviewServer(server: { middlewares: { use: (handler: (req: { url?: string }, res: { statusCode: number; end: (body: string) => void }, next: () => void) => void) => void } }) {
@@ -57,8 +59,10 @@ const blockLegacyAdminPath = () => ({
         next();
         return;
       }
-      res.statusCode = 404;
-      res.end('Not Found');
+      const homePath = basePath.replace(/\/+$/, '') || '/';
+      res.statusCode = 302;
+      res.setHeader('Location', homePath);
+      res.end();
     });
   },
 });
