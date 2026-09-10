@@ -9,12 +9,12 @@ import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
 import heroGlobe from '@assets/generated_images/sendflow-earth-globe-transparent.png';
-import networkSectionArt from '@assets/generated_images/sendflow-section-network-3d.png';
-import howItWorksSectionArt from '@assets/generated_images/sendflow-section-how-it-works-3d.png';
-import internationalSectionArt from '@assets/generated_images/sendflow-section-international-3d.png';
-import securitySectionArt from '@assets/generated_images/sendflow-section-security-3d.png';
-import coverageSectionArt from '@assets/generated_images/sendflow-section-coverage-3d.png';
-import downloadSectionArt from '@assets/generated_images/sendflow-section-download-3d.png';
+import networkSectionArt from '@assets/generated_images/sendflow-section-network-3d-transparent.png';
+import howItWorksSectionArt from '@assets/generated_images/sendflow-section-how-it-works-3d-transparent.png';
+import internationalSectionArt from '@assets/generated_images/sendflow-section-international-3d-transparent.png';
+import securitySectionArt from '@assets/generated_images/sendflow-section-security-3d-transparent.png';
+import coverageSectionArt from '@assets/generated_images/sendflow-section-coverage-3d-transparent.png';
+import downloadSectionArt from '@assets/generated_images/sendflow-section-download-3d-transparent.png';
 
 const queryClient = new QueryClient();
 
@@ -421,7 +421,7 @@ function LandingPage() {
         <section id="security" className="overflow-hidden bg-[#d7eee8] px-5 py-24 sm:px-8 sm:py-32">
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[.9fr_1.1fr]">
              <div className="reveal relative min-h-[300px]">
-               <img src={securitySectionArt} alt={isFrench ? 'Protection et sécurité des transferts' : 'Transfer protection and security'} className="absolute bottom-0 right-0 z-10 h-40 w-40 object-contain sm:h-52 sm:w-52" />
+               <img src={securitySectionArt} alt={isFrench ? 'Protection et sécurité des transferts' : 'Transfer protection and security'} className="absolute bottom-0 left-1/2 z-10 h-40 w-40 -translate-x-1/2 object-contain object-center sm:h-52 sm:w-52" />
               <div className="absolute left-[12%] top-[15%] h-[210px] w-[210px] rounded-full border border-[#6d35d8]/25 sm:h-[290px] sm:w-[290px]" />
               <div className="absolute left-[20%] top-[23%] h-[165px] w-[165px] rounded-full border border-[#6d35d8]/25 sm:h-[225px] sm:w-[225px]" />
               <div className="absolute left-[30%] top-[34%] flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#6d35d8] text-[#fbf8ef] shadow-[0_18px_35px_rgba(109,53,216,.25)] sm:h-32 sm:w-32"><LockKeyhole size={34} strokeWidth={1.5} /></div>
