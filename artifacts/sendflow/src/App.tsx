@@ -112,20 +112,13 @@ const operatorLogoMarks: Record<string, { mark: string; background: string; fore
   Telkom: { mark: 'T', background: '#0072bc', foreground: '#ffffff' },
 };
 
-function OperatorRow({ network, index, total }: { network: string; index: number; total: number }) {
+function OperatorRow({ network }: { network: string }) {
   const logo = operatorLogoMarks[network] ?? { mark: network.slice(0, 1).toUpperCase(), background: '#6d35d8', foreground: '#ffffff' };
   return (
-    <div className="flex items-center gap-3">
-      <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#f0ece3] text-[10px] font-bold text-[#1769ff]">
-        {index + 1}
-        {index < total - 1 && <span className="absolute left-1/2 top-8 h-3 w-px bg-[#d6d0c7]" />}
+    <div className="flex items-center justify-center">
+      <span role="img" aria-label={`${network} logo`} className="flex h-14 w-14 items-center justify-center rounded-full shadow-[0_8px_18px_rgba(58,38,83,.08)] sm:h-16 sm:w-16" style={{ backgroundColor: logo.background, color: logo.foreground }}>
+        {network === 'Orange' ? <span className="h-3 w-6 bg-white" aria-hidden="true" /> : <span className="text-[10px] font-extrabold tracking-[-.04em]">{logo.mark}</span>}
       </span>
-      <div className="flex min-h-[56px] flex-1 items-center justify-center border border-[#2d2535]/10 bg-white px-4 py-3">
-        <span role="img" aria-label={`${network} logo`} className={`flex h-8 min-w-8 items-center justify-center px-2 text-[10px] font-extrabold tracking-[-.04em] ${network === 'Orange' ? 'rounded-none' : 'rounded-full'}`} style={{ backgroundColor: logo.background, color: logo.foreground }}>
-          {network === 'Orange' ? <span className="h-3 w-5 bg-white" aria-hidden="true" /> : logo.mark}
-        </span>
-      </div>
-      {index < total - 1 && <ArrowRight size={15} className="text-[#b1abb4]" />}
     </div>
   );
 }
@@ -468,8 +461,8 @@ function LandingPage() {
                   </div>
                    <span className="flex h-12 w-12 items-center justify-center rounded-none text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span>
                 </div>
-                <div className="mt-10 space-y-3">{displayNetworks.map((network, index) => <OperatorRow key={network} network={network} index={index} total={displayNetworks.length} />)}</div>
-                 <div className="mt-9 flex items-center gap-2 border-t border-[#2d2535]/10 pt-5 text-[11px] text-[#8d8792]"><Check size={14} className="text-[#1769ff]" /> {isFrench ? 'Logos publics affichés lorsqu’ils sont disponibles · Pas de transaction' : 'Public logos shown when available · No transaction'}</div>
+                 <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-7 sm:grid-cols-4">{displayNetworks.map((network) => <OperatorRow key={network} network={network} />)}</div>
+                 <div className="mt-9 flex items-center gap-2 border-t border-[#2d2535]/10 pt-5 text-[11px] text-[#8d8792]"><Check size={14} className="text-[#1769ff]" /> {isFrench ? 'Logos des réseaux · Pas de transaction' : 'Network logos · No transaction'}</div>
               </div>
             </div>
           </div>
