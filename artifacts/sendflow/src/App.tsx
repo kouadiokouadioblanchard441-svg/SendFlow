@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Route, Switch, Router as WouterRouter } from 'wouter';
 import { ArrowDownRight, ArrowRight, Check, ChevronDown, Facebook, Globe2, Instagram, Linkedin, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { ClerkProvider, SignIn, SignUp, useAuth } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, useAuth, useClerk } from '@clerk/react';
+import { useSignIn } from '@clerk/react/legacy';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Toaster } from '@/components/ui/toaster';
@@ -397,16 +398,84 @@ function AdminRoute() {
             <LockKeyhole className="text-[#1769ff]" size={19} />
             Connexion au panel administrateur
           </div>
-          <SignIn
-            routing="hash"
-            signUpUrl={`${basePath}/sign-up`}
-            fallbackRedirectUrl={`${basePath}/admin`}
-          />
+          <AdminLoginForm />
         </div>
       </div>
     );
   }
   return <AdminPage />;
+}
+
+function AdminLoginForm() {
+  const { isLoaded, signIn } = useSignIn();
+  const { setActive } = useClerk();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!isLoaded || !signIn) return;
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const attempt = await signIn.create({ identifier: email.trim() });
+      const result = await signIn.attemptFirstFactor({
+        strategy: 'password',
+        password,
+      });
+      if (result.status === 'complete' && result.createdSessionId) {
+        await setActive({ session: result.createdSessionId });
+        window.location.assign(`${basePath}/admin`);
+        return;
+      }
+      setError('Une vérification supplémentaire est requise pour ce compte.');
+    } catch (caught) {
+      const clerkError = caught as { errors?: Array<{ longMessage?: string; message?: string }> };
+      setError(clerkError.errors?.[0]?.longMessage ?? clerkError.errors?.[0]?.message ?? 'Email ou mot de passe incorrect.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <p className="text-sm leading-6 text-[#667386]">Utilisez le compte administrateur autorisé pour gérer le contenu de SendFlow.</p>
+      <label className="block">
+        <span className="mb-2 block text-sm font-semibold text-[#192231]">Email administrateur</span>
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          autoComplete="username"
+          required
+          placeholder="admin@exemple.com"
+          className="w-full rounded-xl border border-[#dbe3ee] bg-[#f8fafc] px-4 py-3 text-sm text-[#192231] outline-none transition focus:border-[#1769ff] focus:ring-4 focus:ring-[#1769ff]/10"
+        />
+      </label>
+      <label className="block">
+        <span className="mb-2 block text-sm font-semibold text-[#192231]">Mot de passe unique</span>
+        <input
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="current-password"
+          required
+          placeholder="Votre mot de passe"
+          className="w-full rounded-xl border border-[#dbe3ee] bg-[#f8fafc] px-4 py-3 text-sm text-[#192231] outline-none transition focus:border-[#1769ff] focus:ring-4 focus:ring-[#1769ff]/10"
+        />
+      </label>
+      {error && <p role="alert" className="rounded-xl bg-[#fff1f1] px-4 py-3 text-sm font-medium leading-5 text-[#b42318]">{error}</p>}
+      <button
+        type="submit"
+        disabled={!isLoaded || isSubmitting}
+        className="w-full rounded-xl bg-[#1769ff] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0d55d6] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isSubmitting ? 'Connexion…' : 'Se connecter au panel'}
+      </button>
+    </form>
+  );
 }
 
 function LandingPage() {
