@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
-import { PrivacyPage, TermsPage } from '@/pages/legal';
+import { LegalMentionsPage, PrivacyPage, TermsPage } from '@/pages/legal';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
@@ -179,6 +179,7 @@ function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigat
             <h3>{isFrench ? 'Réglementation' : 'Regulation'}</h3>
               <Link href="/confidentialite">{isFrench ? 'Politique de Confidentialité' : 'Privacy Policy'}</Link>
               <Link href="/conditions-utilisation">{isFrench ? 'Conditions d’utilisation' : 'Terms of Use'}</Link>
+              <Link href="/mentions-legales">{isFrench ? 'Mentions légales' : 'Legal notice'}</Link>
           </section>
         </div>
 
@@ -215,7 +216,7 @@ function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigat
 
         <div className="sendflow-footer-bottom">
           <span>© 2025 Flow Digital SARL. {isFrench ? 'Tous droits réservés.' : 'All rights reserved.'}</span>
-          <div><Link href="/confidentialite">{isFrench ? 'Confidentialité' : 'Privacy'}</Link><span>{isFrench ? 'Mentions légales · bientôt' : 'Legal notice · soon'}</span></div>
+          <div><Link href="/confidentialite">{isFrench ? 'Confidentialité' : 'Privacy'}</Link><Link href="/mentions-legales">{isFrench ? 'Mentions légales' : 'Legal notice'}</Link></div>
         </div>
       </div>
     </footer>
@@ -231,6 +232,7 @@ function App() {
             <Route path="/" component={LandingPage} />
             <Route path="/conditions-utilisation" component={TermsPage} />
             <Route path="/confidentialite" component={PrivacyPage} />
+            <Route path="/mentions-legales" component={LegalMentionsPage} />
             <Route component={NotFound} />
           </Switch>
         </WouterRouter>

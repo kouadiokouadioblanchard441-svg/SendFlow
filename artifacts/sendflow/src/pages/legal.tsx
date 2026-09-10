@@ -71,11 +71,111 @@ function LegalLayout({ title, eyebrow, intro, children }: { title: string; eyebr
             <Link href="/" className="text-[#e8cd4d] hover:underline">Accueil</Link>
             <Link href="/conditions-utilisation" className="hover:text-[#e8cd4d]">Conditions</Link>
             <Link href="/confidentialite" className="hover:text-[#e8cd4d]">Confidentialité</Link>
+            <Link href="/mentions-legales" className="hover:text-[#e8cd4d]">Mentions légales</Link>
             <a href="mailto:support@sendflow.studio" className="hover:text-[#e8cd4d]">Contact</a>
           </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+export function LegalMentionsPage() {
+  return (
+    <LegalLayout
+      eyebrow="SendFlow · Éditeur"
+      title="Mentions légales"
+      intro="Cette page présente l’identité de l’éditeur de SendFlow, les informations de publication, les règles d’utilisation du site et les responsabilités liées aux contenus et aux services proposés."
+    >
+      <LegalSection number="01" title="Éditeur du site">
+        <p>Le site SendFlow est édité par <strong>Flow Digital SARL</strong>, société de droit ivoirien, exploitant la marque et le projet technologique SendFlow.</p>
+        <div className="rounded-2xl border border-[#2d2535]/10 bg-white px-5 py-5 text-[14px] leading-7 shadow-[0_10px_30px_rgba(58,38,83,.05)]">
+          <p><strong>Dénomination :</strong> Flow Digital SARL</p>
+          <p><strong>Forme juridique :</strong> Société à responsabilité limitée — information à confirmer sur l’extrait officiel</p>
+          <p><strong>Siège / adresse officielle communiquée :</strong> Côte d’Ivoire, Abidjan, Cocody Riviera Palmeraie</p>
+          <p><strong>Numéro RCCM :</strong> à compléter avant publication définitive</p>
+          <p><strong>Identifiant fiscal / compte contribuable :</strong> à compléter avant publication définitive</p>
+          <p><strong>Capital social :</strong> à compléter avant publication définitive</p>
+          <p><strong>Adresse électronique :</strong> <a className="font-bold text-[#5b21b6] underline" href="mailto:support@sendflow.studio">support@sendflow.studio</a></p>
+        </div>
+        <p>Les informations d’immatriculation, de capital et d’identification fiscale doivent être remplacées par les données figurant sur les documents officiels de Flow Digital SARL avant toute mise en ligne présentée comme définitive.</p>
+      </LegalSection>
+
+      <LegalSection number="02" title="Directeur de la publication">
+        <p><strong>Directeur de la publication :</strong> à compléter avec le nom et la qualité de la personne légalement désignée par Flow Digital SARL.</p>
+        <p>La désignation du directeur de la publication doit être vérifiée au regard de la forme sociale de l’éditeur, du pays de publication, des règles applicables aux communications électroniques et de l’organisation réelle de Flow Digital SARL.</p>
+      </LegalSection>
+
+      <LegalSection number="03" title="Hébergement et infrastructure technique">
+        <p>Le site SendFlow est déployé sur une infrastructure technique dont l’hébergeur, l’adresse et les coordonnées doivent être reportés ici à partir du contrat ou de la facture d’hébergement en production.</p>
+        <div className="rounded-2xl border border-[#2d2535]/10 bg-white px-5 py-5 text-[14px] leading-7 shadow-[0_10px_30px_rgba(58,38,83,.05)]">
+          <p><strong>Hébergeur :</strong> à confirmer avant publication définitive</p>
+          <p><strong>Adresse de l’hébergeur :</strong> à confirmer</p>
+          <p><strong>Téléphone / contact juridique :</strong> à confirmer</p>
+          <p><strong>Région ou pays de stockage :</strong> à confirmer selon l’architecture effectivement déployée</p>
+        </div>
+        <p>Les coordonnées de l’hébergeur ne doivent pas être devinées à partir d’un outil de développement, d’un fournisseur temporaire ou d’une adresse technique. Elles doivent correspondre à l’infrastructure qui sert réellement le site au public.</p>
+      </LegalSection>
+
+      <LegalSection number="04" title="Objet du site">
+        <p>SendFlow présente une solution technologique conçue pour simplifier la compréhension, la préparation et le suivi de transferts d’argent entre réseaux de paiement et opérateurs de mobile money, en Afrique et, lorsque cela est disponible, entre plusieurs pays.</p>
+        <p>Les pages publiques peuvent contenir des informations de présentation, des illustrations, des démonstrations, des cartes de couverture, des indications de réseaux et des formulaires de contact. Une démonstration ou une indication de couverture ne constitue pas une promesse de disponibilité commerciale, de délai ou de prix.</p>
+      </LegalSection>
+
+      <LegalSection number="05" title="Statut de SendFlow et services réglementés">
+        <p>Sauf mention contraire dans une convention ou un parcours particulier, SendFlow est une interface technologique et ne se présente pas comme une banque, un établissement de monnaie électronique, un opérateur de télécommunications ou un service autonome de conservation de fonds.</p>
+        <p>Les opérations de paiement, de transfert, de change, de conservation, de remise des fonds ou de vérification peuvent relever d’un opérateur, d’une banque, d’un établissement de paiement ou d’un autre partenaire autorisé dans le territoire concerné. Le partenaire réellement impliqué doit être identifié dans les conditions du parcours avant une mise en production.</p>
+        <p>Aucune mention présente sur le site ne doit être interprétée comme une déclaration d’agrément de Flow Digital SARL. Les autorisations, licences, partenariats et obligations applicables doivent être confirmés séparément avant l’ouverture commerciale.</p>
+      </LegalSection>
+
+      <LegalSection number="06" title="Accès et disponibilité">
+        <p>Flow Digital SARL s’efforce de maintenir un site accessible, sécurisé et à jour. L’accès peut toutefois être interrompu pour maintenance, mise à niveau, correction d’un risque, panne, indisponibilité d’un fournisseur, incident de réseau, décision d’une autorité ou événement indépendant de la volonté de l’éditeur.</p>
+        <p>Les informations publiées peuvent être modifiées, suspendues ou retirées sans préavis lorsqu’une correction, une évolution réglementaire, une contrainte de partenaire ou un impératif de sécurité le justifie. La disponibilité du site vitrine ne garantit pas la disponibilité d’un futur service de transfert.</p>
+      </LegalSection>
+
+      <LegalSection number="07" title="Propriété intellectuelle">
+        <p>La structure du site, les textes, la marque SendFlow, le nom Flow Digital, les logos, les éléments graphiques, les illustrations, les animations, les interfaces, les composants logiciels et les bases de données sont protégés par les règles applicables de propriété intellectuelle.</p>
+        <p>Sauf mention d’un titulaire différent, ces éléments appartiennent à Flow Digital SARL ou sont utilisés avec l’autorisation de leur titulaire. Toute reproduction, représentation, adaptation, extraction, réutilisation, diffusion ou exploitation commerciale sans autorisation écrite préalable est interdite.</p>
+        <p>Les noms et logos d’opérateurs, banques, réseaux ou partenaires éventuellement visibles sur le site restent la propriété de leurs titulaires respectifs. Leur présence sert uniquement à décrire une compatibilité, une illustration ou un environnement possible et ne crée pas nécessairement un partenariat commercial.</p>
+      </LegalSection>
+
+      <LegalSection number="08" title="Images, illustrations et contenus de tiers">
+        <p>Les visuels utilisés sur SendFlow peuvent être des créations originales, des éléments commandés, des ressources sous licence ou des contenus fournis par un partenaire. Les crédits et licences doivent être conservés dans le dossier de production et ajoutés sur cette page lorsqu’une licence l’exige.</p>
+        <p>Les marques, pictogrammes, drapeaux, logos d’opérateurs et références à des services tiers ne signifient pas que ces tiers valident le contenu du site. Toute erreur de représentation ou demande de retrait peut être adressée à support@sendflow.studio avec le lien concerné et les justificatifs utiles.</p>
+      </LegalSection>
+
+      <LegalSection number="09" title="Responsabilité éditoriale">
+        <p>Flow Digital SARL s’efforce de présenter des informations compréhensibles et actualisées. Toutefois, les informations de couverture, de réseau, de disponibilité, de prix, de délai ou de réglementation peuvent évoluer et dépendent parfois d’un partenaire ou d’une autorité.</p>
+        <p>Les contenus du site ne constituent pas un conseil financier, juridique, fiscal, bancaire ou réglementaire. Ils ne remplacent pas la lecture des conditions d’un opérateur, d’une banque ou d’un prestataire de paiement, ni l’avis d’un professionnel qualifié.</p>
+        <p>L’utilisateur reste responsable de la vérification des informations avant toute décision, inscription ou opération. Les dommages résultant d’une utilisation d’une information ancienne, incomplète ou destinée à une autre zone géographique doivent être appréciés conformément aux règles impératives applicables et aux conditions d’utilisation de SendFlow.</p>
+      </LegalSection>
+
+      <LegalSection number="10" title="Liens externes et réseaux sociaux">
+        <p>Le site peut contenir des liens vers des sites, plateformes ou réseaux sociaux exploités par des tiers. Flow Digital SARL ne contrôle pas leurs contenus, leurs conditions, leurs cookies, leurs pratiques de sécurité ou leur disponibilité.</p>
+        <p>L’ouverture d’un lien externe relève de la responsabilité de l’utilisateur. La présence d’un lien ne vaut ni recommandation générale, ni garantie, ni certification du service tiers. Les utilisateurs doivent consulter les politiques et conditions du site qu’ils visitent.</p>
+      </LegalSection>
+
+      <LegalSection number="11" title="Données personnelles">
+        <p>Les traitements de données personnelles liés au site et au projet SendFlow sont décrits dans la <Link href="/confidentialite" className="font-bold text-[#5b21b6] underline">Politique de confidentialité</Link>. Les utilisateurs peuvent également consulter les <Link href="/conditions-utilisation" className="font-bold text-[#5b21b6] underline">Conditions générales d’utilisation</Link> pour comprendre les règles applicables à l’utilisation du service.</p>
+        <p>Pour exercer une demande ou signaler une difficulté relative aux données personnelles, écrivez à support@sendflow.studio. Les informations de l’autorité compétente, les formalités et les délais doivent être confirmés par Flow Digital SARL selon le cadre juridique effectivement applicable à la date du lancement.</p>
+      </LegalSection>
+
+      <LegalSection number="12" title="Signalement d’un contenu ou d’un comportement illicite">
+        <p>Tout utilisateur peut signaler un contenu manifestement illicite, une usurpation de marque, une atteinte à un droit, une tentative de fraude ou un usage abusif du site en écrivant à support@sendflow.studio.</p>
+        <p>Le signalement doit préciser l’identité et le moyen de contact du demandeur, l’adresse ou la référence du contenu, une description précise des faits, les raisons du signalement et tout document utile. Un signalement incomplet peut retarder l’analyse. Flow Digital SARL peut demander des informations complémentaires et transmettre le dossier à un partenaire ou à une autorité lorsque la loi l’exige.</p>
+      </LegalSection>
+
+      <LegalSection number="13" title="Droit applicable et juridiction">
+        <p>La page de mentions légales est rédigée en français et s’inscrit dans le cadre juridique de l’éditeur établi en Côte d’Ivoire, sous réserve des règles impératives applicables à l’utilisateur, au pays de consultation et aux services de paiement proposés par un partenaire.</p>
+        <p>Les réclamations doivent d’abord être adressées à Flow Digital SARL à l’adresse support@sendflow.studio. À défaut de résolution amiable, les juridictions compétentes d’Abidjan peuvent être saisies, sous réserve des règles impératives de compétence et de protection des consommateurs.</p>
+      </LegalSection>
+
+      <LegalSection number="14" title="Mise à jour et informations à compléter">
+        <p>Les présentes mentions doivent être mises à jour à chaque changement d’identité de l’éditeur, de siège, de directeur de publication, d’hébergeur, de marque, de modèle de service ou de statut réglementaire.</p>
+        <p>Avant publication définitive, Flow Digital SARL doit notamment confirmer le numéro RCCM, l’identifiant fiscal, le capital social, le nom du directeur de publication, l’identité et l’adresse de l’hébergeur, les éventuels crédits de contenus et les références des partenaires autorisés.</p>
+        <p><strong>Version de travail publiée le 10 septembre 2026.</strong></p>
+      </LegalSection>
+    </LegalLayout>
   );
 }
 
