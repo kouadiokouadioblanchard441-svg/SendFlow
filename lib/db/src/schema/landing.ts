@@ -15,6 +15,46 @@ const timestamps = {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 };
 
+export const landingMedia = pgTable(
+  "landing_media",
+  {
+    id: serial("id").primaryKey(),
+    slug: varchar("slug", { length: 160 }).notNull(),
+    kind: varchar("kind", { length: 32 }).notNull(),
+    sourcePath: text("source_path").notNull(),
+    storagePath: text("storage_path"),
+    publicUrl: text("public_url"),
+    mimeType: varchar("mime_type", { length: 100 }).notNull(),
+    altFr: text("alt_fr"),
+    altEn: text("alt_en"),
+    width: integer("width"),
+    height: integer("height"),
+    isVisible: boolean("is_visible").default(true).notNull(),
+    ...timestamps,
+  },
+  (table) => ({
+    slugUnique: uniqueIndex("landing_media_slug_unique").on(table.slug),
+  }),
+);
+
+export const landingContent = pgTable(
+  "landing_content",
+  {
+    id: serial("id").primaryKey(),
+    contentKey: varchar("content_key", { length: 160 }).notNull(),
+    locale: varchar("locale", { length: 5 }).notNull(),
+    group: varchar("group", { length: 48 }).notNull(),
+    contentType: varchar("content_type", { length: 24 }).default("text").notNull(),
+    value: text("value").notNull(),
+    orderIndex: integer("order_index").default(0).notNull(),
+    isVisible: boolean("is_visible").default(true).notNull(),
+    ...timestamps,
+  },
+  (table) => ({
+    contentLocaleUnique: uniqueIndex("landing_content_key_locale_unique").on(table.contentKey, table.locale),
+  }),
+);
+
 export const landingSections = pgTable(
   "landing_sections",
   {
