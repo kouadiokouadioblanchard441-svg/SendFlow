@@ -5,13 +5,25 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
-import sendflowWordmark from '@assets/sendflow-wordmark.png';
+import sendflowMark from '@assets/sendflow-mark-original.png';
+import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
 const queryClient = new QueryClient();
 
 type Language = 'fr' | 'en';
 type Copy = { fr: string; en: string };
 const t = (copy: Copy, language: Language) => copy[language];
+
+function BrandLockup() {
+  return (
+    <span className="flex items-center gap-2">
+      <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-[#6d35d8]/20">
+        <img src={sendflowMark} alt="" className="h-7 w-6 object-contain" />
+      </span>
+      <img src={sendflowWordmark} alt="SendFlow" className="h-5 w-auto object-contain" />
+    </span>
+  );
+}
 
 const navItems = [
   { id: 'top', label: { fr: 'Accueil', en: 'Home' } },
@@ -94,7 +106,7 @@ function LandingPage() {
       <header className="fixed inset-x-0 top-0 z-40 px-4 pt-4 sm:px-8 sm:pt-6">
         <nav className="mx-auto flex max-w-[1240px] items-center justify-between rounded-full border border-[#2d2535]/10 bg-[#f7f3e9]/85 px-4 py-3 backdrop-blur-md sm:px-5">
           <button onClick={() => goTo('top')} className="flex items-center gap-2" data-testid="button-logo">
-            <img src={sendflowWordmark} alt="SendFlow" className="h-7 w-auto object-contain" />
+            <BrandLockup />
           </button>
           <div className="hidden items-center gap-7 md:flex">
             {navItems.map((item) => <a key={item.id} href={`#${item.id}`} onClick={() => setMobileOpen(false)} className="link-underline text-[13px] font-medium text-[#5e5766] transition-colors hover:text-[#6d35d8]" data-testid={`link-nav-${item.id}`}>{t(item.label, language)}</a>)}
@@ -111,7 +123,7 @@ function LandingPage() {
       {mobileOpen && <div className="fixed inset-0 z-50 bg-[#211d2c]/20 backdrop-blur-sm md:hidden" onClick={() => setMobileOpen(false)}>
         <div className="ml-auto min-h-full w-[min(88%,380px)] bg-[#f7f3e9] p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
           <div className="flex items-center justify-between">
-            <img src={sendflowWordmark} alt="SendFlow" className="h-8 w-auto object-contain" />
+            <BrandLockup />
             <button onClick={() => setMobileOpen(false)} className="rounded-full border border-[#2d2535]/10 p-2" data-testid="button-close-menu"><X size={19} /></button>
           </div>
           <div className="mt-16 flex flex-col gap-6">

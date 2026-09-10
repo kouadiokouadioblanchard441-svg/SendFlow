@@ -14,3 +14,45 @@ mtime_ms = 1788998585505
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/87634388-2758-49fb-8fe3-11478b2f6433/5b509501-bbb5-4fc3-ad4f-ef06df95e068"
 storage_version_token = "1788998679708119"
 content_type = "image/png"
+
+[[outputs]]
+id = "04lWsedMqwR_N_Qf8YLBg"
+uri = "file://attached_assets/sendflow-logo-original-cropped.png"
+type = "image"
+title = "Logo SendFlow recadré"
+description = "Logo original SendFlow recadré proprement, avec ses couleurs violet, bleu et bleu nuit conservées."
+logical_id = "bea63f2a-b90d-4582-b872-4cd25b8025e3"
+content_hash = "sha256:429e765481d3a441de5eae9d6b0d4d6a14face813b34c8bb25ca772e7161504b"
+size = 623447
+mtime_ms = 1788998861812
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/bea63f2a-b90d-4582-b872-4cd25b8025e3/c5c078a2-edc6-43d2-b7bf-02b48c573826"
+storage_version_token = "1788998868235099"
+content_type = "image/png"
+
+[[outputs]]
+id = "b9YehYLYyY5Sk2WG_e4Ml"
+uri = "file://attached_assets/sendflow-mark-original.png"
+type = "image"
+title = "Symbole SendFlow recadré"
+description = "Symbole original violet de SendFlow, recadré pour les usages arrondis et l’icône de navigation."
+logical_id = "c1c38b0d-28f9-4dde-abdd-77e106f7db08"
+content_hash = "sha256:acbb0b9ea1e14363375349686d6513b7ae990f00a866a76c6e3fe4160b6ba0dd"
+size = 283351
+mtime_ms = 1788998778568
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/c1c38b0d-28f9-4dde-abdd-77e106f7db08/d3c73c34-ea2f-47b1-9441-7b2f3de5c1a1"
+storage_version_token = "1788998868742975"
+content_type = "image/png"
+
+[[outputs]]
+id = "UV3YTQfsPz7gdMWLJpBbo"
+uri = "file://attached_assets/sendflow-wordmark-original.png"
+type = "image"
+title = "Mot-symbole SendFlow original"
+description = "Mot-symbole SendFlow recadré avec les couleurs originales, sans recoloration."
+logical_id = "15a1c282-b218-401b-8275-1e452b75a69a"
+content_hash = "sha256:59bce196c5335da58de5b11e4bd8176d31693bfca272db55f14708f737bdc4a5"
+size = 155853
+mtime_ms = 1788998813304
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/15a1c282-b218-401b-8275-1e452b75a69a/30cde7e4-dcf7-4e57-98ee-40c831c3465f"
+storage_version_token = "1788998869195444"
+content_type = "image/png"
