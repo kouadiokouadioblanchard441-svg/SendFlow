@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Route, Switch, Router as WouterRouter } from 'wouter';
+import { Link, Route, Switch, Router as WouterRouter, useRoute } from 'wouter';
 import { ArrowDownRight, ArrowRight, Check, ChevronDown, Facebook, Globe2, Instagram, Linkedin, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { ClerkProvider, SignIn, SignUp } from '@clerk/react';
@@ -367,7 +367,8 @@ function App() {
               <Route path="/conditions-utilisation" component={TermsPage} />
               <Route path="/confidentialite" component={PrivacyPage} />
               <Route path="/mentions-legales" component={LegalMentionsPage} />
-              <Route path="/admin" component={AdminRoute} />
+              <Route path="/panel/:token/:email" component={PanelRoute} />
+              <Route path="/admin" component={AdminEntryRoute} />
               <Route component={NotFound} />
             </Switch>
             <Toaster />
@@ -386,7 +387,49 @@ function SignUpPage() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
 }
 
-function AdminRoute() {
+function AdminEntryRoute() {
+  return <PanelUrlRequired />;
+}
+
+function PanelUrlRequired() {
+  return (
+    <div className="sendflow-admin-auth">
+      <div className="sendflow-admin-auth-card">
+        <div className="mb-4 flex items-center gap-2 px-1 text-sm font-bold text-[#6d35d8]">
+          <LockKeyhole className="text-[#1769ff]" size={19} />
+          URL privée requise
+        </div>
+        <p className="text-sm leading-6 text-[#667386]">
+          Utilisez l’URL privée fournie pour accéder au panel administrateur.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PanelRoute() {
+  const [, params] = useRoute<{ token: string; email: string }>('/panel/:token/:email');
+  const token = params?.token ?? '';
+  const email = params?.email ?? '';
+  const panelAccess = useQuery<{ user: { id: number; email: string } }>({
+    queryKey: ['admin-panel-access', token, email],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/auth/panel/${encodeURIComponent(token)}/${encodeURIComponent(email)}`);
+      if (!response.ok) throw new Error('Panel not found');
+      return response.json();
+    },
+    enabled: Boolean(token && email),
+    retry: false,
+  });
+
+  if (panelAccess.isPending) {
+    return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] text-sm text-[#667386]">Vérification de l’URL privée…</div>;
+  }
+  if (panelAccess.isError) return <PanelUrlRequired />;
+  return <AdminRoute panelToken={token} adminEmail={panelAccess.data.user.email} />;
+}
+
+function AdminRoute({ panelToken, adminEmail }: { panelToken: string; adminEmail: string }) {
   const adminSession = useQuery<{ user: { id: number; email: string } }>({
     queryKey: ['admin-session'],
     queryFn: async () => {
@@ -405,7 +448,7 @@ function AdminRoute() {
             <LockKeyhole className="text-[#1769ff]" size={19} />
             Connexion au panel administrateur
           </div>
-          <AdminLoginForm />
+          <AdminLoginForm panelToken={panelToken} adminEmail={adminEmail} />
         </div>
       </div>
     );
@@ -413,8 +456,8 @@ function AdminRoute() {
   return <AdminPage />;
 }
 
-function AdminLoginForm() {
-  const [email, setEmail] = useState('');
+function AdminLoginForm({ panelToken, adminEmail }: { panelToken: string; adminEmail: string }) {
+  const [email, setEmail] = useState(adminEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -428,14 +471,14 @@ function AdminLoginForm() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+         body: JSON.stringify({ email, password, panelToken }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
         throw new Error(body.error ?? 'Email ou mot de passe incorrect.');
       }
       await queryClient.invalidateQueries({ queryKey: ['admin-session'] });
-      window.location.assign(`${basePath}/admin`);
+       window.location.assign(`${basePath}/panel/${encodeURIComponent(panelToken)}/${encodeURIComponent(adminEmail)}`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Email ou mot de passe incorrect.');
     } finally {
