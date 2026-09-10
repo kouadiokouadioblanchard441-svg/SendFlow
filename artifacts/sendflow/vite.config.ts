@@ -27,12 +27,48 @@ if (!basePath) {
   );
 }
 
+const isLegacyAdminPath = (requestUrl = '') => {
+  const requestPath = requestUrl.split('?')[0].replace(/\/+$/, '') || '/';
+  const normalizedBasePath = basePath.replace(/\/+$/, '');
+  return (
+    requestPath === '/admin' ||
+    requestPath.startsWith('/admin/') ||
+    requestPath === `${normalizedBasePath}/admin` ||
+    requestPath.startsWith(`${normalizedBasePath}/admin/`)
+  );
+};
+
+const blockLegacyAdminPath = () => ({
+  name: 'sendflow-block-legacy-admin-path',
+  configureServer(server: { middlewares: { use: (handler: (req: { url?: string }, res: { statusCode: number; end: (body: string) => void }, next: () => void) => void) => void } }) {
+    server.middlewares.use((req, res, next) => {
+      if (!isLegacyAdminPath(req.url)) {
+        next();
+        return;
+      }
+      res.statusCode = 404;
+      res.end('Not Found');
+    });
+  },
+  configurePreviewServer(server: { middlewares: { use: (handler: (req: { url?: string }, res: { statusCode: number; end: (body: string) => void }, next: () => void) => void) => void } }) {
+    server.middlewares.use((req, res, next) => {
+      if (!isLegacyAdminPath(req.url)) {
+        next();
+        return;
+      }
+      res.statusCode = 404;
+      res.end('Not Found');
+    });
+  },
+});
+
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),
+    blockLegacyAdminPath(),
     ...(process.env.NODE_ENV !== 'production' &&
     process.env.REPL_ID !== undefined
       ? [
