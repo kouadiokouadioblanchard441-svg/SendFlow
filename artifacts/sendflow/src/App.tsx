@@ -139,7 +139,6 @@ function LandingPage() {
           <div className="absolute -right-32 top-24 h-[430px] w-[430px] rounded-full bg-[#d4f0e9] opacity-70 blur-3xl" />
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[1.04fr_.96fr] lg:gap-8">
             <div className="relative z-10 max-w-[680px]">
-              <div className="rise flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]"><span className="h-2 w-2 rounded-full bg-[#6d35d8]" />{isFrench ? 'La finance, sans le bruit' : 'Finance, without the noise'}</div>
               <h1 className="rise delay-1 mt-6 max-w-[700px] text-[clamp(3.45rem,8.5vw,7.2rem)] font-semibold leading-[.9] tracking-[-.085em]">{isFrench ? <>L’argent circule.<br /><em className="font-serif font-normal text-[#6d35d8]">Les réseaux</em> aussi.</> : <>Money moves.<br /><em className="font-serif font-normal text-[#6d35d8]">Networks</em> do too.</>}</h1>
               <p className="rise delay-2 mt-8 max-w-[465px] text-[16px] leading-7 text-[#5e5766] sm:text-[18px]">{isFrench ? 'SendFlow simplifie vos transferts d’argent entre différents réseaux de paiement, localement et au-delà des frontières.' : 'SendFlow simplifies money transfers across different payment networks, locally and across borders.'}</p>
               <div className="rise delay-3 mt-9 flex flex-wrap items-center gap-3">
