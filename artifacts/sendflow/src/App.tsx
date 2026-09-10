@@ -8,7 +8,7 @@ import NotFound from '@/pages/not-found';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
-import heroGlobe from '@assets/generated_images/sendflow-earth-globe.png';
+import heroGlobe from '@assets/generated_images/sendflow-earth-globe-transparent.png';
 
 const queryClient = new QueryClient();
 
@@ -141,10 +141,10 @@ function LandingPage() {
           <div className="absolute -right-32 top-24 h-[430px] w-[430px] rounded-full bg-[#d4f0e9] opacity-70 blur-3xl" />
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[1.04fr_.96fr] lg:gap-8">
             <div className="relative z-10 max-w-[680px]">
-              <div className="rise mb-7 aspect-[2.4/1] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-[#6d35d8]/10 bg-white shadow-[0_18px_45px_rgba(75,44,180,.08)]" data-testid="hero-image-slot">
+              <div className="rise mb-7 aspect-[1.45/1] w-full max-w-[640px] overflow-hidden rounded-[34px] border border-[#6d35d8]/10 bg-white shadow-[0_22px_55px_rgba(75,44,180,.1)]" data-testid="hero-image-slot">
                 <img src={heroPlaceholder} alt={isFrench ? 'Illustration temporaire du passage entre plusieurs réseaux' : 'Temporary illustration of a path across multiple networks'} className="h-full w-full object-cover" />
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-                  <span className="hero-globe-spin block h-20 w-20 sm:h-28 sm:w-28">
+                  <span className="hero-globe-spin block h-24 w-24 sm:h-36 sm:w-36">
                     <img src={heroGlobe} alt={isFrench ? 'Terre centrée sur l’Afrique' : 'Earth centered on Africa'} className="h-full w-full object-contain drop-shadow-[0_10px_16px_rgba(20,50,150,.22)]" />
                   </span>
                 </div>

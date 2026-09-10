@@ -84,3 +84,17 @@ mtime_ms = 1788999300576
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/00d0a9e1-6f0b-4d9f-9a85-5332f7a8b4e3/51b5a511-ffb1-4a7f-90c8-1ec692c064ae"
 storage_version_token = "1788999391454124"
 content_type = "image/png"
+
+[[outputs]]
+id = "LVJselCOjEaMLvJJkHFDY"
+uri = "file://attached_assets/generated_images/sendflow-earth-globe-transparent.png"
+type = "image"
+title = "Terre sans fond blanc"
+description = "Version transparente du globe centrée sur l’Afrique, utilisée dans l’image héroïque animée."
+logical_id = "5011216e-a5c8-467b-b157-5c2036745e32"
+content_hash = "sha256:59ed479cabf92ce09c0e2a9797067a68aaf8a0db3670d7b938d80c6481dbb659"
+size = 1419945
+mtime_ms = 1788999664244
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/5011216e-a5c8-467b-b157-5c2036745e32/8486a774-ee05-4186-a09a-9ced474a51ba"
+storage_version_token = "1788999713355374"
+content_type = "image/png"
