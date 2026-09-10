@@ -423,10 +423,10 @@ function LandingPage() {
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[.9fr_1.1fr]">
             <div className="reveal relative min-h-[380px] sm:min-h-[480px]">
                <img src={securitySectionArt} alt={isFrench ? 'Protection et sécurité des transferts' : 'Transfer protection and security'} className="absolute bottom-0 left-[1%] z-10 h-[220px] w-[220px] object-contain object-center sm:left-[2%] sm:h-[360px] sm:w-[360px]" />
-               <div className="absolute bottom-0 right-0 z-20 h-[300px] w-[300px] sm:h-[460px] sm:w-[460px]">
+               <div className="absolute bottom-0 right-[5%] z-20 h-[300px] w-[300px] sm:right-[3%] sm:h-[460px] sm:w-[460px]">
                  <img src={securityGuardianArt} alt={isFrench ? 'Gardien 3D de la sécurité SendFlow' : '3D SendFlow security guardian'} className="h-full w-full object-contain object-center" />
                </div>
-               <div className="absolute left-[34%] top-[-2%] z-30 flex items-center gap-3 rounded-full border-2 border-[#6d35d8]/25 bg-white px-4 py-2.5 shadow-[0_12px_28px_rgba(80,40,170,.2)] sm:left-[35%] sm:top-[-1%] sm:gap-4 sm:px-6 sm:py-3.5">
+               <div className="absolute left-1/2 top-[-2%] z-30 flex w-max max-w-[calc(100%-1rem)] -translate-x-1/2 items-center gap-3 rounded-full border-2 border-[#6d35d8]/25 bg-white px-4 py-2.5 shadow-[0_12px_28px_rgba(80,40,170,.2)] sm:top-[-1%] sm:gap-4 sm:px-6 sm:py-3.5">
                  <img src={sendflowMark} alt="" className="h-10 w-10 object-contain sm:h-14 sm:w-14" />
                  <img src={sendflowWordmark} alt="SendFlow" className="h-8 w-auto object-contain sm:h-12" />
                </div>
