@@ -56,3 +56,17 @@ mtime_ms = 1788998813304
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/15a1c282-b218-401b-8275-1e452b75a69a/30cde7e4-dcf7-4e57-98ee-40c831c3465f"
 storage_version_token = "1788998869195444"
 content_type = "image/png"
+
+[[outputs]]
+id = "NRsSl-B0Wq34Sc_rRQpq9"
+uri = "file://attached_assets/generated_images/sendflow-hero-placeholder.png"
+type = "image"
+title = "Image héroïque temporaire SendFlow"
+description = "Illustration abstraite temporaire des transferts entre réseaux, ajoutée dans l’emplacement du hero pour être remplacée plus tard."
+logical_id = "a84a2113-a5e6-4a25-8c35-44a6a68fa769"
+content_hash = "sha256:25607b419de450f0cc12b7b11b3a0a000c7d491f32541697f3f22c93d6fa81e1"
+size = 830444
+mtime_ms = 1788999090368
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/a84a2113-a5e6-4a25-8c35-44a6a68fa769/65ad3fda-47f0-4fca-aef0-82a8a2688dc0"
+storage_version_token = "1788999147640325"
+content_type = "image/png"
