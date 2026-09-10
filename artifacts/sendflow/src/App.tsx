@@ -183,12 +183,12 @@ function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigat
         <div className="sendflow-footer-divider" />
 
         <section className="sendflow-footer-legal">
-          <p>{isFrench ? 'SendFlow est une solution de technologie financière, développée et détenue par SendFlow Studio. Nous ne sommes pas une banque ; nos services s’appuient sur des partenariats avec des banques et des institutions financières dûment agréées.' : 'SendFlow is a financial technology solution developed and owned by SendFlow Studio. We are not a bank; our services rely on partnerships with duly licensed banks and financial institutions.'}</p>
+          <p>{isFrench ? 'SendFlow est une solution de technologie financière, développée par Flow Digital SARL. Nous ne sommes pas une banque ; nos services s’appuient sur des partenariats avec des banques et des institutions financières dûment agréées.' : 'SendFlow is a financial technology solution developed by Flow Digital SARL. We are not a bank; our services rely on partnerships with duly licensed banks and financial institutions.'}</p>
           <p>{isFrench ? 'Les services de paiement SendFlow sont proposés via des partenaires agréés dans les territoires où le service est disponible, conformément aux règles locales. Les conditions varient selon la destination, le réseau et le montant du transfert.' : 'SendFlow payment services are offered through licensed partners in territories where the service is available, in accordance with local rules. Conditions vary by destination, network, and transfer amount.'}</p>
         </section>
 
         <div className="sendflow-footer-bottom">
-          <span>© 2025 SendFlow Studio. {isFrench ? 'Tous droits réservés.' : 'All rights reserved.'}</span>
+          <span>© 2025 Flow Digital SARL. {isFrench ? 'Tous droits réservés.' : 'All rights reserved.'}</span>
           <div><button onClick={() => onNavigate('faq')}>{isFrench ? 'Confidentialité' : 'Privacy'}</button><button onClick={() => onNavigate('faq')}>{isFrench ? 'Mentions' : 'Legal'}</button></div>
         </div>
       </div>
