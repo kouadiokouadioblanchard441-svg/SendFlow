@@ -426,10 +426,10 @@ function PanelRoute() {
     return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] text-sm text-[#667386]">Vérification de l’URL privée…</div>;
   }
   if (panelAccess.isError) return <PanelUrlRequired />;
-  return <AdminRoute panelToken={token} adminEmail={panelAccess.data.user.email} />;
+  return <AdminRoute panelToken={token} adminEmail={panelAccess.data.user.email} panelEmail={email} />;
 }
 
-function AdminRoute({ panelToken, adminEmail }: { panelToken: string; adminEmail: string }) {
+function AdminRoute({ panelToken, adminEmail, panelEmail }: { panelToken: string; adminEmail: string; panelEmail: string }) {
   const adminSession = useQuery<{ user: { id: number; email: string } }>({
     queryKey: ['admin-session'],
     queryFn: async () => {
@@ -448,7 +448,7 @@ function AdminRoute({ panelToken, adminEmail }: { panelToken: string; adminEmail
             <LockKeyhole className="text-[#1769ff]" size={19} />
             Connexion au panel administrateur
           </div>
-          <AdminLoginForm panelToken={panelToken} adminEmail={adminEmail} />
+          <AdminLoginForm panelToken={panelToken} adminEmail={adminEmail} panelEmail={panelEmail} />
         </div>
       </div>
     );
@@ -456,7 +456,7 @@ function AdminRoute({ panelToken, adminEmail }: { panelToken: string; adminEmail
   return <AdminPage />;
 }
 
-function AdminLoginForm({ panelToken, adminEmail }: { panelToken: string; adminEmail: string }) {
+function AdminLoginForm({ panelToken, adminEmail, panelEmail }: { panelToken: string; adminEmail: string; panelEmail: string }) {
   const [email, setEmail] = useState(adminEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -478,7 +478,7 @@ function AdminLoginForm({ panelToken, adminEmail }: { panelToken: string; adminE
         throw new Error(body.error ?? 'Email ou mot de passe incorrect.');
       }
       await queryClient.invalidateQueries({ queryKey: ['admin-session'] });
-       window.location.assign(`${basePath}/panel/${encodeURIComponent(panelToken)}/${encodeURIComponent(adminEmail)}`);
+       window.location.assign(`${basePath}/panel/${encodeURIComponent(panelToken)}/${encodeURIComponent(panelEmail)}`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Email ou mot de passe incorrect.');
     } finally {

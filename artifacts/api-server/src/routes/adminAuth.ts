@@ -44,8 +44,8 @@ router.post("/admin/auth/login", async (req, res): Promise<void> => {
 
 router.get("/admin/auth/panel/:token/:email", async (req, res): Promise<void> => {
   const token = typeof req.params.token === "string" ? req.params.token : "";
-  const email = typeof req.params.email === "string" ? decodeURIComponent(req.params.email).trim().toLowerCase() : "";
-  if (!token || !email) {
+  const panelEmail = typeof req.params.email === "string" ? decodeURIComponent(req.params.email).trim() : "";
+  if (!token || !panelEmail) {
     res.status(404).json({ error: "Panel not found" });
     return;
   }
@@ -53,7 +53,7 @@ router.get("/admin/auth/panel/:token/:email", async (req, res): Promise<void> =>
   const [user] = await db
     .select({ id: adminUsers.id, email: adminUsers.email })
     .from(adminUsers)
-    .where(and(eq(adminUsers.email, email), eq(adminUsers.panelTokenHash, hashAdminPanelToken(token)), eq(adminUsers.isActive, true)))
+    .where(and(eq(adminUsers.panelTokenHash, hashAdminPanelToken(token)), eq(adminUsers.isActive, true)))
     .limit(1);
 
   if (!user) {
