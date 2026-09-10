@@ -196,3 +196,45 @@ mtime_ms = 1789003533676
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/d0000118-b5a3-41c4-b7f5-7d40fb3dc969/4135fd92-388a-4c7c-8309-f86dcc7f17b0"
 storage_version_token = "1789003589352580"
 content_type = "image/png"
+
+[[outputs]]
+id = "1mj2LiljSmAyVtsauWZGg"
+uri = "file://screenshots/sendflow-about-feature-icons.jpg"
+type = "image"
+title = "Desktop — section Découvrir SendFlow"
+description = "Capture desktop montrant les trois visuels SVG SendFlow dans la section des fonctionnalités."
+logical_id = "7e605884-2e84-4b36-9eb6-dc5aca931ab7"
+content_hash = "sha256:dee3734c79fb7d6c06b79d59fc8f3664bcf702c585a4220877062f3d56fd8dc6"
+size = 288607
+mtime_ms = 1789077772102
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/7e605884-2e84-4b36-9eb6-dc5aca931ab7/0803f72e-d791-44d7-883d-b2e473181516"
+storage_version_token = "1789077891568968"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "9k2qvnlzP6icv3sw7dNe5"
+uri = "file://screenshots/sendflow-about-header-logo-language.jpg"
+type = "image"
+title = "Mobile — logo et langue"
+description = "Capture mobile montrant le logo SendFlow et le drapeau français dans le sélecteur de langue."
+logical_id = "78ca037d-2bfc-4c4a-926a-c6003380c0ef"
+content_hash = "sha256:d22c01f6611996b8e8aca74f16dd0c9387f0dbf6318cecbdde464bfc2211dabe"
+size = 46386
+mtime_ms = 1789069051025
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/78ca037d-2bfc-4c4a-926a-c6003380c0ef/ff0a335f-4f80-4274-ab41-403b9b9734dd"
+storage_version_token = "1789077892250982"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "v8wEaWnfqUexzAej9crLL"
+uri = "file://screenshots/sendflow-hero-buttons.jpg"
+type = "image"
+title = "Desktop — hero et boutons"
+description = "Capture desktop du hero SendFlow avec les boutons d’action colorés."
+logical_id = "8344c042-2df3-4929-9455-68358fcd11ce"
+content_hash = "sha256:55ef60b47de8efb795d0aea185d9f7bd0a475ff4a4657168c0b06b8969f5de0c"
+size = 117299
+mtime_ms = 1789068365497
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/8344c042-2df3-4929-9455-68358fcd11ce/648c4d7c-c189-44b5-ab25-c8f9c80f8eb0"
+storage_version_token = "1789077892723451"
+content_type = "image/jpeg"
