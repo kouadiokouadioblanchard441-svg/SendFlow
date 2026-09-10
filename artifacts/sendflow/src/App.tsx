@@ -26,6 +26,14 @@ import chooseStepArt from '@assets/generated_images/sendflow-step-choose-3d-tran
 import checkStepArt from '@assets/generated_images/sendflow-step-check-3d-transparent.png';
 import sendStepArt from '@assets/generated_images/sendflow-step-send-3d-transparent.png';
 import operatorLogosTicker from '@assets/operator-logos_(1)_1789039877510.png';
+import orangeOperatorLogo from './assets/operator-logos/operator-logo-01.png';
+import moovOperatorLogo from './assets/operator-logos/operator-logo-02.png';
+import waveOperatorLogo from './assets/operator-logos/operator-logo-03.png';
+import airtelOperatorLogo from './assets/operator-logos/operator-logo-04.png';
+import mtnOperatorLogo from './assets/operator-logos/operator-logo-05.png';
+import momoOperatorLogo from './assets/operator-logos/operator-logo-06.png';
+import freeOperatorLogo from './assets/operator-logos/operator-logo-07.png';
+import mpesaOperatorLogo from './assets/operator-logos/operator-logo-09.png';
 import crossNetworkIcon from './assets/sendflow-icon-cross-network.svg';
 import internationalIcon from './assets/sendflow-icon-international-transfer.svg';
 import trackingIcon from './assets/sendflow-icon-transaction-tracking.svg';
@@ -92,17 +100,19 @@ const countries = [
   { name: 'Kenya', code: 'KE', networks: ['Safaricom', 'Airtel', 'Telkom'], flag: '🇰🇪', tone: '#dbeaff' },
 ];
 
-const operatorLogoMarks: Record<string, { mark: string; background: string; foreground: string }> = {
-  Orange: { mark: '', background: '#ff7900', foreground: '#ffffff' },
-  MTN: { mark: 'MTN', background: '#ffca05', foreground: '#17131f' },
-  'Moov Africa': { mark: 'moov', background: '#e83e8c', foreground: '#ffffff' },
-  Wave: { mark: '⌁', background: '#1769ff', foreground: '#ffffff' },
+type OperatorLogo = { mark: string; background: string; foreground: string; image?: string };
+
+const operatorLogoMarks: Record<string, OperatorLogo> = {
+  Orange: { mark: '', background: '#ff7900', foreground: '#ffffff', image: orangeOperatorLogo },
+  MTN: { mark: 'MTN', background: '#ffca05', foreground: '#17131f', image: mtnOperatorLogo },
+  'Moov Africa': { mark: 'moov', background: '#e83e8c', foreground: '#ffffff', image: moovOperatorLogo },
+  Wave: { mark: '⌁', background: '#1769ff', foreground: '#ffffff', image: waveOperatorLogo },
   Celtiis: { mark: 'C', background: '#1a9c75', foreground: '#ffffff' },
   Togocom: { mark: 'T', background: '#e22d39', foreground: '#ffffff' },
   Camtel: { mark: 'C', background: '#0b5fa5', foreground: '#ffffff' },
   Nexttel: { mark: 'N', background: '#e52936', foreground: '#ffffff' },
   'Telecel Faso': { mark: 'T', background: '#ed1c24', foreground: '#ffffff' },
-  Airtel: { mark: 'airtel', background: '#e4002b', foreground: '#ffffff' },
+  Airtel: { mark: 'airtel', background: '#e4002b', foreground: '#ffffff', image: airtelOperatorLogo },
   Vodafone: { mark: 'V', background: '#e60000', foreground: '#ffffff' },
   Africell: { mark: 'a', background: '#e40046', foreground: '#ffffff' },
   QCell: { mark: 'Q', background: '#008c44', foreground: '#ffffff' },
@@ -117,14 +127,17 @@ const operatorLogoMarks: Record<string, { mark: string; background: string; fore
   '9mobile': { mark: '9', background: '#78be20', foreground: '#ffffff' },
   Safaricom: { mark: 'S', background: '#00a651', foreground: '#ffffff' },
   Telkom: { mark: 'T', background: '#0072bc', foreground: '#ffffff' },
+  MoMo: { mark: 'MoMo', background: '#1b65a7', foreground: '#ffffff', image: momoOperatorLogo },
+  Free: { mark: 'Free', background: '#111827', foreground: '#ffffff', image: freeOperatorLogo },
+  'M-Pesa': { mark: 'M-Pesa', background: '#f2f2f2', foreground: '#17131f', image: mpesaOperatorLogo },
 };
 
 function OperatorRow({ network }: { network: string }) {
   const logo = operatorLogoMarks[network] ?? { mark: network.slice(0, 1).toUpperCase(), background: '#6d35d8', foreground: '#ffffff' };
   return (
     <div className="flex items-center justify-center">
-      <span role="img" aria-label={`${network} logo`} className="flex h-14 w-14 items-center justify-center rounded-full shadow-[0_8px_18px_rgba(58,38,83,.08)] sm:h-16 sm:w-16" style={{ backgroundColor: logo.background, color: logo.foreground }}>
-        {network === 'Orange' ? <span className="h-3 w-6 bg-white" aria-hidden="true" /> : <span className="text-[10px] font-extrabold tracking-[-.04em]">{logo.mark}</span>}
+      <span role="img" aria-label={`${network} logo`} className={`flex h-14 w-14 items-center justify-center shadow-[0_8px_18px_rgba(58,38,83,.08)] sm:h-16 sm:w-16 ${logo.image ? 'rounded-2xl border border-[#dbe5f2] bg-white p-2' : 'rounded-full'}`} style={logo.image ? undefined : { backgroundColor: logo.background, color: logo.foreground }}>
+        {logo.image ? <img src={logo.image} alt="" className="max-h-full max-w-full object-contain" /> : network === 'Orange' ? <span className="h-3 w-6 bg-white" aria-hidden="true" /> : <span className="text-[10px] font-extrabold tracking-[-.04em]">{logo.mark}</span>}
       </span>
     </div>
   );
