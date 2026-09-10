@@ -406,12 +406,19 @@ function LandingPage() {
                  <button onClick={() => goTo('features')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#6d35d8]/25 bg-white/80 px-5 py-3.5 text-[13px] font-bold text-[#211d2c] shadow-[0_10px_22px_rgba(45,37,53,.08)] transition-all hover:-translate-y-1 hover:border-[#6d35d8] hover:text-[#6d35d8] sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</button>
               </div>
             </div>
-             <div className="relative mx-auto flex h-[370px] w-full max-w-[530px] items-center justify-center sm:h-[500px]">
+              <div className="relative mx-auto aspect-[3/2] w-full max-w-[530px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]">
                <img
                  src={heroGlobalConnection}
                  alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
-                 className="h-full w-full rounded-[28px] object-contain drop-shadow-[0_22px_38px_rgba(75,44,180,.16)]"
+                  className="h-full w-full object-cover"
                />
+                <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center rounded-full border border-[#6d35d8]/20 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.16)] backdrop-blur-sm" aria-label="SendFlow">
+                  <BrandLockup />
+                </div>
+                <div className="hero-globe-motion pointer-events-none absolute right-[4%] top-[3%] z-10 aspect-square w-[61%] rounded-full" aria-hidden="true">
+                  <span className="hero-globe-motion__meridian hero-globe-motion__meridian--wide" />
+                  <span className="hero-globe-motion__meridian hero-globe-motion__meridian--narrow" />
+                </div>
             </div>
            </div>
          </section>
