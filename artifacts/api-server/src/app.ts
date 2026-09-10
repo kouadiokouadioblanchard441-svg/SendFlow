@@ -14,10 +14,13 @@ app.use(
     logger,
     serializers: {
       req(req) {
+        const path = req.url?.split("?")[0] ?? "";
         return {
           id: req.id,
           method: req.method,
-          url: req.url?.split("?")[0],
+          url: path.startsWith("/api/admin/auth/panel/")
+            ? "/api/admin/auth/panel/[redacted]"
+            : path,
         };
       },
       res(res) {
