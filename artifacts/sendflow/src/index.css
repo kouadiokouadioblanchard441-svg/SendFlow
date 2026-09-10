@@ -214,3 +214,18 @@ button[data-testid="button-submit-email"] {
 @media (prefers-reduced-motion: reduce) {
   .hero-globe-spin { animation: none; }
 }
+
+/* Product language: keep the CTA and footer focused on SendFlow itself. */
+#join p.mt-4 {
+  font-size: 0 !important;
+}
+
+#join p.mt-4::after {
+  content: 'Recevez les prochaines évolutions de SendFlow';
+  font-size: 10px;
+}
+
+footer > div > div > div:last-child > div.mt-5,
+footer > div > div:last-child > span:first-child {
+  display: none !important;
+}
