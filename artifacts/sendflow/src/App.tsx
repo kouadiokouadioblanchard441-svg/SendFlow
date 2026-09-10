@@ -25,6 +25,10 @@ import downloadPersonArt from '@assets/generated_images/sendflow-download-person
 import chooseStepArt from '@assets/generated_images/sendflow-step-choose-3d-transparent.png';
 import checkStepArt from '@assets/generated_images/sendflow-step-check-3d-transparent.png';
 import sendStepArt from '@assets/generated_images/sendflow-step-send-3d-transparent.png';
+import crossNetworkIcon from '@assets/IMG_20260829_070956_652_1789033614210.jpg';
+import internationalIcon from '@assets/IMG_20260829_070945_804_1789033614117.jpg';
+import trackingIcon from '@assets/IMG_20260829_070937_128_1789033614037.jpg';
+import simpleExperienceIcon from '@assets/IMG_20260829_070956_964_1789033614255.jpg';
 
 const queryClient = new QueryClient();
 
@@ -386,11 +390,11 @@ function LandingPage() {
             </div>
             <div className="reveal mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { title: { fr: 'Transfert inter-réseaux', en: 'Cross-network transfers' }, text: { fr: 'Relier les réseaux sans demander au bénéficiaire de changer ses habitudes.', en: 'Connect networks without asking recipients to change their habits.' }, icon: ArrowRight },
-                { title: { fr: 'Transfert international', en: 'International transfers' }, text: { fr: 'Explorer les chemins possibles entre pays africains, lorsque disponibles.', en: 'Explore possible routes across African countries where available.' }, icon: Globe2 },
-                { title: { fr: 'Suivi des transactions', en: 'Transaction tracking' }, text: { fr: 'Voir où en est chaque étape avant de confirmer.', en: 'See where each step stands before confirming.' }, icon: Check },
-                { title: { fr: 'Expérience simple', en: 'Simple experience' }, text: { fr: 'Moins de friction, plus de confiance dans chaque choix.', en: 'Less friction, more confidence in every choice.' }, icon: Sparkles },
-              ].map((feature) => <div key={feature.title.fr} className="group min-h-[220px] rounded-[24px] border border-[#2d2535]/10 bg-[#fbf8ef] p-5 shadow-[0_15px_45px_rgba(58,38,83,.05)] transition-transform hover:-translate-y-1 sm:p-6"><feature.icon className="text-[#6d35d8] transition-transform group-hover:rotate-12" size={21} /><h3 className="mt-16 text-[17px] font-bold tracking-[-.03em] text-[#17131f]">{t(feature.title, language)}</h3><p className="mt-3 text-[13px] font-medium leading-5 text-[#30283b]">{t(feature.text, language)}</p></div>)}
+                { title: { fr: 'Transfert inter-réseaux', en: 'Cross-network transfers' }, text: { fr: 'Relier les réseaux sans demander au bénéficiaire de changer ses habitudes.', en: 'Connect networks without asking recipients to change their habits.' }, icon: crossNetworkIcon, iconPanel: 'bg-[#211d2c]' },
+                { title: { fr: 'Transfert international', en: 'International transfers' }, text: { fr: 'Explorer les chemins possibles entre pays africains, lorsque disponibles.', en: 'Explore possible routes across African countries where available.' }, icon: internationalIcon, iconPanel: 'bg-[#211d2c]' },
+                { title: { fr: 'Suivi des transactions', en: 'Transaction tracking' }, text: { fr: 'Voir où en est chaque étape avant de confirmer.', en: 'See where each step stands before confirming.' }, icon: trackingIcon, iconPanel: 'bg-white' },
+                { title: { fr: 'Expérience simple', en: 'Simple experience' }, text: { fr: 'Moins de friction, plus de confiance dans chaque choix.', en: 'Less friction, more confidence in every choice.' }, icon: simpleExperienceIcon, iconPanel: 'bg-[#211d2c]' },
+              ].map((feature) => <div key={feature.title.fr} className="group min-h-[360px] rounded-[24px] border border-[#2d2535]/10 bg-[#fbf8ef] p-5 shadow-[0_15px_45px_rgba(58,38,83,.05)] transition-transform hover:-translate-y-1 sm:p-6"><div className={`flex h-36 items-center justify-center overflow-hidden rounded-[18px] border border-[#2d2535]/10 sm:h-40 ${feature.iconPanel}`}><img src={feature.icon} alt="" className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105 sm:p-4" /></div><h3 className="mt-6 text-[17px] font-bold tracking-[-.03em] text-[#17131f]">{t(feature.title, language)}</h3><p className="mt-3 text-[13px] font-medium leading-5 text-[#30283b]">{t(feature.text, language)}</p></div>)}
             </div>
             <div className="reveal mt-16 rounded-[28px] bg-[#d7eee8] p-6 sm:p-8">
               <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]">{isFrench ? 'Une expérience, trois repères' : 'One experience, three principles'}</p>
