@@ -225,8 +225,9 @@ function LandingPage() {
       if (entry.isIntersecting) entry.target.classList.add('reveal-visible');
     }), { threshold: .12 });
     elements.forEach((element) => observer.observe(element));
-    if (window.location.hash === '#footer') {
-      window.setTimeout(() => document.getElementById('footer')?.scrollIntoView(), 500);
+    const initialAnchor = window.location.hash.slice(1);
+    if (initialAnchor) {
+      window.setTimeout(() => document.getElementById(initialAnchor)?.scrollIntoView(), 500);
     }
     return () => observer.disconnect();
   }, []);
