@@ -10,6 +10,7 @@ import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
 import heroGlobe from '@assets/generated_images/sendflow-earth-globe-transparent.png';
+import heroGlobalConnection from '@assets/file_000000003d2481f8a4200aa758aa64b9_1789047674015.png';
 import networkSectionArt from '@assets/generated_images/sendflow-section-network-3d-transparent.png';
 import howItWorksSectionArt from '@assets/generated_images/sendflow-section-how-it-works-3d-transparent.png';
 import internationalSectionArt from '@assets/generated_images/sendflow-section-international-3d-transparent.png';
@@ -405,17 +406,12 @@ function LandingPage() {
                  <button onClick={() => goTo('features')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#6d35d8]/25 bg-white/80 px-5 py-3.5 text-[13px] font-bold text-[#211d2c] shadow-[0_10px_22px_rgba(45,37,53,.08)] transition-all hover:-translate-y-1 hover:border-[#6d35d8] hover:text-[#6d35d8] sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</button>
               </div>
             </div>
-            <div className="relative mx-auto h-[370px] w-full max-w-[530px] sm:h-[500px]">
-              <div className="absolute left-1/2 top-1/2 h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#6d35d8]/15 sm:h-[370px] sm:w-[370px]" />
-              <div className="absolute left-1/2 top-1/2 h-[190px] w-[190px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#6d35d8]/20 sm:h-[255px] sm:w-[255px]" />
-              <div className="absolute left-1/2 top-1/2 flex h-[120px] w-[120px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[36px] bg-[#211d2c] text-[#fbf8ef] shadow-[0_25px_50px_rgba(33,29,44,.25)] sm:h-[150px] sm:w-[150px]">
-                <div className="text-center"><ArrowDownRight className="mx-auto mb-2 text-[#e8cd4d]" size={29} /><div className="text-[12px] font-bold tracking-[-.02em]">sendflow</div><div className="mt-1 text-[9px] text-[#bcb6c5]">{isFrench ? 'le point de passage' : 'the crossing point'}</div></div>
-              </div>
-              <div className="orbit-dot absolute left-1/2 top-1/2 -ml-3 -mt-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e8cd4d] text-[11px] font-bold shadow-lg">A</div></div>
-              <div className="orbit-dot-small absolute left-1/2 top-1/2 -ml-3 -mt-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#9adacb] text-[11px] font-bold shadow-lg">B</div></div>
-              <div className="absolute left-[7%] top-[15%] flex items-center gap-2 text-[11px] font-semibold text-[#5e5766]"><span className="h-2 w-2 rounded-full bg-[#6d35d8]" />Réseau A</div>
-              <div className="absolute bottom-[19%] right-[3%] flex items-center gap-2 text-[11px] font-semibold text-[#5e5766]"><span className="h-2 w-2 rounded-full bg-[#ef987f]" />Réseau B</div>
-              <div className="absolute bottom-[8%] left-[18%] rounded-full border border-[#2d2535]/10 bg-[#fbf8ef]/70 px-3 py-1.5 text-[10px] text-[#5e5766] backdrop-blur-sm">+ 19 connexions possibles</div>
+             <div className="relative mx-auto flex h-[370px] w-full max-w-[530px] items-center justify-center sm:h-[500px]">
+               <img
+                 src={heroGlobalConnection}
+                 alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
+                 className="h-full w-full rounded-[28px] object-contain drop-shadow-[0_22px_38px_rgba(75,44,180,.16)]"
+               />
             </div>
            </div>
          </section>
