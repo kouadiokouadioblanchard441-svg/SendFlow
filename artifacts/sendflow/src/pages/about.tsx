@@ -22,6 +22,7 @@ import {
   UserRound,
   Zap,
 } from 'lucide-react';
+import sendflowMark from '@assets/sendflow-mark-original.png';
 
 export type AboutLocale = 'fr' | 'en';
 
@@ -102,8 +103,8 @@ function FounderPhoto({ profile }: { profile: FounderProfile }) {
 
 function Mark({ className = '' }: { className?: string }) {
   return (
-    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#6d35d8] text-sm font-bold tracking-[-0.12em] text-[#fffdf7] ${className}`}>
-      sf
+    <span className={`inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#fffdf7] shadow-[0_5px_14px_rgba(33,29,44,.12)] ring-1 ring-[#1769ff]/25 ${className}`}>
+      <img src={sendflowMark} alt="" className="h-9 w-9 object-contain" />
     </span>
   );
 }
@@ -181,7 +182,7 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
   return (
     <main className="noise min-h-[100dvh]" style={{ backgroundColor: colors.ivory, color: colors.navy }}>
       <header className="sticky top-0 z-30 border-b backdrop-blur-md" style={{ borderColor: 'rgba(222,215,204,.8)', backgroundColor: 'rgba(247,243,233,.88)' }}>
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-4 sm:px-8 lg:px-12">
           <button
             type="button"
             onClick={onBackHome}
@@ -203,12 +204,14 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
             <button
               type="button"
               onClick={onToggleLocale}
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-[#fffdf7]"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full border bg-[#fffdf7] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] shadow-[0_4px_12px_rgba(33,29,44,.05)] transition-colors hover:bg-white"
               style={{ borderColor: colors.line, color: colors.navy }}
               aria-label={isFrench ? 'Passer en anglais' : 'Switch to French'}
             >
-              <Globe2 size={14} />
-              {isFrench ? 'EN' : 'FR'}
+              <span aria-hidden="true" className="text-base leading-none">
+                {isFrench ? '🇫🇷' : '🇬🇧'}
+              </span>
+              <span>{isFrench ? 'FR' : 'EN'}</span>
             </button>
           )}
         </div>
