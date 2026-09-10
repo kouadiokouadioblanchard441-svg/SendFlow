@@ -390,7 +390,21 @@ function AdminRoute() {
   const { isLoaded, isSignedIn } = useAuth();
   if (!isLoaded) return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] text-sm text-[#667386]">Chargement de la session…</div>;
   if (!isSignedIn) {
-    return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-5"><div className="max-w-md rounded-3xl border border-[#e2e8ef] bg-white p-8 text-center shadow-[0_20px_60px_rgba(20,35,60,.1)]"><LockKeyhole className="mx-auto text-[#1769ff]" size={30} /><h1 className="mt-5 text-3xl font-bold tracking-[-.05em] text-[#192231]">Accès administrateur</h1><p className="mt-3 text-sm leading-6 text-[#667386]">Connectez-vous avec votre compte autorisé pour gérer la landing SendFlow.</p><a className="mt-6 inline-flex rounded-xl bg-[#1769ff] px-5 py-3 text-sm font-bold text-white" href={`${basePath}/sign-in?redirect_url=${encodeURIComponent(`${basePath}/admin`)}`}>Se connecter</a></div></div>;
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4 py-10">
+        <div className="w-full max-w-[440px] rounded-3xl border border-[#e2e8ef] bg-white p-5 shadow-[0_20px_60px_rgba(20,35,60,.1)] sm:p-8">
+          <div className="mb-4 flex items-center gap-2 px-1 text-sm font-bold text-[#192231]">
+            <LockKeyhole className="text-[#1769ff]" size={19} />
+            Connexion au panel administrateur
+          </div>
+          <SignIn
+            routing="hash"
+            signUpUrl={`${basePath}/sign-up`}
+            fallbackRedirectUrl={`${basePath}/admin`}
+          />
+        </div>
+      </div>
+    );
   }
   return <AdminPage />;
 }
