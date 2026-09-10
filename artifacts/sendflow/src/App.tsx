@@ -392,12 +392,15 @@ function LandingPage() {
                  <button onClick={() => goTo('features')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#6d35d8]/25 bg-white/80 px-5 py-3.5 text-[13px] font-bold text-[#211d2c] shadow-[0_10px_22px_rgba(45,37,53,.08)] transition-all hover:-translate-y-1 hover:border-[#6d35d8] hover:text-[#6d35d8] sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</button>
               </div>
             </div>
-                <div className="relative mx-auto aspect-[3/2] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]" data-testid="hero-video-slot">
+                <div className="relative mx-auto aspect-[9/16] w-full max-w-[390px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]" data-testid="hero-video-slot">
                 <img
                   src={heroGlobalConnection}
                   alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
                   className="hero-video-poster absolute inset-0 h-full w-full object-cover"
                 />
+                {heroVideoFailed && <div className="pointer-events-none absolute left-5 top-8 z-10 opacity-80 drop-shadow-[0_3px_12px_rgba(255,255,255,.45)]">
+                  <img src={sendflowWordmark} alt="" className="h-6 w-auto object-contain" />
+                </div>}
                 {!heroVideoFailed && (
                   <video
                     className="hero-video absolute inset-0 h-full w-full object-cover"
