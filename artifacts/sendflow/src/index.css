@@ -387,9 +387,9 @@ footer:not(.sendflow-reference-footer) {
 }
 
 .sendflow-store-badge--large {
-  width: 198px;
-  min-height: 70px;
-  padding: 10px 14px;
+  width: 188px;
+  min-height: 62px;
+  padding: 8px 12px;
   border-radius: 14px;
   gap: 10px;
 }
