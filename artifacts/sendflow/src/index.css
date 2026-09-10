@@ -935,6 +935,19 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-table td { max-width: 250px; border-top: 1px solid #edf0f4; padding: 13px 10px; color: #637083; font-size: 11px; vertical-align: middle; }
 .sendflow-admin-table td.is-emphasis { color: var(--admin-ink); font-weight: 700; }
 .sendflow-admin-table td > span:not(.sendflow-admin-pill) { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sendflow-admin-cell-with-thumb { display: inline-flex !important; align-items: center; gap: 8px; max-width: 100%; }
+.sendflow-admin-cell-with-thumb > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sendflow-admin-media-thumb { display: inline-grid; flex: 0 0 auto; place-items: center; width: 28px; height: 28px; overflow: hidden; border: 1px solid #e2e7ee; border-radius: 7px; background: #f7f9fb; color: #9aa7b5; }
+.sendflow-admin-media-thumb.is-large { width: 54px; height: 54px; border-radius: 10px; }
+.sendflow-admin-media-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.sendflow-admin-country-flag { display: inline-grid !important; place-items: center; width: 30px; height: 24px; border-radius: 6px; background: #f3f6fa; font-size: 16px; }
+.sendflow-admin-media-link { display: block; overflow: hidden; color: var(--admin-blue); text-overflow: ellipsis; text-decoration: none; white-space: nowrap; }
+.sendflow-admin-media-link:hover { text-decoration: underline; }
+.sendflow-admin-asset-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(125px, 1fr)); gap: 9px; margin-top: 18px; border-top: 1px solid #edf0f4; padding-top: 16px; }
+.sendflow-admin-asset-card { display: grid; justify-items: center; gap: 6px; min-width: 0; border: 1px solid #e7eaf0; border-radius: 10px; background: #fbfcfd; padding: 10px 7px; text-align: center; }
+.sendflow-admin-asset-card strong, .sendflow-admin-asset-card small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sendflow-admin-asset-card strong { color: var(--admin-ink); font-size: 10px; }
+.sendflow-admin-asset-card small { color: var(--admin-faint); font-size: 9px; }
 .sendflow-admin-actions-heading { width: 115px; }
 .sendflow-admin-row-actions { display: flex; justify-content: flex-end; gap: 3px; }
 .sendflow-admin-icon-button { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #8491a2; cursor: pointer; }
@@ -985,6 +998,14 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-field input, .sendflow-admin-field textarea, .sendflow-admin-field select { width: 100%; border: 1px solid #dce3eb; border-radius: 7px; outline: 0; background: #fbfcfd; color: var(--admin-ink); padding: 9px 10px; font-size: 12px; font-weight: 500; transition: border-color .18s ease, box-shadow .18s ease; }
 .sendflow-admin-field textarea { min-height: 89px; resize: vertical; line-height: 1.5; }
 .sendflow-admin-field input:focus, .sendflow-admin-field textarea:focus, .sendflow-admin-field select:focus { border-color: var(--admin-violet); box-shadow: 0 0 0 3px rgba(109,53,216,.13); }
+.sendflow-admin-upload-box { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; margin-top: 18px; border: 1px dashed #cfc3ee; border-radius: 10px; background: #fbfaff; padding: 13px; }
+.sendflow-admin-upload-box strong, .sendflow-admin-upload-box small { display: block; }
+.sendflow-admin-upload-box strong { color: var(--admin-ink); font-size: 11px; }
+.sendflow-admin-upload-box small { max-width: 480px; margin-top: 4px; color: var(--admin-subtle); font-size: 10px; line-height: 1.45; }
+.sendflow-admin-upload-label { white-space: nowrap; }
+.sendflow-admin-upload-error { grid-column: 1 / -1; margin: 0; color: #b04d45; font-size: 10px; line-height: 1.4; }
+.sendflow-admin-upload-preview { display: flex; grid-column: 1 / -1; align-items: center; gap: 9px; min-width: 0; color: var(--admin-subtle); font-size: 10px; }
+.sendflow-admin-upload-preview > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sendflow-admin-toggle-field { display: flex; align-items: center; justify-content: space-between; grid-column: 1 / -1; border-top: 1px solid #edf0f4; padding-top: 15px; cursor: pointer; }
 .sendflow-admin-toggle-field strong, .sendflow-admin-toggle-field small { display: block; }
 .sendflow-admin-toggle-field strong { color: #617084; font-size: 10px; }

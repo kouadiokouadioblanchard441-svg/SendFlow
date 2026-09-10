@@ -51,7 +51,7 @@ type FieldConfig = {
   label: string;
   kind?: InputKind;
   placeholder?: string;
-  optionSource?: 'locale' | 'contentType' | 'page' | 'operator';
+  optionSource?: 'locale' | 'contentType' | 'page' | 'operator' | 'media';
 };
 type ResourceConfig = {
   label: string;
@@ -92,22 +92,14 @@ const resourceConfigs: Record<ResourceKey, ResourceConfig> = {
     description: 'Images, illustrations et métadonnées servies par la landing.',
     fields: [
       { key: 'slug', label: 'Slug', placeholder: 'hero-globe' },
-      { key: 'kind', label: 'Type', placeholder: 'image' },
-      { key: 'sourcePath', label: 'Chemin source', placeholder: '/assets/hero.png' },
-      { key: 'storagePath', label: 'Chemin stockage', placeholder: 'landing/hero.png' },
-      { key: 'publicUrl', label: 'URL publique', placeholder: 'https://…' },
-      { key: 'mimeType', label: 'Type MIME', placeholder: 'image/png' },
       { key: 'altFr', label: 'Texte alternatif · FR', kind: 'textarea' },
       { key: 'altEn', label: 'Texte alternatif · EN', kind: 'textarea' },
-      { key: 'width', label: 'Largeur', kind: 'number' },
-      { key: 'height', label: 'Hauteur', kind: 'number' },
       { key: 'isVisible', label: 'Visible sur le site', kind: 'checkbox' },
     ],
     columns: [
       { key: 'slug', label: 'Média', emphasis: true },
       { key: 'kind', label: 'Type' },
       { key: 'mimeType', label: 'Format' },
-      { key: 'publicUrl', label: 'URL publique' },
       { key: 'isVisible', label: 'État' },
     ],
   },
@@ -212,7 +204,7 @@ const resourceConfigs: Record<ResourceKey, ResourceConfig> = {
     fields: [
       { key: 'slug', label: 'Slug', placeholder: 'orange' },
       { key: 'name', label: 'Nom', placeholder: 'Orange' },
-      { key: 'logoKey', label: 'Clé logo' },
+      { key: 'logoKey', label: 'Logo opérateur', kind: 'select', optionSource: 'media' },
       { key: 'background', label: 'Couleur de fond', placeholder: '#ff7900' },
       { key: 'foreground', label: 'Couleur du texte', placeholder: '#ffffff' },
       { key: 'isVisible', label: 'Visible sur le site', kind: 'checkbox' },
@@ -347,6 +339,62 @@ function displayValue(value: Primitive, resource: ResourceKey, key: string, bund
   return text.length > 86 ? `${text.slice(0, 86)}…` : text;
 }
 
+function mediaUrl(media: RecordItem | null | undefined): string | null {
+  const candidates = [media?.publicUrl, media?.storagePath, media?.sourcePath];
+  const value = candidates.find((candidate) => typeof candidate === 'string' && (candidate.startsWith('/') || candidate.startsWith('http')));
+  return typeof value === 'string' ? value : null;
+}
+
+function mediaForKey(bundle: Bundle, key: Primitive): RecordItem | null {
+  if (!key) return null;
+  return bundle.media.find((media) => media.slug === key || String(media.id) === String(key)) ?? null;
+}
+
+function MediaThumb({ media, label, large = false }: { media?: RecordItem | null; label: string; large?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  const src = mediaUrl(media);
+  if (!src || failed) {
+    return <span className={`sendflow-admin-media-thumb is-empty ${large ? 'is-large' : ''}`} title={label}><Image size={large ? 22 : 16} /></span>;
+  }
+  return <span className={`sendflow-admin-media-thumb ${large ? 'is-large' : ''}`} title={label}><img src={src} alt="" onError={() => setFailed(true)} /></span>;
+}
+
+function CountryFlag({ value }: { value: Primitive }) {
+  return <span className="sendflow-admin-country-flag" aria-label={String(value ?? 'Drapeau')}>{String(value ?? '—')}</span>;
+}
+
+function ResourceCell({ resource, column, item, bundle }: { resource: ResourceKey; column: { key: string }; item: RecordItem; bundle: Bundle }) {
+  if (resource === 'media' && column.key === 'slug') {
+    return <span className="sendflow-admin-cell-with-thumb"><MediaThumb media={item} label={String(item.slug ?? 'Média')} /><span>{displayValue(item[column.key], resource, column.key, bundle)}</span></span>;
+  }
+  if (resource === 'media' && column.key === 'publicUrl') {
+    const url = mediaUrl(item);
+    return url ? <a className="sendflow-admin-media-link" href={url} target="_blank" rel="noreferrer">{displayValue(item[column.key], resource, column.key, bundle)}</a> : <span>—</span>;
+  }
+  if (resource === 'operators' && column.key === 'name') {
+    return <span className="sendflow-admin-cell-with-thumb"><MediaThumb media={mediaForKey(bundle, item.logoKey)} label={`Logo ${String(item.name ?? 'opérateur')}`} /><span>{displayValue(item[column.key], resource, column.key, bundle)}</span></span>;
+  }
+  if (resource === 'operators' && column.key === 'logoKey') {
+    return <span className="sendflow-admin-cell-with-thumb"><MediaThumb media={mediaForKey(bundle, item.logoKey)} label={`Logo ${String(item.name ?? 'opérateur')}`} /><span>{displayValue(item[column.key], resource, column.key, bundle)}</span></span>;
+  }
+  if (resource === 'countries' && column.key === 'flag') return <CountryFlag value={item[column.key]} />;
+  return <span>{displayValue(item[column.key], resource, column.key, bundle)}</span>;
+}
+
+function AssetStrip({ bundle, resource }: { bundle: Bundle; resource: 'media' | 'operators' }) {
+  const items = resource === 'media' ? bundle.media : bundle.operators;
+  if (items.length === 0) return null;
+  return (
+    <div className="sendflow-admin-asset-strip" aria-label={resource === 'media' ? 'Aperçus des médias' : 'Aperçus des logos opérateurs'}>
+      {items.map((item) => {
+        const media = resource === 'media' ? item : mediaForKey(bundle, item.logoKey);
+        const label = resource === 'media' ? String(item.slug ?? 'Média') : String(item.name ?? 'Opérateur');
+        return <div className="sendflow-admin-asset-card" key={`${resource}-${String(item.id)}`}><MediaThumb media={media} label={label} large /><strong>{label}</strong><small>{resource === 'media' ? String(item.kind ?? 'image') : String(item.logoKey ?? 'Logo non associé')}</small></div>;
+      })}
+    </div>
+  );
+}
+
 function defaultValues(config: ResourceConfig, bundle: Bundle): Record<string, Primitive> {
   const values: Record<string, Primitive> = {};
   config.fields.forEach((field) => {
@@ -402,6 +450,8 @@ function FormField({
         ? [{ value: 'text', label: 'Texte' }, { value: 'html', label: 'HTML' }, { value: 'url', label: 'URL' }]
         : field.optionSource === 'operator'
           ? bundle.operators.map((operator) => ({ value: String(operator.id), label: String(operator.name) }))
+          : field.optionSource === 'media'
+            ? bundle.media.map((media) => ({ value: String(media.slug ?? media.id), label: `${String(media.slug ?? media.id)} · ${String(media.kind ?? 'image')}` }))
           : bundle.legalPages.map((page) => ({ value: String(page.id), label: `${page.titleFr} · ${page.slug}` }));
     return (
       <label className="sendflow-admin-field" htmlFor={inputId}>
@@ -435,24 +485,46 @@ function EditorDialog({
   item,
   bundle,
   saving,
+  uploading,
   onClose,
   onSave,
+  onUploadMedia,
 }: {
   config: ResourceConfig;
   item: RecordItem | null;
   bundle: Bundle;
   saving: boolean;
+  uploading: boolean;
   onClose: () => void;
   onSave: (values: Record<string, Primitive>) => void;
+  onUploadMedia: (file: File) => Promise<{ storagePath: string; publicUrl: string }>;
 }) {
   const [values, setValues] = useState<Record<string, Primitive>>(() => {
     const initial = defaultValues(config, bundle);
     if (item) config.fields.forEach((field) => { initial[field.key] = item[field.key]; });
     return initial;
   });
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const submit = (event: FormEvent) => {
     event.preventDefault();
     onSave(values);
+  };
+  const handleMediaUpload = async (file: File) => {
+    setUploadError(null);
+    try {
+      const uploaded = await onUploadMedia(file);
+      setValues((current) => ({
+        ...current,
+        slug: current.slug || file.name.toLowerCase().replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+        kind: current.kind || 'image',
+        sourcePath: current.sourcePath || file.name,
+        storagePath: uploaded.storagePath,
+        publicUrl: uploaded.publicUrl,
+        mimeType: file.type,
+      }));
+    } catch (caught) {
+      setUploadError(caught instanceof Error ? caught.message : 'Impossible d’importer ce visuel.');
+    }
   };
   return (
     <div className="sendflow-admin-modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
@@ -467,6 +539,21 @@ function EditorDialog({
             <FormField key={field.key} field={field} value={values[field.key]} bundle={bundle} onChange={(value) => setValues((current) => ({ ...current, [field.key]: value }))} />
           ))}
         </div>
+        {config.apiResource === 'media' && (
+          <div className="sendflow-admin-upload-box">
+            <div>
+              <strong>Importer depuis la galerie</strong>
+              <small>Choisis directement une image sur ton appareil. PNG, JPG, WEBP ou SVG · 10 Mo maximum.</small>
+            </div>
+            <label className="sendflow-admin-button sendflow-admin-button-quiet sendflow-admin-upload-label">
+              {uploading ? <LoaderCircle className="sendflow-admin-spin" size={16} /> : <UploadCloud size={16} />}
+              {uploading ? 'Import en cours…' : 'Choisir une image'}
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleMediaUpload(file); event.currentTarget.value = ''; }} />
+            </label>
+            {uploadError && <p className="sendflow-admin-upload-error">{uploadError}</p>}
+            {(values.publicUrl || item?.publicUrl) && <div className="sendflow-admin-upload-preview"><MediaThumb media={{ ...item, ...values } as RecordItem} label="Aperçu du média" large /><span>Image prête à être enregistrée dans SendFlow.</span></div>}
+          </div>
+        )}
         <div className="sendflow-admin-modal-foot">
           <button type="button" className="sendflow-admin-button sendflow-admin-button-quiet" onClick={onClose}>Annuler</button>
           <button type="submit" className="sendflow-admin-button sendflow-admin-button-primary" disabled={saving} data-testid="button-save-resource">
@@ -507,6 +594,7 @@ function AssignmentEditor({
             <label className={`sendflow-admin-check-row ${checked ? 'is-checked' : ''}`} key={String(operator.id)} htmlFor={`operator-${operator.id}`}>
               <input id={`operator-${operator.id}`} type="checkbox" checked={checked} onChange={() => setDraft((current) => { const next = new Set(current); if (next.has(Number(operator.id))) next.delete(Number(operator.id)); else next.add(Number(operator.id)); return next; })} />
               <span className="sendflow-admin-check-box">{checked && <Check size={13} />}</span>
+              <MediaThumb media={mediaForKey(bundle, operator.logoKey)} label={`Logo ${String(operator.name ?? 'opérateur')}`} />
               <span>{String(operator.name)}</span>
               <small>{operator.slug}</small>
             </label>
@@ -529,6 +617,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [editor, setEditor] = useState<{ resource: ResourceKey; item: RecordItem | null } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<number | undefined>();
@@ -576,6 +665,10 @@ export default function AdminPage() {
 
   const saveResource = async (values: Record<string, Primitive>) => {
     if (!editor) return;
+    if (editor.resource === 'media' && !editor.item?.id && !values.storagePath) {
+      setNotice({ tone: 'error', text: 'Choisis une image dans ta galerie avant d’enregistrer le média.' });
+      return;
+    }
     setSaving(true);
     try {
       const path = `/api/admin/landing/${resourceConfigs[editor.resource].apiResource}${editor.item?.id ? `/${editor.item.id}` : ''}`;
@@ -588,6 +681,21 @@ export default function AdminPage() {
       setNotice({ tone: 'error', text: caught instanceof Error ? caught.message : 'Impossible d’enregistrer ce contenu.' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const uploadMediaFile = async (file: File) => {
+    setUploadingMedia(true);
+    try {
+      const upload = await apiRequest<{ uploadURL: string; storagePath: string; publicUrl: string }>('/api/admin/landing/media/upload-url', {
+        method: 'POST',
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      });
+      const response = await fetch(upload.uploadURL, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      if (!response.ok) throw new AdminHttpError(response.status, 'Le fichier n’a pas pu être envoyé vers App Storage.');
+      return { storagePath: upload.storagePath, publicUrl: upload.publicUrl };
+    } finally {
+      setUploadingMedia(false);
     }
   };
 
@@ -668,6 +776,7 @@ export default function AdminPage() {
               <button className="sendflow-admin-button sendflow-admin-button-primary" onClick={() => setEditor({ resource: activeResource, item: null })} disabled={loading || Boolean(error)} data-testid="button-add-resource"><Plus size={16} /> Ajouter</button>
             </div>
             {activeResource === 'countries' && !loading && bundle.countries.length > 0 && <AssignmentEditor bundle={bundle} selectedCountry={selectedCountry ?? bundle.countries[0].id} saving={assignmentSaving} onCountryChange={setSelectedCountry} onSave={saveAssignments} />}
+            {!loading && !error && (activeResource === 'media' || activeResource === 'operators') && <AssetStrip bundle={bundle} resource={activeResource} />}
             <div className="sendflow-admin-toolbar">
               <label className="sendflow-admin-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Rechercher dans ${config.label.toLowerCase()}`} data-testid="input-resource-search" /></label>
               <span className="sendflow-admin-result-count">{loading ? 'Chargement…' : `${visibleItems.length} élément${visibleItems.length > 1 ? 's' : ''}`}</span>
@@ -677,7 +786,7 @@ export default function AdminPage() {
                 <table className="sendflow-admin-table">
                   <thead><tr>{config.columns.map((column) => <th key={column.key}>{column.label}</th>)}<th className="sendflow-admin-actions-heading"><span className="sr-only">Actions</span></th></tr></thead>
                   <tbody>{visibleItems.map((item, index) => <tr key={String(item.id ?? index)} data-testid={`row-${activeResource}-${item.id ?? index}`}>
-                    {config.columns.map((column) => <td className={column.emphasis ? 'is-emphasis' : ''} key={column.key}>{column.key === 'isVisible' ? <span className={`sendflow-admin-pill ${item.isVisible === false ? 'is-muted' : 'is-published'}`}><span />{displayValue(item[column.key], activeResource, column.key, bundle)}</span> : <span>{displayValue(item[column.key], activeResource, column.key, bundle)}</span>}</td>)}
+                    {config.columns.map((column) => <td className={column.emphasis ? 'is-emphasis' : ''} key={column.key}>{column.key === 'isVisible' ? <span className={`sendflow-admin-pill ${item.isVisible === false ? 'is-muted' : 'is-published'}`}><span />{displayValue(item[column.key], activeResource, column.key, bundle)}</span> : <ResourceCell resource={activeResource} column={column} item={item} bundle={bundle} />}</td>)}
                     <td className="sendflow-admin-row-actions"><button className="sendflow-admin-icon-button" onClick={() => setEditor({ resource: activeResource, item })} disabled={!item.id} aria-label={`Modifier ${config.singular}`} data-testid={`button-edit-${activeResource}-${item.id ?? index}`}><Pencil size={15} /></button><button className="sendflow-admin-icon-button danger" onClick={() => void deleteResource(activeResource, item)} disabled={!item.id || deleting === item.id} aria-label={`Supprimer ${config.singular}`} data-testid={`button-delete-${activeResource}-${item.id ?? index}`}>{deleting === item.id ? <LoaderCircle className="sendflow-admin-spin" size={15} /> : <Trash2 size={15} />}</button><button className="sendflow-admin-icon-button" aria-label="Plus d’options" data-testid={`button-more-${activeResource}-${item.id ?? index}`}><MoreHorizontal size={15} /></button></td>
                   </tr>)}</tbody>
                 </table>
@@ -688,7 +797,7 @@ export default function AdminPage() {
         </div>
       </main>
       {notice && <div className={`sendflow-admin-notice ${notice.tone}`} role="status" data-testid="status-save-feedback">{notice.tone === 'success' ? <Check size={17} /> : <AlertTriangle size={17} />}<span>{notice.text}</span><button onClick={() => setNotice(null)} aria-label="Fermer le message"><X size={14} /></button></div>}
-      {editor && <EditorDialog config={resourceConfigs[editor.resource]} item={editor.item} bundle={bundle} saving={saving} onClose={() => setEditor(null)} onSave={saveResource} />}
+      {editor && <EditorDialog config={resourceConfigs[editor.resource]} item={editor.item} bundle={bundle} saving={saving} uploading={uploadingMedia} onClose={() => setEditor(null)} onSave={saveResource} onUploadMedia={uploadMediaFile} />}
     </div>
   );
 }

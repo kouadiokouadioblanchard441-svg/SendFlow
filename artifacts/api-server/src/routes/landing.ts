@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { and, asc, eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { db } from "@workspace/db";
 import {
   landingContent,
@@ -15,6 +16,11 @@ import {
   legalSections,
 } from "@workspace/db";
 import { requireAdmin } from "../middlewares/adminAuth";
+import {
+  getPublicObjectSearchPaths,
+  getSignedObjectUrl,
+  parseStoragePath,
+} from "../lib/publicObjectStorage";
 
 const router: IRouter = Router();
 
@@ -81,6 +87,33 @@ router.get("/landing", async (_req, res): Promise<void> => {
 
 router.get("/admin/landing", requireAdmin, async (_req, res): Promise<void> => {
   res.json(await getLandingBundle());
+});
+
+router.post("/admin/landing/media/upload-url", requireAdmin, async (req, res): Promise<void> => {
+  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+  const contentType = typeof req.body?.contentType === "string" ? req.body.contentType.trim().toLowerCase() : "";
+  const size = Number(req.body?.size);
+  if (!name || !contentType.startsWith("image/") || !Number.isFinite(size) || size <= 0 || size > 10 * 1024 * 1024) {
+    res.status(400).json({ error: "Un fichier image valide de 10 Mo maximum est requis." });
+    return;
+  }
+
+  try {
+    const publicRoot = getPublicObjectSearchPaths()[0];
+    const { bucketName, objectName: publicObjectRoot } = parseStoragePath(publicRoot);
+    const safeName = name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "image";
+    const relativePath = `landing/admin/${randomUUID()}-${safeName}`;
+    const objectName = `${publicObjectRoot.replace(/\/+$/, "")}/${relativePath}`;
+    const uploadURL = await getSignedObjectUrl({ bucketName, objectName, method: "PUT" });
+    res.json({
+      uploadURL,
+      storagePath: `${publicRoot.replace(/\/+$/, "")}/${relativePath}`,
+      publicUrl: `/api/storage/public-objects/${relativePath}`,
+    });
+  } catch (error) {
+    req.log.error({ err: error }, "Unable to prepare admin media upload");
+    res.status(503).json({ error: "Le stockage des images est indisponible pour le moment. Réessaie lorsque le service sera disponible." });
+  }
 });
 
 router.patch("/admin/landing/:resource/:id", requireAdmin, async (req, res): Promise<void> => {
