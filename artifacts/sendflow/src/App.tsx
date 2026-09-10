@@ -440,17 +440,17 @@ function LandingPage() {
                 { title: { fr: 'Expérience simple', en: 'Simple experience' }, text: { fr: 'Moins de friction, plus de confiance dans chaque choix.', en: 'Less friction, more confidence in every choice.' }, icon: simpleExperienceIcon },
               ].map((feature) => <div key={feature.title.fr} className="group min-h-[360px] rounded-[24px] border border-[#dbe5f2] bg-white p-5 shadow-[0_18px_48px_rgba(35,76,135,.08)] transition-transform hover:-translate-y-1 sm:p-6"><div className="flex h-36 items-center justify-between gap-2 overflow-hidden rounded-[18px] bg-[#f4f7fc] px-3 sm:h-40 sm:px-4"><img src={feature.icon} alt="" className="h-full min-w-0 flex-1 object-contain p-2 transition-transform duration-300 group-hover:scale-105 sm:p-3" /><span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#6d35d8]/15 bg-white px-2 py-1.5 shadow-[0_6px_14px_rgba(58,38,83,.08)]" aria-label="SendFlow"><img src={sendflowMark} alt="" className="h-5 w-5 object-contain" /><img src={sendflowWordmark} alt="SendFlow" className="h-3.5 w-auto object-contain" /></span></div><h3 className="mt-6 text-[18px] font-extrabold tracking-[-.035em] text-[#17131f]">{t(feature.title, language)}</h3><p className="mt-3 max-w-[270px] text-[14px] font-medium leading-6 text-[#3d4654]">{t(feature.text, language)}</p></div>)}
             </div>
-            <div className="reveal mt-16 rounded-[28px] bg-[#d7eee8] p-6 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]">{isFrench ? 'Une expérience, trois repères' : 'One experience, three principles'}</p>
-              <h3 className="mt-4 text-3xl font-semibold tracking-[-.05em] sm:text-4xl">{isFrench ? 'Pensé pour une Afrique connectée.' : 'Built for a connected Africa.'}</h3>
-              <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                {[
-                  { title: { fr: 'Simplicité', en: 'Simplicity' }, text: { fr: 'Des choix clairs, sans détour.', en: 'Clear choices, no detours.' } },
-                  { title: { fr: 'Rapidité', en: 'Speed' }, text: { fr: 'Un parcours court et lisible.', en: 'A short, readable journey.' } },
-                  { title: { fr: 'Interopérabilité', en: 'Interoperability' }, text: { fr: 'Des réseaux qui peuvent mieux dialoguer.', en: 'Networks that can speak more clearly.' } },
-                ].map((principle) => <div key={principle.title.fr} className="rounded-2xl border border-[#211d2c]/10 bg-[#f7f3e9]/55 p-4"><h4 className="text-[15px] font-bold">{t(principle.title, language)}</h4><p className="mt-2 text-[13px] leading-5 text-[#5e5766]">{t(principle.text, language)}</p></div>)}
-              </div>
-            </div>
+             <div className="reveal mt-16 rounded-[28px] border-2 border-[#dbe5f2] bg-[#eef5ff] p-6 shadow-[0_18px_50px_rgba(35,76,135,.08)] sm:p-8">
+               <p className="text-[11px] font-extrabold uppercase tracking-[.17em] text-[#5b21b6]">{isFrench ? 'Une expérience, trois repères' : 'One experience, three principles'}</p>
+               <h3 className="mt-4 max-w-[620px] text-3xl font-extrabold leading-tight tracking-[-.05em] text-[#17131f] sm:text-4xl">{isFrench ? 'Pensé pour une Afrique connectée.' : 'Built for a connected Africa.'}</h3>
+               <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                 {[
+                  { n: '01', title: { fr: 'Simplicité', en: 'Simplicity' }, text: { fr: 'Des choix clairs, sans détour.', en: 'Clear choices, no detours.' }, art: howPersonArt, artAlt: { fr: 'Personnage SendFlow illustrant la simplicité', en: 'SendFlow character illustrating simplicity' }, artBg: 'bg-[#f4f0ff]' },
+                  { n: '02', title: { fr: 'Rapidité', en: 'Speed' }, text: { fr: 'Un parcours court et lisible.', en: 'A short, readable journey.' }, art: internationalPersonArt, artAlt: { fr: 'Personnage SendFlow illustrant la rapidité', en: 'SendFlow character illustrating speed' }, artBg: 'bg-[#eef7ff]' },
+                  { n: '03', title: { fr: 'Interopérabilité', en: 'Interoperability' }, text: { fr: 'Des réseaux qui peuvent mieux dialoguer.', en: 'Networks that can speak more clearly.' }, art: networkPersonArt, artAlt: { fr: 'Personnage SendFlow illustrant l’interopérabilité', en: 'SendFlow character illustrating interoperability' }, artBg: 'bg-[#edf9f6]' },
+                 ].map((principle) => <div key={principle.title.fr} className="group relative min-h-[250px] overflow-hidden rounded-[22px] border-2 border-white bg-white p-5 shadow-[0_12px_28px_rgba(35,76,135,.08)] transition-transform hover:-translate-y-1"><div className={`absolute right-3 top-3 flex h-24 w-24 items-end justify-center overflow-hidden rounded-[18px] ${principle.artBg}`}><img src={principle.art} alt={t(principle.artAlt, language)} loading="lazy" decoding="async" className="h-24 w-24 object-contain object-bottom transition-transform duration-300 group-hover:scale-105" /></div><span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-[#211d2c] px-2 text-[11px] font-extrabold text-white">{principle.n}</span><h4 className="mt-16 max-w-[180px] text-[19px] font-extrabold leading-tight tracking-[-.04em] text-[#17131f]">{t(principle.title, language)}</h4><p className="mt-3 max-w-[190px] text-[14px] font-semibold leading-6 text-[#3d4654]">{t(principle.text, language)}</p></div>)}
+               </div>
+             </div>
           </div>
         </section>
 
