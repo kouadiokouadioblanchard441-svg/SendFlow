@@ -144,7 +144,7 @@ function LandingPage() {
               <div className="rise mb-7 aspect-[1.45/1] w-full max-w-[640px] overflow-hidden rounded-[34px] border border-[#6d35d8]/10 bg-white shadow-[0_22px_55px_rgba(75,44,180,.1)]" data-testid="hero-image-slot">
                 <img src={heroPlaceholder} alt={isFrench ? 'Illustration temporaire du passage entre plusieurs réseaux' : 'Temporary illustration of a path across multiple networks'} className="h-full w-full object-cover" />
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-                  <span className="hero-globe-spin block h-24 w-24 sm:h-36 sm:w-36">
+                  <span className="hero-globe-spin block h-32 w-32 sm:h-48 sm:w-48">
                     <img src={heroGlobe} alt={isFrench ? 'Terre centrée sur l’Afrique' : 'Earth centered on Africa'} className="h-full w-full object-contain drop-shadow-[0_10px_16px_rgba(20,50,150,.22)]" />
                   </span>
                 </div>
