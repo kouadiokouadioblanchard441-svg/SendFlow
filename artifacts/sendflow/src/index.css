@@ -625,6 +625,11 @@ section#security [class*="rounded-2xl"] {
   box-shadow: 0 14px 32px rgba(35, 76, 135, .08) !important;
 }
 
+.security-ground-shadow {
+  background: radial-gradient(ellipse at center, rgba(109, 53, 216, .42) 0%, rgba(109, 53, 216, .18) 45%, rgba(109, 53, 216, 0) 76%);
+  filter: blur(2px);
+}
+
 section#faq .reveal.space-y-2 > div {
   border: 1px solid #d7e2f0 !important;
   border-radius: 18px;

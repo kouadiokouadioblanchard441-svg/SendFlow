@@ -426,7 +426,11 @@ function LandingPage() {
                <div className="absolute bottom-0 right-0 z-20 h-[300px] w-[300px] sm:h-[460px] sm:w-[460px]">
                  <img src={securityGuardianArt} alt={isFrench ? 'Gardien 3D de la sécurité SendFlow' : '3D SendFlow security guardian'} className="h-full w-full object-contain object-center" />
                </div>
-               <img src={sendflowWordmark} alt="SendFlow" className="absolute left-[43%] top-[2%] z-30 w-24 object-contain drop-shadow-[0_2px_2px_rgba(30,20,80,.18)] sm:left-[42%] sm:top-[3%] sm:w-32" />
+               <div className="absolute left-[34%] top-[-2%] z-30 flex items-center gap-3 rounded-full border-2 border-[#6d35d8]/25 bg-white px-4 py-2.5 shadow-[0_12px_28px_rgba(80,40,170,.2)] sm:left-[35%] sm:top-[-1%] sm:gap-4 sm:px-6 sm:py-3.5">
+                 <img src={sendflowMark} alt="" className="h-10 w-10 object-contain sm:h-14 sm:w-14" />
+                 <img src={sendflowWordmark} alt="SendFlow" className="h-8 w-auto object-contain sm:h-12" />
+               </div>
+               <div className="security-ground-shadow absolute bottom-[1%] left-1/2 z-0 h-12 w-64 -translate-x-1/2 sm:h-16 sm:w-[390px]" />
               <div className="absolute left-[30%] top-[34%] flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#6d35d8] text-[#fbf8ef] shadow-[0_18px_35px_rgba(109,53,216,.25)] sm:h-32 sm:w-32"><LockKeyhole size={34} strokeWidth={1.5} /></div>
               <div className="absolute bottom-[4%] left-[3%] rounded-2xl bg-[#211d2c] px-4 py-3 text-[11px] text-[#fbf8ef] shadow-lg"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#9adacb]" />{isFrench ? 'En contrôle' : 'In control'}</div>
             </div>
