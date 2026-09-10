@@ -85,35 +85,35 @@ const countries = [
   { name: 'Kenya', code: 'KE', networks: ['Safaricom', 'Airtel', 'Telkom'], flag: '🇰🇪', tone: '#dbeaff' },
 ];
 
-const operatorLogoUrls: Record<string, string> = {
-  Orange: 'https://cdn.simpleicons.org/orange',
-  MTN: 'https://cdn.simpleicons.org/mtn',
-  'Moov Africa': 'https://cdn.simpleicons.org/moovafrica',
-  Wave: 'https://cdn.simpleicons.org/wave',
-  Celtiis: 'https://cdn.simpleicons.org/celtiis',
-  Togocom: 'https://cdn.simpleicons.org/togocel',
-  Camtel: 'https://cdn.simpleicons.org/camtel',
-  Nexttel: 'https://cdn.simpleicons.org/nexttel',
-  'Telecel Faso': 'https://cdn.simpleicons.org/telecel',
-  Airtel: 'https://cdn.simpleicons.org/airtel',
-  Vodafone: 'https://cdn.simpleicons.org/vodafone',
-  Africell: 'https://cdn.simpleicons.org/africell',
-  QCell: 'https://cdn.simpleicons.org/qcell',
-  Comium: 'https://cdn.simpleicons.org/comium',
-  Cellcom: 'https://cdn.simpleicons.org/cellcom',
-  'Lonestar Cell MTN': 'https://cdn.simpleicons.org/mtn',
-  Mauritel: 'https://cdn.simpleicons.org/mauritel',
-  Mattel: 'https://cdn.simpleicons.org/mattel',
-  Chinguitel: 'https://cdn.simpleicons.org/chinguitel',
-  'Zamani Telecom': 'https://cdn.simpleicons.org/zamanitelecom',
-  Glo: 'https://cdn.simpleicons.org/glo',
-  '9mobile': 'https://cdn.simpleicons.org/9mobile',
-  Safaricom: 'https://cdn.simpleicons.org/safaricom',
-  Telkom: 'https://cdn.simpleicons.org/telkom',
+const operatorLogoMarks: Record<string, { mark: string; background: string; foreground: string }> = {
+  Orange: { mark: '', background: '#ff7900', foreground: '#ffffff' },
+  MTN: { mark: 'MTN', background: '#ffca05', foreground: '#17131f' },
+  'Moov Africa': { mark: 'moov', background: '#e83e8c', foreground: '#ffffff' },
+  Wave: { mark: '⌁', background: '#1769ff', foreground: '#ffffff' },
+  Celtiis: { mark: 'C', background: '#1a9c75', foreground: '#ffffff' },
+  Togocom: { mark: 'T', background: '#e22d39', foreground: '#ffffff' },
+  Camtel: { mark: 'C', background: '#0b5fa5', foreground: '#ffffff' },
+  Nexttel: { mark: 'N', background: '#e52936', foreground: '#ffffff' },
+  'Telecel Faso': { mark: 'T', background: '#ed1c24', foreground: '#ffffff' },
+  Airtel: { mark: 'airtel', background: '#e4002b', foreground: '#ffffff' },
+  Vodafone: { mark: 'V', background: '#e60000', foreground: '#ffffff' },
+  Africell: { mark: 'a', background: '#e40046', foreground: '#ffffff' },
+  QCell: { mark: 'Q', background: '#008c44', foreground: '#ffffff' },
+  Comium: { mark: 'C', background: '#f58220', foreground: '#ffffff' },
+  Cellcom: { mark: 'C', background: '#f58220', foreground: '#ffffff' },
+  'Lonestar Cell MTN': { mark: 'MTN', background: '#ffca05', foreground: '#17131f' },
+  Mauritel: { mark: 'M', background: '#008dba', foreground: '#ffffff' },
+  Mattel: { mark: 'M', background: '#e2001a', foreground: '#ffffff' },
+  Chinguitel: { mark: 'C', background: '#00a8a8', foreground: '#ffffff' },
+  'Zamani Telecom': { mark: 'Z', background: '#ef7d00', foreground: '#ffffff' },
+  Glo: { mark: 'G', background: '#78be20', foreground: '#ffffff' },
+  '9mobile': { mark: '9', background: '#78be20', foreground: '#ffffff' },
+  Safaricom: { mark: 'S', background: '#00a651', foreground: '#ffffff' },
+  Telkom: { mark: 'T', background: '#0072bc', foreground: '#ffffff' },
 };
 
 function OperatorRow({ network, index, total }: { network: string; index: number; total: number }) {
-  const logoUrl = operatorLogoUrls[network];
+  const logo = operatorLogoMarks[network] ?? { mark: network.slice(0, 1).toUpperCase(), background: '#6d35d8', foreground: '#ffffff' };
   return (
     <div className="flex items-center gap-3">
       <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#f0ece3] text-[10px] font-bold text-[#1769ff]">
@@ -121,7 +121,9 @@ function OperatorRow({ network, index, total }: { network: string; index: number
         {index < total - 1 && <span className="absolute left-1/2 top-8 h-3 w-px bg-[#d6d0c7]" />}
       </span>
       <div className="flex min-h-[56px] flex-1 items-center justify-center border border-[#2d2535]/10 bg-white px-4 py-3">
-        {logoUrl && <img src={logoUrl} alt={`${network} logo`} loading="lazy" className="h-7 w-auto max-w-[112px] object-contain" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
+        <span role="img" aria-label={`${network} logo`} className={`flex h-8 min-w-8 items-center justify-center px-2 text-[10px] font-extrabold tracking-[-.04em] ${network === 'Orange' ? 'rounded-none' : 'rounded-full'}`} style={{ backgroundColor: logo.background, color: logo.foreground }}>
+          {network === 'Orange' ? <span className="h-3 w-5 bg-white" aria-hidden="true" /> : logo.mark}
+        </span>
       </div>
       {index < total - 1 && <ArrowRight size={15} className="text-[#b1abb4]" />}
     </div>
