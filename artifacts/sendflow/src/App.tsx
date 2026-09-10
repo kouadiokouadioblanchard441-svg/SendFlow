@@ -161,15 +161,43 @@ function RegulatorLogo() {
   );
 }
 
-function StoreBadge({ store, icon }: { store: string; icon: 'play' | 'apple' | 'gallery' }) {
+function StoreLogo({ icon }: { icon: 'play' | 'apple' | 'gallery' }) {
+  if (icon === 'play') {
+    return (
+      <svg viewBox="0 0 32 32" className="h-9 w-9 shrink-0" aria-hidden="true">
+        <path d="M4.5 3.8C3.6 4.7 3 6.1 3 7.8v16.4c0 1.7.6 3.1 1.5 4l14-14.2L4.5 3.8Z" fill="#00A0FF" />
+        <path d="m18.5 14 4.2-4.3 4.8 2.7c1.5.9 1.5 2.5 0 3.4l-4.8 2.7-4.2-4.5Z" fill="#FFD900" />
+        <path d="M4.5 3.8 18.5 18l4.2-4.3L7.2 2.3c-1-.5-2-.1-2.7 1.5Z" fill="#FF3A44" />
+        <path d="M4.5 28.2 18.5 14l4.2 4.5-15.5 8.9c-1 .5-2 .1-2.7-1.5Z" fill="#00C86F" />
+      </svg>
+    );
+  }
+
+  if (icon === 'apple') {
+    return (
+      <svg viewBox="0 0 32 32" className="h-9 w-9 shrink-0" aria-hidden="true">
+        <path d="M21.2 16.8c0-3 2.5-4.5 2.6-4.6-1.4-2.1-3.7-2.4-4.5-2.4-1.9-.2-3.7 1.1-4.7 1.1-1 0-2.5-1.1-4.1-1-2.1 0-4.1 1.2-5.2 3.1-2.2 3.8-.6 9.4 1.5 12.5 1 1.5 2.3 3.2 3.9 3.1 1.6-.1 2.2-1 4.1-1 1.9 0 2.4 1 4.1.9 1.7 0 2.8-1.5 3.8-3 1.2-1.7 1.7-3.4 1.7-3.5-.1 0-3.2-1.2-3.2-5.2Z" fill="currentColor" />
+        <path d="M18.2 7.9c.9-1.1 1.5-2.6 1.3-4.1-1.3.1-2.9.9-3.8 2-.8.9-1.5 2.5-1.3 3.9 1.5.1 2.9-.7 3.8-1.8Z" fill="currentColor" />
+      </svg>
+    );
+  }
+
   return (
-    <div className="sendflow-store-badge" aria-label={`Disponible sur ${store}`}>
-      {icon === 'play' && <span className="sendflow-play-icon" aria-hidden="true">▶</span>}
-      {icon === 'apple' && <span className="sendflow-apple-icon" aria-hidden="true">●</span>}
-      {icon === 'gallery' && <span className="sendflow-gallery-icon" aria-hidden="true">▣</span>}
+    <svg viewBox="0 0 32 32" className="h-9 w-9 shrink-0" aria-hidden="true">
+      <rect x="4" y="4" width="24" height="24" rx="7" fill="#E8CD4D" />
+      <path d="M10 11h12v10H10z" fill="#6D35D8" />
+      <path d="m13 13 6 3-6 3v-6Z" fill="#fff" />
+    </svg>
+  );
+}
+
+function StoreBadge({ store, icon, soonLabel, className = '' }: { store: string; icon: 'play' | 'apple' | 'gallery'; soonLabel?: string; className?: string }) {
+  return (
+    <div className={`sendflow-store-badge ${className}`} aria-label={`Disponible sur ${store}`}>
+      <StoreLogo icon={icon} />
       <span>
         <small>{icon === 'gallery' ? 'DÉCOUVREZ-LE SUR' : icon === 'play' ? 'DISPONIBLE SUR' : 'Télécharger sur'}</small>
-        <strong>{store}</strong>
+        <strong>{store}{soonLabel && <em className="sendflow-store-soon"> · {soonLabel}</em>}</strong>
       </span>
     </div>
   );
@@ -503,9 +531,9 @@ function LandingPage() {
             <h2 className="mt-5 max-w-[820px] text-6xl font-extrabold leading-[.86] tracking-[-.08em] sm:text-8xl">{isFrench ? <>Votre prochain transfert<br /><em className="font-serif font-normal text-[#e8cd4d]">commence ici.</em></> : <>Your next transfer<br /><em className="font-serif font-normal text-[#e8cd4d]">starts here.</em></>}</h2>
             <p className="mt-8 max-w-[540px] text-[17px] font-semibold leading-7 text-[#f4edff]">{isFrench ? 'Téléchargez bientôt l’application SendFlow et simplifiez vos transferts entre réseaux.' : 'Download the SendFlow app soon and simplify transfers across networks.'}</p>
             <button onClick={() => setSubmitted(true)} className="mt-8 rounded-full bg-[#e8cd4d] px-5 py-3.5 text-[13px] font-bold text-[#211d2c] transition-transform hover:-translate-y-0.5" data-testid="button-download-placeholder">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2 inline" size={15} /></button>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <span className="rounded-xl border border-[#fbf8ef]/25 px-3 py-2 text-[11px] font-semibold text-[#f4edff]">Google Play · bientôt</span>
-              <span className="rounded-xl border border-[#fbf8ef]/25 px-3 py-2 text-[11px] font-semibold text-[#f4edff]">App Store · bientôt</span>
+             <div className="mt-5 flex flex-wrap gap-3">
+               <StoreBadge store="Google Play" icon="play" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--dark" />
+               <StoreBadge store="App Store" icon="apple" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--dark" />
             </div>
              <div className="mt-10 grid items-end gap-1 sm:grid-cols-[1.1fr_.9fr] lg:absolute lg:right-8 lg:top-1/2 lg:mt-0 lg:w-[430px] lg:-translate-y-1/2">
                <img src={downloadSectionArt} alt={isFrench ? 'Application mobile SendFlow' : 'SendFlow mobile app'} className="h-48 w-full object-contain sm:h-60" />

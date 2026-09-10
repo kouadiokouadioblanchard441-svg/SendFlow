@@ -386,6 +386,33 @@ footer:not(.sendflow-reference-footer) {
   line-height: 1;
 }
 
+.sendflow-store-badge--large {
+  width: 198px;
+  min-height: 70px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  gap: 10px;
+}
+
+.sendflow-store-badge--large strong {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sendflow-store-badge--dark {
+  border-color: rgba(251, 248, 239, .38);
+  background: rgba(33, 29, 44, .18);
+  color: #fbf8ef;
+  box-shadow: 0 10px 24px rgba(33, 29, 44, .12);
+}
+
+.sendflow-store-soon {
+  color: #e8cd4d;
+  font-size: .78em;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .sendflow-play-icon,
 .sendflow-apple-icon,
 .sendflow-gallery-icon {
