@@ -42,7 +42,10 @@ function LegalLayout({ title, eyebrow, intro, children }: { title: string; eyebr
             </span>
             <img src={sendflowWordmark} alt="SendFlow" className="h-6 w-auto object-contain" />
           </Link>
-          <Link href="/" className="rounded-full border border-[#2d2535]/15 bg-white px-4 py-2 text-[12px] font-bold text-[#30283b] transition-colors hover:border-[#6d35d8] hover:text-[#6d35d8]">
+          <Link
+            href="/"
+            className="inline-flex min-w-[164px] items-center justify-center rounded-full border border-[#6d35d8] bg-[#6d35d8] px-5 py-2.5 text-center text-[12px] font-extrabold text-white shadow-[0_8px_18px_rgba(109,53,216,.2)] transition-all hover:border-[#5421b8] hover:bg-[#5421b8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6d35d8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f3e9]"
+          >
             Retour à l’accueil
           </Link>
         </div>
