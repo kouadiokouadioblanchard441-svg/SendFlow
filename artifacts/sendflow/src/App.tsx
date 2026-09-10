@@ -416,6 +416,7 @@ function LandingPage() {
                   <BrandLockup />
                 </div>
                 <div className="hero-globe-motion pointer-events-none absolute right-[4%] top-[3%] z-10 aspect-square w-[61%] rounded-full" aria-hidden="true">
+                  <img src={heroGlobe} alt="" className="hero-globe-motion__earth hero-globe-spin" />
                   <span className="hero-globe-motion__meridian hero-globe-motion__meridian--wide" />
                   <span className="hero-globe-motion__meridian hero-globe-motion__meridian--narrow" />
                 </div>
