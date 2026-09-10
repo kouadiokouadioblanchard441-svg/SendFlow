@@ -92,6 +92,7 @@
 @keyframes orbitSmall { from { transform: rotate(180deg) translateX(80px) rotate(-180deg); } to { transform: rotate(540deg) translateX(80px) rotate(-540deg); } }
 @keyframes pulseSoft { 0%, 100% { opacity: .45; transform: scale(.94); } 50% { opacity: 1; transform: scale(1); } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes marqueeReverse { from { transform: translateX(-50%); } to { transform: translateX(0); } }
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .75s ease, transform .75s ease; }
 .reveal-visible { opacity: 1; transform: translateY(0); }
 .rise { animation: rise .7s ease both; }
@@ -103,6 +104,7 @@
 .orbit-dot { animation: orbit 13s linear infinite; }
 .orbit-dot-small { animation: orbitSmall 9s linear infinite; }
 .marquee-track { animation: marquee 30s linear infinite; }
+.marquee-track--reverse { animation: marqueeReverse 30s linear infinite; }
 .noise::after { content: ''; pointer-events: none; position: fixed; inset: 0; opacity: .035; z-index: 50; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E"); }
 .link-underline { position: relative; }
 .link-underline::after { content: ''; position: absolute; left: 0; right: 0; bottom: -5px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform .25s ease; }
@@ -213,6 +215,7 @@ button[data-testid="button-submit-email"] {
 
 @media (prefers-reduced-motion: reduce) {
   .hero-globe-spin { animation: none; }
+  .marquee-track { animation: none; }
 }
 
 /* Product language: keep the CTA and footer focused on SendFlow itself. */
