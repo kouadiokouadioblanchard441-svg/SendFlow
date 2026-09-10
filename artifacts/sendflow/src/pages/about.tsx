@@ -15,7 +15,6 @@ import {
   MapPin,
   Network,
   Quote,
-  ShieldCheck,
   Sparkles,
   Target,
   UserRound,
@@ -23,6 +22,9 @@ import {
 } from 'lucide-react';
 import { SiGmail } from 'react-icons/si';
 import sendflowMark from '@assets/sendflow-mark-original.png';
+import crossNetworkIcon from '../assets/sendflow-icon-cross-network.svg';
+import internationalTransferIcon from '../assets/sendflow-icon-international-transfer.svg';
+import visibleDetailsIcon from '../assets/sendflow-icon-visible-details.svg';
 
 export type AboutLocale = 'fr' | 'en';
 
@@ -111,25 +113,19 @@ function Mark({ className = '' }: { className?: string }) {
 
 function Feature({
   icon: Icon,
+  iconAlt,
   title,
   description,
-  tone,
 }: {
-  icon: typeof Network;
+  icon: string;
+  iconAlt: string;
   title: string;
   description: string;
-  tone: 'violet' | 'mint' | 'yellow';
 }) {
-  const toneStyles: Record<typeof tone, CSSProperties> = {
-    violet: { backgroundColor: colors.violet, color: colors.paper },
-    mint: { backgroundColor: colors.mint, color: colors.navy },
-    yellow: { backgroundColor: colors.yellow, color: colors.navy },
-  };
-
   return (
     <article className="group rounded-[26px] border p-6 transition-transform duration-300 hover:-translate-y-1" style={{ borderColor: colors.line, backgroundColor: colors.paper }}>
-      <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-2xl" style={toneStyles[tone]}>
-        <Icon size={21} strokeWidth={1.8} />
+      <div className="mb-8 flex h-28 w-full items-center justify-center overflow-hidden rounded-2xl border bg-[#f7f3e9] px-3 py-2" style={{ borderColor: colors.line }}>
+        <img src={Icon} alt={iconAlt} className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]" />
       </div>
       <h3 className="font-serif text-[28px] leading-none tracking-[-0.04em]" style={{ color: colors.navy }}>
         {title}
@@ -355,8 +351,8 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <Feature
-            icon={Network}
-            tone="violet"
+            icon={crossNetworkIcon}
+            iconAlt={t({ fr: 'Icône SendFlow représentant des réseaux connectés', en: 'SendFlow icon representing connected networks' })}
             title={t({ fr: 'Un seul point de départ', en: 'One starting point' })}
             description={t({
               fr: 'Choisissez un pays, un réseau et un bénéficiaire depuis un parcours pensé pour être compris du premier coup.',
@@ -364,8 +360,8 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
             })}
           />
           <Feature
-            icon={ShieldCheck}
-            tone="mint"
+            icon={visibleDetailsIcon}
+            iconAlt={t({ fr: 'Icône SendFlow représentant des informations visibles et vérifiées', en: 'SendFlow icon representing visible and verified information' })}
             title={t({ fr: 'Une confiance lisible', en: 'Trust you can read' })}
             description={t({
               fr: 'Les informations essentielles restent visibles : qui reçoit, combien, quand et où en est le transfert.',
@@ -373,8 +369,8 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
             })}
           />
           <Feature
-            icon={Globe2}
-            tone="yellow"
+            icon={internationalTransferIcon}
+            iconAlt={t({ fr: 'Icône SendFlow représentant un transfert international', en: 'SendFlow icon representing an international transfer' })}
             title={t({ fr: 'Des frontières moins lourdes', en: 'Lighter borders' })}
             description={t({
               fr: 'SendFlow rapproche les réseaux locaux pour que la distance géographique ne dicte plus la distance humaine.',
