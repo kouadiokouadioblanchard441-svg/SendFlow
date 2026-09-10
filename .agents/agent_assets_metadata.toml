@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "-GpoWi-_k9h32D6_heY1n"
+uri = "file://attached_assets/sendflow-logo-professional.png"
+type = "image"
+title = "Logo SendFlow professionnel"
+description = "Version régénérée du logo SendFlow en bleu et bleu nuit, avec le symbole de circulation et le mot-symbole nettoyés."
+logical_id = "87634388-2758-49fb-8fe3-11478b2f6433"
+content_hash = "sha256:b3fca227ec508bf53627aab096c0eedda6ef3054bab4e5a5aed41fca60a71c75"
+size = 859570
+mtime_ms = 1788998585505
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/87634388-2758-49fb-8fe3-11478b2f6433/5b509501-bbb5-4fc3-ad4f-ef06df95e068"
+storage_version_token = "1788998679708119"
+content_type = "image/png"
