@@ -182,3 +182,17 @@ mtime_ms = 1789002743572
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/53a8691f-ce2d-4c59-8f00-89dfb0d64b5d/5186115a-80fc-4e99-bf4d-90115577da90"
 storage_version_token = "1789002756911917"
 content_type = "image/png"
+
+[[outputs]]
+id = "fx_CGysHZ0-DOanQjUixy"
+uri = "file://attached_assets/generated_images/sendflow-security-guardian-3d-transparent.png"
+type = "image"
+title = "Personnage 3D de sécurité SendFlow"
+description = "Personnage 3D transparent tenant le bouclier de protection, utilisé dans la section Sécurité."
+logical_id = "d0000118-b5a3-41c4-b7f5-7d40fb3dc969"
+content_hash = "sha256:09dfcaddbacf97b4ae8d8d2235366a93a953ed5fc83bbf5f3688d35f01d63429"
+size = 963425
+mtime_ms = 1789003533676
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/d0000118-b5a3-41c4-b7f5-7d40fb3dc969/4135fd92-388a-4c7c-8309-f86dcc7f17b0"
+storage_version_token = "1789003589352580"
+content_type = "image/png"

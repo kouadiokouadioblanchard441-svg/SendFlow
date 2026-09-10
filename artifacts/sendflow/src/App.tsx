@@ -13,6 +13,7 @@ import networkSectionArt from '@assets/generated_images/sendflow-section-network
 import howItWorksSectionArt from '@assets/generated_images/sendflow-section-how-it-works-3d-transparent.png';
 import internationalSectionArt from '@assets/generated_images/sendflow-section-international-3d-transparent.png';
 import securitySectionArt from '@assets/generated_images/sendflow-section-security-3d-transparent.png';
+import securityGuardianArt from '@assets/generated_images/sendflow-security-guardian-3d-transparent.png';
 import coverageSectionArt from '@assets/generated_images/sendflow-section-coverage-3d-transparent.png';
 import downloadSectionArt from '@assets/generated_images/sendflow-section-download-3d-transparent.png';
 
@@ -418,10 +419,14 @@ function LandingPage() {
           </div>
         </section>
 
-        <section id="security" className="overflow-hidden bg-[#d7eee8] px-5 py-24 sm:px-8 sm:py-32">
+        <section id="security" className="overflow-hidden px-5 py-24 sm:px-8 sm:py-32">
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[.9fr_1.1fr]">
-             <div className="reveal relative min-h-[300px]">
-               <img src={securitySectionArt} alt={isFrench ? 'Protection et sécurité des transferts' : 'Transfer protection and security'} className="absolute bottom-0 left-1/2 z-10 h-40 w-40 -translate-x-1/2 object-contain object-center sm:h-52 sm:w-52" />
+            <div className="reveal relative min-h-[430px] sm:min-h-[540px]">
+               <img src={securitySectionArt} alt={isFrench ? 'Protection et sécurité des transferts' : 'Transfer protection and security'} className="absolute bottom-0 left-1/2 z-10 h-[340px] w-[340px] -translate-x-1/2 object-contain object-center sm:h-[470px] sm:w-[470px]" />
+               <div className="absolute bottom-0 left-1/2 z-20 h-[390px] w-[390px] -translate-x-[34%] sm:h-[540px] sm:w-[540px]">
+                 <img src={securityGuardianArt} alt={isFrench ? 'Gardien 3D de la sécurité SendFlow' : '3D SendFlow security guardian'} className="h-full w-full object-contain object-center" />
+                 <img src={sendflowWordmark} alt="SendFlow" className="absolute left-[31%] top-[28%] z-30 w-20 object-contain drop-shadow-[0_2px_2px_rgba(30,20,80,.18)] sm:w-28" />
+               </div>
               <div className="absolute left-[12%] top-[15%] h-[210px] w-[210px] rounded-full border border-[#6d35d8]/25 sm:h-[290px] sm:w-[290px]" />
               <div className="absolute left-[20%] top-[23%] h-[165px] w-[165px] rounded-full border border-[#6d35d8]/25 sm:h-[225px] sm:w-[225px]" />
               <div className="absolute left-[30%] top-[34%] flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#6d35d8] text-[#fbf8ef] shadow-[0_18px_35px_rgba(109,53,216,.25)] sm:h-32 sm:w-32"><LockKeyhole size={34} strokeWidth={1.5} /></div>
