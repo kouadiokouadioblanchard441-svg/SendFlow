@@ -323,9 +323,9 @@ function LandingPage() {
             <button onClick={() => setMobileOpen(false)} className="rounded-full border border-[#2d2535]/10 p-2" data-testid="button-close-menu"><X size={19} /></button>
           </div>
           <div className="mt-16 flex flex-col gap-6">
-            {navItems.map((item, index) => <a key={item.id} href={`#${item.id}`} onClick={() => setMobileOpen(false)} className="flex items-center justify-between border-b border-[#2d2535]/10 pb-4 text-left text-2xl font-semibold tracking-[-.04em]" data-testid={`link-mobile-${item.id}`}>{t(item.label, language)}<span className="text-[#6d35d8]">0{index + 1}</span></a>)}
+            {navItems.map((item) => <a key={item.id} href={`#${item.id}`} onClick={() => setMobileOpen(false)} className="flex items-center border-b border-[#2d2535]/10 pb-4 text-left text-2xl font-semibold tracking-[-.04em]" data-testid={`link-mobile-${item.id}`}>{t(item.label, language)}</a>)}
           </div>
-          <button onClick={() => { setLanguage(isFrench ? 'en' : 'fr'); setMobileOpen(false); }} className="mt-12 flex items-center gap-2 text-sm font-semibold text-[#6d35d8]" data-testid="button-mobile-language"><Globe2 size={16} /> {isFrench ? 'Passer en anglais' : 'Switch to French'}</button>
+          <button onClick={() => { setLanguage(isFrench ? 'en' : 'fr'); setMobileOpen(false); }} className="mt-12 flex items-center gap-2 text-sm font-semibold text-[#6d35d8]" data-testid="button-mobile-language"><span aria-hidden="true">{isFrench ? '🇬🇧' : '🇫🇷'}</span> {isFrench ? 'Passer en anglais' : 'Switch to French'}</button>
           <button onClick={() => goTo('join')} className="mt-5 w-full rounded-full bg-[#6d35d8] px-5 py-4 text-sm font-semibold text-[#fbf8ef]" data-testid="button-mobile-download">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2 inline" size={16} /></button>
         </div>
       </div>}
