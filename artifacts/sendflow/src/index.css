@@ -823,13 +823,18 @@ section#faq .reveal.space-y-2 > div {
   --admin-subtle: #667386;
   --admin-faint: #93a0af;
   --admin-line: #e2e8ef;
-  --admin-paper: #f6f8fb;
+  --admin-paper: #f6f8fc;
   --admin-surface: #ffffff;
   --admin-blue: #1769ff;
+  --admin-blue-hover: #0d55d6;
   --admin-blue-soft: #eaf2ff;
-  --admin-mint: #d9f0e9;
-  --admin-yellow: #f6e7ac;
-  --admin-lilac: #e9e3f7;
+  --admin-violet: #6d35d8;
+  --admin-violet-soft: #f0eaff;
+  --admin-mint: #67d4ab;
+  --admin-mint-soft: #e5f6ef;
+  --admin-yellow: #e8cd4d;
+  --admin-yellow-soft: #fff8d9;
+  --admin-lilac: #a995da;
   display: flex;
   min-height: 100dvh;
   background: var(--admin-paper);
@@ -847,7 +852,7 @@ section#faq .reveal.space-y-2 > div {
   display: flex;
   width: 244px;
   flex-direction: column;
-  background: #192231;
+  background: linear-gradient(165deg, #192231 0%, #211d2c 70%, #302047 100%);
   color: #edf3fa;
   padding: 25px 15px 18px;
   transition: transform .22s ease;
@@ -868,8 +873,8 @@ section#faq .reveal.space-y-2 > div {
   border: 0; border-radius: 8px; background: transparent; color: #aeb9c7; cursor: pointer; text-align: left; font-size: 12px;
 }
 .sendflow-admin-nav button svg:last-child { margin-left: auto; }
-.sendflow-admin-nav button:hover { background: rgba(255,255,255,.06); color: #fff; }
-.sendflow-admin-nav button.is-active { background: #26344a; color: #fff; box-shadow: inset 3px 0 var(--admin-blue); }
+.sendflow-admin-nav button:hover { background: rgba(109,53,216,.2); color: #fff; }
+.sendflow-admin-nav button.is-active { background: linear-gradient(90deg, rgba(23,105,255,.28), rgba(109,53,216,.34)); color: #fff; box-shadow: inset 3px 0 var(--admin-yellow); }
 .sendflow-admin-sidebar-bottom { margin-top: auto; padding: 14px 10px 0; color: #aeb9c7; font-size: 10px; line-height: 2; }
 .sendflow-admin-sidebar-bottom > div { display: flex; align-items: center; gap: 5px; color: #718095; }
 .sendflow-admin-status-dot, .sendflow-admin-live-dot { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: #67d4ab; box-shadow: 0 0 0 3px rgba(103,212,171,.12); }
@@ -900,9 +905,9 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-button:hover:not(:disabled) { transform: translateY(-1px); }
 .sendflow-admin-button:disabled { cursor: not-allowed; opacity: .55; }
 .sendflow-admin-button-primary { background: var(--admin-blue); color: #fff; box-shadow: 0 8px 18px rgba(23,105,255,.16); }
-.sendflow-admin-button-primary:hover:not(:disabled) { background: #0e58dd; }
-.sendflow-admin-button-quiet { border-color: var(--admin-line); background: var(--admin-surface); color: var(--admin-ink); }
-.sendflow-admin-button-quiet:hover:not(:disabled) { border-color: #bfcbd8; background: #f9fbfd; }
+.sendflow-admin-button-primary:hover:not(:disabled) { background: var(--admin-violet); }
+.sendflow-admin-button-quiet { border-color: #d8d0ee; background: var(--admin-surface); color: var(--admin-violet); }
+.sendflow-admin-button-quiet:hover:not(:disabled) { border-color: var(--admin-violet); background: var(--admin-violet-soft); }
 .sendflow-admin-button-full { width: 100%; margin-top: 15px; }
 .sendflow-admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 34px; }
 .sendflow-admin-stat { display: flex; align-items: center; gap: 14px; min-height: 83px; border: 1px solid var(--admin-line); border-radius: 11px; background: var(--admin-surface); padding: 15px 17px; }
@@ -917,7 +922,7 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-workspace { margin-top: 28px; border: 1px solid var(--admin-line); border-radius: 13px; background: var(--admin-surface); padding: 25px 25px 12px; box-shadow: 0 15px 35px rgba(33,51,75,.035); }
 .sendflow-admin-section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .sendflow-admin-section-title { display: flex; align-items: center; gap: 12px; }
-.sendflow-admin-section-icon { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 9px; background: var(--admin-blue-soft); color: var(--admin-blue); }
+.sendflow-admin-section-icon { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 9px; background: var(--admin-violet-soft); color: var(--admin-violet); }
 .sendflow-admin-section-title h2 { margin: 0; font-size: 17px; letter-spacing: -.035em; }
 .sendflow-admin-section-title p { margin: 4px 0 0; color: var(--admin-subtle); font-size: 11px; }
 .sendflow-admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin: 25px 0 11px; padding-top: 15px; border-top: 1px solid #edf0f4; }
@@ -933,7 +938,7 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-actions-heading { width: 115px; }
 .sendflow-admin-row-actions { display: flex; justify-content: flex-end; gap: 3px; }
 .sendflow-admin-icon-button { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #8491a2; cursor: pointer; }
-.sendflow-admin-icon-button:hover { border-color: var(--admin-line); background: #f7f9fb; color: var(--admin-blue); }
+.sendflow-admin-icon-button:hover { border-color: #cfc3ee; background: var(--admin-violet-soft); color: var(--admin-violet); }
 .sendflow-admin-icon-button.danger:hover { color: #d55a61; }
 .sendflow-admin-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 30px; background: #e5f6ef; padding: 4px 7px; color: #26765d; font-size: 9px; font-weight: 700; }
 .sendflow-admin-pill > span { width: 5px; height: 5px; border-radius: 50%; background: #47b78f; }
@@ -948,17 +953,17 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-empty-state h3 { margin: 14px 0 5px; color: var(--admin-ink); font-size: 15px; }
 .sendflow-admin-empty-state p { max-width: 350px; margin: 0 0 15px; color: var(--admin-subtle); font-size: 11px; line-height: 1.6; }
 .sendflow-admin-error-state .sendflow-admin-empty-icon { background: #fff0ed; color: #c35b4c; }
-.sendflow-admin-assignment { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; margin-top: 23px; border: 1px solid #dce7f5; border-radius: 10px; background: #f7faff; padding: 17px; }
+.sendflow-admin-assignment { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; margin-top: 23px; border: 1px solid #d6c9f1; border-radius: 10px; background: linear-gradient(135deg, #f7faff, #fbf9ff); padding: 17px; }
 .sendflow-admin-assignment-head { display: flex; justify-content: space-between; grid-column: 1 / -1; color: var(--admin-blue); }
 .sendflow-admin-assignment-head h3 { margin: 2px 0 0; color: var(--admin-ink); font-size: 15px; }
 .sendflow-admin-assignment-head h3 span { margin-left: 5px; color: var(--admin-faint); font-size: 10px; font-weight: 500; letter-spacing: .08em; }
 .sendflow-admin-assignment > p { margin: 0; color: var(--admin-subtle); font-size: 11px; line-height: 1.5; }
 .sendflow-admin-check-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .sendflow-admin-check-row { display: flex; align-items: center; gap: 7px; min-height: 29px; border: 1px solid transparent; border-radius: 6px; padding: 0 7px; color: #596779; cursor: pointer; font-size: 11px; }
-.sendflow-admin-check-row:hover, .sendflow-admin-check-row.is-checked { border-color: #d8e5f7; background: #fff; color: var(--admin-ink); }
+.sendflow-admin-check-row:hover, .sendflow-admin-check-row.is-checked { border-color: #cfc3ee; background: #fff; color: var(--admin-ink); }
 .sendflow-admin-check-row input { position: absolute; opacity: 0; pointer-events: none; }
 .sendflow-admin-check-box { display: grid; place-items: center; width: 15px; height: 15px; border: 1px solid #b9c6d6; border-radius: 4px; color: #fff; }
-.sendflow-admin-check-row.is-checked .sendflow-admin-check-box { border-color: var(--admin-blue); background: var(--admin-blue); }
+.sendflow-admin-check-row.is-checked .sendflow-admin-check-box { border-color: var(--admin-violet); background: var(--admin-violet); }
 .sendflow-admin-check-row small { margin-left: auto; color: var(--admin-faint); font-size: 9px; }
 .sendflow-admin-empty-small { grid-column: 1 / -1; color: var(--admin-subtle); font-size: 11px; }
 .sendflow-admin-country-switcher { display: flex; align-items: center; gap: 8px; color: var(--admin-subtle); font-size: 10px; }
@@ -979,7 +984,7 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-field-wide { grid-column: 1 / -1; }
 .sendflow-admin-field input, .sendflow-admin-field textarea, .sendflow-admin-field select { width: 100%; border: 1px solid #dce3eb; border-radius: 7px; outline: 0; background: #fbfcfd; color: var(--admin-ink); padding: 9px 10px; font-size: 12px; font-weight: 500; transition: border-color .18s ease, box-shadow .18s ease; }
 .sendflow-admin-field textarea { min-height: 89px; resize: vertical; line-height: 1.5; }
-.sendflow-admin-field input:focus, .sendflow-admin-field textarea:focus, .sendflow-admin-field select:focus { border-color: var(--admin-blue); box-shadow: 0 0 0 3px rgba(23,105,255,.1); }
+.sendflow-admin-field input:focus, .sendflow-admin-field textarea:focus, .sendflow-admin-field select:focus { border-color: var(--admin-violet); box-shadow: 0 0 0 3px rgba(109,53,216,.13); }
 .sendflow-admin-toggle-field { display: flex; align-items: center; justify-content: space-between; grid-column: 1 / -1; border-top: 1px solid #edf0f4; padding-top: 15px; cursor: pointer; }
 .sendflow-admin-toggle-field strong, .sendflow-admin-toggle-field small { display: block; }
 .sendflow-admin-toggle-field strong { color: #617084; font-size: 10px; }
@@ -998,6 +1003,66 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-gate-card > p:not(.sendflow-admin-overline) { margin: 0; color: var(--admin-subtle); font-size: 13px; line-height: 1.6; }
 .sendflow-admin-gate-card > div { display: flex; gap: 8px; margin-top: 25px; }
 .sendflow-admin-gate-card > div a { text-decoration: none; }
+
+.sendflow-admin-auth {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(232,205,77,.28), transparent 28%),
+    radial-gradient(circle at 85% 82%, rgba(109,53,216,.28), transparent 34%),
+    linear-gradient(135deg, #f6f8fc 0%, #edf4ff 100%);
+  padding: 24px;
+}
+.sendflow-admin-auth-card {
+  width: min(440px, 100%);
+  border: 1px solid rgba(109,53,216,.18);
+  border-radius: 26px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 24px 70px rgba(33,29,44,.14), 0 0 0 8px rgba(23,105,255,.04);
+  padding: 30px;
+}
+.sendflow-admin-auth-card > div:first-child {
+  color: var(--admin-violet) !important;
+}
+.sendflow-admin-auth-input {
+  width: 100%;
+  border: 1px solid #d8d0ee;
+  border-radius: 12px;
+  background: #fbfaff;
+  color: var(--admin-ink);
+  outline: 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.sendflow-admin-auth-input:focus {
+  border-color: var(--admin-blue);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(23,105,255,.12);
+}
+.sendflow-admin-auth-submit {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(100deg, var(--admin-blue), var(--admin-violet));
+  color: #fff;
+  cursor: pointer;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(23,105,255,.2);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+.sendflow-admin-auth-submit:hover:not(:disabled) {
+  filter: saturate(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 15px 28px rgba(109,53,216,.24);
+}
+.sendflow-admin-auth-submit:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
 @media (max-width: 900px) {
   .sendflow-admin-sidebar { width: 220px; }
   .sendflow-admin-main { width: calc(100% - 220px); margin-left: 220px; }

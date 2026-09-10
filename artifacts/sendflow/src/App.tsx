@@ -399,8 +399,8 @@ function AdminRoute() {
   if (adminSession.isPending) return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] text-sm text-[#667386]">Chargement de la session…</div>;
   if (adminSession.isError) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4 py-10">
-        <div className="w-full max-w-[440px] rounded-3xl border border-[#e2e8ef] bg-white p-5 shadow-[0_20px_60px_rgba(20,35,60,.1)] sm:p-8">
+      <div className="sendflow-admin-auth">
+        <div className="sendflow-admin-auth-card">
           <div className="mb-4 flex items-center gap-2 px-1 text-sm font-bold text-[#192231]">
             <LockKeyhole className="text-[#1769ff]" size={19} />
             Connexion au panel administrateur
@@ -448,14 +448,14 @@ function AdminLoginForm() {
       <p className="text-sm leading-6 text-[#667386]">Utilisez le compte administrateur autorisé pour gérer le contenu de SendFlow.</p>
       <label className="block">
         <span className="mb-2 block text-sm font-semibold text-[#192231]">Email administrateur</span>
-        <input
+          <input
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="username"
           required
           placeholder="admin@exemple.com"
-          className="w-full rounded-xl border border-[#dbe3ee] bg-[#f8fafc] px-4 py-3 text-sm text-[#192231] outline-none transition focus:border-[#1769ff] focus:ring-4 focus:ring-[#1769ff]/10"
+          className="sendflow-admin-auth-input"
         />
       </label>
       <label className="block">
@@ -467,14 +467,14 @@ function AdminLoginForm() {
           autoComplete="current-password"
           required
           placeholder="Votre mot de passe"
-          className="w-full rounded-xl border border-[#dbe3ee] bg-[#f8fafc] px-4 py-3 text-sm text-[#192231] outline-none transition focus:border-[#1769ff] focus:ring-4 focus:ring-[#1769ff]/10"
+          className="sendflow-admin-auth-input"
         />
       </label>
       {error && <p role="alert" className="rounded-xl bg-[#fff1f1] px-4 py-3 text-sm font-medium leading-5 text-[#b42318]">{error}</p>}
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-xl bg-[#1769ff] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0d55d6] disabled:cursor-not-allowed disabled:opacity-60"
+        className="sendflow-admin-auth-submit"
       >
         {isSubmitting ? 'Connexion…' : 'Se connecter au panel'}
       </button>
