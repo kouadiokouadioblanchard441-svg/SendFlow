@@ -368,7 +368,6 @@ function App() {
               <Route path="/confidentialite" component={PrivacyPage} />
               <Route path="/mentions-legales" component={LegalMentionsPage} />
               <Route path="/panel/:token/:email" component={PanelRoute} />
-              <Route path="/admin" component={AdminEntryRoute} />
               <Route component={NotFound} />
             </Switch>
             <Toaster />
@@ -385,10 +384,6 @@ function SignInPage() {
 
 function SignUpPage() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
-}
-
-function AdminEntryRoute() {
-  return <PanelUrlRequired />;
 }
 
 function PanelUrlRequired() {
