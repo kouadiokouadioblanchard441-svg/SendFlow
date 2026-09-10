@@ -243,6 +243,12 @@ button[data-testid="button-submit-email"] {
   will-change: transform;
 }
 
+.hero-globe-motion__badge-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+}
+
 .hero-globe-motion__earth {
   position: absolute;
   inset: 5%;

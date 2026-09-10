@@ -135,11 +135,11 @@ const operatorLogoMarks: Record<string, OperatorLogo> = {
 };
 
 const heroOperatorBadges = [
-  { network: 'Orange', position: 'left-[5%] top-[39%]' },
-  { network: 'MTN', position: 'left-[27%] top-[9%]' },
+  { network: 'Orange', position: 'left-[54%] top-[39%]' },
+  { network: 'MTN', position: 'left-[37%] top-[9%]' },
   { network: 'Wave', position: 'right-[3%] top-[32%]' },
   { network: 'Moov Africa', position: 'right-[9%] bottom-[17%]' },
-  { network: 'Airtel', position: 'left-[22%] bottom-[7%]' },
+  { network: 'Airtel', position: 'left-[54%] bottom-[7%]' },
 ];
 
 function OperatorRow({ network }: { network: string }) {
@@ -426,6 +426,8 @@ function LandingPage() {
                  <div className="hero-globe-motion pointer-events-none absolute right-[4%] top-[3%] z-10 aspect-square w-[61%] rounded-full" aria-hidden="true">
                    <div className="hero-globe-motion__surface hero-globe-spin">
                      <img src={heroGlobe} alt="" className="hero-globe-motion__earth" />
+                   </div>
+                   <div className="hero-globe-motion__badge-layer">
                      {heroOperatorBadges.map(({ network, position }, index) => {
                        const logo = operatorLogoMarks[network];
                        return (
