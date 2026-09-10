@@ -284,7 +284,7 @@ function LandingPage() {
       </div>}
 
       <main id="top">
-        <section className="relative overflow-hidden px-5 pb-20 pt-36 sm:px-8 sm:pb-28 sm:pt-44">
+        <section className="relative overflow-hidden px-5 pb-10 pt-36 sm:px-8 sm:pb-16 sm:pt-44">
           <div className="absolute -right-32 top-24 h-[430px] w-[430px] rounded-full bg-[#d4f0e9] opacity-70 blur-3xl" />
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[1.04fr_.96fr] lg:gap-8">
             <div className="relative z-10 max-w-[680px]">
@@ -323,12 +323,9 @@ function LandingPage() {
               <div className="absolute bottom-[8%] left-[18%] rounded-full border border-[#2d2535]/10 bg-[#fbf8ef]/70 px-3 py-1.5 text-[10px] text-[#5e5766] backdrop-blur-sm">+ 19 connexions possibles</div>
             </div>
           </div>
-          <div className="mx-auto mt-18 max-w-[1240px] border-t border-[#2d2535]/10 pt-5">
-            <div className="flex flex-wrap items-center gap-x-7 gap-y-3 text-[11px] font-semibold text-[#8d8792]"><span>{isFrench ? 'Pensé pour les mouvements qui comptent' : 'Built for the moves that matter'}</span><span className="h-1 w-1 rounded-full bg-[#6d35d8]" /><span>Abidjan</span><span>Dakar</span><span>Accra</span><span>Nairobi</span></div>
-          </div>
         </section>
 
-        <section id="features-cards" className="px-5 py-24 sm:px-8 sm:py-32">
+        <section id="features-cards" className="px-5 py-16 sm:px-8 sm:py-24">
           <div className="mx-auto max-w-[1240px]">
             <div className="reveal max-w-[720px]">
               <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]">01 / {isFrench ? 'Le point de départ' : 'The starting point'}</p>
