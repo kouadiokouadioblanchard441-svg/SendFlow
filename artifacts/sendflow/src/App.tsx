@@ -16,6 +16,11 @@ import securitySectionArt from '@assets/generated_images/sendflow-section-securi
 import securityGuardianArt from '@assets/generated_images/sendflow-security-guardian-3d-transparent.png';
 import coverageSectionArt from '@assets/generated_images/sendflow-section-coverage-3d-transparent.png';
 import downloadSectionArt from '@assets/generated_images/sendflow-section-download-3d-transparent.png';
+import networkPersonArt from '@assets/generated_images/sendflow-network-person-3d-transparent.png';
+import howPersonArt from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
+import internationalPersonArt from '@assets/generated_images/sendflow-international-person-3d-transparent.png';
+import coveragePersonArt from '@assets/generated_images/sendflow-coverage-person-3d-transparent.png';
+import downloadPersonArt from '@assets/generated_images/sendflow-download-person-3d-transparent.png';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +36,18 @@ function BrandLockup() {
       </span>
       <img src={sendflowWordmark} alt="SendFlow" className="h-5 w-auto object-contain" />
     </span>
+  );
+}
+
+function BrandedCharacter({ src, alt, className = '' }: { src: string; alt: string; className?: string }) {
+  return (
+    <div className={`relative flex min-w-0 items-end justify-center ${className}`}>
+      <img src={src} alt={alt} className="h-40 w-full object-contain sm:h-52" />
+      <span className="absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#6d35d8]/20 bg-white px-2.5 py-1.5 shadow-[0_8px_18px_rgba(80,40,170,.16)]">
+        <img src={sendflowMark} alt="" className="h-4 w-4 object-contain" />
+        <img src={sendflowWordmark} alt="SendFlow" className="h-3.5 w-auto object-contain" />
+      </span>
+    </div>
   );
 }
 
@@ -341,7 +358,10 @@ function LandingPage() {
               <p className="mt-6 max-w-[520px] text-[15px] leading-7 text-[#5e5766]">{isFrench ? 'Envoyer de l’argent ne devrait pas dépendre du réseau utilisé par votre proche. SendFlow imagine un passage plus simple, plus lisible et plus direct.' : 'Sending money should not depend on the network your loved one uses. SendFlow imagines a simpler, clearer, more direct path.'}</p>
             </div>
             <div className="reveal mt-10 overflow-hidden rounded-[28px] border border-[#6d35d8]/10 bg-[#fbf8ef] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
-              <img src={networkSectionArt} alt={isFrench ? 'Réseaux de paiement interconnectés' : 'Interconnected payment networks'} className="mx-auto h-52 w-full object-contain p-5 sm:h-64 sm:p-8" />
+              <div className="grid items-center gap-2 p-4 sm:grid-cols-[1.25fr_.75fr] sm:p-6">
+                <img src={networkSectionArt} alt={isFrench ? 'Réseaux de paiement interconnectés' : 'Interconnected payment networks'} className="mx-auto h-52 w-full object-contain sm:h-64" />
+                <BrandedCharacter src={networkPersonArt} alt={isFrench ? 'Personne SendFlow aux côtés des réseaux interconnectés' : 'SendFlow person beside interconnected networks'} className="h-52 sm:h-64" />
+              </div>
             </div>
             <div className="reveal mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
@@ -373,7 +393,10 @@ function LandingPage() {
                 {[{ n: '01', title: { fr: 'Choisissez', en: 'Choose' }, text: { fr: 'Votre pays, votre réseau, votre destination.', en: 'Your country, your network, your destination.' }, icon: Globe2 }, { n: '02', title: { fr: 'Vérifiez', en: 'Check' }, text: { fr: 'Le montant et le chemin, sans surprise.', en: 'The amount and the path, no surprises.' }, icon: Sparkles }, { n: '03', title: { fr: 'Envoyez', en: 'Send' }, text: { fr: 'Un dernier regard. Puis, c’est parti.', en: 'One last look. Then, it moves.' }, icon: ArrowDownRight }].map((step) => <div key={step.n} className="group rounded-[24px] border border-[#fbf8ef]/15 bg-[#2b2638] p-5 transition-colors hover:border-[#9adacb]/60 sm:p-6"><div className="flex items-start justify-between"><span className="text-[11px] font-bold text-[#9adacb]">{step.n}</span><step.icon size={19} className="text-[#e8cd4d] transition-transform group-hover:rotate-12" /></div><h3 className="mt-20 text-xl font-semibold tracking-[-.04em]">{t(step.title, language)}</h3><p className="mt-3 text-[13px] leading-5 text-[#bcb6c5]">{t(step.text, language)}</p></div>)}</div>
              </div>
              <div className="reveal mt-12 overflow-hidden rounded-[28px] border border-[#fbf8ef]/15 bg-[#2b2638] p-4 sm:p-6">
-               <img src={howItWorksSectionArt} alt={isFrench ? 'Parcours de transfert en trois étapes' : 'Three-step transfer journey'} className="mx-auto h-48 w-full object-contain sm:h-64" />
+               <div className="grid items-center gap-2 sm:grid-cols-[1.25fr_.75fr]">
+                 <img src={howItWorksSectionArt} alt={isFrench ? 'Parcours de transfert en trois étapes' : 'Three-step transfer journey'} className="mx-auto h-48 w-full object-contain sm:h-64" />
+                 <BrandedCharacter src={howPersonArt} alt={isFrench ? 'Personne SendFlow qui guide le parcours de transfert' : 'SendFlow person guiding the transfer journey'} className="h-48 sm:h-64" />
+               </div>
              </div>
              <div className="reveal mt-20 grid items-center gap-8 border-t border-[#fbf8ef]/15 pt-7 sm:grid-cols-[1fr_auto]"><div className="flex items-center gap-4"><div className="flex -space-x-2"><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#e8cd4d] text-[10px] font-bold">CI</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#9adacb] text-[10px] font-bold">SN</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#b69de5] text-[10px] font-bold">GH</span></div><p className="text-[12px] text-[#bcb6c5]">{isFrench ? 'Une idée née entre plusieurs rives.' : 'An idea born between several shores.'}</p></div><span className="text-[11px] font-semibold uppercase tracking-[.12em] text-[#e8cd4d]">{isFrench ? 'Pensé pour une Afrique connectée' : 'Built for a connected Africa'}</span></div>
           </div>
@@ -396,10 +419,16 @@ function LandingPage() {
              </div>
              <div className="reveal mt-12 grid gap-4 sm:grid-cols-2">
                <div className="overflow-hidden rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
-                 <img src={internationalSectionArt} alt={isFrench ? 'Transferts internationaux autour de l’Afrique' : 'International transfers around Africa'} className="h-52 w-full object-contain p-5 sm:h-60 sm:p-7" />
+                 <div className="grid items-center gap-1 p-4 sm:grid-cols-[1.15fr_.85fr] sm:p-5">
+                   <img src={internationalSectionArt} alt={isFrench ? 'Transferts internationaux autour de l’Afrique' : 'International transfers around Africa'} className="h-52 w-full object-contain sm:h-60" />
+                   <BrandedCharacter src={internationalPersonArt} alt={isFrench ? 'Personne SendFlow pour les transferts internationaux' : 'SendFlow person for international transfers'} className="h-52 sm:h-60" />
+                 </div>
                </div>
                <div className="overflow-hidden rounded-[28px] border border-[#2d2535]/10 bg-[#d7eee8] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
-                 <img src={coverageSectionArt} alt={isFrench ? 'Couverture africaine de SendFlow' : 'SendFlow African coverage'} className="h-52 w-full object-contain p-5 sm:h-60 sm:p-7" />
+                 <div className="grid items-center gap-1 p-4 sm:grid-cols-[1.15fr_.85fr] sm:p-5">
+                   <img src={coverageSectionArt} alt={isFrench ? 'Couverture africaine de SendFlow' : 'SendFlow African coverage'} className="h-52 w-full object-contain sm:h-60" />
+                   <BrandedCharacter src={coveragePersonArt} alt={isFrench ? 'Ambassadrice SendFlow pour la couverture africaine' : 'SendFlow ambassador for African coverage'} className="h-52 sm:h-60" />
+                 </div>
                </div>
              </div>
              <div id="international" className="reveal mt-12 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
@@ -453,8 +482,9 @@ function LandingPage() {
               <span className="rounded-xl border border-[#fbf8ef]/25 px-3 py-2 text-[11px] font-semibold text-[#f4edff]">Google Play · bientôt</span>
               <span className="rounded-xl border border-[#fbf8ef]/25 px-3 py-2 text-[11px] font-semibold text-[#f4edff]">App Store · bientôt</span>
             </div>
-             <div className="mt-10 flex justify-center lg:absolute lg:right-10 lg:top-1/2 lg:mt-0 lg:-translate-y-1/2">
-               <img src={downloadSectionArt} alt={isFrench ? 'Application mobile SendFlow' : 'SendFlow mobile app'} className="h-48 w-48 object-contain sm:h-60 sm:w-60" />
+             <div className="mt-10 grid items-end gap-1 sm:grid-cols-[1.1fr_.9fr] lg:absolute lg:right-8 lg:top-1/2 lg:mt-0 lg:w-[430px] lg:-translate-y-1/2">
+               <img src={downloadSectionArt} alt={isFrench ? 'Application mobile SendFlow' : 'SendFlow mobile app'} className="h-48 w-full object-contain sm:h-60" />
+               <BrandedCharacter src={downloadPersonArt} alt={isFrench ? 'Personne SendFlow avec l’application mobile' : 'SendFlow person with the mobile app'} className="h-48 sm:h-60" />
              </div>
           </div>
         </section>
