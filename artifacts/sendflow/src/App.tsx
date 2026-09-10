@@ -412,7 +412,7 @@ function LandingPage() {
                  alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
                   className="h-full w-full object-cover"
                />
-                <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center rounded-full border border-[#6d35d8]/20 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.16)] backdrop-blur-sm" aria-label="SendFlow">
+                <div className="pointer-events-none absolute right-4 top-4 z-10 flex items-center rounded-full border border-[#6d35d8]/20 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.16)] backdrop-blur-sm" aria-label="SendFlow">
                   <BrandLockup />
                 </div>
                 <div className="hero-globe-motion pointer-events-none absolute right-[4%] top-[3%] z-10 aspect-square w-[61%] rounded-full" aria-hidden="true">
