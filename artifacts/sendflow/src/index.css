@@ -203,13 +203,106 @@ button[data-testid="button-submit-email"] {
   color: #ffffff !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero-video { display: none; }
-  .hero-video-poster { display: block; }
-  .marquee-track { animation: none; }
+.hero-globe-spin {
+  animation: hero-globe-spin 22s linear infinite;
+  transform-origin: center;
 }
 
-.hero-video-poster { display: block; }
+@keyframes hero-globe-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hero-globe-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hero-globe-meridian-wide {
+  0%, 100% { opacity: .2; transform: translateX(-50%) scaleX(.18); }
+  50% { opacity: .72; transform: translateX(-50%) scaleX(1); }
+}
+
+@keyframes hero-globe-meridian-narrow {
+  0%, 100% { opacity: .68; transform: translateX(-50%) scaleX(1); }
+  50% { opacity: .2; transform: translateX(-50%) scaleX(.18); }
+}
+
+.hero-globe-motion {
+  overflow: hidden;
+  border: 1px solid rgba(224, 210, 255, .5);
+  box-shadow: inset 0 0 30px rgba(172, 124, 255, .2), 0 0 24px rgba(156, 95, 255, .16);
+  mix-blend-mode: screen;
+}
+
+.hero-globe-motion__earth {
+  position: absolute;
+  inset: 5%;
+  height: 90%;
+  width: 90%;
+  object-fit: contain;
+  opacity: .34;
+  filter: saturate(1.25) contrast(1.08);
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.hero-globe-motion::before {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  background: conic-gradient(
+    from 25deg,
+    transparent 0deg 42deg,
+    rgba(255, 255, 255, .86) 62deg,
+    rgba(190, 137, 255, .72) 78deg,
+    transparent 100deg 218deg,
+    rgba(255, 255, 255, .58) 242deg,
+    transparent 270deg 360deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 56%, #000 57%, #000 63%, transparent 64%);
+  mask: radial-gradient(circle, transparent 56%, #000 57%, #000 63%, transparent 64%);
+  animation: hero-globe-sweep 8s linear infinite;
+}
+
+.hero-globe-motion::after {
+  content: '';
+  position: absolute;
+  inset: 4%;
+  border: 1px solid rgba(255, 255, 255, .46);
+  border-left-color: rgba(169, 105, 255, .85);
+  border-right-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-18deg);
+  animation: hero-globe-sweep 11s linear infinite reverse;
+}
+
+.hero-globe-motion__meridian {
+  position: absolute;
+  top: -8%;
+  bottom: -8%;
+  left: 50%;
+  width: 76%;
+  border: 1px solid rgba(255, 255, 255, .65);
+  border-radius: 50%;
+  transform-origin: center;
+}
+
+.hero-globe-motion__meridian--wide {
+  animation: hero-globe-meridian-wide 5.5s ease-in-out infinite;
+}
+
+.hero-globe-motion__meridian--narrow {
+  animation: hero-globe-meridian-narrow 5.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-globe-spin,
+  .hero-globe-motion::before,
+  .hero-globe-motion::after,
+  .hero-globe-motion__meridian { animation: none; }
+  .marquee-track { animation: none; }
+}
 
 /* Product language: keep the CTA and footer focused on SendFlow itself. */
 #join p.mt-4 {

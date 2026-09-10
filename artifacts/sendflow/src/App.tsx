@@ -384,7 +384,21 @@ function LandingPage() {
         <section className="relative overflow-hidden px-5 pb-10 pt-36 sm:px-8 sm:pb-16 sm:pt-44">
           <div className="absolute -right-32 top-24 h-[430px] w-[430px] rounded-full bg-[#d4f0e9] opacity-70 blur-3xl" />
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[1.04fr_.96fr] lg:gap-8">
-             <div className="order-2 relative z-10 max-w-[680px] lg:order-1">
+            <div className="relative z-10 max-w-[680px]">
+              <div className="rise relative mb-7 aspect-[1.45/1] w-full max-w-[640px] overflow-hidden rounded-[34px] border border-[#6d35d8]/10 bg-white shadow-[0_22px_55px_rgba(75,44,180,.1)]" data-testid="hero-image-slot">
+                <img src={heroPlaceholder} alt={isFrench ? 'Illustration temporaire du passage entre plusieurs réseaux' : 'Temporary illustration of a path across multiple networks'} className="h-full w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                  <div className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-[#6d35d8]/15 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.1)] backdrop-blur-sm">
+                    <BrandLockup />
+                  </div>
+                  {countries.filter((country) => heroCountryPositions[country.code]).map((country) => <div key={country.code} className={`absolute ${heroCountryPositions[country.code]} flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-2 py-1 text-[10px] font-bold text-[#211d2c] shadow-[0_8px_18px_rgba(20,30,80,.12)]`}><span className="text-sm leading-none">{country.flag}</span><span className="hidden sm:inline">{country.name}</span></div>)}
+                </div>
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+                  <span className="hero-globe-spin block h-32 w-32 sm:h-48 sm:w-48">
+                    <img src={heroGlobe} alt={isFrench ? 'Terre centrée sur l’Afrique' : 'Earth centered on Africa'} className="h-full w-full object-contain drop-shadow-[0_10px_16px_rgba(20,50,150,.22)]" />
+                  </span>
+                </div>
+              </div>
               <h1 className="rise delay-1 mt-6 max-w-[760px] text-[clamp(3.7rem,9vw,7.6rem)] font-extrabold leading-[.88] tracking-[-.09em] text-[#17131f]">{isFrench ? <>L’argent circule.<br /><em className="font-serif font-normal text-[#5b21b6]">Les réseaux</em> aussi.</> : <>Money moves.<br /><em className="font-serif font-normal text-[#5b21b6]">Networks</em> do too.</>}</h1>
               <p className="rise delay-2 mt-8 max-w-[520px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{isFrench ? 'SendFlow simplifie vos transferts d’argent entre différents réseaux de paiement, localement et au-delà des frontières.' : 'SendFlow simplifies money transfers across different payment networks, locally and across borders.'}</p>
               <div className="rise delay-3 mt-9 flex w-full max-w-[520px] flex-col items-stretch gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
@@ -392,31 +406,21 @@ function LandingPage() {
                  <button onClick={() => goTo('features')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#6d35d8]/25 bg-white/80 px-5 py-3.5 text-[13px] font-bold text-[#211d2c] shadow-[0_10px_22px_rgba(45,37,53,.08)] transition-all hover:-translate-y-1 hover:border-[#6d35d8] hover:text-[#6d35d8] sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</button>
               </div>
             </div>
-                <div className="relative mx-auto aspect-[9/16] w-full max-w-[390px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]" data-testid="hero-video-slot">
-                <img
-                  src={heroGlobalConnection}
-                  alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
-                  className="hero-video-poster absolute inset-0 h-full w-full object-cover"
-                />
-                {heroVideoFailed && <div className="pointer-events-none absolute left-5 top-8 z-10 opacity-80 drop-shadow-[0_3px_12px_rgba(255,255,255,.45)]">
-                  <img src={sendflowWordmark} alt="" className="h-6 w-auto object-contain" />
-                </div>}
-                {!heroVideoFailed && (
-                  <video
-                    className="hero-video absolute inset-0 h-full w-full object-cover"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    poster={heroGlobalConnection}
-                    preload="metadata"
-                    onError={() => setHeroVideoFailed(true)}
-                    aria-label={isFrench ? 'Globe SendFlow en rotation derrière un personnage' : 'SendFlow globe rotating behind a character'}
-                  >
-                    <source src={heroVideoSrc} type="video/mp4" />
-                  </video>
-                )}
-             </div>
+              <div className="relative mx-auto aspect-[3/2] w-full max-w-[530px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]">
+               <img
+                 src={heroGlobalConnection}
+                 alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
+                  className="h-full w-full object-cover"
+               />
+                <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center rounded-full border border-[#6d35d8]/20 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.16)] backdrop-blur-sm" aria-label="SendFlow">
+                  <BrandLockup />
+                </div>
+                <div className="hero-globe-motion pointer-events-none absolute right-[4%] top-[3%] z-10 aspect-square w-[61%] rounded-full" aria-hidden="true">
+                  <img src={heroGlobe} alt="" className="hero-globe-motion__earth hero-globe-spin" />
+                  <span className="hero-globe-motion__meridian hero-globe-motion__meridian--wide" />
+                  <span className="hero-globe-motion__meridian hero-globe-motion__meridian--narrow" />
+                </div>
+            </div>
            </div>
          </section>
 
