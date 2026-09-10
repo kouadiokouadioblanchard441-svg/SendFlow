@@ -231,6 +231,7 @@ export const adminUsers = pgTable(
     email: varchar("email", { length: 320 }).notNull(),
     passwordHash: text("password_hash").notNull(),
     panelTokenHash: varchar("panel_token_hash", { length: 64 }),
+    panelEmailHash: varchar("panel_email_hash", { length: 64 }),
     isActive: boolean("is_active").default(true).notNull(),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     ...timestamps,

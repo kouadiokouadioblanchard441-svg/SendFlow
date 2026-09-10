@@ -471,7 +471,7 @@ function AdminLoginForm({ panelToken, adminEmail, panelEmail }: { panelToken: st
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ email, password, panelToken }),
+         body: JSON.stringify({ email, password, panelToken, panelEmail }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));

@@ -19,13 +19,21 @@ router.post("/admin/auth/login", async (req, res): Promise<void> => {
   const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
   const password = typeof req.body?.password === "string" ? req.body.password : "";
   const panelToken = typeof req.body?.panelToken === "string" ? req.body.panelToken : "";
-  if (!email || !password || !panelToken) {
+  const panelEmail = typeof req.body?.panelEmail === "string" ? req.body.panelEmail.trim().toLowerCase() : "";
+  if (!email || !password || !panelToken || !panelEmail) {
     res.status(400).json({ error: "Panel URL, email and password are required" });
     return;
   }
 
   const [user] = await db.select().from(adminUsers).where(and(eq(adminUsers.email, email), eq(adminUsers.isActive, true))).limit(1);
-  if (!user || !user.panelTokenHash || hashAdminPanelToken(panelToken) !== user.panelTokenHash || !(await verifyAdminPassword(password, user.passwordHash))) {
+  if (
+    !user ||
+    !user.panelTokenHash ||
+    !user.panelEmailHash ||
+    hashAdminPanelToken(panelToken) !== user.panelTokenHash ||
+    hashAdminPanelToken(panelEmail) !== user.panelEmailHash ||
+    !(await verifyAdminPassword(password, user.passwordHash))
+  ) {
     res.status(401).json({ error: "Invalid panel URL, email or password" });
     return;
   }
@@ -53,7 +61,11 @@ router.get("/admin/auth/panel/:token/:email", async (req, res): Promise<void> =>
   const [user] = await db
     .select({ id: adminUsers.id, email: adminUsers.email })
     .from(adminUsers)
-    .where(and(eq(adminUsers.panelTokenHash, hashAdminPanelToken(token)), eq(adminUsers.isActive, true)))
+    .where(and(
+      eq(adminUsers.panelTokenHash, hashAdminPanelToken(token)),
+      eq(adminUsers.panelEmailHash, hashAdminPanelToken(panelEmail.toLowerCase())),
+      eq(adminUsers.isActive, true),
+    ))
     .limit(1);
 
   if (!user) {
