@@ -30,9 +30,9 @@ import orangeOperatorLogo from './assets/operator-logos/operator-logo-01.png';
 import moovOperatorLogo from './assets/operator-logos/operator-logo-02.png';
 import waveOperatorLogo from './assets/operator-logos/operator-logo-03.png';
 import airtelOperatorLogo from './assets/operator-logos/operator-logo-04.png';
-import mtnOperatorLogo from './assets/operator-logos/operator-logo-05.png';
-import momoOperatorLogo from './assets/operator-logos/operator-logo-06.png';
+import momoMtnOperatorLogo from './assets/operator-logos/operator-logo-momo-mtn.png';
 import freeOperatorLogo from './assets/operator-logos/operator-logo-07.png';
+import mixxOperatorLogo from './assets/operator-logos/operator-logo-08.png';
 import mpesaOperatorLogo from './assets/operator-logos/operator-logo-09.png';
 import crossNetworkIcon from './assets/sendflow-icon-cross-network.svg';
 import internationalIcon from './assets/sendflow-icon-international-transfer.svg';
@@ -81,9 +81,9 @@ const navItems = [
 
 const countries = [
   { name: 'Côte d’Ivoire', code: 'CI', networks: ['Orange', 'MTN', 'Moov Africa', 'Wave'], flag: '🇨🇮', tone: '#dbeaff' },
-  { name: 'Bénin', code: 'BJ', networks: ['MTN', 'Moov Africa', 'Celtiis'], flag: '🇧🇯', tone: '#dbeaff' },
-  { name: 'Togo', code: 'TG', networks: ['Togocom', 'Moov Africa'], flag: '🇹🇬', tone: '#dbeaff' },
-  { name: 'Cameroun', code: 'CM', networks: ['MTN', 'Orange', 'Camtel', 'Nexttel'], flag: '🇨🇲', tone: '#dbeaff' },
+  { name: 'Bénin', code: 'BJ', networks: ['MTN', 'Moov Africa'], flag: '🇧🇯', tone: '#dbeaff' },
+  { name: 'Togo', code: 'TG', networks: ['T-Money', 'Moov Africa'], flag: '🇹🇬', tone: '#dbeaff' },
+  { name: 'Cameroun', code: 'CM', networks: ['MTN', 'Orange'], flag: '🇨🇲', tone: '#dbeaff' },
   { name: 'Burkina Faso', code: 'BF', networks: ['Orange', 'Moov Africa', 'Telecel Faso'], flag: '🇧🇫', tone: '#dbeaff' },
   { name: 'Cap-Vert', code: 'CV', networks: ['CVMóvel', 'Unitel T+'], flag: '🇨🇻', tone: '#dbeaff' },
   { name: 'Gambie', code: 'GM', networks: ['Africell', 'QCell', 'Comium'], flag: '🇬🇲', tone: '#dbeaff' },
@@ -104,11 +104,12 @@ type OperatorLogo = { mark: string; background: string; foreground: string; imag
 
 const operatorLogoMarks: Record<string, OperatorLogo> = {
   Orange: { mark: '', background: '#ff7900', foreground: '#ffffff', image: orangeOperatorLogo },
-  MTN: { mark: 'MTN', background: '#ffca05', foreground: '#17131f', image: mtnOperatorLogo },
+  MTN: { mark: 'MTN', background: '#ffca05', foreground: '#17131f', image: momoMtnOperatorLogo },
   'Moov Africa': { mark: 'moov', background: '#e83e8c', foreground: '#ffffff', image: moovOperatorLogo },
   Wave: { mark: '⌁', background: '#1769ff', foreground: '#ffffff', image: waveOperatorLogo },
   Celtiis: { mark: 'C', background: '#1a9c75', foreground: '#ffffff' },
-  Togocom: { mark: 'T', background: '#e22d39', foreground: '#ffffff' },
+  Togocom: { mark: 'T', background: '#e22d39', foreground: '#ffffff', image: mixxOperatorLogo },
+  'T-Money': { mark: 'T-Money', background: '#1553a5', foreground: '#ffffff', image: mixxOperatorLogo },
   Camtel: { mark: 'C', background: '#0b5fa5', foreground: '#ffffff' },
   Nexttel: { mark: 'N', background: '#e52936', foreground: '#ffffff' },
   'Telecel Faso': { mark: 'T', background: '#ed1c24', foreground: '#ffffff' },
@@ -118,7 +119,7 @@ const operatorLogoMarks: Record<string, OperatorLogo> = {
   QCell: { mark: 'Q', background: '#008c44', foreground: '#ffffff' },
   Comium: { mark: 'C', background: '#f58220', foreground: '#ffffff' },
   Cellcom: { mark: 'C', background: '#f58220', foreground: '#ffffff' },
-  'Lonestar Cell MTN': { mark: 'MTN', background: '#ffca05', foreground: '#17131f' },
+  'Lonestar Cell MTN': { mark: 'MTN', background: '#ffca05', foreground: '#17131f', image: momoMtnOperatorLogo },
   Mauritel: { mark: 'M', background: '#008dba', foreground: '#ffffff' },
   Mattel: { mark: 'M', background: '#e2001a', foreground: '#ffffff' },
   Chinguitel: { mark: 'C', background: '#00a8a8', foreground: '#ffffff' },
@@ -127,7 +128,7 @@ const operatorLogoMarks: Record<string, OperatorLogo> = {
   '9mobile': { mark: '9', background: '#78be20', foreground: '#ffffff' },
   Safaricom: { mark: 'S', background: '#00a651', foreground: '#ffffff' },
   Telkom: { mark: 'T', background: '#0072bc', foreground: '#ffffff' },
-  MoMo: { mark: 'MoMo', background: '#1b65a7', foreground: '#ffffff', image: momoOperatorLogo },
+  MoMo: { mark: 'MoMo', background: '#1b65a7', foreground: '#ffffff', image: momoMtnOperatorLogo },
   Free: { mark: 'Free', background: '#111827', foreground: '#ffffff', image: freeOperatorLogo },
   'M-Pesa': { mark: 'M-Pesa', background: '#f2f2f2', foreground: '#17131f', image: mpesaOperatorLogo },
 };
