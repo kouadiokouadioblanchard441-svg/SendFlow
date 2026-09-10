@@ -87,21 +87,41 @@ const countries = [
 
 const operatorLogoUrls: Record<string, string> = {
   Orange: 'https://cdn.simpleicons.org/orange',
+  MTN: 'https://cdn.simpleicons.org/mtn',
+  'Moov Africa': 'https://cdn.simpleicons.org/moovafrica',
+  Wave: 'https://cdn.simpleicons.org/wave',
+  Celtiis: 'https://cdn.simpleicons.org/celtiis',
+  Togocom: 'https://cdn.simpleicons.org/togocel',
+  Camtel: 'https://cdn.simpleicons.org/camtel',
+  Nexttel: 'https://cdn.simpleicons.org/nexttel',
+  'Telecel Faso': 'https://cdn.simpleicons.org/telecel',
   Airtel: 'https://cdn.simpleicons.org/airtel',
   Vodafone: 'https://cdn.simpleicons.org/vodafone',
+  Africell: 'https://cdn.simpleicons.org/africell',
+  QCell: 'https://cdn.simpleicons.org/qcell',
+  Comium: 'https://cdn.simpleicons.org/comium',
+  Cellcom: 'https://cdn.simpleicons.org/cellcom',
+  'Lonestar Cell MTN': 'https://cdn.simpleicons.org/mtn',
+  Mauritel: 'https://cdn.simpleicons.org/mauritel',
+  Mattel: 'https://cdn.simpleicons.org/mattel',
+  Chinguitel: 'https://cdn.simpleicons.org/chinguitel',
+  'Zamani Telecom': 'https://cdn.simpleicons.org/zamanitelecom',
+  Glo: 'https://cdn.simpleicons.org/glo',
+  '9mobile': 'https://cdn.simpleicons.org/9mobile',
+  Safaricom: 'https://cdn.simpleicons.org/safaricom',
+  Telkom: 'https://cdn.simpleicons.org/telkom',
 };
 
 function OperatorRow({ network, index, total }: { network: string; index: number; total: number }) {
   const logoUrl = operatorLogoUrls[network];
   return (
     <div className="flex items-center gap-3">
-      <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#f0ece3] text-[10px] font-bold text-[#6d35d8]">
+      <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#f0ece3] text-[10px] font-bold text-[#1769ff]">
         {index + 1}
         {index < total - 1 && <span className="absolute left-1/2 top-8 h-3 w-px bg-[#d6d0c7]" />}
       </span>
-      <div className="flex flex-1 items-center gap-3 rounded-xl border border-[#2d2535]/10 px-4 py-3 text-[13px] font-semibold">
-        {logoUrl && <img src={logoUrl} alt="" className="h-6 w-6 object-contain" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
-        <span>{network}</span>
+      <div className="flex min-h-[56px] flex-1 items-center justify-center border border-[#2d2535]/10 bg-white px-4 py-3">
+        {logoUrl && <img src={logoUrl} alt={`${network} logo`} loading="lazy" className="h-7 w-auto max-w-[112px] object-contain" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
       </div>
       {index < total - 1 && <ArrowRight size={15} className="text-[#b1abb4]" />}
     </div>
@@ -438,16 +458,16 @@ function LandingPage() {
              </div>
              <div id="international" className="reveal mt-12 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
               <div className="rounded-[28px] bg-[#e8cd4d] p-6 sm:p-8"><div className="flex items-center justify-between"><span className="text-[11px] font-bold uppercase tracking-[.14em]">{isFrench ? 'Couverture SendFlow' : 'SendFlow coverage'}</span><span className="rounded-full bg-[#211d2c]/10 px-3 py-1 text-[10px] font-bold">{countries.length} pays</span></div><div className="mt-10 text-[clamp(3.5rem,8vw,6.5rem)] font-extrabold leading-[.8] tracking-[-.09em]">{countries.length}<span className="font-serif font-normal text-[#6d35d8]">.</span></div><p className="mt-6 max-w-[280px] text-[15px] font-semibold leading-6 text-[#211d2c]/85">{isFrench ? 'Des connexions pensées pour accompagner vos transferts.' : 'Connections designed to support your transfers.'}</p><div className="mt-10 flex flex-wrap gap-2">{countries.map((country) => <button key={country.code} onClick={() => setSelectedCountry(country)} className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all ${selectedCountry.code === country.code ? 'border-[#211d2c] bg-[#211d2c] text-[#fbf8ef]' : 'border-[#211d2c]/20 hover:border-[#211d2c]'}`} data-testid={`button-country-${country.code}`}><span className="mr-1">{country.flag}</span>{country.code}</button>)}</div></div>
-              <div className="rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] p-6 shadow-[0_15px_45px_rgba(58,38,83,.06)] sm:p-8">
+               <div className="border border-[#2d2535]/10 bg-[#fbf8ef] p-6 shadow-[0_15px_45px_rgba(58,38,83,.06)] sm:p-8">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8d8792]">{isFrench ? 'Opérateurs disponibles' : 'Available operators'}</p>
-                    <h3 className="mt-2 text-3xl font-semibold tracking-[-.06em]">{selectedCountry.name}</h3>
+                     <h3 className="mt-2 text-3xl font-extrabold tracking-[-.06em]">{selectedCountry.name}</h3>
                   </div>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span>
+                   <span className="flex h-12 w-12 items-center justify-center rounded-none text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span>
                 </div>
                 <div className="mt-10 space-y-3">{displayNetworks.map((network, index) => <OperatorRow key={network} network={network} index={index} total={displayNetworks.length} />)}</div>
-                <div className="mt-9 flex items-center gap-2 border-t border-[#2d2535]/10 pt-5 text-[11px] text-[#8d8792]"><Check size={14} className="text-[#6d35d8]" /> {isFrench ? 'Logos publics affichés lorsqu’ils sont disponibles · Pas de transaction' : 'Public logos shown when available · No transaction'}</div>
+                 <div className="mt-9 flex items-center gap-2 border-t border-[#2d2535]/10 pt-5 text-[11px] text-[#8d8792]"><Check size={14} className="text-[#1769ff]" /> {isFrench ? 'Logos publics affichés lorsqu’ils sont disponibles · Pas de transaction' : 'Public logos shown when available · No transaction'}</div>
               </div>
             </div>
           </div>
