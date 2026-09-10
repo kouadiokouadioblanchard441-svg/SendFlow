@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Route, Switch, Router as WouterRouter } from 'wouter';
 import { ArrowDownRight, ArrowRight, Check, ChevronDown, Facebook, Globe2, Instagram, Linkedin, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { ClerkProvider, SignIn, SignUp, useAuth } from '@clerk/react';
+import { publishableKeyFromHost } from '@clerk/react/internal';
+import { shadcn } from '@clerk/themes';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
+import AdminPage from '@/pages/admin';
 import { LegalMentionsPage, PrivacyPage, TermsPage } from '@/pages/legal';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -43,10 +47,23 @@ import visibleDetailsIcon from './assets/sendflow-icon-visible-details.svg';
 import privateIcon from './assets/sendflow-icon-private.svg';
 
 const queryClient = new QueryClient();
+const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 type Language = 'fr' | 'en';
 type Copy = { fr: string; en: string };
 const t = (copy: Copy, language: Language) => copy[language];
+type PublicLandingBundle = {
+  sections: Array<{ slug: string; titleFr: string; titleEn: string; bodyFr: string | null; bodyEn: string | null; isVisible: boolean }>;
+  features: Array<{ slug: string; group: string; titleFr: string; titleEn: string; bodyFr: string; bodyEn: string; iconKey: string | null; isVisible: boolean }>;
+  faqs: Array<{ questionFr: string; questionEn: string; answerFr: string; answerEn: string; isVisible: boolean }>;
+  countries: Array<{ id: number; code: string; nameFr: string; nameEn: string; flag: string; tone: string; isVisible: boolean }>;
+  operators: Array<{ id: number; name: string; isVisible: boolean }>;
+  countryOperators: Array<{ countryId: number; operatorId: number; orderIndex: number }>;
+  globeBadges: Array<{ operatorId: number; positionX: number; positionY: number; orderIndex: number; isVisible: boolean }>;
+  media: Array<{ slug: string; publicUrl: string | null; storagePath: string | null; sourcePath: string; isVisible: boolean }>;
+};
 
 function BrandLockup() {
   return (
@@ -298,21 +315,84 @@ function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigat
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Switch>
-            <Route path="/" component={LandingPage} />
-            <Route path="/conditions-utilisation" component={TermsPage} />
-            <Route path="/confidentialite" component={PrivacyPage} />
-            <Route path="/mentions-legales" component={LegalMentionsPage} />
-            <Route component={NotFound} />
-          </Switch>
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <WouterRouter base={basePath}>
+      <ClerkProvider
+        publishableKey={clerkPubKey}
+        proxyUrl={clerkProxyUrl}
+        signInUrl={`${basePath}/sign-in`}
+        signUpUrl={`${basePath}/sign-up`}
+        appearance={{
+          theme: shadcn,
+          cssLayerName: 'clerk',
+          options: {
+            logoPlacement: 'inside',
+            logoLinkUrl: basePath || '/',
+            logoImageUrl: `${window.location.origin}${basePath}/favicon.svg`,
+          },
+          variables: {
+            colorPrimary: '#1769ff',
+            colorForeground: '#192231',
+            colorMutedForeground: '#667386',
+            colorBackground: '#ffffff',
+            colorInput: '#f6f8fb',
+            colorInputForeground: '#192231',
+            colorNeutral: '#e2e8ef',
+            colorDanger: '#c53b3b',
+            fontFamily: 'DM Sans',
+            borderRadius: '0.75rem',
+          },
+          elements: {
+            rootBox: 'w-full flex justify-center',
+            cardBox: 'bg-white rounded-2xl w-[440px] max-w-full overflow-hidden',
+            card: '!shadow-none !border-0 !bg-transparent',
+            footer: '!shadow-none !border-0 !bg-transparent',
+            headerTitle: 'text-[#192231]',
+            headerSubtitle: 'text-[#667386]',
+            socialButtonsBlockButtonText: 'text-[#192231]',
+            formFieldLabel: 'text-[#192231]',
+            footerActionLink: 'text-[#1769ff]',
+            footerActionText: 'text-[#667386]',
+            dividerText: 'text-[#667386]',
+            formButtonPrimary: 'bg-[#1769ff] hover:bg-[#0d55d6]',
+            formFieldInput: 'bg-[#f6f8fb] text-[#192231] border-[#e2e8ef]',
+          },
+        }}
+      >
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Switch>
+              <Route path="/" component={LandingPage} />
+              <Route path="/sign-in/*?" component={SignInPage} />
+              <Route path="/sign-up/*?" component={SignUpPage} />
+              <Route path="/conditions-utilisation" component={TermsPage} />
+              <Route path="/confidentialite" component={PrivacyPage} />
+              <Route path="/mentions-legales" component={LegalMentionsPage} />
+              <Route path="/admin" component={AdminRoute} />
+              <Route component={NotFound} />
+            </Switch>
+            <Toaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ClerkProvider>
+    </WouterRouter>
   );
+}
+
+function SignInPage() {
+  return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div>;
+}
+
+function SignUpPage() {
+  return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
+}
+
+function AdminRoute() {
+  const { isLoaded, isSignedIn } = useAuth();
+  if (!isLoaded) return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] text-sm text-[#667386]">Chargement de la session…</div>;
+  if (!isSignedIn) {
+    return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-5"><div className="max-w-md rounded-3xl border border-[#e2e8ef] bg-white p-8 text-center shadow-[0_20px_60px_rgba(20,35,60,.1)]"><LockKeyhole className="mx-auto text-[#1769ff]" size={30} /><h1 className="mt-5 text-3xl font-bold tracking-[-.05em] text-[#192231]">Accès administrateur</h1><p className="mt-3 text-sm leading-6 text-[#667386]">Connectez-vous avec votre compte autorisé pour gérer la landing SendFlow.</p><a className="mt-6 inline-flex rounded-xl bg-[#1769ff] px-5 py-3 text-sm font-bold text-white" href={`${basePath}/sign-in?redirect_url=${encodeURIComponent(`${basePath}/admin`)}`}>Se connecter</a></div></div>;
+  }
+  return <AdminPage />;
 }
 
 function LandingPage() {
@@ -322,6 +402,66 @@ function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const { data: landingBundle } = useQuery<PublicLandingBundle>({
+    queryKey: ['/api/landing'],
+    queryFn: async () => {
+      const response = await fetch('/api/landing');
+      if (!response.ok) throw new Error('Landing content unavailable');
+      return response.json() as Promise<PublicLandingBundle>;
+    },
+    staleTime: 30_000,
+  });
+
+  const activeCountries = useMemo(() => {
+    if (!landingBundle?.countries?.length) return countries;
+    return landingBundle.countries
+      .filter((country) => country.isVisible)
+      .map((country) => ({
+        ...country,
+        name: country.nameFr,
+        networks: landingBundle.countryOperators
+          .filter((relation) => relation.countryId === country.id)
+          .sort((a, b) => a.orderIndex - b.orderIndex)
+          .map((relation) => landingBundle.operators.find((operator) => operator.id === relation.operatorId && operator.isVisible)?.name)
+          .filter((name): name is string => Boolean(name)),
+      }));
+  }, [landingBundle]);
+
+  const activeFaqs = useMemo(() => (
+    landingBundle?.faqs?.filter((faq) => faq.isVisible).map((faq) => ({
+      q: { fr: faq.questionFr, en: faq.questionEn },
+      a: { fr: faq.answerFr, en: faq.answerEn },
+    })) ?? faqs
+  ), [landingBundle]);
+
+  const remoteFeatures = useMemo(() => {
+    const iconMap: Record<string, string> = {
+      'icon-cross-network': crossNetworkIcon,
+      'icon-international': internationalIcon,
+      'icon-tracking': trackingIcon,
+      'icon-simple': simpleExperienceIcon,
+    };
+    const rows = landingBundle?.features?.filter((feature) => feature.group === 'feature' && feature.isVisible);
+    return rows?.length ? rows.map((feature) => ({
+      title: { fr: feature.titleFr, en: feature.titleEn },
+      text: { fr: feature.bodyFr, en: feature.bodyEn },
+      icon: iconMap[feature.iconKey ?? ''] ?? crossNetworkIcon,
+    })) : [
+      { title: { fr: 'Transfert inter-réseaux', en: 'Cross-network transfers' }, text: { fr: 'Relier les réseaux sans demander au bénéficiaire de changer ses habitudes.', en: 'Connect networks without asking recipients to change their habits.' }, icon: crossNetworkIcon },
+      { title: { fr: 'Transfert international', en: 'International transfers' }, text: { fr: 'Explorer les chemins possibles entre pays africains, lorsque disponibles.', en: 'Explore possible routes across African countries where available.' }, icon: internationalIcon },
+      { title: { fr: 'Suivi des transactions', en: 'Transaction tracking' }, text: { fr: 'Voir où en est chaque étape avant de confirmer.', en: 'See where each step stands before confirming.' }, icon: trackingIcon },
+      { title: { fr: 'Expérience simple', en: 'Simple experience' }, text: { fr: 'Moins de friction, plus de confiance dans chaque choix.', en: 'Less friction, more confidence in every choice.' }, icon: simpleExperienceIcon },
+    ];
+  }, [landingBundle]);
+
+  const sectionCopy = (slug: string, fallback: Copy): Copy => {
+    const section = landingBundle?.sections?.find((item) => item.slug === slug && item.isVisible);
+    return section ? { fr: section.titleFr, en: section.titleEn } : fallback;
+  };
+  const sectionBody = (slug: string, fallback: Copy): Copy => {
+    const section = landingBundle?.sections?.find((item) => item.slug === slug && item.isVisible);
+    return section ? { fr: section.bodyFr ?? fallback.fr, en: section.bodyEn ?? fallback.en } : fallback;
+  };
 
   useEffect(() => {
     const elements = document.querySelectorAll('.reveal');
@@ -337,6 +477,11 @@ function LandingPage() {
   }, []);
 
   const isFrench = language === 'fr';
+  useEffect(() => {
+    const nextCountry = activeCountries.find((country) => country.code === selectedCountry.code) ?? activeCountries[0];
+    if (nextCountry && nextCountry.code !== selectedCountry.code) setSelectedCountry(nextCountry);
+  }, [activeCountries, selectedCountry.code]);
+
   const displayNetworks = useMemo(() => selectedCountry.networks, [selectedCountry]);
 
   const goTo = (id: string) => {
@@ -399,7 +544,7 @@ function LandingPage() {
                   <div className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-[#6d35d8]/15 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.1)] backdrop-blur-sm">
                     <BrandLockup />
                   </div>
-                  {countries.filter((country) => heroCountryPositions[country.code]).map((country) => <div key={country.code} className={`absolute ${heroCountryPositions[country.code]} flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-2 py-1 text-[10px] font-bold text-[#211d2c] shadow-[0_8px_18px_rgba(20,30,80,.12)]`}><span className="text-sm leading-none">{country.flag}</span><span className="hidden sm:inline">{country.name}</span></div>)}
+                  {activeCountries.filter((country) => heroCountryPositions[country.code]).map((country) => <div key={country.code} className={`absolute ${heroCountryPositions[country.code]} flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-2 py-1 text-[10px] font-bold text-[#211d2c] shadow-[0_8px_18px_rgba(20,30,80,.12)]`}><span className="text-sm leading-none">{country.flag}</span><span className="hidden sm:inline">{country.name}</span></div>)}
                 </div>
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                   <span className="hero-globe-spin block h-32 w-32 sm:h-48 sm:w-48">
@@ -461,13 +606,8 @@ function LandingPage() {
                  <BrandedCharacter src={networkPersonArt} alt={isFrench ? 'Personne SendFlow aux côtés des réseaux interconnectés' : 'SendFlow person beside interconnected networks'} className="h-52 sm:h-64" />
                </div>
              </div>
-             <div className="reveal mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-               {[
-                 { title: { fr: 'Transfert inter-réseaux', en: 'Cross-network transfers' }, text: { fr: 'Relier les réseaux sans demander au bénéficiaire de changer ses habitudes.', en: 'Connect networks without asking recipients to change their habits.' }, icon: crossNetworkIcon },
-                 { title: { fr: 'Transfert international', en: 'International transfers' }, text: { fr: 'Explorer les chemins possibles entre pays africains, lorsque disponibles.', en: 'Explore possible routes across African countries where available.' }, icon: internationalIcon },
-                 { title: { fr: 'Suivi des transactions', en: 'Transaction tracking' }, text: { fr: 'Voir où en est chaque étape avant de confirmer.', en: 'See where each step stands before confirming.' }, icon: trackingIcon },
-                 { title: { fr: 'Expérience simple', en: 'Simple experience' }, text: { fr: 'Moins de friction, plus de confiance dans chaque choix.', en: 'Less friction, more confidence in every choice.' }, icon: simpleExperienceIcon },
-               ].map((feature) => <div key={feature.title.fr} className="group min-h-[360px] rounded-[24px] border border-[#dbe5f2] bg-white p-5 shadow-[0_18px_48px_rgba(35,76,135,.08)] transition-transform hover:-translate-y-1 sm:p-6"><div className="flex h-36 items-center justify-between gap-2 overflow-hidden rounded-[18px] bg-[#f4f7fc] px-3 sm:h-40 sm:px-4"><img src={feature.icon} alt="" className="h-full min-w-0 flex-1 object-contain p-2 transition-transform duration-300 group-hover:scale-105 sm:p-3" /><span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#6d35d8]/15 bg-white px-2 py-1.5 shadow-[0_6px_14px_rgba(58,38,83,.08)]" aria-label="SendFlow"><img src={sendflowMark} alt="" className="h-5 w-5 object-contain" /><img src={sendflowWordmark} alt="SendFlow" className="h-3.5 w-auto object-contain" /></span></div><h3 className="mt-6 text-[18px] font-extrabold tracking-[-.035em] text-[#17131f]">{t(feature.title, language)}</h3><p className="mt-3 max-w-[270px] text-[14px] font-medium leading-6 text-[#3d4654]">{t(feature.text, language)}</p></div>)}
+              <div className="reveal mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {remoteFeatures.map((feature) => <div key={feature.title.fr} className="group min-h-[360px] rounded-[24px] border border-[#dbe5f2] bg-white p-5 shadow-[0_18px_48px_rgba(35,76,135,.08)] transition-transform hover:-translate-y-1 sm:p-6"><div className="flex h-36 items-center justify-between gap-2 overflow-hidden rounded-[18px] bg-[#f4f7fc] px-3 sm:h-40 sm:px-4"><img src={feature.icon} alt="" className="h-full min-w-0 flex-1 object-contain p-2 transition-transform duration-300 group-hover:scale-105 sm:p-3" /><span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#6d35d8]/15 bg-white px-2 py-1.5 shadow-[0_6px_14px_rgba(58,38,83,.08)]" aria-label="SendFlow"><img src={sendflowMark} alt="" className="h-5 w-5 object-contain" /><img src={sendflowWordmark} alt="SendFlow" className="h-3.5 w-auto object-contain" /></span></div><h3 className="mt-6 text-[18px] font-extrabold tracking-[-.035em] text-[#17131f]">{t(feature.title, language)}</h3><p className="mt-3 max-w-[270px] text-[14px] font-medium leading-6 text-[#3d4654]">{t(feature.text, language)}</p></div>)}
              </div>
               <div className="reveal mt-16 rounded-[28px] border-2 border-[#dbe5f2] bg-[#eef5ff] p-6 shadow-[0_18px_50px_rgba(35,76,135,.08)] sm:p-8">
                 <p className="text-[11px] font-extrabold uppercase tracking-[.17em] text-[#5b21b6]">{isFrench ? 'Une expérience, trois repères' : 'One experience, three principles'}</p>
@@ -529,7 +669,7 @@ function LandingPage() {
                </div>
              </div>
              <div id="international" className="reveal mt-12 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
-              <div className="rounded-[28px] bg-[#e8cd4d] p-6 sm:p-8"><div className="flex items-center justify-between"><span className="text-[11px] font-bold uppercase tracking-[.14em]">{isFrench ? 'Couverture SendFlow' : 'SendFlow coverage'}</span><span className="rounded-full bg-[#211d2c]/10 px-3 py-1 text-[10px] font-bold">{countries.length} pays</span></div><div className="mt-10 text-[clamp(3.5rem,8vw,6.5rem)] font-extrabold leading-[.8] tracking-[-.09em]">{countries.length}<span className="font-serif font-normal text-[#6d35d8]">.</span></div><p className="mt-6 max-w-[280px] text-[15px] font-semibold leading-6 text-[#211d2c]/85">{isFrench ? 'Des connexions pensées pour accompagner vos transferts.' : 'Connections designed to support your transfers.'}</p><div className="mt-10 flex flex-wrap gap-2">{countries.map((country) => <button key={country.code} onClick={() => setSelectedCountry(country)} className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all ${selectedCountry.code === country.code ? 'border-[#211d2c] bg-[#211d2c] text-[#fbf8ef]' : 'border-[#211d2c]/20 hover:border-[#211d2c]'}`} data-testid={`button-country-${country.code}`}><span className="mr-1">{country.flag}</span>{country.code}</button>)}</div></div>
+              <div className="rounded-[28px] bg-[#e8cd4d] p-6 sm:p-8"><div className="flex items-center justify-between"><span className="text-[11px] font-bold uppercase tracking-[.14em]">{isFrench ? 'Couverture SendFlow' : 'SendFlow coverage'}</span><span className="rounded-full bg-[#211d2c]/10 px-3 py-1 text-[10px] font-bold">{activeCountries.length} pays</span></div><div className="mt-10 text-[clamp(3.5rem,8vw,6.5rem)] font-extrabold leading-[.8] tracking-[-.09em]">{activeCountries.length}<span className="font-serif font-normal text-[#6d35d8]">.</span></div><p className="mt-6 max-w-[280px] text-[15px] font-semibold leading-6 text-[#211d2c]/85">{isFrench ? 'Des connexions pensées pour accompagner vos transferts.' : 'Connections designed to support your transfers.'}</p><div className="mt-10 flex flex-wrap gap-2">{activeCountries.map((country) => <button key={country.code} onClick={() => setSelectedCountry(country)} className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all ${selectedCountry.code === country.code ? 'border-[#211d2c] bg-[#211d2c] text-[#fbf8ef]' : 'border-[#211d2c]/20 hover:border-[#211d2c]'}`} data-testid={`button-country-${country.code}`}><span className="mr-1">{country.flag}</span>{country.code}</button>)}</div></div>
                 <div className="rounded-[20px] border-2 border-[#cbdced] bg-white p-6 shadow-[0_22px_55px_rgba(43,75,115,.14)] sm:p-8">
                 <div className="flex items-start justify-between">
                   <div>
@@ -565,7 +705,7 @@ function LandingPage() {
 
           <section id="about" aria-label={isFrench ? 'Opérateurs de paiement partenaires' : 'Partner payment operators'} className="overflow-hidden border-b border-[#2d2535]/10 bg-white/70 py-4 sm:py-5"><div className="flex flex-col gap-2" aria-hidden="false"><div className="marquee-track marquee-track--reverse flex w-max items-center"><img src={operatorLogosTicker} alt={isFrench ? 'Logos des opérateurs de paiement partenaires' : 'Partner payment operator logos'} className="h-10 w-auto max-w-none object-contain sm:h-12" /><img src={operatorLogosTicker} alt="" aria-hidden="true" className="h-10 w-auto max-w-none object-contain sm:h-12" /></div><div className="marquee-track flex w-max items-center"><img src={operatorLogosTicker} alt="" aria-hidden="true" className="h-10 w-auto max-w-none object-contain sm:h-12" /><img src={operatorLogosTicker} alt="" aria-hidden="true" className="h-10 w-auto max-w-none object-contain sm:h-12" /></div></div></section>
 
-        <section id="faq" className="px-5 py-24 sm:px-8 sm:py-32"><div className="mx-auto grid max-w-[1040px] gap-14 lg:grid-cols-[.7fr_1.3fr]"><div className="reveal"><h2 className="mt-0 text-6xl font-extrabold leading-[.88] tracking-[-.075em] text-[#17131f] sm:text-8xl">{isFrench ? <>Vous avez<br /><em className="font-serif font-normal text-[#5b21b6]">raison.</em></> : <>Good<br /><em className="font-serif font-normal text-[#5b21b6]">questions.</em></>}</h2><p className="mt-8 max-w-[300px] text-[16px] font-semibold leading-7 text-[#30283b]">{isFrench ? 'Une idée nouvelle mérite des réponses simples.' : 'A new idea deserves simple answers.'}</p></div><div className="reveal space-y-2">{faqs.map((faq, index) => <div key={index} className="border-b border-[#2d2535]/15"><button onClick={() => setOpenFaq(openFaq === index ? null : index)} className="flex w-full items-center justify-between py-5 text-left text-[16px] font-bold tracking-[-.025em] text-[#17131f]" data-testid={`button-faq-${index}`}><span>{t(faq.q, language)}</span><ChevronDown size={18} className={`shrink-0 text-[#6d35d8] transition-transform ${openFaq === index ? 'rotate-180' : ''}`} /></button><div className={`grid transition-[grid-template-rows] duration-300 ${openFaq === index ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}><div className="overflow-hidden"><p className="pb-5 pr-8 text-[14px] font-medium leading-6 text-[#30283b]">{t(faq.a, language)}</p></div></div></div>)}</div></div></section>
+        <section id="faq" className="px-5 py-24 sm:px-8 sm:py-32"><div className="mx-auto grid max-w-[1040px] gap-14 lg:grid-cols-[.7fr_1.3fr]"><div className="reveal"><h2 className="mt-0 text-6xl font-extrabold leading-[.88] tracking-[-.075em] text-[#17131f] sm:text-8xl">{t(sectionCopy('faq', { fr: 'Vous avez raison.', en: 'Good questions.' }), language)}</h2><p className="mt-8 max-w-[300px] text-[16px] font-semibold leading-7 text-[#30283b]">{t(sectionBody('faq', { fr: 'Une idée nouvelle mérite des réponses simples.', en: 'A new idea deserves simple answers.' }), language)}</p></div><div className="reveal space-y-2">{activeFaqs.map((faq, index) => <div key={index} className="border-b border-[#2d2535]/15"><button onClick={() => setOpenFaq(openFaq === index ? null : index)} className="flex w-full items-center justify-between py-5 text-left text-[16px] font-bold tracking-[-.025em] text-[#17131f]" data-testid={`button-faq-${index}`}><span>{t(faq.q, language)}</span><ChevronDown size={18} className={`shrink-0 text-[#6d35d8] transition-transform ${openFaq === index ? 'rotate-180' : ''}`} /></button><div className={`grid transition-[grid-template-rows] duration-300 ${openFaq === index ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}><div className="overflow-hidden"><p className="pb-5 pr-8 text-[14px] font-medium leading-6 text-[#30283b]">{t(faq.a, language)}</p></div></div></div>)}</div></div></section>
 
          <section id="join" className="px-5 pb-24 sm:px-8 sm:pb-32"><div className="reveal relative mx-auto max-w-[1240px] overflow-hidden rounded-[32px] bg-[#6d35d8] px-6 py-14 text-[#fbf8ef] sm:px-14 sm:py-20"><div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#fbf8ef]/20" /><div className="absolute -right-2 -top-10 h-48 w-48 rounded-full border border-[#fbf8ef]/15" /><div className="relative max-w-[680px]"><p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#e8cd4d]">The next move</p><h2 className="mt-5 text-6xl font-extrabold leading-[.86] tracking-[-.08em] sm:text-8xl">{isFrench ? <>Prêt·e à faire<br /><em className="font-serif font-normal text-[#e8cd4d]">bouger les choses ?</em></> : <>Ready to<br /><em className="font-serif font-normal text-[#e8cd4d]">move things?</em></>}</h2><p className="mt-8 max-w-[500px] text-[17px] font-semibold leading-7 text-[#f4edff]">{isFrench ? 'Recevez les prochaines nouvelles de SendFlow. Pas de bruit, juste les avancées.' : 'Get the next SendFlow updates. No noise, just progress.'}</p><form onSubmit={(event) => { event.preventDefault(); if (email) setSubmitted(true); }} className="mt-8 flex max-w-[480px] flex-col gap-3 sm:flex-row"><input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required placeholder={isFrench ? 'votre@email.com' : 'your@email.com'} className="min-h-[54px] min-w-0 flex-1 rounded-[14px] border-2 border-white/60 bg-white px-5 py-3.5 text-[14px] font-semibold text-[#211d2c] outline-none placeholder:text-[#7d6b9a] shadow-[0_10px_24px_rgba(33,29,44,.12)] focus:border-[#e8cd4d] focus:ring-2 focus:ring-[#e8cd4d]/30" data-testid="input-email" /><button type="submit" className="inline-flex min-h-[54px] items-center justify-center rounded-[14px] border-2 border-[#a68bea] bg-[#5b21b6] px-6 py-3.5 text-[14px] font-extrabold text-white shadow-[0_14px_28px_rgba(33,29,44,.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4c1d95]" data-testid="button-submit-email">{submitted ? <><Check className="mr-1 inline" size={14} />{isFrench ? 'C’est noté' : 'You’re on it'}</> : <>{isFrench ? 'Me tenir au courant' : 'Keep me posted'} <ArrowRight className="ml-2 inline" size={17} /></>}</button></form><p className="mt-4 text-[11px] font-medium text-[#e5dff0]">{isFrench ? 'Démo uniquement · Aucun engagement' : 'Demo only · No commitment'}</p></div></div></section>
         <section id="download" className="px-5 pb-24 sm:px-8 sm:pb-32">
