@@ -1,1 +1,2 @@
 - [Long JSX edits](long-jsx-edits.md) — Prefer inserting multiline sections around stable anchors over replacing very long one-line JSX blocks.
+- [App Storage constraints](app-storage-constraints.md) — Provisioning may require workspace credits before public asset migration can run.
