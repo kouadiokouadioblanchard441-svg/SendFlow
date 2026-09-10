@@ -37,11 +37,21 @@ const navItems = [
 ];
 
 const countries = [
-  { name: 'Côte d’Ivoire', code: 'CI', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: 'CI', tone: '#dbeaff' },
-  { name: 'Sénégal', code: 'SN', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: 'SN', tone: '#dbeaff' },
-  { name: 'Ghana', code: 'GH', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: 'GH', tone: '#dbeaff' },
-  { name: 'Kenya', code: 'KE', networks: ['Réseau A', 'Réseau B'], flag: 'KE', tone: '#dbeaff' },
+  { name: 'Côte d’Ivoire', code: 'CI', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇨🇮', tone: '#dbeaff' },
+  { name: 'Bénin', code: 'BJ', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇧🇯', tone: '#dbeaff' },
+  { name: 'Togo', code: 'TG', networks: ['Réseau A', 'Réseau B'], flag: '🇹🇬', tone: '#dbeaff' },
+  { name: 'Cameroun', code: 'CM', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇨🇲', tone: '#dbeaff' },
+  { name: 'Sénégal', code: 'SN', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇸🇳', tone: '#dbeaff' },
+  { name: 'Ghana', code: 'GH', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇬🇭', tone: '#dbeaff' },
+  { name: 'Kenya', code: 'KE', networks: ['Réseau A', 'Réseau B'], flag: '🇰🇪', tone: '#dbeaff' },
 ];
+
+const heroCountryPositions: Record<string, string> = {
+  CI: 'left-[7%] top-[53%]',
+  BJ: 'right-[22%] top-[24%]',
+  TG: 'right-[5%] top-[54%]',
+  CM: 'left-[34%] bottom-[8%]',
+};
 
 const faqs: { q: Copy; a: Copy }[] = [
   { q: { fr: 'Qu’est-ce que SendFlow ?', en: 'What is SendFlow?' }, a: { fr: 'SendFlow est une expérience de démonstration qui imagine une manière plus claire de transférer de l’argent entre réseaux Mobile Money. Elle ne traite aucun paiement réel.', en: 'SendFlow is a demo experience imagining a clearer way to move money between Mobile Money networks. It does not process real payments.' } },
@@ -141,8 +151,14 @@ function LandingPage() {
           <div className="absolute -right-32 top-24 h-[430px] w-[430px] rounded-full bg-[#d4f0e9] opacity-70 blur-3xl" />
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[1.04fr_.96fr] lg:gap-8">
             <div className="relative z-10 max-w-[680px]">
-              <div className="rise mb-7 aspect-[1.45/1] w-full max-w-[640px] overflow-hidden rounded-[34px] border border-[#6d35d8]/10 bg-white shadow-[0_22px_55px_rgba(75,44,180,.1)]" data-testid="hero-image-slot">
+              <div className="rise relative mb-7 aspect-[1.45/1] w-full max-w-[640px] overflow-hidden rounded-[34px] border border-[#6d35d8]/10 bg-white shadow-[0_22px_55px_rgba(75,44,180,.1)]" data-testid="hero-image-slot">
                 <img src={heroPlaceholder} alt={isFrench ? 'Illustration temporaire du passage entre plusieurs réseaux' : 'Temporary illustration of a path across multiple networks'} className="h-full w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                  <div className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-[#6d35d8]/15 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.1)] backdrop-blur-sm">
+                    <BrandLockup />
+                  </div>
+                  {countries.filter((country) => heroCountryPositions[country.code]).map((country) => <div key={country.code} className={`absolute ${heroCountryPositions[country.code]} flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-2 py-1 text-[10px] font-bold text-[#211d2c] shadow-[0_8px_18px_rgba(20,30,80,.12)]`}><span className="text-sm leading-none">{country.flag}</span><span className="hidden sm:inline">{country.name}</span></div>)}
+                </div>
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                   <span className="hero-globe-spin block h-32 w-32 sm:h-48 sm:w-48">
                     <img src={heroGlobe} alt={isFrench ? 'Terre centrée sur l’Afrique' : 'Earth centered on Africa'} className="h-full w-full object-contain drop-shadow-[0_10px_16px_rgba(20,50,150,.22)]" />
@@ -219,7 +235,7 @@ function LandingPage() {
           <div className="mx-auto max-w-[1240px]">
             <div className="reveal flex flex-col justify-between gap-6 sm:flex-row sm:items-end"><div><p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]">02 / {isFrench ? 'Voir plus loin' : 'See further'}</p><h2 className="mt-4 max-w-[650px] text-4xl font-semibold leading-[.96] tracking-[-.065em] sm:text-6xl">{isFrench ? <>Votre argent,<br /><em className="font-serif font-normal text-[#6d35d8]">sans frontières mentales.</em></> : <>Your money,<br /><em className="font-serif font-normal text-[#6d35d8]">without mental borders.</em></>}</h2></div><p className="max-w-[280px] text-[14px] leading-6 text-[#5e5766]">{isFrench ? 'Explorez une couverture fictive et les connexions qui donnent vie à SendFlow.' : 'Explore illustrative coverage and the connections that bring SendFlow to life.'}</p></div>
             <div id="international" className="reveal mt-12 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
-              <div className="rounded-[28px] bg-[#e8cd4d] p-6 sm:p-8"><div className="flex items-center justify-between"><span className="text-[11px] font-bold uppercase tracking-[.14em]">{isFrench ? 'Couverture démo' : 'Demo coverage'}</span><span className="rounded-full bg-[#211d2c]/10 px-3 py-1 text-[10px] font-bold">{countries.length} pays</span></div><div className="mt-10 text-[clamp(3.5rem,8vw,6.5rem)] font-semibold leading-[.8] tracking-[-.09em]">4<span className="font-serif font-normal text-[#6d35d8]">.</span></div><p className="mt-6 max-w-[240px] text-[14px] leading-6 text-[#211d2c]/70">{isFrench ? 'Des premiers chemins pour tester une idée plus vaste.' : 'First paths to test a bigger idea.'}</p><div className="mt-10 flex flex-wrap gap-2">{countries.map((country) => <button key={country.code} onClick={() => setSelectedCountry(country)} className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all ${selectedCountry.code === country.code ? 'border-[#211d2c] bg-[#211d2c] text-[#fbf8ef]' : 'border-[#211d2c]/20 hover:border-[#211d2c]'}`} data-testid={`button-country-${country.code}`}>{country.code}</button>)}</div></div>
+              <div className="rounded-[28px] bg-[#e8cd4d] p-6 sm:p-8"><div className="flex items-center justify-between"><span className="text-[11px] font-bold uppercase tracking-[.14em]">{isFrench ? 'Couverture démo' : 'Demo coverage'}</span><span className="rounded-full bg-[#211d2c]/10 px-3 py-1 text-[10px] font-bold">{countries.length} pays</span></div><div className="mt-10 text-[clamp(3.5rem,8vw,6.5rem)] font-semibold leading-[.8] tracking-[-.09em]">{countries.length}<span className="font-serif font-normal text-[#6d35d8]">.</span></div><p className="mt-6 max-w-[240px] text-[14px] leading-6 text-[#211d2c]/70">{isFrench ? 'Des premiers chemins pour tester une idée plus vaste.' : 'First paths to test a bigger idea.'}</p><div className="mt-10 flex flex-wrap gap-2">{countries.map((country) => <button key={country.code} onClick={() => setSelectedCountry(country)} className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all ${selectedCountry.code === country.code ? 'border-[#211d2c] bg-[#211d2c] text-[#fbf8ef]' : 'border-[#211d2c]/20 hover:border-[#211d2c]'}`} data-testid={`button-country-${country.code}`}><span className="mr-1">{country.flag}</span>{country.code}</button>)}</div></div>
               <div className="rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] p-6 shadow-[0_15px_45px_rgba(58,38,83,.06)] sm:p-8"><div className="flex items-start justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8d8792]">{isFrench ? 'Chemin actif' : 'Active path'}</p><h3 className="mt-2 text-3xl font-semibold tracking-[-.06em]">{selectedCountry.name}</h3></div><span className="flex h-11 w-11 items-center justify-center rounded-2xl text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span></div><div className="mt-10 space-y-3">{displayNetworks.map((network, index) => <div key={network} className="flex items-center gap-3"><span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#f0ece3] text-[10px] font-bold text-[#6d35d8]">{index + 1}{index < displayNetworks.length - 1 && <span className="absolute left-1/2 top-8 h-3 w-px bg-[#d6d0c7]" />}</span><div className="flex-1 rounded-xl border border-[#2d2535]/10 px-4 py-3 text-[13px] font-semibold">{network}</div>{index < displayNetworks.length - 1 && <ArrowRight size={15} className="text-[#b1abb4]" />}</div>)}</div><div className="mt-9 flex items-center gap-2 border-t border-[#2d2535]/10 pt-5 text-[11px] text-[#8d8792]"><Check size={14} className="text-[#6d35d8]" /> {isFrench ? 'Parcours illustratif · Pas de transaction' : 'Illustrative path · No transaction'}</div></div>
             </div>
           </div>
