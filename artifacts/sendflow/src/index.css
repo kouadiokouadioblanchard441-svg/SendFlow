@@ -230,6 +230,17 @@ footer > div > div:last-child > span:first-child {
   display: none !important;
 }
 
+/* Keep footer columns aligned on one bottom baseline. */
+footer > div > div:first-child {
+  align-items: end;
+}
+
+@media (min-width: 640px) {
+  footer > div > div:last-child {
+    align-items: flex-end;
+  }
+}
+
 /* Clear card hierarchy: every content block must read as a distinct surface. */
 section#features-cards [class*="rounded-[24px]"] {
   background: #f7faff !important;
