@@ -8,6 +8,7 @@ import {
   landingCountries,
   landingFaqs,
   landingFeatures,
+  landingFounderProfile,
   landingGlobeBadges,
   landingMedia,
   landingOperators,
@@ -37,6 +38,12 @@ const resources = {
   legalSections: { table: legalSections, editable: ["pageId", "sectionNumber", "titleFr", "titleEn", "bodyFr", "bodyEn", "orderIndex"] },
 } as const;
 
+const founderEditableFields = [
+  "name", "roleFr", "roleEn", "shortBioFr", "shortBioEn", "storyFr", "storyEn",
+  "visionFr", "visionEn", "educationFr", "educationEn", "missionFr", "missionEn",
+  "photoKey", "linkedinUrl", "email", "isVisible",
+] as const;
+
 type ResourceName = keyof typeof resources;
 
 function resourceConfig(name: string) {
@@ -64,6 +71,7 @@ async function getLandingBundle() {
     globeBadges,
     pages,
     pageSections,
+    founderProfiles,
   ] = await Promise.all([
     db.select().from(landingMedia).orderBy(asc(landingMedia.id)),
     db.select().from(landingContent).orderBy(asc(landingContent.orderIndex), asc(landingContent.id)),
@@ -76,9 +84,10 @@ async function getLandingBundle() {
     db.select().from(landingGlobeBadges).orderBy(asc(landingGlobeBadges.orderIndex)),
     db.select().from(legalPages).orderBy(asc(legalPages.id)),
     db.select().from(legalSections).orderBy(asc(legalSections.pageId), asc(legalSections.orderIndex)),
+    db.select().from(landingFounderProfile).orderBy(asc(landingFounderProfile.id)),
   ]);
 
-  return { media, content, sections, features, faqs, countries, operators, countryOperators, globeBadges, legalPages: pages, legalSections: pageSections };
+  return { media, content, sections, features, faqs, countries, operators, countryOperators, globeBadges, legalPages: pages, legalSections: pageSections, founder: founderProfiles[0] ?? null };
 }
 
 router.get("/landing", async (_req, res): Promise<void> => {
@@ -87,6 +96,22 @@ router.get("/landing", async (_req, res): Promise<void> => {
 
 router.get("/admin/landing", requireAdmin, async (_req, res): Promise<void> => {
   res.json(await getLandingBundle());
+});
+
+router.put("/admin/landing/founder", requireAdmin, async (req, res): Promise<void> => {
+  const source = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
+  const values = Object.fromEntries(
+    Object.entries(source).filter(([key, value]) => founderEditableFields.includes(key as (typeof founderEditableFields)[number]) && value !== undefined),
+  );
+  if (!values.name || !values.roleFr || !values.roleEn || !values.shortBioFr || !values.shortBioEn || !values.storyFr || !values.storyEn || !values.visionFr || !values.visionEn || !values.educationFr || !values.educationEn || !values.missionFr || !values.missionEn) {
+    res.status(400).json({ error: "Le nom, les rôles, les biographies, le parcours, la vision et la mission sont requis en français et en anglais." });
+    return;
+  }
+  const existing = await db.select({ id: landingFounderProfile.id }).from(landingFounderProfile).orderBy(asc(landingFounderProfile.id)).limit(1);
+  const [saved] = existing[0]
+    ? await db.update(landingFounderProfile).set(values).where(eq(landingFounderProfile.id, existing[0].id)).returning()
+    : await db.insert(landingFounderProfile).values(values as typeof landingFounderProfile.$inferInsert).returning();
+  res.json(saved);
 });
 
 router.post("/admin/landing/media/upload-url", requireAdmin, async (req, res): Promise<void> => {

@@ -11,6 +11,7 @@
     "push": "drizzle-kit push --config ./drizzle.config.ts",
     "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
     "seed": "node ./seed.mjs",
+    "seed-founder": "node ./seed-founder.mjs",
     "seed-admin": "node ./seed-admin.mjs",
     "seed-admin-panel": "node ./seed-admin-panel.mjs",
     "migrate-media": "node ./migrate-landing-media.mjs",

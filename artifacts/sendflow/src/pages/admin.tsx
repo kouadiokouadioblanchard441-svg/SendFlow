@@ -24,6 +24,7 @@ import {
   Trash2,
   UploadCloud,
   Users,
+  UserRound,
   X,
 } from 'lucide-react';
 
@@ -43,8 +44,9 @@ type Bundle = {
   globeBadges: RecordItem[];
   legalPages: RecordItem[];
   legalSections: RecordItem[];
+  founder: RecordItem | null;
 };
-type ResourceKey = Exclude<keyof Bundle, 'countryOperators'>;
+type ResourceKey = Exclude<keyof Bundle, 'countryOperators' | 'founder'>;
 type InputKind = 'text' | 'textarea' | 'number' | 'checkbox' | 'select';
 type FieldConfig = {
   key: string;
@@ -304,6 +306,7 @@ const emptyBundle = (): Bundle => ({
   globeBadges: [],
   legalPages: [],
   legalSections: [],
+  founder: null,
 });
 
 class AdminHttpError extends Error {
@@ -565,6 +568,109 @@ function EditorDialog({
   );
 }
 
+const founderDefaults: Record<string, Primitive> = {
+  name: 'Fondateur de SendFlow',
+  roleFr: 'Fondateur & CEO',
+  roleEn: 'Founder & CEO',
+  shortBioFr: '',
+  shortBioEn: '',
+  storyFr: '',
+  storyEn: '',
+  visionFr: '',
+  visionEn: '',
+  educationFr: '',
+  educationEn: '',
+  missionFr: '',
+  missionEn: '',
+  photoKey: '',
+  linkedinUrl: '',
+  email: '',
+  isVisible: true,
+};
+
+function FounderEditor({
+  bundle,
+  saving,
+  onSave,
+}: {
+  bundle: Bundle;
+  saving: boolean;
+  onSave: (values: Record<string, Primitive>) => void;
+}) {
+  const [values, setValues] = useState<Record<string, Primitive>>(() => ({ ...founderDefaults, ...(bundle.founder ?? {}) }));
+  useEffect(() => {
+    setValues({ ...founderDefaults, ...(bundle.founder ?? {}) });
+  }, [bundle.founder]);
+
+  const update = (key: string, value: Primitive) => setValues((current) => ({ ...current, [key]: value }));
+  const photo = mediaForKey(bundle, values.photoKey);
+  const field = (key: string, label: string, kind: 'text' | 'textarea' = 'text', wide = false) => (
+    <label className={`sendflow-admin-field ${wide ? 'sendflow-admin-field-wide' : ''}`} htmlFor={`founder-${key}`}>
+      <span>{label}</span>
+      {kind === 'textarea' ? (
+        <textarea id={`founder-${key}`} value={String(values[key] ?? '')} rows={4} onChange={(event) => update(key, event.target.value)} />
+      ) : (
+        <input id={`founder-${key}`} value={String(values[key] ?? '')} onChange={(event) => update(key, event.target.value)} />
+      )}
+    </label>
+  );
+
+  return (
+    <section className="sendflow-admin-founder-card" aria-labelledby="founder-editor-title">
+      <div className="sendflow-admin-assignment-head">
+        <div>
+          <p className="sendflow-admin-overline">Page « À propos »</p>
+          <h3 id="founder-editor-title">Profil du CEO / fondateur</h3>
+        </div>
+        <UserRound size={19} />
+      </div>
+      <p className="sendflow-admin-founder-intro">Ces informations alimentent la page « Découvrir SendFlow ». Le contenu est éditable en français et en anglais.</p>
+      <div className="sendflow-admin-form-grid">
+        {field('name', 'Nom affiché')}
+        {field('email', 'Email public')}
+        {field('roleFr', 'Rôle · FR')}
+        {field('roleEn', 'Rôle · EN')}
+        {field('educationFr', 'Formation / parcours · FR', 'textarea')}
+        {field('educationEn', 'Formation / parcours · EN', 'textarea')}
+        {field('shortBioFr', 'Biographie courte · FR', 'textarea', true)}
+        {field('shortBioEn', 'Biographie courte · EN', 'textarea', true)}
+        {field('storyFr', 'Histoire / citation · FR', 'textarea', true)}
+        {field('storyEn', 'Histoire / citation · EN', 'textarea', true)}
+        {field('visionFr', 'Vision · FR', 'textarea', true)}
+        {field('visionEn', 'Vision · EN', 'textarea', true)}
+        {field('missionFr', 'Mission · FR', 'textarea', true)}
+        {field('missionEn', 'Mission · EN', 'textarea', true)}
+        {field('linkedinUrl', 'Profil LinkedIn')}
+      </div>
+      <div className="sendflow-admin-founder-media">
+        <label className="sendflow-admin-field" htmlFor="founder-photo-key">
+          <span>Photo de profil · média de la galerie</span>
+          <select id="founder-photo-key" value={String(values.photoKey ?? '')} onChange={(event) => update('photoKey', event.target.value)}>
+            <option value="">Aucun média · afficher les initiales</option>
+            {bundle.media.filter((item) => String(item.mimeType ?? '').startsWith('image/') || item.kind === 'image' || item.kind === 'portrait').map((item) => (
+              <option key={String(item.slug ?? item.id)} value={String(item.slug ?? item.id)}>{String(item.slug ?? item.id)}</option>
+            ))}
+          </select>
+        </label>
+        <div className="sendflow-admin-founder-preview">
+          <MediaThumb media={photo} label="Aperçu de la photo du fondateur" large />
+          <span>{photo ? 'Cette image sera affichée sur la page de présentation.' : 'Ajoute d’abord une image dans Médias pour pouvoir la sélectionner ici.'}</span>
+        </div>
+      </div>
+      <div className="sendflow-admin-founder-foot">
+        <label className="sendflow-admin-toggle-field" htmlFor="founder-visible">
+          <span><strong>Profil visible</strong><small>Masqué, la page utilise le contenu de secours.</small></span>
+          <input id="founder-visible" type="checkbox" checked={Boolean(values.isVisible)} onChange={(event) => update('isVisible', event.target.checked)} />
+          <span className="sendflow-admin-toggle"><i /></span>
+        </label>
+        <button className="sendflow-admin-button sendflow-admin-button-primary" disabled={saving} onClick={() => onSave(values)} data-testid="button-save-founder">
+          {saving ? <LoaderCircle className="sendflow-admin-spin" size={16} /> : <Save size={16} />} {saving ? 'Enregistrement…' : 'Enregistrer le profil'}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function AssignmentEditor({
   bundle,
   selectedCountry,
@@ -620,6 +726,7 @@ export default function AdminPage() {
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [assignmentSaving, setAssignmentSaving] = useState(false);
+  const [founderSaving, setFounderSaving] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<number | undefined>();
   const [notice, setNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -727,6 +834,19 @@ export default function AdminPage() {
     }
   };
 
+  const saveFounder = async (values: Record<string, Primitive>) => {
+    setFounderSaving(true);
+    try {
+      const saved = await apiRequest<RecordItem>('/api/admin/landing/founder', { method: 'PUT', body: JSON.stringify(values) });
+      setBundle((current) => ({ ...current, founder: saved }));
+      setNotice({ tone: 'success', text: 'Le profil du fondateur est à jour.' });
+    } catch (caught) {
+      setNotice({ tone: 'error', text: caught instanceof Error ? caught.message : 'Impossible d’enregistrer le profil du fondateur.' });
+    } finally {
+      setFounderSaving(false);
+    }
+  };
+
   if (error?.status === 401 || error?.status === 403 || error?.status === 503) {
     return <UnauthorizedState status={error.status} onRetry={() => void loadBundle()} />;
   }
@@ -776,6 +896,7 @@ export default function AdminPage() {
               <button className="sendflow-admin-button sendflow-admin-button-primary" onClick={() => setEditor({ resource: activeResource, item: null })} disabled={loading || Boolean(error)} data-testid="button-add-resource"><Plus size={16} /> Ajouter</button>
             </div>
             {activeResource === 'countries' && !loading && bundle.countries.length > 0 && <AssignmentEditor bundle={bundle} selectedCountry={selectedCountry ?? bundle.countries[0].id} saving={assignmentSaving} onCountryChange={setSelectedCountry} onSave={saveAssignments} />}
+            {activeResource === 'content' && !loading && <FounderEditor bundle={bundle} saving={founderSaving} onSave={saveFounder} />}
             {!loading && !error && (activeResource === 'media' || activeResource === 'operators') && <AssetStrip bundle={bundle} resource={activeResource} />}
             <div className="sendflow-admin-toolbar">
               <label className="sendflow-admin-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Rechercher dans ${config.label.toLowerCase()}`} data-testid="input-resource-search" /></label>

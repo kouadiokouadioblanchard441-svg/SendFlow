@@ -37,6 +37,31 @@ export const landingMedia = pgTable(
   }),
 );
 
+export const landingFounderProfile = pgTable(
+  "landing_founder_profile",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    roleFr: text("role_fr").notNull(),
+    roleEn: text("role_en").notNull(),
+    shortBioFr: text("short_bio_fr").notNull(),
+    shortBioEn: text("short_bio_en").notNull(),
+    storyFr: text("story_fr").notNull(),
+    storyEn: text("story_en").notNull(),
+    visionFr: text("vision_fr").notNull(),
+    visionEn: text("vision_en").notNull(),
+    educationFr: text("education_fr").notNull(),
+    educationEn: text("education_en").notNull(),
+    missionFr: text("mission_fr").notNull(),
+    missionEn: text("mission_en").notNull(),
+    photoKey: varchar("photo_key", { length: 160 }),
+    linkedinUrl: text("linkedin_url"),
+    email: text("email"),
+    isVisible: boolean("is_visible").default(true).notNull(),
+    ...timestamps,
+  },
+);
+
 export const landingContent = pgTable(
   "landing_content",
   {

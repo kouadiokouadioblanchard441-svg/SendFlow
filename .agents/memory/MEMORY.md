@@ -1,2 +1,3 @@
 - [Long JSX edits](long-jsx-edits.md) — Prefer inserting multiline sections around stable anchors over replacing very long one-line JSX blocks.
 - [App Storage constraints](app-storage-constraints.md) — Provisioning may require workspace credits before public asset migration can run.
+- [Database connection priority](database-connection-priority.md) — The app resolves Neon before the generic database variable; verify writes through the API.

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Route, Switch, Router as WouterRouter, useRoute } from 'wouter';
+import { Link, Route, Switch, Router as WouterRouter, useLocation, useRoute } from 'wouter';
 import { ArrowDownRight, ArrowRight, Check, ChevronDown, Facebook, Globe2, Instagram, Linkedin, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { ClerkProvider, SignIn, SignUp } from '@clerk/react';
@@ -9,6 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import AdminPage from '@/pages/admin';
+import AboutPage, { type FounderProfile } from '@/pages/about';
 import { LegalMentionsPage, PrivacyPage, TermsPage } from '@/pages/legal';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -63,6 +64,49 @@ type PublicLandingBundle = {
   countryOperators: Array<{ countryId: number; operatorId: number; orderIndex: number }>;
   globeBadges: Array<{ operatorId: number; positionX: number; positionY: number; orderIndex: number; isVisible: boolean }>;
   media: Array<{ slug: string; publicUrl: string | null; storagePath: string | null; sourcePath: string; isVisible: boolean }>;
+  founder: {
+    id: number;
+    name: string;
+    roleFr: string;
+    roleEn: string;
+    shortBioFr: string;
+    shortBioEn: string;
+    storyFr: string;
+    storyEn: string;
+    visionFr: string;
+    visionEn: string;
+    educationFr: string;
+    educationEn: string;
+    missionFr: string;
+    missionEn: string;
+    photoKey: string | null;
+    linkedinUrl: string | null;
+    email: string | null;
+    isVisible: boolean;
+  } | null;
+};
+
+const fallbackFounder: Record<Language, FounderProfile> = {
+  fr: {
+    name: 'Fondateur de SendFlow',
+    role: 'Fondateur & CEO',
+    shortBio: 'Un profil finance-comptabilité devenu bâtisseur de produits numériques, avec une conviction : la technologie doit clarifier les mouvements d’argent.',
+    story: 'Je viens de la finance-comptabilité, un univers qui apprend à regarder les chiffres, les risques et les détails. En me lançant dans la tech, j’ai voulu transformer cette rigueur en une expérience concrète : aider les personnes à envoyer de l’argent entre réseaux sans se perdre dans la complexité.',
+    vision: 'Faire de chaque transfert un parcours compréhensible, fiable et ouvert, où les réseaux rapprochent les personnes au lieu de créer de nouvelles frontières.',
+    mission: 'Connecter les réseaux de paiement et les personnes qui les utilisent, sans imposer la complexité technique à ceux qui veulent simplement aider, recevoir ou avancer.',
+    education: 'Formation en finance-comptabilité · Côte d’Ivoire',
+    email: 'hello@sendflow.studio',
+  },
+  en: {
+    name: 'SendFlow Founder',
+    role: 'Founder & CEO',
+    shortBio: 'A finance and accounting profile turned digital product builder, with one conviction: technology should make money movement clearer.',
+    story: 'I come from finance and accounting, a world that teaches you to look at numbers, risk, and detail. Moving into tech, I wanted to turn that discipline into a concrete experience: helping people send money across networks without getting lost in complexity.',
+    vision: 'Make every transfer understandable, reliable, and open, so networks bring people closer instead of creating new borders.',
+    mission: 'Connect payment networks and the people who use them, without placing technical complexity on those who simply want to help, receive, or move forward.',
+    education: 'Finance & accounting background · Côte d’Ivoire',
+    email: 'hello@sendflow.studio',
+  },
 };
 
 function BrandLockup() {
@@ -362,6 +406,7 @@ function App() {
           <TooltipProvider>
             <Switch>
               <Route path="/" component={LandingPage} />
+              <Route path="/a-propos" component={AboutRoute} />
               <Route path="/sign-in/*?" component={SignInPage} />
               <Route path="/sign-up/*?" component={SignUpPage} />
               <Route path="/conditions-utilisation" component={TermsPage} />
@@ -386,6 +431,63 @@ function SignInPage() {
 
 function SignUpPage() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
+}
+
+function AboutRoute() {
+  const [, navigate] = useLocation();
+  const [language, setLanguage] = useState<Language>('fr');
+  const { data: landingBundle } = useQuery<PublicLandingBundle>({
+    queryKey: ['/api/landing'],
+    queryFn: async () => {
+      const response = await fetch('/api/landing');
+      if (!response.ok) throw new Error('Landing content unavailable');
+      return response.json() as Promise<PublicLandingBundle>;
+    },
+    staleTime: 30_000,
+  });
+
+  const profile = useMemo<FounderProfile>(() => {
+    const fallback = fallbackFounder[language];
+    const founder = landingBundle?.founder;
+    if (!founder || founder.isVisible === false) return fallback;
+    const photoUrl = founder.photoKey
+      ? landingBundle.media.find((media) => media.slug === founder.photoKey && media.isVisible)?.publicUrl ?? null
+      : null;
+    return language === 'fr'
+      ? {
+        name: founder.name,
+        role: founder.roleFr,
+        photoUrl,
+        shortBio: founder.shortBioFr,
+        story: founder.storyFr,
+        vision: founder.visionFr,
+        mission: founder.missionFr,
+        education: founder.educationFr,
+        linkedinUrl: founder.linkedinUrl,
+        email: founder.email,
+      }
+      : {
+        name: founder.name,
+        role: founder.roleEn,
+        photoUrl,
+        shortBio: founder.shortBioEn,
+        story: founder.storyEn,
+        vision: founder.visionEn,
+        mission: founder.missionEn,
+        education: founder.educationEn,
+        linkedinUrl: founder.linkedinUrl,
+        email: founder.email,
+      };
+  }, [language, landingBundle]);
+
+  return (
+    <AboutPage
+      locale={language}
+      profile={profile}
+      onBackHome={() => navigate('/')}
+      onToggleLocale={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')}
+    />
+  );
 }
 
 function LegacyAdminRedirect() {
@@ -690,7 +792,7 @@ function LandingPage() {
               <p className="rise delay-2 mt-8 max-w-[520px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{isFrench ? 'SendFlow simplifie vos transferts d’argent entre différents réseaux de paiement, localement et au-delà des frontières.' : 'SendFlow simplifies money transfers across different payment networks, locally and across borders.'}</p>
               <div className="rise delay-3 mt-9 flex w-full max-w-[520px] flex-col items-stretch gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
                 <button onClick={() => goTo('join')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#8b62e5] bg-[#6d35d8] px-5 py-3.5 text-sm font-bold text-[#fbf8ef] shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3] sm:min-w-[210px]" data-testid="button-hero-download">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2" size={15} /></button>
-                <button onClick={() => goTo('features')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#6d35d8]/25 bg-white/80 px-5 py-3.5 text-sm font-bold text-[#211d2c] shadow-[0_10px_22px_rgba(45,37,53,.08)] transition-all hover:-translate-y-1 hover:border-[#6d35d8] hover:text-[#6d35d8] sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</button>
+                <Link href="/a-propos" className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#6d35d8]/25 bg-white/80 px-5 py-3.5 text-sm font-bold text-[#211d2c] shadow-[0_10px_22px_rgba(45,37,53,.08)] transition-all hover:-translate-y-1 hover:border-[#6d35d8] hover:text-[#6d35d8] sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</Link>
               </div>
             </div>
               <div className="relative mx-auto aspect-[3/2] w-full max-w-[530px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]">
