@@ -97,7 +97,6 @@ const faqs: { q: Copy; a: Copy }[] = [
 
 const footerAddresses = [
   { flag: '🇨🇮', country: 'Côte d’Ivoire', address: 'Abidjan, Cocody Riviera Palmeraie' },
-  { flag: '🇧🇯', country: 'Bénin', address: 'Siège social : Ilot C/SB, Quartier Atrokpocodji, Maison Emile Eric Affognitode, Abomey-Calavi (Atlantique)' },
 ];
 
 function RegulatorLogo() {
