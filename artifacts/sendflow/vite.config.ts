@@ -40,6 +40,7 @@ const isLegacyAdminPath = (requestUrl = '') => {
 
 const blockLegacyAdminPath = () => ({
   name: 'sendflow-block-legacy-admin-path',
+  enforce: 'pre' as const,
   configureServer(server: { middlewares: { use: (handler: (req: { url?: string }, res: { statusCode: number; end: (body: string) => void }, next: () => void) => void) => void } }) {
     server.middlewares.use((req, res, next) => {
       if (!isLegacyAdminPath(req.url)) {
