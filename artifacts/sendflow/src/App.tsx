@@ -419,18 +419,15 @@ function LandingPage() {
           </div>
         </section>
 
-        <section id="security" className="overflow-hidden px-5 py-24 sm:px-8 sm:py-32">
+        <section id="security" className="overflow-hidden px-5 py-12 sm:px-8 sm:py-20">
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[.9fr_1.1fr]">
-            <div className="reveal relative min-h-[430px] sm:min-h-[540px]">
-               <img src={securitySectionArt} alt={isFrench ? 'Protection et sécurité des transferts' : 'Transfer protection and security'} className="absolute bottom-0 left-1/2 z-10 h-[340px] w-[340px] -translate-x-1/2 object-contain object-center sm:h-[470px] sm:w-[470px]" />
-               <div className="absolute bottom-0 left-1/2 z-20 h-[390px] w-[390px] -translate-x-[34%] sm:h-[540px] sm:w-[540px]">
+            <div className="reveal relative min-h-[380px] sm:min-h-[480px]">
+               <img src={securitySectionArt} alt={isFrench ? 'Protection et sécurité des transferts' : 'Transfer protection and security'} className="absolute bottom-0 left-[1%] z-10 h-[220px] w-[220px] object-contain object-center sm:left-[2%] sm:h-[360px] sm:w-[360px]" />
+               <div className="absolute bottom-0 right-0 z-20 h-[300px] w-[300px] sm:h-[460px] sm:w-[460px]">
                  <img src={securityGuardianArt} alt={isFrench ? 'Gardien 3D de la sécurité SendFlow' : '3D SendFlow security guardian'} className="h-full w-full object-contain object-center" />
-                 <img src={sendflowWordmark} alt="SendFlow" className="absolute left-[31%] top-[28%] z-30 w-20 object-contain drop-shadow-[0_2px_2px_rgba(30,20,80,.18)] sm:w-28" />
                </div>
-              <div className="absolute left-[12%] top-[15%] h-[210px] w-[210px] rounded-full border border-[#6d35d8]/25 sm:h-[290px] sm:w-[290px]" />
-              <div className="absolute left-[20%] top-[23%] h-[165px] w-[165px] rounded-full border border-[#6d35d8]/25 sm:h-[225px] sm:w-[225px]" />
+               <img src={sendflowWordmark} alt="SendFlow" className="absolute left-[43%] top-[2%] z-30 w-24 object-contain drop-shadow-[0_2px_2px_rgba(30,20,80,.18)] sm:left-[42%] sm:top-[3%] sm:w-32" />
               <div className="absolute left-[30%] top-[34%] flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#6d35d8] text-[#fbf8ef] shadow-[0_18px_35px_rgba(109,53,216,.25)] sm:h-32 sm:w-32"><LockKeyhole size={34} strokeWidth={1.5} /></div>
-              <div className="float-art absolute right-[9%] top-[8%] rounded-2xl bg-[#fbf8ef] p-4 shadow-lg"><ShieldCheck className="text-[#6d35d8]" size={24} /><span className="mt-2 block text-[10px] font-bold">{isFrench ? 'visible' : 'visible'}</span></div>
               <div className="absolute bottom-[4%] left-[3%] rounded-2xl bg-[#211d2c] px-4 py-3 text-[11px] text-[#fbf8ef] shadow-lg"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#9adacb]" />{isFrench ? 'En contrôle' : 'In control'}</div>
             </div>
             <div className="reveal"><p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]">03 / {isFrench ? 'La confiance' : 'Trust'}</p><h2 className="mt-5 max-w-[600px] text-4xl font-semibold leading-[.94] tracking-[-.065em] sm:text-6xl">{isFrench ? <>Chaque étape<br /><em className="font-serif font-normal text-[#6d35d8]">à découvert.</em></> : <>Every step,<br /><em className="font-serif font-normal text-[#6d35d8]">in the clear.</em></>}</h2><p className="mt-7 max-w-[450px] text-[16px] leading-7 text-[#5e5766]">{isFrench ? 'Le calme vient de ce que l’on comprend. SendFlow rend les détails lisibles, les choix explicites et le contrôle toujours à portée de main.' : 'Calm comes from understanding. SendFlow makes details readable, choices explicit, and control always within reach.'}</p><div className="mt-8 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl border border-[#6d35d8]/15 bg-[#fbf8ef]/50 p-4"><LockKeyhole size={18} className="text-[#6d35d8]" /><h3 className="mt-7 text-[14px] font-bold">{isFrench ? 'Détails visibles' : 'Visible details'}</h3><p className="mt-2 text-[12px] leading-5 text-[#5e5766]">{isFrench ? 'Comprendre avant de confirmer.' : 'Understand before you confirm.'}</p></div><div className="rounded-2xl border border-[#6d35d8]/15 bg-[#fbf8ef]/50 p-4"><ShieldCheck size={18} className="text-[#6d35d8]" /><h3 className="mt-7 text-[14px] font-bold">{isFrench ? 'Pensé privé' : 'Privacy-minded'}</h3><p className="mt-2 text-[12px] leading-5 text-[#5e5766]">{isFrench ? 'Moins de données, plus de sérénité.' : 'Less data, more peace of mind.'}</p></div></div></div>
