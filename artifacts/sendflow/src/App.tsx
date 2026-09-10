@@ -398,9 +398,6 @@ function LandingPage() {
                   alt={isFrench ? 'Homme devant un globe connecté entre l’Afrique et l’Europe' : 'Man in front of a globe connecting Africa and Europe'}
                   className="hero-video-poster absolute inset-0 h-full w-full object-cover"
                 />
-                {heroVideoFailed && <div className="pointer-events-none absolute left-5 top-8 z-10 opacity-80 drop-shadow-[0_3px_12px_rgba(255,255,255,.45)]">
-                  <img src={sendflowWordmark} alt="" className="h-6 w-auto object-contain" />
-                </div>}
                 {!heroVideoFailed && (
                   <video
                     className="hero-video absolute inset-0 h-full w-full object-cover"
