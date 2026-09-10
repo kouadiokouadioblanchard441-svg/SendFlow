@@ -37,25 +37,48 @@ const navItems = [
 ];
 
 const countries = [
-  { name: 'Côte d’Ivoire', code: 'CI', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇨🇮', tone: '#dbeaff' },
-  { name: 'Bénin', code: 'BJ', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇧🇯', tone: '#dbeaff' },
-  { name: 'Togo', code: 'TG', networks: ['Réseau A', 'Réseau B'], flag: '🇹🇬', tone: '#dbeaff' },
-  { name: 'Cameroun', code: 'CM', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇨🇲', tone: '#dbeaff' },
-  { name: 'Burkina Faso', code: 'BF', networks: ['Réseau A', 'Réseau B'], flag: '🇧🇫', tone: '#dbeaff' },
-  { name: 'Cap-Vert', code: 'CV', networks: ['Réseau A', 'Réseau B'], flag: '🇨🇻', tone: '#dbeaff' },
-  { name: 'Gambie', code: 'GM', networks: ['Réseau A', 'Réseau B'], flag: '🇬🇲', tone: '#dbeaff' },
-  { name: 'Guinée', code: 'GN', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇬🇳', tone: '#dbeaff' },
-  { name: 'Guinée-Bissau', code: 'GW', networks: ['Réseau A', 'Réseau B'], flag: '🇬🇼', tone: '#dbeaff' },
-  { name: 'Liberia', code: 'LR', networks: ['Réseau A', 'Réseau B'], flag: '🇱🇷', tone: '#dbeaff' },
-  { name: 'Mali', code: 'ML', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇲🇱', tone: '#dbeaff' },
-  { name: 'Mauritanie', code: 'MR', networks: ['Réseau A', 'Réseau B'], flag: '🇲🇷', tone: '#dbeaff' },
-  { name: 'Niger', code: 'NE', networks: ['Réseau A', 'Réseau B'], flag: '🇳🇪', tone: '#dbeaff' },
-  { name: 'Nigeria', code: 'NG', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇳🇬', tone: '#dbeaff' },
-  { name: 'Sierra Leone', code: 'SL', networks: ['Réseau A', 'Réseau B'], flag: '🇸🇱', tone: '#dbeaff' },
-  { name: 'Sénégal', code: 'SN', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇸🇳', tone: '#dbeaff' },
-  { name: 'Ghana', code: 'GH', networks: ['Réseau A', 'Réseau B', 'Réseau C'], flag: '🇬🇭', tone: '#dbeaff' },
-  { name: 'Kenya', code: 'KE', networks: ['Réseau A', 'Réseau B'], flag: '🇰🇪', tone: '#dbeaff' },
+  { name: 'Côte d’Ivoire', code: 'CI', networks: ['Orange', 'MTN', 'Moov Africa', 'Wave'], flag: '🇨🇮', tone: '#dbeaff' },
+  { name: 'Bénin', code: 'BJ', networks: ['MTN', 'Moov Africa', 'Celtiis'], flag: '🇧🇯', tone: '#dbeaff' },
+  { name: 'Togo', code: 'TG', networks: ['Togocom', 'Moov Africa'], flag: '🇹🇬', tone: '#dbeaff' },
+  { name: 'Cameroun', code: 'CM', networks: ['MTN', 'Orange', 'Camtel', 'Nexttel'], flag: '🇨🇲', tone: '#dbeaff' },
+  { name: 'Burkina Faso', code: 'BF', networks: ['Orange', 'Moov Africa', 'Telecel Faso'], flag: '🇧🇫', tone: '#dbeaff' },
+  { name: 'Cap-Vert', code: 'CV', networks: ['CVMóvel', 'Unitel T+'], flag: '🇨🇻', tone: '#dbeaff' },
+  { name: 'Gambie', code: 'GM', networks: ['Africell', 'QCell', 'Comium'], flag: '🇬🇲', tone: '#dbeaff' },
+  { name: 'Guinée', code: 'GN', networks: ['Orange', 'MTN', 'Cellcom'], flag: '🇬🇳', tone: '#dbeaff' },
+  { name: 'Guinée-Bissau', code: 'GW', networks: ['Orange', 'MTN'], flag: '🇬🇼', tone: '#dbeaff' },
+  { name: 'Liberia', code: 'LR', networks: ['Lonestar Cell MTN', 'Orange', 'Africell'], flag: '🇱🇷', tone: '#dbeaff' },
+  { name: 'Mali', code: 'ML', networks: ['Orange', 'Moov Africa', 'Telecel Mali'], flag: '🇲🇱', tone: '#dbeaff' },
+  { name: 'Mauritanie', code: 'MR', networks: ['Mauritel', 'Mattel', 'Chinguitel'], flag: '🇲🇷', tone: '#dbeaff' },
+  { name: 'Niger', code: 'NE', networks: ['Airtel', 'Moov Africa', 'Zamani Telecom'], flag: '🇳🇪', tone: '#dbeaff' },
+  { name: 'Nigeria', code: 'NG', networks: ['MTN', 'Airtel', 'Glo', '9mobile'], flag: '🇳🇬', tone: '#dbeaff' },
+  { name: 'Sierra Leone', code: 'SL', networks: ['Africell', 'Orange', 'QCell'], flag: '🇸🇱', tone: '#dbeaff' },
+  { name: 'Sénégal', code: 'SN', networks: ['Orange', 'Free', 'Expresso', 'Wave'], flag: '🇸🇳', tone: '#dbeaff' },
+  { name: 'Ghana', code: 'GH', networks: ['MTN', 'Telecel', 'AT'], flag: '🇬🇭', tone: '#dbeaff' },
+  { name: 'Kenya', code: 'KE', networks: ['Safaricom', 'Airtel', 'Telkom'], flag: '🇰🇪', tone: '#dbeaff' },
 ];
+
+const operatorLogoUrls: Record<string, string> = {
+  Orange: 'https://cdn.simpleicons.org/orange',
+  Airtel: 'https://cdn.simpleicons.org/airtel',
+  Vodafone: 'https://cdn.simpleicons.org/vodafone',
+};
+
+function OperatorRow({ network, index, total }: { network: string; index: number; total: number }) {
+  const logoUrl = operatorLogoUrls[network];
+  return (
+    <div className="flex items-center gap-3">
+      <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#f0ece3] text-[10px] font-bold text-[#6d35d8]">
+        {index + 1}
+        {index < total - 1 && <span className="absolute left-1/2 top-8 h-3 w-px bg-[#d6d0c7]" />}
+      </span>
+      <div className="flex flex-1 items-center gap-3 rounded-xl border border-[#2d2535]/10 px-4 py-3 text-[13px] font-semibold">
+        {logoUrl && <img src={logoUrl} alt="" className="h-6 w-6 object-contain" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
+        <span>{network}</span>
+      </div>
+      {index < total - 1 && <ArrowRight size={15} className="text-[#b1abb4]" />}
+    </div>
+  );
+}
 
 const heroCountryPositions: Record<string, string> = {
   CI: 'left-[7%] top-[53%]',
@@ -65,11 +88,11 @@ const heroCountryPositions: Record<string, string> = {
 };
 
 const faqs: { q: Copy; a: Copy }[] = [
-  { q: { fr: 'Qu’est-ce que SendFlow ?', en: 'What is SendFlow?' }, a: { fr: 'SendFlow est une expérience de démonstration qui imagine une manière plus claire de transférer de l’argent entre réseaux Mobile Money. Elle ne traite aucun paiement réel.', en: 'SendFlow is a demo experience imagining a clearer way to move money between Mobile Money networks. It does not process real payments.' } },
-  { q: { fr: 'Quels réseaux sont disponibles ?', en: 'Which networks are available?' }, a: { fr: 'La couverture présentée est illustrative. Choisissez un pays dans la démo pour explorer quelques réseaux Mobile Money de démonstration.', en: 'The coverage shown is illustrative. Choose a country in the demo to explore a few illustrative Mobile Money networks.' } },
-  { q: { fr: 'Puis-je transférer vers un autre pays ?', en: 'Can I transfer to another country?' }, a: { fr: 'Le transfert international fait partie de la vision SendFlow, lorsque la couverture et les conditions locales le permettent. Cette page ne traite aucun paiement réel.', en: 'International transfers are part of the SendFlow vision where coverage and local conditions allow. This page does not process real payments.' } },
-  { q: { fr: 'Comment suivre un transfert ?', en: 'How do I track a transfer?' }, a: { fr: 'Le concept prévoit un suivi clair de chaque étape, de la vérification à la confirmation, avec un statut lisible pour le bénéficiaire et l’expéditeur.', en: 'The concept includes clear step-by-step tracking from review to confirmation, with a readable status for sender and recipient.' } },
-  { q: { fr: 'SendFlow possède-t-il un wallet ?', en: 'Does SendFlow have a wallet?' }, a: { fr: 'Non. SendFlow est présenté ici comme une couche de connexion entre réseaux, pas comme un wallet. Aucun compte financier n’est créé dans cette démo.', en: 'No. SendFlow is presented as a connection layer between networks, not as a wallet. This demo creates no financial account.' } },
+  { q: { fr: 'Qu’est-ce que SendFlow ?', en: 'What is SendFlow?' }, a: { fr: 'SendFlow simplifie les transferts d’argent entre réseaux Mobile Money avec un parcours clair, rapide et lisible.', en: 'SendFlow simplifies money transfers between Mobile Money networks with a clear, fast, and easy-to-follow journey.' } },
+  { q: { fr: 'Quels réseaux sont disponibles ?', en: 'Which networks are available?' }, a: { fr: 'La couverture SendFlow réunit les principaux opérateurs disponibles dans les pays couverts. Sélectionnez un pays pour découvrir ses réseaux.', en: 'SendFlow coverage brings together the main operators available in supported countries. Select a country to explore its networks.' } },
+  { q: { fr: 'Puis-je transférer vers un autre pays ?', en: 'Can I transfer to another country?' }, a: { fr: 'Oui. SendFlow est conçu pour relier les réseaux locaux et faciliter les transferts internationaux lorsque les conditions locales le permettent.', en: 'Yes. SendFlow is designed to connect local networks and simplify international transfers where local conditions allow.' } },
+  { q: { fr: 'Comment suivre un transfert ?', en: 'How do I track a transfer?' }, a: { fr: 'SendFlow affiche chaque étape, de la vérification à la confirmation, avec un statut lisible pour le bénéficiaire et l’expéditeur.', en: 'SendFlow shows every step from review to confirmation, with a clear status for sender and recipient.' } },
+  { q: { fr: 'SendFlow possède-t-il un wallet ?', en: 'Does SendFlow have a wallet?' }, a: { fr: 'Non. SendFlow agit comme une couche de connexion entre réseaux, et non comme un wallet ou un compte financier.', en: 'No. SendFlow acts as a connection layer between networks, not as a wallet or financial account.' } },
 ];
 
 function App() {
@@ -114,12 +137,12 @@ function LandingPage() {
   };
 
   const downloadBrief = () => {
-    const brief = `SendFlow\n\nUne vision plus calme des mouvements d’argent en Afrique.\n\nDémo conceptuelle — aucun paiement réel.\n\nParcours exploré : ${selectedCountry.name}\nRéseaux : ${selectedCountry.networks.join(', ')}\n\nsendflow.studio`;
+    const brief = `SendFlow\n\nUne vision plus calme des mouvements d’argent en Afrique.\n\nParcours exploré : ${selectedCountry.name}\nOpérateurs : ${selectedCountry.networks.join(', ')}\n\nsendflow.studio`;
     const blob = new Blob([brief], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'sendflow-demo-brief.txt';
+    anchor.download = 'sendflow-brief.txt';
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -182,7 +205,7 @@ function LandingPage() {
                 <button onClick={() => goTo('join')} className="rounded-full bg-[#6d35d8] px-5 py-3.5 text-[13px] font-bold text-[#fbf8ef] shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3]" data-testid="button-hero-download">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2 inline" size={15} /></button>
                 <button onClick={() => goTo('features')} className="rounded-full border border-[#2d2535]/20 px-5 py-3.5 text-[13px] font-bold text-[#211d2c] transition-all hover:-translate-y-1 hover:border-[#6d35d8] hover:text-[#6d35d8]" data-testid="button-hero-discover"><Play className="mr-2 inline" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</button>
               </div>
-              <p className="mt-5 text-[11px] text-[#8d8792]">{isFrench ? 'Démo conceptuelle · Aucun paiement réel' : 'Concept demo · No real payments'}</p>
+              <p className="mt-5 text-[11px] text-[#8d8792]">{isFrench ? 'Des transferts plus simples entre réseaux.' : 'Simpler transfers between networks.'}</p>
             </div>
             <div className="relative mx-auto h-[370px] w-full max-w-[530px] sm:h-[500px]">
               <div className="absolute left-1/2 top-1/2 h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#6d35d8]/15 sm:h-[370px] sm:w-[370px]" />
@@ -238,7 +261,7 @@ function LandingPage() {
               <div className="grid gap-3 sm:grid-cols-3">
                 {[{ n: '01', title: { fr: 'Choisissez', en: 'Choose' }, text: { fr: 'Votre pays, votre réseau, votre destination.', en: 'Your country, your network, your destination.' }, icon: Globe2 }, { n: '02', title: { fr: 'Vérifiez', en: 'Check' }, text: { fr: 'Le montant et le chemin, sans surprise.', en: 'The amount and the path, no surprises.' }, icon: Sparkles }, { n: '03', title: { fr: 'Envoyez', en: 'Send' }, text: { fr: 'Un dernier regard. Puis, c’est parti.', en: 'One last look. Then, it moves.' }, icon: ArrowDownRight }].map((step) => <div key={step.n} className="group rounded-[24px] border border-[#fbf8ef]/15 bg-[#2b2638] p-5 transition-colors hover:border-[#9adacb]/60 sm:p-6"><div className="flex items-start justify-between"><span className="text-[11px] font-bold text-[#9adacb]">{step.n}</span><step.icon size={19} className="text-[#e8cd4d] transition-transform group-hover:rotate-12" /></div><h3 className="mt-20 text-xl font-semibold tracking-[-.04em]">{t(step.title, language)}</h3><p className="mt-3 text-[13px] leading-5 text-[#bcb6c5]">{t(step.text, language)}</p></div>)}</div>
             </div>
-            <div className="reveal mt-20 grid items-center gap-8 border-t border-[#fbf8ef]/15 pt-7 sm:grid-cols-[1fr_auto]"><div className="flex items-center gap-4"><div className="flex -space-x-2"><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#e8cd4d] text-[10px] font-bold">CI</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#9adacb] text-[10px] font-bold">SN</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#b69de5] text-[10px] font-bold">GH</span></div><p className="text-[12px] text-[#bcb6c5]">{isFrench ? 'Une idée née entre plusieurs rives.' : 'An idea born between several shores.'}</p></div><span className="text-[11px] font-semibold uppercase tracking-[.12em] text-[#e8cd4d]">A demo, not a promise</span></div>
+            <div className="reveal mt-20 grid items-center gap-8 border-t border-[#fbf8ef]/15 pt-7 sm:grid-cols-[1fr_auto]"><div className="flex items-center gap-4"><div className="flex -space-x-2"><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#e8cd4d] text-[10px] font-bold">CI</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#9adacb] text-[10px] font-bold">SN</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#b69de5] text-[10px] font-bold">GH</span></div><p className="text-[12px] text-[#bcb6c5]">{isFrench ? 'Une idée née entre plusieurs rives.' : 'An idea born between several shores.'}</p></div><span className="text-[11px] font-semibold uppercase tracking-[.12em] text-[#e8cd4d]">{isFrench ? 'Pensé pour une Afrique connectée' : 'Built for a connected Africa'}</span></div>
           </div>
         </section>
 
@@ -247,7 +270,17 @@ function LandingPage() {
             <div className="reveal flex flex-col justify-between gap-6 sm:flex-row sm:items-end"><div><p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]">02 / {isFrench ? 'Voir plus loin' : 'See further'}</p><h2 className="mt-4 max-w-[650px] text-4xl font-semibold leading-[.96] tracking-[-.065em] sm:text-6xl">{isFrench ? <>Votre argent,<br /><em className="font-serif font-normal text-[#6d35d8]">sans frontières mentales.</em></> : <>Your money,<br /><em className="font-serif font-normal text-[#6d35d8]">without mental borders.</em></>}</h2></div><p className="max-w-[280px] text-[14px] leading-6 text-[#5e5766]">{isFrench ? 'Explorez une couverture fictive et les connexions qui donnent vie à SendFlow.' : 'Explore illustrative coverage and the connections that bring SendFlow to life.'}</p></div>
             <div id="international" className="reveal mt-12 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
               <div className="rounded-[28px] bg-[#e8cd4d] p-6 sm:p-8"><div className="flex items-center justify-between"><span className="text-[11px] font-bold uppercase tracking-[.14em]">{isFrench ? 'Couverture démo' : 'Demo coverage'}</span><span className="rounded-full bg-[#211d2c]/10 px-3 py-1 text-[10px] font-bold">{countries.length} pays</span></div><div className="mt-10 text-[clamp(3.5rem,8vw,6.5rem)] font-semibold leading-[.8] tracking-[-.09em]">{countries.length}<span className="font-serif font-normal text-[#6d35d8]">.</span></div><p className="mt-6 max-w-[240px] text-[14px] leading-6 text-[#211d2c]/70">{isFrench ? 'Des premiers chemins pour tester une idée plus vaste.' : 'First paths to test a bigger idea.'}</p><div className="mt-10 flex flex-wrap gap-2">{countries.map((country) => <button key={country.code} onClick={() => setSelectedCountry(country)} className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all ${selectedCountry.code === country.code ? 'border-[#211d2c] bg-[#211d2c] text-[#fbf8ef]' : 'border-[#211d2c]/20 hover:border-[#211d2c]'}`} data-testid={`button-country-${country.code}`}><span className="mr-1">{country.flag}</span>{country.code}</button>)}</div></div>
-              <div className="rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] p-6 shadow-[0_15px_45px_rgba(58,38,83,.06)] sm:p-8"><div className="flex items-start justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8d8792]">{isFrench ? 'Chemin actif' : 'Active path'}</p><h3 className="mt-2 text-3xl font-semibold tracking-[-.06em]">{selectedCountry.name}</h3></div><span className="flex h-11 w-11 items-center justify-center rounded-2xl text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span></div><div className="mt-10 space-y-3">{displayNetworks.map((network, index) => <div key={network} className="flex items-center gap-3"><span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#f0ece3] text-[10px] font-bold text-[#6d35d8]">{index + 1}{index < displayNetworks.length - 1 && <span className="absolute left-1/2 top-8 h-3 w-px bg-[#d6d0c7]" />}</span><div className="flex-1 rounded-xl border border-[#2d2535]/10 px-4 py-3 text-[13px] font-semibold">{network}</div>{index < displayNetworks.length - 1 && <ArrowRight size={15} className="text-[#b1abb4]" />}</div>)}</div><div className="mt-9 flex items-center gap-2 border-t border-[#2d2535]/10 pt-5 text-[11px] text-[#8d8792]"><Check size={14} className="text-[#6d35d8]" /> {isFrench ? 'Parcours illustratif · Pas de transaction' : 'Illustrative path · No transaction'}</div></div>
+              <div className="rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] p-6 shadow-[0_15px_45px_rgba(58,38,83,.06)] sm:p-8">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8d8792]">{isFrench ? 'Opérateurs disponibles' : 'Available operators'}</p>
+                    <h3 className="mt-2 text-3xl font-semibold tracking-[-.06em]">{selectedCountry.name}</h3>
+                  </div>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span>
+                </div>
+                <div className="mt-10 space-y-3">{displayNetworks.map((network, index) => <OperatorRow key={network} network={network} index={index} total={displayNetworks.length} />)}</div>
+                <div className="mt-9 flex items-center gap-2 border-t border-[#2d2535]/10 pt-5 text-[11px] text-[#8d8792]"><Check size={14} className="text-[#6d35d8]" /> {isFrench ? 'Logos publics affichés lorsqu’ils sont disponibles · Pas de transaction' : 'Public logos shown when available · No transaction'}</div>
+              </div>
             </div>
           </div>
         </section>
