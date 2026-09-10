@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { Link, Route, Switch, Router as WouterRouter } from 'wouter';
 import { ArrowDownRight, ArrowRight, Check, ChevronDown, Facebook, Globe2, Instagram, Linkedin, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
+import { PrivacyPage, TermsPage } from '@/pages/legal';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
@@ -176,9 +177,8 @@ function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigat
           </section>
           <section>
             <h3>{isFrench ? 'Réglementation' : 'Regulation'}</h3>
-            <button onClick={() => onNavigate('security')}>{isFrench ? 'Politique de Confidentialité' : 'Privacy Policy'}</button>
-            <button onClick={() => onNavigate('faq')}>CGU SendFlow</button>
-            <button onClick={() => onNavigate('faq')}>CGU Europe</button>
+              <Link href="/confidentialite">{isFrench ? 'Politique de Confidentialité' : 'Privacy Policy'}</Link>
+              <Link href="/conditions-utilisation">{isFrench ? 'Conditions d’utilisation' : 'Terms of Use'}</Link>
           </section>
         </div>
 
@@ -215,7 +215,7 @@ function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigat
 
         <div className="sendflow-footer-bottom">
           <span>© 2025 Flow Digital SARL. {isFrench ? 'Tous droits réservés.' : 'All rights reserved.'}</span>
-          <div><button onClick={() => onNavigate('faq')}>{isFrench ? 'Confidentialité' : 'Privacy'}</button><button onClick={() => onNavigate('faq')}>{isFrench ? 'Mentions' : 'Legal'}</button></div>
+          <div><Link href="/confidentialite">{isFrench ? 'Confidentialité' : 'Privacy'}</Link><span>{isFrench ? 'Mentions légales · bientôt' : 'Legal notice · soon'}</span></div>
         </div>
       </div>
     </footer>
@@ -229,6 +229,8 @@ function App() {
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <Switch>
             <Route path="/" component={LandingPage} />
+            <Route path="/conditions-utilisation" component={TermsPage} />
+            <Route path="/confidentialite" component={PrivacyPage} />
             <Route component={NotFound} />
           </Switch>
         </WouterRouter>
