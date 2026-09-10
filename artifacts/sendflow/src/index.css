@@ -244,18 +244,22 @@ section#features-cards [class*="rounded-[28px]"] {
 }
 
 section#how {
-  background: #0d1728 !important;
+  background: #6d35d8 !important;
   color: #ffffff !important;
 }
 
 section#how [class*="rounded-[24px]"] {
-  background: #182941 !important;
-  border-color: #496585 !important;
+  background: #5822c3 !important;
+  border-color: rgba(255, 255, 255, .32) !important;
   box-shadow: 0 18px 38px rgba(0, 0, 0, .2) !important;
 }
 
 section#how [class*="text-[#fbf8ef]"] {
   color: #ffffff !important;
+}
+
+section#how [class*="text-[#e8cd4d]"] {
+  color: #eef5ff !important;
 }
 
 section#features [class*="rounded-[28px]"] {
