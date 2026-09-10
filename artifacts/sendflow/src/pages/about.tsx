@@ -12,7 +12,6 @@ import {
   GraduationCap,
   HeartHandshake,
   Linkedin,
-  Mail,
   MapPin,
   Network,
   Quote,
@@ -22,6 +21,7 @@ import {
   UserRound,
   Zap,
 } from 'lucide-react';
+import { SiGmail } from 'react-icons/si';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 
 export type AboutLocale = 'fr' | 'en';
@@ -445,7 +445,7 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
                 </div>
               </div>
             </div>
-            <div className="mt-10 flex flex-wrap gap-3 border-t pt-6" style={{ borderColor: colors.line }}>
+            <div className="mt-10 flex flex-wrap justify-center gap-3 border-t pt-6 sm:justify-start" style={{ borderColor: colors.line }}>
               {profile.linkedinUrl && (
                 <a
                   href={profile.linkedinUrl}
@@ -461,10 +461,10 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
               {profile.email && (
                 <a
                   href={`mailto:${profile.email}`}
-                  className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-transform hover:-translate-y-0.5"
+                  className="inline-flex min-w-[214px] items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-transform hover:-translate-y-0.5"
                   style={{ backgroundColor: colors.violet, color: colors.paper }}
                 >
-                  <Mail size={16} />
+                  <SiGmail size={18} color="#EA4335" aria-hidden="true" />
                   {t({ fr: 'Écrire au fondateur', en: 'Email the founder' })}
                 </a>
               )}
