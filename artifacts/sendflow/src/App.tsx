@@ -462,7 +462,6 @@ function LandingPage() {
                    <span className="flex h-12 w-12 items-center justify-center rounded-none text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span>
                 </div>
                  <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-7 sm:grid-cols-4">{displayNetworks.map((network) => <OperatorRow key={network} network={network} />)}</div>
-                 <div className="mt-9 flex items-center gap-2 border-t border-[#2d2535]/10 pt-5 text-[11px] text-[#8d8792]"><Check size={14} className="text-[#1769ff]" /> {isFrench ? 'Logos des réseaux · Pas de transaction' : 'Network logos · No transaction'}</div>
               </div>
             </div>
           </div>
