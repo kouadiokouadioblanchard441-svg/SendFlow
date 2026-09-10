@@ -223,3 +223,34 @@ export const legalSections = pgTable(
     pageOrderUnique: uniqueIndex("legal_sections_page_order_unique").on(table.pageId, table.orderIndex),
   }),
 );
+
+export const adminUsers = pgTable(
+  "admin_users",
+  {
+    id: serial("id").primaryKey(),
+    email: varchar("email", { length: 320 }).notNull(),
+    passwordHash: text("password_hash").notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => ({
+    emailUnique: uniqueIndex("admin_users_email_unique").on(table.email),
+  }),
+);
+
+export const adminSessions = pgTable(
+  "admin_sessions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => adminUsers.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash", { length: 128 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ...timestamps,
+  },
+  (table) => ({
+    tokenUnique: uniqueIndex("admin_sessions_token_unique").on(table.tokenHash),
+  }),
+);

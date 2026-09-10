@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Route, Switch, Router as WouterRouter } from 'wouter';
 import { ArrowDownRight, ArrowRight, Check, ChevronDown, Facebook, Globe2, Instagram, Linkedin, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { ClerkProvider, SignIn, SignUp, useAuth, useClerk } from '@clerk/react';
-import { useSignIn } from '@clerk/react/legacy';
+import { ClerkProvider, SignIn, SignUp } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Toaster } from '@/components/ui/toaster';
@@ -388,9 +387,17 @@ function SignUpPage() {
 }
 
 function AdminRoute() {
-  const { isLoaded, isSignedIn } = useAuth();
-  if (!isLoaded) return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] text-sm text-[#667386]">Chargement de la session…</div>;
-  if (!isSignedIn) {
+  const adminSession = useQuery<{ user: { id: number; email: string } }>({
+    queryKey: ['admin-session'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/auth/me', { credentials: 'include' });
+      if (!response.ok) throw new Error('Not authenticated');
+      return response.json();
+    },
+    retry: false,
+  });
+  if (adminSession.isPending) return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] text-sm text-[#667386]">Chargement de la session…</div>;
+  if (adminSession.isError) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4 py-10">
         <div className="w-full max-w-[440px] rounded-3xl border border-[#e2e8ef] bg-white p-5 shadow-[0_20px_60px_rgba(20,35,60,.1)] sm:p-8">
@@ -407,8 +414,6 @@ function AdminRoute() {
 }
 
 function AdminLoginForm() {
-  const { isLoaded, signIn } = useSignIn();
-  const { setActive } = useClerk();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -416,24 +421,23 @@ function AdminLoginForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isLoaded || !signIn) return;
     setError('');
     setIsSubmitting(true);
     try {
-      const attempt = await signIn.create({ identifier: email.trim() });
-      const result = await signIn.attemptFirstFactor({
-        strategy: 'password',
-        password,
+      const response = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
-      if (result.status === 'complete' && result.createdSessionId) {
-        await setActive({ session: result.createdSessionId });
-        window.location.assign(`${basePath}/admin`);
-        return;
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Email ou mot de passe incorrect.');
       }
-      setError('Une vérification supplémentaire est requise pour ce compte.');
+      await queryClient.invalidateQueries({ queryKey: ['admin-session'] });
+      window.location.assign(`${basePath}/admin`);
     } catch (caught) {
-      const clerkError = caught as { errors?: Array<{ longMessage?: string; message?: string }> };
-      setError(clerkError.errors?.[0]?.longMessage ?? clerkError.errors?.[0]?.message ?? 'Email ou mot de passe incorrect.');
+      setError(caught instanceof Error ? caught.message : 'Email ou mot de passe incorrect.');
     } finally {
       setIsSubmitting(false);
     }
@@ -469,7 +473,7 @@ function AdminLoginForm() {
       {error && <p role="alert" className="rounded-xl bg-[#fff1f1] px-4 py-3 text-sm font-medium leading-5 text-[#b42318]">{error}</p>}
       <button
         type="submit"
-        disabled={!isLoaded || isSubmitting}
+        disabled={isSubmitting}
         className="w-full rounded-xl bg-[#1769ff] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0d55d6] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? 'Connexion…' : 'Se connecter au panel'}

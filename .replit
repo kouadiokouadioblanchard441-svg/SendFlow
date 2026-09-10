@@ -26,3 +26,4 @@ channel = "stable-25_05"
 
 [userenv.shared]
 ADMIN_EMAILS = "kouadioblanchardkouadio64@gmail.com"
+ADMIN_BOOTSTRAP_EMAIL = "kouadioblanchardkouadio64@gmail.com"
