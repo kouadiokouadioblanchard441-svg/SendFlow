@@ -1005,6 +1005,9 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-admin-gate-card > div a { text-decoration: none; }
 
 .sendflow-admin-auth {
+  --admin-ink: #192231;
+  --admin-blue: #1769ff;
+  --admin-violet: #6d35d8;
   display: grid;
   min-height: 100dvh;
   place-items: center;
