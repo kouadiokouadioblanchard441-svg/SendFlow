@@ -464,6 +464,20 @@ footer:not(.sendflow-reference-footer) {
   gap: 22px;
 }
 
+/* Preserve the existing sections while giving each block more breathing room. */
+main > section + section {
+  margin-top: 24px;
+}
+
+@media (max-width: 639px) {
+  section#features-cards .grid,
+  section#how .grid,
+  section#features .grid,
+  section#security .grid {
+    row-gap: 20px;
+  }
+}
+
 @media (min-width: 640px) {
   .sendflow-reference-footer {
     padding: 96px 40px 34px;
