@@ -84,7 +84,7 @@ const countries = [
   { name: 'Bénin', code: 'BJ', networks: ['MTN', 'Moov Africa'], flag: '🇧🇯', tone: '#dbeaff' },
   { name: 'Togo', code: 'TG', networks: ['T-Money', 'Moov Africa'], flag: '🇹🇬', tone: '#dbeaff' },
   { name: 'Cameroun', code: 'CM', networks: ['MTN', 'Orange'], flag: '🇨🇲', tone: '#dbeaff' },
-  { name: 'Burkina Faso', code: 'BF', networks: ['Orange', 'Moov Africa', 'Telecel Faso'], flag: '🇧🇫', tone: '#dbeaff' },
+  { name: 'Burkina Faso', code: 'BF', networks: ['Orange', 'Moov Africa', 'Wave', 'Telecel Faso'], flag: '🇧🇫', tone: '#dbeaff' },
   { name: 'Cap-Vert', code: 'CV', networks: ['CVMóvel', 'Unitel T+'], flag: '🇨🇻', tone: '#dbeaff' },
   { name: 'Gambie', code: 'GM', networks: ['Africell', 'QCell', 'Comium'], flag: '🇬🇲', tone: '#dbeaff' },
   { name: 'Guinée', code: 'GN', networks: ['Orange', 'MTN', 'Cellcom'], flag: '🇬🇳', tone: '#dbeaff' },
@@ -95,7 +95,7 @@ const countries = [
   { name: 'Niger', code: 'NE', networks: ['Airtel', 'Moov Africa', 'Zamani Telecom'], flag: '🇳🇪', tone: '#dbeaff' },
   { name: 'Nigeria', code: 'NG', networks: ['MTN', 'Airtel', 'Glo', '9mobile'], flag: '🇳🇬', tone: '#dbeaff' },
   { name: 'Sierra Leone', code: 'SL', networks: ['Africell', 'Orange', 'QCell'], flag: '🇸🇱', tone: '#dbeaff' },
-  { name: 'Sénégal', code: 'SN', networks: ['Orange', 'Free', 'Expresso', 'Wave'], flag: '🇸🇳', tone: '#dbeaff' },
+  { name: 'Sénégal', code: 'SN', networks: ['Orange', 'Free', 'Moov Africa', 'Expresso', 'Wave'], flag: '🇸🇳', tone: '#dbeaff' },
   { name: 'Ghana', code: 'GH', networks: ['MTN', 'Telecel', 'AT'], flag: '🇬🇭', tone: '#dbeaff' },
   { name: 'Kenya', code: 'KE', networks: ['Safaricom', 'Airtel', 'Telkom'], flag: '🇰🇪', tone: '#dbeaff' },
 ];
