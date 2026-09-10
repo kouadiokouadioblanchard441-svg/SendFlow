@@ -3,6 +3,13 @@ import { Link } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
+const legalCompanyDetails = {
+  name: 'Flow Digital SARL',
+  legalForm: 'Société à responsabilité limitée',
+  address: 'Côte d’Ivoire, Abidjan, Cocody Riviera Palmeraie',
+  email: 'support@sendflow.studio',
+} as const;
+
 type LegalSectionProps = {
   number: string;
   title: string;
@@ -91,17 +98,25 @@ export function LegalMentionsPage() {
       intro="Cette page présente l’identité de l’éditeur de SendFlow, les informations de publication, les règles d’utilisation du site et les responsabilités liées aux contenus et aux services proposés."
     >
       <LegalSection number="01" title="Éditeur du site">
-        <p>Le site SendFlow est édité par <strong>Flow Digital SARL</strong>, société de droit ivoirien, exploitant la marque et le projet technologique SendFlow.</p>
-        <div className="rounded-2xl border border-[#2d2535]/10 bg-white px-5 py-5 text-[14px] leading-7 shadow-[0_10px_30px_rgba(58,38,83,.05)]">
-          <p><strong>Dénomination :</strong> Flow Digital SARL</p>
-          <p><strong>Forme juridique :</strong> Société à responsabilité limitée — information à confirmer sur l’extrait officiel</p>
-          <p><strong>Siège / adresse officielle communiquée :</strong> Côte d’Ivoire, Abidjan, Cocody Riviera Palmeraie</p>
-          <p><strong>Numéro RCCM :</strong> à compléter avant publication définitive</p>
-          <p><strong>Identifiant fiscal / compte contribuable :</strong> à compléter avant publication définitive</p>
-          <p><strong>Capital social :</strong> à compléter avant publication définitive</p>
-          <p><strong>Adresse électronique :</strong> <a className="font-bold text-[#5b21b6] underline" href="mailto:support@sendflow.studio">support@sendflow.studio</a></p>
+        <p>Le site SendFlow est édité par <strong>{legalCompanyDetails.name}</strong>, société de droit ivoirien, exploitant la marque et le projet technologique SendFlow.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-[#e6def3] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(58,38,83,.05)]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#6d35d8]">Dénomination</p>
+            <p className="mt-2 text-[15px] font-bold leading-6 text-[#211d2c]">{legalCompanyDetails.name}</p>
+          </div>
+          <div className="rounded-2xl border border-[#e6def3] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(58,38,83,.05)]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#6d35d8]">Forme juridique</p>
+            <p className="mt-2 text-[15px] font-bold leading-6 text-[#211d2c]">{legalCompanyDetails.legalForm}</p>
+          </div>
+          <div className="rounded-2xl border border-[#e6def3] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(58,38,83,.05)]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#6d35d8]">Siège social</p>
+            <p className="mt-2 text-[15px] font-bold leading-6 text-[#211d2c]">{legalCompanyDetails.address}</p>
+          </div>
+          <div className="rounded-2xl border border-[#e6def3] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(58,38,83,.05)]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#6d35d8]">Adresse électronique</p>
+            <a className="mt-2 block break-all text-[15px] font-bold leading-6 text-[#5b21b6] underline decoration-[#cbb6f3] underline-offset-4" href={`mailto:${legalCompanyDetails.email}`}>{legalCompanyDetails.email}</a>
+          </div>
         </div>
-        <p>Les informations d’immatriculation, de capital et d’identification fiscale doivent être remplacées par les données figurant sur les documents officiels de Flow Digital SARL avant toute mise en ligne présentée comme définitive.</p>
       </LegalSection>
 
       <LegalSection number="02" title="Directeur de la publication">
@@ -173,9 +188,9 @@ export function LegalMentionsPage() {
         <p>Les réclamations doivent d’abord être adressées à Flow Digital SARL à l’adresse support@sendflow.studio. À défaut de résolution amiable, les juridictions compétentes d’Abidjan peuvent être saisies, sous réserve des règles impératives de compétence et de protection des consommateurs.</p>
       </LegalSection>
 
-      <LegalSection number="14" title="Mise à jour et informations à compléter">
-        <p>Les présentes mentions doivent être mises à jour à chaque changement d’identité de l’éditeur, de siège, de directeur de publication, d’hébergeur, de marque, de modèle de service ou de statut réglementaire.</p>
-        <p>Avant publication définitive, Flow Digital SARL doit notamment confirmer le numéro RCCM, l’identifiant fiscal, le capital social, le nom du directeur de publication, l’identité et l’adresse de l’hébergeur, les éventuels crédits de contenus et les références des partenaires autorisés.</p>
+      <LegalSection number="14" title="Mise à jour des mentions">
+        <p>Les présentes mentions doivent être maintenues à jour à chaque changement d’identité de l’éditeur, de siège, de directeur de publication, d’hébergeur, de marque, de modèle de service ou de statut réglementaire.</p>
+        <p>Les informations affichées sur cette page sont regroupées dans une structure éditable afin de pouvoir être remplacées proprement lorsque les données officielles et les informations de production seront disponibles.</p>
         <p><strong>Version de travail publiée le 10 septembre 2026.</strong></p>
       </LegalSection>
     </LegalLayout>
