@@ -530,10 +530,10 @@ function LandingPage() {
             <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#e8cd4d]">{isFrench ? 'Le prochain mouvement' : 'The next move'}</p>
             <h2 className="mt-5 max-w-[820px] text-6xl font-extrabold leading-[.86] tracking-[-.08em] sm:text-8xl">{isFrench ? <>Votre prochain transfert<br /><em className="font-serif font-normal text-[#e8cd4d]">commence ici.</em></> : <>Your next transfer<br /><em className="font-serif font-normal text-[#e8cd4d]">starts here.</em></>}</h2>
             <p className="mt-8 max-w-[540px] text-[17px] font-semibold leading-7 text-[#f4edff]">{isFrench ? 'Téléchargez bientôt l’application SendFlow et simplifiez vos transferts entre réseaux.' : 'Download the SendFlow app soon and simplify transfers across networks.'}</p>
-            <button onClick={() => setSubmitted(true)} className="mt-8 rounded-full bg-[#e8cd4d] px-5 py-3.5 text-[13px] font-bold text-[#211d2c] transition-transform hover:-translate-y-0.5" data-testid="button-download-placeholder">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2 inline" size={15} /></button>
+             <button onClick={() => setSubmitted(true)} className="mt-8 inline-flex items-center rounded-[14px] border-2 border-[#a68bea] bg-[#5b21b6] px-6 py-4 text-[14px] font-extrabold text-white shadow-[0_14px_28px_rgba(33,29,44,.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4c1d95]" data-testid="button-download-placeholder">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2" size={17} /></button>
              <div className="mt-5 flex flex-wrap gap-3">
-               <StoreBadge store="Google Play" icon="play" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--dark" />
-               <StoreBadge store="App Store" icon="apple" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--dark" />
+               <StoreBadge store="Google Play" icon="play" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
+               <StoreBadge store="App Store" icon="apple" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
             </div>
              <div className="mt-10 grid items-end gap-1 sm:grid-cols-[1.1fr_.9fr] lg:absolute lg:right-8 lg:top-1/2 lg:mt-0 lg:w-[430px] lg:-translate-y-1/2">
                <img src={downloadSectionArt} alt={isFrench ? 'Application mobile SendFlow' : 'SendFlow mobile app'} className="h-48 w-full object-contain sm:h-60" />

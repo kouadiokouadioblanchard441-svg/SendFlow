@@ -399,11 +399,20 @@ footer:not(.sendflow-reference-footer) {
   font-weight: 700;
 }
 
-.sendflow-store-badge--dark {
-  border-color: rgba(251, 248, 239, .38);
-  background: rgba(33, 29, 44, .18);
-  color: #fbf8ef;
-  box-shadow: 0 10px 24px rgba(33, 29, 44, .12);
+.sendflow-store-badge--featured {
+  border: 2px solid #ffffff;
+  background: #ffffff;
+  color: #211d2c;
+  box-shadow: 0 14px 30px rgba(33, 29, 44, .22);
+}
+
+.sendflow-store-badge--featured small {
+  color: #6d35d8;
+  font-weight: 800;
+}
+
+.sendflow-store-badge--featured .sendflow-store-soon {
+  color: #6d35d8;
 }
 
 .sendflow-store-soon {
