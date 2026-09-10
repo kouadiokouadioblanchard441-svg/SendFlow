@@ -453,7 +453,7 @@ function LandingPage() {
              </div>
              <div id="international" className="reveal mt-12 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
               <div className="rounded-[28px] bg-[#e8cd4d] p-6 sm:p-8"><div className="flex items-center justify-between"><span className="text-[11px] font-bold uppercase tracking-[.14em]">{isFrench ? 'Couverture SendFlow' : 'SendFlow coverage'}</span><span className="rounded-full bg-[#211d2c]/10 px-3 py-1 text-[10px] font-bold">{countries.length} pays</span></div><div className="mt-10 text-[clamp(3.5rem,8vw,6.5rem)] font-extrabold leading-[.8] tracking-[-.09em]">{countries.length}<span className="font-serif font-normal text-[#6d35d8]">.</span></div><p className="mt-6 max-w-[280px] text-[15px] font-semibold leading-6 text-[#211d2c]/85">{isFrench ? 'Des connexions pensées pour accompagner vos transferts.' : 'Connections designed to support your transfers.'}</p><div className="mt-10 flex flex-wrap gap-2">{countries.map((country) => <button key={country.code} onClick={() => setSelectedCountry(country)} className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all ${selectedCountry.code === country.code ? 'border-[#211d2c] bg-[#211d2c] text-[#fbf8ef]' : 'border-[#211d2c]/20 hover:border-[#211d2c]'}`} data-testid={`button-country-${country.code}`}><span className="mr-1">{country.flag}</span>{country.code}</button>)}</div></div>
-               <div className="border border-[#2d2535]/10 bg-[#fbf8ef] p-6 shadow-[0_15px_45px_rgba(58,38,83,.06)] sm:p-8">
+                <div className="rounded-[20px] border-2 border-[#cbdced] bg-white p-6 shadow-[0_22px_55px_rgba(43,75,115,.14)] sm:p-8">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8d8792]">{isFrench ? 'Opérateurs disponibles' : 'Available operators'}</p>
@@ -461,7 +461,7 @@ function LandingPage() {
                   </div>
                    <span className="flex h-12 w-12 items-center justify-center rounded-none text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span>
                 </div>
-                 <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-7 sm:grid-cols-4">{displayNetworks.map((network) => <OperatorRow key={network} network={network} />)}</div>
+                  <div className="mt-10 rounded-[18px] border border-[#e2e6ef] bg-[#f4f3f9] p-5 sm:p-6"><div className="grid grid-cols-2 gap-x-8 gap-y-7 sm:grid-cols-4">{displayNetworks.map((network) => <OperatorRow key={network} network={network} />)}</div></div>
               </div>
             </div>
           </div>
