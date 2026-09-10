@@ -70,3 +70,17 @@ mtime_ms = 1788999090368
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/a84a2113-a5e6-4a25-8c35-44a6a68fa769/65ad3fda-47f0-4fca-aef0-82a8a2688dc0"
 storage_version_token = "1788999147640325"
 content_type = "image/png"
+
+[[outputs]]
+id = "XZKaxnt3y02sBrtwaSI8S"
+uri = "file://attached_assets/generated_images/sendflow-earth-globe.png"
+type = "image"
+title = "Terre animée SendFlow"
+description = "Globe centré sur l’Afrique, placé au milieu de l’image héroïque et animé en rotation lente."
+logical_id = "00d0a9e1-6f0b-4d9f-9a85-5332f7a8b4e3"
+content_hash = "sha256:4b78175788c937ec6b719946a454360371a55e1fe199865c7986cfd1af2ee90f"
+size = 1659525
+mtime_ms = 1788999300576
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:463b82a6-9ded-41aa-86f0-7dc9a11e743f/00d0a9e1-6f0b-4d9f-9a85-5332f7a8b4e3/51b5a511-ffb1-4a7f-90c8-1ec692c064ae"
+storage_version_token = "1788999391454124"
+content_type = "image/png"

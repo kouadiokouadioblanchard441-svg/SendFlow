@@ -8,6 +8,7 @@ import NotFound from '@/pages/not-found';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
+import heroGlobe from '@assets/generated_images/sendflow-earth-globe.png';
 
 const queryClient = new QueryClient();
 
@@ -142,6 +143,11 @@ function LandingPage() {
             <div className="relative z-10 max-w-[680px]">
               <div className="rise mb-7 aspect-[2.4/1] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-[#6d35d8]/10 bg-white shadow-[0_18px_45px_rgba(75,44,180,.08)]" data-testid="hero-image-slot">
                 <img src={heroPlaceholder} alt={isFrench ? 'Illustration temporaire du passage entre plusieurs réseaux' : 'Temporary illustration of a path across multiple networks'} className="h-full w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+                  <span className="hero-globe-spin block h-20 w-20 sm:h-28 sm:w-28">
+                    <img src={heroGlobe} alt={isFrench ? 'Terre centrée sur l’Afrique' : 'Earth centered on Africa'} className="h-full w-full object-contain drop-shadow-[0_10px_16px_rgba(20,50,150,.22)]" />
+                  </span>
+                </div>
               </div>
               <h1 className="rise delay-1 mt-6 max-w-[700px] text-[clamp(3.45rem,8.5vw,7.2rem)] font-semibold leading-[.9] tracking-[-.085em]">{isFrench ? <>L’argent circule.<br /><em className="font-serif font-normal text-[#6d35d8]">Les réseaux</em> aussi.</> : <>Money moves.<br /><em className="font-serif font-normal text-[#6d35d8]">Networks</em> do too.</>}</h1>
               <p className="rise delay-2 mt-8 max-w-[465px] text-[16px] leading-7 text-[#5e5766] sm:text-[18px]">{isFrench ? 'SendFlow simplifie vos transferts d’argent entre différents réseaux de paiement, localement et au-delà des frontières.' : 'SendFlow simplifies money transfers across different payment networks, locally and across borders.'}</p>
