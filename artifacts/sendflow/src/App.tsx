@@ -329,8 +329,8 @@ function LandingPage() {
               <div className="absolute bottom-[19%] right-[3%] flex items-center gap-2 text-[11px] font-semibold text-[#5e5766]"><span className="h-2 w-2 rounded-full bg-[#ef987f]" />Réseau B</div>
               <div className="absolute bottom-[8%] left-[18%] rounded-full border border-[#2d2535]/10 bg-[#fbf8ef]/70 px-3 py-1.5 text-[10px] text-[#5e5766] backdrop-blur-sm">+ 19 connexions possibles</div>
             </div>
-          </div>
-        </section>
+           </div>
+         </section>
 
         <section id="features-cards" className="px-5 py-16 sm:px-8 sm:py-24">
           <div className="mx-auto max-w-[1240px]">
@@ -370,8 +370,11 @@ function LandingPage() {
               <div><p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#e8cd4d]">01 / {isFrench ? 'Le chemin' : 'The path'}</p><h2 className="mt-5 max-w-[360px] text-4xl font-semibold leading-[.96] tracking-[-.065em] sm:text-6xl">{isFrench ? <>Un passage<br /><em className="font-serif font-normal text-[#9adacb]">simple.</em></> : <>One clear<br /><em className="font-serif font-normal text-[#9adacb]">passage.</em></>}</h2><p className="mt-7 max-w-[310px] text-[15px] leading-7 text-[#bcb6c5]">{isFrench ? 'Le réseau ne devrait jamais être votre problème. SendFlow rend chaque étape visible, du premier clic au dernier.' : 'The network should never be your problem. SendFlow makes every step visible, from first click to last.'}</p></div>
               <div className="grid gap-3 sm:grid-cols-3">
                 {[{ n: '01', title: { fr: 'Choisissez', en: 'Choose' }, text: { fr: 'Votre pays, votre réseau, votre destination.', en: 'Your country, your network, your destination.' }, icon: Globe2 }, { n: '02', title: { fr: 'Vérifiez', en: 'Check' }, text: { fr: 'Le montant et le chemin, sans surprise.', en: 'The amount and the path, no surprises.' }, icon: Sparkles }, { n: '03', title: { fr: 'Envoyez', en: 'Send' }, text: { fr: 'Un dernier regard. Puis, c’est parti.', en: 'One last look. Then, it moves.' }, icon: ArrowDownRight }].map((step) => <div key={step.n} className="group rounded-[24px] border border-[#fbf8ef]/15 bg-[#2b2638] p-5 transition-colors hover:border-[#9adacb]/60 sm:p-6"><div className="flex items-start justify-between"><span className="text-[11px] font-bold text-[#9adacb]">{step.n}</span><step.icon size={19} className="text-[#e8cd4d] transition-transform group-hover:rotate-12" /></div><h3 className="mt-20 text-xl font-semibold tracking-[-.04em]">{t(step.title, language)}</h3><p className="mt-3 text-[13px] leading-5 text-[#bcb6c5]">{t(step.text, language)}</p></div>)}</div>
-            </div>
-            <div className="reveal mt-20 grid items-center gap-8 border-t border-[#fbf8ef]/15 pt-7 sm:grid-cols-[1fr_auto]"><div className="flex items-center gap-4"><div className="flex -space-x-2"><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#e8cd4d] text-[10px] font-bold">CI</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#9adacb] text-[10px] font-bold">SN</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#b69de5] text-[10px] font-bold">GH</span></div><p className="text-[12px] text-[#bcb6c5]">{isFrench ? 'Une idée née entre plusieurs rives.' : 'An idea born between several shores.'}</p></div><span className="text-[11px] font-semibold uppercase tracking-[.12em] text-[#e8cd4d]">{isFrench ? 'Pensé pour une Afrique connectée' : 'Built for a connected Africa'}</span></div>
+             </div>
+             <div className="reveal mt-12 overflow-hidden rounded-[28px] border border-[#fbf8ef]/15 bg-[#2b2638] p-4 sm:p-6">
+               <img src={howItWorksSectionArt} alt={isFrench ? 'Parcours de transfert en trois étapes' : 'Three-step transfer journey'} className="mx-auto h-48 w-full object-contain sm:h-64" />
+             </div>
+             <div className="reveal mt-20 grid items-center gap-8 border-t border-[#fbf8ef]/15 pt-7 sm:grid-cols-[1fr_auto]"><div className="flex items-center gap-4"><div className="flex -space-x-2"><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#e8cd4d] text-[10px] font-bold">CI</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#9adacb] text-[10px] font-bold">SN</span><span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#211d2c] bg-[#b69de5] text-[10px] font-bold">GH</span></div><p className="text-[12px] text-[#bcb6c5]">{isFrench ? 'Une idée née entre plusieurs rives.' : 'An idea born between several shores.'}</p></div><span className="text-[11px] font-semibold uppercase tracking-[.12em] text-[#e8cd4d]">{isFrench ? 'Pensé pour une Afrique connectée' : 'Built for a connected Africa'}</span></div>
           </div>
         </section>
 
@@ -389,8 +392,16 @@ function LandingPage() {
                 </h2>
               </div>
               <p className="max-w-[280px] text-[14px] leading-6 text-[#5e5766]">{isFrench ? 'Explorez la couverture et les connexions qui donnent vie à SendFlow.' : 'Explore the coverage and connections that bring SendFlow to life.'}</p>
-            </div>
-            <div id="international" className="reveal mt-12 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
+             </div>
+             <div className="reveal mt-12 grid gap-4 sm:grid-cols-2">
+               <div className="overflow-hidden rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
+                 <img src={internationalSectionArt} alt={isFrench ? 'Transferts internationaux autour de l’Afrique' : 'International transfers around Africa'} className="h-52 w-full object-contain p-5 sm:h-60 sm:p-7" />
+               </div>
+               <div className="overflow-hidden rounded-[28px] border border-[#2d2535]/10 bg-[#d7eee8] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
+                 <img src={coverageSectionArt} alt={isFrench ? 'Couverture africaine de SendFlow' : 'SendFlow African coverage'} className="h-52 w-full object-contain p-5 sm:h-60 sm:p-7" />
+               </div>
+             </div>
+             <div id="international" className="reveal mt-12 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
               <div className="rounded-[28px] bg-[#e8cd4d] p-6 sm:p-8"><div className="flex items-center justify-between"><span className="text-[11px] font-bold uppercase tracking-[.14em]">{isFrench ? 'Couverture SendFlow' : 'SendFlow coverage'}</span><span className="rounded-full bg-[#211d2c]/10 px-3 py-1 text-[10px] font-bold">{countries.length} pays</span></div><div className="mt-10 text-[clamp(3.5rem,8vw,6.5rem)] font-semibold leading-[.8] tracking-[-.09em]">{countries.length}<span className="font-serif font-normal text-[#6d35d8]">.</span></div><p className="mt-6 max-w-[240px] text-[14px] leading-6 text-[#211d2c]/70">{isFrench ? 'Des connexions pensées pour accompagner vos transferts.' : 'Connections designed to support your transfers.'}</p><div className="mt-10 flex flex-wrap gap-2">{countries.map((country) => <button key={country.code} onClick={() => setSelectedCountry(country)} className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all ${selectedCountry.code === country.code ? 'border-[#211d2c] bg-[#211d2c] text-[#fbf8ef]' : 'border-[#211d2c]/20 hover:border-[#211d2c]'}`} data-testid={`button-country-${country.code}`}><span className="mr-1">{country.flag}</span>{country.code}</button>)}</div></div>
               <div className="rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] p-6 shadow-[0_15px_45px_rgba(58,38,83,.06)] sm:p-8">
                 <div className="flex items-start justify-between">
@@ -409,7 +420,8 @@ function LandingPage() {
 
         <section id="security" className="overflow-hidden bg-[#d7eee8] px-5 py-24 sm:px-8 sm:py-32">
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[.9fr_1.1fr]">
-            <div className="reveal relative min-h-[300px]">
+             <div className="reveal relative min-h-[300px]">
+               <img src={securitySectionArt} alt={isFrench ? 'Protection et sécurité des transferts' : 'Transfer protection and security'} className="absolute bottom-0 right-0 z-10 h-40 w-40 object-contain sm:h-52 sm:w-52" />
               <div className="absolute left-[12%] top-[15%] h-[210px] w-[210px] rounded-full border border-[#6d35d8]/25 sm:h-[290px] sm:w-[290px]" />
               <div className="absolute left-[20%] top-[23%] h-[165px] w-[165px] rounded-full border border-[#6d35d8]/25 sm:h-[225px] sm:w-[225px]" />
               <div className="absolute left-[30%] top-[34%] flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#6d35d8] text-[#fbf8ef] shadow-[0_18px_35px_rgba(109,53,216,.25)] sm:h-32 sm:w-32"><LockKeyhole size={34} strokeWidth={1.5} /></div>
@@ -435,6 +447,9 @@ function LandingPage() {
               <span className="rounded-xl border border-[#fbf8ef]/25 px-3 py-2 text-[11px] font-semibold text-[#f4edff]">Google Play · bientôt</span>
               <span className="rounded-xl border border-[#fbf8ef]/25 px-3 py-2 text-[11px] font-semibold text-[#f4edff]">App Store · bientôt</span>
             </div>
+             <div className="mt-10 flex justify-center lg:absolute lg:right-10 lg:top-1/2 lg:mt-0 lg:-translate-y-1/2">
+               <img src={downloadSectionArt} alt={isFrench ? 'Application mobile SendFlow' : 'SendFlow mobile app'} className="h-48 w-48 object-contain sm:h-60 sm:w-60" />
+             </div>
           </div>
         </section>
       </main>
