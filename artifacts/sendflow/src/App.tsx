@@ -9,6 +9,12 @@ import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
 import heroGlobe from '@assets/generated_images/sendflow-earth-globe-transparent.png';
+import networkSectionArt from '@assets/generated_images/sendflow-section-network-3d.png';
+import howItWorksSectionArt from '@assets/generated_images/sendflow-section-how-it-works-3d.png';
+import internationalSectionArt from '@assets/generated_images/sendflow-section-international-3d.png';
+import securitySectionArt from '@assets/generated_images/sendflow-section-security-3d.png';
+import coverageSectionArt from '@assets/generated_images/sendflow-section-coverage-3d.png';
+import downloadSectionArt from '@assets/generated_images/sendflow-section-download-3d.png';
 
 const queryClient = new QueryClient();
 
@@ -332,6 +338,9 @@ function LandingPage() {
               <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#6d35d8]">01 / {isFrench ? 'Le point de départ' : 'The starting point'}</p>
               <h2 className="mt-5 text-4xl font-semibold leading-[.96] tracking-[-.065em] sm:text-6xl">{isFrench ? <>Plusieurs réseaux.<br /><em className="font-serif font-normal text-[#6d35d8]">Une seule destination.</em></> : <>Many networks.<br /><em className="font-serif font-normal text-[#6d35d8]">One destination.</em></>}</h2>
               <p className="mt-6 max-w-[520px] text-[15px] leading-7 text-[#5e5766]">{isFrench ? 'Envoyer de l’argent ne devrait pas dépendre du réseau utilisé par votre proche. SendFlow imagine un passage plus simple, plus lisible et plus direct.' : 'Sending money should not depend on the network your loved one uses. SendFlow imagines a simpler, clearer, more direct path.'}</p>
+            </div>
+            <div className="reveal mt-10 overflow-hidden rounded-[28px] border border-[#6d35d8]/10 bg-[#fbf8ef] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
+              <img src={networkSectionArt} alt={isFrench ? 'Réseaux de paiement interconnectés' : 'Interconnected payment networks'} className="mx-auto h-52 w-full object-contain p-5 sm:h-64 sm:p-8" />
             </div>
             <div className="reveal mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
