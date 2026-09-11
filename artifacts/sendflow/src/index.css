@@ -794,16 +794,26 @@ footer > div > div:first-child {
 .sf-download-hero-shape-one { width: 480px; height: 480px; right: -285px; top: 95px; }
 .sf-download-hero-shape-two { width: 330px; height: 330px; left: -235px; bottom: 40px; }
 .sf-download-hero-orbit { display: none; }
-.sf-download-steps { width: min(100% - 38px, 700px); margin: 0 auto; padding: 65px 0 77px; }
+.sf-download-steps { width: min(100% - 38px, 1110px); margin: 0 auto; padding: 65px 0 77px; }
 .sf-download-section-heading { display: flex; align-items: flex-start; gap: 14px; }
 .sf-download-heading-icon { display: grid; place-items: center; width: 30px; height: 30px; color: var(--sf-violet); }
 .sf-download-section-heading p { margin: 2px 0 7px; color: var(--sf-violet); font-size: 10px; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
 .sf-download-section-heading h2 { margin: 0; color: var(--sf-ink); font-size: clamp(34px, 8vw, 54px); font-weight: 800; letter-spacing: -.07em; line-height: .95; }
-.sf-download-step-list { display: grid; gap: 37px; margin-top: 47px; }
-.sf-download-step { display: flex; align-items: flex-start; gap: 21px; }
-.sf-download-step-number { display: grid; place-items: center; width: 59px; height: 59px; flex: 0 0 59px; border-radius: 50%; background: var(--sf-violet); color: #fff; font-size: 21px; font-weight: 800; box-shadow: 0 9px 19px rgba(109, 53, 216, .25); }
-.sf-download-step h3 { margin: 3px 0 0; color: var(--sf-ink); font-size: 17px; font-weight: 800; letter-spacing: -.03em; }
-.sf-download-step p { margin: 7px 0 0; color: var(--sf-muted); font-size: 14px; line-height: 1.5; }
+.sf-download-step-list { display: grid; gap: 16px; margin-top: 42px; }
+.sf-download-step { overflow: hidden; border: 1px solid #e4dff2; border-radius: 28px; background: #fff; box-shadow: 0 18px 42px rgba(58, 38, 83, .09); }
+.sf-download-step-art { position: relative; display: grid; min-height: 245px; place-items: center; overflow: hidden; padding: 12px 12px 0; }
+.sf-download-step-art::after { position: absolute; right: -28px; bottom: -40px; width: 150px; height: 150px; border: 1px solid rgba(109, 53, 216, .16); border-radius: 50%; content: ''; }
+.sf-download-step-art img { position: relative; z-index: 1; width: 100%; height: 238px; object-fit: contain; object-position: center bottom; }
+.sf-download-step-icon { position: absolute; top: 16px; left: 16px; z-index: 2; display: grid; width: 48px; height: 48px; place-items: center; border: 1px solid rgba(255, 255, 255, .72); border-radius: 15px; background: var(--sf-violet); color: #fff; box-shadow: 0 10px 22px rgba(71, 31, 164, .28); }
+.sf-download-step-copy { padding: 18px 20px 22px; }
+.sf-download-step-meta { display: flex; align-items: center; justify-content: space-between; color: var(--sf-violet); }
+.sf-download-step-meta span { font-size: 11px; font-weight: 900; letter-spacing: .16em; }
+.sf-download-step h3 { margin: 10px 0 0; color: var(--sf-ink); font-size: 18px; font-weight: 800; letter-spacing: -.04em; }
+.sf-download-step p { margin: 8px 0 0; color: var(--sf-muted); font-size: 14px; line-height: 1.55; }
+.sf-download-step-1 .sf-download-step-art { background: linear-gradient(145deg, #f4edff, #e8ddff); }
+.sf-download-step-2 .sf-download-step-art { background: linear-gradient(145deg, #edf3ff, #dce8ff); }
+.sf-download-step-3 .sf-download-step-art { background: linear-gradient(145deg, #f1efff, #e5e1ff); }
+.sf-download-step-4 .sf-download-step-art { background: linear-gradient(145deg, #f0f7ff, #dceeff); }
 .sf-download-support { display: flex; width: min(100% - 38px, 1110px); margin: 0 auto 80px; flex-direction: column; gap: 25px; border-radius: 22px; background: #f3edff; padding: 30px; }
 .sf-download-support h2 { max-width: 500px; margin: 9px 0 0; font-size: clamp(30px, 6vw, 47px); font-weight: 800; letter-spacing: -.065em; line-height: .98; }
 .sf-download-support p:last-child { max-width: 460px; margin: 15px 0 0; color: var(--sf-muted); font-size: 15px; line-height: 1.5; }
@@ -854,6 +864,10 @@ footer > div > div:first-child {
 @media (min-width: 960px) {
   .sf-download-hero { min-height: 600px; }
   .sf-download-hero-content { padding: 57px 0 60px; }
+  .sf-download-step-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .sf-download-step { display: flex; flex-direction: column; }
+  .sf-download-step-art { min-height: 220px; }
+  .sf-download-step-art img { height: 220px; }
   .sf-download-hero-orbit { position: absolute; right: 6%; top: 50%; display: block; width: 280px; height: 280px; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; transform: translateY(-50%); }
   .sf-download-hero-orbit::before { position: absolute; inset: 22px; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; content: ''; }
   .sf-download-hero-orbit span { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: #fff; opacity: .8; }
