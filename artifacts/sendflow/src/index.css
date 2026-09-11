@@ -774,24 +774,24 @@ footer > div > div:first-child {
 .sf-download-hero-body { max-width: 475px; margin: 22px auto 0; color: #f7f2ff; font-size: 17px; line-height: 1.55; }
 .sf-download-free { margin: 10px auto 0; color: #e1d3ff; font-size: 13px; font-weight: 600; }
 .sf-download-stores { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 30px; }
-.sf-download-store { display: flex; width: 220px; min-height: 63px; align-items: center; gap: 13px; padding: 10px 17px; border: 1px solid rgba(255,255,255,.24); border-radius: 12px; background: #24133f; color: #fff; text-align: left; box-shadow: 0 10px 20px rgba(42, 14, 95, .24); transition: transform .2s ease, background-color .2s ease; }
-.sf-download-store:hover { transform: translateY(-2px); background: #180c2e; }
+.sf-download-store { display: flex; width: 220px; min-height: 63px; align-items: center; gap: 13px; padding: 10px 17px; border: 1px solid #e6e0f0; border-radius: 12px; background: #fff; color: #1b2034; text-align: left; box-shadow: 0 12px 24px rgba(42, 14, 95, .2); transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.sf-download-store:hover:not(.is-disabled) { transform: translateY(-2px); border-color: #c7b7e9; box-shadow: 0 16px 28px rgba(42, 14, 95, .26); }
 .sf-download-store svg { width: 35px; height: 35px; flex: 0 0 35px; }
 .sf-download-store svg path:not([fill]) { fill: currentColor; }
 .sf-download-store small, .sf-download-store strong { display: block; }
-.sf-download-store small { color: #d8c9f4; font-size: 9px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
-.sf-download-store strong { margin-top: 3px; font-size: 19px; font-weight: 700; letter-spacing: -.04em; }
-.sf-download-store.is-disabled { opacity: .58; filter: saturate(.75); }
-.sf-download-apk { display: flex; width: min(100%, 390px); min-height: 82px; align-items: center; gap: 14px; margin: 26px auto 0; padding: 13px 16px; border: 1px solid rgba(255,255,255,.34); border-radius: 19px; background: linear-gradient(135deg, #211d2c 0%, #442080 100%); color: #fff; text-align: left; box-shadow: 0 14px 30px rgba(34, 12, 87, .35); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
-.sf-download-apk:hover:not(.is-disabled) { transform: translateY(-3px); border-color: rgba(255,255,255,.7); box-shadow: 0 18px 35px rgba(34, 12, 87, .42); }
+.sf-download-store small { color: #687086; font-size: 9px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.sf-download-store strong { margin-top: 3px; color: #1b2034; font-size: 19px; font-weight: 700; letter-spacing: -.04em; }
+.sf-download-store.is-disabled { opacity: .82; }
+.sf-download-apk { display: flex; width: min(100%, 390px); min-height: 82px; align-items: center; gap: 14px; margin: 26px auto 0; padding: 13px 16px; border: 1px solid #e6e0f0; border-radius: 19px; background: #fff; color: #1b2034; text-align: left; box-shadow: 0 14px 30px rgba(34, 12, 87, .22); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.sf-download-apk:hover:not(.is-disabled) { transform: translateY(-3px); border-color: #c7b7e9; box-shadow: 0 18px 35px rgba(34, 12, 87, .3); }
 .sf-download-apk > span:nth-child(2) { flex: 1; }
 .sf-download-apk strong, .sf-download-apk small { display: block; }
-.sf-download-apk strong { color: #fff; font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
-.sf-download-apk small { margin-top: 5px; color: #eee7ff; font-size: 12px; font-weight: 600; }
-.sf-download-apk > svg { flex: 0 0 auto; color: #fff; }
-.sf-download-apk-icon { display: grid; width: 50px; height: 50px; flex: 0 0 50px; place-items: center; border: 1px solid rgba(255,255,255,.7); border-radius: 15px; background: #fff; color: #2b155b; box-shadow: 0 8px 18px rgba(0,0,0,.2); }
+.sf-download-apk strong { color: #1b2034; font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+.sf-download-apk small { margin-top: 5px; color: #687086; font-size: 12px; font-weight: 600; }
+.sf-download-apk > svg { flex: 0 0 auto; color: var(--sf-violet); }
+.sf-download-apk-icon { display: grid; width: 50px; height: 50px; flex: 0 0 50px; place-items: center; border: 1px solid #e6e0f0; border-radius: 15px; background: #fff; color: #111827; box-shadow: 0 8px 18px rgba(34, 12, 87, .12); }
 .sf-download-apk-icon img { width: 31px; height: 31px; display: block; }
-.sf-download-apk.is-disabled { cursor: not-allowed; opacity: .98; }
+.sf-download-apk.is-disabled { cursor: not-allowed; opacity: .9; }
 .sf-download-hero-shape { position: absolute; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; }
 .sf-download-hero-shape-one { width: 480px; height: 480px; right: -285px; top: 95px; }
 .sf-download-hero-shape-two { width: 330px; height: 330px; left: -235px; bottom: 40px; }
@@ -886,7 +886,7 @@ footer > div > div:first-child {
 }
 @media (prefers-reduced-motion: reduce) {
   .sf-download-store, .sf-download-apk { transition: none; }
-  .sf-download-store:hover, .sf-download-apk:hover:not(.is-disabled) { transform: none; }
+  .sf-download-store:hover:not(.is-disabled), .sf-download-apk:hover:not(.is-disabled) { transform: none; }
 }
 
 /* Clear card hierarchy: every content block must read as a distinct surface. */
