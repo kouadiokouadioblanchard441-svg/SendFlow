@@ -719,10 +719,10 @@ function SiteSettingsEditor({
   }, [bundle.settings]);
 
   const update = (key: string, value: Primitive) => setValues((current) => ({ ...current, [key]: value }));
-  const field = (key: string, label: string, type: 'text' | 'email' | 'url' = 'text') => (
+  const field = (key: string, label: string, type: 'text' | 'email' | 'url' = 'text', placeholder?: string) => (
     <label className="sendflow-admin-field" htmlFor={`site-settings-${key}`}>
       <span>{label}</span>
-      <input id={`site-settings-${key}`} type={type} value={String(values[key] ?? '')} onChange={(event) => update(key, event.target.value)} />
+      <input id={`site-settings-${key}`} type={type} placeholder={placeholder} value={String(values[key] ?? '')} onChange={(event) => update(key, event.target.value)} />
     </label>
   );
 
@@ -753,7 +753,7 @@ function SiteSettingsEditor({
         {field('googlePlayUrl', 'Lien Google Play', 'text')}
         {field('appStoreUrl', 'Lien App Store', 'text')}
         {field('appGalleryUrl', 'Lien AppGallery', 'text')}
-        {field('apkUrl', 'Lien APK Android', 'url')}
+        {field('apkUrl', 'Lien APK Android', 'url', 'https://exemple.com/sendflow.apk')}
       </div>
       <div className="sendflow-admin-founder-foot">
         <span className="sendflow-admin-muted">Le lien APK peut rester vide avant la publication. Il accepte une URL publique https:// ou un chemin / de l’application.</span>

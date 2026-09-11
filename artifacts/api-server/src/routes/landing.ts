@@ -76,6 +76,24 @@ function trimContactFields(values: Record<string, unknown>, fields: readonly str
     ]),
   );
 }
+
+function normalizeOptionalHttpUrl(values: Record<string, unknown>, fieldName: string): void {
+  const value = values[fieldName];
+  if (typeof value !== "string") return;
+  const trimmed = value.trim();
+  values[fieldName] = trimmed;
+  if (!trimmed) return;
+  if (/^\/(?!\/)/.test(trimmed)) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error(`${fieldName} doit être une URL publique valide.`);
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(`${fieldName} doit utiliser http:// ou https://.`);
+  }
+}
 async function getLandingBundle() {
   const [
     media,
@@ -145,12 +163,14 @@ router.put("/admin/landing/settings", requireAdmin, async (req, res): Promise<vo
     ),
     [...siteContactFields, ...siteLinkFields],
   );
-  if (typeof values.supportEmail !== "string" || !values.supportEmail.trim()) {
-    res.status(400).json({ error: "L’adresse email du support est requise." });
+  try {
+    normalizeOptionalHttpUrl(values, "apkUrl");
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "Le lien APK Android est invalide." });
     return;
   }
-  if (typeof values.apkUrl === "string" && values.apkUrl && !/^(https?:\/\/|\/(?!\/))/i.test(values.apkUrl)) {
-    res.status(400).json({ error: "Le lien APK doit commencer par https://, http:// ou /." });
+  if (typeof values.supportEmail !== "string" || !values.supportEmail.trim()) {
+    res.status(400).json({ error: "L’adresse email du support est requise." });
     return;
   }
   const existing = await db.select({ id: landingSiteSettings.id }).from(landingSiteSettings).orderBy(asc(landingSiteSettings.id)).limit(1);
@@ -161,7 +181,7 @@ router.put("/admin/landing/settings", requireAdmin, async (req, res): Promise<vo
 });
 
 router.post("/admin/landing/media/upload-url", requireAdmin, async (req, res): Promise<void> => {
-  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+  const name = req.params.resource as string;
   const contentType = typeof req.body?.contentType === "string" ? req.body.contentType.trim().toLowerCase() : "";
   const size = Number(req.body?.size);
   if (!name || !contentType.startsWith("image/") || !Number.isFinite(size) || size <= 0 || size > 10 * 1024 * 1024) {
