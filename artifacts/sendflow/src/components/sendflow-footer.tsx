@@ -192,7 +192,7 @@ export function SendFlowFooter({ isFrench, onNavigate, settings, content, media 
         </section>
 
         <div className="sendflow-footer-bottom">
-          <span>© 2025 {legalCompany}. {isFrench ? 'Tous droits réservés.' : 'All rights reserved.'}</span>
+          <span>© 2026 {legalCompany}. {isFrench ? 'Tous droits réservés.' : 'All rights reserved.'}</span>
           <div><Link href="/confidentialite">{isFrench ? 'Confidentialité' : 'Privacy'}</Link><Link href="/mentions-legales">{isFrench ? 'Mentions légales' : 'Legal notice'}</Link></div>
         </div>
       </div>
