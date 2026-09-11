@@ -12,8 +12,6 @@ import {
   GraduationCap,
   HeartHandshake,
   Linkedin,
-  MapPin,
-  Network,
   Quote,
   Sparkles,
   Target,
@@ -425,7 +423,9 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
           <div className="relative h-[280px] sm:h-[360px] lg:h-[390px] lg:self-start">
             <FounderPhoto profile={profile} />
             <div className="absolute bottom-5 left-5 flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] shadow-sm" style={{ backgroundColor: colors.yellow, color: colors.navy }}>
-              <MapPin size={13} />
+              <span className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-white p-0.5">
+                <img src={sendflowMark} alt="" className="h-full w-full object-contain" />
+              </span>
               SendFlow
             </div>
           </div>
@@ -489,8 +489,8 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
             <button
               type="button"
               onClick={onBackHome}
-              className="group inline-flex shrink-0 items-center gap-3 rounded-full px-6 py-4 text-sm font-bold transition-transform hover:-translate-y-1"
-              style={{ backgroundColor: colors.yellow, color: colors.navy }}
+              className="group inline-flex shrink-0 items-center gap-3 rounded-full px-6 py-4 text-sm font-bold text-[#fffdf7] transition-colors transition-transform hover:-translate-y-1 hover:bg-[#4d269d]"
+              style={{ backgroundColor: colors.violet }}
             >
               {t({ fr: 'Découvrir SendFlow', en: 'Discover SendFlow' })}
               <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" />
