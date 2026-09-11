@@ -692,6 +692,7 @@ const siteSettingsDefaults: Record<string, Primitive> = {
   legalForm: 'Société à responsabilité limitée',
   legalAddress: 'Côte d’Ivoire, Abidjan, Cocody Riviera Palmeraie',
   legalEmail: 'support@sendflow.studio',
+  footerAddressFlag: '🇨🇮',
   footerAddressCountry: 'Côte d’Ivoire',
   footerAddress: 'Abidjan, Cocody Riviera Palmeraie',
   regulatorNameFr: 'Régulateur à confirmer',
@@ -742,6 +743,7 @@ function SiteSettingsEditor({
         {field('legalForm', 'Forme juridique')}
         {field('legalAddress', 'Adresse légale', 'text')}
         {field('legalEmail', 'Email légal', 'email')}
+        {field('footerAddressFlag', 'Drapeau affiché dans les adresses')}
         {field('footerAddressCountry', 'Pays affiché dans les adresses')}
         {field('footerAddress', 'Adresse affichée dans le footer')}
         {field('regulatorNameFr', 'Régulateur · FR')}

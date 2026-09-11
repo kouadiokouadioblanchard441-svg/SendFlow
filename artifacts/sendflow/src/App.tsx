@@ -139,6 +139,7 @@ type PublicLandingBundle = {
     legalForm: string;
     legalAddress: string;
     legalEmail: string;
+    footerAddressFlag: string;
     footerAddressCountry: string;
     footerAddress: string;
     regulatorNameFr: string;
@@ -415,9 +416,9 @@ function SendFlowFooter({
         </div>
 
         <section className="sendflow-footer-addresses">
-          <h3>{isFrench ? 'Nos adresses' : 'Our offices'}</h3>
+           <h3>{copy('footer.address.title', { fr: 'Nos adresses', en: 'Our offices' })}</h3>
           <div className="sendflow-office">
-            <span className="sendflow-office-flag" aria-hidden="true">🇨🇮</span>
+             <span className="sendflow-office-flag" aria-hidden="true">{settings?.footerAddressFlag || '🇨🇮'}</span>
             <div><strong>{settings?.footerAddressCountry || copy('footer.address.country', { fr: 'Côte d’Ivoire', en: 'Côte d’Ivoire' })}</strong><p>{settings?.footerAddress || copy('footer.address.value', { fr: 'Abidjan, Cocody Riviera Palmeraie', en: 'Abidjan, Cocody Riviera Palmeraie' })}</p></div>
           </div>
         </section>

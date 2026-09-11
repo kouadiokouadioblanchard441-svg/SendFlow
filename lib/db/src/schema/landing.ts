@@ -79,6 +79,7 @@ export const landingSiteSettings = pgTable(
     legalForm: text("legal_form").notNull().default("Société à responsabilité limitée"),
     legalAddress: text("legal_address").notNull().default("Côte d’Ivoire, Abidjan, Cocody Riviera Palmeraie"),
     legalEmail: text("legal_email").notNull().default("support@sendflow.studio"),
+    footerAddressFlag: text("footer_address_flag").notNull().default("🇨🇮"),
     footerAddressCountry: text("footer_address_country").notNull().default("Côte d’Ivoire"),
     footerAddress: text("footer_address").notNull().default("Abidjan, Cocody Riviera Palmeraie"),
     regulatorNameFr: text("regulator_name_fr").notNull().default("Régulateur à confirmer"),
