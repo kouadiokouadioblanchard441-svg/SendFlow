@@ -3,6 +3,7 @@ import { ArrowDownToLine, ArrowRight, ChevronRight, Globe2, Headphones, Menu, Se
 import { Link } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import androidMaterialIcon from '@assets/google-android-material-icon.svg';
 import stepDownloadArt from '@assets/generated_images/sendflow-step-download-clean.png';
 import stepAccountArt from '@assets/generated_images/sendflow-step-account-clean.png';
 import stepWalletArt from '@assets/generated_images/sendflow-step-wallet-clean.png';
@@ -338,8 +339,8 @@ export default function DownloadPage() {
               <StoreButton store="apple" label={t.download} href={settings?.appStoreUrl} language={language} />
               <StoreButton store="play" label={t.download} href={settings?.googlePlayUrl} language={language} />
             </div>
-            <a className={`sf-download-apk ${loading || !settings?.apkUrl ? 'is-disabled' : ''}`} href={settings?.apkUrl || undefined} onClick={(event) => { if (!settings?.apkUrl) event.preventDefault(); }} target={settings?.apkUrl ? '_blank' : undefined} rel={settings?.apkUrl ? 'noreferrer' : undefined} aria-disabled={!settings?.apkUrl}>
-              <span className="sf-download-apk-icon"><ArrowDownToLine size={23} /></span>
+            <a className={`sf-download-apk ${loading || !settings?.apkUrl ? 'is-disabled' : ''}`} href={settings?.apkUrl || undefined} onClick={(event) => { if (!settings?.apkUrl) event.preventDefault(); }} target={settings?.apkUrl ? '_blank' : undefined} rel={settings?.apkUrl ? 'noreferrer' : undefined} aria-disabled={!settings?.apkUrl} aria-label={t.apkTitle}>
+              <span className="sf-download-apk-icon"><img src={androidMaterialIcon} alt="" /></span>
               <span><strong>{t.apkTitle}</strong><small>{settings?.apkUrl ? t.apkReady : t.apkMeta}</small></span>
               {settings?.apkUrl && <ArrowRight size={18} />}
             </a>
