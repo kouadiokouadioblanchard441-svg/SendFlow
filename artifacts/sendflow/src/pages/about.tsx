@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { SiGmail } from 'react-icons/si';
 import sendflowMark from '@assets/sendflow-mark-original.png';
+import founderPortrait from '@assets/file_00000000d41881f4b07497287b39201e_1789085205545.png';
 import crossNetworkIcon from '../assets/sendflow-icon-cross-network.svg';
 import internationalTransferIcon from '../assets/sendflow-icon-international-transfer.svg';
 import visibleDetailsIcon from '../assets/sendflow-icon-visible-details.svg';
@@ -72,6 +73,7 @@ const sectionKicker = 'mb-4 flex items-center gap-2 text-[11px] font-bold upperc
 
 function FounderPhoto({ profile }: { profile: FounderProfile }) {
   const [hasImageError, setHasImageError] = useState(false);
+  const imageUrl = profile.photoUrl || founderPortrait;
   const initials = profile.name
     .split(' ')
     .filter(Boolean)
@@ -80,7 +82,7 @@ function FounderPhoto({ profile }: { profile: FounderProfile }) {
     .join('')
     .toUpperCase();
 
-  if (!profile.photoUrl || hasImageError) {
+  if (hasImageError) {
     return (
       <div
         className="flex h-full min-h-[310px] w-full items-center justify-center bg-[#6d35d8] p-8 sm:min-h-[430px]"
@@ -95,9 +97,10 @@ function FounderPhoto({ profile }: { profile: FounderProfile }) {
 
   return (
     <img
-      src={profile.photoUrl}
+      src={imageUrl}
       alt={profile.name}
-      className="h-full min-h-[310px] w-full object-cover object-center sm:min-h-[430px]"
+      className="h-full min-h-[310px] w-full object-cover sm:min-h-[430px]"
+      style={{ objectPosition: '50% 24%' }}
       onError={() => setHasImageError(true)}
     />
   );
