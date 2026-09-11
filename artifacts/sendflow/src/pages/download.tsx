@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ArrowDownToLine, ArrowRight, ChevronRight, Globe2, Headphones, Menu, ShieldCheck, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowRight, ChevronRight, Globe2, Headphones, Menu, X } from 'lucide-react';
 import { Link } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import { SendFlowFooter } from '@/components/sendflow-footer';
 
 type Language = 'fr' | 'en';
 
@@ -286,16 +287,8 @@ export default function DownloadPage() {
 
   const closeMenu = () => setMenuOpen(false);
   const toggleLanguage = () => { setLanguage((current) => current === 'fr' ? 'en' : 'fr'); closeMenu(); };
-  const settingsAddress = settings?.footerAddress?.trim() || settings?.legalAddress?.trim() || 'Abidjan, Cocody Riviera Palmeraie';
   const supportEmail = settings?.supportEmail?.trim() || 'support@sendflow.studio';
-  const supportPhone = settings?.supportPhone?.trim();
-  const legalEmail = settings?.legalEmail?.trim() || supportEmail;
-  const regulatorLabel = language === 'fr'
-    ? settings?.regulatorNameFr?.trim() || 'Régulateur à confirmer'
-    : settings?.regulatorNameEn?.trim() || 'Regulator to be confirmed';
-  const regulatorLogo = settings?.regulatorLogoKey
-    ? media.find((item) => item.slug === settings.regulatorLogoKey && item.isVisible)?.publicUrl
-    : null;
+  const navigateToLandingSection = (id: string) => { window.location.assign(`/#${id}`); };
 
   return (
     <div className="sf-download-page">
@@ -362,34 +355,13 @@ export default function DownloadPage() {
         </section>
       </main>
 
-      <footer className="sf-download-footer">
-        <div className="sf-download-footer-inner">
-          <div className="sf-download-footer-intro"><Brand /><p>{t.footerLead}</p><span className="sf-download-footer-note"><ShieldCheck size={15} />{t.footerNote}</span></div>
-          <div className="sf-download-footer-links">
-            <div><h3>{t.products}</h3><a href="/#features-cards">{t.features}</a><a href="/#security">{t.security}</a><Link href="/download">{t.download}</Link></div>
-            <div><h3>{t.company}</h3><Link href="/a-propos">{t.about}</Link><a href={`mailto:${supportEmail}`}>{t.support}</a>{supportPhone && <a href={`tel:${supportPhone}`}>{supportPhone}</a>}</div>
-            <div><h3>{t.legal}</h3><Link href="/conditions-utilisation">{t.terms}</Link><Link href="/confidentialite">{t.privacy}</Link><Link href="/mentions-legales">{t.mentions}</Link></div>
-          </div>
-          <div className="sf-download-footer-address">
-            <h3>{t.address}</h3>
-            <p><span className="sf-download-footer-flag" aria-hidden="true">{settings?.footerAddressFlag || '🇨🇮'}</span>{settings?.footerAddressCountry || 'Côte d’Ivoire'}</p>
-            <span>{settingsAddress}</span>
-            <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
-          </div>
-          <div className="sf-download-footer-legal-info">
-            <h3>{t.legalIdentity}</h3>
-            <p>{settings?.companyName || 'Flow Digital SARL'}{settings?.legalForm ? ` · ${settings.legalForm}` : ''}</p>
-            <span>{settings?.legalAddress || settingsAddress}</span>
-            <a href={`mailto:${legalEmail}`}>{t.legalContact} · {legalEmail}</a>
-            <div className="sf-download-footer-regulator">
-              {regulatorLogo ? <img src={regulatorLogo} alt={regulatorLabel} /> : <span>{t.regulator}</span>}
-              <strong>{regulatorLabel}</strong>
-            </div>
-            <small>{t.legalNotice}</small>
-          </div>
-          <div className="sf-download-footer-bottom"><span>© 2025 {settings?.companyName || 'SendFlow Studio'}. {t.rights}</span><button type="button" onClick={toggleLanguage}><Globe2 size={14} /> {language === 'fr' ? 'English version' : 'Version française'}</button></div>
-        </div>
-      </footer>
+      <SendFlowFooter
+        isFrench={language === 'fr'}
+        onNavigate={navigateToLandingSection}
+        settings={settings}
+        content={content ?? []}
+        media={media}
+      />
     </div>
   );
 }

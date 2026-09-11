@@ -376,7 +376,7 @@ footer:not(.sendflow-reference-footer) > div > div:last-child > span:first-child
   display: none !important;
 }
 
-footer:not(.sendflow-reference-footer):not(.sf-download-footer) {
+footer:not(.sendflow-reference-footer) {
   display: none !important;
 }
 
