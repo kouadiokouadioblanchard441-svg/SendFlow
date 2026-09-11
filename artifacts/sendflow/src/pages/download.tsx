@@ -299,7 +299,6 @@ export default function DownloadPage() {
 
   return (
     <div className="sf-download-page">
-      <div className="sf-download-status" aria-hidden="true"><span>08:19</span><span className="sf-status-icons">▴ ◌ ▪ 4G 100</span></div>
       <header className="sf-download-header">
         <div className="sf-download-header-inner">
           <Brand />
