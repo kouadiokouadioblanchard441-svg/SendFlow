@@ -88,6 +88,7 @@ export const landingSiteSettings = pgTable(
     googlePlayUrl: text("google_play_url"),
     appStoreUrl: text("app_store_url"),
     appGalleryUrl: text("app_gallery_url"),
+    apkUrl: text("apk_url"),
     ...timestamps,
   },
 );

@@ -48,7 +48,7 @@ const founderEditableFields = [
 const siteSettingsEditableFields = [
   "supportEmail", "supportPhone", "websiteUrl", "linkedinUrl", "instagramUrl", "facebookUrl",
   "companyName", "legalForm", "legalAddress", "legalEmail", "footerAddressFlag", "footerAddressCountry", "footerAddress",
-  "regulatorNameFr", "regulatorNameEn", "regulatorLogoKey", "googlePlayUrl", "appStoreUrl", "appGalleryUrl",
+  "regulatorNameFr", "regulatorNameEn", "regulatorLogoKey", "googlePlayUrl", "appStoreUrl", "appGalleryUrl", "apkUrl",
 ] as const;
 
 const founderContactFields = ["linkedinUrl", "websiteUrl", "instagramUrl", "xUrl", "email"] as const;

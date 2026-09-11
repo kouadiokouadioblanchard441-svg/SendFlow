@@ -701,6 +701,7 @@ const siteSettingsDefaults: Record<string, Primitive> = {
   googlePlayUrl: '',
   appStoreUrl: '',
   appGalleryUrl: '',
+  apkUrl: '',
 };
 
 function SiteSettingsEditor({
@@ -752,6 +753,7 @@ function SiteSettingsEditor({
         {field('googlePlayUrl', 'Lien Google Play', 'text')}
         {field('appStoreUrl', 'Lien App Store', 'text')}
         {field('appGalleryUrl', 'Lien AppGallery', 'text')}
+        {field('apkUrl', 'Lien APK Android', 'text')}
       </div>
       <div className="sendflow-admin-founder-foot">
         <span className="sendflow-admin-muted">Les champs de lien peuvent rester vides si le profil n’est pas encore publié.</span>

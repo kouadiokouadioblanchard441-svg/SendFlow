@@ -12,6 +12,7 @@ import AdminPage from '@/pages/admin';
 import AboutPage, { type FounderProfile } from '@/pages/about';
 import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '@/pages/legal';
 import { EditableLegalPage } from '@/pages/editable-legal';
+import DownloadPage from '@/pages/download';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
@@ -148,6 +149,7 @@ type PublicLandingBundle = {
     googlePlayUrl: string | null;
     appStoreUrl: string | null;
     appGalleryUrl: string | null;
+    apkUrl: string | null;
   } | null;
 };
 
@@ -502,6 +504,7 @@ function App() {
           <TooltipProvider>
             <Switch>
               <Route path="/" component={LandingPage} />
+              <Route path="/download" component={DownloadPage} />
               <Route path="/a-propos" component={AboutRoute} />
               <Route path="/sign-in/*?" component={SignInPage} />
               <Route path="/sign-up/*?" component={SignUpPage} />
@@ -895,7 +898,7 @@ function LandingPage() {
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <button onClick={() => setLanguage(isFrench ? 'en' : 'fr')} className="flex items-center gap-1 rounded-full px-2 py-2 text-[12px] font-semibold text-[#5e5766] hover:text-[#6d35d8]" data-testid="button-language">{isFrench ? 'EN' : 'FR'} <Globe2 size={14} /></button>
-            <button onClick={() => goTo('join')} className="rounded-full bg-[#211d2c] px-4 py-2.5 text-[12px] font-semibold text-[#fbf8ef] transition-transform hover:-translate-y-0.5" data-testid="button-nav-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-1 inline" size={14} /></button>
+             <Link href="/download" onClick={() => setMobileOpen(false)} className="rounded-full bg-[#211d2c] px-4 py-2.5 text-[12px] font-semibold text-[#fbf8ef] transition-transform hover:-translate-y-0.5" data-testid="button-nav-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-1 inline" size={14} /></Link>
           </div>
           <button type="button" onClick={downloadBrief} className="hidden items-center gap-1 rounded-full px-2 py-2 text-[11px] font-semibold text-[#6d35d8] lg:flex" data-testid="button-download-brief">{isFrench ? 'Brief' : 'Brief'} <ArrowDownRight size={13} /></button>
           <button className="rounded-full p-2 md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu" data-testid="button-open-menu"><Menu size={21} /></button>
@@ -912,7 +915,7 @@ function LandingPage() {
             {publicNavItems.map((item) => <a key={item.id} href={`#${item.id}`} onClick={() => setMobileOpen(false)} className="flex items-center border-b border-[#2d2535]/10 pb-4 text-left text-2xl font-semibold tracking-[-.04em]" data-testid={`link-mobile-${item.id}`}>{t(item.label, language)}</a>)}
           </div>
           <button onClick={() => { setLanguage(isFrench ? 'en' : 'fr'); setMobileOpen(false); }} className="mt-12 flex items-center gap-2 text-sm font-semibold text-[#6d35d8]" data-testid="button-mobile-language"><span aria-hidden="true">{isFrench ? '🇬🇧' : '🇫🇷'}</span> {isFrench ? 'Passer en anglais' : 'Switch to French'}</button>
-           <button onClick={() => goTo('join')} className="mt-5 w-full rounded-full bg-[#6d35d8] px-5 py-4 text-sm font-semibold text-[#fbf8ef]" data-testid="button-mobile-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2 inline" size={16} /></button>
+            <Link href="/download" onClick={() => setMobileOpen(false)} className="mt-5 block w-full rounded-full bg-[#6d35d8] px-5 py-4 text-center text-sm font-semibold text-[#fbf8ef]" data-testid="button-mobile-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2 inline" size={16} /></Link>
         </div>
       </div>}
 
@@ -938,7 +941,7 @@ function LandingPage() {
               <h1 className="rise delay-1 mt-6 max-w-[760px] whitespace-pre-line text-[clamp(3.7rem,9vw,7.6rem)] font-extrabold leading-[.88] tracking-[-.09em] text-[#17131f]">{t(localizedSection('hero', { title: { fr: 'L’argent circule.\nLes réseaux aussi.', en: 'Money moves.\nNetworks do too.' }, body: { fr: '', en: '' } }).title, language)}</h1>
               <p className="rise delay-2 mt-8 max-w-[520px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{t(localizedSection('hero', { title: { fr: '', en: '' }, body: { fr: 'SendFlow simplifie vos transferts d’argent entre différents réseaux de paiement, localement et au-delà des frontières.', en: 'SendFlow simplifies money transfers across different payment networks, locally and across borders.' } }).body, language)}</p>
               <div className="rise delay-3 mt-9 flex w-full max-w-[520px] flex-col items-stretch gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
-                 <button onClick={() => goTo('join')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#8b62e5] bg-[#6d35d8] px-5 py-3.5 text-sm font-bold text-[#fbf8ef] shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3] sm:min-w-[210px]" data-testid="button-hero-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2" size={15} /></button>
+                 <Link href="/download" className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#8b62e5] bg-[#6d35d8] px-5 py-3.5 text-sm font-bold text-[#fbf8ef] shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3] sm:min-w-[210px]" data-testid="button-hero-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2" size={15} /></Link>
                  <Link href="/a-propos" className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#8b62e5] bg-[#6d35d8] px-5 py-3.5 text-sm font-bold !text-white shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3] hover:!text-white sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2 text-white" size={14} fill="currentColor" />{t(contentCopy(landingBundle?.content, 'cta.discover', { fr: 'Découvrir SendFlow', en: 'Discover SendFlow' }), language)}</Link>
               </div>
             </div>
@@ -1093,7 +1096,7 @@ function LandingPage() {
              <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#e8cd4d]">{t(contentCopy(landingBundle?.content, 'cta.nextMove', { fr: 'Le prochain mouvement', en: 'The next move' }), language)}</p>
              <h2 className="mt-5 max-w-[820px] whitespace-pre-line text-6xl font-extrabold leading-[.86] tracking-[-.08em] sm:text-8xl">{t(contentCopy(landingBundle?.content, 'cta.download.title', { fr: 'Votre prochain transfert\ncommence ici.', en: 'Your next transfer\nstarts here.' }), language)}</h2>
               <p className="mt-7 max-w-[540px] text-[17px] font-semibold leading-7 text-[#f4edff]">{t(contentCopy(landingBundle?.content, 'cta.download.body', { fr: 'Téléchargez bientôt l’application SendFlow et simplifiez vos transferts entre réseaux.', en: 'Download the SendFlow app soon and simplify transfers across networks.' }), language)}</p>
-               <button onClick={() => setSubmitted(true)} className="mt-6 inline-flex items-center rounded-[14px] border-2 border-[#a68bea] bg-[#5b21b6] px-6 py-3.5 text-[14px] font-extrabold text-white shadow-[0_14px_28px_rgba(33,29,44,.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4c1d95]" data-testid="button-download-placeholder">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2" size={17} /></button>
+                <Link href="/download" className="mt-6 inline-flex items-center rounded-[14px] border-2 border-[#a68bea] bg-[#5b21b6] px-6 py-3.5 text-[14px] font-extrabold text-white shadow-[0_14px_28px_rgba(33,29,44,.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4c1d95]" data-testid="button-download-placeholder">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2" size={17} /></Link>
               <div className="mt-4 flex flex-wrap gap-3">
                <StoreBadge store="Google Play" icon="play" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
                <StoreBadge store="App Store" icon="apple" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
