@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useRoute } from 'wouter';
 import { ArrowDownRight, ArrowRight, Check, ChevronDown, Facebook, Globe2, Instagram, Linkedin, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
@@ -10,7 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import AdminPage from '@/pages/admin';
 import AboutPage, { type FounderProfile } from '@/pages/about';
-import { LegalMentionsPage, PrivacyPage, TermsPage } from '@/pages/legal';
+import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '@/pages/legal';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
@@ -81,8 +81,20 @@ type PublicLandingBundle = {
     missionEn: string;
     photoKey: string | null;
     linkedinUrl: string | null;
+    websiteUrl: string | null;
+    instagramUrl: string | null;
+    xUrl: string | null;
     email: string | null;
     isVisible: boolean;
+  } | null;
+  settings: {
+    id: number;
+    supportEmail: string;
+    supportPhone: string | null;
+    websiteUrl: string | null;
+    linkedinUrl: string | null;
+    instagramUrl: string | null;
+    facebookUrl: string | null;
   } | null;
 };
 
@@ -288,7 +300,8 @@ function StoreBadge({ store, icon, soonLabel, className = '' }: { store: string;
   );
 }
 
-function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigate: (id: string) => void }) {
+function SendFlowFooter({ isFrench, onNavigate, settings }: { isFrench: boolean; onNavigate: (id: string) => void; settings: PublicLandingBundle['settings'] }) {
+  const supportEmail = settings?.supportEmail || 'support@sendflow.studio';
   return (
     <footer id="footer" className="sendflow-reference-footer">
       <div className="sendflow-footer-inner">
@@ -306,7 +319,7 @@ function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigat
           </section>
           <section>
             <h3>{isFrench ? 'Assistance' : 'Support'}</h3>
-            <a href="mailto:support@sendflow.studio">Support@sendflow.studio</a>
+            <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
             <button onClick={() => onNavigate('join')}>{isFrench ? 'Parrainage' : 'Referral'}</button>
           </section>
           <section>
@@ -336,9 +349,9 @@ function SendFlowFooter({ isFrench, onNavigate }: { isFrench: boolean; onNavigat
         </section>
 
         <div className="sendflow-footer-socials" aria-label="Réseaux sociaux">
-          <a href="#" aria-label="LinkedIn"><Linkedin size={20} strokeWidth={2.5} /></a>
-          <a href="#" aria-label="Facebook"><Facebook size={19} fill="currentColor" /></a>
-          <a href="#" aria-label="Instagram"><Instagram size={20} strokeWidth={2.5} /></a>
+          <a href={settings?.linkedinUrl || '#'} aria-label="LinkedIn" target={settings?.linkedinUrl ? '_blank' : undefined} rel={settings?.linkedinUrl ? 'noreferrer' : undefined}><Linkedin size={20} strokeWidth={2.5} /></a>
+          <a href={settings?.facebookUrl || '#'} aria-label="Facebook" target={settings?.facebookUrl ? '_blank' : undefined} rel={settings?.facebookUrl ? 'noreferrer' : undefined}><Facebook size={19} fill="currentColor" /></a>
+          <a href={settings?.instagramUrl || '#'} aria-label="Instagram" target={settings?.instagramUrl ? '_blank' : undefined} rel={settings?.instagramUrl ? 'noreferrer' : undefined}><Instagram size={20} strokeWidth={2.5} /></a>
         </div>
 
         <div className="sendflow-footer-divider" />
@@ -409,9 +422,9 @@ function App() {
               <Route path="/a-propos" component={AboutRoute} />
               <Route path="/sign-in/*?" component={SignInPage} />
               <Route path="/sign-up/*?" component={SignUpPage} />
-              <Route path="/conditions-utilisation" component={TermsPage} />
-              <Route path="/confidentialite" component={PrivacyPage} />
-              <Route path="/mentions-legales" component={LegalMentionsPage} />
+              <Route path="/conditions-utilisation" component={() => <PublicLegalRoute page={TermsPage} />} />
+              <Route path="/confidentialite" component={() => <PublicLegalRoute page={PrivacyPage} />} />
+              <Route path="/mentions-legales" component={() => <PublicLegalRoute page={LegalMentionsPage} />} />
               <Route path="/admin" component={LegacyAdminRedirect} />
               <Route path="/admin/*" component={LegacyAdminRedirect} />
               <Route path="/panel/:token/:email" component={PanelRoute} />
@@ -431,6 +444,19 @@ function SignInPage() {
 
 function SignUpPage() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
+}
+
+function PublicLegalRoute({ page: Page }: { page: (props: LegalPageProps) => ReactElement }) {
+  const { data } = useQuery<PublicLandingBundle>({
+    queryKey: ['/api/landing'],
+    queryFn: async () => {
+      const response = await fetch('/api/landing');
+      if (!response.ok) throw new Error('Landing content unavailable');
+      return response.json() as Promise<PublicLandingBundle>;
+    },
+    staleTime: 30_000,
+  });
+  return <Page supportEmail={data?.settings?.supportEmail ?? null} />;
 }
 
 function AboutRoute() {
@@ -464,6 +490,9 @@ function AboutRoute() {
         mission: founder.missionFr,
         education: founder.educationFr,
         linkedinUrl: founder.linkedinUrl,
+        websiteUrl: founder.websiteUrl,
+        instagramUrl: founder.instagramUrl,
+        xUrl: founder.xUrl,
         email: founder.email,
       }
       : {
@@ -476,6 +505,9 @@ function AboutRoute() {
         mission: founder.missionEn,
         education: founder.educationEn,
         linkedinUrl: founder.linkedinUrl,
+        websiteUrl: founder.websiteUrl,
+        instagramUrl: founder.instagramUrl,
+        xUrl: founder.xUrl,
         email: founder.email,
       };
   }, [language, landingBundle]);
@@ -962,7 +994,7 @@ function LandingPage() {
         </section>
       </main>
 
-      <SendFlowFooter isFrench={isFrench} onNavigate={goTo} />
+      <SendFlowFooter isFrench={isFrench} onNavigate={goTo} settings={landingBundle?.settings ?? null} />
       <footer className="bg-[#211d2c] px-5 py-12 text-[#fbf8ef] sm:px-8 sm:py-16"><div className="mx-auto max-w-[1240px]"><div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_.6fr_.6fr_.8fr]"><div><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8cd4d] text-[#211d2c]"><ArrowDownRight size={17} strokeWidth={2.5} /></span><span className="text-[17px] font-bold tracking-[-.045em]">sendflow<span className="text-[#e8cd4d]">.</span></span></div><p className="mt-6 max-w-[280px] text-[13px] leading-6 text-[#bcb6c5]">{isFrench ? 'Une vision plus calme des mouvements d’argent en Afrique.' : 'A calmer vision for moving money across Africa.'}</p></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Explorer' : 'Explore'}</p><div className="mt-5 flex flex-col gap-3 text-[13px] text-[#bcb6c5]">{navItems.slice(0, 3).map((item) => <button key={item.id} onClick={() => goTo(item.id)} className="w-fit transition-colors hover:text-[#e8cd4d]" data-testid={`link-footer-${item.id}`}>{t(item.label, language)}</button>)}</div></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Projet' : 'Project'}</p><div className="mt-5 flex flex-col gap-3 text-[13px] text-[#bcb6c5]"><button onClick={() => goTo('security')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-security">{isFrench ? 'Notre approche' : 'Our approach'}</button><button onClick={() => goTo('faq')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-faq">{isFrench ? 'Questions' : 'Questions'}</button><button onClick={() => goTo('join')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-join">{isFrench ? 'Contact' : 'Contact'}</button></div></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Statut' : 'Status'}</p><div className="mt-5 flex items-center gap-2 text-[13px] text-[#bcb6c5]"><span className="h-2 w-2 rounded-full bg-[#9adacb]" />{isFrench ? 'Démo en évolution' : 'Demo in progress'}</div><button onClick={() => setLanguage(isFrench ? 'en' : 'fr')} className="mt-5 flex items-center gap-2 text-[12px] font-semibold text-[#e8cd4d]" data-testid="button-footer-language"><Globe2 size={14} /> {isFrench ? 'English version' : 'Version française'}</button></div></div><div className="mt-14 flex flex-col justify-between gap-4 border-t border-[#fbf8ef]/15 pt-5 text-[10px] text-[#8d8792] sm:flex-row"><span>© 2025 SendFlow Studio. {isFrench ? 'Projet conceptuel.' : 'Concept project.'}</span><span className="flex gap-4"><span>{isFrench ? 'Confidentialité' : 'Privacy'}</span><span>{isFrench ? 'Mentions' : 'Legal'}</span></span></div></div></footer>
     </div>
   );

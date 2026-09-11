@@ -56,8 +56,25 @@ export const landingFounderProfile = pgTable(
     missionEn: text("mission_en").notNull(),
     photoKey: varchar("photo_key", { length: 160 }),
     linkedinUrl: text("linkedin_url"),
+    websiteUrl: text("website_url"),
+    instagramUrl: text("instagram_url"),
+    xUrl: text("x_url"),
     email: text("email"),
     isVisible: boolean("is_visible").default(true).notNull(),
+    ...timestamps,
+  },
+);
+
+export const landingSiteSettings = pgTable(
+  "landing_site_settings",
+  {
+    id: serial("id").primaryKey(),
+    supportEmail: text("support_email").notNull().default("support@sendflow.studio"),
+    supportPhone: text("support_phone"),
+    websiteUrl: text("website_url"),
+    linkedinUrl: text("linkedin_url"),
+    instagramUrl: text("instagram_url"),
+    facebookUrl: text("facebook_url"),
     ...timestamps,
   },
 );

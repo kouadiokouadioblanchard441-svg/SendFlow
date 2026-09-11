@@ -45,8 +45,9 @@ type Bundle = {
   legalPages: RecordItem[];
   legalSections: RecordItem[];
   founder: RecordItem | null;
+  settings: RecordItem | null;
 };
-type ResourceKey = Exclude<keyof Bundle, 'countryOperators' | 'founder'>;
+type ResourceKey = Exclude<keyof Bundle, 'countryOperators' | 'founder' | 'settings'>;
 type InputKind = 'text' | 'textarea' | 'number' | 'checkbox' | 'select';
 type FieldConfig = {
   key: string;
@@ -307,6 +308,7 @@ const emptyBundle = (): Bundle => ({
   legalPages: [],
   legalSections: [],
   founder: null,
+  settings: null,
 });
 
 class AdminHttpError extends Error {
@@ -584,6 +586,9 @@ const founderDefaults: Record<string, Primitive> = {
   missionEn: '',
   photoKey: '',
   linkedinUrl: '',
+  websiteUrl: '',
+  instagramUrl: '',
+  xUrl: '',
   email: '',
   isVisible: true,
 };
@@ -627,7 +632,7 @@ function FounderEditor({
       <p className="sendflow-admin-founder-intro">Ces informations alimentent la page « Découvrir SendFlow ». Le contenu est éditable en français et en anglais.</p>
       <div className="sendflow-admin-form-grid">
         {field('name', 'Nom affiché')}
-        {field('email', 'Email public')}
+        {field('email', 'Gmail professionnel du CEO', 'text')}
         {field('roleFr', 'Rôle · FR')}
         {field('roleEn', 'Rôle · EN')}
         {field('educationFr', 'Formation / parcours · FR', 'textarea')}
@@ -641,6 +646,9 @@ function FounderEditor({
         {field('missionFr', 'Mission · FR', 'textarea', true)}
         {field('missionEn', 'Mission · EN', 'textarea', true)}
         {field('linkedinUrl', 'Profil LinkedIn')}
+        {field('websiteUrl', 'Site ou portfolio du CEO')}
+        {field('instagramUrl', 'Instagram du CEO')}
+        {field('xUrl', 'X / Twitter du CEO')}
       </div>
       <div className="sendflow-admin-founder-media">
         <label className="sendflow-admin-field" htmlFor="founder-photo-key">
@@ -665,6 +673,62 @@ function FounderEditor({
         </label>
         <button className="sendflow-admin-button sendflow-admin-button-primary" disabled={saving} onClick={() => onSave(values)} data-testid="button-save-founder">
           {saving ? <LoaderCircle className="sendflow-admin-spin" size={16} /> : <Save size={16} />} {saving ? 'Enregistrement…' : 'Enregistrer le profil'}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+const siteSettingsDefaults: Record<string, Primitive> = {
+  supportEmail: 'support@sendflow.studio',
+  supportPhone: '',
+  websiteUrl: '',
+  linkedinUrl: '',
+  instagramUrl: '',
+  facebookUrl: '',
+};
+
+function SiteSettingsEditor({
+  bundle,
+  saving,
+  onSave,
+}: {
+  bundle: Bundle;
+  saving: boolean;
+  onSave: (values: Record<string, Primitive>) => void;
+}) {
+  const [values, setValues] = useState<Record<string, Primitive>>(() => ({ ...siteSettingsDefaults, ...(bundle.settings ?? {}) }));
+  useEffect(() => {
+    setValues({ ...siteSettingsDefaults, ...(bundle.settings ?? {}) });
+  }, [bundle.settings]);
+
+  const update = (key: string, value: Primitive) => setValues((current) => ({ ...current, [key]: value }));
+  const field = (key: string, label: string, type: 'text' | 'email' = 'text') => (
+    <label className="sendflow-admin-field" htmlFor={`site-settings-${key}`}>
+      <span>{label}</span>
+      <input id={`site-settings-${key}`} type={type} value={String(values[key] ?? '')} onChange={(event) => update(key, event.target.value)} />
+    </label>
+  );
+
+  return (
+    <section className="sendflow-admin-founder-card" aria-labelledby="site-settings-editor-title">
+      <div className="sendflow-admin-founder-head">
+        <div><p className="sendflow-admin-overline">Coordonnées globales</p><h3 id="site-settings-editor-title">Support et liens du site</h3></div>
+        <SlidersHorizontal size={19} className="text-[#6d35d8]" />
+      </div>
+      <p className="sendflow-admin-founder-intro">Ces coordonnées sont distinctes du Gmail professionnel du CEO et alimentent les points de contact publics de SendFlow.</p>
+      <div className="sendflow-admin-form-grid">
+        {field('supportEmail', 'Email support public', 'email')}
+        {field('supportPhone', 'Téléphone support')}
+        {field('websiteUrl', 'Site officiel')}
+        {field('linkedinUrl', 'LinkedIn SendFlow')}
+        {field('instagramUrl', 'Instagram SendFlow')}
+        {field('facebookUrl', 'Facebook SendFlow')}
+      </div>
+      <div className="sendflow-admin-founder-foot">
+        <span className="sendflow-admin-muted">Les champs de lien peuvent rester vides si le profil n’est pas encore publié.</span>
+        <button className="sendflow-admin-button sendflow-admin-button-primary" disabled={saving} onClick={() => onSave(values)} data-testid="button-save-site-settings">
+          {saving ? <LoaderCircle className="sendflow-admin-spin" size={16} /> : <Save size={16} />} {saving ? 'Enregistrement…' : 'Enregistrer les coordonnées'}
         </button>
       </div>
     </section>
@@ -727,6 +791,7 @@ export default function AdminPage() {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [founderSaving, setFounderSaving] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<number | undefined>();
   const [notice, setNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -847,6 +912,19 @@ export default function AdminPage() {
     }
   };
 
+  const saveSiteSettings = async (values: Record<string, Primitive>) => {
+    setSettingsSaving(true);
+    try {
+      const saved = await apiRequest<RecordItem>('/api/admin/landing/settings', { method: 'PUT', body: JSON.stringify(values) });
+      setBundle((current) => ({ ...current, settings: saved }));
+      setNotice({ tone: 'success', text: 'Les coordonnées du site sont à jour.' });
+    } catch (caught) {
+      setNotice({ tone: 'error', text: caught instanceof Error ? caught.message : 'Impossible d’enregistrer les coordonnées du site.' });
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
   if (error?.status === 401 || error?.status === 403 || error?.status === 503) {
     return <UnauthorizedState status={error.status} onRetry={() => void loadBundle()} />;
   }
@@ -896,7 +974,7 @@ export default function AdminPage() {
               <button className="sendflow-admin-button sendflow-admin-button-primary" onClick={() => setEditor({ resource: activeResource, item: null })} disabled={loading || Boolean(error)} data-testid="button-add-resource"><Plus size={16} /> Ajouter</button>
             </div>
             {activeResource === 'countries' && !loading && bundle.countries.length > 0 && <AssignmentEditor bundle={bundle} selectedCountry={selectedCountry ?? bundle.countries[0].id} saving={assignmentSaving} onCountryChange={setSelectedCountry} onSave={saveAssignments} />}
-            {activeResource === 'content' && !loading && <FounderEditor bundle={bundle} saving={founderSaving} onSave={saveFounder} />}
+            {activeResource === 'content' && !loading && <><FounderEditor bundle={bundle} saving={founderSaving} onSave={saveFounder} /><SiteSettingsEditor bundle={bundle} saving={settingsSaving} onSave={saveSiteSettings} /></>}
             {!loading && !error && (activeResource === 'media' || activeResource === 'operators') && <AssetStrip bundle={bundle} resource={activeResource} />}
             <div className="sendflow-admin-toolbar">
               <label className="sendflow-admin-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Rechercher dans ${config.label.toLowerCase()}`} data-testid="input-resource-search" /></label>
@@ -914,7 +992,7 @@ export default function AdminPage() {
               </div>
             )}
           </section>
-          <footer className="sendflow-admin-footer"><span>SendFlow Editorial Desk</span><span>Les modifications sont enregistrées directement sur la landing de production.</span><span>v1.0 · <a href="mailto:support@sendflow.studio">Besoin d’aide ?</a></span></footer>
+          <footer className="sendflow-admin-footer"><span>SendFlow Editorial Desk</span><span>Les modifications sont enregistrées directement sur la landing de production.</span><span>v1.0 · <a href={`mailto:${String(bundle.settings?.supportEmail || 'support@sendflow.studio')}`}>Besoin d’aide ?</a></span></footer>
         </div>
       </main>
       {notice && <div className={`sendflow-admin-notice ${notice.tone}`} role="status" data-testid="status-save-feedback">{notice.tone === 'success' ? <Check size={17} /> : <AlertTriangle size={17} />}<span>{notice.text}</span><button onClick={() => setNotice(null)} aria-label="Fermer le message"><X size={14} /></button></div>}

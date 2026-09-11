@@ -11,6 +11,7 @@ import {
   Globe2,
   GraduationCap,
   HeartHandshake,
+  Instagram,
   Linkedin,
   Quote,
   Sparkles,
@@ -38,6 +39,9 @@ export type FounderProfile = {
   education: string;
   linkedinUrl?: string | null;
   email?: string | null;
+  websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  xUrl?: string | null;
 };
 
 export type AboutPageProps = {
@@ -455,6 +459,42 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
                 >
                   <Linkedin size={16} />
                   LinkedIn
+                </a>
+              )}
+              {profile.websiteUrl && (
+                <a
+                  href={profile.websiteUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition-colors hover:bg-[#f7f3e9]"
+                  style={{ borderColor: colors.line, color: colors.navy }}
+                >
+                  <Globe2 size={16} />
+                  Site
+                </a>
+              )}
+              {profile.instagramUrl && (
+                <a
+                  href={profile.instagramUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition-colors hover:bg-[#f7f3e9]"
+                  style={{ borderColor: colors.line, color: colors.navy }}
+                >
+                  <Instagram size={16} />
+                  Instagram
+                </a>
+              )}
+              {profile.xUrl && (
+                <a
+                  href={profile.xUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition-colors hover:bg-[#f7f3e9]"
+                  style={{ borderColor: colors.line, color: colors.navy }}
+                >
+                  <span className="text-sm font-black leading-none">X</span>
+                  X
                 </a>
               )}
               {profile.email && (

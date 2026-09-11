@@ -13,6 +13,7 @@ import {
   landingMedia,
   landingOperators,
   landingSections,
+  landingSiteSettings,
   legalPages,
   legalSections,
 } from "@workspace/db";
@@ -41,7 +42,11 @@ const resources = {
 const founderEditableFields = [
   "name", "roleFr", "roleEn", "shortBioFr", "shortBioEn", "storyFr", "storyEn",
   "visionFr", "visionEn", "educationFr", "educationEn", "missionFr", "missionEn",
-  "photoKey", "linkedinUrl", "email", "isVisible",
+  "photoKey", "linkedinUrl", "websiteUrl", "instagramUrl", "xUrl", "email", "isVisible",
+] as const;
+
+const siteSettingsEditableFields = [
+  "supportEmail", "supportPhone", "websiteUrl", "linkedinUrl", "instagramUrl", "facebookUrl",
 ] as const;
 
 type ResourceName = keyof typeof resources;
@@ -72,6 +77,7 @@ async function getLandingBundle() {
     pages,
     pageSections,
     founderProfiles,
+    siteSettings,
   ] = await Promise.all([
     db.select().from(landingMedia).orderBy(asc(landingMedia.id)),
     db.select().from(landingContent).orderBy(asc(landingContent.orderIndex), asc(landingContent.id)),
@@ -85,9 +91,10 @@ async function getLandingBundle() {
     db.select().from(legalPages).orderBy(asc(legalPages.id)),
     db.select().from(legalSections).orderBy(asc(legalSections.pageId), asc(legalSections.orderIndex)),
     db.select().from(landingFounderProfile).orderBy(asc(landingFounderProfile.id)),
+    db.select().from(landingSiteSettings).orderBy(asc(landingSiteSettings.id)),
   ]);
 
-  return { media, content, sections, features, faqs, countries, operators, countryOperators, globeBadges, legalPages: pages, legalSections: pageSections, founder: founderProfiles[0] ?? null };
+  return { media, content, sections, features, faqs, countries, operators, countryOperators, globeBadges, legalPages: pages, legalSections: pageSections, founder: founderProfiles[0] ?? null, settings: siteSettings[0] ?? null };
 }
 
 router.get("/landing", async (_req, res): Promise<void> => {
@@ -111,6 +118,22 @@ router.put("/admin/landing/founder", requireAdmin, async (req, res): Promise<voi
   const [saved] = existing[0]
     ? await db.update(landingFounderProfile).set(values).where(eq(landingFounderProfile.id, existing[0].id)).returning()
     : await db.insert(landingFounderProfile).values(values as typeof landingFounderProfile.$inferInsert).returning();
+  res.json(saved);
+});
+
+router.put("/admin/landing/settings", requireAdmin, async (req, res): Promise<void> => {
+  const source = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
+  const values = Object.fromEntries(
+    Object.entries(source).filter(([key, value]) => siteSettingsEditableFields.includes(key as (typeof siteSettingsEditableFields)[number]) && value !== undefined),
+  );
+  if (typeof values.supportEmail !== "string" || !values.supportEmail.trim()) {
+    res.status(400).json({ error: "L’adresse email du support est requise." });
+    return;
+  }
+  const existing = await db.select({ id: landingSiteSettings.id }).from(landingSiteSettings).orderBy(asc(landingSiteSettings.id)).limit(1);
+  const [saved] = existing[0]
+    ? await db.update(landingSiteSettings).set(values).where(eq(landingSiteSettings.id, existing[0].id)).returning()
+    : await db.insert(landingSiteSettings).values(values as typeof landingSiteSettings.$inferInsert).returning();
   res.json(saved);
 });
 
