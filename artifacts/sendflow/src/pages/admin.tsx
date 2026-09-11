@@ -719,7 +719,7 @@ function SiteSettingsEditor({
   }, [bundle.settings]);
 
   const update = (key: string, value: Primitive) => setValues((current) => ({ ...current, [key]: value }));
-  const field = (key: string, label: string, type: 'text' | 'email' = 'text') => (
+  const field = (key: string, label: string, type: 'text' | 'email' | 'url' = 'text') => (
     <label className="sendflow-admin-field" htmlFor={`site-settings-${key}`}>
       <span>{label}</span>
       <input id={`site-settings-${key}`} type={type} value={String(values[key] ?? '')} onChange={(event) => update(key, event.target.value)} />
@@ -753,10 +753,10 @@ function SiteSettingsEditor({
         {field('googlePlayUrl', 'Lien Google Play', 'text')}
         {field('appStoreUrl', 'Lien App Store', 'text')}
         {field('appGalleryUrl', 'Lien AppGallery', 'text')}
-        {field('apkUrl', 'Lien APK Android', 'text')}
+        {field('apkUrl', 'Lien APK Android', 'url')}
       </div>
       <div className="sendflow-admin-founder-foot">
-        <span className="sendflow-admin-muted">Les champs de lien peuvent rester vides si le profil n’est pas encore publié.</span>
+        <span className="sendflow-admin-muted">Le lien APK peut rester vide avant la publication. Il accepte une URL publique https:// ou un chemin / de l’application.</span>
         <button className="sendflow-admin-button sendflow-admin-button-primary" disabled={saving} onClick={() => onSave(values)} data-testid="button-save-site-settings">
           {saving ? <LoaderCircle className="sendflow-admin-spin" size={16} /> : <Save size={16} />} {saving ? 'Enregistrement…' : 'Enregistrer les coordonnées'}
         </button>

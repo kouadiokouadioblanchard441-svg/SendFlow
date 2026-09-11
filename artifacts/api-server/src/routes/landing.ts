@@ -53,6 +53,7 @@ const siteSettingsEditableFields = [
 
 const founderContactFields = ["linkedinUrl", "websiteUrl", "instagramUrl", "xUrl", "email"] as const;
 const siteContactFields = ["supportEmail", "supportPhone", "websiteUrl", "linkedinUrl", "instagramUrl", "facebookUrl", "legalEmail"] as const;
+const siteLinkFields = ["websiteUrl", "linkedinUrl", "instagramUrl", "facebookUrl", "googlePlayUrl", "appStoreUrl", "appGalleryUrl", "apkUrl"] as const;
 type ResourceName = keyof typeof resources;
 
 function resourceConfig(name: string) {
@@ -142,10 +143,14 @@ router.put("/admin/landing/settings", requireAdmin, async (req, res): Promise<vo
     Object.fromEntries(
       Object.entries(source).filter(([key, value]) => siteSettingsEditableFields.includes(key as (typeof siteSettingsEditableFields)[number]) && value !== undefined),
     ),
-    siteContactFields,
+    [...siteContactFields, ...siteLinkFields],
   );
   if (typeof values.supportEmail !== "string" || !values.supportEmail.trim()) {
     res.status(400).json({ error: "L’adresse email du support est requise." });
+    return;
+  }
+  if (typeof values.apkUrl === "string" && values.apkUrl && !/^(https?:\/\/|\/(?!\/))/i.test(values.apkUrl)) {
+    res.status(400).json({ error: "Le lien APK doit commencer par https://, http:// ou /." });
     return;
   }
   const existing = await db.select({ id: landingSiteSettings.id }).from(landingSiteSettings).orderBy(asc(landingSiteSettings.id)).limit(1);
