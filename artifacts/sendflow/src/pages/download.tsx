@@ -314,7 +314,10 @@ export default function DownloadPage() {
               <a href="/#features-cards" onClick={closeMenu}>{t.navFeatures}<ChevronRight size={18} /></a>
               <a href={`mailto:${supportEmail}`} onClick={closeMenu}>{t.navSupport}<ChevronRight size={18} /></a>
             </nav>
-            <button type="button" className="sf-download-menu-language" onClick={toggleLanguage}><Globe2 size={17} /> {language === 'fr' ? 'Passer en anglais' : 'Switch to French'}</button>
+            <button type="button" className="sf-download-menu-language" onClick={toggleLanguage}>
+              <span className="sf-download-language-flag" aria-hidden="true">{language === 'fr' ? '🇫🇷' : '🇬🇧'}</span>
+              {language === 'fr' ? 'Passer en anglais' : 'Switch to French'}
+            </button>
           </aside>
         </div>
       )}

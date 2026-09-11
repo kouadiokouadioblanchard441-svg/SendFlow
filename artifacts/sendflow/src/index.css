@@ -764,6 +764,7 @@ footer > div > div:first-child {
 .sf-download-menu nav { display: grid; gap: 0; margin-top: 62px; }
 .sf-download-menu nav a { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e6e8ee; padding: 18px 0; color: var(--sf-ink); font-size: 21px; font-weight: 700; letter-spacing: -.04em; }
 .sf-download-menu-language { display: flex; align-items: center; gap: 9px; margin-top: 36px; border: 0; background: transparent; color: var(--sf-violet); cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; }
+.sf-download-language-flag { font-size: 20px; line-height: 1; }
 .sf-download-hero { position: relative; overflow: hidden; min-height: 705px; background: linear-gradient(145deg, #7d48e4 0%, #6d35d8 48%, #5421ad 100%); color: #fff; }
 .sf-download-hero-content { position: relative; z-index: 2; width: min(100% - 38px, 570px); margin: 0 auto; padding: 62px 0 70px; text-align: center; }
 .sf-download-app-icon { display: grid; place-items: center; width: 106px; height: 106px; margin: 0 auto 22px; border-radius: 26px; background: #fff; box-shadow: 0 15px 30px rgba(47, 18, 111, .25); }
