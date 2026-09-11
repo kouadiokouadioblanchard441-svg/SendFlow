@@ -245,7 +245,7 @@ export default function DownloadPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settings, setSettings] = useState<DownloadSettings | null>(null);
   const [content, setContent] = useState<LandingResponse['content']>([]);
-  const [media, setMedia] = useState<LandingResponse['media']>([]);
+  const [media, setMedia] = useState<NonNullable<LandingResponse['media']>>([]);
   const [loading, setLoading] = useState(true);
   const t = Object.fromEntries(
     Object.entries(copy[language]).map(([property, fallback]) => {
