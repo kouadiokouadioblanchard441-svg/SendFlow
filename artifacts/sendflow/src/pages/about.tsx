@@ -85,7 +85,7 @@ function FounderPhoto({ profile }: { profile: FounderProfile }) {
   if (hasImageError) {
     return (
       <div
-        className="flex h-full min-h-[310px] w-full items-center justify-center bg-[#6d35d8] p-8 sm:min-h-[430px]"
+        className="flex h-full w-full items-center justify-center bg-[#6d35d8] p-8"
         aria-label={profile.name}
       >
         <div className="flex h-36 w-36 items-center justify-center rounded-full border-[10px] border-[#9adacb] bg-[#e8cd4d] text-5xl font-bold tracking-[-0.08em] text-[#211d2c] shadow-[0_18px_0_rgba(33,29,44,.15)] sm:h-48 sm:w-48 sm:text-6xl">
@@ -99,7 +99,7 @@ function FounderPhoto({ profile }: { profile: FounderProfile }) {
     <img
       src={imageUrl}
       alt={profile.name}
-      className="h-full min-h-[310px] w-full object-cover sm:min-h-[430px]"
+      className="h-full w-full object-cover"
       style={{ objectPosition: '50% 24%' }}
       onError={() => setHasImageError(true)}
     />
@@ -422,7 +422,7 @@ export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: About
         </div>
 
         <div className="grid overflow-hidden rounded-[30px] border lg:grid-cols-[.82fr_1.18fr]" style={{ borderColor: colors.line, backgroundColor: colors.paper }}>
-          <div className="relative min-h-[310px]">
+          <div className="relative h-[280px] sm:h-[360px] lg:h-[390px] lg:self-start">
             <FounderPhoto profile={profile} />
             <div className="absolute bottom-5 left-5 flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] shadow-sm" style={{ backgroundColor: colors.yellow, color: colors.navy }}>
               <MapPin size={13} />
