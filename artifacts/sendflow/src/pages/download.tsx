@@ -246,6 +246,11 @@ function StoreButton({ store, label, href, language }: { store: 'apple' | 'play'
   return href ? <a href={href} target="_blank" rel="noreferrer" aria-label={`${label} ${title}`}>{badge}</a> : <span aria-disabled="true">{badge}</span>;
 }
 
+function getSafeApkUrl(value?: string | null) {
+  const candidate = value?.trim() ?? '';
+  return /^(https?:\/\/|\/(?!\/))/i.test(candidate) ? candidate : null;
+}
+
 export default function DownloadPage() {
   const [language, setLanguage] = useState<Language>('fr');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -293,6 +298,7 @@ export default function DownloadPage() {
   const closeMenu = () => setMenuOpen(false);
   const toggleLanguage = () => { setLanguage((current) => current === 'fr' ? 'en' : 'fr'); closeMenu(); };
   const supportEmail = settings?.supportEmail?.trim() || 'support@sendflow.studio';
+  const apkUrl = getSafeApkUrl(settings?.apkUrl);
   const navigateToLandingSection = (id: string) => { window.location.assign(`/#${id}`); };
 
   return (
@@ -339,10 +345,10 @@ export default function DownloadPage() {
               <StoreButton store="apple" label={t.download} href={settings?.appStoreUrl} language={language} />
               <StoreButton store="play" label={t.download} href={settings?.googlePlayUrl} language={language} />
             </div>
-            <a className={`sf-download-apk ${loading || !settings?.apkUrl ? 'is-disabled' : ''}`} href={settings?.apkUrl || undefined} onClick={(event) => { if (!settings?.apkUrl) event.preventDefault(); }} target={settings?.apkUrl ? '_blank' : undefined} rel={settings?.apkUrl ? 'noreferrer' : undefined} aria-disabled={!settings?.apkUrl} aria-label={t.apkTitle}>
+            <a className={`sf-download-apk ${loading || !apkUrl ? 'is-disabled' : ''}`} href={apkUrl || undefined} onClick={(event) => { if (!apkUrl) event.preventDefault(); }} target={apkUrl ? '_blank' : undefined} rel={apkUrl ? 'noreferrer' : undefined} aria-disabled={!apkUrl} aria-label={t.apkTitle}>
               <span className="sf-download-apk-icon"><img src={androidMaterialIcon} alt="" /></span>
-              <span><strong>{t.apkTitle}</strong><small>{settings?.apkUrl ? t.apkReady : t.apkMeta}</small></span>
-              {settings?.apkUrl && <ArrowRight size={18} />}
+              <span><strong>{t.apkTitle}</strong><small>{apkUrl ? t.apkReady : t.apkMeta}</small></span>
+              {apkUrl && <ArrowRight size={18} />}
             </a>
           </div>
           <div className="sf-download-hero-orbit" aria-hidden="true"><span /><span /><span /></div>
