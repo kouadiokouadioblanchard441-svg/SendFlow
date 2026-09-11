@@ -11,6 +11,7 @@ import NotFound from '@/pages/not-found';
 import AdminPage from '@/pages/admin';
 import AboutPage, { type FounderProfile } from '@/pages/about';
 import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '@/pages/legal';
+import { EditableLegalPage } from '@/pages/editable-legal';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import heroPlaceholder from '@assets/generated_images/sendflow-hero-placeholder.png';
@@ -54,16 +55,55 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 type Language = 'fr' | 'en';
 type Copy = { fr: string; en: string };
-const t = (copy: Copy, language: Language) => copy[language];
+let activePublicContent: PublicLandingBundle['content'] | undefined;
+const publicEditorialFallbacks: Record<string, Copy> = {
+  'nav.home': { fr: 'Accueil', en: 'Home' },
+  'nav.features': { fr: 'Fonctionnalités', en: 'Features' },
+  'nav.how': { fr: 'Comment ça marche', en: 'How it works' },
+  'nav.international': { fr: 'International', en: 'International' },
+  'nav.security': { fr: 'Sécurité', en: 'Security' },
+  'nav.about': { fr: 'À propos', en: 'About' },
+  'cta.download': { fr: 'Télécharger l’application', en: 'Download the app' },
+  'cta.discover': { fr: 'Découvrir SendFlow', en: 'Discover SendFlow' },
+  'cta.newsletter': { fr: 'Me tenir au courant', en: 'Keep me posted' },
+  'cta.newsletter.note': { fr: 'Démo uniquement · Aucun engagement', en: 'Demo only · No commitment' },
+  'features.principles.kicker': { fr: 'Une expérience, trois repères', en: 'One experience, three principles' },
+  'features.principles.title': { fr: 'Pensé pour une Afrique connectée.', en: 'Built for a connected Africa.' },
+  'security.title': { fr: 'Chaque étape\nà découvert.', en: 'Every step,\nin the clear.' },
+  'security.body': { fr: 'Le calme vient de ce que l’on comprend. SendFlow rend les détails lisibles, les choix explicites et le contrôle toujours à portée de main.', en: 'Calm comes from understanding. SendFlow makes details readable, choices explicit, and control always within reach.' },
+  'security.visible.title': { fr: 'Détails visibles', en: 'Visible details' },
+  'security.visible.body': { fr: 'Comprendre avant de confirmer.', en: 'Understand before you confirm.' },
+  'security.private.title': { fr: 'Pensé privé', en: 'Privacy-minded' },
+  'security.private.body': { fr: 'Moins de données, plus de sérénité.', en: 'Less data, more peace of mind.' },
+  'cta.nextMove': { fr: 'Le prochain mouvement', en: 'The next move' },
+  'cta.download.title': { fr: 'Votre prochain transfert\ncommence ici.', en: 'Your next transfer\nstarts here.' },
+  'cta.download.body': { fr: 'Téléchargez bientôt l’application SendFlow et simplifiez vos transferts entre réseaux.', en: 'Download the SendFlow app soon and simplify transfers across networks.' },
+};
+const t = (copy: Copy, language: Language) => {
+  const key = Object.entries(publicEditorialFallbacks).find(([, fallback]) => fallback.fr === copy.fr && fallback.en === copy.en)?.[0];
+  const override = key ? activePublicContent?.find((item) => item.contentKey === key && item.locale === language && item.isVisible)?.value : undefined;
+  return override ?? copy[language];
+};
+const contentCopy = (
+  content: PublicLandingBundle['content'] | undefined,
+  key: string,
+  fallback: Copy,
+): Copy => ({
+  fr: content?.find((item) => item.contentKey === key && item.locale === 'fr' && item.isVisible)?.value ?? fallback.fr,
+  en: content?.find((item) => item.contentKey === key && item.locale === 'en' && item.isVisible)?.value ?? fallback.en,
+});
 type PublicLandingBundle = {
+  content: Array<{ contentKey: string; locale: string; value: string; isVisible: boolean }>;
   sections: Array<{ slug: string; titleFr: string; titleEn: string; bodyFr: string | null; bodyEn: string | null; isVisible: boolean }>;
   features: Array<{ slug: string; group: string; titleFr: string; titleEn: string; bodyFr: string; bodyEn: string; iconKey: string | null; isVisible: boolean }>;
   faqs: Array<{ questionFr: string; questionEn: string; answerFr: string; answerEn: string; isVisible: boolean }>;
-  countries: Array<{ id: number; code: string; nameFr: string; nameEn: string; flag: string; tone: string; isVisible: boolean }>;
-  operators: Array<{ id: number; name: string; isVisible: boolean }>;
+  countries: Array<{ id: number; code: string; nameFr: string; nameEn: string; flag: string; tone: string; heroPositionX: number | null; heroPositionY: number | null; isVisible: boolean }>;
+  operators: Array<{ id: number; slug: string; name: string; logoKey: string | null; background: string | null; foreground: string | null; isVisible: boolean }>;
   countryOperators: Array<{ countryId: number; operatorId: number; orderIndex: number }>;
   globeBadges: Array<{ operatorId: number; positionX: number; positionY: number; orderIndex: number; isVisible: boolean }>;
   media: Array<{ slug: string; publicUrl: string | null; storagePath: string | null; sourcePath: string; isVisible: boolean }>;
+  legalPages: Array<{ id: number; slug: string; titleFr: string; titleEn: string; introFr: string; introEn: string; isVisible: boolean }>;
+  legalSections: Array<{ id: number; pageId: number; sectionNumber: number; titleFr: string; titleEn: string; bodyFr: string; bodyEn: string; orderIndex: number }>;
   founder: {
     id: number;
     name: string;
@@ -95,6 +135,18 @@ type PublicLandingBundle = {
     linkedinUrl: string | null;
     instagramUrl: string | null;
     facebookUrl: string | null;
+    companyName: string;
+    legalForm: string;
+    legalAddress: string;
+    legalEmail: string;
+    footerAddressCountry: string;
+    footerAddress: string;
+    regulatorNameFr: string;
+    regulatorNameEn: string;
+    regulatorLogoKey: string | null;
+    googlePlayUrl: string | null;
+    appStoreUrl: string | null;
+    appGalleryUrl: string | null;
   } | null;
 };
 
@@ -153,7 +205,7 @@ const navItems = [
   { id: 'about', label: { fr: 'À propos', en: 'About' } },
 ];
 
-const countries = [
+const fallbackCountries = [
   { name: 'Côte d’Ivoire', code: 'CI', networks: ['Orange', 'MTN', 'Moov Africa', 'Wave'], flag: '🇨🇮', tone: '#dbeaff' },
   { name: 'Bénin', code: 'BJ', networks: ['MTN', 'Moov Africa'], flag: '🇧🇯', tone: '#dbeaff' },
   { name: 'Togo', code: 'TG', networks: ['T-Money', 'Moov Africa'], flag: '🇹🇬', tone: '#dbeaff' },
@@ -173,6 +225,20 @@ const countries = [
   { name: 'Ghana', code: 'GH', networks: ['MTN', 'Telecel', 'AT'], flag: '🇬🇭', tone: '#dbeaff' },
   { name: 'Kenya', code: 'KE', networks: ['Safaricom', 'Airtel', 'Telkom'], flag: '🇰🇪', tone: '#dbeaff' },
 ];
+const countries = fallbackCountries.map((country) => ({
+  ...country,
+  heroPositionX: (({ CI: 7, BJ: 78, TG: 95, CM: 34 } as Record<string, number>)[country.code] ?? null) as number | null,
+  heroPositionY: (({ CI: 53, BJ: 24, TG: 54, CM: 84 } as Record<string, number>)[country.code] ?? null) as number | null,
+}));
+type LandingCountryView = {
+  name: string;
+  code: string;
+  networks: string[];
+  flag: string;
+  tone: string;
+  heroPositionX: number | null;
+  heroPositionY: number | null;
+};
 
 type OperatorLogo = { mark: string; background: string; foreground: string; image?: string };
 
@@ -207,16 +273,23 @@ const operatorLogoMarks: Record<string, OperatorLogo> = {
   'M-Pesa': { mark: 'M-Pesa', background: '#f2f2f2', foreground: '#17131f', image: mpesaOperatorLogo },
 };
 
-const heroOperatorBadges = [
-  { network: 'Orange', position: 'left-[54%] top-[39%]' },
-  { network: 'MTN', position: 'left-[37%] top-[9%]' },
-  { network: 'Wave', position: 'right-[3%] top-[32%]' },
-  { network: 'Moov Africa', position: 'right-[9%] bottom-[17%]' },
-  { network: 'Airtel', position: 'left-[54%] bottom-[7%]' },
-];
-
-function OperatorRow({ network }: { network: string }) {
-  const logo = operatorLogoMarks[network] ?? { mark: network.slice(0, 1).toUpperCase(), background: '#6d35d8', foreground: '#ffffff' };
+function OperatorRow({
+  network,
+  operator,
+  media,
+}: {
+  network: string;
+  operator?: PublicLandingBundle['operators'][number];
+  media?: PublicLandingBundle['media'];
+}) {
+  const fallbackLogo = operatorLogoMarks[network] ?? { mark: network.slice(0, 1).toUpperCase(), background: '#6d35d8', foreground: '#ffffff' };
+  const mediaLogo = operator?.logoKey ? media?.find((item) => item.slug === operator.logoKey && item.isVisible)?.publicUrl : null;
+  const logo = {
+    ...fallbackLogo,
+    background: operator?.background || fallbackLogo.background,
+    foreground: operator?.foreground || fallbackLogo.foreground,
+    image: mediaLogo || fallbackLogo.image,
+  };
   return (
     <div className="flex items-center justify-center">
       <span role="img" aria-label={`${network} logo`} className={`flex h-14 w-14 items-center justify-center shadow-[0_8px_18px_rgba(58,38,83,.08)] sm:h-16 sm:w-16 ${logo.image ? 'rounded-2xl border border-[#dbe5f2] bg-white p-2' : 'rounded-full'}`} style={logo.image ? undefined : { backgroundColor: logo.background, color: logo.foreground }}>
@@ -226,13 +299,6 @@ function OperatorRow({ network }: { network: string }) {
   );
 }
 
-const heroCountryPositions: Record<string, string> = {
-  CI: 'left-[7%] top-[53%]',
-  BJ: 'right-[22%] top-[24%]',
-  TG: 'right-[5%] top-[54%]',
-  CM: 'left-[34%] bottom-[8%]',
-};
-
 const faqs: { q: Copy; a: Copy }[] = [
   { q: { fr: 'Qu’est-ce que SendFlow ?', en: 'What is SendFlow?' }, a: { fr: 'SendFlow simplifie les transferts d’argent entre réseaux Mobile Money avec un parcours clair, rapide et lisible.', en: 'SendFlow simplifies money transfers between Mobile Money networks with a clear, fast, and easy-to-follow journey.' } },
   { q: { fr: 'Quels réseaux sont disponibles ?', en: 'Which networks are available?' }, a: { fr: 'La couverture SendFlow réunit les principaux opérateurs disponibles dans les pays couverts. Sélectionnez un pays pour découvrir ses réseaux.', en: 'SendFlow coverage brings together the main operators available in supported countries. Select a country to explore its networks.' } },
@@ -241,13 +307,11 @@ const faqs: { q: Copy; a: Copy }[] = [
   { q: { fr: 'SendFlow possède-t-il un wallet ?', en: 'Does SendFlow have a wallet?' }, a: { fr: 'Non. SendFlow agit comme une couche de connexion entre réseaux, et non comme un wallet ou un compte financier.', en: 'No. SendFlow acts as a connection layer between networks, not as a wallet or financial account.' } },
 ];
 
-const footerAddresses = [
-  { flag: '🇨🇮', country: 'Côte d’Ivoire', address: 'Abidjan, Cocody Riviera Palmeraie' },
-];
 
-function RegulatorLogo() {
+function RegulatorLogo({ logoUrl, label }: { logoUrl?: string | null; label: string }) {
+  if (logoUrl) return <img src={logoUrl} alt={label} className="sendflow-regulator-logo object-contain" />;
   return (
-    <svg className="sendflow-regulator-logo" viewBox="0 0 250 78" role="img" aria-label="National Bank of Belgium Eurosystem">
+    <svg className="sendflow-regulator-logo" viewBox="0 0 250 78" role="img" aria-label={label}>
       <path d="M5 54V29c0-11 8-19 18-19 7 0 12 3 16 8 4-8 11-13 20-13 13 0 23 10 23 23v26H67V31c0-5-3-9-8-9s-9 4-9 9v23H37V31c0-5-3-9-8-9s-9 4-9 9v23H5Z" fill="#0b527f" />
       <path d="M39 18c5-8 12-13 21-13 13 0 23 10 23 23v26H67V31c0-5-3-9-8-9-5 0-9 4-9 9v23H39V18Z" fill="#b6b9bc" opacity=".9" />
       <text x="88" y="40" fill="#114e78" fontSize="24" fontWeight="700" letterSpacing="-1">National</text>
@@ -288,8 +352,8 @@ function StoreLogo({ icon }: { icon: 'play' | 'apple' | 'gallery' }) {
   );
 }
 
-function StoreBadge({ store, icon, soonLabel, className = '' }: { store: string; icon: 'play' | 'apple' | 'gallery'; soonLabel?: string; className?: string }) {
-  return (
+function StoreBadge({ store, icon, soonLabel, href, className = '' }: { store: string; icon: 'play' | 'apple' | 'gallery'; soonLabel?: string; href?: string | null; className?: string }) {
+  const badge = (
     <div className={`sendflow-store-badge ${className}`} aria-label={`Disponible sur ${store}`}>
       <StoreLogo icon={icon} />
       <span>
@@ -298,29 +362,46 @@ function StoreBadge({ store, icon, soonLabel, className = '' }: { store: string;
       </span>
     </div>
   );
+  return href ? <a href={href} target="_blank" rel="noreferrer">{badge}</a> : badge;
 }
 
-function SendFlowFooter({ isFrench, onNavigate, settings }: { isFrench: boolean; onNavigate: (id: string) => void; settings: PublicLandingBundle['settings'] }) {
+function SendFlowFooter({
+  isFrench,
+  onNavigate,
+  settings,
+  content,
+  media,
+}: {
+  isFrench: boolean;
+  onNavigate: (id: string) => void;
+  settings: PublicLandingBundle['settings'];
+  content: PublicLandingBundle['content'];
+  media: PublicLandingBundle['media'];
+}) {
   const supportEmail = settings?.supportEmail || 'support@sendflow.studio';
+  const copy = (key: string, fallback: Copy) => t(contentCopy(content, key, fallback), isFrench ? 'fr' : 'en');
+  const legalCompany = settings?.companyName || 'Flow Digital SARL';
+  const regulatorLabel = isFrench ? settings?.regulatorNameFr || 'Régulateur à confirmer' : settings?.regulatorNameEn || 'Regulator to be confirmed';
+  const regulatorLogo = settings?.regulatorLogoKey ? media.find((item) => item.slug === settings.regulatorLogoKey && item.isVisible)?.publicUrl : null;
   return (
     <footer id="footer" className="sendflow-reference-footer">
       <div className="sendflow-footer-inner">
         <section className="sendflow-footer-regulator">
           <p className="sendflow-footer-kicker">{isFrench ? 'Réglementé par :' : 'Regulated by:'}</p>
-          <RegulatorLogo />
+          <RegulatorLogo logoUrl={regulatorLogo} label={regulatorLabel} />
         </section>
 
         <div className="sendflow-footer-link-groups">
           <section>
             <h3>{isFrench ? 'Produits' : 'Products'}</h3>
-            <button onClick={() => onNavigate('top')}>SendFlow Afrique</button>
-            <button onClick={() => onNavigate('international')}>SendFlow Europe</button>
-             <button onClick={() => onNavigate('features-cards')}>SendFlow Business</button>
+            <button onClick={() => onNavigate('top')}>{copy('footer.product.africa', { fr: 'SendFlow Afrique', en: 'SendFlow Africa' })}</button>
+            <button onClick={() => onNavigate('international')}>{copy('footer.product.europe', { fr: 'SendFlow Europe', en: 'SendFlow Europe' })}</button>
+            <button onClick={() => onNavigate('features-cards')}>{copy('footer.product.business', { fr: 'SendFlow Business', en: 'SendFlow Business' })}</button>
           </section>
           <section>
             <h3>{isFrench ? 'Assistance' : 'Support'}</h3>
             <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
-            <button onClick={() => onNavigate('join')}>{isFrench ? 'Parrainage' : 'Referral'}</button>
+            <button onClick={() => onNavigate('join')}>{copy('footer.referral', { fr: 'Parrainage', en: 'Referral' })}</button>
           </section>
           <section>
             <h3>{isFrench ? 'Réglementation' : 'Regulation'}</h3>
@@ -332,20 +413,18 @@ function SendFlowFooter({ isFrench, onNavigate, settings }: { isFrench: boolean;
 
         <section className="sendflow-footer-addresses">
           <h3>{isFrench ? 'Nos adresses' : 'Our offices'}</h3>
-          {footerAddresses.map((office) => (
-            <div className="sendflow-office" key={office.country}>
-              <span className="sendflow-office-flag" aria-hidden="true">{office.flag}</span>
-              <div><strong>{office.country}</strong><p>{office.address}</p></div>
-            </div>
-          ))}
+          <div className="sendflow-office">
+            <span className="sendflow-office-flag" aria-hidden="true">🌍</span>
+            <div><strong>{settings?.footerAddressCountry || copy('footer.address.country', { fr: 'Côte d’Ivoire', en: 'Côte d’Ivoire' })}</strong><p>{settings?.footerAddress || copy('footer.address.value', { fr: 'Abidjan, Cocody Riviera Palmeraie', en: 'Abidjan, Cocody Riviera Palmeraie' })}</p></div>
+          </div>
         </section>
 
         <section className="sendflow-footer-downloads">
           <div className="sendflow-store-row">
-            <StoreBadge store="Google Play" icon="play" />
-            <StoreBadge store="App Store" icon="apple" />
+            <StoreBadge store="Google Play" icon="play" href={settings?.googlePlayUrl} />
+            <StoreBadge store="App Store" icon="apple" href={settings?.appStoreUrl} />
           </div>
-          <StoreBadge store="AppGallery" icon="gallery" />
+          <StoreBadge store="AppGallery" icon="gallery" href={settings?.appGalleryUrl} />
         </section>
 
         <div className="sendflow-footer-socials" aria-label="Réseaux sociaux">
@@ -422,9 +501,9 @@ function App() {
               <Route path="/a-propos" component={AboutRoute} />
               <Route path="/sign-in/*?" component={SignInPage} />
               <Route path="/sign-up/*?" component={SignUpPage} />
-              <Route path="/conditions-utilisation" component={() => <PublicLegalRoute page={TermsPage} />} />
-              <Route path="/confidentialite" component={() => <PublicLegalRoute page={PrivacyPage} />} />
-              <Route path="/mentions-legales" component={() => <PublicLegalRoute page={LegalMentionsPage} />} />
+              <Route path="/conditions-utilisation" component={() => <PublicLegalRoute page={TermsPage} slug="conditions-utilisation" />} />
+              <Route path="/confidentialite" component={() => <PublicLegalRoute page={PrivacyPage} slug="confidentialite" />} />
+              <Route path="/mentions-legales" component={() => <PublicLegalRoute page={LegalMentionsPage} slug="mentions-legales" />} />
               <Route path="/admin" component={LegacyAdminRedirect} />
               <Route path="/admin/*" component={LegacyAdminRedirect} />
               <Route path="/panel/:token/:email" component={PanelRoute} />
@@ -446,7 +525,7 @@ function SignUpPage() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
 }
 
-function PublicLegalRoute({ page: Page }: { page: (props: LegalPageProps) => ReactElement }) {
+function PublicLegalRoute({ page: Page, slug }: { page: (props: LegalPageProps) => ReactElement; slug: string }) {
   const { data } = useQuery<PublicLandingBundle>({
     queryKey: ['/api/landing'],
     queryFn: async () => {
@@ -456,6 +535,16 @@ function PublicLegalRoute({ page: Page }: { page: (props: LegalPageProps) => Rea
     },
     staleTime: 30_000,
   });
+  const legalPage = data?.legalPages?.find((item) => item.slug === slug && item.isVisible);
+  const legalSections = data?.legalSections?.filter((item) => item.pageId === legalPage?.id).sort((a, b) => a.orderIndex - b.orderIndex) ?? [];
+  if (legalPage && legalSections.length > 0) {
+    return <EditableLegalPage page={legalPage} sections={legalSections} settings={data?.settings ? {
+      companyName: data.settings.companyName,
+      legalForm: data.settings.legalForm,
+      legalAddress: data.settings.legalAddress,
+      legalEmail: data.settings.legalEmail,
+    } : null} />;
+  }
   return <Page supportEmail={data?.settings?.supportEmail ?? null} />;
 }
 
@@ -516,6 +605,7 @@ function AboutRoute() {
     <AboutPage
       locale={language}
       profile={profile}
+      content={landingBundle?.content ?? []}
       onBackHome={() => navigate('/')}
       onToggleLocale={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')}
     />
@@ -664,9 +754,10 @@ function AdminLoginForm({ panelToken, adminEmail, panelEmail }: { panelToken: st
 }
 
 function LandingPage() {
+  // Editorial copy is loaded from the public landing bundle.
   const [language, setLanguage] = useState<Language>('fr');
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(countries[0]);
+  const [selectedCountry, setSelectedCountry] = useState<LandingCountryView>(countries[0]);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -679,21 +770,26 @@ function LandingPage() {
     },
     staleTime: 30_000,
   });
+  activePublicContent = landingBundle?.content;
 
-  const activeCountries = useMemo(() => {
+  const activeCountries = useMemo<LandingCountryView[]>(() => {
     if (!landingBundle?.countries?.length) return countries;
     return landingBundle.countries
       .filter((country) => country.isVisible)
       .map((country) => ({
-        ...country,
-        name: country.nameFr,
+        name: language === 'fr' ? country.nameFr : country.nameEn,
+        code: country.code,
+        flag: country.flag,
+        tone: country.tone,
+        heroPositionX: country.heroPositionX,
+        heroPositionY: country.heroPositionY,
         networks: landingBundle.countryOperators
           .filter((relation) => relation.countryId === country.id)
           .sort((a, b) => a.orderIndex - b.orderIndex)
           .map((relation) => landingBundle.operators.find((operator) => operator.id === relation.operatorId && operator.isVisible)?.name)
           .filter((name): name is string => Boolean(name)),
       }));
-  }, [landingBundle]);
+  }, [landingBundle, language]);
 
   const activeFaqs = useMemo(() => (
     landingBundle?.faqs?.filter((faq) => faq.isVisible).map((faq) => ({
@@ -701,6 +797,41 @@ function LandingPage() {
       a: { fr: faq.answerFr, en: faq.answerEn },
     })) ?? faqs
   ), [landingBundle]);
+
+  const publicNavItems = useMemo(() => {
+    const keys: Record<string, string> = {
+      top: 'nav.home',
+      'features-cards': 'nav.features',
+      how: 'nav.how',
+      international: 'nav.international',
+      security: 'nav.security',
+      about: 'nav.about',
+    };
+    return navItems.map((item) => ({ ...item, label: contentCopy(landingBundle?.content, keys[item.id] ?? item.id, item.label) }));
+  }, [landingBundle]);
+
+  const localizedSection = (slug: string, fallback: { title: Copy; body: Copy }) => {
+    const section = landingBundle?.sections?.find((item) => item.slug === slug && item.isVisible);
+    return section
+      ? { title: { fr: section.titleFr, en: section.titleEn }, body: { fr: section.bodyFr ?? fallback.body.fr, en: section.bodyEn ?? fallback.body.en } }
+      : fallback;
+  };
+
+  const featureCopy = (slug: string, fallback: { title: Copy; text: Copy }) => {
+    const feature = landingBundle?.features?.find((item) => item.slug === slug && item.isVisible);
+    return feature ? { title: { fr: feature.titleFr, en: feature.titleEn }, text: { fr: feature.bodyFr, en: feature.bodyEn } } : fallback;
+  };
+
+  const sectionCopy = (slug: string, fallback: Copy): Copy => localizedSection(slug, { title: fallback, body: { fr: '', en: '' } }).title;
+  const sectionBody = (slug: string, fallback: Copy): Copy => localizedSection(slug, { title: { fr: '', en: '' }, body: fallback }).body;
+
+  const heroBadges = useMemo(() => {
+    const rows = landingBundle?.globeBadges?.filter((badge) => badge.isVisible).sort((a, b) => a.orderIndex - b.orderIndex) ?? [];
+    return rows.map((badge) => {
+      const operator = landingBundle?.operators.find((item) => item.id === badge.operatorId && item.isVisible);
+      return operator ? { operator, position: { left: `${badge.positionX}%`, top: `${badge.positionY}%` } } : null;
+    }).filter((item): item is { operator: PublicLandingBundle['operators'][number]; position: { left: string; top: string } } => Boolean(item));
+  }, [landingBundle]);
 
   const remoteFeatures = useMemo(() => {
     const iconMap: Record<string, string> = {
@@ -721,15 +852,6 @@ function LandingPage() {
       { title: { fr: 'Expérience simple', en: 'Simple experience' }, text: { fr: 'Moins de friction, plus de confiance dans chaque choix.', en: 'Less friction, more confidence in every choice.' }, icon: simpleExperienceIcon },
     ];
   }, [landingBundle]);
-
-  const sectionCopy = (slug: string, fallback: Copy): Copy => {
-    const section = landingBundle?.sections?.find((item) => item.slug === slug && item.isVisible);
-    return section ? { fr: section.titleFr, en: section.titleEn } : fallback;
-  };
-  const sectionBody = (slug: string, fallback: Copy): Copy => {
-    const section = landingBundle?.sections?.find((item) => item.slug === slug && item.isVisible);
-    return section ? { fr: section.bodyFr ?? fallback.fr, en: section.bodyEn ?? fallback.en } : fallback;
-  };
 
   useEffect(() => {
     const elements = document.querySelectorAll('.reveal');
@@ -776,11 +898,11 @@ function LandingPage() {
             <BrandLockup />
           </button>
           <div className="hidden items-center gap-7 md:flex">
-            {navItems.map((item) => <a key={item.id} href={`#${item.id}`} onClick={() => setMobileOpen(false)} className="link-underline text-[13px] font-medium text-[#5e5766] transition-colors hover:text-[#6d35d8]" data-testid={`link-nav-${item.id}`}>{t(item.label, language)}</a>)}
+            {publicNavItems.map((item) => <a key={item.id} href={`#${item.id}`} onClick={() => setMobileOpen(false)} className="link-underline text-[13px] font-medium text-[#5e5766] transition-colors hover:text-[#6d35d8]" data-testid={`link-nav-${item.id}`}>{t(item.label, language)}</a>)}
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <button onClick={() => setLanguage(isFrench ? 'en' : 'fr')} className="flex items-center gap-1 rounded-full px-2 py-2 text-[12px] font-semibold text-[#5e5766] hover:text-[#6d35d8]" data-testid="button-language">{isFrench ? 'EN' : 'FR'} <Globe2 size={14} /></button>
-            <button onClick={() => goTo('join')} className="rounded-full bg-[#211d2c] px-4 py-2.5 text-[12px] font-semibold text-[#fbf8ef] transition-transform hover:-translate-y-0.5" data-testid="button-nav-download">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-1 inline" size={14} /></button>
+            <button onClick={() => goTo('join')} className="rounded-full bg-[#211d2c] px-4 py-2.5 text-[12px] font-semibold text-[#fbf8ef] transition-transform hover:-translate-y-0.5" data-testid="button-nav-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-1 inline" size={14} /></button>
           </div>
           <button type="button" onClick={downloadBrief} className="hidden items-center gap-1 rounded-full px-2 py-2 text-[11px] font-semibold text-[#6d35d8] lg:flex" data-testid="button-download-brief">{isFrench ? 'Brief' : 'Brief'} <ArrowDownRight size={13} /></button>
           <button className="rounded-full p-2 md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu" data-testid="button-open-menu"><Menu size={21} /></button>
@@ -794,10 +916,10 @@ function LandingPage() {
             <button onClick={() => setMobileOpen(false)} className="rounded-full border border-[#2d2535]/10 p-2" data-testid="button-close-menu"><X size={19} /></button>
           </div>
           <div className="mt-16 flex flex-col gap-6">
-            {navItems.map((item) => <a key={item.id} href={`#${item.id}`} onClick={() => setMobileOpen(false)} className="flex items-center border-b border-[#2d2535]/10 pb-4 text-left text-2xl font-semibold tracking-[-.04em]" data-testid={`link-mobile-${item.id}`}>{t(item.label, language)}</a>)}
+            {publicNavItems.map((item) => <a key={item.id} href={`#${item.id}`} onClick={() => setMobileOpen(false)} className="flex items-center border-b border-[#2d2535]/10 pb-4 text-left text-2xl font-semibold tracking-[-.04em]" data-testid={`link-mobile-${item.id}`}>{t(item.label, language)}</a>)}
           </div>
           <button onClick={() => { setLanguage(isFrench ? 'en' : 'fr'); setMobileOpen(false); }} className="mt-12 flex items-center gap-2 text-sm font-semibold text-[#6d35d8]" data-testid="button-mobile-language"><span aria-hidden="true">{isFrench ? '🇬🇧' : '🇫🇷'}</span> {isFrench ? 'Passer en anglais' : 'Switch to French'}</button>
-          <button onClick={() => goTo('join')} className="mt-5 w-full rounded-full bg-[#6d35d8] px-5 py-4 text-sm font-semibold text-[#fbf8ef]" data-testid="button-mobile-download">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2 inline" size={16} /></button>
+           <button onClick={() => goTo('join')} className="mt-5 w-full rounded-full bg-[#6d35d8] px-5 py-4 text-sm font-semibold text-[#fbf8ef]" data-testid="button-mobile-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2 inline" size={16} /></button>
         </div>
       </div>}
 
@@ -812,7 +934,7 @@ function LandingPage() {
                   <div className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-[#6d35d8]/15 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(50,30,130,.1)] backdrop-blur-sm">
                     <BrandLockup />
                   </div>
-                  {activeCountries.filter((country) => heroCountryPositions[country.code]).map((country) => <div key={country.code} className={`absolute ${heroCountryPositions[country.code]} flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-2 py-1 text-[10px] font-bold text-[#211d2c] shadow-[0_8px_18px_rgba(20,30,80,.12)]`}><span className="text-sm leading-none">{country.flag}</span><span className="hidden sm:inline">{country.name}</span></div>)}
+                   {activeCountries.filter((country) => country.heroPositionX !== null && country.heroPositionY !== null).map((country) => <div key={country.code} className="absolute flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-2 py-1 text-[10px] font-bold text-[#211d2c] shadow-[0_8px_18px_rgba(20,30,80,.12)]" style={{ left: `${country.heroPositionX}%`, top: `${country.heroPositionY}%` }}><span className="text-sm leading-none">{country.flag}</span><span className="hidden sm:inline">{country.name}</span></div>)}
                 </div>
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                   <span className="hero-globe-spin block h-32 w-32 sm:h-48 sm:w-48">
@@ -820,11 +942,11 @@ function LandingPage() {
                   </span>
                 </div>
               </div>
-              <h1 className="rise delay-1 mt-6 max-w-[760px] text-[clamp(3.7rem,9vw,7.6rem)] font-extrabold leading-[.88] tracking-[-.09em] text-[#17131f]">{isFrench ? <>L’argent circule.<br /><em className="font-serif font-normal text-[#5b21b6]">Les réseaux</em> aussi.</> : <>Money moves.<br /><em className="font-serif font-normal text-[#5b21b6]">Networks</em> do too.</>}</h1>
-              <p className="rise delay-2 mt-8 max-w-[520px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{isFrench ? 'SendFlow simplifie vos transferts d’argent entre différents réseaux de paiement, localement et au-delà des frontières.' : 'SendFlow simplifies money transfers across different payment networks, locally and across borders.'}</p>
+              <h1 className="rise delay-1 mt-6 max-w-[760px] whitespace-pre-line text-[clamp(3.7rem,9vw,7.6rem)] font-extrabold leading-[.88] tracking-[-.09em] text-[#17131f]">{t(localizedSection('hero', { title: { fr: 'L’argent circule.\nLes réseaux aussi.', en: 'Money moves.\nNetworks do too.' }, body: { fr: '', en: '' } }).title, language)}</h1>
+              <p className="rise delay-2 mt-8 max-w-[520px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{t(localizedSection('hero', { title: { fr: '', en: '' }, body: { fr: 'SendFlow simplifie vos transferts d’argent entre différents réseaux de paiement, localement et au-delà des frontières.', en: 'SendFlow simplifies money transfers across different payment networks, locally and across borders.' } }).body, language)}</p>
               <div className="rise delay-3 mt-9 flex w-full max-w-[520px] flex-col items-stretch gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
-                <button onClick={() => goTo('join')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#8b62e5] bg-[#6d35d8] px-5 py-3.5 text-sm font-bold text-[#fbf8ef] shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3] sm:min-w-[210px]" data-testid="button-hero-download">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2" size={15} /></button>
-                <Link href="/a-propos" className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#8b62e5] bg-[#6d35d8] px-5 py-3.5 text-sm font-bold !text-white shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3] hover:!text-white sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2 text-white" size={14} fill="currentColor" />{isFrench ? 'Découvrir SendFlow' : 'Discover SendFlow'}</Link>
+                 <button onClick={() => goTo('join')} className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#8b62e5] bg-[#6d35d8] px-5 py-3.5 text-sm font-bold text-[#fbf8ef] shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3] sm:min-w-[210px]" data-testid="button-hero-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2" size={15} /></button>
+                 <Link href="/a-propos" className="inline-flex min-h-[52px] items-center justify-center rounded-[14px] border-2 border-[#8b62e5] bg-[#6d35d8] px-5 py-3.5 text-sm font-bold !text-white shadow-[0_12px_24px_rgba(109,53,216,.2)] transition-all hover:-translate-y-1 hover:bg-[#5822c3] hover:!text-white sm:min-w-[210px]" data-testid="button-hero-discover"><Play className="mr-2 text-white" size={14} fill="currentColor" />{t(contentCopy(landingBundle?.content, 'cta.discover', { fr: 'Découvrir SendFlow', en: 'Discover SendFlow' }), language)}</Link>
               </div>
             </div>
               <div className="relative mx-auto aspect-[3/2] w-full max-w-[530px] overflow-hidden rounded-[28px] border border-[#6d35d8]/15 bg-white shadow-[0_22px_45px_rgba(75,44,180,.14)]">
@@ -841,16 +963,17 @@ function LandingPage() {
                      <img src={heroGlobe} alt="" className="hero-globe-motion__earth" />
                    </div>
                    <div className="hero-globe-motion__badge-layer">
-                     {heroOperatorBadges.map(({ network, position }, index) => {
-                       const logo = operatorLogoMarks[network];
+                      {heroBadges.map(({ operator, position }, index) => {
+                        const fallbackLogo = operatorLogoMarks[operator.name] ?? { mark: operator.name.slice(0, 1).toUpperCase(), background: '#6d35d8', foreground: '#ffffff' };
+                        const logoUrl = operator.logoKey ? landingBundle?.media.find((item) => item.slug === operator.logoKey && item.isVisible)?.publicUrl : null;
                        return (
                          <span
-                           key={network}
-                           className={`hero-operator-badge ${position}`}
-                           style={{ animationDelay: `${index * -0.7}s` }}
-                           aria-label={`${network} logo`}
+                            key={operator.id}
+                            className="hero-operator-badge"
+                            style={{ ...position, animationDelay: `${index * -0.7}s` }}
+                            aria-label={`${operator.name} logo`}
                          >
-                           {logo.image ? <img src={logo.image} alt="" /> : <span>{logo.mark}</span>}
+                            {logoUrl || fallbackLogo.image ? <img src={logoUrl || fallbackLogo.image} alt="" /> : <span>{fallbackLogo.mark}</span>}
                          </span>
                        );
                      })}
@@ -865,8 +988,8 @@ function LandingPage() {
          <section id="features-cards" className="px-5 py-16 sm:px-8 sm:py-24">
            <div className="mx-auto max-w-[1240px]">
              <div className="reveal max-w-[720px]">
-               <h2 className="mt-0 max-w-[760px] text-5xl font-extrabold leading-[.9] tracking-[-.075em] text-[#17131f] sm:text-7xl lg:text-8xl">{isFrench ? <>Plusieurs réseaux.<br /><em className="font-serif font-normal text-[#5b21b6]">Une seule destination.</em></> : <>Many networks.<br /><em className="font-serif font-normal text-[#5b21b6]">One destination.</em></>}</h2>
-               <p className="mt-7 max-w-[560px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{isFrench ? 'Envoyer de l’argent ne devrait pas dépendre du réseau utilisé par votre proche. SendFlow imagine un passage plus simple, plus lisible et plus direct.' : 'Sending money should not depend on the network your loved one uses. SendFlow imagines a simpler, clearer, more direct path.'}</p>
+                <h2 className="mt-0 max-w-[760px] text-5xl font-extrabold leading-[.9] tracking-[-.075em] text-[#17131f] sm:text-7xl lg:text-8xl">{t(localizedSection('networks', { title: { fr: 'Plusieurs réseaux. Une seule destination.', en: 'Many networks. One destination.' }, body: { fr: '', en: '' } }).title, language)}</h2>
+                <p className="mt-7 max-w-[560px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{t(localizedSection('networks', { title: { fr: '', en: '' }, body: { fr: 'Envoyer de l’argent ne devrait pas dépendre du réseau utilisé par votre proche. SendFlow imagine un passage plus simple, plus lisible et plus direct.', en: 'Sending money should not depend on the network your loved one uses. SendFlow imagines a simpler, clearer, more direct path.' } }).body, language)}</p>
              </div>
              <div className="reveal mt-10 overflow-hidden rounded-[28px] border border-[#6d35d8]/10 bg-[#fbf8ef] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
                <div className="grid items-center gap-2 p-4 sm:grid-cols-[1.25fr_.75fr] sm:p-6">
@@ -878,8 +1001,8 @@ function LandingPage() {
                 {remoteFeatures.map((feature) => <div key={feature.title.fr} className="group min-h-[360px] rounded-[24px] border border-[#dbe5f2] bg-white p-5 shadow-[0_18px_48px_rgba(35,76,135,.08)] transition-transform hover:-translate-y-1 sm:p-6"><div className="flex h-36 items-center justify-between gap-2 overflow-hidden rounded-[18px] bg-[#f4f7fc] px-3 sm:h-40 sm:px-4"><img src={feature.icon} alt="" className="h-full min-w-0 flex-1 object-contain p-2 transition-transform duration-300 group-hover:scale-105 sm:p-3" /><span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#6d35d8]/15 bg-white px-2 py-1.5 shadow-[0_6px_14px_rgba(58,38,83,.08)]" aria-label="SendFlow"><img src={sendflowMark} alt="" className="h-5 w-5 object-contain" /><img src={sendflowWordmark} alt="SendFlow" className="h-3.5 w-auto object-contain" /></span></div><h3 className="mt-6 text-[18px] font-extrabold tracking-[-.035em] text-[#17131f]">{t(feature.title, language)}</h3><p className="mt-3 max-w-[270px] text-[14px] font-medium leading-6 text-[#3d4654]">{t(feature.text, language)}</p></div>)}
              </div>
               <div className="reveal mt-16 rounded-[28px] border-2 border-[#dbe5f2] bg-[#eef5ff] p-6 shadow-[0_18px_50px_rgba(35,76,135,.08)] sm:p-8">
-                <p className="text-[11px] font-extrabold uppercase tracking-[.17em] text-[#5b21b6]">{isFrench ? 'Une expérience, trois repères' : 'One experience, three principles'}</p>
-                <h3 className="mt-4 max-w-[620px] text-3xl font-extrabold leading-tight tracking-[-.05em] text-[#17131f] sm:text-4xl">{isFrench ? 'Pensé pour une Afrique connectée.' : 'Built for a connected Africa.'}</h3>
+                 <p className="text-[11px] font-extrabold uppercase tracking-[.17em] text-[#5b21b6]">{t(contentCopy(landingBundle?.content, 'features.principles.kicker', { fr: 'Une expérience, trois repères', en: 'One experience, three principles' }), language)}</p>
+                 <h3 className="mt-4 max-w-[620px] text-3xl font-extrabold leading-tight tracking-[-.05em] text-[#17131f] sm:text-4xl">{t(contentCopy(landingBundle?.content, 'features.principles.title', { fr: 'Pensé pour une Afrique connectée.', en: 'Built for a connected Africa.' }), language)}</h3>
                 <div className="mt-8 grid gap-4 sm:grid-cols-3">
                   {[
                    { n: '01', title: { fr: 'Simplicité', en: 'Simplicity' }, text: { fr: 'Des choix clairs, sans détour.', en: 'Clear choices, no detours.' }, art: howPersonArt, artAlt: { fr: 'Personnage SendFlow illustrant la simplicité', en: 'SendFlow character illustrating simplicity' }, artBg: 'bg-[#f4f0ff]' },
@@ -894,7 +1017,7 @@ function LandingPage() {
         <section id="how" className="bg-[#211d2c] px-5 py-24 text-[#fbf8ef] sm:px-8 sm:py-32">
           <div className="mx-auto max-w-[1240px]">
             <div className="reveal grid gap-12 lg:grid-cols-[.75fr_1.25fr] lg:gap-24">
-              <div><h2 className="mt-0 max-w-[500px] text-5xl font-extrabold leading-[.9] tracking-[-.075em] text-[#fbf8ef] sm:text-7xl lg:text-8xl">{isFrench ? <>Un passage<br /><em className="font-serif font-normal text-[#9adacb]">simple.</em></> : <>One clear<br /><em className="font-serif font-normal text-[#9adacb]">passage.</em></>}</h2><p className="mt-8 max-w-[360px] text-[16px] font-semibold leading-7 text-[#f4edff] sm:text-[17px]">{isFrench ? 'Le réseau ne devrait jamais être votre problème. SendFlow rend chaque étape visible, du premier clic au dernier.' : 'The network should never be your problem. SendFlow makes every step visible, from first click to last.'}</p></div>
+               <div><h2 className="mt-0 max-w-[500px] whitespace-pre-line text-5xl font-extrabold leading-[.9] tracking-[-.075em] text-[#fbf8ef] sm:text-7xl lg:text-8xl">{t(localizedSection('how', { title: { fr: 'Un passage\nsimple.', en: 'One clear\npassage.' }, body: { fr: '', en: '' } }).title, language)}</h2><p className="mt-8 max-w-[360px] text-[16px] font-semibold leading-7 text-[#f4edff] sm:text-[17px]">{t(localizedSection('how', { title: { fr: '', en: '' }, body: { fr: 'Le réseau ne devrait jamais être votre problème. SendFlow rend chaque étape visible, du premier clic au dernier.', en: 'The network should never be your problem. SendFlow makes every step visible, from first click to last.' } }).body, language)}</p></div>
               <div className="grid gap-3 sm:grid-cols-3">
                 {[{ n: '01', title: { fr: 'Choisissez', en: 'Choose' }, text: { fr: 'Votre pays, votre réseau, votre destination.', en: 'Your country, your network, your destination.' }, icon: Globe2, art: chooseStepArt }, { n: '02', title: { fr: 'Vérifiez', en: 'Check' }, text: { fr: 'Le montant et le chemin, sans surprise.', en: 'The amount and the path, no surprises.' }, icon: Sparkles, art: checkStepArt }, { n: '03', title: { fr: 'Envoyez', en: 'Send' }, text: { fr: 'Un dernier regard. Puis, c’est parti.', en: 'One last look. Then, it moves.' }, icon: ArrowDownRight, art: sendStepArt }].map((step) => <div key={step.n} className="group grid min-h-[210px] grid-cols-[.78fr_1.22fr] items-center gap-3 rounded-[24px] border border-[#fbf8ef]/15 bg-[#2b2638] p-4 transition-colors hover:border-[#9adacb]/60 sm:p-5"><div className="flex h-full items-center justify-center rounded-[18px] bg-[#211d2c]/55 p-2"><img src={step.art} alt="" className="h-28 w-full object-contain sm:h-32" /></div><div className="min-w-0"><div className="flex items-start justify-between gap-2"><span className="text-[11px] font-bold text-[#9adacb]">{step.n}</span><step.icon size={18} className="shrink-0 text-[#e8cd4d] transition-transform group-hover:rotate-12" /></div><h3 className="mt-10 text-xl font-bold tracking-[-.04em] text-[#fbf8ef]">{t(step.title, language)}</h3><p className="mt-3 text-[13px] font-medium leading-5 text-[#e5dff0]">{t(step.text, language)}</p></div></div>)}</div>
              </div>
@@ -913,14 +1036,10 @@ function LandingPage() {
             <div className="reveal flex flex-col justify-between gap-7 sm:flex-row sm:items-end">
               <div>
                 <h2 className="mt-0 max-w-[760px] text-5xl font-extrabold leading-[.9] tracking-[-.075em] text-[#17131f] sm:text-7xl lg:text-8xl">
-                  {isFrench ? (
-                    <>Votre argent,<br /><em className="font-serif font-normal text-[#5b21b6]">sans frontières mentales.</em></>
-                  ) : (
-                    <>Your money,<br /><em className="font-serif font-normal text-[#5b21b6]">without mental borders.</em></>
-                  )}
+                  {t(localizedSection('international', { title: { fr: 'Votre argent,\nsans frontières mentales.', en: 'Your money,\nwithout mental borders.' }, body: { fr: '', en: '' } }).title, language)}
                 </h2>
               </div>
-              <p className="max-w-[320px] text-[15px] font-semibold leading-7 text-[#30283b] sm:text-[17px]">{isFrench ? 'Explorez la couverture et les connexions qui donnent vie à SendFlow.' : 'Explore the coverage and connections that bring SendFlow to life.'}</p>
+               <p className="max-w-[320px] text-[15px] font-semibold leading-7 text-[#30283b] sm:text-[17px]">{t(localizedSection('international', { title: { fr: '', en: '' }, body: { fr: 'Explorez la couverture et les connexions qui donnent vie à SendFlow.', en: 'Explore the coverage and connections that bring SendFlow to life.' } }).body, language)}</p>
              </div>
              <div className="reveal mt-12 grid gap-4 sm:grid-cols-2">
                <div className="overflow-hidden rounded-[28px] border border-[#2d2535]/10 bg-[#fbf8ef] shadow-[0_18px_50px_rgba(58,38,83,.07)]">
@@ -946,7 +1065,7 @@ function LandingPage() {
                   </div>
                    <span className="flex h-12 w-12 items-center justify-center rounded-none text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span>
                 </div>
-                  <div className="mt-10 rounded-[18px] border border-[#e2e6ef] bg-[#f4f3f9] p-5 sm:p-6"><div className="grid grid-cols-2 gap-x-8 gap-y-7 sm:grid-cols-4">{displayNetworks.map((network) => <OperatorRow key={network} network={network} />)}</div></div>
+                  <div className="mt-10 rounded-[18px] border border-[#e2e6ef] bg-[#f4f3f9] p-5 sm:p-6"><div className="grid grid-cols-2 gap-x-8 gap-y-7 sm:grid-cols-4">{displayNetworks.map((network) => <OperatorRow key={network} network={network} operator={landingBundle?.operators.find((item) => item.name === network && item.isVisible)} media={landingBundle?.media ?? []} />)}</div></div>
               </div>
             </div>
           </div>
@@ -967,7 +1086,7 @@ function LandingPage() {
               <div className="absolute left-[30%] top-[34%] flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#6d35d8] text-[#fbf8ef] shadow-[0_18px_35px_rgba(109,53,216,.25)] sm:h-32 sm:w-32"><LockKeyhole size={34} strokeWidth={1.5} /></div>
               <div className="absolute bottom-[4%] left-[3%] rounded-2xl bg-[#211d2c] px-4 py-3 text-[11px] text-[#fbf8ef] shadow-lg"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#9adacb]" />{isFrench ? 'En contrôle' : 'In control'}</div>
             </div>
-            <div className="reveal"><h2 className="mt-0 max-w-[760px] text-5xl font-extrabold leading-[.9] tracking-[-.075em] text-[#17131f] sm:text-7xl lg:text-8xl">{isFrench ? <>Chaque étape<br /><em className="font-serif font-normal text-[#5b21b6]">à découvert.</em></> : <>Every step,<br /><em className="font-serif font-normal text-[#5b21b6]">in the clear.</em></>}</h2><p className="mt-8 max-w-[520px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{isFrench ? 'Le calme vient de ce que l’on comprend. SendFlow rend les détails lisibles, les choix explicites et le contrôle toujours à portée de main.' : 'Calm comes from understanding. SendFlow makes details readable, choices explicit, and control always within reach.'}</p><div className="mt-8 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl border border-[#dbe5f2] bg-white p-4 shadow-[0_12px_28px_rgba(35,76,135,.06)]"><div className="flex items-center justify-between gap-3"><img src={visibleDetailsIcon} alt="" className="h-14 w-20 object-contain" /><span className="flex shrink-0 items-center gap-1 rounded-full border border-[#6d35d8]/15 bg-[#f4f7fc] px-2 py-1.5"><img src={sendflowMark} alt="" className="h-4 w-4 object-contain" /><img src={sendflowWordmark} alt="SendFlow" className="h-3 w-auto object-contain" /></span></div><h3 className="mt-5 text-[15px] font-extrabold">{isFrench ? 'Détails visibles' : 'Visible details'}</h3><p className="mt-2 text-[12px] font-medium leading-5 text-[#3d4654]">{isFrench ? 'Comprendre avant de confirmer.' : 'Understand before you confirm.'}</p></div><div className="rounded-2xl border border-[#dbe5f2] bg-white p-4 shadow-[0_12px_28px_rgba(35,76,135,.06)]"><div className="flex items-center justify-between gap-3"><img src={privateIcon} alt="" className="h-14 w-20 object-contain" /><span className="flex shrink-0 items-center gap-1 rounded-full border border-[#6d35d8]/15 bg-[#f4f7fc] px-2 py-1.5"><img src={sendflowMark} alt="" className="h-4 w-4 object-contain" /><img src={sendflowWordmark} alt="SendFlow" className="h-3 w-auto object-contain" /></span></div><h3 className="mt-5 text-[15px] font-extrabold">{isFrench ? 'Pensé privé' : 'Privacy-minded'}</h3><p className="mt-2 text-[12px] font-medium leading-5 text-[#3d4654]">{isFrench ? 'Moins de données, plus de sérénité.' : 'Less data, more peace of mind.'}</p></div></div></div>
+             <div className="reveal"><h2 className="mt-0 max-w-[760px] whitespace-pre-line text-5xl font-extrabold leading-[.9] tracking-[-.075em] text-[#17131f] sm:text-7xl lg:text-8xl">{t(contentCopy(landingBundle?.content, 'security.title', { fr: 'Chaque étape\nà découvert.', en: 'Every step,\nin the clear.' }), language)}</h2><p className="mt-8 max-w-[520px] text-[17px] font-semibold leading-7 text-[#30283b] sm:text-[19px]">{t(contentCopy(landingBundle?.content, 'security.body', { fr: 'Le calme vient de ce que l’on comprend. SendFlow rend les détails lisibles, les choix explicites et le contrôle toujours à portée de main.', en: 'Calm comes from understanding. SendFlow makes details readable, choices explicit, and control always within reach.' }), language)}</p><div className="mt-8 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl border border-[#dbe5f2] bg-white p-4 shadow-[0_12px_28px_rgba(35,76,135,.06)]"><div className="flex items-center justify-between gap-3"><img src={visibleDetailsIcon} alt="" className="h-14 w-20 object-contain" /><span className="flex shrink-0 items-center gap-1 rounded-full border border-[#6d35d8]/15 bg-[#f4f7fc] px-2 py-1.5"><img src={sendflowMark} alt="" className="h-4 w-4 object-contain" /><img src={sendflowWordmark} alt="SendFlow" className="h-3 w-auto object-contain" /></span></div><h3 className="mt-5 text-[15px] font-extrabold">{t(contentCopy(landingBundle?.content, 'security.visible.title', { fr: 'Détails visibles', en: 'Visible details' }), language)}</h3><p className="mt-2 text-[12px] font-medium leading-5 text-[#3d4654]">{t(contentCopy(landingBundle?.content, 'security.visible.body', { fr: 'Comprendre avant de confirmer.', en: 'Understand before you confirm.' }), language)}</p></div><div className="rounded-2xl border border-[#dbe5f2] bg-white p-4 shadow-[0_12px_28px_rgba(35,76,135,.06)]"><div className="flex items-center justify-between gap-3"><img src={privateIcon} alt="" className="h-14 w-20 object-contain" /><span className="flex shrink-0 items-center gap-1 rounded-full border border-[#6d35d8]/15 bg-[#f4f7fc] px-2 py-1.5"><img src={sendflowMark} alt="" className="h-4 w-4 object-contain" /><img src={sendflowWordmark} alt="SendFlow" className="h-3 w-auto object-contain" /></span></div><h3 className="mt-5 text-[15px] font-extrabold">{t(contentCopy(landingBundle?.content, 'security.private.title', { fr: 'Pensé privé', en: 'Privacy-minded' }), language)}</h3><p className="mt-2 text-[12px] font-medium leading-5 text-[#3d4654]">{t(contentCopy(landingBundle?.content, 'security.private.body', { fr: 'Moins de données, plus de sérénité.', en: 'Less data, more peace of mind.' }), language)}</p></div></div></div>
           </div>
         </section>
 
@@ -978,10 +1097,10 @@ function LandingPage() {
          <section id="join" className="px-5 pb-24 sm:px-8 sm:pb-32"><div className="reveal relative mx-auto max-w-[1240px] overflow-hidden rounded-[32px] bg-[#6d35d8] px-6 py-14 text-[#fbf8ef] sm:px-14 sm:py-20"><div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#fbf8ef]/20" /><div className="absolute -right-2 -top-10 h-48 w-48 rounded-full border border-[#fbf8ef]/15" /><div className="relative max-w-[680px]"><p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#e8cd4d]">The next move</p><h2 className="mt-5 text-6xl font-extrabold leading-[.86] tracking-[-.08em] sm:text-8xl">{isFrench ? <>Prêt·e à faire<br /><em className="font-serif font-normal text-[#e8cd4d]">bouger les choses ?</em></> : <>Ready to<br /><em className="font-serif font-normal text-[#e8cd4d]">move things?</em></>}</h2><p className="mt-8 max-w-[500px] text-[17px] font-semibold leading-7 text-[#f4edff]">{isFrench ? 'Recevez les prochaines nouvelles de SendFlow. Pas de bruit, juste les avancées.' : 'Get the next SendFlow updates. No noise, just progress.'}</p><form onSubmit={(event) => { event.preventDefault(); if (email) setSubmitted(true); }} className="mt-8 flex max-w-[480px] flex-col gap-3 sm:flex-row"><input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required placeholder={isFrench ? 'votre@email.com' : 'your@email.com'} className="min-h-[54px] min-w-0 flex-1 rounded-[14px] border-2 border-white/60 bg-white px-5 py-3.5 text-[14px] font-semibold text-[#211d2c] outline-none placeholder:text-[#7d6b9a] shadow-[0_10px_24px_rgba(33,29,44,.12)] focus:border-[#e8cd4d] focus:ring-2 focus:ring-[#e8cd4d]/30" data-testid="input-email" /><button type="submit" className="inline-flex min-h-[54px] items-center justify-center rounded-[14px] border-2 border-[#a68bea] bg-[#5b21b6] px-6 py-3.5 text-[14px] font-extrabold text-white shadow-[0_14px_28px_rgba(33,29,44,.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4c1d95]" data-testid="button-submit-email">{submitted ? <><Check className="mr-1 inline" size={14} />{isFrench ? 'C’est noté' : 'You’re on it'}</> : <>{isFrench ? 'Me tenir au courant' : 'Keep me posted'} <ArrowRight className="ml-2 inline" size={17} /></>}</button></form><p className="mt-4 text-[11px] font-medium text-[#e5dff0]">{isFrench ? 'Démo uniquement · Aucun engagement' : 'Demo only · No commitment'}</p></div></div></section>
         <section id="download" className="px-5 pb-24 sm:px-8 sm:pb-32">
            <div className="reveal relative mx-auto max-w-[1240px] overflow-hidden rounded-[32px] bg-[#6d35d8] px-6 py-10 text-[#fbf8ef] sm:px-14 sm:py-16">
-            <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#e8cd4d]">{isFrench ? 'Le prochain mouvement' : 'The next move'}</p>
-            <h2 className="mt-5 max-w-[820px] text-6xl font-extrabold leading-[.86] tracking-[-.08em] sm:text-8xl">{isFrench ? <>Votre prochain transfert<br /><em className="font-serif font-normal text-[#e8cd4d]">commence ici.</em></> : <>Your next transfer<br /><em className="font-serif font-normal text-[#e8cd4d]">starts here.</em></>}</h2>
-             <p className="mt-7 max-w-[540px] text-[17px] font-semibold leading-7 text-[#f4edff]">{isFrench ? 'Téléchargez bientôt l’application SendFlow et simplifiez vos transferts entre réseaux.' : 'Download the SendFlow app soon and simplify transfers across networks.'}</p>
-              <button onClick={() => setSubmitted(true)} className="mt-6 inline-flex items-center rounded-[14px] border-2 border-[#a68bea] bg-[#5b21b6] px-6 py-3.5 text-[14px] font-extrabold text-white shadow-[0_14px_28px_rgba(33,29,44,.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4c1d95]" data-testid="button-download-placeholder">{isFrench ? 'Télécharger l’application' : 'Download the app'} <ArrowRight className="ml-2" size={17} /></button>
+             <p className="text-[11px] font-bold uppercase tracking-[.17em] text-[#e8cd4d]">{t(contentCopy(landingBundle?.content, 'cta.nextMove', { fr: 'Le prochain mouvement', en: 'The next move' }), language)}</p>
+             <h2 className="mt-5 max-w-[820px] whitespace-pre-line text-6xl font-extrabold leading-[.86] tracking-[-.08em] sm:text-8xl">{t(contentCopy(landingBundle?.content, 'cta.download.title', { fr: 'Votre prochain transfert\ncommence ici.', en: 'Your next transfer\nstarts here.' }), language)}</h2>
+              <p className="mt-7 max-w-[540px] text-[17px] font-semibold leading-7 text-[#f4edff]">{t(contentCopy(landingBundle?.content, 'cta.download.body', { fr: 'Téléchargez bientôt l’application SendFlow et simplifiez vos transferts entre réseaux.', en: 'Download the SendFlow app soon and simplify transfers across networks.' }), language)}</p>
+               <button onClick={() => setSubmitted(true)} className="mt-6 inline-flex items-center rounded-[14px] border-2 border-[#a68bea] bg-[#5b21b6] px-6 py-3.5 text-[14px] font-extrabold text-white shadow-[0_14px_28px_rgba(33,29,44,.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4c1d95]" data-testid="button-download-placeholder">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2" size={17} /></button>
               <div className="mt-4 flex flex-wrap gap-3">
                <StoreBadge store="Google Play" icon="play" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
                <StoreBadge store="App Store" icon="apple" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
@@ -994,7 +1113,7 @@ function LandingPage() {
         </section>
       </main>
 
-      <SendFlowFooter isFrench={isFrench} onNavigate={goTo} settings={landingBundle?.settings ?? null} />
+      <SendFlowFooter isFrench={isFrench} onNavigate={goTo} settings={landingBundle?.settings ?? null} content={landingBundle?.content ?? []} media={landingBundle?.media ?? []} />
       <footer className="bg-[#211d2c] px-5 py-12 text-[#fbf8ef] sm:px-8 sm:py-16"><div className="mx-auto max-w-[1240px]"><div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_.6fr_.6fr_.8fr]"><div><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8cd4d] text-[#211d2c]"><ArrowDownRight size={17} strokeWidth={2.5} /></span><span className="text-[17px] font-bold tracking-[-.045em]">sendflow<span className="text-[#e8cd4d]">.</span></span></div><p className="mt-6 max-w-[280px] text-[13px] leading-6 text-[#bcb6c5]">{isFrench ? 'Une vision plus calme des mouvements d’argent en Afrique.' : 'A calmer vision for moving money across Africa.'}</p></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Explorer' : 'Explore'}</p><div className="mt-5 flex flex-col gap-3 text-[13px] text-[#bcb6c5]">{navItems.slice(0, 3).map((item) => <button key={item.id} onClick={() => goTo(item.id)} className="w-fit transition-colors hover:text-[#e8cd4d]" data-testid={`link-footer-${item.id}`}>{t(item.label, language)}</button>)}</div></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Projet' : 'Project'}</p><div className="mt-5 flex flex-col gap-3 text-[13px] text-[#bcb6c5]"><button onClick={() => goTo('security')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-security">{isFrench ? 'Notre approche' : 'Our approach'}</button><button onClick={() => goTo('faq')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-faq">{isFrench ? 'Questions' : 'Questions'}</button><button onClick={() => goTo('join')} className="w-fit hover:text-[#e8cd4d]" data-testid="link-footer-join">{isFrench ? 'Contact' : 'Contact'}</button></div></div><div><p className="text-[11px] font-bold uppercase tracking-[.15em] text-[#9adacb]">{isFrench ? 'Statut' : 'Status'}</p><div className="mt-5 flex items-center gap-2 text-[13px] text-[#bcb6c5]"><span className="h-2 w-2 rounded-full bg-[#9adacb]" />{isFrench ? 'Démo en évolution' : 'Demo in progress'}</div><button onClick={() => setLanguage(isFrench ? 'en' : 'fr')} className="mt-5 flex items-center gap-2 text-[12px] font-semibold text-[#e8cd4d]" data-testid="button-footer-language"><Globe2 size={14} /> {isFrench ? 'English version' : 'Version française'}</button></div></div><div className="mt-14 flex flex-col justify-between gap-4 border-t border-[#fbf8ef]/15 pt-5 text-[10px] text-[#8d8792] sm:flex-row"><span>© 2025 SendFlow Studio. {isFrench ? 'Projet conceptuel.' : 'Concept project.'}</span><span className="flex gap-4"><span>{isFrench ? 'Confidentialité' : 'Privacy'}</span><span>{isFrench ? 'Mentions' : 'Legal'}</span></span></div></div></footer>
     </div>
   );

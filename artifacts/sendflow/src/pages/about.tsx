@@ -47,6 +47,7 @@ export type FounderProfile = {
 export type AboutPageProps = {
   locale: AboutLocale;
   profile: FounderProfile;
+  content?: Array<{ contentKey: string; locale: string; value: string; isVisible: boolean }>;
   onBackHome: () => void;
   onToggleLocale?: () => void;
 };
@@ -57,6 +58,37 @@ type Copy = {
 };
 
 const copy = (value: Copy, locale: AboutLocale) => value[locale];
+
+const editorialFallbacks: Record<string, Copy> = {
+  'about.hero.kicker': { fr: 'L’histoire derrière SendFlow', en: 'The story behind SendFlow' },
+  'about.hero.title': { fr: 'L’argent circule mieux quand les gens se comprennent.', en: 'Money moves better when people understand each other.' },
+  'about.hero.intro': { fr: 'SendFlow est né d’une intuition simple : la technologie financière ne devrait pas ajouter de distance. Elle devrait rendre les liens plus directs, les choix plus lisibles et les transferts plus humains.', en: 'SendFlow was born from a simple intuition: financial technology should not add distance. It should make connections more direct, choices clearer, and transfers more human.' },
+  'about.hero.founderCta': { fr: 'Rencontrer le fondateur', en: 'Meet the founder' },
+  'about.hero.missionCta': { fr: 'Notre raison d’être', en: 'Our reason why' },
+  'about.mission.kicker': { fr: 'Une conviction concrète', en: 'A practical conviction' },
+  'about.mission.title': { fr: 'Rendre la simplicité accessible à tous.', en: 'Make simplicity accessible to everyone.' },
+  'about.mission.label': { fr: 'Notre mission', en: 'Our mission' },
+  'about.vision.label': { fr: 'Notre vision', en: 'Our vision' },
+  'about.path.kicker': { fr: 'Le chemin', en: 'The path' },
+  'about.path.title': { fr: 'Une idée qui a pris racine dans le réel.', en: 'An idea rooted in real life.' },
+  'about.path.intro': { fr: 'Pas de raccourci spectaculaire. Un apprentissage patient : écouter, comprendre les contraintes, puis construire quelque chose qui tient.', en: 'No spectacular shortcut. A patient practice: listen, understand the constraints, then build something that holds.' },
+  'about.benefits.kicker': { fr: 'Ce que SendFlow rend possible', en: 'What SendFlow makes possible' },
+  'about.benefits.title': { fr: 'Moins de friction. Plus de mouvement.', en: 'Less friction. More movement.' },
+  'about.founder.kicker': { fr: 'À l’origine du mouvement', en: 'At the origin of the movement' },
+  'about.founder.title': { fr: 'Le visage derrière le produit.', en: 'The person behind the product.' },
+  'about.cta.kicker': { fr: 'La suite s’écrit ensemble', en: 'The next chapter is shared' },
+  'about.cta.title': { fr: 'Prêt à faire circuler les possibles ?', en: 'Ready to keep possibilities moving?' },
+  'about.cta.button': { fr: 'Découvrir SendFlow', en: 'Discover SendFlow' },
+  'about.card.tagline': { fr: 'Tout circule.', en: 'Keep it moving.' },
+  'about.feature.start.title': { fr: 'Un seul point de départ', en: 'One starting point' },
+  'about.feature.start.body': { fr: 'Choisissez un pays, un réseau et un bénéficiaire depuis un parcours pensé pour être compris du premier coup.', en: 'Choose a country, a network, and a recipient through a journey designed to be understood at first glance.' },
+  'about.feature.trust.title': { fr: 'Une confiance lisible', en: 'Trust you can read' },
+  'about.feature.trust.body': { fr: 'Les informations essentielles restent visibles : qui reçoit, combien, quand et où en est le transfert.', en: 'The essentials stay visible: who receives, how much, when, and where the transfer stands.' },
+  'about.feature.borders.title': { fr: 'Des frontières moins lourdes', en: 'Lighter borders' },
+  'about.feature.borders.body': { fr: 'SendFlow rapproche les réseaux locaux pour que la distance géographique ne dicte plus la distance humaine.', en: 'SendFlow brings local networks closer so geography does not dictate human distance.' },
+  'about.footer.tagline': { fr: 'Des liens qui avancent.', en: 'Connections in motion.' },
+  'about.footer.initiative': { fr: 'Une initiative Flow Digital SARL.', en: 'An initiative by Flow Digital SARL.' },
+};
 
 const colors = {
   ivory: '#f7f3e9',
@@ -142,9 +174,13 @@ function Feature({
   );
 }
 
-export function AboutPage({ locale, profile, onBackHome, onToggleLocale }: AboutPageProps) {
+export function AboutPage({ locale, profile, content = [], onBackHome, onToggleLocale }: AboutPageProps) {
   const isFrench = locale === 'fr';
-  const t = (value: Copy) => copy(value, locale);
+  const t = (value: Copy) => {
+    const key = Object.entries(editorialFallbacks).find(([, fallback]) => fallback.fr === value.fr && fallback.en === value.en)?.[0];
+    const override = key ? content.find((item) => item.contentKey === key && item.locale === locale && item.isVisible) : undefined;
+    return override?.value ?? copy(value, locale);
+  };
 
   const storySteps = [
     {

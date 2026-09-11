@@ -356,6 +356,11 @@ button[data-testid="button-submit-email"] {
   .marquee-track { animation: none; }
 }
 
+/* The landing footer is rendered by SendFlowFooter; keep the legacy shell out of the public page. */
+.noise > footer[class~="bg-[#211d2c]"] {
+  display: none;
+}
+
 /* Product language: keep the CTA and footer focused on SendFlow itself. */
 #join p.mt-4 {
   font-size: 0 !important;

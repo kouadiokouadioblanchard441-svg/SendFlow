@@ -189,6 +189,8 @@ const resourceConfigs: Record<ResourceKey, ResourceConfig> = {
       { key: 'flag', label: 'Code drapeau', placeholder: 'CI' },
       { key: 'tone', label: 'Ton visuel', placeholder: '#dbeaff' },
       { key: 'orderIndex', label: 'Ordre', kind: 'number' },
+      { key: 'heroPositionX', label: 'Position hero · X (%)', kind: 'number' },
+      { key: 'heroPositionY', label: 'Position hero · Y (%)', kind: 'number' },
       { key: 'isVisible', label: 'Visible sur le site', kind: 'checkbox' },
     ],
     columns: [
@@ -686,6 +688,18 @@ const siteSettingsDefaults: Record<string, Primitive> = {
   linkedinUrl: '',
   instagramUrl: '',
   facebookUrl: '',
+  companyName: 'Flow Digital SARL',
+  legalForm: 'Société à responsabilité limitée',
+  legalAddress: 'Côte d’Ivoire, Abidjan, Cocody Riviera Palmeraie',
+  legalEmail: 'support@sendflow.studio',
+  footerAddressCountry: 'Côte d’Ivoire',
+  footerAddress: 'Abidjan, Cocody Riviera Palmeraie',
+  regulatorNameFr: 'Régulateur à confirmer',
+  regulatorNameEn: 'Regulator to be confirmed',
+  regulatorLogoKey: '',
+  googlePlayUrl: '',
+  appStoreUrl: '',
+  appGalleryUrl: '',
 };
 
 function SiteSettingsEditor({
@@ -724,6 +738,18 @@ function SiteSettingsEditor({
         {field('linkedinUrl', 'LinkedIn SendFlow')}
         {field('instagramUrl', 'Instagram SendFlow')}
         {field('facebookUrl', 'Facebook SendFlow')}
+        {field('companyName', 'Dénomination légale')}
+        {field('legalForm', 'Forme juridique')}
+        {field('legalAddress', 'Adresse légale', 'text')}
+        {field('legalEmail', 'Email légal', 'email')}
+        {field('footerAddressCountry', 'Pays affiché dans les adresses')}
+        {field('footerAddress', 'Adresse affichée dans le footer')}
+        {field('regulatorNameFr', 'Régulateur · FR')}
+        {field('regulatorNameEn', 'Régulateur · EN')}
+        {field('regulatorLogoKey', 'Logo du régulateur · clé média')}
+        {field('googlePlayUrl', 'Lien Google Play', 'text')}
+        {field('appStoreUrl', 'Lien App Store', 'text')}
+        {field('appGalleryUrl', 'Lien AppGallery', 'text')}
       </div>
       <div className="sendflow-admin-founder-foot">
         <span className="sendflow-admin-muted">Les champs de lien peuvent rester vides si le profil n’est pas encore publié.</span>

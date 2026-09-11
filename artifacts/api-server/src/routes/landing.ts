@@ -32,7 +32,7 @@ const resources = {
   sections: { table: landingSections, editable: ["slug", "kind", "orderIndex", "eyebrowFr", "eyebrowEn", "titleFr", "titleEn", "bodyFr", "bodyEn", "imageKey", "isVisible"] },
   features: { table: landingFeatures, editable: ["slug", "group", "orderIndex", "titleFr", "titleEn", "bodyFr", "bodyEn", "iconKey", "imageKey", "isVisible"] },
   faqs: { table: landingFaqs, editable: ["orderIndex", "questionFr", "questionEn", "answerFr", "answerEn", "isVisible"] },
-  countries: { table: landingCountries, editable: ["code", "nameFr", "nameEn", "flag", "tone", "orderIndex", "isVisible"] },
+  countries: { table: landingCountries, editable: ["code", "nameFr", "nameEn", "flag", "tone", "orderIndex", "heroPositionX", "heroPositionY", "isVisible"] },
   operators: { table: landingOperators, editable: ["slug", "name", "logoKey", "background", "foreground", "isVisible"] },
   badges: { table: landingGlobeBadges, editable: ["operatorId", "positionX", "positionY", "orderIndex", "isVisible"] },
   legalPages: { table: legalPages, editable: ["slug", "titleFr", "titleEn", "introFr", "introEn", "isVisible"] },
@@ -47,6 +47,8 @@ const founderEditableFields = [
 
 const siteSettingsEditableFields = [
   "supportEmail", "supportPhone", "websiteUrl", "linkedinUrl", "instagramUrl", "facebookUrl",
+  "companyName", "legalForm", "legalAddress", "legalEmail", "footerAddressCountry", "footerAddress",
+  "regulatorNameFr", "regulatorNameEn", "regulatorLogoKey", "googlePlayUrl", "appStoreUrl", "appGalleryUrl",
 ] as const;
 
 type ResourceName = keyof typeof resources;
