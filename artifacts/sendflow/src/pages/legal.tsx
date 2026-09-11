@@ -20,6 +20,10 @@ export type LegalPageProps = {
   supportEmail?: string | null;
 };
 
+function normalizeSupportEmail(value?: string | null): string {
+  return value?.trim() || legalCompanyDetails.email;
+}
+
 function LegalSection({ number, title, children }: LegalSectionProps) {
   return (
     <section className="scroll-mt-28 border-t border-[#2d2535]/10 pt-8">
@@ -42,7 +46,8 @@ function LegalNotice() {
   );
 }
 
-function LegalLayout({ title, eyebrow, intro, supportEmail = legalCompanyDetails.email, children }: { title: string; eyebrow: string; intro: string; supportEmail?: string | null; children: ReactNode }) {
+function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title: string; eyebrow: string; intro: string; supportEmail?: string | null; children: ReactNode }) {
+  const contactEmail = normalizeSupportEmail(supportEmail);
   return (
     <div className="min-h-screen bg-[#f7f3e9] text-[#17131f]">
       <header className="sticky top-0 z-40 border-b border-[#2d2535]/10 bg-[#f7f3e9]/90 px-5 py-4 backdrop-blur-md sm:px-8">
@@ -86,7 +91,7 @@ function LegalLayout({ title, eyebrow, intro, supportEmail = legalCompanyDetails
             <Link href="/conditions-utilisation" className="hover:text-[#e8cd4d]">Conditions</Link>
             <Link href="/confidentialite" className="hover:text-[#e8cd4d]">Confidentialité</Link>
             <Link href="/mentions-legales" className="hover:text-[#e8cd4d]">Mentions légales</Link>
-            <a href={`mailto:${supportEmail}`} className="hover:text-[#e8cd4d]">Contact</a>
+            <a href={`mailto:${contactEmail}`} className="hover:text-[#e8cd4d]">Contact</a>
           </div>
         </div>
       </footer>
@@ -94,7 +99,8 @@ function LegalLayout({ title, eyebrow, intro, supportEmail = legalCompanyDetails
   );
 }
 
-export function LegalMentionsPage({ supportEmail = legalCompanyDetails.email }: LegalPageProps) {
+export function LegalMentionsPage({ supportEmail }: LegalPageProps) {
+  const contactEmail = normalizeSupportEmail(supportEmail);
   return (
     <LegalLayout
       eyebrow="SendFlow · Éditeur"
@@ -119,7 +125,7 @@ export function LegalMentionsPage({ supportEmail = legalCompanyDetails.email }: 
           </div>
           <div className="rounded-2xl border border-[#e6def3] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(58,38,83,.05)]">
             <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#6d35d8]">Adresse électronique</p>
-            <a className="mt-2 block break-all text-[15px] font-bold leading-6 text-[#5b21b6] underline decoration-[#cbb6f3] underline-offset-4" href={`mailto:${legalCompanyDetails.email}`}>{legalCompanyDetails.email}</a>
+            <a className="mt-2 block break-all text-[15px] font-bold leading-6 text-[#5b21b6] underline decoration-[#cbb6f3] underline-offset-4" href={`mailto:${contactEmail}`} data-testid="link-legal-support-email">{contactEmail}</a>
           </div>
         </div>
       </LegalSection>
@@ -164,7 +170,7 @@ export function LegalMentionsPage({ supportEmail = legalCompanyDetails.email }: 
 
       <LegalSection number="08" title="Images, illustrations et contenus de tiers">
         <p>Les visuels utilisés sur SendFlow peuvent être des créations originales, des éléments commandés, des ressources sous licence ou des contenus fournis par un partenaire. Les crédits et licences doivent être conservés dans le dossier de production et ajoutés sur cette page lorsqu’une licence l’exige.</p>
-        <p>Les marques, pictogrammes, drapeaux, logos d’opérateurs et références à des services tiers ne signifient pas que ces tiers valident le contenu du site. Toute erreur de représentation ou demande de retrait peut être adressée à {supportEmail} avec le lien concerné et les justificatifs utiles.</p>
+        <p>Les marques, pictogrammes, drapeaux, logos d’opérateurs et références à des services tiers ne signifient pas que ces tiers valident le contenu du site. Toute erreur de représentation ou demande de retrait peut être adressée à {contactEmail} avec le lien concerné et les justificatifs utiles.</p>
       </LegalSection>
 
       <LegalSection number="09" title="Responsabilité éditoriale">
@@ -180,17 +186,17 @@ export function LegalMentionsPage({ supportEmail = legalCompanyDetails.email }: 
 
       <LegalSection number="11" title="Données personnelles">
         <p>Les traitements de données personnelles liés au site et au projet SendFlow sont décrits dans la <Link href="/confidentialite" className="font-bold text-[#5b21b6] underline">Politique de confidentialité</Link>. Les utilisateurs peuvent également consulter les <Link href="/conditions-utilisation" className="font-bold text-[#5b21b6] underline">Conditions générales d’utilisation</Link> pour comprendre les règles applicables à l’utilisation du service.</p>
-        <p>Pour exercer une demande ou signaler une difficulté relative aux données personnelles, écrivez à {supportEmail}. Les informations de l’autorité compétente, les formalités et les délais doivent être confirmés par Flow Digital SARL selon le cadre juridique effectivement applicable à la date du lancement.</p>
+        <p>Pour exercer une demande ou signaler une difficulté relative aux données personnelles, écrivez à {contactEmail}. Les informations de l’autorité compétente, les formalités et les délais doivent être confirmés par Flow Digital SARL selon le cadre juridique effectivement applicable à la date du lancement.</p>
       </LegalSection>
 
       <LegalSection number="12" title="Signalement d’un contenu ou d’un comportement illicite">
-        <p>Tout utilisateur peut signaler un contenu manifestement illicite, une usurpation de marque, une atteinte à un droit, une tentative de fraude ou un usage abusif du site en écrivant à {supportEmail}.</p>
+        <p>Tout utilisateur peut signaler un contenu manifestement illicite, une usurpation de marque, une atteinte à un droit, une tentative de fraude ou un usage abusif du site en écrivant à {contactEmail}.</p>
         <p>Le signalement doit préciser l’identité et le moyen de contact du demandeur, l’adresse ou la référence du contenu, une description précise des faits, les raisons du signalement et tout document utile. Un signalement incomplet peut retarder l’analyse. Flow Digital SARL peut demander des informations complémentaires et transmettre le dossier à un partenaire ou à une autorité lorsque la loi l’exige.</p>
       </LegalSection>
 
       <LegalSection number="13" title="Droit applicable et juridiction">
         <p>La page de mentions légales est rédigée en français et s’inscrit dans le cadre juridique de l’éditeur établi en Côte d’Ivoire, sous réserve des règles impératives applicables à l’utilisateur, au pays de consultation et aux services de paiement proposés par un partenaire.</p>
-        <p>Les réclamations doivent d’abord être adressées à Flow Digital SARL à l’adresse {supportEmail}. À défaut de résolution amiable, les juridictions compétentes d’Abidjan peuvent être saisies, sous réserve des règles impératives de compétence et de protection des consommateurs.</p>
+        <p>Les réclamations doivent d’abord être adressées à Flow Digital SARL à l’adresse {contactEmail}. À défaut de résolution amiable, les juridictions compétentes d’Abidjan peuvent être saisies, sous réserve des règles impératives de compétence et de protection des consommateurs.</p>
       </LegalSection>
 
       <LegalSection number="14" title="Mise à jour des mentions">
@@ -202,7 +208,8 @@ export function LegalMentionsPage({ supportEmail = legalCompanyDetails.email }: 
   );
 }
 
-export function TermsPage({ supportEmail = legalCompanyDetails.email }: LegalPageProps) {
+export function TermsPage({ supportEmail }: LegalPageProps) {
+  const contactEmail = normalizeSupportEmail(supportEmail);
   return (
     <LegalLayout
       eyebrow="SendFlow · Conditions"
@@ -212,7 +219,7 @@ export function TermsPage({ supportEmail = legalCompanyDetails.email }: LegalPag
     >
       <LegalSection number="01" title="Identification de l’éditeur">
         <p>SendFlow est une marque et une solution technologique développées par <strong>Flow Digital SARL</strong>, société établie en Côte d’Ivoire, dont l’adresse officielle de contact est : Abidjan, Cocody Riviera Palmeraie, Côte d’Ivoire.</p>
-        <p>Pour toute question relative aux présentes conditions, à l’utilisation du service ou à une réclamation, l’utilisateur peut écrire à <a className="font-bold text-[#5b21b6] underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>. Les informations d’immatriculation, d’agrément et de représentation des partenaires de paiement seront ajoutées ou précisées avant l’ouverture commerciale du service concerné.</p>
+        <p>Pour toute question relative aux présentes conditions, à l’utilisation du service ou à une réclamation, l’utilisateur peut écrire à <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. Les informations d’immatriculation, d’agrément et de représentation des partenaires de paiement seront ajoutées ou précisées avant l’ouverture commerciale du service concerné.</p>
       </LegalSection>
 
       <LegalSection number="02" title="Objet et champ d’application">
@@ -282,7 +289,7 @@ export function TermsPage({ supportEmail = legalCompanyDetails.email }: LegalPag
 
       <LegalSection number="12" title="Disponibilité, maintenance et sécurité">
         <p>Flow Digital SARL met en œuvre des mesures raisonnables pour maintenir un service accessible et protéger ses systèmes. Toutefois, une disponibilité permanente ne peut être garantie. Des interruptions peuvent résulter d’une maintenance, d’une panne, d’un incident de réseau, d’un opérateur, d’un partenaire, d’une autorité, d’un événement de force majeure ou d’un risque de sécurité.</p>
-        <p>Il est interdit de désactiver les mécanismes de sécurité ou de considérer l’absence d’alerte comme une garantie d’absence de vulnérabilité. Tout incident suspect doit être signalé à {supportEmail} avec suffisamment d’informations pour permettre une analyse, sans transmettre de mot de passe ou de code secret.</p>
+        <p>Il est interdit de désactiver les mécanismes de sécurité ou de considérer l’absence d’alerte comme une garantie d’absence de vulnérabilité. Tout incident suspect doit être signalé à {contactEmail} avec suffisamment d’informations pour permettre une analyse, sans transmettre de mot de passe ou de code secret.</p>
       </LegalSection>
 
       <LegalSection number="13" title="Suspension, fermeture et résiliation">
@@ -319,7 +326,8 @@ export function TermsPage({ supportEmail = legalCompanyDetails.email }: LegalPag
   );
 }
 
-export function PrivacyPage({ supportEmail = legalCompanyDetails.email }: LegalPageProps) {
+export function PrivacyPage({ supportEmail }: LegalPageProps) {
+  const contactEmail = normalizeSupportEmail(supportEmail);
   return (
     <LegalLayout
       eyebrow="SendFlow · Confidentialité"
@@ -329,7 +337,7 @@ export function PrivacyPage({ supportEmail = legalCompanyDetails.email }: LegalP
     >
       <LegalSection number="01" title="Responsable du traitement">
         <p>Le responsable du traitement présenté dans cette politique est <strong>Flow Digital SARL</strong>, opérateur de la marque SendFlow, établi à Abidjan, Cocody Riviera Palmeraie, Côte d’Ivoire.</p>
-        <p>Pour toute question relative aux données personnelles, vous pouvez contacter <a className="font-bold text-[#5b21b6] underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>. Lorsqu’un partenaire exécute directement une opération de paiement, il peut agir comme responsable indépendant ou responsable conjoint pour certaines données et présenter sa propre politique.</p>
+        <p>Pour toute question relative aux données personnelles, vous pouvez contacter <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. Lorsqu’un partenaire exécute directement une opération de paiement, il peut agir comme responsable indépendant ou responsable conjoint pour certaines données et présenter sa propre politique.</p>
       </LegalSection>
 
       <LegalSection number="02" title="Périmètre de la politique">
@@ -417,7 +425,7 @@ export function PrivacyPage({ supportEmail = legalCompanyDetails.email }: LegalP
 
       <LegalSection number="12" title="Vos droits">
         <p>Selon la loi applicable à votre situation, vous pouvez demander l’accès à vos données, leur rectification, leur mise à jour, leur suppression lorsque cela est possible, la limitation d’un traitement, l’opposition à certains usages, le retrait d’un consentement ou une copie des informations vous concernant.</p>
-        <p>Pour exercer un droit, écrivez à {supportEmail} en indiquant votre nom, le moyen de vous répondre, l’objet précis de la demande et, si nécessaire, les éléments permettant de retrouver le compte. Flow Digital SARL peut demander une vérification d’identité raisonnable pour éviter de communiquer des données à la mauvaise personne.</p>
+        <p>Pour exercer un droit, écrivez à {contactEmail} en indiquant votre nom, le moyen de vous répondre, l’objet précis de la demande et, si nécessaire, les éléments permettant de retrouver le compte. Flow Digital SARL peut demander une vérification d’identité raisonnable pour éviter de communiquer des données à la mauvaise personne.</p>
         <p>Une demande peut être limitée ou refusée lorsque la conservation est imposée par la loi, lorsque l’exercice du droit porterait atteinte aux droits d’une autre personne, lorsqu’une enquête de fraude est en cours ou lorsque le partenaire est le responsable compétent pour le traitement concerné. Une explication sera fournie dans la mesure permise.</p>
       </LegalSection>
 
@@ -447,7 +455,7 @@ export function PrivacyPage({ supportEmail = legalCompanyDetails.email }: LegalP
       </LegalSection>
 
       <LegalSection number="18" title="Date et contact">
-        <p>Version de travail publiée le <strong>10 septembre 2026</strong>. Pour toute question, demande de droit ou réclamation relative à la confidentialité : <a className="font-bold text-[#5b21b6] underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>.</p>
+        <p>Version de travail publiée le <strong>10 septembre 2026</strong>. Pour toute question, demande de droit ou réclamation relative à la confidentialité : <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>.</p>
       </LegalSection>
     </LegalLayout>
   );

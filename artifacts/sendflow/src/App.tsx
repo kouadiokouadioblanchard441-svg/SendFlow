@@ -378,7 +378,10 @@ function SendFlowFooter({
   content: PublicLandingBundle['content'];
   media: PublicLandingBundle['media'];
 }) {
-  const supportEmail = settings?.supportEmail || 'support@sendflow.studio';
+  const supportEmail = settings?.supportEmail?.trim() || 'support@sendflow.studio';
+  const linkedinUrl = settings?.linkedinUrl?.trim() || null;
+  const facebookUrl = settings?.facebookUrl?.trim() || null;
+  const instagramUrl = settings?.instagramUrl?.trim() || null;
   const copy = (key: string, fallback: Copy) => t(contentCopy(content, key, fallback), isFrench ? 'fr' : 'en');
   const legalCompany = settings?.companyName || 'Flow Digital SARL';
   const regulatorLabel = isFrench ? settings?.regulatorNameFr || 'Régulateur à confirmer' : settings?.regulatorNameEn || 'Regulator to be confirmed';
@@ -400,7 +403,7 @@ function SendFlowFooter({
           </section>
           <section>
             <h3>{isFrench ? 'Assistance' : 'Support'}</h3>
-            <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
+            <a href={`mailto:${supportEmail}`} data-testid="link-footer-support-email">{supportEmail}</a>
             <button onClick={() => onNavigate('join')}>{copy('footer.referral', { fr: 'Parrainage', en: 'Referral' })}</button>
           </section>
           <section>
@@ -428,9 +431,9 @@ function SendFlowFooter({
         </section>
 
         <div className="sendflow-footer-socials" aria-label="Réseaux sociaux">
-          <a href={settings?.linkedinUrl || '#'} aria-label="LinkedIn" target={settings?.linkedinUrl ? '_blank' : undefined} rel={settings?.linkedinUrl ? 'noreferrer' : undefined}><Linkedin size={20} strokeWidth={2.5} /></a>
-          <a href={settings?.facebookUrl || '#'} aria-label="Facebook" target={settings?.facebookUrl ? '_blank' : undefined} rel={settings?.facebookUrl ? 'noreferrer' : undefined}><Facebook size={19} fill="currentColor" /></a>
-          <a href={settings?.instagramUrl || '#'} aria-label="Instagram" target={settings?.instagramUrl ? '_blank' : undefined} rel={settings?.instagramUrl ? 'noreferrer' : undefined}><Instagram size={20} strokeWidth={2.5} /></a>
+          {linkedinUrl && <a href={linkedinUrl} aria-label="LinkedIn" target="_blank" rel="noreferrer" data-testid="link-footer-linkedin"><Linkedin size={20} strokeWidth={2.5} /></a>}
+          {facebookUrl && <a href={facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer" data-testid="link-footer-facebook"><Facebook size={19} fill="currentColor" /></a>}
+          {instagramUrl && <a href={instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer" data-testid="link-footer-instagram"><Instagram size={20} strokeWidth={2.5} /></a>}
         </div>
 
         <div className="sendflow-footer-divider" />
@@ -526,15 +529,7 @@ function SignUpPage() {
 }
 
 function PublicLegalRoute({ page: Page, slug }: { page: (props: LegalPageProps) => ReactElement; slug: string }) {
-  const { data } = useQuery<PublicLandingBundle>({
-    queryKey: ['/api/landing'],
-    queryFn: async () => {
-      const response = await fetch('/api/landing');
-      if (!response.ok) throw new Error('Landing content unavailable');
-      return response.json() as Promise<PublicLandingBundle>;
-    },
-    staleTime: 30_000,
-  });
+  const { data } = usePublicLandingBundle();
   const legalPage = data?.legalPages?.find((item) => item.slug === slug && item.isVisible);
   const legalSections = data?.legalSections?.filter((item) => item.pageId === legalPage?.id).sort((a, b) => a.orderIndex - b.orderIndex) ?? [];
   if (legalPage && legalSections.length > 0) {
@@ -542,24 +537,29 @@ function PublicLegalRoute({ page: Page, slug }: { page: (props: LegalPageProps) 
       companyName: data.settings.companyName,
       legalForm: data.settings.legalForm,
       legalAddress: data.settings.legalAddress,
-      legalEmail: data.settings.legalEmail,
+      legalEmail: data.settings.supportEmail || data.settings.legalEmail,
     } : null} />;
   }
   return <Page supportEmail={data?.settings?.supportEmail ?? null} />;
 }
 
-function AboutRoute() {
-  const [, navigate] = useLocation();
-  const [language, setLanguage] = useState<Language>('fr');
-  const { data: landingBundle } = useQuery<PublicLandingBundle>({
+function usePublicLandingBundle() {
+  return useQuery<PublicLandingBundle>({
     queryKey: ['/api/landing'],
     queryFn: async () => {
       const response = await fetch('/api/landing');
       if (!response.ok) throw new Error('Landing content unavailable');
       return response.json() as Promise<PublicLandingBundle>;
     },
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
+}
+
+function AboutRoute() {
+  const [, navigate] = useLocation();
+  const [language, setLanguage] = useState<Language>('fr');
+  const { data: landingBundle } = usePublicLandingBundle();
 
   const profile = useMemo<FounderProfile>(() => {
     const fallback = fallbackFounder[language];
@@ -578,11 +578,11 @@ function AboutRoute() {
         vision: founder.visionFr,
         mission: founder.missionFr,
         education: founder.educationFr,
-        linkedinUrl: founder.linkedinUrl,
-        websiteUrl: founder.websiteUrl,
-        instagramUrl: founder.instagramUrl,
-        xUrl: founder.xUrl,
-        email: founder.email,
+        linkedinUrl: founder.linkedinUrl?.trim() || null,
+        websiteUrl: founder.websiteUrl?.trim() || null,
+        instagramUrl: founder.instagramUrl?.trim() || null,
+        xUrl: founder.xUrl?.trim() || null,
+        email: founder.email?.trim() || null,
       }
       : {
         name: founder.name,
@@ -593,11 +593,11 @@ function AboutRoute() {
         vision: founder.visionEn,
         mission: founder.missionEn,
         education: founder.educationEn,
-        linkedinUrl: founder.linkedinUrl,
-        websiteUrl: founder.websiteUrl,
-        instagramUrl: founder.instagramUrl,
-        xUrl: founder.xUrl,
-        email: founder.email,
+        linkedinUrl: founder.linkedinUrl?.trim() || null,
+        websiteUrl: founder.websiteUrl?.trim() || null,
+        instagramUrl: founder.instagramUrl?.trim() || null,
+        xUrl: founder.xUrl?.trim() || null,
+        email: founder.email?.trim() || null,
       };
   }, [language, landingBundle]);
 
@@ -761,15 +761,7 @@ function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const { data: landingBundle } = useQuery<PublicLandingBundle>({
-    queryKey: ['/api/landing'],
-    queryFn: async () => {
-      const response = await fetch('/api/landing');
-      if (!response.ok) throw new Error('Landing content unavailable');
-      return response.json() as Promise<PublicLandingBundle>;
-    },
-    staleTime: 30_000,
-  });
+  const { data: landingBundle } = usePublicLandingBundle();
   activePublicContent = landingBundle?.content;
 
   const activeCountries = useMemo<LandingCountryView[]>(() => {

@@ -51,6 +51,8 @@ const siteSettingsEditableFields = [
   "regulatorNameFr", "regulatorNameEn", "regulatorLogoKey", "googlePlayUrl", "appStoreUrl", "appGalleryUrl",
 ] as const;
 
+const founderContactFields = ["linkedinUrl", "websiteUrl", "instagramUrl", "xUrl", "email"] as const;
+const siteContactFields = ["supportEmail", "supportPhone", "websiteUrl", "linkedinUrl", "instagramUrl", "facebookUrl", "legalEmail"] as const;
 type ResourceName = keyof typeof resources;
 
 function resourceConfig(name: string) {
@@ -65,6 +67,14 @@ function editablePayload(name: ResourceName, body: unknown): Record<string, unkn
   return Object.fromEntries(Object.entries(source).filter(([key, value]) => allowed.includes(key) && value !== undefined));
 }
 
+function trimContactFields(values: Record<string, unknown>, fields: readonly string[]): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(values).map(([key, value]) => [
+      key,
+      fields.includes(key) && typeof value === "string" ? value.trim() : value,
+    ]),
+  );
+}
 async function getLandingBundle() {
   const [
     media,
@@ -109,8 +119,11 @@ router.get("/admin/landing", requireAdmin, async (_req, res): Promise<void> => {
 
 router.put("/admin/landing/founder", requireAdmin, async (req, res): Promise<void> => {
   const source = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
-  const values = Object.fromEntries(
-    Object.entries(source).filter(([key, value]) => founderEditableFields.includes(key as (typeof founderEditableFields)[number]) && value !== undefined),
+  const values = trimContactFields(
+    Object.fromEntries(
+      Object.entries(source).filter(([key, value]) => founderEditableFields.includes(key as (typeof founderEditableFields)[number]) && value !== undefined),
+    ),
+    founderContactFields,
   );
   if (!values.name || !values.roleFr || !values.roleEn || !values.shortBioFr || !values.shortBioEn || !values.storyFr || !values.storyEn || !values.visionFr || !values.visionEn || !values.educationFr || !values.educationEn || !values.missionFr || !values.missionEn) {
     res.status(400).json({ error: "Le nom, les rôles, les biographies, le parcours, la vision et la mission sont requis en français et en anglais." });
@@ -125,8 +138,11 @@ router.put("/admin/landing/founder", requireAdmin, async (req, res): Promise<voi
 
 router.put("/admin/landing/settings", requireAdmin, async (req, res): Promise<void> => {
   const source = req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {};
-  const values = Object.fromEntries(
-    Object.entries(source).filter(([key, value]) => siteSettingsEditableFields.includes(key as (typeof siteSettingsEditableFields)[number]) && value !== undefined),
+  const values = trimContactFields(
+    Object.fromEntries(
+      Object.entries(source).filter(([key, value]) => siteSettingsEditableFields.includes(key as (typeof siteSettingsEditableFields)[number]) && value !== undefined),
+    ),
+    siteContactFields,
   );
   if (typeof values.supportEmail !== "string" || !values.supportEmail.trim()) {
     res.status(400).json({ error: "L’adresse email du support est requise." });
@@ -169,7 +185,7 @@ router.post("/admin/landing/media/upload-url", requireAdmin, async (req, res): P
 router.patch("/admin/landing/:resource/:id", requireAdmin, async (req, res): Promise<void> => {
   const name = req.params.resource as string;
   const config = resourceConfig(name);
-  if (!config || name === "countryOperators") {
+  if (!config) {
     res.status(404).json({ error: "Unknown landing resource" });
     return;
   }
