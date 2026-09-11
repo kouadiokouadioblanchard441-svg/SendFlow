@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowDownToLine, ArrowRight, ChevronRight, Globe2, Headphones, Menu, Send, Smartphone, UserRound, WalletCards, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowRight, ChevronRight, Globe2, Headphones, Menu, X } from 'lucide-react';
 import { Link } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -8,6 +8,10 @@ import stepDownloadArt from '@assets/generated_images/sendflow-step-download-cle
 import stepAccountArt from '@assets/generated_images/sendflow-step-account-clean.png';
 import stepWalletArt from '@assets/generated_images/sendflow-step-wallet-clean.png';
 import stepTransferArt from '@assets/generated_images/sendflow-step-transfer-clean.png';
+import materialGetAppIcon from '@assets/google-material/get-app.svg';
+import materialPersonIcon from '@assets/google-material/person.svg';
+import materialWalletIcon from '@assets/google-material/account-balance-wallet.svg';
+import materialOutboxIcon from '@assets/google-material/outbox.svg';
 import { SendFlowFooter } from '@/components/sendflow-footer';
 
 type Language = 'fr' | 'en';
@@ -358,20 +362,19 @@ export default function DownloadPage() {
           <div className="sf-download-section-heading"><span className="sf-download-heading-icon"><ArrowDownToLine size={20} /></span><div><p>{t.startKicker}</p><h2>{t.startTitle}</h2></div></div>
           <div className="sf-download-step-list">
             {[
-              { title: t.step1, body: t.step1Body, icon: Smartphone, art: stepDownloadArt, alt: language === 'fr' ? 'Personnage SendFlow qui télécharge l’application sur son téléphone' : 'SendFlow character downloading the app on a phone' },
-              { title: t.step2, body: t.step2Body, icon: UserRound, art: stepAccountArt, alt: language === 'fr' ? 'Personnage SendFlow qui crée son compte' : 'SendFlow character creating an account' },
-              { title: t.step3, body: t.step3Body, icon: WalletCards, art: stepWalletArt, alt: language === 'fr' ? 'Personnage SendFlow qui sécurise son portefeuille mobile' : 'SendFlow character securing a mobile wallet' },
-              { title: t.step4, body: t.step4Body, icon: Send, art: stepTransferArt, alt: language === 'fr' ? 'Personnage SendFlow qui envoie un transfert' : 'SendFlow character sending a transfer' },
+              { title: t.step1, body: t.step1Body, icon: materialGetAppIcon, art: stepDownloadArt, alt: language === 'fr' ? 'Personnage SendFlow qui télécharge l’application sur son téléphone' : 'SendFlow character downloading the app on a phone' },
+              { title: t.step2, body: t.step2Body, icon: materialPersonIcon, art: stepAccountArt, alt: language === 'fr' ? 'Personnage SendFlow qui crée son compte' : 'SendFlow character creating an account' },
+              { title: t.step3, body: t.step3Body, icon: materialWalletIcon, art: stepWalletArt, alt: language === 'fr' ? 'Personnage SendFlow qui sécurise son portefeuille mobile' : 'SendFlow character securing a mobile wallet' },
+              { title: t.step4, body: t.step4Body, icon: materialOutboxIcon, art: stepTransferArt, alt: language === 'fr' ? 'Personnage SendFlow qui envoie un transfert' : 'SendFlow character sending a transfer' },
             ].map((step, index) => {
-              const StepIcon = step.icon;
               return (
                 <article className={`sf-download-step sf-download-step-${index + 1}`} key={step.title}>
                   <div className="sf-download-step-art">
                     <img src={step.art} alt={step.alt} loading="lazy" decoding="async" />
-                    <span className="sf-download-step-icon" aria-hidden="true"><StepIcon size={22} strokeWidth={2.4} /></span>
+                    <span className="sf-download-step-icon" aria-hidden="true"><img src={step.icon} alt="" /></span>
                   </div>
                   <div className="sf-download-step-copy">
-                    <div className="sf-download-step-meta"><span>0{index + 1}</span><StepIcon size={17} strokeWidth={2.4} aria-hidden="true" /></div>
+                    <div className="sf-download-step-meta"><span>0{index + 1}</span><img src={step.icon} alt="" aria-hidden="true" /></div>
                     <h3>{step.title}</h3>
                     <p>{step.body}</p>
                   </div>
