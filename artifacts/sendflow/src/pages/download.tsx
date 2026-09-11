@@ -8,10 +8,10 @@ import stepDownloadArt from '@assets/generated_images/sendflow-step-download-cle
 import stepAccountArt from '@assets/generated_images/sendflow-step-account-clean.png';
 import stepWalletArt from '@assets/generated_images/sendflow-step-wallet-clean.png';
 import stepTransferArt from '@assets/generated_images/sendflow-step-transfer-clean.png';
-import materialGetAppIcon from '@assets/google-material/get-app.svg';
-import materialPersonIcon from '@assets/google-material/person.svg';
-import materialWalletIcon from '@assets/google-material/account-balance-wallet.svg';
-import materialOutboxIcon from '@assets/google-material/outbox.svg';
+import materialGetAppIcon from '../assets/google-material/get-app.svg';
+import materialPersonIcon from '../assets/google-material/person.svg';
+import materialWalletIcon from '../assets/google-material/account-balance-wallet.svg';
+import materialOutboxIcon from '../assets/google-material/outbox.svg';
 import { SendFlowFooter } from '@/components/sendflow-footer';
 
 type Language = 'fr' | 'en';

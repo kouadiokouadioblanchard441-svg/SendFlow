@@ -807,9 +807,11 @@ footer > div > div:first-child {
 .sf-download-step-art::after { position: absolute; right: -28px; bottom: -40px; width: 150px; height: 150px; border: 1px solid rgba(109, 53, 216, .16); border-radius: 50%; content: ''; }
 .sf-download-step-art img { position: relative; z-index: 1; width: 100%; height: 238px; object-fit: contain; object-position: center bottom; }
 .sf-download-step-icon { position: absolute; top: 16px; left: 16px; z-index: 2; display: grid; width: 48px; height: 48px; place-items: center; border: 1px solid rgba(255, 255, 255, .72); border-radius: 15px; background: var(--sf-violet); color: #fff; box-shadow: 0 10px 22px rgba(71, 31, 164, .28); }
+.sf-download-step-icon img { width: 25px; height: 25px; display: block; filter: brightness(0) invert(1); }
 .sf-download-step-copy { padding: 18px 20px 22px; }
 .sf-download-step-meta { display: flex; align-items: center; justify-content: space-between; color: var(--sf-violet); }
 .sf-download-step-meta span { font-size: 11px; font-weight: 900; letter-spacing: .16em; }
+.sf-download-step-meta img { width: 18px; height: 18px; display: block; filter: brightness(0) saturate(100%) invert(27%) sepia(49%) saturate(2599%) hue-rotate(250deg) brightness(89%) contrast(91%); }
 .sf-download-step h3 { margin: 10px 0 0; color: var(--sf-ink); font-size: 18px; font-weight: 800; letter-spacing: -.04em; }
 .sf-download-step p { margin: 8px 0 0; color: var(--sf-muted); font-size: 14px; line-height: 1.55; }
 .sf-download-step-1 .sf-download-step-art { background: linear-gradient(145deg, #f4edff, #e8ddff); }
