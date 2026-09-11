@@ -11,8 +11,14 @@ type DownloadSettings = {
   supportPhone?: string | null;
   companyName?: string | null;
   legalAddress?: string | null;
+  legalForm?: string | null;
+  legalEmail?: string | null;
   footerAddress?: string | null;
   footerAddressCountry?: string | null;
+  footerAddressFlag?: string | null;
+  regulatorNameFr?: string | null;
+  regulatorNameEn?: string | null;
+  regulatorLogoKey?: string | null;
   googlePlayUrl?: string | null;
   appStoreUrl?: string | null;
   appGalleryUrl?: string | null;
@@ -25,6 +31,7 @@ type DownloadSettings = {
 type LandingResponse = {
   settings?: DownloadSettings | null;
   content?: Array<{ contentKey: string; locale: string; value: string; isVisible: boolean }>;
+  media?: Array<{ slug: string; publicUrl: string | null; isVisible: boolean }>;
 };
 
 const copy = {
@@ -72,6 +79,11 @@ const copy = {
     mentions: 'Mentions légales',
     address: 'Nos adresses',
     footerNote: 'SendFlow connecte les réseaux de paiement et les personnes qui les utilisent.',
+    residence: 'Pays de résidence',
+    legalIdentity: 'Identité légale',
+    regulator: 'Réglementé par',
+    legalContact: 'Contact légal',
+    legalNotice: 'SendFlow est une solution de technologie financière développée par Flow Digital SARL. Nous ne sommes pas une banque ; nos services s’appuient sur des partenaires agréés.',
     rights: 'Tous droits réservés.',
   },
   en: {
@@ -118,6 +130,11 @@ const copy = {
     mentions: 'Legal notice',
     address: 'Our offices',
     footerNote: 'SendFlow connects payment networks and the people who use them.',
+    residence: 'Country of residence',
+    legalIdentity: 'Legal identity',
+    regulator: 'Regulated by',
+    legalContact: 'Legal contact',
+    legalNotice: 'SendFlow is a financial technology solution developed by Flow Digital SARL. We are not a bank; our services rely on licensed partners.',
     rights: 'All rights reserved.',
   },
 } as const;
@@ -167,6 +184,11 @@ const downloadContentKeys: Record<DownloadCopyKey, string> = {
   mentions: 'download.footer.mentions',
   address: 'download.footer.address',
   footerNote: 'download.footer.note',
+  residence: 'download.footer.residence',
+  legalIdentity: 'download.footer.legalIdentity',
+  regulator: 'download.footer.regulator',
+  legalContact: 'download.footer.legalContact',
+  legalNotice: 'download.footer.legalNotice',
   rights: 'download.footer.rights',
 };
 
@@ -223,6 +245,7 @@ export default function DownloadPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settings, setSettings] = useState<DownloadSettings | null>(null);
   const [content, setContent] = useState<LandingResponse['content']>([]);
+  const [media, setMedia] = useState<LandingResponse['media']>([]);
   const [loading, setLoading] = useState(true);
   const t = Object.fromEntries(
     Object.entries(copy[language]).map(([property, fallback]) => {
@@ -254,6 +277,7 @@ export default function DownloadPage() {
          if (!active) return;
          setSettings(data?.settings ?? null);
          setContent(data?.content ?? []);
+         setMedia(data?.media ?? []);
        })
       .catch(() => { if (active) setSettings(null); })
       .finally(() => { if (active) setLoading(false); });
@@ -265,6 +289,13 @@ export default function DownloadPage() {
   const settingsAddress = settings?.footerAddress?.trim() || settings?.legalAddress?.trim() || 'Abidjan, Cocody Riviera Palmeraie';
   const supportEmail = settings?.supportEmail?.trim() || 'support@sendflow.studio';
   const supportPhone = settings?.supportPhone?.trim();
+  const legalEmail = settings?.legalEmail?.trim() || supportEmail;
+  const regulatorLabel = language === 'fr'
+    ? settings?.regulatorNameFr?.trim() || 'Régulateur à confirmer'
+    : settings?.regulatorNameEn?.trim() || 'Regulator to be confirmed';
+  const regulatorLogo = settings?.regulatorLogoKey
+    ? media.find((item) => item.slug === settings.regulatorLogoKey && item.isVisible)?.publicUrl
+    : null;
 
   return (
     <div className="sf-download-page">
@@ -340,7 +371,23 @@ export default function DownloadPage() {
             <div><h3>{t.company}</h3><Link href="/a-propos">{t.about}</Link><a href={`mailto:${supportEmail}`}>{t.support}</a>{supportPhone && <a href={`tel:${supportPhone}`}>{supportPhone}</a>}</div>
             <div><h3>{t.legal}</h3><Link href="/conditions-utilisation">{t.terms}</Link><Link href="/confidentialite">{t.privacy}</Link><Link href="/mentions-legales">{t.mentions}</Link></div>
           </div>
-          <div className="sf-download-footer-address"><h3>{t.address}</h3><p>{settings?.footerAddressCountry || 'Côte d’Ivoire'}</p><span>{settingsAddress}</span><a href={`mailto:${supportEmail}`}>{supportEmail}</a></div>
+          <div className="sf-download-footer-address">
+            <h3>{t.address}</h3>
+            <p><span className="sf-download-footer-flag" aria-hidden="true">{settings?.footerAddressFlag || '🇨🇮'}</span>{settings?.footerAddressCountry || 'Côte d’Ivoire'}</p>
+            <span>{settingsAddress}</span>
+            <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
+          </div>
+          <div className="sf-download-footer-legal-info">
+            <h3>{t.legalIdentity}</h3>
+            <p>{settings?.companyName || 'Flow Digital SARL'}{settings?.legalForm ? ` · ${settings.legalForm}` : ''}</p>
+            <span>{settings?.legalAddress || settingsAddress}</span>
+            <a href={`mailto:${legalEmail}`}>{t.legalContact} · {legalEmail}</a>
+            <div className="sf-download-footer-regulator">
+              {regulatorLogo ? <img src={regulatorLogo} alt={regulatorLabel} /> : <span>{t.regulator}</span>}
+              <strong>{regulatorLabel}</strong>
+            </div>
+            <small>{t.legalNotice}</small>
+          </div>
           <div className="sf-download-footer-bottom"><span>© 2025 {settings?.companyName || 'SendFlow Studio'}. {t.rights}</span><button type="button" onClick={toggleLanguage}><Globe2 size={14} /> {language === 'fr' ? 'English version' : 'Version française'}</button></div>
         </div>
       </footer>
