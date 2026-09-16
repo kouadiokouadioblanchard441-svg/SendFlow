@@ -10,7 +10,7 @@ import momoMtnOperatorLogo from '../assets/operator-logos/operator-logo-momo-mtn
 import mixxByYasOperatorLogo from '../assets/operator-logos/operator-logo-08.png';
 import crossNetworkIcon from '../assets/sendflow-icon-cross-network.svg';
 import internationalIcon from '../assets/sendflow-icon-international-transfer.svg';
-import { SendFlowFooter, type FooterContentItem, type FooterMediaItem, type FooterSettings } from '@/components/sendflow-footer';
+import { SendFlowFooter, type FooterContentItem, type FooterSettings } from '@/components/sendflow-footer';
 import { useSeo } from '@/lib/seo';
 
 type Language = 'fr' | 'en';
@@ -18,7 +18,6 @@ type Language = 'fr' | 'en';
 type LandingResponse = {
   settings?: FooterSettings | null;
   content?: FooterContentItem[];
-  media?: FooterMediaItem[];
 };
 
 const copy = {
@@ -126,7 +125,6 @@ export default function FeaturesPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settings, setSettings] = useState<FooterSettings | null>(null);
   const [content, setContent] = useState<FooterContentItem[]>([]);
-  const [media, setMedia] = useState<FooterMediaItem[]>([]);
   const t = copy[language];
 
   useSeo({
@@ -147,13 +145,11 @@ export default function FeaturesPage() {
         if (!active) return;
         setSettings(data?.settings ?? null);
         setContent(data?.content ?? []);
-        setMedia(data?.media ?? []);
       })
       .catch(() => {
         if (!active) return;
         setSettings(null);
         setContent([]);
-        setMedia([]);
       });
     return () => { active = false; };
   }, []);
@@ -269,7 +265,7 @@ export default function FeaturesPage() {
         </section>
       </main>
 
-      <SendFlowFooter isFrench={language === 'fr'} settings={settings} content={content} media={media} />
+      <SendFlowFooter isFrench={language === 'fr'} settings={settings} content={content} />
     </div>
   );
 }

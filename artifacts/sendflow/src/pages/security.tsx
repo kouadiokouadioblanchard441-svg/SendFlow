@@ -6,7 +6,7 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import securityLockIcon from '@assets/generated_images/sendflow-security-lock-icon-clean.png';
 import securityCheckIcon from '../assets/sendflow-security-check.svg';
 import securityHeroArt from '@assets/generated_images/sendflow-security-hero-3d-clean.png';
-import { SendFlowFooter, type FooterContentItem, type FooterMediaItem, type FooterSettings } from '@/components/sendflow-footer';
+import { SendFlowFooter, type FooterContentItem, type FooterSettings } from '@/components/sendflow-footer';
 import { useSeo } from '@/lib/seo';
 
 type Language = 'fr' | 'en';
@@ -14,7 +14,6 @@ type Language = 'fr' | 'en';
 type LandingResponse = {
   settings?: FooterSettings | null;
   content?: FooterContentItem[];
-  media?: FooterMediaItem[];
 };
 
 const copy = {
@@ -84,7 +83,6 @@ export default function SecurityPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settings, setSettings] = useState<FooterSettings | null>(null);
   const [content, setContent] = useState<FooterContentItem[]>([]);
-  const [media, setMedia] = useState<FooterMediaItem[]>([]);
   const t = copy[language];
 
   useSeo({
@@ -105,13 +103,11 @@ export default function SecurityPage() {
         if (!active) return;
         setSettings(data?.settings ?? null);
         setContent(data?.content ?? []);
-        setMedia(data?.media ?? []);
       })
       .catch(() => {
         if (!active) return;
         setSettings(null);
         setContent([]);
-        setMedia([]);
       });
     return () => { active = false; };
   }, []);
@@ -195,7 +191,7 @@ export default function SecurityPage() {
         </section>
       </main>
 
-      <SendFlowFooter isFrench={language === 'fr'} settings={settings} content={content} media={media} />
+      <SendFlowFooter isFrench={language === 'fr'} settings={settings} content={content} />
     </div>
   );
 }

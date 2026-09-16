@@ -411,7 +411,6 @@ export default function DownloadPage() {
         onNavigate={navigateToLandingSection}
         settings={settings}
         content={content ?? []}
-        media={media}
       />
     </div>
   );

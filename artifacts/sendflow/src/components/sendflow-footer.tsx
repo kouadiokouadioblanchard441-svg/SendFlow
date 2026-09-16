@@ -2,6 +2,7 @@ import { Facebook, Instagram, Linkedin } from 'lucide-react';
 import { Link } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import bceaoLogo from '@assets/image_search/bceao-logo-official.png';
 
 type Copy = { fr: string; en: string };
 
@@ -32,33 +33,12 @@ export type FooterContentItem = {
   isVisible: boolean;
 };
 
-export type FooterMediaItem = {
-  slug: string;
-  publicUrl: string | null;
-  isVisible: boolean;
-};
-
 type SendFlowFooterProps = {
   isFrench: boolean;
   onNavigate?: (id: string) => void;
   settings: FooterSettings | null | undefined;
   content: FooterContentItem[];
-  media: FooterMediaItem[];
 };
-
-function RegulatorLogo({ logoUrl, label }: { logoUrl?: string | null; label: string }) {
-  if (logoUrl) return <img src={logoUrl} alt={label} className="sendflow-regulator-logo object-contain" />;
-  return (
-    <svg className="sendflow-regulator-logo" viewBox="0 0 250 78" role="img" aria-label={label}>
-      <path d="M5 54V29c0-11 8-19 18-19 7 0 12 3 16 8 4-8 11-13 20-13 13 0 23 10 23 23v26H67V31c0-5-3-9-8-9s-9 4-9 9v23H37V31c0-5-3-9-8-9s-9 4-9 9v23H5Z" fill="#0b527f" />
-      <path d="M39 18c5-8 12-13 21-13 13 0 23 10 23 23v26H67V31c0-5-3-9-8-9-5 0-9 4-9 9v23H39V18Z" fill="#b6b9bc" opacity=".9" />
-      <text x="88" y="40" fill="#114e78" fontSize="24" fontWeight="700" letterSpacing="-1">National</text>
-      <text x="187" y="40" fill="#9ea2a6" fontSize="24" fontWeight="400" letterSpacing="-1">Bank</text>
-      <text x="164" y="53" fill="#114e78" fontSize="7" fontWeight="700" letterSpacing=".8">OF BELGIUM</text>
-      <text x="88" y="68" fill="#a0a3a7" fontSize="13" fontWeight="400">Eurosystem</text>
-    </svg>
-  );
-}
 
 function StoreLogo({ icon }: { icon: 'play' | 'apple' | 'gallery' }) {
   if (icon === 'play') {
@@ -107,18 +87,12 @@ function contentValue(content: FooterContentItem[], key: string, fallback: Copy,
   return content.find((item) => item.contentKey === key && item.locale === (isFrench ? 'fr' : 'en') && item.isVisible)?.value ?? fallback[isFrench ? 'fr' : 'en'];
 }
 
-export function SendFlowFooter({ isFrench, onNavigate, settings, content, media }: SendFlowFooterProps) {
+export function SendFlowFooter({ isFrench, onNavigate, settings, content }: SendFlowFooterProps) {
   const supportEmail = settings?.supportEmail?.trim() || 'support@sendflow.studio';
   const legalCompany = settings?.companyName?.trim() || 'Flow Digital SARL';
   const legalForm = settings?.legalForm?.trim();
   const legalAddress = settings?.legalAddress?.trim() || settings?.footerAddress?.trim() || 'Côte d’Ivoire, Abidjan, Cocody Riviera Palmeraie';
   const legalEmail = settings?.legalEmail?.trim() || supportEmail;
-  const regulatorLabel = isFrench
-    ? settings?.regulatorNameFr?.trim() || 'Régulateur à confirmer'
-    : settings?.regulatorNameEn?.trim() || 'Regulator to be confirmed';
-  const regulatorLogo = settings?.regulatorLogoKey
-    ? media.find((item) => item.slug === settings.regulatorLogoKey && item.isVisible)?.publicUrl
-    : null;
   const navigate = (id: string) => {
     if (onNavigate) {
       onNavigate(id);
@@ -131,9 +105,10 @@ export function SendFlowFooter({ isFrench, onNavigate, settings, content, media 
   return (
     <footer id="footer" className="sendflow-reference-footer">
       <div className="sendflow-footer-inner">
-        <section className="sendflow-footer-regulator">
-          <p className="sendflow-footer-kicker">{isFrench ? 'Réglementé par :' : 'Regulated by:'}</p>
-          <RegulatorLogo logoUrl={regulatorLogo} label={regulatorLabel} />
+        <section className="sendflow-footer-regulator" aria-label="BCEAO">
+          <a href="https://www.bceao.int/" target="_blank" rel="noreferrer" aria-label="Visiter le site officiel de la BCEAO">
+            <img src={bceaoLogo} alt="BCEAO — Banque Centrale des États de l’Afrique de l’Ouest" className="sendflow-official-regulator-logo" />
+          </a>
         </section>
 
         <div className="sendflow-footer-link-groups">

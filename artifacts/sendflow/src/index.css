@@ -395,18 +395,10 @@ footer:not(.sendflow-reference-footer) {
   text-align: left;
 }
 
-.sendflow-footer-kicker {
-  margin: 0;
-  color: #202833;
-  font-size: 16px;
-  letter-spacing: .01em;
-}
-
-.sendflow-regulator-logo {
+.sendflow-official-regulator-logo {
   display: block;
-  width: 225px;
+  width: 200px;
   height: auto;
-  margin-top: 13px;
 }
 
 .sendflow-footer-link-groups {
