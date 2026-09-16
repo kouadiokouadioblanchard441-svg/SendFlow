@@ -48,6 +48,7 @@ const copy = {
   fr: {
     navHome: 'Accueil',
     navFeatures: 'Fonctionnalités',
+    navSecurity: 'Sécurité',
     navSupport: 'Assistance',
     language: 'EN',
     menuOpen: 'Ouvrir le menu',
@@ -99,6 +100,7 @@ const copy = {
   en: {
     navHome: 'Home',
     navFeatures: 'Features',
+    navSecurity: 'Security',
     navSupport: 'Support',
     language: 'FR',
     menuOpen: 'Open menu',
@@ -153,6 +155,7 @@ type DownloadCopyKey = keyof typeof copy.fr;
 const downloadContentKeys: Record<DownloadCopyKey, string> = {
   navHome: 'download.nav.home',
   navFeatures: 'download.nav.features',
+  navSecurity: 'download.nav.security',
   navSupport: 'download.nav.support',
   language: 'download.language',
   menuOpen: 'download.menu.open',
@@ -313,6 +316,7 @@ export default function DownloadPage() {
           <nav className="sf-download-desktop-nav" aria-label="Primary">
             <Link href="/">{t.navHome}</Link>
             <Link href="/fonctionnalites">{t.navFeatures}</Link>
+            <Link href="/securite">{t.navSecurity}</Link>
             <a href={`mailto:${supportEmail}`}>{t.navSupport}</a>
             <button type="button" onClick={toggleLanguage}><Globe2 size={15} />{t.language}</button>
           </nav>
@@ -327,6 +331,7 @@ export default function DownloadPage() {
             <nav>
               <Link href="/" onClick={closeMenu}>{t.navHome}<ChevronRight size={18} /></Link>
               <Link href="/fonctionnalites" onClick={closeMenu}>{t.navFeatures}<ChevronRight size={18} /></Link>
+              <Link href="/securite" onClick={closeMenu}>{t.navSecurity}<ChevronRight size={18} /></Link>
               <a href={`mailto:${supportEmail}`} onClick={closeMenu}>{t.navSupport}<ChevronRight size={18} /></a>
             </nav>
             <button type="button" className="sf-download-menu-language" onClick={toggleLanguage}>

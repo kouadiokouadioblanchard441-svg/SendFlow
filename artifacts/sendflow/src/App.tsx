@@ -776,7 +776,17 @@ function LandingPage() {
 
   const goTo = (id: string) => {
     setMobileOpen(false);
+    if (id === 'security') {
+      window.location.assign(`${basePath}/securite`);
+      return;
+    }
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const publicNavHref = (id: string) => {
+    if (id === 'features-cards') return '/fonctionnalites';
+    if (id === 'security') return '/securite';
+    return `#${id}`;
   };
 
   const downloadBrief = () => {
@@ -798,7 +808,7 @@ function LandingPage() {
             <BrandLockup />
           </button>
           <div className="hidden items-center gap-7 md:flex">
-            {publicNavItems.map((item) => <a key={item.id} href={item.id === 'features-cards' ? '/fonctionnalites' : `#${item.id}`} onClick={() => setMobileOpen(false)} className="link-underline text-[13px] font-medium text-[#5e5766] transition-colors hover:text-[#6d35d8]" data-testid={`link-nav-${item.id}`}>{t(item.label, language)}</a>)}
+            {publicNavItems.map((item) => <a key={item.id} href={publicNavHref(item.id)} onClick={() => setMobileOpen(false)} className="link-underline text-[13px] font-medium text-[#5e5766] transition-colors hover:text-[#6d35d8]" data-testid={`link-nav-${item.id}`}>{t(item.label, language)}</a>)}
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <button onClick={() => setLanguage(isFrench ? 'en' : 'fr')} className="flex items-center gap-1 rounded-full px-2 py-2 text-[12px] font-semibold text-[#5e5766] hover:text-[#6d35d8]" data-testid="button-language">{isFrench ? 'EN' : 'FR'} <Globe2 size={14} /></button>
@@ -816,7 +826,7 @@ function LandingPage() {
             <button onClick={() => setMobileOpen(false)} className="rounded-full border border-[#2d2535]/10 p-2" data-testid="button-close-menu"><X size={19} /></button>
           </div>
           <div className="mt-16 flex flex-col gap-6">
-            {publicNavItems.map((item) => <a key={item.id} href={item.id === 'features-cards' ? '/fonctionnalites' : `#${item.id}`} onClick={() => setMobileOpen(false)} className="flex items-center border-b border-[#2d2535]/10 pb-4 text-left text-2xl font-semibold tracking-[-.04em]" data-testid={`link-mobile-${item.id}`}>{t(item.label, language)}</a>)}
+            {publicNavItems.map((item) => <a key={item.id} href={publicNavHref(item.id)} onClick={() => setMobileOpen(false)} className="flex items-center border-b border-[#2d2535]/10 pb-4 text-left text-2xl font-semibold tracking-[-.04em]" data-testid={`link-mobile-${item.id}`}>{t(item.label, language)}</a>)}
           </div>
           <button onClick={() => { setLanguage(isFrench ? 'en' : 'fr'); setMobileOpen(false); }} className="mt-12 flex items-center gap-2 text-sm font-semibold text-[#6d35d8]" data-testid="button-mobile-language"><span aria-hidden="true">{isFrench ? '🇬🇧' : '🇫🇷'}</span> {isFrench ? 'Passer en anglais' : 'Switch to French'}</button>
             <Link href="/download" onClick={() => setMobileOpen(false)} className="mt-5 block w-full rounded-full bg-[#6d35d8] px-5 py-4 text-center text-sm font-semibold text-[#fbf8ef]" data-testid="button-mobile-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2 inline" size={16} /></Link>

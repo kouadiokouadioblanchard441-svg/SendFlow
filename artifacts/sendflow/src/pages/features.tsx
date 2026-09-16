@@ -24,6 +24,7 @@ const copy = {
   fr: {
     home: 'Accueil',
     features: 'Fonctionnalités',
+    security: 'Sécurité',
     download: 'Télécharger',
     support: 'Assistance',
     language: 'EN',
@@ -49,6 +50,7 @@ const copy = {
   en: {
     home: 'Home',
     features: 'Features',
+    security: 'Security',
     download: 'Download',
     support: 'Support',
     language: 'FR',
@@ -174,6 +176,7 @@ export default function FeaturesPage() {
           <nav className="sf-features-desktop-nav" aria-label="Primary">
             <Link href="/">{t.home}</Link>
             <Link href="/fonctionnalites" className="is-active">{t.features}</Link>
+            <Link href="/securite">{t.security}</Link>
             <Link href="/download">{t.download}</Link>
             <a href={`mailto:${supportEmail}`}>{t.support}</a>
             <button type="button" onClick={toggleLanguage}><Globe2 size={15} />{t.language}</button>
@@ -194,6 +197,7 @@ export default function FeaturesPage() {
             <nav>
               <Link href="/" onClick={closeMenu}>{t.home}<ChevronRight size={18} /></Link>
               <Link href="/fonctionnalites" onClick={closeMenu}>{t.features}<ChevronRight size={18} /></Link>
+              <Link href="/securite" onClick={closeMenu}>{t.security}<ChevronRight size={18} /></Link>
               <Link href="/download" onClick={closeMenu}>{t.download}<ChevronRight size={18} /></Link>
               <a href={`mailto:${supportEmail}`} onClick={closeMenu}>{t.support}<ChevronRight size={18} /></a>
             </nav>
