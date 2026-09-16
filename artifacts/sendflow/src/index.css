@@ -1221,8 +1221,67 @@ section#faq .reveal.space-y-2 > div {
   height: 42px;
   object-fit: contain;
 }
+.sf-features-card-route {
+  display: flex;
+  min-height: 55px;
+  align-items: center;
+  gap: 13px;
+  margin-top: 23px;
+}
+.sf-features-route-brand {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: 32px 14px;
+  align-items: center;
+  column-gap: 6px;
+  min-width: 0;
+}
+.sf-features-route-flag {
+  grid-row: 1 / span 2;
+  font-size: 20px;
+  line-height: 1;
+}
+.sf-features-route-logo {
+  display: flex;
+  width: 74px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #fff;
+}
+.sf-features-route-logo img {
+  display: block;
+  max-width: 70px;
+  max-height: 29px;
+  object-fit: contain;
+}
+.sf-features-route-logo.sf-features-tmoney-logo {
+  width: 82px;
+  border: 1px solid #e1e8f3;
+  background: #1553a5;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+.sf-features-route-brand small {
+  grid-column: 2;
+  overflow: hidden;
+  color: #7b8493;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sf-features-route-arrow {
+  flex: 0 0 auto;
+  color: #1769ff;
+}
 .sf-features-card h2 {
-  margin: 29px 0 0;
+  margin: 21px 0 0;
   color: var(--sf-features-ink);
   font-size: 23px;
   font-weight: 800;

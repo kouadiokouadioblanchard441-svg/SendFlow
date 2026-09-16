@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronRight, Globe2, Menu, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Globe2, Menu, X } from 'lucide-react';
 import { Link } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -85,6 +85,35 @@ function Brand() {
       <img src={sendflowMark} alt="" />
       <img src={sendflowWordmark} alt="SendFlow" />
     </Link>
+  );
+}
+
+function TransferRoute({
+  destination,
+  international = false,
+}: {
+  destination: 'wave' | 'tmoney';
+  international?: boolean;
+}) {
+  const isTmoney = destination === 'tmoney';
+  return (
+    <div className="sf-features-card-route" aria-label={international ? 'MTN Côte d’Ivoire vers T-Money Togo' : 'MTN vers Wave'}>
+      <div className="sf-features-route-brand">
+        <span className="sf-features-route-flag" aria-hidden="true">🇨🇮</span>
+        <span className="sf-features-route-logo">
+          <img src={momoMtnOperatorLogo} alt="MTN MoMo" />
+        </span>
+        <small>{international ? 'Côte d’Ivoire' : 'MTN'}</small>
+      </div>
+      <ArrowRight className="sf-features-route-arrow" size={20} strokeWidth={2.5} aria-hidden="true" />
+      <div className="sf-features-route-brand">
+        <span className="sf-features-route-flag" aria-hidden="true">{isTmoney ? '🇹🇬' : '🇨🇮'}</span>
+        <span className={`sf-features-route-logo ${isTmoney ? 'sf-features-tmoney-logo' : ''}`}>
+          {isTmoney ? <strong>T-Money</strong> : <img src={waveOperatorLogo} alt="Wave" />}
+        </span>
+        <small>{isTmoney ? 'Togo' : 'Wave'}</small>
+      </div>
+    </div>
   );
 }
 
@@ -200,6 +229,7 @@ export default function FeaturesPage() {
               <div className="sf-features-card-icon">
                 <img src={crossNetworkIcon} alt="" />
               </div>
+              <TransferRoute destination="wave" />
               <h2>{t.networkTitle}</h2>
               <p>{t.networkBody}</p>
               <span className="sf-features-card-tag">01</span>
@@ -208,6 +238,7 @@ export default function FeaturesPage() {
               <div className="sf-features-card-icon">
                 <img src={internationalIcon} alt="" />
               </div>
+              <TransferRoute destination="tmoney" international />
               <h2>{t.internationalTitle}</h2>
               <p>{t.internationalBody}</p>
               <span className="sf-features-card-tag">02</span>
