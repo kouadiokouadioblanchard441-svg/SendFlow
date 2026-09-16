@@ -973,7 +973,14 @@ function LandingPage() {
                     <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8d8792]">{isFrench ? 'Opérateurs disponibles' : 'Available operators'}</p>
                      <h3 className="mt-2 text-3xl font-extrabold tracking-[-.06em]">{selectedCountry.name}</h3>
                   </div>
-                   <span className="flex h-12 w-12 items-center justify-center rounded-none text-[11px] font-bold" style={{ backgroundColor: selectedCountry.tone }}>{selectedCountry.code}</span>
+                   <span
+                     className="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-none text-[10px] font-bold leading-none"
+                     style={{ backgroundColor: selectedCountry.tone }}
+                     aria-label={`${selectedCountry.name} (${selectedCountry.code})`}
+                   >
+                     <span className="text-[20px] leading-none" aria-hidden="true">{selectedCountry.flag}</span>
+                     <span>{selectedCountry.code}</span>
+                   </span>
                 </div>
                   <div className="mt-10 rounded-[18px] border border-[#e2e6ef] bg-[#f4f3f9] p-5 sm:p-6"><div className="grid grid-cols-2 gap-x-8 gap-y-7 sm:grid-cols-4">{displayNetworks.map((network) => <OperatorRow key={network} network={network} operator={landingBundle?.operators.find((item) => item.name === network && item.isVisible)} media={landingBundle?.media ?? []} />)}</div></div>
               </div>
