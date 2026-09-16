@@ -371,7 +371,7 @@ function App() {
           options: {
             logoPlacement: 'inside',
             logoLinkUrl: basePath || '/',
-            logoImageUrl: `${window.location.origin}${basePath}/favicon.svg`,
+            logoImageUrl: `${window.location.origin}${basePath}/sendflow-favicon.png`,
           },
           variables: {
             colorPrimary: '#1769ff',
