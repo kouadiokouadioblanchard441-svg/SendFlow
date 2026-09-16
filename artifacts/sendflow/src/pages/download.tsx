@@ -312,7 +312,7 @@ export default function DownloadPage() {
           <Brand />
           <nav className="sf-download-desktop-nav" aria-label="Primary">
             <Link href="/">{t.navHome}</Link>
-            <a href="/#features-cards">{t.navFeatures}</a>
+            <Link href="/fonctionnalites">{t.navFeatures}</Link>
             <a href={`mailto:${supportEmail}`}>{t.navSupport}</a>
             <button type="button" onClick={toggleLanguage}><Globe2 size={15} />{t.language}</button>
           </nav>
@@ -326,7 +326,7 @@ export default function DownloadPage() {
             <div className="sf-download-menu-top"><Brand /><button type="button" onClick={closeMenu} aria-label={t.menuClose}><X size={24} /></button></div>
             <nav>
               <Link href="/" onClick={closeMenu}>{t.navHome}<ChevronRight size={18} /></Link>
-              <a href="/#features-cards" onClick={closeMenu}>{t.navFeatures}<ChevronRight size={18} /></a>
+              <Link href="/fonctionnalites" onClick={closeMenu}>{t.navFeatures}<ChevronRight size={18} /></Link>
               <a href={`mailto:${supportEmail}`} onClick={closeMenu}>{t.navSupport}<ChevronRight size={18} /></a>
             </nav>
             <button type="button" className="sf-download-menu-language" onClick={toggleLanguage}>

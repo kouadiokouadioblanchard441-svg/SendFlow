@@ -1017,6 +1017,359 @@ section#faq .reveal.space-y-2 > div {
   padding-inline: 18px;
 }
 
+/* SendFlow features page — reference-inspired mobile feature catalogue. */
+.sf-features-page {
+  --sf-features-blue: #1769ff;
+  --sf-features-deep: #171b70;
+  --sf-features-ink: #111a35;
+  --sf-features-muted: #626a79;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #f7f9fc;
+  color: var(--sf-features-ink);
+}
+
+.sf-features-page a { text-decoration: none; }
+.sf-features-header {
+  position: relative;
+  z-index: 20;
+  border-bottom: 1px solid #e2e6ef;
+  background: #fff;
+}
+.sf-features-header-inner {
+  display: flex;
+  width: min(100% - 36px, 1180px);
+  min-height: 74px;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: space-between;
+}
+.sf-features-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--sf-features-blue);
+}
+.sf-features-brand img:first-child { width: 39px; height: 39px; object-fit: contain; }
+.sf-features-brand img:last-child { width: 135px; height: auto; object-fit: contain; }
+.sf-features-desktop-nav { display: none; align-items: center; gap: 26px; }
+.sf-features-desktop-nav a,
+.sf-features-desktop-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: #596170;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sf-features-desktop-nav a:hover,
+.sf-features-desktop-nav a.is-active,
+.sf-features-desktop-nav button:hover { color: var(--sf-features-blue); }
+.sf-features-menu-button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--sf-features-ink);
+  cursor: pointer;
+}
+.sf-features-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(19, 28, 78, .28);
+}
+.sf-features-menu {
+  min-height: 100dvh;
+  width: min(88%, 390px);
+  margin-left: auto;
+  background: #fff;
+  padding: 25px 24px;
+  box-shadow: -15px 0 45px rgba(11, 22, 91, .16);
+}
+.sf-features-menu-top { display: flex; align-items: center; justify-content: space-between; }
+.sf-features-menu-top button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--sf-features-ink);
+  cursor: pointer;
+}
+.sf-features-menu nav { display: grid; gap: 0; margin-top: 62px; }
+.sf-features-menu nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e6e8ee;
+  padding: 18px 0;
+  color: var(--sf-features-ink);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -.04em;
+}
+.sf-features-menu-language {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--sf-features-blue);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+.sf-features-hero {
+  display: flex;
+  min-height: 304px;
+  align-items: center;
+  justify-content: center;
+  background: #eff5ff;
+  padding: 56px 22px 60px;
+  text-align: center;
+}
+.sf-features-hero-content { width: min(100%, 640px); }
+.sf-features-hero h1 {
+  margin: 0;
+  color: var(--sf-features-ink);
+  font-size: clamp(38px, 10vw, 56px);
+  font-weight: 800;
+  letter-spacing: -.075em;
+  line-height: 1.05;
+}
+.sf-features-hero h1 span { color: #1d31d7; }
+.sf-features-hero p {
+  max-width: 520px;
+  margin: 22px auto 0;
+  color: #606a7b;
+  font-size: 17px;
+  line-height: 1.8;
+}
+.sf-features-compatible {
+  min-height: 228px;
+  padding: 54px 20px 50px;
+  background: #fff;
+  text-align: center;
+}
+.sf-features-compatible > p {
+  margin: 0;
+  color: #69707e;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+}
+.sf-features-operator-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 32px;
+  width: min(100%, 420px);
+  margin: 34px auto 0;
+  align-items: center;
+  justify-items: center;
+}
+.sf-features-operator {
+  display: grid;
+  width: 118px;
+  height: 64px;
+  place-items: center;
+  border-radius: 8px;
+  background: #fff;
+}
+.sf-features-operator img {
+  display: block;
+  max-width: 110px;
+  max-height: 55px;
+  object-fit: contain;
+}
+.sf-features-card-area {
+  padding: 46px 18px 74px;
+  background: #f7f9fc;
+}
+.sf-features-card-grid {
+  display: grid;
+  gap: 34px;
+  width: min(100%, 940px);
+  margin: 0 auto;
+}
+.sf-features-card {
+  position: relative;
+  min-height: 302px;
+  overflow: hidden;
+  border: 1px solid #e5e9ef;
+  border-radius: 18px;
+  background: #fff;
+  padding: 34px 36px 38px;
+  box-shadow: 0 2px 3px rgba(18, 29, 52, .04), 0 12px 30px rgba(18, 29, 52, .04);
+}
+.sf-features-card-icon {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border-radius: 18px;
+  background: #edf5ff;
+}
+.sf-features-card-icon img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+.sf-features-card h2 {
+  margin: 29px 0 0;
+  color: var(--sf-features-ink);
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -.045em;
+  line-height: 1.15;
+}
+.sf-features-card p {
+  max-width: 610px;
+  margin: 17px 0 0;
+  color: #69707c;
+  font-size: 17px;
+  line-height: 1.7;
+}
+.sf-features-card-tag {
+  position: absolute;
+  top: 39px;
+  right: 34px;
+  color: #1769ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+.sf-features-security {
+  display: grid;
+  gap: 30px;
+  width: min(100%, 940px);
+  margin: 42px auto 0;
+  border-radius: 24px;
+  background: #e9f1ff;
+  padding: 30px 28px;
+}
+.sf-features-kicker {
+  margin: 0;
+  color: #1769ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.sf-features-security h2 {
+  max-width: 440px;
+  margin: 14px 0 0;
+  font-size: 31px;
+  font-weight: 800;
+  letter-spacing: -.06em;
+  line-height: 1.05;
+}
+.sf-features-security-body {
+  max-width: 480px;
+  margin: 14px 0 0;
+  color: #606a7b;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.sf-features-security ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sf-features-security li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #374155;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.sf-features-security li span {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+  place-items: center;
+  border-radius: 50%;
+  background: #1769ff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.sf-features-cta {
+  padding: 0 18px 74px;
+  background: #f7f9fc;
+}
+.sf-features-cta > div {
+  width: min(100%, 940px);
+  margin: 0 auto;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #241e78, #4c2ab4);
+  padding: 34px 28px 38px;
+  color: #fff;
+}
+.sf-features-cta h2 {
+  max-width: 620px;
+  margin: 14px 0 0;
+  font-size: clamp(34px, 8vw, 54px);
+  font-weight: 800;
+  letter-spacing: -.07em;
+  line-height: .98;
+}
+.sf-features-cta > div > p:not(.sf-features-kicker) {
+  max-width: 520px;
+  margin: 18px 0 0;
+  color: #d8ddff;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.sf-features-cta .sf-features-kicker { color: #b9c6ff; }
+.sf-features-cta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  border-radius: 10px;
+  background: #fff;
+  padding: 13px 17px;
+  color: #252078;
+  font-size: 13px;
+  font-weight: 800;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.sf-features-cta a:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0, 0, 0, .18); }
+
+@media (min-width: 768px) {
+  .sf-features-header-inner { min-height: 86px; }
+  .sf-features-desktop-nav { display: flex; }
+  .sf-features-menu-button { display: none; }
+  .sf-features-hero { min-height: 340px; padding: 74px 32px; }
+  .sf-features-hero p { font-size: 18px; }
+  .sf-features-compatible { padding-top: 58px; }
+  .sf-features-operator-row { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .sf-features-card-area { padding: 58px 32px 92px; }
+  .sf-features-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .sf-features-card { min-height: 356px; padding: 36px 36px 42px; }
+  .sf-features-card h2 { margin-top: 36px; }
+  .sf-features-security { grid-template-columns: 1fr 1fr; align-items: center; padding: 42px 44px; }
+  .sf-features-cta { padding: 0 32px 92px; }
+  .sf-features-cta > div { padding: 48px 54px 54px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-features-cta a { transition: none; }
+  .sf-features-cta a:hover { transform: none; }
+}
+
 /* Editorial control room
    Layout paradigm: quiet split-pane workstation.
    Mood: dependable paper, ink, and one precise signal blue. */
