@@ -7,6 +7,7 @@ import securityLockIcon from '@assets/generated_images/sendflow-security-lock-ic
 import securityCheckIcon from '../assets/sendflow-security-check.svg';
 import securityHeroArt from '@assets/generated_images/sendflow-security-hero-3d-clean.png';
 import { SendFlowFooter, type FooterContentItem, type FooterMediaItem, type FooterSettings } from '@/components/sendflow-footer';
+import { useSeo } from '@/lib/seo';
 
 type Language = 'fr' | 'en';
 
@@ -86,19 +87,15 @@ export default function SecurityPage() {
   const [media, setMedia] = useState<FooterMediaItem[]>([]);
   const t = copy[language];
 
-  useEffect(() => {
-    document.title = language === 'fr' ? 'Sécurité · SendFlow' : 'Security · SendFlow';
-    const description = language === 'fr'
-      ? 'Découvrez les garanties de sécurité SendFlow pour protéger votre argent et vos données.'
-      : 'Discover SendFlow security guarantees designed to protect your money and data.';
-    let meta = document.querySelector('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', description);
-  }, [language]);
+  useSeo({
+    path: '/securite',
+    locale: language,
+    title: language === 'fr' ? 'Sécurité des transferts d’argent | SendFlow' : 'Money transfer security | SendFlow',
+    description: language === 'fr'
+      ? 'Découvrez les garanties de sécurité de SendFlow pour protéger vos transferts d’argent et vos données personnelles.'
+      : 'Discover SendFlow security guarantees designed to protect your transfers and personal data.',
+    breadcrumbs: [{ name: language === 'fr' ? 'Accueil' : 'Home', path: '/' }, { name: t.security, path: '/securite' }],
+  });
 
   useEffect(() => {
     let active = true;

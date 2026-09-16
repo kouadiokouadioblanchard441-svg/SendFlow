@@ -13,6 +13,7 @@ import materialPersonIcon from '../assets/google-material/person.svg';
 import materialWalletIcon from '../assets/google-material/account-balance-wallet.svg';
 import materialOutboxIcon from '../assets/google-material/outbox.svg';
 import { SendFlowFooter } from '@/components/sendflow-footer';
+import { useSeo } from '@/lib/seo';
 
 type Language = 'fr' | 'en';
 
@@ -273,19 +274,15 @@ export default function DownloadPage() {
     }),
   ) as typeof copy.fr;
 
-  useEffect(() => {
-    document.title = language === 'fr' ? 'Télécharger l’application · SendFlow' : 'Download the SendFlow app';
-    const description = language === 'fr'
-      ? 'Téléchargez SendFlow et simplifiez vos transferts entre réseaux de paiement.'
-      : 'Download SendFlow and simplify transfers across payment networks.';
-    let meta = document.querySelector('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', description);
-  }, [language]);
+  useSeo({
+    path: '/download',
+    locale: language,
+    title: language === 'fr' ? 'Télécharger SendFlow | Transferts entre réseaux' : 'Download SendFlow | Transfers across networks',
+    description: language === 'fr'
+      ? 'Téléchargez SendFlow pour simplifier vos transferts d’argent entre réseaux de paiement.'
+      : 'Download SendFlow to simplify money transfers across payment networks.',
+    breadcrumbs: [{ name: language === 'fr' ? 'Accueil' : 'Home', path: '/' }, { name: language === 'fr' ? 'Télécharger' : 'Download', path: '/download' }],
+  });
 
   useEffect(() => {
     let active = true;

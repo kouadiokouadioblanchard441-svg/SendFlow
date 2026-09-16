@@ -11,6 +11,7 @@ import mixxByYasOperatorLogo from '../assets/operator-logos/operator-logo-08.png
 import crossNetworkIcon from '../assets/sendflow-icon-cross-network.svg';
 import internationalIcon from '../assets/sendflow-icon-international-transfer.svg';
 import { SendFlowFooter, type FooterContentItem, type FooterMediaItem, type FooterSettings } from '@/components/sendflow-footer';
+import { useSeo } from '@/lib/seo';
 
 type Language = 'fr' | 'en';
 
@@ -128,19 +129,15 @@ export default function FeaturesPage() {
   const [media, setMedia] = useState<FooterMediaItem[]>([]);
   const t = copy[language];
 
-  useEffect(() => {
-    document.title = language === 'fr' ? 'Fonctionnalités · SendFlow' : 'Features · SendFlow';
-    const description = language === 'fr'
-      ? 'Découvrez les fonctionnalités SendFlow pour vos transferts inter-réseaux et internationaux.'
-      : 'Discover SendFlow features for cross-network and international transfers.';
-    let meta = document.querySelector('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', description);
-  }, [language]);
+  useSeo({
+    path: '/fonctionnalites',
+    locale: language,
+    title: language === 'fr' ? 'Transfert inter-réseaux et international | SendFlow' : 'Cross-network and international transfers | SendFlow',
+    description: language === 'fr'
+      ? 'Découvrez les fonctionnalités SendFlow pour envoyer de l’argent entre réseaux de paiement et au-delà des frontières.'
+      : 'Discover SendFlow features for sending money across payment networks and across borders.',
+    breadcrumbs: [{ name: language === 'fr' ? 'Accueil' : 'Home', path: '/' }, { name: t.features, path: '/fonctionnalites' }],
+  });
 
   useEffect(() => {
     let active = true;

@@ -7,6 +7,7 @@ import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useSeo } from '@/lib/seo';
 import NotFound from '@/pages/not-found';
 import AdminPage from '@/pages/admin';
 import AboutPage, { type FounderProfile } from '@/pages/about';
@@ -418,7 +419,7 @@ function App() {
               <Route path="/admin" component={LegacyAdminRedirect} />
               <Route path="/admin/*" component={LegacyAdminRedirect} />
               <Route path="/panel/:token/:email" component={PanelRoute} />
-              <Route component={NotFound} />
+              <Route component={NotFoundRoute} />
             </Switch>
             <Toaster />
           </TooltipProvider>
@@ -429,10 +430,24 @@ function App() {
 }
 
 function SignInPage() {
+  useSeo({
+    path: '/sign-in',
+    locale: 'fr',
+    title: 'Connexion · SendFlow',
+    description: 'Espace de connexion SendFlow.',
+    robots: 'noindex,nofollow',
+  });
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div>;
 }
 
 function SignUpPage() {
+  useSeo({
+    path: '/sign-up',
+    locale: 'fr',
+    title: 'Créer un compte · SendFlow',
+    description: 'Espace de création de compte SendFlow.',
+    robots: 'noindex,nofollow',
+  });
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
 }
 
@@ -440,6 +455,19 @@ function PublicLegalRoute({ page: Page, slug }: { page: (props: LegalPageProps) 
   const { data } = usePublicLandingBundle();
   const legalPage = data?.legalPages?.find((item) => item.slug === slug && item.isVisible);
   const legalSections = data?.legalSections?.filter((item) => item.pageId === legalPage?.id).sort((a, b) => a.orderIndex - b.orderIndex) ?? [];
+  const fallbackTitles: Record<string, string> = {
+    'conditions-utilisation': 'Conditions générales d’utilisation',
+    confidentialite: 'Politique de confidentialité',
+    'mentions-legales': 'Mentions légales',
+  };
+  const legalTitle = legalPage?.titleFr || fallbackTitles[slug] || 'Informations légales';
+  useSeo({
+    path: `/${slug}`,
+    locale: 'fr',
+    title: `${legalTitle} · SendFlow`,
+    description: legalPage?.introFr || `${legalTitle} de SendFlow.`,
+    breadcrumbs: [{ name: 'Accueil', path: '/' }, { name: legalTitle, path: `/${slug}` }],
+  });
   if (legalPage && legalSections.length > 0) {
     return <EditableLegalPage page={legalPage} sections={legalSections} settings={data?.settings ? {
       companyName: data.settings.companyName,
@@ -509,6 +537,16 @@ function AboutRoute() {
       };
   }, [language, landingBundle]);
 
+  useSeo({
+    path: '/a-propos',
+    locale: language,
+    title: language === 'fr' ? 'À propos de SendFlow | Transferts plus simples' : 'About SendFlow | Simpler money transfers',
+    description: language === 'fr'
+      ? 'Découvrez l’histoire, la mission et la vision de SendFlow pour simplifier les transferts entre réseaux de paiement.'
+      : 'Discover SendFlow’s story, mission, and vision for simpler transfers across payment networks.',
+    breadcrumbs: [{ name: language === 'fr' ? 'Accueil' : 'Home', path: '/' }, { name: language === 'fr' ? 'À propos' : 'About', path: '/a-propos' }],
+  });
+
   return (
     <AboutPage
       locale={language}
@@ -521,10 +559,28 @@ function AboutRoute() {
 }
 
 function LegacyAdminRedirect() {
+  useSeo({
+    path: '/admin',
+    locale: 'fr',
+    title: 'Administration · SendFlow',
+    description: 'Espace d’administration SendFlow.',
+    robots: 'noindex,nofollow',
+  });
   useEffect(() => {
     window.location.replace(`${basePath}/`);
   }, []);
   return null;
+}
+
+function NotFoundRoute() {
+  useSeo({
+    path: '/404',
+    locale: 'fr',
+    title: 'Page introuvable · SendFlow',
+    description: 'La page demandée est introuvable.',
+    robots: 'noindex,nofollow',
+  });
+  return <NotFound />;
 }
 
 function PanelUrlRequired() {
@@ -544,6 +600,13 @@ function PanelUrlRequired() {
 }
 
 function PanelRoute() {
+  useSeo({
+    path: '/panel',
+    locale: 'fr',
+    title: 'Espace privé · SendFlow',
+    description: 'Espace privé SendFlow.',
+    robots: 'noindex,nofollow',
+  });
   const [, params] = useRoute<{ token: string; email: string }>('/panel/:token/:email');
   const token = params?.token ?? '';
   const email = params?.email ?? '';
@@ -767,6 +830,16 @@ function LandingPage() {
   }, []);
 
   const isFrench = language === 'fr';
+  useSeo({
+    path: '/',
+    locale: language,
+    title: isFrench ? 'SendFlow | Transfert d’argent entre réseaux et pays' : 'SendFlow | Money transfers across networks and countries',
+    description: isFrench
+      ? 'SendFlow simplifie les transferts d’argent entre réseaux de paiement et, selon les services disponibles, entre pays africains.'
+      : 'SendFlow simplifies money transfers across payment networks and, where available, across African countries.',
+    breadcrumbs: [{ name: isFrench ? 'Accueil' : 'Home', path: '/' }],
+    faqItems: activeFaqs.map((faq) => ({ question: faq.q[language], answer: faq.a[language] })),
+  });
   useEffect(() => {
     const nextCountry = activeCountries.find((country) => country.code === selectedCountry.code) ?? activeCountries[0];
     if (nextCountry && nextCountry.code !== selectedCountry.code) setSelectedCountry(nextCountry);
