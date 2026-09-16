@@ -611,13 +611,13 @@ function FounderEditor({
 
   const update = (key: string, value: Primitive) => setValues((current) => ({ ...current, [key]: value }));
   const photo = mediaForKey(bundle, values.photoKey);
-  const field = (key: string, label: string, kind: 'text' | 'textarea' = 'text', wide = false) => (
+  const field = (key: string, label: string, kind: 'text' | 'textarea' | 'email' | 'url' = 'text', wide = false) => (
     <label className={`sendflow-admin-field ${wide ? 'sendflow-admin-field-wide' : ''}`} htmlFor={`founder-${key}`}>
       <span>{label}</span>
       {kind === 'textarea' ? (
         <textarea id={`founder-${key}`} value={String(values[key] ?? '')} rows={4} onChange={(event) => update(key, event.target.value)} />
       ) : (
-        <input id={`founder-${key}`} value={String(values[key] ?? '')} onChange={(event) => update(key, event.target.value)} />
+        <input id={`founder-${key}`} type={kind} value={String(values[key] ?? '')} onChange={(event) => update(key, event.target.value)} />
       )}
     </label>
   );
@@ -634,7 +634,7 @@ function FounderEditor({
       <p className="sendflow-admin-founder-intro">Ces informations alimentent la page « Découvrir SendFlow ». Le contenu est éditable en français et en anglais.</p>
       <div className="sendflow-admin-form-grid">
         {field('name', 'Nom affiché')}
-        {field('email', 'Gmail professionnel du CEO', 'text')}
+        {field('email', 'Email professionnel du CEO', 'email')}
         {field('roleFr', 'Rôle · FR')}
         {field('roleEn', 'Rôle · EN')}
         {field('educationFr', 'Formation / parcours · FR', 'textarea')}
@@ -647,10 +647,10 @@ function FounderEditor({
         {field('visionEn', 'Vision · EN', 'textarea', true)}
         {field('missionFr', 'Mission · FR', 'textarea', true)}
         {field('missionEn', 'Mission · EN', 'textarea', true)}
-        {field('linkedinUrl', 'Profil LinkedIn')}
-        {field('websiteUrl', 'Site ou portfolio du CEO')}
-        {field('instagramUrl', 'Instagram du CEO')}
-        {field('xUrl', 'X / Twitter du CEO')}
+        {field('linkedinUrl', 'Profil LinkedIn', 'url')}
+        {field('websiteUrl', 'Site ou portfolio du CEO', 'url')}
+        {field('instagramUrl', 'Instagram du CEO', 'url')}
+        {field('xUrl', 'X / Twitter du CEO', 'url')}
       </div>
       <div className="sendflow-admin-founder-media">
         <label className="sendflow-admin-field" htmlFor="founder-photo-key">
@@ -719,7 +719,7 @@ function SiteSettingsEditor({
   }, [bundle.settings]);
 
   const update = (key: string, value: Primitive) => setValues((current) => ({ ...current, [key]: value }));
-  const field = (key: string, label: string, type: 'text' | 'email' | 'url' = 'text', placeholder?: string) => (
+  const field = (key: string, label: string, type: 'text' | 'email' | 'url' | 'tel' = 'text', placeholder?: string) => (
     <label className="sendflow-admin-field" htmlFor={`site-settings-${key}`}>
       <span>{label}</span>
       <input id={`site-settings-${key}`} type={type} placeholder={placeholder} value={String(values[key] ?? '')} onChange={(event) => update(key, event.target.value)} />
@@ -727,7 +727,7 @@ function SiteSettingsEditor({
   );
 
   return (
-    <section className="sendflow-admin-founder-card" aria-labelledby="site-settings-editor-title">
+    <section id="site-settings-editor" className="sendflow-admin-founder-card" aria-labelledby="site-settings-editor-title">
       <div className="sendflow-admin-founder-head">
         <div><p className="sendflow-admin-overline">Coordonnées globales</p><h3 id="site-settings-editor-title">Support et liens du site</h3></div>
         <SlidersHorizontal size={19} className="text-[#6d35d8]" />
@@ -735,11 +735,11 @@ function SiteSettingsEditor({
       <p className="sendflow-admin-founder-intro">Ces coordonnées sont distinctes du Gmail professionnel du CEO et alimentent les points de contact publics de SendFlow.</p>
       <div className="sendflow-admin-form-grid">
         {field('supportEmail', 'Email support public', 'email')}
-        {field('supportPhone', 'Téléphone support')}
-        {field('websiteUrl', 'Site officiel')}
-        {field('linkedinUrl', 'LinkedIn SendFlow')}
-        {field('instagramUrl', 'Instagram SendFlow')}
-        {field('facebookUrl', 'Facebook SendFlow')}
+        {field('supportPhone', 'Téléphone support', 'tel')}
+        {field('websiteUrl', 'Site officiel', 'url', 'https://sendflow.example')}
+        {field('linkedinUrl', 'LinkedIn SendFlow', 'url', 'https://www.linkedin.com/company/...')}
+        {field('instagramUrl', 'Instagram SendFlow', 'url', 'https://www.instagram.com/...')}
+        {field('facebookUrl', 'Facebook SendFlow', 'url', 'https://www.facebook.com/...')}
         {field('companyName', 'Dénomination légale')}
         {field('legalForm', 'Forme juridique')}
         {field('legalAddress', 'Adresse légale', 'text')}
@@ -750,9 +750,9 @@ function SiteSettingsEditor({
         {field('regulatorNameFr', 'Régulateur · FR')}
         {field('regulatorNameEn', 'Régulateur · EN')}
         {field('regulatorLogoKey', 'Logo du régulateur · clé média')}
-        {field('googlePlayUrl', 'Lien Google Play', 'text')}
-        {field('appStoreUrl', 'Lien App Store', 'text')}
-        {field('appGalleryUrl', 'Lien AppGallery', 'text')}
+        {field('googlePlayUrl', 'Lien Google Play', 'url', 'https://play.google.com/store/apps/details?id=...')}
+        {field('appStoreUrl', 'Lien App Store', 'url', 'https://apps.apple.com/...')}
+        {field('appGalleryUrl', 'Lien AppGallery', 'url', 'https://appgallery.huawei.com/...')}
         {field('apkUrl', 'Lien APK Android', 'url', 'https://exemple.com/sendflow.apk')}
       </div>
       <div className="sendflow-admin-founder-foot">
@@ -861,6 +861,13 @@ export default function AdminPage() {
     setActiveResource(resource);
     setSearch('');
     setMobileNavOpen(false);
+  };
+
+  const chooseSiteSettings = () => {
+    setActiveResource('content');
+    setSearch('');
+    setMobileNavOpen(false);
+    window.setTimeout(() => document.getElementById('site-settings-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
 
   const updateLocal = (resource: ResourceKey, next: RecordItem[]) => setBundle((current) => ({ ...current, [resource]: next }));
@@ -972,6 +979,7 @@ export default function AdminPage() {
         <nav className="sendflow-admin-nav" aria-label="Ressources éditoriales">
           {navigation.slice(0, 8).map(({ key: resource, icon: Icon }) => <button key={resource} className={activeResource === resource ? 'is-active' : ''} onClick={() => chooseResource(resource)} data-testid={`nav-${resource}`}><Icon size={16} /><span>{resourceConfigs[resource].label}</span>{activeResource === resource && <ChevronRight size={14} />}</button>)}
         </nav>
+        <button className="sendflow-admin-nav-button" onClick={chooseSiteSettings} data-testid="nav-site-settings"><SlidersHorizontal size={16} /><span>Réglages du site</span><ChevronRight size={14} /></button>
         <p className="sendflow-admin-nav-label sendflow-admin-nav-label-spaced">Conformité</p>
         <nav className="sendflow-admin-nav">
           {navigation.slice(8).map(({ key: resource, icon: Icon }) => <button key={resource} className={activeResource === resource ? 'is-active' : ''} onClick={() => chooseResource(resource)} data-testid={`nav-${resource}`}><Icon size={16} /><span>{resourceConfigs[resource].label}</span>{activeResource === resource && <ChevronRight size={14} />}</button>)}

@@ -54,6 +54,8 @@ const siteSettingsEditableFields = [
 const founderContactFields = ["linkedinUrl", "websiteUrl", "instagramUrl", "xUrl", "email"] as const;
 const siteContactFields = ["supportEmail", "supportPhone", "websiteUrl", "linkedinUrl", "instagramUrl", "facebookUrl", "legalEmail"] as const;
 const siteLinkFields = ["websiteUrl", "linkedinUrl", "instagramUrl", "facebookUrl", "googlePlayUrl", "appStoreUrl", "appGalleryUrl", "apkUrl"] as const;
+const siteEmailFields = ["supportEmail", "legalEmail"] as const;
+const founderEmailFields = ["email"] as const;
 type ResourceName = keyof typeof resources;
 
 function resourceConfig(name: string) {
@@ -77,13 +79,16 @@ function trimContactFields(values: Record<string, unknown>, fields: readonly str
   );
 }
 
-function normalizeOptionalHttpUrl(values: Record<string, unknown>, fieldName: string): void {
+function normalizeOptionalHttpUrl(values: Record<string, unknown>, fieldName: string, allowRelative = false): void {
   const value = values[fieldName];
   if (typeof value !== "string") return;
   const trimmed = value.trim();
   values[fieldName] = trimmed;
   if (!trimmed) return;
-  if (/^\/(?!\/)/.test(trimmed)) return;
+  if (/^\/(?!\/)/.test(trimmed)) {
+    if (allowRelative) return;
+    throw new Error(`${fieldName} doit être une URL publique complète.`);
+  }
   let parsed: URL;
   try {
     parsed = new URL(trimmed);
@@ -93,6 +98,21 @@ function normalizeOptionalHttpUrl(values: Record<string, unknown>, fieldName: st
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`${fieldName} doit utiliser http:// ou https://.`);
   }
+}
+
+function normalizeOptionalEmail(values: Record<string, unknown>, fieldName: string, label: string): void {
+  const value = values[fieldName];
+  if (typeof value !== "string") return;
+  const trimmed = value.trim();
+  values[fieldName] = trimmed;
+  if (!trimmed) return;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    throw new Error(`${label} doit être une adresse email valide.`);
+  }
+}
+
+function normalizePublicLinks(values: Record<string, unknown>, fields: readonly string[], relativeFields: readonly string[] = []): void {
+  for (const fieldName of fields) normalizeOptionalHttpUrl(values, fieldName, relativeFields.includes(fieldName));
 }
 async function getLandingBundle() {
   const [
@@ -144,6 +164,13 @@ router.put("/admin/landing/founder", requireAdmin, async (req, res): Promise<voi
     ),
     founderContactFields,
   );
+  try {
+    normalizePublicLinks(values, founderContactFields.filter((field) => field !== "email"));
+    normalizeOptionalEmail(values, "email", "L’email du fondateur");
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "Les coordonnées du fondateur sont invalides." });
+    return;
+  }
   if (!values.name || !values.roleFr || !values.roleEn || !values.shortBioFr || !values.shortBioEn || !values.storyFr || !values.storyEn || !values.visionFr || !values.visionEn || !values.educationFr || !values.educationEn || !values.missionFr || !values.missionEn) {
     res.status(400).json({ error: "Le nom, les rôles, les biographies, le parcours, la vision et la mission sont requis en français et en anglais." });
     return;
@@ -164,9 +191,12 @@ router.put("/admin/landing/settings", requireAdmin, async (req, res): Promise<vo
     [...siteContactFields, ...siteLinkFields],
   );
   try {
-    normalizeOptionalHttpUrl(values, "apkUrl");
+    normalizePublicLinks(values, siteLinkFields, ["apkUrl"]);
+    for (const fieldName of siteEmailFields) {
+      normalizeOptionalEmail(values, fieldName, fieldName === "supportEmail" ? "L’email du support" : "L’email légal");
+    }
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : "Le lien APK Android est invalide." });
+    res.status(400).json({ error: error instanceof Error ? error.message : "Les coordonnées du site sont invalides." });
     return;
   }
   if (typeof values.supportEmail !== "string" || !values.supportEmail.trim()) {
