@@ -139,9 +139,7 @@ export function SendFlowFooter({ isFrench, onNavigate, settings, content, media 
         <div className="sendflow-footer-link-groups">
           <section>
             <h3>{isFrench ? 'Produits' : 'Products'}</h3>
-            <button onClick={() => navigate('top')}>{copy('footer.product.africa', { fr: 'SendFlow Afrique', en: 'SendFlow Africa' })}</button>
-            <button onClick={() => navigate('international')}>{copy('footer.product.europe', { fr: 'SendFlow Europe', en: 'SendFlow Europe' })}</button>
-            <button onClick={() => navigate('features-cards')}>{copy('footer.product.business', { fr: 'SendFlow Business', en: 'SendFlow Business' })}</button>
+            <button onClick={() => navigate('top')}>SendFlow Africa</button>
           </section>
           <section>
             <h3>{isFrench ? 'Assistance' : 'Support'}</h3>
