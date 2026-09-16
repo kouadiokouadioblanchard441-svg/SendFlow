@@ -1031,7 +1031,7 @@ section#faq .reveal.space-y-2 > div {
 
 .sf-features-page a { text-decoration: none; }
 .sf-security-page {
-  --sf-security-blue: #1d31d7;
+  --sf-security-violet: #6d35d8;
   --sf-security-ink: #11152f;
   min-height: 100dvh;
   overflow: hidden;
@@ -1044,7 +1044,7 @@ section#faq .reveal.space-y-2 > div {
   min-height: 385px;
   align-items: center;
   justify-content: center;
-  background: #eff5ff;
+  background: #f7f1ff;
   padding: 58px 24px 62px;
   text-align: center;
 }
@@ -1057,7 +1057,7 @@ section#faq .reveal.space-y-2 > div {
   letter-spacing: -.075em;
   line-height: 1.08;
 }
-.sf-security-hero h1 span { color: var(--sf-security-blue); }
+.sf-security-hero h1 span { color: var(--sf-security-violet); }
 .sf-security-hero p {
   max-width: 680px;
   margin: 24px auto 0;
@@ -1076,9 +1076,14 @@ section#faq .reveal.space-y-2 > div {
   height: 72px;
   place-items: center;
   border-radius: 18px;
-  background: linear-gradient(145deg, #253fe4, #1c22c7);
-  color: #fff;
-  box-shadow: 0 12px 22px rgba(35, 48, 195, .2);
+  background: transparent;
+  box-shadow: none;
+}
+.sf-security-lock img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
 }
 .sf-security-guarantees h2 {
   margin: 35px 0 0;
@@ -1106,16 +1111,17 @@ section#faq .reveal.space-y-2 > div {
 .sf-security-guarantees li strong { font-weight: 700; }
 .sf-security-check {
   display: grid;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   place-items: center;
   margin-top: 0;
-  border-radius: 50%;
-  background: #e4efff;
-  color: #1d43d3;
-  font-size: 17px;
-  font-weight: 800;
+}
+.sf-security-check img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 .sf-security-art {
   position: relative;
@@ -1135,7 +1141,7 @@ section#faq .reveal.space-y-2 > div {
   left: 7%;
   height: 33%;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(76, 116, 226, .14), rgba(76, 116, 226, 0) 70%);
+  background: radial-gradient(ellipse, rgba(109, 53, 216, .16), rgba(109, 53, 216, 0) 70%);
   filter: blur(8px);
 }
 .sf-security-art img {

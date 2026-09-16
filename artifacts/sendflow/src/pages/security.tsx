@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ChevronRight, Globe2, LockKeyhole, Menu, X } from 'lucide-react';
+import { ChevronRight, Globe2, Menu, X } from 'lucide-react';
 import { Link } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
-import securitySectionArt from '@assets/generated_images/sendflow-section-security-3d-transparent.png';
+import securityLockIcon from '@assets/generated_images/sendflow-security-lock-icon-clean.png';
+import securityCheckIcon from '../assets/sendflow-security-check.svg';
+import securityHeroArt from '@assets/generated_images/sendflow-security-hero-3d-clean.png';
 import { SendFlowFooter, type FooterContentItem, type FooterMediaItem, type FooterSettings } from '@/components/sendflow-footer';
 
 type Language = 'fr' | 'en';
@@ -175,13 +177,15 @@ export default function SecurityPage() {
 
         <section className="sf-security-guarantees" aria-labelledby="sf-security-guarantees-title">
           <div className="sf-security-lock" aria-hidden="true">
-            <LockKeyhole size={38} strokeWidth={2} />
+            <img src={securityLockIcon} alt="" />
           </div>
           <h2 id="sf-security-guarantees-title">{t.guarantees}</h2>
           <ul>
             {t.items.map((item) => (
               <li key={item}>
-                <span className="sf-security-check" aria-hidden="true">✓</span>
+                <span className="sf-security-check" aria-hidden="true">
+                  <img src={securityCheckIcon} alt="" />
+                </span>
                 <strong>{item}</strong>
               </li>
             ))}
@@ -190,7 +194,7 @@ export default function SecurityPage() {
 
         <section className="sf-security-art" aria-label={language === 'fr' ? 'Illustration de protection SendFlow' : 'SendFlow protection illustration'}>
           <div className="sf-security-art-glow" aria-hidden="true" />
-          <img src={securitySectionArt} alt="" />
+          <img src={securityHeroArt} alt="" />
         </section>
       </main>
 
