@@ -1260,11 +1260,7 @@ section#faq .reveal.space-y-2 > div {
 .sf-features-route-logo.sf-features-tmoney-logo {
   width: 82px;
   border: 1px solid #e1e8f3;
-  background: #1553a5;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: -.03em;
+  background: #fff;
 }
 .sf-features-route-brand small {
   grid-column: 2;

@@ -7,6 +7,7 @@ import orangeOperatorLogo from '../assets/operator-logos/operator-logo-01.png';
 import moovOperatorLogo from '../assets/operator-logos/operator-logo-02.png';
 import waveOperatorLogo from '../assets/operator-logos/operator-logo-03.png';
 import momoMtnOperatorLogo from '../assets/operator-logos/operator-logo-momo-mtn.png';
+import mixxByYasOperatorLogo from '../assets/operator-logos/operator-logo-08.png';
 import crossNetworkIcon from '../assets/sendflow-icon-cross-network.svg';
 import internationalIcon from '../assets/sendflow-icon-international-transfer.svg';
 import { SendFlowFooter, type FooterContentItem, type FooterMediaItem, type FooterSettings } from '@/components/sendflow-footer';
@@ -109,7 +110,7 @@ function TransferRoute({
       <div className="sf-features-route-brand">
         <span className="sf-features-route-flag" aria-hidden="true">{isTmoney ? '🇹🇬' : '🇨🇮'}</span>
         <span className={`sf-features-route-logo ${isTmoney ? 'sf-features-tmoney-logo' : ''}`}>
-          {isTmoney ? <strong>T-Money</strong> : <img src={waveOperatorLogo} alt="Wave" />}
+          {isTmoney ? <img src={mixxByYasOperatorLogo} alt="Mixx by Yas" /> : <img src={waveOperatorLogo} alt="Wave" />}
         </span>
         <small>{isTmoney ? 'Togo' : 'Wave'}</small>
       </div>
