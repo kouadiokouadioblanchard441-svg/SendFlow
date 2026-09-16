@@ -106,6 +106,7 @@ export function SendFlowFooter({ isFrench, onNavigate, settings, content }: Send
     <footer id="footer" className="sendflow-reference-footer">
       <div className="sendflow-footer-inner">
         <section className="sendflow-footer-regulator" aria-label="BCEAO">
+          <p className="sendflow-footer-kicker">{isFrench ? 'Réglementé par :' : 'Regulated by:'}</p>
           <a href="https://www.bceao.int/" target="_blank" rel="noreferrer" aria-label="Visiter le site officiel de la BCEAO">
             <img src={bceaoLogo} alt="BCEAO — Banque Centrale des États de l’Afrique de l’Ouest" className="sendflow-official-regulator-logo" />
           </a>
