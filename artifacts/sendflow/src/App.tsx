@@ -14,6 +14,7 @@ import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '
 import { EditableLegalPage } from '@/pages/editable-legal';
 import DownloadPage from '@/pages/download';
 import FeaturesPage from '@/pages/features';
+import SecurityPage from '@/pages/security';
 import { SendFlowFooter } from '@/components/sendflow-footer';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -407,6 +408,7 @@ function App() {
               <Route path="/" component={LandingPage} />
               <Route path="/download" component={DownloadPage} />
               <Route path="/fonctionnalites" component={FeaturesPage} />
+              <Route path="/securite" component={SecurityPage} />
               <Route path="/a-propos" component={AboutRoute} />
               <Route path="/sign-in/*?" component={SignInPage} />
               <Route path="/sign-up/*?" component={SignUpPage} />
