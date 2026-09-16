@@ -1,0 +1,252 @@
+Optimise entièrement le SEO du site public SendFlow sans modifier son design actuel ni casser aucune fonctionnalité.
+
+OBJECTIF :
+Faire de SendFlow un site techniquement très propre pour Google, Bing et les autres moteurs de recherche, facilement explorable, compréhensible et indexable.
+
+CONTEXTE :
+SendFlow est une plateforme de transfert d’argent permettant de faciliter les transferts entre différents réseaux de paiement et, selon les services disponibles, les transferts entre pays.
+
+POSITIONNEMENT :
+- Transfert d’argent entre réseaux
+- Transfert d’argent international
+- Transfert entre pays
+- Transfert inter-réseaux
+- Services de transfert d’argent
+- Solutions de paiement et de transfert
+- Afrique et international
+
+IMPORTANT :
+Ne jamais inventer de licence, certification, partenariat, pays disponible, opérateur officiellement intégré ou promesse financière qui n’existe pas réellement.
+
+1. SEO TECHNIQUE
+- Vérifier toutes les pages publiques.
+- Vérifier que les pages importantes retournent HTTP 200.
+- Corriger les erreurs 404, liens cassés et redirections incorrectes.
+- Ajouter une URL canonique unique sur chaque page indexable.
+- Éviter les URLs dupliquées.
+- Vérifier HTTPS.
+- Créer automatiquement /sitemap.xml.
+- Créer /robots.txt correctement.
+- Ne pas bloquer Googlebot ou les principaux moteurs de recherche.
+- Ne pas mettre noindex sur les pages publiques importantes.
+- Mettre noindex sur les pages privées comme connexion, inscription, dashboard, profil, administration et autres espaces personnels.
+- Ajouter le sitemap dans robots.txt.
+- Vérifier que toutes les pages importantes sont accessibles par des liens HTML crawlables.
+- Vérifier les performances mobiles et desktop.
+
+2. STRUCTURE DES URL
+Utiliser des URLs propres, courtes et descriptives.
+
+Exemples :
+/
+ /transfert-argent
+ /transfert-inter-reseau
+ /transfert-international
+ /transfert-entre-pays
+ /transfert-argent-afrique
+ /a-propos
+ /faq
+ /contact
+
+Éviter les URLs inutiles avec des paramètres ou des noms techniques.
+
+3. BALISES SEO
+Créer pour chaque page :
+- <title> unique
+- meta description unique
+- canonical
+- meta robots appropriée
+- Open Graph
+- Twitter/X Card
+- langue HTML correcte
+- viewport mobile
+
+Exemples de titres :
+
+Accueil :
+"SendFlow | Transfert d'argent entre réseaux et pays"
+
+Transfert inter-réseau :
+"Transfert d'argent entre réseaux | SendFlow"
+
+Transfert international :
+"Transfert d'argent international | SendFlow"
+
+Transfert entre pays :
+"Transfert d'argent entre pays | SendFlow"
+
+Les titres doivent rester naturels et ne pas être remplis artificiellement de mots-clés.
+
+4. CONTENU SEO
+Optimiser le contenu visible de chaque page avec une structure claire :
+- un seul H1 principal
+- H2 et H3 logiques
+- paragraphes réellement utiles
+- vocabulaire naturel autour du transfert d'argent
+- contenu unique pour chaque page
+
+Utiliser naturellement des expressions pertinentes comme :
+"transfert d'argent"
+"transfert inter-réseau"
+"transfert international"
+"transfert d'argent entre pays"
+"envoyer de l'argent"
+"recevoir de l'argent"
+"transfert entre réseaux de paiement"
+"transfert d'argent en Afrique"
+
+Ne jamais faire de keyword stuffing.
+
+5. DONNÉES STRUCTURÉES
+Ajouter du JSON-LD Schema.org lorsque pertinent.
+
+Utiliser notamment :
+- Organization
+- WebSite
+- WebPage
+- BreadcrumbList
+- FAQPage uniquement lorsqu'une vraie FAQ correspond au contenu visible de la page.
+
+Les données structurées doivent correspondre exactement au contenu réellement présent sur la page.
+
+6. IMAGES
+Optimiser toutes les images :
+- noms de fichiers descriptifs
+- alt text pertinents
+- width/height définis lorsque possible
+- lazy loading pour les images non critiques
+- formats modernes comme WebP/AVIF lorsque possible
+- compression sans perte visuelle importante
+
+Ne pas utiliser des alt texts remplis de mots-clés.
+
+7. JAVASCRIPT / RENDU
+Si le site utilise React ou une architecture JavaScript :
+- vérifier que Google peut réellement voir le contenu principal après rendu ;
+- privilégier SSR, SSG ou pré-rendu pour les pages publiques lorsque l'architecture actuelle le permet ;
+- ne pas laisser les éléments SEO importants dépendre uniquement d'un rendu client tardif ;
+- vérifier que les titres, H1, paragraphes, liens et données structurées sont présents dans le HTML rendu.
+
+Ne pas transformer l'application privée en pages indexables.
+
+8. PERFORMANCE
+Optimiser :
+- LCP
+- CLS
+- INP
+- images
+- JavaScript
+- CSS
+- fonts
+- cache
+- compression
+- chargement des ressources
+
+Éviter les scripts inutiles sur les pages publiques.
+
+9. SEO LOCAL ET INTERNATIONAL
+Préparer correctement le site pour son développement international sans inventer de pays disponibles.
+
+Prévoir une architecture permettant éventuellement :
+/fr/
+/en/
+
+ou une autre structure propre si le projet actuel utilise déjà un système multilingue.
+
+Si plusieurs langues sont réellement disponibles :
+- utiliser hreflang correctement ;
+- éviter les pages traduites automatiquement sans contenu réellement adapté ;
+- conserver une URL canonique cohérente pour chaque langue.
+
+10. SEARCH CONSOLE
+Préparer le projet pour Google Search Console :
+- sitemap.xml accessible publiquement
+- robots.txt accessible
+- URLs canoniques correctes
+- aucune règle noindex involontaire
+- pages publiques accessibles sans connexion
+
+Ne pas prétendre que le site est déjà indexé.
+
+11. SÉCURITÉ ET INDEXATION
+NE PAS exposer dans le SEO :
+- données utilisateurs
+- transactions
+- numéros de téléphone
+- données personnelles
+- API privées
+- clés API
+- dashboard
+- administration
+- données financières privées
+
+Les pages privées doivent rester protégées.
+
+12. LIENS INTERNES
+Créer une architecture de liens internes logique entre les pages publiques.
+
+Exemple :
+Accueil → Transfert inter-réseau
+Accueil → Transfert international
+Accueil → Transfert entre pays
+Accueil → FAQ
+Accueil → Contact
+
+Utiliser des textes d'ancrage descriptifs et naturels.
+
+13. FICHIER SITEMAP
+Générer automatiquement un sitemap propre contenant uniquement les URLs publiques importantes et canoniques.
+
+Ne pas inclure :
+- /login
+- /register
+- /dashboard
+- /profile
+- /admin
+- pages privées
+- URLs avec paramètres inutiles
+- pages 404
+
+14. ROBOTS.TXT
+Créer un robots.txt propre permettant l'exploration des pages publiques et bloquant uniquement les espaces qui ne doivent pas être explorés.
+
+Inclure :
+Sitemap: https://sendflow.com/sitemap.xml
+
+Adapter l'URL au domaine réel configuré dans le projet.
+
+15. VÉRIFICATION FINALE
+Avant de terminer :
+- inspecter le code existant ;
+- identifier les problèmes SEO ;
+- corriger les problèmes ;
+- vérifier toutes les routes publiques ;
+- vérifier les titles ;
+- vérifier les meta descriptions ;
+- vérifier les H1 ;
+- vérifier canonical ;
+- vérifier robots.txt ;
+- vérifier sitemap.xml ;
+- vérifier JSON-LD ;
+- vérifier les liens internes ;
+- vérifier les images ;
+- vérifier mobile ;
+- vérifier les performances ;
+- vérifier qu'aucune clé secrète ou donnée privée n'est exposée.
+
+IMPORTANT :
+Ne refais pas le design du site.
+Ne supprime aucune fonctionnalité existante.
+Ne crée pas de fausses informations.
+Ne crée pas de faux avis, faux utilisateurs ou fausses statistiques.
+Ne promet pas que SendFlow sera automatiquement premier sur Google.
+
+À la fin, donne-moi un rapport clair avec :
+1. problèmes trouvés ;
+2. corrections effectuées ;
+3. pages optimisées ;
+4. sitemap créé ;
+5. robots.txt créé/corrigé ;
+6. données structurées ajoutées ;
+7. recommandations restantes ;
+8. commandes ou étapes nécessaires pour tester le SEO avant la mise en production.
