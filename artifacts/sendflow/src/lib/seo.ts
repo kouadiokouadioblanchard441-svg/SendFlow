@@ -12,6 +12,13 @@ export type SeoBreadcrumb = {
   path: string;
 };
 
+export type SeoApplication = {
+  name: string;
+  operatingSystem: string;
+  applicationCategory: string;
+  downloadUrls?: string[];
+};
+
 export type SeoConfig = {
   path: string;
   locale: SeoLocale;
@@ -22,6 +29,7 @@ export type SeoConfig = {
   imagePath?: string;
   breadcrumbs?: SeoBreadcrumb[];
   faqItems?: SeoFaqItem[];
+  application?: SeoApplication;
 };
 
 const schemaId = 'sendflow-seo-schema';
@@ -116,6 +124,20 @@ function setSchema(config: SeoConfig, pageUrl: string, imageUrl: string) {
         },
       })),
     });
+  }
+
+  if (config.application) {
+    const application: Record<string, unknown> = {
+      '@type': 'SoftwareApplication',
+      '@id': `${pageUrl}#application`,
+      name: config.application.name,
+      operatingSystem: config.application.operatingSystem,
+      applicationCategory: config.application.applicationCategory,
+    };
+    if (config.application.downloadUrls?.length) {
+      application.downloadUrl = config.application.downloadUrls;
+    }
+    graph.push(application);
   }
 
   const script = document.createElement('script');

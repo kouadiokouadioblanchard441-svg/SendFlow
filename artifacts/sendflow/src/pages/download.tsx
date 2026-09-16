@@ -274,16 +274,6 @@ export default function DownloadPage() {
     }),
   ) as typeof copy.fr;
 
-  useSeo({
-    path: '/download',
-    locale: language,
-    title: language === 'fr' ? 'Télécharger SendFlow | Transferts entre réseaux' : 'Download SendFlow | Transfers across networks',
-    description: language === 'fr'
-      ? 'Téléchargez SendFlow pour simplifier vos transferts d’argent entre réseaux de paiement.'
-      : 'Download SendFlow to simplify money transfers across payment networks.',
-    breadcrumbs: [{ name: language === 'fr' ? 'Accueil' : 'Home', path: '/' }, { name: language === 'fr' ? 'Télécharger' : 'Download', path: '/download' }],
-  });
-
   useEffect(() => {
     let active = true;
     fetch('/api/landing')
@@ -303,6 +293,30 @@ export default function DownloadPage() {
   const toggleLanguage = () => { setLanguage((current) => current === 'fr' ? 'en' : 'fr'); closeMenu(); };
   const supportEmail = settings?.supportEmail?.trim() || 'support@sendflow.studio';
   const apkUrl = getSafeApkUrl(settings?.apkUrl);
+  const googlePlayUrl = settings?.googlePlayUrl?.trim() || null;
+  const appStoreUrl = settings?.appStoreUrl?.trim() || null;
+  const hasStoreLink = Boolean(googlePlayUrl || appStoreUrl);
+  useSeo({
+    path: '/download',
+    locale: language,
+    title: language === 'fr'
+      ? hasStoreLink ? 'Télécharger SendFlow | Application de transfert d’argent' : 'Télécharger bientôt SendFlow | Application de transfert'
+      : hasStoreLink ? 'Download SendFlow | Money transfer app' : 'Download SendFlow soon | Transfer app',
+    description: language === 'fr'
+      ? hasStoreLink
+        ? 'Téléchargez l’application SendFlow sur votre store et simplifiez vos transferts entre réseaux de paiement.'
+        : 'Découvrez comment télécharger bientôt l’application SendFlow pour vos transferts entre réseaux de paiement.'
+      : hasStoreLink
+        ? 'Download the SendFlow app from your store and simplify transfers across payment networks.'
+        : 'Learn how to download the SendFlow app soon for transfers across payment networks.',
+    breadcrumbs: [{ name: language === 'fr' ? 'Accueil' : 'Home', path: '/' }, { name: language === 'fr' ? 'Télécharger' : 'Download', path: '/download' }],
+    application: {
+      name: 'SendFlow',
+      operatingSystem: 'Android, iOS',
+      applicationCategory: 'FinanceApplication',
+      downloadUrls: [googlePlayUrl, appStoreUrl].filter((url): url is string => Boolean(url)),
+    },
+  });
   const navigateToLandingSection = (id: string) => { window.location.assign(`/#${id}`); };
 
   return (

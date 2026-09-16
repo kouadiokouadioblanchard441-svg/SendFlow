@@ -830,15 +830,28 @@ function LandingPage() {
   }, []);
 
   const isFrench = language === 'fr';
+  const googlePlayUrl = landingBundle?.settings?.googlePlayUrl?.trim() || null;
+  const appStoreUrl = landingBundle?.settings?.appStoreUrl?.trim() || null;
+  const hasStoreLink = Boolean(googlePlayUrl || appStoreUrl);
   useSeo({
     path: '/',
     locale: language,
-    title: isFrench ? 'SendFlow | Transfert d’argent entre réseaux et pays' : 'SendFlow | Money transfers across networks and countries',
+    title: isFrench ? 'SendFlow | Transfert d’argent et application mobile' : 'SendFlow | Money transfers and mobile app',
     description: isFrench
-      ? 'SendFlow simplifie les transferts d’argent entre réseaux de paiement et, selon les services disponibles, entre pays africains.'
-      : 'SendFlow simplifies money transfers across payment networks and, where available, across African countries.',
+      ? hasStoreLink
+        ? 'Découvrez SendFlow et téléchargez l’application pour simplifier vos transferts entre réseaux de paiement.'
+        : 'Découvrez SendFlow, une application conçue pour simplifier les transferts d’argent entre réseaux de paiement.'
+      : hasStoreLink
+        ? 'Discover SendFlow and download the app to simplify transfers across payment networks.'
+        : 'Discover SendFlow, an app designed to simplify money transfers across payment networks.',
     breadcrumbs: [{ name: isFrench ? 'Accueil' : 'Home', path: '/' }],
     faqItems: activeFaqs.map((faq) => ({ question: faq.q[language], answer: faq.a[language] })),
+    application: {
+      name: 'SendFlow',
+      operatingSystem: 'Android, iOS',
+      applicationCategory: 'FinanceApplication',
+      downloadUrls: [googlePlayUrl, appStoreUrl].filter((url): url is string => Boolean(url)),
+    },
   });
   useEffect(() => {
     const nextCountry = activeCountries.find((country) => country.code === selectedCountry.code) ?? activeCountries[0];
@@ -1092,8 +1105,8 @@ function LandingPage() {
               <p className="mt-7 max-w-[540px] text-[17px] font-semibold leading-7 text-[#f4edff]">{t(contentCopy(landingBundle?.content, 'cta.download.body', { fr: 'Téléchargez bientôt l’application SendFlow et simplifiez vos transferts entre réseaux.', en: 'Download the SendFlow app soon and simplify transfers across networks.' }), language)}</p>
                 <Link href="/download" className="mt-6 inline-flex items-center rounded-[14px] border-2 border-[#a68bea] bg-[#5b21b6] px-6 py-3.5 text-[14px] font-extrabold text-white shadow-[0_14px_28px_rgba(33,29,44,.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4c1d95]" data-testid="button-download-placeholder">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2" size={17} /></Link>
               <div className="mt-4 flex flex-wrap gap-3">
-               <StoreBadge store="Google Play" icon="play" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
-               <StoreBadge store="App Store" icon="apple" soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
+               <StoreBadge store="Google Play" icon="play" href={googlePlayUrl} soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
+               <StoreBadge store="App Store" icon="apple" href={appStoreUrl} soonLabel={isFrench ? 'bientôt' : 'coming soon'} className="sendflow-store-badge--large sendflow-store-badge--featured" />
             </div>
               <div className="mt-8 grid items-end gap-1 sm:grid-cols-[1.1fr_.9fr] lg:absolute lg:right-8 lg:top-1/2 lg:mt-0 lg:w-[430px] lg:-translate-y-1/2">
                 <img src={downloadSectionArt} alt={isFrench ? 'Application mobile SendFlow' : 'SendFlow mobile app'} className="h-44 w-full object-contain sm:h-56" />
