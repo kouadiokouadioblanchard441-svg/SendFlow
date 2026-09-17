@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
+import { validateSignIn, type SignInField } from '@/lib/auth-validation';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -20,6 +21,8 @@ export default function SigninPage() {
   const [form, setForm] = useState<SignInForm>(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [touched, setTouched] = useState<Partial<Record<SignInField, boolean>>>({});
 
   useSeo({
     path: '/sign-in',
@@ -29,18 +32,24 @@ export default function SigninPage() {
     robots: 'noindex,nofollow',
   });
 
-  const canSubmit = useMemo(
-    () => form.phone.trim().length >= 6 && form.password.length >= 4,
-    [form],
-  );
+  const errors = useMemo(() => validateSignIn(form), [form]);
+  const canSubmit = Object.keys(errors).length === 0;
 
   const update = <K extends keyof SignInForm>(key: K, value: SignInForm[K]) => {
     setSubmitted(false);
     setForm((current) => ({ ...current, [key]: value }));
   };
 
+  const markTouched = (field: SignInField) => {
+    setTouched((current) => ({ ...current, [field]: true }));
+  };
+
+  const visibleError = (field: SignInField) =>
+    (submitAttempted || touched[field]) ? errors[field] : undefined;
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitAttempted(true);
     if (!canSubmit) return;
     setSubmitted(true);
   };
@@ -59,28 +68,45 @@ export default function SigninPage() {
             <p>Connectez-vous à votre compte</p>
           </header>
 
-          <form className="sendflow-signup-form" onSubmit={handleSubmit}>
-            <CountryPhoneField value={form.phone} onChange={(value) => update('phone', value)} />
+          <form className="sendflow-signup-form" onSubmit={handleSubmit} noValidate>
+            <CountryPhoneField
+              value={form.phone}
+              onChange={(value) => update('phone', value)}
+              error={visibleError('phone')}
+              onBlur={() => markTouched('phone')}
+            />
 
-            <label className="sendflow-signup-field">
-              <span className="sr-only">Code secret</span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={form.password}
-                onChange={(event) => update('password', event.target.value)}
-                placeholder="Code secret"
-                autoComplete="current-password"
-                required
-              />
-              <button
-                type="button"
-                className="sendflow-signup-password-toggle"
-                onClick={() => setShowPassword((current) => !current)}
-                aria-label={showPassword ? 'Masquer le code secret' : 'Afficher le code secret'}
-              >
-                {showPassword ? <Eye size={22} strokeWidth={1.65} /> : <EyeOff size={22} strokeWidth={1.65} />}
-              </button>
-            </label>
+            <div className="sendflow-signup-control">
+              <label className={`sendflow-signup-field${visibleError('password') ? ' has-error' : ''}`}>
+                <span className="sr-only">Code secret</span>
+                <input
+                  id="signin-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(event) => update('password', event.target.value)}
+                  onBlur={() => markTouched('password')}
+                  placeholder="Code secret"
+                  autoComplete="current-password"
+                  maxLength={64}
+                  aria-invalid={Boolean(visibleError('password'))}
+                  aria-describedby={visibleError('password') ? 'signin-password-error' : undefined}
+                  required
+                />
+                <button
+                  type="button"
+                  className="sendflow-signup-password-toggle"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? 'Masquer le code secret' : 'Afficher le code secret'}
+                >
+                  {showPassword ? <Eye size={22} strokeWidth={1.65} /> : <EyeOff size={22} strokeWidth={1.65} />}
+                </button>
+              </label>
+              {visibleError('password') && (
+                <p id="signin-password-error" className="sendflow-signup-error" role="alert">
+                  {visibleError('password')}
+                </p>
+              )}
+            </div>
 
             <button type="submit" className="sendflow-signup-submit" disabled={!canSubmit}>
               Se connecter

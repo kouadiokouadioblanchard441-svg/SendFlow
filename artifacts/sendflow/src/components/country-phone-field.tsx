@@ -128,9 +128,11 @@ const defaultCountry = countries.find((country) => country.name === 'Côte d’I
 type CountryPhoneFieldProps = {
   value: string;
   onChange: (value: string) => void;
+  error?: string;
+  onBlur?: () => void;
 };
 
-export function CountryPhoneField({ value, onChange }: CountryPhoneFieldProps) {
+export function CountryPhoneField({ value, onChange, error, onBlur }: CountryPhoneFieldProps) {
   const [selectedCountry, setSelectedCountry] = useState(defaultCountry);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -176,28 +178,35 @@ export function CountryPhoneField({ value, onChange }: CountryPhoneFieldProps) {
 
   return (
     <>
-      <div className="sendflow-signup-phone">
-        <label className="sr-only" htmlFor={inputId}>Numéro de téléphone</label>
-        <button
-          type="button"
-          className="sendflow-signup-country"
-          onClick={openPicker}
-          aria-haspopup="dialog"
-          aria-expanded={isOpen}
-        >
-          <span aria-hidden="true">{selectedCountry.flag}</span>
-          <span>{selectedCountry.dialCode}</span>
-        </button>
-        <input
-          id={inputId}
-          type="tel"
-          value={value}
-          onChange={(event) => onChange(event.target.value.replace(/[^\d\s()-]/g, ''))}
-          placeholder="Numéro de téléphone"
-          autoComplete="tel"
-          inputMode="tel"
-          required
-        />
+      <div className="sendflow-signup-control">
+        <div className={`sendflow-signup-phone${error ? ' has-error' : ''}`}>
+          <label className="sr-only" htmlFor={inputId}>Numéro de téléphone</label>
+          <button
+            type="button"
+            className="sendflow-signup-country"
+            onClick={openPicker}
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+            aria-label={`Pays sélectionné : ${selectedCountry.name}, ${selectedCountry.dialCode}. Ouvrir la liste`}
+          >
+            <span aria-hidden="true">{selectedCountry.flag}</span>
+            <span>{selectedCountry.dialCode}</span>
+          </button>
+          <input
+            id={inputId}
+            type="tel"
+            value={value}
+            onChange={(event) => onChange(event.target.value.replace(/[^\d\s()-]/g, ''))}
+            onBlur={onBlur}
+            placeholder="Numéro de téléphone"
+            autoComplete="tel"
+            inputMode="tel"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? `${inputId}-error` : undefined}
+            required
+          />
+        </div>
+        {error && <p id={`${inputId}-error`} className="sendflow-signup-error" role="alert">{error}</p>}
       </div>
 
       {isOpen && (

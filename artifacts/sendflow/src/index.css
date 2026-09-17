@@ -2003,6 +2003,20 @@ section#faq .reveal.space-y-2 > div {
   border-color: #6d35d8;
   box-shadow: 0 0 0 3px rgba(109, 53, 216, .12);
 }
+.sendflow-signup-control {
+  display: grid;
+  width: 100%;
+  gap: 7px;
+}
+.sendflow-signup-field.has-error,
+.sendflow-signup-phone.has-error {
+  border-color: #c2414d;
+}
+.sendflow-signup-field.has-error:focus-within,
+.sendflow-signup-phone.has-error:focus-within {
+  border-color: #c2414d;
+  box-shadow: 0 0 0 3px rgba(194, 65, 77, .14);
+}
 .sendflow-signup-field input,
 .sendflow-signup-phone input {
   width: 100%;
@@ -2138,8 +2152,18 @@ section#faq .reveal.space-y-2 > div {
 .sendflow-signup-submit:not(:disabled):active {
   transform: translateY(0) scale(.99);
 }
+.sendflow-signup-submit:disabled {
+  background: #c7c2cf;
+  box-shadow: none;
+  color: #fff;
+  cursor: not-allowed;
+}
 .sendflow-signup-feedback {
   margin: -8px 0 0;
+  border: 1px solid #d9c9f4;
+  border-radius: 8px;
+  background: #faf7ff;
+  padding: 10px 12px;
   color: #6d35d8;
   font-size: 13px;
   line-height: 1.45;
