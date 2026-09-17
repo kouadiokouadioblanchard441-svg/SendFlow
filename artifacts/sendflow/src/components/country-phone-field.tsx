@@ -108,7 +108,6 @@ const countryCatalog: CountryOption[] = [
 ];
 
 const featuredAfricanCountryNames = [
-  'Afrique du Sud',
   'Côte d’Ivoire',
   'Bénin',
   'Burkina Faso',
@@ -116,6 +115,7 @@ const featuredAfricanCountryNames = [
   'Niger',
   'Cameroun',
   'Sénégal',
+  'Afrique du Sud',
 ];
 
 const countries: CountryOption[] = [
