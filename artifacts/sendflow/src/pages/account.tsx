@@ -97,8 +97,8 @@ export default function AccountPage() {
               <Menu size={25} strokeWidth={2} />
             </button>
             <Link href="/account" className="sendflow-dashboard-brand" aria-label="SendFlow, accueil" data-testid="link-dashboard-home">
-              <img src={sendflowMark} alt="" />
-              <span>SendFlow</span>
+              <img className="sendflow-dashboard-mark" src={sendflowMark} alt="" />
+              <img className="sendflow-dashboard-wordmark" src={sendflowWordmark} alt="SendFlow" />
             </Link>
             <button type="button" className={`sendflow-header-button sendflow-notification-button${notificationRead ? '' : ' has-unread'}`} onClick={() => { setNotificationRead(true); setLocation('/notifications'); }} aria-label="Voir les notifications" data-testid="button-open-notifications">
               <Bell size={22} strokeWidth={2} />

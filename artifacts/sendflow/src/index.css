@@ -797,9 +797,9 @@
   position: relative;
   z-index: 2;
   overflow: hidden;
-  border-radius: 0 0 36px 36px;
-  background: linear-gradient(120deg, #5930bd 0%, #7043d3 57%, #4b2aa9 100%);
-  box-shadow: 0 16px 34px rgba(75, 42, 169, .23);
+  border-radius: 0 0 32px 32px;
+  background: linear-gradient(135deg, #4f249f 0%, #7040d0 58%, #492195 100%);
+  box-shadow: 0 14px 30px rgba(76, 39, 160, .24);
 }
 
 .sendflow-dashboard-header::before {
@@ -830,11 +830,11 @@
   z-index: 1;
   display: grid;
   width: min(100%, 1120px);
-  min-height: 126px;
+  min-height: 166px;
   grid-template-columns: 48px 1fr 48px;
   align-items: center;
   margin: 0 auto;
-  padding: 20px 18px 24px;
+  padding: max(20px, env(safe-area-inset-top)) 18px 26px;
 }
 
 .sendflow-header-button,
@@ -878,6 +878,27 @@
   height: 32px;
   object-fit: contain;
   filter: brightness(0) invert(1);
+}
+
+.sendflow-dashboard-header .sendflow-dashboard-brand {
+  gap: 9px;
+  border: 1px solid rgba(62, 37, 113, .08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .98);
+  box-shadow: 0 8px 18px rgba(35, 20, 79, .18);
+  padding: 10px 14px;
+}
+
+.sendflow-dashboard-header .sendflow-dashboard-brand img.sendflow-dashboard-mark {
+  width: 30px;
+  height: 35px;
+  filter: none;
+}
+
+.sendflow-dashboard-header .sendflow-dashboard-brand img.sendflow-dashboard-wordmark {
+  width: 116px;
+  height: 22px;
+  filter: none;
 }
 
 .sendflow-notification-button {
