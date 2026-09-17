@@ -544,8 +544,8 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
-  border-top: 3px solid #1295a5;
-  background: #f1f8fa;
+  border-top: 3px solid #6d35d8;
+  background: #f8f5ff;
   padding: 22px 24px 24px;
 }
 
@@ -581,7 +581,7 @@
 .sendflow-pin-forgot:focus-visible,
 .sendflow-pin-key:focus-visible,
 .sendflow-account-logout:focus-visible {
-  outline: 3px solid rgba(18, 149, 165, .28);
+  outline: 3px solid rgba(109, 53, 216, .28);
   outline-offset: 4px;
 }
 
@@ -645,7 +645,7 @@
 }
 
 .sendflow-pin-dots span.is-filled {
-  background: #1596a6;
+  background: #6d35d8;
   transform: scale(1.04);
 }
 
@@ -676,7 +676,7 @@
 }
 
 .sendflow-pin-key:hover {
-  color: #1596a6;
+  color: #6d35d8;
 }
 
 .sendflow-pin-key:active {
@@ -721,8 +721,8 @@
   min-height: 100dvh;
   display: grid;
   place-items: center;
-  border-top: 3px solid #1295a5;
-  background: #f1f8fa;
+  border-top: 3px solid #6d35d8;
+  background: #f8f5ff;
   padding: 24px;
 }
 
@@ -736,7 +736,7 @@
 
 .sendflow-account-eyebrow {
   margin: 0 0 20px;
-  color: #1596a6;
+  color: #6d35d8;
   font-size: 16px;
   font-weight: 700;
 }
