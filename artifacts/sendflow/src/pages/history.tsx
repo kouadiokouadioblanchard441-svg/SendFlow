@@ -5,6 +5,7 @@ import { TransactionCard } from '@/components/transaction-card';
 import { transactions } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
+import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
 export default function HistoryPage() {
   const [, setLocation] = useLocation();
@@ -40,8 +41,8 @@ export default function HistoryPage() {
             <ArrowLeft size={26} strokeWidth={2} />
           </button>
           <Link href="/account" className="sendflow-dashboard-brand" aria-label="SendFlow, retour au compte" data-testid="link-history-brand">
-            <img src={sendflowMark} alt="" />
-            <span>SendFlow</span>
+            <img className="sendflow-history-mark" src={sendflowMark} alt="" />
+            <img className="sendflow-history-wordmark" src={sendflowWordmark} alt="SendFlow" />
           </Link>
           <span aria-hidden="true" />
         </div>
