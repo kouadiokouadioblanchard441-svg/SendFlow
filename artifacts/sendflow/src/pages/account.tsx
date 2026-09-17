@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   ArrowLeftRight,
-  Bell,
   Check,
   ChevronRight,
   Clock3,
@@ -17,6 +16,7 @@ import { TransactionCard } from '@/components/transaction-card';
 import { operatorNames, transactions } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
 import { DEMO_SESSION_KEY } from '@/lib/demo-account';
+import notificationBell from '@assets/633486_1789677628502.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 import profileMariam from '@assets/generated_images/sendflow-profile-mariam.png';
@@ -101,7 +101,7 @@ export default function AccountPage() {
               <img className="sendflow-dashboard-wordmark" src={sendflowWordmark} alt="SendFlow" />
             </Link>
             <button type="button" className={`sendflow-header-button sendflow-notification-button${notificationRead ? '' : ' has-unread'}`} onClick={() => { setNotificationRead(true); setLocation('/notifications'); }} aria-label="Voir les notifications" data-testid="button-open-notifications">
-              <Bell size={22} strokeWidth={2} />
+              <img className="sendflow-notification-icon" src={notificationBell} alt="" />
               {!notificationRead && <span className="sendflow-notification-dot" aria-hidden="true" />}
             </button>
           </div>

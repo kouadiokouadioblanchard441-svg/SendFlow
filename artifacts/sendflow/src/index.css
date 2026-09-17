@@ -906,6 +906,8 @@
   justify-self: end;
 }
 
+.sendflow-notification-icon { width: 22px; height: 22px; object-fit: contain; filter: brightness(0) invert(1); }
+
 .sendflow-notification-dot {
   position: absolute;
   top: 8px;
