@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link } from 'wouter';
 import { useSeo } from '@/lib/seo';
+import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
 type SignUpForm = {
@@ -96,7 +97,8 @@ export default function SignupPage() {
       <section className="sendflow-signup-card" aria-labelledby="signup-title">
         <div className="sendflow-signup-content">
           <Link href="/" className="sendflow-signup-brand" aria-label="Retour à l’accueil SendFlow">
-            <img src={sendflowWordmark} alt="SendFlow" />
+            <img src={sendflowMark} alt="" className="sendflow-signup-mark" />
+            <img src={sendflowWordmark} alt="SendFlow" className="sendflow-signup-wordmark" />
           </Link>
 
           <header className="sendflow-signup-heading">

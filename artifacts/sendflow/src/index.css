@@ -1942,14 +1942,22 @@ section#faq .reveal.space-y-2 > div {
 }
 .sendflow-signup-brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   width: fit-content;
   margin: 0 auto;
   border-radius: 999px;
   outline: none;
 }
-.sendflow-signup-brand img {
+.sendflow-signup-mark {
+  display: block;
+  width: 58px;
+  height: 70px;
+  object-fit: contain;
+}
+.sendflow-signup-wordmark {
   display: block;
   width: 126px;
   height: auto;
