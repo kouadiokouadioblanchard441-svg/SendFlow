@@ -4,6 +4,7 @@ import { Link, Redirect, useLocation } from 'wouter';
 import { TransactionCard } from '@/components/transaction-card';
 import { transactions } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
+import sendflowMark from '@assets/sendflow-mark-original.png';
 
 export default function HistoryPage() {
   const [, setLocation] = useLocation();
@@ -35,10 +36,14 @@ export default function HistoryPage() {
     <main className="sendflow-history-shell">
       <header className="sendflow-history-header">
         <div className="sendflow-history-header-inner">
-          <button type="button" className="sendflow-history-back" onClick={() => setLocation('/account')} aria-label="Retour au compte" data-testid="button-history-back">
+          <button type="button" className="sendflow-history-back sendflow-header-button" onClick={() => setLocation('/account')} aria-label="Retour au compte" data-testid="button-history-back">
             <ArrowLeft size={26} strokeWidth={2} />
           </button>
-          <h1>Transactions</h1>
+          <Link href="/account" className="sendflow-dashboard-brand" aria-label="SendFlow, retour au compte" data-testid="link-history-brand">
+            <img src={sendflowMark} alt="" />
+            <span>SendFlow</span>
+          </Link>
+          <span aria-hidden="true" />
         </div>
       </header>
 
