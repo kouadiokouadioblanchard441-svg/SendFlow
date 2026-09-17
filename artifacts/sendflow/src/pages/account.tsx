@@ -11,7 +11,6 @@ import {
   HelpCircle,
   Menu,
   PhoneCall,
-  Send,
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
@@ -195,11 +194,6 @@ export default function AccountPage() {
           </section>
         </section>
 
-        <nav className="sendflow-bottom-nav" aria-label="Navigation principale">
-          <Link href="/account" className="sendflow-bottom-link is-active" aria-current="page" data-testid="link-bottom-home"><span className="sendflow-bottom-icon"><Send size={19} /></span><span>Accueil</span></Link>
-          <button type="button" className="sendflow-bottom-link" onClick={() => openSheet('history')} data-testid="button-bottom-history"><span className="sendflow-bottom-icon"><Clock3 size={19} /></span><span>Historique</span></button>
-          <button type="button" className="sendflow-bottom-link" onClick={() => openSheet('plus')} data-testid="button-bottom-more"><span className="sendflow-bottom-icon"><Grid2X2 size={19} /></span><span>Plus</span></button>
-        </nav>
       </section>
 
       {menuOpen && (

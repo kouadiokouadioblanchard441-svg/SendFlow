@@ -1102,12 +1102,6 @@
 .sendflow-transaction-amount { color: #c83e55; font-size: 12px; font-weight: 800; white-space: nowrap; }
 .sendflow-transaction-chevron { color: #aaa2b3; }
 
-.sendflow-bottom-nav { position: sticky; bottom: 0; z-index: 5; display: grid; width: 100%; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #ebe7ef; background: rgba(255, 255, 255, .94); box-shadow: 0 -5px 18px rgba(47, 34, 72, .06); padding: 9px 12px calc(9px + env(safe-area-inset-bottom)); backdrop-filter: blur(14px); }
-.sendflow-bottom-link { display: flex; align-items: center; justify-content: center; gap: 5px; border: 0; background: transparent; color: #948c9e; cursor: pointer; padding: 3px; font: inherit; font-size: 11px; font-weight: 700; text-decoration: none; }
-.sendflow-bottom-link.is-active { color: #5e32bb; }
-.sendflow-bottom-icon { display: grid; width: 30px; height: 26px; place-items: center; border-radius: 10px; }
-.sendflow-bottom-link.is-active .sendflow-bottom-icon { background: #eee7fc; }
-
 .sendflow-panel-layer,
 .sendflow-sheet-layer { position: fixed; z-index: 20; inset: 0; }
 .sendflow-panel-backdrop,
