@@ -110,9 +110,7 @@ export default function AccountPage() {
         <section className="sendflow-dashboard-content">
           <div className="sendflow-dashboard-welcome">
              <img className="sendflow-profile-avatar" src={profileMariam} alt="Photo de profil de Mariam" />
-            <p className="sendflow-dashboard-kicker">Votre espace SendFlow</p>
             <h1 id="account-title">Bonjour, Mariam</h1>
-            <p className="sendflow-dashboard-subtitle">L’argent circule. Les réseaux aussi.</p>
           </div>
 
           <nav className="sendflow-action-grid" aria-label="Actions principales">
