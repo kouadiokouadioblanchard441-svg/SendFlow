@@ -96,14 +96,14 @@
 
 .sendflow-signup-mark {
   display: block;
-  width: 30px;
-  height: 38px;
+  width: 38px;
+  height: 48px;
   object-fit: contain;
 }
 
 .sendflow-signup-wordmark {
   display: block;
-  width: 82px;
+  width: 106px;
   height: auto;
   object-fit: contain;
 }
