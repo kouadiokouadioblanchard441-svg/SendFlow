@@ -1134,21 +1134,23 @@
 .sendflow-sheet-backdrop { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(34, 25, 53, .36); cursor: default; }
 .sendflow-side-menu,
 .sendflow-notification-panel { position: absolute; top: 0; bottom: 0; left: 0; display: flex; width: min(86vw, 345px); flex-direction: column; background: #fff; box-shadow: 18px 0 35px rgba(29, 18, 50, .18); padding: 24px 18px; animation: sendflow-panel-enter .22s ease-out both; }
+.sendflow-side-menu { top: 12px; bottom: 12px; left: 12px; width: min(72vw, 340px); max-height: calc(100dvh - 24px); overflow-y: auto; border: 1px solid rgba(52, 40, 76, .09); border-radius: 28px; box-shadow: 0 20px 48px rgba(29, 18, 50, .24), 0 2px 8px rgba(29, 18, 50, .08); padding: 18px 14px 14px; overscroll-behavior: contain; }
 .sendflow-side-menu-top,
 .sendflow-sheet-header { display: flex; align-items: flex-start; justify-content: space-between; }
+.sendflow-side-menu-top { min-height: 44px; align-items: center; padding: 0 2px 3px; }
 .sendflow-side-brand { display: flex; align-items: center; gap: 8px; color: #33205e; font-size: 20px; font-weight: 800; letter-spacing: -.05em; }
 .sendflow-side-brand img { width: 27px; height: 31px; object-fit: contain; }
 .sendflow-close-button { width: 36px; height: 36px; background: #f3eff9; color: #5c32b3; }
-.sendflow-menu-profile { display: flex; align-items: center; gap: 11px; margin-top: 38px; border-radius: 16px; background: #f8f5fd; padding: 14px; }
+.sendflow-menu-profile { display: flex; align-items: center; gap: 11px; margin-top: 22px; border: 1px solid #eee9f7; border-radius: 18px; background: #f8f5fd; padding: 13px; }
 .sendflow-menu-profile .sendflow-profile-avatar { width: 42px; height: 42px; border-width: 2px; font-size: 12px; }
 .sendflow-menu-profile span:last-child { display: flex; flex-direction: column; gap: 3px; }
 .sendflow-menu-profile strong { font-size: 14px; }
 .sendflow-menu-profile small { color: #8a8294; font-size: 11px; }
-.sendflow-menu-links { display: grid; gap: 3px; margin-top: 28px; }
+.sendflow-menu-links { display: grid; gap: 2px; margin-top: 20px; border-top: 1px solid #eeeaf3; border-bottom: 1px solid #eeeaf3; padding: 7px 0; }
 .sendflow-menu-links button,
 .sendflow-menu-footer button { display: grid; grid-template-columns: 23px 1fr 17px; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: #40394b; cursor: pointer; padding: 13px 9px; font: inherit; font-size: 13px; text-align: left; }
 .sendflow-menu-links button:hover, .sendflow-menu-footer button:hover { background: #f5f1fc; color: #5930bd; }
-.sendflow-menu-footer { display: grid; gap: 2px; margin-top: auto; border-top: 1px solid #eeeaf3; padding-top: 15px; }
+.sendflow-menu-footer { display: grid; gap: 2px; margin-top: auto; padding-top: 12px; }
 .sendflow-menu-footer button:last-child { color: #c15b69; }
 .sendflow-menu-logout-icon { display: inline-grid; width: 21px; height: 21px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 13px; }
 
