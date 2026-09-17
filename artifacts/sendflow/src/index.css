@@ -2029,8 +2029,8 @@ section#faq .reveal.space-y-2 > div {
   align-items: center;
   gap: 5px;
   border-right: 1px solid #e6e6e6;
-  background: #fbf7ed;
-  color: #5c5143;
+  background: #fafafa;
+  color: #59616b;
   padding: 0 9px;
   font-size: 16px;
 }
@@ -2046,7 +2046,7 @@ section#faq .reveal.space-y-2 > div {
 }
 .sendflow-signup-country:hover,
 .sendflow-signup-country:focus-visible {
-  background: #f4ecdc;
+  background: #f4efff;
 }
 .sendflow-signup-country:focus-visible {
   outline: 2px solid #6d35d8;
