@@ -1904,3 +1904,229 @@ section#faq .reveal.space-y-2 > div {
 @media (prefers-reduced-motion: reduce) {
   .sendflow-admin-skeleton-row span, .sendflow-admin-spin { animation: none; }
 }
+
+/* Mobile app sign-up screen */
+.sendflow-signup-shell {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: #f2f5fa;
+  padding: 56px 20px 20px;
+}
+.sendflow-signup-card {
+  width: min(100%, 650px);
+  min-height: calc(100dvh - 76px);
+  overflow: hidden;
+  border-radius: 14px;
+  background: #fff;
+}
+.sendflow-signup-content {
+  display: flex;
+  min-height: calc(100dvh - 76px);
+  flex-direction: column;
+  align-items: stretch;
+  padding: 132px 20px 110px;
+}
+.sendflow-signup-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 0 auto;
+  border-radius: 999px;
+  outline: none;
+}
+.sendflow-signup-brand img {
+  display: block;
+  width: 126px;
+  height: auto;
+  object-fit: contain;
+}
+.sendflow-signup-heading {
+  margin-top: 91px;
+  text-align: center;
+}
+.sendflow-signup-heading h1 {
+  margin: 0;
+  color: #090b10;
+  font-size: clamp(23px, 5.4vw, 30px);
+  font-weight: 800;
+  letter-spacing: -.04em;
+  line-height: 1.15;
+}
+.sendflow-signup-heading p {
+  margin: 10px 0 0;
+  color: #5f6670;
+  font-size: 17px;
+  line-height: 1.3;
+}
+.sendflow-signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 23px;
+  margin-top: 42px;
+}
+.sendflow-signup-field,
+.sendflow-signup-phone {
+  display: flex;
+  width: 100%;
+  min-height: 87px;
+  overflow: hidden;
+  border: 2px solid #e6e6e6;
+  border-radius: 12px;
+  background: #fff;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.sendflow-signup-field:focus-within,
+.sendflow-signup-phone:focus-within {
+  border-color: #6d35d8;
+  box-shadow: 0 0 0 3px rgba(109, 53, 216, .12);
+}
+.sendflow-signup-field input,
+.sendflow-signup-phone input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #515861;
+  padding: 0 20px;
+  font: inherit;
+  font-size: 17px;
+}
+.sendflow-signup-field input::placeholder,
+.sendflow-signup-phone input::placeholder {
+  color: #a6abb3;
+  opacity: 1;
+}
+.sendflow-signup-phone {
+  align-items: stretch;
+}
+.sendflow-signup-country {
+  display: inline-flex;
+  flex: 0 0 120px;
+  align-items: center;
+  gap: 9px;
+  border-right: 1px solid #e6e6e6;
+  background: #fafafa;
+  color: #59616b;
+  padding: 0 14px;
+  font-size: 17px;
+}
+.sendflow-signup-country span:first-child {
+  font-size: 25px;
+  line-height: 1;
+}
+.sendflow-signup-phone input {
+  padding-left: 19px;
+}
+.sendflow-signup-password-toggle {
+  display: grid;
+  flex: 0 0 62px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #707981;
+  cursor: pointer;
+  transition: color .18s ease, transform .18s ease;
+}
+.sendflow-signup-password-toggle:hover {
+  color: #6d35d8;
+}
+.sendflow-signup-password-toggle:active {
+  transform: scale(.92);
+}
+.sendflow-signup-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: -1px 0 0 24px;
+  color: #5e646b;
+  font-size: 16px;
+  line-height: 1.35;
+}
+.sendflow-signup-terms input {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  margin: 0;
+  appearance: none;
+  border: 2px solid #737c84;
+  border-radius: 3px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+.sendflow-signup-terms input:checked {
+  border-color: #6d35d8;
+  background: #6d35d8;
+  box-shadow: inset 0 0 0 4px #fff;
+}
+.sendflow-signup-terms input:focus-visible {
+  outline: 3px solid rgba(109, 53, 216, .22);
+  outline-offset: 2px;
+}
+.sendflow-signup-terms a,
+.sendflow-signup-login a {
+  color: #6d35d8;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.sendflow-signup-submit {
+  width: 100%;
+  min-height: 87px;
+  margin-top: 2px;
+  border: 0;
+  border-radius: 10px;
+  background: #909090;
+  color: #fff;
+  cursor: not-allowed;
+  font: inherit;
+  font-size: 17px;
+  transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.sendflow-signup-submit:not(:disabled) {
+  background: #6d35d8;
+  box-shadow: 0 8px 20px rgba(109, 53, 216, .2);
+  cursor: pointer;
+}
+.sendflow-signup-submit:not(:disabled):hover {
+  background: #5b21b6;
+  box-shadow: 0 11px 25px rgba(109, 53, 216, .28);
+  transform: translateY(-1px);
+}
+.sendflow-signup-submit:not(:disabled):active {
+  transform: translateY(0) scale(.99);
+}
+.sendflow-signup-feedback {
+  margin: -8px 0 0;
+  color: #6d35d8;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+.sendflow-signup-login {
+  margin: 44px 0 0;
+  color: #5e646b;
+  font-size: 16px;
+  line-height: 1.4;
+  text-align: center;
+}
+.sendflow-signup-brand:focus-visible,
+.sendflow-signup-password-toggle:focus-visible {
+  outline: 3px solid rgba(109, 53, 216, .24);
+  outline-offset: 4px;
+}
+@media (min-width: 700px) {
+  .sendflow-signup-shell { padding-top: 70px; }
+  .sendflow-signup-content { padding-inline: 34px; }
+  .sendflow-signup-heading h1 { font-size: 30px; }
+}
+@media (max-width: 380px) {
+  .sendflow-signup-shell { padding-inline: 12px; }
+  .sendflow-signup-content { padding-inline: 14px; }
+  .sendflow-signup-country { flex-basis: 108px; padding-inline: 11px; }
+  .sendflow-signup-terms { margin-left: 8px; }
+}

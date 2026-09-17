@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useRoute } from 'wouter';
 import { ArrowDownRight, ArrowRight, Check, ChevronDown, Globe2, LockKeyhole, Menu, Play, Sparkles, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { ClerkProvider, SignIn, SignUp } from '@clerk/react';
+import { ClerkProvider, SignIn } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Toaster } from '@/components/ui/toaster';
@@ -16,6 +16,7 @@ import { EditableLegalPage } from '@/pages/editable-legal';
 import DownloadPage from '@/pages/download';
 import FeaturesPage from '@/pages/features';
 import SecurityPage from '@/pages/security';
+import SignupPage from '@/pages/sign-up';
 import { SendFlowFooter } from '@/components/sendflow-footer';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -412,7 +413,7 @@ function App() {
               <Route path="/securite" component={SecurityPage} />
               <Route path="/a-propos" component={AboutRoute} />
               <Route path="/sign-in/*?" component={SignInPage} />
-              <Route path="/sign-up/*?" component={SignUpPage} />
+              <Route path="/sign-up/*?" component={SignupPage} />
               <Route path="/conditions-utilisation" component={() => <PublicLegalRoute page={TermsPage} slug="conditions-utilisation" />} />
               <Route path="/confidentialite" component={() => <PublicLegalRoute page={PrivacyPage} slug="confidentialite" />} />
               <Route path="/mentions-legales" component={() => <PublicLegalRoute page={LegalMentionsPage} slug="mentions-legales" />} />
@@ -438,17 +439,6 @@ function SignInPage() {
     robots: 'noindex,nofollow',
   });
   return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div>;
-}
-
-function SignUpPage() {
-  useSeo({
-    path: '/sign-up',
-    locale: 'fr',
-    title: 'Créer un compte · SendFlow',
-    description: 'Espace de création de compte SendFlow.',
-    robots: 'noindex,nofollow',
-  });
-  return <div className="flex min-h-[100dvh] items-center justify-center bg-[#f6f8fb] px-4"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
 }
 
 function PublicLegalRoute({ page: Page, slug }: { page: (props: LegalPageProps) => ReactElement; slug: string }) {
