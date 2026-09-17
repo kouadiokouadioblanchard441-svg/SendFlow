@@ -46,10 +46,6 @@ export default function NotificationsPage() {
         </div>
       </header>
 
-      <div className="sendflow-notifications-status" role="status">
-        Compte validé ! Vous pouvez transférer de l’argent avec votre compte SendFlow
-      </div>
-
       <section className="sendflow-notifications-card" aria-labelledby="notifications-page-title">
         <button
           type="button"
