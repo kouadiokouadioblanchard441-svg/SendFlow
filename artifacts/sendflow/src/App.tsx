@@ -10,6 +10,7 @@ import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '
 import NotFound from '@/pages/not-found';
 import AccountPage from '@/pages/account';
 import HistoryPage from '@/pages/history';
+import NotificationsPage from '@/pages/notifications';
 import PinPage from '@/pages/pin';
 import ResetPage from '@/pages/reset';
 import SigninPage from '@/pages/sign-in';
@@ -111,6 +112,7 @@ function App() {
               <Route path="/forgot-pin" component={() => <ResetPage mode="pin" />} />
               <Route path="/account" component={AccountPage} />
               <Route path="/history" component={HistoryPage} />
+              <Route path="/notifications" component={NotificationsPage} />
               <Route
                 path="/conditions-utilisation"
                 component={() => (

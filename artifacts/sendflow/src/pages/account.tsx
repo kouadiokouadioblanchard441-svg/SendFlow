@@ -5,7 +5,6 @@ import {
   Check,
   ChevronRight,
   Clock3,
-  Gift,
   Globe2,
   Grid2X2,
   HelpCircle,
@@ -50,7 +49,6 @@ export default function AccountPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const [menuOpen, setMenuOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetName>(null);
   const [notificationRead, setNotificationRead] = useState(false);
   const [creditAmount, setCreditAmount] = useState('1 000 FCFA');
@@ -74,21 +72,18 @@ export default function AccountPage() {
 
   const openSheet = (nextSheet: Exclude<SheetName, null>) => {
     setMenuOpen(false);
-    setNotificationsOpen(false);
     setCreditPurchased(false);
     setSheet(nextSheet);
   };
 
   const openHistory = () => {
     setMenuOpen(false);
-    setNotificationsOpen(false);
     setSheet(null);
     setLocation('/history');
   };
 
   const closePanels = () => {
     setMenuOpen(false);
-    setNotificationsOpen(false);
     setCreditPurchased(false);
     setSheet(null);
   };
@@ -105,7 +100,7 @@ export default function AccountPage() {
               <img src={sendflowMark} alt="" />
               <span>SendFlow</span>
             </Link>
-            <button type="button" className={`sendflow-header-button sendflow-notification-button${notificationRead ? '' : ' has-unread'}`} onClick={() => { setNotificationsOpen(true); setNotificationRead(true); }} aria-label="Voir les notifications" data-testid="button-open-notifications">
+            <button type="button" className={`sendflow-header-button sendflow-notification-button${notificationRead ? '' : ' has-unread'}`} onClick={() => { setNotificationRead(true); setLocation('/notifications'); }} aria-label="Voir les notifications" data-testid="button-open-notifications">
               <Bell size={22} strokeWidth={2} />
               {!notificationRead && <span className="sendflow-notification-dot" aria-hidden="true" />}
             </button>
@@ -182,17 +177,6 @@ export default function AccountPage() {
               <button type="button" onClick={() => openSheet('plus')} data-testid="button-menu-services"><Grid2X2 size={19} />Services SendFlow<ChevronRight size={17} /></button>
             </div>
              <div className="sendflow-menu-footer"><button type="button" onClick={() => openSheet('notifications')} data-testid="button-menu-help"><HelpCircle size={19} />Besoin d’aide<ChevronRight size={17} /></button><button type="button" onClick={() => { window.sessionStorage.removeItem('sendflow.pin.unlocked'); window.sessionStorage.removeItem(DEMO_SESSION_KEY); setLocation('/sign-in'); }} data-testid="button-menu-logout"><span className="sendflow-menu-logout-icon">↗</span>Se déconnecter</button></div>
-          </aside>
-        </div>
-      )}
-
-      {notificationsOpen && (
-        <div className="sendflow-panel-layer">
-          <button type="button" className="sendflow-panel-backdrop" onClick={closePanels} aria-label="Fermer les notifications" data-testid="button-close-notifications-backdrop" />
-          <aside className="sendflow-notification-panel" aria-labelledby="notifications-title">
-            <div className="sendflow-sheet-header"><div><p className="sendflow-section-kicker">SendFlow</p><h2 id="notifications-title">Notifications</h2></div><button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer les notifications" data-testid="button-close-notifications"><X size={20} /></button></div>
-            <div className="sendflow-notification-item"><span className="sendflow-notification-check"><Check size={17} /></span><span><strong>Compte sécurisé</strong><small>Votre session est protégée par votre code PIN.</small></span></div>
-            <div className="sendflow-notification-item"><span className="sendflow-notification-mark"><Gift size={17} /></span><span><strong>Bienvenue sur SendFlow</strong><small>Transférez entre réseaux, sans frontière.</small></span></div>
           </aside>
         </div>
       )}

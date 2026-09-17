@@ -1128,6 +1128,30 @@
 .sendflow-history-list .sendflow-transaction-amount { font-size: 14px; }
 .sendflow-history-list .sendflow-transaction-chevron { width: 18px; height: 18px; }
 .sendflow-history-empty { margin: 0; color: #89858d; font-size: 14px; text-align: center; }
+
+/* Notifications — compact mobile layout inspired by the reference screen */
+.sendflow-notifications-shell { min-height: 100dvh; overflow: hidden; background: #eef2f7; color: #303743; }
+.sendflow-notifications-header { display: flex; height: 132px; align-items: flex-end; border-radius: 0 0 28px 28px; background: linear-gradient(135deg, #5225a7 0%, #7041d0 58%, #4b249e 100%); box-shadow: 0 10px 24px rgba(76, 39, 160, .2); padding: 0 20px 28px; }
+.sendflow-notifications-brand { display: inline-flex; align-items: center; gap: 9px; }
+.sendflow-notifications-mark { width: 30px; height: 35px; object-fit: contain; filter: brightness(0) invert(1); }
+.sendflow-notifications-wordmark { width: 116px; height: 22px; object-fit: contain; filter: brightness(0) invert(1); }
+.sendflow-notifications-status { display: flex; width: calc(100% - 38px); max-width: 720px; min-height: 64px; align-items: center; justify-content: center; margin: 19px auto 0; border-radius: 8px; background: #d9f1e8; color: #267750; padding: 11px 16px; text-align: center; font-size: 14px; line-height: 1.35; }
+.sendflow-notifications-card { display: flex; width: calc(100% - 38px); max-width: 720px; height: min(750px, calc(100dvh - 250px)); flex-direction: column; margin: 19px auto 0; overflow: hidden; border-radius: 8px; background: #fff; box-shadow: 0 2px 10px rgba(39, 49, 68, .035); padding: 10px 11px 0; }
+.sendflow-notifications-back { flex: 0 0 auto; align-self: flex-start; border: 0; background: transparent; color: #6d35d8; cursor: pointer; padding: 0 1px 5px; font: inherit; font-size: 15px; line-height: 1.2; }
+.sendflow-notifications-back:hover, .sendflow-notifications-back:focus-visible { color: #4f239f; outline: 0; text-decoration: underline; }
+.sendflow-notifications-card h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.sendflow-notifications-list { min-height: 0; flex: 1; overflow-y: auto; margin-top: 26px; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d8d3df transparent; }
+.sendflow-notification-row { display: grid; min-height: 91px; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 12px; border-bottom: 1px solid #dedfe2; padding: 11px 2px; }
+.sendflow-notification-row:last-child { border-bottom: 0; }
+.sendflow-notification-operator { display: grid; width: 52px; height: 52px; place-items: center; border: 1.5px solid #e1e2e5; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(34, 39, 50, .06); }
+.sendflow-notification-operator img { display: block; width: 43px; height: 43px; border-radius: 50%; object-fit: contain; }
+.sendflow-notification-operator strong { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; font-size: 11px; font-weight: 800; line-height: 1; }
+.sendflow-notification-operator.is-tmoney strong { background: #f7c31e; color: #ab1822; }
+.sendflow-notification-operator.is-moov strong { background: #ef8124; color: #fff; }
+.sendflow-notification-copy { display: flex; min-width: 0; flex-direction: column; gap: 7px; }
+.sendflow-notification-copy strong { color: #343b46; font-size: 16px; font-weight: 400; letter-spacing: -.015em; line-height: 1.15; }
+.sendflow-notification-copy small { color: #3b414b; font-size: 14px; line-height: 1.1; }
+
 .sendflow-panel-layer,
 .sendflow-sheet-layer { position: fixed; z-index: 20; inset: 0; }
 .sendflow-panel-backdrop,
