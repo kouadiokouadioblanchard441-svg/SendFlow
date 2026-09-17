@@ -1,4 +1,5 @@
 import path from 'path';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -26,10 +27,16 @@ const isLegacyAdminPath = (requestUrl = '') => {
   );
 };
 
+type ViteMiddleware = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  next: () => void,
+) => void;
+
 const blockLegacyAdminPath = () => ({
   name: 'sendflow-block-legacy-admin-path',
   enforce: 'pre' as const,
-  configureServer(server: { middlewares: { use: (handler: (req: { url?: string }, res: { statusCode: number; end: (body: string) => void }, next: () => void) => void) => void } }) {
+  configureServer(server: { middlewares: { use: (handler: ViteMiddleware) => void } }) {
     server.middlewares.use((req, res, next) => {
       if (!isLegacyAdminPath(req.url)) {
         next();
@@ -41,7 +48,7 @@ const blockLegacyAdminPath = () => ({
       res.end();
     });
   },
-  configurePreviewServer(server: { middlewares: { use: (handler: (req: { url?: string }, res: { statusCode: number; end: (body: string) => void }, next: () => void) => void) => void } }) {
+  configurePreviewServer(server: { middlewares: { use: (handler: ViteMiddleware) => void } }) {
     server.middlewares.use((req, res, next) => {
       if (!isLegacyAdminPath(req.url)) {
         next();

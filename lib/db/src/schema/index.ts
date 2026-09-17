@@ -1,2 +1,2 @@
-export * from "./admin";
-export * from "./legal";
+export * from "./admin.js";
+export * from "./legal.js";
