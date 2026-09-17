@@ -52,17 +52,17 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
     <div className="min-h-screen bg-[#f7f3e9] text-[#17131f]">
       <header className="sticky top-0 z-40 border-b border-[#2d2535]/10 bg-[#f7f3e9]/90 px-5 py-4 backdrop-blur-md sm:px-8">
         <div className="mx-auto flex max-w-[1060px] items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2" aria-label="Retour à SendFlow">
+          <Link href="/sign-in" className="flex items-center gap-2" aria-label="Retour à SendFlow">
             <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-[#6d35d8]/20">
               <img src={sendflowMark} alt="" className="h-8 w-7 object-contain" />
             </span>
             <img src={sendflowWordmark} alt="SendFlow" className="h-6 w-auto object-contain" />
           </Link>
           <Link
-            href="/"
+            href="/sign-in"
             className="inline-flex min-w-[164px] items-center justify-center rounded-full border border-[#6d35d8] bg-[#6d35d8] px-5 py-2.5 text-center text-[12px] font-extrabold text-white shadow-[0_8px_18px_rgba(109,53,216,.2)] transition-all hover:border-[#5421b8] hover:bg-[#5421b8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6d35d8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f3e9]"
           >
-            Retour à l’accueil
+            Retour à la connexion
           </Link>
         </div>
       </header>
@@ -87,7 +87,7 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
         <div className="mx-auto flex max-w-[900px] flex-col gap-6 text-[12px] sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-[470px] leading-5 text-[#c9c0d6]">Flow Digital SARL · Côte d’Ivoire · Abidjan, Cocody Riviera Palmeraie</p>
           <div className="flex flex-wrap gap-4 font-bold">
-            <Link href="/" className="text-[#e8cd4d] hover:underline">Accueil</Link>
+            <Link href="/sign-in" className="text-[#e8cd4d] hover:underline">Connexion</Link>
             <Link href="/conditions-utilisation" className="hover:text-[#e8cd4d]">Conditions</Link>
             <Link href="/confidentialite" className="hover:text-[#e8cd4d]">Confidentialité</Link>
             <Link href="/mentions-legales" className="hover:text-[#e8cd4d]">Mentions légales</Link>
@@ -159,7 +159,7 @@ export function LegalMentionsPage({ supportEmail }: LegalPageProps) {
 
       <LegalSection number="06" title="Accès et disponibilité">
         <p>Flow Digital SARL s’efforce de maintenir un site accessible, sécurisé et à jour. L’accès peut toutefois être interrompu pour maintenance, mise à niveau, correction d’un risque, panne, indisponibilité d’un fournisseur, incident de réseau, décision d’une autorité ou événement indépendant de la volonté de l’éditeur.</p>
-        <p>Les informations publiées peuvent être modifiées, suspendues ou retirées sans préavis lorsqu’une correction, une évolution réglementaire, une contrainte de partenaire ou un impératif de sécurité le justifie. La disponibilité du site vitrine ne garantit pas la disponibilité d’un futur service de transfert.</p>
+        <p>Les informations publiées peuvent être modifiées, suspendues ou retirées sans préavis lorsqu’une correction, une évolution réglementaire, une contrainte de partenaire ou un impératif de sécurité le justifie. La disponibilité de l’application peut dépendre de contraintes techniques, réglementaires ou liées aux partenaires de paiement.</p>
       </LegalSection>
 
       <LegalSection number="07" title="Propriété intellectuelle">

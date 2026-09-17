@@ -1,6 +1,6 @@
 ---
 name: App Storage constraints
-description: Environment behavior to check before migrating public landing assets.
+description: Environment behavior to check before migrating public application assets.
 ---
 
 App Storage provisioning can fail before a bucket is created when the workspace has no remaining credits; an existing project may still serve previously migrated public assets while new uploads or provisioning are denied.

@@ -26,8 +26,8 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 ## Architecture decisions
 
-- Les parcours d’inscription et de connexion sont conçus comme la porte d’entrée de l’application, pas comme des pages autonomes de vitrine.
-- La page vitrine actuelle est transitoire et sera supprimée lorsque le produit applicatif sera prêt.
+- Les parcours d’inscription et de connexion sont la porte d’entrée publique de l’application.
+- Les anciennes surfaces de présentation ont été retirées du produit ; les prochaines fonctionnalités doivent être ajoutées derrière l’accès applicatif.
 
 ## Product
 

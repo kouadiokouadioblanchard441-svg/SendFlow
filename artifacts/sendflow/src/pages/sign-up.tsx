@@ -115,7 +115,7 @@ export default function SignupPage() {
     <main className="sendflow-signup-shell">
       <section className="sendflow-signup-card" aria-labelledby="signup-title">
         <div className="sendflow-signup-content">
-          <Link href="/" className="sendflow-signup-brand" aria-label="Retour à l’accueil SendFlow">
+          <Link href="/sign-up" className="sendflow-signup-brand" aria-label="SendFlow">
             <img src={sendflowMark} alt="" className="sendflow-signup-mark" />
             <img src={sendflowWordmark} alt="SendFlow" className="sendflow-signup-wordmark" />
           </Link>

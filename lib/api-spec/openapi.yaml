@@ -11,7 +11,7 @@ tags:
   - name: health
     description: Health operations
   - name: Storage
-    description: Public landing asset serving.
+    description: Public object storage serving.
 paths:
   /healthz:
     get:
@@ -30,7 +30,7 @@ paths:
     get:
       operationId: getPublicObject
       tags: [Storage]
-      summary: Serve a public landing asset
+      summary: Serve a public object
       parameters:
         - name: filePath
           in: path

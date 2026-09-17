@@ -18,7 +18,7 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * @summary Serve a public landing asset
+ * @summary Serve a public object
  */
 export const GetPublicObjectParams = zod.object({
   "filePath": zod.coerce.string().describe('Relative path within the configured public object search paths.')

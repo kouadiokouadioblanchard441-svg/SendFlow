@@ -1,7 +1,7 @@
 kind = "web"
 previewPath = "/"
 title = "SendFlow"
-description = "A premium, mobile-first fintech landing page for SendFlow, a demo product simplifying transfers across Mobile Money networks and African borders."
+description = "A mobile-first SendFlow application with secure account access and country-aware phone authentication."
 version = "1.0.0"
 id = "artifacts/sendflow"
 router = "path"

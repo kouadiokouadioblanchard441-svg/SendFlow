@@ -7,4 +7,4 @@ The project database layer resolves `NEON_DATABASE_URL` before `DATABASE_URL`; s
 
 **Why:** A generic development SQL helper can point at a different database when both variables exist, making a successfully applied Neon table appear missing.
 
-**How to apply:** Use the project’s db package scripts or app connection for development data initialization, and verify the resulting row through `/api/landing`.
+**How to apply:** Use the project’s db package scripts or app connection for development data initialization, and verify the result through the relevant API endpoint.

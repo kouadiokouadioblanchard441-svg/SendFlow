@@ -134,7 +134,7 @@ export const getGetPublicObjectUrl = (filePath: string,) => {
 }
 
 /**
- * @summary Serve a public landing asset
+ * @summary Serve a public object
  */
 export const getPublicObject = async (filePath: string, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
 
@@ -181,7 +181,7 @@ export type GetPublicObjectQueryError = ErrorType<ErrorEnvelope>
 
 
 /**
- * @summary Serve a public landing asset
+ * @summary Serve a public object
  */
 
 export function useGetPublicObject<TData = Awaited<ReturnType<typeof getPublicObject>>, TError = ErrorType<ErrorEnvelope>>(
