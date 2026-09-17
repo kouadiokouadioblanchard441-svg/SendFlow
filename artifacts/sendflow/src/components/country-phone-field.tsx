@@ -7,7 +7,7 @@ export type CountryOption = {
   flag: string;
 };
 
-const countries: CountryOption[] = [
+const countryCatalog: CountryOption[] = [
   { name: 'Afrique du Sud', dialCode: '+27', flag: '🇿🇦' },
   { name: 'Albanie', dialCode: '+355', flag: '🇦🇱' },
   { name: 'Algérie', dialCode: '+213', flag: '🇩🇿' },
@@ -105,6 +105,22 @@ const countries: CountryOption[] = [
   { name: 'Vietnam', dialCode: '+84', flag: '🇻🇳' },
   { name: 'Zambie', dialCode: '+260', flag: '🇿🇲' },
   { name: 'Zimbabwe', dialCode: '+263', flag: '🇿🇼' },
+];
+
+const featuredAfricanCountryNames = [
+  'Afrique du Sud',
+  'Côte d’Ivoire',
+  'Bénin',
+  'Burkina Faso',
+  'Togo',
+  'Niger',
+  'Cameroun',
+  'Sénégal',
+];
+
+const countries: CountryOption[] = [
+  ...featuredAfricanCountryNames.flatMap((name) => countryCatalog.filter((country) => country.name === name)),
+  ...countryCatalog.filter((country) => !featuredAfricanCountryNames.includes(country.name)),
 ];
 
 const defaultCountry = countries.find((country) => country.dialCode === '+229') ?? countries[0];
