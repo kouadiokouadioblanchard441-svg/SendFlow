@@ -166,7 +166,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                   setPhone(value);
                 }}
                 error={phoneError}
-                defaultCountryName="Bénin"
+                defaultCountryName="Côte d’Ivoire"
               />
               <button type="submit" className="sendflow-reset-submit">Suivant</button>
             </form>
