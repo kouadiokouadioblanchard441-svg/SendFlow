@@ -156,7 +156,7 @@ export default function AccountPage() {
               <button type="button" className="sendflow-see-all" onClick={openHistory} data-testid="button-view-all-transactions">Voir tout <ChevronRight size={18} /></button>
             </div>
             <div className="sendflow-transaction-list">
-              {transactions.map((transaction) => (
+              {transactions.slice(0, 5).map((transaction) => (
                 <TransactionCard
                   key={transaction.id}
                   transaction={transaction}
