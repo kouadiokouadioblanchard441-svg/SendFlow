@@ -129,7 +129,6 @@ export default function AccountPage() {
           <section className="sendflow-promo-section" aria-label="Offres SendFlow">
             <div className="sendflow-promo-heading">
               <span>À la une</span>
-              <span className="sendflow-promo-status"><span aria-hidden="true" /> Actualités SendFlow</span>
             </div>
             <div className="sendflow-promo-viewport">
               <div className="sendflow-promo-track">
