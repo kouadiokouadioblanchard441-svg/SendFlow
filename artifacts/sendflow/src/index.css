@@ -908,15 +908,23 @@
 
 .sendflow-notification-icon { width: 22px; height: 22px; object-fit: contain; filter: brightness(0) invert(1); }
 
-.sendflow-notification-dot {
+.sendflow-notification-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 7px;
-  height: 7px;
-  border: 2px solid #6940cd;
-  border-radius: 50%;
-  background: #f6cd5e;
+  top: -3px;
+  right: -4px;
+  display: grid;
+  min-width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #ff0000;
+  color: #fff;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 2px 5px rgba(77, 0, 0, .28);
 }
 
 .sendflow-dashboard-content {

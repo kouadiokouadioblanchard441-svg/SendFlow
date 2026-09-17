@@ -14,6 +14,7 @@ import {
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransactionCard } from '@/components/transaction-card';
 import { operatorNames, transactions } from '@/lib/transactions';
+import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 import { DEMO_SESSION_KEY } from '@/lib/demo-account';
 import notificationBell from '@assets/633486_1789677628502.png';
@@ -22,6 +23,7 @@ import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 import profileMariam from '@assets/generated_images/sendflow-profile-mariam.png';
 
 type SheetName = 'inter' | 'international' | 'plus' | 'call-credit' | 'notifications' | 'transaction' | null;
+const NOTIFICATIONS_READ_KEY = 'sendflow.notifications.read';
 
 function ActionTile({
   icon,
@@ -50,7 +52,9 @@ export default function AccountPage() {
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetName>(null);
-  const [notificationRead, setNotificationRead] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(() => (
+    window.sessionStorage.getItem(NOTIFICATIONS_READ_KEY) === 'true' ? 0 : notifications.length
+  ));
   const [creditAmount, setCreditAmount] = useState('1 000 FCFA');
   const [creditPurchased, setCreditPurchased] = useState(false);
 
@@ -100,9 +104,9 @@ export default function AccountPage() {
               <img className="sendflow-dashboard-mark" src={sendflowMark} alt="" />
               <img className="sendflow-dashboard-wordmark" src={sendflowWordmark} alt="SendFlow" />
             </Link>
-            <button type="button" className={`sendflow-header-button sendflow-notification-button${notificationRead ? '' : ' has-unread'}`} onClick={() => { setNotificationRead(true); setLocation('/notifications'); }} aria-label="Voir les notifications" data-testid="button-open-notifications">
+            <button type="button" className={`sendflow-header-button sendflow-notification-button${unreadNotificationCount > 0 ? ' has-unread' : ''}`} onClick={() => { setUnreadNotificationCount(0); window.sessionStorage.setItem(NOTIFICATIONS_READ_KEY, 'true'); setLocation('/notifications'); }} aria-label="Voir les notifications" data-testid="button-open-notifications">
               <img className="sendflow-notification-icon" src={notificationBell} alt="" />
-              {!notificationRead && <span className="sendflow-notification-dot" aria-hidden="true" />}
+              {unreadNotificationCount > 0 && <span className="sendflow-notification-badge" aria-label={`${Math.min(unreadNotificationCount, 99)} notification${unreadNotificationCount > 1 ? 's' : ''} non lue${unreadNotificationCount > 1 ? 's' : ''}`}>{Math.min(unreadNotificationCount, 99)}</span>}
             </button>
           </div>
         </header>
