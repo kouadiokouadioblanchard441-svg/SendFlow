@@ -796,19 +796,45 @@
 .sendflow-dashboard-header {
   position: relative;
   z-index: 2;
-  border-radius: 0 0 28px 28px;
+  overflow: hidden;
+  border-radius: 0 0 36px 36px;
   background: linear-gradient(120deg, #5930bd 0%, #7043d3 57%, #4b2aa9 100%);
-  box-shadow: 0 12px 28px rgba(75, 42, 169, .18);
+  box-shadow: 0 16px 34px rgba(75, 42, 169, .23);
+}
+
+.sendflow-dashboard-header::before {
+  position: absolute;
+  top: -110px;
+  right: -72px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 50%;
+  box-shadow: 0 0 0 22px rgba(255, 255, 255, .035), 0 0 0 46px rgba(255, 255, 255, .025);
+  content: "";
+}
+
+.sendflow-dashboard-header::after {
+  position: absolute;
+  bottom: -92px;
+  left: 8%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .045);
+  content: "";
 }
 
 .sendflow-dashboard-header-inner {
+  position: relative;
+  z-index: 1;
   display: grid;
   width: min(100%, 1120px);
-  min-height: 78px;
+  min-height: 126px;
   grid-template-columns: 48px 1fr 48px;
   align-items: center;
   margin: 0 auto;
-  padding: 10px 18px 14px;
+  padding: 20px 18px 24px;
 }
 
 .sendflow-header-button,
