@@ -40,7 +40,7 @@ const countryCatalog: CountryOption[] = [
   { name: 'Chine', dialCode: '+86', flag: '🇨🇳' },
   { name: 'Colombie', dialCode: '+57', flag: '🇨🇴' },
   { name: 'Comores', dialCode: '+269', flag: '🇰🇲' },
-  { name: 'Congo', dialCode: '+242', flag: '🇨🇬' },
+  { name: 'Congo-Brazzaville', dialCode: '+242', flag: '🇨🇬' },
   { name: 'Côte d’Ivoire', dialCode: '+225', flag: '🇨🇮' },
   { name: 'Croatie', dialCode: '+385', flag: '🇭🇷' },
   { name: 'Cuba', dialCode: '+53', flag: '🇨🇺' },
@@ -107,20 +107,20 @@ const countryCatalog: CountryOption[] = [
   { name: 'Zimbabwe', dialCode: '+263', flag: '🇿🇼' },
 ];
 
-const featuredAfricanCountryNames = [
+const allowedCountryNames = [
   'Côte d’Ivoire',
   'Bénin',
   'Burkina Faso',
-  'Togo',
-  'Niger',
-  'Cameroun',
   'Sénégal',
-  'Afrique du Sud',
+  'Niger',
+  'Mali',
+  'Togo',
+  'Cameroun',
+  'Congo-Brazzaville',
 ];
 
 const countries: CountryOption[] = [
-  ...featuredAfricanCountryNames.flatMap((name) => countryCatalog.filter((country) => country.name === name)),
-  ...countryCatalog.filter((country) => !featuredAfricanCountryNames.includes(country.name)),
+  ...allowedCountryNames.flatMap((name) => countryCatalog.filter((country) => country.name === name)),
 ];
 
 const defaultCountry = countries.find((country) => country.name === 'Côte d’Ivoire') ?? countries[0];
