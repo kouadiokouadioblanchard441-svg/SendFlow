@@ -2034,6 +2034,24 @@ section#faq .reveal.space-y-2 > div {
   padding: 0 9px;
   font-size: 16px;
 }
+.sendflow-signup-country {
+  appearance: none;
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background-color .18s ease;
+}
+.sendflow-signup-country:hover,
+.sendflow-signup-country:focus-visible {
+  background: #f1f3f8;
+}
+.sendflow-signup-country:focus-visible {
+  outline: 2px solid #6d35d8;
+  outline-offset: -2px;
+}
 .sendflow-signup-country span:first-child {
   font-size: 21px;
   line-height: 1;
@@ -2134,6 +2152,152 @@ section#faq .reveal.space-y-2 > div {
   line-height: 1.4;
   text-align: center;
 }
+.sendflow-country-picker {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sendflow-country-picker-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(24, 31, 42, .28);
+  cursor: default;
+}
+.sendflow-country-sheet {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: min(82dvh, 840px);
+  max-height: 82dvh;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px 22px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 32px rgba(20, 28, 44, .12);
+  padding: 31px 16px 0;
+}
+.sendflow-country-search {
+  display: flex;
+  height: 56px;
+  flex: 0 0 56px;
+  align-items: center;
+  gap: 14px;
+  margin: 0 15px 22px;
+  border-radius: 9px;
+  background: #f1f3f8;
+  color: #9aa1ad;
+  padding: 0 16px;
+}
+.sendflow-country-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #4d5561;
+  font: inherit;
+  font-size: 16px;
+}
+.sendflow-country-search input::placeholder {
+  color: #9da4af;
+  opacity: 1;
+}
+.sendflow-country-search input::-webkit-search-cancel-button {
+  display: none;
+}
+.sendflow-country-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border-top: 1px solid #e5e5e5;
+  padding-bottom: 86px;
+  scrollbar-width: none;
+}
+.sendflow-country-list::-webkit-scrollbar {
+  display: none;
+}
+.sendflow-country-option {
+  display: flex;
+  width: 100%;
+  min-height: 59px;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 1px solid #ededed;
+  background: #fff;
+  padding: 0 16px;
+  color: #16191e;
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  text-align: left;
+  transition: background-color .16s ease;
+}
+.sendflow-country-option:hover,
+.sendflow-country-option:focus-visible {
+  background: #f7f8fb;
+  outline: 0;
+}
+.sendflow-country-option.is-selected {
+  background: #fbfbfd;
+}
+.sendflow-country-option-flag {
+  display: inline-flex;
+  width: 22px;
+  flex: 0 0 22px;
+  justify-content: center;
+  font-size: 21px;
+  line-height: 1;
+}
+.sendflow-country-option-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sendflow-country-option-code {
+  flex: 0 0 auto;
+  color: #777d86;
+  font-size: 14px;
+}
+.sendflow-country-empty {
+  margin: 30px 16px;
+  color: #777d86;
+  font-size: 16px;
+  text-align: center;
+}
+.sendflow-country-close {
+  position: absolute;
+  right: 31px;
+  bottom: 48px;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #0aa2bc;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(24, 67, 85, .26);
+  transition: transform .18s ease, background-color .18s ease;
+}
+.sendflow-country-close:hover {
+  background: #088da5;
+  transform: translateY(-2px);
+}
+.sendflow-country-close:active {
+  transform: scale(.96);
+}
+.sendflow-country-close:focus-visible {
+  outline: 3px solid rgba(10, 162, 188, .3);
+  outline-offset: 3px;
+}
 .sendflow-signup-brand:focus-visible,
 .sendflow-signup-password-toggle:focus-visible {
   outline: 3px solid rgba(109, 53, 216, .24);
@@ -2149,4 +2313,9 @@ section#faq .reveal.space-y-2 > div {
   .sendflow-signup-content { padding-inline: 14px; }
   .sendflow-signup-country { flex-basis: 76px; padding-inline: 8px; }
   .sendflow-signup-terms { margin-left: 8px; }
+}
+@media (min-width: 700px) {
+  .sendflow-country-sheet {
+    max-width: 650px;
+  }
 }
