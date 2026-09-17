@@ -1923,7 +1923,7 @@ section#faq .reveal.space-y-2 > div {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background: #f2f5fa;
+  background: #f8f5ff;
   padding: 56px 20px 20px;
 }
 .sendflow-signup-card {
@@ -2046,7 +2046,7 @@ section#faq .reveal.space-y-2 > div {
 }
 .sendflow-signup-country:hover,
 .sendflow-signup-country:focus-visible {
-  background: #f1f3f8;
+  background: #f4efff;
 }
 .sendflow-signup-country:focus-visible {
   outline: 2px solid #6d35d8;
@@ -2189,7 +2189,7 @@ section#faq .reveal.space-y-2 > div {
   gap: 14px;
   margin: 0 15px 22px;
   border-radius: 9px;
-  background: #f1f3f8;
+  background: #f4efff;
   color: #9aa1ad;
   padding: 0 16px;
 }
@@ -2240,11 +2240,11 @@ section#faq .reveal.space-y-2 > div {
 }
 .sendflow-country-option:hover,
 .sendflow-country-option:focus-visible {
-  background: #f7f8fb;
+  background: #faf8ff;
   outline: 0;
 }
 .sendflow-country-option.is-selected {
-  background: #fbfbfd;
+  background: #fcfaff;
 }
 .sendflow-country-option-flag {
   display: inline-flex;
@@ -2281,21 +2281,21 @@ section#faq .reveal.space-y-2 > div {
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: #0aa2bc;
+  background: #6d35d8;
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(24, 67, 85, .26);
+  box-shadow: 0 8px 18px rgba(109, 53, 216, .28);
   transition: transform .18s ease, background-color .18s ease;
 }
 .sendflow-country-close:hover {
-  background: #088da5;
+  background: #5822c3;
   transform: translateY(-2px);
 }
 .sendflow-country-close:active {
   transform: scale(.96);
 }
 .sendflow-country-close:focus-visible {
-  outline: 3px solid rgba(10, 162, 188, .3);
+  outline: 3px solid rgba(109, 53, 216, .3);
   outline-offset: 3px;
 }
 .sendflow-signup-brand:focus-visible,
