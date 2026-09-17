@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Delete } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
+import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
 import { hasPin, savePin, verifyPin } from '@/lib/pin-storage';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -39,6 +40,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
+  const isDemoSession = window.sessionStorage.getItem(DEMO_SESSION_KEY) === 'true';
 
   useSeo({
     path: mode === 'create' ? '/create-pin' : '/pin',
@@ -105,7 +107,9 @@ export default function PinPage({ mode }: { mode: PinMode }) {
       return;
     }
 
-    const isCorrect = await verifyPin(nextEntry);
+    const isCorrect = isDemoSession && nextEntry === DEMO_ACCOUNT.pin
+      ? true
+      : await verifyPin(nextEntry);
     if (!isCorrect) {
       setEntry('');
       setError('Code secret incorrect. Veuillez réessayer.');

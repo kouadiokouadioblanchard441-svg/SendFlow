@@ -3,7 +3,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
-import { validateSignIn, type SignInField } from '@/lib/auth-validation';
+import { normalizePhone, validateSignIn, type SignInField } from '@/lib/auth-validation';
+import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
 import { hasPin } from '@/lib/pin-storage';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -53,6 +54,18 @@ export default function SigninPage() {
     event.preventDefault();
     setSubmitAttempted(true);
     if (!canSubmit) return;
+
+    const isDemoAccount =
+      normalizePhone(form.phone) === DEMO_ACCOUNT.phone &&
+      form.password === DEMO_ACCOUNT.password;
+
+    if (isDemoAccount) {
+      window.sessionStorage.setItem(DEMO_SESSION_KEY, 'true');
+      setLocation('/pin');
+      return;
+    }
+
+    window.sessionStorage.removeItem(DEMO_SESSION_KEY);
     setLocation(hasPin() ? '/pin' : '/create-pin');
   };
 

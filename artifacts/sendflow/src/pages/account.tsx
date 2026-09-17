@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
+import { DEMO_SESSION_KEY } from '@/lib/demo-account';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import profileMariam from '@assets/generated_images/sendflow-profile-mariam.png';
 
@@ -216,7 +217,7 @@ export default function AccountPage() {
               <button type="button" onClick={() => openSheet('history')} data-testid="button-menu-history"><Clock3 size={19} />Historique<ChevronRight size={17} /></button>
               <button type="button" onClick={() => openSheet('plus')} data-testid="button-menu-services"><Grid2X2 size={19} />Services SendFlow<ChevronRight size={17} /></button>
             </div>
-            <div className="sendflow-menu-footer"><button type="button" onClick={() => openSheet('notifications')} data-testid="button-menu-help"><HelpCircle size={19} />Besoin d’aide<ChevronRight size={17} /></button><button type="button" onClick={() => { window.sessionStorage.removeItem('sendflow.pin.unlocked'); setLocation('/sign-in'); }} data-testid="button-menu-logout"><span className="sendflow-menu-logout-icon">↗</span>Se déconnecter</button></div>
+             <div className="sendflow-menu-footer"><button type="button" onClick={() => openSheet('notifications')} data-testid="button-menu-help"><HelpCircle size={19} />Besoin d’aide<ChevronRight size={17} /></button><button type="button" onClick={() => { window.sessionStorage.removeItem('sendflow.pin.unlocked'); window.sessionStorage.removeItem(DEMO_SESSION_KEY); setLocation('/sign-in'); }} data-testid="button-menu-logout"><span className="sendflow-menu-logout-icon">↗</span>Se déconnecter</button></div>
           </aside>
         </div>
       )}
