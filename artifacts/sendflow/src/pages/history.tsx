@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
-import { Redirect, useLocation } from 'wouter';
+import { ArrowLeft, CircleHelp, History, House, Search } from 'lucide-react';
+import { Link, Redirect, useLocation } from 'wouter';
 import { TransactionCard } from '@/components/transaction-card';
 import { transactions } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
@@ -33,6 +33,15 @@ export default function HistoryPage() {
 
   return (
     <main className="sendflow-history-shell">
+      <header className="sendflow-history-header">
+        <div className="sendflow-history-header-inner">
+          <button type="button" className="sendflow-history-back" onClick={() => setLocation('/account')} aria-label="Retour au compte" data-testid="button-history-back">
+            <ArrowLeft size={26} strokeWidth={2} />
+          </button>
+          <h1>Transactions</h1>
+        </div>
+      </header>
+
       <section className="sendflow-history-page" aria-labelledby="history-title">
         <label className="sendflow-history-search">
           <Search size={28} strokeWidth={2.1} aria-hidden="true" />
@@ -62,6 +71,21 @@ export default function HistoryPage() {
           )}
         </div>
       </section>
+
+      <nav className="sendflow-history-bottom-nav" aria-label="Navigation des transactions">
+        <Link href="/account" className="sendflow-history-bottom-link" data-testid="link-history-home">
+          <House size={23} strokeWidth={2} />
+          <span>Accueil</span>
+        </Link>
+        <Link href="/history" className="sendflow-history-bottom-link is-active" aria-current="page" data-testid="link-history-transactions">
+          <History size={24} strokeWidth={2} />
+          <span>Transactions</span>
+        </Link>
+        <button type="button" className="sendflow-history-bottom-link" data-testid="button-history-support">
+          <CircleHelp size={23} strokeWidth={2} />
+          <span>Service client</span>
+        </button>
+      </nav>
     </main>
   );
 }
