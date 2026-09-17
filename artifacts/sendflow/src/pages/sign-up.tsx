@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { validateSignUp, type SignUpField } from '@/lib/auth-validation';
@@ -74,6 +74,7 @@ function PasswordField({
 }
 
 export default function SignupPage() {
+  const [, setLocation] = useLocation();
   const [form, setForm] = useState<SignUpForm>(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -108,7 +109,8 @@ export default function SignupPage() {
     event.preventDefault();
     setSubmitAttempted(true);
     if (!canSubmit) return;
-    setSubmitted(true);
+    window.sessionStorage.setItem('sendflow.pending-signup', 'true');
+    setLocation('/create-pin');
   };
 
   return (
@@ -210,11 +212,7 @@ export default function SignupPage() {
               Créer
             </button>
 
-            {submitted && (
-              <p className="sendflow-signup-feedback" role="status">
-                Votre formulaire est prêt. La création de compte sera activée avec le parcours d’authentification SendFlow.
-              </p>
-            )}
+            {submitted && <p className="sendflow-signup-feedback" role="status">Création de votre compte…</p>}
           </form>
 
           <p className="sendflow-signup-login">

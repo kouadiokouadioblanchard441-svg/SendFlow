@@ -538,3 +538,240 @@
   .sendflow-signup-country { flex-basis: 76px; padding-inline: 8px; }
   .sendflow-signup-terms { margin-left: 8px; }
 }
+
+.sendflow-pin-shell {
+  min-height: 100dvh;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  border-top: 3px solid #1295a5;
+  background: #f1f8fa;
+  padding: 22px 24px 24px;
+}
+
+.sendflow-pin-card {
+  position: relative;
+  display: flex;
+  width: min(100%, 444px);
+  min-height: calc(100dvh - 49px);
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #fff;
+  padding: 20px 24px 32px;
+}
+
+.sendflow-pin-back {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 13px;
+  border: 0;
+  background: transparent;
+  color: #11151a;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-size: 18px;
+  letter-spacing: -.01em;
+}
+
+.sendflow-pin-back:focus-visible,
+.sendflow-pin-forgot:focus-visible,
+.sendflow-pin-key:focus-visible,
+.sendflow-account-logout:focus-visible {
+  outline: 3px solid rgba(18, 149, 165, .28);
+  outline-offset: 4px;
+}
+
+.sendflow-pin-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 84px;
+}
+
+.sendflow-pin-mark {
+  display: block;
+  width: 37px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.sendflow-pin-wordmark {
+  display: block;
+  width: 99px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sendflow-pin-heading {
+  margin-top: 64px;
+  text-align: center;
+}
+
+.sendflow-pin-heading h1 {
+  margin: 0;
+  color: #080a0c;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+}
+
+.sendflow-pin-heading p {
+  margin: 5px 0 0;
+  color: #56606a;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.sendflow-pin-dots {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 47px;
+}
+
+.sendflow-pin-dots span {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #d9dce2;
+  transition: background-color .16s ease, transform .16s ease;
+}
+
+.sendflow-pin-dots span.is-filled {
+  background: #1596a6;
+  transform: scale(1.04);
+}
+
+.sendflow-pin-keypad {
+  display: grid;
+  width: min(100%, 288px);
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 126px;
+  row-gap: 13px;
+}
+
+.sendflow-pin-key {
+  display: grid;
+  width: 72px;
+  height: 76px;
+  place-items: center;
+  justify-self: center;
+  border: 0;
+  background: transparent;
+  color: #050505;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform .12s ease, color .12s ease;
+}
+
+.sendflow-pin-key:hover {
+  color: #1596a6;
+}
+
+.sendflow-pin-key:active {
+  transform: scale(.9);
+}
+
+.sendflow-pin-key:disabled {
+  cursor: default;
+}
+
+.sendflow-pin-delete {
+  color: #050505;
+}
+
+.sendflow-pin-delete:hover {
+  color: #050505;
+}
+
+.sendflow-pin-error {
+  min-height: 18px;
+  margin: 8px 0 -4px;
+  color: #b42318;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.sendflow-pin-forgot {
+  margin-top: 39px;
+  border: 0;
+  background: transparent;
+  color: #171717;
+  cursor: pointer;
+  padding: 4px;
+  font: inherit;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sendflow-account-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  border-top: 3px solid #1295a5;
+  background: #f1f8fa;
+  padding: 24px;
+}
+
+.sendflow-account-card {
+  width: min(100%, 444px);
+  border-radius: 14px;
+  background: #fff;
+  padding: 42px 28px;
+  text-align: center;
+}
+
+.sendflow-account-eyebrow {
+  margin: 0 0 20px;
+  color: #1596a6;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sendflow-account-card h1 {
+  margin: 0;
+  color: #080a0c;
+  font-size: 28px;
+  letter-spacing: -.035em;
+}
+
+.sendflow-account-card > p:not(.sendflow-account-eyebrow) {
+  margin: 12px auto 26px;
+  max-width: 310px;
+  color: #56606a;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.sendflow-account-logout {
+  min-height: 48px;
+  border: 0;
+  border-radius: 10px;
+  background: #6d35d8;
+  color: #fff;
+  cursor: pointer;
+  padding: 0 24px;
+  font: inherit;
+  font-weight: 600;
+}
+
+@media (max-width: 380px) {
+  .sendflow-pin-shell { padding-inline: 12px; }
+  .sendflow-pin-card { padding-inline: 16px; }
+  .sendflow-pin-brand { margin-top: 70px; }
+  .sendflow-pin-heading { margin-top: 53px; }
+  .sendflow-pin-keypad { margin-top: 98px; }
+}

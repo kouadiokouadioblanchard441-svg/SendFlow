@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { validateSignIn, type SignInField } from '@/lib/auth-validation';
+import { hasPin } from '@/lib/pin-storage';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -18,6 +19,7 @@ const initialForm: SignInForm = {
 };
 
 export default function SigninPage() {
+  const [, setLocation] = useLocation();
   const [form, setForm] = useState<SignInForm>(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -51,7 +53,7 @@ export default function SigninPage() {
     event.preventDefault();
     setSubmitAttempted(true);
     if (!canSubmit) return;
-    setSubmitted(true);
+    setLocation(hasPin() ? '/pin' : '/create-pin');
   };
 
   return (
@@ -112,11 +114,7 @@ export default function SigninPage() {
               Se connecter
             </button>
 
-            {submitted && (
-              <p className="sendflow-signup-feedback" role="status">
-                Votre formulaire est prêt. La connexion sera activée avec le parcours d’authentification SendFlow.
-              </p>
-            )}
+            {submitted && <p className="sendflow-signup-feedback" role="status">Connexion en cours…</p>}
           </form>
 
           <p className="sendflow-signup-login">

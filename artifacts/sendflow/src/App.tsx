@@ -5,6 +5,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '@/pages/legal';
 import NotFound from '@/pages/not-found';
+import AccountPage from '@/pages/account';
+import PinPage from '@/pages/pin';
 import SigninPage from '@/pages/sign-in';
 import SignupPage from '@/pages/sign-up';
 import { useSeo } from '@/lib/seo';
@@ -54,6 +56,9 @@ function App() {
             <Route path="/" component={() => <Redirect to="/sign-in" />} />
             <Route path="/sign-in/*?" component={SigninPage} />
             <Route path="/sign-up/*?" component={SignupPage} />
+            <Route path="/create-pin" component={() => <PinPage mode="create" />} />
+            <Route path="/pin" component={() => <PinPage mode="enter" />} />
+            <Route path="/account" component={AccountPage} />
             <Route
               path="/conditions-utilisation"
               component={() => (
