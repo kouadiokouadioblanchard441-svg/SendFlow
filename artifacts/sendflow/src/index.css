@@ -1028,7 +1028,7 @@
   position: relative;
   display: flex;
   width: 50%;
-  min-height: 154px;
+  min-height: 220px;
   flex: 0 0 50%;
   align-items: flex-end;
   overflow: hidden;
@@ -1036,7 +1036,7 @@
   background: #302061;
   color: #fff;
   cursor: pointer;
-  padding: 19px;
+  padding: 24px;
   text-align: left;
 }
 
@@ -1055,11 +1055,11 @@
 
 .sendflow-promo-orbit {
   position: absolute;
-  top: 20px;
-  right: 27px;
+  top: 28px;
+  right: 34px;
   display: grid;
-  width: 82px;
-  height: 82px;
+  width: 112px;
+  height: 112px;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, .45);
   border-radius: 50%;
@@ -1068,24 +1068,24 @@
 
 .sendflow-promo-orbit::before {
   position: absolute;
-  width: 116px;
-  height: 43px;
+  width: 154px;
+  height: 57px;
   border: 1px solid rgba(255, 255, 255, .58);
   border-radius: 50%;
   content: "";
 }
 
-.sendflow-promo-orbit span { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #f4c95d; }
-.sendflow-promo-orbit span:nth-child(1) { top: 7px; right: 12px; }
-.sendflow-promo-orbit span:nth-child(2) { bottom: 12px; left: 12px; background: #fff; }
-.sendflow-promo-orbit span:nth-child(3) { top: 35px; left: 35px; width: 16px; height: 16px; background: #a88af0; }
+.sendflow-promo-orbit span { position: absolute; width: 13px; height: 13px; border-radius: 50%; background: #f4c95d; }
+.sendflow-promo-orbit span:nth-child(1) { top: 9px; right: 15px; }
+.sendflow-promo-orbit span:nth-child(2) { bottom: 15px; left: 15px; background: #fff; }
+.sendflow-promo-orbit span:nth-child(3) { top: 48px; left: 48px; width: 21px; height: 21px; background: #a88af0; }
 
 .sendflow-promo-copy,
 .sendflow-promo-cta { position: relative; z-index: 1; }
-.sendflow-promo-copy { display: flex; max-width: 63%; flex-direction: column; gap: 7px; }
-.sendflow-promo-copy strong { font-size: 23px; letter-spacing: -.05em; line-height: .98; }
-.sendflow-promo-copy small { color: rgba(255, 255, 255, .78); font-size: 11px; line-height: 1.35; }
-.sendflow-promo-cta { display: inline-flex; align-items: center; gap: 2px; align-self: flex-end; margin: 0 0 1px auto; color: #f8d66e; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.sendflow-promo-copy { display: flex; max-width: 67%; flex-direction: column; gap: 10px; }
+.sendflow-promo-copy strong { font-size: 29px; letter-spacing: -.05em; line-height: .98; }
+.sendflow-promo-copy small { color: rgba(255, 255, 255, .78); font-size: 13px; line-height: 1.4; }
+.sendflow-promo-cta { display: inline-flex; align-items: center; gap: 2px; align-self: flex-end; margin: 0 0 1px auto; color: #f8d66e; font-size: 13px; font-weight: 800; white-space: nowrap; }
 
 .sendflow-transactions { margin-top: 29px; }
 .sendflow-section-heading h2 { margin: 4px 0 0; color: #2c2539; font-size: 21px; font-weight: 800; letter-spacing: -.045em; }
@@ -1196,7 +1196,7 @@
   .sendflow-dashboard { width: min(100%, 1120px); margin: 0 auto; box-shadow: 0 0 0 1px rgba(60, 40, 92, .04), 0 15px 45px rgba(50, 34, 73, .08); }
   .sendflow-dashboard-content { padding-inline: 38px; }
   .sendflow-action-tile { min-height: 145px; }
-  .sendflow-promo-card { min-height: 178px; }
+  .sendflow-promo-card { min-height: 240px; }
   .sendflow-transaction-list { grid-template-columns: 1fr; }
   .sendflow-action-sheet { width: min(100%, 560px); border-radius: 25px; margin-bottom: 24px; }
 }
