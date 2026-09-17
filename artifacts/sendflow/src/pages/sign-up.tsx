@@ -52,7 +52,7 @@ function PasswordField({
         onClick={onToggle}
         aria-label={show ? `Masquer ${label.toLowerCase()}` : `Afficher ${label.toLowerCase()}`}
       >
-        {show ? <EyeOff size={22} strokeWidth={1.65} /> : <Eye size={22} strokeWidth={1.65} />}
+        {show ? <Eye size={22} strokeWidth={1.65} /> : <EyeOff size={22} strokeWidth={1.65} />}
       </button>
     </label>
   );

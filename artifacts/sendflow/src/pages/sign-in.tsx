@@ -78,7 +78,7 @@ export default function SigninPage() {
                 onClick={() => setShowPassword((current) => !current)}
                 aria-label={showPassword ? 'Masquer le code secret' : 'Afficher le code secret'}
               >
-                {showPassword ? <EyeOff size={22} strokeWidth={1.65} /> : <Eye size={22} strokeWidth={1.65} />}
+                {showPassword ? <Eye size={22} strokeWidth={1.65} /> : <EyeOff size={22} strokeWidth={1.65} />}
               </button>
             </label>
 

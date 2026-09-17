@@ -1924,28 +1924,28 @@ section#faq .reveal.space-y-2 > div {
   align-items: flex-start;
   justify-content: center;
   background: #f8f5ff;
-  padding: 56px 20px 20px;
+  padding: 65px 22px 23px;
 }
 .sendflow-signup-card {
   width: min(100%, 650px);
-  min-height: calc(100dvh - 76px);
+  min-height: calc(100dvh - 105px);
   overflow: hidden;
   border-radius: 14px;
   background: #fff;
 }
 .sendflow-signup-content {
   display: flex;
-  min-height: calc(100dvh - 76px);
+  min-height: calc(100dvh - 105px);
   flex-direction: column;
   align-items: stretch;
-  padding: 132px 20px 110px;
+  padding: 154px 20px 110px;
 }
 .sendflow-signup-brand {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 6px;
   width: fit-content;
   margin: 0 auto;
   border-radius: 999px;
@@ -1953,18 +1953,18 @@ section#faq .reveal.space-y-2 > div {
 }
 .sendflow-signup-mark {
   display: block;
-  width: 58px;
-  height: 70px;
+  width: 30px;
+  height: 38px;
   object-fit: contain;
 }
 .sendflow-signup-wordmark {
   display: block;
-  width: 126px;
+  width: 82px;
   height: auto;
   object-fit: contain;
 }
 .sendflow-signup-heading {
-  margin-top: 91px;
+  margin-top: 58px;
   text-align: center;
 }
 .sendflow-signup-heading h1 {
@@ -1985,7 +1985,7 @@ section#faq .reveal.space-y-2 > div {
   display: flex;
   flex-direction: column;
   gap: 23px;
-  margin-top: 42px;
+  margin-top: 14px;
 }
 .sendflow-signup-field,
 .sendflow-signup-phone {
@@ -2146,7 +2146,7 @@ section#faq .reveal.space-y-2 > div {
   text-align: center;
 }
 .sendflow-signup-login {
-  margin: 44px 0 0;
+  margin: 28px 0 0;
   color: #5e646b;
   font-size: 16px;
   line-height: 1.4;
