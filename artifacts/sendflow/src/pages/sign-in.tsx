@@ -110,6 +110,10 @@ export default function SigninPage() {
               )}
             </div>
 
+            <Link href="/forgot-password" className="sendflow-signup-forgot">
+              Mot de passe oublié ?
+            </Link>
+
             <button type="submit" className="sendflow-signup-submit" disabled={!canSubmit}>
               Se connecter
             </button>

@@ -130,10 +130,19 @@ type CountryPhoneFieldProps = {
   onChange: (value: string) => void;
   error?: string;
   onBlur?: () => void;
+  defaultCountryName?: string;
 };
 
-export function CountryPhoneField({ value, onChange, error, onBlur }: CountryPhoneFieldProps) {
-  const [selectedCountry, setSelectedCountry] = useState(defaultCountry);
+export function CountryPhoneField({
+  value,
+  onChange,
+  error,
+  onBlur,
+  defaultCountryName,
+}: CountryPhoneFieldProps) {
+  const [selectedCountry, setSelectedCountry] = useState(
+    () => countries.find((country) => country.name === defaultCountryName) ?? defaultCountry,
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);

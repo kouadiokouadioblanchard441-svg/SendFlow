@@ -189,8 +189,8 @@ export default function PinPage({ mode }: { mode: PinMode }) {
 
         {error && <p className="sendflow-pin-error" role="alert">{error}</p>}
 
-        <button type="button" className="sendflow-pin-forgot" onClick={() => setLocation('/sign-in')}>
-          J’ai oublié mon code secret
+        <button type="button" className="sendflow-pin-forgot" onClick={() => setLocation('/forgot-pin')}>
+          J’ai oublié mon code PIN
         </button>
       </section>
     </main>
