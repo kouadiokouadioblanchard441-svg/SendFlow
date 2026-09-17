@@ -152,7 +152,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
         {step === 'phone' && (
           <>
             <header className="sendflow-reset-heading">
-              <h1 id="reset-title">{isPassword ? 'Mot de passe oublié ?' : 'Code secret oublié ?'} 🥹</h1>
+              <h1 id="reset-title">{isPassword ? 'Mot de passe oublié ? 😭' : 'Code secret oublié ? 🥹'}</h1>
               <p>
                 Nous sommes là pour vous aider ! Veuillez entrer le numéro de téléphone associé à votre compte.
               </p>
