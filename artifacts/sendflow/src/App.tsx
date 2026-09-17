@@ -888,7 +888,7 @@ function LandingPage() {
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <button onClick={() => setLanguage(isFrench ? 'en' : 'fr')} className="flex items-center gap-1 rounded-full px-2 py-2 text-[12px] font-semibold text-[#5e5766] hover:text-[#6d35d8]" data-testid="button-language">{isFrench ? 'EN' : 'FR'} <Globe2 size={14} /></button>
-             <Link href="/sign-up" onClick={() => setMobileOpen(false)} className="rounded-full border-2 border-[#8b62e5] px-4 py-2.5 text-[12px] font-semibold !text-[#6d35d8] transition-transform hover:-translate-y-0.5 hover:bg-[#f4f0ff]" data-testid="button-nav-sign-up">{isFrench ? 'Créer un compte' : 'Create an account'}</Link>
+             <Link href="/sign-up" onClick={() => setMobileOpen(false)} className="sendflow-sign-up-link rounded-full px-4 py-2.5 text-[12px] font-semibold transition-transform hover:-translate-y-0.5" data-testid="button-nav-sign-up">{isFrench ? 'Créer un compte' : 'Create an account'}</Link>
              <Link href="/download" onClick={() => setMobileOpen(false)} className="rounded-full bg-[#211d2c] px-4 py-2.5 text-[12px] font-semibold !text-white transition-transform hover:-translate-y-0.5" data-testid="button-nav-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-1 inline" size={14} /></Link>
           </div>
           <button type="button" onClick={downloadBrief} className="hidden items-center gap-1 rounded-full px-2 py-2 text-[11px] font-semibold text-[#6d35d8] lg:flex" data-testid="button-download-brief">{isFrench ? 'Brief' : 'Brief'} <ArrowDownRight size={13} /></button>
@@ -906,7 +906,7 @@ function LandingPage() {
             {publicNavItems.map((item) => <a key={item.id} href={publicNavHref(item.id)} onClick={() => setMobileOpen(false)} className="flex items-center border-b border-[#2d2535]/10 pb-4 text-left text-2xl font-semibold tracking-[-.04em]" data-testid={`link-mobile-${item.id}`}>{t(item.label, language)}</a>)}
           </div>
           <button onClick={() => { setLanguage(isFrench ? 'en' : 'fr'); setMobileOpen(false); }} className="mt-12 flex items-center gap-2 text-sm font-semibold text-[#6d35d8]" data-testid="button-mobile-language"><span aria-hidden="true">{isFrench ? '🇬🇧' : '🇫🇷'}</span> {isFrench ? 'Passer en anglais' : 'Switch to French'}</button>
-             <Link href="/sign-up" onClick={() => setMobileOpen(false)} className="mt-5 block w-full rounded-full border-2 border-[#8b62e5] px-5 py-4 text-center text-sm font-semibold !text-[#6d35d8]" data-testid="button-mobile-sign-up">{isFrench ? 'Créer un compte' : 'Create an account'}</Link>
+             <Link href="/sign-up" onClick={() => setMobileOpen(false)} className="sendflow-sign-up-link mt-5 block w-full rounded-full px-5 py-4 text-center text-sm font-semibold" data-testid="button-mobile-sign-up">{isFrench ? 'Créer un compte' : 'Create an account'}</Link>
              <Link href="/download" onClick={() => setMobileOpen(false)} className="mt-3 block w-full rounded-full bg-[#6d35d8] px-5 py-4 text-center text-sm font-semibold !text-white" data-testid="button-mobile-download">{t(contentCopy(landingBundle?.content, 'cta.download', { fr: 'Télécharger l’application', en: 'Download the app' }), language)} <ArrowRight className="ml-2 inline" size={16} /></Link>
         </div>
       </div>}

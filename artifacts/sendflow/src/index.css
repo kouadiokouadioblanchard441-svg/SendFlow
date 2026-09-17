@@ -205,6 +205,18 @@ button[data-testid="button-submit-email"] {
   color: #ffffff !important;
 }
 
+.sendflow-sign-up-link {
+  border: 2px solid #6d35d8 !important;
+  background-color: #6d35d8 !important;
+  color: #ffffff !important;
+}
+
+.sendflow-sign-up-link:hover {
+  border-color: #5822c3 !important;
+  background-color: #5822c3 !important;
+  color: #ffffff !important;
+}
+
 .hero-globe-spin {
   animation: hero-globe-spin 22s linear infinite;
   transform-origin: center;
