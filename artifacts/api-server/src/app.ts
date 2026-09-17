@@ -18,9 +18,7 @@ app.use(
         return {
           id: req.id,
           method: req.method,
-          url: path.startsWith("/api/admin/auth/panel/")
-            ? "/api/admin/auth/panel/[redacted]"
-            : path,
+          url: path,
         };
       },
       res(res) {

@@ -1,5 +1,4 @@
 import path from 'path';
-import type { IncomingMessage, ServerResponse } from 'node:http';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -16,59 +15,12 @@ if (Number.isNaN(port) || port <= 0) {
 
 const basePath = process.env.BASE_PATH ?? '/';
 
-const isLegacyAdminPath = (requestUrl = '') => {
-  const requestPath = requestUrl.split('?')[0].replace(/\/+$/, '') || '/';
-  const normalizedBasePath = basePath.replace(/\/+$/, '');
-  return (
-    requestPath === '/admin' ||
-    requestPath.startsWith('/admin/') ||
-    requestPath === `${normalizedBasePath}/admin` ||
-    requestPath.startsWith(`${normalizedBasePath}/admin/`)
-  );
-};
-
-type ViteMiddleware = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  next: () => void,
-) => void;
-
-const blockLegacyAdminPath = () => ({
-  name: 'sendflow-block-legacy-admin-path',
-  enforce: 'pre' as const,
-  configureServer(server: { middlewares: { use: (handler: ViteMiddleware) => void } }) {
-    server.middlewares.use((req, res, next) => {
-      if (!isLegacyAdminPath(req.url)) {
-        next();
-        return;
-      }
-      const homePath = basePath.replace(/\/+$/, '') || '/';
-      res.statusCode = 302;
-      res.setHeader('Location', homePath);
-      res.end();
-    });
-  },
-  configurePreviewServer(server: { middlewares: { use: (handler: ViteMiddleware) => void } }) {
-    server.middlewares.use((req, res, next) => {
-      if (!isLegacyAdminPath(req.url)) {
-        next();
-        return;
-      }
-      const homePath = basePath.replace(/\/+$/, '') || '/';
-      res.statusCode = 302;
-      res.setHeader('Location', homePath);
-      res.end();
-    });
-  },
-});
-
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),
-    blockLegacyAdminPath(),
     ...(process.env.NODE_ENV !== 'production' &&
     process.env.REPL_ID !== undefined
       ? [
