@@ -929,10 +929,11 @@
   gap: 0;
   margin-top: 22px;
   overflow: hidden;
-  border: 1px solid #e8e3ee;
-  border-radius: 17px;
+  border: 1px solid rgba(226, 220, 237, .9);
+  border-radius: 27px;
   background: #fff;
-  box-shadow: 0 4px 10px rgba(51, 38, 74, .055);
+  box-shadow: 0 12px 26px rgba(51, 38, 74, .1);
+  padding: 8px 4px;
 }
 
 .sendflow-action-tile {
