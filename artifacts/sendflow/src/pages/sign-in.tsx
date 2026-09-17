@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link } from 'wouter';
 import { useSeo } from '@/lib/seo';
+import { CountryPhoneField } from '@/components/country-phone-field';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -59,22 +60,7 @@ export default function SigninPage() {
           </header>
 
           <form className="sendflow-signup-form" onSubmit={handleSubmit}>
-            <label className="sendflow-signup-phone">
-              <span className="sendflow-signup-country">
-                <span aria-hidden="true">🇧🇯</span>
-                <span>+229</span>
-              </span>
-              <span className="sr-only">Numéro de téléphone</span>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(event) => update('phone', event.target.value.replace(/[^\d\s()-]/g, ''))}
-                placeholder="Numéro de téléphone"
-                autoComplete="tel"
-                inputMode="tel"
-                required
-              />
-            </label>
+            <CountryPhoneField value={form.phone} onChange={(value) => update('phone', value)} />
 
             <label className="sendflow-signup-field">
               <span className="sr-only">Code secret</span>
