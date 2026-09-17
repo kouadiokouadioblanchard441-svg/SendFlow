@@ -1138,8 +1138,9 @@
 .sendflow-side-menu-top,
 .sendflow-sheet-header { display: flex; align-items: flex-start; justify-content: space-between; }
 .sendflow-side-menu-top { min-height: 44px; align-items: center; padding: 0 2px 3px; }
-.sendflow-side-brand { display: flex; align-items: center; gap: 8px; color: #33205e; font-size: 20px; font-weight: 800; letter-spacing: -.05em; }
+.sendflow-side-brand { display: flex; align-items: center; gap: 8px; color: #33205e; }
 .sendflow-side-brand img { width: 27px; height: 31px; object-fit: contain; }
+.sendflow-side-brand .sendflow-side-wordmark { width: 103px; height: 22px; object-fit: contain; }
 .sendflow-close-button { width: 36px; height: 36px; background: #f3eff9; color: #5c32b3; }
 .sendflow-menu-profile { display: flex; align-items: center; gap: 11px; margin-top: 22px; border: 1px solid #eee9f7; border-radius: 18px; background: #f8f5fd; padding: 13px; }
 .sendflow-menu-profile .sendflow-profile-avatar { width: 42px; height: 42px; border-width: 2px; font-size: 12px; }

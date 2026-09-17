@@ -19,6 +19,7 @@ import { operatorNames, transactions } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
 import { DEMO_SESSION_KEY } from '@/lib/demo-account';
 import sendflowMark from '@assets/sendflow-mark-original.png';
+import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 import profileMariam from '@assets/generated_images/sendflow-profile-mariam.png';
 
 type SheetName = 'inter' | 'international' | 'plus' | 'call-credit' | 'notifications' | 'transaction' | null;
@@ -170,7 +171,7 @@ export default function AccountPage() {
           <button type="button" className="sendflow-panel-backdrop" onClick={closePanels} aria-label="Fermer le menu" data-testid="button-close-menu-backdrop" />
           <aside className="sendflow-side-menu" aria-label="Menu SendFlow">
             <div className="sendflow-side-menu-top">
-              <div className="sendflow-side-brand"><img src={sendflowMark} alt="" /><span>SendFlow</span></div>
+              <div className="sendflow-side-brand"><img src={sendflowMark} alt="" /><img className="sendflow-side-wordmark" src={sendflowWordmark} alt="SendFlow" /></div>
               <button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer le menu" data-testid="button-close-menu"><X size={20} /></button>
             </div>
              <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileMariam} alt="" /><span><strong>Mariam A.</strong><small>Compte personnel</small></span></div>
