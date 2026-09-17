@@ -123,7 +123,7 @@ const countries: CountryOption[] = [
   ...countryCatalog.filter((country) => !featuredAfricanCountryNames.includes(country.name)),
 ];
 
-const defaultCountry = countries.find((country) => country.dialCode === '+229') ?? countries[0];
+const defaultCountry = countries.find((country) => country.name === 'Côte d’Ivoire') ?? countries[0];
 
 type CountryPhoneFieldProps = {
   value: string;
