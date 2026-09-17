@@ -66,7 +66,7 @@ export default function SigninPage() {
           </Link>
 
           <header className="sendflow-signup-heading">
-            <h1 id="signin-title">Bon retour sur SendFlow</h1>
+            <h1 id="signin-title">😏 Bon retour sur SendFlow</h1>
             <p>Connectez-vous à votre compte</p>
           </header>
 

@@ -123,7 +123,7 @@ export default function SignupPage() {
           </Link>
 
           <header className="sendflow-signup-heading">
-            <h1 id="signup-title">Bienvenue sur SendFlow</h1>
+            <h1 id="signup-title">😏 Bienvenue sur SendFlow</h1>
             <p>Créons votre compte</p>
           </header>
 
