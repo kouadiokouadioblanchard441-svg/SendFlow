@@ -127,9 +127,6 @@ export default function AccountPage() {
           </nav>
 
           <section className="sendflow-promo-section" aria-label="Offres SendFlow">
-            <div className="sendflow-promo-heading">
-              <span>À la une</span>
-            </div>
             <div className="sendflow-promo-viewport">
               <div className="sendflow-promo-track">
                 {[0, 1].map((copy) => (

@@ -1012,7 +1012,7 @@
 
 .sendflow-promo-viewport {
   overflow: hidden;
-  margin-top: 10px;
+  margin-top: 0;
   border-radius: 19px;
 }
 
@@ -1028,7 +1028,7 @@
   position: relative;
   display: flex;
   width: 50%;
-  min-height: 220px;
+  min-height: 250px;
   flex: 0 0 50%;
   align-items: flex-end;
   overflow: hidden;
@@ -1196,7 +1196,7 @@
   .sendflow-dashboard { width: min(100%, 1120px); margin: 0 auto; box-shadow: 0 0 0 1px rgba(60, 40, 92, .04), 0 15px 45px rgba(50, 34, 73, .08); }
   .sendflow-dashboard-content { padding-inline: 38px; }
   .sendflow-action-tile { min-height: 145px; }
-  .sendflow-promo-card { min-height: 240px; }
+  .sendflow-promo-card { min-height: 270px; }
   .sendflow-transaction-list { grid-template-columns: 1fr; }
   .sendflow-action-sheet { width: min(100%, 560px); border-radius: 25px; margin-bottom: 24px; }
 }
