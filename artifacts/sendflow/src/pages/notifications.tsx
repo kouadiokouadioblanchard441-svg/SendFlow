@@ -12,13 +12,23 @@ const operatorLogos: Partial<Record<SendFlowNotification['operator'], string>> =
   wave: waveLogo,
 };
 
+const operatorWordmarks: Partial<Record<SendFlowNotification['operator'], string>> = {
+  tmoney: 'TMoney',
+  moov: 'Moov',
+};
+
 function NotificationOperatorIcon({ notification }: { notification: SendFlowNotification }) {
   const logo = operatorLogos[notification.operator];
   const operatorName = operatorNames[notification.operator];
+  const wordmark = operatorWordmarks[notification.operator] ?? operatorName;
 
   return (
-    <span className={`sendflow-notification-operator is-${notification.operator}`} aria-label={`Opérateur : ${operatorName}`}>
-      {logo ? <img src={logo} alt="" /> : <strong>{notification.operator === 'tmoney' ? 'T' : 'M'}</strong>}
+    <span
+      className={`sendflow-notification-operator is-${notification.operator}`}
+      role="img"
+      aria-label={`Opérateur : ${operatorName}`}
+    >
+      {logo ? <img src={logo} alt="" /> : <strong aria-hidden="true">{wordmark}</strong>}
     </span>
   );
 }

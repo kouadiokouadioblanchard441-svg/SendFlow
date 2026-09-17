@@ -1208,8 +1208,8 @@
 .sendflow-notification-operator { display: grid; width: 52px; height: 52px; place-items: center; border: 2px solid #ebe5f4; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(55, 36, 91, .1); }
 .sendflow-notification-operator img { display: block; width: 43px; height: 43px; border-radius: 50%; object-fit: contain; }
 .sendflow-notification-operator strong { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; font-size: 11px; font-weight: 800; line-height: 1; }
-.sendflow-notification-operator.is-tmoney strong { background: #f7c31e; color: #ab1822; }
-.sendflow-notification-operator.is-moov strong { background: #ef8124; color: #fff; }
+.sendflow-notification-operator.is-tmoney strong { background: #f7c31e; color: #ab1822; font-size: 10px; letter-spacing: -.04em; }
+.sendflow-notification-operator.is-moov strong { background: #ef8124; color: #fff; font-size: 11px; letter-spacing: -.03em; }
 .sendflow-notification-copy { display: flex; min-width: 0; flex-direction: column; gap: 7px; }
 .sendflow-notification-copy strong { color: #332b40; font-size: 16px; font-weight: 500; letter-spacing: -.015em; line-height: 1.15; }
 .sendflow-notification-copy small { color: #766b87; font-size: 14px; font-weight: 500; line-height: 1.1; }
