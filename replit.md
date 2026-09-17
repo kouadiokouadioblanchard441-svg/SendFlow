@@ -1,6 +1,6 @@
-# [Project name]
+# SendFlow
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+SendFlow est une application de transfert et de gestion de flux destinée aux utilisateurs de la région ouest-africaine.
 
 ## Run & Operate
 
@@ -26,11 +26,12 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Les parcours d’inscription et de connexion sont conçus comme la porte d’entrée de l’application, pas comme des pages autonomes de vitrine.
+- La page vitrine actuelle est transitoire et sera supprimée lorsque le produit applicatif sera prêt.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+SendFlow doit devenir une application accessible après authentification. Les écrans publics actuels servent uniquement de transition pendant le développement ; les prochaines fonctionnalités doivent prioritairement renforcer le produit connecté et ses parcours d’accès.
 
 ## User preferences
 
