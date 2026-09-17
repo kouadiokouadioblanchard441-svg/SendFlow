@@ -885,8 +885,8 @@
 
 .sendflow-profile-avatar {
   display: grid;
-   width: 76px;
-   height: 76px;
+   width: 120px;
+   height: 120px;
   place-items: center;
   border: 4px solid #fff;
   border-radius: 50%;
@@ -898,7 +898,7 @@
   object-fit: cover;
 }
 
-.sendflow-dashboard-welcome .sendflow-profile-avatar { margin-bottom: 10px; }
+.sendflow-dashboard-welcome .sendflow-profile-avatar { margin-bottom: 14px; }
 .sendflow-dashboard-kicker,
 .sendflow-section-kicker {
   margin: 0;
