@@ -146,7 +146,6 @@ export default function AccountPage() {
           <section className="sendflow-transactions" id="transactions" aria-labelledby="transactions-title">
             <div className="sendflow-section-heading">
               <div>
-                <p className="sendflow-section-kicker">Votre activité</p>
                 <h2 id="transactions-title">Transactions récentes</h2>
               </div>
               <button type="button" className="sendflow-see-all" onClick={openHistory} data-testid="button-view-all-transactions">Voir tout <ChevronRight size={18} /></button>
