@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  ArrowLeft,
   Bell,
   Check,
   Clipboard,
@@ -52,10 +53,21 @@ export default function InterNetworkTransferPage() {
     <main className="sendflow-transfer-shell">
       <header className="sendflow-transfer-header">
         <div className="sendflow-transfer-header-inner">
-          <Link href="/account" className="sendflow-transfer-brand" aria-label="Retour au compte">
-            <img src={sendflowMark} alt="" />
-            <strong>SendFlow</strong>
-          </Link>
+          <div className="sendflow-transfer-header-leading">
+            <button
+              type="button"
+              className="sendflow-transfer-header-button"
+              onClick={() => setLocation('/account')}
+              aria-label="Retour au dashboard"
+              data-testid="button-transfer-back-dashboard"
+            >
+              <ArrowLeft size={22} strokeWidth={2.1} />
+            </button>
+            <Link href="/account" className="sendflow-transfer-brand" aria-label="Retour au compte">
+              <img src={sendflowMark} alt="" />
+              <strong>SendFlow</strong>
+            </Link>
+          </div>
           <div className="sendflow-transfer-header-actions">
             <button
               type="button"
