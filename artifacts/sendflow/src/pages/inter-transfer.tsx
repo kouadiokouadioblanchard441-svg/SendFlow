@@ -14,7 +14,7 @@ import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
-type CountryCode = 'ci' | 'bf';
+type CountryCode = 'ci';
 type TransferSide = 'source' | 'destination';
 type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov' | 'telecel';
 
@@ -29,11 +29,6 @@ type TransferOperator = {
   requiresOtp: boolean;
   otpCommand?: string;
 };
-
-const countryOptions: Array<{ code: CountryCode; label: string; flag: string }> = [
-  { code: 'ci', label: 'Côte d’Ivoire', flag: '🇨🇮' },
-  { code: 'bf', label: 'Burkina Faso', flag: '🇧🇫' },
-];
 
 const operatorsByCountry: Record<CountryCode, TransferOperator[]> = {
   ci: [
@@ -79,38 +74,6 @@ const operatorsByCountry: Record<CountryCode, TransferOperator[]> = {
       requiresOtp: false,
     },
   ],
-  bf: [
-    {
-      id: 'orange-bf',
-      name: 'Orange Money',
-      shortName: 'Orange',
-      brand: 'orange',
-      country: 'bf',
-      prefix: '+226',
-      flag: '🇧🇫',
-      requiresOtp: true,
-    },
-    {
-      id: 'moov-bf',
-      name: 'Moov Money',
-      shortName: 'Moov',
-      brand: 'moov',
-      country: 'bf',
-      prefix: '+226',
-      flag: '🇧🇫',
-      requiresOtp: false,
-    },
-    {
-      id: 'telecel-bf',
-      name: 'Telecel Money',
-      shortName: 'Telecel',
-      brand: 'telecel',
-      country: 'bf',
-      prefix: '+226',
-      flag: '🇧🇫',
-      requiresOtp: false,
-    },
-  ],
 };
 
 const initialSourceOperator = operatorsByCountry.ci[0];
@@ -146,7 +109,6 @@ export default function InterNetworkTransferPage() {
   const [sourceOperator, setSourceOperator] = useState(initialSourceOperator);
   const [destinationOperator, setDestinationOperator] = useState(initialDestinationOperator);
   const [operatorPicker, setOperatorPicker] = useState<TransferSide | null>(null);
-  const [operatorCountry, setOperatorCountry] = useState<CountryCode>('ci');
 
   useSeo({
     path: '/inter-transfer',
@@ -166,7 +128,6 @@ export default function InterNetworkTransferPage() {
 
   const openOperatorPicker = (side: TransferSide) => {
     setOperatorPicker(side);
-    setOperatorCountry(side === 'source' ? sourceOperator.country : destinationOperator.country);
   };
 
   const selectOperator = (operator: TransferOperator) => {
@@ -281,7 +242,7 @@ export default function InterNetworkTransferPage() {
                 onChange={(event) => setSourceNumber(event.target.value)}
                 aria-label="Numéro source"
               />
-              <span className="sendflow-transfer-flag" aria-label={sourceOperator.country === 'ci' ? 'Côte d’Ivoire' : 'Burkina Faso'}>
+              <span className="sendflow-transfer-flag" aria-label="Côte d’Ivoire">
                 {sourceOperator.flag}
               </span>
             </div>
@@ -343,7 +304,7 @@ export default function InterNetworkTransferPage() {
                 placeholder="Numéro"
                 aria-label="Numéro du bénéficiaire"
               />
-              <span className="sendflow-transfer-flag" aria-label={destinationOperator.country === 'ci' ? 'Côte d’Ivoire' : 'Burkina Faso'}>
+              <span className="sendflow-transfer-flag" aria-label="Côte d’Ivoire">
                 {destinationOperator.flag}
               </span>
               <ContactRound className="sendflow-transfer-contact" size={27} strokeWidth={1.8} aria-hidden="true" />
@@ -395,24 +356,8 @@ export default function InterNetworkTransferPage() {
                 </button>
               </div>
 
-              <div className="sendflow-transfer-country-tabs" role="tablist" aria-label="Pays">
-                {countryOptions.map((country) => (
-                  <button
-                    type="button"
-                    key={country.code}
-                    className={`sendflow-transfer-country-tab${operatorCountry === country.code ? ' is-selected' : ''}`}
-                    onClick={() => setOperatorCountry(country.code)}
-                    role="tab"
-                    aria-selected={operatorCountry === country.code}
-                  >
-                    <span>{country.flag}</span>
-                    {country.label}
-                  </button>
-                ))}
-              </div>
-
               <div className="sendflow-transfer-operator-list">
-                {operatorsByCountry[operatorCountry].map((operator) => {
+                {operatorsByCountry.ci.map((operator) => {
                   const isSelected = activeOperator.id === operator.id;
 
                   return (

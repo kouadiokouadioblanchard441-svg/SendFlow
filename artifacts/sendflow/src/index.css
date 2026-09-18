@@ -1353,10 +1353,6 @@
 .sendflow-transfer-operator-sheet-header h2 { margin: 0; color: #30273d; font-size: 22px; letter-spacing: -.04em; }
 .sendflow-transfer-operator-close { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 50%; background: #f4f0fa; color: #5d32b5; cursor: pointer; }
 .sendflow-transfer-operator-close:hover, .sendflow-transfer-operator-close:focus-visible { background: #e9defb; outline: 0; }
-.sendflow-transfer-country-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 20px; }
-.sendflow-transfer-country-tab { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; border: 1px solid #e5deef; border-radius: 11px; background: #fff; color: #756b81; cursor: pointer; padding: 0 9px; font: inherit; font-size: 12px; font-weight: 700; }
-.sendflow-transfer-country-tab:hover, .sendflow-transfer-country-tab:focus-visible { border-color: #a88bdc; outline: 0; }
-.sendflow-transfer-country-tab.is-selected { border-color: #6334c4; background: #f2ebfd; color: #5d32b5; }
 .sendflow-transfer-operator-list { display: grid; gap: 9px; margin-top: 16px; }
 .sendflow-transfer-operator-option { display: grid; grid-template-columns: 50px minmax(0, 1fr) 24px; align-items: center; gap: 12px; width: 100%; min-height: 67px; border: 1px solid #e8e3ed; border-radius: 14px; background: #fff; color: #342c3e; cursor: pointer; padding: 8px 12px 8px 8px; text-align: left; }
 .sendflow-transfer-operator-option:hover, .sendflow-transfer-operator-option:focus-visible { border-color: #b39bdf; background: #fbf9fe; outline: 0; }
