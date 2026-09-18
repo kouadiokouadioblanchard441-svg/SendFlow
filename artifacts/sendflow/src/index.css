@@ -1367,19 +1367,10 @@
 .sendflow-sheet-primary, .sendflow-sheet-secondary { width: 100%; min-height: 50px; margin-top: 18px; border: 0; border-radius: 12px; background: #6334c4; color: #fff; cursor: pointer; padding: 0 18px; font: inherit; font-size: 14px; font-weight: 750; }
 .sendflow-sheet-primary:hover { background: #5127a9; }
 .sendflow-sheet-secondary { border: 1px solid #e2d9f2; background: #f8f5fd; color: #5d32b5; }
-.sendflow-service-row { display: grid; grid-template-columns: 42px 1fr 18px; align-items: center; gap: 12px; width: 100%; border: 0; border-radius: 15px; background: #f8f5fd; color: #352d41; cursor: pointer; padding: 13px; text-align: left; }
-.sendflow-service-row > span:nth-child(2) { display: flex; flex-direction: column; gap: 4px; }
-.sendflow-service-row small { color: #8c8395; font-size: 11px; }
-.sendflow-service-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; background: #e8defc; color: #6437bd; }
-.sendflow-credit-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.sendflow-credit-option { min-height: 46px; border: 1px solid #e2d9f2; border-radius: 12px; background: #fff; color: #5d32b5; cursor: pointer; padding: 0 8px; font: inherit; font-size: 12px; font-weight: 750; transition: background-color .18s ease, border-color .18s ease, transform .18s ease; }
-.sendflow-credit-option:hover, .sendflow-credit-option.is-selected { border-color: #6334c4; background: #f1eafd; }
-.sendflow-credit-option:active { transform: scale(.97); }
 .sendflow-gift-card-preview { display: flex; align-items: center; gap: 12px; margin-top: 20px; border-radius: 16px; background: linear-gradient(135deg, #f2eaff, #fbf8ff); color: #6437bd; padding: 15px; }
 .sendflow-gift-card-preview > span { display: flex; flex-direction: column; gap: 4px; }
 .sendflow-gift-card-preview strong { color: #34224f; font-size: 14px; }
 .sendflow-gift-card-preview small { color: #8c8395; font-size: 11px; line-height: 1.3; }
-.sendflow-purchase-success { display: flex; align-items: center; gap: 8px; margin: 19px 0 0; border-radius: 12px; background: #eaf7f1; color: #278d66; padding: 13px; font-size: 13px; font-weight: 700; }
 .sendflow-detail-amount { margin-top: 20px; color: #c83e55; font-size: 29px; font-weight: 800; letter-spacing: -.05em; }
 .sendflow-detail-amount small { display: block; margin-top: 4px; color: #8d8494; font-size: 11px; font-weight: 500; letter-spacing: 0; }
 .sendflow-detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 22px; }
