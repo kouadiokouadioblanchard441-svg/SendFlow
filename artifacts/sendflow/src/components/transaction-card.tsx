@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
@@ -47,7 +47,6 @@ function TransactionCardContent({ transaction }: { transaction: Transaction }) {
         <small>{transaction.date}</small>
       </span>
       <span className="sendflow-transaction-amount">{transaction.amount}</span>
-      <ChevronRight className="sendflow-transaction-chevron" size={20} strokeWidth={2} aria-hidden="true" />
     </>
   );
 }
