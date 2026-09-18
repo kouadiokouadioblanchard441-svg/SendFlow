@@ -1354,8 +1354,8 @@
   .sendflow-menu-links button:hover > svg, .sendflow-menu-footer button:hover > svg { color: #5423b4; }
 }
 .sendflow-menu-footer { display: grid; gap: 9px; margin-top: auto; padding-top: 20px; }
-.sendflow-menu-footer button:last-child { color: #d34136; }
-.sendflow-menu-footer button:last-child svg { color: #d34136; }
+.sendflow-menu-footer button:last-child { color: #ff0000; }
+.sendflow-menu-footer button:last-child svg { color: #ff0000; }
 .sendflow-menu-copyright { margin: 18px 0 0; color: #898989; font-size: 12px; font-weight: 500; line-height: 1.3; text-align: center; }
 .sendflow-menu-logout-icon { display: inline-grid; width: 21px; height: 21px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 13px; }
 
