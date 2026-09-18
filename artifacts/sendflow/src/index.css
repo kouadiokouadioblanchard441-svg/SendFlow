@@ -1413,6 +1413,28 @@
 .sendflow-deposit-fee-amount { color: #ff0000 !important; }
 .sendflow-deposit-summary > div:nth-child(2) { color: #342c3e; font-weight: 700; }
 .sendflow-deposit-summary > div:nth-child(2) strong { color: #6334c4; }
+.sendflow-international-wallet-source { display: flex; min-height: 60px; align-items: center; gap: 11px; margin-top: 15px; border: 1px solid #e0e1e6; border-radius: 10px; background: #f8f9fb; padding: 8px 11px; }
+.sendflow-international-wallet-icon { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border-radius: 11px; background: #e8defc; color: #6334c4; }
+.sendflow-international-wallet-source > span:last-child { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.sendflow-international-wallet-source strong { color: #342c3e; font-size: 14px; }
+.sendflow-international-wallet-source small { color: #8b8393; font-size: 11px; line-height: 1.35; }
+.sendflow-international-country-button { display: flex; width: 100%; min-height: 63px; align-items: center; gap: 11px; border: 1px solid #e0e1e6; border-radius: 10px; background: #f8f9fb; color: #342c3e; cursor: pointer; padding: 8px 11px 8px 8px; text-align: left; }
+.sendflow-international-country-button:hover, .sendflow-international-country-button:focus-visible { border-color: #8f6bd2; background: #fbf9fe; outline: 0; }
+.sendflow-international-country-flag { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border-radius: 11px; background: #f0e8fc; font-size: 25px; line-height: 1; }
+.sendflow-international-country-button > span:nth-child(2) { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 4px; }
+.sendflow-international-country-button small { color: #8b8393; font-size: 11px; }
+.sendflow-international-country-button strong { overflow: hidden; color: #342c3e; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.sendflow-international-country-button > svg { color: #6334c4; }
+.sendflow-international-phone-row { margin-top: 12px !important; }
+.sendflow-international-country-list { display: grid; gap: 9px; margin-top: 18px; }
+.sendflow-international-country-option { display: grid; grid-template-columns: 44px minmax(0, 1fr) 22px; align-items: center; gap: 12px; width: 100%; min-height: 64px; border: 1px solid #e8e3ed; border-radius: 14px; background: #fff; color: #342c3e; cursor: pointer; padding: 8px 12px 8px 8px; text-align: left; }
+.sendflow-international-country-option:hover, .sendflow-international-country-option:focus-visible { border-color: #b39bdf; background: #fbf9fe; outline: 0; }
+.sendflow-international-country-option.is-selected { border-color: #6334c4; background: #f7f2fe; box-shadow: 0 0 0 2px rgba(99, 52, 196, .08); }
+.sendflow-international-country-option-flag { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 11px; background: #f0e8fc; font-size: 24px; line-height: 1; }
+.sendflow-international-country-option > span:nth-child(2) { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.sendflow-international-country-option strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.sendflow-international-country-option small { color: #8b8393; font-size: 11px; }
+.sendflow-international-country-option > svg { color: #6334c4; }
 .sendflow-transfer-submit { display: flex; width: 100%; min-height: 57px; align-items: center; justify-content: center; gap: 9px; margin-top: 20px; border: 0; border-radius: 8px; background: #8a8b8e; color: #fff; cursor: pointer; padding: 0 16px; font: inherit; font-size: 16px; font-weight: 500; transition: background-color .18s ease, transform .18s ease; }
 .sendflow-transfer-submit:not(:disabled) { background: #6334c4; }
 .sendflow-transfer-submit:not(:disabled):hover { background: #5127a9; }
