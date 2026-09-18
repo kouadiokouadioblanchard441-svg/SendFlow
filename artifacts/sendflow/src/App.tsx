@@ -11,6 +11,7 @@ import NotFound from '@/pages/not-found';
 import AccountPage from '@/pages/account';
 import DepositPage from '@/pages/deposit';
 import HistoryPage from '@/pages/history';
+import InternationalTransferPage from '@/pages/international-transfer';
 import InterNetworkTransferPage from '@/pages/inter-transfer';
 import NotificationsPage from '@/pages/notifications';
 import PinPage from '@/pages/pin';
@@ -114,6 +115,7 @@ function App() {
               <Route path="/forgot-pin" component={() => <ResetPage mode="pin" />} />
               <Route path="/account" component={AccountPage} />
               <Route path="/deposit" component={DepositPage} />
+              <Route path="/international-transfer" component={InternationalTransferPage} />
               <Route path="/inter-transfer" component={InterNetworkTransferPage} />
               <Route path="/history" component={HistoryPage} />
               <Route path="/notifications" component={NotificationsPage} />

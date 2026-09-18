@@ -27,7 +27,7 @@ import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 import profileMariam from '@assets/generated_images/sendflow-profile-mariam.png';
 
-type SheetName = 'inter' | 'international' | 'plus' | 'call-credit' | 'notifications' | 'transaction' | null;
+type SheetName = 'inter' | 'plus' | 'call-credit' | 'notifications' | 'transaction' | null;
 const NOTIFICATIONS_READ_KEY = 'sendflow.notifications.read';
 
 function ActionTile({
@@ -147,7 +147,7 @@ export default function AccountPage() {
           </section>
 
           <nav className="sendflow-action-grid" aria-label="Actions principales">
-            <ActionTile icon={<Globe2 size={44} strokeWidth={2.2} />} label="Transfert international" onClick={() => openSheet('international')} testId="button-transfer-international" />
+            <ActionTile icon={<Globe2 size={44} strokeWidth={2.2} />} label="Transfert international" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/international-transfer'); }} testId="button-transfer-international" />
             <ActionTile icon={<ArrowLeftRight size={44} strokeWidth={2.5} />} label="Transfert inter réseau" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/inter-transfer'); }} testId="button-transfer-inter-network" />
             <ActionTile icon={<History size={44} strokeWidth={2.4} />} label="Historique" onClick={openHistory} testId="button-view-history" />
             <ActionTile icon={<ArrowDownToLine size={44} strokeWidth={2.2} />} label="Dépôt" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/deposit'); }} testId="button-open-deposit" />
@@ -157,7 +157,7 @@ export default function AccountPage() {
             <div className="sendflow-promo-viewport">
               <div className="sendflow-promo-track">
                 {[0, 1].map((copy) => (
-                  <button type="button" className={`sendflow-promo-card promo-${copy}`} key={copy} onClick={() => openSheet('international')} data-testid={`button-promotion-${copy + 1}`}>
+                  <button type="button" className={`sendflow-promo-card promo-${copy}`} key={copy} onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/international-transfer'); }} data-testid={`button-promotion-${copy + 1}`}>
                     <span className="sendflow-promo-orbit" aria-hidden="true"><span /><span /><span /></span>
                     <span className="sendflow-promo-copy">
                       <strong>{copy === 0 ? 'Envoyez plus loin.' : 'Un même geste, partout.'}</strong>
@@ -203,7 +203,7 @@ export default function AccountPage() {
              <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileMariam} alt="" /><span><strong>Mariam A.</strong><small>Compte personnel</small></span></div>
             <div className="sendflow-menu-links">
                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/inter-transfer'); }} data-testid="button-menu-inter"><ArrowLeftRight size={19} />Transfert inter réseau<ChevronRight size={17} /></button>
-              <button type="button" onClick={() => openSheet('international')} data-testid="button-menu-international"><Globe2 size={19} />Transfert international<ChevronRight size={17} /></button>
+               <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/international-transfer'); }} data-testid="button-menu-international"><Globe2 size={19} />Transfert international<ChevronRight size={17} /></button>
               <button type="button" onClick={openHistory} data-testid="button-menu-history"><Clock3 size={19} />Historique<ChevronRight size={17} /></button>
               <button type="button" onClick={() => openSheet('plus')} data-testid="button-menu-services"><Grid2X2 size={19} />Services SendFlow<ChevronRight size={17} /></button>
             </div>
@@ -217,9 +217,8 @@ export default function AccountPage() {
           <button type="button" className="sendflow-sheet-backdrop" onClick={closePanels} aria-label="Fermer la fenêtre" data-testid="button-close-sheet-backdrop" />
           <section className="sendflow-action-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
             <div className="sendflow-sheet-handle" aria-hidden="true" />
-             <div className="sendflow-sheet-header"><div><p className="sendflow-section-kicker">SendFlow</p><h2 id="sheet-title">{sheet === 'inter' ? 'Transfert inter réseau' : sheet === 'international' ? 'Transfert international' : sheet === 'plus' ? 'Plus de services' : sheet === 'transaction' ? 'Détail de la transaction' : 'Besoin d’aide'}</h2></div><button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer" data-testid="button-close-sheet"><X size={20} /></button></div>
+             <div className="sendflow-sheet-header"><div><p className="sendflow-section-kicker">SendFlow</p><h2 id="sheet-title">{sheet === 'inter' ? 'Transfert inter réseau' : sheet === 'plus' ? 'Plus de services' : sheet === 'transaction' ? 'Détail de la transaction' : 'Besoin d’aide'}</h2></div><button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer" data-testid="button-close-sheet"><X size={20} /></button></div>
             {sheet === 'inter' && <><p className="sendflow-sheet-text">Envoyez de l’argent au même pays, même lorsque votre destinataire utilise un autre réseau.</p><div className="sendflow-route-card"><span>Votre réseau</span><ArrowLeftRight size={19} /><span>Autre réseau</span></div><button type="button" className="sendflow-sheet-primary" onClick={() => setSheet(null)} data-testid="button-start-inter-transfer">Commencer un transfert</button></>}
-            {sheet === 'international' && <><p className="sendflow-sheet-text">Transférez de pays à pays avec un parcours clair et les frais affichés avant l’envoi.</p><div className="sendflow-route-card"><span>France</span><Globe2 size={19} /><span>Sénégal</span></div><button type="button" className="sendflow-sheet-primary" onClick={() => setSheet(null)} data-testid="button-start-international-transfer">Choisir un pays</button></>}
              {sheet === 'plus' && <><p className="sendflow-sheet-text">Des services utiles, directement depuis votre compte SendFlow.</p><button type="button" className="sendflow-service-row" onClick={() => openSheet('call-credit')} data-testid="button-buy-call-credit"><span className="sendflow-service-icon"><PhoneCall size={20} /></span><span><strong>Crédit d'appel</strong><small>Acheter du crédit pour votre ligne</small></span><ChevronRight size={18} /></button></>}
              {sheet === 'call-credit' && <><p className="sendflow-sheet-text">Choisissez le montant à créditer sur votre ligne. Le crédit sera disponible après confirmation du paiement.</p><div className="sendflow-credit-options" role="group" aria-label="Montant du crédit d'appel">{['500 FCFA', '1 000 FCFA', '2 000 FCFA'].map((amount) => <button type="button" className={`sendflow-credit-option${creditAmount === amount ? ' is-selected' : ''}`} onClick={() => setCreditAmount(amount)} key={amount}>{amount}</button>)}</div>{creditPurchased ? <p className="sendflow-purchase-success" role="status"><Check size={18} /> Crédit d'appel acheté avec succès.</p> : <button type="button" className="sendflow-sheet-primary" onClick={() => setCreditPurchased(true)} data-testid="button-confirm-call-credit">Acheter {creditAmount}</button>}</>}
              {sheet === 'transaction' && <><p className="sendflow-sheet-text">Cette opération a été enregistrée sur votre compte.</p><div className="sendflow-detail-amount">{transactions[0].amount}<small>Transfert inter réseau</small></div><div className="sendflow-detail-grid"><span>Destinataire<strong>{transactions[0].recipient}</strong></span><span>Date<strong>{transactions[0].date}</strong></span><span>Opérateur<strong>{operatorNames[transactions[0].toOperator]}</strong></span><span>Statut<strong className="is-success">Terminé</strong></span></div></>}
