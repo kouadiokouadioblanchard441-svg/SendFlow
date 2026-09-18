@@ -150,7 +150,7 @@ export default function DepositPage() {
           }}
         >
           <section className="sendflow-transfer-section" aria-labelledby="deposit-from-title">
-            <h2 id="deposit-from-title">De</h2>
+            <h2 id="deposit-from-title">Dépôt</h2>
             <label className="sendflow-transfer-money-field">
               <span className="sr-only">Montant du dépôt</span>
               <input
