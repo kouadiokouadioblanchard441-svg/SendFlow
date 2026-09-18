@@ -4,6 +4,8 @@ import {
   Check,
   ChevronRight,
   Clock3,
+  Eye,
+  EyeOff,
   Gift,
   Globe2,
   Grid2X2,
@@ -11,6 +13,7 @@ import {
   History,
   Menu,
   PhoneCall,
+  WalletCards,
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
@@ -59,6 +62,7 @@ export default function AccountPage() {
   ));
   const [creditAmount, setCreditAmount] = useState('1 000 FCFA');
   const [creditPurchased, setCreditPurchased] = useState(false);
+  const [walletVisible, setWalletVisible] = useState(true);
 
   useSeo({
     path: '/account',
@@ -96,7 +100,7 @@ export default function AccountPage() {
 
   return (
     <main className="sendflow-dashboard-shell">
-      <section className="sendflow-dashboard" aria-labelledby="account-title">
+      <section className="sendflow-dashboard" aria-labelledby="wallet-title">
         <header className="sendflow-dashboard-header">
           <div className="sendflow-dashboard-header-inner">
             <button type="button" className="sendflow-header-button" onClick={() => setMenuOpen(true)} aria-label="Ouvrir le menu" aria-expanded={menuOpen} data-testid="button-open-menu">
@@ -114,10 +118,34 @@ export default function AccountPage() {
         </header>
 
         <section className="sendflow-dashboard-content">
-          <div className="sendflow-dashboard-welcome">
-             <img className="sendflow-profile-avatar" src={profileMariam} alt="Photo de profil de Mariam" />
-            <h1 id="account-title">Bonjour, Mariam</h1>
-          </div>
+          <section className="sendflow-wallet-card" aria-labelledby="wallet-title">
+            <div className="sendflow-wallet-topline">
+              <div className="sendflow-wallet-heading">
+                <span className="sendflow-wallet-icon" aria-hidden="true"><WalletCards size={21} strokeWidth={2.1} /></span>
+                <div>
+                  <p>Wallet interne</p>
+                  <h1 id="wallet-title">Mon wallet</h1>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="sendflow-wallet-visibility"
+                onClick={() => setWalletVisible((current) => !current)}
+                aria-label={walletVisible ? 'Masquer le solde du wallet' : 'Afficher le solde du wallet'}
+                data-testid="button-toggle-wallet-balance"
+              >
+                {walletVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+              </button>
+            </div>
+            <div className="sendflow-wallet-balance-row">
+              <strong>{walletVisible ? '0' : '••••'}</strong>
+              <span>FCFA</span>
+            </div>
+            <div className="sendflow-wallet-footer">
+              <span>Solde disponible</span>
+              <span className="sendflow-wallet-status"><span aria-hidden="true" /> Prêt à transférer</span>
+            </div>
+          </section>
 
           <nav className="sendflow-action-grid" aria-label="Actions principales">
             <ActionTile icon={<Globe2 size={44} strokeWidth={2.2} />} label="Transfert international" onClick={() => openSheet('international')} testId="button-transfer-international" />
