@@ -79,6 +79,35 @@ export default function AccountPage() {
     }
   }, [isUnlocked, setLocation]);
 
+  useEffect(() => {
+    if (!menuOpen && !sheet) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehaviorY;
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehaviorY = 'none';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehaviorY = previousOverscrollBehavior;
+    };
+  }, [menuOpen, sheet]);
+
+  useEffect(() => {
+    if (!menuOpen && !sheet) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        setSelectedTransaction(null);
+        setSheet(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [menuOpen, sheet]);
+
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
   const openSheet = (nextSheet: Exclude<SheetName, null>) => {
