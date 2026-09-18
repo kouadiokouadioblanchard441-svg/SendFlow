@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Check, ChevronDown, ChevronRight, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Globe2,
+  Store,
+  X,
+} from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import {
@@ -14,6 +23,12 @@ import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 function OperatorMark({ operator }: { operator: PricingOperator }) {
   if (operator.brand === 'wave') return <img src={waveLogo} alt="" />;
   return <strong>{operator.initials}</strong>;
+}
+
+function CategoryIcon({ categoryId }: { categoryId: PricingCategoryId }) {
+  if (categoryId === 'deposit') return <Store size={19} strokeWidth={2.1} />;
+  if (categoryId === 'inter-network') return <ArrowLeftRight size={19} strokeWidth={2.1} />;
+  return <Globe2 size={19} strokeWidth={2.1} />;
 }
 
 export default function PricingPage() {
@@ -93,6 +108,9 @@ export default function PricingPage() {
                 onClick={() => setCategoryId(item.id)}
                 data-testid={`button-pricing-category-${item.id}`}
               >
+                <span className="sendflow-pricing-tab-icon" aria-hidden="true">
+                  <CategoryIcon categoryId={item.id} />
+                </span>
                 <span>{item.shortLabel}</span>
               </button>
             ))}
@@ -134,11 +152,10 @@ export default function PricingPage() {
                 </span>
                 <span className="sendflow-pricing-operator-name">
                   <strong>{operator.name}</strong>
-                  <small>{country.name}</small>
-                </span>
-                <span className="sendflow-pricing-fee">
-                  <strong data-testid={`text-pricing-fee-${operator.id}`}>{operator.feeLabel}</strong>
-                  <small>par opération</small>
+                  <span className="sendflow-pricing-fee">
+                    <strong data-testid={`text-pricing-fee-${operator.id}`}>{operator.feeLabel}</strong>
+                    <small>par opération</small>
+                  </span>
                 </span>
               </article>
             )) : (

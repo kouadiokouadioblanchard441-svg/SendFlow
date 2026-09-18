@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ArrowLeftRight,
   ArrowDownToLine,
+  BadgePercent,
   ChevronRight,
   Eye,
   EyeOff,
@@ -241,7 +242,7 @@ export default function AccountPage() {
             <div className="sendflow-menu-links">
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-info'); }} data-testid="button-menu-account-info"><UserRound size={19} />Informations du compte<ChevronRight size={17} /></button>
                <button type="button" onClick={() => openSheet('change-secret')} data-testid="button-menu-change-secret"><LockKeyhole size={19} />Modifier le code secret<ChevronRight size={17} /></button>
-                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/pricing'); }} data-testid="button-menu-pricing"><span className="sendflow-menu-text-icon" aria-hidden="true">%</span>Tarification<ChevronRight size={17} /></button>
+                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/pricing'); }} data-testid="button-menu-pricing"><BadgePercent size={19} />Tarification<ChevronRight size={17} /></button>
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-limit'); }} data-testid="button-menu-limit"><WalletCards size={19} />Plafond du compte<ChevronRight size={17} /></button>
                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/confidentialite'); }} data-testid="button-menu-privacy"><FileText size={19} />Politique de confidentialité<ChevronRight size={17} /></button>
             </div>
