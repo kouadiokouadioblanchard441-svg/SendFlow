@@ -1289,8 +1289,9 @@
 .sendflow-transfer-header-inner { display: flex; align-items: center; justify-content: space-between; width: min(100%, 720px); margin: 0 auto; }
 .sendflow-transfer-header-leading { display: flex; align-items: center; gap: 8px; }
 .sendflow-transfer-brand { display: inline-flex; align-items: center; gap: 9px; color: #fff; text-decoration: none; }
-.sendflow-transfer-brand img { display: block; width: 34px; height: 38px; object-fit: contain; }
-.sendflow-transfer-brand strong { font-size: 22px; font-weight: 800; letter-spacing: -.045em; }
+.sendflow-transfer-brand img { display: block; object-fit: contain; }
+.sendflow-transfer-brand .sendflow-transfer-mark { width: 34px; height: 38px; }
+.sendflow-transfer-brand .sendflow-transfer-wordmark { width: 112px; height: 24px; }
 .sendflow-transfer-header-actions { display: flex; align-items: center; gap: 8px; }
 .sendflow-transfer-header-button { position: relative; display: grid; width: 43px; height: 43px; place-items: center; border: 1px solid rgba(255, 255, 255, .22); border-radius: 50%; background: rgba(255, 255, 255, .13); color: #fff; cursor: pointer; transition: background-color .18s ease, transform .18s ease; }
 .sendflow-transfer-header-button:hover, .sendflow-transfer-header-button:focus-visible { background: rgba(255, 255, 255, .25); outline: 0; }

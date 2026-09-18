@@ -11,6 +11,7 @@ import { Link, Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
+import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
 export default function InterNetworkTransferPage() {
   const [, setLocation] = useLocation();
@@ -64,8 +65,8 @@ export default function InterNetworkTransferPage() {
               <ArrowLeft size={22} strokeWidth={2.1} />
             </button>
             <Link href="/account" className="sendflow-transfer-brand" aria-label="Retour au compte">
-              <img src={sendflowMark} alt="" />
-              <strong>SendFlow</strong>
+              <img className="sendflow-transfer-mark" src={sendflowMark} alt="" />
+              <img className="sendflow-transfer-wordmark" src={sendflowWordmark} alt="SendFlow" />
             </Link>
           </div>
           <div className="sendflow-transfer-header-actions">
