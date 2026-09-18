@@ -143,7 +143,6 @@ export default function AccountPage() {
             </div>
             <div className="sendflow-wallet-footer">
               <span>Solde disponible</span>
-              <span className="sendflow-wallet-status"><span aria-hidden="true" /> Prêt à transférer</span>
             </div>
           </section>
 
