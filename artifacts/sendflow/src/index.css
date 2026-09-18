@@ -1310,10 +1310,17 @@
 .sendflow-transfer-phone-row input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: #454752; font: inherit; font-size: 16px; }
 .sendflow-transfer-phone-row input::placeholder { color: #9a9ca5; }
 .sendflow-transfer-operator-box { display: grid; width: 60px; height: 59px; flex: 0 0 60px; place-items: center; border: 1px solid #e3e4e8; border-radius: 8px; background: #fff; cursor: pointer; padding: 5px; }
+.sendflow-transfer-operator-box:focus-visible { border-color: #6334c4; box-shadow: 0 0 0 3px rgba(99, 52, 196, .13); outline: 0; }
 .sendflow-transfer-operator-box.is-orange { color: #171717; font-size: 9px; line-height: .95; text-align: center; }
 .sendflow-transfer-operator-box.is-orange strong { display: block; color: #1a1a1a; font-size: 10px; font-weight: 800; }
 .sendflow-transfer-operator-box.is-orange small { display: block; color: #222; font-size: 9px; font-weight: 700; }
 .sendflow-transfer-operator-box.is-wave img { display: block; width: 45px; height: 45px; border-radius: 50%; object-fit: contain; }
+.sendflow-transfer-operator-box.is-mtn,
+.sendflow-transfer-operator-box.is-moov,
+.sendflow-transfer-operator-box.is-telecel { color: #4f249f; font-size: 10px; font-weight: 800; }
+.sendflow-transfer-operator-box.is-mtn { background: #ffca05; color: #1c2675; }
+.sendflow-transfer-operator-box.is-moov { background: #fff2e4; color: #dd6f14; }
+.sendflow-transfer-operator-box.is-telecel { background: #fcebee; color: #d6253d; }
 .sendflow-transfer-prefix { flex: 0 0 auto; color: #777982; font-size: 15px; padding: 0 10px; }
 .sendflow-transfer-flag { flex: 0 0 auto; font-size: 20px; line-height: 1; padding: 0 3px 0 7px; }
 .sendflow-transfer-otp-help { display: flex; align-items: center; gap: 5px; margin-top: 13px; color: #454752; font-size: 14px; line-height: 1.25; }
@@ -1338,6 +1345,34 @@
 .sendflow-transfer-submit:not(:disabled):active { transform: scale(.985); }
 .sendflow-transfer-submit:disabled { cursor: not-allowed; opacity: .95; }
 .sendflow-transfer-success { display: flex; align-items: center; gap: 8px; margin-top: 15px; border-radius: 8px; background: #e2f6ee; color: #267856; padding: 11px 13px; font-size: 13px; font-weight: 700; }
+.sendflow-transfer-operator-picker { position: fixed; z-index: 30; inset: 0; display: flex; align-items: flex-end; justify-content: center; background: rgba(25, 17, 39, .42); padding: 0; }
+.sendflow-transfer-operator-sheet { width: min(100%, 560px); max-height: min(82dvh, 620px); overflow-y: auto; border-radius: 25px 25px 0 0; background: #fff; box-shadow: 0 -12px 35px rgba(29, 18, 50, .2); padding: 22px 20px calc(24px + env(safe-area-inset-bottom)); animation: sendflow-sheet-enter .24s ease-out both; }
+.sendflow-transfer-operator-sheet-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
+.sendflow-transfer-operator-sheet-header > div { display: flex; flex-direction: column; gap: 5px; }
+.sendflow-transfer-operator-sheet-header span { color: #8b8393; font-size: 12px; }
+.sendflow-transfer-operator-sheet-header h2 { margin: 0; color: #30273d; font-size: 22px; letter-spacing: -.04em; }
+.sendflow-transfer-operator-close { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 50%; background: #f4f0fa; color: #5d32b5; cursor: pointer; }
+.sendflow-transfer-operator-close:hover, .sendflow-transfer-operator-close:focus-visible { background: #e9defb; outline: 0; }
+.sendflow-transfer-country-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 20px; }
+.sendflow-transfer-country-tab { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; border: 1px solid #e5deef; border-radius: 11px; background: #fff; color: #756b81; cursor: pointer; padding: 0 9px; font: inherit; font-size: 12px; font-weight: 700; }
+.sendflow-transfer-country-tab:hover, .sendflow-transfer-country-tab:focus-visible { border-color: #a88bdc; outline: 0; }
+.sendflow-transfer-country-tab.is-selected { border-color: #6334c4; background: #f2ebfd; color: #5d32b5; }
+.sendflow-transfer-operator-list { display: grid; gap: 9px; margin-top: 16px; }
+.sendflow-transfer-operator-option { display: grid; grid-template-columns: 50px minmax(0, 1fr) 24px; align-items: center; gap: 12px; width: 100%; min-height: 67px; border: 1px solid #e8e3ed; border-radius: 14px; background: #fff; color: #342c3e; cursor: pointer; padding: 8px 12px 8px 8px; text-align: left; }
+.sendflow-transfer-operator-option:hover, .sendflow-transfer-operator-option:focus-visible { border-color: #b39bdf; background: #fbf9fe; outline: 0; }
+.sendflow-transfer-operator-option.is-selected { border-color: #6334c4; background: #f7f2fe; box-shadow: 0 0 0 2px rgba(99, 52, 196, .08); }
+.sendflow-transfer-operator-choice { display: grid; width: 50px; height: 50px; place-items: center; overflow: hidden; border: 1px solid #e6e1ea; border-radius: 11px; background: #fff; color: #4f249f; font-size: 11px; font-weight: 800; line-height: 1; text-align: center; }
+.sendflow-transfer-operator-choice.is-orange { color: #171717; font-size: 9px; }
+.sendflow-transfer-operator-choice.is-orange strong { display: block; font-size: 10px; font-weight: 800; }
+.sendflow-transfer-operator-choice.is-orange small { display: block; font-size: 9px; font-weight: 700; }
+.sendflow-transfer-operator-choice.is-wave img { display: block; width: 43px; height: 43px; border-radius: 50%; object-fit: contain; }
+.sendflow-transfer-operator-choice.is-mtn { border-color: #e7b700; background: #ffca05; color: #1c2675; }
+.sendflow-transfer-operator-choice.is-moov { border-color: #f3c995; background: #fff2e4; color: #dd6f14; }
+.sendflow-transfer-operator-choice.is-telecel { border-color: #e8a9b3; background: #fcebee; color: #d6253d; }
+.sendflow-transfer-operator-option-copy { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
+.sendflow-transfer-operator-option-copy strong { overflow: hidden; color: #342c3e; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.sendflow-transfer-operator-option-copy small { color: #8b8393; font-size: 11px; }
+.sendflow-transfer-operator-option-check { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; color: #6334c4; }
 
 @keyframes sendflow-promo-scroll { 0%, 40% { transform: translateX(0); } 50%, 90% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
 @keyframes sendflow-panel-enter { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
