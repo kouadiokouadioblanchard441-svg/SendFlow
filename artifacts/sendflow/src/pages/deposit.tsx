@@ -136,14 +136,6 @@ export default function DepositPage() {
       </header>
 
       <div className="sendflow-transfer-page">
-        <div className="sendflow-deposit-country" aria-label={`Pays d’inscription : ${accountCountry.name}`}>
-          <span className="sendflow-deposit-country-flag" aria-hidden="true">{accountCountry.flag}</span>
-          <span>
-            <small>Pays d’inscription</small>
-            <strong>{accountCountry.name}</strong>
-          </span>
-        </div>
-
         <form
           className="sendflow-transfer-card"
           onSubmit={(event) => {
