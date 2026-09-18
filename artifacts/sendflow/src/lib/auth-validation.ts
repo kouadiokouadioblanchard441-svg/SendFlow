@@ -16,6 +16,16 @@ export type SignUpField = keyof SignUpValidationInput;
 export type SignInField = keyof SignInValidationInput;
 export type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
+export function getAdultBirthDateLimit(referenceDate = new Date()) {
+  const limit = new Date(referenceDate);
+  limit.setFullYear(limit.getFullYear() - 18);
+
+  const year = limit.getFullYear();
+  const month = String(limit.getMonth() + 1).padStart(2, '0');
+  const day = String(limit.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function normalizePhone(phone: string) {
   return phone.replace(/\D/g, '');
 }
@@ -44,9 +54,7 @@ function validateBirthDate(birthDate: string) {
   const parsedDate = new Date(`${birthDate}T00:00:00`);
   if (Number.isNaN(parsedDate.getTime())) return 'Saisissez une date de naissance valide.';
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (parsedDate > today) return 'La date de naissance ne peut pas être dans le futur.';
+  if (birthDate > getAdultBirthDateLimit()) return 'Vous devez avoir au moins 18 ans.';
 
   return undefined;
 }

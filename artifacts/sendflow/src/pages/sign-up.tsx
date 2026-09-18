@@ -3,7 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
-import { validateSignUp, type SignUpField } from '@/lib/auth-validation';
+import { getAdultBirthDateLimit, validateSignUp, type SignUpField } from '@/lib/auth-validation';
 import { DEFAULT_ACCOUNT_COUNTRY, saveAccountCountry, type AccountCountry } from '@/lib/account-country';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -19,7 +19,7 @@ type SignUpForm = {
 
 const initialForm: SignUpForm = {
   fullName: '',
-  birthDate: '',
+  birthDate: '2000-01-01',
   phone: '',
   password: '',
   confirmation: '',
@@ -166,7 +166,7 @@ export default function SignupPage() {
                   value={form.birthDate}
                   onChange={(event) => update('birthDate', event.target.value)}
                   onBlur={() => markTouched('birthDate')}
-                  max={new Date().toISOString().slice(0, 10)}
+                  max={getAdultBirthDateLimit()}
                   aria-label="Date de naissance"
                   aria-invalid={Boolean(visibleError('birthDate'))}
                   aria-describedby={visibleError('birthDate') ? 'signup-birth-date-error' : undefined}
