@@ -1518,6 +1518,18 @@
 @keyframes sendflow-panel-enter-right { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes sendflow-sheet-enter { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 
+@media (prefers-reduced-motion: reduce) {
+  .sendflow-side-menu,
+  .sendflow-notification-panel,
+  .sendflow-action-sheet,
+  .sendflow-menu-links button,
+  .sendflow-menu-footer button,
+  .sendflow-close-button {
+    animation: none;
+    transition: none;
+  }
+}
+
 @media (min-width: 700px) {
   .sendflow-dashboard { width: min(100%, 1120px); margin: 0 auto; box-shadow: 0 0 0 1px rgba(60, 40, 92, .04), 0 15px 45px rgba(50, 34, 73, .08); }
   .sendflow-dashboard-content { padding-inline: 38px; }
