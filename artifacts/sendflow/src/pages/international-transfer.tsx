@@ -33,7 +33,7 @@ const transferCountries: TransferCountry[] = [
 ];
 
 const INTERNATIONAL_FEE_RATE = 0.03;
-const initialCountry = transferCountries[1];
+const initialCountry = transferCountries[0];
 
 export default function InternationalTransferPage() {
   const [, setLocation] = useLocation();
