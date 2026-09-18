@@ -79,6 +79,7 @@ const operatorsByCountry: Record<CountryCode, TransferOperator[]> = {
 
 const initialSourceOperator = operatorsByCountry.ci[0];
 const initialDestinationOperator = operatorsByCountry.ci[1];
+const TRANSFER_FEE = 907;
 
 type SavedContact = {
   id: string;
@@ -234,8 +235,13 @@ export default function InterNetworkTransferPage() {
     }
   };
 
+  const enteredAmount = Number(amount.replace(/\s/g, '')) || 0;
+  const recipientAmount = supportFees
+    ? enteredAmount
+    : Math.max(enteredAmount - TRANSFER_FEE, 0);
   const canSubmit =
-    amount.trim().length > 0 &&
+    enteredAmount > 0 &&
+    (supportFees || recipientAmount > 0) &&
     (!sourceOperator.requiresOtp || otp.trim().length > 0) &&
     recipientNumber.trim().length > 0;
 
@@ -397,7 +403,7 @@ export default function InterNetworkTransferPage() {
               </button>
             </div>
             <div className="sendflow-transfer-fees">
-              Frais: <strong>{supportFees ? '907' : '0'} Fcfa</strong>
+              Frais: <strong>{TRANSFER_FEE} Fcfa</strong>
             </div>
 
             {submitted && (
@@ -408,7 +414,7 @@ export default function InterNetworkTransferPage() {
             )}
 
             <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || submitted}>
-              {submitted ? 'Transfert préparé' : `Envoyer ${amount || '0'} FCFA`}
+              {submitted ? 'Transfert préparé' : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
             </button>
           </section>
         </form>
