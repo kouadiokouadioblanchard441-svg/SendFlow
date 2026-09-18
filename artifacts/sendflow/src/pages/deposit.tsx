@@ -33,6 +33,8 @@ const ivoryCoastDepositOperators: DepositOperator[] = [
   { id: 'moov-ci', name: 'Moov Money', shortName: 'Moov', brand: 'moov', requiresOtp: false },
 ];
 
+const DEPOSIT_FEE_RATE = 0.03;
+
 function OperatorMark({ operator }: { operator: DepositOperator }) {
   if (operator.brand === 'wave') {
     return <img src={waveLogo} alt="" />;
@@ -91,9 +93,12 @@ export default function DepositPage() {
   };
 
   const enteredAmount = Number(amount.replace(/\s/g, '')) || 0;
+  const feeAmount = enteredAmount > 0 ? Math.ceil(enteredAmount * DEPOSIT_FEE_RATE) : 0;
+  const walletAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
+  const totalDebited = payFees ? enteredAmount + feeAmount : enteredAmount;
   const canSubmit = Boolean(
     operator &&
-    enteredAmount > 0 &&
+    walletAmount > 0 &&
     sourceNumber.trim().length > 0 &&
     (!operator.requiresOtp || otp.trim().length > 0),
   );
@@ -211,12 +216,32 @@ export default function DepositPage() {
             )}
 
             <label className="sendflow-transfer-checkbox">
-              <input type="checkbox" checked={payFees} onChange={(event) => setPayFees(event.target.checked)} />
+              <input
+                type="checkbox"
+                checked={payFees}
+                onChange={(event) => {
+                  setPayFees(event.target.checked);
+                  setSubmitted(false);
+                }}
+              />
               <span aria-hidden="true">{payFees ? <Check size={13} strokeWidth={3} /> : null}</span>
               <strong>Je paie les frais</strong>
             </label>
-            <div className="sendflow-transfer-fees">
-              Frais: <strong>0 Fcfa</strong>
+            <div className="sendflow-deposit-summary" aria-live="polite">
+              <div>
+                <span>Frais (3%)</span>
+                <strong>{feeAmount.toLocaleString('fr-FR')} Fcfa</strong>
+              </div>
+              <div>
+                <span>Le wallet reçoit</span>
+                <strong>{walletAmount.toLocaleString('fr-FR')} Fcfa</strong>
+              </div>
+              {payFees && (
+                <div>
+                  <span>Total débité</span>
+                  <strong>{totalDebited.toLocaleString('fr-FR')} Fcfa</strong>
+                </div>
+              )}
             </div>
 
             {submitted && (
@@ -227,7 +252,7 @@ export default function DepositPage() {
             )}
 
             <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || submitted}>
-              {submitted ? 'Dépôt préparé' : `Déposer ${enteredAmount.toLocaleString('fr-FR')} FCFA`}
+              {submitted ? 'Dépôt préparé' : `Déposer ${walletAmount.toLocaleString('fr-FR')} FCFA`}
             </button>
           </section>
         </form>
