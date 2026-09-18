@@ -4,9 +4,11 @@ import {
   Check,
   ChevronRight,
   Clock3,
+  Gift,
   Globe2,
   Grid2X2,
   HelpCircle,
+  History,
   Menu,
   PhoneCall,
   X,
@@ -34,7 +36,7 @@ function ActionTile({
 }: {
   icon: React.ReactNode;
   label: string;
-  detail: string;
+  detail?: string;
   onClick: () => void;
   testId: string;
 }) {
@@ -42,7 +44,7 @@ function ActionTile({
     <button type="button" className="sendflow-action-tile" onClick={onClick} data-testid={testId}>
       <span className="sendflow-action-icon" aria-hidden="true">{icon}</span>
       <span className="sendflow-action-label">{label}</span>
-      <span className="sendflow-action-detail">{detail}</span>
+      {detail && <span className="sendflow-action-detail">{detail}</span>}
     </button>
   );
 }
@@ -86,6 +88,12 @@ export default function AccountPage() {
     setLocation('/history');
   };
 
+  const openPromotions = () => {
+    setMenuOpen(false);
+    setSheet(null);
+    document.getElementById('promotions')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const closePanels = () => {
     setMenuOpen(false);
     setCreditPurchased(false);
@@ -118,13 +126,13 @@ export default function AccountPage() {
           </div>
 
           <nav className="sendflow-action-grid" aria-label="Actions principales">
-            <ActionTile icon={<ArrowLeftRight size={25} />} label="Transfert inter réseau" detail="Même pays" onClick={() => openSheet('inter')} testId="button-transfer-inter-network" />
-            <ActionTile icon={<Globe2 size={24} />} label="Transfert international" detail="Pays à pays" onClick={() => openSheet('international')} testId="button-transfer-international" />
-            <ActionTile icon={<Clock3 size={24} />} label="Historique" detail="Vos mouvements" onClick={openHistory} testId="button-view-history" />
-            <ActionTile icon={<Grid2X2 size={23} />} label="Plus" detail="Services SendFlow" onClick={() => openSheet('plus')} testId="button-open-more" />
+            <ActionTile icon={<Gift size={44} strokeWidth={2.2} />} label="Promotions" onClick={openPromotions} testId="button-open-promotions" />
+            <ActionTile icon={<ArrowLeftRight size={44} strokeWidth={2.5} />} label="Transférer" onClick={() => openSheet('inter')} testId="button-transfer-inter-network" />
+            <ActionTile icon={<History size={44} strokeWidth={2.4} />} label="Historique" onClick={openHistory} testId="button-view-history" />
+            <ActionTile icon={<Grid2X2 size={40} strokeWidth={2.6} />} label="Plus" onClick={() => openSheet('plus')} testId="button-open-more" />
           </nav>
 
-          <section className="sendflow-promo-section" aria-label="Offres SendFlow">
+          <section className="sendflow-promo-section" id="promotions" aria-label="Offres SendFlow">
             <div className="sendflow-promo-viewport">
               <div className="sendflow-promo-track">
                 {[0, 1].map((copy) => (
