@@ -58,6 +58,7 @@ export default function DepositPage() {
   const [amount, setAmount] = useState('');
   const [sourceNumber, setSourceNumber] = useState('');
   const [otp, setOtp] = useState('');
+  const [payFees, setPayFees] = useState(true);
   const [operator, setOperator] = useState<DepositOperator | null>(depositOperators[0] ?? null);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -208,6 +209,12 @@ export default function DepositPage() {
                 Aucun moyen de dépôt n’est encore disponible pour votre pays d’inscription.
               </div>
             )}
+
+            <label className="sendflow-transfer-checkbox">
+              <input type="checkbox" checked={payFees} onChange={(event) => setPayFees(event.target.checked)} />
+              <span aria-hidden="true">{payFees ? <Check size={13} strokeWidth={3} /> : null}</span>
+              <strong>Je paie les frais</strong>
+            </label>
           </section>
 
           <div className="sendflow-transfer-divider" />
