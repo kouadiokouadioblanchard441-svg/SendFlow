@@ -1324,7 +1324,8 @@
 .sendflow-transfer-operator-box.is-telecel { background: #fcebee; color: #d6253d; }
 .sendflow-transfer-prefix { flex: 0 0 auto; color: #777982; font-size: 15px; padding: 0 10px; }
 .sendflow-transfer-flag { flex: 0 0 auto; font-size: 20px; line-height: 1; padding: 0 3px 0 7px; }
-.sendflow-transfer-otp-help { display: flex; align-items: center; gap: 5px; margin-top: 13px; color: #454752; font-size: 14px; line-height: 1.25; }
+.sendflow-transfer-otp-help { display: flex; align-items: center; flex-wrap: nowrap; gap: 5px; margin-top: 13px; color: #454752; font-size: 14px; line-height: 1.25; }
+.sendflow-transfer-otp-help > span, .sendflow-transfer-otp-link { white-space: nowrap; }
 .sendflow-transfer-otp-link { border: 0; background: transparent; color: #6334c4; cursor: pointer; padding: 0; font: inherit; font-weight: 700; }
 .sendflow-transfer-copy { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; margin-left: auto; border: 0; background: transparent; color: #59616c; cursor: pointer; }
 .sendflow-transfer-otp-input { width: 100%; min-height: 60px; margin-top: 13px; border: 1px solid #e0e1e6; border-radius: 9px; outline: 0; background: #fff; color: #444650; padding: 0 14px; font: inherit; font-size: 16px; }
