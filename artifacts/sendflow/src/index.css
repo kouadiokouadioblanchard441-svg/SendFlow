@@ -1331,7 +1331,9 @@
 .sendflow-transfer-otp-input::placeholder { color: #a1a3ab; }
 .sendflow-transfer-checkbox { display: inline-flex; align-items: center; gap: 10px; margin-top: 20px; color: #555762; cursor: pointer; font-size: 14px; }
 .sendflow-transfer-checkbox input { position: absolute; opacity: 0; pointer-events: none; }
-.sendflow-transfer-checkbox > span { display: grid; width: 19px; height: 19px; place-items: center; border: 1px solid #1ba5ae; border-radius: 3px; background: #1ba5ae; color: #fff; }
+.sendflow-transfer-checkbox > span { display: grid; width: 19px; height: 19px; place-items: center; border: 1px solid #d5d4dc; border-radius: 3px; background: #fff; color: transparent; }
+.sendflow-transfer-checkbox input:checked + span { border-color: #6334c4; background: #6334c4; color: #fff; }
+.sendflow-transfer-checkbox input:focus-visible + span { border-color: #6334c4; box-shadow: 0 0 0 3px rgba(99, 52, 196, .13); }
 .sendflow-transfer-checkbox strong { font-weight: 500; }
 .sendflow-transfer-divider { height: 1px; margin: 18px 0; background: #e2e3e7; }
 .sendflow-transfer-destination h2 { margin-bottom: 13px; }
