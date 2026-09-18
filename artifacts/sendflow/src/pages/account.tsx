@@ -121,7 +121,7 @@ export default function AccountPage() {
 
           <nav className="sendflow-action-grid" aria-label="Actions principales">
             <ActionTile icon={<Globe2 size={44} strokeWidth={2.2} />} label="Transfert international" onClick={() => openSheet('international')} testId="button-transfer-international" />
-            <ActionTile icon={<ArrowLeftRight size={44} strokeWidth={2.5} />} label="Transfert inter réseau" onClick={() => openSheet('inter')} testId="button-transfer-inter-network" />
+            <ActionTile icon={<ArrowLeftRight size={44} strokeWidth={2.5} />} label="Transfert inter réseau" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/inter-transfer'); }} testId="button-transfer-inter-network" />
             <ActionTile icon={<History size={44} strokeWidth={2.4} />} label="Historique" onClick={openHistory} testId="button-view-history" />
             <ActionTile icon={<Gift size={44} strokeWidth={2.2} />} label="Carte cadeau" onClick={() => openSheet('gift-card')} testId="button-open-gift-card" />
           </nav>
@@ -175,7 +175,7 @@ export default function AccountPage() {
             </div>
              <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileMariam} alt="" /><span><strong>Mariam A.</strong><small>Compte personnel</small></span></div>
             <div className="sendflow-menu-links">
-              <button type="button" onClick={() => openSheet('inter')} data-testid="button-menu-inter"><ArrowLeftRight size={19} />Transfert inter réseau<ChevronRight size={17} /></button>
+               <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/inter-transfer'); }} data-testid="button-menu-inter"><ArrowLeftRight size={19} />Transfert inter réseau<ChevronRight size={17} /></button>
               <button type="button" onClick={() => openSheet('international')} data-testid="button-menu-international"><Globe2 size={19} />Transfert international<ChevronRight size={17} /></button>
               <button type="button" onClick={openHistory} data-testid="button-menu-history"><Clock3 size={19} />Historique<ChevronRight size={17} /></button>
               <button type="button" onClick={() => openSheet('plus')} data-testid="button-menu-services"><Grid2X2 size={19} />Services SendFlow<ChevronRight size={17} /></button>
