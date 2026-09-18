@@ -231,20 +231,35 @@ export default function InternationalTransferPage() {
               </span>
               <ChevronDown size={20} aria-hidden="true" />
             </button>
-            <div className="sendflow-transfer-phone-row sendflow-international-phone-row">
-              <span className="sendflow-transfer-prefix">{country.dialCode}</span>
-              <input
-                type="tel"
-                value={recipientNumber}
-                onChange={(event) => {
-                  setRecipientNumber(event.target.value);
-                  setSubmitted(false);
-                }}
-                placeholder="Numéro du bénéficiaire"
-                aria-label={`Numéro du bénéficiaire au ${country.name}`}
-              />
-              <span className="sendflow-transfer-flag" aria-label={country.name}>{country.flag}</span>
-            </div>
+            {operator ? (
+              <div className="sendflow-transfer-phone-row sendflow-international-phone-row">
+                <button
+                  type="button"
+                  className={`sendflow-transfer-operator-box is-${operator.brand}`}
+                  onClick={() => setOperatorPickerOpen(true)}
+                  aria-label={`Sélectionner l’opérateur destinataire, actuellement ${operator.name}`}
+                  data-testid="button-select-international-operator"
+                >
+                  <OperatorMark operator={operator} />
+                </button>
+                <span className="sendflow-transfer-prefix">{country.dialCode}</span>
+                <input
+                  type="tel"
+                  value={recipientNumber}
+                  onChange={(event) => {
+                    setRecipientNumber(event.target.value);
+                    setSubmitted(false);
+                  }}
+                  placeholder="Numéro du bénéficiaire"
+                  aria-label={`Numéro du bénéficiaire au ${country.name}`}
+                />
+                <span className="sendflow-transfer-flag" aria-label={country.name}>{country.flag}</span>
+              </div>
+            ) : (
+              <div className="sendflow-deposit-unavailable" role="status">
+                Aucun opérateur n’est encore disponible pour ce pays.
+              </div>
+            )}
 
             <label className="sendflow-transfer-checkbox">
               <input
@@ -314,6 +329,43 @@ export default function InternationalTransferPage() {
                       <small>{nextCountry.dialCode}</small>
                     </span>
                     {country.id === nextCountry.id && <Check size={18} aria-hidden="true" />}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {operatorPickerOpen && operator && (
+          <div className="sendflow-transfer-operator-picker" role="presentation" onClick={() => setOperatorPickerOpen(false)}>
+            <section className="sendflow-transfer-operator-sheet" role="dialog" aria-modal="true" aria-labelledby="international-operator-title" onClick={(event) => event.stopPropagation()}>
+              <div className="sendflow-transfer-operator-sheet-header">
+                <div>
+                  <span>Choisir l’opérateur</span>
+                  <h2 id="international-operator-title">{country.name}</h2>
+                </div>
+                <button type="button" className="sendflow-transfer-operator-close" onClick={() => setOperatorPickerOpen(false)} aria-label="Fermer la sélection de l’opérateur">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="sendflow-transfer-operator-list">
+                {(operatorsByCountry[country.id] ?? []).map((nextOperator) => (
+                  <button
+                    type="button"
+                    key={nextOperator.id}
+                    className={`sendflow-transfer-operator-option${operator.id === nextOperator.id ? ' is-selected' : ''}`}
+                    onClick={() => selectOperator(nextOperator)}
+                  >
+                    <span className={`sendflow-transfer-operator-choice is-${nextOperator.brand}`}>
+                      <OperatorMark operator={nextOperator} />
+                    </span>
+                    <span className="sendflow-transfer-operator-option-copy">
+                      <strong>{nextOperator.name}</strong>
+                      <small>Moyen de réception disponible</small>
+                    </span>
+                    <span className="sendflow-transfer-operator-option-check" aria-hidden="true">
+                      {operator.id === nextOperator.id ? <Check size={18} /> : null}
+                    </span>
                   </button>
                 ))}
               </div>

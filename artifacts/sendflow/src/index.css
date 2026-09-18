@@ -1382,6 +1382,7 @@
 .sendflow-transfer-operator-box.is-mtn,
 .sendflow-transfer-operator-box.is-moov,
 .sendflow-transfer-operator-box.is-telecel { color: #4f249f; font-size: 10px; font-weight: 800; }
+.sendflow-transfer-operator-box.is-generic { color: #6334c4; font-size: 10px; font-weight: 800; }
 .sendflow-transfer-operator-box.is-mtn { background: #ffca05; color: #1c2675; }
 .sendflow-transfer-operator-box.is-moov { background: #fff2e4; color: #dd6f14; }
 .sendflow-transfer-operator-box.is-telecel { background: #fcebee; color: #d6253d; }
@@ -1461,6 +1462,7 @@
 .sendflow-transfer-operator-choice.is-mtn { border-color: #e7b700; background: #ffca05; color: #1c2675; }
 .sendflow-transfer-operator-choice.is-moov { border-color: #f3c995; background: #fff2e4; color: #dd6f14; }
 .sendflow-transfer-operator-choice.is-telecel { border-color: #e8a9b3; background: #fcebee; color: #d6253d; }
+.sendflow-transfer-operator-choice.is-generic { color: #6334c4; font-size: 10px; font-weight: 800; }
 .sendflow-transfer-operator-option-copy { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
 .sendflow-transfer-operator-option-copy strong { overflow: hidden; color: #342c3e; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .sendflow-transfer-operator-option-copy small { color: #8b8393; font-size: 11px; }
