@@ -1300,7 +1300,8 @@
 .sendflow-transfer-page { width: min(100%, 720px); margin: 0 auto; padding: 20px 20px 40px; }
 .sendflow-transfer-valid-banner { display: flex; align-items: flex-start; gap: 7px; border-radius: 8px; background: #dff4ec; color: #267856; padding: 12px 15px; font-size: 13px; line-height: 1.38; }
 .sendflow-transfer-valid-banner svg { flex: 0 0 18px; margin-top: 1px; }
-.sendflow-transfer-card { margin-top: 17px; border-radius: 9px; background: #fff; box-shadow: 0 5px 18px rgba(48, 55, 78, .07); padding: 22px 13px 20px; }
+.sendflow-transfer-card { margin-top: 17px; border: 1px solid #e0e1e6; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(48, 55, 78, .1); padding: 14px; }
+.sendflow-transfer-section { border: 1px solid #e0e1e6; border-radius: 12px; background: #fff; box-shadow: 0 3px 10px rgba(48, 55, 78, .055); padding: 18px 13px 16px; }
 .sendflow-transfer-section h2 { margin: 0 0 14px; color: #3b3d48; font-size: 19px; font-weight: 800; letter-spacing: -.035em; }
 .sendflow-transfer-money-field { display: flex; min-height: 60px; align-items: center; border: 1px solid #e0e1e6; border-radius: 9px; background: #fff; padding: 0 15px; }
 .sendflow-transfer-money-field:focus-within, .sendflow-transfer-phone-row:focus-within, .sendflow-transfer-otp-input:focus { border-color: #8f6bd2; box-shadow: 0 0 0 3px rgba(99, 52, 196, .1); outline: 0; }
@@ -1332,7 +1333,7 @@
 .sendflow-transfer-checkbox input { position: absolute; opacity: 0; pointer-events: none; }
 .sendflow-transfer-checkbox > span { display: grid; width: 19px; height: 19px; place-items: center; border: 1px solid #1ba5ae; border-radius: 3px; background: #1ba5ae; color: #fff; }
 .sendflow-transfer-checkbox strong { font-weight: 500; }
-.sendflow-transfer-divider { height: 1px; margin: 20px -13px 25px; background: #e2e3e7; }
+.sendflow-transfer-divider { height: 1px; margin: 18px 0; background: #e2e3e7; }
 .sendflow-transfer-destination h2 { margin-bottom: 13px; }
 .sendflow-transfer-destination .sendflow-transfer-phone-row { margin-top: 0; background: #fff; padding-right: 8px; }
 .sendflow-transfer-destination .sendflow-transfer-prefix { padding-inline: 9px; }
@@ -1384,7 +1385,6 @@
   .sendflow-action-sheet { width: min(100%, 560px); border-radius: 25px; margin-bottom: 24px; }
   .sendflow-transfer-page { padding-top: 28px; }
   .sendflow-transfer-card { padding: 28px 24px 24px; }
-  .sendflow-transfer-divider { margin-right: -24px; margin-left: -24px; }
 }
 
 @media (max-width: 380px) {
@@ -1396,7 +1396,7 @@
   .sendflow-transaction-copy small { font-size: 10px; }
   .sendflow-transaction-amount { font-size: 12px; }
   .sendflow-transfer-page { padding-inline: 12px; }
-  .sendflow-transfer-card { padding-inline: 12px; }
+  .sendflow-transfer-card { padding: 12px; }
   .sendflow-transfer-phone-row { padding-right: 6px; }
   .sendflow-transfer-prefix { padding-inline: 7px; }
   .sendflow-transfer-otp-help { font-size: 12px; }
