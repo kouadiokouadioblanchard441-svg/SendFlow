@@ -4,6 +4,7 @@ import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { validateSignUp, type SignUpField } from '@/lib/auth-validation';
+import { DEFAULT_ACCOUNT_COUNTRY, saveAccountCountry, type AccountCountry } from '@/lib/account-country';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -81,6 +82,7 @@ export default function SignupPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignUpField, boolean>>>({});
+  const [signupCountry, setSignupCountry] = useState<AccountCountry>(DEFAULT_ACCOUNT_COUNTRY);
 
   useSeo({
     path: '/sign-up',
@@ -109,6 +111,7 @@ export default function SignupPage() {
     event.preventDefault();
     setSubmitAttempted(true);
     if (!canSubmit) return;
+    saveAccountCountry(signupCountry);
     window.sessionStorage.setItem('sendflow.pending-signup', 'true');
     setLocation('/create-pin');
   };
@@ -155,6 +158,7 @@ export default function SignupPage() {
             <CountryPhoneField
               value={form.phone}
               onChange={(value) => update('phone', value)}
+              onCountryChange={setSignupCountry}
               error={visibleError('phone')}
               onBlur={() => markTouched('phone')}
             />

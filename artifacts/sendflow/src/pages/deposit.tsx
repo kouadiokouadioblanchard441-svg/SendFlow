@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
+import { readAccountCountry, type AccountCountry } from '@/lib/account-country';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -25,14 +26,12 @@ type DepositOperator = {
   otpCommand?: string;
 };
 
-const depositOperators: DepositOperator[] = [
+const ivoryCoastDepositOperators: DepositOperator[] = [
   { id: 'orange-ci', name: 'Orange Money', shortName: 'Orange', brand: 'orange', requiresOtp: true, otpCommand: '#144*82# option 2' },
   { id: 'wave-ci', name: 'Wave', shortName: 'Wave', brand: 'wave', requiresOtp: false },
   { id: 'mtn-ci', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn', requiresOtp: false },
   { id: 'moov-ci', name: 'Moov Money', shortName: 'Moov', brand: 'moov', requiresOtp: false },
 ];
-
-const initialOperator = depositOperators[0];
 
 function OperatorMark({ operator }: { operator: DepositOperator }) {
   if (operator.brand === 'wave') {
@@ -54,10 +53,12 @@ function OperatorMark({ operator }: { operator: DepositOperator }) {
 export default function DepositPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
+  const accountCountry = readAccountCountry();
+  const depositOperators = accountCountry.dialCode === '+225' ? ivoryCoastDepositOperators : [];
   const [amount, setAmount] = useState('');
   const [sourceNumber, setSourceNumber] = useState('');
   const [otp, setOtp] = useState('');
-  const [operator, setOperator] = useState(initialOperator);
+  const [operator, setOperator] = useState<DepositOperator | null>(depositOperators[0] ?? null);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -77,7 +78,7 @@ export default function DepositPage() {
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
   const copyOtpCode = async () => {
-    if (!operator.otpCommand) return;
+    if (!operator?.otpCommand) return;
 
     try {
       await navigator.clipboard.writeText(operator.otpCommand);
@@ -89,7 +90,12 @@ export default function DepositPage() {
   };
 
   const enteredAmount = Number(amount.replace(/\s/g, '')) || 0;
-  const canSubmit = enteredAmount > 0 && sourceNumber.trim().length > 0 && (!operator.requiresOtp || otp.trim().length > 0);
+  const canSubmit = Boolean(
+    operator &&
+    enteredAmount > 0 &&
+    sourceNumber.trim().length > 0 &&
+    (!operator.requiresOtp || otp.trim().length > 0),
+  );
 
   const selectOperator = (nextOperator: DepositOperator) => {
     setOperator(nextOperator);
@@ -130,11 +136,11 @@ export default function DepositPage() {
       </header>
 
       <div className="sendflow-transfer-page">
-        <div className="sendflow-deposit-intro">
-          <span className="sendflow-deposit-intro-icon" aria-hidden="true"><WalletCards size={24} strokeWidth={2} /></span>
+        <div className="sendflow-deposit-country" aria-label={`Pays d’inscription : ${accountCountry.name}`}>
+          <span className="sendflow-deposit-country-flag" aria-hidden="true">{accountCountry.flag}</span>
           <span>
-            <strong>Recharger le wallet</strong>
-            <small>Ajoutez de l’argent à votre solde SendFlow.</small>
+            <small>Pays d’inscription</small>
+            <strong>{accountCountry.name}</strong>
           </span>
         </div>
 
@@ -160,47 +166,55 @@ export default function DepositPage() {
               <strong>FCFA</strong>
             </label>
 
-            <div className="sendflow-transfer-phone-row">
-              <button
-                type="button"
-                className={`sendflow-transfer-operator-box is-${operator.brand}`}
-                onClick={() => setOperatorPickerOpen(true)}
-                aria-label={`Sélectionner l’opérateur de dépôt, actuellement ${operator.name}`}
-                data-testid="button-select-deposit-operator"
-              >
-                <OperatorMark operator={operator} />
-              </button>
-              <span className="sendflow-transfer-prefix">+225</span>
-              <input
-                type="tel"
-                value={sourceNumber}
-                onChange={(event) => setSourceNumber(event.target.value)}
-                aria-label="Numéro source du dépôt"
-                placeholder="Numéro source"
-              />
-              <span className="sendflow-transfer-flag" aria-label="Côte d’Ivoire">🇨🇮</span>
-            </div>
-
-            {operator.requiresOtp && (
+            {operator ? (
               <>
-                <div className="sendflow-transfer-otp-help">
-                  <span>Obtenir le code otp avec</span>
-                  <button type="button" onClick={copyOtpCode} className="sendflow-transfer-otp-link">
-                    {operator.otpCommand}
+                <div className="sendflow-transfer-phone-row">
+                  <button
+                    type="button"
+                    className={`sendflow-transfer-operator-box is-${operator.brand}`}
+                    onClick={() => setOperatorPickerOpen(true)}
+                    aria-label={`Sélectionner le moyen de dépôt, actuellement ${operator.name}`}
+                    data-testid="button-select-deposit-operator"
+                  >
+                    <OperatorMark operator={operator} />
                   </button>
-                  <button type="button" className="sendflow-transfer-copy" onClick={copyOtpCode} aria-label="Copier le code OTP">
-                    {copied ? <Check size={18} /> : <Clipboard size={18} />}
-                  </button>
+                  <span className="sendflow-transfer-prefix">{accountCountry.dialCode}</span>
+                  <input
+                    type="tel"
+                    value={sourceNumber}
+                    onChange={(event) => setSourceNumber(event.target.value)}
+                    aria-label="Numéro source du dépôt"
+                    placeholder="Numéro source"
+                  />
+                  <span className="sendflow-transfer-flag" aria-label={accountCountry.name}>{accountCountry.flag}</span>
                 </div>
-                <input
-                  className="sendflow-transfer-otp-input"
-                  type="text"
-                  value={otp}
-                  onChange={(event) => setOtp(event.target.value)}
-                  placeholder="Code OTP"
-                  aria-label="Code OTP"
-                />
+
+                {operator.requiresOtp && (
+                  <>
+                    <div className="sendflow-transfer-otp-help">
+                      <span>Obtenir le code otp avec</span>
+                      <button type="button" onClick={copyOtpCode} className="sendflow-transfer-otp-link">
+                        {operator.otpCommand}
+                      </button>
+                      <button type="button" className="sendflow-transfer-copy" onClick={copyOtpCode} aria-label="Copier le code OTP">
+                        {copied ? <Check size={18} /> : <Clipboard size={18} />}
+                      </button>
+                    </div>
+                    <input
+                      className="sendflow-transfer-otp-input"
+                      type="text"
+                      value={otp}
+                      onChange={(event) => setOtp(event.target.value)}
+                      placeholder="Code OTP"
+                      aria-label="Code OTP"
+                    />
+                  </>
+                )}
               </>
+            ) : (
+              <div className="sendflow-deposit-unavailable" role="status">
+                Aucun moyen de dépôt n’est encore disponible pour votre pays d’inscription.
+              </div>
             )}
           </section>
 

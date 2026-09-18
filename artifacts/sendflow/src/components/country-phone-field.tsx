@@ -128,6 +128,7 @@ const defaultCountry = countries.find((country) => country.name === 'Côte d’I
 type CountryPhoneFieldProps = {
   value: string;
   onChange: (value: string) => void;
+  onCountryChange?: (country: CountryOption) => void;
   error?: string;
   onBlur?: () => void;
   defaultCountryName?: string;
@@ -136,6 +137,7 @@ type CountryPhoneFieldProps = {
 export function CountryPhoneField({
   value,
   onChange,
+  onCountryChange,
   error,
   onBlur,
   defaultCountryName,
@@ -181,6 +183,7 @@ export function CountryPhoneField({
 
   const selectCountry = (country: CountryOption) => {
     setSelectedCountry(country);
+    onCountryChange?.(country);
     setIsOpen(false);
     setQuery('');
   };
