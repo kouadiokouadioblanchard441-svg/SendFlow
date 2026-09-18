@@ -12,12 +12,20 @@ import { Link, Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 
 type TransferCountry = {
   id: string;
   name: string;
   dialCode: string;
   flag: string;
+};
+
+type InternationalOperator = {
+  id: string;
+  name: string;
+  shortName: string;
+  brand: 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
 };
 
 const transferCountries: TransferCountry[] = [
@@ -32,8 +40,67 @@ const transferCountries: TransferCountry[] = [
   { id: 'cg', name: 'Congo-Brazzaville', dialCode: '+242', flag: '🇨🇬' },
 ];
 
+const operatorsByCountry: Record<string, InternationalOperator[]> = {
+  ci: [
+    { id: 'orange-ci', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
+    { id: 'wave-ci', name: 'Wave', shortName: 'Wave', brand: 'wave' },
+    { id: 'mtn-ci', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn' },
+    { id: 'moov-ci', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
+  ],
+  sn: [
+    { id: 'orange-sn', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
+    { id: 'wave-sn', name: 'Wave', shortName: 'Wave', brand: 'wave' },
+    { id: 'free-sn', name: 'Free Money', shortName: 'Free', brand: 'generic' },
+  ],
+  bf: [
+    { id: 'orange-bf', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
+    { id: 'moov-bf', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
+    { id: 'telecel-bf', name: 'Telecel Money', shortName: 'Telecel', brand: 'generic' },
+  ],
+  bj: [
+    { id: 'mtn-bj', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn' },
+    { id: 'moov-bj', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
+  ],
+  ml: [
+    { id: 'orange-ml', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
+    { id: 'moov-ml', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
+  ],
+  ne: [
+    { id: 'airtel-ne', name: 'Airtel Money', shortName: 'Airtel', brand: 'generic' },
+    { id: 'moov-ne', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
+  ],
+  tg: [
+    { id: 'tmoney-tg', name: 'TMoney', shortName: 'TMoney', brand: 'generic' },
+    { id: 'flooz-tg', name: 'Flooz', shortName: 'Flooz', brand: 'generic' },
+  ],
+  cm: [
+    { id: 'orange-cm', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
+    { id: 'mtn-cm', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn' },
+  ],
+  cg: [
+    { id: 'airtel-cg', name: 'Airtel Money', shortName: 'Airtel', brand: 'generic' },
+    { id: 'mtn-cg', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn' },
+  ],
+};
+
 const INTERNATIONAL_FEE_RATE = 0.03;
 const initialCountry = transferCountries[0];
+const initialOperator = operatorsByCountry[initialCountry.id][0];
+
+function OperatorMark({ operator }: { operator: InternationalOperator }) {
+  if (operator.brand === 'wave') return <img src={waveLogo} alt="" />;
+
+  if (operator.brand === 'orange') {
+    return (
+      <>
+        <strong>Orange</strong>
+        <small>Money</small>
+      </>
+    );
+  }
+
+  return <strong>{operator.shortName}</strong>;
+}
 
 export default function InternationalTransferPage() {
   const [, setLocation] = useLocation();
@@ -41,8 +108,10 @@ export default function InternationalTransferPage() {
   const [amount, setAmount] = useState('');
   const [recipientNumber, setRecipientNumber] = useState('');
   const [country, setCountry] = useState(initialCountry);
+  const [operator, setOperator] = useState<InternationalOperator | null>(initialOperator);
   const [payFees, setPayFees] = useState(true);
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
+  const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   useSeo({
@@ -63,13 +132,20 @@ export default function InternationalTransferPage() {
   const feeAmount = enteredAmount > 0 ? Math.ceil(enteredAmount * INTERNATIONAL_FEE_RATE) : 0;
   const recipientAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
   const walletDebit = payFees ? enteredAmount + feeAmount : enteredAmount;
-  const canSubmit = enteredAmount > 0 && recipientAmount > 0 && recipientNumber.trim().length > 0;
+  const canSubmit = Boolean(operator) && enteredAmount > 0 && recipientAmount > 0 && recipientNumber.trim().length > 0;
 
   const selectCountry = (nextCountry: TransferCountry) => {
     setCountry(nextCountry);
+    setOperator(operatorsByCountry[nextCountry.id]?.[0] ?? null);
     setRecipientNumber('');
     setSubmitted(false);
     setCountryPickerOpen(false);
+  };
+
+  const selectOperator = (nextOperator: InternationalOperator) => {
+    setOperator(nextOperator);
+    setSubmitted(false);
+    setOperatorPickerOpen(false);
   };
 
   return (
