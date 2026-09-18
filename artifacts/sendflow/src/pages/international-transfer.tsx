@@ -113,6 +113,7 @@ export default function InternationalTransferPage() {
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useSeo({
     path: '/international-transfer',
@@ -126,25 +127,49 @@ export default function InternationalTransferPage() {
     if (!isUnlocked) setLocation('/sign-in');
   }, [isUnlocked, setLocation]);
 
+  useEffect(() => {
+    if (!countryPickerOpen && !operatorPickerOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setCountryPickerOpen(false);
+        setOperatorPickerOpen(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [countryPickerOpen, operatorPickerOpen]);
+
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
   const enteredAmount = Number(amount.replace(/\s/g, '')) || 0;
   const feeAmount = enteredAmount > 0 ? Math.ceil(enteredAmount * INTERNATIONAL_FEE_RATE) : 0;
   const recipientAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
   const walletDebit = payFees ? enteredAmount + feeAmount : enteredAmount;
-  const canSubmit = Boolean(operator) && enteredAmount > 0 && recipientAmount > 0 && recipientNumber.trim().length > 0;
+  const recipientDigits = recipientNumber.replace(/\D/g, '');
+  const hasValidRecipient = /^\d{7,15}$/.test(recipientDigits);
+  const canSubmit = Boolean(operator) && enteredAmount > 0 && recipientAmount > 0 && hasValidRecipient;
 
   const selectCountry = (nextCountry: TransferCountry) => {
     setCountry(nextCountry);
     setOperator(operatorsByCountry[nextCountry.id]?.[0] ?? null);
     setRecipientNumber('');
     setSubmitted(false);
+    setSubmitAttempted(false);
     setCountryPickerOpen(false);
   };
 
   const selectOperator = (nextOperator: InternationalOperator) => {
     setOperator(nextOperator);
     setSubmitted(false);
+    setSubmitAttempted(false);
     setOperatorPickerOpen(false);
   };
 
@@ -184,6 +209,7 @@ export default function InternationalTransferPage() {
           className="sendflow-transfer-card"
           onSubmit={(event) => {
             event.preventDefault();
+            setSubmitAttempted(true);
             if (canSubmit) setSubmitted(true);
           }}
         >
@@ -198,9 +224,11 @@ export default function InternationalTransferPage() {
                 onChange={(event) => {
                   setAmount(event.target.value.replace(/[^\d ]/g, ''));
                   setSubmitted(false);
+                  setSubmitAttempted(false);
                 }}
                 placeholder="Montant du transfert"
                 aria-label="Montant du transfert international"
+                maxLength={12}
               />
               <strong>FCFA</strong>
             </label>
@@ -221,6 +249,7 @@ export default function InternationalTransferPage() {
               type="button"
               className="sendflow-international-country-button"
               onClick={() => setCountryPickerOpen(true)}
+              aria-haspopup="dialog"
               aria-label={`Sélectionner le pays destinataire, actuellement ${country.name}`}
               data-testid="button-select-international-country"
             >
@@ -237,6 +266,7 @@ export default function InternationalTransferPage() {
                   type="button"
                   className={`sendflow-transfer-operator-box is-${operator.brand}`}
                   onClick={() => setOperatorPickerOpen(true)}
+                  aria-haspopup="dialog"
                   aria-label={`Sélectionner l’opérateur destinataire, actuellement ${operator.name}`}
                   data-testid="button-select-international-operator"
                 >
@@ -249,9 +279,14 @@ export default function InternationalTransferPage() {
                   onChange={(event) => {
                     setRecipientNumber(event.target.value);
                     setSubmitted(false);
+                    setSubmitAttempted(false);
                   }}
                   placeholder="Numéro du bénéficiaire"
                   aria-label={`Numéro du bénéficiaire au ${country.name}`}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  maxLength={18}
+                  aria-invalid={submitAttempted && !hasValidRecipient}
                 />
                 <span className="sendflow-transfer-flag" aria-label={country.name}>{country.flag}</span>
               </div>
@@ -259,6 +294,11 @@ export default function InternationalTransferPage() {
               <div className="sendflow-deposit-unavailable" role="status">
                 Aucun opérateur n’est encore disponible pour ce pays.
               </div>
+            )}
+            {submitAttempted && !hasValidRecipient && (
+              <p className="sendflow-international-field-error" role="alert">
+                Entrez un numéro valide pour {country.name}.
+              </p>
             )}
 
             <label className="sendflow-transfer-checkbox">

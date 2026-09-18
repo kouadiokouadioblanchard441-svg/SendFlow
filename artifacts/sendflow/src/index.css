@@ -1427,6 +1427,7 @@
 .sendflow-international-country-button strong { overflow: hidden; color: #342c3e; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .sendflow-international-country-button > svg { color: #6334c4; }
 .sendflow-international-phone-row { margin-top: 12px !important; }
+.sendflow-international-field-error { margin: 8px 3px 0; color: #c53030; font-size: 12px; line-height: 1.35; }
 .sendflow-international-country-list { display: grid; gap: 9px; margin-top: 18px; }
 .sendflow-international-country-option { display: grid; grid-template-columns: 44px minmax(0, 1fr) 22px; align-items: center; gap: 12px; width: 100%; min-height: 64px; border: 1px solid #e8e3ed; border-radius: 14px; background: #fff; color: #342c3e; cursor: pointer; padding: 8px 12px 8px 8px; text-align: left; }
 .sendflow-international-country-option:hover, .sendflow-international-country-option:focus-visible { border-color: #b39bdf; background: #fbf9fe; outline: 0; }
