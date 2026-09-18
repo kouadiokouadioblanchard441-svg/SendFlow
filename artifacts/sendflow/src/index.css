@@ -699,6 +699,7 @@
   width: 100%;
   min-height: 59px;
   flex: 0 0 auto;
+  margin-bottom: 18px;
   border: 2px solid #7d20e7;
   border-radius: 17px;
   background: #fff;
