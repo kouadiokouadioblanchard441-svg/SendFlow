@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '@/pages/legal';
 import NotFound from '@/pages/not-found';
 import AccountPage from '@/pages/account';
+import AccountInfoPage from '@/pages/account-info';
 import DepositPage from '@/pages/deposit';
 import HistoryPage from '@/pages/history';
 import InternationalTransferPage from '@/pages/international-transfer';
@@ -114,6 +115,7 @@ function App() {
               <Route path="/forgot-password" component={() => <ResetPage mode="password" />} />
               <Route path="/forgot-pin" component={() => <ResetPage mode="pin" />} />
               <Route path="/account" component={AccountPage} />
+              <Route path="/account-info" component={AccountInfoPage} />
               <Route path="/deposit" component={DepositPage} />
               <Route path="/international-transfer" component={InternationalTransferPage} />
               <Route path="/inter-transfer" component={InterNetworkTransferPage} />

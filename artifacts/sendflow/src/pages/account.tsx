@@ -24,12 +24,13 @@ import { operatorNames, transactions, type Transaction } from '@/lib/transaction
 import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 import { DEMO_SESSION_KEY } from '@/lib/demo-account';
+import { readAccountProfile } from '@/lib/account-profile';
 import notificationBell from '@assets/633486_1789677628502.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 import profileMariam from '@assets/generated_images/sendflow-profile-mariam.png';
 
-type SheetName = 'notifications' | 'transaction' | 'account-info' | 'change-secret' | 'pricing' | 'limit' | null;
+type SheetName = 'notifications' | 'transaction' | 'change-secret' | 'pricing' | 'limit' | null;
 const NOTIFICATIONS_READ_KEY = 'sendflow.notifications.read';
 
 function ActionTile({
@@ -57,6 +58,7 @@ function ActionTile({
 export default function AccountPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
+  const accountProfile = readAccountProfile();
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetName>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(() => (
@@ -236,9 +238,9 @@ export default function AccountPage() {
               <div className="sendflow-side-brand"><img src={sendflowMark} alt="" /><img className="sendflow-side-wordmark" src={sendflowWordmark} alt="SendFlow" /></div>
               <button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer le menu" data-testid="button-close-menu"><X size={20} /></button>
             </div>
-             <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileMariam} alt="" /><span><strong>Mariam A.</strong><small>Compte personnel</small></span></div>
+             <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileMariam} alt="" /><span><strong>{accountProfile.firstName} {accountProfile.lastName}</strong><small>Compte personnel</small></span></div>
             <div className="sendflow-menu-links">
-               <button type="button" onClick={() => openSheet('account-info')} data-testid="button-menu-account-info"><UserRound size={19} />Informations du compte<ChevronRight size={17} /></button>
+                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-info'); }} data-testid="button-menu-account-info"><UserRound size={19} />Informations du compte<ChevronRight size={17} /></button>
                <button type="button" onClick={() => openSheet('change-secret')} data-testid="button-menu-change-secret"><LockKeyhole size={19} />Modifier le code secret<ChevronRight size={17} /></button>
                <button type="button" onClick={() => openSheet('pricing')} data-testid="button-menu-pricing"><BadgePercent size={19} />Tarification<ChevronRight size={17} /></button>
                <button type="button" onClick={() => openSheet('limit')} data-testid="button-menu-limit"><WalletCards size={19} />Plafond du compte<ChevronRight size={17} /></button>
@@ -255,8 +257,7 @@ export default function AccountPage() {
           <button type="button" className="sendflow-sheet-backdrop" onClick={closePanels} aria-label="Fermer la fenêtre" data-testid="button-close-sheet-backdrop" />
           <section className="sendflow-action-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
             <div className="sendflow-sheet-handle" aria-hidden="true" />
-             <div className="sendflow-sheet-header"><div><p className="sendflow-section-kicker">SendFlow</p><h2 id="sheet-title">{sheet === 'transaction' ? 'Détail de la transaction' : sheet === 'account-info' ? 'Informations du compte' : sheet === 'change-secret' ? 'Modifier le code secret' : sheet === 'pricing' ? 'Tarification' : sheet === 'limit' ? 'Plafond du compte' : 'Service client'}</h2></div><button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer" data-testid="button-close-sheet"><X size={20} /></button></div>
-              {sheet === 'account-info' && <><p className="sendflow-sheet-text">Consultez les informations principales de votre compte SendFlow.</p><div className="sendflow-detail-grid"><span>Nom<strong>Mariam A.</strong></span><span>Type<strong>Compte personnel</strong></span></div></>}
+             <div className="sendflow-sheet-header"><div><p className="sendflow-section-kicker">SendFlow</p><h2 id="sheet-title">{sheet === 'transaction' ? 'Détail de la transaction' : sheet === 'change-secret' ? 'Modifier le code secret' : sheet === 'pricing' ? 'Tarification' : sheet === 'limit' ? 'Plafond du compte' : 'Service client'}</h2></div><button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer" data-testid="button-close-sheet"><X size={20} /></button></div>
               {sheet === 'change-secret' && <><p className="sendflow-sheet-text">Pour protéger votre compte, vous pouvez réinitialiser votre code secret depuis le parcours sécurisé.</p><button type="button" className="sendflow-sheet-primary" onClick={() => setLocation('/forgot-password')} data-testid="button-start-change-secret">Modifier le code secret</button></>}
               {sheet === 'pricing' && <><p className="sendflow-sheet-text">Les frais SendFlow sont affichés clairement avant la confirmation de chaque opération.</p><div className="sendflow-route-card"><span>Tarification</span><strong>Visible avant confirmation</strong></div></>}
               {sheet === 'limit' && <><p className="sendflow-sheet-text">Le plafond de votre compte sera affiché ici lorsque les limites de transfert seront activées pour votre profil.</p><div className="sendflow-route-card"><span>Plafond actuel</span><strong>À définir</strong></div></>}

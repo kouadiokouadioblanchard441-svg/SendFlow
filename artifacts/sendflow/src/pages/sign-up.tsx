@@ -5,6 +5,7 @@ import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpField } from '@/lib/auth-validation';
 import { DEFAULT_ACCOUNT_COUNTRY, saveAccountCountry, type AccountCountry } from '@/lib/account-country';
+import { saveAccountProfile, splitFullName } from '@/lib/account-profile';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -114,6 +115,10 @@ export default function SignupPage() {
     setSubmitAttempted(true);
     if (!canSubmit) return;
     saveAccountCountry(signupCountry);
+    saveAccountProfile({
+      ...splitFullName(form.fullName),
+      birthDate: form.birthDate,
+    });
     window.sessionStorage.setItem('sendflow.pending-signup', 'true');
     setLocation('/create-pin');
   };
