@@ -2,7 +2,7 @@ import { ArrowRight, ChevronRight } from 'lucide-react';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
-import type { OperatorCode, Transaction } from '@/lib/transactions';
+import { operatorNames, type OperatorCode, type Transaction } from '@/lib/transactions';
 
 const operatorLogos: Partial<Record<OperatorCode, string>> = {
   sendflow: sendflowMark,
@@ -35,22 +35,15 @@ function OperatorLogo({ operator }: { operator: OperatorCode }) {
 }
 
 function TransactionCardContent({ transaction }: { transaction: Transaction }) {
-  const fromName = transaction.fromOperator === 'sendflow' ? 'SendFlow' : transaction.fromOperator;
-  const toName = transaction.toOperator === 'sendflow' ? 'SendFlow' : transaction.toOperator;
-
   return (
     <>
-      <span className="sendflow-transaction-route" aria-label={`De ${fromName} vers ${toName}`}>
+      <span className="sendflow-transaction-route" aria-label={`De ${operatorNames[transaction.fromOperator]} vers ${operatorNames[transaction.toOperator]}`}>
         <OperatorLogo operator={transaction.fromOperator} />
         <ArrowRight className="sendflow-transaction-route-arrow" size={17} strokeWidth={1.8} aria-hidden="true" />
         <OperatorLogo operator={transaction.toOperator} />
       </span>
       <span className="sendflow-transaction-copy">
-        <strong>
-          {transaction.kind === 'deposit'
-            ? `De ${transaction.sender} vers ${transaction.recipient}`
-            : `De ${transaction.sender} vers ${transaction.recipient}`}
-        </strong>
+        <strong>De {transaction.sender} vers {transaction.recipient}</strong>
         <small>{transaction.date}</small>
       </span>
       <span className="sendflow-transaction-amount">{transaction.amount}</span>

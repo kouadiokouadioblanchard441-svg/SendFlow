@@ -1237,6 +1237,7 @@
 .sendflow-transaction-route { display: flex; width: 88px; min-width: 88px; align-items: center; justify-content: space-between; gap: 4px; white-space: nowrap; }
 .sendflow-transaction-logo { display: grid; width: 31px; height: 31px; flex: 0 0 31px; place-items: center; overflow: hidden; border: 1px solid #e8edf2; border-radius: 4px; background: #fff; box-shadow: none; }
 .sendflow-transaction-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.sendflow-transaction-logo.is-sendflow { border-color: #ded8eb; background: #fff; padding: 4px; }
 .sendflow-transaction-logo.is-tmoney { border-color: #e6bf1e; background: #f5c419; color: #a8151d; font-size: 20px; font-style: italic; }
 .sendflow-transaction-logo.is-moov { border-color: #086da9; background: #0877bd; color: #fff; font-size: 18px; font-style: italic; }
 .sendflow-transaction-route-arrow { flex: 0 0 15px; color: #55535c; }

@@ -1,7 +1,7 @@
 import { DEMO_ACCOUNT } from '@/lib/demo-account';
 
 export type TransactionKind = 'transfer' | 'deposit';
-export type OperatorCode = 'mixx' | 'wave' | 'tmoney' | 'moov';
+export type OperatorCode = 'sendflow' | 'mixx' | 'wave' | 'tmoney' | 'moov';
 
 export type Transaction = {
   id: string;
@@ -15,6 +15,7 @@ export type Transaction = {
 };
 
 export const operatorNames: Record<OperatorCode, string> = {
+  sendflow: 'SendFlow',
   mixx: 'Mixx by Yas',
   wave: 'Wave',
   tmoney: 'TMoney',
