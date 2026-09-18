@@ -8,10 +8,10 @@ import {
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
+import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
-import nativeWalletIcon from '@assets/10149443_1789713972148.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 
 type TransferCountry = {
@@ -233,7 +233,7 @@ export default function InternationalTransferPage() {
               <strong>FCFA</strong>
             </label>
             <div className="sendflow-international-wallet-source">
-              <span className="sendflow-international-wallet-icon" aria-hidden="true"><img src={nativeWalletIcon} alt="" /></span>
+              <span className="sendflow-international-wallet-icon"><NativeWalletIcon className="is-compact" /></span>
               <span>
                 <strong>Wallet interne</strong>
                 <small>Le montant sera débité après confirmation</small>
