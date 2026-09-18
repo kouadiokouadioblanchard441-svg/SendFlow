@@ -1001,6 +1001,17 @@
 .sendflow-wallet-balance-row strong { color: #fff; font-size: clamp(34px, 10vw, 46px); font-weight: 800; letter-spacing: -.06em; line-height: 1; }
 .sendflow-wallet-balance-row span { color: rgba(255, 255, 255, .82); font-size: 14px; font-weight: 700; }
 .sendflow-wallet-footer { color: rgba(255, 255, 255, .72); font-size: 11px; }
+.sendflow-deposit-intro { display: flex; align-items: center; gap: 12px; margin-bottom: 17px; border: 1px solid #e0e1e6; border-radius: 14px; background: #fff; box-shadow: 0 4px 12px rgba(48, 55, 78, .06); padding: 13px 14px; }
+.sendflow-deposit-intro-icon { display: grid; width: 43px; height: 43px; flex: 0 0 43px; place-items: center; border-radius: 12px; background: #f0e8fc; color: #6334c4; }
+.sendflow-deposit-intro > span:last-child { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.sendflow-deposit-intro strong { color: #342c3e; font-size: 14px; }
+.sendflow-deposit-intro small { color: #8b8393; font-size: 11px; line-height: 1.35; }
+.sendflow-deposit-wallet-target { display: flex; min-height: 68px; align-items: center; gap: 11px; border: 1px solid #e0e1e6; border-radius: 10px; background: #f8f9fb; padding: 8px 12px 8px 8px; }
+.sendflow-deposit-wallet-target-icon { display: grid; width: 49px; height: 49px; flex: 0 0 49px; place-items: center; border-radius: 11px; background: #e8defc; color: #6334c4; }
+.sendflow-deposit-wallet-target > span:nth-child(2) { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 4px; }
+.sendflow-deposit-wallet-target strong { color: #342c3e; font-size: 14px; }
+.sendflow-deposit-wallet-target small { color: #8b8393; font-size: 11px; }
+.sendflow-deposit-wallet-target > span:last-child { color: #777982; font-size: 12px; font-weight: 700; }
 
 .sendflow-profile-avatar {
   display: grid;
