@@ -215,20 +215,6 @@ export default function DepositPage() {
               <span aria-hidden="true">{payFees ? <Check size={13} strokeWidth={3} /> : null}</span>
               <strong>Je paie les frais</strong>
             </label>
-          </section>
-
-          <div className="sendflow-transfer-divider" />
-
-          <section className="sendflow-transfer-section sendflow-transfer-destination" aria-labelledby="deposit-to-title">
-            <h2 id="deposit-to-title">Vers</h2>
-            <div className="sendflow-deposit-wallet-target">
-              <span className="sendflow-deposit-wallet-target-icon" aria-hidden="true"><WalletCards size={24} strokeWidth={2} /></span>
-              <span>
-                <strong>Wallet interne</strong>
-                <small>Votre solde SendFlow</small>
-              </span>
-              <span>FCFA</span>
-            </div>
             <div className="sendflow-transfer-fees">
               Frais: <strong>0 Fcfa</strong>
             </div>

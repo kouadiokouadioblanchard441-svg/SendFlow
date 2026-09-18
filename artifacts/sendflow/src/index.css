@@ -1002,12 +1002,6 @@
 .sendflow-wallet-balance-row span { color: rgba(255, 255, 255, .82); font-size: 14px; font-weight: 700; }
 .sendflow-wallet-footer { color: rgba(255, 255, 255, .72); font-size: 11px; }
 .sendflow-deposit-unavailable { margin-top: 19px; border-radius: 10px; background: #f8f5fd; color: #6f637d; padding: 12px; font-size: 13px; line-height: 1.45; }
-.sendflow-deposit-wallet-target { display: flex; min-height: 68px; align-items: center; gap: 11px; border: 1px solid #e0e1e6; border-radius: 10px; background: #f8f9fb; padding: 8px 12px 8px 8px; }
-.sendflow-deposit-wallet-target-icon { display: grid; width: 49px; height: 49px; flex: 0 0 49px; place-items: center; border-radius: 11px; background: #e8defc; color: #6334c4; }
-.sendflow-deposit-wallet-target > span:nth-child(2) { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 4px; }
-.sendflow-deposit-wallet-target strong { color: #342c3e; font-size: 14px; }
-.sendflow-deposit-wallet-target small { color: #8b8393; font-size: 11px; }
-.sendflow-deposit-wallet-target > span:last-child { color: #777982; font-size: 12px; font-weight: 700; }
 
 .sendflow-profile-avatar {
   display: grid;
