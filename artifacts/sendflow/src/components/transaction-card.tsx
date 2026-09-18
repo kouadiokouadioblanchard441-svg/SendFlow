@@ -1,35 +1,56 @@
 import { ArrowRight, ChevronRight } from 'lucide-react';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
+import sendflowMark from '@assets/sendflow-mark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import type { OperatorCode, Transaction } from '@/lib/transactions';
 
 const operatorLogos: Partial<Record<OperatorCode, string>> = {
+  sendflow: sendflowMark,
   mixx: mixxLogo,
   wave: waveLogo,
 };
 
 function OperatorLogo({ operator }: { operator: OperatorCode }) {
+  if (operator === 'sendflow') {
+    return (
+      <span className="sendflow-transaction-logo is-sendflow">
+        <img src={sendflowMark} alt="" />
+      </span>
+    );
+  }
+
+  if (operator === 'mixx' || operator === 'wave') {
+    return (
+      <span className={`sendflow-transaction-logo is-${operator}`}>
+        <img src={operatorLogos[operator]} alt="" />
+      </span>
+    );
+  }
+
   return (
     <span className={`sendflow-transaction-logo is-${operator}`}>
-      {operatorLogos[operator] ? (
-        <img src={operatorLogos[operator]} alt="" />
-      ) : (
-        <strong>{operator === 'tmoney' ? 'T' : 'M'}</strong>
-      )}
+      <strong>{operator === 'tmoney' ? 'T' : 'M'}</strong>
     </span>
   );
 }
 
 function TransactionCardContent({ transaction }: { transaction: Transaction }) {
+  const fromName = transaction.fromOperator === 'sendflow' ? 'SendFlow' : transaction.fromOperator;
+  const toName = transaction.toOperator === 'sendflow' ? 'SendFlow' : transaction.toOperator;
+
   return (
     <>
-      <span className="sendflow-transaction-route" aria-label={`De ${transaction.fromOperator} vers ${transaction.toOperator}`}>
+      <span className="sendflow-transaction-route" aria-label={`De ${fromName} vers ${toName}`}>
         <OperatorLogo operator={transaction.fromOperator} />
         <ArrowRight className="sendflow-transaction-route-arrow" size={17} strokeWidth={1.8} aria-hidden="true" />
         <OperatorLogo operator={transaction.toOperator} />
       </span>
       <span className="sendflow-transaction-copy">
-        <strong>De {transaction.sender} vers {transaction.recipient}</strong>
+        <strong>
+          {transaction.kind === 'deposit'
+            ? `De ${transaction.sender} vers ${transaction.recipient}`
+            : `De ${transaction.sender} vers ${transaction.recipient}`}
+        </strong>
         <small>{transaction.date}</small>
       </span>
       <span className="sendflow-transaction-amount">{transaction.amount}</span>

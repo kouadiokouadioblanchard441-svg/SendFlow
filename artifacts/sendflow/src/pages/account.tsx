@@ -18,7 +18,7 @@ import {
 import { Link, Redirect, useLocation } from 'wouter';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { TransactionCard } from '@/components/transaction-card';
-import { operatorNames, transactions } from '@/lib/transactions';
+import { operatorNames, transactions, type Transaction } from '@/lib/transactions';
 import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 import { DEMO_SESSION_KEY } from '@/lib/demo-account';
@@ -63,6 +63,7 @@ export default function AccountPage() {
   const [creditAmount, setCreditAmount] = useState('1 000 FCFA');
   const [creditPurchased, setCreditPurchased] = useState(false);
   const [walletVisible, setWalletVisible] = useState(true);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useSeo({
     path: '/account',
@@ -83,7 +84,15 @@ export default function AccountPage() {
   const openSheet = (nextSheet: Exclude<SheetName, null>) => {
     setMenuOpen(false);
     setCreditPurchased(false);
+    setSelectedTransaction(null);
     setSheet(nextSheet);
+  };
+
+  const openTransaction = (transaction: Transaction) => {
+    setMenuOpen(false);
+    setCreditPurchased(false);
+    setSelectedTransaction(transaction);
+    setSheet('transaction');
   };
 
   const openHistory = () => {
@@ -95,6 +104,7 @@ export default function AccountPage() {
   const closePanels = () => {
     setMenuOpen(false);
     setCreditPurchased(false);
+    setSelectedTransaction(null);
     setSheet(null);
   };
 
@@ -182,7 +192,7 @@ export default function AccountPage() {
                 <TransactionCard
                   key={transaction.id}
                   transaction={transaction}
-                  onClick={() => openSheet('transaction')}
+                  onClick={() => openTransaction(transaction)}
                   testId={`button-transaction-${transaction.id}`}
                 />
               ))}
@@ -221,7 +231,7 @@ export default function AccountPage() {
             {sheet === 'inter' && <><p className="sendflow-sheet-text">Envoyez de l’argent au même pays, même lorsque votre destinataire utilise un autre réseau.</p><div className="sendflow-route-card"><span>Votre réseau</span><ArrowLeftRight size={19} /><span>Autre réseau</span></div><button type="button" className="sendflow-sheet-primary" onClick={() => setSheet(null)} data-testid="button-start-inter-transfer">Commencer un transfert</button></>}
              {sheet === 'plus' && <><p className="sendflow-sheet-text">Des services utiles, directement depuis votre compte SendFlow.</p><button type="button" className="sendflow-service-row" onClick={() => openSheet('call-credit')} data-testid="button-buy-call-credit"><span className="sendflow-service-icon"><PhoneCall size={20} /></span><span><strong>Crédit d'appel</strong><small>Acheter du crédit pour votre ligne</small></span><ChevronRight size={18} /></button></>}
              {sheet === 'call-credit' && <><p className="sendflow-sheet-text">Choisissez le montant à créditer sur votre ligne. Le crédit sera disponible après confirmation du paiement.</p><div className="sendflow-credit-options" role="group" aria-label="Montant du crédit d'appel">{['500 FCFA', '1 000 FCFA', '2 000 FCFA'].map((amount) => <button type="button" className={`sendflow-credit-option${creditAmount === amount ? ' is-selected' : ''}`} onClick={() => setCreditAmount(amount)} key={amount}>{amount}</button>)}</div>{creditPurchased ? <p className="sendflow-purchase-success" role="status"><Check size={18} /> Crédit d'appel acheté avec succès.</p> : <button type="button" className="sendflow-sheet-primary" onClick={() => setCreditPurchased(true)} data-testid="button-confirm-call-credit">Acheter {creditAmount}</button>}</>}
-             {sheet === 'transaction' && <><p className="sendflow-sheet-text">Cette opération a été enregistrée sur votre compte.</p><div className="sendflow-detail-amount">{transactions[0].amount}<small>Transfert inter réseau</small></div><div className="sendflow-detail-grid"><span>Destinataire<strong>{transactions[0].recipient}</strong></span><span>Date<strong>{transactions[0].date}</strong></span><span>Opérateur<strong>{operatorNames[transactions[0].toOperator]}</strong></span><span>Statut<strong className="is-success">Terminé</strong></span></div></>}
+             {sheet === 'transaction' && selectedTransaction && <><p className="sendflow-sheet-text">Cette opération a été enregistrée sur votre compte.</p><div className="sendflow-detail-amount">{selectedTransaction.amount}<small>{selectedTransaction.kind === 'deposit' ? 'Dépôt vers le wallet' : 'Transfert vers un wallet'}</small></div><div className="sendflow-detail-grid"><span>{selectedTransaction.kind === 'deposit' ? 'Source' : 'Destinataire'}<strong>{selectedTransaction.kind === 'deposit' ? operatorNames[selectedTransaction.fromOperator] : selectedTransaction.recipient}</strong></span><span>Date<strong>{selectedTransaction.date}</strong></span><span>Opérateur<strong>{operatorNames[selectedTransaction.kind === 'deposit' ? selectedTransaction.fromOperator : selectedTransaction.toOperator]}</strong></span><span>Statut<strong className="is-success">Terminé</strong></span></div></>}
             {sheet === 'notifications' && <><p className="sendflow-sheet-text">Notre équipe est là pour vous aider.</p><button type="button" className="sendflow-sheet-primary" onClick={() => setSheet(null)} data-testid="button-contact-support">Contacter le support</button></>}
           </section>
         </div>
