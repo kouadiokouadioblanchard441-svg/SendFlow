@@ -1,14 +1,17 @@
-import { ArrowLeft, Facebook, MessageCircle, PhoneCall, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, PhoneCall, type LucideIcon } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { customerServiceProvider } from '@/lib/customer-service';
 import { useSeo } from '@/lib/seo';
+import facebookLogo from '@assets/facebook-logo-clean-icon-png_1789744005304.png';
+import whatsappLogo from '@assets/logo-whatsapp-fond-blanc-vecteur_980129-12073_1789744005252.jpg';
 
 type SupportChannel = {
   id: 'whatsapp' | 'facebook' | 'phone';
   label: string;
   value: string;
   href: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  logo?: string;
   external?: boolean;
 };
 
@@ -22,7 +25,7 @@ export default function CustomerServicePage() {
       label: 'WhatsApp',
       value: contact.whatsappNumber,
       href: contact.whatsappHref,
-      icon: MessageCircle,
+      logo: whatsappLogo,
       external: true,
     },
     {
@@ -30,7 +33,7 @@ export default function CustomerServicePage() {
       label: 'Facebook',
       value: contact.facebookLabel,
       href: contact.facebookHref,
-      icon: Facebook,
+      logo: facebookLogo,
       external: true,
     },
     {
@@ -87,7 +90,11 @@ export default function CustomerServicePage() {
                   <span>{channel.value}</span>
                 </span>
                 <span className="sendflow-customer-service-icon" aria-hidden="true">
-                  <Icon size={27} strokeWidth={2.35} />
+                  {channel.logo ? (
+                    <img src={channel.logo} alt="" />
+                  ) : Icon ? (
+                    <Icon size={27} strokeWidth={2.35} />
+                  ) : null}
                 </span>
               </a>
             );
