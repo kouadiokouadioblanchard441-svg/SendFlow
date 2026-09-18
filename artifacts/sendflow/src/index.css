@@ -1332,11 +1332,12 @@
 .sendflow-side-brand img { width: 27px; height: 31px; object-fit: contain; }
 .sendflow-side-brand .sendflow-side-wordmark { width: 103px; height: 22px; object-fit: contain; }
 .sendflow-close-button { width: 36px; height: 36px; background: #f3eff9; color: #5c32b3; touch-action: manipulation; }
-.sendflow-menu-profile { display: flex; align-items: center; gap: 13px; margin-top: 22px; border: 1px solid #eee9f7; border-radius: 18px; background: #f8f5fd; padding: 15px; }
-.sendflow-menu-profile .sendflow-profile-avatar { width: 56px; height: 56px; border-width: 2px; font-size: 14px; }
-.sendflow-menu-profile span:last-child { display: flex; flex-direction: column; gap: 4px; }
-.sendflow-menu-profile strong { font-size: 16px; }
-.sendflow-menu-profile small { color: #8a8294; font-size: 13px; }
+.sendflow-menu-profile { position: relative; display: flex; min-height: 88px; align-items: center; gap: 14px; margin-top: 22px; overflow: hidden; border: 1px solid #e5e0ef; border-radius: 18px; background: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .98), 0 7px 18px rgba(42, 29, 67, .08); padding: 15px 16px; }
+.sendflow-menu-profile::before { position: absolute; top: 14px; bottom: 14px; left: 0; width: 4px; border-radius: 0 4px 4px 0; background: #6d35d8; content: ""; }
+.sendflow-menu-profile .sendflow-profile-avatar { width: 56px; height: 56px; border: 3px solid #fff; font-size: 14px; box-shadow: 0 3px 10px rgba(51, 34, 97, .18); }
+.sendflow-menu-profile span:last-child { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
+.sendflow-menu-profile strong { color: #171717; font-size: 16px; font-weight: 750; letter-spacing: -.015em; line-height: 1.2; }
+.sendflow-menu-profile small { color: #68636f; font-size: 13px; font-weight: 500; line-height: 1.2; }
 .sendflow-menu-links { display: grid; gap: 7px; margin-top: 20px; padding: 0; }
 .sendflow-menu-links button,
 .sendflow-menu-footer button { position: relative; display: grid; min-height: 58px; grid-template-columns: 25px minmax(0, 1fr) 17px; align-items: center; gap: 12px; overflow: hidden; border: 1px solid #e9e7ee; border-radius: 14px; background: #fafafa; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .96), 0 2px 6px rgba(42, 29, 67, .045); color: #171717; cursor: pointer; padding: 15px 13px; font: inherit; font-size: 14px; font-weight: 600; line-height: 1.3; text-align: left; touch-action: manipulation; user-select: none; -webkit-user-select: none; transition: background-color .18s cubic-bezier(.2, .8, .2, 1), border-color .18s cubic-bezier(.2, .8, .2, 1), box-shadow .18s cubic-bezier(.2, .8, .2, 1), color .18s cubic-bezier(.2, .8, .2, 1), transform .12s cubic-bezier(.2, .8, .2, 1); }
