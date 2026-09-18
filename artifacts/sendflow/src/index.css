@@ -565,6 +565,421 @@
   .sendflow-signup-terms { margin-left: 8px; }
 }
 
+/* Pricing — a clear, editorial fee list inspired by the supplied mobile reference */
+.sendflow-pricing-shell {
+  min-height: 100dvh;
+  background: #fff;
+  color: #17131f;
+}
+
+.sendflow-pricing-header {
+  display: grid;
+  width: min(100%, 720px);
+  min-height: 72px;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  margin: 0 auto;
+  border-bottom: 1px solid #ece9f1;
+  padding: max(10px, env(safe-area-inset-top)) 18px 8px;
+}
+
+.sendflow-pricing-header h1 {
+  margin: 0;
+  color: #33214d;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  text-align: center;
+}
+
+.sendflow-pricing-back,
+.sendflow-pricing-close {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #24192f;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color .18s ease, transform .18s ease;
+}
+
+.sendflow-pricing-back:hover,
+.sendflow-pricing-back:focus-visible,
+.sendflow-pricing-close:hover,
+.sendflow-pricing-close:focus-visible {
+  background: #f4effd;
+  outline: 0;
+}
+
+.sendflow-pricing-back:active,
+.sendflow-pricing-close:active { transform: scale(.94); }
+
+.sendflow-pricing-content {
+  width: min(100%, 720px);
+  margin: 0 auto;
+  padding: 0 18px 40px;
+}
+
+.sendflow-pricing-tabs-wrap {
+  overflow-x: auto;
+  margin: 0 -18px;
+  border-bottom: 1px solid #ddd8e3;
+  scrollbar-width: none;
+}
+
+.sendflow-pricing-tabs-wrap::-webkit-scrollbar { display: none; }
+
+.sendflow-pricing-tabs {
+  display: flex;
+  min-width: max-content;
+  align-items: stretch;
+  padding: 0 10px;
+}
+
+.sendflow-pricing-tab {
+  position: relative;
+  min-height: 65px;
+  border: 0;
+  background: transparent;
+  color: #716b79;
+  cursor: pointer;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color .18s ease;
+}
+
+.sendflow-pricing-tab::after {
+  position: absolute;
+  right: 18px;
+  bottom: -1px;
+  left: 18px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: #5a16b5;
+  content: "";
+  opacity: 0;
+  transform: scaleX(.45);
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.sendflow-pricing-tab:hover,
+.sendflow-pricing-tab:focus-visible,
+.sendflow-pricing-tab.is-active {
+  color: #4f109f;
+  outline: 0;
+}
+
+.sendflow-pricing-tab.is-active { font-weight: 700; }
+.sendflow-pricing-tab.is-active::after { opacity: 1; transform: scaleX(1); }
+
+.sendflow-pricing-country-section {
+  padding: 25px 0 19px;
+}
+
+.sendflow-pricing-eyebrow {
+  display: block;
+  color: #9a92a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.sendflow-pricing-country-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 13px;
+  margin-top: 9px;
+  border: 1px solid #e8e2ef;
+  border-radius: 14px;
+  background: #fcfbfe;
+  color: #24192f;
+  cursor: pointer;
+  padding: 12px 14px;
+  text-align: left;
+  transition: border-color .18s ease, background-color .18s ease, transform .18s ease;
+}
+
+.sendflow-pricing-country-button:hover,
+.sendflow-pricing-country-button:focus-visible {
+  border-color: #bca1dd;
+  background: #faf7ff;
+  outline: 0;
+}
+
+.sendflow-pricing-country-button:active { transform: scale(.99); }
+
+.sendflow-pricing-country-badge {
+  display: inline-grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: #efe5fb;
+  color: #6320ae;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.sendflow-pricing-country-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sendflow-pricing-country-copy strong {
+  overflow: hidden;
+  color: #2e2438;
+  font-size: 16px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sendflow-pricing-country-copy small {
+  color: #938a9f;
+  font-size: 12px;
+}
+
+.sendflow-pricing-country-button > svg { color: #6d35d8; }
+
+.sendflow-pricing-list-section {
+  border-radius: 20px;
+  background: #f6f4fa;
+  padding: 20px 14px 10px;
+}
+
+.sendflow-pricing-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px 12px;
+}
+
+.sendflow-pricing-section-heading h2 {
+  margin: 6px 0 0;
+  color: #451087;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -.055em;
+  line-height: 1;
+}
+
+.sendflow-pricing-rate-note {
+  border-radius: 999px;
+  background: #eadcf9;
+  color: #6320ae;
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sendflow-pricing-operator-list {
+  display: grid;
+  gap: 1px;
+}
+
+.sendflow-pricing-operator-row {
+  display: flex;
+  min-height: 75px;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #ebe7f0;
+  padding: 10px 4px;
+}
+
+.sendflow-pricing-operator-mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #29242f;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+
+.sendflow-pricing-operator-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sendflow-pricing-operator-mark.is-orange { background: #201b23; }
+.sendflow-pricing-operator-mark.is-mtn { background: #f6bf19; color: #211d12; }
+.sendflow-pricing-operator-mark.is-moov { background: #ef6b18; }
+.sendflow-pricing-operator-mark.is-generic { background: #302938; }
+
+.sendflow-pricing-operator-name {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sendflow-pricing-operator-name strong {
+  overflow: hidden;
+  color: #302938;
+  font-size: 14px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sendflow-pricing-operator-name small,
+.sendflow-pricing-fee small {
+  color: #9a93a1;
+  font-size: 11px;
+}
+
+.sendflow-pricing-fee {
+  display: flex;
+  flex: 0 0 62px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.sendflow-pricing-fee strong {
+  color: #1c1721;
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.sendflow-pricing-footnote {
+  margin: 18px 4px 0;
+  color: #96909d;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.sendflow-pricing-empty {
+  padding: 35px 16px;
+  color: #8b8393;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.sendflow-pricing-picker {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(35, 24, 48, .3);
+}
+
+.sendflow-pricing-country-sheet {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-height: min(80dvh, 680px);
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px 24px 0 0;
+  background: #fff;
+  box-shadow: 0 -12px 35px rgba(44, 26, 65, .16);
+  padding: 22px 18px max(18px, env(safe-area-inset-bottom));
+}
+
+.sendflow-pricing-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 3px 16px;
+}
+
+.sendflow-pricing-sheet-header h2 {
+  margin: 5px 0 0;
+  color: #30203e;
+  font-size: 22px;
+  letter-spacing: -.04em;
+}
+
+.sendflow-pricing-close { width: 38px; height: 38px; background: #f6f2fa; }
+
+.sendflow-pricing-country-list {
+  overflow-y: auto;
+  border-top: 1px solid #eeeaf2;
+}
+
+.sendflow-pricing-country-option {
+  display: flex;
+  width: 100%;
+  min-height: 60px;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-bottom: 1px solid #f0edf3;
+  background: #fff;
+  color: #302938;
+  cursor: pointer;
+  padding: 8px 3px;
+  font: inherit;
+  text-align: left;
+}
+
+.sendflow-pricing-country-option:hover,
+.sendflow-pricing-country-option:focus-visible,
+.sendflow-pricing-country-option.is-selected {
+  background: #fcfaff;
+  outline: 0;
+}
+
+.sendflow-pricing-country-option > span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sendflow-pricing-country-option strong { font-size: 14px; font-weight: 650; }
+.sendflow-pricing-country-option small { color: #9a93a1; font-size: 12px; }
+.sendflow-pricing-country-option > svg { color: #6d35d8; }
+
+.sendflow-menu-text-icon {
+  display: inline-grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (min-width: 600px) {
+  .sendflow-pricing-content { padding-inline: 28px; }
+  .sendflow-pricing-tabs-wrap { margin-inline: -28px; }
+  .sendflow-pricing-tabs { justify-content: center; }
+  .sendflow-pricing-country-sheet { max-width: 560px; border-radius: 24px; margin-bottom: 18px; }
+}
+
 /* Account limit — a quiet, native-feeling surface matching the SendFlow mobile flow */
 .sendflow-account-limit-shell {
   min-height: 100dvh;
