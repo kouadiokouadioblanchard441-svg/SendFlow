@@ -1410,6 +1410,7 @@
 .sendflow-deposit-summary { display: grid; gap: 8px; margin: 16px 4px 0; border-top: 1px solid #ececf0; padding-top: 12px; color: #63656f; font-size: 13px; }
 .sendflow-deposit-summary > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .sendflow-deposit-summary strong { color: #3e4050; font-weight: 700; }
+.sendflow-deposit-fee-amount { color: #ff0000 !important; }
 .sendflow-deposit-summary > div:nth-child(2) { color: #342c3e; font-weight: 700; }
 .sendflow-deposit-summary > div:nth-child(2) strong { color: #6334c4; }
 .sendflow-transfer-submit { display: flex; width: 100%; min-height: 57px; align-items: center; justify-content: center; gap: 9px; margin-top: 20px; border: 0; border-radius: 8px; background: #8a8b8e; color: #fff; cursor: pointer; padding: 0 16px; font: inherit; font-size: 16px; font-weight: 500; transition: background-color .18s ease, transform .18s ease; }

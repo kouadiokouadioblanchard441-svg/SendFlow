@@ -230,7 +230,9 @@ export default function DepositPage() {
             <div className="sendflow-deposit-summary" aria-live="polite">
               <div>
                 <span>Frais (3%)</span>
-                <strong>{feeAmount.toLocaleString('fr-FR')} Fcfa</strong>
+                <strong className="sendflow-deposit-fee-amount">
+                  {feeAmount > 0 ? `- ${feeAmount.toLocaleString('fr-FR')} Fcfa` : '—'}
+                </strong>
               </div>
               <div>
                 <span>Le wallet reçoit</span>
