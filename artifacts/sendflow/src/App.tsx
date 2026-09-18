@@ -10,6 +10,7 @@ import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '
 import NotFound from '@/pages/not-found';
 import AccountPage from '@/pages/account';
 import AccountInfoPage from '@/pages/account-info';
+import AccountLimitPage from '@/pages/account-limit';
 import DepositPage from '@/pages/deposit';
 import HistoryPage from '@/pages/history';
 import InternationalTransferPage from '@/pages/international-transfer';
@@ -116,6 +117,7 @@ function App() {
               <Route path="/forgot-pin" component={() => <ResetPage mode="pin" />} />
               <Route path="/account" component={AccountPage} />
               <Route path="/account-info" component={AccountInfoPage} />
+              <Route path="/account-limit" component={AccountLimitPage} />
               <Route path="/deposit" component={DepositPage} />
               <Route path="/international-transfer" component={InternationalTransferPage} />
               <Route path="/inter-transfer" component={InterNetworkTransferPage} />
