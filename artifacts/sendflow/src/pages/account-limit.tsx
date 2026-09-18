@@ -9,6 +9,7 @@ export default function AccountLimitPage() {
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const [verificationNoticeVisible, setVerificationNoticeVisible] = useState(false);
   const accountLimit = useMemo(() => accountLimitProvider.getAccountLimit(), []);
+  const isVerified = accountLimit.status === 'verified';
   const progress = Math.min(100, Math.max(0, (accountLimit.sentAmount / accountLimit.monthlyLimit) * 100));
 
   useSeo({
@@ -102,33 +103,39 @@ export default function AccountLimitPage() {
             </p>
           </section>
 
-          <p className="sendflow-account-limit-explanation" data-testid="text-account-limit-explanation">
-            Pour augmenter votre plafond veuillez renseigner l'ensemble
-            de vos informations de compte et ajouter une pièce valide
-          </p>
-
-          <section className="sendflow-account-limit-info" aria-labelledby="account-limit-info-title">
-            <span className="sendflow-account-limit-info-icon" aria-hidden="true">
-              <ShieldCheck size={20} strokeWidth={2} />
-            </span>
-            <div>
-              <h3 id="account-limit-info-title">Pourquoi vérifier mon identité ?</h3>
-              <p>
-                La vérification permet d’accéder à un plafond mensuel supérieur
-                tout en renforçant la sécurité de votre compte.
+          {!isVerified && (
+            <>
+              <p className="sendflow-account-limit-explanation" data-testid="text-account-limit-explanation">
+                Pour augmenter votre plafond veuillez renseigner l'ensemble
+                de vos informations de compte et ajouter une pièce valide
               </p>
-            </div>
-          </section>
+
+              <section className="sendflow-account-limit-info" aria-labelledby="account-limit-info-title">
+                <span className="sendflow-account-limit-info-icon" aria-hidden="true">
+                  <ShieldCheck size={20} strokeWidth={2} />
+                </span>
+                <div>
+                  <h3 id="account-limit-info-title">Pourquoi vérifier mon identité ?</h3>
+                  <p>
+                    La vérification permet d’accéder à un plafond mensuel supérieur
+                    tout en renforçant la sécurité de votre compte.
+                  </p>
+                </div>
+              </section>
+            </>
+          )}
         </div>
 
-        <button
-          type="button"
-          className="sendflow-account-limit-primary"
-          onClick={() => setVerificationNoticeVisible(true)}
-          data-testid="button-increase-account-limit"
-        >
-          Relever mon plafond
-        </button>
+        {!isVerified && (
+          <button
+            type="button"
+            className="sendflow-account-limit-primary"
+            onClick={() => setVerificationNoticeVisible(true)}
+            data-testid="button-increase-account-limit"
+          >
+            Relever mon plafond
+          </button>
+        )}
       </section>
     </main>
   );

@@ -11,15 +11,23 @@ export interface AccountLimitProvider {
   getAccountLimit: () => AccountLimitConfig;
 }
 
-const temporaryAccountLimit: AccountLimitConfig = {
-  currency: 'FCFA',
-  monthlyLimit: 200000,
-  sentAmount: 11760,
-  status: 'unverified',
+export const temporaryAccountLimits: Record<AccountLimitStatus, AccountLimitConfig> = {
+  unverified: {
+    currency: 'FCFA',
+    monthlyLimit: 200000,
+    sentAmount: 11760,
+    status: 'unverified',
+  },
+  verified: {
+    currency: 'FCFA',
+    monthlyLimit: 10000000,
+    sentAmount: 11760,
+    status: 'verified',
+  },
 };
 
 export const accountLimitProvider: AccountLimitProvider = {
-  getAccountLimit: () => temporaryAccountLimit,
+  getAccountLimit: () => temporaryAccountLimits.unverified,
 };
 
 export function formatAccountLimitAmount(amount: number): string {
