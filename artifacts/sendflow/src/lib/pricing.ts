@@ -15,15 +15,21 @@ export type PricingCountry = {
   flag: string;
 };
 
+export type PricingFeeMap = Partial<Record<PricingCategoryId, number>>;
+
 export type PricingOperator = {
   id: string;
   countryId: string;
   name: string;
   initials: string;
   brand: 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
-  feeLabel: string;
+  fees: PricingFeeMap;
+};
+
+export type PricingOperatorRate = PricingOperator & {
+  categoryId: PricingCategoryId;
   feeRate: number;
-  availableFor: PricingCategoryId[];
+  feeLabel: string;
 };
 
 export type PricingCatalog = {
@@ -34,7 +40,7 @@ export type PricingCatalog = {
 
 export interface PricingProvider {
   getCatalog(): PricingCatalog;
-  getOperators(countryId: string, categoryId: PricingCategoryId): PricingOperator[];
+  getOperators(countryId: string, categoryId: PricingCategoryId): PricingOperatorRate[];
 }
 
 const categories: PricingCategory[] = [
@@ -71,37 +77,47 @@ const countries: PricingCountry[] = [
 ];
 
 const operators: PricingOperator[] = [
-  { id: 'orange-ci', countryId: 'ci', name: 'Orange Money', initials: 'O', brand: 'orange', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'wave-ci', countryId: 'ci', name: 'Wave', initials: 'W', brand: 'wave', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'mtn-ci', countryId: 'ci', name: 'MTN Mobile Money', initials: 'MTN', brand: 'mtn', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'moov-ci', countryId: 'ci', name: 'Moov Money', initials: 'M', brand: 'moov', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'orange-sn', countryId: 'sn', name: 'Orange Money', initials: 'O', brand: 'orange', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'wave-sn', countryId: 'sn', name: 'Wave', initials: 'W', brand: 'wave', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'free-sn', countryId: 'sn', name: 'Free Money', initials: 'F', brand: 'generic', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'orange-bf', countryId: 'bf', name: 'Orange Money', initials: 'O', brand: 'orange', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'moov-bf', countryId: 'bf', name: 'Moov Money', initials: 'M', brand: 'moov', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'telecel-bf', countryId: 'bf', name: 'Telecel Money', initials: 'T', brand: 'generic', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'mtn-bj', countryId: 'bj', name: 'MTN Mobile Money', initials: 'MTN', brand: 'mtn', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'moov-bj', countryId: 'bj', name: 'Moov Money', initials: 'M', brand: 'moov', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'orange-ml', countryId: 'ml', name: 'Orange Money', initials: 'O', brand: 'orange', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'moov-ml', countryId: 'ml', name: 'Moov Money', initials: 'M', brand: 'moov', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'airtel-ne', countryId: 'ne', name: 'Airtel Money', initials: 'A', brand: 'generic', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'moov-ne', countryId: 'ne', name: 'Moov Money', initials: 'M', brand: 'moov', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'tmoney-tg', countryId: 'tg', name: 'TMoney', initials: 'T', brand: 'generic', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'flooz-tg', countryId: 'tg', name: 'Flooz', initials: 'F', brand: 'generic', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'orange-cm', countryId: 'cm', name: 'Orange Money', initials: 'O', brand: 'orange', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'mtn-cm', countryId: 'cm', name: 'MTN Mobile Money', initials: 'MTN', brand: 'mtn', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'airtel-cg', countryId: 'cg', name: 'Airtel Money', initials: 'A', brand: 'generic', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
-  { id: 'mtn-cg', countryId: 'cg', name: 'MTN Mobile Money', initials: 'MTN', brand: 'mtn', feeLabel: '3 %', feeRate: 0.03, availableFor: ['deposit', 'inter-network', 'international'] },
+  { id: 'orange-ci', countryId: 'ci', name: 'Orange Money', initials: 'O', brand: 'orange', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'wave-ci', countryId: 'ci', name: 'Wave', initials: 'W', brand: 'wave', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'mtn-ci', countryId: 'ci', name: 'MTN Mobile Money', initials: 'MTN', brand: 'mtn', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'moov-ci', countryId: 'ci', name: 'Moov Money', initials: 'M', brand: 'moov', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'orange-sn', countryId: 'sn', name: 'Orange Money', initials: 'O', brand: 'orange', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'wave-sn', countryId: 'sn', name: 'Wave', initials: 'W', brand: 'wave', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'free-sn', countryId: 'sn', name: 'Free Money', initials: 'F', brand: 'generic', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'orange-bf', countryId: 'bf', name: 'Orange Money', initials: 'O', brand: 'orange', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'moov-bf', countryId: 'bf', name: 'Moov Money', initials: 'M', brand: 'moov', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'telecel-bf', countryId: 'bf', name: 'Telecel Money', initials: 'T', brand: 'generic', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'mtn-bj', countryId: 'bj', name: 'MTN Mobile Money', initials: 'MTN', brand: 'mtn', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'moov-bj', countryId: 'bj', name: 'Moov Money', initials: 'M', brand: 'moov', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'orange-ml', countryId: 'ml', name: 'Orange Money', initials: 'O', brand: 'orange', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'moov-ml', countryId: 'ml', name: 'Moov Money', initials: 'M', brand: 'moov', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'airtel-ne', countryId: 'ne', name: 'Airtel Money', initials: 'A', brand: 'generic', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'moov-ne', countryId: 'ne', name: 'Moov Money', initials: 'M', brand: 'moov', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'tmoney-tg', countryId: 'tg', name: 'TMoney', initials: 'T', brand: 'generic', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'flooz-tg', countryId: 'tg', name: 'Flooz', initials: 'F', brand: 'generic', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'orange-cm', countryId: 'cm', name: 'Orange Money', initials: 'O', brand: 'orange', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'mtn-cm', countryId: 'cm', name: 'MTN Mobile Money', initials: 'MTN', brand: 'mtn', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'airtel-cg', countryId: 'cg', name: 'Airtel Money', initials: 'A', brand: 'generic', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
+  { id: 'mtn-cg', countryId: 'cg', name: 'MTN Mobile Money', initials: 'MTN', brand: 'mtn', fees: { deposit: 0.03, 'inter-network': 0.03, international: 0.03 } },
 ];
 
 const catalog: PricingCatalog = { categories, countries, operators };
 
 export const pricingProvider: PricingProvider = {
   getCatalog: () => catalog,
-  getOperators: (countryId, categoryId) => operators.filter(
-    (operator) => operator.countryId === countryId && operator.availableFor.includes(categoryId),
-  ),
+  getOperators: (countryId, categoryId) => operators.flatMap((operator) => {
+    const feeRate = operator.fees[categoryId];
+    if (operator.countryId !== countryId || feeRate === undefined) return [];
+
+    return [{
+      ...operator,
+      categoryId,
+      feeRate,
+      feeLabel: formatPricingFeeRate(feeRate),
+    }];
+  }),
 };
 
-export const pricingFeeRate = 0.03;
+export function formatPricingFeeRate(rate: number): string {
+  return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(rate * 100)} %`;
+}
