@@ -5,7 +5,6 @@ import {
   Check,
   Clipboard,
   History,
-  WalletCards,
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';

@@ -13,7 +13,6 @@ import {
   History,
   Menu,
   PhoneCall,
-  WalletCards,
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
@@ -23,6 +22,7 @@ import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 import { DEMO_SESSION_KEY } from '@/lib/demo-account';
 import notificationBell from '@assets/633486_1789677628502.png';
+import nativeWalletIcon from '@assets/10149443_1789713972148.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 import profileMariam from '@assets/generated_images/sendflow-profile-mariam.png';
@@ -121,7 +121,7 @@ export default function AccountPage() {
           <section className="sendflow-wallet-card" aria-labelledby="wallet-title">
             <div className="sendflow-wallet-topline">
               <div className="sendflow-wallet-heading">
-                <span className="sendflow-wallet-icon" aria-hidden="true"><WalletCards size={21} strokeWidth={2.1} /></span>
+                <span className="sendflow-wallet-icon" aria-hidden="true"><img src={nativeWalletIcon} alt="" /></span>
                 <div>
                   <p>Wallet interne</p>
                   <h1 id="wallet-title">Mon wallet</h1>
