@@ -744,6 +744,12 @@
   letter-spacing: .02em;
 }
 
+.sendflow-pricing-country-flag {
+  display: block;
+  font-size: 23px;
+  line-height: 1;
+}
+
 .sendflow-pricing-country-copy {
   display: flex;
   min-width: 0;

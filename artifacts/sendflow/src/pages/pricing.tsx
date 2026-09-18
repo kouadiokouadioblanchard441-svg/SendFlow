@@ -127,7 +127,9 @@ export default function PricingPage() {
             aria-expanded={countryPickerOpen}
             data-testid="button-pricing-country"
           >
-            <span className="sendflow-pricing-country-badge" aria-hidden="true">{country.initials}</span>
+            <span className="sendflow-pricing-country-badge" aria-hidden="true">
+              <span className="sendflow-pricing-country-flag">{country.flag}</span>
+            </span>
             <span className="sendflow-pricing-country-copy">
               <strong data-testid="text-pricing-country">{country.name}</strong>
               <small>{category.description}</small>
@@ -204,7 +206,9 @@ export default function PricingPage() {
                   onClick={() => selectCountry(item)}
                   data-testid={`button-pricing-country-${item.id}`}
                 >
-                  <span className="sendflow-pricing-country-badge" aria-hidden="true">{item.initials}</span>
+                  <span className="sendflow-pricing-country-badge" aria-hidden="true">
+                    <span className="sendflow-pricing-country-flag">{item.flag}</span>
+                  </span>
                   <span>
                     <strong>{item.name}</strong>
                     <small>{item.dialCode}</small>

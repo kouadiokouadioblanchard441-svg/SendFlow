@@ -12,6 +12,7 @@ export type PricingCountry = {
   name: string;
   dialCode: string;
   initials: string;
+  flag: string;
 };
 
 export type PricingOperator = {
@@ -58,15 +59,15 @@ const categories: PricingCategory[] = [
 ];
 
 const countries: PricingCountry[] = [
-  { id: 'ci', name: 'Côte d’Ivoire', dialCode: '+225', initials: 'CI' },
-  { id: 'sn', name: 'Sénégal', dialCode: '+221', initials: 'SN' },
-  { id: 'bf', name: 'Burkina Faso', dialCode: '+226', initials: 'BF' },
-  { id: 'bj', name: 'Bénin', dialCode: '+229', initials: 'BJ' },
-  { id: 'ml', name: 'Mali', dialCode: '+223', initials: 'ML' },
-  { id: 'ne', name: 'Niger', dialCode: '+227', initials: 'NE' },
-  { id: 'tg', name: 'Togo', dialCode: '+228', initials: 'TG' },
-  { id: 'cm', name: 'Cameroun', dialCode: '+237', initials: 'CM' },
-  { id: 'cg', name: 'Congo-Brazzaville', dialCode: '+242', initials: 'CG' },
+  { id: 'ci', name: 'Côte d’Ivoire', dialCode: '+225', initials: 'CI', flag: '🇨🇮' },
+  { id: 'sn', name: 'Sénégal', dialCode: '+221', initials: 'SN', flag: '🇸🇳' },
+  { id: 'bf', name: 'Burkina Faso', dialCode: '+226', initials: 'BF', flag: '🇧🇫' },
+  { id: 'bj', name: 'Bénin', dialCode: '+229', initials: 'BJ', flag: '🇧🇯' },
+  { id: 'ml', name: 'Mali', dialCode: '+223', initials: 'ML', flag: '🇲🇱' },
+  { id: 'ne', name: 'Niger', dialCode: '+227', initials: 'NE', flag: '🇳🇪' },
+  { id: 'tg', name: 'Togo', dialCode: '+228', initials: 'TG', flag: '🇹🇬' },
+  { id: 'cm', name: 'Cameroun', dialCode: '+237', initials: 'CM', flag: '🇨🇲' },
+  { id: 'cg', name: 'Congo-Brazzaville', dialCode: '+242', initials: 'CG', flag: '🇨🇬' },
 ];
 
 const operators: PricingOperator[] = [
