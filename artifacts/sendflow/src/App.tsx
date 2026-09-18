@@ -11,6 +11,7 @@ import NotFound from '@/pages/not-found';
 import AccountPage from '@/pages/account';
 import AccountInfoPage from '@/pages/account-info';
 import AccountLimitPage from '@/pages/account-limit';
+import CustomerServicePage from '@/pages/customer-service';
 import DepositPage from '@/pages/deposit';
 import HistoryPage from '@/pages/history';
 import InternationalTransferPage from '@/pages/international-transfer';
@@ -120,6 +121,7 @@ function App() {
               <Route path="/account" component={AccountPage} />
               <Route path="/account-info" component={AccountInfoPage} />
               <Route path="/account-limit" component={AccountLimitPage} />
+              <Route path="/customer-service" component={CustomerServicePage} />
               <Route path="/deposit" component={DepositPage} />
               <Route path="/international-transfer" component={InternationalTransferPage} />
               <Route path="/inter-transfer" component={InterNetworkTransferPage} />

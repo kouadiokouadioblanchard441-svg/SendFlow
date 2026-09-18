@@ -971,11 +971,150 @@
 .sendflow-pricing-country-option small { color: #9a93a1; font-size: 12px; }
 .sendflow-pricing-country-option > svg { color: #6d35d8; }
 
+/* Customer service — native contact cards matching the supplied mobile reference */
+.sendflow-customer-service-shell {
+  min-height: 100dvh;
+  background: #fff;
+  color: #17131f;
+}
+
+.sendflow-customer-service-page {
+  width: min(100%, 520px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: max(22px, env(safe-area-inset-top)) 28px max(32px, env(safe-area-inset-bottom));
+}
+
+.sendflow-customer-service-header {
+  display: flex;
+  min-height: 50px;
+  align-items: center;
+  gap: 17px;
+}
+
+.sendflow-customer-service-header h1 {
+  margin: 0;
+  color: #17131f;
+  font-size: 17px;
+  font-weight: 550;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+}
+
+.sendflow-customer-service-back {
+  display: grid;
+  width: 41px;
+  height: 41px;
+  flex: 0 0 41px;
+  place-items: center;
+  border: 0;
+  border-radius: 13px;
+  background: #f5f5f5;
+  color: #60636b;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color .18s ease, transform .18s ease;
+}
+
+.sendflow-customer-service-back:hover,
+.sendflow-customer-service-back:focus-visible {
+  background: #eeeafa;
+  outline: 0;
+}
+
+.sendflow-customer-service-back:active {
+  transform: scale(.94);
+}
+
+.sendflow-customer-service-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 43px;
+}
+
+.sendflow-customer-service-card {
+  display: flex;
+  min-height: 103px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  background: #fafafa;
+  color: #17131f;
+  padding: 20px 25px 20px 22px;
+  text-decoration: none;
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.sendflow-customer-service-card:hover,
+.sendflow-customer-service-card:focus-visible {
+  border-color: #e6dcf8;
+  background: #fcfaff;
+  box-shadow: 0 8px 20px rgba(85, 44, 143, .07);
+  outline: 0;
+}
+
+.sendflow-customer-service-card:active {
+  transform: scale(.985);
+}
+
+.sendflow-customer-service-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sendflow-customer-service-copy strong {
+  color: #17131f;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.sendflow-customer-service-copy > span {
+  overflow: hidden;
+  color: #7f7d83;
+  font-size: 15px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sendflow-customer-service-icon {
+  display: grid;
+  width: 33px;
+  height: 33px;
+  flex: 0 0 33px;
+  place-items: center;
+  color: #33284c;
+}
+
+.sendflow-customer-service-card.is-whatsapp .sendflow-customer-service-icon {
+  border-radius: 50%;
+  background: #27b968;
+  color: #fff;
+}
+
+.sendflow-customer-service-card.is-facebook .sendflow-customer-service-icon {
+  border-radius: 50%;
+  background: #6d35d8;
+  color: #fff;
+}
+
+.sendflow-customer-service-card.is-phone .sendflow-customer-service-icon {
+  color: #33284c;
+}
+
 @media (min-width: 600px) {
   .sendflow-pricing-content { padding-inline: 28px; }
   .sendflow-pricing-tabs-wrap { margin-inline: -28px; }
   .sendflow-pricing-tabs { justify-content: center; }
   .sendflow-pricing-country-sheet { max-width: 560px; border-radius: 24px; margin-bottom: 18px; }
+  .sendflow-customer-service-page { padding-inline: 32px; }
 }
 
 /* Account limit — a quiet, native-feeling surface matching the SendFlow mobile flow */
