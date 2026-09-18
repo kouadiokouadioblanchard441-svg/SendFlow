@@ -1284,10 +1284,10 @@
 .sendflow-detail-grid strong { color: #403747; font-size: 12px; }
 .sendflow-detail-grid strong.is-success { color: #29946a; }
 
-.sendflow-transfer-shell { min-height: 100dvh; background: #f1f4fa; color: #31323a; }
+.sendflow-transfer-shell { min-height: 100dvh; overflow-x: clip; overscroll-behavior-x: none; background: #f1f4fa; color: #31323a; }
 .sendflow-transfer-header { min-height: 147px; overflow: hidden; border-radius: 0 0 30px 30px; background: linear-gradient(135deg, #4f249f 0%, #7040d0 58%, #492195 100%); box-shadow: 0 12px 25px rgba(76, 39, 160, .24); color: #fff; padding: max(16px, env(safe-area-inset-top)) 20px 30px; }
-.sendflow-transfer-header-inner { display: flex; align-items: center; justify-content: space-between; width: min(100%, 720px); margin: 0 auto; }
-.sendflow-transfer-header-leading { display: flex; align-items: center; gap: 8px; }
+.sendflow-transfer-header-inner { display: flex; min-width: 0; align-items: center; justify-content: space-between; width: min(100%, 720px); margin: 0 auto; }
+.sendflow-transfer-header-leading { display: flex; min-width: 0; align-items: center; gap: 8px; }
 .sendflow-transfer-brand { display: inline-flex; align-items: center; gap: 9px; color: #fff; text-decoration: none; }
 .sendflow-transfer-brand img { display: block; object-fit: contain; }
 .sendflow-transfer-brand .sendflow-transfer-mark { width: 34px; height: 38px; }
@@ -1297,10 +1297,10 @@
 .sendflow-transfer-header-button:hover, .sendflow-transfer-header-button:focus-visible { background: rgba(255, 255, 255, .25); outline: 0; }
 .sendflow-transfer-header-button:active { transform: scale(.94); }
 .sendflow-transfer-header-button.has-notification span { position: absolute; top: -3px; right: -3px; display: grid; width: 19px; height: 19px; place-items: center; border: 2px solid #6334c4; border-radius: 50%; background: #f10d24; color: #fff; font-size: 9px; font-weight: 800; }
-.sendflow-transfer-page { width: min(100%, 720px); margin: 0 auto; padding: 20px 20px 40px; }
+.sendflow-transfer-page { width: min(100%, 720px); margin: 0 auto; padding: 20px clamp(16px, 4vw, 20px) calc(48px + env(safe-area-inset-bottom)); }
 .sendflow-transfer-valid-banner { display: flex; align-items: flex-start; gap: 7px; border-radius: 8px; background: #dff4ec; color: #267856; padding: 12px 15px; font-size: 13px; line-height: 1.38; }
 .sendflow-transfer-valid-banner svg { flex: 0 0 18px; margin-top: 1px; }
-.sendflow-transfer-card { margin-top: 17px; border: 1px solid #e0e1e6; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(48, 55, 78, .1); padding: 14px; }
+.sendflow-transfer-card { display: block; overflow: hidden; width: 100%; margin-top: 17px; border: 1px solid #e0e1e6; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(48, 55, 78, .1); padding: 14px; }
 .sendflow-transfer-section { border: 1px solid #e0e1e6; border-radius: 12px; background: #fff; box-shadow: 0 3px 10px rgba(48, 55, 78, .055); padding: 18px 13px 16px; }
 .sendflow-transfer-section h2 { margin: 0 0 14px; color: #3b3d48; font-size: 19px; font-weight: 800; letter-spacing: -.035em; }
 .sendflow-transfer-money-field { display: flex; min-height: 60px; align-items: center; border: 1px solid #e0e1e6; border-radius: 9px; background: #fff; padding: 0 15px; }
@@ -1410,6 +1410,13 @@
   .sendflow-transaction-amount { font-size: 12px; }
   .sendflow-transfer-page { padding-inline: 12px; }
   .sendflow-transfer-card { padding: 12px; }
+  .sendflow-transfer-header { padding-inline: 12px; }
+  .sendflow-transfer-header-leading { gap: 6px; }
+  .sendflow-transfer-brand { gap: 6px; }
+  .sendflow-transfer-brand .sendflow-transfer-mark { width: 30px; height: 34px; }
+  .sendflow-transfer-brand .sendflow-transfer-wordmark { width: 94px; height: 20px; }
+  .sendflow-transfer-header-actions { gap: 5px; }
+  .sendflow-transfer-header-button { width: 39px; height: 39px; }
   .sendflow-transfer-phone-row { padding-right: 6px; }
   .sendflow-transfer-prefix { padding-inline: 7px; }
   .sendflow-transfer-otp-help { font-size: 12px; }
