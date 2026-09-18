@@ -9,7 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
-import { readAccountCountry, type AccountCountry } from '@/lib/account-country';
+import { readAccountCountry } from '@/lib/account-country';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -247,7 +247,7 @@ export default function DepositPage() {
           </section>
         </form>
 
-        {operatorPickerOpen && (
+        {operatorPickerOpen && operator && (
           <div className="sendflow-transfer-operator-picker" role="presentation" onClick={() => setOperatorPickerOpen(false)}>
             <section className="sendflow-transfer-operator-sheet" role="dialog" aria-modal="true" aria-labelledby="deposit-operator-title" onClick={(event) => event.stopPropagation()}>
               <div className="sendflow-transfer-operator-sheet-header">
