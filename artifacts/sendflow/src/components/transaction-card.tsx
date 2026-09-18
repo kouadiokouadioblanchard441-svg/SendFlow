@@ -35,6 +35,9 @@ function OperatorLogo({ operator }: { operator: OperatorCode }) {
 }
 
 function TransactionCardContent({ transaction }: { transaction: Transaction }) {
+  const amountPrefix = transaction.kind === 'deposit' ? '+ ' : transaction.kind === 'international' ? '- ' : '';
+  const amountClass = transaction.kind === 'deposit' ? 'is-deposit' : transaction.kind === 'international' ? 'is-international' : '';
+
   return (
     <>
       <span className="sendflow-transaction-route" aria-label={`De ${operatorNames[transaction.fromOperator]} vers ${operatorNames[transaction.toOperator]}`}>
@@ -46,7 +49,7 @@ function TransactionCardContent({ transaction }: { transaction: Transaction }) {
         <strong>De {transaction.sender} vers {transaction.recipient}</strong>
         <small>{transaction.date}</small>
       </span>
-      <span className="sendflow-transaction-amount">{transaction.amount}</span>
+      <span className={`sendflow-transaction-amount ${amountClass}`.trim()}>{amountPrefix}{transaction.amount}</span>
     </>
   );
 }
