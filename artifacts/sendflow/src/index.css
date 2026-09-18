@@ -797,16 +797,6 @@
   line-height: 1;
 }
 
-.sendflow-pricing-rate-note {
-  border-radius: 999px;
-  background: #eadcf9;
-  color: #6320ae;
-  padding: 6px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 .sendflow-pricing-operator-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

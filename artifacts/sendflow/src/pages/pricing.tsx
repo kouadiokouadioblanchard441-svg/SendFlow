@@ -12,7 +12,6 @@ import {
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import {
-  pricingFeeRate,
   pricingProvider,
   type PricingCategoryId,
   type PricingCountry,
@@ -144,7 +143,6 @@ export default function PricingPage() {
               <span className="sendflow-pricing-eyebrow">Frais SendFlow</span>
               <h2 id="pricing-operators-title" data-testid="text-pricing-list-title">{category.label}</h2>
             </div>
-            <span className="sendflow-pricing-rate-note">{Math.round(pricingFeeRate * 100)} % temporaire</span>
           </div>
           <div className="sendflow-pricing-operator-list">
             {listedOperators.length > 0 ? listedOperators.map((operator) => (
