@@ -30,6 +30,14 @@ export function parseStoragePath(storagePath: string): {
     throw new Error(`Invalid public storage path: ${storagePath}`);
   }
 
+  if (
+    objectName.includes("\\")
+    || objectName.includes("\u0000")
+    || objectName.split("/").some((part) => part === "." || part === "..")
+  ) {
+    throw new Error("Invalid public storage object path");
+  }
+
   return { bucketName, objectName };
 }
 

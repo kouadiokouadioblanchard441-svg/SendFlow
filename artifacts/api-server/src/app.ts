@@ -9,6 +9,14 @@ import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./mid
 
 const app: Express = express();
 
+app.disable("x-powered-by");
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("X-Frame-Options", "DENY");
+  next();
+});
+
 app.use(
   pinoHttp({
     logger,
@@ -30,9 +38,37 @@ app.use(
   }),
 );
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
-app.use(cors({ credentials: true, origin: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+const originValues = [
+  process.env.CORS_ALLOWED_ORIGINS,
+  process.env.REPLIT_DOMAINS,
+  process.env.REPLIT_DEV_DOMAIN,
+]
+  .filter(Boolean)
+  .flatMap((value) => value!.split(","))
+  .map((value) => value.trim())
+  .filter(Boolean)
+  .flatMap((value) => {
+    const normalized = value.replace(/\/+$/, "");
+    return /^https?:\/\//i.test(normalized) ? [normalized] : [`https://${normalized}`];
+  });
+const allowedOrigins = new Set(originValues);
+
+app.use(
+  cors({
+    credentials: true,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
+  }),
+);
+app.use(express.json({ limit: "100kb", strict: true }));
+app.use(express.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
 app.use(
   clerkMiddleware((req) => ({
     publishableKey: publishableKeyFromHost(
