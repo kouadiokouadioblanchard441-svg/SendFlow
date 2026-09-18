@@ -87,6 +87,22 @@ type SavedContact = {
   initials: string;
 };
 
+type DeviceContact = {
+  name?: string[];
+  tel?: string[];
+};
+
+type ContactsManager = {
+  select: (
+    properties: Array<'name' | 'tel'>,
+    options?: { multiple?: boolean },
+  ) => Promise<DeviceContact[]>;
+};
+
+type ContactsNavigator = Navigator & {
+  contacts?: ContactsManager;
+};
+
 const savedContacts: SavedContact[] = [
   { id: 'contact-aicha', name: 'Aïcha Koné', phone: '0708123456', initials: 'AK' },
   { id: 'contact-mariam', name: 'Mariam A.', phone: '0595857098', initials: 'MA' },
@@ -125,6 +141,7 @@ export default function InterNetworkTransferPage() {
   const [destinationOperator, setDestinationOperator] = useState(initialDestinationOperator);
   const [operatorPicker, setOperatorPicker] = useState<TransferSide | null>(null);
   const [contactsOpen, setContactsOpen] = useState(false);
+  const [contactsNotice, setContactsNotice] = useState('');
 
   useSeo({
     path: '/inter-transfer',
@@ -163,6 +180,46 @@ export default function InterNetworkTransferPage() {
     setRecipientNumber(contact.phone);
     setSubmitted(false);
     setContactsOpen(false);
+  };
+
+  const normalizeIvoryCoastPhone = (value: string) => {
+    const compact = value.replace(/[^\d+]/g, '');
+    const localNumber = compact.startsWith('+225')
+      ? compact.slice(4)
+      : compact.startsWith('225')
+        ? compact.slice(3)
+        : compact;
+
+    return /^0\d{9}$/.test(localNumber) ? localNumber : '';
+  };
+
+  const openDeviceContacts = async () => {
+    setContactsNotice('');
+    const contactsApi = (navigator as ContactsNavigator).contacts;
+
+    if (!contactsApi) {
+      setContactsNotice('Votre navigateur ne permet pas d’ouvrir les contacts du téléphone. Vous pouvez choisir un contact SendFlow enregistré ci-dessous.');
+      setContactsOpen(true);
+      return;
+    }
+
+    try {
+      const [contact] = await contactsApi.select(['name', 'tel'], { multiple: false });
+      const phone = contact?.tel?.map(normalizeIvoryCoastPhone).find(Boolean) ?? '';
+
+      if (!phone) {
+        setContactsNotice('Sélectionnez un contact avec un numéro de Côte d’Ivoire en +225.');
+        setContactsOpen(true);
+        return;
+      }
+
+      setRecipientNumber(phone);
+      setSubmitted(false);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setContactsNotice('Les contacts du téléphone ne sont pas accessibles. Vous pouvez choisir un contact SendFlow enregistré ci-dessous.');
+      setContactsOpen(true);
+    }
   };
 
   const copyOtpCode = async () => {
@@ -332,7 +389,7 @@ export default function InterNetworkTransferPage() {
               <button
                 type="button"
                 className="sendflow-transfer-contact"
-                onClick={() => setContactsOpen(true)}
+                onClick={() => void openDeviceContacts()}
                 aria-label="Ouvrir les contacts"
                 data-testid="button-open-transfer-contacts"
               >
@@ -442,6 +499,12 @@ export default function InterNetworkTransferPage() {
                   <X size={20} />
                 </button>
               </div>
+
+              {contactsNotice && (
+                <p className="sendflow-transfer-contact-notice" role="status">
+                  {contactsNotice}
+                </p>
+              )}
 
               <div className="sendflow-transfer-contact-list">
                 {savedContacts.map((contact) => (

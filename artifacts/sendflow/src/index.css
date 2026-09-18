@@ -1382,6 +1382,7 @@
 .sendflow-transfer-contact-copy strong { overflow: hidden; color: #342c3e; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .sendflow-transfer-contact-copy small { color: #8b8393; font-size: 12px; }
 .sendflow-transfer-contact-option > svg { color: #8b8393; }
+.sendflow-transfer-contact-notice { margin: 17px 0 0; border-radius: 10px; background: #f8f5fd; color: #6f637d; padding: 11px 12px; font-size: 12px; line-height: 1.45; }
 
 @keyframes sendflow-promo-scroll { 0%, 40% { transform: translateX(0); } 50%, 90% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
 @keyframes sendflow-panel-enter { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
