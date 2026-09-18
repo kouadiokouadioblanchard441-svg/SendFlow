@@ -1340,7 +1340,8 @@
 .sendflow-transfer-destination h2 { margin-bottom: 13px; }
 .sendflow-transfer-destination .sendflow-transfer-phone-row { margin-top: 0; background: #fff; padding-right: 8px; }
 .sendflow-transfer-destination .sendflow-transfer-prefix { padding-inline: 9px; }
-.sendflow-transfer-contact { flex: 0 0 27px; margin-left: 5px; color: #73767f; }
+.sendflow-transfer-contact { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; margin-left: 4px; border: 0; border-radius: 8px; background: transparent; color: #73767f; cursor: pointer; padding: 0; }
+.sendflow-transfer-contact:hover, .sendflow-transfer-contact:focus-visible { background: #f2eef8; color: #6334c4; outline: 0; }
 .sendflow-transfer-fees { margin: 14px 4px 0 auto; color: #4d4f59; font-size: 14px; text-align: right; }
 .sendflow-transfer-fees strong { font-weight: 500; }
 .sendflow-transfer-submit { display: flex; width: 100%; min-height: 57px; align-items: center; justify-content: center; gap: 9px; margin-top: 20px; border: 0; border-radius: 8px; background: #8a8b8e; color: #fff; cursor: pointer; padding: 0 16px; font: inherit; font-size: 16px; font-weight: 500; transition: background-color .18s ease, transform .18s ease; }
@@ -1373,6 +1374,14 @@
 .sendflow-transfer-operator-option-copy strong { overflow: hidden; color: #342c3e; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .sendflow-transfer-operator-option-copy small { color: #8b8393; font-size: 11px; }
 .sendflow-transfer-operator-option-check { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; color: #6334c4; }
+.sendflow-transfer-contact-list { display: grid; gap: 9px; margin-top: 20px; }
+.sendflow-transfer-contact-option { display: grid; grid-template-columns: 44px minmax(0, 1fr) 20px; align-items: center; gap: 12px; width: 100%; min-height: 67px; border: 1px solid #e8e3ed; border-radius: 14px; background: #fff; color: #342c3e; cursor: pointer; padding: 8px 12px 8px 8px; text-align: left; }
+.sendflow-transfer-contact-option:hover, .sendflow-transfer-contact-option:focus-visible { border-color: #b39bdf; background: #fbf9fe; outline: 0; }
+.sendflow-transfer-contact-avatar { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: #f0e8fc; color: #6334c4; font-size: 12px; font-weight: 800; }
+.sendflow-transfer-contact-copy { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
+.sendflow-transfer-contact-copy strong { overflow: hidden; color: #342c3e; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.sendflow-transfer-contact-copy small { color: #8b8393; font-size: 12px; }
+.sendflow-transfer-contact-option > svg { color: #8b8393; }
 
 @keyframes sendflow-promo-scroll { 0%, 40% { transform: translateX(0); } 50%, 90% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
 @keyframes sendflow-panel-enter { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }

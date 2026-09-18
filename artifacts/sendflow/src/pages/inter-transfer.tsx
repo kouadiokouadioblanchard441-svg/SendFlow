@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Bell,
   Check,
+  ChevronRight,
   Clipboard,
   ContactRound,
   History,
@@ -79,6 +80,20 @@ const operatorsByCountry: Record<CountryCode, TransferOperator[]> = {
 const initialSourceOperator = operatorsByCountry.ci[0];
 const initialDestinationOperator = operatorsByCountry.ci[1];
 
+type SavedContact = {
+  id: string;
+  name: string;
+  phone: string;
+  initials: string;
+};
+
+const savedContacts: SavedContact[] = [
+  { id: 'contact-aicha', name: 'Aïcha Koné', phone: '0708123456', initials: 'AK' },
+  { id: 'contact-mariam', name: 'Mariam A.', phone: '0595857098', initials: 'MA' },
+  { id: 'contact-yannick', name: 'Yannick Kouassi', phone: '0509071623', initials: 'YK' },
+  { id: 'contact-fatou', name: 'Fatou Traoré', phone: '0585325450', initials: 'FT' },
+];
+
 function OperatorMark({ operator }: { operator: TransferOperator }) {
   if (operator.brand === 'wave') {
     return <img src={waveLogo} alt="" />;
@@ -109,6 +124,7 @@ export default function InterNetworkTransferPage() {
   const [sourceOperator, setSourceOperator] = useState(initialSourceOperator);
   const [destinationOperator, setDestinationOperator] = useState(initialDestinationOperator);
   const [operatorPicker, setOperatorPicker] = useState<TransferSide | null>(null);
+  const [contactsOpen, setContactsOpen] = useState(false);
 
   useSeo({
     path: '/inter-transfer',
@@ -141,6 +157,12 @@ export default function InterNetworkTransferPage() {
     }
     setSubmitted(false);
     setOperatorPicker(null);
+  };
+
+  const selectContact = (contact: SavedContact) => {
+    setRecipientNumber(contact.phone);
+    setSubmitted(false);
+    setContactsOpen(false);
   };
 
   const copyOtpCode = async () => {
@@ -307,7 +329,15 @@ export default function InterNetworkTransferPage() {
               <span className="sendflow-transfer-flag" aria-label="Côte d’Ivoire">
                 {destinationOperator.flag}
               </span>
-              <ContactRound className="sendflow-transfer-contact" size={27} strokeWidth={1.8} aria-hidden="true" />
+              <button
+                type="button"
+                className="sendflow-transfer-contact"
+                onClick={() => setContactsOpen(true)}
+                aria-label="Ouvrir les contacts"
+                data-testid="button-open-transfer-contacts"
+              >
+                <ContactRound size={27} strokeWidth={1.8} aria-hidden="true" />
+              </button>
             </div>
             <div className="sendflow-transfer-fees">
               Frais: <strong>{supportFees ? '907' : '0'} Fcfa</strong>
@@ -380,6 +410,58 @@ export default function InterNetworkTransferPage() {
                     </button>
                   );
                 })}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {contactsOpen && (
+          <div
+            className="sendflow-transfer-operator-picker"
+            role="presentation"
+            onClick={() => setContactsOpen(false)}
+          >
+            <section
+              className="sendflow-transfer-operator-sheet sendflow-transfer-contact-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="transfer-contacts-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sendflow-transfer-operator-sheet-header">
+                <div>
+                  <span>Votre carnet SendFlow</span>
+                  <h2 id="transfer-contacts-title">Choisir un contact</h2>
+                </div>
+                <button
+                  type="button"
+                  className="sendflow-transfer-operator-close"
+                  onClick={() => setContactsOpen(false)}
+                  aria-label="Fermer les contacts"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="sendflow-transfer-contact-list">
+                {savedContacts.map((contact) => (
+                  <button
+                    type="button"
+                    className="sendflow-transfer-contact-option"
+                    key={contact.id}
+                    onClick={() => selectContact(contact)}
+                    data-testid={`button-select-contact-${contact.id}`}
+                  >
+                    <span className="sendflow-transfer-contact-avatar" aria-hidden="true">
+                      {contact.initials}
+                    </span>
+                    <span className="sendflow-transfer-contact-copy">
+                      <strong>{contact.name}</strong>
+                      <small>{destinationOperator.prefix} {contact.phone}</small>
+                    </span>
+                    <ChevronRight size={19} strokeWidth={2} aria-hidden="true" />
+                  </button>
+                ))}
               </div>
             </section>
           </div>
