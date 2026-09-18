@@ -12,6 +12,7 @@ type SupportChannel = {
   href: string;
   icon?: LucideIcon;
   logo?: string;
+  showValue: boolean;
   external?: boolean;
 };
 
@@ -26,6 +27,7 @@ export default function CustomerServicePage() {
       value: contact.whatsappNumber,
       href: contact.whatsappHref,
       logo: whatsappLogo,
+      showValue: false,
       external: true,
     },
     {
@@ -34,6 +36,7 @@ export default function CustomerServicePage() {
       value: contact.facebookLabel,
       href: contact.facebookHref,
       logo: facebookLogo,
+      showValue: false,
       external: true,
     },
     {
@@ -42,6 +45,7 @@ export default function CustomerServicePage() {
       value: contact.phoneNumber,
       href: contact.phoneHref,
       icon: PhoneCall,
+      showValue: true,
     },
   ];
 
@@ -87,7 +91,7 @@ export default function CustomerServicePage() {
               >
                 <span className="sendflow-customer-service-copy">
                   <strong>{channel.label}</strong>
-                  <span>{channel.value}</span>
+                  {channel.showValue && <span>{channel.value}</span>}
                 </span>
                 <span className="sendflow-customer-service-icon" aria-hidden="true">
                   {channel.logo ? (
