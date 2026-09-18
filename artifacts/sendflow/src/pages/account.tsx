@@ -217,10 +217,6 @@ export default function AccountPage() {
             </div>
              <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileMariam} alt="" /><span><strong>Mariam A.</strong><small>Compte personnel</small></span></div>
             <div className="sendflow-menu-links">
-               <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/inter-transfer'); }} data-testid="button-menu-inter"><ArrowLeftRight size={19} />Transfert inter réseau<ChevronRight size={17} /></button>
-               <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/international-transfer'); }} data-testid="button-menu-international"><Globe2 size={19} />Transfert international<ChevronRight size={17} /></button>
-              <button type="button" onClick={openHistory} data-testid="button-menu-history"><Clock3 size={19} />Historique<ChevronRight size={17} /></button>
-              <button type="button" onClick={() => openSheet('plus')} data-testid="button-menu-services"><Grid2X2 size={19} />Services SendFlow<ChevronRight size={17} /></button>
                <button type="button" onClick={() => openSheet('account-info')} data-testid="button-menu-account-info"><UserRound size={19} />Informations du compte<ChevronRight size={17} /></button>
                <button type="button" onClick={() => openSheet('change-secret')} data-testid="button-menu-change-secret"><LockKeyhole size={19} />Modifier le code secret<ChevronRight size={17} /></button>
                <button type="button" onClick={() => openSheet('limit')} data-testid="button-menu-limit"><WalletCards size={19} />Plafond du compte<ChevronRight size={17} /></button>
