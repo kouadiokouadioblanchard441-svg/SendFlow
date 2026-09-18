@@ -49,7 +49,11 @@ export default function AccountLimitPage() {
         <div className="sendflow-account-limit-content">
           <h2 data-testid="text-account-limit-section-title">Limites</h2>
 
-          <section className="sendflow-account-limit-card" aria-labelledby="monthly-limit-title">
+          <section
+            className="sendflow-account-limit-card"
+            aria-labelledby={!isVerified ? 'monthly-limit-title' : undefined}
+            aria-label={isVerified ? 'Progression de la limite mensuelle' : undefined}
+          >
             {!isVerified && <h3 id="monthly-limit-title">Limite mensuelle</h3>}
             <div
               className="sendflow-account-limit-progress"

@@ -732,6 +732,22 @@
   line-height: 1.4;
 }
 
+.sendflow-account-limit-status {
+  margin: 25px 0 0;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.sendflow-account-limit-status.is-pending {
+  color: #6d35d8;
+}
+
+.sendflow-account-limit-status.is-verified {
+  color: #198b50;
+}
+
 .sendflow-account-limit-primary {
   width: 100%;
   min-height: 59px;
@@ -760,72 +776,9 @@
   transform: scale(.985);
 }
 
-.sendflow-account-limit-feedback-page {
-  align-items: stretch;
-}
-
-.sendflow-account-limit-feedback {
-  width: min(100%, 360px);
-  margin: auto;
-  text-align: center;
-}
-
-.sendflow-account-limit-feedback-mark {
-  display: grid;
-  width: 54px;
-  height: 54px;
-  place-items: center;
-  margin: 0 auto 22px;
-  border-radius: 50%;
-  background: #f2eaff;
-  color: #7620db;
-  font-size: 25px;
-  font-weight: 700;
-}
-
-.sendflow-account-limit-feedback h1 {
-  margin: 0;
-  color: #171717;
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -.045em;
-  line-height: 1.12;
-}
-
-.sendflow-account-limit-feedback p {
-  margin: 13px auto 28px;
-  color: #929292;
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-.sendflow-account-limit-secondary {
-  min-height: 50px;
-  border: 0;
-  border-radius: 13px;
-  background: #7620db;
-  color: #fff;
-  cursor: pointer;
-  padding: 0 22px;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  transition: background-color .18s ease, transform .18s ease;
-}
-
-.sendflow-account-limit-secondary:hover,
-.sendflow-account-limit-secondary:focus-visible {
-  background: #5f13b7;
-  outline: 0;
-}
-
-.sendflow-account-limit-secondary:active {
-  transform: scale(.98);
-}
-
 .sendflow-account-limit-back:focus-visible,
 .sendflow-account-limit-primary:focus-visible,
-.sendflow-account-limit-secondary:focus-visible {
+.sendflow-account-limit-status:focus-visible {
   box-shadow: 0 0 0 3px rgba(118, 32, 219, .2);
 }
 
