@@ -121,7 +121,7 @@ export default function AccountPage() {
           <section className="sendflow-wallet-card" aria-labelledby="wallet-title">
             <div className="sendflow-wallet-topline">
               <div className="sendflow-wallet-heading">
-                <span className="sendflow-wallet-icon"><NativeWalletIcon /></span>
+                <span className="sendflow-wallet-icon"><NativeWalletIcon className="is-wallet-card" /></span>
                 <div>
                   <p>Wallet interne</p>
                   <h1 id="wallet-title">Mon wallet</h1>
