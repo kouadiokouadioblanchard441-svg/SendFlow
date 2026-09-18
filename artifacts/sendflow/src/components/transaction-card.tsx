@@ -29,7 +29,7 @@ function OperatorLogo({ operator }: { operator: OperatorCode }) {
 
   return (
     <span className={`sendflow-transaction-logo is-${operator}`}>
-      <strong>{operator === 'tmoney' ? 'T' : 'M'}</strong>
+      <strong>{operator === 'mtn' ? 'MTN' : operator === 'tmoney' ? 'T' : 'M'}</strong>
     </span>
   );
 }

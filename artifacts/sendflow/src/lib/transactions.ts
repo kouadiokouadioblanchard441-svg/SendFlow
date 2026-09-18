@@ -1,7 +1,7 @@
 import { DEMO_ACCOUNT } from '@/lib/demo-account';
 
-export type TransactionKind = 'transfer' | 'deposit';
-export type OperatorCode = 'sendflow' | 'mixx' | 'wave' | 'tmoney' | 'moov';
+export type TransactionKind = 'inter-network' | 'deposit';
+export type OperatorCode = 'sendflow' | 'mixx' | 'wave' | 'mtn' | 'tmoney' | 'moov';
 
 export type Transaction = {
   id: string;
@@ -18,6 +18,7 @@ export const operatorNames: Record<OperatorCode, string> = {
   sendflow: 'SendFlow',
   mixx: 'Mixx by Yas',
   wave: 'Wave',
+  mtn: 'MTN Mobile Money',
   tmoney: 'TMoney',
   moov: 'Moov Africa',
 };
@@ -25,9 +26,9 @@ export const operatorNames: Record<OperatorCode, string> = {
 export const transactions: Transaction[] = [
   {
     id: 'sf-001',
-    kind: 'transfer',
-    fromOperator: 'sendflow',
-    toOperator: 'wave',
+    kind: 'inter-network',
+    fromOperator: 'wave',
+    toOperator: 'mtn',
     sender: DEMO_ACCOUNT.phone,
     recipient: '0576915898',
     date: 'sept. 18, 2026 · 12:55',
@@ -55,8 +56,8 @@ export const transactions: Transaction[] = [
   },
   {
     id: 'sf-004',
-    kind: 'transfer',
-    fromOperator: 'sendflow',
+    kind: 'inter-network',
+    fromOperator: 'mtn',
     toOperator: 'wave',
     sender: DEMO_ACCOUNT.phone,
     recipient: '0585325450',
@@ -65,9 +66,9 @@ export const transactions: Transaction[] = [
   },
   {
     id: 'sf-005',
-    kind: 'transfer',
-    fromOperator: 'sendflow',
-    toOperator: 'wave',
+    kind: 'inter-network',
+    fromOperator: 'wave',
+    toOperator: 'mtn',
     sender: DEMO_ACCOUNT.phone,
     recipient: '0585325450',
     date: 'août 21, 2026 · 12:32',
@@ -75,8 +76,8 @@ export const transactions: Transaction[] = [
   },
   {
     id: 'sf-006',
-    kind: 'transfer',
-    fromOperator: 'sendflow',
+    kind: 'inter-network',
+    fromOperator: 'mtn',
     toOperator: 'wave',
     sender: DEMO_ACCOUNT.phone,
     recipient: '0595857098',
