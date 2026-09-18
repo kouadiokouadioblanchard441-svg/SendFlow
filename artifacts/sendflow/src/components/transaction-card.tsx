@@ -46,17 +46,8 @@ function TransactionCardContent({ transaction }: { transaction: Transaction }) {
         <OperatorLogo operator={transaction.toOperator} />
       </span>
       <span className="sendflow-transaction-copy">
-        <span className="sendflow-transaction-parties" aria-label={`De ${transaction.sender} vers ${transaction.recipient}`}>
-          <span className="sendflow-transaction-party">
-            <small>De</small>
-            <strong>{transaction.sender}</strong>
-          </span>
-          <span className="sendflow-transaction-party">
-            <small>Vers</small>
-            <strong>{transaction.recipient}</strong>
-          </span>
-        </span>
-        <small className="sendflow-transaction-date">{transaction.date}</small>
+        <strong>De {transaction.sender} vers {transaction.recipient}</strong>
+        <small>{transaction.date}</small>
       </span>
       <span className={`sendflow-transaction-amount ${amountClass}`.trim()}>{amountPrefix}{transaction.amount}</span>
     </>
