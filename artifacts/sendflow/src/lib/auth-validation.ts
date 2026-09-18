@@ -1,5 +1,6 @@
 export type SignUpValidationInput = {
   fullName: string;
+  birthDate: string;
   phone: string;
   password: string;
   confirmation: string;
@@ -37,6 +38,19 @@ function validatePassword(password: string) {
   return undefined;
 }
 
+function validateBirthDate(birthDate: string) {
+  if (!birthDate) return 'La date de naissance est requise.';
+
+  const parsedDate = new Date(`${birthDate}T00:00:00`);
+  if (Number.isNaN(parsedDate.getTime())) return 'Saisissez une date de naissance valide.';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (parsedDate > today) return 'La date de naissance ne peut pas être dans le futur.';
+
+  return undefined;
+}
+
 export function validateSignUp(form: SignUpValidationInput): FieldErrors<SignUpField> {
   const errors: FieldErrors<SignUpField> = {};
   const fullName = form.fullName.trim().replace(/\s+/g, ' ');
@@ -50,6 +64,9 @@ export function validateSignUp(form: SignUpValidationInput): FieldErrors<SignUpF
   } else if (!/[A-Za-zÀ-ÿ]/.test(fullName)) {
     errors.fullName = 'Saisissez un nom avec des lettres.';
   }
+
+  const birthDateError = validateBirthDate(form.birthDate);
+  if (birthDateError) errors.birthDate = birthDateError;
 
   const phoneError = validatePhone(form.phone);
   if (phoneError) errors.phone = phoneError;

@@ -10,6 +10,7 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
 type SignUpForm = {
   fullName: string;
+  birthDate: string;
   phone: string;
   password: string;
   confirmation: string;
@@ -18,6 +19,7 @@ type SignUpForm = {
 
 const initialForm: SignUpForm = {
   fullName: '',
+  birthDate: '',
   phone: '',
   password: '',
   confirmation: '',
@@ -151,6 +153,29 @@ export default function SignupPage() {
               {visibleError('fullName') && (
                 <p id="signup-full-name-error" className="sendflow-signup-error" role="alert">
                   {visibleError('fullName')}
+                </p>
+              )}
+            </div>
+
+            <div className="sendflow-signup-control">
+              <label className={`sendflow-signup-field sendflow-signup-date-field${visibleError('birthDate') ? ' has-error' : ''}`}>
+                <span className="sr-only">Date de naissance</span>
+                <input
+                  id="signup-birth-date"
+                  type="date"
+                  value={form.birthDate}
+                  onChange={(event) => update('birthDate', event.target.value)}
+                  onBlur={() => markTouched('birthDate')}
+                  max={new Date().toISOString().slice(0, 10)}
+                  aria-label="Date de naissance"
+                  aria-invalid={Boolean(visibleError('birthDate'))}
+                  aria-describedby={visibleError('birthDate') ? 'signup-birth-date-error' : undefined}
+                  required
+                />
+              </label>
+              {visibleError('birthDate') && (
+                <p id="signup-birth-date-error" className="sendflow-signup-error" role="alert">
+                  {visibleError('birthDate')}
                 </p>
               )}
             </div>

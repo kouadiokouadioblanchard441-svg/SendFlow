@@ -190,6 +190,21 @@
   opacity: 1;
 }
 
+.sendflow-signup-date-field {
+  align-items: center;
+}
+
+.sendflow-signup-date-field input {
+  cursor: pointer;
+  color: #515861;
+}
+
+.sendflow-signup-date-field input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  margin-right: 10px;
+  opacity: .7;
+}
+
 .sendflow-signup-phone {
   align-items: stretch;
 }
