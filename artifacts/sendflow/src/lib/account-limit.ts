@@ -1,4 +1,4 @@
-export type AccountLimitStatus = 'unverified' | 'pending' | 'verified';
+export type AccountLimitStatus = 'unverified' | 'pending' | 'verified' | 'failed';
 
 export type AccountLimitConfig = {
   currency: 'FCFA';
@@ -23,6 +23,12 @@ export const temporaryAccountLimits: Record<AccountLimitStatus, AccountLimitConf
     monthlyLimit: 200000,
     sentAmount: 11760,
     status: 'pending',
+  },
+  failed: {
+    currency: 'FCFA',
+    monthlyLimit: 200000,
+    sentAmount: 11760,
+    status: 'failed',
   },
   verified: {
     currency: 'FCFA',

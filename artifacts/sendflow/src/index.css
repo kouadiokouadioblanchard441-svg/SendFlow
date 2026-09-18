@@ -748,6 +748,10 @@
   color: #198b50;
 }
 
+.sendflow-account-limit-status.is-failed {
+  color: #c53b3b;
+}
+
 .sendflow-account-limit-primary {
   width: 100%;
   min-height: 59px;

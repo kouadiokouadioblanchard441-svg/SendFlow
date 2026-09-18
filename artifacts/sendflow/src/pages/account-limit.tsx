@@ -11,7 +11,8 @@ export default function AccountLimitPage() {
   const [verificationStatus, setVerificationStatus] = useState(accountLimit.status);
   const isPending = verificationStatus === 'pending';
   const isVerified = verificationStatus === 'verified';
-  const canStartVerification = verificationStatus === 'unverified';
+  const isFailed = verificationStatus === 'failed';
+  const canStartVerification = verificationStatus === 'unverified' || isFailed;
   const progress = Math.min(100, Math.max(0, (accountLimit.sentAmount / accountLimit.monthlyLimit) * 100));
 
   useSeo({
@@ -83,6 +84,12 @@ export default function AccountLimitPage() {
           {isVerified && (
             <p className="sendflow-account-limit-status is-verified" role="status" aria-live="polite" data-testid="status-account-limit-verified">
               Vous êtes authentifié
+            </p>
+          )}
+
+          {isFailed && (
+            <p className="sendflow-account-limit-status is-failed" role="alert" aria-live="assertive" data-testid="status-account-limit-failed">
+              La vérification a échoué. Vous pouvez réessayer.
             </p>
           )}
 
