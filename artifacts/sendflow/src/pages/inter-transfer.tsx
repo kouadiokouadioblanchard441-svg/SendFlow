@@ -81,11 +81,6 @@ export default function InterNetworkTransferPage() {
       </header>
 
       <div className="sendflow-transfer-page">
-        <div className="sendflow-transfer-valid-banner" role="status">
-          <Check size={18} strokeWidth={2.8} />
-          <span>Compte validé ! Vous pouvez transférer de l’argent avec votre carte bancaire ou votre mobile money</span>
-        </div>
-
         <form
           className="sendflow-transfer-card"
           onSubmit={(event) => {
