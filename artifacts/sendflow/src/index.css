@@ -1911,10 +1911,10 @@
   height: 40px;
   flex: 0 0 40px;
   place-items: center;
-  border: 0;
+  border: 1px solid #dfc5ff;
   border-radius: 13px;
-  background: #f5f5f5;
-  color: #5d5d62;
+  background: #f3e8ff;
+  color: #7d22ff;
   cursor: pointer;
   padding: 0;
   transition: background-color .18s ease, transform .18s ease;
@@ -1922,11 +1922,14 @@
 
 .sendflow-account-info-back:hover,
 .sendflow-account-info-back:focus-visible {
-  background: #eee9fa;
+  border-color: #c99cff;
+  background: #ead8ff;
+  color: #6d16ec;
   outline: 0;
 }
 
 .sendflow-account-info-back:active {
+  background: #dfc5ff;
   transform: scale(.94);
 }
 

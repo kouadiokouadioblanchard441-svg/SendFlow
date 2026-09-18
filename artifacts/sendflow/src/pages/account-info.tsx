@@ -147,7 +147,7 @@ export default function AccountInfoPage() {
             aria-label="Retour au compte"
             data-testid="button-account-info-back"
           >
-            <ArrowLeft size={23} strokeWidth={2} />
+            <ArrowLeft size={23} strokeWidth={2} aria-hidden="true" />
           </button>
           <h1 id="account-info-title">Information de compte</h1>
         </header>
