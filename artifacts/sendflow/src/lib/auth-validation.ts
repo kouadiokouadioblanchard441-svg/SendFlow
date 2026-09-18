@@ -15,6 +15,7 @@ export type SignInValidationInput = {
 export type SignUpField = keyof SignUpValidationInput;
 export type SignInField = keyof SignInValidationInput;
 export type FieldErrors<T extends string> = Partial<Record<T, string>>;
+export const MIN_BIRTH_DATE = '1900-01-01';
 
 export function getAdultBirthDateLimit(referenceDate = new Date()) {
   const limit = new Date(referenceDate);
@@ -51,8 +52,22 @@ function validatePassword(password: string) {
 function validateBirthDate(birthDate: string) {
   if (!birthDate) return 'La date de naissance est requise.';
 
-  const parsedDate = new Date(`${birthDate}T00:00:00`);
-  if (Number.isNaN(parsedDate.getTime())) return 'Saisissez une date de naissance valide.';
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate);
+  if (!match) return 'Saisissez une date de naissance valide.';
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsedDate = new Date(year, month - 1, day);
+  const isRealCalendarDate = (
+    parsedDate.getFullYear() === year
+    && parsedDate.getMonth() === month - 1
+    && parsedDate.getDate() === day
+  );
+
+  if (!isRealCalendarDate || birthDate < MIN_BIRTH_DATE) {
+    return 'Saisissez une date de naissance valide.';
+  }
 
   if (birthDate > getAdultBirthDateLimit()) return 'Vous devez avoir au moins 18 ans.';
 
