@@ -1,4 +1,4 @@
-import { type ReactElement } from 'react';
+import { useEffect, type ReactElement } from 'react';
 import { ClerkProvider } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
@@ -62,7 +62,50 @@ function NotFoundRoute() {
   return <NotFound />;
 }
 
+function useProtectImages() {
+  useEffect(() => {
+    const isImageTarget = (target: EventTarget | null) =>
+      target instanceof Element && Boolean(target.closest('img'));
+
+    const preventImageAction = (event: Event) => {
+      if (isImageTarget(event.target)) event.preventDefault();
+    };
+
+    const markImagesAsNonDraggable = (root: ParentNode = document) => {
+      root.querySelectorAll('img').forEach((image) => {
+        image.draggable = false;
+      });
+    };
+
+    document.addEventListener('contextmenu', preventImageAction, true);
+    document.addEventListener('dragstart', preventImageAction, true);
+    document.addEventListener('selectstart', preventImageAction, true);
+    markImagesAsNonDraggable();
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof Element) {
+            if (node instanceof HTMLImageElement) node.draggable = false;
+            markImagesAsNonDraggable(node);
+          }
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      document.removeEventListener('contextmenu', preventImageAction, true);
+      document.removeEventListener('dragstart', preventImageAction, true);
+      document.removeEventListener('selectstart', preventImageAction, true);
+      observer.disconnect();
+    };
+  }, []);
+}
+
 function App() {
+  useProtectImages();
+
   return (
     <WouterRouter base={basePath}>
       <ClerkProvider
