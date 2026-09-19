@@ -2202,6 +2202,20 @@
 .sendflow-notification-copy { display: flex; min-width: 0; flex-direction: column; gap: 7px; }
 .sendflow-notification-copy strong { color: #332b40; font-size: 16px; font-weight: 500; letter-spacing: -.015em; line-height: 1.15; }
 .sendflow-notification-copy small { color: #766b87; font-size: 14px; font-weight: 500; line-height: 1.1; }
+.sendflow-notification-row.is-actionable { width: 100%; border-top: 0; border-right: 0; border-left: 0; background: #fff; color: inherit; cursor: pointer; font: inherit; text-align: left; }
+.sendflow-notification-row.is-actionable:hover { background: #fbf9ff; }
+.sendflow-notification-row.is-actionable:focus-visible { position: relative; z-index: 1; background: #fbf9ff; box-shadow: inset 0 0 0 2px rgba(99, 49, 195, .28); outline: 0; }
+.sendflow-notification-detail-card { width: calc(100% - 38px); max-width: 720px; min-height: 340px; margin: 19px auto 0; border: 1px solid #ebe5f5; border-radius: 16px; background: #fff; box-shadow: 0 8px 24px rgba(55, 36, 91, .08); padding: 12px 20px 28px; }
+.sendflow-notification-detail-card .sendflow-notifications-back { display: inline-flex; align-items: center; gap: 6px; }
+.sendflow-notification-detail-icon { display: flex; justify-content: center; margin-top: 30px; }
+.sendflow-notification-detail-icon .sendflow-notification-operator { width: 64px; height: 64px; }
+.sendflow-notification-detail-icon .sendflow-notification-operator img { width: 52px; height: 52px; }
+.sendflow-notification-detail-icon .sendflow-notification-operator strong { width: 52px; height: 52px; }
+.sendflow-notification-detail-kicker { margin: 20px 0 0; color: #7654b5; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-align: center; text-transform: uppercase; }
+.sendflow-notification-detail-card h1 { margin: 10px auto 0; max-width: 580px; color: #332b40; font-size: clamp(24px, 5vw, 34px); font-weight: 700; letter-spacing: -.04em; line-height: 1.12; text-align: center; }
+.sendflow-notification-detail-message { max-width: 560px; margin: 22px auto 0; color: #4d435a; font-size: 16px; line-height: 1.55; text-align: center; }
+.sendflow-notification-detail-body { max-width: 560px; margin: 14px auto 0; color: #655a70; font-size: 15px; line-height: 1.65; text-align: center; }
+.sendflow-notification-detail-time { display: block; margin-top: 24px; color: #766b87; font-size: 14px; text-align: center; }
 
 .sendflow-panel-layer,
 .sendflow-sheet-layer { position: fixed; z-index: 20; inset: 0; }

@@ -16,7 +16,7 @@ import DepositPage from '@/pages/deposit';
 import HistoryPage from '@/pages/history';
 import InternationalTransferPage from '@/pages/international-transfer';
 import InterNetworkTransferPage from '@/pages/inter-transfer';
-import NotificationsPage from '@/pages/notifications';
+import NotificationsPage, { NotificationDetailPage } from '@/pages/notifications';
 import PinPage from '@/pages/pin';
 import PricingPage from '@/pages/pricing';
 import ResetPage from '@/pages/reset';
@@ -169,6 +169,7 @@ function App() {
               <Route path="/international-transfer" component={InternationalTransferPage} />
               <Route path="/inter-transfer" component={InterNetworkTransferPage} />
               <Route path="/history" component={HistoryPage} />
+              <Route path="/notifications/:id" component={NotificationDetailPage} />
               <Route path="/notifications" component={NotificationsPage} />
               <Route
                 path="/conditions-utilisation"
