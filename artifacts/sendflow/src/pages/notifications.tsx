@@ -74,6 +74,16 @@ function NotificationRow({
   );
 }
 
+function readNotificationId(location: string): string {
+  const rawId = location.split('/').filter(Boolean).at(-1) ?? '';
+
+  try {
+    return decodeURIComponent(rawId);
+  } catch {
+    return '';
+  }
+}
+
 export default function NotificationsPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
@@ -110,13 +120,17 @@ export default function NotificationsPage() {
         <h1 id="notifications-page-title">Notifications</h1>
 
         <div className="sendflow-notifications-list">
-          {notifications.map((notification) => (
-            <NotificationRow
-              key={notification.id}
-              notification={notification}
-              onOpen={(nextNotification) => setLocation(`/notifications/${encodeURIComponent(nextNotification.id)}`)}
-            />
-          ))}
+          {notifications.length > 0 ? (
+            notifications.map((notification) => (
+              <NotificationRow
+                key={notification.id}
+                notification={notification}
+                onOpen={(nextNotification) => setLocation(`/notifications/${encodeURIComponent(nextNotification.id)}`)}
+              />
+            ))
+          ) : (
+            <p className="sendflow-notifications-empty">Aucune notification pour le moment.</p>
+          )}
         </div>
       </section>
     </main>
@@ -126,7 +140,7 @@ export default function NotificationsPage() {
 export function NotificationDetailPage() {
   const [location, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const notificationId = decodeURIComponent(location.split('/').filter(Boolean).at(-1) ?? '');
+  const notificationId = readNotificationId(location);
   const notification = notifications.find(
     (candidate) => candidate.id === notificationId && candidate.type === 'general',
   );
@@ -143,7 +157,7 @@ export function NotificationDetailPage() {
   if (!notification) return <Redirect to="/notifications" />;
 
   return (
-    <main className="sendflow-notifications-shell">
+    <main className="sendflow-notifications-shell is-detail">
       <header className="sendflow-notifications-header">
         <div className="sendflow-notifications-brand" aria-label="SendFlow">
           <img className="sendflow-notifications-mark" src={sendflowMark} alt="" />

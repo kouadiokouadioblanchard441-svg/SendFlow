@@ -2181,6 +2181,7 @@
 
 /* Notifications — compact mobile layout inspired by the reference screen */
 .sendflow-notifications-shell { min-height: 100dvh; overflow: hidden; background: #f4f1fb; color: #302641; }
+.sendflow-notifications-shell.is-detail { overflow-y: auto; }
 .sendflow-notifications-header { display: flex; min-height: 166px; align-items: center; border-radius: 0 0 32px 32px; background: linear-gradient(135deg, #4f249f 0%, #7040d0 58%, #492195 100%); box-shadow: 0 14px 30px rgba(76, 39, 160, .24); padding: max(20px, env(safe-area-inset-top)) 20px 26px; }
 .sendflow-notifications-brand { display: inline-flex; align-items: center; gap: 9px; border: 1px solid rgba(62, 37, 113, .08); border-radius: 18px; background: rgba(255, 255, 255, .98); box-shadow: 0 8px 18px rgba(35, 20, 79, .18); padding: 10px 14px; }
 .sendflow-notifications-mark { width: 30px; height: 35px; object-fit: contain; }
@@ -2204,8 +2205,10 @@
 .sendflow-notification-copy strong { color: #332b40; font-size: 16px; font-weight: 500; letter-spacing: -.015em; line-height: 1.15; }
 .sendflow-notification-copy small { color: #766b87; font-size: 14px; font-weight: 500; line-height: 1.1; }
 .sendflow-notification-row.is-actionable { width: 100%; border-top: 0; border-right: 0; border-left: 0; background: #fff; color: inherit; cursor: pointer; font: inherit; text-align: left; }
+.sendflow-notification-row.is-actionable { -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: background-color .18s ease, box-shadow .18s ease; }
 .sendflow-notification-row.is-actionable:hover { background: #fbf9ff; }
 .sendflow-notification-row.is-actionable:focus-visible { position: relative; z-index: 1; background: #fbf9ff; box-shadow: inset 0 0 0 2px rgba(99, 49, 195, .28); outline: 0; }
+.sendflow-notifications-empty { margin: 40px 12px; color: #766b87; font-size: 15px; line-height: 1.5; text-align: center; }
 .sendflow-notification-detail-card { width: calc(100% - 38px); max-width: 720px; min-height: 340px; margin: 19px auto 0; border: 1px solid #ebe5f5; border-radius: 16px; background: #fff; box-shadow: 0 8px 24px rgba(55, 36, 91, .08); padding: 12px 20px 28px; }
 .sendflow-notification-detail-card .sendflow-notifications-back { display: inline-flex; align-items: center; gap: 6px; }
 .sendflow-notification-detail-icon { display: flex; justify-content: center; margin-top: 30px; }
