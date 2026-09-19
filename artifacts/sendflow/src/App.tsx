@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Redirect, Route, Router as WouterRouter, Switch } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { LegalMentionsPage, PrivacyPage, TermsPage, type LegalPageProps } from '@/pages/legal';
+import { LegalMentionsPage, PrivacyPage, type LegalPageProps } from '@/pages/legal';
 import NotFound from '@/pages/not-found';
 import AccountPage from '@/pages/account';
 import AccountInfoPage from '@/pages/account-info';
@@ -177,17 +177,6 @@ function App() {
               <Route path="/transaction/:id" component={TransactionDetailPage} />
               <Route path="/notifications/:id" component={NotificationDetailPage} />
               <Route path="/notifications" component={NotificationsPage} />
-              <Route
-                path="/conditions-utilisation"
-                component={() => (
-                  <PublicLegalRoute
-                    page={TermsPage}
-                    path="/conditions-utilisation"
-                    title="Conditions d’utilisation · SendFlow"
-                    description="Conditions d’utilisation de SendFlow."
-                  />
-                )}
-              />
               <Route
                 path="/confidentialite"
                 component={() => (

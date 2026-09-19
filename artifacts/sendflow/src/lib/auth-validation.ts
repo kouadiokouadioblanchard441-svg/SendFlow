@@ -4,7 +4,7 @@ export type SignUpValidationInput = {
   phone: string;
   password: string;
   confirmation: string;
-  acceptedTerms: boolean;
+  acceptedPrivacy: boolean;
 };
 
 export type SignInValidationInput = {
@@ -103,8 +103,8 @@ export function validateSignUp(form: SignUpValidationInput): FieldErrors<SignUpF
     errors.confirmation = 'Les deux codes secrets doivent être identiques.';
   }
 
-  if (!form.acceptedTerms) {
-    errors.acceptedTerms = 'Vous devez accepter les conditions générales.';
+  if (!form.acceptedPrivacy) {
+    errors.acceptedPrivacy = 'Vous devez accepter la politique de confidentialité.';
   }
 
   return errors;

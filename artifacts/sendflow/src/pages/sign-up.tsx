@@ -17,7 +17,7 @@ type SignUpForm = {
   phone: string;
   password: string;
   confirmation: string;
-  acceptedTerms: boolean;
+  acceptedPrivacy: boolean;
 };
 
 const initialForm: SignUpForm = {
@@ -26,7 +26,7 @@ const initialForm: SignUpForm = {
   phone: '',
   password: '',
   confirmation: '',
-  acceptedTerms: false,
+  acceptedPrivacy: false,
 };
 
 function PasswordField({
@@ -233,24 +233,23 @@ export default function SignupPage() {
             />
 
             <div className="sendflow-signup-control">
-              <label className="sendflow-signup-terms">
+              <label className="sendflow-signup-privacy">
                 <input
                   type="checkbox"
-                  checked={form.acceptedTerms}
-                  onChange={(event) => update('acceptedTerms', event.target.checked)}
-                  onBlur={() => markTouched('acceptedTerms')}
-                  aria-invalid={Boolean(visibleError('acceptedTerms'))}
-                  aria-describedby={visibleError('acceptedTerms') ? 'signup-terms-error' : undefined}
+                  checked={form.acceptedPrivacy}
+                  onChange={(event) => update('acceptedPrivacy', event.target.checked)}
+                  onBlur={() => markTouched('acceptedPrivacy')}
+                  aria-invalid={Boolean(visibleError('acceptedPrivacy'))}
+                  aria-describedby={visibleError('acceptedPrivacy') ? 'signup-privacy-error' : undefined}
                   required
                 />
                 <span>
-                  J’accepte les <Link href="/conditions-utilisation">conditions générales d’utilisation</Link>{' '}
-                  et la <Link href="/confidentialite">politique de confidentialité</Link>
+                  J’accepte la <Link href="/confidentialite">politique de confidentialité</Link>
                 </span>
               </label>
-              {visibleError('acceptedTerms') && (
-                <p id="signup-terms-error" className="sendflow-signup-error" role="alert">
-                  {visibleError('acceptedTerms')}
+              {visibleError('acceptedPrivacy') && (
+                <p id="signup-privacy-error" className="sendflow-signup-error" role="alert">
+                  {visibleError('acceptedPrivacy')}
                 </p>
               )}
             </div>
