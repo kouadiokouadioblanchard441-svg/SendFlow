@@ -25,10 +25,10 @@ import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 import { DEMO_SESSION_KEY } from '@/lib/demo-account';
 import { readAccountProfile } from '@/lib/account-profile';
+import { getAvatarForUser, getCurrentAvatarUserKey } from '@/lib/avatar-bank';
 import notificationBell from '@assets/633486_1789677628502.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
-import profileMariam from '@assets/generated_images/sendflow-profile-mariam.png';
 
 type SheetName = 'notifications' | 'transaction' | 'change-secret' | null;
 const NOTIFICATIONS_READ_KEY = 'sendflow.notifications.read';
@@ -59,6 +59,7 @@ export default function AccountPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountProfile = readAccountProfile();
+  const profileAvatar = getAvatarForUser(getCurrentAvatarUserKey(accountProfile));
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetName>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(() => (
@@ -238,7 +239,7 @@ export default function AccountPage() {
               <div className="sendflow-side-brand"><img src={sendflowMark} alt="" /><img className="sendflow-side-wordmark" src={sendflowWordmark} alt="SendFlow" /></div>
               <button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer le menu" data-testid="button-close-menu"><X size={20} /></button>
             </div>
-             <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileMariam} alt="" /><span><strong>{accountProfile.firstName} {accountProfile.lastName}</strong><small>Compte personnel</small></span></div>
+             <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileAvatar.src} alt="" /><span><strong>{accountProfile.firstName} {accountProfile.lastName}</strong><small>Compte personnel</small></span></div>
             <div className="sendflow-menu-links">
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-info'); }} data-testid="button-menu-account-info"><UserRound size={19} />Informations du compte<ChevronRight size={17} /></button>
                <button type="button" onClick={() => openSheet('change-secret')} data-testid="button-menu-change-secret"><LockKeyhole size={19} />Modifier le code secret<ChevronRight size={17} /></button>
@@ -246,7 +247,7 @@ export default function AccountPage() {
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-limit'); }} data-testid="button-menu-limit"><WalletCards size={19} />Plafond du compte<ChevronRight size={17} /></button>
                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/confidentialite'); }} data-testid="button-menu-privacy"><FileText size={19} />Politique de confidentialité<ChevronRight size={17} /></button>
             </div>
-              <div className="sendflow-menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/customer-service'); }} data-testid="button-menu-help"><Headphones size={19} />Service client<ChevronRight size={17} /></button><button type="button" onClick={() => { window.sessionStorage.removeItem('sendflow.pin.unlocked'); window.sessionStorage.removeItem(DEMO_SESSION_KEY); setLocation('/sign-in'); }} data-testid="button-menu-logout"><LogOut size={19} />Déconnecter</button></div>
+              <div className="sendflow-menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/customer-service'); }} data-testid="button-menu-help"><Headphones size={19} />Service client<ChevronRight size={17} /></button><button type="button" onClick={() => { window.sessionStorage.removeItem('sendflow.pin.unlocked'); window.sessionStorage.removeItem(DEMO_SESSION_KEY); window.sessionStorage.removeItem('sendflow.avatar.user-key'); setLocation('/sign-in'); }} data-testid="button-menu-logout"><LogOut size={19} />Déconnecter</button></div>
               <p className="sendflow-menu-copyright">© 2026 SendFlow</p>
           </aside>
         </div>

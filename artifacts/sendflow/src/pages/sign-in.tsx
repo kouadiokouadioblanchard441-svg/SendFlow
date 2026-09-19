@@ -6,6 +6,7 @@ import { CountryPhoneField } from '@/components/country-phone-field';
 import { normalizePhone, validateSignIn, type SignInField } from '@/lib/auth-validation';
 import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
 import { hasPin } from '@/lib/pin-storage';
+import { AVATAR_USER_KEY } from '@/lib/avatar-bank';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -61,11 +62,13 @@ export default function SigninPage() {
 
     if (isDemoAccount) {
       window.sessionStorage.setItem(DEMO_SESSION_KEY, 'true');
+      window.sessionStorage.setItem(AVATAR_USER_KEY, `phone:${normalizePhone(form.phone)}`);
       setLocation('/pin');
       return;
     }
 
     window.sessionStorage.removeItem(DEMO_SESSION_KEY);
+    window.sessionStorage.setItem(AVATAR_USER_KEY, `phone:${normalizePhone(form.phone)}`);
     setLocation(hasPin() ? '/pin' : '/create-pin');
   };
 
