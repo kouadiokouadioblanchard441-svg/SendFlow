@@ -2708,11 +2708,11 @@
 .sendflow-account-info-illustration {
   position: absolute;
   z-index: 0;
-  top: 145px;
-  right: -168px;
-  width: min(112vw, 560px);
+  top: 180px;
+  right: -45px;
+  width: min(118vw, 600px);
   pointer-events: none;
-  opacity: .13;
+  opacity: .2;
   transform: rotate(-2deg);
 }
 
