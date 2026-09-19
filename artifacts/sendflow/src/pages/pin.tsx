@@ -214,7 +214,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
           <img src={sendflowWordmark} alt="SendFlow" className="sendflow-pin-wordmark" />
         </div>
 
-        <header className="sendflow-pin-heading">
+        <header className="sendflow-pin-heading is-change-pin">
           <h1 id="pin-title">{copy.title}</h1>
           <p>{copy.subtitle}</p>
         </header>
