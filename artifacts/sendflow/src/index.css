@@ -3175,9 +3175,10 @@
   background: #8b4cc8;
   color: #fff;
   padding: 0 17px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: -.025em;
+  white-space: nowrap;
   text-decoration: none;
   box-shadow: 0 3px 7px rgba(92, 45, 146, .2);
   transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease;
