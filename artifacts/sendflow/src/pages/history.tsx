@@ -6,7 +6,6 @@ import { transactions } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
-import historyIllustration from '@assets/generated_images/sendflow-history-transactions-3d.png';
 
 export default function HistoryPage() {
   const [, setLocation] = useLocation();
@@ -50,9 +49,6 @@ export default function HistoryPage() {
       </header>
 
       <section className="sendflow-history-page" aria-labelledby="history-title">
-        <div className="sendflow-history-illustration" aria-hidden="true">
-          <img src={historyIllustration} alt="" />
-        </div>
         <label className="sendflow-history-search">
           <Search size={28} strokeWidth={2.1} aria-hidden="true" />
           <input
