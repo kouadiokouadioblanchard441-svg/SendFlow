@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, LockKeyhole } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -116,10 +116,6 @@ export default function OnboardingPage() {
             <img src={sendflowMark} alt="" />
             <img src={sendflowWordmark} alt="SendFlow" />
           </Link>
-          <span className="sendflow-onboarding-secure">
-            <LockKeyhole size={14} strokeWidth={2.2} aria-hidden="true" />
-            Protégé par SendFlow
-          </span>
         </header>
 
         <nav className="sendflow-onboarding-progress" aria-label="Progression de la découverte">
