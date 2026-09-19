@@ -4,6 +4,7 @@ import { Link } from 'wouter';
 import { useLocation } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import { avatarBank } from '@/lib/avatar-bank';
 
 const legalCompanyDetails = {
   name: 'Flow Digital SARL',
@@ -135,6 +136,7 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
 
 function PrivacyLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
+  const heroAvatars = avatarBank.slice(0, 5);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -168,8 +170,25 @@ function PrivacyLayout({ children }: { children: ReactNode }) {
 
       <main className="sendflow-privacy-main">
         <article className="sendflow-privacy-article">
-          <h2 className="sendflow-privacy-title">Politique de confidentialité</h2>
-          <p className="sendflow-privacy-date">Version de travail · 10 septembre 2026</p>
+          <div className="sendflow-privacy-hero">
+            <div className="sendflow-privacy-hero-copy">
+              <p className="sendflow-privacy-eyebrow">SendFlow · Données personnelles</p>
+              <h2 className="sendflow-privacy-title">Politique de confidentialité</h2>
+              <p className="sendflow-privacy-date">Version de travail · 10 septembre 2026</p>
+              <p className="sendflow-privacy-lead">Une explication claire de la manière dont SendFlow utilise, protège et conserve les informations nécessaires à ses services.</p>
+            </div>
+            <div className="sendflow-privacy-avatar-cloud" aria-hidden="true">
+              {heroAvatars.map((avatar, index) => (
+                <img key={avatar.id} src={avatar.src} alt="" className={`is-avatar-${index + 1}`} />
+              ))}
+            </div>
+          </div>
+
+          <div className="sendflow-privacy-notice">
+            <span className="sendflow-privacy-notice-mark" aria-hidden="true">i</span>
+            <p><strong>À retenir :</strong> SendFlow ne vous demandera jamais votre code PIN, votre mot de passe ou votre code OTP par e-mail ou par message.</p>
+          </div>
+
           <div className="sendflow-privacy-content">{children}</div>
         </article>
       </main>
@@ -406,129 +425,115 @@ export function TermsPage({ supportEmail }: LegalPageProps) {
 
 export function PrivacyPage({ supportEmail }: LegalPageProps) {
   const contactEmail = normalizeSupportEmail(supportEmail);
+  const contactAvatars = avatarBank.slice(4, 8);
+
   return (
     <PrivacyLayout>
-      <LegalSection number="01" title="Responsable du traitement">
-        <p>Le responsable du traitement présenté dans cette politique est <strong>Flow Digital SARL</strong>, opérateur de la marque SendFlow, établi à Abidjan, Cocody Riviera Palmeraie, Côte d’Ivoire.</p>
-        <p>Pour toute question relative aux données personnelles, vous pouvez contacter <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. Lorsqu’un partenaire exécute directement une opération de paiement, il peut agir comme responsable indépendant ou responsable conjoint pour certaines données et présenter sa propre politique.</p>
+      <LegalSection number="01" title="Qui est responsable de vos données ?">
+        <p><strong>Flow Digital SARL</strong>, opérateur de la marque SendFlow, est le responsable du traitement présenté dans cette politique. La société est établie à Abidjan, Cocody Riviera Palmeraie, en Côte d’Ivoire.</p>
+        <p>Pour toute question sur vos informations personnelles, vous pouvez écrire à <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. Lorsqu’un opérateur, une banque ou un autre partenaire intervient directement dans une opération, il peut également être responsable de certains traitements réalisés dans son propre environnement.</p>
       </LegalSection>
 
-      <LegalSection number="02" title="Périmètre de la politique">
-        <p>Cette politique s’applique au site SendFlow, à l’application, aux parcours de transfert, au suivi des opérations, aux formulaires de contact, aux communications liées au service et aux pages publiques associées.</p>
-        <p>Elle ne remplace pas la politique d’un opérateur mobile money, d’une banque, d’un prestataire de paiement, d’un hébergeur ou d’un autre partenaire qui collecte directement des informations dans son propre environnement. Avant de confirmer un transfert, consultez les informations affichées par le partenaire concerné.</p>
+      <LegalSection number="02" title="Quand cette politique s’applique-t-elle ?">
+        <p>Cette politique concerne le site SendFlow, l’application, les parcours de transfert, le suivi des opérations, les formulaires de contact et les communications liées au service.</p>
+        <p>Elle complète, mais ne remplace pas, les documents publiés par un opérateur mobile money, une banque ou un prestataire de paiement qui recueille directement des informations. Avant de confirmer une opération, prenez connaissance des informations présentées par le partenaire concerné.</p>
       </LegalSection>
 
-      <LegalSection number="03" title="Catégories de données collectées">
-        <p>Selon le parcours utilisé, SendFlow peut traiter les catégories suivantes :</p>
+      <LegalSection number="03" title="Quelles informations pouvons-nous recueillir ?">
+        <p>Les informations traitées dépendent des fonctionnalités que vous utilisez et des exigences applicables à l’opération. Elles peuvent notamment comprendre :</p>
         <LegalBulletList>
-          <li><strong>Identité et contact :</strong> nom, prénom, numéro de téléphone, adresse électronique, pays de résidence et préférences de communication.</li>
-          <li><strong>Données de compte :</strong> identifiant, informations de connexion, historique de consentement, paramètres de sécurité et statut du compte.</li>
-          <li><strong>Données de transfert :</strong> pays, réseau, bénéficiaire, montant, devise, référence, statut, date, frais affichés et informations nécessaires au rapprochement.</li>
-          <li><strong>Données de vérification :</strong> justificatifs, informations de connaissance client, origine des fonds et éléments de conformité lorsque la loi ou un partenaire l’exige.</li>
-          <li><strong>Données techniques :</strong> adresse IP, type d’appareil, système, version de l’application, identifiants techniques, journaux d’erreur et événements de sécurité.</li>
-          <li><strong>Données de support :</strong> contenu d’une demande, pièces jointes envoyées volontairement, correspondances et informations utiles à la résolution.</li>
-          <li><strong>Données de navigation :</strong> pages consultées, préférences, langue, consentements et informations de session nécessaires au fonctionnement.</li>
+          <li><strong>Informations d’identité et de contact :</strong> nom, prénom, numéro de téléphone, adresse e-mail, pays de résidence et préférences de communication ;</li>
+          <li><strong>Informations de compte :</strong> identifiant, paramètres de sécurité, consentements, statut du compte et données nécessaires à la connexion ;</li>
+          <li><strong>Informations liées aux transferts :</strong> pays, réseau, bénéficiaire, montant, devise, frais affichés, référence, date et statut ;</li>
+          <li><strong>Informations de conformité :</strong> justificatifs, origine des fonds ou éléments de connaissance client lorsqu’un contrôle est requis ;</li>
+          <li><strong>Informations techniques :</strong> appareil, système, version de l’application, adresse IP, journaux d’erreur et événements de sécurité ;</li>
+          <li><strong>Échanges avec le support :</strong> demandes, correspondances et pièces jointes que vous choisissez de nous transmettre.</li>
         </LegalBulletList>
-        <p>SendFlow ne demande pas de mot de passe bancaire, de code PIN mobile money ou de code OTP par courrier électronique. Ne communiquez jamais ces informations à un agent qui les réclamerait en dehors d’un écran sécurisé du partenaire.</p>
       </LegalSection>
 
-      <LegalSection number="04" title="Origine des données">
-        <p>Les données peuvent être fournies directement par vous, générées lors de l’utilisation du service, reçues d’un opérateur ou d’un partenaire avec lequel vous avez demandé l’exécution d’un transfert, ou collectées automatiquement depuis votre appareil et votre navigateur.</p>
-        <p>Si vous saisissez les informations d’un bénéficiaire, vous devez vous assurer que vous avez le droit de les utiliser pour le transfert demandé et, lorsque cela est nécessaire, l’informer du traitement.</p>
+      <LegalSection number="04" title="Comment ces informations arrivent-elles jusqu’à nous ?">
+        <p>Vous pouvez nous transmettre des informations lorsque vous créez un compte, complétez un formulaire, ajoutez un bénéficiaire ou contactez l’assistance. D’autres données sont générées automatiquement lorsque vous consultez le service ou utilisez une fonctionnalité.</p>
+        <p>Nous pouvons aussi recevoir des informations d’un opérateur ou d’un partenaire lorsque vous lui demandez d’exécuter, de vérifier ou de rapprocher une opération. Si vous saisissez les coordonnées d’un bénéficiaire, vous devez disposer du droit de les utiliser et l’informer du traitement lorsque la réglementation l’exige.</p>
       </LegalSection>
 
-      <LegalSection number="05" title="Finalités et bases de traitement">
-        <p>Les données sont utilisées pour fournir et sécuriser SendFlow, notamment pour :</p>
+      <LegalSection number="05" title="Pourquoi utilisons-nous vos données ?">
+        <p>Nous utilisons les informations nécessaires pour faire fonctionner SendFlow de façon utile et sécurisée, notamment pour :</p>
         <LegalBulletList>
-          <li>créer et gérer un compte, vérifier une identité et répondre à une demande ;</li>
+          <li>ouvrir et administrer un compte, répondre à une demande et assurer la continuité du service ;</li>
           <li>préparer, transmettre, suivre, rapprocher ou résoudre une opération demandée ;</li>
-          <li>afficher les réseaux, pays, frais, statuts et informations utiles au parcours ;</li>
-          <li>prévenir la fraude, détecter les comportements abusifs et protéger les utilisateurs ;</li>
-          <li>respecter les obligations légales, réglementaires, judiciaires et de conservation ;</li>
-          <li>assurer le support, traiter les réclamations et améliorer la fiabilité du produit ;</li>
-          <li>mesurer l’usage du site et corriger les erreurs, lorsque cela est autorisé et configuré ;</li>
-          <li>envoyer des communications commerciales lorsque vous y avez consenti ou lorsque la loi le permet avec une possibilité de retrait.</li>
+          <li>présenter les pays, réseaux, frais, statuts et informations utiles à votre parcours ;</li>
+          <li>détecter les comportements anormaux, limiter la fraude et protéger les comptes ;</li>
+          <li>répondre aux obligations légales, réglementaires, comptables et judiciaires ;</li>
+          <li>traiter les demandes d’assistance, les réclamations et les incidents ;</li>
+          <li>améliorer la fiabilité, l’accessibilité et la sécurité de nos produits ;</li>
+          <li>envoyer des communications commerciales uniquement lorsque le cadre applicable et vos choix le permettent.</li>
         </LegalBulletList>
-        <p>Selon le traitement, la base peut être l’exécution d’un service demandé, le respect d’une obligation légale, votre consentement, la protection des intérêts essentiels ou l’intérêt légitime de sécurité et d’amélioration du service. La base exacte peut dépendre du pays et du rôle du partenaire.</p>
+        <p>La base utilisée dépend du traitement : service demandé, obligation légale, consentement, intérêt légitime de sécurité ou protection d’une personne. Elle peut également varier selon le pays et le rôle du partenaire.</p>
       </LegalSection>
 
-      <LegalSection number="06" title="Données de paiement et données financières">
-        <p>SendFlow peut afficher ou transmettre des informations nécessaires à un transfert, mais ne doit pas être considéré comme le coffre-fort de vos données bancaires. Les coordonnées de carte, codes secrets et identifiants sensibles sont en principe traités par le prestataire de paiement ou l’opérateur concerné, selon son propre environnement.</p>
-        <p>Lorsque Flow Digital SARL reçoit une référence, un statut ou une information de rapprochement, elle l’utilise pour fournir le service, le support, la prévention de la fraude et les obligations de preuve. Les informations financières ne sont pas utilisées pour vendre des profils publicitaires personnalisés.</p>
+      <LegalSection number="06" title="Informations financières et opérations de paiement">
+        <p>SendFlow peut afficher ou transmettre les informations nécessaires à un transfert. Les coordonnées de carte, codes secrets et identifiants sensibles doivent toutefois rester dans l’environnement sécurisé du prestataire qui les traite directement.</p>
+        <p>Une référence, un statut, un montant ou une information de rapprochement peut être conservé pour confirmer le service, répondre au support, prévenir la fraude et respecter les obligations de preuve. Ces informations ne sont pas utilisées pour créer des profils publicitaires fondés sur vos habitudes financières.</p>
       </LegalSection>
 
-      <LegalSection number="07" title="Partage avec les partenaires et prestataires">
-        <p>Les données peuvent être communiquées uniquement dans la mesure nécessaire à une finalité déterminée, notamment aux catégories suivantes :</p>
+      <LegalSection number="07" title="Avec qui pouvons-nous partager certaines informations ?">
+        <p>Un partage n’est effectué que lorsqu’il est nécessaire à une finalité précise, avec des accès limités à ce qui est utile. Les destinataires peuvent appartenir aux catégories suivantes :</p>
         <LegalBulletList>
-          <li>opérateurs de mobile money, banques, établissements de paiement et prestataires qui exécutent ou vérifient l’opération ;</li>
-          <li>prestataires techniques d’hébergement, de stockage, de sécurité, de messagerie, de support et de supervision ;</li>
-          <li>prestataires de vérification d’identité, de lutte contre la fraude et de conformité ;</li>
-          <li>conseils professionnels, auditeurs et assureurs soumis à une obligation de confidentialité ;</li>
-          <li>autorités administratives, judiciaires ou réglementaires lorsqu’une demande légale l’exige.</li>
+          <li>opérateurs mobile money, banques, établissements de paiement et prestataires qui exécutent ou contrôlent l’opération ;</li>
+          <li>prestataires techniques chargés de l’hébergement, du stockage, de la sécurité, de la messagerie ou de la supervision ;</li>
+          <li>partenaires de vérification d’identité, de prévention de la fraude et de conformité ;</li>
+          <li>conseils, auditeurs ou assureurs soumis à une obligation de confidentialité ;</li>
+          <li>autorités administratives, judiciaires ou réglementaires lorsqu’une demande légale le justifie.</li>
         </LegalBulletList>
-        <p>Les prestataires techniques doivent recevoir des instructions et des accès limités à leurs besoins. Une liste nominative des prestataires utilisés pour la version commercialisée devra être ajoutée avant le lancement, avec leurs rôles, pays de traitement et liens de confidentialité.</p>
+        <p>Les prestataires recevant ces informations doivent respecter des consignes de confidentialité, de sécurité et de limitation d’accès. La liste détaillée des partenaires retenus pour la version commerciale devra être confirmée avant le lancement.</p>
       </LegalSection>
 
-      <LegalSection number="08" title="Transferts internationaux">
-        <p>Les données peuvent être traitées dans un pays différent de celui où vous utilisez SendFlow lorsque les partenaires ou prestataires techniques y sont établis. Avant un transfert international, Flow Digital SARL doit évaluer le cadre applicable, les garanties contractuelles, les mesures de sécurité et les obligations d’information.</p>
-        <p>Les partenaires de paiement peuvent appliquer leurs propres règles de localisation, de conservation et de communication. Lorsque cela est requis, des informations complémentaires seront présentées dans l’écran du parcours ou dans la politique du partenaire.</p>
-      </LegalSection>
-
-      <LegalSection number="09" title="Conservation des données">
-        <p>Les données sont conservées pendant la durée nécessaire à la finalité pour laquelle elles ont été collectées, puis supprimées, anonymisées ou archivées lorsque la loi impose une conservation plus longue.</p>
+      <LegalSection number="08" title="Où et combien de temps conservons-nous vos données ?">
+        <p>Selon les partenaires utilisés, certaines informations peuvent être traitées dans un pays différent de celui où vous utilisez SendFlow. Flow Digital SARL doit alors examiner le cadre applicable, les garanties contractuelles et les mesures de protection à mettre en place.</p>
         <LegalBulletList>
-          <li>les données de compte sont conservées pendant la relation, puis pendant la période nécessaire à la gestion des demandes et litiges ;</li>
-          <li>les données de transfert peuvent être conservées pendant les durées imposées par la comptabilité, la preuve, la lutte contre le blanchiment, la fiscalité et les partenaires ;</li>
-          <li>les journaux de sécurité sont conservés pendant une durée proportionnée à la prévention et à l’analyse des incidents ;</li>
-          <li>les demandes de support sont conservées le temps de traiter la demande puis selon les besoins de preuve et de qualité ;</li>
-          <li>les consentements sont conservés afin de pouvoir démontrer la date, le contenu et le retrait éventuel du choix.</li>
+          <li>les données de compte sont conservées pendant la relation, puis le temps nécessaire au traitement des demandes et des litiges ;</li>
+          <li>les informations de transfert peuvent être gardées pendant les durées imposées par la preuve, la comptabilité, la fiscalité et la lutte contre le blanchiment ;</li>
+          <li>les journaux de sécurité sont conservés pendant une période proportionnée à l’analyse des incidents ;</li>
+          <li>les demandes de support et les consentements sont conservés pour assurer le suivi et démontrer les choix effectués.</li>
         </LegalBulletList>
-        <p>Les durées exactes seront documentées dans le registre interne de Flow Digital SARL et pourront varier selon le produit, le pays et le partenaire qui intervient dans le transfert.</p>
+        <p>À l’issue de la période utile, les informations sont supprimées, anonymisées ou archivées lorsque la loi impose une conservation plus longue.</p>
       </LegalSection>
 
-      <LegalSection number="10" title="Sécurité et confidentialité">
-        <p>Flow Digital SARL met en place des mesures techniques et organisationnelles raisonnables : contrôle des accès, limitation des habilitations, chiffrement lorsque disponible, journalisation, sauvegardes, séparation des environnements, surveillance des incidents et sensibilisation des personnes autorisées.</p>
-        <p>Aucun service connecté à Internet n’est totalement exempt de risque. Vous devez utiliser un appareil à jour, protéger votre téléphone et votre messagerie, activer les mécanismes de sécurité disponibles et signaler immédiatement toute suspicion de compromission.</p>
+      <LegalSection number="09" title="Comment protégeons-nous vos informations ?">
+        <p>Nous prévoyons des mesures techniques et organisationnelles proportionnées aux risques : gestion des habilitations, limitation des accès, journalisation, sauvegardes, séparation des environnements, surveillance des incidents et sensibilisation des personnes autorisées.</p>
+        <p>La sécurité dépend aussi de votre appareil et de vos habitudes. Utilisez un téléphone à jour, protégez votre messagerie, ne partagez jamais vos codes et signalez rapidement toute perte, tentative de fraude ou activité inhabituelle.</p>
       </LegalSection>
 
-      <LegalSection number="11" title="Cookies et technologies similaires">
-        <p>SendFlow peut utiliser des cookies ou technologies similaires nécessaires à la session, à la sécurité, à la mémorisation de la langue et au fonctionnement du site. Des outils de mesure d’audience ou de diagnostic ne doivent être activés que dans le respect des choix requis par la réglementation applicable.</p>
-        <p>Vous pouvez configurer votre navigateur pour limiter certains cookies. La désactivation d’un cookie strictement nécessaire peut empêcher le fonctionnement d’un formulaire, d’une session ou d’une mesure de sécurité.</p>
+      <div className="sendflow-privacy-people-card">
+        <div className="sendflow-privacy-people-avatars" aria-hidden="true">
+          {contactAvatars.map((avatar) => (
+            <img key={avatar.id} src={avatar.src} alt="" />
+          ))}
+        </div>
+        <div>
+          <p className="sendflow-privacy-people-eyebrow">Une question sur vos données ?</p>
+          <h3>Notre équipe peut vous orienter vers le bon canal.</h3>
+          <p>Ne transmettez jamais de code secret dans une demande d’assistance. Utilisez uniquement l’adresse officielle indiquée dans cette politique.</p>
+          <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+        </div>
+      </div>
+
+      <LegalSection number="10" title="Quels sont vos droits ?">
+        <p>Selon la réglementation applicable à votre situation, vous pouvez demander l’accès à vos informations, leur correction, leur mise à jour, leur suppression lorsqu’elle est possible, la limitation d’un traitement, l’opposition à certains usages, le retrait d’un consentement ou une copie des données concernées.</p>
+        <p>Pour exercer un droit, écrivez à <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a> en précisant l’objet de votre demande, le moyen de vous répondre et, si nécessaire, les éléments permettant de retrouver votre compte. Une vérification raisonnable peut être demandée pour protéger vos informations.</p>
+        <p>Une demande peut être limitée lorsque la loi impose une conservation, protège les droits d’une autre personne, concerne une enquête de fraude ou relève directement d’un partenaire. Nous expliquerons la réponse dans la mesure permise.</p>
       </LegalSection>
 
-      <LegalSection number="12" title="Vos droits">
-        <p>Selon la loi applicable à votre situation, vous pouvez demander l’accès à vos données, leur rectification, leur mise à jour, leur suppression lorsque cela est possible, la limitation d’un traitement, l’opposition à certains usages, le retrait d’un consentement ou une copie des informations vous concernant.</p>
-        <p>Pour exercer un droit, écrivez à {contactEmail} en indiquant votre nom, le moyen de vous répondre, l’objet précis de la demande et, si nécessaire, les éléments permettant de retrouver le compte. Flow Digital SARL peut demander une vérification d’identité raisonnable pour éviter de communiquer des données à la mauvaise personne.</p>
-        <p>Une demande peut être limitée ou refusée lorsque la conservation est imposée par la loi, lorsque l’exercice du droit porterait atteinte aux droits d’une autre personne, lorsqu’une enquête de fraude est en cours ou lorsque le partenaire est le responsable compétent pour le traitement concerné. Une explication sera fournie dans la mesure permise.</p>
+      <LegalSection number="11" title="Cookies, profilage et mineurs">
+        <p>SendFlow peut utiliser des cookies ou technologies similaires nécessaires à la session, à la sécurité, à la langue et au fonctionnement du site. Les outils de mesure ou de diagnostic doivent respecter les choix requis par la réglementation applicable.</p>
+        <p>Des contrôles automatisés peuvent aider à repérer une anomalie, une fraude ou un risque de conformité. Ils ne doivent pas être considérés comme une décision définitive sans l’examen ou la procédure prévus par le cadre applicable.</p>
+        <p>SendFlow n’est pas destiné aux personnes qui ne peuvent pas légalement utiliser un service financier ou de transfert. Si vous pensez qu’un mineur nous a transmis des informations, contactez-nous afin que la situation puisse être examinée.</p>
       </LegalSection>
 
-      <LegalSection number="13" title="Mineurs">
-        <p>SendFlow n’est pas destiné aux personnes qui ne peuvent pas légalement utiliser un service financier ou de transfert. Nous ne cherchons pas à collecter volontairement les données d’un mineur sans le cadre et l’autorisation requis.</p>
-        <p>Si vous pensez qu’un mineur nous a transmis des informations, contactez-nous afin que nous puissions vérifier la situation et prendre les mesures appropriées, sous réserve des obligations de conservation et de preuve.</p>
-      </LegalSection>
-
-      <LegalSection number="14" title="Décisions automatisées et profilage">
-        <p>Des contrôles automatisés peuvent contribuer à détecter une anomalie, une fraude ou un risque de conformité. Ces contrôles ne doivent pas être interprétés comme une décision définitive sur votre personne sans examen ou procédure prévue par le partenaire compétent lorsque la loi l’exige.</p>
-        <p>SendFlow n’utilise pas les données de transfert pour créer un profil publicitaire de vos habitudes financières. Toute évolution importante de cette pratique devra faire l’objet d’une information et, si nécessaire, d’un consentement.</p>
-      </LegalSection>
-
-      <LegalSection number="15" title="Violation de données et notifications">
-        <p>En cas d’incident susceptible d’affecter des données personnelles, Flow Digital SARL applique une procédure d’analyse, de confinement, de correction et de notification. Les autorités, partenaires et personnes concernées peuvent être informés lorsque la loi ou le niveau de risque le requiert.</p>
-        <p>Les notifications officielles seront effectuées par un canal vérifiable. Méfiez-vous des messages qui demandent un code secret, une somme urgente ou une copie non nécessaire d’un document.</p>
-      </LegalSection>
-
-      <LegalSection number="16" title="Mise à jour de la politique">
-        <p>Cette politique peut être modifiée pour refléter une nouvelle fonctionnalité, un nouveau partenaire, une évolution réglementaire ou une amélioration de nos pratiques. La date de la dernière version est indiquée ci-dessous.</p>
-        <p>Si une modification est importante, un avis peut être affiché sur le site ou dans l’application, et un consentement spécifique peut être demandé lorsque la loi l’exige.</p>
-      </LegalSection>
-
-      <LegalSection number="17" title="Références réglementaires indicatives">
-        <p>Le traitement des données peut notamment être encadré, selon le contexte, par les textes ivoiriens relatifs à la protection des données à caractère personnel, aux transactions électroniques, par les règles de l’UEMOA et par les obligations imposées aux établissements et partenaires de paiement.</p>
-        <p>Les références précises, l’autorité compétente, les formalités, les bases de transfert et les durées de conservation doivent être confirmées lors de l’audit juridique du produit réel. Cette page ne constitue pas une déclaration exhaustive de conformité.</p>
-      </LegalSection>
-
-      <LegalSection number="18" title="Date et contact">
-        <p>Version de travail publiée le <strong>10 septembre 2026</strong>. Pour toute question, demande de droit ou réclamation relative à la confidentialité : <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>.</p>
+      <LegalSection number="12" title="Contact, incidents et mises à jour">
+        <p>En cas d’incident susceptible d’affecter des informations personnelles, Flow Digital SARL applique une procédure d’analyse, de confinement, de correction et de notification lorsque la loi ou le niveau de risque le requiert. Les communications officielles utilisent un canal vérifiable.</p>
+        <p>Cette politique peut évoluer pour refléter une nouvelle fonctionnalité, un nouveau partenaire, une évolution réglementaire ou une amélioration de nos pratiques. La version actuelle a été publiée le <strong>10 septembre 2026</strong>.</p>
+        <p>Pour une question, une demande de droit ou une réclamation relative à la confidentialité, contactez <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. Cette page est une base de travail qui devra être revue par un conseil juridique avant tout lancement financier.</p>
       </LegalSection>
     </PrivacyLayout>
   );

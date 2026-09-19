@@ -3189,8 +3189,48 @@
 }
 
 .sendflow-privacy-article {
+  position: relative;
   width: min(100%, 720px);
   margin: 0 auto;
+}
+
+.sendflow-privacy-hero {
+  position: relative;
+  min-height: 265px;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 88% 14%, rgba(203, 171, 255, .22), transparent 30%),
+    linear-gradient(135deg, #fbf9ff 0%, #fff 63%);
+  padding: 31px 24px 27px;
+}
+
+.sendflow-privacy-hero::after {
+  position: absolute;
+  right: 12%;
+  bottom: -86px;
+  width: 235px;
+  height: 235px;
+  border: 1px solid rgba(139, 76, 200, .12);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.sendflow-privacy-hero-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 510px;
+}
+
+.sendflow-privacy-eyebrow {
+  margin: 0 0 19px;
+  color: #7c42bb;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .sendflow-privacy-title {
@@ -3210,6 +3250,107 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
+}
+
+.sendflow-privacy-lead {
+  max-width: 430px;
+  margin: 19px 0 0;
+  color: #55515f;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.sendflow-privacy-avatar-cloud {
+  position: absolute;
+  z-index: 1;
+  top: 26px;
+  right: -13px;
+  width: 220px;
+  height: 205px;
+  pointer-events: none;
+}
+
+.sendflow-privacy-avatar-cloud img {
+  position: absolute;
+  display: block;
+  width: 79px;
+  height: 79px;
+  border: 4px solid rgba(255, 255, 255, .95);
+  border-radius: 50%;
+  background: #eadffd;
+  object-fit: cover;
+  box-shadow: 0 10px 22px rgba(72, 38, 115, .18);
+}
+
+.sendflow-privacy-avatar-cloud .is-avatar-1 {
+  top: 7px;
+  right: 75px;
+  transform: rotate(-8deg);
+}
+
+.sendflow-privacy-avatar-cloud .is-avatar-2 {
+  top: 49px;
+  right: 8px;
+  transform: rotate(8deg);
+}
+
+.sendflow-privacy-avatar-cloud .is-avatar-3 {
+  top: 105px;
+  right: 93px;
+  transform: rotate(6deg);
+}
+
+.sendflow-privacy-avatar-cloud .is-avatar-4 {
+  top: 121px;
+  right: 23px;
+  transform: rotate(-9deg);
+}
+
+.sendflow-privacy-avatar-cloud .is-avatar-5 {
+  top: 61px;
+  right: 142px;
+  width: 54px;
+  height: 54px;
+  border-width: 3px;
+  opacity: .86;
+  transform: rotate(-12deg);
+}
+
+.sendflow-privacy-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 18px;
+  border: 1px solid #e8dcf9;
+  border-radius: 16px;
+  background: #fbf8ff;
+  color: #4e4560;
+  padding: 14px 15px;
+}
+
+.sendflow-privacy-notice-mark {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+  place-items: center;
+  border-radius: 50%;
+  background: #8b4cc8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sendflow-privacy-notice p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sendflow-privacy-notice strong {
+  color: #352147;
+  font-weight: 700;
 }
 
 .sendflow-privacy-content {
@@ -3296,6 +3437,93 @@
   box-shadow: none;
 }
 
+.sendflow-privacy-people-card {
+  display: grid;
+  grid-template-columns: minmax(120px, 150px) 1fr;
+  align-items: center;
+  gap: 22px;
+  margin: 58px 0;
+  border: 1px solid #e5d8f6;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fbf8ff 0%, #f4edff 100%);
+  padding: 20px;
+}
+
+.sendflow-privacy-people-avatars {
+  position: relative;
+  min-height: 106px;
+}
+
+.sendflow-privacy-people-avatars img {
+  position: absolute;
+  display: block;
+  width: 70px;
+  height: 70px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #e8ddfa;
+  object-fit: cover;
+  box-shadow: 0 7px 14px rgba(72, 38, 115, .15);
+}
+
+.sendflow-privacy-people-avatars img:nth-child(1) {
+  top: 0;
+  left: 3px;
+  z-index: 4;
+}
+
+.sendflow-privacy-people-avatars img:nth-child(2) {
+  top: 30px;
+  left: 34px;
+  z-index: 3;
+}
+
+.sendflow-privacy-people-avatars img:nth-child(3) {
+  top: 2px;
+  left: 65px;
+  z-index: 2;
+}
+
+.sendflow-privacy-people-avatars img:nth-child(4) {
+  top: 37px;
+  left: 91px;
+  z-index: 1;
+}
+
+.sendflow-privacy-people-eyebrow {
+  margin: 0 0 6px;
+  color: #7c42bb;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.sendflow-privacy-people-card h3 {
+  margin: 0;
+  color: #1d1725;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.25;
+}
+
+.sendflow-privacy-people-card p:not(.sendflow-privacy-people-eyebrow) {
+  margin: 8px 0 9px;
+  color: #5e566a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sendflow-privacy-people-card a {
+  color: #5b21b6;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .sendflow-privacy-icon-button:focus-visible,
 .sendflow-privacy-brand:focus-visible,
 .sendflow-privacy-download:focus-visible {
@@ -3310,5 +3538,43 @@
 
   .sendflow-privacy-main {
     padding-inline: 24px;
+  }
+}
+
+@media (max-width: 520px) {
+  .sendflow-privacy-hero {
+    min-height: 430px;
+    padding: 27px 20px 24px;
+  }
+
+  .sendflow-privacy-hero-copy {
+    max-width: 100%;
+  }
+
+  .sendflow-privacy-title {
+    font-size: clamp(28px, 8vw, 38px);
+  }
+
+  .sendflow-privacy-lead {
+    max-width: 90%;
+  }
+
+  .sendflow-privacy-avatar-cloud {
+    top: auto;
+    bottom: 8px;
+    right: -7px;
+    width: 205px;
+    height: 180px;
+    opacity: .95;
+  }
+
+  .sendflow-privacy-people-card {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .sendflow-privacy-people-avatars {
+    min-height: 94px;
+    margin-bottom: 5px;
   }
 }
