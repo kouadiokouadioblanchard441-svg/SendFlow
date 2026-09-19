@@ -63,15 +63,20 @@
 }
 
 .sendflow-signup-shell {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background: #f8f5ff;
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(circle at 88% 5%, #eee4ff 0%, #f8f5ff 34%, #f8f5ff 100%);
   padding: 65px 22px 23px;
 }
 
 .sendflow-signup-card {
+  position: relative;
+  isolation: isolate;
   width: min(100%, 650px);
   min-height: calc(100dvh - 105px);
   overflow: hidden;
@@ -79,8 +84,50 @@
   background: #fff;
 }
 
+.sendflow-auth-art {
+  position: absolute;
+  z-index: 0;
+  width: 310px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.sendflow-auth-art.is-signin {
+  top: -26px;
+  right: -86px;
+  transform: rotate(8deg);
+}
+
+.sendflow-auth-art.is-signup {
+  top: -30px;
+  left: -84px;
+  transform: rotate(-8deg);
+}
+
+.sendflow-auth-art-glow {
+  position: absolute;
+  top: 26%;
+  left: 23%;
+  width: 54%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(147, 104, 235, .2);
+  filter: blur(34px);
+}
+
+.sendflow-auth-art img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: .15;
+  mix-blend-mode: multiply;
+}
+
 .sendflow-signup-content {
   display: flex;
+  position: relative;
+  z-index: 1;
   min-height: calc(100dvh - 105px);
   flex-direction: column;
   align-items: stretch;
@@ -568,6 +615,10 @@
   .sendflow-signup-content { padding-inline: 14px; }
   .sendflow-signup-country { flex-basis: 76px; padding-inline: 8px; }
   .sendflow-signup-terms { margin-left: 8px; }
+  .sendflow-auth-art { width: 270px; }
+  .sendflow-auth-art.is-signin { right: -92px; }
+  .sendflow-auth-art.is-signup { left: -92px; }
+  .sendflow-auth-art img { opacity: .12; }
 }
 
 /* Pricing — a clear, editorial fee list inspired by the supplied mobile reference */
