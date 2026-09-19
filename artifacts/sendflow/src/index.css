@@ -2756,6 +2756,20 @@
   transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
+.sendflow-receipt-secondary-actions a {
+  display: inline-flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 17px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
 .sendflow-receipt-secondary-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2763,6 +2777,11 @@
 }
 
 .sendflow-receipt-secondary-actions button { min-height: 58px; }
+.sendflow-receipt-secondary-actions a { min-height: 58px; }
+.sendflow-receipt-secondary-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
 .sendflow-receipt-rate { background: #f7f6f8; color: #3e3942; }
 .sendflow-receipt-report { background: #fdecef; color: #cf3153; }
 .sendflow-receipt-rate:hover,
@@ -2770,10 +2789,16 @@
 .sendflow-receipt-report:hover,
 .sendflow-receipt-report:focus-visible { background: #fbdde4; outline: 0; }
 .sendflow-receipt-secondary-actions button:active { transform: scale(.985); }
+.sendflow-receipt-secondary-actions a:active { transform: scale(.985); }
 
 .sendflow-receipt-icon-button:focus-visible,
 .sendflow-receipt-secondary-actions button:focus-visible {
   box-shadow: 0 0 0 3px rgba(99, 52, 196, .18);
+}
+
+.sendflow-receipt-secondary-actions a:focus-visible {
+  box-shadow: 0 0 0 3px rgba(99, 52, 196, .18);
+  outline: 0;
 }
 
 @media (min-width: 700px) {

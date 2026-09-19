@@ -1,6 +1,7 @@
 import { ArrowLeft, Download, Flag, Star } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { OperatorLogo } from '@/components/transaction-card';
+import { customerServiceProvider } from '@/lib/customer-service';
 import {
   operatorNames,
   transactionDetails,
@@ -76,9 +77,30 @@ export default function TransactionDetailPage() {
   if (!transaction || !detail) return <Redirect to="/history" />;
 
   const isDeposit = transaction.kind === 'deposit';
+  const supportContact = customerServiceProvider.getContact();
+  const whatsappMessage = [
+    "Bonjour, je souhaite obtenir de l'aide concernant une transaction SendFlow.",
+    '',
+    `Montant envoyé : ${detail.sentAmount}`,
+    `Total payé : ${detail.total}`,
+    `Numéro débité : ${detail.debitedNumber}`,
+    `Bénéficiaire : ${detail.beneficiary}`,
+    `Opérateur : ${operatorNames[transaction.toOperator]}`,
+    `Référence : ${detail.reference}`,
+    `Date : ${detail.dateTime}`,
+    '',
+    'Pouvez-vous m’aider à vérifier cette opération ?',
+  ].join('\n');
+  const whatsappHref = `${supportContact.whatsappHref}${supportContact.whatsappHref.includes('?') ? '&' : '?'}text=${encodeURIComponent(whatsappMessage)}`;
 
   const handleDownload = () => {
     window.print();
+  };
+
+  const handleRate = () => {
+    if (supportContact.playStoreHref) {
+      window.location.assign(supportContact.playStoreHref);
+    }
   };
 
   return (
@@ -143,14 +165,27 @@ export default function TransactionDetailPage() {
 
       <section className="sendflow-receipt-actions" aria-label="Actions sur la transaction">
         <div className="sendflow-receipt-secondary-actions">
-          <button type="button" className="sendflow-receipt-rate" onClick={() => setLocation('/customer-service')}>
+          <button
+            type="button"
+            className="sendflow-receipt-rate"
+            onClick={handleRate}
+            disabled={!supportContact.playStoreHref}
+            title={!supportContact.playStoreHref ? 'Lien Play Store à configurer' : undefined}
+            data-testid="button-rate-application"
+          >
             <Star size={17} strokeWidth={2} aria-hidden="true" />
             Noter l'application
           </button>
-          <button type="button" className="sendflow-receipt-report" onClick={() => setLocation('/customer-service')}>
+          <a
+            className="sendflow-receipt-report"
+            href={whatsappHref}
+            target="_blank"
+            rel="noreferrer"
+            data-testid="link-receipt-whatsapp-support"
+          >
             <Flag size={17} strokeWidth={2} aria-hidden="true" />
             Besoin d’aide ?
-          </button>
+          </a>
         </div>
       </section>
     </main>
