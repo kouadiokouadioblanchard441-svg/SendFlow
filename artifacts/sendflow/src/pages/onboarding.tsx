@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -47,6 +46,7 @@ export default function OnboardingPage() {
   const [, setLocation] = useLocation();
   const [activeStep, setActiveStep] = useState(getInitialStep);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
   useSeo({
     path: '/',
@@ -57,7 +57,6 @@ export default function OnboardingPage() {
   });
 
   const slide = slides[activeStep];
-  const isLastStep = activeStep === slides.length - 1;
 
   useEffect(() => {
     window.sessionStorage.setItem(ONBOARDING_STEP_KEY, String(activeStep));
@@ -80,8 +79,7 @@ export default function OnboardingPage() {
       }
       if (event.key === 'ArrowRight') {
         event.preventDefault();
-        if (isLastStep) setLocation('/sign-up');
-        else setActiveStep((current) => Math.min(current + 1, slides.length - 1));
+        setActiveStep((current) => Math.min(current + 1, slides.length - 1));
       }
       if (event.key === 'Home') {
         event.preventDefault();
@@ -95,18 +93,36 @@ export default function OnboardingPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLastStep, setLocation]);
+  }, []);
 
-  const goNext = () => {
-    if (isLastStep) {
-      setLocation('/sign-up');
-      return;
-    }
-    setActiveStep((current) => Math.min(current + 1, slides.length - 1));
+  const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLElement>) => {
+    const startX = touchStartX.current;
+    const endX = event.changedTouches[0]?.clientX;
+    touchStartX.current = null;
+
+    if (startX === null || endX === undefined) return;
+
+    const distance = endX - startX;
+    if (Math.abs(distance) < 48) return;
+
+    setActiveStep((current) =>
+      distance < 0
+        ? Math.min(current + 1, slides.length - 1)
+        : Math.max(current - 1, 0),
+    );
   };
 
   return (
-    <main className={`sendflow-onboarding${reducedMotion ? ' is-reduced-motion' : ''}`} data-accent={slide.accent}>
+    <main
+      className={`sendflow-onboarding${reducedMotion ? ' is-reduced-motion' : ''}`}
+      data-accent={slide.accent}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="sendflow-onboarding-orbit sendflow-onboarding-orbit-one" aria-hidden="true" />
       <div className="sendflow-onboarding-orbit sendflow-onboarding-orbit-two" aria-hidden="true" />
 
@@ -127,10 +143,7 @@ export default function OnboardingPage() {
               onClick={() => setActiveStep(index)}
               aria-label={`Aller à l’étape ${index + 1} : ${item.eyebrow}`}
               aria-current={index === activeStep ? 'step' : undefined}
-            >
-              <span className="sendflow-onboarding-progress-dot" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-              <span className="sendflow-onboarding-progress-label">{item.eyebrow}</span>
-            </button>
+            />
           ))}
         </nav>
 
@@ -145,26 +158,6 @@ export default function OnboardingPage() {
             <div className="sendflow-onboarding-visual-backdrop" aria-hidden="true" />
             <img src={slide.image} alt={slide.imageAlt} />
           </div>
-        </div>
-
-        <div className="sendflow-onboarding-controls" aria-label="Navigation entre les étapes">
-          <button
-            type="button"
-            className="sendflow-onboarding-arrow is-back"
-            onClick={() => setActiveStep((current) => Math.max(current - 1, 0))}
-            disabled={activeStep === 0}
-            aria-label="Étape précédente"
-          >
-            <ArrowLeft size={19} strokeWidth={2.2} aria-hidden="true" />
-          </button>
-          <span className="sendflow-onboarding-counter" aria-live="polite">
-            <strong>{String(activeStep + 1).padStart(2, '0')}</strong>
-            <span>/ {String(slides.length).padStart(2, '0')}</span>
-          </span>
-          <button type="button" className="sendflow-onboarding-next" onClick={goNext}>
-            {isLastStep ? 'Commencer' : 'Suivant'}
-            <ArrowRight size={18} strokeWidth={2.2} aria-hidden="true" />
-          </button>
         </div>
 
         <footer className="sendflow-onboarding-actions">
