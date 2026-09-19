@@ -3188,8 +3188,11 @@
   padding: 25px 14px 64px;
 }
 
+.sendflow-privacy-intro {
+  margin: 0;
+}
+
 .sendflow-privacy-article {
-  position: relative;
   width: min(100%, 720px);
   margin: 0 auto;
 }
@@ -3394,6 +3397,7 @@
   letter-spacing: .005em;
   line-height: 1.58;
   text-align: justify;
+  text-justify: inter-word;
 }
 
 .sendflow-privacy-content > section > div p {
@@ -3439,16 +3443,13 @@
 
 .sendflow-privacy-section-art {
   display: flex;
-  min-height: 116px;
+  min-height: 104px;
   align-items: center;
   justify-content: center;
-  margin: 0 0 24px;
+  margin: 6px 0 24px;
   overflow: hidden;
-  border: 1px solid #ebe1f8;
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(211, 184, 255, .35), transparent 58%),
-    linear-gradient(135deg, #fbf8ff 0%, #f4effd 100%);
+  border: 0;
+  background: transparent;
 }
 
 .sendflow-privacy-section-art img {

@@ -172,7 +172,6 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
 
 function PrivacyLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
-  const heroAvatars = avatarBank.slice(0, 5);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -207,23 +206,9 @@ function PrivacyLayout({ children }: { children: ReactNode }) {
 
       <main className="sendflow-privacy-main">
         <article className="sendflow-privacy-article">
-          <div className="sendflow-privacy-hero">
-            <div className="sendflow-privacy-hero-copy">
-              <p className="sendflow-privacy-eyebrow">SendFlow · Données personnelles</p>
-              <h2 className="sendflow-privacy-title">Politique de confidentialité</h2>
-              <p className="sendflow-privacy-date">Version de travail · 10 septembre 2026</p>
-              <p className="sendflow-privacy-lead">Une explication claire de la manière dont SendFlow utilise, protège et conserve les informations nécessaires à ses services.</p>
-            </div>
-            <div className="sendflow-privacy-avatar-cloud" aria-hidden="true">
-              {heroAvatars.map((avatar, index) => (
-                <img key={avatar.id} src={avatar.src} alt="" className={`is-avatar-${index + 1}`} />
-              ))}
-            </div>
-          </div>
-
-          <div className="sendflow-privacy-notice">
-            <span className="sendflow-privacy-notice-mark" aria-hidden="true">i</span>
-            <p><strong>À retenir :</strong> SendFlow ne vous demandera jamais votre code PIN, votre mot de passe ou votre code OTP par e-mail ou par message.</p>
+          <div className="sendflow-privacy-intro">
+            <h2 className="sendflow-privacy-title">Politique de confidentialité</h2>
+            <p className="sendflow-privacy-date">Version de travail · 10 septembre 2026</p>
           </div>
 
           <div className="sendflow-privacy-content">{children}</div>
