@@ -24,6 +24,7 @@ import PricingPage from '@/pages/pricing';
 import ResetPage from '@/pages/reset';
 import SigninPage from '@/pages/sign-in';
 import SignupPage from '@/pages/sign-up';
+import OnboardingPage from '@/pages/onboarding';
 import { useSeo } from '@/lib/seo';
 
 const queryClient = new QueryClient();
@@ -155,7 +156,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <Switch>
-              <Route path="/" component={() => <Redirect to="/sign-in" />} />
+              <Route path="/" component={OnboardingPage} />
               <Route path="/sign-in/*?" component={SigninPage} />
               <Route path="/sign-up/*?" component={SignupPage} />
               <Route path="/create-pin" component={() => <PinPage mode="create" />} />

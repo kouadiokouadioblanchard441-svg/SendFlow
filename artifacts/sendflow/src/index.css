@@ -29,25 +29,45 @@
 }
 
 :root {
-  --background: 42 35% 95%;
-  --foreground: 255 24% 13%;
-  --border: 253 18% 84%;
-  --input: 253 18% 84%;
+  --background: 264 42% 97%;
+  --foreground: 258 28% 16%;
+  --border: 260 22% 87%;
+  --input: 260 22% 87%;
   --ring: 267 74% 50%;
-  --card: 42 45% 98%;
-  --card-foreground: 255 24% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 258 28% 16%;
   --primary: 267 74% 50%;
-  --primary-foreground: 42 35% 97%;
-  --secondary: 49 93% 61%;
-  --secondary-foreground: 255 24% 13%;
-  --muted: 39 24% 89%;
-  --muted-foreground: 255 11% 42%;
-  --accent: 165 48% 72%;
-  --accent-foreground: 255 24% 13%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 45 94% 63%;
+  --secondary-foreground: 258 28% 16%;
+  --muted: 264 24% 92%;
+  --muted-foreground: 258 12% 44%;
+  --accent: 271 83% 95%;
+  --accent-foreground: 267 58% 34%;
   --destructive: 5 70% 49%;
-  --destructive-foreground: 42 35% 97%;
+  --destructive-foreground: 0 0% 100%;
   --app-font-sans: 'DM Sans', ui-sans-serif, sans-serif;
   --radius: 1rem;
+}
+
+.dark {
+  --background: 258 28% 12%;
+  --foreground: 264 24% 96%;
+  --border: 258 18% 28%;
+  --input: 258 18% 28%;
+  --ring: 267 74% 68%;
+  --card: 258 24% 16%;
+  --card-foreground: 264 24% 96%;
+  --primary: 267 74% 68%;
+  --primary-foreground: 258 28% 12%;
+  --secondary: 45 94% 63%;
+  --secondary-foreground: 258 28% 12%;
+  --muted: 258 20% 23%;
+  --muted-foreground: 264 12% 72%;
+  --accent: 267 28% 26%;
+  --accent-foreground: 267 74% 84%;
+  --destructive: 5 70% 62%;
+  --destructive-foreground: 258 28% 12%;
 }
 
 @layer base {
@@ -665,6 +685,505 @@
   .sendflow-auth-art img,
   .sendflow-auth-art.is-signin-secondary img,
   .sendflow-auth-art.is-signup-secondary img { opacity: .2; }
+}
+
+/* Onboarding — a calm, tactile welcome built around SendFlow’s violet signal */
+.sendflow-onboarding {
+  --onboarding-ink: #241b35;
+  --onboarding-muted: #6b6478;
+  --onboarding-violet: #6d35d8;
+  --onboarding-deep: #4e1da9;
+  --onboarding-lilac: #eee5ff;
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+  background: #f8f5ff;
+  color: var(--onboarding-ink);
+}
+
+.sendflow-onboarding::before {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(212, 190, 255, .42), transparent 29%),
+    radial-gradient(circle at 87% 82%, rgba(255, 221, 139, .23), transparent 27%);
+  content: '';
+}
+
+.sendflow-onboarding-frame {
+  position: relative;
+  display: flex;
+  width: min(100%, 1180px);
+  min-height: 100dvh;
+  flex-direction: column;
+  margin: 0 auto;
+  padding: max(20px, env(safe-area-inset-top)) clamp(20px, 6vw, 80px) max(132px, calc(env(safe-area-inset-bottom) + 124px));
+}
+
+.sendflow-onboarding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.sendflow-onboarding-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 14px;
+  outline: none;
+  text-decoration: none;
+}
+
+.sendflow-onboarding-brand img:first-child {
+  width: 24px;
+  height: 31px;
+  object-fit: contain;
+}
+
+.sendflow-onboarding-brand img:last-child {
+  width: 90px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sendflow-onboarding-secure {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #766b8a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.sendflow-onboarding-progress {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(18px, 5vw, 62px);
+  margin-top: clamp(38px, 7vh, 78px);
+}
+
+.sendflow-onboarding-progress-step {
+  display: inline-flex;
+  position: relative;
+  min-width: 30px;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  color: #a09aac;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.sendflow-onboarding-progress-step:not(:last-child)::after {
+  position: absolute;
+  top: 15px;
+  left: calc(100% + 9px);
+  width: clamp(12px, 4vw, 52px);
+  height: 1px;
+  background: #d9d0e7;
+  content: '';
+}
+
+.sendflow-onboarding-progress-dot {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border: 1px solid #d5cce2;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .54);
+  color: #948aa0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  transition: color .22s ease, background-color .22s ease, border-color .22s ease, transform .22s ease;
+}
+
+.sendflow-onboarding-progress-label {
+  display: none;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.sendflow-onboarding-progress-step:hover .sendflow-onboarding-progress-dot,
+.sendflow-onboarding-progress-step:focus-visible .sendflow-onboarding-progress-dot {
+  border-color: var(--onboarding-violet);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.sendflow-onboarding-progress-step.is-active {
+  color: var(--onboarding-deep);
+}
+
+.sendflow-onboarding-progress-step.is-active .sendflow-onboarding-progress-dot {
+  border-color: var(--onboarding-violet);
+  background: var(--onboarding-violet);
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(109, 53, 216, .2);
+}
+
+.sendflow-onboarding-progress-step.is-complete .sendflow-onboarding-progress-dot {
+  border-color: #bca1ea;
+  background: #e8dcff;
+  color: var(--onboarding-deep);
+}
+
+.sendflow-onboarding-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: clamp(26px, 5vh, 58px) 0 20px;
+  animation: sendflow-onboarding-reveal .48s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.sendflow-onboarding-copy {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 530px);
+  text-align: center;
+}
+
+.sendflow-onboarding-eyebrow {
+  margin: 0 0 13px;
+  color: var(--onboarding-violet);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.sendflow-onboarding-copy h1 {
+  max-width: 610px;
+  margin: 0 auto;
+  color: var(--onboarding-ink);
+  font-family: 'Montserrat', var(--app-font-sans);
+  font-size: clamp(31px, 8.5vw, 58px);
+  font-weight: 800;
+  letter-spacing: -.065em;
+  line-height: .98;
+}
+
+.sendflow-onboarding-description {
+  max-width: 390px;
+  margin: 18px auto 0;
+  color: var(--onboarding-muted);
+  font-size: 15px;
+  line-height: 1.52;
+}
+
+.sendflow-onboarding-visual {
+  position: relative;
+  display: flex;
+  width: min(100%, 500px);
+  height: clamp(265px, 42vh, 430px);
+  align-items: flex-end;
+  justify-content: center;
+  margin-top: -8px;
+  isolation: isolate;
+}
+
+.sendflow-onboarding-visual-backdrop {
+  position: absolute;
+  z-index: -1;
+  top: 16%;
+  left: 50%;
+  width: min(78%, 330px);
+  aspect-ratio: 1;
+  border-radius: 46% 54% 58% 42%;
+  background: #eadfff;
+  box-shadow: inset -15px -20px 0 rgba(255, 255, 255, .26);
+  opacity: .86;
+  transform: translateX(-50%) rotate(-8deg);
+}
+
+.sendflow-onboarding-visual.is-how .sendflow-onboarding-visual-backdrop {
+  top: 9%;
+  border-radius: 52% 48% 42% 58%;
+  background: #e9e1ff;
+  transform: translateX(-50%) rotate(7deg);
+}
+
+.sendflow-onboarding-visual.is-coverage .sendflow-onboarding-visual-backdrop {
+  top: 8%;
+  width: min(84%, 365px);
+  background: #e6dafd;
+  transform: translateX(-50%) rotate(-4deg);
+}
+
+.sendflow-onboarding-visual img {
+  display: block;
+  width: min(100%, 470px);
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 18px 17px rgba(76, 36, 137, .13));
+}
+
+.sendflow-onboarding-visual.is-network img {
+  width: min(110%, 555px);
+}
+
+.sendflow-onboarding-visual.is-how img {
+  width: min(96%, 470px);
+}
+
+.sendflow-onboarding-visual.is-coverage img {
+  width: min(109%, 540px);
+}
+
+.sendflow-onboarding-controls {
+  display: flex;
+  position: relative;
+  z-index: 2;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(100%, 500px);
+  margin: 0 auto;
+}
+
+.sendflow-onboarding-arrow {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  border: 1px solid #d6cde4;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .72);
+  color: var(--onboarding-ink);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.sendflow-onboarding-arrow:hover:not(:disabled),
+.sendflow-onboarding-arrow:focus-visible {
+  border-color: #a884e0;
+  background: #fff;
+  outline: 0;
+  transform: translateY(-2px);
+}
+
+.sendflow-onboarding-arrow:disabled {
+  cursor: not-allowed;
+  opacity: .38;
+}
+
+.sendflow-onboarding-counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  color: #93889f;
+  font-size: 12px;
+  letter-spacing: .04em;
+}
+
+.sendflow-onboarding-counter strong {
+  color: var(--onboarding-deep);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.sendflow-onboarding-next {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--onboarding-deep);
+  color: #fff;
+  cursor: pointer;
+  padding: 0 19px 0 22px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 9px 20px rgba(78, 29, 169, .19);
+  transition: background-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.sendflow-onboarding-next:hover,
+.sendflow-onboarding-next:focus-visible {
+  background: #3f138f;
+  outline: 0;
+  box-shadow: 0 11px 23px rgba(78, 29, 169, .25);
+  transform: translateY(-2px);
+}
+
+.sendflow-onboarding-actions {
+  display: grid;
+  position: fixed;
+  z-index: 5;
+  right: 0;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  left: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: min(calc(100% - 32px), 500px);
+  margin: 0 auto;
+  padding: 0;
+}
+
+.sendflow-onboarding-action {
+  display: inline-flex;
+  min-height: 51px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  padding: 0 15px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.sendflow-onboarding-action:hover,
+.sendflow-onboarding-action:focus-visible {
+  outline: 0;
+  transform: translateY(-2px);
+}
+
+.sendflow-onboarding-action.is-secondary {
+  border-color: #d4c8e4;
+  background: rgba(255, 255, 255, .78);
+  color: var(--onboarding-deep);
+}
+
+.sendflow-onboarding-action.is-secondary:hover,
+.sendflow-onboarding-action.is-secondary:focus-visible {
+  border-color: #ad8bdd;
+  background: #fff;
+}
+
+.sendflow-onboarding-action.is-primary {
+  background: var(--onboarding-violet);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(109, 53, 216, .2);
+}
+
+.sendflow-onboarding-action.is-primary:hover,
+.sendflow-onboarding-action.is-primary:focus-visible {
+  background: #5822c3;
+}
+
+.sendflow-onboarding-brand:focus-visible,
+.sendflow-onboarding-progress-step:focus-visible {
+  outline: 3px solid rgba(109, 53, 216, .26);
+  outline-offset: 4px;
+}
+
+.sendflow-onboarding.is-reduced-motion *,
+.sendflow-onboarding.is-reduced-motion *::before,
+.sendflow-onboarding.is-reduced-motion *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: .01ms !important;
+}
+
+@keyframes sendflow-onboarding-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 760px) {
+  .sendflow-onboarding-frame {
+    padding-bottom: 46px;
+  }
+
+  .sendflow-onboarding-progress-label {
+    display: block;
+  }
+
+  .sendflow-onboarding-content {
+    display: grid;
+    grid-template-columns: minmax(280px, .86fr) minmax(390px, 1.14fr);
+    align-items: center;
+    gap: 36px;
+    padding-top: 24px;
+  }
+
+  .sendflow-onboarding-copy {
+    text-align: left;
+  }
+
+  .sendflow-onboarding-copy h1 {
+    margin-left: 0;
+  }
+
+  .sendflow-onboarding-description {
+    margin-left: 0;
+  }
+
+  .sendflow-onboarding-visual {
+    width: 100%;
+    height: min(58vh, 520px);
+    margin-top: 0;
+  }
+
+  .sendflow-onboarding-controls {
+    width: min(100%, 500px);
+    margin-right: 0;
+  }
+
+  .sendflow-onboarding-actions {
+    position: static;
+    width: min(100%, 500px);
+    margin: 26px 0 0 auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .sendflow-onboarding-frame {
+    padding-inline: 16px;
+  }
+
+  .sendflow-onboarding-secure {
+    font-size: 9px;
+  }
+
+  .sendflow-onboarding-progress {
+    gap: 15px;
+  }
+
+  .sendflow-onboarding-progress-step:not(:last-child)::after {
+    width: 10px;
+  }
+
+  .sendflow-onboarding-visual {
+    height: clamp(230px, 36vh, 315px);
+  }
+
+  .sendflow-onboarding-description {
+    font-size: 14px;
+  }
 }
 
 /* Pricing — a clear, editorial fee list inspired by the supplied mobile reference */
