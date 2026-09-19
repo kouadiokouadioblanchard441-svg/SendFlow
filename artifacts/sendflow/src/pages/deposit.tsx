@@ -34,7 +34,7 @@ const ivoryCoastDepositOperators: DepositOperator[] = [
 ];
 
 const DEPOSIT_FEE_RATE = 0.03;
-type DepositRequestState = 'idle' | 'request' | 'pending' | 'success';
+type DepositRequestState = 'idle' | 'pending' | 'success';
 
 function OperatorMark({ operator }: { operator: DepositOperator }) {
   if (operator.brand === 'wave') {
@@ -66,8 +66,6 @@ export default function DepositPage() {
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [requestState, setRequestState] = useState<DepositRequestState>('idle');
-  const [ussdCode, setUssdCode] = useState('');
-  const [validationError, setValidationError] = useState('');
 
   useSeo({
     path: '/deposit',
@@ -117,26 +115,11 @@ export default function DepositPage() {
     setOperator(nextOperator);
     if (!nextOperator.requiresOtp) setOtp('');
     setRequestState('idle');
-    setUssdCode('');
-    setValidationError('');
     setOperatorPickerOpen(false);
   };
 
   const cancelDepositRequest = () => {
     setRequestState('idle');
-    setUssdCode('');
-    setValidationError('');
-  };
-
-  const confirmDepositRequest = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!ussdCode.trim()) {
-      setValidationError('Saisissez le code USSD pour continuer.');
-      return;
-    }
-
-    setValidationError('');
-    setRequestState('pending');
   };
 
   return (
@@ -176,8 +159,7 @@ export default function DepositPage() {
           onSubmit={(event) => {
             event.preventDefault();
             if (canSubmit) {
-              setValidationError('');
-              setRequestState('request');
+              setRequestState('pending');
             }
           }}
         >
@@ -291,9 +273,15 @@ export default function DepositPage() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="deposit-request-title"
+              aria-live="polite"
             >
-              {requestState === 'request' && (
-                <>
+              {requestState === 'pending' && (
+                <div className="sendflow-deposit-request-state">
+                  <div className="sendflow-deposit-pending-dots" aria-label="Validation en cours">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
                   <header className="sendflow-deposit-request-header">
                     <span>Requête de transaction</span>
                     <h2 id="deposit-request-title">Dépôt</h2>
@@ -302,51 +290,13 @@ export default function DepositPage() {
                     <span>Montant à créditer</span>
                     <strong>{walletAmount.toLocaleString('fr-FR')} <small>FCFA</small></strong>
                   </div>
-                  <p className="sendflow-deposit-request-copy">
-                    Tapez le code USSD affiché sur votre téléphone pour autoriser ce dépôt.
-                  </p>
                   <div className="sendflow-deposit-request-meta">
                     <span>{operator.name}</span>
                     <strong>{accountCountry.dialCode} {sourceNumber}</strong>
                   </div>
-                  <form className="sendflow-deposit-request-form" onSubmit={confirmDepositRequest}>
-                    <label className="sendflow-deposit-ussd-field">
-                      <span>Code USSD</span>
-                      <input
-                        type="text"
-                        inputMode="text"
-                        value={ussdCode}
-                        onChange={(event) => {
-                          setValidationError('');
-                          setUssdCode(event.target.value);
-                        }}
-                        placeholder="Ex. *144#"
-                        autoFocus
-                        aria-label="Code USSD de validation"
-                      />
-                    </label>
-                    {validationError && <p className="sendflow-deposit-request-error" role="alert">{validationError}</p>}
-                    <div className="sendflow-deposit-request-actions">
-                      <button type="button" className="sendflow-deposit-request-cancel" onClick={cancelDepositRequest}>
-                        Annuler
-                      </button>
-                      <button type="submit" className="sendflow-deposit-request-confirm" disabled={!ussdCode.trim()}>
-                        Valider
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
-
-              {requestState === 'pending' && (
-                <div className="sendflow-deposit-request-state">
-                  <div className="sendflow-deposit-pending-dots" aria-label="Validation en cours">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <h2 id="deposit-request-title">Dépôt en attente</h2>
-                  <p>Nous vérifions la confirmation de votre opérateur.</p>
+                  <p className="sendflow-deposit-request-copy">
+                    Composez le code USSD de votre opérateur sur votre téléphone pour confirmer ce dépôt.
+                  </p>
                   <button type="button" className="sendflow-deposit-request-cancel" onClick={cancelDepositRequest}>
                     Annuler
                   </button>
