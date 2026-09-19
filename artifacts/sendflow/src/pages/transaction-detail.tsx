@@ -149,7 +149,7 @@ export default function TransactionDetailPage() {
           </button>
           <button type="button" className="sendflow-receipt-report" onClick={() => setLocation('/customer-service')}>
             <Flag size={17} strokeWidth={2} aria-hidden="true" />
-            Signaler
+            Besoin d’aide ?
           </button>
         </div>
       </section>
