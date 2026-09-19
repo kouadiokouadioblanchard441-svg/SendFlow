@@ -167,7 +167,6 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
           <p className="max-w-[470px] leading-5 text-[#c9c0d6]">Flow Digital SARL · Côte d’Ivoire · Abidjan, Cocody Riviera Palmeraie</p>
           <div className="flex flex-wrap gap-4 font-bold">
             <Link href="/sign-in" className="text-[#e8cd4d] hover:underline">Connexion</Link>
-            <Link href="/conditions-utilisation" className="hover:text-[#e8cd4d]">Conditions</Link>
             <Link href="/confidentialite" className="hover:text-[#e8cd4d]">Confidentialité</Link>
             <Link href="/mentions-legales" className="hover:text-[#e8cd4d]">Mentions légales</Link>
             <a href={`mailto:${contactEmail}`} className="hover:text-[#e8cd4d]">Contact</a>
@@ -330,7 +329,7 @@ export function LegalMentionsPage({ supportEmail }: LegalPageProps) {
       </LegalSection>
 
       <LegalSection number="11" title="Données personnelles">
-        <p>Les traitements de données personnelles liés au site et au projet SendFlow sont décrits dans la <Link href="/confidentialite" className="font-bold text-[#5b21b6] underline">Politique de confidentialité</Link>. Les utilisateurs peuvent également consulter les <Link href="/conditions-utilisation" className="font-bold text-[#5b21b6] underline">Conditions générales d’utilisation</Link> pour comprendre les règles applicables à l’utilisation du service.</p>
+        <p>Les traitements de données personnelles liés au site et au projet SendFlow sont décrits dans la <Link href="/confidentialite" className="font-bold text-[#5b21b6] underline">Politique de confidentialité</Link>.</p>
         <p>Pour exercer une demande ou signaler une difficulté relative aux données personnelles, écrivez à {contactEmail}. Les informations de l’autorité compétente, les formalités et les délais doivent être confirmés par Flow Digital SARL selon le cadre juridique effectivement applicable à la date du lancement.</p>
       </LegalSection>
 
@@ -348,124 +347,6 @@ export function LegalMentionsPage({ supportEmail }: LegalPageProps) {
         <p>Les présentes mentions doivent être maintenues à jour à chaque changement d’identité de l’éditeur, de siège, de directeur de publication, d’hébergeur, de marque, de modèle de service ou de statut réglementaire.</p>
         <p>Les informations affichées sur cette page sont regroupées dans une structure éditable afin de pouvoir être remplacées proprement lorsque les données officielles et les informations de production seront disponibles.</p>
         <p><strong>Version de travail publiée le 10 septembre 2026.</strong></p>
-      </LegalSection>
-    </LegalLayout>
-  );
-}
-
-export function TermsPage({ supportEmail }: LegalPageProps) {
-  const contactEmail = normalizeSupportEmail(supportEmail);
-  return (
-    <LegalLayout
-      eyebrow="SendFlow · Conditions"
-      title="Conditions générales d’utilisation"
-      intro="Les présentes conditions encadrent l’accès au site, à l’application et aux fonctionnalités SendFlow proposées par Flow Digital SARL. Elles expliquent ce que SendFlow fait, ce qu’il ne fait pas, les responsabilités de chacun et les règles applicables aux transferts."
-      supportEmail={supportEmail}
-    >
-      <LegalSection number="01" title="Identification de l’éditeur">
-        <p>SendFlow est une marque et une solution technologique développées par <strong>Flow Digital SARL</strong>, société établie en Côte d’Ivoire, dont l’adresse officielle de contact est : Abidjan, Cocody Riviera Palmeraie, Côte d’Ivoire.</p>
-        <p>Pour toute question relative aux présentes conditions, à l’utilisation du service ou à une réclamation, l’utilisateur peut écrire à <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. Les informations d’immatriculation, d’agrément et de représentation des partenaires de paiement seront ajoutées ou précisées avant l’ouverture commerciale du service concerné.</p>
-      </LegalSection>
-
-      <LegalSection number="02" title="Objet et champ d’application">
-        <p>SendFlow fournit une interface numérique destinée à simplifier la compréhension et l’initiation de transferts d’argent entre réseaux de paiement et opérateurs de mobile money, localement ou, lorsque cela est disponible, entre plusieurs pays.</p>
-        <p>Les présentes conditions s’appliquent au site, à l’application, aux interfaces de suivi, aux formulaires, aux notifications et à toute fonctionnalité associée à SendFlow. Des conditions particulières peuvent s’appliquer à un pays, à un opérateur, à une banque, à un prestataire de paiement ou à une campagne spécifique. En cas de contradiction, les conditions particulières du service concerné prévalent pour l’opération correspondante.</p>
-      </LegalSection>
-
-      <LegalSection number="03" title="Acceptation des conditions">
-        <p>L’accès au site et l’utilisation d’une fonctionnalité SendFlow signifient que l’utilisateur a lu et compris les présentes conditions. Lorsqu’un consentement explicite est demandé, l’utilisateur doit l’exprimer avant de poursuivre.</p>
-        <p>Si l’utilisateur n’accepte pas ces conditions, il doit cesser d’utiliser le service. L’absence de lecture effective d’une clause ne prive pas celle-ci de son effet lorsque l’utilisateur a pu accéder au document avant l’utilisation du service.</p>
-      </LegalSection>
-
-      <LegalSection number="04" title="Description du service et limites de SendFlow">
-        <p>SendFlow est une couche technologique de connexion, d’information et de suivi. Sauf indication contraire affichée pour un parcours précis, SendFlow n’est ni une banque, ni un établissement de monnaie électronique, ni un opérateur de télécommunication, ni un wallet autonome.</p>
-        <p>La conservation des fonds, l’exécution du paiement, la conversion de devises, la vérification d’identité et la mise à disposition des fonds peuvent être réalisées par des partenaires agréés. L’identité de ces partenaires, leurs conditions, leurs frais et leurs obligations réglementaires peuvent varier selon le pays, le réseau et le montant.</p>
-        <LegalBulletList>
-          <li>SendFlow ne garantit pas que tous les réseaux ou corridors seront disponibles à tout moment.</li>
-          <li>Une indication de disponibilité, de délai ou de frais est susceptible de changer avant la confirmation finale.</li>
-          <li>Le statut affiché par SendFlow dépend des informations reçues des partenaires et peut connaître un délai de synchronisation.</li>
-          <li>Les conditions du partenaire peuvent compléter ou remplacer certaines informations générales présentées sur SendFlow.</li>
-        </LegalBulletList>
-      </LegalSection>
-
-      <LegalSection number="05" title="Éligibilité et utilisation personnelle">
-        <p>Le service est destiné aux personnes capables de conclure un contrat selon le droit qui leur est applicable. En principe, l’utilisation d’une fonctionnalité de transfert est réservée aux personnes âgées d’au moins 18 ans, sauf si une réglementation locale prévoit une règle différente et que le partenaire l’autorise expressément.</p>
-        <p>L’utilisateur déclare fournir des informations exactes, à jour et complètes. Il ne doit pas utiliser l’identité, le téléphone, le compte, le portefeuille ou les moyens d’un tiers sans autorisation valable. Une utilisation professionnelle, commerciale ou pour le compte d’une autre personne peut être soumise à une convention distincte.</p>
-      </LegalSection>
-
-      <LegalSection number="06" title="Création, sécurité et responsabilité du compte">
-        <p>Lorsqu’un compte est nécessaire, l’utilisateur est responsable de la confidentialité de ses identifiants, codes, appareils et moyens de récupération. Il doit signaler sans délai tout accès non autorisé, perte de téléphone, détournement de carte SIM ou activité inhabituelle.</p>
-        <p>L’utilisateur ne doit pas partager ses codes de validation, contourner une mesure de sécurité, permettre à une autre personne de se connecter à son compte ou utiliser un appareil compromis. Flow Digital SARL peut demander une nouvelle authentification ou suspendre temporairement un accès lorsqu’une activité présente un risque pour l’utilisateur, les partenaires ou le système.</p>
-      </LegalSection>
-
-      <LegalSection number="07" title="Instructions de transfert, frais et confirmation">
-        <p>Avant de confirmer une opération, l’utilisateur doit vérifier le bénéficiaire, le pays, le réseau, le montant, la devise, les frais, le taux appliqué lorsqu’il est affiché et le montant estimé reçu. Une confirmation donnée avec des informations erronées peut être irréversible.</p>
-        <p>Les frais et taux sont affichés lorsqu’ils sont connus au moment du parcours. Ils peuvent comprendre des frais SendFlow, des frais de partenaire, des frais de réseau, des frais de change ou des taxes imposées par la réglementation applicable. Toute retenue ou variation imposée par un opérateur ou une banque peut affecter le montant reçu.</p>
-        <p>Une demande d’annulation, de correction ou de remboursement doit être adressée dès que possible. Elle n’est pas garantie lorsque le transfert a déjà été accepté, débité, remis au bénéficiaire ou rendu irréversible par le partenaire.</p>
-      </LegalSection>
-
-      <LegalSection number="08" title="Vérification d’identité, lutte contre la fraude et obligations réglementaires">
-        <p>Pour protéger les utilisateurs et respecter les exigences applicables aux services de paiement, les partenaires peuvent demander des informations d’identification, des justificatifs, l’origine des fonds, la relation avec le bénéficiaire ou le motif de l’opération.</p>
-        <p>L’utilisateur s’engage à répondre honnêtement aux demandes de vérification et à ne pas fractionner, déguiser ou organiser une opération pour contourner un seuil, une restriction ou une procédure de contrôle. SendFlow et ses partenaires peuvent retarder, refuser, bloquer ou signaler une opération lorsqu’un contrôle de conformité, de sanctions, de fraude ou de lutte contre le blanchiment le justifie.</p>
-        <p>Les parcours peuvent être soumis aux règles applicables en Côte d’Ivoire, dans l’espace UEMOA, aux instructions des autorités compétentes, aux exigences des établissements partenaires et aux règles du pays d’envoi ou de destination. Le respect de ces règles ne constitue pas une garantie que l’opération sera autorisée.</p>
-      </LegalSection>
-
-      <LegalSection number="09" title="Utilisations interdites">
-        <p>Il est interdit d’utiliser SendFlow pour une activité illégale, frauduleuse, trompeuse ou portant atteinte aux droits d’autrui. Sont notamment interdits :</p>
-        <LegalBulletList>
-          <li>le financement du terrorisme, le blanchiment de capitaux, la fraude fiscale ou la dissimulation de l’origine des fonds ;</li>
-          <li>les escroqueries, fausses collectes, usurpations d’identité, faux bénéficiaires ou demandes de paiement trompeuses ;</li>
-          <li>le contournement de sanctions, embargos, limites, contrôles géographiques ou procédures de vérification ;</li>
-          <li>l’utilisation de robots, le scraping, le test de charge abusif, l’injection de code ou toute tentative de compromettre le service ;</li>
-          <li>la revente, la sous-licence, la copie ou l’exploitation commerciale d’une interface SendFlow sans autorisation écrite ;</li>
-          <li>l’envoi de contenus illicites, haineux, menaçants, diffamatoires ou portant atteinte à la vie privée.</li>
-        </LegalBulletList>
-      </LegalSection>
-
-      <LegalSection number="10" title="Propriété intellectuelle">
-        <p>La marque SendFlow, ses noms, logos, textes, interfaces, illustrations, animations, composants, bases de données, logiciels et éléments graphiques sont protégés par les règles applicables de propriété intellectuelle. Ils appartiennent à Flow Digital SARL ou sont utilisés avec l’autorisation de leurs titulaires.</p>
-        <p>Une licence personnelle, limitée, non exclusive, non transférable et révocable est accordée à l’utilisateur pour accéder au service et l’utiliser conformément aux présentes conditions. Aucun droit de propriété n’est transféré par l’utilisation du site ou de l’application.</p>
-      </LegalSection>
-
-      <LegalSection number="11" title="Données, confidentialité et communications">
-        <p>Les données personnelles sont traitées conformément à la <Link href="/confidentialite" className="font-bold text-[#5b21b6] underline">Politique de confidentialité SendFlow</Link>. L’utilisateur doit consulter ce document avant d’utiliser un parcours qui implique la collecte d’informations personnelles, financières, d’identité ou de bénéficiaire.</p>
-        <p>En utilisant le service, l’utilisateur peut recevoir des communications nécessaires à la sécurité, à la confirmation, au suivi, à la résolution d’un incident ou à l’évolution du service. Les communications commerciales sont traitées selon les choix disponibles et la réglementation applicable.</p>
-      </LegalSection>
-
-      <LegalSection number="12" title="Disponibilité, maintenance et sécurité">
-        <p>Flow Digital SARL met en œuvre des mesures raisonnables pour maintenir un service accessible et protéger ses systèmes. Toutefois, une disponibilité permanente ne peut être garantie. Des interruptions peuvent résulter d’une maintenance, d’une panne, d’un incident de réseau, d’un opérateur, d’un partenaire, d’une autorité, d’un événement de force majeure ou d’un risque de sécurité.</p>
-        <p>Il est interdit de désactiver les mécanismes de sécurité ou de considérer l’absence d’alerte comme une garantie d’absence de vulnérabilité. Tout incident suspect doit être signalé à {contactEmail} avec suffisamment d’informations pour permettre une analyse, sans transmettre de mot de passe ou de code secret.</p>
-      </LegalSection>
-
-      <LegalSection number="13" title="Suspension, fermeture et résiliation">
-        <p>L’utilisateur peut cesser d’utiliser SendFlow à tout moment. Flow Digital SARL ou un partenaire peut suspendre ou limiter l’accès si cela est nécessaire pour protéger l’utilisateur, respecter une obligation légale, prévenir une fraude, traiter un impayé, répondre à une demande d’autorité ou constater une violation des présentes conditions.</p>
-        <p>Lorsque la loi et la sécurité le permettent, l’utilisateur peut être informé du motif général de la mesure. Certaines informations ne peuvent toutefois pas être communiquées lorsqu’elles concernent un signalement, une enquête, une mesure de lutte contre la fraude ou une obligation de confidentialité.</p>
-      </LegalSection>
-
-      <LegalSection number="14" title="Responsabilité et limites">
-        <p>Les présentes conditions ne limitent pas les droits impératifs dont bénéficie un consommateur ni les responsabilités qui ne peuvent légalement être exclues. Dans la mesure permise par la loi, Flow Digital SARL ne répond pas des pertes résultant d’une information fournie par l’utilisateur, d’un bénéficiaire erroné, d’un partage de code, d’un appareil compromis, d’un réseau indisponible ou d’un acte d’un partenaire indépendant.</p>
-        <p>Flow Digital SARL ne garantit pas un délai fixe, un taux, un montant reçu ou la réussite d’une opération lorsque ces éléments dépendent d’un partenaire, d’un opérateur, d’une banque, d’une autorité, d’un contrôle de conformité ou d’un événement extérieur.</p>
-        <p>La responsabilité de Flow Digital SARL, lorsqu’elle est légalement engagée, est évaluée au regard du dommage direct, prévisible et prouvé, sous réserve des plafonds, exclusions et règles impératives applicables. Les dommages indirects, pertes d’opportunité, pertes de données non imputables à Flow Digital SARL ou préjudices commerciaux sont exclus dans la mesure autorisée par la loi.</p>
-      </LegalSection>
-
-      <LegalSection number="15" title="Modifications des conditions">
-        <p>Flow Digital SARL peut modifier les présentes conditions pour tenir compte d’une évolution du service, de la sécurité, des partenaires, de la réglementation ou de la jurisprudence. La date de mise à jour est indiquée en haut de la page.</p>
-        <p>Pour une modification importante, un avis peut être affiché dans l’application, envoyé par un canal disponible ou présenté avant la prochaine utilisation. La poursuite de l’utilisation après l’entrée en vigueur de la modification vaut acceptation, sauf lorsque la loi impose un consentement distinct.</p>
-      </LegalSection>
-
-      <LegalSection number="16" title="Droit applicable, réclamations et règlement des différends">
-        <p>Les présentes conditions sont interprétées selon le droit applicable en Côte d’Ivoire, sous réserve des règles impératives protectrices de l’utilisateur et des conditions particulières du partenaire qui exécute une opération.</p>
-        <p>Avant toute procédure, l’utilisateur est invité à contacter le support afin de permettre une analyse amiable. Une réclamation doit préciser l’identité du demandeur, la date concernée, la référence disponible, l’objet de la demande et le résultat attendu. Ne transmettez jamais un mot de passe, un code OTP ou une clé secrète.</p>
-        <p>À défaut de résolution amiable, les juridictions compétentes d’Abidjan peuvent être saisies, sous réserve des règles impératives relatives à la protection des consommateurs et des mécanismes de réclamation propres aux partenaires agréés.</p>
-      </LegalSection>
-
-      <LegalSection number="17" title="Références réglementaires indicatives">
-        <p>Le cadre du service peut notamment être concerné par les textes ivoiriens relatifs à la protection des données à caractère personnel et aux transactions électroniques, par les règles et instructions applicables dans l’espace UEMOA, par les exigences de la BCEAO et par les obligations de lutte contre le blanchiment et le financement du terrorisme applicables aux partenaires.</p>
-        <p>Cette liste est indicative et ne constitue pas une certification de conformité. Les textes, autorités compétentes, agréments, contrats partenaires et obligations peuvent varier selon le pays, le produit et le rôle exact de Flow Digital SARL. Une revue juridique et réglementaire devra être menée avant le lancement commercial.</p>
-      </LegalSection>
-
-      <LegalSection number="18" title="Date et version">
-        <p>Version de travail publiée le <strong>10 septembre 2026</strong>. Flow Digital SARL conservera un historique des versions et indiquera la date de la dernière mise à jour sur cette page.</p>
       </LegalSection>
     </LegalLayout>
   );
