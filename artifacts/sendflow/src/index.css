@@ -2528,8 +2528,6 @@
 .sendflow-transaction-amount { align-self: center; min-width: 70px; color: #262332; font-size: clamp(14px, 2.8vw, 17px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.025em; line-height: 1.1; text-align: right; white-space: nowrap; }
 .sendflow-transaction-amount.is-deposit { color: #008000; }
 .sendflow-transaction-amount.is-international { color: #ff0000; }
-.sendflow-transaction-amount.is-pending { color: #f59e0b; }
-.sendflow-transaction-amount.is-failed { color: #dc2626; }
 
 .sendflow-history-shell { display: flex; height: 100dvh; min-height: 100dvh; flex-direction: column; overflow: hidden; background: #f4f1fb; color: #1d1d24; }
 .sendflow-history-header { position: relative; z-index: 2; flex: 0 0 166px; overflow: hidden; min-height: 166px; border-radius: 0 0 32px 32px; background: linear-gradient(135deg, #4f249f 0%, #7040d0 58%, #492195 100%); box-shadow: 0 14px 30px rgba(76, 39, 160, .24); color: #fff; }
@@ -2634,9 +2632,6 @@
   letter-spacing: -.055em;
   line-height: 1.05;
 }
-.sendflow-receipt-total.is-success { color: #17121d; }
-.sendflow-receipt-total.is-pending { color: #f59e0b; }
-.sendflow-receipt-total.is-failed { color: #dc2626; }
 
 .sendflow-receipt-recipient {
   overflow: hidden;
