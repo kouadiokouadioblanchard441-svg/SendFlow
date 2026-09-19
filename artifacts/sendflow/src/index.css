@@ -2280,7 +2280,7 @@
 .sendflow-transfer-header { min-height: 147px; overflow: hidden; border-radius: 0 0 30px 30px; background: linear-gradient(135deg, #4f249f 0%, #7040d0 58%, #492195 100%); box-shadow: 0 12px 25px rgba(76, 39, 160, .24); color: #fff; padding: max(16px, env(safe-area-inset-top)) 20px 30px; }
 .sendflow-transfer-header-inner { display: flex; min-width: 0; align-items: center; justify-content: space-between; width: min(100%, 720px); margin: 0 auto; }
 .sendflow-transfer-header-leading { display: flex; min-width: 0; align-items: center; gap: 8px; }
-.sendflow-transfer-brand { display: inline-flex; align-items: center; gap: 9px; color: #fff; text-decoration: none; }
+.sendflow-transfer-brand { display: inline-flex; align-items: center; gap: 9px; border-radius: 10px; background: #fff; color: #fff; text-decoration: none; box-shadow: 0 3px 10px rgba(28, 13, 62, .16); }
 .sendflow-transfer-brand img { display: block; object-fit: contain; }
 .sendflow-transfer-brand .sendflow-transfer-mark { width: 34px; height: 38px; }
 .sendflow-transfer-brand .sendflow-transfer-wordmark { width: 112px; height: 24px; }
