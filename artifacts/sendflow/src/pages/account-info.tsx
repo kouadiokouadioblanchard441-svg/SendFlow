@@ -5,6 +5,7 @@ import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
 import { readAccountCountry } from '@/lib/account-country';
 import { readAccountProfile, saveAccountProfile, type AccountProfile } from '@/lib/account-profile';
 import { useSeo } from '@/lib/seo';
+import accountInfoIllustration from '@assets/generated_images/sendflow-account-info-profile-3d-transparent.png';
 
 type AccountProfileField = keyof AccountProfile;
 type AccountProfileErrors = Partial<Record<AccountProfileField, string>>;
@@ -139,6 +140,9 @@ export default function AccountInfoPage() {
   return (
     <main className="sendflow-account-info-shell">
       <section className="sendflow-account-info-page" aria-labelledby="account-info-title">
+        <div className="sendflow-account-info-illustration" aria-hidden="true">
+          <img src={accountInfoIllustration} alt="" />
+        </div>
         <header className="sendflow-account-info-header">
           <button
             type="button"

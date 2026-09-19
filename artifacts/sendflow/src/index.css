@@ -2697,14 +2697,36 @@
 }
 
 .sendflow-account-info-page {
+  position: relative;
+  overflow: hidden;
   width: min(100%, 560px);
   min-height: 100dvh;
   margin: 0 auto;
   background: #fff;
 }
 
+.sendflow-account-info-illustration {
+  position: absolute;
+  z-index: 0;
+  top: 145px;
+  right: -168px;
+  width: min(112vw, 560px);
+  pointer-events: none;
+  opacity: .13;
+  transform: rotate(-2deg);
+}
+
+.sendflow-account-info-illustration img {
+  display: block;
+  width: 100%;
+  height: auto;
+  mix-blend-mode: multiply;
+}
+
 .sendflow-account-info-header {
   display: flex;
+  position: relative;
+  z-index: 1;
   min-height: 72px;
   align-items: center;
   gap: 16px;
@@ -2749,6 +2771,8 @@
 
 .sendflow-account-info-content {
   display: flex;
+  position: relative;
+  z-index: 1;
   min-height: calc(100dvh - 72px);
   flex-direction: column;
   padding: 54px 26px max(31px, env(safe-area-inset-bottom));
