@@ -3,6 +3,7 @@ import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { accountLimitProvider, formatAccountLimitAmount } from '@/lib/account-limit';
 import { useSeo } from '@/lib/seo';
+import limitVerificationIllustration from '@assets/generated_images/sendflow-account-limit-verification-3d-transparent.png';
 
 export default function AccountLimitPage() {
   const [, setLocation] = useLocation();
@@ -112,6 +113,10 @@ export default function AccountLimitPage() {
                   </p>
                 </div>
               </section>
+
+               <figure className="sendflow-account-limit-illustration" aria-hidden="true">
+                 <img src={limitVerificationIllustration} alt="" />
+               </figure>
             </>
           )}
         </div>

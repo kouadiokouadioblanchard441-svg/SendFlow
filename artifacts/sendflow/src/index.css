@@ -1369,6 +1369,27 @@
   line-height: 1.4;
 }
 
+.sendflow-account-limit-illustration {
+  display: flex;
+  width: 100%;
+  min-height: 190px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: 18px 0 0;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #fff 0%, #f7f0ff 100%);
+}
+
+.sendflow-account-limit-illustration img {
+  display: block;
+  width: min(100%, 290px);
+  height: 210px;
+  object-fit: contain;
+  object-position: center;
+  transform: translateY(5px);
+}
+
 .sendflow-account-limit-status {
   margin: 25px 0 0;
   font-size: 16px;
