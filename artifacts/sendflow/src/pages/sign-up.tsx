@@ -9,6 +9,7 @@ import { saveAccountProfile, splitFullName } from '@/lib/account-profile';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import signupIllustration from '@assets/generated_images/sendflow-signup-welcome-3d-clean.png';
+import signupProfileIllustration from '@assets/generated_images/sendflow-signup-profile-3d-clean.png';
 
 type SignUpForm = {
   fullName: string;
@@ -127,9 +128,13 @@ export default function SignupPage() {
   return (
     <main className="sendflow-signup-shell sendflow-auth-shell is-signup">
       <section className="sendflow-signup-card" aria-labelledby="signup-title">
-        <div className="sendflow-auth-art is-signup" aria-hidden="true">
+        <div className="sendflow-auth-art is-signup-primary" aria-hidden="true">
           <span className="sendflow-auth-art-glow" />
           <img src={signupIllustration} alt="" loading="eager" decoding="async" />
+        </div>
+        <div className="sendflow-auth-art is-signup-secondary" aria-hidden="true">
+          <span className="sendflow-auth-art-glow" />
+          <img src={signupProfileIllustration} alt="" loading="eager" decoding="async" />
         </div>
 
         <div className="sendflow-signup-content">

@@ -77,7 +77,7 @@
 .sendflow-signup-card {
   position: relative;
   isolation: isolate;
-  width: min(100%, 650px);
+  width: min(100%, 560px);
   min-height: calc(100dvh - 105px);
   overflow: hidden;
   border-radius: 14px;
@@ -87,21 +87,35 @@
 .sendflow-auth-art {
   position: absolute;
   z-index: 0;
-  width: 310px;
+  width: 265px;
   pointer-events: none;
   user-select: none;
 }
 
-.sendflow-auth-art.is-signin {
-  top: -26px;
-  right: -86px;
-  transform: rotate(8deg);
+.sendflow-auth-art.is-signin-primary {
+  top: -34px;
+  right: -68px;
+  transform: rotate(7deg);
 }
 
-.sendflow-auth-art.is-signup {
-  top: -30px;
-  left: -84px;
+.sendflow-auth-art.is-signin-secondary {
+  top: 16px;
+  left: -116px;
+  width: 230px;
   transform: rotate(-8deg);
+}
+
+.sendflow-auth-art.is-signup-primary {
+  top: -34px;
+  left: -68px;
+  transform: rotate(-7deg);
+}
+
+.sendflow-auth-art.is-signup-secondary {
+  top: 20px;
+  right: -116px;
+  width: 232px;
+  transform: rotate(8deg);
 }
 
 .sendflow-auth-art-glow {
@@ -120,8 +134,13 @@
   display: block;
   width: 100%;
   height: auto;
-  opacity: .15;
+  opacity: .22;
   mix-blend-mode: multiply;
+}
+
+.sendflow-auth-art.is-signin-secondary img,
+.sendflow-auth-art.is-signup-secondary img {
+  opacity: .2;
 }
 
 .sendflow-signup-content {
@@ -615,10 +634,14 @@
   .sendflow-signup-content { padding-inline: 14px; }
   .sendflow-signup-country { flex-basis: 76px; padding-inline: 8px; }
   .sendflow-signup-terms { margin-left: 8px; }
-  .sendflow-auth-art { width: 270px; }
-  .sendflow-auth-art.is-signin { right: -92px; }
-  .sendflow-auth-art.is-signup { left: -92px; }
-  .sendflow-auth-art img { opacity: .12; }
+  .sendflow-auth-art { width: 235px; }
+  .sendflow-auth-art.is-signin-primary { right: -82px; }
+  .sendflow-auth-art.is-signin-secondary { left: -136px; width: 205px; }
+  .sendflow-auth-art.is-signup-primary { left: -82px; }
+  .sendflow-auth-art.is-signup-secondary { right: -136px; width: 207px; }
+  .sendflow-auth-art img,
+  .sendflow-auth-art.is-signin-secondary img,
+  .sendflow-auth-art.is-signup-secondary img { opacity: .2; }
 }
 
 /* Pricing — a clear, editorial fee list inspired by the supplied mobile reference */

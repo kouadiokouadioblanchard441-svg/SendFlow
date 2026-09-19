@@ -10,6 +10,7 @@ import { AVATAR_USER_KEY } from '@/lib/avatar-bank';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import signinIllustration from '@assets/generated_images/sendflow-signin-security-3d-clean.png';
+import signinPaymentsIllustration from '@assets/generated_images/sendflow-signin-payments-3d-clean.png';
 
 type SignInForm = {
   phone: string;
@@ -76,9 +77,13 @@ export default function SigninPage() {
   return (
     <main className="sendflow-signup-shell sendflow-auth-shell is-signin">
       <section className="sendflow-signup-card" aria-labelledby="signin-title">
-        <div className="sendflow-auth-art is-signin" aria-hidden="true">
+        <div className="sendflow-auth-art is-signin-primary" aria-hidden="true">
           <span className="sendflow-auth-art-glow" />
           <img src={signinIllustration} alt="" loading="eager" decoding="async" />
+        </div>
+        <div className="sendflow-auth-art is-signin-secondary" aria-hidden="true">
+          <span className="sendflow-auth-art-glow" />
+          <img src={signinPaymentsIllustration} alt="" loading="eager" decoding="async" />
         </div>
 
         <div className="sendflow-signup-content">
