@@ -1457,9 +1457,12 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   border-top: 3px solid #6d35d8;
   background: #f8f5ff;
-  padding: 22px 24px 24px;
+  padding: max(22px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
 }
 
 .sendflow-pin-card {
@@ -1469,7 +1472,8 @@
   min-height: calc(100dvh - 49px);
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 14px;
   background: #fff;
   padding: 20px 24px 32px;
@@ -1585,7 +1589,9 @@
   font-size: 30px;
   font-weight: 800;
   line-height: 1;
-  transition: transform .12s ease, color .12s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform .12s ease, color .12s ease, opacity .12s ease;
 }
 
 .sendflow-pin-key:hover {
@@ -1598,6 +1604,7 @@
 
 .sendflow-pin-key:disabled {
   cursor: default;
+  opacity: .55;
 }
 
 .sendflow-pin-delete {

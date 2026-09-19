@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Delete } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
-import { hasPin, savePin, verifyPin } from '@/lib/pin-storage';
+import { savePin, verifyPin } from '@/lib/pin-storage';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -16,20 +16,20 @@ function getPinCopy(mode: PinMode, confirming: boolean) {
   if (mode === 'create' && confirming) {
     return {
       title: 'Confirmez votre code',
-      subtitle: 'Veuillez entrer à nouveau votre code secret',
+      subtitle: 'Veuillez entrer à nouveau votre code PIN',
     };
   }
 
   if (mode === 'create') {
     return {
       title: 'Bienvenue',
-      subtitle: 'Créez votre code secret',
+      subtitle: 'Créez votre code PIN',
     };
   }
 
   return {
     title: 'Bienvenue',
-    subtitle: 'Veuillez entrer votre code secret',
+    subtitle: 'Veuillez entrer votre code PIN',
   };
 }
 
@@ -45,28 +45,59 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   useSeo({
     path: mode === 'create' ? '/create-pin' : '/pin',
     locale: 'fr',
-    title: mode === 'create' ? 'Créer votre code secret · SendFlow' : 'Code secret · SendFlow',
-    description: 'Protégez votre compte SendFlow avec un code secret.',
+    title: mode === 'create' ? 'Créer votre code PIN · SendFlow' : 'Code PIN · SendFlow',
+    description: 'Protégez votre compte SendFlow avec un code PIN.',
     robots: 'noindex,nofollow',
   });
 
   const copy = getPinCopy(mode, confirming);
   const digits = useMemo(() => Array.from({ length: PIN_LENGTH }, (_, index) => index < entry.length), [entry.length]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (/^\d$/.test(event.key)) {
-        appendDigit(event.key);
-      } else if (event.key === 'Backspace') {
-        removeDigit();
+  const completeEntry = useCallback(async (nextEntry: string) => {
+    setProcessing(true);
+
+    try {
+      if (mode === 'create' && !confirming) {
+        setCreatedPin(nextEntry);
+        setEntry('');
+        setConfirming(true);
+        setProcessing(false);
+        return;
       }
-    };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+      if (mode === 'create') {
+        if (nextEntry !== createdPin) {
+          setEntry('');
+          setError('Les deux codes PIN ne correspondent pas.');
+          setProcessing(false);
+          return;
+        }
 
-  const appendDigit = (digit: string) => {
+        await savePin(nextEntry);
+        setLocation('/sign-in');
+        return;
+      }
+
+      const isCorrect = isDemoSession && nextEntry === DEMO_ACCOUNT.pin
+        ? true
+        : await verifyPin(nextEntry);
+      if (!isCorrect) {
+        setEntry('');
+        setError('Code PIN incorrect. Veuillez réessayer.');
+        setProcessing(false);
+        return;
+      }
+
+      window.sessionStorage.setItem('sendflow.pin.unlocked', 'true');
+      setLocation('/account');
+    } catch {
+      setEntry('');
+      setError('Une erreur est survenue. Veuillez réessayer.');
+      setProcessing(false);
+    }
+  }, [confirming, createdPin, isDemoSession, mode, setLocation]);
+
+  const appendDigit = useCallback((digit: string) => {
     if (processing || entry.length >= PIN_LENGTH) return;
     setError('');
     const nextEntry = `${entry}${digit}`;
@@ -75,51 +106,28 @@ export default function PinPage({ mode }: { mode: PinMode }) {
     if (nextEntry.length === PIN_LENGTH) {
       void completeEntry(nextEntry);
     }
-  };
+  }, [completeEntry, entry, processing]);
 
-  const removeDigit = () => {
+  const removeDigit = useCallback(() => {
     if (processing) return;
     setError('');
     setEntry((current) => current.slice(0, -1));
-  };
+  }, [processing]);
 
-  const completeEntry = async (nextEntry: string) => {
-    setProcessing(true);
-
-    if (mode === 'create' && !confirming) {
-      setCreatedPin(nextEntry);
-      setEntry('');
-      setConfirming(true);
-      setProcessing(false);
-      return;
-    }
-
-    if (mode === 'create') {
-      if (nextEntry !== createdPin) {
-        setEntry('');
-        setError('Les deux codes ne correspondent pas.');
-        setProcessing(false);
-        return;
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (/^\d$/.test(event.key)) {
+        event.preventDefault();
+        appendDigit(event.key);
+      } else if (event.key === 'Backspace') {
+        event.preventDefault();
+        removeDigit();
       }
+    };
 
-      await savePin(nextEntry);
-      setLocation('/sign-in');
-      return;
-    }
-
-    const isCorrect = isDemoSession && nextEntry === DEMO_ACCOUNT.pin
-      ? true
-      : await verifyPin(nextEntry);
-    if (!isCorrect) {
-      setEntry('');
-      setError('Code secret incorrect. Veuillez réessayer.');
-      setProcessing(false);
-      return;
-    }
-
-    window.sessionStorage.setItem('sendflow.pin.unlocked', 'true');
-    setLocation('/account');
-  };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [appendDigit, removeDigit]);
 
   const handleBack = () => {
     if (mode === 'create' && confirming) {
