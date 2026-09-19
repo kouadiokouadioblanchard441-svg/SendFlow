@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Delete } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
 import { savePin, verifyPin } from '@/lib/pin-storage';
@@ -33,6 +33,82 @@ function getPinCopy(mode: PinMode, confirming: boolean) {
   };
 }
 
+function usePinKeyboard(appendDigit: (digit: string) => void, removeDigit: () => void) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (/^\d$/.test(event.key)) {
+        event.preventDefault();
+        appendDigit(event.key);
+      } else if (event.key === 'Backspace') {
+        event.preventDefault();
+        removeDigit();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [appendDigit, removeDigit]);
+}
+
+function PinDots({ entry }: { entry: string }) {
+  const digits = useMemo(() => Array.from({ length: PIN_LENGTH }, (_, index) => index < entry.length), [entry.length]);
+
+  return (
+    <div className="sendflow-pin-dots" aria-label={`${entry.length} chiffre sur ${PIN_LENGTH}`}>
+      {digits.map((filled, index) => (
+        <span key={index} className={filled ? 'is-filled' : ''} />
+      ))}
+    </div>
+  );
+}
+
+function PinKeypad({
+  processing,
+  onDigit,
+  onDelete,
+}: {
+  processing: boolean;
+  onDigit: (digit: string) => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="sendflow-pin-keypad" aria-label="Pavé numérique">
+      {KEYPAD.map((key, index) => {
+        if (key === '') {
+          return <span key={`empty-${index}`} aria-hidden="true" />;
+        }
+
+        if (key === 'backspace') {
+          return (
+            <button
+              key={key}
+              type="button"
+              className="sendflow-pin-key sendflow-pin-delete"
+              onClick={onDelete}
+              aria-label="Effacer le dernier chiffre"
+              disabled={processing}
+            >
+              <Delete size={27} strokeWidth={2.8} />
+            </button>
+          );
+        }
+
+        return (
+          <button
+            key={key}
+            type="button"
+            className="sendflow-pin-key"
+            onClick={() => onDigit(key)}
+            disabled={processing}
+          >
+            {key}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function PinPage({ mode }: { mode: PinMode }) {
   const [, setLocation] = useLocation();
   const [entry, setEntry] = useState('');
@@ -51,8 +127,6 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   });
 
   const copy = getPinCopy(mode, confirming);
-  const digits = useMemo(() => Array.from({ length: PIN_LENGTH }, (_, index) => index < entry.length), [entry.length]);
-
   const completeEntry = useCallback(async (nextEntry: string) => {
     setProcessing(true);
 
@@ -114,20 +188,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
     setEntry((current) => current.slice(0, -1));
   }, [processing]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (/^\d$/.test(event.key)) {
-        event.preventDefault();
-        appendDigit(event.key);
-      } else if (event.key === 'Backspace') {
-        event.preventDefault();
-        removeDigit();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [appendDigit, removeDigit]);
+  usePinKeyboard(appendDigit, removeDigit);
 
   const handleBack = () => {
     if (mode === 'create' && confirming) {
@@ -158,46 +219,8 @@ export default function PinPage({ mode }: { mode: PinMode }) {
           <p>{copy.subtitle}</p>
         </header>
 
-        <div className="sendflow-pin-dots" aria-label={`${entry.length} chiffre sur ${PIN_LENGTH}`}>
-          {digits.map((filled, index) => (
-            <span key={index} className={filled ? 'is-filled' : ''} />
-          ))}
-        </div>
-
-        <div className="sendflow-pin-keypad" aria-label="Pavé numérique">
-          {KEYPAD.map((key, index) => {
-            if (key === '') {
-              return <span key={`empty-${index}`} aria-hidden="true" />;
-            }
-
-            if (key === 'backspace') {
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  className="sendflow-pin-key sendflow-pin-delete"
-                  onClick={removeDigit}
-                  aria-label="Effacer le dernier chiffre"
-                  disabled={processing}
-                >
-                  <Delete size={27} strokeWidth={2.8} />
-                </button>
-              );
-            }
-
-            return (
-              <button
-                key={key}
-                type="button"
-                className="sendflow-pin-key"
-                onClick={() => appendDigit(key)}
-                disabled={processing}
-              >
-                {key}
-              </button>
-            );
-          })}
-        </div>
+        <PinDots entry={entry} />
+        <PinKeypad processing={processing} onDigit={appendDigit} onDelete={removeDigit} />
 
         {error && <p className="sendflow-pin-error" role="alert">{error}</p>}
 
