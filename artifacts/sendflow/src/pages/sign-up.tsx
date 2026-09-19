@@ -244,8 +244,8 @@ export default function SignupPage() {
                   required
                 />
                 <span>
-                  J’accepte les{' '}
-                  <Link href="/conditions-utilisation">conditions générales d’utilisation</Link>
+                  J’accepte les <Link href="/conditions-utilisation">conditions générales d’utilisation</Link>{' '}
+                  et la <Link href="/confidentialite">politique de confidentialité</Link>
                 </span>
               </label>
               {visibleError('acceptedTerms') && (

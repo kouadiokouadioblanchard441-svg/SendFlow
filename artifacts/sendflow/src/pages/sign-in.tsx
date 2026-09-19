@@ -154,6 +154,11 @@ export default function SigninPage() {
           <p className="sendflow-signup-login">
             Vous n’avez pas encore de compte ? <Link href="/sign-up">Créez-en un</Link>
           </p>
+          <p className="sendflow-auth-legal">
+            <Link href="/conditions-utilisation">Conditions générales</Link>
+            <span aria-hidden="true"> · </span>
+            <Link href="/confidentialite">Confidentialité</Link>
+          </p>
         </div>
       </section>
     </main>

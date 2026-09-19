@@ -466,6 +466,21 @@
   text-align: center;
 }
 
+.sendflow-auth-legal {
+  margin: 16px 0 0;
+  color: #777d86;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.sendflow-auth-legal a {
+  color: #6d35d8;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .sendflow-signup-forgot {
   align-self: flex-end;
   margin: -10px 0 -1px;
