@@ -16,42 +16,31 @@ type PinKey = (typeof PIN_DIGITS)[number] | '' | 'backspace';
 const PIN_LENGTH = 4;
 const PIN_CHANGE_SUCCESS_KEY = 'sendflow.pin.change-success';
 
-function createShuffledKeypad(): PinKey[] {
+function createShuffledKeypad(previous?: readonly PinKey[]): PinKey[] {
+  const previousDigits = previous?.slice(0, PIN_DIGITS.length).join('');
   const digits = [...PIN_DIGITS];
 
-  for (let index = digits.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [digits[index], digits[swapIndex]] = [digits[swapIndex], digits[index]];
-  }
+  do {
+    for (let index = digits.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [digits[index], digits[swapIndex]] = [digits[swapIndex], digits[index]];
+    }
+  } while (previousDigits && digits.join('') === previousDigits);
 
   // Keep the empty slot and delete action stable so the keypad stays easy to scan.
   return [...digits.slice(0, 9), '', digits[9], 'backspace'];
 }
 
-function getPinCopy(mode: PinMode, confirming: boolean) {
-  if (mode === 'create' && confirming) {
-    return {
-      title: 'Confirmez votre code',
-      subtitle: 'Veuillez entrer à nouveau votre code PIN',
-    };
-  }
-
-  if (mode === 'create') {
-    return {
-      title: 'Bienvenue',
-      subtitle: 'Créez votre code PIN',
-    };
-  }
-
-  return {
-    title: 'Bienvenue',
-    subtitle: 'Veuillez entrer votre code PIN',
-  };
+function isEditableTarget(target: EventTarget | null) {
+  return target instanceof HTMLElement
+    && (target.isContentEditable || target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement);
 }
 
 function usePinKeyboard(appendDigit: (digit: string) => void, removeDigit: () => void) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) return;
+
       if (/^\d$/.test(event.key)) {
         event.preventDefault();
         appendDigit(event.key);
@@ -98,6 +87,7 @@ function PinKeypad({
     activeAnimations.current = [];
 
     const nextPositions = new Map<string, { left: number; top: number }>();
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
     keys.forEach((key, index) => {
       const keyId = key === '' ? `empty-${index}` : key;
@@ -109,7 +99,7 @@ function PinKeypad({
       const previousPosition = previousPositions.current.get(keyId);
       nextPositions.set(keyId, currentPosition);
 
-      if (!previousPosition || typeof node.animate !== 'function') return;
+      if (reduceMotion || !previousPosition || typeof node.animate !== 'function') return;
 
       const deltaX = previousPosition.left - currentPosition.left;
       const deltaY = previousPosition.top - currentPosition.top;
@@ -130,6 +120,10 @@ function PinKeypad({
 
     previousPositions.current = nextPositions;
   }, [keys]);
+
+  useEffect(() => () => {
+    activeAnimations.current.forEach((animation) => animation.cancel());
+  }, []);
 
   return (
     <div className="sendflow-pin-keypad" aria-label="Pavé numérique">
@@ -185,6 +179,27 @@ function PinKeypad({
       })}
     </div>
   );
+}
+
+function getPinCopy(mode: PinMode, confirming: boolean) {
+  if (mode === 'create' && confirming) {
+    return {
+      title: 'Confirmez votre code',
+      subtitle: 'Veuillez entrer à nouveau votre code PIN',
+    };
+  }
+
+  if (mode === 'create') {
+    return {
+      title: 'Bienvenue',
+      subtitle: 'Créez votre code PIN',
+    };
+  }
+
+  return {
+    title: 'Bienvenue',
+    subtitle: 'Veuillez entrer votre code PIN',
+  };
 }
 
 function PinBackgroundArt() {
@@ -271,7 +286,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
     setError('');
     const nextEntry = `${entry}${digit}`;
     setEntry(nextEntry);
-    setKeypad(createShuffledKeypad());
+    setKeypad(createShuffledKeypad(keypad));
 
     if (nextEntry.length === PIN_LENGTH) {
       void completeEntry(nextEntry);
@@ -287,6 +302,8 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   usePinKeyboard(appendDigit, removeDigit);
 
   const handleBack = () => {
+    if (processing) return;
+
     if (mode === 'create' && confirming) {
       setConfirming(false);
       setCreatedPin('');
@@ -299,9 +316,9 @@ export default function PinPage({ mode }: { mode: PinMode }) {
 
   return (
     <main className="sendflow-pin-shell">
-      <section className="sendflow-pin-card" aria-labelledby="pin-title">
+      <section className="sendflow-pin-card" aria-labelledby="pin-title" aria-busy={processing}>
         <PinBackgroundArt />
-        <button type="button" className="sendflow-pin-back" onClick={handleBack} aria-label="Retour">
+        <button type="button" className="sendflow-pin-back" onClick={handleBack} aria-label="Retour" disabled={processing}>
           <ArrowLeft size={25} strokeWidth={1.9} />
           <span>Autre compte</span>
         </button>
@@ -321,7 +338,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
 
         {error && <p className="sendflow-pin-error" role="alert">{error}</p>}
 
-        <button type="button" className="sendflow-pin-forgot" onClick={() => setLocation('/forgot-pin')}>
+        <button type="button" className="sendflow-pin-forgot" onClick={() => setLocation('/forgot-pin')} disabled={processing}>
           J’ai oublié mon code PIN
         </button>
       </section>
@@ -427,7 +444,7 @@ export function ChangePinPage() {
     setError('');
     const nextEntry = `${entry}${digit}`;
     setEntry(nextEntry);
-    setKeypad(createShuffledKeypad());
+    setKeypad(createShuffledKeypad(keypad));
 
     if (nextEntry.length === PIN_LENGTH) {
       void completeEntry(nextEntry);
@@ -443,6 +460,8 @@ export function ChangePinPage() {
   usePinKeyboard(appendDigit, removeDigit);
 
   const handleBack = () => {
+    if (processing) return;
+
     if (step === 'confirm') {
       setStep('new');
       setEntry('');
@@ -464,9 +483,9 @@ export function ChangePinPage() {
 
   return (
     <main className="sendflow-pin-shell">
-      <section className="sendflow-pin-card" aria-labelledby="change-pin-title">
+      <section className="sendflow-pin-card" aria-labelledby="change-pin-title" aria-busy={processing}>
         <PinBackgroundArt />
-        <button type="button" className="sendflow-pin-back" onClick={handleBack} aria-label="Retour">
+        <button type="button" className="sendflow-pin-back" onClick={handleBack} aria-label="Retour" disabled={processing}>
           <ArrowLeft size={25} strokeWidth={1.9} />
           <span>Retour</span>
         </button>

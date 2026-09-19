@@ -1586,6 +1586,12 @@
   outline-offset: 4px;
 }
 
+.sendflow-pin-back:disabled,
+.sendflow-pin-forgot:disabled {
+  cursor: default;
+  opacity: .55;
+}
+
 .sendflow-pin-brand {
   display: flex;
   flex-direction: column;
