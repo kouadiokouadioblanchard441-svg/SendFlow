@@ -889,6 +889,14 @@
   transform: translateX(-50%) rotate(5deg);
 }
 
+.sendflow-onboarding-visual.is-momentum .sendflow-onboarding-visual-backdrop {
+  top: 13%;
+  width: min(88%, 380px);
+  background: #e6d8ff;
+  box-shadow: inset -18px -22px 0 rgba(255, 255, 255, .3), 0 0 45px rgba(141, 91, 235, .12);
+  transform: translateX(-50%) rotate(-6deg);
+}
+
 .sendflow-onboarding-visual img {
   display: block;
   width: min(100%, 470px);
@@ -912,6 +920,11 @@
 
 .sendflow-onboarding-visual.is-security img {
   width: min(107%, 535px);
+}
+
+.sendflow-onboarding-visual.is-momentum img {
+  width: min(109%, 545px);
+  animation: sendflow-onboarding-momentum-float 4.8s ease-in-out infinite;
 }
 
 .sendflow-onboarding-actions {
@@ -1001,6 +1014,11 @@
 @keyframes sendflow-onboarding-progress-fill {
   from { width: 0; }
   to { width: 100%; }
+}
+
+@keyframes sendflow-onboarding-momentum-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-.5deg); }
+  50% { transform: translate3d(0, -8px, 0) rotate(.5deg); }
 }
 
 @media (min-width: 760px) {

@@ -7,6 +7,7 @@ import networkIllustration from '@assets/generated_images/sendflow-network-perso
 import howIllustration from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
 import coverageIllustration from '@assets/generated_images/sendflow-coverage-person-3d-flags-clean.png';
 import securityIllustration from '@assets/generated_images/sendflow-onboarding-security-3d-transparent-clean.png';
+import momentumIllustration from '@assets/generated_images/sendflow-onboarding-momentum-3d-clean.png';
 
 const ONBOARDING_STEP_KEY = 'sendflow.onboarding-step';
 const ONBOARDING_STEP_DURATION = 5000;
@@ -43,6 +44,14 @@ const slides = [
     image: securityIllustration,
     imageAlt: 'Femme présentant un wallet mobile protégé par un bouclier',
     accent: 'security',
+  },
+  {
+    eyebrow: 'Une expérience qui avance avec vous',
+    title: 'Envoyez plus simplement. Vivez plus librement.',
+    description: 'Une expérience fluide pour garder le contrôle de votre argent, à chaque instant.',
+    image: momentumIllustration,
+    imageAlt: 'Homme présentant un wallet mobile entouré de flux lumineux',
+    accent: 'momentum',
   },
 ] as const;
 
