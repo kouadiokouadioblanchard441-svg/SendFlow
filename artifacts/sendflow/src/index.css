@@ -881,6 +881,13 @@
   transform: translateX(-50%) rotate(-4deg);
 }
 
+.sendflow-onboarding-visual.is-security .sendflow-onboarding-visual-backdrop {
+  top: 12%;
+  width: min(86%, 370px);
+  background: #e8ddff;
+  transform: translateX(-50%) rotate(5deg);
+}
+
 .sendflow-onboarding-visual img {
   display: block;
   width: min(100%, 470px);
@@ -900,6 +907,10 @@
 
 .sendflow-onboarding-visual.is-coverage img {
   width: min(109%, 540px);
+}
+
+.sendflow-onboarding-visual.is-security img {
+  width: min(107%, 535px);
 }
 
 .sendflow-onboarding-actions {

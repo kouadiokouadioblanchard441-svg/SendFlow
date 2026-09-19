@@ -6,6 +6,7 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import networkIllustration from '@assets/generated_images/sendflow-network-person-3d-transparent.png';
 import howIllustration from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
 import coverageIllustration from '@assets/generated_images/sendflow-coverage-person-3d-transparent.png';
+import securityIllustration from '@assets/generated_images/sendflow-onboarding-security-3d-transparent-clean.png';
 
 const ONBOARDING_STEP_KEY = 'sendflow.onboarding-step';
 const ONBOARDING_STEP_DURATION = 5000;
@@ -34,6 +35,14 @@ const slides = [
     image: coverageIllustration,
     imageAlt: 'Femme tenant un téléphone devant une carte connectée de l’Afrique',
     accent: 'coverage',
+  },
+  {
+    eyebrow: 'Votre confiance, notre priorité',
+    title: 'Votre argent mérite une protection à la hauteur.',
+    description: 'Avec SendFlow, chaque transfert est suivi, chaque étape est claire et votre wallet reste sous votre contrôle.',
+    image: securityIllustration,
+    imageAlt: 'Femme présentant un wallet mobile protégé par un bouclier',
+    accent: 'security',
   },
 ] as const;
 
