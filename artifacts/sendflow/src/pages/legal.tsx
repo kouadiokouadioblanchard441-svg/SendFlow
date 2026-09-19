@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { Link } from 'wouter';
 import { useLocation } from 'wouter';
@@ -225,7 +225,7 @@ function PrivacyLayout({
           >
             <span aria-hidden="true">{language === 'fr' ? '🇫🇷' : '🇬🇧'}</span>
           </button>
-          <Link href="/sign-up" className="sendflow-privacy-download">{language === 'fr' ? 'Télécharger l&apos;app' : 'Download the app'}</Link>
+          <Link href="/sign-up" className="sendflow-privacy-download">{language === 'fr' ? "Télécharger l'app" : 'Download the app'}</Link>
         </div>
       </header>
 
@@ -769,12 +769,34 @@ function PrivacyEnglishContent({ contactEmail }: { contactEmail: string }) {
 
 export function PrivacyPage({ supportEmail }: LegalPageProps) {
   const contactEmail = normalizeSupportEmail(supportEmail);
-  const [language, setLanguage] = useState<PrivacyLanguage>('fr');
+  const [language, setLanguage] = useState<PrivacyLanguage>(() => {
+    try {
+      return window.localStorage.getItem('sendflow.privacy.language') === 'en' ? 'en' : 'fr';
+    } catch {
+      return 'fr';
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  const toggleLanguage = () => {
+    setLanguage((current) => {
+      const nextLanguage = current === 'fr' ? 'en' : 'fr';
+      try {
+        window.localStorage.setItem('sendflow.privacy.language', nextLanguage);
+      } catch {
+        // Private browsing may block local storage; the current page still switches.
+      }
+      return nextLanguage;
+    });
+  };
 
   return (
     <PrivacyLayout
       language={language}
-      onLanguageChange={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')}
+      onLanguageChange={toggleLanguage}
     >
       {language === 'fr'
         ? <PrivacyFrenchContent contactEmail={contactEmail} />

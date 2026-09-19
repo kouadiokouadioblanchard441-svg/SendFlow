@@ -3175,6 +3175,36 @@
   transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }
 
+.sendflow-privacy-language {
+  display: inline-grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border: 1px solid #e7dff1;
+  border-radius: 50%;
+  background: #fff;
+  color: #24212b;
+  cursor: pointer;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+  box-shadow: 0 3px 8px rgba(92, 45, 146, .08);
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.sendflow-privacy-language:hover,
+.sendflow-privacy-language:focus-visible {
+  border-color: #c9b1e8;
+  background: #faf7ff;
+  box-shadow: 0 5px 12px rgba(92, 45, 146, .14);
+  outline: 0;
+}
+
+.sendflow-privacy-language:active {
+  transform: scale(.94);
+}
+
 .sendflow-privacy-download:hover,
 .sendflow-privacy-download:focus-visible {
   background: #7736b5;
@@ -3591,6 +3621,7 @@
 
 .sendflow-privacy-icon-button:focus-visible,
 .sendflow-privacy-brand:focus-visible,
+.sendflow-privacy-language:focus-visible,
 .sendflow-privacy-download:focus-visible {
   outline: 3px solid rgba(139, 76, 200, .28);
   outline-offset: 3px;
@@ -3646,6 +3677,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sendflow-privacy-icon-button,
+  .sendflow-privacy-language,
   .sendflow-privacy-download {
     transition: none;
   }
@@ -3658,6 +3690,7 @@
   }
 
   .sendflow-privacy-icon-button,
+  .sendflow-privacy-language,
   .sendflow-privacy-download {
     display: none;
   }
