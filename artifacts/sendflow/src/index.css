@@ -753,20 +753,25 @@
 .sendflow-onboarding-brand {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  border-radius: 14px;
+  gap: 10px;
+  border: 1px solid rgba(109, 53, 216, .12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .84);
+  box-shadow: 0 10px 24px rgba(76, 36, 137, .1);
   outline: none;
+  padding: 7px 13px 7px 9px;
   text-decoration: none;
+  backdrop-filter: blur(10px);
 }
 
 .sendflow-onboarding-brand img:first-child {
-  width: 24px;
-  height: 31px;
+  width: 31px;
+  height: 40px;
   object-fit: contain;
 }
 
 .sendflow-onboarding-brand img:last-child {
-  width: 90px;
+  width: 118px;
   height: auto;
   object-fit: contain;
 }
@@ -1043,6 +1048,21 @@
 }
 
 @media (min-width: 760px) {
+  .sendflow-onboarding-brand {
+    gap: 12px;
+    border-radius: 20px;
+    padding: 8px 16px 8px 11px;
+  }
+
+  .sendflow-onboarding-brand img:first-child {
+    width: 36px;
+    height: 46px;
+  }
+
+  .sendflow-onboarding-brand img:last-child {
+    width: 140px;
+  }
+
   .sendflow-onboarding-frame {
     padding-bottom: 46px;
   }
