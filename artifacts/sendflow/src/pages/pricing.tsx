@@ -18,6 +18,7 @@ import {
   type PricingOperator,
 } from '@/lib/pricing';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
+import pricingIllustration from '@assets/generated_images/sendflow-pricing-fees-3d-transparent.png';
 
 function OperatorMark({ operator }: { operator: PricingOperator }) {
   if (operator.brand === 'wave') return <img src={waveLogo} alt="" />;
@@ -169,6 +170,10 @@ export default function PricingPage() {
         <p className="sendflow-pricing-footnote" data-testid="text-pricing-footnote">
           Les frais affichés sont temporaires et sont présentés avant chaque confirmation.
         </p>
+
+        <figure className="sendflow-pricing-illustration" aria-label="Illustration des tarifs SendFlow">
+          <img src={pricingIllustration} alt="Illustration 3D SendFlow représentant les tarifs et les transferts" />
+        </figure>
       </div>
 
       {countryPickerOpen && (
