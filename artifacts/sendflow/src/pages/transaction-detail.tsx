@@ -21,6 +21,13 @@ function readTransactionId(location: string): string {
   }
 }
 
+function getFallbackReference(transactionId: string): string {
+  const sequence = transactionId.match(/\d+$/)?.[0]?.padStart(4, '0') ?? '0000';
+  const suffix = transactionId.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(-8).padStart(8, '0');
+
+  return `SF-00000000-${sequence}-${suffix}`;
+}
+
 function getTransactionDetail(transaction: Transaction): TransactionDetail {
   return transactionDetails[transaction.id] ?? {
     nature: transaction.kind === 'deposit' ? "Dépôt d'argent" : "Transfert d'argent",
@@ -35,7 +42,7 @@ function getTransactionDetail(transaction: Transaction): TransactionDetail {
     beneficiary: transaction.recipient,
     status: 'En cours',
     dateTime: transaction.date,
-    reference: `sendflow_${transaction.id}`,
+    reference: getFallbackReference(transaction.id),
   };
 }
 

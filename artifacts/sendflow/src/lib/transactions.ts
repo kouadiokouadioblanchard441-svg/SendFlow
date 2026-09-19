@@ -126,7 +126,7 @@ export const transactionDetails: Record<string, TransactionDetail> = {
     beneficiary: '0576915898',
     status: 'Réussie',
     dateTime: '18/09/2026 à 12h55',
-    reference: 'sendflow_sf001_7a3d9c21',
+    reference: 'SF-260918-0001-7A3D9C21',
   },
   'sf-002': {
     nature: "Dépôt d'argent",
@@ -141,7 +141,7 @@ export const transactionDetails: Record<string, TransactionDetail> = {
     beneficiary: 'Wallet SendFlow',
     status: 'Réussie',
     dateTime: '17/09/2026 à 08h17',
-    reference: 'sendflow_sf002_2f94b801',
+    reference: 'SF-260917-0001-2F94B801',
   },
   'sf-003': {
     nature: 'Transfert international',
@@ -156,7 +156,7 @@ export const transactionDetails: Record<string, TransactionDetail> = {
     beneficiary: '0585325450',
     status: 'En cours',
     dateTime: '16/09/2026 à 18h42',
-    reference: 'sendflow_sf003_6d1e4b0f',
+    reference: 'SF-260916-0001-6D1E4B0F',
   },
   'sf-004': {
     nature: "Dépôt d'argent",
@@ -171,7 +171,7 @@ export const transactionDetails: Record<string, TransactionDetail> = {
     beneficiary: 'Wallet SendFlow',
     status: 'Réussie',
     dateTime: '16/09/2026 à 22h18',
-    reference: 'sendflow_sf004_9c8a2e44',
+    reference: 'SF-260916-0002-9C8A2E44',
   },
   'sf-005': {
     nature: "Transfert d'argent",
@@ -186,7 +186,7 @@ export const transactionDetails: Record<string, TransactionDetail> = {
     beneficiary: '0585325450',
     status: 'Réussie',
     dateTime: '21/08/2026 à 20h53',
-    reference: 'sendflow_sf005_4e1f7ac6',
+    reference: 'SF-260821-0003-4E1F7AC6',
   },
   'sf-006': {
     nature: "Transfert d'argent",
@@ -201,7 +201,7 @@ export const transactionDetails: Record<string, TransactionDetail> = {
     beneficiary: '0585325450',
     status: 'Réussie',
     dateTime: '21/08/2026 à 12h32',
-    reference: 'sendflow_sf006_1b7d25e0',
+    reference: 'SF-260821-0002-1B7D25E0',
   },
   'sf-007': {
     nature: "Transfert d'argent",
@@ -216,6 +216,6 @@ export const transactionDetails: Record<string, TransactionDetail> = {
     beneficiary: '0595857098',
     status: 'Réussie',
     dateTime: '21/08/2026 à 00h08',
-    reference: 'sendflow_sf007_8f2c4d19',
+    reference: 'SF-260821-0001-8F2C4D19',
   },
 };
