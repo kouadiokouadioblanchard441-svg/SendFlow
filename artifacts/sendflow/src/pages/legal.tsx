@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { Link } from 'wouter';
+import { useLocation } from 'wouter';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -24,11 +26,43 @@ function normalizeSupportEmail(value?: string | null): string {
   return value?.trim() || legalCompanyDetails.email;
 }
 
+function toRomanNumeral(value: string): string {
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 1 || number > 3999) return value;
+
+  const numerals: Array<[number, string]> = [
+    [1000, 'M'],
+    [900, 'CM'],
+    [500, 'D'],
+    [400, 'CD'],
+    [100, 'C'],
+    [90, 'XC'],
+    [50, 'L'],
+    [40, 'XL'],
+    [10, 'X'],
+    [9, 'IX'],
+    [5, 'V'],
+    [4, 'IV'],
+    [1, 'I'],
+  ];
+  let remaining = number;
+  let result = '';
+
+  numerals.forEach(([unit, numeral]) => {
+    while (remaining >= unit) {
+      result += numeral;
+      remaining -= unit;
+    }
+  });
+
+  return result;
+}
+
 function LegalSection({ number, title, children }: LegalSectionProps) {
   return (
-    <section className="scroll-mt-28 border-t border-[#2d2535]/10 pt-8">
+    <section className="scroll-mt-28 border-t border-[#2d2535]/10 pt-8" data-section-number={toRomanNumeral(number)}>
       <p className="text-[11px] font-extrabold uppercase tracking-[.18em] text-[#6d35d8]">{number}</p>
-      <h2 className="mt-3 text-2xl font-extrabold leading-tight tracking-[-.04em] text-[#17131f] sm:text-3xl">{title}</h2>
+      <h2 data-section-number={toRomanNumeral(number)} className="mt-3 text-2xl font-extrabold leading-tight tracking-[-.04em] text-[#17131f] sm:text-3xl">{title}</h2>
       <div className="mt-5 space-y-4 text-[15px] leading-7 text-[#40384c]">{children}</div>
     </section>
   );
@@ -95,6 +129,50 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function PrivacyLayout({ children }: { children: ReactNode }) {
+  const [, setLocation] = useLocation();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    setLocation('/sign-in');
+  };
+
+  return (
+    <div className="sendflow-privacy-page">
+      <header className="sendflow-privacy-header">
+        <div className="sendflow-privacy-topbar">
+          <button type="button" className="sendflow-privacy-icon-button" onClick={handleBack} aria-label="Retour">
+            <ArrowLeft size={24} strokeWidth={1.9} />
+          </button>
+          <h1>Politique de confidentialité</h1>
+          <button type="button" className="sendflow-privacy-icon-button is-refresh" onClick={() => window.location.reload()} aria-label="Actualiser la page">
+            <RefreshCw size={23} strokeWidth={2.1} />
+          </button>
+        </div>
+
+        <div className="sendflow-privacy-brandbar">
+          <Link href="/sign-in" className="sendflow-privacy-brand" aria-label="Retour à SendFlow">
+            <img src={sendflowMark} alt="" />
+            <img src={sendflowWordmark} alt="SendFlow" />
+          </Link>
+          <Link href="/sign-up" className="sendflow-privacy-download">Télécharger l&apos;app</Link>
+        </div>
+      </header>
+
+      <main className="sendflow-privacy-main">
+        <article className="sendflow-privacy-article">
+          <h2 className="sendflow-privacy-title">Politique de confidentialité</h2>
+          <p className="sendflow-privacy-date">Version de travail · 10 septembre 2026</p>
+          <div className="sendflow-privacy-content">{children}</div>
+        </article>
+      </main>
     </div>
   );
 }
@@ -329,12 +407,7 @@ export function TermsPage({ supportEmail }: LegalPageProps) {
 export function PrivacyPage({ supportEmail }: LegalPageProps) {
   const contactEmail = normalizeSupportEmail(supportEmail);
   return (
-    <LegalLayout
-      eyebrow="SendFlow · Confidentialité"
-      title="Politique de confidentialité"
-      intro="Cette politique explique quelles données SendFlow peut traiter, pourquoi elles sont utilisées, avec qui elles peuvent être partagées, combien de temps elles sont conservées et comment exercer vos droits."
-      supportEmail={supportEmail}
-    >
+    <PrivacyLayout>
       <LegalSection number="01" title="Responsable du traitement">
         <p>Le responsable du traitement présenté dans cette politique est <strong>Flow Digital SARL</strong>, opérateur de la marque SendFlow, établi à Abidjan, Cocody Riviera Palmeraie, Côte d’Ivoire.</p>
         <p>Pour toute question relative aux données personnelles, vous pouvez contacter <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. Lorsqu’un partenaire exécute directement une opération de paiement, il peut agir comme responsable indépendant ou responsable conjoint pour certaines données et présenter sa propre politique.</p>
@@ -457,6 +530,6 @@ export function PrivacyPage({ supportEmail }: LegalPageProps) {
       <LegalSection number="18" title="Date et contact">
         <p>Version de travail publiée le <strong>10 septembre 2026</strong>. Pour toute question, demande de droit ou réclamation relative à la confidentialité : <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>.</p>
       </LegalSection>
-    </LegalLayout>
+    </PrivacyLayout>
   );
 }
