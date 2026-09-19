@@ -231,3 +231,162 @@ export default function PinPage({ mode }: { mode: PinMode }) {
     </main>
   );
 }
+
+type ChangePinStep = 'current' | 'new' | 'confirm';
+
+function getChangePinCopy(step: ChangePinStep) {
+  if (step === 'current') {
+    return {
+      title: 'Entrez votre code PIN actuel',
+      subtitle: 'Vérifiez votre code PIN pour continuer.',
+    };
+  }
+
+  if (step === 'new') {
+    return {
+      title: 'Créez un nouveau code PIN',
+      subtitle: 'Choisissez un code PIN pour protéger votre compte.',
+    };
+  }
+
+  return {
+    title: 'Répétez votre nouveau code PIN',
+    subtitle: 'Saisissez-le une seconde fois pour confirmer.',
+  };
+}
+
+export function ChangePinPage() {
+  const [, setLocation] = useLocation();
+  const [step, setStep] = useState<ChangePinStep>('current');
+  const [entry, setEntry] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [error, setError] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const isDemoSession = window.sessionStorage.getItem(DEMO_SESSION_KEY) === 'true';
+  const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
+
+  useSeo({
+    path: '/change-pin',
+    locale: 'fr',
+    title: 'Modifier le code PIN · SendFlow',
+    description: 'Modifiez le code PIN de votre compte SendFlow.',
+    robots: 'noindex,nofollow',
+  });
+
+  const copy = getChangePinCopy(step);
+
+  const completeEntry = useCallback(async (nextEntry: string) => {
+    setProcessing(true);
+
+    try {
+      if (step === 'current') {
+        const isCorrect = isDemoSession && nextEntry === DEMO_ACCOUNT.pin
+          ? true
+          : await verifyPin(nextEntry);
+
+        if (!isCorrect) {
+          setEntry('');
+          setError('Code PIN incorrect. Veuillez réessayer.');
+          setProcessing(false);
+          return;
+        }
+
+        setStep('new');
+        setEntry('');
+        setError('');
+        setProcessing(false);
+        return;
+      }
+
+      if (step === 'new') {
+        setNewPin(nextEntry);
+        setStep('confirm');
+        setEntry('');
+        setError('');
+        setProcessing(false);
+        return;
+      }
+
+      if (nextEntry !== newPin) {
+        setEntry('');
+        setError('Les deux codes PIN ne correspondent pas.');
+        setProcessing(false);
+        return;
+      }
+
+      await savePin(nextEntry);
+      setLocation('/account');
+    } catch {
+      setEntry('');
+      setError('Une erreur est survenue. Veuillez réessayer.');
+      setProcessing(false);
+    }
+  }, [isDemoSession, newPin, setLocation, step]);
+
+  const appendDigit = useCallback((digit: string) => {
+    if (processing || entry.length >= PIN_LENGTH) return;
+    setError('');
+    const nextEntry = `${entry}${digit}`;
+    setEntry(nextEntry);
+
+    if (nextEntry.length === PIN_LENGTH) {
+      void completeEntry(nextEntry);
+    }
+  }, [completeEntry, entry, processing]);
+
+  const removeDigit = useCallback(() => {
+    if (processing) return;
+    setError('');
+    setEntry((current) => current.slice(0, -1));
+  }, [processing]);
+
+  usePinKeyboard(appendDigit, removeDigit);
+
+  const handleBack = () => {
+    if (step === 'confirm') {
+      setStep('new');
+      setEntry('');
+      setError('');
+      return;
+    }
+
+    if (step === 'new') {
+      setStep('current');
+      setEntry('');
+      setError('');
+      return;
+    }
+
+    setLocation('/account');
+  };
+
+  if (!isUnlocked) return <Redirect to="/sign-in" />;
+
+  return (
+    <main className="sendflow-pin-shell">
+      <section className="sendflow-pin-card" aria-labelledby="change-pin-title">
+        <button type="button" className="sendflow-pin-back" onClick={handleBack} aria-label="Retour">
+          <ArrowLeft size={25} strokeWidth={1.9} />
+          <span>Retour</span>
+        </button>
+
+        <div className="sendflow-pin-brand" aria-label="SendFlow">
+          <img src={sendflowMark} alt="" className="sendflow-pin-mark" />
+          <img src={sendflowWordmark} alt="SendFlow" className="sendflow-pin-wordmark" />
+        </div>
+
+        <header className="sendflow-pin-heading">
+          <h1 id="change-pin-title">{copy.title}</h1>
+          <p>{copy.subtitle}</p>
+        </header>
+
+        <PinDots entry={entry} />
+        <PinKeypad processing={processing} onDigit={appendDigit} onDelete={removeDigit} />
+
+        <p className="sendflow-pin-error" role="alert" aria-live="polite">
+          {error}
+        </p>
+      </section>
+    </main>
+  );
+}

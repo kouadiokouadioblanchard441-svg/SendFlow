@@ -17,7 +17,7 @@ import HistoryPage from '@/pages/history';
 import InternationalTransferPage from '@/pages/international-transfer';
 import InterNetworkTransferPage from '@/pages/inter-transfer';
 import NotificationsPage, { NotificationDetailPage } from '@/pages/notifications';
-import PinPage from '@/pages/pin';
+import PinPage, { ChangePinPage } from '@/pages/pin';
 import PricingPage from '@/pages/pricing';
 import ResetPage from '@/pages/reset';
 import SigninPage from '@/pages/sign-in';
@@ -158,6 +158,7 @@ function App() {
               <Route path="/sign-up/*?" component={SignupPage} />
               <Route path="/create-pin" component={() => <PinPage mode="create" />} />
               <Route path="/pin" component={() => <PinPage mode="enter" />} />
+              <Route path="/change-pin" component={ChangePinPage} />
               <Route path="/pricing" component={PricingPage} />
               <Route path="/forgot-password" component={() => <ResetPage mode="password" />} />
               <Route path="/forgot-pin" component={() => <ResetPage mode="pin" />} />
