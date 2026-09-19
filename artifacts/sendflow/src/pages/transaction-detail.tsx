@@ -84,6 +84,7 @@ export default function TransactionDetailPage() {
   if (!transaction || !detail) return <Redirect to="/history" />;
 
   const isDeposit = transaction.kind === 'deposit';
+  const statusLabel = detail.status === 'En cours' ? 'ATTENTE' : detail.status === 'Échouée' ? 'ÉCHEC' : detail.status;
   const supportContact = customerServiceProvider.getContact();
   const whatsappMessage = [
     "Bonjour, je souhaite obtenir de l'aide concernant une transaction SendFlow.",
@@ -163,7 +164,7 @@ export default function TransactionDetailPage() {
           <DetailRow label="Bénéficiaire" value={detail.beneficiary} />
           <DetailRow
             label="Statut"
-            value={<span className={`sendflow-receipt-status is-${detail.status === 'Réussie' ? 'success' : detail.status === 'Échouée' ? 'failed' : 'pending'}`}>{detail.status}</span>}
+            value={<span className={`sendflow-receipt-status is-${detail.status === 'Réussie' ? 'success' : detail.status === 'Échouée' ? 'failed' : 'pending'}${detail.status === 'Réussie' ? '' : ' is-prominent'}`}>{statusLabel}</span>}
           />
           <DetailRow label="Date et heure" value={detail.dateTime} separated />
           <DetailRow label="ID transaction" value={detail.reference} />

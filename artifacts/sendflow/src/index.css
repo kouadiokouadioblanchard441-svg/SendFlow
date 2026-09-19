@@ -2525,9 +2525,13 @@
 .sendflow-transaction-copy { display: flex; min-width: 0; flex-direction: column; gap: 6px; padding: 0 2px; }
 .sendflow-transaction-copy strong { overflow: visible; color: #26202f; font-size: clamp(10.5px, 2.5vw, 14px); font-weight: 750; letter-spacing: -.018em; line-height: 1.25; white-space: nowrap; }
 .sendflow-transaction-copy small { overflow: hidden; color: #81798d; font-size: clamp(10.5px, 1.9vw, 12px); font-weight: 500; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.sendflow-transaction-amount-wrap { display: flex; min-width: 82px; flex-direction: column; align-items: flex-end; justify-content: center; gap: 5px; }
 .sendflow-transaction-amount { align-self: center; min-width: 70px; color: #262332; font-size: clamp(14px, 2.8vw, 17px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.025em; line-height: 1.1; text-align: right; white-space: nowrap; }
 .sendflow-transaction-amount.is-deposit { color: #008000; }
 .sendflow-transaction-amount.is-international { color: #ff0000; }
+.sendflow-transaction-status { font-size: 12px; font-weight: 900; letter-spacing: .08em; line-height: 1; text-align: right; }
+.sendflow-transaction-status.is-pending { color: #f59e0b; }
+.sendflow-transaction-status.is-failed { color: #dc2626; }
 
 .sendflow-history-shell { display: flex; height: 100dvh; min-height: 100dvh; flex-direction: column; overflow: hidden; background: #f4f1fb; color: #1d1d24; }
 .sendflow-history-header { position: relative; z-index: 2; flex: 0 0 166px; overflow: hidden; min-height: 166px; border-radius: 0 0 32px 32px; background: linear-gradient(135deg, #4f249f 0%, #7040d0 58%, #492195 100%); box-shadow: 0 14px 30px rgba(76, 39, 160, .24); color: #fff; }
@@ -2732,8 +2736,9 @@
 }
 
 .sendflow-receipt-status.is-success { color: #16804a; }
-.sendflow-receipt-status.is-pending { color: #a46b00; }
-.sendflow-receipt-status.is-failed { color: #c2384b; }
+.sendflow-receipt-status.is-pending { color: #f59e0b; }
+.sendflow-receipt-status.is-failed { color: #dc2626; }
+.sendflow-receipt-status.is-prominent { font-size: 17px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 
 .sendflow-receipt-actions {
   display: grid;

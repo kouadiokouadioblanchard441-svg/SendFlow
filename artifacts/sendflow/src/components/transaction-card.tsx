@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
-import { operatorNames, type OperatorCode, type Transaction } from '@/lib/transactions';
+import { operatorNames, transactionDetails, type OperatorCode, type Transaction } from '@/lib/transactions';
 
 const operatorLogos: Partial<Record<OperatorCode, string>> = {
   sendflow: sendflowMark,
@@ -37,6 +37,9 @@ export function OperatorLogo({ operator }: { operator: OperatorCode }) {
 function TransactionCardContent({ transaction }: { transaction: Transaction }) {
   const amountPrefix = transaction.kind === 'deposit' ? '+ ' : transaction.kind === 'international' ? '- ' : '';
   const amountClass = transaction.kind === 'deposit' ? 'is-deposit' : transaction.kind === 'international' ? 'is-international' : '';
+  const transactionStatus = transactionDetails[transaction.id]?.status;
+  const statusLabel = transactionStatus === 'En cours' ? 'ATTENTE' : transactionStatus === 'Échouée' ? 'ÉCHEC' : null;
+  const statusClass = transactionStatus === 'En cours' ? 'is-pending' : transactionStatus === 'Échouée' ? 'is-failed' : '';
 
   return (
     <>
@@ -49,7 +52,10 @@ function TransactionCardContent({ transaction }: { transaction: Transaction }) {
         <strong>De {transaction.sender} vers {transaction.recipient}</strong>
         <small>{transaction.date}</small>
       </span>
-      <span className={`sendflow-transaction-amount ${amountClass}`.trim()}>{amountPrefix}{transaction.amount}</span>
+      <span className="sendflow-transaction-amount-wrap">
+        <span className={`sendflow-transaction-amount ${amountClass}`.trim()}>{amountPrefix}{transaction.amount}</span>
+        {statusLabel && <span className={`sendflow-transaction-status ${statusClass}`}>{statusLabel}</span>}
+      </span>
     </>
   );
 }
