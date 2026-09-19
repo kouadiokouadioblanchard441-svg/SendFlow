@@ -122,7 +122,7 @@ function PinKeypad({
         {
           duration: 145,
           easing: 'cubic-bezier(.22, .8, .32, 1)',
-          fill: 'both',
+          fill: 'none',
         },
       ));
     });

@@ -1671,18 +1671,6 @@
   grid-template-columns: repeat(3, 1fr);
   margin-top: 126px;
   row-gap: 13px;
-  animation: sendflow-pin-keypad-refresh .18s ease-out;
-}
-
-@keyframes sendflow-pin-keypad-refresh {
-  from {
-    opacity: .78;
-    transform: scale(.985);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 .sendflow-pin-key {
