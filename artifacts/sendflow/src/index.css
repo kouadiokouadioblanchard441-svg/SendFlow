@@ -3509,6 +3509,12 @@
 .sendflow-deposit-request-state.is-success p { max-width: 240px; margin: 8px 0 0; color: #746b80; font-size: 12px; line-height: 1.4; }
 .sendflow-deposit-request-state.is-success > .sendflow-deposit-request-confirm { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; width: 100%; margin-top: auto; border: 0; border-radius: 10px; background: #1b9a61; box-shadow: 0 8px 17px rgba(27, 154, 97, .2); color: #fff; cursor: pointer; padding: 0 13px; font: inherit; font-size: 13px; font-weight: 750; }
 .sendflow-deposit-request-state.is-success > .sendflow-deposit-request-confirm:hover, .sendflow-deposit-request-state.is-success > .sendflow-deposit-request-confirm:focus-visible { background: #147b4c; outline: 0; }
+.sendflow-deposit-failure-art { display: grid; width: 108px; height: 108px; place-items: center; margin-top: auto; }
+.sendflow-deposit-failure-art img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 13px 12px rgba(214, 37, 61, .18)); }
+.sendflow-deposit-request-state.is-failure h2 { max-width: 260px; margin: 12px 0 0; color: #c52e43; font-size: 20px; font-weight: 800; letter-spacing: -.045em; line-height: 1.1; }
+.sendflow-deposit-request-state.is-failure p { max-width: 240px; margin: 8px 0 0; color: #746b80; font-size: 12px; line-height: 1.4; }
+.sendflow-deposit-request-state.is-failure > .sendflow-deposit-request-confirm { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; width: 100%; margin-top: auto; border: 0; border-radius: 10px; background: #d6253d; box-shadow: 0 8px 17px rgba(214, 37, 61, .2); color: #fff; cursor: pointer; padding: 0 13px; font: inherit; font-size: 13px; font-weight: 750; }
+.sendflow-deposit-request-state.is-failure > .sendflow-deposit-request-confirm:hover, .sendflow-deposit-request-state.is-failure > .sendflow-deposit-request-confirm:focus-visible { background: #b81e34; outline: 0; }
 .sendflow-transfer-operator-picker { position: fixed; z-index: 30; inset: 0; display: flex; align-items: flex-end; justify-content: center; background: rgba(25, 17, 39, .42); padding: 0; }
 .sendflow-transfer-operator-sheet { width: min(100%, 560px); max-height: min(82dvh, 620px); overflow-y: auto; border-radius: 25px 25px 0 0; background: #fff; box-shadow: 0 -12px 35px rgba(29, 18, 50, .2); padding: 22px 20px calc(24px + env(safe-area-inset-bottom)); animation: sendflow-sheet-enter .24s ease-out both; }
 .sendflow-transfer-operator-sheet-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
@@ -3572,6 +3578,7 @@
   .sendflow-deposit-request-copy { margin-top: 9px; }
   .sendflow-deposit-request-meta { margin-top: 7px; }
   .sendflow-deposit-success-art { width: 96px; height: 96px; }
+  .sendflow-deposit-failure-art { width: 96px; height: 96px; }
 }
 
 @media (min-width: 700px) {

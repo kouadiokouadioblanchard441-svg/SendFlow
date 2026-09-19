@@ -14,6 +14,7 @@ import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import depositSuccessIllustration from '@assets/generated_images/sendflow-deposit-success-3d-alpha.png';
+import depositFailureIllustration from '@assets/generated_images/sendflow-deposit-failure-3d-alpha.png';
 
 type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov';
 
@@ -34,7 +35,7 @@ const ivoryCoastDepositOperators: DepositOperator[] = [
 ];
 
 const DEPOSIT_FEE_RATE = 0.03;
-type DepositRequestState = 'idle' | 'pending' | 'success';
+type DepositRequestState = 'idle' | 'pending' | 'success' | 'failure';
 
 function OperatorMark({ operator }: { operator: DepositOperator }) {
   if (operator.brand === 'wave') {
@@ -312,6 +313,19 @@ export default function DepositPage() {
                   <p>{walletAmount.toLocaleString('fr-FR')} FCFA sont maintenant disponibles dans votre wallet.</p>
                   <button type="button" className="sendflow-deposit-request-confirm" onClick={cancelDepositRequest}>
                     Terminé
+                  </button>
+                </div>
+              )}
+
+              {requestState === 'failure' && (
+                <div className="sendflow-deposit-request-state is-failure">
+                  <div className="sendflow-deposit-failure-art">
+                    <img src={depositFailureIllustration} alt="" />
+                  </div>
+                  <h2 id="deposit-request-title">Votre dépôt n’a pas pu être confirmé</h2>
+                  <p>Aucun montant n’a été crédité. Vérifiez votre opération USSD puis réessayez.</p>
+                  <button type="button" className="sendflow-deposit-request-confirm" onClick={cancelDepositRequest}>
+                    Réessayer
                   </button>
                 </div>
               )}
