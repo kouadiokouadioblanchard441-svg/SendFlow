@@ -505,6 +505,25 @@ export function PrivacyPage({ supportEmail }: LegalPageProps) {
       <LegalSection number="06" title="Données de paiement et données financières">
         <p>SendFlow peut afficher ou transmettre des informations nécessaires à un transfert, mais ne doit pas être considéré comme le coffre-fort de vos données bancaires. Les coordonnées de carte, codes secrets et identifiants sensibles sont en principe traités par le prestataire de paiement ou l’opérateur concerné, selon son propre environnement.</p>
         <p>Lorsque Flow Digital SARL reçoit une référence, un statut ou une information de rapprochement, elle l’utilise pour fournir le service, le support, la prévention de la fraude et les obligations de preuve. Les informations financières ne sont pas utilisées pour vendre des profils publicitaires personnalisés.</p>
+        <div className="sendflow-privacy-detail-group">
+          <section className="sendflow-privacy-detail-section" aria-labelledby="privacy-inter-network-title">
+            <h3 id="privacy-inter-network-title">Transferts inter réseau</h3>
+            <div className="sendflow-privacy-section-art" aria-hidden="true">
+              <img src={privacyArtNetwork} alt="" loading="lazy" decoding="async" />
+            </div>
+            <p>Lorsque vous préparez un transfert inter réseau, SendFlow peut traiter l’opérateur source, le numéro utilisé pour l’envoi, l’opérateur destinataire, le numéro du bénéficiaire, le montant, les frais, le choix de la personne qui les prend en charge et le statut de l’opération.</p>
+            <p>Ces informations servent à vérifier les éléments saisis, préparer le transfert entre les réseaux concernés, présenter le montant attendu, assurer le suivi et répondre à une demande d’assistance. Si un opérateur exige une vérification par code, le code communiqué dans le parcours est utilisé uniquement pour cette étape et ne doit jamais être partagé avec le support.</p>
+          </section>
+
+          <section className="sendflow-privacy-detail-section" aria-labelledby="privacy-deposit-title">
+            <h3 id="privacy-deposit-title">Dépôts vers le wallet SendFlow</h3>
+            <div className="sendflow-privacy-section-art" aria-hidden="true">
+              <img src={privacyArtCheck} alt="" loading="lazy" decoding="async" />
+            </div>
+            <p>Lorsque vous préparez un dépôt, SendFlow peut traiter l’opérateur ou le moyen de paiement source, le numéro utilisé, le montant, les frais, le montant attendu dans le wallet, le statut et la référence de confirmation lorsqu’elle est disponible.</p>
+            <p>Ces données permettent de préparer la demande de dépôt, de rapprocher la confirmation reçue du partenaire, de traiter une difficulté et de conserver la preuve nécessaire. Le code PIN, le mot de passe et les identifiants secrets restent confidentiels et ne doivent pas être transmis à SendFlow par message ou par e-mail.</p>
+          </section>
+        </div>
       </LegalSection>
 
       <LegalSection number="07" title="Partage avec les partenaires et prestataires">

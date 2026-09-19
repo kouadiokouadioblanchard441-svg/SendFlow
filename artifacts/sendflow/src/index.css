@@ -3476,6 +3476,32 @@
   box-shadow: 0 8px 16px rgba(67, 36, 110, .16);
 }
 
+.sendflow-privacy-detail-group {
+  display: grid;
+  gap: 42px;
+  margin-top: 42px;
+  padding-top: 4px;
+}
+
+.sendflow-privacy-detail-section {
+  display: grid;
+  gap: 16px;
+}
+
+.sendflow-privacy-detail-section h3 {
+  margin: 0;
+  color: #111217;
+  font-size: clamp(19px, 4.8vw, 27px);
+  font-weight: 800;
+  letter-spacing: -.035em;
+  line-height: 1.28;
+  text-align: center;
+}
+
+.sendflow-privacy-detail-section p {
+  margin: 0;
+}
+
 .sendflow-privacy-people-card {
   display: grid;
   grid-template-columns: minmax(120px, 150px) 1fr;
