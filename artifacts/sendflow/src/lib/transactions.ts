@@ -184,7 +184,7 @@ export const transactionDetails: Record<string, TransactionDetail> = {
     recipientFlag: '🇨🇮',
     debitedNumber: DEMO_ACCOUNT.phone,
     beneficiary: '0585325450',
-    status: 'Réussie',
+    status: 'Échouée',
     dateTime: '21/08/2026 à 20h53',
     reference: 'SF-260821-0003-4E1F7AC6',
   },

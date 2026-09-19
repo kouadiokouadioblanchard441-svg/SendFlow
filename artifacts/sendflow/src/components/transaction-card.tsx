@@ -38,8 +38,8 @@ function TransactionCardContent({ transaction }: { transaction: Transaction }) {
   const amountPrefix = transaction.kind === 'deposit' ? '+ ' : transaction.kind === 'international' ? '- ' : '';
   const amountClass = transaction.kind === 'deposit' ? 'is-deposit' : transaction.kind === 'international' ? 'is-international' : '';
   const transactionStatus = transactionDetails[transaction.id]?.status;
-  const statusLabel = transactionStatus === 'En cours' ? 'ATTENTE' : transactionStatus === 'Échouée' ? 'ÉCHEC' : null;
-  const statusClass = transactionStatus === 'En cours' ? 'is-pending' : transactionStatus === 'Échouée' ? 'is-failed' : '';
+  const statusLabel = transactionStatus === 'Réussie' ? 'RÉUSSIE' : transactionStatus === 'En cours' ? 'ATTENTE' : transactionStatus === 'Échouée' ? 'ÉCHEC' : null;
+  const statusClass = transactionStatus === 'Réussie' ? 'is-success' : transactionStatus === 'En cours' ? 'is-pending' : transactionStatus === 'Échouée' ? 'is-failed' : '';
 
   return (
     <>
