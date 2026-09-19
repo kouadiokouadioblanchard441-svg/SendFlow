@@ -11,8 +11,21 @@ import pinCharacterSecondary from '@assets/generated_images/sendflow-network-per
 
 type PinMode = 'create' | 'enter';
 
-const KEYPAD = ['9', '8', '0', '6', '4', '1', '2', '7', '3', '', '5', 'backspace'] as const;
+const PIN_DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
+type PinKey = (typeof PIN_DIGITS)[number] | '' | 'backspace';
 const PIN_LENGTH = 4;
+
+function createShuffledKeypad(): PinKey[] {
+  const digits = [...PIN_DIGITS];
+
+  for (let index = digits.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [digits[index], digits[swapIndex]] = [digits[swapIndex], digits[index]];
+  }
+
+  // Keep the empty slot and delete action stable so the keypad stays easy to scan.
+  return [...digits.slice(0, 9), '', digits[9], 'backspace'];
+}
 
 function getPinCopy(mode: PinMode, confirming: boolean) {
   if (mode === 'create' && confirming) {
@@ -65,17 +78,19 @@ function PinDots({ entry }: { entry: string }) {
 }
 
 function PinKeypad({
+  keys,
   processing,
   onDigit,
   onDelete,
 }: {
+  keys: PinKey[];
   processing: boolean;
   onDigit: (digit: string) => void;
   onDelete: () => void;
 }) {
   return (
-    <div className="sendflow-pin-keypad" aria-label="Pavé numérique">
-      {KEYPAD.map((key, index) => {
+    <div key={keys.join('-')} className="sendflow-pin-keypad" aria-label="Pavé numérique">
+      {keys.map((key, index) => {
         if (key === '') {
           return <span key={`empty-${index}`} aria-hidden="true" />;
         }
@@ -130,6 +145,7 @@ function PinBackgroundArt() {
 export default function PinPage({ mode }: { mode: PinMode }) {
   const [, setLocation] = useLocation();
   const [entry, setEntry] = useState('');
+  const [keypad, setKeypad] = useState<PinKey[]>(createShuffledKeypad);
   const [createdPin, setCreatedPin] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
@@ -194,6 +210,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
     setError('');
     const nextEntry = `${entry}${digit}`;
     setEntry(nextEntry);
+    setKeypad(createShuffledKeypad());
 
     if (nextEntry.length === PIN_LENGTH) {
       void completeEntry(nextEntry);
@@ -239,7 +256,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
         </header>
 
         <PinDots entry={entry} />
-        <PinKeypad processing={processing} onDigit={appendDigit} onDelete={removeDigit} />
+        <PinKeypad keys={keypad} processing={processing} onDigit={appendDigit} onDelete={removeDigit} />
 
         {error && <p className="sendflow-pin-error" role="alert">{error}</p>}
 
@@ -278,6 +295,7 @@ export function ChangePinPage() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<ChangePinStep>('current');
   const [entry, setEntry] = useState('');
+  const [keypad, setKeypad] = useState<PinKey[]>(createShuffledKeypad);
   const [newPin, setNewPin] = useState('');
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -347,6 +365,7 @@ export function ChangePinPage() {
     setError('');
     const nextEntry = `${entry}${digit}`;
     setEntry(nextEntry);
+    setKeypad(createShuffledKeypad());
 
     if (nextEntry.length === PIN_LENGTH) {
       void completeEntry(nextEntry);
@@ -401,7 +420,7 @@ export function ChangePinPage() {
         </header>
 
         <PinDots entry={entry} />
-        <PinKeypad processing={processing} onDigit={appendDigit} onDelete={removeDigit} />
+        <PinKeypad keys={keypad} processing={processing} onDigit={appendDigit} onDelete={removeDigit} />
 
         <p className="sendflow-pin-error" role="alert" aria-live="polite">
           {error}
