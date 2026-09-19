@@ -64,10 +64,8 @@ export default function OnboardingPage() {
   }, [activeStep]);
 
   useEffect(() => {
-    if (activeStep >= slides.length - 1) return;
-
     const timer = window.setTimeout(() => {
-      setActiveStep((current) => Math.min(current + 1, slides.length - 1));
+      setActiveStep((current) => (current + 1) % slides.length);
     }, ONBOARDING_STEP_DURATION);
 
     return () => window.clearTimeout(timer);
