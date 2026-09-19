@@ -4,6 +4,7 @@ import { customerServiceProvider } from '@/lib/customer-service';
 import { useSeo } from '@/lib/seo';
 import facebookLogo from '@assets/facebook-logo-clean-icon-png_1789744005304.png';
 import whatsappLogo from '@assets/logo-whatsapp-fond-blanc-vecteur_980129-12073_1789744005252.jpg';
+import customerServiceIllustration from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
 
 type SupportChannel = {
   id: 'whatsapp' | 'facebook' | 'phone';
@@ -62,6 +63,9 @@ export default function CustomerServicePage() {
   return (
     <main className="sendflow-customer-service-shell">
       <section className="sendflow-customer-service-page" aria-labelledby="customer-service-title">
+        <div className="sendflow-customer-service-illustration" aria-hidden="true">
+          <img src={customerServiceIllustration} alt="" />
+        </div>
         <header className="sendflow-customer-service-header">
           <button
             type="button"
