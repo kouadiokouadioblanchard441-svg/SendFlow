@@ -134,12 +134,25 @@ export default function OnboardingPage() {
     );
   };
 
+  const handleScreenClick = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest('a, button, input, textarea, select, [role="button"]')
+    ) {
+      return;
+    }
+
+    setActiveStep((current) => (current + 1) % slides.length);
+  };
+
   return (
     <main
       className={`sendflow-onboarding${reducedMotion ? ' is-reduced-motion' : ''}`}
       data-accent={slide.accent}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onClick={handleScreenClick}
     >
       <div className="sendflow-onboarding-orbit sendflow-onboarding-orbit-one" aria-hidden="true" />
       <div className="sendflow-onboarding-orbit sendflow-onboarding-orbit-two" aria-hidden="true" />

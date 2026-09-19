@@ -803,6 +803,7 @@
   justify-content: center;
   gap: 2px;
   padding: clamp(26px, 5vh, 58px) 0 20px;
+  cursor: pointer;
   animation: sendflow-onboarding-reveal .48s cubic-bezier(.22, 1, .36, 1) both;
 }
 
