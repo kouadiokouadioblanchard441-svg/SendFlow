@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, Flag, Star } from 'lucide-react';
+import { ArrowLeft, CircleHelp, Download, Star } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { OperatorLogo } from '@/components/transaction-card';
 import { customerServiceProvider } from '@/lib/customer-service';
@@ -190,7 +190,7 @@ export default function TransactionDetailPage() {
             rel="noreferrer"
             data-testid="link-receipt-whatsapp-support"
           >
-            <Flag size={17} strokeWidth={2} aria-hidden="true" />
+            <CircleHelp size={19} strokeWidth={2.2} aria-hidden="true" />
             Besoin d’aide ?
           </a>
         </div>

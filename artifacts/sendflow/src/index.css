@@ -2783,11 +2783,11 @@
   opacity: .52;
 }
 .sendflow-receipt-rate { background: #f7f6f8; color: #3e3942; }
-.sendflow-receipt-report { background: #fdecef; color: #cf3153; }
+.sendflow-receipt-report { background: #ff0000; color: #fff; }
 .sendflow-receipt-rate:hover,
 .sendflow-receipt-rate:focus-visible { background: #ece9ef; outline: 0; }
 .sendflow-receipt-report:hover,
-.sendflow-receipt-report:focus-visible { background: #fbdde4; outline: 0; }
+.sendflow-receipt-report:focus-visible { background: #d90000; outline: 0; }
 .sendflow-receipt-secondary-actions button:active { transform: scale(.985); }
 .sendflow-receipt-secondary-actions a:active { transform: scale(.985); }
 
