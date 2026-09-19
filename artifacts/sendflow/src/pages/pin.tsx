@@ -14,6 +14,7 @@ type PinMode = 'create' | 'enter';
 const PIN_DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
 type PinKey = (typeof PIN_DIGITS)[number] | '' | 'backspace';
 const PIN_LENGTH = 4;
+const PIN_CHANGE_SUCCESS_KEY = 'sendflow.pin.change-success';
 
 function createShuffledKeypad(): PinKey[] {
   const digits = [...PIN_DIGITS];
@@ -412,7 +413,8 @@ export function ChangePinPage() {
       }
 
       await savePin(nextEntry);
-      setLocation('/account');
+      window.sessionStorage.setItem(PIN_CHANGE_SUCCESS_KEY, 'true');
+      setLocation('/change-pin-success');
     } catch {
       setEntry('');
       setError('Une erreur est survenue. Veuillez réessayer.');

@@ -1756,6 +1756,174 @@
   .sendflow-pin-top-character.is-secondary { left: -47px; width: 126px; }
 }
 
+.sendflow-pin-success-shell {
+  min-height: 100dvh;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  border-top: 3px solid #6d35d8;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(219, 198, 255, .38), transparent 32%),
+    #f8f5ff;
+  padding: max(22px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+}
+
+.sendflow-pin-success-card {
+  position: relative;
+  display: flex;
+  width: min(100%, 444px);
+  min-height: calc(100dvh - 49px);
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #fff;
+  padding: 30px 24px 30px;
+  text-align: center;
+}
+
+.sendflow-pin-success-brand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sendflow-pin-success-brand img:first-child {
+  width: 29px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.sendflow-pin-success-brand img:last-child {
+  width: 99px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sendflow-pin-success-art {
+  position: relative;
+  display: grid;
+  width: min(100%, 330px);
+  height: clamp(260px, 42dvh, 360px);
+  place-items: center;
+  margin-top: 15px;
+}
+
+.sendflow-pin-success-art-glow {
+  position: absolute;
+  top: 20%;
+  left: 19%;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(109, 53, 216, .16);
+  filter: blur(38px);
+}
+
+.sendflow-pin-success-art img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(100%, 310px);
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.sendflow-pin-success-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: #e7f8f0;
+  color: #21875e;
+  padding: 8px 13px 8px 9px;
+  font-size: 13px;
+}
+
+.sendflow-pin-success-status > span {
+  display: grid;
+  place-items: center;
+}
+
+.sendflow-pin-success-status strong {
+  font-weight: 750;
+}
+
+.sendflow-pin-success-copy {
+  margin-top: 18px;
+}
+
+.sendflow-pin-success-copy h1 {
+  max-width: 360px;
+  margin: 0;
+  color: #080a0c;
+  font-size: 29px;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  line-height: 1.14;
+}
+
+.sendflow-pin-success-copy p {
+  max-width: 315px;
+  margin: 10px auto 0;
+  color: #56606a;
+  font-size: 16px;
+  line-height: 1.42;
+}
+
+.sendflow-pin-success-action {
+  display: inline-flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: min(100%, 310px);
+  margin-top: auto;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #6d35d8, #5421b8);
+  box-shadow: 0 13px 22px rgba(91, 41, 184, .23);
+  color: #fff;
+  cursor: pointer;
+  padding: 0 21px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 750;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.sendflow-pin-success-action:hover {
+  box-shadow: 0 16px 27px rgba(91, 41, 184, .29);
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+
+.sendflow-pin-success-action:active {
+  box-shadow: 0 8px 14px rgba(91, 41, 184, .2);
+  transform: translateY(1px);
+}
+
+.sendflow-pin-success-action:focus-visible {
+  outline: 3px solid rgba(109, 53, 216, .28);
+  outline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .sendflow-pin-success-card { padding: 27px 20px 24px; }
+  .sendflow-pin-success-art {
+    height: clamp(220px, 36dvh, 300px);
+    margin-top: 8px;
+  }
+  .sendflow-pin-success-art img { width: min(100%, 275px); }
+  .sendflow-pin-success-copy { margin-top: 14px; }
+  .sendflow-pin-success-copy h1 { font-size: 26px; }
+  .sendflow-pin-success-action { margin-top: 24px; }
+}
+
 .sendflow-account-shell {
   min-height: 100dvh;
   display: grid;
