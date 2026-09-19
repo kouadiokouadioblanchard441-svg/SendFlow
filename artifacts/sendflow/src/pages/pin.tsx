@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Delete } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
@@ -88,17 +88,73 @@ function PinKeypad({
   onDigit: (digit: string) => void;
   onDelete: () => void;
 }) {
+  const keyRefs = useRef(new Map<string, HTMLElement>());
+  const previousPositions = useRef(new Map<string, { left: number; top: number }>());
+  const activeAnimations = useRef<Animation[]>([]);
+
+  useLayoutEffect(() => {
+    activeAnimations.current.forEach((animation) => animation.cancel());
+    activeAnimations.current = [];
+
+    const nextPositions = new Map<string, { left: number; top: number }>();
+
+    keys.forEach((key, index) => {
+      const keyId = key === '' ? `empty-${index}` : key;
+      const node = keyRefs.current.get(keyId);
+      if (!node) return;
+
+      const rect = node.getBoundingClientRect();
+      const currentPosition = { left: rect.left, top: rect.top };
+      const previousPosition = previousPositions.current.get(keyId);
+      nextPositions.set(keyId, currentPosition);
+
+      if (!previousPosition || typeof node.animate !== 'function') return;
+
+      const deltaX = previousPosition.left - currentPosition.left;
+      const deltaY = previousPosition.top - currentPosition.top;
+      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return;
+
+      activeAnimations.current.push(node.animate(
+        [
+          { transform: `translate(${deltaX}px, ${deltaY}px)` },
+          { transform: 'translate(0, 0)' },
+        ],
+        {
+          duration: 145,
+          easing: 'cubic-bezier(.22, .8, .32, 1)',
+          fill: 'both',
+        },
+      ));
+    });
+
+    previousPositions.current = nextPositions;
+  }, [keys]);
+
   return (
-    <div key={keys.join('-')} className="sendflow-pin-keypad" aria-label="Pavé numérique">
+    <div className="sendflow-pin-keypad" aria-label="Pavé numérique">
       {keys.map((key, index) => {
+        const keyId = key === '' ? `empty-${index}` : key;
         if (key === '') {
-          return <span key={`empty-${index}`} aria-hidden="true" />;
+          return (
+            <span
+              key={keyId}
+              ref={(node) => {
+                if (node) keyRefs.current.set(keyId, node);
+                else keyRefs.current.delete(keyId);
+              }}
+              aria-hidden="true"
+            />
+          );
         }
 
         if (key === 'backspace') {
           return (
             <button
               key={key}
+              ref={(node) => {
+                if (node) keyRefs.current.set(keyId, node);
+                else keyRefs.current.delete(keyId);
+              }}
               type="button"
               className="sendflow-pin-key sendflow-pin-delete"
               onClick={onDelete}
@@ -113,6 +169,10 @@ function PinKeypad({
         return (
           <button
             key={key}
+            ref={(node) => {
+              if (node) keyRefs.current.set(keyId, node);
+              else keyRefs.current.delete(keyId);
+            }}
             type="button"
             className="sendflow-pin-key"
             onClick={() => onDigit(key)}
