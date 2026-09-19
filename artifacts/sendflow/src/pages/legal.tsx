@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { Link } from 'wouter';
 import { useLocation } from 'wouter';
@@ -34,6 +34,8 @@ const privacySectionContext = createContext(false);
 export type LegalPageProps = {
   supportEmail?: string | null;
 };
+
+type PrivacyLanguage = 'fr' | 'en';
 
 function normalizeSupportEmail(value?: string | null): string {
   return value?.trim() || legalCompanyDetails.email;
@@ -176,7 +178,15 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
   );
 }
 
-function PrivacyLayout({ children }: { children: ReactNode }) {
+function PrivacyLayout({
+  language,
+  onLanguageChange,
+  children,
+}: {
+  language: PrivacyLanguage;
+  onLanguageChange: () => void;
+  children: ReactNode;
+}) {
   const [, setLocation] = useLocation();
 
   const handleBack = () => {
@@ -195,8 +205,8 @@ function PrivacyLayout({ children }: { children: ReactNode }) {
           <button type="button" className="sendflow-privacy-icon-button" onClick={handleBack} aria-label="Retour">
             <ArrowLeft size={24} strokeWidth={1.9} />
           </button>
-          <h1>Politique de confidentialité</h1>
-          <button type="button" className="sendflow-privacy-icon-button is-refresh" onClick={() => window.location.reload()} aria-label="Actualiser la page">
+          <h1>{language === 'fr' ? 'Politique de confidentialité' : 'Privacy Policy'}</h1>
+          <button type="button" className="sendflow-privacy-icon-button is-refresh" onClick={() => window.location.reload()} aria-label={language === 'fr' ? 'Actualiser la page' : 'Refresh page'}>
             <RefreshCw size={23} strokeWidth={2.1} />
           </button>
         </div>
@@ -206,15 +216,24 @@ function PrivacyLayout({ children }: { children: ReactNode }) {
             <img src={sendflowMark} alt="" />
             <img src={sendflowWordmark} alt="SendFlow" />
           </Link>
-          <Link href="/sign-up" className="sendflow-privacy-download">Télécharger l&apos;app</Link>
+          <button
+            type="button"
+            className="sendflow-privacy-language"
+            onClick={onLanguageChange}
+            aria-label={language === 'fr' ? 'Switch to English' : 'Passer en français'}
+            title={language === 'fr' ? 'English' : 'Français'}
+          >
+            <span aria-hidden="true">{language === 'fr' ? '🇫🇷' : '🇬🇧'}</span>
+          </button>
+          <Link href="/sign-up" className="sendflow-privacy-download">{language === 'fr' ? 'Télécharger l&apos;app' : 'Download the app'}</Link>
         </div>
       </header>
 
       <main className="sendflow-privacy-main">
         <article className="sendflow-privacy-article">
           <div className="sendflow-privacy-intro">
-            <h2 className="sendflow-privacy-title">Politique de confidentialité</h2>
-            <p className="sendflow-privacy-date">Version de travail · 10 septembre 2026</p>
+            <h2 className="sendflow-privacy-title">{language === 'fr' ? 'Politique de confidentialité' : 'Privacy Policy'}</h2>
+            <p className="sendflow-privacy-date">{language === 'fr' ? 'Version de travail · 10 septembre 2026' : 'Working version · 10 September 2026'}</p>
           </div>
 
           <div className="sendflow-privacy-content">{children}</div>
@@ -452,12 +471,9 @@ export function TermsPage({ supportEmail }: LegalPageProps) {
   );
 }
 
-export function PrivacyPage({ supportEmail }: LegalPageProps) {
-  const contactEmail = normalizeSupportEmail(supportEmail);
-  const contactAvatars = avatarBank.slice(4, 8);
-
+function PrivacyFrenchContent({ contactEmail }: { contactEmail: string }) {
   return (
-    <PrivacyLayout>
+    <>
       <LegalSection number="01" title="Responsable du traitement">
         <p>Le responsable du traitement présenté dans cette politique est <strong>Flow Digital SARL</strong>, opérateur de la marque SendFlow, établi à Abidjan, Cocody Riviera Palmeraie, Côte d’Ivoire.</p>
         <p>Pour toute question relative aux données personnelles, vous pouvez contacter <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. Lorsqu’un partenaire exécute directement une opération de paiement, il peut agir comme responsable indépendant ou responsable conjoint pour certaines données et présenter sa propre politique.</p>
@@ -599,6 +615,170 @@ export function PrivacyPage({ supportEmail }: LegalPageProps) {
       <LegalSection number="18" title="Date et contact">
         <p>Version de travail publiée le <strong>10 septembre 2026</strong>. Pour toute question, demande de droit ou réclamation relative à la confidentialité : <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>.</p>
       </LegalSection>
+    </>
+  );
+}
+
+function PrivacyEnglishContent({ contactEmail }: { contactEmail: string }) {
+  return (
+    <>
+      <LegalSection number="01" title="Data controller">
+        <p>The controller responsible for the processing described in this policy is <strong>Flow Digital SARL</strong>, operator of the SendFlow brand, established in Abidjan, Cocody Riviera Palmeraie, Côte d’Ivoire.</p>
+        <p>For questions about personal data, contact <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>. When a partner directly executes a payment operation, it may act as an independent or joint controller for certain data and provide its own privacy policy.</p>
+      </LegalSection>
+
+      <LegalSection number="02" title="Scope of this policy">
+        <p>This policy applies to the SendFlow website, application, transfer journeys, transaction tracking, contact forms, service-related communications and associated public pages.</p>
+        <p>It does not replace the policy of a mobile money operator, bank, payment provider, hosting provider or other partner that collects information directly in its own environment. Before confirming a transfer, review the information displayed by the relevant partner.</p>
+      </LegalSection>
+
+      <LegalSection number="03" title="Categories of data collected">
+        <p>Depending on the journey used, SendFlow may process the following categories:</p>
+        <LegalBulletList>
+          <li><strong>Identity and contact data:</strong> first name, last name, phone number, email address, country of residence and communication preferences.</li>
+          <li><strong>Account data:</strong> identifier, login information, consent history, security settings and account status.</li>
+          <li><strong>Transfer data:</strong> country, network, beneficiary, amount, currency, reference, status, date, displayed fees and information needed for reconciliation.</li>
+          <li><strong>Verification data:</strong> supporting documents, know-your-customer information, source of funds and compliance information when required by law or a partner.</li>
+          <li><strong>Technical data:</strong> IP address, device type, operating system, application version, technical identifiers, error logs and security events.</li>
+          <li><strong>Support data:</strong> the content of a request, attachments voluntarily sent, correspondence and information useful for resolving the request.</li>
+          <li><strong>Browsing data:</strong> pages viewed, preferences, language, consents and session information needed for operation.</li>
+        </LegalBulletList>
+        <p>SendFlow does not request a bank password, mobile money PIN or OTP code by email. Never share this information with an agent who requests it outside a secure partner screen.</p>
+      </LegalSection>
+
+      <LegalSection number="04" title="Where data comes from">
+        <p>Data may be provided directly by you, generated while using the service, received from an operator or partner with whom you requested a transfer, or collected automatically from your device and browser.</p>
+        <p>If you enter a beneficiary’s information, you must ensure that you have the right to use it for the requested transfer and, where required, inform the beneficiary about the processing.</p>
+      </LegalSection>
+
+      <LegalSection number="05" title="Purposes and legal bases">
+        <p>Data is used to provide and secure SendFlow, including to:</p>
+        <LegalBulletList>
+          <li>create and manage an account, verify identity and respond to a request;</li>
+          <li>prepare, transmit, track, reconcile or resolve a requested operation;</li>
+          <li>display networks, countries, fees, statuses and information useful to the journey;</li>
+          <li>prevent fraud, detect abusive behaviour and protect users;</li>
+          <li>comply with legal, regulatory, judicial and retention obligations;</li>
+          <li>provide support, handle complaints and improve product reliability;</li>
+          <li>measure site usage and correct errors where authorised and configured;</li>
+          <li>send marketing communications where you have consented or where the law allows it with an opt-out option.</li>
+        </LegalBulletList>
+        <p>Depending on the processing, the legal basis may be performance of a requested service, compliance with a legal obligation, your consent, protection of vital interests, or our legitimate interest in security and service improvement. The exact basis may depend on the country and the partner’s role.</p>
+      </LegalSection>
+
+      <LegalSection number="06" title="Payment and financial data">
+        <p>SendFlow may display or transmit information needed for a transfer, but it should not be considered a vault for your banking data. Card details, secret codes and sensitive identifiers are generally handled by the relevant payment provider or operator in its own environment.</p>
+        <p>When Flow Digital SARL receives a reference, status or reconciliation detail, it uses it to provide the service, support, fraud prevention and proof obligations. Financial information is not used to sell personalised advertising profiles.</p>
+        <div className="sendflow-privacy-detail-group">
+          <section className="sendflow-privacy-detail-section" aria-labelledby="privacy-inter-network-title-en">
+            <h3 id="privacy-inter-network-title-en">Inter-network transfers</h3>
+            <div className="sendflow-privacy-section-art" aria-hidden="true">
+              <img src={privacyArtNetwork} alt="" loading="lazy" decoding="async" />
+            </div>
+            <p>When you prepare an inter-network transfer, SendFlow may process the source operator, the number used for sending, the destination operator, the beneficiary’s number, the amount, fees, the choice of who pays the fees and the operation status.</p>
+            <p>This information is used to check the entered details, prepare the transfer between the relevant networks, show the expected amount, track the operation and respond to a support request. If an operator requires code verification, the code entered in the journey is used only for that step and must never be shared with support.</p>
+          </section>
+
+          <section className="sendflow-privacy-detail-section" aria-labelledby="privacy-deposit-title-en">
+            <h3 id="privacy-deposit-title-en">Deposits into the SendFlow wallet</h3>
+            <div className="sendflow-privacy-section-art" aria-hidden="true">
+              <img src={privacyArtCheck} alt="" loading="lazy" decoding="async" />
+            </div>
+            <p>When you prepare a deposit, SendFlow may process the source operator or payment method, the number used, the amount, fees, the amount expected in the wallet, the status and the confirmation reference when available.</p>
+            <p>This data is used to prepare the deposit request, reconcile the confirmation received from the partner, handle an issue and keep the necessary proof. Your PIN, password and secret identifiers remain confidential and must not be sent to SendFlow by message or email.</p>
+          </section>
+        </div>
+      </LegalSection>
+
+      <LegalSection number="07" title="Sharing with partners and providers">
+        <p>Data may be disclosed only to the extent necessary for a defined purpose, including to:</p>
+        <LegalBulletList>
+          <li>mobile money operators, banks, payment institutions and providers that execute or verify the operation;</li>
+          <li>technical providers for hosting, storage, security, messaging, support and monitoring;</li>
+          <li>identity verification, fraud prevention and compliance providers;</li>
+          <li>professional advisers, auditors and insurers bound by confidentiality;</li>
+          <li>administrative, judicial or regulatory authorities when legally required.</li>
+        </LegalBulletList>
+        <p>Technical providers must receive instructions and access limited to their needs. A named list of providers used for the commercial version must be added before launch, with their roles, processing countries and privacy links.</p>
+      </LegalSection>
+
+      <LegalSection number="08" title="International transfers">
+        <p>Data may be processed in a country different from the one where you use SendFlow when partners or technical providers are established there. Before an international transfer, Flow Digital SARL must assess the applicable framework, contractual safeguards, security measures and information obligations.</p>
+        <p>Payment partners may apply their own rules on location, retention and disclosure. Where required, additional information will be shown in the journey or in the partner’s policy.</p>
+      </LegalSection>
+
+      <LegalSection number="09" title="Data retention">
+        <p>Data is kept for the time needed for the purpose for which it was collected, then deleted, anonymised or archived when the law requires longer retention.</p>
+        <LegalBulletList>
+          <li>account data is kept during the relationship and then for the period needed to handle requests and disputes;</li>
+          <li>transfer data may be kept for periods required by accounting, proof, anti-money-laundering, tax and partner obligations;</li>
+          <li>security logs are kept for a period proportionate to preventing and analysing incidents;</li>
+          <li>support requests are kept for the time needed to handle them and then for quality and proof requirements;</li>
+          <li>consents are kept to demonstrate the date, content and possible withdrawal of the choice.</li>
+        </LegalBulletList>
+        <p>Exact periods will be documented in Flow Digital SARL’s internal records and may vary depending on the product, country and partner involved in the transfer.</p>
+      </LegalSection>
+
+      <LegalSection number="10" title="Security and confidentiality">
+        <p>Flow Digital SARL implements reasonable technical and organisational measures: access controls, limited permissions, encryption where available, logging, backups, environment separation, incident monitoring and awareness for authorised personnel.</p>
+        <p>No service connected to the Internet is entirely risk-free. Use an up-to-date device, protect your phone and email account, enable available security measures and immediately report any suspected compromise.</p>
+      </LegalSection>
+
+      <LegalSection number="11" title="Cookies and similar technologies">
+        <p>SendFlow may use cookies or similar technologies needed for sessions, security, language preferences and site operation. Analytics or diagnostic tools must only be activated in accordance with the choices required by applicable law.</p>
+        <p>You can configure your browser to limit certain cookies. Disabling a strictly necessary cookie may prevent a form, session or security measure from working.</p>
+      </LegalSection>
+
+      <LegalSection number="12" title="Your rights">
+        <p>Depending on the law applicable to your situation, you may request access to your data, correction, updating, deletion where possible, restriction of processing, objection to certain uses, withdrawal of consent or a copy of the information concerning you.</p>
+        <p>To exercise a right, write to <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a> with your name, a way to reply, the precise purpose of the request and, where necessary, information that helps locate the account. Flow Digital SARL may request a reasonable identity check to avoid disclosing data to the wrong person.</p>
+        <p>A request may be limited or refused when retention is required by law, when exercising the right would affect another person’s rights, when a fraud investigation is ongoing or when the partner is the controller responsible for the relevant processing. An explanation will be provided where permitted.</p>
+      </LegalSection>
+
+      <LegalSection number="13" title="Children">
+        <p>SendFlow is not intended for people who cannot legally use a financial or transfer service. We do not knowingly seek to collect a child’s data without the required framework and authorisation.</p>
+        <p>If you believe that a child has sent us information, contact us so that we can review the situation and take appropriate action, subject to retention and proof obligations.</p>
+      </LegalSection>
+
+      <LegalSection number="14" title="Automated decisions and profiling">
+        <p>Automated checks may help detect an anomaly, fraud or compliance risk. They should not be treated as a final decision about you without the review or procedure required by the relevant partner and applicable law.</p>
+        <p>SendFlow does not use transfer data to create an advertising profile of your financial habits. Any significant change to this practice must be explained and, where necessary, consent must be obtained.</p>
+      </LegalSection>
+
+      <LegalSection number="15" title="Data breaches and notifications">
+        <p>If an incident may affect personal data, Flow Digital SARL follows a process for analysis, containment, correction and notification. Authorities, partners and affected people may be informed when required by law or the level of risk.</p>
+        <p>Official notices will be sent through a verifiable channel. Be careful with messages requesting a secret code, an urgent payment or an unnecessary copy of a document.</p>
+      </LegalSection>
+
+      <LegalSection number="16" title="Policy updates">
+        <p>This policy may be amended to reflect a new feature, a new partner, a regulatory change or an improvement to our practices. The latest update date is shown below.</p>
+        <p>For a material change, a notice may be displayed on the website or in the application, and specific consent may be requested where required by law.</p>
+      </LegalSection>
+
+      <LegalSection number="17" title="Indicative regulatory references">
+        <p>Depending on the context, data processing may be governed by Ivorian rules on personal data protection and electronic transactions, UEMOA rules and obligations imposed on payment institutions and partners.</p>
+        <p>Exact references, the competent authority, formalities, transfer bases and retention periods must be confirmed during the legal review of the actual product. This page is not an exhaustive compliance statement.</p>
+      </LegalSection>
+
+      <LegalSection number="18" title="Date and contact">
+        <p>Working version published on <strong>10 September 2026</strong>. For any question, rights request or privacy complaint: <a className="font-bold text-[#5b21b6] underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>.</p>
+      </LegalSection>
+    </>
+  );
+}
+
+export function PrivacyPage({ supportEmail }: LegalPageProps) {
+  const contactEmail = normalizeSupportEmail(supportEmail);
+  const [language, setLanguage] = useState<PrivacyLanguage>('fr');
+
+  return (
+    <PrivacyLayout
+      language={language}
+      onLanguageChange={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')}
+    >
+      {language === 'fr'
+        ? <PrivacyFrenchContent contactEmail={contactEmail} />
+        : <PrivacyEnglishContent contactEmail={contactEmail} />}
     </PrivacyLayout>
   );
 }
