@@ -2741,7 +2741,6 @@
   margin-top: 22px;
 }
 
-.sendflow-receipt-repeat,
 .sendflow-receipt-secondary-actions button {
   display: inline-flex;
   min-height: 56px;
@@ -2757,18 +2756,6 @@
   transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
-.sendflow-receipt-repeat {
-  background: #eadfff;
-  color: #7030d4;
-  box-shadow: 0 4px 12px rgba(112, 48, 212, .08);
-}
-
-.sendflow-receipt-repeat:hover,
-.sendflow-receipt-repeat:focus-visible {
-  background: #dfcffd;
-  outline: 0;
-}
-
 .sendflow-receipt-secondary-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2782,11 +2769,9 @@
 .sendflow-receipt-rate:focus-visible { background: #ece9ef; outline: 0; }
 .sendflow-receipt-report:hover,
 .sendflow-receipt-report:focus-visible { background: #fbdde4; outline: 0; }
-.sendflow-receipt-repeat:active,
 .sendflow-receipt-secondary-actions button:active { transform: scale(.985); }
 
 .sendflow-receipt-icon-button:focus-visible,
-.sendflow-receipt-repeat:focus-visible,
 .sendflow-receipt-secondary-actions button:focus-visible {
   box-shadow: 0 0 0 3px rgba(99, 52, 196, .18);
 }

@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, Flag, Repeat2, Star } from 'lucide-react';
+import { ArrowLeft, Download, Flag, Star } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { OperatorLogo } from '@/components/transaction-card';
 import {
@@ -76,11 +76,6 @@ export default function TransactionDetailPage() {
   if (!transaction || !detail) return <Redirect to="/history" />;
 
   const isDeposit = transaction.kind === 'deposit';
-  const repeatPath = isDeposit
-    ? '/deposit'
-    : transaction.kind === 'international'
-      ? '/international-transfer'
-      : '/inter-transfer';
 
   const handleDownload = () => {
     window.print();
@@ -147,10 +142,6 @@ export default function TransactionDetailPage() {
       </section>
 
       <section className="sendflow-receipt-actions" aria-label="Actions sur la transaction">
-        <button type="button" className="sendflow-receipt-repeat" onClick={() => setLocation(repeatPath)}>
-          <Repeat2 size={19} strokeWidth={2} aria-hidden="true" />
-          Répéter le transfert
-        </button>
         <div className="sendflow-receipt-secondary-actions">
           <button type="button" className="sendflow-receipt-rate" onClick={() => setLocation('/customer-service')}>
             <Star size={17} strokeWidth={2} aria-hidden="true" />
