@@ -883,6 +883,53 @@
   text-align: center;
 }
 
+.sendflow-pricing-illustration {
+  position: relative;
+  display: flex;
+  min-height: 285px;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  margin: 24px 0 0;
+  border-radius: 26px;
+  background: linear-gradient(145deg, #fcfaff 0%, #f6efff 100%);
+  isolation: isolate;
+}
+
+.sendflow-pricing-illustration::before,
+.sendflow-pricing-illustration::after {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, .12);
+  content: '';
+  filter: blur(2px);
+  z-index: -1;
+}
+
+.sendflow-pricing-illustration::before {
+  top: -80px;
+  right: -36px;
+  width: 210px;
+  height: 210px;
+}
+
+.sendflow-pricing-illustration::after {
+  bottom: -98px;
+  left: -46px;
+  width: 220px;
+  height: 220px;
+}
+
+.sendflow-pricing-illustration img {
+  display: block;
+  width: min(100%, 420px);
+  height: auto;
+  max-height: 345px;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: translateY(6px);
+}
+
 .sendflow-pricing-empty {
   padding: 35px 16px;
   color: #8b8393;
