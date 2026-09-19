@@ -68,7 +68,7 @@ export default function HistoryPage() {
               key={transaction.id}
               transaction={transaction}
               className={index === 0 ? 'is-highlighted' : ''}
-              onClick={() => setLocation('/account')}
+              onClick={() => setLocation(`/transaction/${encodeURIComponent(transaction.id)}`)}
               testId={`history-transaction-${transaction.id}`}
             />
           ))}

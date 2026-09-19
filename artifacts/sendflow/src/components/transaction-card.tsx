@@ -10,7 +10,7 @@ const operatorLogos: Partial<Record<OperatorCode, string>> = {
   wave: waveLogo,
 };
 
-function OperatorLogo({ operator }: { operator: OperatorCode }) {
+export function OperatorLogo({ operator }: { operator: OperatorCode }) {
   if (operator === 'sendflow') {
     return (
       <span className="sendflow-transaction-logo is-sendflow">

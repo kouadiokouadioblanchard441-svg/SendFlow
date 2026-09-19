@@ -14,6 +14,7 @@ import AccountLimitPage from '@/pages/account-limit';
 import CustomerServicePage from '@/pages/customer-service';
 import DepositPage from '@/pages/deposit';
 import HistoryPage from '@/pages/history';
+import TransactionDetailPage from '@/pages/transaction-detail';
 import InternationalTransferPage from '@/pages/international-transfer';
 import InterNetworkTransferPage from '@/pages/inter-transfer';
 import NotificationsPage, { NotificationDetailPage } from '@/pages/notifications';
@@ -172,6 +173,7 @@ function App() {
               <Route path="/international-transfer" component={InternationalTransferPage} />
               <Route path="/inter-transfer" component={InterNetworkTransferPage} />
               <Route path="/history" component={HistoryPage} />
+              <Route path="/transaction/:id" component={TransactionDetailPage} />
               <Route path="/notifications/:id" component={NotificationDetailPage} />
               <Route path="/notifications" component={NotificationsPage} />
               <Route

@@ -14,6 +14,22 @@ export type Transaction = {
   amount: string;
 };
 
+export type TransactionDetail = {
+  nature: string;
+  sentAmount: string;
+  fee: string;
+  total: string;
+  senderCountry: string;
+  senderFlag: string;
+  recipientCountry: string;
+  recipientFlag: string;
+  debitedNumber: string;
+  beneficiary: string;
+  status: 'En cours' | 'Réussie' | 'Échouée';
+  dateTime: string;
+  reference: string;
+};
+
 export const operatorNames: Record<OperatorCode, string> = {
   sendflow: 'SendFlow',
   mixx: 'Mixx by Yas',
@@ -95,3 +111,111 @@ export const transactions: Transaction[] = [
     amount: '31 000',
   },
 ];
+
+export const transactionDetails: Record<string, TransactionDetail> = {
+  'sf-001': {
+    nature: "Transfert d'argent",
+    sentAmount: '47 000 Fcfa',
+    fee: '1 000 Fcfa',
+    total: '48 000 Fcfa',
+    senderCountry: "Côte d'Ivoire",
+    senderFlag: '🇨🇮',
+    recipientCountry: 'Cameroun',
+    recipientFlag: '🇨🇲',
+    debitedNumber: DEMO_ACCOUNT.phone,
+    beneficiary: '0576915898',
+    status: 'Réussie',
+    dateTime: '18/09/2026 à 12h55',
+    reference: 'sendflow_sf001_7a3d9c21',
+  },
+  'sf-002': {
+    nature: "Dépôt d'argent",
+    sentAmount: '41 200 Fcfa',
+    fee: '0 Fcfa',
+    total: '41 200 Fcfa',
+    senderCountry: "Côte d'Ivoire",
+    senderFlag: '🇨🇮',
+    recipientCountry: "Côte d'Ivoire",
+    recipientFlag: '🇨🇮',
+    debitedNumber: DEMO_ACCOUNT.phone,
+    beneficiary: 'Wallet SendFlow',
+    status: 'Réussie',
+    dateTime: '17/09/2026 à 08h17',
+    reference: 'sendflow_sf002_2f94b801',
+  },
+  'sf-003': {
+    nature: 'Transfert international',
+    sentAmount: '18 500 Fcfa',
+    fee: '1 500 Fcfa',
+    total: '20 000 Fcfa',
+    senderCountry: "Côte d'Ivoire",
+    senderFlag: '🇨🇮',
+    recipientCountry: 'Cameroun',
+    recipientFlag: '🇨🇲',
+    debitedNumber: DEMO_ACCOUNT.phone,
+    beneficiary: '0585325450',
+    status: 'En cours',
+    dateTime: '16/09/2026 à 18h42',
+    reference: 'sendflow_sf003_6d1e4b0f',
+  },
+  'sf-004': {
+    nature: "Dépôt d'argent",
+    sentAmount: '125 000 Fcfa',
+    fee: '0 Fcfa',
+    total: '125 000 Fcfa',
+    senderCountry: "Côte d'Ivoire",
+    senderFlag: '🇨🇮',
+    recipientCountry: "Côte d'Ivoire",
+    recipientFlag: '🇨🇮',
+    debitedNumber: DEMO_ACCOUNT.phone,
+    beneficiary: 'Wallet SendFlow',
+    status: 'Réussie',
+    dateTime: '16/09/2026 à 22h18',
+    reference: 'sendflow_sf004_9c8a2e44',
+  },
+  'sf-005': {
+    nature: "Transfert d'argent",
+    sentAmount: '32 500 Fcfa',
+    fee: '1 000 Fcfa',
+    total: '33 500 Fcfa',
+    senderCountry: "Côte d'Ivoire",
+    senderFlag: '🇨🇮',
+    recipientCountry: "Côte d'Ivoire",
+    recipientFlag: '🇨🇮',
+    debitedNumber: DEMO_ACCOUNT.phone,
+    beneficiary: '0585325450',
+    status: 'Réussie',
+    dateTime: '21/08/2026 à 20h53',
+    reference: 'sendflow_sf005_4e1f7ac6',
+  },
+  'sf-006': {
+    nature: "Transfert d'argent",
+    sentAmount: '35 000 Fcfa',
+    fee: '1 000 Fcfa',
+    total: '36 000 Fcfa',
+    senderCountry: "Côte d'Ivoire",
+    senderFlag: '🇨🇮',
+    recipientCountry: "Côte d'Ivoire",
+    recipientFlag: '🇨🇮',
+    debitedNumber: DEMO_ACCOUNT.phone,
+    beneficiary: '0585325450',
+    status: 'Réussie',
+    dateTime: '21/08/2026 à 12h32',
+    reference: 'sendflow_sf006_1b7d25e0',
+  },
+  'sf-007': {
+    nature: "Transfert d'argent",
+    sentAmount: '31 000 Fcfa',
+    fee: '1 000 Fcfa',
+    total: '32 000 Fcfa',
+    senderCountry: "Côte d'Ivoire",
+    senderFlag: '🇨🇮',
+    recipientCountry: "Côte d'Ivoire",
+    recipientFlag: '🇨🇮',
+    debitedNumber: DEMO_ACCOUNT.phone,
+    beneficiary: '0595857098',
+    status: 'Réussie',
+    dateTime: '21/08/2026 à 00h08',
+    reference: 'sendflow_sf007_8f2c4d19',
+  },
+};
