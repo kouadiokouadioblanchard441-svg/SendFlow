@@ -2518,9 +2518,19 @@
 @media (max-width: 380px) {
   .sendflow-pin-shell { padding-inline: 12px; }
   .sendflow-pin-card { padding-inline: 16px; }
-  .sendflow-pin-brand { margin-top: 70px; }
-  .sendflow-pin-heading { margin-top: 53px; }
-  .sendflow-pin-keypad { margin-top: 98px; }
+  .sendflow-pin-brand { margin-top: 28px; }
+  .sendflow-pin-heading { margin-top: 22px; }
+  .sendflow-pin-keypad { margin-top: 24px; }
+  .sendflow-pin-key { width: 62px; height: 62px; font-size: 26px; }
+}
+
+@media (max-width: 600px) and (max-height: 700px) {
+  .sendflow-pin-brand { margin-top: 22px; }
+  .sendflow-pin-heading { margin-top: 18px; }
+  .sendflow-pin-dots { margin-top: 16px; }
+  .sendflow-pin-keypad { margin-top: 18px; row-gap: 4px; }
+  .sendflow-pin-key { width: 60px; height: 58px; font-size: 25px; }
+  .sendflow-pin-forgot { margin-top: 16px; }
 }
 
 .sendflow-reset-shell {
