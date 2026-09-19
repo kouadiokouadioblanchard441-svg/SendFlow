@@ -20,7 +20,7 @@ import {
 import { Link, Redirect, useLocation } from 'wouter';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { TransactionCard } from '@/components/transaction-card';
-import { operatorNames, transactions, type Transaction } from '@/lib/transactions';
+import { transactions } from '@/lib/transactions';
 import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 import { DEMO_SESSION_KEY } from '@/lib/demo-account';
@@ -30,7 +30,7 @@ import notificationBell from '@assets/633486_1789677628502.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 
-type SheetName = 'notifications' | 'transaction' | null;
+type SheetName = 'notifications' | null;
 const NOTIFICATIONS_READ_KEY = 'sendflow.notifications.read';
 
 function ActionTile({
@@ -66,7 +66,6 @@ export default function AccountPage() {
     window.sessionStorage.getItem(NOTIFICATIONS_READ_KEY) === 'true' ? 0 : notifications.length
   ));
   const [walletVisible, setWalletVisible] = useState(true);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useSeo({
     path: '/account',
@@ -102,7 +101,6 @@ export default function AccountPage() {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setMenuOpen(false);
-        setSelectedTransaction(null);
         setSheet(null);
       }
     };
@@ -115,14 +113,12 @@ export default function AccountPage() {
 
   const openSheet = (nextSheet: Exclude<SheetName, null>) => {
     setMenuOpen(false);
-    setSelectedTransaction(null);
     setSheet(nextSheet);
   };
 
-  const openTransaction = (transaction: Transaction) => {
+  const openTransaction = (transactionId: string) => {
     setMenuOpen(false);
-    setSelectedTransaction(transaction);
-    setSheet('transaction');
+    setLocation(`/transaction/${encodeURIComponent(transactionId)}`);
   };
 
   const openHistory = () => {
@@ -133,7 +129,6 @@ export default function AccountPage() {
 
   const closePanels = () => {
     setMenuOpen(false);
-    setSelectedTransaction(null);
     setSheet(null);
   };
 
@@ -221,7 +216,7 @@ export default function AccountPage() {
                 <TransactionCard
                   key={transaction.id}
                   transaction={transaction}
-                  onClick={() => openTransaction(transaction)}
+                  onClick={() => openTransaction(transaction.id)}
                   testId={`button-transaction-${transaction.id}`}
                 />
               ))}
@@ -258,8 +253,7 @@ export default function AccountPage() {
           <button type="button" className="sendflow-sheet-backdrop" onClick={closePanels} aria-label="Fermer la fenêtre" data-testid="button-close-sheet-backdrop" />
           <section className="sendflow-action-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
             <div className="sendflow-sheet-handle" aria-hidden="true" />
-             <div className="sendflow-sheet-header"><div><p className="sendflow-section-kicker">SendFlow</p><h2 id="sheet-title">{sheet === 'transaction' ? 'Détail de la transaction' : 'Service client'}</h2></div><button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer" data-testid="button-close-sheet"><X size={20} /></button></div>
-             {sheet === 'transaction' && selectedTransaction && <><p className="sendflow-sheet-text">Cette opération a été enregistrée sur votre compte.</p><div className="sendflow-detail-amount">{selectedTransaction.amount}<small>{selectedTransaction.kind === 'deposit' ? 'Dépôt vers le wallet' : selectedTransaction.kind === 'international' ? 'Transfert international' : 'Transfert inter réseau'}</small></div><div className="sendflow-detail-grid"><span>{selectedTransaction.kind === 'deposit' ? 'Source' : 'Destinataire'}<strong>{selectedTransaction.kind === 'deposit' ? operatorNames[selectedTransaction.fromOperator] : selectedTransaction.recipient}</strong></span><span>Date<strong>{selectedTransaction.date}</strong></span><span>Opérateur<strong>{operatorNames[selectedTransaction.kind === 'deposit' ? selectedTransaction.fromOperator : selectedTransaction.toOperator]}</strong></span><span>Statut<strong className="is-success">Terminé</strong></span></div></>}
+             <div className="sendflow-sheet-header"><div><p className="sendflow-section-kicker">SendFlow</p><h2 id="sheet-title">Service client</h2></div><button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer" data-testid="button-close-sheet"><X size={20} /></button></div>
             {sheet === 'notifications' && <><p className="sendflow-sheet-text">Notre équipe est là pour vous aider.</p><button type="button" className="sendflow-sheet-primary" onClick={() => setSheet(null)} data-testid="button-contact-support">Contacter le support</button></>}
           </section>
         </div>
