@@ -82,7 +82,13 @@ function LegalSection({ number, title, children }: LegalSectionProps) {
       <div className="mt-5 space-y-4 text-[15px] leading-7 text-[#40384c]">
         {illustration && (
           <div className="sendflow-privacy-section-art" aria-hidden="true">
-            <img className={illustration.kind === 'avatar' ? 'is-avatar' : undefined} src={illustration.src} alt="" />
+            <img
+              className={illustration.kind === 'avatar' ? 'is-avatar' : undefined}
+              src={illustration.src}
+              alt=""
+              loading={number === '01' ? 'eager' : 'lazy'}
+              decoding="async"
+            />
           </div>
         )}
         {children}

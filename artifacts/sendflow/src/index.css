@@ -3063,6 +3063,8 @@
   background: #fff;
   color: #17181d;
   font-family: 'Montserrat', var(--app-font-sans), sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 .sendflow-privacy-header {
@@ -3357,7 +3359,8 @@
 }
 
 .sendflow-privacy-content {
-  margin-top: 48px;
+  width: min(100%, 650px);
+  margin: 48px auto 0;
 }
 
 .sendflow-privacy-content > section {
@@ -3375,6 +3378,7 @@
 }
 
 .sendflow-privacy-content > section > h2 {
+  max-width: 680px;
   margin: 0 auto 26px;
   color: #111217;
   font-size: clamp(22px, 5.7vw, 34px);
@@ -3383,6 +3387,7 @@
   line-height: 1.28;
   text-align: center;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 .sendflow-privacy-content > section > h2::before {
@@ -3398,6 +3403,7 @@
   line-height: 1.58;
   text-align: justify;
   text-justify: inter-word;
+  overflow-wrap: anywhere;
 }
 
 .sendflow-privacy-content > section > div p {
@@ -3454,6 +3460,7 @@
 
 .sendflow-privacy-section-art img {
   display: block;
+  max-width: 100%;
   width: 132px;
   height: 104px;
   object-fit: contain;
@@ -3608,5 +3615,32 @@
   .sendflow-privacy-people-avatars {
     min-height: 94px;
     margin-bottom: 5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sendflow-privacy-icon-button,
+  .sendflow-privacy-download {
+    transition: none;
+  }
+}
+
+@media print {
+  .sendflow-privacy-header {
+    position: static;
+    box-shadow: none;
+  }
+
+  .sendflow-privacy-icon-button,
+  .sendflow-privacy-download {
+    display: none;
+  }
+
+  .sendflow-privacy-main {
+    padding: 24px 0;
+  }
+
+  .sendflow-privacy-content > section {
+    break-inside: avoid;
   }
 }
