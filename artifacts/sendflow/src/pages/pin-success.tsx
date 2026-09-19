@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -39,13 +39,6 @@ export default function PinChangeSuccessPage() {
         <div className="sendflow-pin-success-art" aria-hidden="true">
           <span className="sendflow-pin-success-art-glow" />
           <img src={successIllustration} alt="" />
-        </div>
-
-        <div className="sendflow-pin-success-status" role="status">
-          <span aria-hidden="true">
-            <CheckCircle2 size={20} strokeWidth={2.5} />
-          </span>
-          <strong>Modification réussie</strong>
         </div>
 
         <div className="sendflow-pin-success-copy">

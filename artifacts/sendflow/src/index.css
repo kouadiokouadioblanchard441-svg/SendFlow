@@ -1832,29 +1832,8 @@
   object-position: center;
 }
 
-.sendflow-pin-success-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-  border-radius: 999px;
-  background: #e7f8f0;
-  color: #21875e;
-  padding: 8px 13px 8px 9px;
-  font-size: 13px;
-}
-
-.sendflow-pin-success-status > span {
-  display: grid;
-  place-items: center;
-}
-
-.sendflow-pin-success-status strong {
-  font-weight: 750;
-}
-
 .sendflow-pin-success-copy {
-  margin-top: 18px;
+  margin-top: 26px;
 }
 
 .sendflow-pin-success-copy h1 {
