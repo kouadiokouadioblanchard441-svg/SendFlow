@@ -1479,6 +1479,56 @@
   padding: 20px 24px 32px;
 }
 
+.sendflow-pin-card > :not(.sendflow-pin-background-art) {
+  position: relative;
+  z-index: 1;
+}
+
+.sendflow-pin-background-art {
+  position: absolute;
+  z-index: 0;
+  top: clamp(270px, 34dvh, 350px);
+  right: 0;
+  left: 0;
+  height: clamp(250px, 38dvh, 350px);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sendflow-pin-background-glow {
+  position: absolute;
+  top: 22%;
+  left: 24%;
+  width: 52%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(109, 53, 216, .14);
+  filter: blur(44px);
+}
+
+.sendflow-pin-character {
+  position: absolute;
+  display: block;
+  height: auto;
+  mix-blend-mode: multiply;
+  opacity: .12;
+  user-select: none;
+}
+
+.sendflow-pin-character.is-primary {
+  right: -104px;
+  bottom: -82px;
+  width: min(76vw, 310px);
+  transform: rotate(-5deg);
+}
+
+.sendflow-pin-character.is-secondary {
+  bottom: -100px;
+  left: -122px;
+  width: min(72vw, 292px);
+  transform: rotate(5deg) scaleX(-1);
+}
+
 .sendflow-pin-back {
   display: flex;
   align-items: center;
@@ -1664,6 +1714,9 @@
   .sendflow-pin-keypad { margin-top: clamp(24px, 3vh, 38px); row-gap: 8px; }
   .sendflow-pin-key { width: 68px; height: 68px; font-size: 28px; }
   .sendflow-pin-forgot { margin-top: 22px; }
+  .sendflow-pin-background-art { top: 260px; height: 330px; }
+  .sendflow-pin-character.is-primary { right: -120px; width: 290px; }
+  .sendflow-pin-character.is-secondary { left: -142px; width: 270px; }
 }
 
 .sendflow-account-shell {
@@ -2531,6 +2584,9 @@
   .sendflow-pin-keypad { margin-top: 18px; row-gap: 4px; }
   .sendflow-pin-key { width: 60px; height: 58px; font-size: 25px; }
   .sendflow-pin-forgot { margin-top: 16px; }
+  .sendflow-pin-background-art { top: 232px; height: 280px; }
+  .sendflow-pin-character.is-primary { right: -128px; width: 250px; }
+  .sendflow-pin-character.is-secondary { left: -148px; width: 230px; }
 }
 
 .sendflow-reset-shell {

@@ -6,6 +6,8 @@ import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
 import { savePin, verifyPin } from '@/lib/pin-storage';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import pinCharacterPrimary from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
+import pinCharacterSecondary from '@assets/generated_images/sendflow-network-person-3d-transparent.png';
 
 type PinMode = 'create' | 'enter';
 
@@ -109,6 +111,16 @@ function PinKeypad({
   );
 }
 
+function PinBackgroundArt() {
+  return (
+    <div className="sendflow-pin-background-art" aria-hidden="true">
+      <span className="sendflow-pin-background-glow" />
+      <img className="sendflow-pin-character is-primary" src={pinCharacterPrimary} alt="" />
+      <img className="sendflow-pin-character is-secondary" src={pinCharacterSecondary} alt="" />
+    </div>
+  );
+}
+
 export default function PinPage({ mode }: { mode: PinMode }) {
   const [, setLocation] = useLocation();
   const [entry, setEntry] = useState('');
@@ -204,6 +216,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   return (
     <main className="sendflow-pin-shell">
       <section className="sendflow-pin-card" aria-labelledby="pin-title">
+        <PinBackgroundArt />
         <button type="button" className="sendflow-pin-back" onClick={handleBack} aria-label="Retour">
           <ArrowLeft size={25} strokeWidth={1.9} />
           <span>Autre compte</span>
@@ -365,6 +378,7 @@ export function ChangePinPage() {
   return (
     <main className="sendflow-pin-shell">
       <section className="sendflow-pin-card" aria-labelledby="change-pin-title">
+        <PinBackgroundArt />
         <button type="button" className="sendflow-pin-back" onClick={handleBack} aria-label="Retour">
           <ArrowLeft size={25} strokeWidth={1.9} />
           <span>Retour</span>
