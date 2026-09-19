@@ -20,7 +20,7 @@ const legalCompanyDetails = {
   name: 'Flow Digital SARL',
   legalForm: 'Société à responsabilité limitée',
   address: 'Côte d’Ivoire, Abidjan, Cocody Riviera Palmeraie',
-  email: 'support@sendflow.studio',
+  email: 'support@sendflow01.com',
 } as const;
 
 type LegalSectionProps = {
