@@ -15,6 +15,7 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import depositSuccessIllustration from '@assets/generated_images/sendflow-deposit-success-3d-alpha.png';
 import depositFailureIllustration from '@assets/generated_images/sendflow-deposit-failure-3d-alpha.png';
+import depositPendingIllustration from '@assets/generated_images/sendflow-deposit-pending-3d-alpha.png';
 
 type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov';
 
@@ -278,6 +279,9 @@ export default function DepositPage() {
             >
               {requestState === 'pending' && (
                 <div className="sendflow-deposit-request-state">
+                  <div className="sendflow-deposit-pending-art">
+                    <img src={depositPendingIllustration} alt="" />
+                  </div>
                   <div className="sendflow-deposit-pending-dots" aria-label="Validation en cours">
                     <span />
                     <span />
