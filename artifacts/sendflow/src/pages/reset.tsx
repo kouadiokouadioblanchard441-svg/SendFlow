@@ -6,6 +6,8 @@ import { CountryPhoneField } from '@/components/country-phone-field';
 import { savePin } from '@/lib/pin-storage';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import resetPasswordIllustration from '@assets/generated_images/sendflow-reset-password-3d-alpha.png';
+import resetPinIllustration from '@assets/generated_images/sendflow-reset-pin-3d-alpha.png';
 
 type ResetMode = 'password' | 'pin';
 type ResetStep = 'phone' | 'verify' | 'secret';
@@ -144,6 +146,14 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   return (
     <main className="sendflow-reset-shell">
       <section className="sendflow-reset-card" aria-labelledby="reset-title">
+        <div className={`sendflow-reset-art${isPassword ? ' is-password' : ' is-pin'}`} aria-hidden="true">
+          <img
+            src={isPassword ? resetPasswordIllustration : resetPinIllustration}
+            alt=""
+            loading="eager"
+            decoding="async"
+          />
+        </div>
         <div className="sendflow-reset-brand" aria-label="SendFlow">
           <img src={sendflowMark} alt="" className="sendflow-reset-mark" />
           <img src={sendflowWordmark} alt="SendFlow" className="sendflow-reset-wordmark" />
