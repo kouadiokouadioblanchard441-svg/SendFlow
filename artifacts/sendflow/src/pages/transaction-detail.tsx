@@ -136,7 +136,7 @@ export default function TransactionDetailPage() {
 
       <section className="sendflow-receipt-summary" aria-labelledby="receipt-summary-title">
         <div className="sendflow-receipt-summary-copy">
-          <p id="receipt-summary-title" className="sendflow-receipt-total">{detail.total}</p>
+          <p id="receipt-summary-title" className={`sendflow-receipt-total is-${detail.status === 'Échouée' ? 'failed' : detail.status === 'En cours' ? 'pending' : 'success'}`}>{detail.total}</p>
           <p className="sendflow-receipt-recipient">
             {isDeposit ? 'Dépôt sur votre wallet' : `Envoi au ${detail.beneficiary}`}
             <span aria-hidden="true"> • </span>
