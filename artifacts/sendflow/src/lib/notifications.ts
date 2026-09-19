@@ -12,6 +12,15 @@ export type SendFlowNotification = {
 
 export const notifications: SendFlowNotification[] = [
   {
+    id: 'notification-general-demo',
+    type: 'general',
+    operator: 'sendflow',
+    title: 'Une nouvelle information SendFlow est disponible',
+    message: 'Découvrez les nouveautés et les informations importantes de votre compte.',
+    details: 'Cette notification de démonstration montre comment un message général envoyé depuis le futur panel sera présenté. Appuyez sur une notification générale pour lire son contenu complet.',
+    relativeTime: 'à l’instant',
+  },
+  {
     id: 'notification-001',
     operator: 'wave',
     title: 'Votre transfert vers Wave est disponible en réception',

@@ -10,6 +10,7 @@ import { useSeo } from '@/lib/seo';
 
 const operatorLogos: Partial<Record<SendFlowNotification['operator'], string>> = {
   mixx: mixxLogo,
+  sendflow: sendflowMark,
   wave: waveLogo,
 };
 
