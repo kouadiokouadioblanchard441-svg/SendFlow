@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Link } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -48,15 +48,20 @@ const slides = [
 
 function getInitialStep() {
   if (typeof window === 'undefined') return 0;
-  const savedStep = Number.parseInt(window.sessionStorage.getItem(ONBOARDING_STEP_KEY) ?? '', 10);
-  return Number.isFinite(savedStep) ? Math.min(Math.max(savedStep, 0), slides.length - 1) : 0;
+
+  try {
+    const savedStep = Number.parseInt(window.sessionStorage.getItem(ONBOARDING_STEP_KEY) ?? '', 10);
+    return Number.isFinite(savedStep) ? Math.min(Math.max(savedStep, 0), slides.length - 1) : 0;
+  } catch {
+    return 0;
+  }
 }
 
 export default function OnboardingPage() {
-  const [, setLocation] = useLocation();
   const [activeStep, setActiveStep] = useState(getInitialStep);
   const [reducedMotion, setReducedMotion] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const suppressClickUntil = useRef(0);
 
   useSeo({
     path: '/',
@@ -69,7 +74,11 @@ export default function OnboardingPage() {
   const slide = slides[activeStep];
 
   useEffect(() => {
-    window.sessionStorage.setItem(ONBOARDING_STEP_KEY, String(activeStep));
+    try {
+      window.sessionStorage.setItem(ONBOARDING_STEP_KEY, String(activeStep));
+    } catch {
+      // Session storage is optional; onboarding remains usable when it is blocked.
+    }
   }, [activeStep]);
 
   useEffect(() => {
@@ -84,8 +93,14 @@ export default function OnboardingPage() {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const updateMotionPreference = () => setReducedMotion(mediaQuery.matches);
     updateMotionPreference();
-    mediaQuery.addEventListener('change', updateMotionPreference);
-    return () => mediaQuery.removeEventListener('change', updateMotionPreference);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateMotionPreference);
+      return () => mediaQuery.removeEventListener('change', updateMotionPreference);
+    }
+
+    mediaQuery.addListener(updateMotionPreference);
+    return () => mediaQuery.removeListener(updateMotionPreference);
   }, []);
 
   useEffect(() => {
@@ -93,11 +108,11 @@ export default function OnboardingPage() {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        setActiveStep((current) => Math.max(current - 1, 0));
+        setActiveStep((current) => (current - 1 + slides.length) % slides.length);
       }
       if (event.key === 'ArrowRight') {
         event.preventDefault();
-        setActiveStep((current) => Math.min(current + 1, slides.length - 1));
+        setActiveStep((current) => (current + 1) % slides.length);
       }
       if (event.key === 'Home') {
         event.preventDefault();
@@ -114,6 +129,11 @@ export default function OnboardingPage() {
   }, []);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    if (event.touches.length !== 1) {
+      touchStartX.current = null;
+      return;
+    }
+
     touchStartX.current = event.touches[0]?.clientX ?? null;
   };
 
@@ -127,14 +147,17 @@ export default function OnboardingPage() {
     const distance = endX - startX;
     if (Math.abs(distance) < 48) return;
 
+    suppressClickUntil.current = Date.now() + 500;
     setActiveStep((current) =>
       distance < 0
-        ? Math.min(current + 1, slides.length - 1)
-        : Math.max(current - 1, 0),
+        ? (current + 1) % slides.length
+        : (current - 1 + slides.length) % slides.length,
     );
   };
 
   const handleScreenClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (Date.now() < suppressClickUntil.current) return;
+
     const target = event.target;
     if (
       target instanceof Element &&
@@ -150,6 +173,7 @@ export default function OnboardingPage() {
     <main
       className={`sendflow-onboarding${reducedMotion ? ' is-reduced-motion' : ''}`}
       data-accent={slide.accent}
+      style={{ '--onboarding-step-duration': `${ONBOARDING_STEP_DURATION}ms` } as CSSProperties}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onClick={handleScreenClick}
