@@ -85,6 +85,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignUpField, boolean>>>({});
   const [signupCountry, setSignupCountry] = useState<AccountCountry>(DEFAULT_ACCOUNT_COUNTRY);
@@ -115,7 +116,9 @@ export default function SignupPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!canSubmit) return;
+    if (!canSubmit || isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitted(true);
     saveAccountCountry(signupCountry);
     saveAccountProfile({
       ...splitFullName(form.fullName),
@@ -148,7 +151,7 @@ export default function SignupPage() {
             <p>Créons votre compte</p>
           </header>
 
-          <form className="sendflow-signup-form" onSubmit={handleSubmit} noValidate>
+          <form className="sendflow-signup-form" onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
             <div className="sendflow-signup-control">
               <label className={`sendflow-signup-field${visibleError('fullName') ? ' has-error' : ''}`}>
                 <span className="sr-only">Nom et prénom</span>
@@ -255,12 +258,12 @@ export default function SignupPage() {
             <button
               type="submit"
               className="sendflow-signup-submit"
-              disabled={!canSubmit}
+              disabled={!canSubmit || isSubmitting}
             >
-              Créer
+              {isSubmitting ? 'Création…' : 'Créer'}
             </button>
 
-            {submitted && <p className="sendflow-signup-feedback" role="status">Création de votre compte…</p>}
+            {submitted && <p className="sendflow-signup-feedback" role="status" aria-live="polite">Création de votre compte…</p>}
           </form>
 
           <p className="sendflow-signup-login">

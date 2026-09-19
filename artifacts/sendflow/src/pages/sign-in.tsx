@@ -27,6 +27,7 @@ export default function SigninPage() {
   const [form, setForm] = useState<SignInForm>(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignInField, boolean>>>({});
 
@@ -56,7 +57,9 @@ export default function SigninPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!canSubmit) return;
+    if (!canSubmit || isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitted(true);
 
     const isDemoAccount =
       normalizePhone(form.phone) === DEMO_ACCOUNT.phone &&
@@ -97,7 +100,7 @@ export default function SigninPage() {
             <p>Connectez-vous à votre compte</p>
           </header>
 
-          <form className="sendflow-signup-form" onSubmit={handleSubmit} noValidate>
+          <form className="sendflow-signup-form" onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
             <CountryPhoneField
               value={form.phone}
               onChange={(value) => update('phone', value)}
@@ -141,11 +144,11 @@ export default function SigninPage() {
               Mot de passe oublié ?
             </Link>
 
-            <button type="submit" className="sendflow-signup-submit" disabled={!canSubmit}>
-              Se connecter
+            <button type="submit" className="sendflow-signup-submit" disabled={!canSubmit || isSubmitting}>
+              {isSubmitting ? 'Connexion…' : 'Se connecter'}
             </button>
 
-            {submitted && <p className="sendflow-signup-feedback" role="status">Connexion en cours…</p>}
+            {submitted && <p className="sendflow-signup-feedback" role="status" aria-live="polite">Connexion en cours…</p>}
           </form>
 
           <p className="sendflow-signup-login">

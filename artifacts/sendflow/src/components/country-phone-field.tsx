@@ -148,6 +148,7 @@ export function CountryPhoneField({
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
+  const pickerTriggerRef = useRef<HTMLButtonElement>(null);
   const inputId = useId();
 
   const filteredCountries = useMemo(() => {
@@ -160,10 +161,10 @@ export function CountryPhoneField({
 
   useEffect(() => {
     if (!isOpen) {
-      document.body.style.overflow = '';
       return;
     }
 
+    const previousBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     searchRef.current?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -171,7 +172,7 @@ export function CountryPhoneField({
     };
     window.addEventListener('keydown', closeOnEscape);
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousBodyOverflow;
       window.removeEventListener('keydown', closeOnEscape);
     };
   }, [isOpen]);
@@ -186,6 +187,7 @@ export function CountryPhoneField({
     onCountryChange?.(country);
     setIsOpen(false);
     setQuery('');
+    requestAnimationFrame(() => pickerTriggerRef.current?.focus());
   };
 
   return (
@@ -196,6 +198,7 @@ export function CountryPhoneField({
           <button
             type="button"
             className="sendflow-signup-country"
+            ref={pickerTriggerRef}
             onClick={openPicker}
             aria-haspopup="dialog"
             aria-expanded={isOpen}
