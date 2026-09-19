@@ -113,11 +113,17 @@ function PinKeypad({
 
 function PinBackgroundArt() {
   return (
-    <div className="sendflow-pin-background-art" aria-hidden="true">
-      <span className="sendflow-pin-background-glow" />
-      <img className="sendflow-pin-character is-primary" src={pinCharacterPrimary} alt="" />
-      <img className="sendflow-pin-character is-secondary" src={pinCharacterSecondary} alt="" />
-    </div>
+    <>
+      <div className="sendflow-pin-top-art" aria-hidden="true">
+        <img className="sendflow-pin-top-character is-primary" src={pinCharacterPrimary} alt="" />
+        <img className="sendflow-pin-top-character is-secondary" src={pinCharacterSecondary} alt="" />
+      </div>
+      <div className="sendflow-pin-background-art" aria-hidden="true">
+        <span className="sendflow-pin-background-glow" />
+        <img className="sendflow-pin-character is-primary" src={pinCharacterPrimary} alt="" />
+        <img className="sendflow-pin-character is-secondary" src={pinCharacterSecondary} alt="" />
+      </div>
+    </>
   );
 }
 

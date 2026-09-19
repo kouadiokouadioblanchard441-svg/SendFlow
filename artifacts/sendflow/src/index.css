@@ -1479,9 +1479,43 @@
   padding: 20px 24px 32px;
 }
 
-.sendflow-pin-card > :not(.sendflow-pin-background-art) {
+.sendflow-pin-card > :not(.sendflow-pin-background-art):not(.sendflow-pin-top-art) {
   position: relative;
   z-index: 1;
+}
+
+.sendflow-pin-top-art {
+  position: absolute;
+  z-index: 0;
+  top: 57px;
+  right: 0;
+  left: 0;
+  height: 142px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sendflow-pin-top-character {
+  position: absolute;
+  display: block;
+  height: auto;
+  mix-blend-mode: multiply;
+  opacity: .17;
+  user-select: none;
+}
+
+.sendflow-pin-top-character.is-primary {
+  top: 6px;
+  right: -33px;
+  width: 145px;
+  transform: rotate(-8deg);
+}
+
+.sendflow-pin-top-character.is-secondary {
+  top: 11px;
+  left: -37px;
+  width: 138px;
+  transform: rotate(8deg) scaleX(-1);
 }
 
 .sendflow-pin-background-art {
@@ -1502,7 +1536,7 @@
   width: 52%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: rgba(109, 53, 216, .14);
+  background: rgba(109, 53, 216, .18);
   filter: blur(44px);
 }
 
@@ -1511,7 +1545,7 @@
   display: block;
   height: auto;
   mix-blend-mode: multiply;
-  opacity: .12;
+  opacity: .18;
   user-select: none;
 }
 
@@ -1717,6 +1751,9 @@
   .sendflow-pin-background-art { top: 260px; height: 330px; }
   .sendflow-pin-character.is-primary { right: -120px; width: 290px; }
   .sendflow-pin-character.is-secondary { left: -142px; width: 270px; }
+  .sendflow-pin-top-art { top: 53px; height: 132px; }
+  .sendflow-pin-top-character.is-primary { right: -43px; width: 132px; }
+  .sendflow-pin-top-character.is-secondary { left: -47px; width: 126px; }
 }
 
 .sendflow-account-shell {
@@ -2587,6 +2624,9 @@
   .sendflow-pin-background-art { top: 232px; height: 280px; }
   .sendflow-pin-character.is-primary { right: -128px; width: 250px; }
   .sendflow-pin-character.is-secondary { left: -148px; width: 230px; }
+  .sendflow-pin-top-art { top: 48px; height: 118px; }
+  .sendflow-pin-top-character.is-primary { right: -50px; width: 118px; }
+  .sendflow-pin-top-character.is-secondary { left: -54px; width: 112px; }
 }
 
 .sendflow-reset-shell {
