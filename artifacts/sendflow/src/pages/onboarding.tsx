@@ -8,6 +8,7 @@ import howIllustration from '@assets/generated_images/sendflow-how-person-3d-tra
 import coverageIllustration from '@assets/generated_images/sendflow-coverage-person-3d-transparent.png';
 
 const ONBOARDING_STEP_KEY = 'sendflow.onboarding-step';
+const ONBOARDING_STEP_DURATION = 5000;
 
 const slides = [
   {
@@ -60,6 +61,16 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     window.sessionStorage.setItem(ONBOARDING_STEP_KEY, String(activeStep));
+  }, [activeStep]);
+
+  useEffect(() => {
+    if (activeStep >= slides.length - 1) return;
+
+    const timer = window.setTimeout(() => {
+      setActiveStep((current) => Math.min(current + 1, slides.length - 1));
+    }, ONBOARDING_STEP_DURATION);
+
+    return () => window.clearTimeout(timer);
   }, [activeStep]);
 
   useEffect(() => {
@@ -143,7 +154,9 @@ export default function OnboardingPage() {
               onClick={() => setActiveStep(index)}
               aria-label={`Aller à l’étape ${index + 1} : ${item.eyebrow}`}
               aria-current={index === activeStep ? 'step' : undefined}
-            />
+            >
+              <span className="sendflow-onboarding-progress-fill" aria-hidden="true" />
+            </button>
           ))}
         </nav>
 

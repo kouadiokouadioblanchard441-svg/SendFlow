@@ -759,16 +759,17 @@
 
 .sendflow-onboarding-progress-step {
   display: block;
+  position: relative;
   width: 100%;
   height: 5px;
   flex: 1 1 0;
   border: 0;
   border-radius: 999px;
-  background: transparent;
   background: #d7cce8;
   cursor: pointer;
   padding: 0;
-  transition: background-color .22s ease, transform .22s ease;
+  overflow: hidden;
+  transition: transform .22s ease;
 }
 
 .sendflow-onboarding-progress-step:hover,
@@ -777,8 +778,21 @@
   transform: scaleY(1.45);
 }
 
-.sendflow-onboarding-progress-step.is-active,
-.sendflow-onboarding-progress-step.is-complete { background: var(--onboarding-violet); }
+.sendflow-onboarding-progress-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--onboarding-violet);
+}
+
+.sendflow-onboarding-progress-step.is-complete .sendflow-onboarding-progress-fill {
+  width: 100%;
+}
+
+.sendflow-onboarding-progress-step.is-active .sendflow-onboarding-progress-fill {
+  animation: sendflow-onboarding-progress-fill var(--onboarding-step-duration, 5s) linear forwards;
+}
 
 .sendflow-onboarding-content {
   display: flex;
@@ -970,6 +984,11 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes sendflow-onboarding-progress-fill {
+  from { width: 0; }
+  to { width: 100%; }
 }
 
 @media (min-width: 760px) {
