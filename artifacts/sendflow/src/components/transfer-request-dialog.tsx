@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import depositSuccessIllustration from '@assets/generated_images/sendflow-deposit-success-3d-alpha.png';
 import depositFailureIllustration from '@assets/generated_images/sendflow-deposit-failure-3d-alpha.png';
 import depositPendingIllustration from '@assets/generated_images/sendflow-deposit-pending-3d-alpha.png';
@@ -41,6 +42,20 @@ export function TransferRequestDialog({
   failureButtonLabel,
   onClose,
 }: TransferRequestDialogProps) {
+  useEffect(() => {
+    if (state === 'idle') return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, [state]);
+
   if (state === 'idle') return null;
 
   const titleId = `sendflow-${operation.toLowerCase().replace(/\s+/g, '-')}-request-title`;

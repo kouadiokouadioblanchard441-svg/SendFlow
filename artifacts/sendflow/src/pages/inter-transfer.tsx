@@ -483,7 +483,7 @@ export default function InterNetworkTransferPage() {
           amount={recipientAmount.toLocaleString('fr-FR')}
           metaLabel={`${sourceOperator.shortName} → ${destinationOperator.shortName}`}
           metaValue={recipientNumber || 'Bénéficiaire'}
-          pendingCopy="La demande de transfert entre les deux réseaux est en cours de préparation. Aucun montant n’est débité avant la confirmation."
+          pendingCopy="Votre transfert inter-réseau est en attente. Veuillez patienter."
           successTitle="Votre transfert inter réseau est prêt"
           successCopy={`La demande de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${recipientNumber} est prête à être confirmée.`}
           failureTitle="Votre transfert inter réseau n’a pas pu être préparé"

@@ -304,7 +304,7 @@ export default function DepositPage() {
           amount={walletAmount.toLocaleString('fr-FR')}
           metaLabel={operator?.name ?? 'Opérateur'}
           metaValue={operator ? `${accountCountry.dialCode} ${sourceNumber}` : '—'}
-          pendingCopy="Composez le code USSD de votre opérateur sur votre téléphone pour confirmer ce dépôt."
+          pendingCopy="Composez le code USSD sur votre téléphone pour confirmer le dépôt."
           successTitle="Votre dépôt a été crédité avec succès"
           successCopy={`${walletAmount.toLocaleString('fr-FR')} FCFA sont maintenant disponibles dans votre wallet.`}
           failureTitle="Votre dépôt n’a pas pu être confirmé"
