@@ -495,9 +495,17 @@
   position: fixed;
   z-index: 100;
   inset: 0;
+  width: 100%;
+  height: 100svh;
+  min-height: 100svh;
+  max-height: 100svh;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  isolation: isolate;
 }
 
 .sendflow-country-picker-backdrop {
@@ -506,21 +514,25 @@
   border: 0;
   background: rgba(24, 31, 42, .28);
   cursor: default;
+  touch-action: none;
 }
 
 .sendflow-country-sheet {
   position: relative;
   z-index: 1;
   display: flex;
+  box-sizing: border-box;
   width: 100%;
-  height: min(82dvh, 840px);
-  max-height: 82dvh;
+  height: min(82svh, 840px);
+  max-height: calc(100svh - 24px);
+  min-height: 0;
+  flex: 0 0 auto;
   flex-direction: column;
   overflow: hidden;
   border-radius: 22px 22px 0 0;
   background: #fff;
   box-shadow: 0 -8px 32px rgba(20, 28, 44, .12);
-  padding: 31px 16px 0;
+  padding: 31px 16px max(16px, env(safe-area-inset-bottom));
 }
 
 .sendflow-country-search {

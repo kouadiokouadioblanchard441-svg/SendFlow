@@ -165,15 +165,39 @@ export function CountryPhoneField({
       return;
     }
 
+    const root = document.documentElement;
     const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyOverscrollBehavior = document.body.style.overscrollBehavior;
+    const previousRootOverflow = root.style.overflow;
+    const signupShell = document.querySelector<HTMLElement>('.sendflow-signup-shell');
+    const previousShellOverflow = signupShell?.style.overflow;
+    const previousShellOverscrollBehavior = signupShell?.style.overscrollBehavior;
+
+    root.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
-    searchRef.current?.focus();
+    document.body.style.overscrollBehavior = 'none';
+    if (signupShell) {
+      signupShell.style.overflow = 'hidden';
+      signupShell.style.overscrollBehavior = 'none';
+    }
+
+    const isTouchDevice = window.matchMedia?.('(pointer: coarse)').matches;
+    if (!isTouchDevice) {
+      requestAnimationFrame(() => searchRef.current?.focus({ preventScroll: true }));
+    }
+
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsOpen(false);
     };
     window.addEventListener('keydown', closeOnEscape);
     return () => {
+      root.style.overflow = previousRootOverflow;
       document.body.style.overflow = previousBodyOverflow;
+      document.body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+      if (signupShell) {
+        signupShell.style.overflow = previousShellOverflow ?? '';
+        signupShell.style.overscrollBehavior = previousShellOverscrollBehavior ?? '';
+      }
       window.removeEventListener('keydown', closeOnEscape);
     };
   }, [isOpen]);
