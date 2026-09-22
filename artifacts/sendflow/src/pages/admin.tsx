@@ -438,7 +438,7 @@ function UsersPage() {
           {!query.isLoading && !query.isError && items.length === 0 && <EmptyState label="Aucun utilisateur ne correspond à votre recherche." />}
           {!query.isLoading && !query.isError && items.length > 0 && (
             <>
-              <Table>
+              <Table className="sendflow-admin-user-table">
                 <TableHeader><TableRow><TableHead>Utilisateur</TableHead><TableHead>Pays</TableHead><TableHead>Créé le</TableHead><TableHead>Dernière activité</TableHead><TableHead>Wallet</TableHead><TableHead>Solde</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {items.map((user) => (
@@ -575,7 +575,7 @@ function UserDetailPage({ userId }: { userId: string }) {
               {!transactionsQuery.isLoading && !transactionsQuery.isError && transactions.length === 0 && <EmptyState label="Aucune transaction enregistrée pour cet utilisateur." />}
               {!transactionsQuery.isLoading && !transactionsQuery.isError && transactions.length > 0 && (
                 <>
-                  <Table>
+                  <Table className="sendflow-admin-user-transactions-table">
                     <TableHeader><TableRow><TableHead>Référence</TableHead><TableHead>Opération</TableHead><TableHead>Réseau</TableHead><TableHead>Statut</TableHead><TableHead>Montant</TableHead><TableHead>Frais</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {transactions.map((transaction) => (
@@ -766,7 +766,7 @@ function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 
           {!query.isLoading && !query.isError && items.length === 0 && <EmptyState label={emptyLabel} />}
           {!query.isLoading && !query.isError && items.length > 0 && (
             <>
-              <Table>
+              <Table className="sendflow-admin-transactions-table">
                 <TableHeader><TableRow><TableHead>Référence</TableHead><TableHead>Compte source</TableHead><TableHead>Compte destinataire</TableHead><TableHead>Utilisateur</TableHead><TableHead>Opération</TableHead><TableHead>Statut</TableHead><TableHead>Montant</TableHead><TableHead>Frais</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {items.map((transaction) => (
