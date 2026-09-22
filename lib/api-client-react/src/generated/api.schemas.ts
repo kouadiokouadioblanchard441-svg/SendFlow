@@ -206,6 +206,8 @@ export interface AdminTransactionSummary {
   fromOperator: string | null;
   /** @nullable */
   toOperator: string | null;
+  senderPhone: string;
+  recipientPhone: string;
   amountMinor: number;
   feeMinor: number;
   currency: string;
@@ -267,6 +269,49 @@ export interface AdminTransactionPage {
   page: number;
   pageSize: number;
   total: number;
+}
+
+export type AdminTransactionDetailKind = typeof AdminTransactionDetailKind[keyof typeof AdminTransactionDetailKind];
+
+
+export const AdminTransactionDetailKind = {
+  'inter-network': 'inter-network',
+  deposit: 'deposit',
+  international: 'international',
+} as const;
+
+export type AdminTransactionDetailStatus = typeof AdminTransactionDetailStatus[keyof typeof AdminTransactionDetailStatus];
+
+
+export const AdminTransactionDetailStatus = {
+  pending: 'pending',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export interface AdminTransactionDetail {
+  id: string;
+  userId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  userPhone: string | null;
+  kind: AdminTransactionDetailKind;
+  status: AdminTransactionDetailStatus;
+  /** @nullable */
+  fromOperator: string | null;
+  /** @nullable */
+  toOperator: string | null;
+  senderPhone: string;
+  recipientPhone: string;
+  amountMinor: number;
+  feeMinor: number;
+  currency: string;
+  reference: string;
+  /** @nullable */
+  providerReference: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AdminUserDetail {

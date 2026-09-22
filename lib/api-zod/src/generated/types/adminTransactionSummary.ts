@@ -19,6 +19,8 @@ export interface AdminTransactionSummary {
   fromOperator: string | null;
   /** @nullable */
   toOperator: string | null;
+  senderPhone: string;
+  recipientPhone: string;
   amountMinor: bigint;
   feeMinor: bigint;
   currency: string;

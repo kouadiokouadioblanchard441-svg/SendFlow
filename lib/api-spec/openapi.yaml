@@ -387,6 +387,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminTransactionPage"
+        "400":
+          description: Invalid transaction filters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
         "401":
           description: Authentication is required.
           content:
@@ -395,6 +401,53 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "403":
           description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/transactions/{transactionId}:
+    get:
+      operationId: getAdminTransaction
+      tags: [admin]
+      summary: Get a SendFlow transaction detail for administrators
+      description: Returns the persisted transaction endpoints, user, operators, references, amounts, fees, and status for an authorized administrator.
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminTransactionId"
+      responses:
+        "200":
+          description: Transaction detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminTransactionDetail"
+        "400":
+          description: Invalid transaction identifier.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Transaction not found.
           content:
             application/json:
               schema:
@@ -461,6 +514,13 @@ components:
       schema:
         type: string
         minLength: 1
+    AdminTransactionId:
+      name: transactionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   securitySchemes:
     clerkSession:
       type: http
@@ -688,6 +748,10 @@ components:
           type: ["string", "null"]
         toOperator:
           type: ["string", "null"]
+        senderPhone:
+          type: string
+        recipientPhone:
+          type: string
         amountMinor:
           type: integer
           format: int64
@@ -711,6 +775,8 @@ components:
         - status
         - fromOperator
         - toOperator
+        - senderPhone
+        - recipientPhone
         - amountMinor
         - feeMinor
         - currency
@@ -808,6 +874,68 @@ components:
         total:
           type: integer
       required: [items, page, pageSize, total]
+    AdminTransactionDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        userPhone:
+          type: ["string", "null"]
+        kind:
+          type: string
+          enum: [inter-network, deposit, international]
+        status:
+          type: string
+          enum: [pending, succeeded, failed]
+        fromOperator:
+          type: ["string", "null"]
+        toOperator:
+          type: ["string", "null"]
+        senderPhone:
+          type: string
+        recipientPhone:
+          type: string
+        amountMinor:
+          type: integer
+          format: int64
+        feeMinor:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        reference:
+          type: string
+        providerReference:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - displayName
+        - userPhone
+        - kind
+        - status
+        - fromOperator
+        - toOperator
+        - senderPhone
+        - recipientPhone
+        - amountMinor
+        - feeMinor
+        - currency
+        - reference
+        - providerReference
+        - createdAt
+        - updatedAt
     AdminUserDetail:
       type: object
       properties:

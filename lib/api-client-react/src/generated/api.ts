@@ -21,6 +21,7 @@ import type {
 
 import type {
   AdminOverview,
+  AdminTransactionDetail,
   AdminTransactionPage,
   AdminUserDetail,
   AdminUserPage,
@@ -915,6 +916,84 @@ export function useListAdminTransactions<TData = Awaited<ReturnType<typeof listA
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListAdminTransactionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminTransactionUrl = (transactionId: string,) => {
+
+
+
+
+  return `/api/admin/transactions/${transactionId}`
+}
+
+/**
+ * Returns the persisted transaction endpoints, user, operators, references, amounts, fees, and status for an authorized administrator.
+ * @summary Get a SendFlow transaction detail for administrators
+ */
+export const getAdminTransaction = async (transactionId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminTransactionDetail> => {
+
+  return customFetch<AdminTransactionDetail>(getGetAdminTransactionUrl(transactionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminTransactionQueryKey = (transactionId: string,) => {
+    return [
+    `/api/admin/transactions/${transactionId}`
+    ] as const;
+    }
+
+
+export const getGetAdminTransactionQueryOptions = <TData = Awaited<ReturnType<typeof getAdminTransaction>>, TError = ErrorType<ErrorEnvelope>>(transactionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminTransaction>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminTransactionQueryKey(transactionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminTransaction>>> = ({ signal }) => getAdminTransaction(transactionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: transactionId !== null && transactionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminTransaction>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminTransactionQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminTransaction>>>
+export type GetAdminTransactionQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get a SendFlow transaction detail for administrators
+ */
+
+export function useGetAdminTransaction<TData = Awaited<ReturnType<typeof getAdminTransaction>>, TError = ErrorType<ErrorEnvelope>>(
+ transactionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminTransaction>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminTransactionQueryOptions(transactionId,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

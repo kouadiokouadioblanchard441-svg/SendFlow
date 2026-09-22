@@ -259,6 +259,8 @@ export const ListAdminTransactionsResponse = zod.object({
   "status": zod.enum(['pending', 'succeeded', 'failed']),
   "fromOperator": zod.string().nullable(),
   "toOperator": zod.string().nullable(),
+  "senderPhone": zod.string(),
+  "recipientPhone": zod.string(),
   "amountMinor": zod.number().int(),
   "feeMinor": zod.number().int(),
   "currency": zod.string(),
@@ -269,6 +271,35 @@ export const ListAdminTransactionsResponse = zod.object({
   "page": zod.number().int(),
   "pageSize": zod.number().int(),
   "total": zod.number().int()
+})
+
+
+/**
+ * Returns the persisted transaction endpoints, user, operators, references, amounts, fees, and status for an authorized administrator.
+ * @summary Get a SendFlow transaction detail for administrators
+ */
+export const GetAdminTransactionParams = zod.object({
+  "transactionId": zod.coerce.string().uuid()
+})
+
+export const GetAdminTransactionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "userId": zod.string(),
+  "displayName": zod.string().nullable(),
+  "userPhone": zod.string().nullable(),
+  "kind": zod.enum(['inter-network', 'deposit', 'international']),
+  "status": zod.enum(['pending', 'succeeded', 'failed']),
+  "fromOperator": zod.string().nullable(),
+  "toOperator": zod.string().nullable(),
+  "senderPhone": zod.string(),
+  "recipientPhone": zod.string(),
+  "amountMinor": zod.number().int(),
+  "feeMinor": zod.number().int(),
+  "currency": zod.string(),
+  "reference": zod.string(),
+  "providerReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
 })
 
 
