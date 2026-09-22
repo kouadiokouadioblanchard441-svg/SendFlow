@@ -754,13 +754,13 @@
 }
 
 .sendflow-admin-sidebar {
-  border-right: 1px solid #393242 !important;
-  background: #2d2738 !important;
+  border-right: 1px solid rgba(255,255,255,.18) !important;
+  background: var(--admin-violet-deep) !important;
   color: #f9f5ff !important;
 }
 
 .sendflow-admin-sidebar [data-sidebar="sidebar"] {
-  background: #2d2738;
+  background: var(--admin-violet-deep);
 }
 
 .sendflow-admin-sidebar-header {
@@ -838,12 +838,12 @@
 
 .sendflow-admin-sidebar [data-sidebar="menu-button"]:hover,
 .sendflow-admin-sidebar [data-sidebar="menu-button"][data-active="true"] {
-  background: rgba(132,85,227,.2);
+  background: rgba(109,53,216,.72);
   color: #fff;
 }
 
 .sendflow-admin-sidebar [data-sidebar="menu-button"][data-active="true"] {
-  box-shadow: inset 3px 0 0 #a581f2;
+  box-shadow: inset 3px 0 0 #d9c4ff;
 }
 
 .sendflow-admin-sidebar-note {
