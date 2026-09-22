@@ -332,14 +332,16 @@ export function CountryPhoneField({
               )}
             </div>
 
-            <button
-              type="button"
-              className="sendflow-country-close"
-              onClick={() => setIsOpen(false)}
-              aria-label="Fermer le sélectionneur de pays"
-            >
-              <X size={26} strokeWidth={1.7} />
-            </button>
+            <div className="sendflow-country-actions">
+              <button
+                type="button"
+                className="sendflow-country-close"
+                onClick={() => setIsOpen(false)}
+                aria-label="Fermer le sélectionneur de pays"
+              >
+                <X size={26} strokeWidth={1.7} />
+              </button>
+            </div>
           </section>
         </div>
       )}
