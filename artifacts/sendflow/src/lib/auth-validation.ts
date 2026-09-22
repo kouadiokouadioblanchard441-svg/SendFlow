@@ -1,3 +1,5 @@
+import { getPhoneDigitsForCountry, getPhoneLengthMessage, normalizePhoneDigits } from '@/lib/phone-rules';
+
 export type SignUpValidationInput = {
   fullName: string;
   birthDate: string;
@@ -31,12 +33,13 @@ export function normalizePhone(phone: string) {
   return phone.replace(/\D/g, '');
 }
 
-function validatePhone(phone: string) {
-  const digits = normalizePhone(phone);
+function validatePhone(phone: string, dialCode = '+225') {
+  const digits = normalizePhoneDigits(phone);
 
   if (!digits) return 'Le numéro de téléphone est requis.';
-  if (digits.length < 8 || digits.length > 10) {
-    return 'Saisissez un numéro valide de 8 à 10 chiffres.';
+  const expectedDigits = getPhoneDigitsForCountry(dialCode);
+  if (expectedDigits ? digits.length !== expectedDigits : digits.length < 8 || digits.length > 10) {
+    return getPhoneLengthMessage(dialCode);
   }
 
   return undefined;
@@ -74,7 +77,7 @@ function validateBirthDate(birthDate: string) {
   return undefined;
 }
 
-export function validateSignUp(form: SignUpValidationInput): FieldErrors<SignUpField> {
+export function validateSignUp(form: SignUpValidationInput, dialCode = '+225'): FieldErrors<SignUpField> {
   const errors: FieldErrors<SignUpField> = {};
   const fullName = form.fullName.trim().replace(/\s+/g, ' ');
 
@@ -91,7 +94,7 @@ export function validateSignUp(form: SignUpValidationInput): FieldErrors<SignUpF
   const birthDateError = validateBirthDate(form.birthDate);
   if (birthDateError) errors.birthDate = birthDateError;
 
-  const phoneError = validatePhone(form.phone);
+  const phoneError = validatePhone(form.phone, dialCode);
   if (phoneError) errors.phone = phoneError;
 
   const passwordError = validatePassword(form.password);
@@ -110,9 +113,9 @@ export function validateSignUp(form: SignUpValidationInput): FieldErrors<SignUpF
   return errors;
 }
 
-export function validateSignIn(form: SignInValidationInput): FieldErrors<SignInField> {
+export function validateSignIn(form: SignInValidationInput, dialCode = '+225'): FieldErrors<SignInField> {
   const errors: FieldErrors<SignInField> = {};
-  const phoneError = validatePhone(form.phone);
+  const phoneError = validatePhone(form.phone, dialCode);
   const passwordError = validatePassword(form.password);
 
   if (phoneError) errors.phone = phoneError;

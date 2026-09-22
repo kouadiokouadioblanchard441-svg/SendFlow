@@ -16,6 +16,7 @@ import {
   isValidTransactionAmount,
   MAX_TRANSACTION_AMOUNT,
   parseWholeAmount,
+  getPhoneDigitsForCountry,
 } from '@/lib/transfer-validation';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -167,7 +168,9 @@ export default function InternationalTransferPage() {
   const feeAmount = enteredAmount > 0 ? Math.ceil(enteredAmount * INTERNATIONAL_FEE_RATE) : 0;
   const recipientAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
   const walletDebit = payFees ? enteredAmount + feeAmount : enteredAmount;
-  const hasValidRecipient = isValidInternationalPhone(recipientNumber);
+  const hasValidRecipient = isValidInternationalPhone(recipientNumber, country.dialCode);
+  const recipientPhoneDigits = getPhoneDigitsForCountry(country.dialCode);
+  const recipientPhoneMaxDigits = recipientPhoneDigits ?? 15;
   const canSubmit = Boolean(operator)
     && isValidTransactionAmount(enteredAmount)
     && recipientAmount > 0
@@ -298,7 +301,7 @@ export default function InternationalTransferPage() {
                   type="tel"
                   value={recipientNumber}
                   onChange={(event) => {
-                    setRecipientNumber(event.target.value.replace(/\D/g, '').slice(0, 15));
+                    setRecipientNumber(event.target.value.replace(/\D/g, '').slice(0, recipientPhoneMaxDigits));
                     setRequestState('idle');
                     setSubmitAttempted(false);
                   }}
@@ -306,7 +309,7 @@ export default function InternationalTransferPage() {
                   aria-label={`Numéro du bénéficiaire au ${country.name}`}
                   inputMode="tel"
                   autoComplete="tel"
-                  maxLength={18}
+                  maxLength={recipientPhoneMaxDigits}
                   aria-invalid={submitAttempted && !hasValidRecipient}
                 />
                 <span className="sendflow-transfer-flag" aria-label={country.name}>{country.flag}</span>
@@ -318,7 +321,9 @@ export default function InternationalTransferPage() {
             )}
             {submitAttempted && !hasValidRecipient && (
               <p className="sendflow-international-field-error" role="alert">
-                Entrez un numéro valide pour {country.name}.
+                {recipientPhoneDigits
+                  ? `Entrez un numéro de ${recipientPhoneDigits} chiffres pour ${country.name}.`
+                  : `Entrez un numéro valide pour ${country.name}.`}
               </p>
             )}
 

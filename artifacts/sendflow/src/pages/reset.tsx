@@ -4,6 +4,8 @@ import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { savePin } from '@/lib/pin-storage';
+import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
+import { getPhoneLengthMessage, isValidPhoneForCountry } from '@/lib/phone-rules';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import resetPasswordIllustration from '@assets/generated_images/sendflow-reset-password-3d-alpha.png';
@@ -63,6 +65,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   const [step, setStep] = useState<ResetStep>('phone');
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [phoneDialCode, setPhoneDialCode] = useState(DEFAULT_ACCOUNT_COUNTRY.dialCode);
   const [otp, setOtp] = useState(['', '', '', '']);
   const [otpError, setOtpError] = useState('');
   const [newSecret, setNewSecret] = useState('');
@@ -88,9 +91,8 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
 
   const handlePhoneSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 8 || digits.length > 10) {
-      setPhoneError('Saisissez un numéro valide de 8 à 10 chiffres.');
+    if (!isValidPhoneForCountry(phone, phoneDialCode, { min: 8, max: 10 })) {
+      setPhoneError(getPhoneLengthMessage(phoneDialCode));
       return;
     }
     setPhoneError('');
@@ -175,6 +177,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                   setPhoneError('');
                   setPhone(value);
                 }}
+                onCountryChange={(country) => setPhoneDialCode(country.dialCode)}
                 error={phoneError}
                 defaultCountryName="Côte d’Ivoire"
               />

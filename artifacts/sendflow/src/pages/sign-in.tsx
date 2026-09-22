@@ -7,6 +7,7 @@ import { normalizePhone, validateSignIn, type SignInField } from '@/lib/auth-val
 import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
 import { hasPin } from '@/lib/pin-storage';
 import { AVATAR_USER_KEY } from '@/lib/avatar-bank';
+import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import signinIllustration from '@assets/generated_images/sendflow-signin-security-3d-clean.png';
@@ -30,6 +31,7 @@ export default function SigninPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignInField, boolean>>>({});
+  const [phoneDialCode, setPhoneDialCode] = useState(DEFAULT_ACCOUNT_COUNTRY.dialCode);
 
   useSeo({
     path: '/sign-in',
@@ -39,7 +41,7 @@ export default function SigninPage() {
     robots: 'noindex,nofollow',
   });
 
-  const errors = useMemo(() => validateSignIn(form), [form]);
+  const errors = useMemo(() => validateSignIn(form, phoneDialCode), [form, phoneDialCode]);
   const canSubmit = Object.keys(errors).length === 0;
 
   const update = <K extends keyof SignInForm>(key: K, value: SignInForm[K]) => {
@@ -104,6 +106,7 @@ export default function SigninPage() {
             <CountryPhoneField
               value={form.phone}
               onChange={(value) => update('phone', value)}
+              onCountryChange={(country) => setPhoneDialCode(country.dialCode)}
               error={visibleError('phone')}
               onBlur={() => markTouched('phone')}
             />

@@ -98,7 +98,7 @@ export default function SignupPage() {
     robots: 'noindex,nofollow',
   });
 
-  const errors = useMemo(() => validateSignUp(form), [form]);
+  const errors = useMemo(() => validateSignUp(form, signupCountry.dialCode), [form, signupCountry.dialCode]);
   const canSubmit = Object.keys(errors).length === 0;
 
   const update = <K extends keyof SignUpForm>(key: K, value: SignUpForm[K]) => {

@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
+import { getPhoneDigitsForCountry, normalizePhoneDigits } from '@/lib/phone-rules';
 
 export type CountryOption = {
   name: string;
@@ -184,11 +185,15 @@ export function CountryPhoneField({
 
   const selectCountry = (country: CountryOption) => {
     setSelectedCountry(country);
+    const maxDigits = getPhoneDigitsForCountry(country.dialCode) ?? 15;
+    onChange(normalizePhoneDigits(value).slice(0, maxDigits));
     onCountryChange?.(country);
     setIsOpen(false);
     setQuery('');
     requestAnimationFrame(() => pickerTriggerRef.current?.focus());
   };
+
+  const maxPhoneDigits = getPhoneDigitsForCountry(selectedCountry.dialCode) ?? 15;
 
   return (
     <>
@@ -211,11 +216,12 @@ export function CountryPhoneField({
             id={inputId}
             type="tel"
             value={value}
-            onChange={(event) => onChange(event.target.value.replace(/[^\d\s()-]/g, ''))}
+            onChange={(event) => onChange(normalizePhoneDigits(event.target.value).slice(0, maxPhoneDigits))}
             onBlur={onBlur}
             placeholder="Numéro de téléphone"
             autoComplete="tel"
             inputMode="tel"
+            maxLength={maxPhoneDigits}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? `${inputId}-error` : undefined}
             required
