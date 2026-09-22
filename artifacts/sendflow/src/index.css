@@ -1244,16 +1244,41 @@
     padding: 12px;
   }
 
+  .sendflow-admin-login-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 9px;
+    padding: 12px;
+  }
+
   .sendflow-admin-search {
     min-height: 44px;
     border-radius: 11px;
     padding-left: 12px;
   }
 
+  .sendflow-admin-login-toolbar .sendflow-admin-search {
+    width: 100%;
+    min-width: 0;
+  }
+
   .sendflow-admin-search input {
     height: 42px;
     min-width: 0;
     font-size: 14px;
+  }
+
+  .sendflow-admin-login-toolbar .sendflow-admin-date-range {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .sendflow-admin-login-toolbar .sendflow-admin-date-range > div {
+    flex: 1;
+  }
+
+  .sendflow-admin-login-toolbar .sendflow-admin-date-range input {
+    width: 100%;
   }
 
   .sendflow-admin-status-filter {
