@@ -12,6 +12,14 @@ tags:
     description: Health operations
   - name: Storage
     description: Public object storage serving.
+  - name: account
+    description: Authenticated account operations.
+  - name: database
+    description: Development database diagnostics.
+  - name: identity-verification
+    description: Didit identity verification for development and sandbox testing.
+  - name: admin
+    description: Protected SendFlow back-office read operations.
 paths:
   /healthz:
     get:
@@ -58,7 +66,344 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /db-status:
+    get:
+      operationId: databaseHealthCheck
+      tags: [database]
+      summary: Check database connectivity
+      description: Checks connectivity to the configured development database without exposing credentials or database details.
+      responses:
+        "200":
+          description: Database is reachable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatabaseStatus"
+        "503":
+          description: Database is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /me:
+    get:
+      operationId: getCurrentAccount
+      tags: [account]
+      summary: Get the authenticated SendFlow account
+      responses:
+        "200":
+          description: Current account and wallet.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentAccount"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Account storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /me/identity-verification:
+    get:
+      operationId: getIdentityVerificationStatus
+      tags: [identity-verification]
+      summary: Get the current identity verification status
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Current verification status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityVerificationStatusResult"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Verification storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createIdentityVerificationSession
+      tags: [identity-verification]
+      summary: Create a Didit verification session
+      description: Creates a development or sandbox verification session. Didit credentials remain server-side.
+      security:
+        - clerkSession: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentityVerificationSessionRequest"
+      responses:
+        "201":
+          description: Verification session created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityVerificationSessionResult"
+        "200":
+          description: Existing in-progress session reused.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityVerificationSessionResult"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "502":
+          description: Didit is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Didit development credentials are not configured.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /webhooks/didit:
+    post:
+      operationId: receiveDiditWebhook
+      tags: [identity-verification]
+      summary: Receive a signed Didit webhook
+      description: Verifies X-Signature-V2 before applying an idempotent status update.
+      parameters:
+        - name: X-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Unix timestamp sent by Didit. Requests older than five minutes are rejected.
+        - name: X-Signature-V2
+          in: header
+          required: true
+          schema:
+            type: string
+          description: HMAC-SHA256 signature of Didit's canonical JSON payload.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiditWebhookPayload"
+      responses:
+        "200":
+          description: Webhook accepted or recognized as a duplicate.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookReceipt"
+        "400":
+          description: Invalid webhook payload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Invalid webhook signature.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Webhook processing is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/overview:
+    get:
+      operationId: getAdminOverview
+      tags: [admin]
+      summary: Get the SendFlow administration overview
+      description: Returns server-calculated platform metrics for an authorized administrator.
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminFrom"
+        - $ref: "#/components/parameters/AdminTo"
+      responses:
+        "200":
+          description: Administration overview.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List SendFlow users for administrators
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminSearch"
+        - $ref: "#/components/parameters/AdminPage"
+        - $ref: "#/components/parameters/AdminPageSize"
+      responses:
+        "200":
+          description: Paginated users.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserPage"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/transactions:
+    get:
+      operationId: listAdminTransactions
+      tags: [admin]
+      summary: List SendFlow transactions for administrators
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminSearch"
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [inter-network, deposit, international]
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, succeeded, failed]
+        - $ref: "#/components/parameters/AdminFrom"
+        - $ref: "#/components/parameters/AdminTo"
+        - $ref: "#/components/parameters/AdminPage"
+        - $ref: "#/components/parameters/AdminPageSize"
+      responses:
+        "200":
+          description: Paginated transactions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminTransactionPage"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
 components:
+  parameters:
+    AdminFrom:
+      name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Inclusive UTC calendar date.
+    AdminTo:
+      name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Inclusive UTC calendar date.
+    AdminSearch:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 120
+    AdminPage:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    AdminPageSize:
+      name: pageSize
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+  securitySchemes:
+    clerkSession:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     HealthStatus:
       type: object
@@ -74,4 +419,291 @@ components:
           type: string
       required:
         - error
+    DatabaseStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+      required:
+        - status
+    WalletSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+        balanceMinor:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [active, locked, closed]
+      required:
+        - id
+        - currency
+        - balanceMinor
+        - status
+    CurrentAccount:
+      type: object
+      properties:
+        userId:
+          type: string
+        phone:
+          type: ["string", "null"]
+        displayName:
+          type: ["string", "null"]
+        countryCode:
+          type: ["string", "null"]
+        wallet:
+          $ref: "#/components/schemas/WalletSummary"
+      required:
+        - userId
+        - wallet
+    IdentityVerificationStatus:
+      type: string
+      enum: [unverified, pending, review, verified, failed]
+    IdentityVerificationSessionRequest:
+      type: object
+      properties:
+        sandboxScenario:
+          type: string
+          enum: [approve, decline_aml_hit]
+          description: Sandbox-only Didit scenario for development tests.
+    IdentityVerificationSessionResult:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        verificationUrl:
+          type: string
+          format: uri
+        status:
+          $ref: "#/components/schemas/IdentityVerificationStatus"
+        diditStatus:
+          type: string
+        sandboxScenario:
+          type: ["string", "null"]
+        reused:
+          type: boolean
+      required: [sessionId, verificationUrl, status, diditStatus, sandboxScenario, reused]
+    IdentityVerificationStatusResult:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/IdentityVerificationStatus"
+        diditStatus:
+          type: ["string", "null"]
+        sessionId:
+          type: ["string", "null"]
+        verificationUrl:
+          type: ["string", "null"]
+          format: uri
+        sandboxScenario:
+          type: ["string", "null"]
+      required: [status, diditStatus, sessionId, verificationUrl, sandboxScenario]
+    AdminPeriod:
+      type: object
+      properties:
+        from:
+          type: ["string", "null"]
+          format: date
+        to:
+          type: ["string", "null"]
+          format: date
+      required: [from, to]
+    AdminUserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        countryCode:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: ["string", "null"]
+          format: date-time
+        wallet:
+          $ref: "#/components/schemas/AdminWalletSummary"
+      required: [id, displayName, phone, countryCode, createdAt, lastSeenAt, wallet]
+    AdminWalletSummary:
+      type: object
+      properties:
+        currency:
+          type: string
+        balanceMinor:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [active, locked, closed]
+      required: [currency, balanceMinor, status]
+    AdminTransactionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        kind:
+          type: string
+          enum: [inter-network, deposit, international]
+        status:
+          type: string
+          enum: [pending, succeeded, failed]
+        fromOperator:
+          type: ["string", "null"]
+        toOperator:
+          type: ["string", "null"]
+        amountMinor:
+          type: integer
+          format: int64
+        feeMinor:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        reference:
+          type: string
+        providerReference:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - displayName
+        - kind
+        - status
+        - fromOperator
+        - toOperator
+        - amountMinor
+        - feeMinor
+        - currency
+        - reference
+        - providerReference
+        - createdAt
+    AdminOverview:
+      type: object
+      properties:
+        period:
+          $ref: "#/components/schemas/AdminPeriod"
+        users:
+          type: object
+          properties:
+            total:
+              type: integer
+            newInPeriod:
+              type: integer
+          required: [total, newInPeriod]
+        wallets:
+          type: object
+          properties:
+            active:
+              type: integer
+            balanceMinor:
+              type: integer
+              format: int64
+          required: [active, balanceMinor]
+        transactions:
+          type: object
+          properties:
+            total:
+              type: integer
+            succeeded:
+              type: integer
+            pending:
+              type: integer
+            failed:
+              type: integer
+            volumeMinor:
+              type: integer
+              format: int64
+            feesMinor:
+              type: integer
+              format: int64
+          required: [total, succeeded, pending, failed, volumeMinor, feesMinor]
+        deposits:
+          type: object
+          properties:
+            succeeded:
+              type: integer
+            pending:
+              type: integer
+            volumeMinor:
+              type: integer
+              format: int64
+          required: [succeeded, pending, volumeMinor]
+        transfers:
+          type: object
+          properties:
+            succeeded:
+              type: integer
+            pending:
+              type: integer
+            volumeMinor:
+              type: integer
+              format: int64
+          required: [succeeded, pending, volumeMinor]
+      required: [period, users, wallets, transactions, deposits, transfers]
+    AdminUserPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserSummary"
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+      required: [items, page, pageSize, total]
+    AdminTransactionPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminTransactionSummary"
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+      required: [items, page, pageSize, total]
+    DiditWebhookPayload:
+      type: object
+      properties:
+        event_id:
+          type: string
+        session_id:
+          type: string
+        webhook_type:
+          type: string
+        status:
+          type: string
+      required: [event_id, session_id, webhook_type, status]
+    WebhookReceipt:
+      type: object
+      properties:
+        received:
+          type: boolean
+        duplicate:
+          type: boolean
+      required: [received, duplicate]
 

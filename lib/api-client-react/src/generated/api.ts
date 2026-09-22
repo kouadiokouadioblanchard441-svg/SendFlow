@@ -6,22 +6,39 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  AdminOverview,
+  AdminTransactionPage,
+  AdminUserPage,
+  CurrentAccount,
+  DatabaseStatus,
+  DiditWebhookPayload,
   ErrorEnvelope,
-  HealthStatus
+  GetAdminOverviewParams,
+  HealthStatus,
+  IdentityVerificationSessionRequest,
+  IdentityVerificationSessionResult,
+  IdentityVerificationStatusResult,
+  ListAdminTransactionsParams,
+  ListAdminUsersParams,
+  WebhookReceipt
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
-import type { ErrorType } from '../custom-fetch';
+import type { ErrorType , BodyType } from '../custom-fetch';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -190,6 +207,635 @@ export function useGetPublicObject<TData = Awaited<ReturnType<typeof getPublicOb
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPublicObjectQueryOptions(filePath,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDatabaseHealthCheckUrl = () => {
+
+
+
+
+  return `/api/db-status`
+}
+
+/**
+ * Checks connectivity to the configured development database without exposing credentials or database details.
+ * @summary Check database connectivity
+ */
+export const databaseHealthCheck = async ( options?: Parameters<typeof customFetch>[1]): Promise<DatabaseStatus> => {
+
+  return customFetch<DatabaseStatus>(getDatabaseHealthCheckUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDatabaseHealthCheckQueryKey = () => {
+    return [
+    `/api/db-status`
+    ] as const;
+    }
+
+
+export const getDatabaseHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof databaseHealthCheck>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof databaseHealthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDatabaseHealthCheckQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof databaseHealthCheck>>> = ({ signal }) => databaseHealthCheck({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof databaseHealthCheck>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DatabaseHealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof databaseHealthCheck>>>
+export type DatabaseHealthCheckQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Check database connectivity
+ */
+
+export function useDatabaseHealthCheck<TData = Awaited<ReturnType<typeof databaseHealthCheck>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof databaseHealthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDatabaseHealthCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCurrentAccountUrl = () => {
+
+
+
+
+  return `/api/me`
+}
+
+/**
+ * @summary Get the authenticated SendFlow account
+ */
+export const getCurrentAccount = async ( options?: Parameters<typeof customFetch>[1]): Promise<CurrentAccount> => {
+
+  return customFetch<CurrentAccount>(getGetCurrentAccountUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentAccountQueryKey = () => {
+    return [
+    `/api/me`
+    ] as const;
+    }
+
+
+export const getGetCurrentAccountQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentAccount>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentAccountQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentAccount>>> = ({ signal }) => getCurrentAccount({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentAccountQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentAccount>>>
+export type GetCurrentAccountQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get the authenticated SendFlow account
+ */
+
+export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurrentAccount>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentAccountQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetIdentityVerificationStatusUrl = () => {
+
+
+
+
+  return `/api/me/identity-verification`
+}
+
+/**
+ * @summary Get the current identity verification status
+ */
+export const getIdentityVerificationStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<IdentityVerificationStatusResult> => {
+
+  return customFetch<IdentityVerificationStatusResult>(getGetIdentityVerificationStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetIdentityVerificationStatusQueryKey = () => {
+    return [
+    `/api/me/identity-verification`
+    ] as const;
+    }
+
+
+export const getGetIdentityVerificationStatusQueryOptions = <TData = Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetIdentityVerificationStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getIdentityVerificationStatus>>> = ({ signal }) => getIdentityVerificationStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetIdentityVerificationStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getIdentityVerificationStatus>>>
+export type GetIdentityVerificationStatusQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get the current identity verification status
+ */
+
+export function useGetIdentityVerificationStatus<TData = Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetIdentityVerificationStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateIdentityVerificationSessionUrl = () => {
+
+
+
+
+  return `/api/me/identity-verification`
+}
+
+/**
+ * Creates a development or sandbox verification session. Didit credentials remain server-side.
+ * @summary Create a Didit verification session
+ */
+export const createIdentityVerificationSession = async (identityVerificationSessionRequest?: IdentityVerificationSessionRequest, options?: Parameters<typeof customFetch>[1]): Promise<IdentityVerificationSessionResult> => {
+
+  return customFetch<IdentityVerificationSessionResult>(getCreateIdentityVerificationSessionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(identityVerificationSessionRequest)
+  }
+);}
+
+
+
+
+
+export const getCreateIdentityVerificationSessionMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createIdentityVerificationSession>>, TError,{data?: BodyType<IdentityVerificationSessionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createIdentityVerificationSession>>, TError,{data?: BodyType<IdentityVerificationSessionRequest>}, TContext> => {
+
+const mutationKey = ['createIdentityVerificationSession'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createIdentityVerificationSession>>, {data?: BodyType<IdentityVerificationSessionRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createIdentityVerificationSession(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateIdentityVerificationSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createIdentityVerificationSession>>>
+    export type CreateIdentityVerificationSessionMutationBody = BodyType<IdentityVerificationSessionRequest> | undefined
+    export type CreateIdentityVerificationSessionMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Create a Didit verification session
+ */
+export const useCreateIdentityVerificationSession = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createIdentityVerificationSession>>, TError,{data?: BodyType<IdentityVerificationSessionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createIdentityVerificationSession>>,
+        TError,
+        {data?: BodyType<IdentityVerificationSessionRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateIdentityVerificationSessionMutationOptions(options));
+    }
+
+export const getReceiveDiditWebhookUrl = () => {
+
+
+
+
+  return `/api/webhooks/didit`
+}
+
+/**
+ * Verifies X-Signature-V2 before applying an idempotent status update.
+ * @summary Receive a signed Didit webhook
+ */
+export const receiveDiditWebhook = async (diditWebhookPayload: DiditWebhookPayload, options?: Parameters<typeof customFetch>[1]): Promise<WebhookReceipt> => {
+
+  return customFetch<WebhookReceipt>(getReceiveDiditWebhookUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(diditWebhookPayload)
+  }
+);}
+
+
+
+
+
+export const getReceiveDiditWebhookMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveDiditWebhook>>, TError,{data: BodyType<DiditWebhookPayload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveDiditWebhook>>, TError,{data: BodyType<DiditWebhookPayload>}, TContext> => {
+
+const mutationKey = ['receiveDiditWebhook'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveDiditWebhook>>, {data: BodyType<DiditWebhookPayload>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  receiveDiditWebhook(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReceiveDiditWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveDiditWebhook>>>
+    export type ReceiveDiditWebhookMutationBody = BodyType<DiditWebhookPayload>
+    export type ReceiveDiditWebhookMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Receive a signed Didit webhook
+ */
+export const useReceiveDiditWebhook = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveDiditWebhook>>, TError,{data: BodyType<DiditWebhookPayload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof receiveDiditWebhook>>,
+        TError,
+        {data: BodyType<DiditWebhookPayload>},
+        TContext
+      > => {
+      return useMutation(getReceiveDiditWebhookMutationOptions(options));
+    }
+
+export const getGetAdminOverviewUrl = (params?: GetAdminOverviewParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/overview?${stringifiedParams}` : `/api/admin/overview`
+}
+
+/**
+ * Returns server-calculated platform metrics for an authorized administrator.
+ * @summary Get the SendFlow administration overview
+ */
+export const getAdminOverview = async (params?: GetAdminOverviewParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminOverview> => {
+
+  return customFetch<AdminOverview>(getGetAdminOverviewUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminOverviewQueryKey = (params?: GetAdminOverviewParams,) => {
+    return [
+    `/api/admin/overview`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getAdminOverview>>, TError = ErrorType<ErrorEnvelope>>(params?: GetAdminOverviewParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminOverviewQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminOverview>>> = ({ signal }) => getAdminOverview(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminOverview>>>
+export type GetAdminOverviewQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get the SendFlow administration overview
+ */
+
+export function useGetAdminOverview<TData = Awaited<ReturnType<typeof getAdminOverview>>, TError = ErrorType<ErrorEnvelope>>(
+ params?: GetAdminOverviewParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminOverviewQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminUsersUrl = (params?: ListAdminUsersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/users?${stringifiedParams}` : `/api/admin/users`
+}
+
+/**
+ * @summary List SendFlow users for administrators
+ */
+export const listAdminUsers = async (params?: ListAdminUsersParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminUserPage> => {
+
+  return customFetch<AdminUserPage>(getListAdminUsersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminUsersQueryKey = (params?: ListAdminUsersParams,) => {
+    return [
+    `/api/admin/users`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminUsersQueryOptions = <TData = Awaited<ReturnType<typeof listAdminUsers>>, TError = ErrorType<ErrorEnvelope>>(params?: ListAdminUsersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminUsers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminUsersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminUsers>>> = ({ signal }) => listAdminUsers(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminUsers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminUsersQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminUsers>>>
+export type ListAdminUsersQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List SendFlow users for administrators
+ */
+
+export function useListAdminUsers<TData = Awaited<ReturnType<typeof listAdminUsers>>, TError = ErrorType<ErrorEnvelope>>(
+ params?: ListAdminUsersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminUsers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminUsersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminTransactionsUrl = (params?: ListAdminTransactionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/transactions?${stringifiedParams}` : `/api/admin/transactions`
+}
+
+/**
+ * @summary List SendFlow transactions for administrators
+ */
+export const listAdminTransactions = async (params?: ListAdminTransactionsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminTransactionPage> => {
+
+  return customFetch<AdminTransactionPage>(getListAdminTransactionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminTransactionsQueryKey = (params?: ListAdminTransactionsParams,) => {
+    return [
+    `/api/admin/transactions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminTransactions>>, TError = ErrorType<ErrorEnvelope>>(params?: ListAdminTransactionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminTransactionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminTransactions>>> = ({ signal }) => listAdminTransactions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminTransactions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminTransactionsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminTransactions>>>
+export type ListAdminTransactionsQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List SendFlow transactions for administrators
+ */
+
+export function useListAdminTransactions<TData = Awaited<ReturnType<typeof listAdminTransactions>>, TError = ErrorType<ErrorEnvelope>>(
+ params?: ListAdminTransactionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminTransactionsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -26,6 +26,7 @@ import SigninPage from '@/pages/sign-in';
 import SignupPage from '@/pages/sign-up';
 import OnboardingPage from '@/pages/onboarding';
 import { useSeo } from '@/lib/seo';
+import { AdminRouter } from '@/pages/admin';
 
 const queryClient = new QueryClient();
 const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
@@ -156,6 +157,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <Switch>
+              <Route path="/admin/*?" component={AdminRouter} />
               <Route path="/" component={OnboardingPage} />
               <Route path="/sign-in/*?" component={SigninPage} />
               <Route path="/sign-up/*?" component={SignupPage} />

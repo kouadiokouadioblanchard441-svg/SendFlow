@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, X } from 'lucide-react';
 import { getPhoneDigitsForCountry, normalizePhoneDigits } from '@/lib/phone-rules';
 
@@ -292,7 +293,7 @@ export function CountryPhoneField({
         {error && <p id={`${inputId}-error`} className="sendflow-signup-error" role="alert">{error}</p>}
       </div>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div className="sendflow-country-picker" role="presentation">
           <button
             type="button"
@@ -343,7 +344,8 @@ export function CountryPhoneField({
               </button>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

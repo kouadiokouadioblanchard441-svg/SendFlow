@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
-import { accountLimitProvider, formatAccountLimitAmount } from '@/lib/account-limit';
+import { accountLimitProvider, formatAccountLimitAmount, temporaryAccountLimits } from '@/lib/account-limit';
 import { useSeo } from '@/lib/seo';
 import limitVerificationIllustration from '@assets/generated_images/sendflow-account-limit-verification-3d-transparent.png';
 
@@ -10,11 +10,16 @@ export default function AccountLimitPage() {
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountLimit = useMemo(() => accountLimitProvider.getAccountLimit(), []);
   const [verificationStatus, setVerificationStatus] = useState(accountLimit.status);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isStarting, setIsStarting] = useState(false);
   const isPending = verificationStatus === 'pending';
   const isVerified = verificationStatus === 'verified';
   const isFailed = verificationStatus === 'failed';
+  const isReview = verificationStatus === 'review';
   const canStartVerification = verificationStatus === 'unverified' || isFailed;
-  const progress = Math.min(100, Math.max(0, (accountLimit.sentAmount / accountLimit.monthlyLimit) * 100));
+  const displayedAccountLimit = verificationStatus === 'verified' ? temporaryAccountLimits.verified : accountLimit;
+  const progress = Math.min(100, Math.max(0, (displayedAccountLimit.sentAmount / displayedAccountLimit.monthlyLimit) * 100));
 
   useSeo({
     path: '/account-limit',
@@ -29,6 +34,78 @@ export default function AccountLimitPage() {
       setLocation('/sign-in');
     }
   }, [isUnlocked, setLocation]);
+
+  useEffect(() => {
+    if (!isUnlocked) return;
+
+    let cancelled = false;
+    setIsLoading(true);
+    fetch('/api/me/identity-verification', { credentials: 'include' })
+      .then(async (response) => {
+        const body = await response.json().catch(() => null) as { error?: string; status?: typeof verificationStatus } | null;
+        if (!response.ok) {
+          throw new Error(
+            response.status === 401
+              ? 'Votre session sécurisée a expiré. Veuillez vous reconnecter.'
+              : 'Le statut de vérification est temporairement indisponible.',
+          );
+        }
+        return body;
+      })
+      .then((body) => {
+        if (cancelled || !body) return;
+        if (body.status) setVerificationStatus(body.status);
+        setStatusMessage(null);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setStatusMessage(error instanceof Error ? error.message : 'Impossible de charger le statut de vérification.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isUnlocked]);
+
+  const startVerification = async () => {
+    if (isStarting) return;
+    setIsStarting(true);
+    setStatusMessage(null);
+
+    try {
+      const response = await fetch('/api/me/identity-verification', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const body = await response.json().catch(() => null) as { status?: typeof verificationStatus; verificationUrl?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(
+          response.status === 401
+            ? 'Votre session sécurisée a expiré. Veuillez vous reconnecter.'
+            : response.status === 503
+              ? 'Le service de vérification est temporairement indisponible. Veuillez réessayer plus tard.'
+              : 'Impossible de démarrer la vérification pour le moment.',
+        );
+      }
+      if (!body?.verificationUrl) {
+        throw new Error('Didit n’a pas fourni de lien de vérification.');
+      }
+
+      setVerificationStatus(body.status ?? 'pending');
+      window.location.assign(body.verificationUrl);
+    } catch (error: unknown) {
+      setStatusMessage(error instanceof Error ? error.message : 'Impossible de démarrer la vérification.');
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
@@ -62,39 +139,57 @@ export default function AccountLimitPage() {
               role="progressbar"
               aria-label="Montant envoyé sur le plafond mensuel"
               aria-valuemin={0}
-              aria-valuemax={accountLimit.monthlyLimit}
-              aria-valuenow={accountLimit.sentAmount}
+              aria-valuemax={displayedAccountLimit.monthlyLimit}
+              aria-valuenow={displayedAccountLimit.sentAmount}
               data-testid="progress-account-monthly-limit"
             >
               <span style={{ width: `${progress}%` }} />
             </div>
             {!isVerified && (
               <p className="sendflow-account-limit-values" data-testid="text-account-limit-values">
-                <span>{formatAccountLimitAmount(accountLimit.sentAmount)} {accountLimit.currency} envoyé</span>
-                <strong>/ {formatAccountLimitAmount(accountLimit.monthlyLimit)} {accountLimit.currency} total</strong>
+                <span>{formatAccountLimitAmount(displayedAccountLimit.sentAmount)} {displayedAccountLimit.currency} envoyé</span>
+                <strong>/ {formatAccountLimitAmount(displayedAccountLimit.monthlyLimit)} {displayedAccountLimit.currency} total</strong>
               </p>
             )}
           </section>
 
-          {isPending && (
+           {isLoading && (
+             <p className="sendflow-account-limit-status is-loading" role="status" aria-live="polite" data-testid="status-account-limit-loading">
+               Chargement du statut de vérification…
+             </p>
+           )}
+
+           {isPending && !isLoading && (
             <p className="sendflow-account-limit-status is-pending" role="status" aria-live="polite" data-testid="status-account-limit-pending">
-              Vérification en attente
+                Vérification en attente
             </p>
           )}
 
-          {isVerified && (
+           {isReview && !isLoading && (
+             <p className="sendflow-account-limit-status is-review" role="status" aria-live="polite" data-testid="status-account-limit-review">
+               Votre dossier est en cours d’examen
+             </p>
+           )}
+
+           {isVerified && !isLoading && (
             <p className="sendflow-account-limit-status is-verified" role="status" aria-live="polite" data-testid="status-account-limit-verified">
               Vous êtes authentifié
             </p>
           )}
 
-          {isFailed && (
+           {isFailed && !isLoading && (
             <p className="sendflow-account-limit-status is-failed" role="alert" aria-live="assertive" data-testid="status-account-limit-failed">
               La vérification a échoué. Vous pouvez réessayer.
             </p>
           )}
 
-          {canStartVerification && (
+           {statusMessage && (
+             <p className="sendflow-account-limit-status is-error" role="alert" data-testid="status-account-limit-error">
+               {statusMessage}
+             </p>
+           )}
+
+           {canStartVerification && !isLoading && (
             <>
               <p className="sendflow-account-limit-explanation" data-testid="text-account-limit-explanation">
                 Pour augmenter votre plafond veuillez renseigner l'ensemble
@@ -121,14 +216,15 @@ export default function AccountLimitPage() {
           )}
         </div>
 
-        {canStartVerification && (
+         {canStartVerification && !isLoading && (
           <button
             type="button"
             className="sendflow-account-limit-primary"
-            onClick={() => setVerificationStatus('pending')}
+             onClick={startVerification}
+             disabled={isStarting}
             data-testid="button-increase-account-limit"
           >
-            Relever mon plafond
+             {isStarting ? 'Préparation de la vérification…' : 'Relever mon plafond'}
           </button>
         )}
       </section>

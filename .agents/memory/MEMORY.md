@@ -4,3 +4,6 @@
 - [Partner logo sourcing](partner-logo-sourcing.md) — Never substitute one operator’s asset for another; use an explicit wordmark until an approved official logo is available.
 - [SendFlow signup authentication](clerk-phone-signup.md) — The phone-first signup UI stays presentation-only until a compatible real authentication method is confirmed.
 - [Preview session reset](preview-session-reset.md) — App screenshots start a fresh browser session, so sessionStorage cannot be used to target a later onboarding slide.
+- [Mobile overlay positioning](mobile-overlay-positioning.md) — Render full-screen mobile overlays at document level when animated cards could create a fixed-position containing block.
+- [Didit development integration](didit-development.md) — Keep identity verification server-side and sandbox-only until secure provider configuration is available.
+- [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.

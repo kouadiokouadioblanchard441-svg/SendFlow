@@ -13,3 +13,317 @@ export interface ErrorEnvelope {
   error: string;
 }
 
+export type DatabaseStatusStatus = typeof DatabaseStatusStatus[keyof typeof DatabaseStatusStatus];
+
+
+export const DatabaseStatusStatus = {
+  healthy: 'healthy',
+} as const;
+
+export interface DatabaseStatus {
+  status: DatabaseStatusStatus;
+}
+
+export type WalletSummaryStatus = typeof WalletSummaryStatus[keyof typeof WalletSummaryStatus];
+
+
+export const WalletSummaryStatus = {
+  active: 'active',
+  locked: 'locked',
+  closed: 'closed',
+} as const;
+
+export interface WalletSummary {
+  id: string;
+  currency: string;
+  balanceMinor: number;
+  status: WalletSummaryStatus;
+}
+
+export interface CurrentAccount {
+  userId: string;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  displayName?: string | null;
+  /** @nullable */
+  countryCode?: string | null;
+  wallet: WalletSummary;
+}
+
+export type IdentityVerificationStatus = typeof IdentityVerificationStatus[keyof typeof IdentityVerificationStatus];
+
+
+export const IdentityVerificationStatus = {
+  unverified: 'unverified',
+  pending: 'pending',
+  review: 'review',
+  verified: 'verified',
+  failed: 'failed',
+} as const;
+
+/**
+ * Sandbox-only Didit scenario for development tests.
+ */
+export type IdentityVerificationSessionRequestSandboxScenario = typeof IdentityVerificationSessionRequestSandboxScenario[keyof typeof IdentityVerificationSessionRequestSandboxScenario];
+
+
+export const IdentityVerificationSessionRequestSandboxScenario = {
+  approve: 'approve',
+  decline_aml_hit: 'decline_aml_hit',
+} as const;
+
+export interface IdentityVerificationSessionRequest {
+  /** Sandbox-only Didit scenario for development tests. */
+  sandboxScenario?: IdentityVerificationSessionRequestSandboxScenario;
+}
+
+export interface IdentityVerificationSessionResult {
+  sessionId: string;
+  verificationUrl: string;
+  status: IdentityVerificationStatus;
+  diditStatus: string;
+  /** @nullable */
+  sandboxScenario: string | null;
+  reused: boolean;
+}
+
+export interface IdentityVerificationStatusResult {
+  status: IdentityVerificationStatus;
+  /** @nullable */
+  diditStatus: string | null;
+  /** @nullable */
+  sessionId: string | null;
+  /** @nullable */
+  verificationUrl: string | null;
+  /** @nullable */
+  sandboxScenario: string | null;
+}
+
+export interface AdminPeriod {
+  /** @nullable */
+  from: string | null;
+  /** @nullable */
+  to: string | null;
+}
+
+export type AdminWalletSummaryStatus = typeof AdminWalletSummaryStatus[keyof typeof AdminWalletSummaryStatus];
+
+
+export const AdminWalletSummaryStatus = {
+  active: 'active',
+  locked: 'locked',
+  closed: 'closed',
+} as const;
+
+export interface AdminWalletSummary {
+  currency: string;
+  balanceMinor: number;
+  status: AdminWalletSummaryStatus;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  phone: string | null;
+  /** @nullable */
+  countryCode: string | null;
+  createdAt: string;
+  /** @nullable */
+  lastSeenAt: string | null;
+  wallet: AdminWalletSummary;
+}
+
+export type AdminTransactionSummaryKind = typeof AdminTransactionSummaryKind[keyof typeof AdminTransactionSummaryKind];
+
+
+export const AdminTransactionSummaryKind = {
+  'inter-network': 'inter-network',
+  deposit: 'deposit',
+  international: 'international',
+} as const;
+
+export type AdminTransactionSummaryStatus = typeof AdminTransactionSummaryStatus[keyof typeof AdminTransactionSummaryStatus];
+
+
+export const AdminTransactionSummaryStatus = {
+  pending: 'pending',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export interface AdminTransactionSummary {
+  id: string;
+  userId: string;
+  /** @nullable */
+  displayName: string | null;
+  kind: AdminTransactionSummaryKind;
+  status: AdminTransactionSummaryStatus;
+  /** @nullable */
+  fromOperator: string | null;
+  /** @nullable */
+  toOperator: string | null;
+  amountMinor: number;
+  feeMinor: number;
+  currency: string;
+  reference: string;
+  /** @nullable */
+  providerReference: string | null;
+  createdAt: string;
+}
+
+export type AdminOverviewUsers = {
+  total: number;
+  newInPeriod: number;
+};
+
+export type AdminOverviewWallets = {
+  active: number;
+  balanceMinor: number;
+};
+
+export type AdminOverviewTransactions = {
+  total: number;
+  succeeded: number;
+  pending: number;
+  failed: number;
+  volumeMinor: number;
+  feesMinor: number;
+};
+
+export type AdminOverviewDeposits = {
+  succeeded: number;
+  pending: number;
+  volumeMinor: number;
+};
+
+export type AdminOverviewTransfers = {
+  succeeded: number;
+  pending: number;
+  volumeMinor: number;
+};
+
+export interface AdminOverview {
+  period: AdminPeriod;
+  users: AdminOverviewUsers;
+  wallets: AdminOverviewWallets;
+  transactions: AdminOverviewTransactions;
+  deposits: AdminOverviewDeposits;
+  transfers: AdminOverviewTransfers;
+}
+
+export interface AdminUserPage {
+  items: AdminUserSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface AdminTransactionPage {
+  items: AdminTransactionSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface DiditWebhookPayload {
+  event_id: string;
+  session_id: string;
+  webhook_type: string;
+  status: string;
+}
+
+export interface WebhookReceipt {
+  received: boolean;
+  duplicate: boolean;
+}
+
+/**
+ * Inclusive UTC calendar date.
+ */
+export type AdminFromParameter = string;
+
+/**
+ * Inclusive UTC calendar date.
+ */
+export type AdminToParameter = string;
+
+export type AdminSearchParameter = string;
+
+export type AdminPageParameter = number;
+
+export type AdminPageSizeParameter = number;
+
+export type GetAdminOverviewParams = {
+/**
+ * Inclusive UTC calendar date.
+ */
+from?: AdminFromParameter;
+/**
+ * Inclusive UTC calendar date.
+ */
+to?: AdminToParameter;
+};
+
+export type ListAdminUsersParams = {
+/**
+ * @maxLength 120
+ */
+search?: AdminSearchParameter;
+/**
+ * @minimum 1
+ */
+page?: AdminPageParameter;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+pageSize?: AdminPageSizeParameter;
+};
+
+export type ListAdminTransactionsParams = {
+/**
+ * @maxLength 120
+ */
+search?: AdminSearchParameter;
+kind?: ListAdminTransactionsKind;
+status?: ListAdminTransactionsStatus;
+/**
+ * Inclusive UTC calendar date.
+ */
+from?: AdminFromParameter;
+/**
+ * Inclusive UTC calendar date.
+ */
+to?: AdminToParameter;
+/**
+ * @minimum 1
+ */
+page?: AdminPageParameter;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+pageSize?: AdminPageSizeParameter;
+};
+
+export type ListAdminTransactionsKind = typeof ListAdminTransactionsKind[keyof typeof ListAdminTransactionsKind];
+
+
+export const ListAdminTransactionsKind = {
+  'inter-network': 'inter-network',
+  deposit: 'deposit',
+  international: 'international',
+} as const;
+
+export type ListAdminTransactionsStatus = typeof ListAdminTransactionsStatus[keyof typeof ListAdminTransactionsStatus];
+
+
+export const ListAdminTransactionsStatus = {
+  pending: 'pending',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+

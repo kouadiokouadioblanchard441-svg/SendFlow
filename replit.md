@@ -25,6 +25,8 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 - Les parcours d’inscription et de connexion sont la porte d’entrée publique de l’application.
 - Les anciennes surfaces de présentation ont été retirées du produit ; les prochaines fonctionnalités doivent être ajoutées derrière l’accès applicatif.
+- La base PostgreSQL actuellement branchée dans Replit est exclusivement dédiée au développement et aux tests de SendFlow. Elle ne doit pas recevoir de données de production ni servir à des transferts d’argent réels.
+- La base de production destinée à Plesk sera une cible séparée, avec ses propres variables d’environnement, secrets, données et procédure de migration contrôlée.
 
 ## Product
 

@@ -27,3 +27,206 @@ export const GetPublicObjectParams = zod.object({
 export const GetPublicObjectResponse = zod.unknown()
 
 
+/**
+ * Checks connectivity to the configured development database without exposing credentials or database details.
+ * @summary Check database connectivity
+ */
+export const DatabaseHealthCheckResponse = zod.object({
+  "status": zod.enum(['healthy'])
+})
+
+
+/**
+ * @summary Get the authenticated SendFlow account
+ */
+export const GetCurrentAccountResponse = zod.object({
+  "userId": zod.string(),
+  "phone": zod.string().nullish(),
+  "displayName": zod.string().nullish(),
+  "countryCode": zod.string().nullish(),
+  "wallet": zod.object({
+  "id": zod.string().uuid(),
+  "currency": zod.string(),
+  "balanceMinor": zod.number().int(),
+  "status": zod.enum(['active', 'locked', 'closed'])
+})
+})
+
+
+/**
+ * @summary Get the current identity verification status
+ */
+export const GetIdentityVerificationStatusResponse = zod.object({
+  "status": zod.enum(['unverified', 'pending', 'review', 'verified', 'failed']),
+  "diditStatus": zod.string().nullable(),
+  "sessionId": zod.string().nullable(),
+  "verificationUrl": zod.string().url().nullable(),
+  "sandboxScenario": zod.string().nullable()
+})
+
+
+/**
+ * Creates a development or sandbox verification session. Didit credentials remain server-side.
+ * @summary Create a Didit verification session
+ */
+export const CreateIdentityVerificationSessionBody = zod.object({
+  "sandboxScenario": zod.enum(['approve', 'decline_aml_hit']).optional().describe('Sandbox-only Didit scenario for development tests.')
+})
+
+export const CreateIdentityVerificationSessionResponse = zod.object({
+  "sessionId": zod.string(),
+  "verificationUrl": zod.string().url(),
+  "status": zod.enum(['unverified', 'pending', 'review', 'verified', 'failed']),
+  "diditStatus": zod.string(),
+  "sandboxScenario": zod.string().nullable(),
+  "reused": zod.boolean()
+})
+
+
+/**
+ * Verifies X-Signature-V2 before applying an idempotent status update.
+ * @summary Receive a signed Didit webhook
+ */
+export const ReceiveDiditWebhookHeader = zod.object({
+  "X-Timestamp": zod.string().describe('Unix timestamp sent by Didit. Requests older than five minutes are rejected.'),
+  "X-Signature-V2": zod.string().describe('HMAC-SHA256 signature of Didit\'s canonical JSON payload.')
+})
+
+export const ReceiveDiditWebhookBody = zod.object({
+  "event_id": zod.string(),
+  "session_id": zod.string(),
+  "webhook_type": zod.string(),
+  "status": zod.string()
+})
+
+export const ReceiveDiditWebhookResponse = zod.object({
+  "received": zod.boolean(),
+  "duplicate": zod.boolean()
+})
+
+
+/**
+ * Returns server-calculated platform metrics for an authorized administrator.
+ * @summary Get the SendFlow administration overview
+ */
+export const GetAdminOverviewQueryParams = zod.object({
+  "from": zod.date().optional().describe('Inclusive UTC calendar date.'),
+  "to": zod.date().optional().describe('Inclusive UTC calendar date.')
+})
+
+export const GetAdminOverviewResponse = zod.object({
+  "period": zod.object({
+  "from": zod.coerce.date().nullable(),
+  "to": zod.coerce.date().nullable()
+}),
+  "users": zod.object({
+  "total": zod.number().int(),
+  "newInPeriod": zod.number().int()
+}),
+  "wallets": zod.object({
+  "active": zod.number().int(),
+  "balanceMinor": zod.number().int()
+}),
+  "transactions": zod.object({
+  "total": zod.number().int(),
+  "succeeded": zod.number().int(),
+  "pending": zod.number().int(),
+  "failed": zod.number().int(),
+  "volumeMinor": zod.number().int(),
+  "feesMinor": zod.number().int()
+}),
+  "deposits": zod.object({
+  "succeeded": zod.number().int(),
+  "pending": zod.number().int(),
+  "volumeMinor": zod.number().int()
+}),
+  "transfers": zod.object({
+  "succeeded": zod.number().int(),
+  "pending": zod.number().int(),
+  "volumeMinor": zod.number().int()
+})
+})
+
+
+/**
+ * @summary List SendFlow users for administrators
+ */
+export const listAdminUsersQuerySearchMax = 120;
+
+export const listAdminUsersQueryPageDefault = 1;
+
+export const listAdminUsersQueryPageSizeDefault = 20;
+export const listAdminUsersQueryPageSizeMax = 50;
+
+
+
+export const ListAdminUsersQueryParams = zod.object({
+  "search": zod.coerce.string().max(listAdminUsersQuerySearchMax).optional(),
+  "page": zod.coerce.number().int().min(1).default(listAdminUsersQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listAdminUsersQueryPageSizeMax).default(listAdminUsersQueryPageSizeDefault)
+})
+
+export const ListAdminUsersResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "displayName": zod.string().nullable(),
+  "phone": zod.string().nullable(),
+  "countryCode": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "lastSeenAt": zod.coerce.date().nullable(),
+  "wallet": zod.object({
+  "currency": zod.string(),
+  "balanceMinor": zod.number().int(),
+  "status": zod.enum(['active', 'locked', 'closed'])
+})
+})),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "total": zod.number().int()
+})
+
+
+/**
+ * @summary List SendFlow transactions for administrators
+ */
+export const listAdminTransactionsQuerySearchMax = 120;
+
+export const listAdminTransactionsQueryPageDefault = 1;
+
+export const listAdminTransactionsQueryPageSizeDefault = 20;
+export const listAdminTransactionsQueryPageSizeMax = 50;
+
+
+
+export const ListAdminTransactionsQueryParams = zod.object({
+  "search": zod.coerce.string().max(listAdminTransactionsQuerySearchMax).optional(),
+  "kind": zod.enum(['inter-network', 'deposit', 'international']).optional(),
+  "status": zod.enum(['pending', 'succeeded', 'failed']).optional(),
+  "from": zod.date().optional().describe('Inclusive UTC calendar date.'),
+  "to": zod.date().optional().describe('Inclusive UTC calendar date.'),
+  "page": zod.coerce.number().int().min(1).default(listAdminTransactionsQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listAdminTransactionsQueryPageSizeMax).default(listAdminTransactionsQueryPageSizeDefault)
+})
+
+export const ListAdminTransactionsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "userId": zod.string(),
+  "displayName": zod.string().nullable(),
+  "kind": zod.enum(['inter-network', 'deposit', 'international']),
+  "status": zod.enum(['pending', 'succeeded', 'failed']),
+  "fromOperator": zod.string().nullable(),
+  "toOperator": zod.string().nullable(),
+  "amountMinor": zod.number().int(),
+  "feeMinor": zod.number().int(),
+  "currency": zod.string(),
+  "reference": zod.string(),
+  "providerReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+})),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "total": zod.number().int()
+})
+
+
