@@ -366,8 +366,8 @@ export default function InternationalTransferPage() {
           metaLabel={operator?.name ?? 'Opérateur'}
           metaValue={`${country.dialCode} ${recipientNumber}`}
           pendingCopy="Votre traitement est en attente du montant. Veuillez patienter."
-          successTitle="Votre transfert international est prêt"
-          successCopy={`La demande de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${country.name} est prête à être confirmée.`}
+          successTitle="Votre transfert international est confirmé"
+          successCopy={`Le transfert de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${country.name} a été confirmé avec succès.`}
           failureTitle="Votre transfert international n’a pas pu être préparé"
           failureCopy="Aucun montant n’a été débité. Vérifiez les informations du bénéficiaire puis réessayez."
           cancelLabel="Annuler l’envoi international"
