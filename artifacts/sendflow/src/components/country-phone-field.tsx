@@ -166,19 +166,35 @@ export function CountryPhoneField({
     }
 
     const root = document.documentElement;
+    const pageScrollY = window.scrollY;
     const previousBodyOverflow = document.body.style.overflow;
     const previousBodyOverscrollBehavior = document.body.style.overscrollBehavior;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyTop = document.body.style.top;
+    const previousBodyLeft = document.body.style.left;
+    const previousBodyRight = document.body.style.right;
+    const previousBodyWidth = document.body.style.width;
     const previousRootOverflow = root.style.overflow;
     const signupShell = document.querySelector<HTMLElement>('.sendflow-signup-shell');
     const previousShellOverflow = signupShell?.style.overflow;
     const previousShellOverscrollBehavior = signupShell?.style.overscrollBehavior;
+    const previousShellTouchAction = signupShell?.style.touchAction;
+    const shellScrollTop = signupShell?.scrollTop ?? 0;
 
     root.style.overflow = 'hidden';
+    root.style.overscrollBehavior = 'none';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${pageScrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
     document.body.style.overscrollBehavior = 'none';
     if (signupShell) {
       signupShell.style.overflow = 'hidden';
       signupShell.style.overscrollBehavior = 'none';
+      signupShell.style.touchAction = 'none';
+      signupShell.scrollTop = shellScrollTop;
     }
 
     const isTouchDevice = window.matchMedia?.('(pointer: coarse)').matches;
@@ -186,19 +202,40 @@ export function CountryPhoneField({
       requestAnimationFrame(() => searchRef.current?.focus({ preventScroll: true }));
     }
 
+    const preventBackgroundScroll = (event: TouchEvent | WheelEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('.sendflow-country-list')) {
+        return;
+      }
+
+      event.preventDefault();
+    };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsOpen(false);
     };
+    document.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
+    document.addEventListener('wheel', preventBackgroundScroll, { passive: false });
     window.addEventListener('keydown', closeOnEscape);
     return () => {
       root.style.overflow = previousRootOverflow;
+      root.style.overscrollBehavior = '';
+      document.body.style.position = previousBodyPosition;
+      document.body.style.top = previousBodyTop;
+      document.body.style.left = previousBodyLeft;
+      document.body.style.right = previousBodyRight;
+      document.body.style.width = previousBodyWidth;
       document.body.style.overflow = previousBodyOverflow;
       document.body.style.overscrollBehavior = previousBodyOverscrollBehavior;
       if (signupShell) {
         signupShell.style.overflow = previousShellOverflow ?? '';
         signupShell.style.overscrollBehavior = previousShellOverscrollBehavior ?? '';
+        signupShell.style.touchAction = previousShellTouchAction ?? '';
+        signupShell.scrollTop = shellScrollTop;
       }
+      document.removeEventListener('touchmove', preventBackgroundScroll);
+      document.removeEventListener('wheel', preventBackgroundScroll);
       window.removeEventListener('keydown', closeOnEscape);
+      window.scrollTo(0, pageScrollY);
     };
   }, [isOpen]);
 
