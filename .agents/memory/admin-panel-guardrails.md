@@ -32,3 +32,9 @@ The admin console must use real icon components or approved image assets for fin
 **Why:** Financial operations need recognizable, consistent symbols on mobile and desktop, and an operator logo must never be faked with another partner’s branding.
 
 **How to apply:** Prefer Lucide icons for generic concepts, use only approved operator assets when available, and use a clearly generic icon for operators without an approved logo.
+
+The login-activity view records one event per Clerk session when the authenticated account endpoint is called. It stores the server-observed IP, user-agent-derived device/browser/OS, and city only when supplied by a trusted proxy header; missing location stays explicit.
+
+**Why:** IP geolocation is personal-data processing and proxy infrastructure may not provide a reliable city. A guessed city is worse than an honest unknown.
+
+**How to apply:** Keep location source visible in the data model, do not invent a city, and use an approved server-side geolocation provider only after privacy, retention, and error behavior are defined.

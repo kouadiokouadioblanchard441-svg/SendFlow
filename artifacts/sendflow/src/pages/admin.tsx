@@ -19,9 +19,14 @@ import {
   Globe2,
   Landmark,
   LayoutDashboard,
+  LogIn,
+  MapPin,
+  Monitor,
   Radio,
   Search,
   ShieldCheck,
+  Smartphone,
+  Tablet,
   UserRound,
   Users,
   WalletCards,
@@ -35,6 +40,7 @@ import {
   useGetAdminUser,
   useGetAdminOverview,
   useListAdminTransactions,
+  useListAdminLoginActivity,
   useListAdminUsers,
 } from '@workspace/api-client-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -81,7 +87,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -92,6 +98,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   deposits: { title: 'Dépôts', eyebrow: 'Flux entrants' },
   international: { title: 'Transferts internationaux', eyebrow: 'Flux sortants' },
   transfers: { title: 'Transferts', eyebrow: 'Flux sortants' },
+  'login-activity': { title: 'Connexions', eyebrow: 'Sécurité' },
 };
 
 const navItems: Array<{ href: string; label: string; section: AdminSection; icon: typeof LayoutDashboard }> = [
@@ -101,6 +108,7 @@ const navItems: Array<{ href: string; label: string; section: AdminSection; icon
   { href: '/admin/deposits', label: 'Dépôts', section: 'deposits', icon: ArrowDownToLine },
   { href: '/admin/international', label: 'International', section: 'international', icon: Globe2 },
   { href: '/admin/transfers', label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
+  { href: '/admin/login-activity', label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
 ];
 
 function formatMoney(minor: number | undefined, currency = 'XOF') {
@@ -791,6 +799,139 @@ function TransactionDetailPage({ transactionId }: { transactionId: string }) {
   );
 }
 
+function LoginActivityPage() {
+  const [search, setSearch] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const params = useMemo(() => ({
+    ...(search ? { search } : {}),
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+    page,
+    pageSize,
+  }), [search, from, to, page]);
+  const query = useListAdminLoginActivity(params);
+  const result = query.data;
+  const items = result?.items ?? [];
+
+  const deviceIcon = (deviceType: string) => {
+    if (deviceType === 'mobile') return Smartphone;
+    if (deviceType === 'tablet') return Tablet;
+    return Monitor;
+  };
+
+  return (
+    <AdminShell section="login-activity">
+      <div className="sendflow-admin-page-intro sendflow-admin-list-intro">
+        <div>
+          <p className="sendflow-admin-overline">Sécurité et traçabilité</p>
+          <h2 data-testid="heading-admin-login-activity-list">Connexions utilisateurs</h2>
+          <p className="sendflow-admin-subtitle">
+            Une ligne est enregistrée par session Clerk détectée par SendFlow, avec les métadonnées réseau et appareil disponibles.
+          </p>
+        </div>
+        <div className="sendflow-admin-readonly-chip"><ShieldCheck className="size-4" /> Données sensibles</div>
+      </div>
+      <Card className="sendflow-admin-list-card">
+        <CardContent className="p-0">
+          <div className="sendflow-admin-login-toolbar">
+            <div className="sendflow-admin-search">
+              <Search className="size-4" />
+              <Input
+                value={search}
+                onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+                placeholder="Rechercher utilisateur, IP, ville ou session"
+                aria-label="Rechercher une connexion"
+                data-testid="input-admin-login-activity-search"
+              />
+            </div>
+            <DateRange
+              from={from}
+              to={to}
+              setFrom={(value) => { setFrom(value); setPage(1); }}
+              setTo={(value) => { setTo(value); setPage(1); }}
+            />
+          </div>
+          {query.isLoading && <div className="sendflow-admin-table-skeleton" data-testid="loading-admin-login-activity">{Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-12 w-full" />)}</div>}
+          {query.isError && <div className="p-5"><QueryState error={query.error} onRetry={() => void query.refetch()} /></div>}
+          {!query.isLoading && !query.isError && items.length === 0 && <EmptyState label="Aucune connexion enregistrée pour ces filtres." />}
+          {!query.isLoading && !query.isError && items.length > 0 && (
+            <>
+              <Table className="sendflow-admin-login-table">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Utilisateur</TableHead>
+                    <TableHead>Connexion</TableHead>
+                    <TableHead>Emplacement</TableHead>
+                    <TableHead>Appareil</TableHead>
+                    <TableHead>Navigateur et système</TableHead>
+                    <TableHead>Session</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item) => {
+                    const DeviceIcon = deviceIcon(item.deviceType);
+                    const location = [item.city, item.region, item.countryCode || item.countryName].filter(Boolean).join(', ');
+                    return (
+                      <TableRow key={item.id} data-testid={`row-admin-login-event-${item.id}`}>
+                        <TableCell>
+                          <div className="sendflow-admin-reference-cell">
+                            <Link href={`/admin/users/${item.userId}`} className="sendflow-admin-detail-link">
+                              <strong data-testid={`text-login-user-${item.id}`}>{item.displayName || 'Nom non renseigné'}</strong>
+                            </Link>
+                            <small>{item.phone || item.userId}</small>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-reference-cell">
+                            <strong data-testid={`text-login-date-${item.id}`}>{formatDate(item.createdAt)}</strong>
+                            <small>Session détectée</small>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-login-location">
+                            <MapPin className="size-4" aria-hidden="true" />
+                            <div>
+                              <strong data-testid={`text-login-location-${item.id}`}>{location || 'Localisation indisponible'}</strong>
+                              <small data-testid={`text-login-ip-${item.id}`}>{item.ipAddress}</small>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-login-device">
+                            <DeviceIcon className="size-4" aria-hidden="true" />
+                            <span>{item.deviceType}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-reference-cell">
+                            <strong>{item.browser}</strong>
+                            <small>{item.operatingSystem}</small>
+                            {item.userAgent && <small className="sendflow-admin-login-user-agent" title={item.userAgent}>{item.userAgent}</small>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-reference-cell">
+                            <strong className="sendflow-admin-login-session" title={item.sessionId}>{item.sessionId}</strong>
+                            <small>{item.locationSource ? `Localisation : ${item.locationSource}` : 'Ville non fournie par le proxy'}</small>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              <Pager page={result?.page ?? page} pageSize={result?.pageSize ?? pageSize} total={result?.total ?? 0} onPage={setPage} />
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </AdminShell>
+  );
+}
+
 function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 'international' | 'transfers' }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
@@ -887,6 +1028,7 @@ export function AdminRouter() {
   const [isDeposits] = useRoute('/admin/deposits');
   const [isInternational] = useRoute('/admin/international');
   const [isTransfers] = useRoute('/admin/transfers');
+  const [isLoginActivity] = useRoute('/admin/login-activity');
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -895,5 +1037,6 @@ export function AdminRouter() {
   if (isDeposits) return <TransactionsPage section="deposits" />;
   if (isInternational) return <TransactionsPage section="international" />;
   if (isTransfers) return <TransactionsPage section="transfers" />;
+  if (isLoginActivity) return <LoginActivityPage />;
   return <OverviewPage />;
 }

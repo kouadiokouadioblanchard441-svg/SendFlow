@@ -301,6 +301,40 @@ export interface AdminTransactionPage {
   total: number;
 }
 
+export interface AdminLoginActivity {
+  id: string;
+  userId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  phone: string | null;
+  sessionId: string;
+  ipAddress: string;
+  /** @nullable */
+  city: string | null;
+  /** @nullable */
+  region: string | null;
+  /** @nullable */
+  countryCode: string | null;
+  /** @nullable */
+  countryName: string | null;
+  /** @nullable */
+  locationSource: string | null;
+  deviceType: string;
+  browser: string;
+  operatingSystem: string;
+  /** @nullable */
+  userAgent: string | null;
+  createdAt: string;
+}
+
+export interface AdminLoginActivityPage {
+  items: AdminLoginActivity[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
 export type AdminTransactionDetailKind = typeof AdminTransactionDetailKind[keyof typeof AdminTransactionDetailKind];
 
 
@@ -489,6 +523,34 @@ from?: AdminFromParameter;
  * Inclusive UTC calendar date.
  */
 to?: AdminToParameter;
+};
+
+export type ListAdminLoginActivityParams = {
+/**
+ * @maxLength 120
+ */
+search?: AdminSearchParameter;
+/**
+ * @minLength 1
+ */
+userId?: AdminUserIdFilterParameter;
+/**
+ * Inclusive UTC calendar date.
+ */
+from?: AdminFromParameter;
+/**
+ * Inclusive UTC calendar date.
+ */
+to?: AdminToParameter;
+/**
+ * @minimum 1
+ */
+page?: AdminPageParameter;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+pageSize?: AdminPageSizeParameter;
 };
 
 export type ListAdminUsersParams = {

@@ -2,11 +2,12 @@ import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { GetCurrentAccountResponse } from "@workspace/api-zod";
 import { db, eq, usersTable, walletsTable } from "@workspace/db";
+import { recordLoginActivity } from "../lib/login-activity";
 
 const router: IRouter = Router();
 
 router.get("/me", async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
+  const { userId, sessionId } = getAuth(req);
 
   if (!userId) {
     res.status(401).json({ error: "Authentication required" });
@@ -53,6 +54,10 @@ router.get("/me", async (req, res): Promise<void> => {
 
       if (!user || !wallet) {
         throw new Error("Account could not be initialized");
+      }
+
+      if (sessionId) {
+        await recordLoginActivity(req, user.id, sessionId, tx);
       }
 
       return {

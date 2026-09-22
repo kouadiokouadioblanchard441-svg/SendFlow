@@ -149,6 +149,54 @@ export const GetAdminOverviewResponse = zod.object({
 
 
 /**
+ * Returns server-recorded session starts with network and device metadata for an authorized administrator.
+ * @summary List authenticated user sessions
+ */
+export const listAdminLoginActivityQuerySearchMax = 120;
+
+
+export const listAdminLoginActivityQueryPageDefault = 1;
+
+export const listAdminLoginActivityQueryPageSizeDefault = 20;
+export const listAdminLoginActivityQueryPageSizeMax = 50;
+
+
+
+export const ListAdminLoginActivityQueryParams = zod.object({
+  "search": zod.coerce.string().max(listAdminLoginActivityQuerySearchMax).optional(),
+  "userId": zod.coerce.string().min(1).optional(),
+  "from": zod.date().optional().describe('Inclusive UTC calendar date.'),
+  "to": zod.date().optional().describe('Inclusive UTC calendar date.'),
+  "page": zod.coerce.number().int().min(1).default(listAdminLoginActivityQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listAdminLoginActivityQueryPageSizeMax).default(listAdminLoginActivityQueryPageSizeDefault)
+})
+
+export const ListAdminLoginActivityResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "userId": zod.string(),
+  "displayName": zod.string().nullable(),
+  "phone": zod.string().nullable(),
+  "sessionId": zod.string(),
+  "ipAddress": zod.string(),
+  "city": zod.string().nullable(),
+  "region": zod.string().nullable(),
+  "countryCode": zod.string().nullable(),
+  "countryName": zod.string().nullable(),
+  "locationSource": zod.string().nullable(),
+  "deviceType": zod.string(),
+  "browser": zod.string(),
+  "operatingSystem": zod.string(),
+  "userAgent": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+})),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "total": zod.number().int()
+})
+
+
+/**
  * @summary List SendFlow users for administrators
  */
 export const listAdminUsersQuerySearchMax = 120;

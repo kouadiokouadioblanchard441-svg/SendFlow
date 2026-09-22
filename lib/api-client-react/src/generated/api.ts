@@ -21,6 +21,7 @@ import type {
 
 import type {
   AdminActionResult,
+  AdminLoginActivityPage,
   AdminOverview,
   AdminTransactionDetail,
   AdminTransactionPage,
@@ -38,6 +39,7 @@ import type {
   IdentityVerificationSessionRequest,
   IdentityVerificationSessionResult,
   IdentityVerificationStatusResult,
+  ListAdminLoginActivityParams,
   ListAdminTransactionsParams,
   ListAdminUsersParams,
   WebhookReceipt
@@ -674,6 +676,91 @@ export function useGetAdminOverview<TData = Awaited<ReturnType<typeof getAdminOv
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAdminOverviewQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminLoginActivityUrl = (params?: ListAdminLoginActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/login-activity?${stringifiedParams}` : `/api/admin/login-activity`
+}
+
+/**
+ * Returns server-recorded session starts with network and device metadata for an authorized administrator.
+ * @summary List authenticated user sessions
+ */
+export const listAdminLoginActivity = async (params?: ListAdminLoginActivityParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminLoginActivityPage> => {
+
+  return customFetch<AdminLoginActivityPage>(getListAdminLoginActivityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminLoginActivityQueryKey = (params?: ListAdminLoginActivityParams,) => {
+    return [
+    `/api/admin/login-activity`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminLoginActivityQueryOptions = <TData = Awaited<ReturnType<typeof listAdminLoginActivity>>, TError = ErrorType<ErrorEnvelope>>(params?: ListAdminLoginActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminLoginActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminLoginActivityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminLoginActivity>>> = ({ signal }) => listAdminLoginActivity(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminLoginActivity>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminLoginActivityQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminLoginActivity>>>
+export type ListAdminLoginActivityQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List authenticated user sessions
+ */
+
+export function useListAdminLoginActivity<TData = Awaited<ReturnType<typeof listAdminLoginActivity>>, TError = ErrorType<ErrorEnvelope>>(
+ params?: ListAdminLoginActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminLoginActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminLoginActivityQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -973,9 +973,17 @@
 .sendflow-admin-currency-note strong { color: var(--admin-violet); font-size: 18px; letter-spacing: -.02em; }
 .sendflow-admin-list-card { border: 1px solid var(--admin-line); background: var(--admin-surface); box-shadow: 0 7px 20px rgba(63,45,82,.035); }
 .sendflow-admin-filterbar { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--admin-line); padding: 15px; }
+.sendflow-admin-login-toolbar { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--admin-line); padding: 15px; }
 .sendflow-admin-search { display: flex; min-width: 240px; flex: 1; align-items: center; gap: 9px; border: 1px solid var(--admin-line); border-radius: 9px; background: #fbf9fc; color: var(--admin-muted); padding-left: 11px; }
 .sendflow-admin-search input { height: 37px; border: 0; background: transparent; box-shadow: none; font-size: 12px; }
 .sendflow-admin-status-filter { width: 160px; height: 37px; font-size: 12px; }
+.sendflow-admin-login-toolbar .sendflow-admin-date-range { flex: 0 0 auto; box-shadow: none; }
+.sendflow-admin-login-location, .sendflow-admin-login-device { display: inline-flex; align-items: center; gap: 7px; color: var(--admin-violet-deep); }
+.sendflow-admin-login-location > div { display: flex; flex-direction: column; gap: 3px; }
+.sendflow-admin-login-location strong, .sendflow-admin-login-device span { color: var(--admin-ink); font-size: 12px; font-weight: 700; }
+.sendflow-admin-login-location small { color: var(--admin-muted); font-size: 10px; }
+.sendflow-admin-login-user-agent { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.sendflow-admin-login-session { max-width: 190px; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px !important; }
 .sendflow-admin-list-card table { min-width: 890px; }
 .sendflow-admin-list-card table th { color: var(--admin-muted); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 .sendflow-admin-list-card table td { border-color: #f0ecf2; color: #4d4657; font-size: 12px; white-space: nowrap; }

@@ -372,7 +372,7 @@ function PrivacyFrenchContent({ contactEmail }: { contactEmail: string }) {
           <li><strong>Données de compte :</strong> identifiant, informations de connexion, historique de consentement, paramètres de sécurité et statut du compte.</li>
           <li><strong>Données de transfert :</strong> pays, réseau, bénéficiaire, montant, devise, référence, statut, date, frais affichés et informations nécessaires au rapprochement.</li>
           <li><strong>Données de vérification :</strong> justificatifs, informations de connaissance client, origine des fonds et éléments de conformité lorsque la loi ou un partenaire l’exige.</li>
-          <li><strong>Données techniques :</strong> adresse IP, type d’appareil, système, version de l’application, identifiants techniques, journaux d’erreur et événements de sécurité.</li>
+          <li><strong>Données techniques :</strong> adresse IP, ville ou zone géographique lorsqu’elle est fournie par l’infrastructure réseau, type d’appareil, système, version de l’application, identifiants techniques, journaux d’erreur et événements de sécurité.</li>
           <li><strong>Données de support :</strong> contenu d’une demande, pièces jointes envoyées volontairement, correspondances et informations utiles à la résolution.</li>
           <li><strong>Données de navigation :</strong> pages consultées, préférences, langue, consentements et informations de session nécessaires au fonctionnement.</li>
         </LegalBulletList>
@@ -520,7 +520,7 @@ function PrivacyEnglishContent({ contactEmail }: { contactEmail: string }) {
           <li><strong>Account data:</strong> identifier, login information, consent history, security settings and account status.</li>
           <li><strong>Transfer data:</strong> country, network, beneficiary, amount, currency, reference, status, date, displayed fees and information needed for reconciliation.</li>
           <li><strong>Verification data:</strong> supporting documents, know-your-customer information, source of funds and compliance information when required by law or a partner.</li>
-          <li><strong>Technical data:</strong> IP address, device type, operating system, application version, technical identifiers, error logs and security events.</li>
+          <li><strong>Technical data:</strong> IP address, city or geographic area when supplied by the network infrastructure, device type, operating system, application version, technical identifiers, error logs and security events.</li>
           <li><strong>Support data:</strong> the content of a request, attachments voluntarily sent, correspondence and information useful for resolving the request.</li>
           <li><strong>Browsing data:</strong> pages viewed, preferences, language, consents and session information needed for operation.</li>
         </LegalBulletList>

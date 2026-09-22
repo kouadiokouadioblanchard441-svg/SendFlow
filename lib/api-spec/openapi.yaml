@@ -271,6 +271,46 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/login-activity:
+    get:
+      operationId: listAdminLoginActivity
+      tags: [admin]
+      summary: List authenticated user sessions
+      description: Returns server-recorded session starts with network and device metadata for an authorized administrator.
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminSearch"
+        - $ref: "#/components/parameters/AdminUserIdFilter"
+        - $ref: "#/components/parameters/AdminFrom"
+        - $ref: "#/components/parameters/AdminTo"
+        - $ref: "#/components/parameters/AdminPage"
+        - $ref: "#/components/parameters/AdminPageSize"
+      responses:
+        "200":
+          description: Paginated login activity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminLoginActivityPage"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /admin/users:
     get:
       operationId: listAdminUsers
@@ -1170,6 +1210,74 @@ components:
         total:
           type: integer
       required: [items, page, pageSize, total]
+    AdminLoginActivityPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminLoginActivity"
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+      required: [items, page, pageSize, total]
+    AdminLoginActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        sessionId:
+          type: string
+        ipAddress:
+          type: string
+        city:
+          type: ["string", "null"]
+        region:
+          type: ["string", "null"]
+        countryCode:
+          type: ["string", "null"]
+        countryName:
+          type: ["string", "null"]
+        locationSource:
+          type: ["string", "null"]
+        deviceType:
+          type: string
+        browser:
+          type: string
+        operatingSystem:
+          type: string
+        userAgent:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - displayName
+        - phone
+        - sessionId
+        - ipAddress
+        - city
+        - region
+        - countryCode
+        - countryName
+        - locationSource
+        - deviceType
+        - browser
+        - operatingSystem
+        - userAgent
+        - createdAt
     AdminTransactionDetail:
       type: object
       properties:
