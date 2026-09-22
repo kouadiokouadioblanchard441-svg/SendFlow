@@ -22,6 +22,7 @@ import type {
 import type {
   AdminOverview,
   AdminTransactionPage,
+  AdminUserDetail,
   AdminUserPage,
   CurrentAccount,
   DatabaseStatus,
@@ -752,6 +753,84 @@ export function useListAdminUsers<TData = Awaited<ReturnType<typeof listAdminUse
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListAdminUsersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminUserUrl = (userId: string,) => {
+
+
+
+
+  return `/api/admin/users/${userId}`
+}
+
+/**
+ * Returns the persisted profile, wallet, and transaction summary for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
+ * @summary Get a SendFlow user detail for administrators
+ */
+export const getAdminUser = async (userId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminUserDetail> => {
+
+  return customFetch<AdminUserDetail>(getGetAdminUserUrl(userId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminUserQueryKey = (userId: string,) => {
+    return [
+    `/api/admin/users/${userId}`
+    ] as const;
+    }
+
+
+export const getGetAdminUserQueryOptions = <TData = Awaited<ReturnType<typeof getAdminUser>>, TError = ErrorType<ErrorEnvelope>>(userId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminUser>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminUserQueryKey(userId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminUser>>> = ({ signal }) => getAdminUser(userId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: userId !== null && userId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminUser>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminUserQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminUser>>>
+export type GetAdminUserQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get a SendFlow user detail for administrators
+ */
+
+export function useGetAdminUser<TData = Awaited<ReturnType<typeof getAdminUser>>, TError = ErrorType<ErrorEnvelope>>(
+ userId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminUser>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminUserQueryOptions(userId,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

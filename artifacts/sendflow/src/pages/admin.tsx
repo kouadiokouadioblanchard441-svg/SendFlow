@@ -3,19 +3,24 @@ import { Link, useLocation, useRoute } from 'wouter';
 import {
   Activity,
   ArrowDownToLine,
+  ArrowLeft,
   ArrowLeftRight,
   ArrowUpRight,
+  Banknote,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
+  Clock3,
   LayoutDashboard,
   Search,
   ShieldCheck,
+  UserRound,
   Users,
   WalletCards,
 } from 'lucide-react';
 import {
+  useGetAdminUser,
   useGetAdminOverview,
   useListAdminTransactions,
   useListAdminUsers,
@@ -429,7 +434,7 @@ function UsersPage() {
                 <TableBody>
                   {items.map((user) => (
                     <TableRow key={user.id} data-testid={`row-admin-user-${user.id}`}>
-                      <TableCell><div className="sendflow-admin-user-cell"><span className="sendflow-admin-avatar">{(user.displayName || user.phone || '?').slice(0, 1).toUpperCase()}</span><span><strong data-testid={`text-user-name-${user.id}`}>{user.displayName || 'Nom non renseigné'}</strong><small data-testid={`text-user-phone-${user.id}`}>{user.phone || 'Téléphone non renseigné'}</small></span></div></TableCell>
+                     <TableCell><div className="sendflow-admin-user-cell"><span className="sendflow-admin-avatar">{(user.displayName || user.phone || '?').slice(0, 1).toUpperCase()}</span><span><Link href={`/admin/users/${user.id}`} className="sendflow-admin-user-link"><strong data-testid={`text-user-name-${user.id}`}>{user.displayName || 'Nom non renseigné'}</strong></Link><small data-testid={`text-user-phone-${user.id}`}>{user.phone || 'Téléphone non renseigné'}</small></span></div></TableCell>
                       <TableCell data-testid={`text-user-country-${user.id}`}>{user.countryCode || '—'}</TableCell>
                       <TableCell data-testid={`text-user-created-${user.id}`}>{formatDate(user.createdAt)}</TableCell>
                       <TableCell data-testid={`text-user-lastseen-${user.id}`}>{formatDate(user.lastSeenAt)}</TableCell>
@@ -444,6 +449,147 @@ function UsersPage() {
           )}
         </CardContent>
       </Card>
+    </AdminShell>
+  );
+}
+
+function transactionKindLabel(kind: 'inter-network' | 'deposit' | 'international') {
+  if (kind === 'deposit') return 'Dépôt';
+  if (kind === 'international') return 'International';
+  return 'Inter-réseaux';
+}
+
+function UserDetailPage({ userId }: { userId: string }) {
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const detailQuery = useGetAdminUser(userId);
+  const transactionsQuery = useListAdminTransactions(
+    useMemo(() => ({ userId, page, pageSize }), [userId, page]),
+  );
+  const detail = detailQuery.data;
+  const transactionResult = transactionsQuery.data;
+  const transactions = transactionResult?.items ?? [];
+
+  return (
+    <AdminShell section="users">
+      <div className="sendflow-admin-page-intro sendflow-admin-detail-intro">
+        <div>
+          <Link href="/admin/users" className="sendflow-admin-back-link" data-testid="link-admin-users-back">
+            <ArrowLeft className="size-4" /> Retour aux utilisateurs
+          </Link>
+          <p className="sendflow-admin-overline">Fiche sécurisée</p>
+          <h2 data-testid="heading-admin-user-detail">Détail utilisateur</h2>
+          <p className="sendflow-admin-subtitle">Données persistées en consultation uniquement. Aucune action de modification n’est disponible.</p>
+        </div>
+        <div className="sendflow-admin-readonly-chip"><ShieldCheck className="size-4" /> Lecture seule</div>
+      </div>
+
+      {detailQuery.isLoading && (
+        <div className="space-y-4" data-testid="loading-admin-user-detail">
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-56 rounded-xl" />
+            <Skeleton className="h-56 rounded-xl" />
+          </div>
+          <Skeleton className="h-72 w-full rounded-xl" />
+        </div>
+      )}
+      {detailQuery.isError && <QueryState error={detailQuery.error} onRetry={() => void detailQuery.refetch()} />}
+
+      {detail && !detailQuery.isError && (
+        <div className="space-y-5" data-testid="content-admin-user-detail">
+          <Card className="sendflow-admin-profile-banner">
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+              <div className="sendflow-admin-profile-heading">
+                <span className="sendflow-admin-avatar sendflow-admin-avatar-large">
+                  {(detail.user.displayName || detail.user.phone || '?').slice(0, 1).toUpperCase()}
+                </span>
+                <div>
+                  <h3 data-testid="text-admin-user-detail-name">{detail.user.displayName || 'Nom non renseigné'}</h3>
+                  <p data-testid="text-admin-user-detail-id">{detail.user.id}</p>
+                </div>
+              </div>
+              <div className="sendflow-admin-profile-status"><UserRound className="size-4" /> Compte utilisateur</div>
+            </CardContent>
+          </Card>
+
+          <div className="sendflow-admin-metric-grid sendflow-admin-detail-metric-grid">
+            <MetricCard label="Transactions" value={formatNumber(detail.transactionSummary.total)} detail={`${formatNumber(detail.transactionSummary.succeeded)} réussies`} icon={ArrowLeftRight} tone="violet" />
+            <MetricCard label="Volume traité" value={formatMoney(detail.transactionSummary.volumeMinor)} detail={`${formatMoney(detail.transactionSummary.feesMinor)} de frais`} icon={Banknote} tone="green" />
+            <MetricCard label="En attente" value={formatNumber(detail.transactionSummary.pending)} detail={`${formatNumber(detail.transactionSummary.failed)} échouées`} icon={CircleAlert} tone="orange" />
+            <MetricCard label="Dernière activité" value={formatDate(detail.user.lastSeenAt)} detail="Dernière présence enregistrée" icon={Clock3} tone="blue" />
+          </div>
+
+          <div className="sendflow-admin-overview-grid">
+            <Card className="sendflow-admin-detail-card">
+              <CardHeader>
+                <CardTitle>Profil</CardTitle>
+                <CardDescription>Informations enregistrées dans SendFlow.</CardDescription>
+              </CardHeader>
+              <CardContent className="sendflow-admin-detail-list">
+                <div><span>Téléphone</span><strong data-testid="text-admin-user-detail-phone">{detail.user.phone || 'Non renseigné'}</strong></div>
+                <div><span>Pays</span><strong data-testid="text-admin-user-detail-country">{detail.user.countryCode || 'Non renseigné'}</strong></div>
+                <div><span>Compte créé</span><strong data-testid="text-admin-user-detail-created">{formatDate(detail.user.createdAt)}</strong></div>
+                <div><span>Dernière mise à jour</span><strong data-testid="text-admin-user-detail-updated">{formatDate(detail.user.updatedAt)}</strong></div>
+              </CardContent>
+            </Card>
+            <Card className="sendflow-admin-detail-card">
+              <CardHeader>
+                <CardTitle>Wallet</CardTitle>
+                <CardDescription>Solde et statut provenant du wallet persistant.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {detail.wallet ? (
+                  <div className="sendflow-admin-wallet-detail">
+                    <div><span>Solde disponible</span><strong data-testid="text-admin-user-detail-balance">{formatMoney(detail.wallet.balanceMinor, detail.wallet.currency)}</strong></div>
+                    <div><span>Statut</span><Badge variant="outline" className="sendflow-admin-wallet-badge" data-testid="status-admin-user-detail-wallet">{detail.wallet.status === 'active' ? 'Actif' : detail.wallet.status === 'locked' ? 'Bloqué' : 'Fermé'}</Badge></div>
+                    <div><span>Devise</span><strong data-testid="text-admin-user-detail-currency">{detail.wallet.currency}</strong></div>
+                  </div>
+                ) : (
+                  <div className="sendflow-admin-detail-unavailable" data-testid="empty-admin-user-detail-wallet">
+                    <WalletCards className="size-5" />
+                    <span>Aucun wallet enregistré pour ce compte.</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="sendflow-admin-list-card">
+            <CardHeader>
+              <CardTitle>Transactions et opérations</CardTitle>
+              <CardDescription>Toutes les opérations enregistrées pour cet utilisateur, avec pagination.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {transactionsQuery.isLoading && <div className="sendflow-admin-table-skeleton" data-testid="loading-admin-user-transactions">{Array.from({ length: 5 }).map((_, index) => <Skeleton key={index} className="h-12 w-full" />)}</div>}
+              {transactionsQuery.isError && <div className="p-5"><QueryState error={transactionsQuery.error} onRetry={() => void transactionsQuery.refetch()} /></div>}
+              {!transactionsQuery.isLoading && !transactionsQuery.isError && transactions.length === 0 && <EmptyState label="Aucune transaction enregistrée pour cet utilisateur." />}
+              {!transactionsQuery.isLoading && !transactionsQuery.isError && transactions.length > 0 && (
+                <>
+                  <Table>
+                    <TableHeader><TableRow><TableHead>Référence</TableHead><TableHead>Opération</TableHead><TableHead>Réseau</TableHead><TableHead>Statut</TableHead><TableHead>Montant</TableHead><TableHead>Frais</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {transactions.map((transaction) => (
+                        <TableRow key={transaction.id} data-testid={`row-admin-user-transaction-${transaction.id}`}>
+                          <TableCell><div className="sendflow-admin-reference-cell"><strong>{transaction.reference}</strong><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
+                          <TableCell data-testid={`text-admin-user-transaction-kind-${transaction.id}`}>{transactionKindLabel(transaction.kind)}</TableCell>
+                          <TableCell>{transaction.fromOperator || transaction.toOperator || '—'}</TableCell>
+                          <TableCell><StatusBadge status={transaction.status} id={`user-${transaction.id}`} /></TableCell>
+                          <TableCell className="font-semibold tabular-nums">{formatMoney(transaction.amountMinor, transaction.currency)}</TableCell>
+                          <TableCell className="tabular-nums">{formatMoney(transaction.feeMinor, transaction.currency)}</TableCell>
+                          <TableCell>{formatDate(transaction.createdAt)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <Pager page={transactionResult?.page ?? page} pageSize={transactionResult?.pageSize ?? pageSize} total={transactionResult?.total ?? 0} onPage={setPage} />
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {!detailQuery.isLoading && !detailQuery.isError && !detail && <EmptyState label="Le profil utilisateur n’est pas disponible." />}
     </AdminShell>
   );
 }
@@ -506,10 +652,12 @@ function TransactionsPage({ section }: { section: 'deposits' | 'transfers' }) {
 }
 
 export function AdminRouter() {
+  const [isUserDetail, userRoute] = useRoute('/admin/users/:userId');
   const [isOverview] = useRoute('/admin');
   const [isUsers] = useRoute('/admin/users');
   const [isDeposits] = useRoute('/admin/deposits');
   const [isTransfers] = useRoute('/admin/transfers');
+  if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isOverview) return <OverviewPage />;
   if (isUsers) return <UsersPage />;
   if (isDeposits) return <TransactionsPage section="deposits" />;

@@ -187,9 +187,50 @@ export const ListAdminUsersResponse = zod.object({
 
 
 /**
+ * Returns the persisted profile, wallet, and transaction summary for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
+ * @summary Get a SendFlow user detail for administrators
+ */
+
+
+
+export const GetAdminUserParams = zod.object({
+  "userId": zod.coerce.string().min(1)
+})
+
+export const GetAdminUserResponse = zod.object({
+  "user": zod.object({
+  "id": zod.string(),
+  "displayName": zod.string().nullable(),
+  "phone": zod.string().nullable(),
+  "countryCode": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "lastSeenAt": zod.coerce.date().nullable()
+}),
+  "wallet": zod.object({
+  "id": zod.string().uuid(),
+  "currency": zod.string(),
+  "balanceMinor": zod.number().int(),
+  "status": zod.enum(['active', 'locked', 'closed']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).nullable(),
+  "transactionSummary": zod.object({
+  "total": zod.number().int(),
+  "succeeded": zod.number().int(),
+  "pending": zod.number().int(),
+  "failed": zod.number().int(),
+  "volumeMinor": zod.number().int(),
+  "feesMinor": zod.number().int()
+})
+})
+
+
+/**
  * @summary List SendFlow transactions for administrators
  */
 export const listAdminTransactionsQuerySearchMax = 120;
+
 
 export const listAdminTransactionsQueryPageDefault = 1;
 
@@ -200,6 +241,7 @@ export const listAdminTransactionsQueryPageSizeMax = 50;
 
 export const ListAdminTransactionsQueryParams = zod.object({
   "search": zod.coerce.string().max(listAdminTransactionsQuerySearchMax).optional(),
+  "userId": zod.coerce.string().min(1).optional(),
   "kind": zod.enum(['inter-network', 'deposit', 'international']).optional(),
   "status": zod.enum(['pending', 'succeeded', 'failed']).optional(),
   "from": zod.date().optional().describe('Inclusive UTC calendar date.'),

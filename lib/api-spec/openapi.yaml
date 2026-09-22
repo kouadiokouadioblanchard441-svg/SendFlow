@@ -307,6 +307,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/users/{userId}:
+    get:
+      operationId: getAdminUser
+      tags: [admin]
+      summary: Get a SendFlow user detail for administrators
+      description: Returns the persisted profile, wallet, and transaction summary for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminUserId"
+      responses:
+        "200":
+          description: User detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserDetail"
+        "400":
+          description: Invalid user identifier or pagination filters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /admin/transactions:
     get:
       operationId: listAdminTransactions
@@ -316,6 +363,7 @@ paths:
         - clerkSession: []
       parameters:
         - $ref: "#/components/parameters/AdminSearch"
+        - $ref: "#/components/parameters/AdminUserIdFilter"
         - name: kind
           in: query
           required: false
@@ -399,6 +447,20 @@ components:
         minimum: 1
         maximum: 50
         default: 20
+    AdminUserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    AdminUserIdFilter:
+      name: userId
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
   securitySchemes:
     clerkSession:
       type: http
@@ -534,6 +596,66 @@ components:
         wallet:
           $ref: "#/components/schemas/AdminWalletSummary"
       required: [id, displayName, phone, countryCode, createdAt, lastSeenAt, wallet]
+    AdminUserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        countryCode:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [id, displayName, phone, countryCode, createdAt, updatedAt, lastSeenAt]
+    AdminWalletDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+        balanceMinor:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [active, locked, closed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, currency, balanceMinor, status, createdAt, updatedAt]
+    AdminUserTransactionSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        succeeded:
+          type: integer
+        pending:
+          type: integer
+        failed:
+          type: integer
+        volumeMinor:
+          type: integer
+          format: int64
+        feesMinor:
+          type: integer
+          format: int64
+      required: [total, succeeded, pending, failed, volumeMinor, feesMinor]
     AdminWalletSummary:
       type: object
       properties:
@@ -686,6 +808,18 @@ components:
         total:
           type: integer
       required: [items, page, pageSize, total]
+    AdminUserDetail:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AdminUserProfile"
+        wallet:
+          type: ["object", "null"]
+          allOf:
+            - $ref: "#/components/schemas/AdminWalletDetail"
+        transactionSummary:
+          $ref: "#/components/schemas/AdminUserTransactionSummary"
+      required: [user, wallet, transactionSummary]
     DiditWebhookPayload:
       type: object
       properties:

@@ -10,6 +10,7 @@ import type { AdminPageParameter } from './adminPageParameter';
 import type { AdminPageSizeParameter } from './adminPageSizeParameter';
 import type { AdminSearchParameter } from './adminSearchParameter';
 import type { AdminToParameter } from './adminToParameter';
+import type { AdminUserIdFilterParameter } from './adminUserIdFilterParameter';
 import type { ListAdminTransactionsKind } from './listAdminTransactionsKind';
 import type { ListAdminTransactionsStatus } from './listAdminTransactionsStatus';
 
@@ -18,6 +19,10 @@ export type ListAdminTransactionsParams = {
  * @maxLength 120
  */
 search?: AdminSearchParameter;
+/**
+ * @minLength 1
+ */
+userId?: AdminUserIdFilterParameter;
 kind?: ListAdminTransactionsKind;
 status?: ListAdminTransactionsStatus;
 /**

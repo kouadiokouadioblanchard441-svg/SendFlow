@@ -8,3 +8,9 @@ The SendFlow back office is read-only until server-side administrator authorizat
 **Why:** SendFlow handles financial data, and the existing customer PIN/session flag is not an authorization boundary. The admin schema currently exposes users, wallets, deposits, and transfers, but not every example-panel concept such as withdrawals.
 
 **How to apply:** Keep admin API routes deny-by-default and enforce authorization on the server. Add new metrics only when their source exists in the database and label unsupported operations explicitly instead of inventing them.
+
+The user detail view remains read-only: profile and wallet data come from the server, while the transaction history is retrieved through a server-side user filter with bounded pagination rather than an unbounded detail payload.
+
+**Why:** Financial histories can grow without limit, and a client-only filter would risk exposing another user’s operations if the server did not constrain the query.
+
+**How to apply:** Keep the user identifier in the authorization-protected API contract and apply it in the database query. Do not add admin mutations until the audit, permission, ledger, and approval model exists.

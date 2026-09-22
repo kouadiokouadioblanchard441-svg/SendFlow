@@ -1,6 +1,8 @@
 import { getAuth } from "@clerk/express";
 import { Router, type IRouter, type Request } from "express";
 import {
+  GetAdminUserParams,
+  GetAdminUserResponse,
   GetAdminOverviewQueryParams,
   GetAdminOverviewResponse,
   ListAdminTransactionsQueryParams,
@@ -278,11 +280,71 @@ router.get("/admin/users", async (req, res): Promise<void> => {
   }
 });
 
+router.get("/admin/users/:userId", async (req, res): Promise<void> => {
+  if (!respondAdminAuthError(req, res)) return;
+
+  const parsedParams = GetAdminUserParams.safeParse(req.params);
+  if (!parsedParams.success) {
+    res.status(400).json({ error: "Invalid user identifier" });
+    return;
+  }
+
+  const { userId } = parsedParams.data;
+
+  try {
+    const [user] = await db
+      .select({
+        id: usersTable.id,
+        displayName: usersTable.displayName,
+        phone: usersTable.phone,
+        countryCode: usersTable.countryCode,
+        createdAt: usersTable.createdAt,
+        updatedAt: usersTable.updatedAt,
+        lastSeenAt: usersTable.lastSeenAt,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId));
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    const [wallet, transactionSummary] = await Promise.all([
+      db
+        .select({
+          id: walletsTable.id,
+          currency: walletsTable.currency,
+          balanceMinor: walletsTable.balanceMinor,
+          status: walletsTable.status,
+          createdAt: walletsTable.createdAt,
+          updatedAt: walletsTable.updatedAt,
+        })
+        .from(walletsTable)
+        .where(eq(walletsTable.userId, userId))
+        .then((items) => items[0]),
+      getTransactionSummary({}, [eq(transactionsTable.userId, userId)]),
+    ]);
+
+    res.json(
+      GetAdminUserResponse.parse({
+        user,
+        wallet: wallet ?? null,
+        transactionSummary,
+      }),
+    );
+  } catch (error) {
+    req.log.error({ err: error, userId }, "Admin user detail lookup failed");
+    res.status(503).json({ error: "Administrator storage unavailable" });
+  }
+});
+
 router.get("/admin/transactions", async (req, res): Promise<void> => {
   if (!respondAdminAuthError(req, res)) return;
 
   const rawQuery = {
     search: req.query.search,
+    userId: req.query.userId,
     kind: req.query.kind,
     status: req.query.status,
     from: typeof req.query.from === "string" ? new Date(`${req.query.from}T00:00:00.000Z`) : undefined,
@@ -296,10 +358,11 @@ router.get("/admin/transactions", async (req, res): Promise<void> => {
     return;
   }
 
-  const { search, kind, status, page, pageSize } = parsed.data;
+  const { search, userId, kind, status, page, pageSize } = parsed.data;
   const range = parseDateRange(req.query as Record<string, unknown>);
   const filters = [
     ...transactionDateFilters(range),
+    userId ? eq(transactionsTable.userId, userId) : undefined,
     kind ? eq(transactionsTable.kind, kind) : undefined,
     status ? eq(transactionsTable.status, status) : undefined,
     search

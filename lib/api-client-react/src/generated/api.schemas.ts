@@ -136,6 +136,47 @@ export interface AdminUserSummary {
   wallet: AdminWalletSummary;
 }
 
+export interface AdminUserProfile {
+  id: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  phone: string | null;
+  /** @nullable */
+  countryCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** @nullable */
+  lastSeenAt: string | null;
+}
+
+export type AdminWalletDetailStatus = typeof AdminWalletDetailStatus[keyof typeof AdminWalletDetailStatus];
+
+
+export const AdminWalletDetailStatus = {
+  active: 'active',
+  locked: 'locked',
+  closed: 'closed',
+} as const;
+
+export interface AdminWalletDetail {
+  id: string;
+  currency: string;
+  balanceMinor: number;
+  status: AdminWalletDetailStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserTransactionSummary {
+  total: number;
+  succeeded: number;
+  pending: number;
+  failed: number;
+  volumeMinor: number;
+  feesMinor: number;
+}
+
 export type AdminTransactionSummaryKind = typeof AdminTransactionSummaryKind[keyof typeof AdminTransactionSummaryKind];
 
 
@@ -228,6 +269,13 @@ export interface AdminTransactionPage {
   total: number;
 }
 
+export interface AdminUserDetail {
+  user: AdminUserProfile;
+  /** @nullable */
+  wallet: AdminWalletDetail | null;
+  transactionSummary: AdminUserTransactionSummary;
+}
+
 export interface DiditWebhookPayload {
   event_id: string;
   session_id: string;
@@ -255,6 +303,8 @@ export type AdminSearchParameter = string;
 export type AdminPageParameter = number;
 
 export type AdminPageSizeParameter = number;
+
+export type AdminUserIdFilterParameter = string;
 
 export type GetAdminOverviewParams = {
 /**
@@ -288,6 +338,10 @@ export type ListAdminTransactionsParams = {
  * @maxLength 120
  */
 search?: AdminSearchParameter;
+/**
+ * @minLength 1
+ */
+userId?: AdminUserIdFilterParameter;
 kind?: ListAdminTransactionsKind;
 status?: ListAdminTransactionsStatus;
 /**

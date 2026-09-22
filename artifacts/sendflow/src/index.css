@@ -995,6 +995,9 @@
 .sendflow-admin-user-cell strong, .sendflow-admin-reference-cell strong { color: var(--admin-ink); font-size: 12px; font-weight: 700; }
 .sendflow-admin-user-cell small, .sendflow-admin-reference-cell small { color: #9991a3; font-size: 10px; }
 .sendflow-admin-avatar { display: grid; width: 29px; height: 29px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #eee6fc; color: var(--admin-violet); font-size: 11px; font-weight: 800; }
+.sendflow-admin-avatar-large { width: 46px; height: 46px; border-radius: 14px; font-size: 16px; }
+.sendflow-admin-user-link { color: inherit; text-decoration: none; }
+.sendflow-admin-user-link:hover strong { color: var(--admin-violet); text-decoration: underline; text-underline-offset: 3px; }
 .sendflow-admin-wallet-badge, .sendflow-admin-status-badge { border-color: #d7d0df; font-size: 10px; font-weight: 700; }
 .sendflow-admin-status-succeeded { border-color: #add8bf; background: #effaf4; color: #26704f; }
 .sendflow-admin-status-pending { border-color: #f1cea8; background: #fff8ed; color: #ae641f; }
@@ -1008,9 +1011,26 @@
 .sendflow-admin-pager button { width: 30px; height: 30px; }
 .sendflow-admin-page-number { min-width: 58px; text-align: center; font-variant-numeric: tabular-nums; }
 .sendflow-admin-error { margin: 10px 0; border-color: #e5b8b8; background: #fff8f8; }
+.sendflow-admin-back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 13px; color: var(--admin-violet-deep); font-size: 11px; font-weight: 700; text-decoration: none; }
+.sendflow-admin-back-link:hover { color: var(--admin-violet); text-decoration: underline; text-underline-offset: 3px; }
+.sendflow-admin-profile-banner, .sendflow-admin-detail-card { border: 1px solid var(--admin-line); background: var(--admin-surface); box-shadow: 0 7px 20px rgba(63,45,82,.035); }
+.sendflow-admin-profile-heading { display: flex; align-items: center; gap: 13px; }
+.sendflow-admin-profile-heading h3 { margin: 0; color: var(--admin-ink); font-size: 17px; font-weight: 750; letter-spacing: -.03em; }
+.sendflow-admin-profile-heading p { margin: 4px 0 0; color: var(--admin-muted); font-size: 11px; }
+.sendflow-admin-profile-status { display: inline-flex; align-items: center; gap: 7px; color: var(--admin-violet-deep); font-size: 11px; font-weight: 700; }
+.sendflow-admin-detail-metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sendflow-admin-detail-card h3 { font-size: 15px; }
+.sendflow-admin-detail-list, .sendflow-admin-wallet-detail { display: grid; gap: 0; }
+.sendflow-admin-detail-list > div, .sendflow-admin-wallet-detail > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-top: 1px solid var(--admin-line); padding: 13px 0; color: var(--admin-muted); font-size: 11px; }
+.sendflow-admin-detail-list > div:first-child, .sendflow-admin-wallet-detail > div:first-child { border-top: 0; padding-top: 0; }
+.sendflow-admin-detail-list > div:last-child, .sendflow-admin-wallet-detail > div:last-child { padding-bottom: 0; }
+.sendflow-admin-detail-list strong, .sendflow-admin-wallet-detail strong { color: var(--admin-ink); font-size: 12px; font-weight: 700; text-align: right; }
+.sendflow-admin-wallet-detail > div:first-child strong { color: var(--admin-violet); font-size: 18px; letter-spacing: -.04em; }
+.sendflow-admin-detail-unavailable { display: flex; min-height: 150px; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: var(--admin-muted); font-size: 12px; text-align: center; }
 
 @media (max-width: 900px) {
   .sendflow-admin-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sendflow-admin-detail-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 767px) {
   .sendflow-admin-sidebar-trigger { display: inline-flex; }
@@ -1034,6 +1054,7 @@
   .sendflow-admin-status-filter { width: 100%; }
   .sendflow-admin-list-card { overflow: hidden; }
   .sendflow-admin-pager { padding-inline: 12px; }
+  .sendflow-admin-profile-banner .p-5 { padding: 16px; }
 }
 @media (max-width: 430px) {
   .sendflow-admin-list-intro { align-items: flex-start; flex-direction: column; }
