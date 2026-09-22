@@ -7,6 +7,7 @@ export type TransferRequestState = 'idle' | 'pending' | 'success' | 'failure';
 type TransferRequestDialogProps = {
   state: TransferRequestState;
   operation: string;
+  pendingLabel: string;
   amountLabel: string;
   amount: string;
   metaLabel: string;
@@ -16,12 +17,16 @@ type TransferRequestDialogProps = {
   successCopy: string;
   failureTitle: string;
   failureCopy: string;
+  cancelLabel: string;
+  successButtonLabel: string;
+  failureButtonLabel: string;
   onClose: () => void;
 };
 
 export function TransferRequestDialog({
   state,
   operation,
+  pendingLabel,
   amountLabel,
   amount,
   metaLabel,
@@ -31,6 +36,9 @@ export function TransferRequestDialog({
   successCopy,
   failureTitle,
   failureCopy,
+  cancelLabel,
+  successButtonLabel,
+  failureButtonLabel,
   onClose,
 }: TransferRequestDialogProps) {
   if (state === 'idle') return null;
@@ -57,7 +65,7 @@ export function TransferRequestDialog({
               <span />
             </div>
             <header className="sendflow-deposit-request-header">
-              <span>Requête de transaction</span>
+              <span>{pendingLabel}</span>
               <h2 id={titleId}>{operation}</h2>
             </header>
             <div className="sendflow-deposit-request-amount">
@@ -70,7 +78,7 @@ export function TransferRequestDialog({
             </div>
             <p className="sendflow-deposit-request-copy">{pendingCopy}</p>
             <button type="button" className="sendflow-deposit-request-cancel" onClick={onClose}>
-              Annuler
+              {cancelLabel}
             </button>
           </div>
         )}
@@ -83,7 +91,7 @@ export function TransferRequestDialog({
             <h2 id={titleId}>{successTitle}</h2>
             <p>{successCopy}</p>
             <button type="button" className="sendflow-deposit-request-confirm" onClick={onClose}>
-              Terminé
+              {successButtonLabel}
             </button>
           </div>
         )}
@@ -96,7 +104,7 @@ export function TransferRequestDialog({
             <h2 id={titleId}>{failureTitle}</h2>
             <p>{failureCopy}</p>
             <button type="button" className="sendflow-deposit-request-confirm" onClick={onClose}>
-              Réessayer
+              {failureButtonLabel}
             </button>
           </div>
         )}

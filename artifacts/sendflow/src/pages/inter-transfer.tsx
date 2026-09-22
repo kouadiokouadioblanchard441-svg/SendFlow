@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
+import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
 import { useSeo } from '@/lib/seo';
 import {
   isValidIvoryCoastPhone,
@@ -143,7 +144,7 @@ export default function InterNetworkTransferPage() {
   const [recipientNumber, setRecipientNumber] = useState('');
   const [supportFees, setSupportFees] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [requestState, setRequestState] = useState<TransferRequestState>('idle');
   const [sourceOperator, setSourceOperator] = useState(initialSourceOperator);
   const [destinationOperator, setDestinationOperator] = useState(initialDestinationOperator);
   const [operatorPicker, setOperatorPicker] = useState<TransferSide | null>(null);
@@ -163,6 +164,13 @@ export default function InterNetworkTransferPage() {
     if (!isUnlocked) setLocation('/sign-in');
   }, [isUnlocked, setLocation]);
 
+  useEffect(() => {
+    if (requestState !== 'pending') return;
+
+    const timeout = window.setTimeout(() => setRequestState('success'), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [requestState]);
+
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
   const activeOperator = operatorPicker === 'source' ? sourceOperator : destinationOperator;
@@ -180,14 +188,14 @@ export default function InterNetworkTransferPage() {
     } else {
       setDestinationOperator(operator);
     }
-    setSubmitted(false);
+    setRequestState('idle');
     setSubmitAttempted(false);
     setOperatorPicker(null);
   };
 
   const selectContact = (contact: SavedContact) => {
     setRecipientNumber(contact.phone);
-    setSubmitted(false);
+    setRequestState('idle');
     setSubmitAttempted(false);
     setContactsOpen(false);
   };
@@ -224,7 +232,7 @@ export default function InterNetworkTransferPage() {
       }
 
       setRecipientNumber(phone);
-      setSubmitted(false);
+      setRequestState('idle');
       setSubmitAttempted(false);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -305,7 +313,7 @@ export default function InterNetworkTransferPage() {
           onSubmit={(event) => {
             event.preventDefault();
             setSubmitAttempted(true);
-            if (canSubmit) setSubmitted(true);
+            if (canSubmit) setRequestState('pending');
           }}
         >
           <section className="sendflow-transfer-section" aria-labelledby="transfer-from-title">
@@ -318,7 +326,7 @@ export default function InterNetworkTransferPage() {
                 value={amount}
                 onChange={(event) => {
                   setAmount(event.target.value.replace(/[^\d ]/g, '').slice(0, 10));
-                  setSubmitted(false);
+                  setRequestState('idle');
                   setSubmitAttempted(false);
                 }}
                 aria-label="Montant du transfert"
@@ -348,7 +356,7 @@ export default function InterNetworkTransferPage() {
                 value={sourceNumber}
                 onChange={(event) => {
                   setSourceNumber(event.target.value.replace(/\D/g, '').slice(0, 10));
-                  setSubmitted(false);
+                  setRequestState('idle');
                   setSubmitAttempted(false);
                 }}
                 aria-label="Numéro source"
@@ -396,7 +404,14 @@ export default function InterNetworkTransferPage() {
             )}
 
             <label className="sendflow-transfer-checkbox">
-              <input type="checkbox" checked={supportFees} onChange={(event) => setSupportFees(event.target.checked)} />
+              <input
+                type="checkbox"
+                checked={supportFees}
+                onChange={(event) => {
+                  setSupportFees(event.target.checked);
+                  setRequestState('idle');
+                }}
+              />
               <span aria-hidden="true">{supportFees ? <Check size={13} strokeWidth={3} /> : null}</span>
               <strong>Je supporte les frais</strong>
             </label>
@@ -422,7 +437,7 @@ export default function InterNetworkTransferPage() {
                 value={recipientNumber}
                 onChange={(event) => {
                   setRecipientNumber(event.target.value.replace(/\D/g, '').slice(0, 10));
-                  setSubmitted(false);
+                  setRequestState('idle');
                   setSubmitAttempted(false);
                 }}
                 placeholder="Numéro"
@@ -454,18 +469,30 @@ export default function InterNetworkTransferPage() {
               Frais: <strong>{TRANSFER_FEE} Fcfa</strong>
             </div>
 
-            {submitted && (
-              <div className="sendflow-transfer-success" role="status">
-                <Check size={18} />
-                Transfert prêt à être confirmé.
-              </div>
-            )}
-
-            <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || submitted}>
-              {submitted ? 'Transfert préparé' : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
+            <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || requestState !== 'idle'}>
+              {requestState !== 'idle' ? 'Transfert préparé' : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
             </button>
           </section>
         </form>
+
+        <TransferRequestDialog
+          state={requestState}
+          operation="Transfert inter réseau"
+          pendingLabel="Préparation du transfert inter-réseau"
+          amountLabel="Montant à envoyer"
+          amount={recipientAmount.toLocaleString('fr-FR')}
+          metaLabel={`${sourceOperator.shortName} → ${destinationOperator.shortName}`}
+          metaValue={recipientNumber || 'Bénéficiaire'}
+          pendingCopy="La demande de transfert entre les deux réseaux est en cours de préparation. Aucun montant n’est débité avant la confirmation."
+          successTitle="Votre transfert inter réseau est prêt"
+          successCopy={`La demande de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${recipientNumber} est prête à être confirmée.`}
+          failureTitle="Votre transfert inter réseau n’a pas pu être préparé"
+          failureCopy="Aucun montant n’a été débité. Vérifiez les informations des deux opérateurs puis réessayez."
+          cancelLabel="Annuler le transfert inter-réseau"
+          successButtonLabel="Fermer le transfert inter-réseau"
+          failureButtonLabel="Réessayer le transfert inter-réseau"
+          onClose={() => setRequestState('idle')}
+        />
 
         {operatorPicker && (
           <div

@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
+import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
 import { readAccountCountry } from '@/lib/account-country';
 import { useSeo } from '@/lib/seo';
 import {
@@ -19,9 +20,6 @@ import {
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
-import depositSuccessIllustration from '@assets/generated_images/sendflow-deposit-success-3d-alpha.png';
-import depositFailureIllustration from '@assets/generated_images/sendflow-deposit-failure-3d-alpha.png';
-import depositPendingIllustration from '@assets/generated_images/sendflow-deposit-pending-3d-alpha.png';
 
 type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov';
 
@@ -42,7 +40,6 @@ const ivoryCoastDepositOperators: DepositOperator[] = [
 ];
 
 const DEPOSIT_FEE_RATE = 0.03;
-type DepositRequestState = 'idle' | 'pending' | 'success' | 'failure';
 
 function OperatorMark({ operator }: { operator: DepositOperator }) {
   if (operator.brand === 'wave') {
@@ -73,7 +70,7 @@ export default function DepositPage() {
   const [operator, setOperator] = useState<DepositOperator | null>(depositOperators[0] ?? null);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [requestState, setRequestState] = useState<DepositRequestState>('idle');
+  const [requestState, setRequestState] = useState<TransferRequestState>('idle');
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useSeo({
@@ -299,74 +296,24 @@ export default function DepositPage() {
           </section>
         </form>
 
-        {requestState !== 'idle' && operator && (
-          <div className="sendflow-deposit-request-layer">
-            <section
-              className={`sendflow-deposit-request-card is-${requestState}`}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="deposit-request-title"
-              aria-live="polite"
-            >
-              {requestState === 'pending' && (
-                <div className="sendflow-deposit-request-state">
-                  <div className="sendflow-deposit-pending-art">
-                    <img src={depositPendingIllustration} alt="" />
-                  </div>
-                  <div className="sendflow-deposit-pending-dots" aria-label="Validation en cours">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <header className="sendflow-deposit-request-header">
-                    <span>Requête de transaction</span>
-                    <h2 id="deposit-request-title">Dépôt</h2>
-                  </header>
-                  <div className="sendflow-deposit-request-amount">
-                    <span>Montant à créditer</span>
-                    <strong>{walletAmount.toLocaleString('fr-FR')} <small>FCFA</small></strong>
-                  </div>
-                  <div className="sendflow-deposit-request-meta">
-                    <span>{operator.name}</span>
-                    <strong>{accountCountry.dialCode} {sourceNumber}</strong>
-                  </div>
-                  <p className="sendflow-deposit-request-copy">
-                    Composez le code USSD de votre opérateur sur votre téléphone pour confirmer ce dépôt.
-                  </p>
-                  <button type="button" className="sendflow-deposit-request-cancel" onClick={cancelDepositRequest}>
-                    Annuler
-                  </button>
-                </div>
-              )}
-
-              {requestState === 'success' && (
-                <div className="sendflow-deposit-request-state is-success">
-                  <div className="sendflow-deposit-success-art">
-                    <img src={depositSuccessIllustration} alt="" />
-                  </div>
-                  <h2 id="deposit-request-title">Votre dépôt a été crédité avec succès</h2>
-                  <p>{walletAmount.toLocaleString('fr-FR')} FCFA sont maintenant disponibles dans votre wallet.</p>
-                  <button type="button" className="sendflow-deposit-request-confirm" onClick={cancelDepositRequest}>
-                    Terminé
-                  </button>
-                </div>
-              )}
-
-              {requestState === 'failure' && (
-                <div className="sendflow-deposit-request-state is-failure">
-                  <div className="sendflow-deposit-failure-art">
-                    <img src={depositFailureIllustration} alt="" />
-                  </div>
-                  <h2 id="deposit-request-title">Votre dépôt n’a pas pu être confirmé</h2>
-                  <p>Aucun montant n’a été crédité. Vérifiez votre opération USSD puis réessayez.</p>
-                  <button type="button" className="sendflow-deposit-request-confirm" onClick={cancelDepositRequest}>
-                    Réessayer
-                  </button>
-                </div>
-              )}
-            </section>
-          </div>
-        )}
+        <TransferRequestDialog
+          state={requestState}
+          operation="Dépôt"
+          pendingLabel="Demande de dépôt"
+          amountLabel="Montant à créditer"
+          amount={walletAmount.toLocaleString('fr-FR')}
+          metaLabel={operator?.name ?? 'Opérateur'}
+          metaValue={operator ? `${accountCountry.dialCode} ${sourceNumber}` : '—'}
+          pendingCopy="Composez le code USSD de votre opérateur sur votre téléphone pour confirmer ce dépôt."
+          successTitle="Votre dépôt a été crédité avec succès"
+          successCopy={`${walletAmount.toLocaleString('fr-FR')} FCFA sont maintenant disponibles dans votre wallet.`}
+          failureTitle="Votre dépôt n’a pas pu être confirmé"
+          failureCopy="Aucun montant n’a été crédité. Vérifiez votre opération USSD puis réessayez."
+          cancelLabel="Annuler le dépôt"
+          successButtonLabel="Fermer le dépôt"
+          failureButtonLabel="Réessayer le dépôt"
+          onClose={cancelDepositRequest}
+        />
 
         {operatorPickerOpen && operator && (
           <div className="sendflow-transfer-operator-picker" role="presentation" onClick={() => setOperatorPickerOpen(false)}>

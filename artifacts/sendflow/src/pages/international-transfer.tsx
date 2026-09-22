@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
+import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { useSeo } from '@/lib/seo';
 import {
@@ -118,7 +119,7 @@ export default function InternationalTransferPage() {
   const [payFees, setPayFees] = useState(true);
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [requestState, setRequestState] = useState<TransferRequestState>('idle');
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useSeo({
@@ -132,6 +133,13 @@ export default function InternationalTransferPage() {
   useEffect(() => {
     if (!isUnlocked) setLocation('/sign-in');
   }, [isUnlocked, setLocation]);
+
+  useEffect(() => {
+    if (requestState !== 'pending') return;
+
+    const timeout = window.setTimeout(() => setRequestState('success'), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [requestState]);
 
   useEffect(() => {
     if (!countryPickerOpen && !operatorPickerOpen) return;
@@ -169,14 +177,14 @@ export default function InternationalTransferPage() {
     setCountry(nextCountry);
     setOperator(operatorsByCountry[nextCountry.id]?.[0] ?? null);
     setRecipientNumber('');
-    setSubmitted(false);
+    setRequestState('idle');
     setSubmitAttempted(false);
     setCountryPickerOpen(false);
   };
 
   const selectOperator = (nextOperator: InternationalOperator) => {
     setOperator(nextOperator);
-    setSubmitted(false);
+    setRequestState('idle');
     setSubmitAttempted(false);
     setOperatorPickerOpen(false);
   };
@@ -218,7 +226,7 @@ export default function InternationalTransferPage() {
           onSubmit={(event) => {
             event.preventDefault();
             setSubmitAttempted(true);
-            if (canSubmit) setSubmitted(true);
+            if (canSubmit) setRequestState('pending');
           }}
         >
           <section className="sendflow-transfer-section" aria-labelledby="international-from-title">
@@ -231,7 +239,7 @@ export default function InternationalTransferPage() {
                 value={amount}
                 onChange={(event) => {
                   setAmount(event.target.value.replace(/[^\d ]/g, '').slice(0, 10));
-                  setSubmitted(false);
+                  setRequestState('idle');
                   setSubmitAttempted(false);
                 }}
                 placeholder="Montant du transfert"
@@ -291,7 +299,7 @@ export default function InternationalTransferPage() {
                   value={recipientNumber}
                   onChange={(event) => {
                     setRecipientNumber(event.target.value.replace(/\D/g, '').slice(0, 15));
-                    setSubmitted(false);
+                    setRequestState('idle');
                     setSubmitAttempted(false);
                   }}
                   placeholder="Numéro du bénéficiaire"
@@ -320,7 +328,7 @@ export default function InternationalTransferPage() {
                 checked={payFees}
                 onChange={(event) => {
                   setPayFees(event.target.checked);
-                  setSubmitted(false);
+                  setRequestState('idle');
                 }}
               />
               <span aria-hidden="true">{payFees ? <Check size={13} strokeWidth={3} /> : null}</span>
@@ -343,18 +351,30 @@ export default function InternationalTransferPage() {
               </div>
             </div>
 
-            {submitted && (
-              <div className="sendflow-transfer-success" role="status">
-                <Check size={18} />
-                Transfert international préparé.
-              </div>
-            )}
-
-            <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || submitted}>
-              {submitted ? 'Transfert préparé' : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
+            <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || requestState !== 'idle'}>
+              {requestState !== 'idle' ? 'Transfert préparé' : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
             </button>
           </section>
         </form>
+
+        <TransferRequestDialog
+          state={requestState}
+          operation="Transfert international"
+          pendingLabel="Préparation du transfert international"
+          amountLabel="Montant à envoyer"
+          amount={recipientAmount.toLocaleString('fr-FR')}
+          metaLabel={operator?.name ?? 'Opérateur'}
+          metaValue={`${country.dialCode} ${recipientNumber}`}
+          pendingCopy="La demande de transfert international est en cours de préparation. Aucun montant n’est débité avant la confirmation."
+          successTitle="Votre transfert international est prêt"
+          successCopy={`La demande de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${country.name} est prête à être confirmée.`}
+          failureTitle="Votre transfert international n’a pas pu être préparé"
+          failureCopy="Aucun montant n’a été débité. Vérifiez les informations du bénéficiaire puis réessayez."
+          cancelLabel="Annuler l’envoi international"
+          successButtonLabel="Fermer le transfert international"
+          failureButtonLabel="Réessayer l’envoi international"
+          onClose={() => setRequestState('idle')}
+        />
 
         {countryPickerOpen && (
           <div className="sendflow-transfer-operator-picker" role="presentation" onClick={() => setCountryPickerOpen(false)}>
