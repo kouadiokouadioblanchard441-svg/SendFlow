@@ -175,6 +175,7 @@ export function CountryPhoneField({
     const previousBodyRight = document.body.style.right;
     const previousBodyWidth = document.body.style.width;
     const previousRootOverflow = root.style.overflow;
+    const previousRootOverscrollBehavior = root.style.overscrollBehavior;
     const signupShell = document.querySelector<HTMLElement>('.sendflow-signup-shell');
     const previousShellOverflow = signupShell?.style.overflow;
     const previousShellOverscrollBehavior = signupShell?.style.overscrollBehavior;
@@ -218,7 +219,7 @@ export function CountryPhoneField({
     window.addEventListener('keydown', closeOnEscape);
     return () => {
       root.style.overflow = previousRootOverflow;
-      root.style.overscrollBehavior = '';
+      root.style.overscrollBehavior = previousRootOverscrollBehavior;
       document.body.style.position = previousBodyPosition;
       document.body.style.top = previousBodyTop;
       document.body.style.left = previousBodyLeft;
