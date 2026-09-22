@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useRoute } from 'wouter';
 import {
-  Activity,
   ArrowDownToLine,
   ArrowLeft,
   ArrowLeftRight,
@@ -285,7 +284,9 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
       <Sidebar collapsible="offcanvas" className="sendflow-admin-sidebar">
         <SidebarHeader className="sendflow-admin-sidebar-header">
           <Link href="/admin" className="sendflow-admin-brand" data-testid="link-admin-brand">
-            <span className="sendflow-admin-brand-mark"><Activity className="size-4" /></span>
+            <span className="sendflow-admin-brand-mark">
+              <img src={sendflowMark} alt="SendFlow" />
+            </span>
             <span><strong>sendflow</strong><small>ADMIN CONSOLE</small></span>
           </Link>
           <div className="sendflow-admin-status" data-testid="status-admin-readonly">

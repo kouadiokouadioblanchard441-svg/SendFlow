@@ -783,8 +783,16 @@
   height: 32px;
   place-items: center;
   border-radius: 10px;
-  background: #8455e3;
+  overflow: hidden;
+  background: #fff;
   box-shadow: 0 8px 20px rgba(132,85,227,.24);
+}
+
+.sendflow-admin-brand-mark img {
+  display: block;
+  width: 23px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .sendflow-admin-brand strong {
