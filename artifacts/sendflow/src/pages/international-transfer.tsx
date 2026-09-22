@@ -352,7 +352,13 @@ export default function InternationalTransferPage() {
             </div>
 
             <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || requestState !== 'idle'}>
-              {requestState !== 'idle' ? 'Transfert préparé' : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
+              {requestState === 'pending'
+                ? 'Confirmation en cours'
+                : requestState === 'success'
+                  ? 'Transfert confirmé'
+                  : requestState === 'failure'
+                    ? 'Réessayer le transfert'
+                    : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
             </button>
           </section>
         </form>
@@ -368,7 +374,7 @@ export default function InternationalTransferPage() {
           pendingCopy="Votre traitement est en attente du montant. Veuillez patienter."
           successTitle="Votre transfert international est confirmé"
           successCopy={`Le transfert de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${country.name} a été confirmé avec succès.`}
-          failureTitle="Votre transfert international n’a pas pu être préparé"
+          failureTitle="Votre transfert international n’a pas pu être confirmé"
           failureCopy="Aucun montant n’a été débité. Vérifiez les informations du bénéficiaire puis réessayez."
           cancelLabel="Annuler l’envoi international"
           successButtonLabel="Fermer le transfert international"

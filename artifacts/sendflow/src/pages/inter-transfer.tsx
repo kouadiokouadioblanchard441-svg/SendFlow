@@ -470,7 +470,13 @@ export default function InterNetworkTransferPage() {
             </div>
 
             <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || requestState !== 'idle'}>
-              {requestState !== 'idle' ? 'Transfert préparé' : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
+              {requestState === 'pending'
+                ? 'Confirmation en cours'
+                : requestState === 'success'
+                  ? 'Transfert confirmé'
+                  : requestState === 'failure'
+                    ? 'Réessayer le transfert'
+                    : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
             </button>
           </section>
         </form>
@@ -486,7 +492,7 @@ export default function InterNetworkTransferPage() {
           pendingCopy="Votre transfert inter-réseau est en attente. Veuillez patienter."
           successTitle="Votre transfert inter réseau est confirmé"
           successCopy={`Le transfert de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${recipientNumber} a été confirmé avec succès.`}
-          failureTitle="Votre transfert inter réseau n’a pas pu être préparé"
+          failureTitle="Votre transfert inter réseau n’a pas pu être confirmé"
           failureCopy="Aucun montant n’a été débité. Vérifiez les informations des deux opérateurs puis réessayez."
           cancelLabel="Annuler le transfert inter-réseau"
           successButtonLabel="Fermer le transfert inter-réseau"
