@@ -20,3 +20,9 @@ Successful sensitive detail reads are fail-closed on audit persistence: if the s
 **Why:** A financial-data access that is visible to an administrator but absent from the audit trail cannot be reliably investigated later.
 
 **How to apply:** Append only the administrator identity, action, resource type, resource identifier, and timestamp; avoid IPs, query strings, idempotency secrets, and financial payloads in the audit record.
+
+The admin console must use real icon components or approved image assets for financial states, operators, security markers, and navigation; do not draw iconography with CSS dots, initials, or pseudo-elements.
+
+**Why:** Financial operations need recognizable, consistent symbols on mobile and desktop, and an operator logo must never be faked with another partner’s branding.
+
+**How to apply:** Prefer Lucide icons for generic concepts, use only approved operator assets when available, and use a clearly generic icon for operators without an approved logo.

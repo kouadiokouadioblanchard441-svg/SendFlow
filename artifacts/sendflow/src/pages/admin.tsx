@@ -9,19 +9,26 @@ import {
   ArrowUpRight,
   Banknote,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
+  CircleX,
   Clock3,
   FileSearch,
   Globe2,
+  Landmark,
   LayoutDashboard,
+  Radio,
   Search,
   ShieldCheck,
   UserRound,
   Users,
   WalletCards,
 } from 'lucide-react';
+import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
+import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
+import sendflowMark from '@assets/sendflow-mark-original.png';
 import {
   useGetAdminTransaction,
   useGetAdminUser,
@@ -171,6 +178,68 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
+const adminOperatorLogos: Record<string, string> = {
+  mixx: mixxLogo,
+  sendflow: sendflowMark,
+  wave: waveLogo,
+};
+
+const adminOperatorNames: Record<string, string> = {
+  mtn: 'MTN Mobile Money',
+  moov: 'Moov Money',
+  orange: 'Orange Money',
+  'orange-money': 'Orange Money',
+  sendflow: 'SendFlow',
+  tmoney: 'TMoney',
+  wave: 'Wave',
+};
+
+function normalizeOperator(operator: string | null | undefined) {
+  return operator?.trim().toLowerCase().replace(/\s+/g, '-') ?? '';
+}
+
+function getAdminOperatorName(operator: string | null | undefined) {
+  const normalized = normalizeOperator(operator);
+  return (normalized && adminOperatorNames[normalized]) || operator?.trim() || 'Réseau non renseigné';
+}
+
+function AdminOperatorIcon({ operator }: { operator: string | null | undefined }) {
+  const normalized = normalizeOperator(operator);
+  const name = getAdminOperatorName(operator);
+  const logo = adminOperatorLogos[normalized];
+
+  return (
+    <span className="sendflow-admin-operator-icon" aria-label={`Icône : ${name}`}>
+      {logo ? <img src={logo} alt="" /> : <Landmark className="size-4" aria-hidden="true" />}
+    </span>
+  );
+}
+
+function AdminOperatorLabel({ operator }: { operator: string | null | undefined }) {
+  return (
+    <span className="sendflow-admin-operator-label">
+      <AdminOperatorIcon operator={operator} />
+      <span>{getAdminOperatorName(operator)}</span>
+    </span>
+  );
+}
+
+function AdminOperatorRoute({
+  fromOperator,
+  toOperator,
+}: {
+  fromOperator: string | null | undefined;
+  toOperator: string | null | undefined;
+}) {
+  return (
+    <span className="sendflow-admin-operator-route">
+      <AdminOperatorLabel operator={fromOperator} />
+      <ArrowRight className="size-3.5" aria-hidden="true" />
+      <AdminOperatorLabel operator={toOperator} />
+    </span>
+  );
+}
+
 function MetricCard({
   label,
   value,
@@ -211,7 +280,7 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
             <span><strong>sendflow</strong><small>ADMIN CONSOLE</small></span>
           </Link>
           <div className="sendflow-admin-status" data-testid="status-admin-readonly">
-            <span className="sendflow-admin-status-dot" />
+            <ShieldCheck className="size-3.5" aria-hidden="true" />
             <span>Lecture seule</span>
           </div>
         </SidebarHeader>
@@ -261,7 +330,7 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
             </div>
           </div>
           <div className="sendflow-admin-topbar-right">
-            <span className="sendflow-admin-live-indicator"><span /> Données en direct</span>
+            <span className="sendflow-admin-live-indicator"><Radio className="size-3.5" aria-hidden="true" /> Données en direct</span>
             <span className="sendflow-admin-protected"><ShieldCheck className="size-3.5" /> Protégé</span>
           </div>
         </header>
@@ -366,7 +435,8 @@ function OverviewPage() {
 
 function StatusBadge({ status, id }: { status: Status; id: string }) {
   const label = status === 'succeeded' ? 'Réussi' : status === 'pending' ? 'En attente' : 'Échoué';
-  return <Badge variant="outline" className={`sendflow-admin-status-badge sendflow-admin-status-${status}`} data-testid={`status-transaction-${id}`}>{label}</Badge>;
+  const Icon = status === 'succeeded' ? CheckCircle2 : status === 'pending' ? Clock3 : CircleX;
+  return <Badge variant="outline" className={`sendflow-admin-status-badge sendflow-admin-status-${status}`} data-testid={`status-transaction-${id}`}><Icon className="size-3" aria-hidden="true" /><span>{label}</span></Badge>;
 }
 
 function Pager({ page, pageSize, total, onPage }: { page: number; pageSize: number; total: number; onPage: (page: number) => void }) {
@@ -443,7 +513,7 @@ function UsersPage() {
                 <TableBody>
                   {items.map((user) => (
                     <TableRow key={user.id} data-testid={`row-admin-user-${user.id}`}>
-                     <TableCell><div className="sendflow-admin-user-cell"><span className="sendflow-admin-avatar">{(user.displayName || user.phone || '?').slice(0, 1).toUpperCase()}</span><span><Link href={`/admin/users/${user.id}`} className="sendflow-admin-user-link"><strong data-testid={`text-user-name-${user.id}`}>{user.displayName || 'Nom non renseigné'}</strong></Link><small data-testid={`text-user-phone-${user.id}`}>{user.phone || 'Téléphone non renseigné'}</small></span></div></TableCell>
+                     <TableCell><div className="sendflow-admin-user-cell"><span className="sendflow-admin-avatar"><UserRound className="size-4" aria-hidden="true" /></span><span><Link href={`/admin/users/${user.id}`} className="sendflow-admin-user-link"><strong data-testid={`text-user-name-${user.id}`}>{user.displayName || 'Nom non renseigné'}</strong></Link><small data-testid={`text-user-phone-${user.id}`}>{user.phone || 'Téléphone non renseigné'}</small></span></div></TableCell>
                       <TableCell data-testid={`text-user-country-${user.id}`}>{user.countryCode || '—'}</TableCell>
                       <TableCell data-testid={`text-user-created-${user.id}`}>{formatDate(user.createdAt)}</TableCell>
                       <TableCell data-testid={`text-user-lastseen-${user.id}`}>{formatDate(user.lastSeenAt)}</TableCell>
@@ -511,7 +581,7 @@ function UserDetailPage({ userId }: { userId: string }) {
             <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
               <div className="sendflow-admin-profile-heading">
                 <span className="sendflow-admin-avatar sendflow-admin-avatar-large">
-                  {(detail.user.displayName || detail.user.phone || '?').slice(0, 1).toUpperCase()}
+                  <UserRound className="size-5" aria-hidden="true" />
                 </span>
                 <div>
                   <h3 data-testid="text-admin-user-detail-name">{detail.user.displayName || 'Nom non renseigné'}</h3>
@@ -582,7 +652,7 @@ function UserDetailPage({ userId }: { userId: string }) {
                         <TableRow key={transaction.id} data-testid={`row-admin-user-transaction-${transaction.id}`}>
                           <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/transactions/${transaction.id}`} className="sendflow-admin-transaction-link"><strong>{transaction.reference}</strong></Link><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
                           <TableCell data-testid={`text-admin-user-transaction-kind-${transaction.id}`}>{transactionKindLabel(transaction.kind)}</TableCell>
-                          <TableCell>{transaction.fromOperator || transaction.toOperator || '—'}</TableCell>
+                          <TableCell><AdminOperatorRoute fromOperator={transaction.fromOperator} toOperator={transaction.toOperator} /></TableCell>
                           <TableCell><StatusBadge status={transaction.status} id={`user-${transaction.id}`} /></TableCell>
                           <TableCell className="font-semibold tabular-nums">{formatMoney(transaction.amountMinor, transaction.currency)}</TableCell>
                           <TableCell className="tabular-nums">{formatMoney(transaction.feeMinor, transaction.currency)}</TableCell>
@@ -682,8 +752,8 @@ function TransactionDetailPage({ transactionId }: { transactionId: string }) {
               <CardContent className="sendflow-admin-detail-list">
                 <div><span>Utilisateur</span><Link href={`/admin/users/${transaction.userId}`} className="sendflow-admin-detail-link" data-testid="link-admin-transaction-user">{transaction.displayName || transaction.userId}</Link></div>
                 <div><span>Téléphone du compte</span><strong data-testid="text-admin-transaction-user-phone">{transaction.userPhone || 'Non renseigné'}</strong></div>
-                <div><span>Réseau de départ</span><strong data-testid="text-admin-transaction-from-operator">{transaction.fromOperator || 'Non renseigné'}</strong></div>
-                <div><span>Réseau d’arrivée</span><strong data-testid="text-admin-transaction-to-operator">{transaction.toOperator || 'Non renseigné'}</strong></div>
+                <div><span>Réseau de départ</span><strong data-testid="text-admin-transaction-from-operator"><AdminOperatorLabel operator={transaction.fromOperator} /></strong></div>
+                <div><span>Réseau d’arrivée</span><strong data-testid="text-admin-transaction-to-operator"><AdminOperatorLabel operator={transaction.toOperator} /></strong></div>
               </CardContent>
             </Card>
           </div>
@@ -772,8 +842,8 @@ function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 
                   {items.map((transaction) => (
                     <TableRow key={transaction.id} data-testid={`row-admin-transaction-${transaction.id}`}>
                       <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/transactions/${transaction.id}`} className="sendflow-admin-transaction-link"><strong data-testid={`text-transaction-reference-${transaction.id}`}>{transaction.reference}</strong></Link><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
-                      <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-source-${transaction.id}`}>{transaction.senderPhone}</strong><small>{transaction.fromOperator || 'Réseau source non renseigné'}</small></div></TableCell>
-                      <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-destination-${transaction.id}`}>{transaction.recipientPhone}</strong><small>{transaction.toOperator || 'Réseau destination non renseigné'}</small></div></TableCell>
+                      <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-source-${transaction.id}`}>{transaction.senderPhone}</strong><small><AdminOperatorLabel operator={transaction.fromOperator} /></small></div></TableCell>
+                      <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-destination-${transaction.id}`}>{transaction.recipientPhone}</strong><small><AdminOperatorLabel operator={transaction.toOperator} /></small></div></TableCell>
                       <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/users/${transaction.userId}`} className="sendflow-admin-detail-link"><strong data-testid={`text-transaction-user-${transaction.id}`}>{transaction.displayName || 'Nom non renseigné'}</strong></Link><small>{transaction.userId}</small></div></TableCell>
                       <TableCell data-testid={`text-transaction-kind-${transaction.id}`}>{transactionKindLabel(transaction.kind)}</TableCell>
                       <TableCell><StatusBadge status={transaction.status} id={transaction.id} /></TableCell>
