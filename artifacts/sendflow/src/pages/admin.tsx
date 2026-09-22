@@ -26,6 +26,7 @@ import {
   Users,
   WalletCards,
 } from 'lucide-react';
+import { AdminActionDialog } from '@/components/admin-action-dialog';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -281,7 +282,7 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
           </Link>
           <div className="sendflow-admin-status" data-testid="status-admin-readonly">
             <ShieldCheck className="size-3.5" aria-hidden="true" />
-            <span>Lecture seule</span>
+            <span>Actions contrôlées</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -517,7 +518,7 @@ function UsersPage() {
                       <TableCell data-testid={`text-user-country-${user.id}`}>{user.countryCode || '—'}</TableCell>
                       <TableCell data-testid={`text-user-created-${user.id}`}>{formatDate(user.createdAt)}</TableCell>
                       <TableCell data-testid={`text-user-lastseen-${user.id}`}>{formatDate(user.lastSeenAt)}</TableCell>
-                      <TableCell><Badge variant="outline" className="sendflow-admin-wallet-badge" data-testid={`status-user-wallet-${user.id}`}>{user.wallet.status === 'active' ? 'Actif' : user.wallet.status === 'locked' ? 'Bloqué' : 'Fermé'}</Badge></TableCell>
+                       <TableCell><div className="sendflow-admin-status-stack"><Badge variant="outline" className="sendflow-admin-wallet-badge" data-testid={`status-user-wallet-${user.id}`}>{user.wallet.status === 'active' ? 'Actif' : user.wallet.status === 'locked' ? 'Bloqué' : 'Fermé'}</Badge><Badge variant="outline" className={`sendflow-admin-account-status sendflow-admin-account-status-${user.status}`} data-testid={`status-admin-user-${user.id}`}>{user.status === 'active' ? 'Compte actif' : user.status === 'suspended' ? 'Suspendu' : 'Supprimé'}</Badge></div></TableCell>
                       <TableCell className="font-semibold tabular-nums" data-testid={`text-user-balance-${user.id}`}>{formatMoney(user.wallet.balanceMinor, user.wallet.currency)}</TableCell>
                     </TableRow>
                   ))}
@@ -558,9 +559,9 @@ function UserDetailPage({ userId }: { userId: string }) {
           </Link>
           <p className="sendflow-admin-overline">Fiche sécurisée</p>
           <h2 data-testid="heading-admin-user-detail">Détail utilisateur</h2>
-          <p className="sendflow-admin-subtitle">Données persistées en consultation uniquement. Aucune action de modification n’est disponible.</p>
+          <p className="sendflow-admin-subtitle">Données persistées avec actions sensibles contrôlées par l’autorisation serveur et l’audit.</p>
         </div>
-        <div className="sendflow-admin-readonly-chip"><ShieldCheck className="size-4" /> Lecture seule</div>
+        <div className="sendflow-admin-readonly-chip"><ShieldCheck className="size-4" /> Actions contrôlées</div>
       </div>
 
       {detailQuery.isLoading && (
@@ -588,7 +589,12 @@ function UserDetailPage({ userId }: { userId: string }) {
                   <p data-testid="text-admin-user-detail-id">{detail.user.id}</p>
                 </div>
               </div>
-              <div className="sendflow-admin-profile-status"><UserRound className="size-4" /> Compte utilisateur</div>
+               <div className="sendflow-admin-profile-actions">
+                 <div className="sendflow-admin-profile-status"><UserRound className="size-4" /> {detail.user.status === 'active' ? 'Compte actif' : detail.user.status === 'suspended' ? 'Compte suspendu' : 'Compte supprimé'}</div>
+                 {detail.user.status === 'active' && <AdminActionDialog kind="suspend" targetId={userId} />}
+                 {detail.user.status === 'suspended' && <AdminActionDialog kind="restore" targetId={userId} />}
+                 {detail.user.status !== 'deleted' && <AdminActionDialog kind="delete-user" targetId={userId} />}
+               </div>
             </CardContent>
           </Card>
 
@@ -621,8 +627,14 @@ function UserDetailPage({ userId }: { userId: string }) {
                 {detail.wallet ? (
                   <div className="sendflow-admin-wallet-detail">
                     <div><span>Solde disponible</span><strong data-testid="text-admin-user-detail-balance">{formatMoney(detail.wallet.balanceMinor, detail.wallet.currency)}</strong></div>
-                    <div><span>Statut</span><Badge variant="outline" className="sendflow-admin-wallet-badge" data-testid="status-admin-user-detail-wallet">{detail.wallet.status === 'active' ? 'Actif' : detail.wallet.status === 'locked' ? 'Bloqué' : 'Fermé'}</Badge></div>
+                     <div><span>Statut</span><Badge variant="outline" className="sendflow-admin-wallet-badge" data-testid="status-admin-user-detail-wallet">{detail.wallet.status === 'active' ? 'Actif' : detail.wallet.status === 'locked' ? 'Bloqué' : 'Fermé'}</Badge></div>
                     <div><span>Devise</span><strong data-testid="text-admin-user-detail-currency">{detail.wallet.currency}</strong></div>
+                     {detail.wallet.status === 'active' && detail.user.status !== 'deleted' && (
+                       <div className="sendflow-admin-wallet-actions">
+                         <AdminActionDialog kind="credit" targetId={userId} currentBalanceMinor={detail.wallet.balanceMinor} currency={detail.wallet.currency} />
+                         <AdminActionDialog kind="debit" targetId={userId} currentBalanceMinor={detail.wallet.balanceMinor} currency={detail.wallet.currency} />
+                       </div>
+                     )}
                   </div>
                 ) : (
                   <div className="sendflow-admin-detail-unavailable" data-testid="empty-admin-user-detail-wallet">
@@ -688,7 +700,7 @@ function TransactionDetailPage({ transactionId }: { transactionId: string }) {
           <h2 data-testid="heading-admin-transaction-detail">Détail de la transaction</h2>
           <p className="sendflow-admin-subtitle">Traçabilité des comptes source et destinataire, avec les références reçues par SendFlow.</p>
         </div>
-        <div className="sendflow-admin-readonly-chip"><ShieldCheck className="size-4" /> Lecture seule</div>
+        <div className="sendflow-admin-readonly-chip"><ShieldCheck className="size-4" /> Actions contrôlées</div>
       </div>
 
       {query.isLoading && (
@@ -713,7 +725,10 @@ function TransactionDetailPage({ transactionId }: { transactionId: string }) {
                   <p data-testid="text-admin-transaction-id">{transaction.id}</p>
                 </div>
               </div>
-              <StatusBadge status={transaction.status} id={`detail-${transaction.id}`} />
+               <div className="sendflow-admin-profile-actions">
+                 <StatusBadge status={transaction.status} id={`detail-${transaction.id}`} />
+                 {!transaction.archivedAt && <AdminActionDialog kind="archive-transaction" targetId={transaction.id} />}
+               </div>
             </CardContent>
           </Card>
 

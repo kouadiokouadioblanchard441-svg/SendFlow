@@ -172,6 +172,9 @@ export const ListAdminUsersResponse = zod.object({
   "displayName": zod.string().nullable(),
   "phone": zod.string().nullable(),
   "countryCode": zod.string().nullable(),
+  "status": zod.enum(['active', 'suspended', 'deleted']),
+  "suspendedAt": zod.coerce.date().nullable(),
+  "deletedAt": zod.coerce.date().nullable(),
   "createdAt": zod.coerce.date(),
   "lastSeenAt": zod.coerce.date().nullable(),
   "wallet": zod.object({
@@ -203,6 +206,9 @@ export const GetAdminUserResponse = zod.object({
   "displayName": zod.string().nullable(),
   "phone": zod.string().nullable(),
   "countryCode": zod.string().nullable(),
+  "status": zod.enum(['active', 'suspended', 'deleted']),
+  "suspendedAt": zod.coerce.date().nullable(),
+  "deletedAt": zod.coerce.date().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date(),
   "lastSeenAt": zod.coerce.date().nullable()
@@ -265,8 +271,9 @@ export const ListAdminTransactionsResponse = zod.object({
   "feeMinor": zod.number().int(),
   "currency": zod.string(),
   "reference": zod.string(),
-  "providerReference": zod.string().nullable(),
-  "createdAt": zod.coerce.date()
+  "providerReference": zod.string().nullish(),
+  "archivedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date().optional()
 })),
   "page": zod.number().int(),
   "pageSize": zod.number().int(),
@@ -298,8 +305,159 @@ export const GetAdminTransactionResponse = zod.object({
   "currency": zod.string(),
   "reference": zod.string(),
   "providerReference": zod.string().nullable(),
-  "createdAt": zod.coerce.date(),
-  "updatedAt": zod.coerce.date()
+  "createdAt": zod.coerce.date().optional(),
+  "updatedAt": zod.coerce.date().optional(),
+  "archivedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * Adjusts a wallet through an immutable ledger entry. Direct balance overwrites are not supported.
+ * @summary Create an audited wallet credit or debit
+ */
+
+
+
+export const CreateAdminWalletAdjustmentParams = zod.object({
+  "userId": zod.coerce.string().min(1)
+})
+
+
+export const createAdminWalletAdjustmentBodyReasonMin = 10;
+export const createAdminWalletAdjustmentBodyReasonMax = 500;
+
+export const createAdminWalletAdjustmentBodyIdempotencyKeyMin = 16;
+export const createAdminWalletAdjustmentBodyIdempotencyKeyMax = 128;
+
+export const createAdminWalletAdjustmentBodyExpectedBalanceMinorMin = 0;
+
+
+
+export const CreateAdminWalletAdjustmentBody = zod.object({
+  "direction": zod.enum(['credit', 'debit']),
+  "amountMinor": zod.number().int().min(1),
+  "reason": zod.string().min(createAdminWalletAdjustmentBodyReasonMin).max(createAdminWalletAdjustmentBodyReasonMax),
+  "confirmation": zod.enum(['CREDIT', 'DEBIT']),
+  "idempotencyKey": zod.string().min(createAdminWalletAdjustmentBodyIdempotencyKeyMin).max(createAdminWalletAdjustmentBodyIdempotencyKeyMax),
+  "expectedBalanceMinor": zod.number().int().min(createAdminWalletAdjustmentBodyExpectedBalanceMinorMin).optional()
+})
+
+export const CreateAdminWalletAdjustmentResponse = zod.object({
+  "ledgerEntryId": zod.string().uuid(),
+  "userId": zod.string(),
+  "walletId": zod.string().uuid(),
+  "direction": zod.enum(['credit', 'debit']),
+  "amountMinor": zod.number().int(),
+  "balanceBeforeMinor": zod.number().int(),
+  "balanceAfterMinor": zod.number().int(),
+  "currency": zod.string(),
+  "duplicate": zod.boolean()
+})
+
+
+/**
+ * @summary Suspend a SendFlow user with an audit trail
+ */
+
+
+
+export const SuspendAdminUserParams = zod.object({
+  "userId": zod.coerce.string().min(1)
+})
+
+export const suspendAdminUserBodyReasonMin = 10;
+export const suspendAdminUserBodyReasonMax = 500;
+
+
+
+export const SuspendAdminUserBody = zod.object({
+  "reason": zod.string().min(suspendAdminUserBodyReasonMin).max(suspendAdminUserBodyReasonMax),
+  "confirmation": zod.enum(['CONFIRMER'])
+})
+
+export const SuspendAdminUserResponse = zod.object({
+  "resourceId": zod.string(),
+  "action": zod.enum(['suspend_user', 'restore_user', 'delete_user', 'archive_transaction']),
+  "status": zod.enum(['active', 'suspended', 'deleted', 'archived'])
+})
+
+
+/**
+ * @summary Restore a suspended SendFlow user with an audit trail
+ */
+
+
+
+export const RestoreAdminUserParams = zod.object({
+  "userId": zod.coerce.string().min(1)
+})
+
+export const restoreAdminUserBodyReasonMin = 10;
+export const restoreAdminUserBodyReasonMax = 500;
+
+
+
+export const RestoreAdminUserBody = zod.object({
+  "reason": zod.string().min(restoreAdminUserBodyReasonMin).max(restoreAdminUserBodyReasonMax),
+  "confirmation": zod.enum(['CONFIRMER'])
+})
+
+export const RestoreAdminUserResponse = zod.object({
+  "resourceId": zod.string(),
+  "action": zod.enum(['suspend_user', 'restore_user', 'delete_user', 'archive_transaction']),
+  "status": zod.enum(['active', 'suspended', 'deleted', 'archived'])
+})
+
+
+/**
+ * Retains financial records and anonymizes no data automatically. This is reversible only through a documented recovery process.
+ * @summary Soft-delete a SendFlow user with an audit trail
+ */
+
+
+
+export const DeleteAdminUserParams = zod.object({
+  "userId": zod.coerce.string().min(1)
+})
+
+export const deleteAdminUserBodyReasonMin = 10;
+export const deleteAdminUserBodyReasonMax = 500;
+
+
+
+export const DeleteAdminUserBody = zod.object({
+  "reason": zod.string().min(deleteAdminUserBodyReasonMin).max(deleteAdminUserBodyReasonMax),
+  "confirmation": zod.enum(['CONFIRMER'])
+})
+
+export const DeleteAdminUserResponse = zod.object({
+  "resourceId": zod.string(),
+  "action": zod.enum(['suspend_user', 'restore_user', 'delete_user', 'archive_transaction']),
+  "status": zod.enum(['active', 'suspended', 'deleted', 'archived'])
+})
+
+
+/**
+ * @summary Archive a transaction without deleting its financial record
+ */
+export const ArchiveAdminTransactionParams = zod.object({
+  "transactionId": zod.coerce.string().uuid()
+})
+
+export const archiveAdminTransactionBodyReasonMin = 10;
+export const archiveAdminTransactionBodyReasonMax = 500;
+
+
+
+export const ArchiveAdminTransactionBody = zod.object({
+  "reason": zod.string().min(archiveAdminTransactionBodyReasonMin).max(archiveAdminTransactionBodyReasonMax),
+  "confirmation": zod.enum(['CONFIRMER'])
+})
+
+export const ArchiveAdminTransactionResponse = zod.object({
+  "resourceId": zod.string(),
+  "action": zod.enum(['suspend_user', 'restore_user', 'delete_user', 'archive_transaction']),
+  "status": zod.enum(['active', 'suspended', 'deleted', 'archived'])
 })
 
 

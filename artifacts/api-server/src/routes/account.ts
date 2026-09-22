@@ -13,6 +13,20 @@ router.get("/me", async (req, res): Promise<void> => {
     return;
   }
 
+  const [existingUser] = await db
+    .select({ status: usersTable.status })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId));
+
+  if (existingUser?.status === "suspended") {
+    res.status(403).json({ error: "Account suspended" });
+    return;
+  }
+  if (existingUser?.status === "deleted") {
+    res.status(403).json({ error: "Account deleted" });
+    return;
+  }
+
   try {
     const account = await db.transaction(async (tx) => {
       const [user] = await tx

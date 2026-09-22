@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminUserSummaryStatus } from './adminUserSummaryStatus';
 import type { AdminWalletSummary } from './adminWalletSummary';
 
 export interface AdminUserSummary {
@@ -15,6 +16,11 @@ export interface AdminUserSummary {
   phone: string | null;
   /** @nullable */
   countryCode: string | null;
+  status: AdminUserSummaryStatus;
+  /** @nullable */
+  suspendedAt: Date | null;
+  /** @nullable */
+  deletedAt: Date | null;
   createdAt: Date;
   /** @nullable */
   lastSeenAt: Date | null;

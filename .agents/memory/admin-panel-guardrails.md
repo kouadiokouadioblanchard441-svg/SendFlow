@@ -3,17 +3,23 @@ name: SendFlow admin panel guardrails
 description: Security and data-integrity decisions for the SendFlow back office.
 ---
 
-The SendFlow back office is read-only until server-side administrator authorization, real database-backed metrics, and audit requirements are in place. Never use a client-only route check or demo financial values.
+The SendFlow back office is deny-by-default: reads use the read-admin allowlist, while sensitive mutations require a separate server-side mutation allowlist, an audit record, and real database-backed state. Never use a client-only route check or demo financial values.
 
-**Why:** SendFlow handles financial data, and the existing customer PIN/session flag is not an authorization boundary. The admin schema currently exposes users, wallets, deposits, and transfers, but not every example-panel concept such as withdrawals.
+**Why:** SendFlow handles financial data, and the existing customer PIN/session flag is not an authorization boundary. Read access and write access must be independently revocable.
 
-**How to apply:** Keep admin API routes deny-by-default and enforce authorization on the server. Add new metrics only when their source exists in the database and label unsupported operations explicitly instead of inventing them.
+**How to apply:** Keep admin API routes deny-by-default and enforce authorization on the server. Use a separate mutation administrator allowlist for financial/account actions. Add new metrics only when their source exists in the database and label unsupported operations explicitly instead of inventing them.
 
-The user detail view remains read-only: profile and wallet data come from the server, while the transaction history is retrieved through a server-side user filter with bounded pagination rather than an unbounded detail payload.
+The user detail view uses server data, while transaction history is retrieved through a server-side user filter with bounded pagination. Wallet changes must be signed as immutable ledger entries with before/after balances, idempotency keys, expected-balance checks, a reason, and an audit record.
 
 **Why:** Financial histories can grow without limit, and a client-only filter would risk exposing another user’s operations if the server did not constrain the query.
 
-**How to apply:** Keep the user identifier in the authorization-protected API contract and apply it in the database query. Do not add admin mutations until the audit, permission, ledger, and approval model exists.
+**How to apply:** Keep the user identifier in the authorization-protected API contract and apply it in the database query. Do not expose a raw balance overwrite; use a validated credit/debit adjustment through the ledger.
+
+Account deletion and transaction deletion are logical state changes, not physical deletes: preserve wallets, ledger entries, transactions, and audit history.
+
+**Why:** Financial evidence and account obligations must remain available after an operational record is removed from normal lists.
+
+**How to apply:** Mark users deleted and transactions archived with the administrator, timestamp, and mandatory reason. Require explicit confirmation text for sensitive actions, and never use a customer PIN or an improvised administrator password.
 
 Successful sensitive detail reads are fail-closed on audit persistence: if the server cannot append the administrator/resource access record, it must not return the user or transaction detail.
 

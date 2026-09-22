@@ -29,6 +29,8 @@ export interface AdminTransactionDetail {
   reference: string;
   /** @nullable */
   providerReference: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  /** @nullable */
+  archivedAt?: Date | null;
 }

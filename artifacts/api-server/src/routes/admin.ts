@@ -22,6 +22,7 @@ import {
   gte,
   ilike,
   inArray,
+  isNull,
   lte,
   or,
   sql,
@@ -38,33 +39,52 @@ type DateRange = {
   to?: Date;
 };
 
-function getAdminUserId(req: Request) {
+export type AdminPermission = "read" | "mutate";
+
+export function getAdminUserId(req: Request, permission: AdminPermission = "read") {
   const { userId } = getAuth(req);
   if (!userId) return { userId: null, error: "Authentication required" as const };
 
-  const configuredAdmins = (process.env.SENDFLOW_ADMIN_USER_IDS ?? "")
+  const configuredAdminValue = permission === "mutate"
+    ? process.env.SENDFLOW_MUTATION_ADMIN_USER_IDS
+    : process.env.SENDFLOW_ADMIN_USER_IDS;
+  const configuredAdmins = (configuredAdminValue ?? "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
 
   if (configuredAdmins.length === 0) {
-    return { userId: null, error: "Administrator access is not configured" as const };
+    return {
+      userId: null,
+      error: permission === "mutate"
+        ? "Administrator mutation access is not configured"
+        : "Administrator access is not configured",
+    } as const;
   }
 
   if (!configuredAdmins.includes(userId)) {
-    return { userId: null, error: "Administrator access denied" as const };
+    return {
+      userId: null,
+      error: permission === "mutate"
+        ? "Administrator mutation access denied"
+        : "Administrator access denied",
+    } as const;
   }
 
   return { userId, error: null };
 }
 
-function respondAdminAuthError(req: Request, res: Parameters<Parameters<IRouter["get"]>[1]>[1]) {
-  const auth = getAdminUserId(req);
+export function respondAdminAuthError(
+  req: Request,
+  res: Parameters<Parameters<IRouter["get"]>[1]>[1],
+  permission: AdminPermission = "read",
+) {
+  const auth = getAdminUserId(req, permission);
   if (auth.userId) return auth.userId;
 
   if (auth.error === "Authentication required") {
     res.status(401).json({ error: auth.error });
-  } else if (auth.error === "Administrator access denied") {
+  } else if (auth.error === "Administrator access denied" || auth.error === "Administrator mutation access denied") {
     res.status(403).json({ error: auth.error });
   } else {
     req.log.error("Administrator access is not configured");
@@ -243,6 +263,9 @@ router.get("/admin/users", async (req, res): Promise<void> => {
           displayName: usersTable.displayName,
           phone: usersTable.phone,
           countryCode: usersTable.countryCode,
+          status: usersTable.status,
+          suspendedAt: usersTable.suspendedAt,
+          deletedAt: usersTable.deletedAt,
           createdAt: usersTable.createdAt,
           lastSeenAt: usersTable.lastSeenAt,
           wallet: {
@@ -302,6 +325,9 @@ router.get("/admin/users/:userId", async (req, res): Promise<void> => {
         displayName: usersTable.displayName,
         phone: usersTable.phone,
         countryCode: usersTable.countryCode,
+        status: usersTable.status,
+        suspendedAt: usersTable.suspendedAt,
+        deletedAt: usersTable.deletedAt,
         createdAt: usersTable.createdAt,
         updatedAt: usersTable.updatedAt,
         lastSeenAt: usersTable.lastSeenAt,
@@ -406,11 +432,12 @@ router.get("/admin/transactions", async (req, res): Promise<void> => {
           currency: transactionsTable.currency,
           reference: transactionsTable.reference,
           providerReference: transactionsTable.providerReference,
+          archivedAt: transactionsTable.deletedAt,
           createdAt: transactionsTable.createdAt,
         })
         .from(transactionsTable)
         .innerJoin(usersTable, eq(usersTable.id, transactionsTable.userId))
-        .where(filters.length ? and(...filters) : undefined)
+        .where(and(isNull(transactionsTable.deletedAt), ...filters))
         .orderBy(desc(transactionsTable.createdAt))
         .limit(pageSize)
         .offset(offset),
@@ -418,7 +445,7 @@ router.get("/admin/transactions", async (req, res): Promise<void> => {
         .select({ value: count() })
         .from(transactionsTable)
         .innerJoin(usersTable, eq(usersTable.id, transactionsTable.userId))
-        .where(filters.length ? and(...filters) : undefined),
+        .where(and(isNull(transactionsTable.deletedAt), ...filters)),
     ]);
 
     res.json(
@@ -465,6 +492,7 @@ router.get("/admin/transactions/:transactionId", async (req, res): Promise<void>
         currency: transactionsTable.currency,
         reference: transactionsTable.reference,
         providerReference: transactionsTable.providerReference,
+        archivedAt: transactionsTable.deletedAt,
         createdAt: transactionsTable.createdAt,
         updatedAt: transactionsTable.updatedAt,
       })

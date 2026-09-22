@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminUserProfileStatus } from './adminUserProfileStatus';
 
 export interface AdminUserProfile {
   id: string;
@@ -14,6 +15,11 @@ export interface AdminUserProfile {
   phone: string | null;
   /** @nullable */
   countryCode: string | null;
+  status: AdminUserProfileStatus;
+  /** @nullable */
+  suspendedAt: Date | null;
+  /** @nullable */
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   /** @nullable */

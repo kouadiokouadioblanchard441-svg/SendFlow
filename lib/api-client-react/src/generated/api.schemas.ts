@@ -107,6 +107,15 @@ export interface AdminPeriod {
   to: string | null;
 }
 
+export type AdminUserSummaryStatus = typeof AdminUserSummaryStatus[keyof typeof AdminUserSummaryStatus];
+
+
+export const AdminUserSummaryStatus = {
+  active: 'active',
+  suspended: 'suspended',
+  deleted: 'deleted',
+} as const;
+
 export type AdminWalletSummaryStatus = typeof AdminWalletSummaryStatus[keyof typeof AdminWalletSummaryStatus];
 
 
@@ -130,11 +139,25 @@ export interface AdminUserSummary {
   phone: string | null;
   /** @nullable */
   countryCode: string | null;
+  status: AdminUserSummaryStatus;
+  /** @nullable */
+  suspendedAt: string | null;
+  /** @nullable */
+  deletedAt: string | null;
   createdAt: string;
   /** @nullable */
   lastSeenAt: string | null;
   wallet: AdminWalletSummary;
 }
+
+export type AdminUserProfileStatus = typeof AdminUserProfileStatus[keyof typeof AdminUserProfileStatus];
+
+
+export const AdminUserProfileStatus = {
+  active: 'active',
+  suspended: 'suspended',
+  deleted: 'deleted',
+} as const;
 
 export interface AdminUserProfile {
   id: string;
@@ -144,6 +167,11 @@ export interface AdminUserProfile {
   phone: string | null;
   /** @nullable */
   countryCode: string | null;
+  status: AdminUserProfileStatus;
+  /** @nullable */
+  suspendedAt: string | null;
+  /** @nullable */
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
   /** @nullable */
@@ -213,8 +241,10 @@ export interface AdminTransactionSummary {
   currency: string;
   reference: string;
   /** @nullable */
-  providerReference: string | null;
-  createdAt: string;
+  providerReference?: string | null;
+  /** @nullable */
+  archivedAt?: string | null;
+  createdAt?: string;
 }
 
 export type AdminOverviewUsers = {
@@ -310,8 +340,10 @@ export interface AdminTransactionDetail {
   reference: string;
   /** @nullable */
   providerReference: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+  /** @nullable */
+  archivedAt?: string | null;
 }
 
 export interface AdminUserDetail {
@@ -331,6 +363,103 @@ export interface DiditWebhookPayload {
 export interface WebhookReceipt {
   received: boolean;
   duplicate: boolean;
+}
+
+export type AdminWalletAdjustmentRequestDirection = typeof AdminWalletAdjustmentRequestDirection[keyof typeof AdminWalletAdjustmentRequestDirection];
+
+
+export const AdminWalletAdjustmentRequestDirection = {
+  credit: 'credit',
+  debit: 'debit',
+} as const;
+
+export type AdminWalletAdjustmentRequestConfirmation = typeof AdminWalletAdjustmentRequestConfirmation[keyof typeof AdminWalletAdjustmentRequestConfirmation];
+
+
+export const AdminWalletAdjustmentRequestConfirmation = {
+  CREDIT: 'CREDIT',
+  DEBIT: 'DEBIT',
+} as const;
+
+export interface AdminWalletAdjustmentRequest {
+  direction: AdminWalletAdjustmentRequestDirection;
+  /** @minimum 1 */
+  amountMinor: number;
+  /**
+     * @minLength 10
+     * @maxLength 500
+     */
+  reason: string;
+  confirmation: AdminWalletAdjustmentRequestConfirmation;
+  /**
+     * @minLength 16
+     * @maxLength 128
+     */
+  idempotencyKey: string;
+  /** @minimum 0 */
+  expectedBalanceMinor?: number;
+}
+
+export type AdminUserActionRequestConfirmation = typeof AdminUserActionRequestConfirmation[keyof typeof AdminUserActionRequestConfirmation];
+
+
+export const AdminUserActionRequestConfirmation = {
+  CONFIRMER: 'CONFIRMER',
+} as const;
+
+export interface AdminUserActionRequest {
+  /**
+     * @minLength 10
+     * @maxLength 500
+     */
+  reason: string;
+  confirmation: AdminUserActionRequestConfirmation;
+}
+
+export type AdminWalletAdjustmentResultDirection = typeof AdminWalletAdjustmentResultDirection[keyof typeof AdminWalletAdjustmentResultDirection];
+
+
+export const AdminWalletAdjustmentResultDirection = {
+  credit: 'credit',
+  debit: 'debit',
+} as const;
+
+export interface AdminWalletAdjustmentResult {
+  ledgerEntryId: string;
+  userId: string;
+  walletId: string;
+  direction: AdminWalletAdjustmentResultDirection;
+  amountMinor: number;
+  balanceBeforeMinor: number;
+  balanceAfterMinor: number;
+  currency: string;
+  duplicate: boolean;
+}
+
+export type AdminActionResultAction = typeof AdminActionResultAction[keyof typeof AdminActionResultAction];
+
+
+export const AdminActionResultAction = {
+  suspend_user: 'suspend_user',
+  restore_user: 'restore_user',
+  delete_user: 'delete_user',
+  archive_transaction: 'archive_transaction',
+} as const;
+
+export type AdminActionResultStatus = typeof AdminActionResultStatus[keyof typeof AdminActionResultStatus];
+
+
+export const AdminActionResultStatus = {
+  active: 'active',
+  suspended: 'suspended',
+  deleted: 'deleted',
+  archived: 'archived',
+} as const;
+
+export interface AdminActionResult {
+  resourceId: string;
+  action: AdminActionResultAction;
+  status: AdminActionResultStatus;
 }
 
 /**

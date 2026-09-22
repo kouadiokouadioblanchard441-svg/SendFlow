@@ -458,6 +458,280 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/users/{userId}/wallet-adjustments:
+    post:
+      operationId: createAdminWalletAdjustment
+      tags: [admin]
+      summary: Create an audited wallet credit or debit
+      description: Adjusts a wallet through an immutable ledger entry. Direct balance overwrites are not supported.
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminUserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminWalletAdjustmentRequest"
+      responses:
+        "201":
+          description: Wallet adjustment created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminWalletAdjustmentResult"
+        "200":
+          description: Idempotent retry of an existing wallet adjustment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminWalletAdjustmentResult"
+        "400":
+          description: Invalid adjustment or insufficient wallet balance.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Financial administrator access is denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User or wallet not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Wallet changed since it was displayed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Financial administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/users/{userId}/suspend:
+    post:
+      operationId: suspendAdminUser
+      tags: [admin]
+      summary: Suspend a SendFlow user with an audit trail
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminUserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserActionRequest"
+      responses:
+        "200":
+          description: User suspended.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminActionResult"
+        "400":
+          description: Invalid action or user is already deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation administrator access is denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Mutation administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/users/{userId}/restore:
+    post:
+      operationId: restoreAdminUser
+      tags: [admin]
+      summary: Restore a suspended SendFlow user with an audit trail
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminUserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserActionRequest"
+      responses:
+        "200":
+          description: User restored.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminActionResult"
+        "400":
+          description: Invalid action or user is deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation administrator access is denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Mutation administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/users/{userId}/delete:
+    post:
+      operationId: deleteAdminUser
+      tags: [admin]
+      summary: Soft-delete a SendFlow user with an audit trail
+      description: Retains financial records and anonymizes no data automatically. This is reversible only through a documented recovery process.
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminUserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserActionRequest"
+      responses:
+        "200":
+          description: User soft-deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminActionResult"
+        "400":
+          description: Invalid action or user is already deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation administrator access is denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Mutation administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/transactions/{transactionId}/archive:
+    post:
+      operationId: archiveAdminTransaction
+      tags: [admin]
+      summary: Archive a transaction without deleting its financial record
+      security:
+        - clerkSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminTransactionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserActionRequest"
+      responses:
+        "200":
+          description: Transaction archived.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminActionResult"
+        "400":
+          description: Invalid action or transaction already archived.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation administrator access is denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Transaction not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Mutation administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
 components:
   parameters:
     AdminFrom:
@@ -647,6 +921,15 @@ components:
           type: ["string", "null"]
         countryCode:
           type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, suspended, deleted]
+        suspendedAt:
+          type: ["string", "null"]
+          format: date-time
+        deletedAt:
+          type: ["string", "null"]
+          format: date-time
         createdAt:
           type: string
           format: date-time
@@ -655,7 +938,7 @@ components:
           format: date-time
         wallet:
           $ref: "#/components/schemas/AdminWalletSummary"
-      required: [id, displayName, phone, countryCode, createdAt, lastSeenAt, wallet]
+      required: [id, displayName, phone, countryCode, status, suspendedAt, deletedAt, createdAt, lastSeenAt, wallet]
     AdminUserProfile:
       type: object
       properties:
@@ -667,6 +950,15 @@ components:
           type: ["string", "null"]
         countryCode:
           type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, suspended, deleted]
+        suspendedAt:
+          type: ["string", "null"]
+          format: date-time
+        deletedAt:
+          type: ["string", "null"]
+          format: date-time
         createdAt:
           type: string
           format: date-time
@@ -676,7 +968,7 @@ components:
         lastSeenAt:
           type: ["string", "null"]
           format: date-time
-      required: [id, displayName, phone, countryCode, createdAt, updatedAt, lastSeenAt]
+      required: [id, displayName, phone, countryCode, status, suspendedAt, deletedAt, createdAt, updatedAt, lastSeenAt]
     AdminWalletDetail:
       type: object
       properties:
@@ -764,6 +1056,9 @@ components:
           type: string
         providerReference:
           type: ["string", "null"]
+        archivedAt:
+          type: ["string", "null"]
+          format: date-time
         createdAt:
           type: string
           format: date-time
@@ -782,7 +1077,8 @@ components:
         - currency
         - reference
         - providerReference
-        - createdAt
+         - createdAt
+         - archivedAt
     AdminOverview:
       type: object
       properties:
@@ -918,6 +1214,9 @@ components:
         updatedAt:
           type: string
           format: date-time
+        archivedAt:
+          type: ["string", "null"]
+          format: date-time
       required:
         - id
         - userId
@@ -935,7 +1234,8 @@ components:
         - reference
         - providerReference
         - createdAt
-        - updatedAt
+         - updatedAt
+         - archivedAt
     AdminUserDetail:
       type: object
       properties:
@@ -968,4 +1268,81 @@ components:
         duplicate:
           type: boolean
       required: [received, duplicate]
+    AdminWalletAdjustmentRequest:
+      type: object
+      properties:
+        direction:
+          type: string
+          enum: [credit, debit]
+        amountMinor:
+          type: integer
+          format: int64
+          minimum: 1
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+        confirmation:
+          type: string
+          enum: [CREDIT, DEBIT]
+        idempotencyKey:
+          type: string
+          minLength: 16
+          maxLength: 128
+        expectedBalanceMinor:
+          type: integer
+          format: int64
+          minimum: 0
+      required: [direction, amountMinor, reason, confirmation, idempotencyKey]
+    AdminUserActionRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+        confirmation:
+          type: string
+          enum: [CONFIRMER]
+      required: [reason, confirmation]
+    AdminWalletAdjustmentResult:
+      type: object
+      properties:
+        ledgerEntryId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        walletId:
+          type: string
+          format: uuid
+        direction:
+          type: string
+          enum: [credit, debit]
+        amountMinor:
+          type: integer
+          format: int64
+        balanceBeforeMinor:
+          type: integer
+          format: int64
+        balanceAfterMinor:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        duplicate:
+          type: boolean
+      required: [ledgerEntryId, userId, walletId, direction, amountMinor, balanceBeforeMinor, balanceAfterMinor, currency, duplicate]
+    AdminActionResult:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        action:
+          type: string
+          enum: [suspend_user, restore_user, delete_user, archive_transaction]
+        status:
+          type: string
+          enum: [active, suspended, deleted, archived]
+      required: [resourceId, action, status]
 

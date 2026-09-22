@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { bigint, index, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const adminAuditLogsTable = pgTable(
   "sf_admin_audit_logs",
@@ -8,6 +8,9 @@ export const adminAuditLogsTable = pgTable(
     action: varchar("action", { length: 64 }).notNull(),
     resourceType: varchar("resource_type", { length: 32 }).notNull(),
     resourceId: text("resource_id").notNull(),
+    reason: varchar("reason", { length: 500 }),
+    amountMinor: bigint("amount_minor", { mode: "number" }),
+    currency: varchar("currency", { length: 3 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -20,5 +23,13 @@ export const adminAuditLogsTable = pgTable(
   }),
 );
 
-export type AdminAuditAction = "view_user_detail" | "view_transaction_detail";
-export type AdminAuditResourceType = "user" | "transaction";
+export type AdminAuditAction =
+  | "view_user_detail"
+  | "view_transaction_detail"
+  | "credit_wallet"
+  | "debit_wallet"
+  | "suspend_user"
+  | "restore_user"
+  | "delete_user"
+  | "archive_transaction";
+export type AdminAuditResourceType = "user" | "transaction" | "wallet";

@@ -7,6 +7,7 @@ export {
   gte,
   ilike,
   inArray,
+  isNull,
   lte,
   or,
   sql,

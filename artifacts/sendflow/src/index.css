@@ -985,12 +985,19 @@
 .sendflow-admin-user-cell > span:last-child, .sendflow-admin-reference-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
 .sendflow-admin-user-cell strong, .sendflow-admin-reference-cell strong { color: var(--admin-ink); font-size: 12px; font-weight: 700; }
 .sendflow-admin-user-cell small, .sendflow-admin-reference-cell small { color: #9991a3; font-size: 10px; }
+.sendflow-admin-status-stack { display: flex; flex-wrap: wrap; gap: 4px; }
+.sendflow-admin-account-status { font-size: 9px; font-weight: 700; }
+.sendflow-admin-account-status-active { border-color: #add8bf; background: #effaf4; color: #26704f; }
+.sendflow-admin-account-status-suspended { border-color: #f1cea8; background: #fff8ed; color: #ae641f; }
+.sendflow-admin-account-status-deleted { border-color: #ebbbbb; background: #fff2f2; color: #a33e43; }
 .sendflow-admin-operator-label { display: inline-flex; min-width: 0; align-items: center; gap: 6px; color: inherit; font-size: inherit; line-height: 1.2; }
 .sendflow-admin-operator-label > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .sendflow-admin-operator-icon { display: inline-grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; overflow: hidden; border: 1px solid var(--admin-line); border-radius: 7px; background: #fff; color: var(--admin-violet); }
 .sendflow-admin-operator-icon img { display: block; width: 19px; height: 19px; object-fit: contain; }
 .sendflow-admin-operator-route { display: inline-flex; min-width: 0; align-items: center; gap: 6px; }
 .sendflow-admin-operator-route > svg { flex: 0 0 auto; color: var(--admin-muted); }
+.sendflow-admin-profile-actions, .sendflow-admin-wallet-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sendflow-admin-wallet-actions { justify-content: flex-end; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--admin-line); }
 .sendflow-admin-transaction-link, .sendflow-admin-detail-link { color: inherit; text-decoration: none; }
 .sendflow-admin-transaction-link:hover strong, .sendflow-admin-detail-link:hover { color: var(--admin-violet); text-decoration: underline; text-underline-offset: 3px; }
 .sendflow-admin-avatar { display: grid; width: 29px; height: 29px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #eee6fc; color: var(--admin-violet); font-size: 11px; font-weight: 800; }

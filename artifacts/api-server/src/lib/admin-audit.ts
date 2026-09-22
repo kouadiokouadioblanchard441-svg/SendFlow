@@ -5,10 +5,15 @@ type AdminAuditEntry = {
   action: AdminAuditAction;
   resourceType: AdminAuditResourceType;
   resourceId: string;
+  reason?: string;
+  amountMinor?: number;
+  currency?: string;
 };
 
-export async function recordAdminAudit(entry: AdminAuditEntry) {
-  const [created] = await db
+type AuditDatabase = Pick<typeof db, "insert">;
+
+export async function recordAdminAudit(entry: AdminAuditEntry, database: AuditDatabase = db) {
+  const [created] = await database
     .insert(adminAuditLogsTable)
     .values(entry)
     .returning({ id: adminAuditLogsTable.id });

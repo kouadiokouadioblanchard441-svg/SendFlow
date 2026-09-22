@@ -26,6 +26,8 @@ export interface AdminTransactionSummary {
   currency: string;
   reference: string;
   /** @nullable */
-  providerReference: string | null;
-  createdAt: Date;
+  providerReference?: string | null;
+  /** @nullable */
+  archivedAt?: Date | null;
+  createdAt?: Date;
 }

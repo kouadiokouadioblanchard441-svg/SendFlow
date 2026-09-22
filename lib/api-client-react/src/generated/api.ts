@@ -20,11 +20,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminActionResult,
   AdminOverview,
   AdminTransactionDetail,
   AdminTransactionPage,
+  AdminUserActionRequest,
   AdminUserDetail,
   AdminUserPage,
+  AdminWalletAdjustmentRequest,
+  AdminWalletAdjustmentResult,
   CurrentAccount,
   DatabaseStatus,
   DiditWebhookPayload,
@@ -1005,4 +1009,366 @@ export function useGetAdminTransaction<TData = Awaited<ReturnType<typeof getAdmi
 
 
 
+
+export const getCreateAdminWalletAdjustmentUrl = (userId: string,) => {
+
+
+
+
+  return `/api/admin/users/${userId}/wallet-adjustments`
+}
+
+/**
+ * Adjusts a wallet through an immutable ledger entry. Direct balance overwrites are not supported.
+ * @summary Create an audited wallet credit or debit
+ */
+export const createAdminWalletAdjustment = async (userId: string,
+    adminWalletAdjustmentRequest: AdminWalletAdjustmentRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminWalletAdjustmentResult> => {
+
+  return customFetch<AdminWalletAdjustmentResult>(getCreateAdminWalletAdjustmentUrl(userId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminWalletAdjustmentRequest)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminWalletAdjustmentMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminWalletAdjustment>>, TError,{userId: string;data: BodyType<AdminWalletAdjustmentRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminWalletAdjustment>>, TError,{userId: string;data: BodyType<AdminWalletAdjustmentRequest>}, TContext> => {
+
+const mutationKey = ['createAdminWalletAdjustment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminWalletAdjustment>>, {userId: string;data: BodyType<AdminWalletAdjustmentRequest>}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  createAdminWalletAdjustment(userId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminWalletAdjustmentMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminWalletAdjustment>>>
+    export type CreateAdminWalletAdjustmentMutationBody = BodyType<AdminWalletAdjustmentRequest>
+    export type CreateAdminWalletAdjustmentMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Create an audited wallet credit or debit
+ */
+export const useCreateAdminWalletAdjustment = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminWalletAdjustment>>, TError,{userId: string;data: BodyType<AdminWalletAdjustmentRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminWalletAdjustment>>,
+        TError,
+        {userId: string;data: BodyType<AdminWalletAdjustmentRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateAdminWalletAdjustmentMutationOptions(options));
+    }
+
+export const getSuspendAdminUserUrl = (userId: string,) => {
+
+
+
+
+  return `/api/admin/users/${userId}/suspend`
+}
+
+/**
+ * @summary Suspend a SendFlow user with an audit trail
+ */
+export const suspendAdminUser = async (userId: string,
+    adminUserActionRequest: AdminUserActionRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminActionResult> => {
+
+  return customFetch<AdminActionResult>(getSuspendAdminUserUrl(userId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminUserActionRequest)
+  }
+);}
+
+
+
+
+
+export const getSuspendAdminUserMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suspendAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext> => {
+
+const mutationKey = ['suspendAdminUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suspendAdminUser>>, {userId: string;data: BodyType<AdminUserActionRequest>}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  suspendAdminUser(userId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuspendAdminUserMutationResult = NonNullable<Awaited<ReturnType<typeof suspendAdminUser>>>
+    export type SuspendAdminUserMutationBody = BodyType<AdminUserActionRequest>
+    export type SuspendAdminUserMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Suspend a SendFlow user with an audit trail
+ */
+export const useSuspendAdminUser = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof suspendAdminUser>>,
+        TError,
+        {userId: string;data: BodyType<AdminUserActionRequest>},
+        TContext
+      > => {
+      return useMutation(getSuspendAdminUserMutationOptions(options));
+    }
+
+export const getRestoreAdminUserUrl = (userId: string,) => {
+
+
+
+
+  return `/api/admin/users/${userId}/restore`
+}
+
+/**
+ * @summary Restore a suspended SendFlow user with an audit trail
+ */
+export const restoreAdminUser = async (userId: string,
+    adminUserActionRequest: AdminUserActionRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminActionResult> => {
+
+  return customFetch<AdminActionResult>(getRestoreAdminUserUrl(userId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminUserActionRequest)
+  }
+);}
+
+
+
+
+
+export const getRestoreAdminUserMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext> => {
+
+const mutationKey = ['restoreAdminUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreAdminUser>>, {userId: string;data: BodyType<AdminUserActionRequest>}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  restoreAdminUser(userId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreAdminUserMutationResult = NonNullable<Awaited<ReturnType<typeof restoreAdminUser>>>
+    export type RestoreAdminUserMutationBody = BodyType<AdminUserActionRequest>
+    export type RestoreAdminUserMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Restore a suspended SendFlow user with an audit trail
+ */
+export const useRestoreAdminUser = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof restoreAdminUser>>,
+        TError,
+        {userId: string;data: BodyType<AdminUserActionRequest>},
+        TContext
+      > => {
+      return useMutation(getRestoreAdminUserMutationOptions(options));
+    }
+
+export const getDeleteAdminUserUrl = (userId: string,) => {
+
+
+
+
+  return `/api/admin/users/${userId}/delete`
+}
+
+/**
+ * Retains financial records and anonymizes no data automatically. This is reversible only through a documented recovery process.
+ * @summary Soft-delete a SendFlow user with an audit trail
+ */
+export const deleteAdminUser = async (userId: string,
+    adminUserActionRequest: AdminUserActionRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminActionResult> => {
+
+  return customFetch<AdminActionResult>(getDeleteAdminUserUrl(userId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminUserActionRequest)
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminUserMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext> => {
+
+const mutationKey = ['deleteAdminUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminUser>>, {userId: string;data: BodyType<AdminUserActionRequest>}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  deleteAdminUser(userId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminUserMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminUser>>>
+    export type DeleteAdminUserMutationBody = BodyType<AdminUserActionRequest>
+    export type DeleteAdminUserMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Soft-delete a SendFlow user with an audit trail
+ */
+export const useDeleteAdminUser = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminUser>>, TError,{userId: string;data: BodyType<AdminUserActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminUser>>,
+        TError,
+        {userId: string;data: BodyType<AdminUserActionRequest>},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminUserMutationOptions(options));
+    }
+
+export const getArchiveAdminTransactionUrl = (transactionId: string,) => {
+
+
+
+
+  return `/api/admin/transactions/${transactionId}/archive`
+}
+
+/**
+ * @summary Archive a transaction without deleting its financial record
+ */
+export const archiveAdminTransaction = async (transactionId: string,
+    adminUserActionRequest: AdminUserActionRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminActionResult> => {
+
+  return customFetch<AdminActionResult>(getArchiveAdminTransactionUrl(transactionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminUserActionRequest)
+  }
+);}
+
+
+
+
+
+export const getArchiveAdminTransactionMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof archiveAdminTransaction>>, TError,{transactionId: string;data: BodyType<AdminUserActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof archiveAdminTransaction>>, TError,{transactionId: string;data: BodyType<AdminUserActionRequest>}, TContext> => {
+
+const mutationKey = ['archiveAdminTransaction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof archiveAdminTransaction>>, {transactionId: string;data: BodyType<AdminUserActionRequest>}> = (props) => {
+          const {transactionId,data} = props ?? {};
+
+          return  archiveAdminTransaction(transactionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ArchiveAdminTransactionMutationResult = NonNullable<Awaited<ReturnType<typeof archiveAdminTransaction>>>
+    export type ArchiveAdminTransactionMutationBody = BodyType<AdminUserActionRequest>
+    export type ArchiveAdminTransactionMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Archive a transaction without deleting its financial record
+ */
+export const useArchiveAdminTransaction = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof archiveAdminTransaction>>, TError,{transactionId: string;data: BodyType<AdminUserActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof archiveAdminTransaction>>,
+        TError,
+        {transactionId: string;data: BodyType<AdminUserActionRequest>},
+        TContext
+      > => {
+      return useMutation(getArchiveAdminTransactionMutationOptions(options));
+    }
 
