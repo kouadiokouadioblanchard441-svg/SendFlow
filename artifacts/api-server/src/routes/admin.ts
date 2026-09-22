@@ -1,5 +1,6 @@
 import { getAuth } from "@clerk/express";
 import { Router, type IRouter, type Request } from "express";
+import { recordAdminAudit } from "../lib/admin-audit";
 import {
   GetAdminTransactionParams,
   GetAdminTransactionResponse,
@@ -283,7 +284,8 @@ router.get("/admin/users", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/users/:userId", async (req, res): Promise<void> => {
-  if (!respondAdminAuthError(req, res)) return;
+  const adminUserId = respondAdminAuthError(req, res);
+  if (!adminUserId) return;
 
   const parsedParams = GetAdminUserParams.safeParse(req.params);
   if (!parsedParams.success) {
@@ -327,6 +329,13 @@ router.get("/admin/users/:userId", async (req, res): Promise<void> => {
         .then((items) => items[0]),
       getTransactionSummary({}, [eq(transactionsTable.userId, userId)]),
     ]);
+
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_user_detail",
+      resourceType: "user",
+      resourceId: userId,
+    });
 
     res.json(
       GetAdminUserResponse.parse({
@@ -427,7 +436,8 @@ router.get("/admin/transactions", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/transactions/:transactionId", async (req, res): Promise<void> => {
-  if (!respondAdminAuthError(req, res)) return;
+  const adminUserId = respondAdminAuthError(req, res);
+  if (!adminUserId) return;
 
   const parsedParams = GetAdminTransactionParams.safeParse(req.params);
   if (!parsedParams.success) {
@@ -466,6 +476,13 @@ router.get("/admin/transactions/:transactionId", async (req, res): Promise<void>
       res.status(404).json({ error: "Transaction not found" });
       return;
     }
+
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_transaction_detail",
+      resourceType: "transaction",
+      resourceId: transactionId,
+    });
 
     res.json(GetAdminTransactionResponse.parse(transaction));
   } catch (error) {
