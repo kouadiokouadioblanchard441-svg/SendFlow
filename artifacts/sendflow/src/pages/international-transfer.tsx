@@ -360,12 +360,12 @@ export default function InternationalTransferPage() {
         <TransferRequestDialog
           state={requestState}
           operation="Transfert international"
-          pendingLabel="Préparation du transfert international"
+          pendingLabel="Traitement en attente"
           amountLabel="Montant à envoyer"
           amount={recipientAmount.toLocaleString('fr-FR')}
           metaLabel={operator?.name ?? 'Opérateur'}
           metaValue={`${country.dialCode} ${recipientNumber}`}
-          pendingCopy="La demande de transfert international est en cours de préparation. Aucun montant n’est débité avant la confirmation."
+          pendingCopy="Votre traitement est en attente du montant. Veuillez patienter."
           successTitle="Votre transfert international est prêt"
           successCopy={`La demande de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${country.name} est prête à être confirmée.`}
           failureTitle="Votre transfert international n’a pas pu être préparé"
