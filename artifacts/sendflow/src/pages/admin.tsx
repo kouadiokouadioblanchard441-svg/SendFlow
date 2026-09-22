@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Link, useLocation, useRoute } from 'wouter';
+import { Link, useRoute } from 'wouter';
 import {
   Activity,
   ArrowDownToLine,
   ArrowLeft,
   ArrowLeftRight,
+  ArrowRight,
   ArrowUpRight,
   Banknote,
   CalendarDays,
@@ -12,6 +13,8 @@ import {
   ChevronRight,
   CircleAlert,
   Clock3,
+  FileSearch,
+  Globe2,
   LayoutDashboard,
   Search,
   ShieldCheck,
@@ -20,6 +23,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import {
+  useGetAdminTransaction,
   useGetAdminUser,
   useGetAdminOverview,
   useListAdminTransactions,
@@ -69,21 +73,26 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'users' | 'deposits' | 'transfers';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers';
 type Status = 'pending' | 'succeeded' | 'failed';
+type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
 const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   overview: { title: 'Vue d’ensemble', eyebrow: 'Opérations' },
+  transactions: { title: 'Transactions', eyebrow: 'Traçabilité' },
   users: { title: 'Utilisateurs', eyebrow: 'Répertoire' },
   deposits: { title: 'Dépôts', eyebrow: 'Flux entrants' },
+  international: { title: 'Transferts internationaux', eyebrow: 'Flux sortants' },
   transfers: { title: 'Transferts', eyebrow: 'Flux sortants' },
 };
 
 const navItems: Array<{ href: string; label: string; section: AdminSection; icon: typeof LayoutDashboard }> = [
   { href: '/admin', label: 'Vue d’ensemble', section: 'overview', icon: LayoutDashboard },
+  { href: '/admin/transactions', label: 'Transactions', section: 'transactions', icon: ArrowLeftRight },
   { href: '/admin/users', label: 'Utilisateurs', section: 'users', icon: Users },
   { href: '/admin/deposits', label: 'Dépôts', section: 'deposits', icon: ArrowDownToLine },
-  { href: '/admin/transfers', label: 'Transferts', section: 'transfers', icon: ArrowLeftRight },
+  { href: '/admin/international', label: 'International', section: 'international', icon: Globe2 },
+  { href: '/admin/transfers', label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
 ];
 
 function formatMoney(minor: number | undefined, currency = 'XOF') {
@@ -571,7 +580,7 @@ function UserDetailPage({ userId }: { userId: string }) {
                     <TableBody>
                       {transactions.map((transaction) => (
                         <TableRow key={transaction.id} data-testid={`row-admin-user-transaction-${transaction.id}`}>
-                          <TableCell><div className="sendflow-admin-reference-cell"><strong>{transaction.reference}</strong><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
+                          <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/transactions/${transaction.id}`} className="sendflow-admin-transaction-link"><strong>{transaction.reference}</strong></Link><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
                           <TableCell data-testid={`text-admin-user-transaction-kind-${transaction.id}`}>{transactionKindLabel(transaction.kind)}</TableCell>
                           <TableCell>{transaction.fromOperator || transaction.toOperator || '—'}</TableCell>
                           <TableCell><StatusBadge status={transaction.status} id={`user-${transaction.id}`} /></TableCell>
@@ -594,14 +603,124 @@ function UserDetailPage({ userId }: { userId: string }) {
   );
 }
 
-function TransactionsPage({ section }: { section: 'deposits' | 'transfers' }) {
+function TransactionDetailPage({ transactionId }: { transactionId: string }) {
+  const query = useGetAdminTransaction(transactionId);
+  const transaction = query.data;
+
+  return (
+    <AdminShell section="transactions">
+      <div className="sendflow-admin-page-intro sendflow-admin-detail-intro">
+        <div>
+          <Link href="/admin/transactions" className="sendflow-admin-back-link" data-testid="link-admin-transactions-back">
+            <ArrowLeft className="size-4" /> Retour aux transactions
+          </Link>
+          <p className="sendflow-admin-overline">Fiche transaction</p>
+          <h2 data-testid="heading-admin-transaction-detail">Détail de la transaction</h2>
+          <p className="sendflow-admin-subtitle">Traçabilité des comptes source et destinataire, avec les références reçues par SendFlow.</p>
+        </div>
+        <div className="sendflow-admin-readonly-chip"><ShieldCheck className="size-4" /> Lecture seule</div>
+      </div>
+
+      {query.isLoading && (
+        <div className="space-y-4" data-testid="loading-admin-transaction-detail">
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-64 rounded-xl" />
+            <Skeleton className="h-64 rounded-xl" />
+          </div>
+        </div>
+      )}
+      {query.isError && <QueryState error={query.error} onRetry={() => void query.refetch()} />}
+
+      {transaction && !query.isError && (
+        <div className="space-y-5" data-testid="content-admin-transaction-detail">
+          <Card className="sendflow-admin-profile-banner">
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+              <div className="sendflow-admin-profile-heading">
+                <span className="sendflow-admin-avatar sendflow-admin-avatar-large"><FileSearch className="size-5" /></span>
+                <div>
+                  <h3 data-testid="text-admin-transaction-reference">{transaction.reference}</h3>
+                  <p data-testid="text-admin-transaction-id">{transaction.id}</p>
+                </div>
+              </div>
+              <StatusBadge status={transaction.status} id={`detail-${transaction.id}`} />
+            </CardContent>
+          </Card>
+
+          <div className="sendflow-admin-metric-grid sendflow-admin-detail-metric-grid">
+            <MetricCard label="Montant" value={formatMoney(transaction.amountMinor, transaction.currency)} detail="Montant de l’opération" icon={Banknote} tone="green" />
+            <MetricCard label="Frais" value={formatMoney(transaction.feeMinor, transaction.currency)} detail="Frais enregistrés" icon={FileSearch} tone="orange" />
+            <MetricCard label="Type" value={transactionKindLabel(transaction.kind)} detail="Catégorie d’opération" icon={ArrowLeftRight} tone="violet" />
+            <MetricCard label="Créée le" value={formatDate(transaction.createdAt)} detail="Date persistée" icon={Clock3} tone="blue" />
+          </div>
+
+          <div className="sendflow-admin-overview-grid">
+            <Card className="sendflow-admin-detail-card">
+              <CardHeader>
+                <CardTitle>Traçabilité des comptes</CardTitle>
+                <CardDescription>Numéros présents sur l’opération telle qu’enregistrée.</CardDescription>
+              </CardHeader>
+              <CardContent className="sendflow-admin-trace">
+                <div className="sendflow-admin-trace-endpoint">
+                  <span>Compte source</span>
+                  <strong data-testid="text-admin-transaction-source">{transaction.senderPhone}</strong>
+                  <small>Départ de l’opération</small>
+                </div>
+                <ArrowRight className="sendflow-admin-trace-arrow size-5" />
+                <div className="sendflow-admin-trace-endpoint">
+                  <span>Compte destinataire</span>
+                  <strong data-testid="text-admin-transaction-destination">{transaction.recipientPhone}</strong>
+                  <small>Destination de l’opération</small>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="sendflow-admin-detail-card">
+              <CardHeader>
+                <CardTitle>Compte SendFlow et réseau</CardTitle>
+                <CardDescription>Contexte applicatif et références opérateur.</CardDescription>
+              </CardHeader>
+              <CardContent className="sendflow-admin-detail-list">
+                <div><span>Utilisateur</span><Link href={`/admin/users/${transaction.userId}`} className="sendflow-admin-detail-link" data-testid="link-admin-transaction-user">{transaction.displayName || transaction.userId}</Link></div>
+                <div><span>Téléphone du compte</span><strong data-testid="text-admin-transaction-user-phone">{transaction.userPhone || 'Non renseigné'}</strong></div>
+                <div><span>Réseau de départ</span><strong data-testid="text-admin-transaction-from-operator">{transaction.fromOperator || 'Non renseigné'}</strong></div>
+                <div><span>Réseau d’arrivée</span><strong data-testid="text-admin-transaction-to-operator">{transaction.toOperator || 'Non renseigné'}</strong></div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="sendflow-admin-detail-card">
+            <CardHeader>
+              <CardTitle>Références et dates</CardTitle>
+              <CardDescription>Identifiants de suivi disponibles sans exposer de secret d’idempotence.</CardDescription>
+            </CardHeader>
+            <CardContent className="sendflow-admin-detail-list sendflow-admin-detail-list-wide">
+              <div><span>Référence SendFlow</span><strong data-testid="text-admin-transaction-reference-secondary">{transaction.reference}</strong></div>
+              <div><span>Référence opérateur</span><strong data-testid="text-admin-transaction-provider-reference">{transaction.providerReference || 'Non renseignée'}</strong></div>
+              <div><span>Dernière mise à jour</span><strong data-testid="text-admin-transaction-updated">{formatDate(transaction.updatedAt)}</strong></div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {!query.isLoading && !query.isError && !transaction && <EmptyState label="La transaction n’est pas disponible." />}
+    </AdminShell>
+  );
+}
+
+function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 'international' | 'transfers' }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
   const pageSize = 20;
-  const kind: 'deposit' | 'inter-network' = section === 'deposits' ? 'deposit' : 'inter-network';
+  const kind: TransactionKind | undefined =
+    section === 'deposits'
+      ? 'deposit'
+      : section === 'international'
+        ? 'international'
+        : section === 'transfers'
+          ? 'inter-network'
+          : undefined;
   const params = useMemo(() => ({
-    kind,
+    ...(kind ? { kind } : {}),
     ...(search ? { search } : {}),
     ...(status !== 'all' ? { status: status as Status } : {}),
     page,
@@ -610,12 +729,33 @@ function TransactionsPage({ section }: { section: 'deposits' | 'transfers' }) {
   const query = useListAdminTransactions(params);
   const result = query.data;
   const items = result?.items ?? [];
-  const title = section === 'deposits' ? 'Dépôts mobile-money' : 'Transferts inter-réseaux';
+  const title =
+    section === 'deposits'
+      ? 'Dépôts mobile-money'
+      : section === 'international'
+        ? 'Transferts internationaux'
+        : section === 'transfers'
+          ? 'Transferts inter-réseaux'
+          : 'Toutes les transactions';
+  const eyebrow =
+    section === 'deposits'
+      ? 'Flux entrants'
+      : section === 'transactions'
+        ? 'Traçabilité globale'
+        : 'Flux sortants';
+  const emptyLabel =
+    section === 'deposits'
+      ? 'Aucun dépôt ne correspond à vos filtres.'
+      : section === 'international'
+        ? 'Aucun transfert international ne correspond à vos filtres.'
+        : section === 'transfers'
+          ? 'Aucun transfert inter-réseaux ne correspond à vos filtres.'
+          : 'Aucune transaction ne correspond à vos filtres.';
 
   return (
     <AdminShell section={section}>
       <div className="sendflow-admin-page-intro sendflow-admin-list-intro">
-        <div><p className="sendflow-admin-overline">{section === 'deposits' ? 'Flux entrants' : 'Flux sortants'}</p><h2 data-testid={`heading-admin-${section}-list`}>{title}</h2><p className="sendflow-admin-subtitle">Suivez les montants, statuts et références telles que reçues par SendFlow.</p></div>
+        <div><p className="sendflow-admin-overline">{eyebrow}</p><h2 data-testid={`heading-admin-${section}-list`}>{title}</h2><p className="sendflow-admin-subtitle">Consultez chaque opération et ouvrez sa fiche pour retracer le compte source, la destination et les références.</p></div>
         <div className="sendflow-admin-currency-note"><span>Devise</span><strong>FCFA</strong></div>
       </div>
       <Card className="sendflow-admin-list-card">
@@ -623,17 +763,19 @@ function TransactionsPage({ section }: { section: 'deposits' | 'transfers' }) {
           <FilterBar search={search} setSearch={(value) => { setSearch(value); setPage(1); }} status={status} setStatus={(value) => { setStatus(value); setPage(1); }} />
           {query.isLoading && <div className="sendflow-admin-table-skeleton" data-testid={`loading-admin-${section}`}>{Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-12 w-full" />)}</div>}
           {query.isError && <div className="p-5"><QueryState error={query.error} onRetry={() => void query.refetch()} /></div>}
-          {!query.isLoading && !query.isError && items.length === 0 && <EmptyState label={`Aucun ${section === 'deposits' ? 'dépôt' : 'transfert'} ne correspond à vos filtres.`} />}
+          {!query.isLoading && !query.isError && items.length === 0 && <EmptyState label={emptyLabel} />}
           {!query.isLoading && !query.isError && items.length > 0 && (
             <>
               <Table>
-                <TableHeader><TableRow><TableHead>Référence</TableHead><TableHead>Utilisateur</TableHead><TableHead>Réseau</TableHead><TableHead>Statut</TableHead><TableHead>Montant</TableHead><TableHead>Frais</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Référence</TableHead><TableHead>Compte source</TableHead><TableHead>Compte destinataire</TableHead><TableHead>Utilisateur</TableHead><TableHead>Opération</TableHead><TableHead>Statut</TableHead><TableHead>Montant</TableHead><TableHead>Frais</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {items.map((transaction) => (
                     <TableRow key={transaction.id} data-testid={`row-admin-transaction-${transaction.id}`}>
-                      <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-reference-${transaction.id}`}>{transaction.reference}</strong><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
-                      <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-user-${transaction.id}`}>{transaction.displayName || 'Nom non renseigné'}</strong><small>{transaction.userId}</small></div></TableCell>
-                      <TableCell data-testid={`text-transaction-operator-${transaction.id}`}>{transaction.fromOperator || transaction.toOperator || '—'}</TableCell>
+                      <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/transactions/${transaction.id}`} className="sendflow-admin-transaction-link"><strong data-testid={`text-transaction-reference-${transaction.id}`}>{transaction.reference}</strong></Link><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
+                      <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-source-${transaction.id}`}>{transaction.senderPhone}</strong><small>{transaction.fromOperator || 'Réseau source non renseigné'}</small></div></TableCell>
+                      <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-destination-${transaction.id}`}>{transaction.recipientPhone}</strong><small>{transaction.toOperator || 'Réseau destination non renseigné'}</small></div></TableCell>
+                      <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/users/${transaction.userId}`} className="sendflow-admin-detail-link"><strong data-testid={`text-transaction-user-${transaction.id}`}>{transaction.displayName || 'Nom non renseigné'}</strong></Link><small>{transaction.userId}</small></div></TableCell>
+                      <TableCell data-testid={`text-transaction-kind-${transaction.id}`}>{transactionKindLabel(transaction.kind)}</TableCell>
                       <TableCell><StatusBadge status={transaction.status} id={transaction.id} /></TableCell>
                       <TableCell className="font-semibold tabular-nums" data-testid={`text-transaction-amount-${transaction.id}`}>{formatMoney(transaction.amountMinor, transaction.currency)}</TableCell>
                       <TableCell className="tabular-nums" data-testid={`text-transaction-fee-${transaction.id}`}>{formatMoney(transaction.feeMinor, transaction.currency)}</TableCell>
@@ -653,14 +795,20 @@ function TransactionsPage({ section }: { section: 'deposits' | 'transfers' }) {
 
 export function AdminRouter() {
   const [isUserDetail, userRoute] = useRoute('/admin/users/:userId');
+  const [isTransactionDetail, transactionRoute] = useRoute('/admin/transactions/:transactionId');
   const [isOverview] = useRoute('/admin');
   const [isUsers] = useRoute('/admin/users');
+  const [isTransactions] = useRoute('/admin/transactions');
   const [isDeposits] = useRoute('/admin/deposits');
+  const [isInternational] = useRoute('/admin/international');
   const [isTransfers] = useRoute('/admin/transfers');
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
+  if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
   if (isUsers) return <UsersPage />;
+  if (isTransactions) return <TransactionsPage section="transactions" />;
   if (isDeposits) return <TransactionsPage section="deposits" />;
+  if (isInternational) return <TransactionsPage section="international" />;
   if (isTransfers) return <TransactionsPage section="transfers" />;
   return <OverviewPage />;
 }

@@ -1,6 +1,8 @@
 import { getAuth } from "@clerk/express";
 import { Router, type IRouter, type Request } from "express";
 import {
+  GetAdminTransactionParams,
+  GetAdminTransactionResponse,
   GetAdminUserParams,
   GetAdminUserResponse,
   GetAdminOverviewQueryParams,
@@ -388,6 +390,8 @@ router.get("/admin/transactions", async (req, res): Promise<void> => {
           status: transactionsTable.status,
           fromOperator: transactionsTable.fromOperator,
           toOperator: transactionsTable.toOperator,
+          senderPhone: transactionsTable.senderPhone,
+          recipientPhone: transactionsTable.recipientPhone,
           amountMinor: transactionsTable.amountMinor,
           feeMinor: transactionsTable.feeMinor,
           currency: transactionsTable.currency,
@@ -418,6 +422,54 @@ router.get("/admin/transactions", async (req, res): Promise<void> => {
     );
   } catch (error) {
     req.log.error({ err: error }, "Admin transaction list lookup failed");
+    res.status(503).json({ error: "Administrator storage unavailable" });
+  }
+});
+
+router.get("/admin/transactions/:transactionId", async (req, res): Promise<void> => {
+  if (!respondAdminAuthError(req, res)) return;
+
+  const parsedParams = GetAdminTransactionParams.safeParse(req.params);
+  if (!parsedParams.success) {
+    res.status(400).json({ error: "Invalid transaction identifier" });
+    return;
+  }
+
+  const { transactionId } = parsedParams.data;
+
+  try {
+    const [transaction] = await db
+      .select({
+        id: transactionsTable.id,
+        userId: transactionsTable.userId,
+        displayName: usersTable.displayName,
+        userPhone: usersTable.phone,
+        kind: transactionsTable.kind,
+        status: transactionsTable.status,
+        fromOperator: transactionsTable.fromOperator,
+        toOperator: transactionsTable.toOperator,
+        senderPhone: transactionsTable.senderPhone,
+        recipientPhone: transactionsTable.recipientPhone,
+        amountMinor: transactionsTable.amountMinor,
+        feeMinor: transactionsTable.feeMinor,
+        currency: transactionsTable.currency,
+        reference: transactionsTable.reference,
+        providerReference: transactionsTable.providerReference,
+        createdAt: transactionsTable.createdAt,
+        updatedAt: transactionsTable.updatedAt,
+      })
+      .from(transactionsTable)
+      .innerJoin(usersTable, eq(usersTable.id, transactionsTable.userId))
+      .where(eq(transactionsTable.id, transactionId));
+
+    if (!transaction) {
+      res.status(404).json({ error: "Transaction not found" });
+      return;
+    }
+
+    res.json(GetAdminTransactionResponse.parse(transaction));
+  } catch (error) {
+    req.log.error({ err: error, transactionId }, "Admin transaction detail lookup failed");
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });
