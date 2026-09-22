@@ -175,6 +175,17 @@
   padding: 154px 20px 110px;
 }
 
+@media (max-width: 699px) {
+  .sendflow-auth-shell .sendflow-signup-card,
+  .sendflow-auth-shell .sendflow-signup-content {
+    min-height: auto;
+  }
+
+  .sendflow-auth-shell .sendflow-signup-content {
+    padding-bottom: 30px;
+  }
+}
+
 .sendflow-signup-brand {
   display: flex;
   flex-direction: column;
