@@ -10,6 +10,12 @@ import {
 import { Link, Redirect, useLocation } from 'wouter';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { useSeo } from '@/lib/seo';
+import {
+  isValidInternationalPhone,
+  isValidTransactionAmount,
+  MAX_TRANSACTION_AMOUNT,
+  parseWholeAmount,
+} from '@/lib/transfer-validation';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
@@ -149,13 +155,15 @@ export default function InternationalTransferPage() {
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
-  const enteredAmount = Number(amount.replace(/\s/g, '')) || 0;
+  const enteredAmount = parseWholeAmount(amount);
   const feeAmount = enteredAmount > 0 ? Math.ceil(enteredAmount * INTERNATIONAL_FEE_RATE) : 0;
   const recipientAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
   const walletDebit = payFees ? enteredAmount + feeAmount : enteredAmount;
-  const recipientDigits = recipientNumber.replace(/\D/g, '');
-  const hasValidRecipient = /^\d{7,15}$/.test(recipientDigits);
-  const canSubmit = Boolean(operator) && enteredAmount > 0 && recipientAmount > 0 && hasValidRecipient;
+  const hasValidRecipient = isValidInternationalPhone(recipientNumber);
+  const canSubmit = Boolean(operator)
+    && isValidTransactionAmount(enteredAmount)
+    && recipientAmount > 0
+    && hasValidRecipient;
 
   const selectCountry = (nextCountry: TransferCountry) => {
     setCountry(nextCountry);
@@ -222,16 +230,21 @@ export default function InternationalTransferPage() {
                 inputMode="numeric"
                 value={amount}
                 onChange={(event) => {
-                  setAmount(event.target.value.replace(/[^\d ]/g, ''));
+                  setAmount(event.target.value.replace(/[^\d ]/g, '').slice(0, 10));
                   setSubmitted(false);
                   setSubmitAttempted(false);
                 }}
                 placeholder="Montant du transfert"
                 aria-label="Montant du transfert international"
-                maxLength={12}
+                maxLength={10}
               />
               <strong>FCFA</strong>
             </label>
+            {submitAttempted && !isValidTransactionAmount(enteredAmount) && (
+              <p className="sendflow-international-field-error" role="alert">
+                Saisissez un montant compris entre 1 et {MAX_TRANSACTION_AMOUNT.toLocaleString('fr-FR')} FCFA.
+              </p>
+            )}
             <div className="sendflow-international-wallet-source">
               <span className="sendflow-international-wallet-icon"><NativeWalletIcon className="is-compact" /></span>
               <span>
@@ -277,7 +290,7 @@ export default function InternationalTransferPage() {
                   type="tel"
                   value={recipientNumber}
                   onChange={(event) => {
-                    setRecipientNumber(event.target.value);
+                    setRecipientNumber(event.target.value.replace(/\D/g, '').slice(0, 15));
                     setSubmitted(false);
                     setSubmitAttempted(false);
                   }}

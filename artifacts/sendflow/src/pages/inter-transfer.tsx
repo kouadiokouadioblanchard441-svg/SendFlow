@@ -11,6 +11,12 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
+import {
+  isValidIvoryCoastPhone,
+  isValidTransactionAmount,
+  MAX_TRANSACTION_AMOUNT,
+  parseWholeAmount,
+} from '@/lib/transfer-validation';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -143,6 +149,7 @@ export default function InterNetworkTransferPage() {
   const [operatorPicker, setOperatorPicker] = useState<TransferSide | null>(null);
   const [contactsOpen, setContactsOpen] = useState(false);
   const [contactsNotice, setContactsNotice] = useState('');
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useSeo({
     path: '/inter-transfer',
@@ -174,12 +181,14 @@ export default function InterNetworkTransferPage() {
       setDestinationOperator(operator);
     }
     setSubmitted(false);
+    setSubmitAttempted(false);
     setOperatorPicker(null);
   };
 
   const selectContact = (contact: SavedContact) => {
     setRecipientNumber(contact.phone);
     setSubmitted(false);
+    setSubmitAttempted(false);
     setContactsOpen(false);
   };
 
@@ -216,6 +225,7 @@ export default function InterNetworkTransferPage() {
 
       setRecipientNumber(phone);
       setSubmitted(false);
+      setSubmitAttempted(false);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
       setContactsNotice('Les contacts du téléphone ne sont pas accessibles. Vous pouvez choisir un contact SendFlow enregistré ci-dessous.');
@@ -235,15 +245,16 @@ export default function InterNetworkTransferPage() {
     }
   };
 
-  const enteredAmount = Number(amount.replace(/\s/g, '')) || 0;
+  const enteredAmount = parseWholeAmount(amount);
   const recipientAmount = supportFees
     ? enteredAmount
     : Math.max(enteredAmount - TRANSFER_FEE, 0);
   const canSubmit =
-    enteredAmount > 0 &&
+    isValidTransactionAmount(enteredAmount) &&
     (supportFees || recipientAmount > 0) &&
     (!sourceOperator.requiresOtp || otp.trim().length > 0) &&
-    recipientNumber.trim().length > 0;
+    isValidIvoryCoastPhone(sourceNumber) &&
+    isValidIvoryCoastPhone(recipientNumber);
 
   return (
     <main className="sendflow-transfer-shell">
@@ -293,6 +304,7 @@ export default function InterNetworkTransferPage() {
           className="sendflow-transfer-card"
           onSubmit={(event) => {
             event.preventDefault();
+            setSubmitAttempted(true);
             if (canSubmit) setSubmitted(true);
           }}
         >
@@ -304,11 +316,21 @@ export default function InterNetworkTransferPage() {
                 type="text"
                 inputMode="numeric"
                 value={amount}
-                onChange={(event) => setAmount(event.target.value.replace(/[^\d ]/g, ''))}
+                onChange={(event) => {
+                  setAmount(event.target.value.replace(/[^\d ]/g, '').slice(0, 10));
+                  setSubmitted(false);
+                  setSubmitAttempted(false);
+                }}
                 aria-label="Montant du transfert"
+                maxLength={10}
               />
               <strong>FCFA</strong>
             </label>
+            {submitAttempted && !isValidTransactionAmount(enteredAmount) && (
+              <p className="sendflow-international-field-error" role="alert">
+                Saisissez un montant compris entre 1 et {MAX_TRANSACTION_AMOUNT.toLocaleString('fr-FR')} FCFA.
+              </p>
+            )}
 
             <div className="sendflow-transfer-phone-row">
               <button
@@ -324,13 +346,26 @@ export default function InterNetworkTransferPage() {
               <input
                 type="tel"
                 value={sourceNumber}
-                onChange={(event) => setSourceNumber(event.target.value)}
+                onChange={(event) => {
+                  setSourceNumber(event.target.value.replace(/\D/g, '').slice(0, 10));
+                  setSubmitted(false);
+                  setSubmitAttempted(false);
+                }}
                 aria-label="Numéro source"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={10}
+                aria-invalid={submitAttempted && !isValidIvoryCoastPhone(sourceNumber)}
               />
               <span className="sendflow-transfer-flag" aria-label="Côte d’Ivoire">
                 {sourceOperator.flag}
               </span>
             </div>
+            {submitAttempted && !isValidIvoryCoastPhone(sourceNumber) && (
+              <p className="sendflow-international-field-error" role="alert">
+                Entrez un numéro source ivoirien valide de 10 chiffres.
+              </p>
+            )}
 
             {sourceOperator.requiresOtp && (
               <>
@@ -385,9 +420,17 @@ export default function InterNetworkTransferPage() {
               <input
                 type="tel"
                 value={recipientNumber}
-                onChange={(event) => setRecipientNumber(event.target.value)}
+                onChange={(event) => {
+                  setRecipientNumber(event.target.value.replace(/\D/g, '').slice(0, 10));
+                  setSubmitted(false);
+                  setSubmitAttempted(false);
+                }}
                 placeholder="Numéro"
                 aria-label="Numéro du bénéficiaire"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={10}
+                aria-invalid={submitAttempted && !isValidIvoryCoastPhone(recipientNumber)}
               />
               <span className="sendflow-transfer-flag" aria-label="Côte d’Ivoire">
                 {destinationOperator.flag}
@@ -402,6 +445,11 @@ export default function InterNetworkTransferPage() {
                 <ContactRound size={27} strokeWidth={1.8} aria-hidden="true" />
               </button>
             </div>
+            {submitAttempted && !isValidIvoryCoastPhone(recipientNumber) && (
+              <p className="sendflow-international-field-error" role="alert">
+                Entrez un numéro bénéficiaire ivoirien valide de 10 chiffres.
+              </p>
+            )}
             <div className="sendflow-transfer-fees">
               Frais: <strong>{TRANSFER_FEE} Fcfa</strong>
             </div>

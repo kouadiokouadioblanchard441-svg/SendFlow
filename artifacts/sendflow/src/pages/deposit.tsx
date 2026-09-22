@@ -10,6 +10,12 @@ import {
 import { Link, Redirect, useLocation } from 'wouter';
 import { readAccountCountry } from '@/lib/account-country';
 import { useSeo } from '@/lib/seo';
+import {
+  isValidIvoryCoastPhone,
+  isValidTransactionAmount,
+  MAX_TRANSACTION_AMOUNT,
+  parseWholeAmount,
+} from '@/lib/transfer-validation';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
@@ -68,6 +74,7 @@ export default function DepositPage() {
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [requestState, setRequestState] = useState<DepositRequestState>('idle');
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useSeo({
     path: '/deposit',
@@ -102,14 +109,16 @@ export default function DepositPage() {
     }
   };
 
-  const enteredAmount = Number(amount.replace(/\s/g, '')) || 0;
+  const enteredAmount = parseWholeAmount(amount);
   const feeAmount = enteredAmount > 0 ? Math.ceil(enteredAmount * DEPOSIT_FEE_RATE) : 0;
   const walletAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
   const totalDebited = payFees ? enteredAmount + feeAmount : enteredAmount;
+  const hasValidSourceNumber = isValidIvoryCoastPhone(sourceNumber);
   const canSubmit = Boolean(
     operator &&
+    isValidTransactionAmount(enteredAmount) &&
     walletAmount > 0 &&
-    sourceNumber.trim().length > 0 &&
+    hasValidSourceNumber &&
     (!operator.requiresOtp || otp.trim().length > 0),
   );
 
@@ -160,6 +169,7 @@ export default function DepositPage() {
           className="sendflow-transfer-card"
           onSubmit={(event) => {
             event.preventDefault();
+            setSubmitAttempted(true);
             if (canSubmit) {
               setRequestState('pending');
             }
@@ -173,12 +183,21 @@ export default function DepositPage() {
                 type="text"
                 inputMode="numeric"
                 value={amount}
-                onChange={(event) => setAmount(event.target.value.replace(/[^\d ]/g, ''))}
+                onChange={(event) => {
+                  setAmount(event.target.value.replace(/[^\d ]/g, '').slice(0, 10));
+                  setSubmitAttempted(false);
+                }}
                 placeholder="Montant du dépôt"
                 aria-label="Montant du dépôt"
+                maxLength={10}
               />
               <strong>FCFA</strong>
             </label>
+            {submitAttempted && !isValidTransactionAmount(enteredAmount) && (
+              <p className="sendflow-international-field-error" role="alert">
+                Saisissez un montant compris entre 1 et {MAX_TRANSACTION_AMOUNT.toLocaleString('fr-FR')} FCFA.
+              </p>
+            )}
 
             {operator ? (
               <>
@@ -196,12 +215,24 @@ export default function DepositPage() {
                   <input
                     type="tel"
                     value={sourceNumber}
-                    onChange={(event) => setSourceNumber(event.target.value)}
+                    onChange={(event) => {
+                      setSourceNumber(event.target.value.replace(/\D/g, '').slice(0, 10));
+                      setSubmitAttempted(false);
+                    }}
                     aria-label="Numéro source du dépôt"
                     placeholder="Numéro source"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    maxLength={10}
+                    aria-invalid={submitAttempted && !hasValidSourceNumber}
                   />
                   <span className="sendflow-transfer-flag" aria-label={accountCountry.name}>{accountCountry.flag}</span>
                 </div>
+                {submitAttempted && !hasValidSourceNumber && (
+                  <p className="sendflow-international-field-error" role="alert">
+                    Entrez un numéro ivoirien valide de 10 chiffres.
+                  </p>
+                )}
 
                 {operator.requiresOtp && (
                   <>
