@@ -24,7 +24,10 @@ export const adminAuditLogsTable = pgTable(
 );
 
 export type AdminAuditAction =
+  | "view_admin_overview"
+  | "view_user_list"
   | "view_user_detail"
+  | "view_transaction_list"
   | "view_transaction_detail"
   | "credit_wallet"
   | "debit_wallet"
@@ -36,4 +39,4 @@ export type AdminAuditAction =
   | "create_banner"
   | "update_banner"
   | "delete_banner";
-export type AdminAuditResourceType = "user" | "transaction" | "wallet" | "login_activity" | "banner";
+export type AdminAuditResourceType = "dashboard" | "user" | "transaction" | "wallet" | "login_activity" | "banner";

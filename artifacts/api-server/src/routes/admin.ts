@@ -169,7 +169,8 @@ async function getKindSummary(
 }
 
 router.get("/admin/overview", async (req, res): Promise<void> => {
-  if (!respondAdminAuthError(req, res)) return;
+  const adminUserId = respondAdminAuthError(req, res);
+  if (!adminUserId) return;
 
   const rawQuery = {
     from: typeof req.query.from === "string" ? new Date(`${req.query.from}T00:00:00.000Z`) : undefined,
@@ -207,8 +208,7 @@ router.get("/admin/overview", async (req, res): Promise<void> => {
         getKindSummary(range, ["inter-network", "international"]),
       ]);
 
-    res.json(
-      GetAdminOverviewResponse.parse({
+    const response = GetAdminOverviewResponse.parse({
         period: {
           from: req.query.from ? new Date(`${String(req.query.from)}T00:00:00.000Z`) : null,
           to: req.query.to ? new Date(`${String(req.query.to)}T00:00:00.000Z`) : null,
@@ -224,8 +224,14 @@ router.get("/admin/overview", async (req, res): Promise<void> => {
         transactions,
         deposits,
         transfers,
-      }),
-    );
+      });
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_admin_overview",
+      resourceType: "dashboard",
+      resourceId: "overview",
+    });
+    res.json(response);
   } catch (error) {
     req.log.error({ err: error }, "Admin overview lookup failed");
     res.status(503).json({ error: "Administrator storage unavailable" });
@@ -233,7 +239,8 @@ router.get("/admin/overview", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/users", async (req, res): Promise<void> => {
-  if (!respondAdminAuthError(req, res)) return;
+  const adminUserId = respondAdminAuthError(req, res);
+  if (!adminUserId) return;
 
   const parsed = ListAdminUsersQueryParams.safeParse({
     search: req.query.search,
@@ -283,8 +290,7 @@ router.get("/admin/users", async (req, res): Promise<void> => {
       db.select({ value: count() }).from(usersTable).where(searchFilter),
     ]);
 
-    res.json(
-      ListAdminUsersResponse.parse({
+    const response = ListAdminUsersResponse.parse({
         items: items.map((item) => ({
           ...item,
           wallet: item.wallet?.currency
@@ -298,8 +304,14 @@ router.get("/admin/users", async (req, res): Promise<void> => {
         page,
         pageSize,
         total: Number(total[0]?.value ?? 0),
-      }),
-    );
+      });
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_user_list",
+      resourceType: "user",
+      resourceId: "list",
+    });
+    res.json(response);
   } catch (error) {
     req.log.error({ err: error }, "Admin user list lookup failed");
     res.status(503).json({ error: "Administrator storage unavailable" });
@@ -377,7 +389,8 @@ router.get("/admin/users/:userId", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/transactions", async (req, res): Promise<void> => {
-  if (!respondAdminAuthError(req, res)) return;
+  const adminUserId = respondAdminAuthError(req, res);
+  if (!adminUserId) return;
 
   const rawQuery = {
     search: req.query.search,
@@ -448,14 +461,19 @@ router.get("/admin/transactions", async (req, res): Promise<void> => {
         .where(and(isNull(transactionsTable.deletedAt), ...filters)),
     ]);
 
-    res.json(
-      ListAdminTransactionsResponse.parse({
+    const response = ListAdminTransactionsResponse.parse({
         items,
         page,
         pageSize,
         total: Number(total[0]?.value ?? 0),
-      }),
-    );
+      });
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_transaction_list",
+      resourceType: "transaction",
+      resourceId: "list",
+    });
+    res.json(response);
   } catch (error) {
     req.log.error({ err: error }, "Admin transaction list lookup failed");
     res.status(503).json({ error: "Administrator storage unavailable" });

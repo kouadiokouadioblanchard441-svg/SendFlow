@@ -41,21 +41,14 @@ function normalizeIpAddress(req: Request) {
   return ip.replace(/^::ffff:/, "").slice(0, 45);
 }
 
-function locationFromRequest(req: Request) {
-  const city = firstHeader(req, ["x-vercel-ip-city", "cf-ipcity", "x-geo-city", "x-replit-city"]);
-  const region = firstHeader(req, ["x-vercel-ip-country-region", "x-geo-region", "x-replit-region"]);
-  const countryCode = firstHeader(req, ["x-vercel-ip-country", "cf-ipcountry", "x-geo-country", "x-replit-country"]);
-  const countryName = firstHeader(req, ["x-geo-country-name", "x-replit-country-name"]);
-  const locationSource = city || region || countryCode
-    ? (req.get("x-vercel-ip-city") || req.get("x-vercel-ip-country") ? "proxy" : "request-header")
-    : undefined;
-
+function locationFromRequest() {
+  // Do not persist client-supplied geolocation headers until a trusted proxy contract is configured.
   return {
-    city,
-    region,
-    countryCode: countryCode?.slice(0, 2).toUpperCase(),
-    countryName,
-    locationSource,
+    city: undefined,
+    region: undefined,
+    countryCode: undefined,
+    countryName: undefined,
+    locationSource: undefined,
   };
 }
 
@@ -63,7 +56,7 @@ export function getLoginActivitySnapshot(req: Request) {
   const userAgent = firstHeader(req, ["user-agent"]) ?? "";
   return {
     ipAddress: normalizeIpAddress(req),
-    ...locationFromRequest(req),
+    ...locationFromRequest(),
     deviceType: classifyDevice(userAgent),
     browser: classifyBrowser(userAgent),
     operatingSystem: classifyOperatingSystem(userAgent),

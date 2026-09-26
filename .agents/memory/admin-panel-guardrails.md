@@ -33,11 +33,17 @@ Configured administrator accounts cannot be suspended or logically deleted throu
 
 **How to apply:** Check both read and mutation administrator allowlists before allowing account suspension or deletion. Change administrator access through the dedicated access configuration process instead.
 
-Successful sensitive detail reads are fail-closed on audit persistence: if the server cannot append the administrator/resource access record, it must not return the user or transaction detail.
+Successful reads that expose user, transaction, session, or financial data—including overview, lists, and details—are fail-closed on audit persistence: if the server cannot append the access record, it must not return the data.
 
-**Why:** A financial-data access that is visible to an administrator but absent from the audit trail cannot be reliably investigated later.
+**Why:** A financial-data access that is visible to an administrator but absent from the audit trail cannot be reliably investigated later, whether it came from a detail page or a broad list.
 
 **How to apply:** Append only the administrator identity, action, resource type, resource identifier, and timestamp; avoid IPs, query strings, idempotency secrets, and financial payloads in the audit record.
+
+Admin API responses must not be cached, and unsafe browser requests must pass a same-origin or explicitly configured trusted-origin check; CORS alone is not CSRF protection.
+
+**Why:** CORS can hide a response without preventing a form submission, and cached admin data can outlive the authorization context that produced it.
+
+**How to apply:** Set private no-store headers for admin responses, validate origins on mutations, and allow origin-less requests only when they cannot rely on ambient browser cookies.
 
 The admin console must use real icon components or approved image assets for financial states, operators, security markers, and navigation; do not draw iconography with CSS dots, initials, or pseudo-elements.
 
@@ -45,8 +51,8 @@ The admin console must use real icon components or approved image assets for fin
 
 **How to apply:** Prefer Lucide icons for generic concepts, use only approved operator assets when available, and use a clearly generic icon for operators without an approved logo.
 
-The login-activity view records one event per Clerk session when the authenticated account endpoint is called. It stores the server-observed IP, user-agent-derived device/browser/OS, and city only when supplied by a trusted proxy header; missing location stays explicit.
+The login-activity view records one event per Clerk session when the authenticated account endpoint is called. It stores the server-observed IP and user-agent-derived device/browser/OS, but leaves location blank until a proxy contract is verified.
 
-**Why:** IP geolocation is personal-data processing and proxy infrastructure may not provide a reliable city. A guessed city is worse than an honest unknown.
+**Why:** IP geolocation is personal-data processing, and client-supplied headers can be forged unless a trusted proxy strips or overwrites them. A guessed city is worse than an honest unknown.
 
-**How to apply:** Keep location source visible in the data model, do not invent a city, and use an approved server-side geolocation provider only after privacy, retention, and error behavior are defined.
+**How to apply:** Do not accept inbound geolocation headers by default. Enable an approved server-side provider only after proxy trust, privacy, retention, and error behavior are defined.

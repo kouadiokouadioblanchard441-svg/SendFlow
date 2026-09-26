@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { clerkMiddleware } from "@clerk/express";
+import { clerkMiddleware, getAuth } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -78,6 +78,43 @@ app.use(
     ),
   })),
 );
+
+app.use("/api/admin", (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, private");
+
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+    next();
+    return;
+  }
+
+  const origin = req.get("origin");
+  if (!origin) {
+    const { userId } = getAuth(req);
+    if (userId && req.headers.cookie) {
+      res.status(403).json({ error: "Origin header is required for administrator actions" });
+      return;
+    }
+    next();
+    return;
+  }
+
+  let requestOrigin: string;
+  let providedOrigin: string;
+  try {
+    providedOrigin = new URL(origin).origin;
+    requestOrigin = new URL(`${req.protocol}://${req.get("host") ?? ""}`).origin;
+  } catch {
+    res.status(403).json({ error: "Invalid administrator request origin" });
+    return;
+  }
+
+  if (!allowedOrigins.has(providedOrigin) && providedOrigin !== requestOrigin) {
+    res.status(403).json({ error: "Cross-origin administrator action denied" });
+    return;
+  }
+
+  next();
+});
 
 app.use("/api", router);
 
