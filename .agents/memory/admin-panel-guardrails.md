@@ -45,6 +45,12 @@ Admin API responses must not be cached, and unsafe browser requests must pass a 
 
 **How to apply:** Set private no-store headers for admin responses, validate origins on mutations, and allow origin-less requests only when they cannot rely on ambient browser cookies.
 
+Customer money-movement flows must remain blocked until a server-side operator integration confirms both any required OTP and the operation itself. An admin OTP policy is configuration only, not evidence of verification.
+
+**Why:** A non-empty code or a client-side timer cannot prove authorization or payment settlement, and showing success could mislead users about money that was never moved.
+
+**How to apply:** Keep unsupported operators clearly marked as not connected, fail closed in customer forms, and render success only from a verified server response.
+
 The admin console must use real icon components or approved image assets for financial states, operators, security markers, and navigation; do not draw iconography with CSS dots, initials, or pseudo-elements.
 
 **Why:** Financial operations need recognizable, consistent symbols on mobile and desktop, and an operator logo must never be faked with another partner’s branding.

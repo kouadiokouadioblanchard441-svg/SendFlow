@@ -355,6 +355,66 @@ export interface PublicBanner {
   sortOrder: number;
 }
 
+export type AdminOtpPolicyCountryCode = typeof AdminOtpPolicyCountryCode[keyof typeof AdminOtpPolicyCountryCode];
+
+
+export const AdminOtpPolicyCountryCode = {
+  ci: 'ci',
+  bf: 'bf',
+  ml: 'ml',
+  sn: 'sn',
+} as const;
+
+export type AdminOtpPolicyOperatorId = typeof AdminOtpPolicyOperatorId[keyof typeof AdminOtpPolicyOperatorId];
+
+
+export const AdminOtpPolicyOperatorId = {
+  'orange-ci': 'orange-ci',
+  'orange-bf': 'orange-bf',
+  'orange-ml': 'orange-ml',
+  'orange-sn': 'orange-sn',
+} as const;
+
+/**
+ * The official operator API is not connected, so OTPs cannot be verified yet.
+ */
+export type AdminOtpPolicyProviderStatus = typeof AdminOtpPolicyProviderStatus[keyof typeof AdminOtpPolicyProviderStatus];
+
+
+export const AdminOtpPolicyProviderStatus = {
+  not_configured: 'not_configured',
+} as const;
+
+export interface AdminOtpPolicy {
+  countryCode: AdminOtpPolicyCountryCode;
+  countryName: string;
+  operatorId: AdminOtpPolicyOperatorId;
+  operatorName: string;
+  phonePrefix: string;
+  requiresOtp: boolean;
+  /** The official operator API is not connected, so OTPs cannot be verified yet. */
+  providerStatus: AdminOtpPolicyProviderStatus;
+  /** @minimum 0 */
+  version: number;
+  /** @nullable */
+  updatedAt: string | null;
+}
+
+export interface AdminOtpPolicyList {
+  items: AdminOtpPolicy[];
+}
+
+export interface AdminOtpPolicyUpdate {
+  requiresOtp: boolean;
+  /** @minimum 0 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
 export interface AdminBanner {
   id: string;
   title: string;

@@ -236,6 +236,78 @@ export const CreateAdminBannerResponse = zod.object({
 
 
 /**
+ * @summary List Orange Money OTP policies for supported countries
+ */
+export const listAdminOtpPoliciesResponseItemsItemVersionMin = 0;
+
+
+
+export const ListAdminOtpPoliciesResponse = zod.object({
+  "items": zod.array(zod.object({
+  "countryCode": zod.enum(['ci', 'bf', 'ml', 'sn']),
+  "countryName": zod.string(),
+  "operatorId": zod.enum(['orange-ci', 'orange-bf', 'orange-ml', 'orange-sn']),
+  "operatorName": zod.string(),
+  "phonePrefix": zod.string(),
+  "requiresOtp": zod.boolean(),
+  "providerStatus": zod.enum(['not_configured']).describe('The official operator API is not connected, so OTPs cannot be verified yet.'),
+  "version": zod.number().int().min(listAdminOtpPoliciesResponseItemsItemVersionMin),
+  "updatedAt": zod.coerce.date().nullable()
+}))
+})
+
+
+/**
+ * @summary Update whether OTP is required for a supported Orange Money operator
+ */
+export const updateAdminOtpPolicyPathCountryCodeMin = 2;
+export const updateAdminOtpPolicyPathCountryCodeMax = 2;
+
+
+export const updateAdminOtpPolicyPathCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const updateAdminOtpPolicyPathOperatorIdMin = 9;
+export const updateAdminOtpPolicyPathOperatorIdMax = 9;
+
+
+export const updateAdminOtpPolicyPathOperatorIdRegExp = new RegExp('^orange-[a-z]{2}$');
+
+
+export const UpdateAdminOtpPolicyParams = zod.object({
+  "countryCode": zod.coerce.string().min(updateAdminOtpPolicyPathCountryCodeMin).max(updateAdminOtpPolicyPathCountryCodeMax).regex(updateAdminOtpPolicyPathCountryCodeRegExp),
+  "operatorId": zod.coerce.string().min(updateAdminOtpPolicyPathOperatorIdMin).max(updateAdminOtpPolicyPathOperatorIdMax).regex(updateAdminOtpPolicyPathOperatorIdRegExp)
+})
+
+export const updateAdminOtpPolicyBodyExpectedVersionMin = 0;
+
+export const updateAdminOtpPolicyBodyReasonMin = 3;
+export const updateAdminOtpPolicyBodyReasonMax = 500;
+
+
+
+export const UpdateAdminOtpPolicyBody = zod.object({
+  "requiresOtp": zod.boolean(),
+  "expectedVersion": zod.number().int().min(updateAdminOtpPolicyBodyExpectedVersionMin),
+  "reason": zod.string().min(updateAdminOtpPolicyBodyReasonMin).max(updateAdminOtpPolicyBodyReasonMax)
+})
+
+export const updateAdminOtpPolicyResponseVersionMin = 0;
+
+
+
+export const UpdateAdminOtpPolicyResponse = zod.object({
+  "countryCode": zod.enum(['ci', 'bf', 'ml', 'sn']),
+  "countryName": zod.string(),
+  "operatorId": zod.enum(['orange-ci', 'orange-bf', 'orange-ml', 'orange-sn']),
+  "operatorName": zod.string(),
+  "phonePrefix": zod.string(),
+  "requiresOtp": zod.boolean(),
+  "providerStatus": zod.enum(['not_configured']).describe('The official operator API is not connected, so OTPs cannot be verified yet.'),
+  "version": zod.number().int().min(updateAdminOtpPolicyResponseVersionMin),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
  * @summary Reorder all administrator banners atomically
  */
 export const reorderAdminBannersBodyExpectedOrderMax = 500;

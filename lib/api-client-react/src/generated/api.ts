@@ -25,6 +25,9 @@ import type {
   AdminBannerList,
   AdminBannerReorderRequest,
   AdminLoginActivityPage,
+  AdminOtpPolicy,
+  AdminOtpPolicyList,
+  AdminOtpPolicyUpdate,
   AdminOverview,
   AdminTransactionDetail,
   AdminTransactionPage,
@@ -919,6 +922,157 @@ export const useCreateAdminBanner = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getCreateAdminBannerMutationOptions(options));
+    }
+
+export const getListAdminOtpPoliciesUrl = () => {
+
+
+
+
+  return `/api/admin/otp-policies`
+}
+
+/**
+ * @summary List Orange Money OTP policies for supported countries
+ */
+export const listAdminOtpPolicies = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminOtpPolicyList> => {
+
+  return customFetch<AdminOtpPolicyList>(getListAdminOtpPoliciesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminOtpPoliciesQueryKey = () => {
+    return [
+    `/api/admin/otp-policies`
+    ] as const;
+    }
+
+
+export const getListAdminOtpPoliciesQueryOptions = <TData = Awaited<ReturnType<typeof listAdminOtpPolicies>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminOtpPolicies>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminOtpPoliciesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminOtpPolicies>>> = ({ signal }) => listAdminOtpPolicies({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminOtpPolicies>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminOtpPoliciesQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminOtpPolicies>>>
+export type ListAdminOtpPoliciesQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List Orange Money OTP policies for supported countries
+ */
+
+export function useListAdminOtpPolicies<TData = Awaited<ReturnType<typeof listAdminOtpPolicies>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminOtpPolicies>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminOtpPoliciesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateAdminOtpPolicyUrl = (countryCode: string,
+    operatorId: string,) => {
+
+
+
+
+  return `/api/admin/otp-policies/${countryCode}/${operatorId}`
+}
+
+/**
+ * @summary Update whether OTP is required for a supported Orange Money operator
+ */
+export const updateAdminOtpPolicy = async (countryCode: string,
+    operatorId: string,
+    adminOtpPolicyUpdate: AdminOtpPolicyUpdate, options?: Parameters<typeof customFetch>[1]): Promise<AdminOtpPolicy> => {
+
+  return customFetch<AdminOtpPolicy>(getUpdateAdminOtpPolicyUrl(countryCode,operatorId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminOtpPolicyUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminOtpPolicyMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOtpPolicy>>, TError,{countryCode: string;operatorId: string;data: BodyType<AdminOtpPolicyUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminOtpPolicy>>, TError,{countryCode: string;operatorId: string;data: BodyType<AdminOtpPolicyUpdate>}, TContext> => {
+
+const mutationKey = ['updateAdminOtpPolicy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminOtpPolicy>>, {countryCode: string;operatorId: string;data: BodyType<AdminOtpPolicyUpdate>}> = (props) => {
+          const {countryCode,operatorId,data} = props ?? {};
+
+          return  updateAdminOtpPolicy(countryCode,operatorId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminOtpPolicyMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminOtpPolicy>>>
+    export type UpdateAdminOtpPolicyMutationBody = BodyType<AdminOtpPolicyUpdate>
+    export type UpdateAdminOtpPolicyMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Update whether OTP is required for a supported Orange Money operator
+ */
+export const useUpdateAdminOtpPolicy = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOtpPolicy>>, TError,{countryCode: string;operatorId: string;data: BodyType<AdminOtpPolicyUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminOtpPolicy>>,
+        TError,
+        {countryCode: string;operatorId: string;data: BodyType<AdminOtpPolicyUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminOtpPolicyMutationOptions(options));
     }
 
 export const getReorderAdminBannersUrl = () => {

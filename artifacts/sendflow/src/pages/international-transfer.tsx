@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
+import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { useSeo } from '@/lib/seo';
 import {
@@ -136,13 +137,6 @@ export default function InternationalTransferPage() {
   }, [isUnlocked, setLocation]);
 
   useEffect(() => {
-    if (requestState !== 'pending') return;
-
-    const timeout = window.setTimeout(() => setRequestState('success'), 2200);
-    return () => window.clearTimeout(timeout);
-  }, [requestState]);
-
-  useEffect(() => {
     if (!countryPickerOpen && !operatorPickerOpen) return;
 
     const previousOverflow = document.body.style.overflow;
@@ -229,7 +223,7 @@ export default function InternationalTransferPage() {
           onSubmit={(event) => {
             event.preventDefault();
             setSubmitAttempted(true);
-            if (canSubmit) setRequestState('pending');
+            if (canSubmit && transactionSubmissionAvailable) setRequestState('pending');
           }}
         >
           <section className="sendflow-transfer-section" aria-labelledby="international-from-title">
@@ -356,8 +350,13 @@ export default function InternationalTransferPage() {
               </div>
             </div>
 
-            <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || requestState !== 'idle'}>
-              {requestState === 'pending'
+            <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status" data-testid="notice-transfer-provider-unavailable">
+              {transactionUnavailableReason}
+            </p>
+            <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || !transactionSubmissionAvailable || requestState !== 'idle'}>
+              {!transactionSubmissionAvailable
+                ? 'Opérations indisponibles'
+                : requestState === 'pending'
                 ? 'Confirmation en cours'
                 : requestState === 'success'
                   ? 'Transfert confirmé'

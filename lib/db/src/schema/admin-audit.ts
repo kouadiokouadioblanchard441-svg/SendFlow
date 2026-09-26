@@ -36,6 +36,7 @@ export type AdminAuditAction =
   | "delete_user"
   | "archive_transaction"
   | "view_login_activity"
+  | "view_otp_policies"
   | "create_banner"
   | "update_banner"
   | "delete_banner"

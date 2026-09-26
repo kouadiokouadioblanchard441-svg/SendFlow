@@ -53,10 +53,13 @@ import {
   useUpdateAdminBanner,
   useDeleteAdminBanner,
   useReorderAdminBanners,
+  useListAdminOtpPolicies,
+  useUpdateAdminOtpPolicy,
+  getListAdminOtpPoliciesQueryKey,
   getListAdminBannersQueryKey,
   getListPublishedBannersQueryKey,
 } from '@workspace/api-client-react';
-import type { AdminBanner, BannerInput, BannerUpdate } from '@workspace/api-client-react';
+import type { AdminBanner, AdminOtpPolicy, BannerInput, BannerUpdate } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -130,7 +133,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'banners';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'banners' | 'otp-policies';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -143,6 +146,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   transfers: { title: 'Transferts', eyebrow: 'Flux sortants' },
   'login-activity': { title: 'Connexions', eyebrow: 'Sécurité' },
   banners: { title: 'Bannières', eyebrow: 'Contenu client' },
+  'otp-policies': { title: 'Politiques OTP', eyebrow: 'Orange Money' },
 };
 
 const navItems: Array<{ href: string; label: string; section: AdminSection; icon: typeof LayoutDashboard }> = [
@@ -154,6 +158,7 @@ const navItems: Array<{ href: string; label: string; section: AdminSection; icon
   { href: '/admin/transfers', label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
   { href: '/admin/login-activity', label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
   { href: '/admin/banners', label: 'Bannières client', section: 'banners', icon: Radio },
+  { href: '/admin/otp-policies', label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
 ];
 
 function formatMoney(minor: number | undefined, currency = 'XOF') {
@@ -1395,6 +1400,137 @@ function BannersPage() {
   );
 }
 
+function OtpPoliciesPage() {
+  const queryClient = useQueryClient();
+  const query = useListAdminOtpPolicies();
+  const mutation = useUpdateAdminOtpPolicy();
+  const [editing, setEditing] = useState<AdminOtpPolicy | null>(null);
+  const [reason, setReason] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [mutationError, setMutationError] = useState('');
+
+  const beginEdit = (policy: AdminOtpPolicy) => {
+    setEditing(policy);
+    setReason('');
+    setFeedback('');
+    setMutationError('');
+  };
+
+  const savePolicy = () => {
+    if (!editing || reason.trim().length < 3) return;
+    setMutationError('');
+    mutation.mutate(
+      {
+        countryCode: editing.countryCode,
+        operatorId: editing.operatorId,
+        data: {
+          requiresOtp: !editing.requiresOtp,
+          expectedVersion: editing.version,
+          reason: reason.trim(),
+        },
+      },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: getListAdminOtpPoliciesQueryKey() });
+          setEditing(null);
+          setReason('');
+          setFeedback(`Politique mise à jour pour ${editing.operatorName} — ${editing.countryName}.`);
+        },
+        onError: () => {
+          setMutationError('La modification a échoué. Actualisez la liste en cas de conflit, puis réessayez.');
+        },
+      },
+    );
+  };
+
+  const items = query.data?.items ?? [];
+
+  return (
+    <AdminShell section="otp-policies">
+      <div className="sendflow-admin-page-intro">
+        <div>
+          <p className="sendflow-admin-overline">Orange Money · CI, BF, ML, SN</p>
+          <h2 data-testid="heading-admin-otp-policies">Configuration des codes OTP</h2>
+          <p className="sendflow-admin-subtitle">Définissez, pour chaque pays, si le parcours devra exiger un code OTP.</p>
+        </div>
+      </div>
+
+      <Alert data-testid="notice-otp-provider-unconfigured">
+        <CircleAlert className="size-4" />
+        <AlertTitle>API officielle non connectée</AlertTitle>
+        <AlertDescription>
+          Les règles sont enregistrées et auditées, mais aucun code n’est vérifié par Orange pour le moment.
+          Cette configuration ne lance pas de transfert et ne permet pas d’annoncer une opération réussie.
+        </AlertDescription>
+      </Alert>
+
+      {feedback && <Alert data-testid="status-otp-policy-feedback"><CheckCircle2 className="size-4" /><AlertDescription>{feedback}</AlertDescription></Alert>}
+      {query.isError && <QueryState error={query.error} onRetry={() => { void query.refetch(); }} />}
+      {query.isLoading && <div className="grid gap-4 md:grid-cols-2" data-testid="loading-admin-otp-policies">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-40 rounded-2xl" />)}</div>}
+      {!query.isLoading && !query.isError && (
+        <div className="grid gap-4 md:grid-cols-2" data-testid="list-admin-otp-policies">
+          {items.map((policy) => (
+            <Card key={policy.operatorId} data-testid={`card-otp-policy-${policy.countryCode}`}>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <div>
+                  <CardTitle>{policy.countryName}</CardTitle>
+                  <CardDescription>{policy.operatorName} · {policy.phonePrefix}</CardDescription>
+                </div>
+                <Badge variant="outline">API non connectée</Badge>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium">{policy.requiresOtp ? 'Code OTP requis' : 'Code OTP non requis'}</p>
+                    <p className="text-sm text-muted-foreground">Version {policy.version} · Modifiée {formatDate(policy.updatedAt)}</p>
+                  </div>
+                  <Switch
+                    checked={policy.requiresOtp}
+                    disabled={mutation.isPending}
+                    onCheckedChange={() => beginEdit(policy)}
+                    aria-label={`${policy.requiresOtp ? 'Désactiver' : 'Activer'} l’exigence OTP pour ${policy.countryName}`}
+                    data-testid={`switch-otp-policy-${policy.countryCode}`}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={Boolean(editing)} onOpenChange={(open) => { if (!open && !mutation.isPending) setEditing(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier la règle OTP</DialogTitle>
+            <DialogDescription>
+              {editing && `${editing.countryName} · ${editing.operatorName} : l’OTP sera ${editing.requiresOtp ? 'désactivée' : 'exigée'}.`}
+              {' '}L’API opérateur reste non connectée.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="otp-policy-reason">Motif de modification</Label>
+            <Input
+              id="otp-policy-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              maxLength={500}
+              placeholder="Expliquez brièvement la raison de ce changement"
+              data-testid="input-otp-policy-reason"
+            />
+          </div>
+          {mutationError && <Alert variant="destructive" data-testid="error-otp-policy-update"><AlertDescription>{mutationError}</AlertDescription></Alert>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={mutation.isPending}>Annuler</Button>
+            <Button onClick={savePolicy} disabled={!editing || reason.trim().length < 3 || mutation.isPending} data-testid="button-save-otp-policy">
+              {mutation.isPending ? 'Enregistrement…' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AdminShell>
+  );
+}
+
 export function AdminRouter() {
   const [isUserDetail, userRoute] = useRoute('/admin/users/:userId');
   const [isTransactionDetail, transactionRoute] = useRoute('/admin/transactions/:transactionId');
@@ -1406,6 +1542,7 @@ export function AdminRouter() {
   const [isTransfers] = useRoute('/admin/transfers');
   const [isLoginActivity] = useRoute('/admin/login-activity');
   const [isBanners] = useRoute('/admin/banners');
+  const [isOtpPolicies] = useRoute('/admin/otp-policies');
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -1416,5 +1553,6 @@ export function AdminRouter() {
   if (isTransfers) return <TransactionsPage section="transfers" />;
   if (isLoginActivity) return <LoginActivityPage />;
   if (isBanners) return <BannersPage />;
+  if (isOtpPolicies) return <OtpPoliciesPage />;
   return <OverviewPage />;
 }

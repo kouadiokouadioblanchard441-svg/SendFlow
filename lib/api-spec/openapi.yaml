@@ -1165,14 +1165,18 @@ components:
       required: true
       schema:
         type: string
-        enum: [ci, bf, ml, sn]
+        minLength: 2
+        maxLength: 2
+        pattern: "^[a-z]{2}$"
     AdminOtpPolicyOperatorId:
       name: operatorId
       in: path
       required: true
       schema:
         type: string
-        enum: [orange-ci, orange-bf, orange-ml, orange-sn]
+        minLength: 9
+        maxLength: 9
+        pattern: "^orange-[a-z]{2}$"
     AdminBannerId:
       name: bannerId
       in: path
@@ -1697,7 +1701,7 @@ components:
           minLength: 3
           maxLength: 500
       required: [requiresOtp, expectedVersion, reason]
-    AdminOtpPolicy:
+    AdminBanner:
       type: object
       properties:
         id:
