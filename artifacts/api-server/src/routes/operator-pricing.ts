@@ -21,7 +21,6 @@ import {
 import { recordAdminAudit } from "../lib/admin-audit";
 import {
   createOperatorDisplayFields,
-  ensureOperatorPricingSeeded,
   isPricingCategoryId,
   pricingCategories,
   pricingCountryCatalog,
@@ -64,7 +63,6 @@ function toManagedOperator(
 
 router.get("/pricing", async (req, res): Promise<void> => {
   try {
-    await ensureOperatorPricingSeeded();
     const [operators, rates, otpPolicies] = await Promise.all([
       db.select().from(operatorCatalogTable),
       db.select().from(operatorPricingRatesTable),
@@ -134,7 +132,6 @@ router.get("/admin/operator-pricing", async (req, res): Promise<void> => {
   if (!adminUserId) return;
 
   try {
-    await ensureOperatorPricingSeeded();
     const [operators, rates] = await Promise.all([
       db.select().from(operatorCatalogTable),
       db.select().from(operatorPricingRatesTable),
@@ -201,7 +198,6 @@ router.post("/admin/operators", async (req, res): Promise<void> => {
   const display = createOperatorDisplayFields(body.data.name.trim(), body.data.brand);
 
   try {
-    await ensureOperatorPricingSeeded();
     const created = await db.transaction(async (tx) => {
       const [operator] = await tx
         .insert(operatorCatalogTable)
@@ -271,7 +267,6 @@ router.patch("/admin/operators/:operatorId", async (req, res): Promise<void> => 
   }
 
   try {
-    await ensureOperatorPricingSeeded();
     const [existing] = await db
       .select()
       .from(operatorCatalogTable)
@@ -348,7 +343,6 @@ router.put("/admin/operator-pricing-rates", async (req, res): Promise<void> => {
   }
 
   try {
-    await ensureOperatorPricingSeeded();
     const requestedIds = updates.map((update) => update.operatorId);
     const knownOperators = await db
       .select({ operatorId: operatorCatalogTable.operatorId, countryCode: operatorCatalogTable.countryCode })

@@ -45,6 +45,12 @@ Admin API responses must not be cached, and unsafe browser requests must pass a 
 
 **How to apply:** Set private no-store headers for admin responses, validate origins on mutations, and allow origin-less requests only when they cannot rely on ambient browser cookies.
 
+Public and administrator GET handlers must not seed or repair business data in response to a client request. Catalog bootstrap runs as a server-startup or migration step before traffic.
+
+**Why:** A read request should not mutate financial configuration or let unauthenticated traffic trigger persistent initialization.
+
+**How to apply:** Keep GET handlers query-only; perform baseline seeding in an explicit startup/migration path, and keep later catalog changes in audited administrator mutations.
+
 Customer money-movement flows must remain blocked until a server-side operator integration confirms both any required OTP and the operation itself. An admin OTP policy is configuration only, not evidence of verification.
 
 **Why:** A non-empty code or a client-side timer cannot prove authorization or payment settlement, and showing success could mislead users about money that was never moved.

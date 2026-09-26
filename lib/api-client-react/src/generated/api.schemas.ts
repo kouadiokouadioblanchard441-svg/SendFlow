@@ -1296,6 +1296,7 @@ from?: AdminFromParameter;
 to?: AdminToParameter;
 /**
  * @minimum 1
+ * @maximum 1000
  */
 page?: AdminPageParameter;
 /**
@@ -1312,6 +1313,7 @@ export type ListAdminUsersParams = {
 search?: AdminSearchParameter;
 /**
  * @minimum 1
+ * @maximum 1000
  */
 page?: AdminPageParameter;
 /**
@@ -1342,6 +1344,7 @@ from?: AdminFromParameter;
 to?: AdminToParameter;
 /**
  * @minimum 1
+ * @maximum 1000
  */
 page?: AdminPageParameter;
 /**

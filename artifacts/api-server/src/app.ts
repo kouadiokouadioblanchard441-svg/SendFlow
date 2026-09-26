@@ -98,17 +98,15 @@ app.use("/api/admin", (req, res, next) => {
     return;
   }
 
-  let requestOrigin: string;
   let providedOrigin: string;
   try {
     providedOrigin = new URL(origin).origin;
-    requestOrigin = new URL(`${req.protocol}://${req.get("host") ?? ""}`).origin;
   } catch {
     res.status(403).json({ error: "Invalid administrator request origin" });
     return;
   }
 
-  if (!allowedOrigins.has(providedOrigin) && providedOrigin !== requestOrigin) {
+  if (!allowedOrigins.has(providedOrigin)) {
     res.status(403).json({ error: "Cross-origin administrator action denied" });
     return;
   }

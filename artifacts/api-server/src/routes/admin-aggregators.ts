@@ -17,7 +17,6 @@ import {
   UpdateAdminAggregatorRouteResponse,
 } from "@workspace/api-zod";
 import { recordAdminAudit } from "../lib/admin-audit";
-import { ensureOperatorPricingSeeded } from "../lib/operator-pricing-catalog";
 import { respondAdminAuthError } from "./admin";
 import {
   aggregatorCountryCatalog,
@@ -76,7 +75,6 @@ router.get("/admin/payment-routing", async (req, res): Promise<void> => {
   if (!adminUserId) return;
 
   try {
-    await ensureOperatorPricingSeeded();
     const [aggregators, storedRoutes] = await Promise.all([
       listAdminAggregators(),
       db.select().from(paymentAggregatorRoutesTable),
@@ -297,7 +295,6 @@ router.put("/admin/payment-aggregator-routes", async (req, res): Promise<void> =
   const scopeKey = getAggregatorRouteScopeKey(scopeType, countryCode, operatorId);
 
   try {
-    await ensureOperatorPricingSeeded();
     if (scopeType === "operator" && operatorId) {
       const [operator] = await db
         .select({ operatorId: operatorCatalogTable.operatorId })

@@ -1539,6 +1539,7 @@ components:
       schema:
         type: integer
         minimum: 1
+        maximum: 1000
         default: 1
     AdminPageSize:
       name: pageSize

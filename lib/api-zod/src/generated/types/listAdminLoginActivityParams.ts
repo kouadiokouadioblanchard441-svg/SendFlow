@@ -31,6 +31,7 @@ from?: AdminFromParameter;
 to?: AdminToParameter;
 /**
  * @minimum 1
+ * @maximum 1000
  */
 page?: AdminPageParameter;
 /**

@@ -791,6 +791,7 @@ export const listAdminLoginActivityQuerySearchMax = 120;
 
 
 export const listAdminLoginActivityQueryPageDefault = 1;
+export const listAdminLoginActivityQueryPageMax = 1000;
 
 export const listAdminLoginActivityQueryPageSizeDefault = 20;
 export const listAdminLoginActivityQueryPageSizeMax = 50;
@@ -802,7 +803,7 @@ export const ListAdminLoginActivityQueryParams = zod.object({
   "userId": zod.coerce.string().min(1).optional(),
   "from": zod.date().optional().describe('Inclusive UTC calendar date.'),
   "to": zod.date().optional().describe('Inclusive UTC calendar date.'),
-  "page": zod.coerce.number().int().min(1).default(listAdminLoginActivityQueryPageDefault),
+  "page": zod.coerce.number().int().min(1).max(listAdminLoginActivityQueryPageMax).default(listAdminLoginActivityQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listAdminLoginActivityQueryPageSizeMax).default(listAdminLoginActivityQueryPageSizeDefault)
 })
 
@@ -837,6 +838,7 @@ export const ListAdminLoginActivityResponse = zod.object({
 export const listAdminUsersQuerySearchMax = 120;
 
 export const listAdminUsersQueryPageDefault = 1;
+export const listAdminUsersQueryPageMax = 1000;
 
 export const listAdminUsersQueryPageSizeDefault = 20;
 export const listAdminUsersQueryPageSizeMax = 50;
@@ -845,7 +847,7 @@ export const listAdminUsersQueryPageSizeMax = 50;
 
 export const ListAdminUsersQueryParams = zod.object({
   "search": zod.coerce.string().max(listAdminUsersQuerySearchMax).optional(),
-  "page": zod.coerce.number().int().min(1).default(listAdminUsersQueryPageDefault),
+  "page": zod.coerce.number().int().min(1).max(listAdminUsersQueryPageMax).default(listAdminUsersQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listAdminUsersQueryPageSizeMax).default(listAdminUsersQueryPageSizeDefault)
 })
 
@@ -922,6 +924,7 @@ export const listAdminTransactionsQuerySearchMax = 120;
 
 
 export const listAdminTransactionsQueryPageDefault = 1;
+export const listAdminTransactionsQueryPageMax = 1000;
 
 export const listAdminTransactionsQueryPageSizeDefault = 20;
 export const listAdminTransactionsQueryPageSizeMax = 50;
@@ -935,7 +938,7 @@ export const ListAdminTransactionsQueryParams = zod.object({
   "status": zod.enum(['pending', 'succeeded', 'failed']).optional(),
   "from": zod.date().optional().describe('Inclusive UTC calendar date.'),
   "to": zod.date().optional().describe('Inclusive UTC calendar date.'),
-  "page": zod.coerce.number().int().min(1).default(listAdminTransactionsQueryPageDefault),
+  "page": zod.coerce.number().int().min(1).max(listAdminTransactionsQueryPageMax).default(listAdminTransactionsQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listAdminTransactionsQueryPageSizeMax).default(listAdminTransactionsQueryPageSizeDefault)
 })
 

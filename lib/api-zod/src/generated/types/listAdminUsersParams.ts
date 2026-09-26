@@ -16,6 +16,7 @@ export type ListAdminUsersParams = {
 search?: AdminSearchParameter;
 /**
  * @minimum 1
+ * @maximum 1000
  */
 page?: AdminPageParameter;
 /**
