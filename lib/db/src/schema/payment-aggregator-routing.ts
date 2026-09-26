@@ -25,7 +25,7 @@ export const paymentAggregatorRoutesTable = pgTable(
     scopeType: varchar("scope_type", { length: 16 }).notNull(),
     scopeKey: varchar("scope_key", { length: 100 }).notNull(),
     countryCode: varchar("country_code", { length: 2 }).notNull(),
-    operatorId: varchar("operator_id", { length: 40 }),
+    operatorId: varchar("operator_id", { length: 60 }),
     aggregatorCode: varchar("aggregator_code", { length: 60 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),

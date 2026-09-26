@@ -39,6 +39,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { AdminActionDialog } from '@/components/admin-action-dialog';
+import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -145,7 +146,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'banners' | 'otp-policies' | 'aggregators';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -160,6 +161,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   banners: { title: 'Bannières', eyebrow: 'Contenu client' },
   'otp-policies': { title: 'Politiques OTP', eyebrow: 'Orange Money' },
   aggregators: { title: 'Partenaires de paiement', eyebrow: 'Routage multi-agrégateurs' },
+  'operator-pricing': { title: 'Opérateurs et tarifs', eyebrow: 'Catalogue client' },
 };
 
 const navItems: Array<{ href: string; label: string; section: AdminSection; icon: typeof LayoutDashboard }> = [
@@ -173,6 +175,7 @@ const navItems: Array<{ href: string; label: string; section: AdminSection; icon
   { href: '/admin/banners', label: 'Bannières client', section: 'banners', icon: Radio },
   { href: '/admin/otp-policies', label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
   { href: '/admin/aggregators', label: 'Agrégateurs', section: 'aggregators', icon: Network },
+  { href: '/admin/operator-pricing', label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
 ];
 
 function formatMoney(minor: number | undefined, currency = 'XOF') {
@@ -2033,6 +2036,7 @@ export function AdminRouter() {
   const [isBanners] = useRoute('/admin/banners');
   const [isOtpPolicies] = useRoute('/admin/otp-policies');
   const [isAggregators] = useRoute('/admin/aggregators');
+  const [isOperatorPricing] = useRoute('/admin/operator-pricing');
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -2045,5 +2049,6 @@ export function AdminRouter() {
   if (isBanners) return <BannersPage />;
   if (isOtpPolicies) return <OtpPoliciesPage />;
   if (isAggregators) return <AggregatorsPage />;
+  if (isOperatorPricing) return <AdminShell section="operator-pricing"><AdminOperatorPricingPage /></AdminShell>;
   return <OverviewPage />;
 }

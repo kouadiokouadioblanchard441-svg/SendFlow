@@ -3,6 +3,7 @@ import {
   and,
   db,
   eq,
+  operatorCatalogTable,
   paymentAggregatorRoutesTable,
   paymentAggregatorsTable,
 } from "@workspace/db";
@@ -16,12 +17,12 @@ import {
   UpdateAdminAggregatorRouteResponse,
 } from "@workspace/api-zod";
 import { recordAdminAudit } from "../lib/admin-audit";
+import { ensureOperatorPricingSeeded } from "../lib/operator-pricing-catalog";
 import { respondAdminAuthError } from "./admin";
 import {
   aggregatorCountryCatalog,
   builtInAggregatorCatalog,
   findAggregatorCountry,
-  findAggregatorOperator,
   getAggregatorRouteScopeKey,
 } from "./aggregator-catalog";
 
@@ -75,10 +76,12 @@ router.get("/admin/payment-routing", async (req, res): Promise<void> => {
   if (!adminUserId) return;
 
   try {
+    await ensureOperatorPricingSeeded();
     const [aggregators, storedRoutes] = await Promise.all([
       listAdminAggregators(),
       db.select().from(paymentAggregatorRoutesTable),
     ]);
+    const operatorRows = await db.select().from(operatorCatalogTable);
     const routesByScope = new Map(
       storedRoutes.map((route) => [`${route.scopeType}:${route.scopeKey}`, route]),
     );
@@ -93,7 +96,10 @@ router.get("/admin/payment-routing", async (req, res): Promise<void> => {
         defaultAggregatorCode,
         defaultVersion: countryRoute?.version ?? 0,
         defaultUpdatedAt: countryRoute?.updatedAt?.toISOString() ?? null,
-        operators: country.operators.map((operator) => {
+        operators: operatorRows
+          .filter((operator) => operator.countryCode === country.countryCode)
+          .sort((left, right) => left.name.localeCompare(right.name, "fr"))
+          .map((operator) => {
           const operatorScopeKey = getAggregatorRouteScopeKey(
             "operator",
             country.countryCode,
@@ -104,14 +110,15 @@ router.get("/admin/payment-routing", async (req, res): Promise<void> => {
 
           return {
             operatorId: operator.operatorId,
-            operatorName: operator.operatorName,
+            operatorName: operator.name,
+            operatorEnabled: operator.enabled,
             aggregatorCode,
             effectiveAggregatorCode: aggregatorCode ?? defaultAggregatorCode,
             inheritsCountryDefault: aggregatorCode === null,
             version: operatorRoute?.version ?? 0,
             updatedAt: operatorRoute?.updatedAt?.toISOString() ?? null,
           };
-        }),
+          }),
       };
     });
 
@@ -283,13 +290,29 @@ router.put("/admin/payment-aggregator-routes", async (req, res): Promise<void> =
     res.status(400).json({ error: "Country routes cannot include an operator" });
     return;
   }
-  if (scopeType === "operator" && (!operatorId || !findAggregatorOperator(countryCode, operatorId))) {
+  if (scopeType === "operator" && !operatorId) {
     res.status(404).json({ error: "Unsupported operator for this country" });
     return;
   }
   const scopeKey = getAggregatorRouteScopeKey(scopeType, countryCode, operatorId);
 
   try {
+    await ensureOperatorPricingSeeded();
+    if (scopeType === "operator" && operatorId) {
+      const [operator] = await db
+        .select({ operatorId: operatorCatalogTable.operatorId })
+        .from(operatorCatalogTable)
+        .where(and(
+          eq(operatorCatalogTable.countryCode, countryCode),
+          eq(operatorCatalogTable.operatorId, operatorId),
+        ))
+        .limit(1);
+      if (!operator) {
+        res.status(404).json({ error: "Unsupported operator for this country" });
+        return;
+      }
+    }
+
     if (aggregatorCode && !(await findAggregator(aggregatorCode))) {
       res.status(404).json({ error: "Aggregator not found" });
       return;

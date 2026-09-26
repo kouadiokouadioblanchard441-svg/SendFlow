@@ -25,6 +25,7 @@ import type {
   AdminBannerList,
   AdminBannerReorderRequest,
   AdminLoginActivityPage,
+  AdminOperatorPricingCatalog,
   AdminOtpPolicy,
   AdminOtpPolicyList,
   AdminOtpPolicyUpdate,
@@ -32,6 +33,7 @@ import type {
   AdminPaymentAggregator,
   AdminPaymentAggregatorRouteUpdate,
   AdminPaymentRouting,
+  AdminPricingRatesUpdateResult,
   AdminTransactionDetail,
   AdminTransactionPage,
   AdminUserActionRequest,
@@ -55,7 +57,12 @@ import type {
   ListAdminLoginActivityParams,
   ListAdminTransactionsParams,
   ListAdminUsersParams,
+  ManagedOperator,
+  NewOperatorInput,
+  OperatorUpdate,
+  PricingRatesUpdate,
   PublicBannerList,
+  PublicPricingCatalog,
   UpdatePaymentAggregatorRequest,
   UpdatePaymentAggregatorRouteRequest,
   WebhookReceipt
@@ -704,6 +711,84 @@ export function useGetAdminOverview<TData = Awaited<ReturnType<typeof getAdminOv
 
 
 
+export const getGetPublicPricingUrl = () => {
+
+
+
+
+  return `/api/pricing`
+}
+
+/**
+ * Returns enabled operators and configured rates for each pricing section. Unconfigured rates are omitted.
+ * @summary Get active operators and public pricing
+ */
+export const getPublicPricing = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicPricingCatalog> => {
+
+  return customFetch<PublicPricingCatalog>(getGetPublicPricingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicPricingQueryKey = () => {
+    return [
+    `/api/pricing`
+    ] as const;
+    }
+
+
+export const getGetPublicPricingQueryOptions = <TData = Awaited<ReturnType<typeof getPublicPricing>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicPricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicPricingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicPricing>>> = ({ signal }) => getPublicPricing({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicPricing>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicPricingQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicPricing>>>
+export type GetPublicPricingQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get active operators and public pricing
+ */
+
+export function useGetPublicPricing<TData = Awaited<ReturnType<typeof getPublicPricing>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicPricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicPricingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getListPublishedBannersUrl = () => {
 
 
@@ -1218,6 +1303,298 @@ export const useUpdateAdminAggregatorRoute = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getUpdateAdminAggregatorRouteMutationOptions(options));
+    }
+
+export const getGetAdminOperatorPricingUrl = () => {
+
+
+
+
+  return `/api/admin/operator-pricing`
+}
+
+/**
+ * @summary List operator availability and fee rates by country and section
+ */
+export const getAdminOperatorPricing = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminOperatorPricingCatalog> => {
+
+  return customFetch<AdminOperatorPricingCatalog>(getGetAdminOperatorPricingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminOperatorPricingQueryKey = () => {
+    return [
+    `/api/admin/operator-pricing`
+    ] as const;
+    }
+
+
+export const getGetAdminOperatorPricingQueryOptions = <TData = Awaited<ReturnType<typeof getAdminOperatorPricing>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminOperatorPricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminOperatorPricingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminOperatorPricing>>> = ({ signal }) => getAdminOperatorPricing({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminOperatorPricing>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminOperatorPricingQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminOperatorPricing>>>
+export type GetAdminOperatorPricingQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List operator availability and fee rates by country and section
+ */
+
+export function useGetAdminOperatorPricing<TData = Awaited<ReturnType<typeof getAdminOperatorPricing>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminOperatorPricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminOperatorPricingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAdminOperatorUrl = () => {
+
+
+
+
+  return `/api/admin/operators`
+}
+
+/**
+ * @summary Add an operator to a country
+ */
+export const createAdminOperator = async (newOperatorInput: NewOperatorInput, options?: Parameters<typeof customFetch>[1]): Promise<ManagedOperator> => {
+
+  return customFetch<ManagedOperator>(getCreateAdminOperatorUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(newOperatorInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminOperatorMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminOperator>>, TError,{data: BodyType<NewOperatorInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminOperator>>, TError,{data: BodyType<NewOperatorInput>}, TContext> => {
+
+const mutationKey = ['createAdminOperator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminOperator>>, {data: BodyType<NewOperatorInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminOperator(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminOperatorMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminOperator>>>
+    export type CreateAdminOperatorMutationBody = BodyType<NewOperatorInput>
+    export type CreateAdminOperatorMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Add an operator to a country
+ */
+export const useCreateAdminOperator = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminOperator>>, TError,{data: BodyType<NewOperatorInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminOperator>>,
+        TError,
+        {data: BodyType<NewOperatorInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAdminOperatorMutationOptions(options));
+    }
+
+export const getUpdateAdminOperatorUrl = (operatorId: string,) => {
+
+
+
+
+  return `/api/admin/operators/${operatorId}`
+}
+
+/**
+ * @summary Edit or enable/disable a country operator
+ */
+export const updateAdminOperator = async (operatorId: string,
+    operatorUpdate: OperatorUpdate, options?: Parameters<typeof customFetch>[1]): Promise<ManagedOperator> => {
+
+  return customFetch<ManagedOperator>(getUpdateAdminOperatorUrl(operatorId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(operatorUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminOperatorMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOperator>>, TError,{operatorId: string;data: BodyType<OperatorUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminOperator>>, TError,{operatorId: string;data: BodyType<OperatorUpdate>}, TContext> => {
+
+const mutationKey = ['updateAdminOperator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminOperator>>, {operatorId: string;data: BodyType<OperatorUpdate>}> = (props) => {
+          const {operatorId,data} = props ?? {};
+
+          return  updateAdminOperator(operatorId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminOperatorMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminOperator>>>
+    export type UpdateAdminOperatorMutationBody = BodyType<OperatorUpdate>
+    export type UpdateAdminOperatorMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Edit or enable/disable a country operator
+ */
+export const useUpdateAdminOperator = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOperator>>, TError,{operatorId: string;data: BodyType<OperatorUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminOperator>>,
+        TError,
+        {operatorId: string;data: BodyType<OperatorUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminOperatorMutationOptions(options));
+    }
+
+export const getUpdateAdminOperatorPricingUrl = () => {
+
+
+
+
+  return `/api/admin/operator-pricing-rates`
+}
+
+/**
+ * Updates all changed operator rates for one country and one pricing section atomically.
+ * @summary Update a country's pricing section rates
+ */
+export const updateAdminOperatorPricing = async (pricingRatesUpdate: PricingRatesUpdate, options?: Parameters<typeof customFetch>[1]): Promise<AdminPricingRatesUpdateResult> => {
+
+  return customFetch<AdminPricingRatesUpdateResult>(getUpdateAdminOperatorPricingUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(pricingRatesUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminOperatorPricingMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOperatorPricing>>, TError,{data: BodyType<PricingRatesUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminOperatorPricing>>, TError,{data: BodyType<PricingRatesUpdate>}, TContext> => {
+
+const mutationKey = ['updateAdminOperatorPricing'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminOperatorPricing>>, {data: BodyType<PricingRatesUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateAdminOperatorPricing(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminOperatorPricingMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminOperatorPricing>>>
+    export type UpdateAdminOperatorPricingMutationBody = BodyType<PricingRatesUpdate>
+    export type UpdateAdminOperatorPricingMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Update a country's pricing section rates
+ */
+export const useUpdateAdminOperatorPricing = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOperatorPricing>>, TError,{data: BodyType<PricingRatesUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminOperatorPricing>>,
+        TError,
+        {data: BodyType<PricingRatesUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminOperatorPricingMutationOptions(options));
     }
 
 export const getListAdminOtpPoliciesUrl = () => {

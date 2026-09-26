@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Bell,
@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
+import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { useSeo } from '@/lib/seo';
+import { formatPricingFeeRate } from '@/lib/pricing';
 import {
   isValidIvoryCoastPhone,
   isValidTransactionAmount,
@@ -25,7 +27,7 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
 type CountryCode = 'ci';
 type TransferSide = 'source' | 'destination';
-type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov' | 'telecel';
+type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
 
 type TransferOperator = {
   id: string;
@@ -36,58 +38,9 @@ type TransferOperator = {
   prefix: string;
   flag: string;
   requiresOtp: boolean;
-  otpCommand?: string;
+  otpCommand: string | null;
+  feeRate?: number;
 };
-
-const operatorsByCountry: Record<CountryCode, TransferOperator[]> = {
-  ci: [
-    {
-      id: 'orange-ci',
-      name: 'Orange Money',
-      shortName: 'Orange',
-      brand: 'orange',
-      country: 'ci',
-      prefix: '+225',
-      flag: '🇨🇮',
-      requiresOtp: true,
-      otpCommand: '#144*82# option 2',
-    },
-    {
-      id: 'wave-ci',
-      name: 'Wave',
-      shortName: 'Wave',
-      brand: 'wave',
-      country: 'ci',
-      prefix: '+225',
-      flag: '🇨🇮',
-      requiresOtp: false,
-    },
-    {
-      id: 'mtn-ci',
-      name: 'MTN Mobile Money',
-      shortName: 'MTN',
-      brand: 'mtn',
-      country: 'ci',
-      prefix: '+225',
-      flag: '🇨🇮',
-      requiresOtp: false,
-    },
-    {
-      id: 'moov-ci',
-      name: 'Moov Money',
-      shortName: 'Moov',
-      brand: 'moov',
-      country: 'ci',
-      prefix: '+225',
-      flag: '🇨🇮',
-      requiresOtp: false,
-    },
-  ],
-};
-
-const initialSourceOperator = operatorsByCountry.ci[0];
-const initialDestinationOperator = operatorsByCountry.ci[1];
-const TRANSFER_FEE = 907;
 
 type SavedContact = {
   id: string;
@@ -139,6 +92,25 @@ function OperatorMark({ operator }: { operator: TransferOperator }) {
 export default function InterNetworkTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
+  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
+  const pricingCountry = pricingQuery.data?.countries.find((item) => item.id === 'ci');
+  const availableOperators = useMemo<TransferOperator[]>(
+    () => (pricingQuery.data?.operators ?? [])
+      .filter((item) => item.countryId === 'ci')
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        shortName: item.shortName,
+        brand: item.brand,
+        country: 'ci',
+        prefix: pricingCountry?.dialCode ?? '+225',
+        flag: pricingCountry?.flag ?? '🇨🇮',
+        requiresOtp: item.requiresOtp,
+        otpCommand: item.otpCommand,
+        feeRate: item.fees['inter-network'],
+      })),
+    [pricingCountry?.dialCode, pricingCountry?.flag, pricingQuery.data?.operators],
+  );
   const [amount, setAmount] = useState('20000');
   const [sourceNumber, setSourceNumber] = useState('0595857098');
   const [otp, setOtp] = useState('');
@@ -146,8 +118,14 @@ export default function InterNetworkTransferPage() {
   const [supportFees, setSupportFees] = useState(true);
   const [copied, setCopied] = useState(false);
   const [requestState, setRequestState] = useState<TransferRequestState>('idle');
-  const [sourceOperator, setSourceOperator] = useState(initialSourceOperator);
-  const [destinationOperator, setDestinationOperator] = useState(initialDestinationOperator);
+  const [sourceOperatorId, setSourceOperatorId] = useState<string | null>('orange-ci');
+  const [destinationOperatorId, setDestinationOperatorId] = useState<string | null>('wave-ci');
+  const sourceOperator = availableOperators.find((item) => item.id === sourceOperatorId)
+    ?? availableOperators[0]
+    ?? null;
+  const destinationOperator = availableOperators.find(
+    (item) => item.id === destinationOperatorId && item.id !== sourceOperator?.id,
+  ) ?? availableOperators.find((item) => item.id !== sourceOperator?.id) ?? null;
   const [operatorPicker, setOperatorPicker] = useState<TransferSide | null>(null);
   const [contactsOpen, setContactsOpen] = useState(false);
   const [contactsNotice, setContactsNotice] = useState('');
@@ -165,7 +143,38 @@ export default function InterNetworkTransferPage() {
     if (!isUnlocked) setLocation('/sign-in');
   }, [isUnlocked, setLocation]);
 
+  useEffect(() => {
+    const nextOperatorId = sourceOperator?.id ?? null;
+    if (nextOperatorId !== sourceOperatorId) setSourceOperatorId(nextOperatorId);
+  }, [sourceOperator?.id, sourceOperatorId]);
+
+  useEffect(() => {
+    const nextOperatorId = destinationOperator?.id ?? null;
+    if (nextOperatorId !== destinationOperatorId) setDestinationOperatorId(nextOperatorId);
+  }, [destinationOperator?.id, destinationOperatorId]);
+
   if (!isUnlocked) return <Redirect to="/sign-in" />;
+  if (pricingQuery.isLoading) {
+    return <main className="sendflow-transfer-shell"><p role="status">Chargement des opérateurs…</p></main>;
+  }
+  if (pricingQuery.isError || !pricingQuery.data) {
+    return (
+      <main className="sendflow-transfer-shell">
+        <div className="sendflow-deposit-unavailable" role="alert">
+          Les opérateurs ne sont pas disponibles pour le moment. Réessayez dans quelques instants.
+        </div>
+      </main>
+    );
+  }
+  if (!sourceOperator || !destinationOperator) {
+    return (
+      <main className="sendflow-transfer-shell">
+        <div className="sendflow-deposit-unavailable" role="status">
+          Il faut au moins deux opérateurs actifs en Côte d’Ivoire pour proposer un transfert inter-réseau.
+        </div>
+      </main>
+    );
+  }
 
   const activeOperator = operatorPicker === 'source' ? sourceOperator : destinationOperator;
 
@@ -175,12 +184,12 @@ export default function InterNetworkTransferPage() {
 
   const selectOperator = (operator: TransferOperator) => {
     if (operatorPicker === 'source') {
-      setSourceOperator(operator);
+      setSourceOperatorId(operator.id);
       if (!operator.requiresOtp) {
         setOtp('');
       }
     } else {
-      setDestinationOperator(operator);
+      setDestinationOperatorId(operator.id);
     }
     setRequestState('idle');
     setSubmitAttempted(false);
@@ -248,10 +257,13 @@ export default function InterNetworkTransferPage() {
   };
 
   const enteredAmount = parseWholeAmount(amount);
+  const feeRate = sourceOperator.feeRate;
+  const feeAmount = enteredAmount > 0 && feeRate !== undefined ? Math.ceil(enteredAmount * feeRate) : 0;
   const recipientAmount = supportFees
     ? enteredAmount
-    : Math.max(enteredAmount - TRANSFER_FEE, 0);
+    : Math.max(enteredAmount - feeAmount, 0);
   const canSubmit =
+    feeRate !== undefined &&
     isValidTransactionAmount(enteredAmount) &&
     (supportFees || recipientAmount > 0) &&
     (!sourceOperator.requiresOtp || otp.trim().length > 0) &&
@@ -460,7 +472,9 @@ export default function InterNetworkTransferPage() {
               </p>
             )}
             <div className="sendflow-transfer-fees">
-              Frais: <strong>{TRANSFER_FEE} Fcfa</strong>
+              Frais: <strong>{feeRate === undefined
+                ? 'À confirmer'
+                : `${formatPricingFeeRate(feeRate)} · ${feeAmount.toLocaleString('fr-FR')} Fcfa`}</strong>
             </div>
 
             <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status" data-testid="notice-transfer-provider-unavailable">
@@ -530,7 +544,9 @@ export default function InterNetworkTransferPage() {
               </div>
 
               <div className="sendflow-transfer-operator-list">
-                {operatorsByCountry.ci.map((operator) => {
+                {availableOperators
+                  .filter((operator) => operator.id !== (operatorPicker === 'source' ? destinationOperator.id : sourceOperator.id))
+                  .map((operator) => {
                   const isSelected = activeOperator.id === operator.id;
 
                   return (

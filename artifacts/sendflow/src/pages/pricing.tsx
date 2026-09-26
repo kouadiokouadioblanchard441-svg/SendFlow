@@ -10,9 +10,10 @@ import {
   X,
 } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
+import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import {
-  pricingProvider,
+  formatPricingFeeRate,
   type PricingCategoryId,
   type PricingCountry,
   type PricingOperator,
@@ -34,7 +35,9 @@ function CategoryIcon({ categoryId }: { categoryId: PricingCategoryId }) {
 export default function PricingPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const { categories, countries } = pricingProvider.getCatalog();
+  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
+  const categories = pricingQuery.data?.categories ?? [];
+  const countries = pricingQuery.data?.countries ?? [];
   const [categoryId, setCategoryId] = useState<PricingCategoryId>('deposit');
   const [countryId, setCountryId] = useState('ci');
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
@@ -42,8 +45,8 @@ export default function PricingPage() {
   const country = countries.find((item) => item.id === countryId) ?? countries[0];
   const category = categories.find((item) => item.id === categoryId) ?? categories[0];
   const listedOperators = useMemo(
-    () => pricingProvider.getOperators(country.id, category.id),
-    [country.id, category.id],
+    () => pricingQuery.data?.operators.filter((operator) => operator.countryId === country?.id) ?? [],
+    [pricingQuery.data?.operators, country?.id],
   );
 
   useSeo({
@@ -57,6 +60,12 @@ export default function PricingPage() {
   useEffect(() => {
     if (!isUnlocked) setLocation('/sign-in');
   }, [isUnlocked, setLocation]);
+
+  useEffect(() => {
+    if (countries.length > 0 && !countries.some((item) => item.id === countryId)) {
+      setCountryId(countries[0].id);
+    }
+  }, [countries, countryId]);
 
   useEffect(() => {
     if (!countryPickerOpen) return;
@@ -73,6 +82,27 @@ export default function PricingPage() {
   }, [countryPickerOpen]);
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
+  if (pricingQuery.isLoading) {
+    return <main className="sendflow-pricing-shell"><div className="sendflow-pricing-content"><p role="status">Chargement des tarifs…</p></div></main>;
+  }
+  if (pricingQuery.isError || !pricingQuery.data || !country || !category) {
+    return (
+      <main className="sendflow-pricing-shell">
+        <header className="sendflow-pricing-header">
+          <button type="button" className="sendflow-pricing-back" onClick={() => setLocation('/account')} aria-label="Retour au compte">
+            <ArrowLeft size={22} strokeWidth={2.15} />
+          </button>
+          <h1>Tarification</h1>
+          <span className="sendflow-pricing-header-spacer" aria-hidden="true" />
+        </header>
+        <div className="sendflow-pricing-content">
+          <div className="sendflow-pricing-empty" role="alert" data-testid="status-pricing-load-error">
+            Les tarifs ne sont pas disponibles pour le moment. Réessayez dans quelques instants.
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   const selectCountry = (nextCountry: PricingCountry) => {
     setCountryId(nextCountry.id);
@@ -154,8 +184,12 @@ export default function PricingPage() {
                 <span className="sendflow-pricing-operator-name">
                   <strong>{operator.name}</strong>
                   <span className="sendflow-pricing-fee">
-                    <strong data-testid={`text-pricing-fee-${operator.id}`}>{operator.feeLabel}</strong>
-                    <small>par opération</small>
+                     <strong data-testid={`text-pricing-fee-${operator.id}`}>
+                       {operator.fees[category.id] === undefined
+                         ? 'Tarif à confirmer'
+                         : formatPricingFeeRate(operator.fees[category.id]!)}
+                     </strong>
+                     <small>{operator.fees[category.id] === undefined ? 'Tarif en cours de configuration' : 'par opération'}</small>
                   </span>
                 </span>
               </article>

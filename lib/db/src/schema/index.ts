@@ -4,6 +4,7 @@ export * from "./contacts";
 export * from "./identity-verification";
 export * from "./login-events";
 export * from "./operator-otp-policies";
+export * from "./operator-pricing";
 export * from "./payment-aggregator-routing";
 export * from "./transactions";
 export * from "./users";

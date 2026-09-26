@@ -149,6 +149,56 @@ export const GetAdminOverviewResponse = zod.object({
 
 
 /**
+ * Returns enabled operators and configured rates for each pricing section. Unconfigured rates are omitted.
+ * @summary Get active operators and public pricing
+ */
+export const getPublicPricingResponseOperatorsItemIdMin = 2;
+export const getPublicPricingResponseOperatorsItemIdMax = 60;
+
+export const getPublicPricingResponseOperatorsItemFeesDepositMin = 0;
+export const getPublicPricingResponseOperatorsItemFeesDepositMax = 1;
+
+export const getPublicPricingResponseOperatorsItemFeesInterNetworkMin = 0;
+export const getPublicPricingResponseOperatorsItemFeesInterNetworkMax = 1;
+
+export const getPublicPricingResponseOperatorsItemFeesInternationalMin = 0;
+export const getPublicPricingResponseOperatorsItemFeesInternationalMax = 1;
+
+
+
+export const GetPublicPricingResponse = zod.object({
+  "categories": zod.array(zod.object({
+  "id": zod.enum(['deposit', 'inter-network', 'international']),
+  "label": zod.string(),
+  "shortLabel": zod.string(),
+  "description": zod.string()
+})),
+  "countries": zod.array(zod.object({
+  "id": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "name": zod.string(),
+  "dialCode": zod.string(),
+  "initials": zod.string(),
+  "flag": zod.string()
+})),
+  "operators": zod.array(zod.object({
+  "id": zod.string().min(getPublicPricingResponseOperatorsItemIdMin).max(getPublicPricingResponseOperatorsItemIdMax),
+  "countryId": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "initials": zod.string(),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "requiresOtp": zod.boolean(),
+  "otpCommand": zod.string().nullable(),
+  "fees": zod.object({
+  "deposit": zod.number().min(getPublicPricingResponseOperatorsItemFeesDepositMin).max(getPublicPricingResponseOperatorsItemFeesDepositMax).optional(),
+  "inter-network": zod.number().min(getPublicPricingResponseOperatorsItemFeesInterNetworkMin).max(getPublicPricingResponseOperatorsItemFeesInterNetworkMax).optional(),
+  "international": zod.number().min(getPublicPricingResponseOperatorsItemFeesInternationalMin).max(getPublicPricingResponseOperatorsItemFeesInternationalMax).optional()
+})
+}))
+})
+
+
+/**
  * Returns active banners within their optional publication dates, in configured display order.
  * @summary List banners currently visible to customers
  */
@@ -265,6 +315,7 @@ export const GetAdminPaymentRoutingResponse = zod.object({
   "operators": zod.array(zod.object({
   "operatorId": zod.string(),
   "operatorName": zod.string(),
+  "operatorEnabled": zod.boolean(),
   "aggregatorCode": zod.string().nullable(),
   "effectiveAggregatorCode": zod.string().nullable(),
   "inheritsCountryDefault": zod.boolean(),
@@ -381,6 +432,186 @@ export const UpdateAdminAggregatorRouteResponse = zod.object({
   "aggregatorCode": zod.string().nullable(),
   "version": zod.number().int().min(updateAdminAggregatorRouteResponseVersionMin),
   "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List operator availability and fee rates by country and section
+ */
+export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMin = 2;
+export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMax = 60;
+
+
+export const getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMin = 0;
+export const getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMax = 100;
+
+
+
+
+export const GetAdminOperatorPricingResponse = zod.object({
+  "categories": zod.array(zod.object({
+  "id": zod.enum(['deposit', 'inter-network', 'international']),
+  "label": zod.string(),
+  "shortLabel": zod.string(),
+  "description": zod.string()
+})),
+  "countries": zod.array(zod.object({
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryName": zod.string(),
+  "phonePrefix": zod.string(),
+  "initials": zod.string(),
+  "flag": zod.string(),
+  "operators": zod.array(zod.object({
+  "operatorId": zod.string().min(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMin).max(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMax),
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "initials": zod.string(),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "enabled": zod.boolean(),
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+}).and(zod.object({
+  "rates": zod.array(zod.object({
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international']),
+  "feePercent": zod.number().min(getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMin).max(getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMax).nullable(),
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+}))
+})))
+}))
+})
+
+
+/**
+ * @summary Add an operator to a country
+ */
+export const createAdminOperatorBodyNameMin = 2;
+export const createAdminOperatorBodyNameMax = 120;
+
+export const createAdminOperatorBodyReasonMin = 3;
+export const createAdminOperatorBodyReasonMax = 500;
+
+
+
+export const CreateAdminOperatorBody = zod.object({
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "name": zod.string().min(createAdminOperatorBodyNameMin).max(createAdminOperatorBodyNameMax),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "reason": zod.string().min(createAdminOperatorBodyReasonMin).max(createAdminOperatorBodyReasonMax)
+})
+
+export const createAdminOperatorResponseOperatorIdMin = 2;
+export const createAdminOperatorResponseOperatorIdMax = 60;
+
+
+
+
+export const CreateAdminOperatorResponse = zod.object({
+  "operatorId": zod.string().min(createAdminOperatorResponseOperatorIdMin).max(createAdminOperatorResponseOperatorIdMax),
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "initials": zod.string(),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "enabled": zod.boolean(),
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Edit or enable/disable a country operator
+ */
+export const updateAdminOperatorPathOperatorIdMin = 2;
+export const updateAdminOperatorPathOperatorIdMax = 60;
+
+
+export const updateAdminOperatorPathOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+
+
+export const UpdateAdminOperatorParams = zod.object({
+  "operatorId": zod.coerce.string().min(updateAdminOperatorPathOperatorIdMin).max(updateAdminOperatorPathOperatorIdMax).regex(updateAdminOperatorPathOperatorIdRegExp)
+})
+
+export const updateAdminOperatorBodyNameMin = 2;
+export const updateAdminOperatorBodyNameMax = 120;
+
+
+export const updateAdminOperatorBodyReasonMin = 3;
+export const updateAdminOperatorBodyReasonMax = 500;
+
+
+
+export const UpdateAdminOperatorBody = zod.object({
+  "name": zod.string().min(updateAdminOperatorBodyNameMin).max(updateAdminOperatorBodyNameMax),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "enabled": zod.boolean(),
+  "expectedVersion": zod.number().int().min(1),
+  "reason": zod.string().min(updateAdminOperatorBodyReasonMin).max(updateAdminOperatorBodyReasonMax)
+})
+
+export const updateAdminOperatorResponseOperatorIdMin = 2;
+export const updateAdminOperatorResponseOperatorIdMax = 60;
+
+
+
+
+export const UpdateAdminOperatorResponse = zod.object({
+  "operatorId": zod.string().min(updateAdminOperatorResponseOperatorIdMin).max(updateAdminOperatorResponseOperatorIdMax),
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "initials": zod.string(),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "enabled": zod.boolean(),
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * Updates all changed operator rates for one country and one pricing section atomically.
+ * @summary Update a country's pricing section rates
+ */
+export const updateAdminOperatorPricingBodyUpdatesItemOperatorIdMin = 2;
+export const updateAdminOperatorPricingBodyUpdatesItemOperatorIdMax = 60;
+
+
+export const updateAdminOperatorPricingBodyUpdatesItemOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+export const updateAdminOperatorPricingBodyUpdatesItemFeePercentMin = 0;
+export const updateAdminOperatorPricingBodyUpdatesItemFeePercentMax = 100;
+
+
+export const updateAdminOperatorPricingBodyUpdatesMax = 100;
+
+export const updateAdminOperatorPricingBodyReasonMin = 3;
+export const updateAdminOperatorPricingBodyReasonMax = 500;
+
+
+
+export const UpdateAdminOperatorPricingBody = zod.object({
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international']),
+  "updates": zod.array(zod.object({
+  "operatorId": zod.string().min(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMin).max(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMax).regex(updateAdminOperatorPricingBodyUpdatesItemOperatorIdRegExp),
+  "feePercent": zod.number().min(updateAdminOperatorPricingBodyUpdatesItemFeePercentMin).max(updateAdminOperatorPricingBodyUpdatesItemFeePercentMax).nullable(),
+  "expectedVersion": zod.number().int().min(1)
+})).min(1).max(updateAdminOperatorPricingBodyUpdatesMax),
+  "reason": zod.string().min(updateAdminOperatorPricingBodyReasonMin).max(updateAdminOperatorPricingBodyReasonMax)
+})
+
+
+
+
+export const UpdateAdminOperatorPricingResponse = zod.object({
+  "items": zod.array(zod.object({
+  "operatorId": zod.string(),
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international']),
+  "feePercent": zod.number().nullable(),
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date()
+}))
 })
 
 

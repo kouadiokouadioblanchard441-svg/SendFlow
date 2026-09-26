@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Bell,
@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
+import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { readAccountCountry } from '@/lib/account-country';
+import { formatPricingFeeRate } from '@/lib/pricing';
 import { useSeo } from '@/lib/seo';
 import {
   isValidIvoryCoastPhone,
@@ -22,7 +24,7 @@ import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 
-type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov';
+type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
 
 type DepositOperator = {
   id: string;
@@ -30,17 +32,9 @@ type DepositOperator = {
   shortName: string;
   brand: OperatorBrand;
   requiresOtp: boolean;
-  otpCommand?: string;
+  otpCommand: string | null;
+  feeRate?: number;
 };
-
-const ivoryCoastDepositOperators: DepositOperator[] = [
-  { id: 'orange-ci', name: 'Orange Money', shortName: 'Orange', brand: 'orange', requiresOtp: true, otpCommand: '#144*82# option 2' },
-  { id: 'wave-ci', name: 'Wave', shortName: 'Wave', brand: 'wave', requiresOtp: false },
-  { id: 'mtn-ci', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn', requiresOtp: false },
-  { id: 'moov-ci', name: 'Moov Money', shortName: 'Moov', brand: 'moov', requiresOtp: false },
-];
-
-const DEPOSIT_FEE_RATE = 0.03;
 
 function OperatorMark({ operator }: { operator: DepositOperator }) {
   if (operator.brand === 'wave') {
@@ -63,12 +57,31 @@ export default function DepositPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountCountry = readAccountCountry();
-  const depositOperators = accountCountry.dialCode === '+225' ? ivoryCoastDepositOperators : [];
+  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
+  const pricingCountry = pricingQuery.data?.countries.find((country) => country.dialCode === accountCountry.dialCode);
+  const depositOperators = useMemo(() => {
+    if (accountCountry.dialCode !== '+225' || !pricingCountry) return [];
+    return (pricingQuery.data?.operators ?? [])
+      .filter((item) => item.countryId === pricingCountry.id)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        shortName: item.shortName,
+        brand: item.brand,
+        requiresOtp: item.requiresOtp,
+        otpCommand: item.otpCommand,
+        feeRate: item.fees.deposit,
+      }));
+  }, [accountCountry.dialCode, pricingCountry?.id, pricingQuery.data?.operators]);
   const [amount, setAmount] = useState('');
   const [sourceNumber, setSourceNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [payFees, setPayFees] = useState(true);
-  const [operator, setOperator] = useState<DepositOperator | null>(depositOperators[0] ?? null);
+  const [operatorId, setOperatorId] = useState<string | null>('orange-ci');
+  const operator = depositOperators.find((item) => item.id === operatorId)
+    ?? depositOperators.find((item) => item.id === 'orange-ci')
+    ?? depositOperators[0]
+    ?? null;
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [requestState, setRequestState] = useState<TransferRequestState>('idle');
@@ -86,6 +99,11 @@ export default function DepositPage() {
     if (!isUnlocked) setLocation('/sign-in');
   }, [isUnlocked, setLocation]);
 
+  useEffect(() => {
+    const nextOperatorId = operator?.id ?? null;
+    if (nextOperatorId !== operatorId) setOperatorId(nextOperatorId);
+  }, [operator?.id, operatorId]);
+
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
   const copyOtpCode = async () => {
@@ -101,12 +119,14 @@ export default function DepositPage() {
   };
 
   const enteredAmount = parseWholeAmount(amount);
-  const feeAmount = enteredAmount > 0 ? Math.ceil(enteredAmount * DEPOSIT_FEE_RATE) : 0;
+  const feeRate = operator?.feeRate;
+  const feeAmount = enteredAmount > 0 && feeRate !== undefined ? Math.ceil(enteredAmount * feeRate) : 0;
   const walletAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
   const totalDebited = payFees ? enteredAmount + feeAmount : enteredAmount;
   const hasValidSourceNumber = isValidIvoryCoastPhone(sourceNumber);
   const canSubmit = Boolean(
     operator &&
+    feeRate !== undefined &&
     isValidTransactionAmount(enteredAmount) &&
     walletAmount > 0 &&
     hasValidSourceNumber &&
@@ -114,7 +134,7 @@ export default function DepositPage() {
   );
 
   const selectOperator = (nextOperator: DepositOperator) => {
-    setOperator(nextOperator);
+    setOperatorId(nextOperator.id);
     if (!nextOperator.requiresOtp) setOtp('');
     setRequestState('idle');
     setOperatorPickerOpen(false);
@@ -267,7 +287,7 @@ export default function DepositPage() {
             </label>
             <div className="sendflow-deposit-summary" aria-live="polite">
               <div>
-                <span>Frais (3%)</span>
+                <span>{feeRate === undefined ? 'Frais à confirmer' : `Frais (${formatPricingFeeRate(feeRate)})`}</span>
                 <strong className="sendflow-deposit-fee-amount">
                   {feeAmount > 0 ? `- ${feeAmount.toLocaleString('fr-FR')} Fcfa` : '—'}
                 </strong>

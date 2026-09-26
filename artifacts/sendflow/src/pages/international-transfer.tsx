@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Bell,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
+import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { useSeo } from '@/lib/seo';
@@ -19,6 +20,7 @@ import {
   parseWholeAmount,
   getPhoneDigitsForCountry,
 } from '@/lib/transfer-validation';
+import { formatPricingFeeRate } from '@/lib/pricing';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
@@ -35,66 +37,8 @@ type InternationalOperator = {
   name: string;
   shortName: string;
   brand: 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
+  feeRate?: number;
 };
-
-const transferCountries: TransferCountry[] = [
-  { id: 'ci', name: 'Côte d’Ivoire', dialCode: '+225', flag: '🇨🇮' },
-  { id: 'sn', name: 'Sénégal', dialCode: '+221', flag: '🇸🇳' },
-  { id: 'bf', name: 'Burkina Faso', dialCode: '+226', flag: '🇧🇫' },
-  { id: 'bj', name: 'Bénin', dialCode: '+229', flag: '🇧🇯' },
-  { id: 'ml', name: 'Mali', dialCode: '+223', flag: '🇲🇱' },
-  { id: 'ne', name: 'Niger', dialCode: '+227', flag: '🇳🇪' },
-  { id: 'tg', name: 'Togo', dialCode: '+228', flag: '🇹🇬' },
-  { id: 'cm', name: 'Cameroun', dialCode: '+237', flag: '🇨🇲' },
-  { id: 'cg', name: 'Congo-Brazzaville', dialCode: '+242', flag: '🇨🇬' },
-];
-
-const operatorsByCountry: Record<string, InternationalOperator[]> = {
-  ci: [
-    { id: 'orange-ci', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
-    { id: 'wave-ci', name: 'Wave', shortName: 'Wave', brand: 'wave' },
-    { id: 'mtn-ci', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn' },
-    { id: 'moov-ci', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
-  ],
-  sn: [
-    { id: 'orange-sn', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
-    { id: 'wave-sn', name: 'Wave', shortName: 'Wave', brand: 'wave' },
-    { id: 'free-sn', name: 'Free Money', shortName: 'Free', brand: 'generic' },
-  ],
-  bf: [
-    { id: 'orange-bf', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
-    { id: 'moov-bf', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
-    { id: 'telecel-bf', name: 'Telecel Money', shortName: 'Telecel', brand: 'generic' },
-  ],
-  bj: [
-    { id: 'mtn-bj', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn' },
-    { id: 'moov-bj', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
-  ],
-  ml: [
-    { id: 'orange-ml', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
-    { id: 'moov-ml', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
-  ],
-  ne: [
-    { id: 'airtel-ne', name: 'Airtel Money', shortName: 'Airtel', brand: 'generic' },
-    { id: 'moov-ne', name: 'Moov Money', shortName: 'Moov', brand: 'moov' },
-  ],
-  tg: [
-    { id: 'tmoney-tg', name: 'TMoney', shortName: 'TMoney', brand: 'generic' },
-    { id: 'flooz-tg', name: 'Flooz', shortName: 'Flooz', brand: 'generic' },
-  ],
-  cm: [
-    { id: 'orange-cm', name: 'Orange Money', shortName: 'Orange', brand: 'orange' },
-    { id: 'mtn-cm', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn' },
-  ],
-  cg: [
-    { id: 'airtel-cg', name: 'Airtel Money', shortName: 'Airtel', brand: 'generic' },
-    { id: 'mtn-cg', name: 'MTN Mobile Money', shortName: 'MTN', brand: 'mtn' },
-  ],
-};
-
-const INTERNATIONAL_FEE_RATE = 0.03;
-const initialCountry = transferCountries[0];
-const initialOperator = operatorsByCountry[initialCountry.id][0];
 
 function OperatorMark({ operator }: { operator: InternationalOperator }) {
   if (operator.brand === 'wave') return <img src={waveLogo} alt="" />;
@@ -114,10 +58,32 @@ function OperatorMark({ operator }: { operator: InternationalOperator }) {
 export default function InternationalTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
+  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
+  const pricingOperators = pricingQuery.data?.operators ?? [];
+  const [countryId, setCountryId] = useState('ci');
+  const [operatorId, setOperatorId] = useState<string | null>('orange-ci');
+  const transferCountries = useMemo(
+    () => (pricingQuery.data?.countries ?? []).filter((item) =>
+      pricingOperators.some((operatorItem) => operatorItem.countryId === item.id),
+    ),
+    [pricingOperators, pricingQuery.data?.countries],
+  );
+  const country = transferCountries.find((item) => item.id === countryId) ?? transferCountries[0];
+  const countryOperators = useMemo<InternationalOperator[]>(
+    () => pricingOperators
+      .filter((item) => item.countryId === country?.id)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        shortName: item.shortName,
+        brand: item.brand,
+        feeRate: item.fees.international,
+      })),
+    [country?.id, pricingOperators],
+  );
   const [amount, setAmount] = useState('');
   const [recipientNumber, setRecipientNumber] = useState('');
-  const [country, setCountry] = useState(initialCountry);
-  const [operator, setOperator] = useState<InternationalOperator | null>(initialOperator);
+  const operator = countryOperators.find((item) => item.id === operatorId) ?? countryOperators[0] ?? null;
   const [payFees, setPayFees] = useState(true);
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
@@ -135,6 +101,17 @@ export default function InternationalTransferPage() {
   useEffect(() => {
     if (!isUnlocked) setLocation('/sign-in');
   }, [isUnlocked, setLocation]);
+
+  useEffect(() => {
+    if (transferCountries.length > 0 && !transferCountries.some((item) => item.id === countryId)) {
+      setCountryId(transferCountries[0].id);
+    }
+  }, [countryId, transferCountries]);
+
+  useEffect(() => {
+    const nextOperatorId = operator?.id ?? null;
+    if (nextOperatorId !== operatorId) setOperatorId(nextOperatorId);
+  }, [operator?.id, operatorId]);
 
   useEffect(() => {
     if (!countryPickerOpen && !operatorPickerOpen) return;
@@ -157,22 +134,44 @@ export default function InternationalTransferPage() {
   }, [countryPickerOpen, operatorPickerOpen]);
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
+  if (pricingQuery.isLoading) {
+    return <main className="sendflow-transfer-shell"><p role="status">Chargement des opérateurs…</p></main>;
+  }
+  if (pricingQuery.isError || !pricingQuery.data) {
+    return (
+      <main className="sendflow-transfer-shell">
+        <div className="sendflow-deposit-unavailable" role="alert">
+          Les opérateurs ne sont pas disponibles pour le moment. Réessayez dans quelques instants.
+        </div>
+      </main>
+    );
+  }
+  if (!country || !operator) {
+    return (
+      <main className="sendflow-transfer-shell">
+        <div className="sendflow-deposit-unavailable" role="status">
+          Aucun opérateur international actif n’est disponible pour le moment.
+        </div>
+      </main>
+    );
+  }
 
   const enteredAmount = parseWholeAmount(amount);
-  const feeAmount = enteredAmount > 0 ? Math.ceil(enteredAmount * INTERNATIONAL_FEE_RATE) : 0;
+  const feeRate = operator.feeRate;
+  const feeAmount = enteredAmount > 0 && feeRate !== undefined ? Math.ceil(enteredAmount * feeRate) : 0;
   const recipientAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
   const walletDebit = payFees ? enteredAmount + feeAmount : enteredAmount;
   const hasValidRecipient = isValidInternationalPhone(recipientNumber, country.dialCode);
   const recipientPhoneDigits = getPhoneDigitsForCountry(country.dialCode);
   const recipientPhoneMaxDigits = recipientPhoneDigits ?? 15;
-  const canSubmit = Boolean(operator)
+  const canSubmit = feeRate !== undefined
     && isValidTransactionAmount(enteredAmount)
     && recipientAmount > 0
     && hasValidRecipient;
 
   const selectCountry = (nextCountry: TransferCountry) => {
-    setCountry(nextCountry);
-    setOperator(operatorsByCountry[nextCountry.id]?.[0] ?? null);
+    setCountryId(nextCountry.id);
+    setOperatorId(pricingOperators.find((item) => item.countryId === nextCountry.id)?.id ?? null);
     setRecipientNumber('');
     setRequestState('idle');
     setSubmitAttempted(false);
@@ -180,7 +179,7 @@ export default function InternationalTransferPage() {
   };
 
   const selectOperator = (nextOperator: InternationalOperator) => {
-    setOperator(nextOperator);
+    setOperatorId(nextOperator.id);
     setRequestState('idle');
     setSubmitAttempted(false);
     setOperatorPickerOpen(false);
@@ -335,7 +334,7 @@ export default function InternationalTransferPage() {
             </label>
             <div className="sendflow-deposit-summary" aria-live="polite">
               <div>
-                <span>Frais (3%)</span>
+                <span>{feeRate === undefined ? 'Frais à confirmer' : `Frais (${formatPricingFeeRate(feeRate)})`}</span>
                 <strong className="sendflow-deposit-fee-amount">
                   {feeAmount > 0 ? `- ${feeAmount.toLocaleString('fr-FR')} Fcfa` : '—'}
                 </strong>
@@ -432,7 +431,7 @@ export default function InternationalTransferPage() {
                 </button>
               </div>
               <div className="sendflow-transfer-operator-list">
-                {(operatorsByCountry[country.id] ?? []).map((nextOperator) => (
+                {countryOperators.map((nextOperator) => (
                   <button
                     type="button"
                     key={nextOperator.id}

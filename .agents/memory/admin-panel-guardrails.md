@@ -57,6 +57,12 @@ The aggregator catalog and country/operator routes in the admin panel are config
 
 **How to apply:** Keep unimplemented providers marked as unavailable for transactions. Only server-side adapter code that verifies real provider results may enable money movement, with credentials read from Replit Secrets.
 
+The operator-pricing bootstrap is a one-time baseline, not a continuing sync from the aggregator catalog. Operators added after that baseline must be created through the audited admin flow and start disabled with no assumed rates.
+
+**Why:** A code-only catalog addition must not silently publish a new operator or assign it an invented fee.
+
+**How to apply:** Seed only an empty operator catalog. Require explicit administrative creation, activation, and rate configuration for later operators.
+
 The admin console must use real icon components or approved image assets for financial states, operators, security markers, and navigation; do not draw iconography with CSS dots, initials, or pseudo-elements.
 
 **Why:** Financial operations need recognizable, consistent symbols on mobile and desktop, and an operator logo must never be faked with another partner’s branding.

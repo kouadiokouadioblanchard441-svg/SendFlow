@@ -20,6 +20,8 @@ tags:
     description: Didit identity verification for development and sandbox testing.
   - name: admin
     description: Protected SendFlow back-office read operations.
+  - name: pricing
+    description: Public operator availability and customer pricing.
 paths:
   /healthz:
     get:
@@ -267,6 +269,25 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "503":
           description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /pricing:
+    get:
+      operationId: getPublicPricing
+      tags: [pricing]
+      summary: Get active operators and public pricing
+      description: Returns enabled operators and configured rates for each pricing section. Unconfigured rates are omitted.
+      responses:
+        "200":
+          description: Public pricing catalog.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicPricingCatalog"
+        "503":
+          description: Pricing catalog is unavailable.
           content:
             application/json:
               schema:
@@ -548,6 +569,203 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "409":
           description: Route changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/operator-pricing:
+    get:
+      operationId: getAdminOperatorPricing
+      tags: [admin]
+      summary: List operator availability and fee rates by country and section
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Operators and pricing sections for all supported countries, including disabled operators.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOperatorPricingCatalog"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/operators:
+    post:
+      operationId: createAdminOperator
+      tags: [admin]
+      summary: Add an operator to a country
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewOperatorInput"
+      responses:
+        "201":
+          description: Operator created inactive with no assumed fee rates.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedOperator"
+        "400":
+          description: Invalid operator data or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: An operator with this country and name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/operators/{operatorId}:
+    parameters:
+      - $ref: "#/components/parameters/AdminOperatorId"
+    patch:
+      operationId: updateAdminOperator
+      tags: [admin]
+      summary: Edit or enable/disable a country operator
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OperatorUpdate"
+      responses:
+        "200":
+          description: Operator updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedOperator"
+        "400":
+          description: Invalid operator data or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Operator not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Operator changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/operator-pricing-rates:
+    put:
+      operationId: updateAdminOperatorPricing
+      tags: [admin]
+      summary: Update a country's pricing section rates
+      description: Updates all changed operator rates for one country and one pricing section atomically.
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PricingRatesUpdate"
+      responses:
+        "200":
+          description: Updated operator rates.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPricingRatesUpdateResult"
+        "400":
+          description: Invalid country, category, rate, or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: One or more operators are not part of this country.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: One or more rates changed since they were loaded.
           content:
             application/json:
               schema:
@@ -1377,6 +1595,15 @@ components:
       schema:
         type: string
         format: uuid
+    AdminOperatorId:
+      name: operatorId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 60
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
   securitySchemes:
     clerkSession:
       type: http
@@ -1900,6 +2127,8 @@ components:
           type: string
         operatorName:
           type: string
+        operatorEnabled:
+          type: boolean
         aggregatorCode:
           type: ["string", "null"]
         effectiveAggregatorCode:
@@ -1912,7 +2141,7 @@ components:
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [operatorId, operatorName, aggregatorCode, effectiveAggregatorCode, inheritsCountryDefault, version, updatedAt]
+      required: [operatorId, operatorName, operatorEnabled, aggregatorCode, effectiveAggregatorCode, inheritsCountryDefault, version, updatedAt]
     AdminCountryPaymentRoutes:
       type: object
       properties:
@@ -1948,6 +2177,273 @@ components:
           items:
             $ref: "#/components/schemas/AdminCountryPaymentRoutes"
       required: [aggregators, countries]
+    PublicPricingCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          enum: [deposit, inter-network, international]
+        label:
+          type: string
+        shortLabel:
+          type: string
+        description:
+          type: string
+      required: [id, label, shortLabel, description]
+    PublicPricingCountry:
+      type: object
+      properties:
+        id:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        name:
+          type: string
+        dialCode:
+          type: string
+        initials:
+          type: string
+        flag:
+          type: string
+      required: [id, name, dialCode, initials, flag]
+    PublicPricingOperator:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 2
+          maxLength: 60
+        countryId:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        name:
+          type: string
+        shortName:
+          type: string
+        initials:
+          type: string
+        brand:
+          type: string
+          enum: [orange, wave, mtn, moov, generic]
+        requiresOtp:
+          type: boolean
+        otpCommand:
+          type: ["string", "null"]
+        fees:
+          type: object
+          properties:
+            deposit:
+              type: number
+              minimum: 0
+              maximum: 1
+            inter-network:
+              type: number
+              minimum: 0
+              maximum: 1
+            international:
+              type: number
+              minimum: 0
+              maximum: 1
+          additionalProperties: false
+      required: [id, countryId, name, shortName, initials, brand, requiresOtp, otpCommand, fees]
+    PublicPricingCatalog:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicPricingCategory"
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicPricingCountry"
+        operators:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicPricingOperator"
+      required: [categories, countries, operators]
+    AdminOperatorPricingRate:
+      type: object
+      properties:
+        categoryId:
+          type: string
+          enum: [deposit, inter-network, international]
+        feePercent:
+          type: ["number", "null"]
+          minimum: 0
+          maximum: 100
+        version:
+          type: integer
+          minimum: 1
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [categoryId, feePercent, version, updatedAt]
+    ManagedOperator:
+      type: object
+      properties:
+        operatorId:
+          type: string
+          minLength: 2
+          maxLength: 60
+        countryCode:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        name:
+          type: string
+        shortName:
+          type: string
+        initials:
+          type: string
+        brand:
+          type: string
+          enum: [orange, wave, mtn, moov, generic]
+        enabled:
+          type: boolean
+        version:
+          type: integer
+          minimum: 1
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [operatorId, countryCode, name, shortName, initials, brand, enabled, version, updatedAt]
+    AdminOperatorWithPricing:
+      allOf:
+        - $ref: "#/components/schemas/ManagedOperator"
+        - type: object
+          properties:
+            rates:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminOperatorPricingRate"
+          required: [rates]
+    AdminCountryOperatorPricing:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        countryName:
+          type: string
+        phonePrefix:
+          type: string
+        initials:
+          type: string
+        flag:
+          type: string
+        operators:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminOperatorWithPricing"
+      required: [countryCode, countryName, phonePrefix, initials, flag, operators]
+    AdminOperatorPricingCatalog:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicPricingCategory"
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminCountryOperatorPricing"
+      required: [categories, countries]
+    NewOperatorInput:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        brand:
+          type: string
+          enum: [orange, wave, mtn, moov, generic]
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [countryCode, name, brand, reason]
+    OperatorUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        brand:
+          type: string
+          enum: [orange, wave, mtn, moov, generic]
+        enabled:
+          type: boolean
+        expectedVersion:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [name, brand, enabled, expectedVersion, reason]
+    PricingRateChangeInput:
+      type: object
+      properties:
+        operatorId:
+          type: string
+          minLength: 2
+          maxLength: 60
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        feePercent:
+          type: ["number", "null"]
+          minimum: 0
+          maximum: 100
+        expectedVersion:
+          type: integer
+          minimum: 1
+      required: [operatorId, feePercent, expectedVersion]
+    PricingRatesUpdate:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        categoryId:
+          type: string
+          enum: [deposit, inter-network, international]
+        updates:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/PricingRateChangeInput"
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [countryCode, categoryId, updates, reason]
+    AdminPricingRatesUpdateResult:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              operatorId:
+                type: string
+              categoryId:
+                type: string
+                enum: [deposit, inter-network, international]
+              feePercent:
+                type: ["number", "null"]
+              version:
+                type: integer
+                minimum: 1
+              updatedAt:
+                type: string
+                format: date-time
+            required: [operatorId, categoryId, feePercent, version, updatedAt]
+      required: [items]
     CreatePaymentAggregatorRequest:
       type: object
       properties:

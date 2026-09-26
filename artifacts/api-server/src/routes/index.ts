@@ -9,6 +9,7 @@ import adminActionsRouter from "./admin-actions";
 import adminLoginActivityRouter from "./admin-login-activity";
 import adminOtpPoliciesRouter from "./admin-otp-policies";
 import adminAggregatorsRouter from "./admin-aggregators";
+import operatorPricingRouter from "./operator-pricing";
 import bannersRouter from "./banners";
 
 const router: IRouter = Router();
@@ -22,5 +23,6 @@ router.use(adminActionsRouter);
 router.use(adminLoginActivityRouter);
 router.use(adminOtpPoliciesRouter);
 router.use(adminAggregatorsRouter);
+router.use(operatorPricingRouter);
 router.use(bannersRouter);
 export default router;

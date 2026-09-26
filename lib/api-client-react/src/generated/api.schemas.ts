@@ -425,6 +425,7 @@ export interface AdminPaymentAggregator {
 export interface AdminOperatorPaymentRoute {
   operatorId: string;
   operatorName: string;
+  operatorEnabled: boolean;
   /** @nullable */
   aggregatorCode: string | null;
   /** @nullable */
@@ -467,6 +468,360 @@ export interface AdminCountryPaymentRoutes {
 export interface AdminPaymentRouting {
   aggregators: AdminPaymentAggregator[];
   countries: AdminCountryPaymentRoutes[];
+}
+
+export type PublicPricingCategoryId = typeof PublicPricingCategoryId[keyof typeof PublicPricingCategoryId];
+
+
+export const PublicPricingCategoryId = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
+} as const;
+
+export interface PublicPricingCategory {
+  id: PublicPricingCategoryId;
+  label: string;
+  shortLabel: string;
+  description: string;
+}
+
+export type PublicPricingCountryId = typeof PublicPricingCountryId[keyof typeof PublicPricingCountryId];
+
+
+export const PublicPricingCountryId = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export interface PublicPricingCountry {
+  id: PublicPricingCountryId;
+  name: string;
+  dialCode: string;
+  initials: string;
+  flag: string;
+}
+
+export type PublicPricingOperatorCountryId = typeof PublicPricingOperatorCountryId[keyof typeof PublicPricingOperatorCountryId];
+
+
+export const PublicPricingOperatorCountryId = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export type PublicPricingOperatorBrand = typeof PublicPricingOperatorBrand[keyof typeof PublicPricingOperatorBrand];
+
+
+export const PublicPricingOperatorBrand = {
+  orange: 'orange',
+  wave: 'wave',
+  mtn: 'mtn',
+  moov: 'moov',
+  generic: 'generic',
+} as const;
+
+export type PublicPricingOperatorFees = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  deposit?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  'inter-network'?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  international?: number;
+};
+
+export interface PublicPricingOperator {
+  /**
+     * @minLength 2
+     * @maxLength 60
+     */
+  id: string;
+  countryId: PublicPricingOperatorCountryId;
+  name: string;
+  shortName: string;
+  initials: string;
+  brand: PublicPricingOperatorBrand;
+  requiresOtp: boolean;
+  /** @nullable */
+  otpCommand: string | null;
+  fees: PublicPricingOperatorFees;
+}
+
+export interface PublicPricingCatalog {
+  categories: PublicPricingCategory[];
+  countries: PublicPricingCountry[];
+  operators: PublicPricingOperator[];
+}
+
+export type AdminOperatorPricingRateCategoryId = typeof AdminOperatorPricingRateCategoryId[keyof typeof AdminOperatorPricingRateCategoryId];
+
+
+export const AdminOperatorPricingRateCategoryId = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
+} as const;
+
+export interface AdminOperatorPricingRate {
+  categoryId: AdminOperatorPricingRateCategoryId;
+  /**
+     * @minimum 0
+     * @maximum 100
+     * @nullable
+     */
+  feePercent: number | null;
+  /** @minimum 1 */
+  version: number;
+  /** @nullable */
+  updatedAt: string | null;
+}
+
+export type ManagedOperatorCountryCode = typeof ManagedOperatorCountryCode[keyof typeof ManagedOperatorCountryCode];
+
+
+export const ManagedOperatorCountryCode = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export type ManagedOperatorBrand = typeof ManagedOperatorBrand[keyof typeof ManagedOperatorBrand];
+
+
+export const ManagedOperatorBrand = {
+  orange: 'orange',
+  wave: 'wave',
+  mtn: 'mtn',
+  moov: 'moov',
+  generic: 'generic',
+} as const;
+
+export interface ManagedOperator {
+  /**
+     * @minLength 2
+     * @maxLength 60
+     */
+  operatorId: string;
+  countryCode: ManagedOperatorCountryCode;
+  name: string;
+  shortName: string;
+  initials: string;
+  brand: ManagedOperatorBrand;
+  enabled: boolean;
+  /** @minimum 1 */
+  version: number;
+  /** @nullable */
+  updatedAt: string | null;
+}
+
+export type AdminOperatorWithPricing = ManagedOperator & {
+  rates: AdminOperatorPricingRate[];
+};
+
+export type AdminCountryOperatorPricingCountryCode = typeof AdminCountryOperatorPricingCountryCode[keyof typeof AdminCountryOperatorPricingCountryCode];
+
+
+export const AdminCountryOperatorPricingCountryCode = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export interface AdminCountryOperatorPricing {
+  countryCode: AdminCountryOperatorPricingCountryCode;
+  countryName: string;
+  phonePrefix: string;
+  initials: string;
+  flag: string;
+  operators: AdminOperatorWithPricing[];
+}
+
+export interface AdminOperatorPricingCatalog {
+  categories: PublicPricingCategory[];
+  countries: AdminCountryOperatorPricing[];
+}
+
+export type NewOperatorInputCountryCode = typeof NewOperatorInputCountryCode[keyof typeof NewOperatorInputCountryCode];
+
+
+export const NewOperatorInputCountryCode = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export type NewOperatorInputBrand = typeof NewOperatorInputBrand[keyof typeof NewOperatorInputBrand];
+
+
+export const NewOperatorInputBrand = {
+  orange: 'orange',
+  wave: 'wave',
+  mtn: 'mtn',
+  moov: 'moov',
+  generic: 'generic',
+} as const;
+
+export interface NewOperatorInput {
+  countryCode: NewOperatorInputCountryCode;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  name: string;
+  brand: NewOperatorInputBrand;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export type OperatorUpdateBrand = typeof OperatorUpdateBrand[keyof typeof OperatorUpdateBrand];
+
+
+export const OperatorUpdateBrand = {
+  orange: 'orange',
+  wave: 'wave',
+  mtn: 'mtn',
+  moov: 'moov',
+  generic: 'generic',
+} as const;
+
+export interface OperatorUpdate {
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  name: string;
+  brand: OperatorUpdateBrand;
+  enabled: boolean;
+  /** @minimum 1 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface PricingRateChangeInput {
+  /**
+     * @minLength 2
+     * @maxLength 60
+     * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+     */
+  operatorId: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     * @nullable
+     */
+  feePercent: number | null;
+  /** @minimum 1 */
+  expectedVersion: number;
+}
+
+export type PricingRatesUpdateCountryCode = typeof PricingRatesUpdateCountryCode[keyof typeof PricingRatesUpdateCountryCode];
+
+
+export const PricingRatesUpdateCountryCode = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export type PricingRatesUpdateCategoryId = typeof PricingRatesUpdateCategoryId[keyof typeof PricingRatesUpdateCategoryId];
+
+
+export const PricingRatesUpdateCategoryId = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
+} as const;
+
+export interface PricingRatesUpdate {
+  countryCode: PricingRatesUpdateCountryCode;
+  categoryId: PricingRatesUpdateCategoryId;
+  /**
+     * @minItems 1
+     * @maxItems 100
+     */
+  updates: PricingRateChangeInput[];
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export type AdminPricingRatesUpdateResultItemsItemCategoryId = typeof AdminPricingRatesUpdateResultItemsItemCategoryId[keyof typeof AdminPricingRatesUpdateResultItemsItemCategoryId];
+
+
+export const AdminPricingRatesUpdateResultItemsItemCategoryId = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
+} as const;
+
+export type AdminPricingRatesUpdateResultItemsItem = {
+  operatorId: string;
+  categoryId: AdminPricingRatesUpdateResultItemsItemCategoryId;
+  /** @nullable */
+  feePercent: number | null;
+  /** @minimum 1 */
+  version: number;
+  updatedAt: string;
+};
+
+export interface AdminPricingRatesUpdateResult {
+  items: AdminPricingRatesUpdateResultItemsItem[];
 }
 
 export interface CreatePaymentAggregatorRequest {

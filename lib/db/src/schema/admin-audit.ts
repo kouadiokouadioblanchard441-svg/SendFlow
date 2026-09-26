@@ -44,7 +44,11 @@ export type AdminAuditAction =
   | "delete_banner"
   | "update_otp_policy"
   | "update_payment_aggregator"
-  | "update_payment_route";
+  | "update_payment_route"
+  | "view_operator_pricing"
+  | "create_operator"
+  | "update_operator"
+  | "update_operator_pricing";
 export type AdminAuditResourceType =
   | "dashboard"
   | "user"
@@ -54,4 +58,6 @@ export type AdminAuditResourceType =
   | "banner"
   | "otp_policy"
   | "payment_aggregator"
-  | "payment_route";
+  | "payment_route"
+  | "operator"
+  | "operator_pricing";

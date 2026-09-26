@@ -9,6 +9,7 @@
 export interface AdminOperatorPaymentRoute {
   operatorId: string;
   operatorName: string;
+  operatorEnabled: boolean;
   /** @nullable */
   aggregatorCode: string | null;
   /** @nullable */
