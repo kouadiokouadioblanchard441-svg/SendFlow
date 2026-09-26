@@ -32,5 +32,8 @@ export type AdminAuditAction =
   | "restore_user"
   | "delete_user"
   | "archive_transaction"
-  | "view_login_activity";
-export type AdminAuditResourceType = "user" | "transaction" | "wallet" | "login_activity";
+  | "view_login_activity"
+  | "create_banner"
+  | "update_banner"
+  | "delete_banner";
+export type AdminAuditResourceType = "user" | "transaction" | "wallet" | "login_activity" | "banner";
