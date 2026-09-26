@@ -23,6 +23,7 @@ import type {
   AdminActionResult,
   AdminBanner,
   AdminBannerList,
+  AdminBannerReorderRequest,
   AdminLoginActivityPage,
   AdminOverview,
   AdminTransactionDetail,
@@ -918,6 +919,77 @@ export const useCreateAdminBanner = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getCreateAdminBannerMutationOptions(options));
+    }
+
+export const getReorderAdminBannersUrl = () => {
+
+
+
+
+  return `/api/admin/banners/reorder`
+}
+
+/**
+ * @summary Reorder all administrator banners atomically
+ */
+export const reorderAdminBanners = async (adminBannerReorderRequest: AdminBannerReorderRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminBannerList> => {
+
+  return customFetch<AdminBannerList>(getReorderAdminBannersUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminBannerReorderRequest)
+  }
+);}
+
+
+
+
+
+export const getReorderAdminBannersMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reorderAdminBanners>>, TError,{data: BodyType<AdminBannerReorderRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reorderAdminBanners>>, TError,{data: BodyType<AdminBannerReorderRequest>}, TContext> => {
+
+const mutationKey = ['reorderAdminBanners'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reorderAdminBanners>>, {data: BodyType<AdminBannerReorderRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  reorderAdminBanners(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReorderAdminBannersMutationResult = NonNullable<Awaited<ReturnType<typeof reorderAdminBanners>>>
+    export type ReorderAdminBannersMutationBody = BodyType<AdminBannerReorderRequest>
+    export type ReorderAdminBannersMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Reorder all administrator banners atomically
+ */
+export const useReorderAdminBanners = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reorderAdminBanners>>, TError,{data: BodyType<AdminBannerReorderRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reorderAdminBanners>>,
+        TError,
+        {data: BodyType<AdminBannerReorderRequest>},
+        TContext
+      > => {
+      return useMutation(getReorderAdminBannersMutationOptions(options));
     }
 
 export const getUpdateAdminBannerUrl = (bannerId: string,) => {

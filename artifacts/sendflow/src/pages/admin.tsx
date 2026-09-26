@@ -52,6 +52,7 @@ import {
   useCreateAdminBanner,
   useUpdateAdminBanner,
   useDeleteAdminBanner,
+  useReorderAdminBanners,
   getListAdminBannersQueryKey,
   getListPublishedBannersQueryKey,
 } from '@workspace/api-client-react';
@@ -195,6 +196,8 @@ function QueryState({ error, onRetry }: { error: unknown; onRetry: () => void })
       ? 'Session administrateur requise'
       : status === 403
         ? 'Accès administrateur refusé'
+        : status === 409
+          ? 'Les données ont changé'
         : status === 503
           ? 'Service temporairement indisponible'
           : 'Impossible de charger ces données';
@@ -203,6 +206,8 @@ function QueryState({ error, onRetry }: { error: unknown; onRetry: () => void })
       ? 'Connectez-vous avec un compte autorisé pour consulter cet espace.'
       : status === 403
         ? 'Votre compte est authentifié mais ne dispose pas des droits nécessaires.'
+        : status === 409
+          ? 'Une modification concurrente a changé cette liste. Actualisez les données avant de réessayer.'
         : status === 503
           ? 'Le service de données ne répond pas pour le moment. Réessayez dans quelques instants.'
           : 'SendFlow n’a pas pu joindre le service d’administration. Aucun chiffre n’est affiché.';
@@ -500,9 +505,9 @@ function Pager({ page, pageSize, total, onPage }: { page: number; pageSize: numb
     <div className="sendflow-admin-pager" data-testid="pagination-admin-results">
       <span data-testid="text-admin-pagination-summary">{total ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} sur ${formatNumber(total)}` : '0 résultat'}</span>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" disabled={page <= 1} onClick={() => onPage(page - 1)} data-testid="button-admin-previous-page"><ChevronLeft className="size-4" /></Button>
+        <Button variant="ghost" size="icon" aria-label="Page précédente" disabled={page <= 1} onClick={() => onPage(page - 1)} data-testid="button-admin-previous-page"><ChevronLeft className="size-4" /></Button>
         <span className="sendflow-admin-page-number" data-testid="text-admin-current-page">{page} / {pageCount}</span>
-        <Button variant="ghost" size="icon" disabled={page >= pageCount} onClick={() => onPage(page + 1)} data-testid="button-admin-next-page"><ChevronRight className="size-4" /></Button>
+        <Button variant="ghost" size="icon" aria-label="Page suivante" disabled={page >= pageCount} onClick={() => onPage(page + 1)} data-testid="button-admin-next-page"><ChevronRight className="size-4" /></Button>
       </div>
     </div>
   );
@@ -1267,14 +1272,16 @@ function BannersPage() {
   const [feedback, setFeedback] = useState('');
   const query = useListAdminBanners({ query: { queryKey: getListAdminBannersQueryKey() } });
   const items = [...(query.data?.items ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
-  const invalidateBanners = () => {
-    void queryClient.invalidateQueries({ queryKey: getListAdminBannersQueryKey() });
-    void queryClient.invalidateQueries({ queryKey: getListPublishedBannersQueryKey() });
+  const invalidateBanners = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: getListAdminBannersQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: getListPublishedBannersQueryKey() }),
+    ]);
   };
   const create = useCreateAdminBanner({
     mutation: {
-      onSuccess: () => {
-        invalidateBanners();
+      onSuccess: async () => {
+        await invalidateBanners();
         setEditorOpen(false);
         setFeedback('Bannière créée.');
       },
@@ -1282,8 +1289,8 @@ function BannersPage() {
   });
   const update = useUpdateAdminBanner({
     mutation: {
-      onSuccess: () => {
-        invalidateBanners();
+      onSuccess: async () => {
+        await invalidateBanners();
         setEditorOpen(false);
         setFeedback('Bannière mise à jour.');
       },
@@ -1291,15 +1298,23 @@ function BannersPage() {
   });
   const remove = useDeleteAdminBanner({
     mutation: {
-      onSuccess: () => {
-        invalidateBanners();
+      onSuccess: async () => {
+        await invalidateBanners();
         setDeletingBanner(undefined);
         setFeedback('Bannière supprimée.');
       },
     },
   });
-  const error = query.error ?? create.error ?? update.error ?? remove.error;
-  const pending = create.isPending || update.isPending || remove.isPending;
+  const reorder = useReorderAdminBanners({
+    mutation: {
+      onSuccess: async () => {
+        await invalidateBanners();
+        setFeedback('Ordre des bannières mis à jour.');
+      },
+    },
+  });
+  const error = query.error ?? create.error ?? update.error ?? remove.error ?? reorder.error;
+  const pending = create.isPending || update.isPending || remove.isPending || reorder.isPending;
 
   const submitBanner = (data: BannerInput | BannerUpdate, editing: boolean) => {
     if (editing && editingBanner) update.mutate({ bannerId: editingBanner.id, data: data as BannerUpdate });
@@ -1312,12 +1327,12 @@ function BannersPage() {
 
   const moveBanner = (banner: AdminBanner, direction: -1 | 1) => {
     const index = items.findIndex((item) => item.id === banner.id);
-    const neighbor = items[index + direction];
-    if (!neighbor) return;
-    update.mutate(
-      { bannerId: banner.id, data: { sortOrder: neighbor.sortOrder } },
-      { onSuccess: () => update.mutate({ bannerId: neighbor.id, data: { sortOrder: banner.sortOrder } }) },
-    );
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= items.length) return;
+    const expectedOrder = items.map((item) => item.id);
+    const orderedIds = [...expectedOrder];
+    [orderedIds[index], orderedIds[targetIndex]] = [orderedIds[targetIndex], orderedIds[index]];
+    reorder.mutate({ data: { expectedOrder, orderedIds } });
   };
 
   return (
@@ -1328,10 +1343,13 @@ function BannersPage() {
           <h2 data-testid="heading-admin-banners">Bannières qui arrivent au bon moment.</h2>
           <p className="sendflow-admin-subtitle">Pilotez les visuels, les destinations et la fenêtre de publication du carrousel de l’accueil.</p>
         </div>
-        <Button onClick={() => { setEditingBanner(undefined); setEditorOpen(true); }} data-testid="button-create-banner"><Plus className="size-4" /> Nouvelle bannière</Button>
+        {query.isSuccess && <Button onClick={() => { setEditingBanner(undefined); setEditorOpen(true); }} data-testid="button-create-banner"><Plus className="size-4" /> Nouvelle bannière</Button>}
       </div>
       {feedback && <Alert className="sendflow-banner-feedback" data-testid="status-banner-feedback"><CheckCircle2 className="size-4" /><AlertDescription>{feedback}</AlertDescription></Alert>}
-      {error && <QueryState error={error} onRetry={() => void query.refetch()} />}
+      {error && <QueryState error={error} onRetry={() => {
+        if (query.isError) void query.refetch();
+        else void invalidateBanners();
+      }} />}
       {query.isLoading && <div className="sendflow-banner-list" data-testid="loading-admin-banners">{Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-48 rounded-2xl" />)}</div>}
       {!query.isLoading && !query.isError && items.length === 0 && <EmptyState label="Aucune bannière n’est configurée. Créez la première campagne pour l’espace client." />}
       {!query.isLoading && !query.isError && items.length > 0 && (
@@ -1346,9 +1364,9 @@ function BannersPage() {
                 <div className="sendflow-banner-admin-heading">
                   <div><p className="sendflow-banner-order">Position {index + 1}</p><h3 data-testid={`text-banner-title-${banner.id}`}>{banner.title}</h3><p>{banner.description || 'Aucune description'}</p></div>
                   <div className="sendflow-banner-reorder" aria-label={`Réordonner ${banner.title}`}>
-                    <Button variant="ghost" size="icon" disabled={index === 0 || pending} onClick={() => moveBanner(banner, -1)} data-testid={`button-banner-up-${banner.id}`}><ArrowUpRight className="size-4 rotate-[-45deg]" /></Button>
+                    <Button variant="ghost" size="icon" aria-label={`Monter ${banner.title}`} disabled={index === 0 || pending} onClick={() => moveBanner(banner, -1)} data-testid={`button-banner-up-${banner.id}`}><ArrowUpRight className="size-4 rotate-[-45deg]" /></Button>
                     <GripVertical className="size-4 text-muted-foreground" />
-                    <Button variant="ghost" size="icon" disabled={index === items.length - 1 || pending} onClick={() => moveBanner(banner, 1)} data-testid={`button-banner-down-${banner.id}`}><ArrowUpRight className="size-4 rotate-[135deg]" /></Button>
+                    <Button variant="ghost" size="icon" aria-label={`Descendre ${banner.title}`} disabled={index === items.length - 1 || pending} onClick={() => moveBanner(banner, 1)} data-testid={`button-banner-down-${banner.id}`}><ArrowUpRight className="size-4 rotate-[135deg]" /></Button>
                   </div>
                 </div>
                 <div className="sendflow-banner-meta">

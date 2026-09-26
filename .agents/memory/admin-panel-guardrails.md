@@ -15,11 +15,23 @@ The user detail view uses server data, while transaction history is retrieved th
 
 **How to apply:** Keep the user identifier in the authorization-protected API contract and apply it in the database query. Do not expose a raw balance overwrite; use a validated credit/debit adjustment through the ledger.
 
+For an unchanged wallet operation, retries must reuse its original idempotency key and expected balance. The server must validate the expected balance on first use and verify that a duplicate key matches the user, administrator, direction, amount, and reason.
+
+**Why:** A lost response after commit must not turn a retry into a second credit or debit, while a stale balance must not authorize a new financial operation.
+
+**How to apply:** Keep the client key stable while the submitted wallet operation is unchanged. Generate a new key only when the user changes its payload, and never weaken server-side balance comparison to accommodate retries.
+
 Account deletion and transaction deletion are logical state changes, not physical deletes: preserve wallets, ledger entries, transactions, and audit history.
 
 **Why:** Financial evidence and account obligations must remain available after an operational record is removed from normal lists.
 
 **How to apply:** Mark users deleted and transactions archived with the administrator, timestamp, and mandatory reason. Require explicit confirmation text for sensitive actions, and never use a customer PIN or an improvised administrator password.
+
+Configured administrator accounts cannot be suspended or logically deleted through ordinary user-management actions.
+
+**Why:** The administrator allowlists are configuration-backed, so changing a user row does not reliably revoke access and could leave a privileged account in a confusing partial state.
+
+**How to apply:** Check both read and mutation administrator allowlists before allowing account suspension or deletion. Change administrator access through the dedicated access configuration process instead.
 
 Successful sensitive detail reads are fail-closed on audit persistence: if the server cannot append the administrator/resource access record, it must not return the user or transaction detail.
 

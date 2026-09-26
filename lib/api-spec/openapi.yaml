@@ -365,6 +365,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/banners/reorder:
+    patch:
+      operationId: reorderAdminBanners
+      tags: [admin]
+      summary: Reorder all administrator banners atomically
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminBannerReorderRequest"
+      responses:
+        "200":
+          description: Banners in the updated display order.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBannerList"
+        "400":
+          description: Invalid or incomplete banner order.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Banner order changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /admin/banners/{bannerId}:
     parameters:
       - $ref: "#/components/parameters/AdminBannerId"
@@ -1622,6 +1672,24 @@ components:
         endsAt:
           type: ["string", "null"]
           format: date-time
+    AdminBannerReorderRequest:
+      type: object
+      properties:
+        expectedOrder:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: string
+            format: uuid
+        orderedIds:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: string
+            format: uuid
+      required: [expectedOrder, orderedIds]
     DeleteAdminBannerResult:
       type: object
       properties:
@@ -1743,6 +1811,7 @@ components:
           type: string
           minLength: 10
           maxLength: 500
+          pattern: '^(\s*\S){10,}\s*$'
         confirmation:
           type: string
           enum: [CREDIT, DEBIT]
@@ -1754,7 +1823,7 @@ components:
           type: integer
           format: int64
           minimum: 0
-      required: [direction, amountMinor, reason, confirmation, idempotencyKey]
+      required: [direction, amountMinor, reason, confirmation, idempotencyKey, expectedBalanceMinor]
     AdminUserActionRequest:
       type: object
       properties:
@@ -1762,6 +1831,7 @@ components:
           type: string
           minLength: 10
           maxLength: 500
+          pattern: '^(\s*\S){10,}\s*$'
         confirmation:
           type: string
           enum: [CONFIRMER]

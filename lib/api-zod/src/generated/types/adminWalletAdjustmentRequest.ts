@@ -15,6 +15,7 @@ export interface AdminWalletAdjustmentRequest {
   /**
      * @minLength 10
      * @maxLength 500
+     * @pattern ^(\s*\S){10,}\s*$
      */
   reason: string;
   confirmation: AdminWalletAdjustmentRequestConfirmation;
@@ -24,5 +25,5 @@ export interface AdminWalletAdjustmentRequest {
      */
   idempotencyKey: string;
   /** @minimum 0 */
-  expectedBalanceMinor?: bigint;
+  expectedBalanceMinor: bigint;
 }

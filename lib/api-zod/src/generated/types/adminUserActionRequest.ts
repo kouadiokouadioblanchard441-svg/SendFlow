@@ -11,6 +11,7 @@ export interface AdminUserActionRequest {
   /**
      * @minLength 10
      * @maxLength 500
+     * @pattern ^(\s*\S){10,}\s*$
      */
   reason: string;
   confirmation: AdminUserActionRequestConfirmation;

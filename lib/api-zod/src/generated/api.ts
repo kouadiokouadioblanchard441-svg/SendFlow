@@ -236,6 +236,40 @@ export const CreateAdminBannerResponse = zod.object({
 
 
 /**
+ * @summary Reorder all administrator banners atomically
+ */
+export const reorderAdminBannersBodyExpectedOrderMax = 500;
+
+export const reorderAdminBannersBodyOrderedIdsMax = 500;
+
+
+
+export const ReorderAdminBannersBody = zod.object({
+  "expectedOrder": zod.array(zod.string().uuid()).min(1).max(reorderAdminBannersBodyExpectedOrderMax),
+  "orderedIds": zod.array(zod.string().uuid()).min(1).max(reorderAdminBannersBodyOrderedIdsMax)
+})
+
+export const ReorderAdminBannersResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "imageUrl": zod.string().describe('Public HTTPS image URL or app asset path under \/banners\/.'),
+  "mobileImageUrl": zod.string().nullable().describe('Optional public HTTPS image URL or app asset path under \/banners\/.'),
+  "imageAlt": zod.string(),
+  "ctaLabel": zod.string().nullable(),
+  "targetUrl": zod.string().nullable(),
+  "sortOrder": zod.number().int(),
+  "isActive": zod.boolean(),
+  "startsAt": zod.coerce.date().nullable(),
+  "endsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
+
+
+/**
  * @summary Update a banner
  */
 export const UpdateAdminBannerParams = zod.object({
@@ -523,6 +557,8 @@ export const CreateAdminWalletAdjustmentParams = zod.object({
 export const createAdminWalletAdjustmentBodyReasonMin = 10;
 export const createAdminWalletAdjustmentBodyReasonMax = 500;
 
+
+export const createAdminWalletAdjustmentBodyReasonRegExp = new RegExp('^(\\s*\\S){10,}\\s*$');
 export const createAdminWalletAdjustmentBodyIdempotencyKeyMin = 16;
 export const createAdminWalletAdjustmentBodyIdempotencyKeyMax = 128;
 
@@ -533,10 +569,10 @@ export const createAdminWalletAdjustmentBodyExpectedBalanceMinorMin = 0;
 export const CreateAdminWalletAdjustmentBody = zod.object({
   "direction": zod.enum(['credit', 'debit']),
   "amountMinor": zod.number().int().min(1),
-  "reason": zod.string().min(createAdminWalletAdjustmentBodyReasonMin).max(createAdminWalletAdjustmentBodyReasonMax),
+  "reason": zod.string().min(createAdminWalletAdjustmentBodyReasonMin).max(createAdminWalletAdjustmentBodyReasonMax).regex(createAdminWalletAdjustmentBodyReasonRegExp),
   "confirmation": zod.enum(['CREDIT', 'DEBIT']),
   "idempotencyKey": zod.string().min(createAdminWalletAdjustmentBodyIdempotencyKeyMin).max(createAdminWalletAdjustmentBodyIdempotencyKeyMax),
-  "expectedBalanceMinor": zod.number().int().min(createAdminWalletAdjustmentBodyExpectedBalanceMinorMin).optional()
+  "expectedBalanceMinor": zod.number().int().min(createAdminWalletAdjustmentBodyExpectedBalanceMinorMin)
 })
 
 export const CreateAdminWalletAdjustmentResponse = zod.object({
@@ -566,9 +602,11 @@ export const suspendAdminUserBodyReasonMin = 10;
 export const suspendAdminUserBodyReasonMax = 500;
 
 
+export const suspendAdminUserBodyReasonRegExp = new RegExp('^(\\s*\\S){10,}\\s*$');
+
 
 export const SuspendAdminUserBody = zod.object({
-  "reason": zod.string().min(suspendAdminUserBodyReasonMin).max(suspendAdminUserBodyReasonMax),
+  "reason": zod.string().min(suspendAdminUserBodyReasonMin).max(suspendAdminUserBodyReasonMax).regex(suspendAdminUserBodyReasonRegExp),
   "confirmation": zod.enum(['CONFIRMER'])
 })
 
@@ -593,9 +631,11 @@ export const restoreAdminUserBodyReasonMin = 10;
 export const restoreAdminUserBodyReasonMax = 500;
 
 
+export const restoreAdminUserBodyReasonRegExp = new RegExp('^(\\s*\\S){10,}\\s*$');
+
 
 export const RestoreAdminUserBody = zod.object({
-  "reason": zod.string().min(restoreAdminUserBodyReasonMin).max(restoreAdminUserBodyReasonMax),
+  "reason": zod.string().min(restoreAdminUserBodyReasonMin).max(restoreAdminUserBodyReasonMax).regex(restoreAdminUserBodyReasonRegExp),
   "confirmation": zod.enum(['CONFIRMER'])
 })
 
@@ -621,9 +661,11 @@ export const deleteAdminUserBodyReasonMin = 10;
 export const deleteAdminUserBodyReasonMax = 500;
 
 
+export const deleteAdminUserBodyReasonRegExp = new RegExp('^(\\s*\\S){10,}\\s*$');
+
 
 export const DeleteAdminUserBody = zod.object({
-  "reason": zod.string().min(deleteAdminUserBodyReasonMin).max(deleteAdminUserBodyReasonMax),
+  "reason": zod.string().min(deleteAdminUserBodyReasonMin).max(deleteAdminUserBodyReasonMax).regex(deleteAdminUserBodyReasonRegExp),
   "confirmation": zod.enum(['CONFIRMER'])
 })
 
@@ -645,9 +687,11 @@ export const archiveAdminTransactionBodyReasonMin = 10;
 export const archiveAdminTransactionBodyReasonMax = 500;
 
 
+export const archiveAdminTransactionBodyReasonRegExp = new RegExp('^(\\s*\\S){10,}\\s*$');
+
 
 export const ArchiveAdminTransactionBody = zod.object({
-  "reason": zod.string().min(archiveAdminTransactionBodyReasonMin).max(archiveAdminTransactionBodyReasonMax),
+  "reason": zod.string().min(archiveAdminTransactionBodyReasonMin).max(archiveAdminTransactionBodyReasonMax).regex(archiveAdminTransactionBodyReasonRegExp),
   "confirmation": zod.enum(['CONFIRMER'])
 })
 

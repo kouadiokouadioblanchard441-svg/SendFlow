@@ -1,4 +1,4 @@
-import { useEffect, type ReactElement } from 'react';
+import { lazy, Suspense, useEffect, type ReactElement } from 'react';
 import { ClerkProvider } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
@@ -26,9 +26,26 @@ import SigninPage from '@/pages/sign-in';
 import SignupPage from '@/pages/sign-up';
 import OnboardingPage from '@/pages/onboarding';
 import { useSeo } from '@/lib/seo';
-import { AdminRouter } from '@/pages/admin';
 
-const queryClient = new QueryClient();
+const AdminRouter = lazy(() => import('@/pages/admin').then((module) => ({ default: module.AdminRouter })));
+
+function getHttpStatus(error: unknown) {
+  if (!error || typeof error !== 'object') return undefined;
+  const candidate = error as { status?: number; response?: { status?: number } };
+  return candidate.status ?? candidate.response?.status;
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        const status = getHttpStatus(error);
+        if (status !== undefined && status >= 400 && status < 500) return false;
+        return failureCount < 2;
+      },
+    },
+  },
+});
 const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -157,7 +174,14 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <Switch>
-              <Route path="/admin/*?" component={AdminRouter} />
+              <Route
+                path="/admin/*?"
+                component={() => (
+                  <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement du panel administrateur…</div>}>
+                    <AdminRouter />
+                  </Suspense>
+                )}
+              />
               <Route path="/" component={OnboardingPage} />
               <Route path="/sign-in/*?" component={SigninPage} />
               <Route path="/sign-up/*?" component={SignupPage} />

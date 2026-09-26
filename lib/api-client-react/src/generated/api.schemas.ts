@@ -468,6 +468,19 @@ export interface BannerUpdate {
   endsAt?: string | null;
 }
 
+export interface AdminBannerReorderRequest {
+  /**
+     * @minItems 1
+     * @maxItems 500
+     */
+  expectedOrder: string[];
+  /**
+     * @minItems 1
+     * @maxItems 500
+     */
+  orderedIds: string[];
+}
+
 export interface DeleteAdminBannerResult {
   id: string;
   deleted: boolean;
@@ -560,6 +573,7 @@ export interface AdminWalletAdjustmentRequest {
   /**
      * @minLength 10
      * @maxLength 500
+     * @pattern ^(\s*\S){10,}\s*$
      */
   reason: string;
   confirmation: AdminWalletAdjustmentRequestConfirmation;
@@ -569,7 +583,7 @@ export interface AdminWalletAdjustmentRequest {
      */
   idempotencyKey: string;
   /** @minimum 0 */
-  expectedBalanceMinor?: number;
+  expectedBalanceMinor: number;
 }
 
 export type AdminUserActionRequestConfirmation = typeof AdminUserActionRequestConfirmation[keyof typeof AdminUserActionRequestConfirmation];
@@ -583,6 +597,7 @@ export interface AdminUserActionRequest {
   /**
      * @minLength 10
      * @maxLength 500
+     * @pattern ^(\s*\S){10,}\s*$
      */
   reason: string;
   confirmation: AdminUserActionRequestConfirmation;

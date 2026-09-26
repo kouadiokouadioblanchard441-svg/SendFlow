@@ -11,6 +11,7 @@ export * from './adminActionResultAction';
 export * from './adminActionResultStatus';
 export * from './adminBanner';
 export * from './adminBannerList';
+export * from './adminBannerReorderRequest';
 export * from './adminFromParameter';
 export * from './adminLoginActivity';
 export * from './adminLoginActivityPage';

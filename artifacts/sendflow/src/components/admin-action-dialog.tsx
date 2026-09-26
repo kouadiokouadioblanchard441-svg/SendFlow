@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Archive, Ban, CheckCircle2, CreditCard, RotateCcw, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetAdminTransactionQueryKey,
+  getGetAdminOverviewQueryKey,
   getGetAdminUserQueryKey,
   getListAdminTransactionsQueryKey,
   getListAdminUsersQueryKey,
@@ -109,6 +110,12 @@ export function AdminActionDialog({
   const [reason, setReason] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [success, setSuccess] = useState('');
+  const [submissionError, setSubmissionError] = useState('');
+  const walletAttemptRef = useRef<{
+    fingerprint: string;
+    idempotencyKey: string;
+    expectedBalanceMinor: number;
+  } | null>(null);
   const queryClient = useQueryClient();
   const walletMutation = useCreateAdminWalletAdjustment();
   const suspendMutation = useSuspendAdminUser();
@@ -124,7 +131,7 @@ export function AdminActionDialog({
     || restoreMutation.isPending
     || deleteMutation.isPending
     || archiveMutation.isPending;
-  const error = kind === 'credit' || kind === 'debit'
+  const mutationError = kind === 'credit' || kind === 'debit'
     ? walletMutation.error
     : kind === 'suspend'
       ? suspendMutation.error
@@ -147,6 +154,7 @@ export function AdminActionDialog({
   };
 
   const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: getGetAdminOverviewQueryKey() });
     if (kind === 'archive-transaction') {
       await queryClient.invalidateQueries({ queryKey: getListAdminTransactionsQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetAdminTransactionQueryKey(targetId) });
@@ -158,47 +166,67 @@ export function AdminActionDialog({
   };
 
   const submit = async () => {
+    setSubmissionError('');
     if (reason.trim().length < 10 || confirmation !== expectedConfirmation) return;
 
-    if (isWalletAction) {
-      const normalizedAmount = amount.trim().replace(',', '.');
-      if (!/^\d+(\.\d{1,2})?$/.test(normalizedAmount)) return;
-      const amountMinor = Math.round(Number(normalizedAmount) * 100);
-      if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) return;
-      const direction = kind === 'credit' ? 'credit' : 'debit';
+    try {
+      if (isWalletAction) {
+        const normalizedAmount = amount.trim().replace(',', '.');
+        if (!/^\d+(\.\d{1,2})?$/.test(normalizedAmount)) return;
+        const amountMinor = Math.round(Number(normalizedAmount) * 100);
+        if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) return;
+        if (currentBalanceMinor === undefined || !Number.isSafeInteger(currentBalanceMinor) || currentBalanceMinor < 0) {
+          setSubmissionError('Le solde actuel n’est pas disponible. Actualisez la page avant de continuer.');
+          return;
+        }
+        const direction = kind === 'credit' ? 'credit' : 'debit';
+        const fingerprint = JSON.stringify([targetId, direction, amountMinor, reason.trim()]);
+        const previousAttempt = walletAttemptRef.current;
+        const attempt = previousAttempt?.fingerprint === fingerprint
+          ? previousAttempt
+          : {
+              fingerprint,
+              idempotencyKey: crypto.randomUUID(),
+              expectedBalanceMinor: currentBalanceMinor,
+            };
+        walletAttemptRef.current = attempt;
 
-      await walletMutation.mutateAsync({
-        userId: targetId,
-        data: {
-          direction,
-          amountMinor,
-          reason: reason.trim(),
-          confirmation: direction === 'credit' ? 'CREDIT' : 'DEBIT',
-          idempotencyKey: crypto.randomUUID(),
-          ...(currentBalanceMinor === undefined ? {} : { expectedBalanceMinor: currentBalanceMinor }),
-        },
-      });
-      await invalidate();
-      setSuccess(`Opération ${kind === 'credit' ? 'de crédit' : 'de débit'} enregistrée.`);
-    } else if (kind === 'suspend') {
-      await suspendMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
-      await invalidate();
-      setSuccess('Compte suspendu et action auditée.');
-    } else if (kind === 'restore') {
-      await restoreMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
-      await invalidate();
-      setSuccess('Compte restauré et action auditée.');
-    } else if (kind === 'delete-user') {
-      await deleteMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
-      await invalidate();
-      setSuccess('Compte marqué comme supprimé logiquement.');
-    } else {
-      await archiveMutation.mutateAsync({ transactionId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
-      await invalidate();
-      setSuccess('Transaction archivée et action auditée.');
+        await walletMutation.mutateAsync({
+          userId: targetId,
+          data: {
+            direction,
+            amountMinor,
+            reason: reason.trim(),
+            confirmation: direction === 'credit' ? 'CREDIT' : 'DEBIT',
+            idempotencyKey: attempt.idempotencyKey,
+            expectedBalanceMinor: attempt.expectedBalanceMinor,
+          },
+        });
+        walletAttemptRef.current = null;
+        await invalidate();
+        setSuccess(`Opération ${kind === 'credit' ? 'de crédit' : 'de débit'} enregistrée.`);
+      } else if (kind === 'suspend') {
+        await suspendMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
+        await invalidate();
+        setSuccess('Compte suspendu et action auditée.');
+      } else if (kind === 'restore') {
+        await restoreMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
+        await invalidate();
+        setSuccess('Compte restauré et action auditée.');
+      } else if (kind === 'delete-user') {
+        await deleteMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
+        await invalidate();
+        setSuccess('Compte marqué comme supprimé logiquement.');
+      } else {
+        await archiveMutation.mutateAsync({ transactionId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
+        await invalidate();
+        setSuccess('Transaction archivée et action auditée.');
+      }
+
+      onCompleted?.();
+    } catch (error) {
+      setSubmissionError(getErrorMessage(error));
     }
-
-    onCompleted?.();
   };
 
   const canSubmit = reason.trim().length >= 10
@@ -259,7 +287,7 @@ export function AdminActionDialog({
             autoComplete="off"
           />
         </div>
-        {error && <Alert variant="destructive"><AlertDescription>{getErrorMessage(error)}</AlertDescription></Alert>}
+        {(submissionError || mutationError) && <Alert variant="destructive"><AlertDescription>{submissionError || getErrorMessage(mutationError)}</AlertDescription></Alert>}
         {success && <Alert><CheckCircle2 className="size-4" /><AlertDescription>{success}</AlertDescription></Alert>}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Fermer</AlertDialogCancel>

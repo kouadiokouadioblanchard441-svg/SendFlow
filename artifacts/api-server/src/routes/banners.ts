@@ -4,7 +4,6 @@ import {
   asc,
   bannersTable,
   db,
-  desc,
   eq,
   gte,
   isNull,
@@ -18,6 +17,7 @@ import {
   DeleteAdminBannerResponse,
   ListAdminBannersResponse,
   ListPublishedBannersResponse,
+  ReorderAdminBannersBody,
   UpdateAdminBannerBody,
   UpdateAdminBannerParams,
   UpdateAdminBannerResponse,
@@ -118,7 +118,7 @@ router.get("/admin/banners", async (req, res): Promise<void> => {
     const items = await db
       .select()
       .from(bannersTable)
-      .orderBy(asc(bannersTable.sortOrder), desc(bannersTable.updatedAt));
+      .orderBy(asc(bannersTable.sortOrder), asc(bannersTable.createdAt));
 
     res.json(ListAdminBannersResponse.parse({ items }));
   } catch (error) {
@@ -180,6 +180,84 @@ router.post("/admin/banners", async (req, res): Promise<void> => {
     res.status(201).json(CreateAdminBannerResponse.parse(banner));
   } catch (error) {
     req.log.error({ err: error }, "Admin banner creation failed");
+    res.status(503).json({ error: "Administrator storage unavailable" });
+  }
+});
+
+router.patch("/admin/banners/reorder", async (req, res): Promise<void> => {
+  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  if (!adminUserId) return;
+
+  const parsed = ReorderAdminBannersBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid banner order" });
+    return;
+  }
+
+  const { expectedOrder, orderedIds } = parsed.data;
+  const expectedIds = new Set(expectedOrder);
+  const orderedIdSet = new Set(orderedIds);
+  if (
+    expectedIds.size !== expectedOrder.length
+    || orderedIdSet.size !== orderedIds.length
+    || expectedIds.size !== orderedIdSet.size
+    || [...orderedIdSet].some((id) => !expectedIds.has(id))
+  ) {
+    res.status(400).json({ error: "The new order must contain every banner exactly once" });
+    return;
+  }
+
+  try {
+    const result = await db.transaction(async (tx) => {
+      const current = await tx
+        .select({ id: bannersTable.id, sortOrder: bannersTable.sortOrder })
+        .from(bannersTable)
+        .orderBy(asc(bannersTable.sortOrder), asc(bannersTable.createdAt))
+        .for("update");
+      const currentOrder = current.map((item) => item.id);
+
+      if (
+        currentOrder.length !== expectedOrder.length
+        || currentOrder.some((id, index) => id !== expectedOrder[index])
+      ) {
+        return { conflict: true as const };
+      }
+
+      const currentById = new Map(current.map((item) => [item.id, item]));
+      for (const [sortOrder, id] of orderedIds.entries()) {
+        const existing = currentById.get(id);
+        if (!existing) throw new Error("Banner disappeared during reorder");
+        if (existing.sortOrder === sortOrder) continue;
+
+        const [updated] = await tx
+          .update(bannersTable)
+          .set({ sortOrder, updatedBy: adminUserId, updatedAt: new Date() })
+          .where(eq(bannersTable.id, id))
+          .returning({ id: bannersTable.id });
+        if (!updated) throw new Error("Banner order was not updated");
+
+        await recordAdminAudit({
+          adminUserId,
+          action: "update_banner",
+          resourceType: "banner",
+          resourceId: id,
+        }, tx);
+      }
+
+      const items = await tx
+        .select()
+        .from(bannersTable)
+        .orderBy(asc(bannersTable.sortOrder), asc(bannersTable.createdAt));
+      return { items };
+    });
+
+    if ("conflict" in result) {
+      res.status(409).json({ error: "Banner order changed. Refresh the list and try again." });
+      return;
+    }
+    res.json(ListAdminBannersResponse.parse({ items: result.items }));
+  } catch (error) {
+    req.log.error({ err: error }, "Admin banner reorder failed");
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });

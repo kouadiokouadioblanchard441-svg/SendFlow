@@ -42,6 +42,15 @@ function actionErrorResponse(res: Parameters<Parameters<IRouter["post"]>[1]>[1],
   res.status(503).json({ error: "Administrator action storage unavailable" });
 }
 
+function isConfiguredAdminUser(userId: string) {
+  return [
+    process.env.SENDFLOW_ADMIN_USER_IDS,
+    process.env.SENDFLOW_MUTATION_ADMIN_USER_IDS,
+  ].some((configuredIds) =>
+    (configuredIds ?? "").split(",").some((configuredId) => configuredId.trim() === userId)
+  );
+}
+
 router.post("/admin/users/:userId/wallet-adjustments", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
@@ -54,9 +63,17 @@ router.post("/admin/users/:userId/wallet-adjustments", async (req, res): Promise
   }
 
   const { userId } = parsedParams.data;
-  const adjustment = parsedBody.data;
+  const adjustment = { ...parsedBody.data, reason: parsedBody.data.reason.trim() };
   if (adjustment.confirmation !== adjustment.direction.toUpperCase()) {
     res.status(400).json({ error: "Confirmation does not match the wallet adjustment direction" });
+    return;
+  }
+  if (adjustment.reason.length < 10) {
+    res.status(400).json({ error: "A meaningful reason of at least 10 non-whitespace characters is required" });
+    return;
+  }
+  if (!Number.isSafeInteger(adjustment.expectedBalanceMinor) || adjustment.expectedBalanceMinor < 0) {
+    res.status(400).json({ error: "A valid expected wallet balance is required" });
     return;
   }
 
@@ -86,17 +103,20 @@ router.post("/admin/users/:userId/wallet-adjustments", async (req, res): Promise
         .where(eq(walletLedgerTable.idempotencyKey, adjustment.idempotencyKey));
 
       if (existing) {
-        if (existing.userId !== userId || existing.direction !== adjustment.direction || existing.amountMinor !== adjustment.amountMinor) {
+        if (
+          existing.userId !== userId
+          || existing.direction !== adjustment.direction
+          || existing.amountMinor !== adjustment.amountMinor
+          || existing.reason !== adjustment.reason
+          || existing.adminUserId !== adminUserId
+        ) {
           throw new AdminActionError(409, "Idempotency key belongs to another wallet adjustment");
         }
 
         return { entry: existing, duplicate: true };
       }
 
-      if (
-        adjustment.expectedBalanceMinor !== undefined
-        && adjustment.expectedBalanceMinor !== wallet.balanceMinor
-      ) {
+      if (adjustment.expectedBalanceMinor !== wallet.balanceMinor) {
         throw new AdminActionError(409, "Wallet balance changed; refresh before retrying");
       }
 
@@ -196,7 +216,15 @@ async function applyUserAction(
   }
 
   const { userId } = parsedParams.data;
-  const reason = parsedBody.data.reason;
+  const reason = parsedBody.data.reason.trim();
+  if (reason.length < 10) {
+    res.status(400).json({ error: "A meaningful reason of at least 10 non-whitespace characters is required" });
+    return;
+  }
+  if ((action === "suspend_user" || action === "delete_user") && isConfiguredAdminUser(userId)) {
+    res.status(409).json({ error: "Administrator accounts cannot be suspended or deleted from this panel" });
+    return;
+  }
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -286,6 +314,11 @@ router.post("/admin/transactions/:transactionId/archive", async (req, res): Prom
   }
 
   const { transactionId } = parsedParams.data;
+  const reason = parsedBody.data.reason.trim();
+  if (reason.length < 10) {
+    res.status(400).json({ error: "A meaningful reason of at least 10 non-whitespace characters is required" });
+    return;
+  }
   try {
     const result = await db.transaction(async (tx) => {
       const [transaction] = await tx
@@ -301,7 +334,7 @@ router.post("/admin/transactions/:transactionId/archive", async (req, res): Prom
         .set({
           deletedAt: new Date(),
           deletedBy: adminUserId,
-          deletionReason: parsedBody.data.reason,
+          deletionReason: reason,
           updatedAt: new Date(),
         })
         .where(eq(transactionsTable.id, transactionId))
@@ -314,7 +347,7 @@ router.post("/admin/transactions/:transactionId/archive", async (req, res): Prom
         action: "archive_transaction",
         resourceType: "transaction",
         resourceId: transactionId,
-        reason: parsedBody.data.reason,
+        reason,
       }, tx);
 
       return { resourceId: transactionId, action: "archive_transaction", status: "archived" };
