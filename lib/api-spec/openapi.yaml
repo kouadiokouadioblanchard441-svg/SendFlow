@@ -1159,6 +1159,20 @@ components:
       schema:
         type: string
         format: uuid
+    AdminOtpPolicyCountryCode:
+      name: countryCode
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [ci, bf, ml, sn]
+    AdminOtpPolicyOperatorId:
+      name: operatorId
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [orange-ci, orange-bf, orange-ml, orange-sn]
     AdminBannerId:
       name: bannerId
       in: path
@@ -1634,7 +1648,56 @@ components:
         sortOrder:
           type: integer
       required: [id, title, description, imageUrl, mobileImageUrl, imageAlt, ctaLabel, targetUrl, sortOrder]
-    AdminBanner:
+    AdminOtpPolicy:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          enum: [ci, bf, ml, sn]
+        countryName:
+          type: string
+        operatorId:
+          type: string
+          enum: [orange-ci, orange-bf, orange-ml, orange-sn]
+        operatorName:
+          type: string
+        phonePrefix:
+          type: string
+        requiresOtp:
+          type: boolean
+        providerStatus:
+          type: string
+          enum: [not_configured]
+          description: The official operator API is not connected, so OTPs cannot be verified yet.
+        version:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [countryCode, countryName, operatorId, operatorName, phonePrefix, requiresOtp, providerStatus, version, updatedAt]
+    AdminOtpPolicyList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminOtpPolicy"
+      required: [items]
+    AdminOtpPolicyUpdate:
+      type: object
+      properties:
+        requiresOtp:
+          type: boolean
+        expectedVersion:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [requiresOtp, expectedVersion, reason]
+    AdminOtpPolicy:
       type: object
       properties:
         id:

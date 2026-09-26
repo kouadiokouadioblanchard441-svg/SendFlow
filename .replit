@@ -28,3 +28,5 @@ channel = "stable-25_05"
 
 [userenv.development]
 DIDIT_ENVIRONMENT = "sandbox"
+SENDFLOW_ADMIN_USER_IDS = "Il ne faut rien ajouter "
+SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "

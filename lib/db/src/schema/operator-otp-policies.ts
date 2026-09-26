@@ -1,4 +1,6 @@
+import { createInsertSchema } from "drizzle-zod";
 import { boolean, integer, pgTable, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import { z } from "zod/v4";
 
 export const operatorOtpPoliciesTable = pgTable(
   "sf_operator_otp_policies",
@@ -20,4 +22,10 @@ export const operatorOtpPoliciesTable = pgTable(
   }),
 );
 
+export const insertOperatorOtpPolicySchema = createInsertSchema(operatorOtpPoliciesTable).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertOperatorOtpPolicy = z.infer<typeof insertOperatorOtpPolicySchema>;
 export type OperatorOtpPolicy = typeof operatorOtpPoliciesTable.$inferSelect;
