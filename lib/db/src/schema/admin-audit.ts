@@ -38,5 +38,13 @@ export type AdminAuditAction =
   | "view_login_activity"
   | "create_banner"
   | "update_banner"
-  | "delete_banner";
-export type AdminAuditResourceType = "dashboard" | "user" | "transaction" | "wallet" | "login_activity" | "banner";
+  | "delete_banner"
+  | "update_otp_policy";
+export type AdminAuditResourceType =
+  | "dashboard"
+  | "user"
+  | "transaction"
+  | "wallet"
+  | "login_activity"
+  | "banner"
+  | "otp_policy";

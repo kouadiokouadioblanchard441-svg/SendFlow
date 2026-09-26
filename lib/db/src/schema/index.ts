@@ -3,6 +3,7 @@ export * from "./banners";
 export * from "./contacts";
 export * from "./identity-verification";
 export * from "./login-events";
+export * from "./operator-otp-policies";
 export * from "./transactions";
 export * from "./users";
 export * from "./wallets";

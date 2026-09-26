@@ -365,6 +365,97 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/otp-policies:
+    get:
+      operationId: listAdminOtpPolicies
+      tags: [admin]
+      summary: List Orange Money OTP policies for supported countries
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Current policy values and official API connection status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOtpPolicyList"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/otp-policies/{countryCode}/{operatorId}:
+    parameters:
+      - $ref: "#/components/parameters/AdminOtpPolicyCountryCode"
+      - $ref: "#/components/parameters/AdminOtpPolicyOperatorId"
+    patch:
+      operationId: updateAdminOtpPolicy
+      tags: [admin]
+      summary: Update whether OTP is required for a supported Orange Money operator
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminOtpPolicyUpdate"
+      responses:
+        "200":
+          description: The updated OTP policy.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOtpPolicy"
+        "400":
+          description: Invalid policy values or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: The country and operator combination is not supported.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Policy changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /admin/banners/reorder:
     patch:
       operationId: reorderAdminBanners
