@@ -8,6 +8,7 @@ import adminRouter from "./admin";
 import adminActionsRouter from "./admin-actions";
 import adminLoginActivityRouter from "./admin-login-activity";
 import adminOtpPoliciesRouter from "./admin-otp-policies";
+import adminAggregatorsRouter from "./admin-aggregators";
 import bannersRouter from "./banners";
 
 const router: IRouter = Router();
@@ -20,5 +21,6 @@ router.use(adminRouter);
 router.use(adminActionsRouter);
 router.use(adminLoginActivityRouter);
 router.use(adminOtpPoliciesRouter);
+router.use(adminAggregatorsRouter);
 router.use(bannersRouter);
 export default router;

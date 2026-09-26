@@ -37,10 +37,14 @@ export type AdminAuditAction =
   | "archive_transaction"
   | "view_login_activity"
   | "view_otp_policies"
+  | "view_payment_routing"
   | "create_banner"
+  | "create_payment_aggregator"
   | "update_banner"
   | "delete_banner"
-  | "update_otp_policy";
+  | "update_otp_policy"
+  | "update_payment_aggregator"
+  | "update_payment_route";
 export type AdminAuditResourceType =
   | "dashboard"
   | "user"
@@ -48,4 +52,6 @@ export type AdminAuditResourceType =
   | "wallet"
   | "login_activity"
   | "banner"
-  | "otp_policy";
+  | "otp_policy"
+  | "payment_aggregator"
+  | "payment_route";

@@ -23,6 +23,7 @@ import {
   LogIn,
   MapPin,
   Monitor,
+  Network,
   Radio,
   Search,
   ShieldCheck,
@@ -56,10 +57,21 @@ import {
   useListAdminOtpPolicies,
   useUpdateAdminOtpPolicy,
   getListAdminOtpPoliciesQueryKey,
+  useGetAdminPaymentRouting,
+  useCreateAdminAggregator,
+  useUpdateAdminAggregator,
+  useUpdateAdminAggregatorRoute,
+  getGetAdminPaymentRoutingQueryKey,
   getListAdminBannersQueryKey,
   getListPublishedBannersQueryKey,
 } from '@workspace/api-client-react';
-import type { AdminBanner, AdminOtpPolicy, BannerInput, BannerUpdate } from '@workspace/api-client-react';
+import type {
+  AdminBanner,
+  AdminOtpPolicy,
+  AdminPaymentAggregator,
+  BannerInput,
+  BannerUpdate,
+} from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -133,7 +145,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'banners' | 'otp-policies';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'banners' | 'otp-policies' | 'aggregators';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -147,6 +159,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'login-activity': { title: 'Connexions', eyebrow: 'Sécurité' },
   banners: { title: 'Bannières', eyebrow: 'Contenu client' },
   'otp-policies': { title: 'Politiques OTP', eyebrow: 'Orange Money' },
+  aggregators: { title: 'Partenaires de paiement', eyebrow: 'Routage multi-agrégateurs' },
 };
 
 const navItems: Array<{ href: string; label: string; section: AdminSection; icon: typeof LayoutDashboard }> = [
@@ -159,6 +172,7 @@ const navItems: Array<{ href: string; label: string; section: AdminSection; icon
   { href: '/admin/login-activity', label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
   { href: '/admin/banners', label: 'Bannières client', section: 'banners', icon: Radio },
   { href: '/admin/otp-policies', label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
+  { href: '/admin/aggregators', label: 'Agrégateurs', section: 'aggregators', icon: Network },
 ];
 
 function formatMoney(minor: number | undefined, currency = 'XOF') {
@@ -1400,6 +1414,481 @@ function BannersPage() {
   );
 }
 
+type PaymentCountryCode = 'ci' | 'sn' | 'bf' | 'bj' | 'ml' | 'ne' | 'tg' | 'cm' | 'cg';
+
+type PaymentRouteEdit = {
+  kind: 'route';
+  scopeType: 'country' | 'operator';
+  countryCode: PaymentCountryCode;
+  countryName: string;
+  operatorId: string | null;
+  operatorName: string | null;
+  aggregatorCode: string | null;
+  expectedVersion: number;
+};
+
+type AggregatorEdit =
+  | {
+      kind: 'provider';
+      code: string;
+      name: string;
+      enabled: boolean;
+      expectedVersion: number;
+    }
+  | PaymentRouteEdit;
+
+function makeAggregatorCode(name: string) {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60);
+}
+
+function AggregatorsPage() {
+  const queryClient = useQueryClient();
+  const query = useGetAdminPaymentRouting();
+  const createAggregator = useCreateAdminAggregator();
+  const updateAggregator = useUpdateAdminAggregator();
+  const updateRoute = useUpdateAdminAggregatorRoute();
+  const [editing, setEditing] = useState<AggregatorEdit | null>(null);
+  const [reason, setReason] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [mutationError, setMutationError] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newCode, setNewCode] = useState('');
+  const [codeWasEdited, setCodeWasEdited] = useState(false);
+  const [newReason, setNewReason] = useState('');
+  const [createError, setCreateError] = useState('');
+
+  const data = query.data;
+  const aggregators = data?.aggregators ?? [];
+  const aggregatorByCode = new Map(aggregators.map((aggregator) => [aggregator.code, aggregator]));
+  const isSaving = updateAggregator.isPending || updateRoute.isPending;
+
+  const invalidateRouting = () =>
+    queryClient.invalidateQueries({ queryKey: getGetAdminPaymentRoutingQueryKey() });
+
+  const openRouteEdit = (route: PaymentRouteEdit) => {
+    setEditing(route);
+    setReason('');
+    setMutationError('');
+    setFeedback('');
+  };
+
+  const saveEdit = () => {
+    if (!editing || reason.trim().length < 3) return;
+    setMutationError('');
+
+    if (editing.kind === 'provider') {
+      updateAggregator.mutate(
+        {
+          data: {
+            code: editing.code,
+            name: editing.name.trim(),
+            enabled: editing.enabled,
+            expectedVersion: editing.expectedVersion,
+            reason: reason.trim(),
+          },
+        },
+        {
+          onSuccess: () => {
+            void invalidateRouting().then(() => {
+              setFeedback(`Le partenaire ${editing.code} a été mis à jour.`);
+              setEditing(null);
+              setReason('');
+            });
+          },
+          onError: () => setMutationError('La modification a échoué. Actualisez les données puis réessayez.'),
+        },
+      );
+      return;
+    }
+
+    updateRoute.mutate(
+      {
+        data: {
+          scopeType: editing.scopeType,
+          countryCode: editing.countryCode,
+          operatorId: editing.operatorId,
+          aggregatorCode: editing.aggregatorCode,
+          expectedVersion: editing.expectedVersion,
+          reason: reason.trim(),
+        },
+      },
+      {
+        onSuccess: () => {
+          const scopeLabel = editing.operatorName
+            ? `${editing.operatorName} — ${editing.countryName}`
+            : editing.countryName;
+          void invalidateRouting().then(() => {
+            setFeedback(`Le routage de ${scopeLabel} a été mis à jour.`);
+            setEditing(null);
+            setReason('');
+          });
+        },
+        onError: () => setMutationError('Le routage a changé ou la sauvegarde a échoué. Actualisez puis réessayez.'),
+      },
+    );
+  };
+
+  const submitNewAggregator = () => {
+    if (newName.trim().length < 2 || newCode.trim().length < 2 || newReason.trim().length < 3) return;
+    setCreateError('');
+    createAggregator.mutate(
+      { data: { code: newCode.trim(), name: newName.trim(), reason: newReason.trim() } },
+      {
+        onSuccess: () => {
+          void invalidateRouting().then(() => {
+            setFeedback(`${newName.trim()} a été ajouté comme partenaire.`);
+            setCreateOpen(false);
+            setNewName('');
+            setNewCode('');
+            setCodeWasEdited(false);
+            setNewReason('');
+          });
+        },
+        onError: () => setCreateError('Ajout impossible. Vérifiez le code partenaire ou actualisez la liste.'),
+      },
+    );
+  };
+
+  return (
+    <AdminShell section="aggregators">
+      <div className="sendflow-admin-page-intro">
+        <div>
+          <p className="sendflow-admin-overline">Pays et opérateurs · Partenaires</p>
+          <h2 data-testid="heading-admin-aggregators">Routage des agrégateurs</h2>
+          <p className="sendflow-admin-subtitle">
+            Choisissez un partenaire par pays et définissez des exceptions pour chaque opérateur.
+          </p>
+        </div>
+        <Button onClick={() => { setCreateOpen(true); setCreateError(''); }} data-testid="button-add-aggregator">
+          <Plus className="mr-2 size-4" /> Ajouter un partenaire
+        </Button>
+      </div>
+
+      <Alert data-testid="notice-aggregator-adapters-unavailable">
+        <CircleAlert className="size-4" />
+        <AlertTitle>Configuration sans connexion opérateur</AlertTitle>
+        <AlertDescription>
+          Les affectations et partenaires sont enregistrés et audités. Les API de paiement doivent être intégrées
+          côté serveur avant qu’un routage puisse traiter une opération. Les formulaires de dépôt et transfert
+          restent bloqués jusque-là; les clés API ne sont pas stockées dans ce panel.
+        </AlertDescription>
+      </Alert>
+
+      {feedback && (
+        <Alert data-testid="status-aggregator-feedback">
+          <CheckCircle2 className="size-4" />
+          <AlertDescription>{feedback}</AlertDescription>
+        </Alert>
+      )}
+      {query.isLoading && (
+        <div className="grid gap-4 md:grid-cols-2" data-testid="loading-admin-aggregators">
+          {Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-40 rounded-2xl" />)}
+        </div>
+      )}
+      {query.isError && <QueryState error={query.error} onRetry={() => { void query.refetch(); }} />}
+
+      {data && !query.isError && (
+        <div className="space-y-6" data-testid="content-admin-aggregators">
+          <section className="space-y-3" aria-labelledby="admin-aggregator-partners-title">
+            <div>
+              <h3 id="admin-aggregator-partners-title" className="text-lg font-semibold">Partenaires disponibles</h3>
+              <p className="text-sm text-muted-foreground">L’activation du partenaire ne signifie pas que son API est intégrée.</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-testid="list-admin-aggregators">
+              {aggregators.map((aggregator) => (
+                <Card key={aggregator.code} data-testid={`card-admin-aggregator-${aggregator.code}`}>
+                  <CardHeader className="flex flex-row items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <CardTitle className="truncate">{aggregator.name}</CardTitle>
+                      <CardDescription>{aggregator.code}</CardDescription>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label={`Modifier ${aggregator.name}`}
+                      onClick={() => {
+                        setEditing({
+                          kind: 'provider',
+                          code: aggregator.code,
+                          name: aggregator.name,
+                          enabled: aggregator.enabled,
+                          expectedVersion: aggregator.version,
+                        });
+                        setReason('');
+                        setMutationError('');
+                      }}
+                      data-testid={`button-edit-aggregator-${aggregator.code}`}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap items-center gap-2">
+                    <Badge variant={aggregator.enabled ? 'default' : 'outline'}>
+                      {aggregator.enabled ? 'Partenaire activé' : 'Partenaire inactif'}
+                    </Badge>
+                    <Badge variant="outline">
+                      {aggregator.adapterStatus === 'not_implemented' ? 'API à intégrer' : aggregator.adapterStatus}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-3" aria-labelledby="admin-aggregator-routing-title">
+            <div>
+              <h3 id="admin-aggregator-routing-title" className="text-lg font-semibold">Affectations par pays et opérateur</h3>
+              <p className="text-sm text-muted-foreground">
+                Une règle opérateur remplace le service par défaut du pays. « Hériter » réutilise le choix du pays.
+              </p>
+            </div>
+            <div className="grid gap-4 xl:grid-cols-2" data-testid="list-admin-aggregator-routes">
+              {data.countries.map((country) => {
+                const countryAggregatorName = country.defaultAggregatorCode
+                  ? aggregatorByCode.get(country.defaultAggregatorCode)?.name ?? country.defaultAggregatorCode
+                  : 'Aucun service sélectionné';
+
+                return (
+                  <Card key={country.countryCode} data-testid={`card-aggregator-country-${country.countryCode}`}>
+                    <CardHeader>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <CardTitle>{country.countryName}</CardTitle>
+                          <CardDescription>{country.countryCode.toUpperCase()} · {country.phonePrefix}</CardDescription>
+                        </div>
+                        <Badge variant="outline">{country.defaultVersion ? `Version ${country.defaultVersion}` : 'Pas de règle enregistrée'}</Badge>
+                      </div>
+                      <div className="space-y-2 pt-2">
+                        <Label htmlFor={`country-aggregator-${country.countryCode}`}>Service par défaut du pays</Label>
+                        <Select
+                          value={country.defaultAggregatorCode ?? '__none__'}
+                          onValueChange={(value) => {
+                            const aggregatorCode = value === '__none__' ? null : value;
+                            if (aggregatorCode === country.defaultAggregatorCode) return;
+                            openRouteEdit({
+                              kind: 'route',
+                              scopeType: 'country',
+                              countryCode: country.countryCode,
+                              countryName: country.countryName,
+                              operatorId: null,
+                              operatorName: null,
+                              aggregatorCode,
+                              expectedVersion: country.defaultVersion,
+                            });
+                          }}
+                        >
+                          <SelectTrigger id={`country-aggregator-${country.countryCode}`} data-testid={`select-country-aggregator-${country.countryCode}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">Aucun agrégateur</SelectItem>
+                            {aggregators.map((aggregator) => (
+                              <SelectItem key={aggregator.code} value={aggregator.code}>
+                                {aggregator.name}{aggregator.enabled ? '' : ' · inactif'}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">Actuellement : {countryAggregatorName}</p>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {country.operators.map((operator) => {
+                        const effectiveName = operator.effectiveAggregatorCode
+                          ? aggregatorByCode.get(operator.effectiveAggregatorCode)?.name ?? operator.effectiveAggregatorCode
+                          : 'Aucun service sélectionné';
+
+                        return (
+                          <div key={operator.operatorId} className="grid gap-2 border-t pt-4 sm:grid-cols-[minmax(0,1fr)_minmax(220px,1fr)] sm:items-center">
+                            <div className="min-w-0">
+                              <p className="font-medium">{operator.operatorName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {operator.inheritsCountryDefault ? `Hérite du pays · ${effectiveName}` : `Service effectif · ${effectiveName}`}
+                              </p>
+                            </div>
+                            <Select
+                              value={operator.aggregatorCode ?? '__inherit__'}
+                              onValueChange={(value) => {
+                                const aggregatorCode = value === '__inherit__' ? null : value;
+                                if (aggregatorCode === operator.aggregatorCode) return;
+                                openRouteEdit({
+                                  kind: 'route',
+                                  scopeType: 'operator',
+                                  countryCode: country.countryCode,
+                                  countryName: country.countryName,
+                                  operatorId: operator.operatorId,
+                                  operatorName: operator.operatorName,
+                                  aggregatorCode,
+                                  expectedVersion: operator.version,
+                                });
+                              }}
+                            >
+                              <SelectTrigger aria-label={`Agrégateur pour ${operator.operatorName} au ${country.countryName}`} data-testid={`select-operator-aggregator-${operator.operatorId}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__inherit__">Hériter du pays</SelectItem>
+                                {aggregators.map((aggregator) => (
+                                  <SelectItem key={aggregator.code} value={aggregator.code}>
+                                    {aggregator.name}{aggregator.enabled ? '' : ' · inactif'}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      )}
+
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          if (createAggregator.isPending) return;
+          setCreateOpen(open);
+          if (!open) {
+            setNewName('');
+            setNewCode('');
+            setCodeWasEdited(false);
+            setNewReason('');
+            setCreateError('');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter un partenaire agrégateur</DialogTitle>
+            <DialogDescription>
+              Cette fiche permet de l’affecter aux pays et opérateurs. Son API restera inactive tant qu’un adaptateur serveur ne sera pas intégré.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="new-aggregator-name">Nom du partenaire</Label>
+            <Input
+              id="new-aggregator-name"
+              value={newName}
+              onChange={(event) => {
+                const value = event.target.value;
+                setNewName(value);
+                if (!codeWasEdited) setNewCode(makeAggregatorCode(value));
+              }}
+              maxLength={120}
+              placeholder="Ex. PayDunya"
+              data-testid="input-new-aggregator-name"
+            />
+            <Label htmlFor="new-aggregator-code">Identifiant technique</Label>
+            <Input
+              id="new-aggregator-code"
+              value={newCode}
+              onChange={(event) => { setCodeWasEdited(true); setNewCode(event.target.value.toLowerCase()); }}
+              maxLength={60}
+              placeholder="ex. paydunya"
+              data-testid="input-new-aggregator-code"
+            />
+            <Label htmlFor="new-aggregator-reason">Motif d’ajout</Label>
+            <Input
+              id="new-aggregator-reason"
+              value={newReason}
+              onChange={(event) => setNewReason(event.target.value)}
+              maxLength={500}
+              placeholder="Expliquez pourquoi ce partenaire est ajouté"
+              data-testid="input-new-aggregator-reason"
+            />
+          </div>
+          {createError && <Alert variant="destructive"><AlertDescription>{createError}</AlertDescription></Alert>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={createAggregator.isPending}>Annuler</Button>
+            <Button
+              onClick={submitNewAggregator}
+              disabled={newName.trim().length < 2 || newCode.trim().length < 2 || newReason.trim().length < 3 || createAggregator.isPending}
+              data-testid="button-confirm-add-aggregator"
+            >
+              {createAggregator.isPending ? 'Ajout…' : 'Ajouter'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(editing)} onOpenChange={(open) => { if (!open && !isSaving) setEditing(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editing?.kind === 'provider'
+                ? `Modifier ${editing.name}`
+                : editing?.operatorName
+                  ? `Changer le service — ${editing.operatorName}`
+                  : `Changer le service — ${editing?.countryName ?? ''}`}
+            </DialogTitle>
+            <DialogDescription>
+              {editing?.kind === 'provider'
+                ? 'L’activation administrative ne connecte pas son API de paiement.'
+                : `Le nouveau routage sera enregistré pour ${editing?.operatorName ? `${editing.operatorName} — ` : ''}${editing?.countryName ?? ''}.`}
+            </DialogDescription>
+          </DialogHeader>
+          {editing?.kind === 'provider' && (
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit-aggregator-name">Nom du partenaire</Label>
+                <Input
+                  id="edit-aggregator-name"
+                  value={editing.name}
+                  onChange={(event) => setEditing((current) => current?.kind === 'provider' ? { ...current, name: event.target.value } : current)}
+                  maxLength={120}
+                  data-testid="input-edit-aggregator-name"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+                <div>
+                  <Label htmlFor="edit-aggregator-enabled">Partenaire activé</Label>
+                  <p className="text-xs text-muted-foreground">L’API reste inactive tant que l’adaptateur n’est pas intégré.</p>
+                </div>
+                <Switch
+                  id="edit-aggregator-enabled"
+                  checked={editing.enabled}
+                  onCheckedChange={(enabled) => setEditing((current) => current?.kind === 'provider' ? { ...current, enabled } : current)}
+                  data-testid="switch-edit-aggregator-enabled"
+                />
+              </div>
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="aggregator-change-reason">Motif de modification</Label>
+            <Input
+              id="aggregator-change-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              maxLength={500}
+              placeholder="Expliquez brièvement ce changement"
+              data-testid="input-aggregator-change-reason"
+            />
+          </div>
+          {mutationError && <Alert variant="destructive" data-testid="error-aggregator-mutation"><AlertDescription>{mutationError}</AlertDescription></Alert>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={isSaving}>Annuler</Button>
+            <Button onClick={saveEdit} disabled={!editing || reason.trim().length < 3 || isSaving || (editing.kind === 'provider' && editing.name.trim().length < 2)} data-testid="button-confirm-aggregator-change">
+              {isSaving ? 'Enregistrement…' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AdminShell>
+  );
+}
+
 function OtpPoliciesPage() {
   const queryClient = useQueryClient();
   const query = useListAdminOtpPolicies();
@@ -1543,6 +2032,7 @@ export function AdminRouter() {
   const [isLoginActivity] = useRoute('/admin/login-activity');
   const [isBanners] = useRoute('/admin/banners');
   const [isOtpPolicies] = useRoute('/admin/otp-policies');
+  const [isAggregators] = useRoute('/admin/aggregators');
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -1554,5 +2044,6 @@ export function AdminRouter() {
   if (isLoginActivity) return <LoginActivityPage />;
   if (isBanners) return <BannersPage />;
   if (isOtpPolicies) return <OtpPoliciesPage />;
+  if (isAggregators) return <AggregatorsPage />;
   return <OverviewPage />;
 }

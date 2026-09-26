@@ -236,6 +236,155 @@ export const CreateAdminBannerResponse = zod.object({
 
 
 /**
+ * @summary List aggregator partners and country/operator routing
+ */
+export const getAdminPaymentRoutingResponseAggregatorsItemVersionMin = 0;
+
+export const getAdminPaymentRoutingResponseCountriesItemDefaultVersionMin = 0;
+
+export const getAdminPaymentRoutingResponseCountriesItemOperatorsItemVersionMin = 0;
+
+
+
+export const GetAdminPaymentRoutingResponse = zod.object({
+  "aggregators": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "enabled": zod.boolean(),
+  "adapterStatus": zod.enum(['not_implemented']).describe('Partner APIs remain inactive until a server-side adapter is implemented and verified.'),
+  "version": zod.number().int().min(getAdminPaymentRoutingResponseAggregatorsItemVersionMin),
+  "updatedAt": zod.coerce.date().nullable()
+})),
+  "countries": zod.array(zod.object({
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryName": zod.string(),
+  "phonePrefix": zod.string(),
+  "defaultAggregatorCode": zod.string().nullable(),
+  "defaultVersion": zod.number().int().min(getAdminPaymentRoutingResponseCountriesItemDefaultVersionMin),
+  "defaultUpdatedAt": zod.coerce.date().nullable(),
+  "operators": zod.array(zod.object({
+  "operatorId": zod.string(),
+  "operatorName": zod.string(),
+  "aggregatorCode": zod.string().nullable(),
+  "effectiveAggregatorCode": zod.string().nullable(),
+  "inheritsCountryDefault": zod.boolean(),
+  "version": zod.number().int().min(getAdminPaymentRoutingResponseCountriesItemOperatorsItemVersionMin),
+  "updatedAt": zod.coerce.date().nullable()
+}))
+}))
+})
+
+
+/**
+ * @summary Add an aggregator partner to the routing catalog
+ */
+export const createAdminAggregatorBodyCodeMin = 2;
+export const createAdminAggregatorBodyCodeMax = 60;
+
+
+export const createAdminAggregatorBodyCodeRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+export const createAdminAggregatorBodyNameMin = 2;
+export const createAdminAggregatorBodyNameMax = 120;
+
+export const createAdminAggregatorBodyReasonMin = 3;
+export const createAdminAggregatorBodyReasonMax = 500;
+
+
+
+export const CreateAdminAggregatorBody = zod.object({
+  "code": zod.string().min(createAdminAggregatorBodyCodeMin).max(createAdminAggregatorBodyCodeMax).regex(createAdminAggregatorBodyCodeRegExp),
+  "name": zod.string().min(createAdminAggregatorBodyNameMin).max(createAdminAggregatorBodyNameMax),
+  "reason": zod.string().min(createAdminAggregatorBodyReasonMin).max(createAdminAggregatorBodyReasonMax)
+})
+
+export const createAdminAggregatorResponseVersionMin = 0;
+
+
+
+export const CreateAdminAggregatorResponse = zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "enabled": zod.boolean(),
+  "adapterStatus": zod.enum(['not_implemented']).describe('Partner APIs remain inactive until a server-side adapter is implemented and verified.'),
+  "version": zod.number().int().min(createAdminAggregatorResponseVersionMin),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Update an aggregator partner in the routing catalog
+ */
+export const updateAdminAggregatorBodyCodeMin = 2;
+export const updateAdminAggregatorBodyCodeMax = 60;
+
+
+export const updateAdminAggregatorBodyCodeRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+export const updateAdminAggregatorBodyNameMin = 2;
+export const updateAdminAggregatorBodyNameMax = 120;
+
+export const updateAdminAggregatorBodyExpectedVersionMin = 0;
+
+export const updateAdminAggregatorBodyReasonMin = 3;
+export const updateAdminAggregatorBodyReasonMax = 500;
+
+
+
+export const UpdateAdminAggregatorBody = zod.object({
+  "code": zod.string().min(updateAdminAggregatorBodyCodeMin).max(updateAdminAggregatorBodyCodeMax).regex(updateAdminAggregatorBodyCodeRegExp),
+  "name": zod.string().min(updateAdminAggregatorBodyNameMin).max(updateAdminAggregatorBodyNameMax),
+  "enabled": zod.boolean(),
+  "expectedVersion": zod.number().int().min(updateAdminAggregatorBodyExpectedVersionMin),
+  "reason": zod.string().min(updateAdminAggregatorBodyReasonMin).max(updateAdminAggregatorBodyReasonMax)
+})
+
+export const updateAdminAggregatorResponseVersionMin = 0;
+
+
+
+export const UpdateAdminAggregatorResponse = zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "enabled": zod.boolean(),
+  "adapterStatus": zod.enum(['not_implemented']).describe('Partner APIs remain inactive until a server-side adapter is implemented and verified.'),
+  "version": zod.number().int().min(updateAdminAggregatorResponseVersionMin),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Assign a partner to a country or operator
+ */
+export const updateAdminAggregatorRouteBodyExpectedVersionMin = 0;
+
+export const updateAdminAggregatorRouteBodyReasonMin = 3;
+export const updateAdminAggregatorRouteBodyReasonMax = 500;
+
+
+
+export const UpdateAdminAggregatorRouteBody = zod.object({
+  "scopeType": zod.enum(['country', 'operator']),
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "operatorId": zod.string().nullable(),
+  "aggregatorCode": zod.string().nullable(),
+  "expectedVersion": zod.number().int().min(updateAdminAggregatorRouteBodyExpectedVersionMin),
+  "reason": zod.string().min(updateAdminAggregatorRouteBodyReasonMin).max(updateAdminAggregatorRouteBodyReasonMax)
+})
+
+export const updateAdminAggregatorRouteResponseVersionMin = 0;
+
+
+
+export const UpdateAdminAggregatorRouteResponse = zod.object({
+  "scopeType": zod.enum(['country', 'operator']),
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "operatorId": zod.string().nullable(),
+  "aggregatorCode": zod.string().nullable(),
+  "version": zod.number().int().min(updateAdminAggregatorRouteResponseVersionMin),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
  * @summary List Orange Money OTP policies for supported countries
  */
 export const listAdminOtpPoliciesResponseItemsItemVersionMin = 0;

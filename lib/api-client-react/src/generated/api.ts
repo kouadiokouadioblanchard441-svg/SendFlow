@@ -29,6 +29,9 @@ import type {
   AdminOtpPolicyList,
   AdminOtpPolicyUpdate,
   AdminOverview,
+  AdminPaymentAggregator,
+  AdminPaymentAggregatorRouteUpdate,
+  AdminPaymentRouting,
   AdminTransactionDetail,
   AdminTransactionPage,
   AdminUserActionRequest,
@@ -38,6 +41,7 @@ import type {
   AdminWalletAdjustmentResult,
   BannerInput,
   BannerUpdate,
+  CreatePaymentAggregatorRequest,
   CurrentAccount,
   DatabaseStatus,
   DeleteAdminBannerResult,
@@ -52,6 +56,8 @@ import type {
   ListAdminTransactionsParams,
   ListAdminUsersParams,
   PublicBannerList,
+  UpdatePaymentAggregatorRequest,
+  UpdatePaymentAggregatorRouteRequest,
   WebhookReceipt
 } from './api.schemas';
 
@@ -922,6 +928,296 @@ export const useCreateAdminBanner = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getCreateAdminBannerMutationOptions(options));
+    }
+
+export const getGetAdminPaymentRoutingUrl = () => {
+
+
+
+
+  return `/api/admin/payment-routing`
+}
+
+/**
+ * @summary List aggregator partners and country/operator routing
+ */
+export const getAdminPaymentRouting = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminPaymentRouting> => {
+
+  return customFetch<AdminPaymentRouting>(getGetAdminPaymentRoutingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminPaymentRoutingQueryKey = () => {
+    return [
+    `/api/admin/payment-routing`
+    ] as const;
+    }
+
+
+export const getGetAdminPaymentRoutingQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPaymentRouting>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPaymentRouting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPaymentRoutingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPaymentRouting>>> = ({ signal }) => getAdminPaymentRouting({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPaymentRouting>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminPaymentRoutingQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPaymentRouting>>>
+export type GetAdminPaymentRoutingQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List aggregator partners and country/operator routing
+ */
+
+export function useGetAdminPaymentRouting<TData = Awaited<ReturnType<typeof getAdminPaymentRouting>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPaymentRouting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminPaymentRoutingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAdminAggregatorUrl = () => {
+
+
+
+
+  return `/api/admin/payment-aggregators`
+}
+
+/**
+ * @summary Add an aggregator partner to the routing catalog
+ */
+export const createAdminAggregator = async (createPaymentAggregatorRequest: CreatePaymentAggregatorRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminPaymentAggregator> => {
+
+  return customFetch<AdminPaymentAggregator>(getCreateAdminAggregatorUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createPaymentAggregatorRequest)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminAggregatorMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminAggregator>>, TError,{data: BodyType<CreatePaymentAggregatorRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminAggregator>>, TError,{data: BodyType<CreatePaymentAggregatorRequest>}, TContext> => {
+
+const mutationKey = ['createAdminAggregator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminAggregator>>, {data: BodyType<CreatePaymentAggregatorRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminAggregator(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminAggregatorMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminAggregator>>>
+    export type CreateAdminAggregatorMutationBody = BodyType<CreatePaymentAggregatorRequest>
+    export type CreateAdminAggregatorMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Add an aggregator partner to the routing catalog
+ */
+export const useCreateAdminAggregator = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminAggregator>>, TError,{data: BodyType<CreatePaymentAggregatorRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminAggregator>>,
+        TError,
+        {data: BodyType<CreatePaymentAggregatorRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateAdminAggregatorMutationOptions(options));
+    }
+
+export const getUpdateAdminAggregatorUrl = () => {
+
+
+
+
+  return `/api/admin/payment-aggregators`
+}
+
+/**
+ * @summary Update an aggregator partner in the routing catalog
+ */
+export const updateAdminAggregator = async (updatePaymentAggregatorRequest: UpdatePaymentAggregatorRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminPaymentAggregator> => {
+
+  return customFetch<AdminPaymentAggregator>(getUpdateAdminAggregatorUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updatePaymentAggregatorRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminAggregatorMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminAggregator>>, TError,{data: BodyType<UpdatePaymentAggregatorRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminAggregator>>, TError,{data: BodyType<UpdatePaymentAggregatorRequest>}, TContext> => {
+
+const mutationKey = ['updateAdminAggregator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminAggregator>>, {data: BodyType<UpdatePaymentAggregatorRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateAdminAggregator(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminAggregatorMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminAggregator>>>
+    export type UpdateAdminAggregatorMutationBody = BodyType<UpdatePaymentAggregatorRequest>
+    export type UpdateAdminAggregatorMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Update an aggregator partner in the routing catalog
+ */
+export const useUpdateAdminAggregator = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminAggregator>>, TError,{data: BodyType<UpdatePaymentAggregatorRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminAggregator>>,
+        TError,
+        {data: BodyType<UpdatePaymentAggregatorRequest>},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminAggregatorMutationOptions(options));
+    }
+
+export const getUpdateAdminAggregatorRouteUrl = () => {
+
+
+
+
+  return `/api/admin/payment-aggregator-routes`
+}
+
+/**
+ * @summary Assign a partner to a country or operator
+ */
+export const updateAdminAggregatorRoute = async (updatePaymentAggregatorRouteRequest: UpdatePaymentAggregatorRouteRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminPaymentAggregatorRouteUpdate> => {
+
+  return customFetch<AdminPaymentAggregatorRouteUpdate>(getUpdateAdminAggregatorRouteUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updatePaymentAggregatorRouteRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminAggregatorRouteMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminAggregatorRoute>>, TError,{data: BodyType<UpdatePaymentAggregatorRouteRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminAggregatorRoute>>, TError,{data: BodyType<UpdatePaymentAggregatorRouteRequest>}, TContext> => {
+
+const mutationKey = ['updateAdminAggregatorRoute'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminAggregatorRoute>>, {data: BodyType<UpdatePaymentAggregatorRouteRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateAdminAggregatorRoute(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminAggregatorRouteMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminAggregatorRoute>>>
+    export type UpdateAdminAggregatorRouteMutationBody = BodyType<UpdatePaymentAggregatorRouteRequest>
+    export type UpdateAdminAggregatorRouteMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Assign a partner to a country or operator
+ */
+export const useUpdateAdminAggregatorRoute = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminAggregatorRoute>>, TError,{data: BodyType<UpdatePaymentAggregatorRouteRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminAggregatorRoute>>,
+        TError,
+        {data: BodyType<UpdatePaymentAggregatorRouteRequest>},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminAggregatorRouteMutationOptions(options));
     }
 
 export const getListAdminOtpPoliciesUrl = () => {

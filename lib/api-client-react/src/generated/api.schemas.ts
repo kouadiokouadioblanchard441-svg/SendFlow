@@ -400,6 +400,190 @@ export interface AdminOtpPolicy {
   updatedAt: string | null;
 }
 
+/**
+ * Partner APIs remain inactive until a server-side adapter is implemented and verified.
+ */
+export type AdminPaymentAggregatorAdapterStatus = typeof AdminPaymentAggregatorAdapterStatus[keyof typeof AdminPaymentAggregatorAdapterStatus];
+
+
+export const AdminPaymentAggregatorAdapterStatus = {
+  not_implemented: 'not_implemented',
+} as const;
+
+export interface AdminPaymentAggregator {
+  code: string;
+  name: string;
+  enabled: boolean;
+  /** Partner APIs remain inactive until a server-side adapter is implemented and verified. */
+  adapterStatus: AdminPaymentAggregatorAdapterStatus;
+  /** @minimum 0 */
+  version: number;
+  /** @nullable */
+  updatedAt: string | null;
+}
+
+export interface AdminOperatorPaymentRoute {
+  operatorId: string;
+  operatorName: string;
+  /** @nullable */
+  aggregatorCode: string | null;
+  /** @nullable */
+  effectiveAggregatorCode: string | null;
+  inheritsCountryDefault: boolean;
+  /** @minimum 0 */
+  version: number;
+  /** @nullable */
+  updatedAt: string | null;
+}
+
+export type AdminCountryPaymentRoutesCountryCode = typeof AdminCountryPaymentRoutesCountryCode[keyof typeof AdminCountryPaymentRoutesCountryCode];
+
+
+export const AdminCountryPaymentRoutesCountryCode = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export interface AdminCountryPaymentRoutes {
+  countryCode: AdminCountryPaymentRoutesCountryCode;
+  countryName: string;
+  phonePrefix: string;
+  /** @nullable */
+  defaultAggregatorCode: string | null;
+  /** @minimum 0 */
+  defaultVersion: number;
+  /** @nullable */
+  defaultUpdatedAt: string | null;
+  operators: AdminOperatorPaymentRoute[];
+}
+
+export interface AdminPaymentRouting {
+  aggregators: AdminPaymentAggregator[];
+  countries: AdminCountryPaymentRoutes[];
+}
+
+export interface CreatePaymentAggregatorRequest {
+  /**
+     * @minLength 2
+     * @maxLength 60
+     * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+     */
+  code: string;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  name: string;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface UpdatePaymentAggregatorRequest {
+  /**
+     * @minLength 2
+     * @maxLength 60
+     * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+     */
+  code: string;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  name: string;
+  enabled: boolean;
+  /** @minimum 0 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export type UpdatePaymentAggregatorRouteRequestScopeType = typeof UpdatePaymentAggregatorRouteRequestScopeType[keyof typeof UpdatePaymentAggregatorRouteRequestScopeType];
+
+
+export const UpdatePaymentAggregatorRouteRequestScopeType = {
+  country: 'country',
+  operator: 'operator',
+} as const;
+
+export type UpdatePaymentAggregatorRouteRequestCountryCode = typeof UpdatePaymentAggregatorRouteRequestCountryCode[keyof typeof UpdatePaymentAggregatorRouteRequestCountryCode];
+
+
+export const UpdatePaymentAggregatorRouteRequestCountryCode = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export interface UpdatePaymentAggregatorRouteRequest {
+  scopeType: UpdatePaymentAggregatorRouteRequestScopeType;
+  countryCode: UpdatePaymentAggregatorRouteRequestCountryCode;
+  /** @nullable */
+  operatorId: string | null;
+  /** @nullable */
+  aggregatorCode: string | null;
+  /** @minimum 0 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export type AdminPaymentAggregatorRouteUpdateScopeType = typeof AdminPaymentAggregatorRouteUpdateScopeType[keyof typeof AdminPaymentAggregatorRouteUpdateScopeType];
+
+
+export const AdminPaymentAggregatorRouteUpdateScopeType = {
+  country: 'country',
+  operator: 'operator',
+} as const;
+
+export type AdminPaymentAggregatorRouteUpdateCountryCode = typeof AdminPaymentAggregatorRouteUpdateCountryCode[keyof typeof AdminPaymentAggregatorRouteUpdateCountryCode];
+
+
+export const AdminPaymentAggregatorRouteUpdateCountryCode = {
+  ci: 'ci',
+  sn: 'sn',
+  bf: 'bf',
+  bj: 'bj',
+  ml: 'ml',
+  ne: 'ne',
+  tg: 'tg',
+  cm: 'cm',
+  cg: 'cg',
+} as const;
+
+export interface AdminPaymentAggregatorRouteUpdate {
+  scopeType: AdminPaymentAggregatorRouteUpdateScopeType;
+  countryCode: AdminPaymentAggregatorRouteUpdateCountryCode;
+  /** @nullable */
+  operatorId: string | null;
+  /** @nullable */
+  aggregatorCode: string | null;
+  /** @minimum 0 */
+  version: number;
+  updatedAt: string;
+}
+
 export interface AdminOtpPolicyList {
   items: AdminOtpPolicy[];
 }

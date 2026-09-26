@@ -51,6 +51,12 @@ Customer money-movement flows must remain blocked until a server-side operator i
 
 **How to apply:** Keep unsupported operators clearly marked as not connected, fail closed in customer forms, and render success only from a verified server response.
 
+The aggregator catalog and country/operator routes in the admin panel are configuration only. An enabled flag or route assignment cannot establish that a provider API is connected; adapter readiness is server-owned, and partner credentials stay in Replit Secrets rather than the admin panel or database.
+
+**Why:** Routing metadata cannot authenticate a provider or prove settlement, and exposing credentials in an editable back office would widen the security boundary.
+
+**How to apply:** Keep unimplemented providers marked as unavailable for transactions. Only server-side adapter code that verifies real provider results may enable money movement, with credentials read from Replit Secrets.
+
 The admin console must use real icon components or approved image assets for financial states, operators, security markers, and navigation; do not draw iconography with CSS dots, initials, or pseudo-elements.
 
 **Why:** Financial operations need recognizable, consistent symbols on mobile and desktop, and an operator logo must never be faked with another partner’s branding.

@@ -365,6 +365,199 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/payment-routing:
+    get:
+      operationId: getAdminPaymentRouting
+      tags: [admin]
+      summary: List aggregator partners and country/operator routing
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Aggregator partners and effective routes for all supported countries and operators.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPaymentRouting"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/payment-aggregators:
+    post:
+      operationId: createAdminAggregator
+      tags: [admin]
+      summary: Add an aggregator partner to the routing catalog
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: "#/components/schemas/CreatePaymentAggregatorRequest"
+      responses:
+        "201":
+          description: Aggregator partner created. API readiness is determined by server implementation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPaymentAggregator"
+        "400":
+          description: Invalid aggregator data or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: An aggregator with this code already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateAdminAggregator
+      tags: [admin]
+      summary: Update an aggregator partner in the routing catalog
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: "#/components/schemas/UpdatePaymentAggregatorRequest"
+      responses:
+        "200":
+          description: Aggregator partner updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPaymentAggregator"
+        "400":
+          description: Invalid aggregator data or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Aggregator not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Aggregator changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/payment-aggregator-routes:
+    put:
+      operationId: updateAdminAggregatorRoute
+      tags: [admin]
+      summary: Assign a partner to a country or operator
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: "#/components/schemas/UpdatePaymentAggregatorRouteRequest"
+      responses:
+        "200":
+          description: Country or operator route updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPaymentAggregatorRouteUpdate"
+        "400":
+          description: Invalid country/operator scope or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Country, operator, or aggregator not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Route changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /admin/otp-policies:
     get:
       operationId: listAdminOtpPolicies
@@ -1680,6 +1873,161 @@ components:
           type: ["string", "null"]
           format: date-time
       required: [countryCode, countryName, operatorId, operatorName, phonePrefix, requiresOtp, providerStatus, version, updatedAt]
+    AdminPaymentAggregator:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        enabled:
+          type: boolean
+        adapterStatus:
+          type: string
+          enum: [not_implemented]
+          description: Partner APIs remain inactive until a server-side adapter is implemented and verified.
+        version:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [code, name, enabled, adapterStatus, version, updatedAt]
+    AdminOperatorPaymentRoute:
+      type: object
+      properties:
+        operatorId:
+          type: string
+        operatorName:
+          type: string
+        aggregatorCode:
+          type: ["string", "null"]
+        effectiveAggregatorCode:
+          type: ["string", "null"]
+        inheritsCountryDefault:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [operatorId, operatorName, aggregatorCode, effectiveAggregatorCode, inheritsCountryDefault, version, updatedAt]
+    AdminCountryPaymentRoutes:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        countryName:
+          type: string
+        phonePrefix:
+          type: string
+        defaultAggregatorCode:
+          type: ["string", "null"]
+        defaultVersion:
+          type: integer
+          minimum: 0
+        defaultUpdatedAt:
+          type: ["string", "null"]
+          format: date-time
+        operators:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminOperatorPaymentRoute"
+      required: [countryCode, countryName, phonePrefix, defaultAggregatorCode, defaultVersion, defaultUpdatedAt, operators]
+    AdminPaymentRouting:
+      type: object
+      properties:
+        aggregators:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminPaymentAggregator"
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminCountryPaymentRoutes"
+      required: [aggregators, countries]
+    CreatePaymentAggregatorRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 2
+          maxLength: 60
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [code, name, reason]
+    UpdatePaymentAggregatorRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 2
+          maxLength: 60
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        enabled:
+          type: boolean
+        expectedVersion:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [code, name, enabled, expectedVersion, reason]
+    UpdatePaymentAggregatorRouteRequest:
+      type: object
+      properties:
+        scopeType:
+          type: string
+          enum: [country, operator]
+        countryCode:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        operatorId:
+          type: ["string", "null"]
+        aggregatorCode:
+          type: ["string", "null"]
+        expectedVersion:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [scopeType, countryCode, operatorId, aggregatorCode, expectedVersion, reason]
+    AdminPaymentAggregatorRouteUpdate:
+      type: object
+      properties:
+        scopeType:
+          type: string
+          enum: [country, operator]
+        countryCode:
+          type: string
+          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+        operatorId:
+          type: ["string", "null"]
+        aggregatorCode:
+          type: ["string", "null"]
+        version:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: string
+          format: date-time
+      required: [scopeType, countryCode, operatorId, aggregatorCode, version, updatedAt]
     AdminOtpPolicyList:
       type: object
       properties:
