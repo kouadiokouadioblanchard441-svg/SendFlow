@@ -1480,10 +1480,10 @@ components:
           type: ["string", "null"]
         imageUrl:
           type: string
-          format: uri
+          description: Public HTTPS image URL or app asset path under /banners/.
         mobileImageUrl:
           type: ["string", "null"]
-          format: uri
+          description: Optional public HTTPS image URL or app asset path under /banners/.
         imageAlt:
           type: string
         ctaLabel:
@@ -1505,10 +1505,10 @@ components:
           type: ["string", "null"]
         imageUrl:
           type: string
-          format: uri
+          description: Public HTTPS image URL or app asset path under /banners/.
         mobileImageUrl:
           type: ["string", "null"]
-          format: uri
+          description: Optional public HTTPS image URL or app asset path under /banners/.
         imageAlt:
           type: string
         ctaLabel:
@@ -1559,10 +1559,10 @@ components:
           type: ["string", "null"]
         imageUrl:
           type: string
-          format: uri
+          description: Public HTTPS image URL or app asset path under /banners/.
         mobileImageUrl:
           type: ["string", "null"]
-          format: uri
+          description: Optional public HTTPS image URL or app asset path under /banners/.
         imageAlt:
           type: string
           minLength: 1
@@ -1597,10 +1597,10 @@ components:
           type: ["string", "null"]
         imageUrl:
           type: string
-          format: uri
+          description: Public HTTPS image URL or app asset path under /banners/.
         mobileImageUrl:
           type: ["string", "null"]
-          format: uri
+          description: Optional public HTTPS image URL or app asset path under /banners/.
         imageAlt:
           type: string
           minLength: 1

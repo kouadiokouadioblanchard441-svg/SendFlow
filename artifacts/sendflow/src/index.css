@@ -4602,6 +4602,9 @@
     min-height: clamp(190px, 61vw, 235px);
     padding: 18px;
   }
+  .sendflow-promo-image img {
+    object-position: right center;
+  }
   .sendflow-promo-card .sendflow-promo-copy {
     max-width: 76%;
     padding-bottom: 25px;

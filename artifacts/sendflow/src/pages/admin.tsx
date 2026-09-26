@@ -1090,10 +1090,12 @@ function isSafeBannerUrl(value: string, allowEmpty = true) {
   }
 }
 
-function isHostedHttpsUrl(value: string, allowEmpty = true) {
+function isAllowedBannerImageUrl(value: string, allowEmpty = true) {
   if (!value.trim()) return allowEmpty;
+  if (/^\/banners\/[a-z0-9][a-z0-9._-]*\.(?:png|jpe?g|webp)$/i.test(value.trim())) return true;
   try {
-    return new URL(value).protocol === 'https:';
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
   } catch {
     return false;
   }
@@ -1150,12 +1152,12 @@ function BannerEditorDialog({
   }, [banner, form, open]);
 
   const handleSubmit = (values: BannerFormValues) => {
-    if (!isHostedHttpsUrl(values.imageUrl, false)) {
-      form.setError('imageUrl', { message: 'Utilisez une URL HTTPS hébergée.' });
+    if (!isAllowedBannerImageUrl(values.imageUrl, false)) {
+      form.setError('imageUrl', { message: 'Utilisez une URL HTTPS ou un visuel SendFlow sous /banners/.' });
       return;
     }
-    if (values.mobileImageUrl && !isHostedHttpsUrl(values.mobileImageUrl, false)) {
-      form.setError('mobileImageUrl', { message: 'Utilisez une URL HTTPS hébergée.' });
+    if (values.mobileImageUrl && !isAllowedBannerImageUrl(values.mobileImageUrl, false)) {
+      form.setError('mobileImageUrl', { message: 'Utilisez une URL HTTPS ou un visuel SendFlow sous /banners/.' });
       return;
     }
     if (values.startsAt && values.endsAt && new Date(values.endsAt).getTime() <= new Date(values.startsAt).getTime()) {
@@ -1194,11 +1196,11 @@ function BannerEditorDialog({
         <DialogHeader>
           <DialogTitle>{banner ? 'Modifier la bannière' : 'Nouvelle bannière'}</DialogTitle>
           <DialogDescription>
-            Les visuels doivent être servis depuis une URL HTTPS publique. Les dates sont optionnelles et interprétées selon votre fuseau local.
+            Utilisez une URL HTTPS publique ou un visuel intégré sous /banners/. Les dates sont optionnelles et interprétées selon votre fuseau local.
           </DialogDescription>
           <div className="sendflow-banner-upload-notice" data-testid="notice-banner-upload-unavailable">
             <CircleAlert className="size-4" />
-            <span><strong>Import direct temporairement indisponible.</strong> Pour le moment, renseignez une URL HTTPS hébergée. L’envoi de fichiers sera ajouté lorsque le stockage persistant sera disponible.</span>
+            <span><strong>Import direct temporairement indisponible.</strong> Vous pouvez utiliser une URL HTTPS hébergée ou les visuels SendFlow intégrés. L’envoi de fichiers sera ajouté lorsque le stockage persistant sera disponible.</span>
           </div>
         </DialogHeader>
         <Form {...form}>
@@ -1216,10 +1218,10 @@ function BannerEditorDialog({
             )} />
             <div className="sendflow-banner-form-grid">
               <FormField control={form.control} name="imageUrl" rules={{ required: 'L’image principale est requise.' }} render={({ field }) => (
-                <FormItem><FormLabel>Image desktop · URL HTTPS</FormLabel><FormControl><Input {...field} type="url" placeholder="https://cdn.exemple.com/banner.webp" data-testid="input-banner-image-url" className={fieldError('imageUrl') ? 'border-destructive' : ''} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Image desktop · URL HTTPS ou média SendFlow</FormLabel><FormControl><Input {...field} type="text" placeholder="https://… ou /banners/sendflow-international.jpg" data-testid="input-banner-image-url" className={fieldError('imageUrl') ? 'border-destructive' : ''} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="mobileImageUrl" render={({ field }) => (
-                <FormItem><FormLabel>Image mobile · URL HTTPS</FormLabel><FormControl><Input {...field} type="url" placeholder="Optionnel" data-testid="input-banner-mobile-image-url" className={fieldError('mobileImageUrl') ? 'border-destructive' : ''} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Image mobile · URL HTTPS ou média SendFlow</FormLabel><FormControl><Input {...field} type="text" placeholder="Optionnel" data-testid="input-banner-mobile-image-url" className={fieldError('mobileImageUrl') ? 'border-destructive' : ''} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
             <div className="sendflow-banner-form-grid">

@@ -29,6 +29,7 @@ const router: IRouter = Router();
 
 function isSecureImageUrl(value: string | null | undefined): boolean {
   if (value == null) return true;
+  if (/^\/banners\/[a-z0-9][a-z0-9._-]*\.(?:png|jpe?g|webp)$/i.test(value)) return true;
   try {
     const url = new URL(value);
     return url.protocol === "https:" && !url.username && !url.password;
@@ -66,7 +67,7 @@ function validateBannerFields(
   },
 ): boolean {
   if (!isSecureImageUrl(fields.imageUrl) || !isSecureImageUrl(fields.mobileImageUrl)) {
-    res.status(400).json({ error: "Banner image URLs must use HTTPS" });
+    res.status(400).json({ error: "Banner images must use HTTPS or a local /banners/ asset path" });
     return false;
   }
   if (!isSafeTargetUrl(fields.targetUrl)) {

@@ -11,8 +11,12 @@ export interface AdminBanner {
   title: string;
   /** @nullable */
   description: string | null;
+  /** Public HTTPS image URL or app asset path under /banners/. */
   imageUrl: string;
-  /** @nullable */
+  /**
+     * Optional public HTTPS image URL or app asset path under /banners/.
+     * @nullable
+     */
   mobileImageUrl: string | null;
   imageAlt: string;
   /** @nullable */
