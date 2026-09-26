@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { accountLimitProvider, formatAccountLimitAmount, temporaryAccountLimits } from '@/lib/account-limit';
 import { useSeo } from '@/lib/seo';
@@ -195,19 +195,6 @@ export default function AccountLimitPage() {
                 Pour augmenter votre plafond veuillez renseigner l'ensemble
                 de vos informations de compte et ajouter une pièce valide
               </p>
-
-              <section className="sendflow-account-limit-info" aria-labelledby="account-limit-info-title">
-                <span className="sendflow-account-limit-info-icon" aria-hidden="true">
-                  <ShieldCheck size={20} strokeWidth={2} />
-                </span>
-                <div>
-                  <h3 id="account-limit-info-title">Pourquoi vérifier mon identité ?</h3>
-                  <p>
-                    La vérification permet d’accéder à un plafond mensuel supérieur
-                    tout en renforçant la sécurité de votre compte.
-                  </p>
-                </div>
-              </section>
 
                <figure className="sendflow-account-limit-illustration" aria-hidden="true">
                  <img src={limitVerificationIllustration} alt="" />
