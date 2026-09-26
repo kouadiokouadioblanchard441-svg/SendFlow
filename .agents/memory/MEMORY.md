@@ -7,3 +7,4 @@
 - [Mobile overlay positioning](mobile-overlay-positioning.md) — Render full-screen mobile overlays at document level when animated cards could create a fixed-position containing block.
 - [Didit development integration](didit-development.md) — Keep identity verification server-side and sandbox-only until secure provider configuration is available.
 - [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.
+- [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.

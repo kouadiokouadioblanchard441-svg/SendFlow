@@ -335,6 +335,128 @@ export interface AdminLoginActivityPage {
   total: number;
 }
 
+export interface PublicBanner {
+  id: string;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  imageUrl: string;
+  /** @nullable */
+  mobileImageUrl: string | null;
+  imageAlt: string;
+  /** @nullable */
+  ctaLabel: string | null;
+  /** @nullable */
+  targetUrl: string | null;
+  sortOrder: number;
+}
+
+export interface AdminBanner {
+  id: string;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  imageUrl: string;
+  /** @nullable */
+  mobileImageUrl: string | null;
+  imageAlt: string;
+  /** @nullable */
+  ctaLabel: string | null;
+  /** @nullable */
+  targetUrl: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  /** @nullable */
+  startsAt: string | null;
+  /** @nullable */
+  endsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublicBannerList {
+  items: PublicBanner[];
+}
+
+export interface AdminBannerList {
+  items: AdminBanner[];
+}
+
+export interface BannerInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  title: string;
+  /** @nullable */
+  description?: string | null;
+  imageUrl: string;
+  /** @nullable */
+  mobileImageUrl?: string | null;
+  /**
+     * @minLength 1
+     * @maxLength 180
+     */
+  imageAlt: string;
+  /**
+     * @maxLength 48
+     * @nullable
+     */
+  ctaLabel?: string | null;
+  /**
+     * Internal path or HTTPS destination URL.
+     * @nullable
+     */
+  targetUrl?: string | null;
+  /** @minimum 0 */
+  sortOrder: number;
+  isActive: boolean;
+  /** @nullable */
+  startsAt?: string | null;
+  /** @nullable */
+  endsAt?: string | null;
+}
+
+export interface BannerUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  title?: string;
+  /** @nullable */
+  description?: string | null;
+  imageUrl?: string;
+  /** @nullable */
+  mobileImageUrl?: string | null;
+  /**
+     * @minLength 1
+     * @maxLength 180
+     */
+  imageAlt?: string;
+  /**
+     * @maxLength 48
+     * @nullable
+     */
+  ctaLabel?: string | null;
+  /**
+     * Internal path or HTTPS destination URL.
+     * @nullable
+     */
+  targetUrl?: string | null;
+  /** @minimum 0 */
+  sortOrder?: number;
+  isActive?: boolean;
+  /** @nullable */
+  startsAt?: string | null;
+  /** @nullable */
+  endsAt?: string | null;
+}
+
+export interface DeleteAdminBannerResult {
+  id: string;
+  deleted: boolean;
+}
+
 export type AdminTransactionDetailKind = typeof AdminTransactionDetailKind[keyof typeof AdminTransactionDetailKind];
 
 

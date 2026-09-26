@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link, useRoute } from 'wouter';
 import {
   ArrowDownToLine,
@@ -14,6 +15,7 @@ import {
   CircleAlert,
   CircleX,
   Clock3,
+  ExternalLink,
   FileSearch,
   Globe2,
   Landmark,
@@ -24,6 +26,11 @@ import {
   Radio,
   Search,
   ShieldCheck,
+  Pencil,
+  Plus,
+  Trash2,
+  GripVertical,
+  Power,
   Smartphone,
   Tablet,
   UserRound,
@@ -41,7 +48,15 @@ import {
   useListAdminTransactions,
   useListAdminLoginActivity,
   useListAdminUsers,
+  useListAdminBanners,
+  useCreateAdminBanner,
+  useUpdateAdminBanner,
+  useDeleteAdminBanner,
+  getListAdminBannersQueryKey,
+  getListPublishedBannersQueryKey,
 } from '@workspace/api-client-react';
+import type { AdminBanner, BannerInput, BannerUpdate } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,8 +67,36 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
@@ -86,7 +129,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'banners';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -98,6 +141,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   international: { title: 'Transferts internationaux', eyebrow: 'Flux sortants' },
   transfers: { title: 'Transferts', eyebrow: 'Flux sortants' },
   'login-activity': { title: 'Connexions', eyebrow: 'Sécurité' },
+  banners: { title: 'Bannières', eyebrow: 'Contenu client' },
 };
 
 const navItems: Array<{ href: string; label: string; section: AdminSection; icon: typeof LayoutDashboard }> = [
@@ -108,6 +152,7 @@ const navItems: Array<{ href: string; label: string; section: AdminSection; icon
   { href: '/admin/international', label: 'International', section: 'international', icon: Globe2 },
   { href: '/admin/transfers', label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
   { href: '/admin/login-activity', label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
+  { href: '/admin/banners', label: 'Bannières client', section: 'banners', icon: Radio },
 ];
 
 function formatMoney(minor: number | undefined, currency = 'XOF') {
@@ -1020,6 +1065,316 @@ function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 
   );
 }
 
+type BannerFormValues = {
+  title: string;
+  description: string;
+  imageUrl: string;
+  mobileImageUrl: string;
+  imageAlt: string;
+  ctaLabel: string;
+  targetUrl: string;
+  sortOrder: number;
+  isActive: boolean;
+  startsAt: string;
+  endsAt: string;
+};
+
+function isSafeBannerUrl(value: string, allowEmpty = true) {
+  if (!value.trim()) return allowEmpty;
+  if (value.startsWith('/') && !value.startsWith('//')) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isHostedHttpsUrl(value: string, allowEmpty = true) {
+  if (!value.trim()) return allowEmpty;
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function toDateInput(value: string | null | undefined) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (number: number) => String(number).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function toDatePayload(value: string) {
+  return value ? new Date(value).toISOString() : null;
+}
+
+function bannerFormValues(banner?: AdminBanner): BannerFormValues {
+  return {
+    title: banner?.title ?? '',
+    description: banner?.description ?? '',
+    imageUrl: banner?.imageUrl ?? '',
+    mobileImageUrl: banner?.mobileImageUrl ?? '',
+    imageAlt: banner?.imageAlt ?? '',
+    ctaLabel: banner?.ctaLabel ?? '',
+    targetUrl: banner?.targetUrl ?? '',
+    sortOrder: banner?.sortOrder ?? 0,
+    isActive: banner?.isActive ?? true,
+    startsAt: toDateInput(banner?.startsAt),
+    endsAt: toDateInput(banner?.endsAt),
+  };
+}
+
+function BannerEditorDialog({
+  open,
+  banner,
+  pending,
+  onOpenChange,
+  onSubmit,
+}: {
+  open: boolean;
+  banner?: AdminBanner;
+  pending: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: BannerInput | BannerUpdate, editing: boolean) => void;
+}) {
+  const form = useForm<BannerFormValues>({
+    defaultValues: bannerFormValues(banner),
+    mode: 'onChange',
+  });
+
+  useEffect(() => {
+    if (open) form.reset(bannerFormValues(banner));
+  }, [banner, form, open]);
+
+  const handleSubmit = (values: BannerFormValues) => {
+    if (!isHostedHttpsUrl(values.imageUrl, false)) {
+      form.setError('imageUrl', { message: 'Utilisez une URL HTTPS hébergée.' });
+      return;
+    }
+    if (values.mobileImageUrl && !isHostedHttpsUrl(values.mobileImageUrl, false)) {
+      form.setError('mobileImageUrl', { message: 'Utilisez une URL HTTPS hébergée.' });
+      return;
+    }
+    if (values.startsAt && values.endsAt && new Date(values.endsAt).getTime() <= new Date(values.startsAt).getTime()) {
+      form.setError('endsAt', { message: 'La fin doit être postérieure au début.' });
+      return;
+    }
+    if (values.ctaLabel.trim() && !values.targetUrl.trim()) {
+      form.setError('targetUrl', { message: 'Ajoutez une destination pour ce bouton.' });
+      return;
+    }
+    if (!isSafeBannerUrl(values.targetUrl)) {
+      form.setError('targetUrl', { message: 'Utilisez un chemin interne ou une URL HTTPS.' });
+      return;
+    }
+    const shared = {
+      title: values.title.trim(),
+      description: values.description.trim() || null,
+      imageUrl: values.imageUrl.trim(),
+      mobileImageUrl: values.mobileImageUrl.trim() || null,
+      imageAlt: values.imageAlt.trim(),
+      ctaLabel: values.ctaLabel.trim() || null,
+      targetUrl: values.targetUrl.trim() || null,
+      sortOrder: Number(values.sortOrder) || 0,
+      isActive: values.isActive,
+      startsAt: toDatePayload(values.startsAt),
+      endsAt: toDatePayload(values.endsAt),
+    };
+    onSubmit(shared, Boolean(banner));
+  };
+
+  const fieldError = (name: keyof BannerFormValues) => Boolean(form.formState.errors[name]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sendflow-banner-dialog">
+        <DialogHeader>
+          <DialogTitle>{banner ? 'Modifier la bannière' : 'Nouvelle bannière'}</DialogTitle>
+          <DialogDescription>
+            Les visuels doivent être servis depuis une URL HTTPS publique. Les dates sont optionnelles et interprétées selon votre fuseau local.
+          </DialogDescription>
+          <div className="sendflow-banner-upload-notice" data-testid="notice-banner-upload-unavailable">
+            <CircleAlert className="size-4" />
+            <span><strong>Import direct temporairement indisponible.</strong> Pour le moment, renseignez une URL HTTPS hébergée. L’envoi de fichiers sera ajouté lorsque le stockage persistant sera disponible.</span>
+          </div>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="sendflow-banner-form" data-testid="form-admin-banner">
+            <div className="sendflow-banner-form-grid">
+              <FormField control={form.control} name="title" rules={{ required: 'Le titre est requis.', maxLength: { value: 120, message: '120 caractères maximum.' } }} render={({ field }) => (
+                <FormItem><FormLabel>Titre</FormLabel><FormControl><Input {...field} placeholder="Un transfert plus simple" data-testid="input-banner-title" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="imageAlt" rules={{ required: 'Le texte alternatif est requis.', maxLength: { value: 180, message: '180 caractères maximum.' } }} render={({ field }) => (
+                <FormItem><FormLabel>Texte alternatif</FormLabel><FormControl><Input {...field} placeholder="Illustration d’une offre SendFlow" data-testid="input-banner-alt" /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <FormField control={form.control} name="description" render={({ field }) => (
+              <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} rows={3} placeholder="Le détail visible sous le titre." data-testid="input-banner-description" /></FormControl><FormMessage /></FormItem>
+            )} />
+            <div className="sendflow-banner-form-grid">
+              <FormField control={form.control} name="imageUrl" rules={{ required: 'L’image principale est requise.' }} render={({ field }) => (
+                <FormItem><FormLabel>Image desktop · URL HTTPS</FormLabel><FormControl><Input {...field} type="url" placeholder="https://cdn.exemple.com/banner.webp" data-testid="input-banner-image-url" className={fieldError('imageUrl') ? 'border-destructive' : ''} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="mobileImageUrl" render={({ field }) => (
+                <FormItem><FormLabel>Image mobile · URL HTTPS</FormLabel><FormControl><Input {...field} type="url" placeholder="Optionnel" data-testid="input-banner-mobile-image-url" className={fieldError('mobileImageUrl') ? 'border-destructive' : ''} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <div className="sendflow-banner-form-grid">
+              <FormField control={form.control} name="ctaLabel" rules={{ maxLength: { value: 48, message: '48 caractères maximum.' } }} render={({ field }) => (
+                <FormItem><FormLabel>Libellé du bouton</FormLabel><FormControl><Input {...field} placeholder="Découvrir" data-testid="input-banner-cta" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="targetUrl" render={({ field }) => (
+                <FormItem><FormLabel>Destination</FormLabel><FormControl><Input {...field} placeholder="/international-transfer ou https://..." data-testid="input-banner-target-url" className={fieldError('targetUrl') ? 'border-destructive' : ''} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <div className="sendflow-banner-form-grid">
+              <FormField control={form.control} name="startsAt" render={({ field }) => (
+                <FormItem><FormLabel>Début de publication</FormLabel><FormControl><Input {...field} type="datetime-local" data-testid="input-banner-starts-at" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="endsAt" render={({ field }) => (
+                <FormItem><FormLabel>Fin de publication</FormLabel><FormControl><Input {...field} type="datetime-local" data-testid="input-banner-ends-at" /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <div className="sendflow-banner-form-options">
+              <FormField control={form.control} name="sortOrder" render={({ field }) => (
+                <FormItem className="max-w-[140px]"><FormLabel>Ordre</FormLabel><FormControl><Input {...field} type="number" min={0} onChange={(event) => field.onChange(Number(event.target.value))} data-testid="input-banner-sort-order" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="isActive" render={({ field }) => (
+                <FormItem className="sendflow-banner-switch-row"><div><FormLabel>Publication active</FormLabel><p>La bannière sera visible si les dates l’autorisent.</p></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-banner-active" /></FormControl></FormItem>
+              )} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} data-testid="button-cancel-banner">Annuler</Button>
+              <Button type="submit" disabled={pending} data-testid="button-save-banner">{pending ? 'Enregistrement…' : banner ? 'Enregistrer les modifications' : 'Créer la bannière'}</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function BannersPage() {
+  const queryClient = useQueryClient();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<AdminBanner | undefined>();
+  const [deletingBanner, setDeletingBanner] = useState<AdminBanner | undefined>();
+  const [feedback, setFeedback] = useState('');
+  const query = useListAdminBanners({ query: { queryKey: getListAdminBannersQueryKey() } });
+  const items = [...(query.data?.items ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
+  const invalidateBanners = () => {
+    void queryClient.invalidateQueries({ queryKey: getListAdminBannersQueryKey() });
+    void queryClient.invalidateQueries({ queryKey: getListPublishedBannersQueryKey() });
+  };
+  const create = useCreateAdminBanner({
+    mutation: {
+      onSuccess: () => {
+        invalidateBanners();
+        setEditorOpen(false);
+        setFeedback('Bannière créée.');
+      },
+    },
+  });
+  const update = useUpdateAdminBanner({
+    mutation: {
+      onSuccess: () => {
+        invalidateBanners();
+        setEditorOpen(false);
+        setFeedback('Bannière mise à jour.');
+      },
+    },
+  });
+  const remove = useDeleteAdminBanner({
+    mutation: {
+      onSuccess: () => {
+        invalidateBanners();
+        setDeletingBanner(undefined);
+        setFeedback('Bannière supprimée.');
+      },
+    },
+  });
+  const error = query.error ?? create.error ?? update.error ?? remove.error;
+  const pending = create.isPending || update.isPending || remove.isPending;
+
+  const submitBanner = (data: BannerInput | BannerUpdate, editing: boolean) => {
+    if (editing && editingBanner) update.mutate({ bannerId: editingBanner.id, data: data as BannerUpdate });
+    else create.mutate({ data: data as BannerInput });
+  };
+
+  const toggleActive = (banner: AdminBanner) => {
+    update.mutate({ bannerId: banner.id, data: { isActive: !banner.isActive } });
+  };
+
+  const moveBanner = (banner: AdminBanner, direction: -1 | 1) => {
+    const index = items.findIndex((item) => item.id === banner.id);
+    const neighbor = items[index + direction];
+    if (!neighbor) return;
+    update.mutate(
+      { bannerId: banner.id, data: { sortOrder: neighbor.sortOrder } },
+      { onSuccess: () => update.mutate({ bannerId: neighbor.id, data: { sortOrder: banner.sortOrder } }) },
+    );
+  };
+
+  return (
+    <AdminShell section="banners">
+      <div className="sendflow-admin-page-intro sendflow-banner-intro">
+        <div>
+          <p className="sendflow-admin-overline">Contenu de l’espace client</p>
+          <h2 data-testid="heading-admin-banners">Bannières qui arrivent au bon moment.</h2>
+          <p className="sendflow-admin-subtitle">Pilotez les visuels, les destinations et la fenêtre de publication du carrousel de l’accueil.</p>
+        </div>
+        <Button onClick={() => { setEditingBanner(undefined); setEditorOpen(true); }} data-testid="button-create-banner"><Plus className="size-4" /> Nouvelle bannière</Button>
+      </div>
+      {feedback && <Alert className="sendflow-banner-feedback" data-testid="status-banner-feedback"><CheckCircle2 className="size-4" /><AlertDescription>{feedback}</AlertDescription></Alert>}
+      {error && <QueryState error={error} onRetry={() => void query.refetch()} />}
+      {query.isLoading && <div className="sendflow-banner-list" data-testid="loading-admin-banners">{Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-48 rounded-2xl" />)}</div>}
+      {!query.isLoading && !query.isError && items.length === 0 && <EmptyState label="Aucune bannière n’est configurée. Créez la première campagne pour l’espace client." />}
+      {!query.isLoading && !query.isError && items.length > 0 && (
+        <div className="sendflow-banner-list" data-testid="list-admin-banners">
+          {items.map((banner, index) => (
+            <Card key={banner.id} className="sendflow-banner-admin-card" data-testid={`card-admin-banner-${banner.id}`}>
+              <div className="sendflow-banner-thumb">
+                <img src={banner.imageUrl} alt="" />
+                <span className={`sendflow-banner-status ${banner.isActive ? 'is-active' : 'is-inactive'}`} data-testid={`status-banner-${banner.id}`}>{banner.isActive ? 'Active' : 'Inactive'}</span>
+              </div>
+              <CardContent className="sendflow-banner-admin-content">
+                <div className="sendflow-banner-admin-heading">
+                  <div><p className="sendflow-banner-order">Position {index + 1}</p><h3 data-testid={`text-banner-title-${banner.id}`}>{banner.title}</h3><p>{banner.description || 'Aucune description'}</p></div>
+                  <div className="sendflow-banner-reorder" aria-label={`Réordonner ${banner.title}`}>
+                    <Button variant="ghost" size="icon" disabled={index === 0 || pending} onClick={() => moveBanner(banner, -1)} data-testid={`button-banner-up-${banner.id}`}><ArrowUpRight className="size-4 rotate-[-45deg]" /></Button>
+                    <GripVertical className="size-4 text-muted-foreground" />
+                    <Button variant="ghost" size="icon" disabled={index === items.length - 1 || pending} onClick={() => moveBanner(banner, 1)} data-testid={`button-banner-down-${banner.id}`}><ArrowUpRight className="size-4 rotate-[135deg]" /></Button>
+                  </div>
+                </div>
+                <div className="sendflow-banner-meta">
+                  <span><CalendarDays className="size-3.5" /> {banner.startsAt ? formatDate(banner.startsAt) : 'Dès maintenant'}</span>
+                  <span><Clock3 className="size-3.5" /> {banner.endsAt ? `Jusqu’au ${formatDate(banner.endsAt)}` : 'Sans date de fin'}</span>
+                  {banner.targetUrl && <span><ExternalLink className="size-3.5" /> {banner.targetUrl}</span>}
+                </div>
+                <div className="sendflow-banner-actions">
+                  <Button variant="outline" size="sm" onClick={() => { setEditingBanner(banner); setEditorOpen(true); }} data-testid={`button-edit-banner-${banner.id}`}><Pencil className="size-3.5" /> Modifier</Button>
+                  <Button variant="outline" size="sm" onClick={() => toggleActive(banner)} disabled={pending} data-testid={`button-toggle-banner-${banner.id}`}><Power className="size-3.5" /> {banner.isActive ? 'Désactiver' : 'Activer'}</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeletingBanner(banner)} data-testid={`button-delete-banner-${banner.id}`}><Trash2 className="size-3.5" /> Supprimer</Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      <BannerEditorDialog open={editorOpen} banner={editingBanner} pending={create.isPending || update.isPending} onOpenChange={setEditorOpen} onSubmit={submitBanner} />
+      <AlertDialog open={Boolean(deletingBanner)} onOpenChange={(open) => { if (!open) setDeletingBanner(undefined); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Supprimer cette bannière&nbsp;?</AlertDialogTitle><AlertDialogDescription>Cette action retire définitivement « {deletingBanner?.title} » des contenus administrés.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel data-testid="button-cancel-delete-banner">Annuler</AlertDialogCancel><AlertDialogAction onClick={() => deletingBanner && remove.mutate({ bannerId: deletingBanner.id })} disabled={remove.isPending} data-testid="button-confirm-delete-banner">Supprimer</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AdminShell>
+  );
+}
+
 export function AdminRouter() {
   const [isUserDetail, userRoute] = useRoute('/admin/users/:userId');
   const [isTransactionDetail, transactionRoute] = useRoute('/admin/transactions/:transactionId');
@@ -1030,6 +1385,7 @@ export function AdminRouter() {
   const [isInternational] = useRoute('/admin/international');
   const [isTransfers] = useRoute('/admin/transfers');
   const [isLoginActivity] = useRoute('/admin/login-activity');
+  const [isBanners] = useRoute('/admin/banners');
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -1039,5 +1395,6 @@ export function AdminRouter() {
   if (isInternational) return <TransactionsPage section="international" />;
   if (isTransfers) return <TransactionsPage section="transfers" />;
   if (isLoginActivity) return <LoginActivityPage />;
+  if (isBanners) return <BannersPage />;
   return <OverviewPage />;
 }

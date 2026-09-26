@@ -271,6 +271,189 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /banners:
+    get:
+      operationId: listPublishedBanners
+      tags: [account]
+      summary: List banners currently visible to customers
+      description: Returns active banners within their optional publication dates, in configured display order.
+      responses:
+        "200":
+          description: Published banners.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicBannerList"
+        "503":
+          description: Banner storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/banners:
+    get:
+      operationId: listAdminBanners
+      tags: [admin]
+      summary: List all banners for administrators
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: All banners, including inactive and scheduled entries.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBannerList"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createAdminBanner
+      tags: [admin]
+      summary: Create a banner
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BannerInput"
+      responses:
+        "201":
+          description: Banner created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBanner"
+        "400":
+          description: Invalid banner data or publication period.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/banners/{bannerId}:
+    parameters:
+      - $ref: "#/components/parameters/AdminBannerId"
+    patch:
+      operationId: updateAdminBanner
+      tags: [admin]
+      summary: Update a banner
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BannerUpdate"
+      responses:
+        "200":
+          description: Banner updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBanner"
+        "400":
+          description: Invalid banner data or publication period.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Banner not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteAdminBanner
+      tags: [admin]
+      summary: Delete a banner
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Banner deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteAdminBannerResult"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Banner not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /admin/login-activity:
     get:
       operationId: listAdminLoginActivity
@@ -835,6 +1018,13 @@ components:
       schema:
         type: string
         format: uuid
+    AdminBannerId:
+      name: bannerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   securitySchemes:
     clerkSession:
       type: http
@@ -1278,6 +1468,169 @@ components:
         - operatingSystem
         - userAgent
         - createdAt
+    PublicBanner:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: string
+          format: uri
+        mobileImageUrl:
+          type: ["string", "null"]
+          format: uri
+        imageAlt:
+          type: string
+        ctaLabel:
+          type: ["string", "null"]
+        targetUrl:
+          type: ["string", "null"]
+        sortOrder:
+          type: integer
+      required: [id, title, description, imageUrl, mobileImageUrl, imageAlt, ctaLabel, targetUrl, sortOrder]
+    AdminBanner:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: string
+          format: uri
+        mobileImageUrl:
+          type: ["string", "null"]
+          format: uri
+        imageAlt:
+          type: string
+        ctaLabel:
+          type: ["string", "null"]
+        targetUrl:
+          type: ["string", "null"]
+        sortOrder:
+          type: integer
+        isActive:
+          type: boolean
+        startsAt:
+          type: ["string", "null"]
+          format: date-time
+        endsAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, title, description, imageUrl, mobileImageUrl, imageAlt, ctaLabel, targetUrl, sortOrder, isActive, startsAt, endsAt, createdAt, updatedAt]
+    PublicBannerList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicBanner"
+      required: [items]
+    AdminBannerList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminBanner"
+      required: [items]
+    BannerInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: string
+          format: uri
+        mobileImageUrl:
+          type: ["string", "null"]
+          format: uri
+        imageAlt:
+          type: string
+          minLength: 1
+          maxLength: 180
+        ctaLabel:
+          type: ["string", "null"]
+          maxLength: 48
+        targetUrl:
+          type: ["string", "null"]
+          description: Internal path or HTTPS destination URL.
+        sortOrder:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+        startsAt:
+          type: ["string", "null"]
+          format: date-time
+        endsAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [title, imageUrl, imageAlt, sortOrder, isActive]
+    BannerUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: string
+          format: uri
+        mobileImageUrl:
+          type: ["string", "null"]
+          format: uri
+        imageAlt:
+          type: string
+          minLength: 1
+          maxLength: 180
+        ctaLabel:
+          type: ["string", "null"]
+          maxLength: 48
+        targetUrl:
+          type: ["string", "null"]
+          description: Internal path or HTTPS destination URL.
+        sortOrder:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+        startsAt:
+          type: ["string", "null"]
+          format: date-time
+        endsAt:
+          type: ["string", "null"]
+          format: date-time
+    DeleteAdminBannerResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        deleted:
+          type: boolean
+      required: [id, deleted]
     AdminTransactionDetail:
       type: object
       properties:

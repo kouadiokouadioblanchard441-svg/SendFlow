@@ -149,6 +149,155 @@ export const GetAdminOverviewResponse = zod.object({
 
 
 /**
+ * Returns active banners within their optional publication dates, in configured display order.
+ * @summary List banners currently visible to customers
+ */
+export const ListPublishedBannersResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "imageUrl": zod.string().url(),
+  "mobileImageUrl": zod.string().url().nullable(),
+  "imageAlt": zod.string(),
+  "ctaLabel": zod.string().nullable(),
+  "targetUrl": zod.string().nullable(),
+  "sortOrder": zod.number().int()
+}))
+})
+
+
+/**
+ * @summary List all banners for administrators
+ */
+export const ListAdminBannersResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "imageUrl": zod.string().url(),
+  "mobileImageUrl": zod.string().url().nullable(),
+  "imageAlt": zod.string(),
+  "ctaLabel": zod.string().nullable(),
+  "targetUrl": zod.string().nullable(),
+  "sortOrder": zod.number().int(),
+  "isActive": zod.boolean(),
+  "startsAt": zod.coerce.date().nullable(),
+  "endsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Create a banner
+ */
+export const createAdminBannerBodyTitleMax = 120;
+
+export const createAdminBannerBodyImageAltMax = 180;
+
+export const createAdminBannerBodyCtaLabelMax = 48;
+
+export const createAdminBannerBodySortOrderMin = 0;
+
+
+
+export const CreateAdminBannerBody = zod.object({
+  "title": zod.string().min(1).max(createAdminBannerBodyTitleMax),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().url(),
+  "mobileImageUrl": zod.string().url().nullish(),
+  "imageAlt": zod.string().min(1).max(createAdminBannerBodyImageAltMax),
+  "ctaLabel": zod.string().max(createAdminBannerBodyCtaLabelMax).nullish(),
+  "targetUrl": zod.string().nullish().describe('Internal path or HTTPS destination URL.'),
+  "sortOrder": zod.number().int().min(createAdminBannerBodySortOrderMin),
+  "isActive": zod.boolean(),
+  "startsAt": zod.coerce.date().nullish(),
+  "endsAt": zod.coerce.date().nullish()
+})
+
+export const CreateAdminBannerResponse = zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "imageUrl": zod.string().url(),
+  "mobileImageUrl": zod.string().url().nullable(),
+  "imageAlt": zod.string(),
+  "ctaLabel": zod.string().nullable(),
+  "targetUrl": zod.string().nullable(),
+  "sortOrder": zod.number().int(),
+  "isActive": zod.boolean(),
+  "startsAt": zod.coerce.date().nullable(),
+  "endsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a banner
+ */
+export const UpdateAdminBannerParams = zod.object({
+  "bannerId": zod.coerce.string().uuid()
+})
+
+export const updateAdminBannerBodyTitleMax = 120;
+
+export const updateAdminBannerBodyImageAltMax = 180;
+
+export const updateAdminBannerBodyCtaLabelMax = 48;
+
+export const updateAdminBannerBodySortOrderMin = 0;
+
+
+
+export const UpdateAdminBannerBody = zod.object({
+  "title": zod.string().min(1).max(updateAdminBannerBodyTitleMax).optional(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().url().optional(),
+  "mobileImageUrl": zod.string().url().nullish(),
+  "imageAlt": zod.string().min(1).max(updateAdminBannerBodyImageAltMax).optional(),
+  "ctaLabel": zod.string().max(updateAdminBannerBodyCtaLabelMax).nullish(),
+  "targetUrl": zod.string().nullish().describe('Internal path or HTTPS destination URL.'),
+  "sortOrder": zod.number().int().min(updateAdminBannerBodySortOrderMin).optional(),
+  "isActive": zod.boolean().optional(),
+  "startsAt": zod.coerce.date().nullish(),
+  "endsAt": zod.coerce.date().nullish()
+})
+
+export const UpdateAdminBannerResponse = zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "imageUrl": zod.string().url(),
+  "mobileImageUrl": zod.string().url().nullable(),
+  "imageAlt": zod.string(),
+  "ctaLabel": zod.string().nullable(),
+  "targetUrl": zod.string().nullable(),
+  "sortOrder": zod.number().int(),
+  "isActive": zod.boolean(),
+  "startsAt": zod.coerce.date().nullable(),
+  "endsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a banner
+ */
+export const DeleteAdminBannerParams = zod.object({
+  "bannerId": zod.coerce.string().uuid()
+})
+
+export const DeleteAdminBannerResponse = zod.object({
+  "id": zod.string().uuid(),
+  "deleted": zod.boolean()
+})
+
+
+/**
  * Returns server-recorded session starts with network and device metadata for an authorized administrator.
  * @summary List authenticated user sessions
  */

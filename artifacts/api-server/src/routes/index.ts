@@ -7,6 +7,7 @@ import identityVerificationRouter from "./identity-verification";
 import adminRouter from "./admin";
 import adminActionsRouter from "./admin-actions";
 import adminLoginActivityRouter from "./admin-login-activity";
+import bannersRouter from "./banners";
 
 const router: IRouter = Router();
 router.use(healthRouter);
@@ -17,4 +18,5 @@ router.use(identityVerificationRouter);
 router.use(adminRouter);
 router.use(adminActionsRouter);
 router.use(adminLoginActivityRouter);
+router.use(bannersRouter);
 export default router;

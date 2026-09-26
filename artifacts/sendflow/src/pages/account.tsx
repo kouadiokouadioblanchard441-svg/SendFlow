@@ -13,11 +13,13 @@ import {
   LockKeyhole,
   Menu,
   LogOut,
+  Radio,
   X,
   UserRound,
   WalletCards,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
+import { useListPublishedBanners, getListPublishedBannersQueryKey } from '@workspace/api-client-react';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { TransactionCard } from '@/components/transaction-card';
 import { transactions } from '@/lib/transactions';
@@ -32,6 +34,17 @@ import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 
 type SheetName = 'notifications' | null;
 const NOTIFICATIONS_READ_KEY = 'sendflow.notifications.read';
+
+function safeBannerDestination(targetUrl: string | null | undefined) {
+  if (!targetUrl) return null;
+  if (targetUrl.startsWith('/') && !targetUrl.startsWith('//')) return targetUrl;
+  try {
+    const url = new URL(targetUrl);
+    return url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
 
 function ActionTile({
   icon,
@@ -66,6 +79,31 @@ export default function AccountPage() {
     window.sessionStorage.getItem(NOTIFICATIONS_READ_KEY) === 'true' ? 0 : notifications.length
   ));
   const [walletVisible, setWalletVisible] = useState(true);
+  const bannersQuery = useListPublishedBanners({ query: { queryKey: getListPublishedBannersQueryKey() } });
+  const publishedBanners = bannersQuery.data?.items ?? [];
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+  const [carouselPaused, setCarouselPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    setActiveBannerIndex((current) => publishedBanners.length ? Math.min(current, publishedBanners.length - 1) : 0);
+  }, [publishedBanners.length]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updateMotionPreference = () => setReducedMotion(mediaQuery.matches);
+    updateMotionPreference();
+    mediaQuery.addEventListener('change', updateMotionPreference);
+    return () => mediaQuery.removeEventListener('change', updateMotionPreference);
+  }, []);
+
+  useEffect(() => {
+    if (carouselPaused || reducedMotion || publishedBanners.length < 2 || bannersQuery.isLoading || bannersQuery.isError) return;
+    const timer = window.setInterval(() => {
+      setActiveBannerIndex((current) => (current + 1) % publishedBanners.length);
+    }, 6500);
+    return () => window.clearInterval(timer);
+  }, [bannersQuery.isError, bannersQuery.isLoading, carouselPaused, publishedBanners.length, reducedMotion]);
 
   useSeo({
     path: '/account',
@@ -187,21 +225,118 @@ export default function AccountPage() {
             <ActionTile icon={<ArrowDownToLine size={44} strokeWidth={2.2} />} label="Dépôt" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/deposit'); }} testId="button-open-deposit" />
           </nav>
 
-          <section className="sendflow-promo-section" aria-label="Offres SendFlow">
-            <div className="sendflow-promo-viewport">
-              <div className="sendflow-promo-track">
-                {[0, 1].map((copy) => (
-                  <button type="button" className={`sendflow-promo-card promo-${copy}`} key={copy} onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/international-transfer'); }} data-testid={`button-promotion-${copy + 1}`}>
-                    <span className="sendflow-promo-orbit" aria-hidden="true"><span /><span /><span /></span>
-                    <span className="sendflow-promo-copy">
-                      <strong>{copy === 0 ? 'Envoyez plus loin.' : 'Un même geste, partout.'}</strong>
-                      <small>{copy === 0 ? 'Les transferts internationaux commencent ici.' : 'Transférez entre réseaux, simplement.'}</small>
-                    </span>
-                    <span className="sendflow-promo-cta">Découvrir <ChevronRight size={16} /></span>
-                  </button>
-                ))}
+          <section className="sendflow-promo-section" aria-label="Actualités SendFlow">
+            {bannersQuery.isLoading && (
+              <div className="sendflow-promo-loading" data-testid="loading-published-banners">
+                <span /><span />
               </div>
-            </div>
+            )}
+            {bannersQuery.isError && (
+              <div className="sendflow-promo-state is-error" data-testid="alert-published-banners">
+                <strong>Les offres ne sont pas disponibles.</strong>
+                <button type="button" onClick={() => void bannersQuery.refetch()} data-testid="button-retry-published-banners">Réessayer</button>
+              </div>
+            )}
+            {!bannersQuery.isLoading && !bannersQuery.isError && publishedBanners.length === 0 && (
+              <div className="sendflow-promo-state" data-testid="empty-published-banners">
+                <span className="sendflow-promo-state-mark" aria-hidden="true"><Radio size={18} /></span>
+                <span><strong>Votre espace SendFlow, au calme.</strong><small>Les nouvelles offres apparaîtront ici.</small></span>
+              </div>
+            )}
+            {!bannersQuery.isLoading && !bannersQuery.isError && publishedBanners.length > 0 && (
+              <div
+                className="sendflow-promo-carousel"
+                role="region"
+                aria-roledescription="carrousel"
+                aria-label="Actualités SendFlow"
+                onMouseEnter={() => setCarouselPaused(true)}
+                onMouseLeave={() => setCarouselPaused(false)}
+                onFocus={() => setCarouselPaused(true)}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setCarouselPaused(false);
+                }}
+                data-testid="carousel-published-banners"
+              >
+                <div className="sendflow-promo-viewport">
+                  <div
+                    className="sendflow-promo-track is-live"
+                    style={{ transform: `translate3d(-${activeBannerIndex * 100}%, 0, 0)` }}
+                    aria-live={carouselPaused ? 'polite' : 'off'}
+                  >
+                  {publishedBanners.map((banner) => {
+                    const destination = safeBannerDestination(banner.targetUrl);
+                    const isActive = publishedBanners[activeBannerIndex]?.id === banner.id;
+                    return (
+                      <button
+                        type="button"
+                        className={`sendflow-promo-card${isActive ? ' is-active' : ''}`}
+                        key={banner.id}
+                        onClick={() => {
+                          if (!destination) return;
+                          setMenuOpen(false);
+                          setSheet(null);
+                          if (destination.startsWith('/')) setLocation(destination);
+                          else window.location.assign(destination);
+                        }}
+                        disabled={!destination}
+                        aria-hidden={!isActive}
+                        tabIndex={isActive ? 0 : -1}
+                        aria-label={`${banner.title}${banner.ctaLabel ? ` · ${banner.ctaLabel}` : ''}`}
+                        data-testid={`button-published-banner-${banner.id}`}
+                      >
+                        <picture className="sendflow-promo-image">
+                          {banner.mobileImageUrl && <source media="(max-width: 520px)" srcSet={banner.mobileImageUrl} />}
+                          <img src={banner.imageUrl} alt={banner.imageAlt} />
+                        </picture>
+                        <span className="sendflow-promo-overlay" />
+                        <span className="sendflow-promo-copy">
+                          <strong>{banner.title}</strong>
+                          {banner.description && <small>{banner.description}</small>}
+                        </span>
+                        {banner.ctaLabel && <span className="sendflow-promo-cta">{banner.ctaLabel} <ChevronRight size={16} /></span>}
+                      </button>
+                    );
+                  })}
+                  </div>
+                </div>
+                {publishedBanners.length > 1 && (
+                  <div className="sendflow-promo-controls">
+                    <button
+                      type="button"
+                      className="sendflow-promo-arrow"
+                      onClick={() => setActiveBannerIndex((current) => (current - 1 + publishedBanners.length) % publishedBanners.length)}
+                      aria-label="Bannière précédente"
+                      data-testid="button-previous-published-banner"
+                    >
+                      <ChevronRight size={18} className="rotate-180" />
+                    </button>
+                    <div className="sendflow-promo-dots" role="tablist" aria-label="Choisir une bannière">
+                      {publishedBanners.map((banner, index) => (
+                        <button
+                          key={banner.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={index === activeBannerIndex}
+                          aria-label={`Afficher la bannière ${index + 1} sur ${publishedBanners.length}`}
+                          className={`sendflow-promo-dot${index === activeBannerIndex ? ' is-active' : ''}`}
+                          onClick={() => setActiveBannerIndex(index)}
+                          data-testid={`button-published-banner-slide-${banner.id}`}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="sendflow-promo-arrow"
+                      onClick={() => setActiveBannerIndex((current) => (current + 1) % publishedBanners.length)}
+                      aria-label="Bannière suivante"
+                      data-testid="button-next-published-banner"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           <section className="sendflow-transactions" id="transactions" aria-labelledby="transactions-title">

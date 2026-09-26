@@ -1,6 +1,7 @@
 export { db, pool } from "./client";
 export {
   and,
+  asc,
   count,
   desc,
   eq,

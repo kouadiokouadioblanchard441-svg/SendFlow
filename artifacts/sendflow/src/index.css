@@ -4424,6 +4424,413 @@
 .sendflow-transfer-contact-notice { margin: 17px 0 0; border-radius: 10px; background: #f8f5fd; color: #6f637d; padding: 11px 12px; font-size: 12px; line-height: 1.45; }
 
 @keyframes sendflow-promo-scroll { 0%, 40% { transform: translateX(0); } 50%, 90% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+/* Published customer campaigns and the banner operations desk. */
+.sendflow-promo-carousel {
+  position: relative;
+}
+.sendflow-promo-track.is-live {
+  animation: none;
+  display: flex;
+  width: 100%;
+  transform: none;
+  transition: transform .52s cubic-bezier(.22, 1, .36, 1);
+}
+.sendflow-promo-track.is-live .sendflow-promo-card {
+  width: 100%;
+  flex: 0 0 100%;
+}
+.sendflow-promo-track.is-live .sendflow-promo-card:not(.is-active) {
+  pointer-events: none;
+}
+.sendflow-promo-track.is-live .sendflow-promo-card {
+  min-height: clamp(190px, 42vw, 270px);
+}
+.sendflow-promo-controls {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  left: 16px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+.sendflow-promo-arrow,
+.sendflow-promo-dot {
+  pointer-events: auto;
+}
+.sendflow-promo-arrow {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .36);
+  border-radius: 50%;
+  background: rgba(38, 24, 72, .55);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color .18s ease, transform .18s ease;
+}
+.sendflow-promo-arrow:hover,
+.sendflow-promo-arrow:focus-visible {
+  background: rgba(38, 24, 72, .8);
+  outline: 0;
+  transform: translateY(-1px);
+}
+.sendflow-promo-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.sendflow-promo-dot {
+  width: 7px;
+  height: 7px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .55);
+  cursor: pointer;
+  padding: 0;
+  transition: width .18s ease, background-color .18s ease;
+}
+.sendflow-promo-dot.is-active {
+  width: 22px;
+  background: #fff;
+}
+.sendflow-promo-arrow:focus-visible,
+.sendflow-promo-dot:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .45);
+  outline: 0;
+}
+.sendflow-promo-card:disabled {
+  cursor: default;
+  opacity: .88;
+}
+.sendflow-promo-image,
+.sendflow-promo-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.sendflow-promo-image img {
+  object-fit: cover;
+  object-position: center;
+}
+.sendflow-promo-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgba(30, 17, 59, .88) 0%, rgba(30, 17, 59, .46) 54%, rgba(30, 17, 59, .08) 100%);
+}
+.sendflow-promo-card .sendflow-promo-copy,
+.sendflow-promo-card .sendflow-promo-cta {
+  z-index: 1;
+}
+.sendflow-promo-card .sendflow-promo-copy {
+  padding-bottom: 26px;
+}
+.sendflow-promo-loading {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+}
+.sendflow-promo-loading span {
+  display: block;
+  width: 100%;
+  min-height: 200px;
+  flex: 0 0 100%;
+  border-radius: 14px;
+  background: linear-gradient(100deg, #ede7f6 20%, #f8f4fc 42%, #ede7f6 64%);
+  background-size: 200% 100%;
+  animation: sendflow-banner-shimmer 1.4s ease-in-out infinite;
+}
+.sendflow-promo-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 110px;
+  border: 1px solid #e4dced;
+  border-radius: 14px;
+  background: #fbf9fe;
+  color: #4b3b63;
+  padding: 18px;
+}
+.sendflow-promo-state-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: 11px;
+  background: #ede5fb;
+  color: #6d35d8;
+}
+.sendflow-promo-state strong,
+.sendflow-promo-state small {
+  display: block;
+}
+.sendflow-promo-state small {
+  margin-top: 4px;
+  color: #847b8e;
+  font-size: 12px;
+}
+.sendflow-promo-state.is-error {
+  justify-content: space-between;
+  color: #8d3d48;
+}
+.sendflow-promo-state button {
+  border: 0;
+  border-radius: 999px;
+  background: #6d35d8;
+  color: #fff;
+  padding: 8px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+@keyframes sendflow-banner-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@media (max-width: 520px) {
+  .sendflow-promo-track.is-live .sendflow-promo-card {
+    min-height: clamp(190px, 61vw, 235px);
+    padding: 18px;
+  }
+  .sendflow-promo-card .sendflow-promo-copy {
+    max-width: 76%;
+    padding-bottom: 25px;
+  }
+  .sendflow-promo-copy strong { font-size: clamp(20px, 6.5vw, 27px); }
+  .sendflow-promo-copy small { font-size: 11px; }
+  .sendflow-promo-cta { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sendflow-promo-track.is-live,
+  .sendflow-promo-arrow,
+  .sendflow-promo-dot {
+    transition: none;
+  }
+}
+.sendflow-banner-intro {
+  align-items: center;
+}
+.sendflow-banner-intro > button {
+  flex: 0 0 auto;
+  gap: 8px;
+  background: var(--admin-violet);
+  box-shadow: 0 10px 24px rgba(109, 53, 216, .18);
+}
+.sendflow-banner-intro > button:hover {
+  background: var(--admin-violet-deep);
+}
+.sendflow-banner-list {
+  display: grid;
+  gap: 14px;
+}
+.sendflow-banner-admin-card {
+  display: grid;
+  grid-template-columns: minmax(190px, 27%) 1fr;
+  overflow: hidden;
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  box-shadow: 0 8px 24px rgba(63,45,82,.045);
+}
+.sendflow-banner-thumb {
+  position: relative;
+  min-height: 210px;
+  overflow: hidden;
+  background: #e9e0f2;
+}
+.sendflow-banner-thumb img {
+  width: 100%;
+  height: 100%;
+  min-height: 210px;
+  object-fit: cover;
+}
+.sendflow-banner-status {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.sendflow-banner-status.is-active {
+  background: #e5f5eb;
+  color: #27704d;
+}
+.sendflow-banner-status.is-inactive {
+  background: #f2edf3;
+  color: #786f7d;
+}
+.sendflow-banner-admin-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+}
+.sendflow-banner-admin-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+}
+.sendflow-banner-admin-heading h3 {
+  margin: 3px 0 5px;
+  color: var(--admin-ink);
+  font-size: 18px;
+  letter-spacing: -.035em;
+}
+.sendflow-banner-admin-heading p:not(.sendflow-banner-order) {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+.sendflow-banner-order {
+  margin: 0;
+  color: var(--admin-violet);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.sendflow-banner-reorder {
+  display: inline-flex;
+  height: fit-content;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--admin-line);
+  border-radius: 10px;
+  padding: 2px;
+}
+.sendflow-banner-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 18px;
+  color: var(--admin-muted);
+  font-size: 11px;
+}
+.sendflow-banner-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sendflow-banner-meta svg { color: var(--admin-violet); }
+.sendflow-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sendflow-banner-actions button { gap: 6px; }
+.sendflow-banner-feedback {
+  margin: -8px 0 18px;
+  border-color: #cce7d8;
+  background: #f0faf4;
+  color: #28714e;
+}
+.sendflow-banner-dialog {
+  max-width: 720px;
+  border-color: var(--admin-line);
+  background: #fffdfd;
+}
+.sendflow-banner-dialog .text-muted-foreground {
+  color: var(--admin-muted);
+}
+.sendflow-banner-upload-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border: 1px solid #ead8b2;
+  border-radius: 11px;
+  background: #fff8e9;
+  color: #76561e;
+  padding: 11px 12px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.sendflow-banner-upload-notice svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #b07b1c;
+}
+.sendflow-banner-upload-notice strong {
+  font-weight: 800;
+}
+.sendflow-banner-form {
+  display: grid;
+  gap: 16px;
+}
+.sendflow-banner-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.sendflow-banner-form label {
+  color: var(--admin-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.sendflow-banner-form input,
+.sendflow-banner-form textarea {
+  background: #fbf9fc;
+  font-size: 13px;
+}
+.sendflow-banner-form-options {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+.sendflow-banner-switch-row {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex: 1;
+  border: 1px solid var(--admin-line);
+  border-radius: 11px;
+  background: #fbf9fc;
+  padding: 10px 12px;
+}
+.sendflow-banner-switch-row p {
+  margin: 3px 0 0;
+  color: var(--admin-muted);
+  font-size: 11px;
+}
+.sendflow-banner-form [role='switch'] {
+  background: #cbc3d1;
+}
+.sendflow-banner-form [role='switch'][data-state='checked'] {
+  background: var(--admin-violet);
+}
+@media (max-width: 760px) {
+  .sendflow-banner-admin-card { grid-template-columns: 1fr; }
+  .sendflow-banner-thumb,
+  .sendflow-banner-thumb img { min-height: 170px; max-height: 220px; }
+  .sendflow-banner-intro { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 540px) {
+  .sendflow-banner-form-grid { grid-template-columns: 1fr; }
+  .sendflow-banner-form-options { align-items: stretch; flex-direction: column; }
+  .sendflow-banner-switch-row { flex: none; }
+  .sendflow-banner-dialog { width: calc(100% - 24px); padding: 20px; }
+  .sendflow-banner-actions button { flex: 1; }
+  .sendflow-banner-admin-heading { gap: 8px; flex-direction: column; }
+  .sendflow-banner-reorder { align-self: flex-start; }
+}
 @keyframes sendflow-panel-enter { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes sendflow-panel-enter-right { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes sendflow-sheet-enter { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
