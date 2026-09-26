@@ -167,10 +167,6 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <p className="sendflow-pricing-footnote" data-testid="text-pricing-footnote">
-          Les frais affichés sont temporaires et sont présentés avant chaque confirmation.
-        </p>
-
         <figure className="sendflow-pricing-illustration" aria-label="Illustration des tarifs SendFlow">
           <img src={pricingIllustration} alt="Illustration 3D SendFlow représentant les tarifs et les transferts" />
         </figure>
