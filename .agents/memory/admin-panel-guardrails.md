@@ -69,6 +69,12 @@ The admin console must use real icon components or approved image assets for fin
 
 **How to apply:** Prefer Lucide icons for generic concepts, use only approved operator assets when available, and use a clearly generic icon for operators without an approved logo.
 
+The phone-first customer sign-in screen is a local demo flow and does not establish the Clerk identity required by admin API routes. Do not send an administrator's 401 state to that screen as if it could grant panel access.
+
+**Why:** Customer UI session flags and demo credentials are not an administrator authorization boundary.
+
+**How to apply:** Keep admin APIs deny-by-default; only add an admin sign-in action when it uses the same real identity provider and preserves server-side admin authorization.
+
 The login-activity view records one event per Clerk session when the authenticated account endpoint is called. It stores the server-observed IP and user-agent-derived device/browser/OS, but leaves location blank until a proxy contract is verified.
 
 **Why:** IP geolocation is personal-data processing, and client-supplied headers can be forged unless a trusted proxy strips or overwrites them. A guessed city is worse than an honest unknown.

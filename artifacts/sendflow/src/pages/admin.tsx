@@ -15,6 +15,7 @@ import {
   CircleAlert,
   CircleX,
   Clock3,
+  Database,
   ExternalLink,
   FileSearch,
   Globe2,
@@ -164,18 +165,31 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'operator-pricing': { title: 'Opérateurs et tarifs', eyebrow: 'Catalogue client' },
 };
 
-const navItems: Array<{ href: string; label: string; section: AdminSection; icon: typeof LayoutDashboard }> = [
-  { href: '/admin', label: 'Vue d’ensemble', section: 'overview', icon: LayoutDashboard },
-  { href: '/admin/transactions', label: 'Transactions', section: 'transactions', icon: ArrowLeftRight },
-  { href: '/admin/users', label: 'Utilisateurs', section: 'users', icon: Users },
-  { href: '/admin/deposits', label: 'Dépôts', section: 'deposits', icon: ArrowDownToLine },
-  { href: '/admin/international', label: 'International', section: 'international', icon: Globe2 },
-  { href: '/admin/transfers', label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
-  { href: '/admin/login-activity', label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
-  { href: '/admin/banners', label: 'Bannières client', section: 'banners', icon: Radio },
-  { href: '/admin/otp-policies', label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
-  { href: '/admin/aggregators', label: 'Agrégateurs', section: 'aggregators', icon: Network },
-  { href: '/admin/operator-pricing', label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
+const navGroups: Array<{
+  label: string;
+  items: Array<{ href: string; label: string; section: AdminSection; icon: typeof LayoutDashboard }>;
+}> = [
+  {
+    label: 'Surveillance',
+    items: [
+      { href: '/admin', label: 'Vue d’ensemble', section: 'overview', icon: LayoutDashboard },
+      { href: '/admin/transactions', label: 'Transactions', section: 'transactions', icon: ArrowLeftRight },
+      { href: '/admin/users', label: 'Utilisateurs', section: 'users', icon: Users },
+      { href: '/admin/deposits', label: 'Dépôts', section: 'deposits', icon: ArrowDownToLine },
+      { href: '/admin/international', label: 'International', section: 'international', icon: Globe2 },
+      { href: '/admin/transfers', label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
+      { href: '/admin/login-activity', label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
+    ],
+  },
+  {
+    label: 'Configuration',
+    items: [
+      { href: '/admin/banners', label: 'Bannières client', section: 'banners', icon: Radio },
+      { href: '/admin/otp-policies', label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
+      { href: '/admin/aggregators', label: 'Agrégateurs', section: 'aggregators', icon: Network },
+      { href: '/admin/operator-pricing', label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
+    ],
+  },
 ];
 
 function formatMoney(minor: number | undefined, currency = 'XOF') {
@@ -225,7 +239,7 @@ function QueryState({ error, onRetry }: { error: unknown; onRetry: () => void })
           : 'Impossible de charger ces données';
   const description =
     status === 401
-      ? 'Connectez-vous avec un compte autorisé pour consulter cet espace.'
+      ? 'Cette session ne correspond pas à un compte administrateur autorisé. Vérifiez l’identité utilisée, puis réessayez.'
       : status === 403
         ? 'Votre compte est authentifié mais ne dispose pas des droits nécessaires.'
         : status === 409
@@ -359,7 +373,7 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
             <span className="sendflow-admin-brand-mark">
               <img src={sendflowMark} alt="SendFlow" />
             </span>
-            <span><strong>sendflow</strong><small>ADMIN CONSOLE</small></span>
+              <span><strong>sendflow</strong><small>ADMINISTRATION</small></span>
           </Link>
           <div className="sendflow-admin-status" data-testid="status-admin-readonly">
             <ShieldCheck className="size-3.5" aria-hidden="true" />
@@ -367,26 +381,28 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
           </div>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Surveillance</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={item.section === section} size="lg">
-                        <Link href={item.href} data-testid={`link-admin-${item.section}`}>
-                          <Icon className="size-[17px]" />
-                          <span>{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {navGroups.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton asChild isActive={item.section === section} size="lg">
+                          <Link href={item.href} data-testid={`link-admin-${item.section}`}>
+                            <Icon className="size-[17px]" />
+                            <span>{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
           <SidebarGroup className="mt-auto">
             <SidebarGroupLabel>Accès</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -398,8 +414,8 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="sendflow-admin-sidebar-footer">
-          <span>SendFlow Operations</span>
-          <span>v1.0 · West Africa</span>
+          <span>Opérations SendFlow</span>
+          <span>Afrique de l’Ouest</span>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="sendflow-admin-main">
@@ -412,7 +428,7 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
             </div>
           </div>
           <div className="sendflow-admin-topbar-right">
-            <span className="sendflow-admin-live-indicator"><Radio className="size-3.5" aria-hidden="true" /> Données en direct</span>
+            <span className="sendflow-admin-data-source"><Database className="size-3.5" aria-hidden="true" /> Données du serveur</span>
             <span className="sendflow-admin-protected"><ShieldCheck className="size-3.5" /> Protégé</span>
           </div>
         </header>
@@ -438,12 +454,12 @@ function DateRange({
       <CalendarDays className="size-4 text-muted-foreground" />
       <div>
         <Label htmlFor="admin-from">Du</Label>
-        <Input id="admin-from" type="date" value={from} onChange={(event) => setFrom(event.target.value)} data-testid="input-admin-date-from" />
+        <Input id="admin-from" type="date" max={to || undefined} value={from} onChange={(event) => setFrom(event.target.value)} data-testid="input-admin-date-from" />
       </div>
       <span className="sendflow-admin-date-separator">→</span>
       <div>
         <Label htmlFor="admin-to">Au</Label>
-        <Input id="admin-to" type="date" value={to} onChange={(event) => setTo(event.target.value)} data-testid="input-admin-date-to" />
+        <Input id="admin-to" type="date" min={from || undefined} value={to} onChange={(event) => setTo(event.target.value)} data-testid="input-admin-date-to" />
       </div>
     </div>
   );

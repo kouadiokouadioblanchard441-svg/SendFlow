@@ -75,6 +75,7 @@ function getMutationError(error: unknown): string {
 export default function AdminOperatorPricingPage() {
   const queryClient = useQueryClient();
   const query = useGetAdminOperatorPricing();
+  const queryErrorStatus = getErrorStatus(query.error);
   const createMutation = useCreateAdminOperator();
   const operatorMutation = useUpdateAdminOperator();
   const ratesMutation = useUpdateAdminOperatorPricing();
@@ -280,9 +281,21 @@ export default function AdminOperatorPricingPage() {
       {query.isError && (
         <Alert variant="destructive" data-testid="alert-admin-operator-pricing-load-error">
           <CircleAlert className="size-4" />
-          <AlertTitle>Catalogue indisponible</AlertTitle>
+          <AlertTitle>
+            {queryErrorStatus === 401
+              ? 'Session administrateur requise'
+              : queryErrorStatus === 403
+                ? 'Accès refusé'
+                : 'Catalogue indisponible'}
+          </AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>Impossible de charger les opérateurs et les tarifs persistés.</span>
+            <span>
+              {queryErrorStatus === 401
+                ? 'Cette session ne correspond pas à un compte administrateur autorisé. Vérifiez l’identité utilisée, puis réessayez.'
+                : queryErrorStatus === 403
+                  ? 'Votre compte ne peut pas consulter le catalogue des opérateurs et des tarifs.'
+                  : 'Impossible de charger les opérateurs et les tarifs persistés.'}
+            </span>
             <Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>
               Réessayer
             </Button>
