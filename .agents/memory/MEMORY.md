@@ -11,3 +11,4 @@
 - [Production Neon database](neon-production-database.md) — All app environments use Neon by choice; treat previews as live and gate schema changes explicitly.
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle pushes against shared Neon](drizzle-scoped-pushes.md) — Narrow schema snapshots can trigger unrelated type/table diffs; stop on drift instead of forcing a production push.
+- [eSMS Verify balance requirement](esms-verify-balance.md) — Test-prefixed keys still need available Verify credit; a start request can fail with HTTP 402.
