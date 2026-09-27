@@ -9,6 +9,7 @@ export {
   ilike,
   inArray,
   isNull,
+  lt,
   lte,
   or,
   sql,

@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
-import { accountLimitProvider, formatAccountLimitAmount, temporaryAccountLimits } from '@/lib/account-limit';
+import type { AccountLimitResult } from '@workspace/api-client-react';
+import { formatAccountLimitAmount } from '@/lib/account-limit';
 import { useSeo } from '@/lib/seo';
 import limitVerificationIllustration from '@assets/generated_images/sendflow-account-limit-verification-3d-transparent.png';
 
 export default function AccountLimitPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const accountLimit = useMemo(() => accountLimitProvider.getAccountLimit(), []);
-  const [verificationStatus, setVerificationStatus] = useState(accountLimit.status);
+  const [accountLimit, setAccountLimit] = useState<AccountLimitResult | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<AccountLimitResult['status']>('unverified');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
@@ -18,8 +19,9 @@ export default function AccountLimitPage() {
   const isFailed = verificationStatus === 'failed';
   const isReview = verificationStatus === 'review';
   const canStartVerification = verificationStatus === 'unverified' || isFailed;
-  const displayedAccountLimit = verificationStatus === 'verified' ? temporaryAccountLimits.verified : accountLimit;
-  const progress = Math.min(100, Math.max(0, (displayedAccountLimit.sentAmount / displayedAccountLimit.monthlyLimit) * 100));
+  const progress = accountLimit
+    ? Math.min(100, Math.max(0, (accountLimit.sentAmount / accountLimit.monthlyLimit) * 100))
+    : 0;
 
   useSeo({
     path: '/account-limit',
@@ -40,9 +42,9 @@ export default function AccountLimitPage() {
 
     let cancelled = false;
     setIsLoading(true);
-    fetch('/api/me/identity-verification', { credentials: 'include' })
+    fetch('/api/me/account-limit', { credentials: 'include' })
       .then(async (response) => {
-        const body = await response.json().catch(() => null) as { error?: string; status?: typeof verificationStatus } | null;
+        const body = await response.json().catch(() => null) as (AccountLimitResult & { error?: string }) | null;
         if (!response.ok) {
           throw new Error(
             response.status === 401
@@ -54,7 +56,8 @@ export default function AccountLimitPage() {
       })
       .then((body) => {
         if (cancelled || !body) return;
-        if (body.status) setVerificationStatus(body.status);
+        setAccountLimit(body);
+        setVerificationStatus(body.status);
         setStatusMessage(null);
       })
       .catch((error: unknown) => {
@@ -134,22 +137,24 @@ export default function AccountLimitPage() {
             aria-label={isVerified ? 'Progression de la limite mensuelle' : undefined}
           >
             {!isVerified && <h3 id="monthly-limit-title">Limite mensuelle</h3>}
-            <div
-              className="sendflow-account-limit-progress"
-              role="progressbar"
-              aria-label="Montant envoyé sur le plafond mensuel"
-              aria-valuemin={0}
-              aria-valuemax={displayedAccountLimit.monthlyLimit}
-              aria-valuenow={displayedAccountLimit.sentAmount}
-              data-testid="progress-account-monthly-limit"
-            >
-              <span style={{ width: `${progress}%` }} />
-            </div>
-            {!isVerified && (
+            {accountLimit && (
+              <>
+                <div
+                  className="sendflow-account-limit-progress"
+                  role="progressbar"
+                  aria-label="Montant comptabilisé sur le plafond mensuel"
+                  aria-valuemin={0}
+                  aria-valuemax={accountLimit.monthlyLimit}
+                  aria-valuenow={accountLimit.sentAmount}
+                  data-testid="progress-account-monthly-limit"
+                >
+                  <span style={{ width: `${progress}%` }} />
+                </div>
               <p className="sendflow-account-limit-values" data-testid="text-account-limit-values">
-                <span>{formatAccountLimitAmount(displayedAccountLimit.sentAmount)} {displayedAccountLimit.currency} envoyé</span>
-                <strong>/ {formatAccountLimitAmount(displayedAccountLimit.monthlyLimit)} {displayedAccountLimit.currency} total</strong>
+                  <span>{formatAccountLimitAmount(accountLimit.sentAmount)} FCFA pris en compte</span>
+                  <strong>/ {formatAccountLimitAmount(accountLimit.monthlyLimit)} FCFA total</strong>
               </p>
+              </>
             )}
           </section>
 

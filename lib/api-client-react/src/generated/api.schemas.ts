@@ -100,6 +100,26 @@ export interface IdentityVerificationStatusResult {
   sandboxScenario: string | null;
 }
 
+export type AccountLimitResultCurrency = typeof AccountLimitResultCurrency[keyof typeof AccountLimitResultCurrency];
+
+
+export const AccountLimitResultCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface AccountLimitResult {
+  status: IdentityVerificationStatus;
+  currency: AccountLimitResultCurrency;
+  /** @minimum 1 */
+  monthlyLimit: number;
+  /** @minimum 0 */
+  sentAmount: number;
+  /** @minimum 0 */
+  remainingAmount: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
 export interface AdminPeriod {
   /** @nullable */
   from: string | null;

@@ -54,6 +54,28 @@ export const GetCurrentAccountResponse = zod.object({
 
 
 /**
+ * Returns the server-calculated monthly limit and the user's pending or successful outgoing transfer usage for the current calendar month.
+ * @summary Get the authenticated account's monthly transfer limit
+ */
+
+export const getCurrentAccountLimitResponseSentAmountMin = 0;
+
+export const getCurrentAccountLimitResponseRemainingAmountMin = 0;
+
+
+
+export const GetCurrentAccountLimitResponse = zod.object({
+  "status": zod.enum(['unverified', 'pending', 'review', 'verified', 'failed']),
+  "currency": zod.enum(['XOF']),
+  "monthlyLimit": zod.number().int().min(1),
+  "sentAmount": zod.number().int().min(getCurrentAccountLimitResponseSentAmountMin),
+  "remainingAmount": zod.number().int().min(getCurrentAccountLimitResponseRemainingAmountMin),
+  "periodStart": zod.coerce.date(),
+  "periodEnd": zod.coerce.date()
+})
+
+
+/**
  * @summary Get the current identity verification status
  */
 export const GetIdentityVerificationStatusResponse = zod.object({

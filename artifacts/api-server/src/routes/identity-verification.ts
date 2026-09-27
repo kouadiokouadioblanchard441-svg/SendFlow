@@ -5,12 +5,17 @@ import {
   desc,
   db,
   eq,
+  gte,
   inArray,
   identityVerificationsTable,
   identityWebhookEventsTable,
+  lt,
+  sql,
+  transactionsTable,
   usersTable,
 } from "@workspace/db";
 import {
+  GetCurrentAccountLimitResponse,
   CreateIdentityVerificationSessionBody,
   CreateIdentityVerificationSessionResponse,
   GetIdentityVerificationStatusResponse,
@@ -61,6 +66,65 @@ function statusRank(status: string) {
   if (["In Progress", "Awaiting User", "Resubmitted"].includes(status)) return 20;
   return 0;
 }
+
+router.get("/me/account-limit", async (req, res): Promise<void> => {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  try {
+    const [verification] = await db
+      .select({ status: identityVerificationsTable.status })
+      .from(identityVerificationsTable)
+      .where(eq(identityVerificationsTable.userId, userId))
+      .orderBy(desc(identityVerificationsTable.createdAt))
+      .limit(1);
+
+    const status = verification ? currentStatus(verification.status) : "unverified";
+    const monthlyLimit = status === "verified" ? 10_000_000 : 150_000;
+    const now = new Date();
+    const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+
+    const [usage] = await db
+      .select({
+        sentAmount: sql<unknown>`coalesce(sum(${transactionsTable.amountMinor}), 0)`,
+      })
+      .from(transactionsTable)
+      .where(
+        and(
+          eq(transactionsTable.userId, userId),
+          eq(transactionsTable.currency, "XOF"),
+          inArray(transactionsTable.kind, ["inter-network", "international"]),
+          inArray(transactionsTable.status, ["pending", "succeeded"]),
+          gte(transactionsTable.createdAt, periodStart),
+          lt(transactionsTable.createdAt, periodEnd),
+        ),
+      );
+
+    const sentAmount = Number(usage?.sentAmount ?? 0);
+    if (!Number.isSafeInteger(sentAmount) || sentAmount < 0) {
+      throw new Error("Account limit usage is outside the safe integer range");
+    }
+
+    res.json(
+      GetCurrentAccountLimitResponse.parse({
+        status,
+        currency: "XOF",
+        monthlyLimit,
+        sentAmount,
+        remainingAmount: Math.max(0, monthlyLimit - sentAmount),
+        periodStart,
+        periodEnd,
+      }),
+    );
+  } catch (error) {
+    req.log.error({ err: error, userId }, "Account limit lookup failed");
+    res.status(503).json({ error: "Account limit data unavailable" });
+  }
+});
 
 router.get("/me/identity-verification", async (req, res): Promise<void> => {
   const { userId } = getAuth(req);

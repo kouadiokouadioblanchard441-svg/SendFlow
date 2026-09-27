@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AccountLimitResult,
   AdminActionResult,
   AdminBanner,
   AdminBannerList,
@@ -393,6 +394,84 @@ export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurren
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetCurrentAccountQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCurrentAccountLimitUrl = () => {
+
+
+
+
+  return `/api/me/account-limit`
+}
+
+/**
+ * Returns the server-calculated monthly limit and the user's pending or successful outgoing transfer usage for the current calendar month.
+ * @summary Get the authenticated account's monthly transfer limit
+ */
+export const getCurrentAccountLimit = async ( options?: Parameters<typeof customFetch>[1]): Promise<AccountLimitResult> => {
+
+  return customFetch<AccountLimitResult>(getGetCurrentAccountLimitUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentAccountLimitQueryKey = () => {
+    return [
+    `/api/me/account-limit`
+    ] as const;
+    }
+
+
+export const getGetCurrentAccountLimitQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentAccountLimit>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccountLimit>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentAccountLimitQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentAccountLimit>>> = ({ signal }) => getCurrentAccountLimit({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccountLimit>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentAccountLimitQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentAccountLimit>>>
+export type GetCurrentAccountLimitQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get the authenticated account's monthly transfer limit
+ */
+
+export function useGetCurrentAccountLimit<TData = Awaited<ReturnType<typeof getCurrentAccountLimit>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccountLimit>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentAccountLimitQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

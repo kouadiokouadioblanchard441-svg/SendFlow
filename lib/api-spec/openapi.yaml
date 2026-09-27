@@ -111,6 +111,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/account-limit:
+    get:
+      operationId: getCurrentAccountLimit
+      tags: [account]
+      summary: Get the authenticated account's monthly transfer limit
+      description: Returns the server-calculated monthly limit and the user's pending or successful outgoing transfer usage for the current calendar month.
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Current monthly account limit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountLimitResult"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Account limit data is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /me/identity-verification:
     get:
       operationId: getIdentityVerificationStatus
@@ -1710,6 +1737,30 @@ components:
         sandboxScenario:
           type: ["string", "null"]
       required: [status, diditStatus, sessionId, verificationUrl, sandboxScenario]
+    AccountLimitResult:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/IdentityVerificationStatus"
+        currency:
+          type: string
+          enum: [XOF]
+        monthlyLimit:
+          type: integer
+          minimum: 1
+        sentAmount:
+          type: integer
+          minimum: 0
+        remainingAmount:
+          type: integer
+          minimum: 0
+        periodStart:
+          type: string
+          format: date-time
+        periodEnd:
+          type: string
+          format: date-time
+      required: [status, currency, monthlyLimit, sentAmount, remainingAmount, periodStart, periodEnd]
     AdminPeriod:
       type: object
       properties:
