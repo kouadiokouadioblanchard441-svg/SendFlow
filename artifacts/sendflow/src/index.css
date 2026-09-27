@@ -2666,6 +2666,14 @@
   background: #e4e4e4;
 }
 
+.sendflow-account-limit-period {
+  margin: 0 0 12px;
+  color: #81788e;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
 .sendflow-account-limit-progress span {
   display: block;
   height: 100%;
@@ -2690,6 +2698,23 @@
 .sendflow-account-limit-values strong {
   color: #181818;
   font-weight: 600;
+}
+
+.sendflow-account-limit-remaining {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 0;
+  color: #81788e;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.sendflow-account-limit-remaining strong {
+  color: #198b50;
+  font-weight: 650;
+  text-align: right;
 }
 
 .sendflow-account-limit-explanation {

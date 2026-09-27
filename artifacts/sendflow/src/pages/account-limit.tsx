@@ -19,6 +19,10 @@ export default function AccountLimitPage() {
   const isFailed = verificationStatus === 'failed';
   const isReview = verificationStatus === 'review';
   const canStartVerification = verificationStatus === 'unverified' || isFailed;
+  const periodLabel = accountLimit
+    ? new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+        .format(new Date(accountLimit.periodStart))
+    : null;
   const progress = accountLimit
     ? Math.min(100, Math.max(0, (accountLimit.sentAmount / accountLimit.monthlyLimit) * 100))
     : 0;
@@ -139,6 +143,9 @@ export default function AccountLimitPage() {
             {!isVerified && <h3 id="monthly-limit-title">Limite mensuelle</h3>}
             {accountLimit && (
               <>
+                <p className="sendflow-account-limit-period" data-testid="text-account-limit-period">
+                  {periodLabel}
+                </p>
                 <div
                   className="sendflow-account-limit-progress"
                   role="progressbar"
@@ -153,6 +160,10 @@ export default function AccountLimitPage() {
               <p className="sendflow-account-limit-values" data-testid="text-account-limit-values">
                   <span>{formatAccountLimitAmount(accountLimit.sentAmount)} FCFA pris en compte</span>
                   <strong>/ {formatAccountLimitAmount(accountLimit.monthlyLimit)} FCFA total</strong>
+              </p>
+              <p className="sendflow-account-limit-remaining" data-testid="text-account-limit-remaining">
+                <span>Restant ce mois-ci</span>
+                <strong>{formatAccountLimitAmount(accountLimit.remainingAmount)} FCFA</strong>
               </p>
               </>
             )}
