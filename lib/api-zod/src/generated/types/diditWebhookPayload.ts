@@ -7,8 +7,20 @@
  */
 
 export interface DiditWebhookPayload {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
   event_id: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
   session_id: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
   webhook_type: string;
   status: string;
 }

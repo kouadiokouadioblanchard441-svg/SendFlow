@@ -36,7 +36,7 @@ const router: IRouter = Router();
 
 function isTrustedOrigin(req: Request) {
   const origin = req.get("origin");
-  if (!origin) return true;
+  if (!origin) return false;
 
   const configuredOrigins = [
     process.env.CORS_ALLOWED_ORIGINS,
@@ -59,6 +59,12 @@ function currentStatus(status: string): "unverified" | "pending" | "verified" | 
   return "pending";
 }
 
+function inactiveAccountMessage(status: "active" | "suspended" | "deleted" | undefined) {
+  if (status === "suspended") return "Account suspended";
+  if (status === "deleted") return "Account deleted";
+  return null;
+}
+
 function statusRank(status: string) {
   if (status === "Approved") return 100;
   if (status === "In Review") return 70;
@@ -75,6 +81,16 @@ router.get("/me/account-limit", async (req, res): Promise<void> => {
   }
 
   try {
+    const [user] = await db
+      .select({ status: usersTable.status })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId));
+    const inactiveAccount = inactiveAccountMessage(user?.status);
+    if (inactiveAccount) {
+      res.status(403).json({ error: inactiveAccount });
+      return;
+    }
+
     const [verification] = await db
       .select({ status: identityVerificationsTable.status })
       .from(identityVerificationsTable)
@@ -134,6 +150,16 @@ router.get("/me/identity-verification", async (req, res): Promise<void> => {
   }
 
   try {
+    const [user] = await db
+      .select({ status: usersTable.status })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId));
+    const inactiveAccount = inactiveAccountMessage(user?.status);
+    if (inactiveAccount) {
+      res.status(403).json({ error: inactiveAccount });
+      return;
+    }
+
     const [verification] = await db
       .select()
       .from(identityVerificationsTable)
@@ -184,12 +210,14 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
     const result = await db.transaction(async (tx) => {
       await tx.insert(usersTable).values({ id: userId }).onConflictDoNothing();
       const [lockedUser] = await tx
-        .select({ id: usersTable.id })
+        .select({ id: usersTable.id, status: usersTable.status })
         .from(usersTable)
         .where(eq(usersTable.id, userId))
         .for("update");
 
       if (!lockedUser) throw new Error("Account could not be locked");
+      const inactiveAccount = inactiveAccountMessage(lockedUser.status);
+      if (inactiveAccount) return { blockedAccount: inactiveAccount } as const;
 
       const [existing] = await tx
         .select()
@@ -209,7 +237,7 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
         .limit(1);
 
       if (existing) {
-        return { verification: existing, reused: true };
+        return { blockedAccount: null, verification: existing, reused: true } as const;
       }
 
       const vendorData = `sendflow:user:${userId}`;
@@ -232,8 +260,13 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
         .returning();
 
       if (!verification) throw new Error("Identity verification session was not stored");
-      return { verification, reused: false };
+      return { blockedAccount: null, verification, reused: false } as const;
     });
+
+    if (result.blockedAccount) {
+      res.status(403).json({ error: result.blockedAccount });
+      return;
+    }
 
     const { verification, reused } = result;
 
@@ -280,7 +313,23 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
   }
 
   try {
-    const duplicate = await db.transaction(async (tx) => {
+    const outcome = await db.transaction(async (tx) => {
+      const [existingEvent] = await tx
+        .select({
+          providerSessionId: identityWebhookEventsTable.providerSessionId,
+          eventType: identityWebhookEventsTable.eventType,
+        })
+        .from(identityWebhookEventsTable)
+        .where(eq(identityWebhookEventsTable.eventId, eventId))
+        .for("update");
+
+      if (existingEvent) {
+        const matches =
+          existingEvent.providerSessionId === providerSessionId &&
+          existingEvent.eventType === eventType;
+        return { duplicate: matches, conflict: !matches };
+      }
+
       const [verification] = await tx
         .select()
         .from(identityVerificationsTable)
@@ -297,7 +346,19 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
         .onConflictDoNothing()
         .returning();
 
-      if (!event) return true;
+      if (!event) {
+        const [concurrentEvent] = await tx
+          .select({
+            providerSessionId: identityWebhookEventsTable.providerSessionId,
+            eventType: identityWebhookEventsTable.eventType,
+          })
+          .from(identityWebhookEventsTable)
+          .where(eq(identityWebhookEventsTable.eventId, eventId));
+        const matches =
+          concurrentEvent?.providerSessionId === providerSessionId &&
+          concurrentEvent.eventType === eventType;
+        return { duplicate: matches, conflict: !matches };
+      }
 
       if (statusRank(status) >= statusRank(verification.status)) {
         await tx
@@ -316,10 +377,16 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
         .set({ matchedVerification: true })
         .where(eq(identityWebhookEventsTable.eventId, eventId));
 
-      return false;
+      return { duplicate: false, conflict: false };
     });
 
-    res.json(ReceiveDiditWebhookResponse.parse({ received: true, duplicate }));
+    if (outcome.conflict) {
+      req.log.warn({ eventId, providerSessionId }, "Didit webhook event identifier conflicts with a stored event");
+      res.status(409).json({ error: "Didit event identifier conflicts with a previously received event" });
+      return;
+    }
+
+    res.json(ReceiveDiditWebhookResponse.parse({ received: true, duplicate: outcome.duplicate }));
   } catch (error) {
     req.log.error({ err: error, eventId }, "Didit webhook processing failed");
     res.status(503).json({ error: "Webhook processing unavailable" });

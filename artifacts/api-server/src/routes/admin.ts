@@ -115,7 +115,11 @@ function transactionDateFilters(range: DateRange) {
 }
 
 function toMinor(value: unknown) {
-  return Number(value ?? 0);
+  const amount = Number(value ?? 0);
+  if (!Number.isSafeInteger(amount)) {
+    throw new Error("Financial amount is outside the safe integer range");
+  }
+  return amount;
 }
 
 async function getTransactionSummary(

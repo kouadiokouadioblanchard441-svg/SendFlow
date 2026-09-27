@@ -114,10 +114,18 @@ export const ReceiveDiditWebhookHeader = zod.object({
   "X-Signature-V2": zod.string().describe('HMAC-SHA256 signature of Didit\'s canonical JSON payload.')
 })
 
+export const receiveDiditWebhookBodyEventIdMax = 255;
+
+export const receiveDiditWebhookBodySessionIdMax = 255;
+
+export const receiveDiditWebhookBodyWebhookTypeMax = 128;
+
+
+
 export const ReceiveDiditWebhookBody = zod.object({
-  "event_id": zod.string(),
-  "session_id": zod.string(),
-  "webhook_type": zod.string(),
+  "event_id": zod.string().min(1).max(receiveDiditWebhookBodyEventIdMax),
+  "session_id": zod.string().min(1).max(receiveDiditWebhookBodySessionIdMax),
+  "webhook_type": zod.string().min(1).max(receiveDiditWebhookBodyWebhookTypeMax),
   "status": zod.string()
 })
 

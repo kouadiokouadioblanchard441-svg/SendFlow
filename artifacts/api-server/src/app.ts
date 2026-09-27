@@ -79,6 +79,11 @@ app.use(
   })),
 );
 
+app.use("/api/me", (_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  next();
+});
+
 app.use("/api/admin", (req, res, next) => {
   res.setHeader("Cache-Control", "no-store, private");
 

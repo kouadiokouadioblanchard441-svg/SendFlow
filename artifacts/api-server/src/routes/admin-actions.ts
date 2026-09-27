@@ -116,6 +116,10 @@ router.post("/admin/users/:userId/wallet-adjustments", async (req, res): Promise
         return { entry: existing, duplicate: true };
       }
 
+      if (!Number.isSafeInteger(wallet.balanceMinor) || wallet.balanceMinor < 0) {
+        throw new AdminActionError(409, "Wallet balance is outside the supported safe range");
+      }
+
       if (adjustment.expectedBalanceMinor !== wallet.balanceMinor) {
         throw new AdminActionError(409, "Wallet balance changed; refresh before retrying");
       }
