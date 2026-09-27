@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   createEsmsVerifyClient,
   EsmsConfigurationError,
+  EsmsProviderError,
   EsmsRateLimitError,
 } from "./esms-verify.ts";
 
@@ -78,6 +79,32 @@ test("treats provider invalid-code responses as a rejected check", async () => {
   ]);
 
   assert.deepEqual(await client.check("verify_123", "000000"), { approved: false });
+});
+
+test("retains a sanitized provider message for server-side diagnostics", async () => {
+  const { client } = makeClient([
+    {
+      status: 402,
+      body: {
+        error: {
+          message: "Payment required for +2250595857098 with esms_test_fake-key; code 123456",
+        },
+      },
+    },
+  ]);
+
+  await assert.rejects(
+    () => client.start("+2250595857098"),
+    (error) => {
+      assert.ok(error instanceof EsmsProviderError);
+      assert.equal(error.statusCode, 402);
+      assert.equal(
+        error.providerMessage,
+        "Payment required for [redacted number] with [redacted credential]; code [redacted code]",
+      );
+      return true;
+    },
+  );
 });
 
 test("returns provider rate limits with a bounded retry delay", async () => {

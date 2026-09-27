@@ -12,14 +12,17 @@ export class EsmsConfigurationError extends Error {
 
 export class EsmsProviderError extends Error {
   readonly statusCode?: number;
+  readonly providerMessage?: string;
 
   constructor(
     message: string,
     statusCode?: number,
+    providerMessage?: string,
   ) {
     super(message);
     this.name = "EsmsProviderError";
     this.statusCode = statusCode;
+    this.providerMessage = providerMessage;
   }
 }
 
@@ -44,6 +47,40 @@ type EsmsVerifyOptions = {
 function parseRecord(value: unknown): JsonRecord | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
   return value as JsonRecord;
+}
+
+function sanitizeProviderMessage(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+
+  const sanitized = value
+    .replace(/Bearer\s+[^\s"']+/gi, "Bearer [redacted]")
+    .replace(/esms_(?:test|live)_[A-Za-z0-9._~-]+/gi, "[redacted credential]")
+    .replace(/\+?\d[\d\s().-]{7,}\d/g, "[redacted number]")
+    .replace(/\b\d{6}\b/g, "[redacted code]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 300);
+
+  return sanitized || undefined;
+}
+
+function getProviderMessage(payload: JsonRecord): string | undefined {
+  const nestedError = parseRecord(payload.error);
+  const candidates = [
+    payload.message,
+    payload.error_description,
+    payload.detail,
+    nestedError?.message,
+    nestedError?.detail,
+    payload.error,
+  ];
+
+  for (const candidate of candidates) {
+    const message = sanitizeProviderMessage(candidate);
+    if (message) return message;
+  }
+
+  return undefined;
 }
 
 async function parseResponse(response: Response): Promise<JsonRecord> {
@@ -117,7 +154,11 @@ export function createEsmsVerifyClient({
       });
 
       if (!response.ok) {
-        throw new EsmsProviderError("eSMS Verify could not start the verification", response.status);
+        throw new EsmsProviderError(
+          "eSMS Verify could not start the verification",
+          response.status,
+          getProviderMessage(payload),
+        );
       }
 
       const verificationId = payload.verification_id;
@@ -137,7 +178,11 @@ export function createEsmsVerifyClient({
 
       if (!response.ok) {
         if ([400, 409, 422].includes(response.status)) return { approved: false };
-        throw new EsmsProviderError("eSMS Verify could not check the code", response.status);
+        throw new EsmsProviderError(
+          "eSMS Verify could not check the code",
+          response.status,
+          getProviderMessage(payload),
+        );
       }
 
       const status = payload.status;

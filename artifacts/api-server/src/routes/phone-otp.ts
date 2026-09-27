@@ -18,6 +18,7 @@ import {
 } from "@workspace/api-zod";
 import {
   EsmsConfigurationError,
+  EsmsProviderError,
   EsmsRateLimitError,
   getEsmsVerifyClient,
 } from "../lib/esms-verify";
@@ -289,7 +290,14 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
       return;
     }
 
-    req.log.warn({ err: error, challengeId: reservation.id }, "eSMS Verify send failed");
+    req.log.warn(
+      {
+        err: error,
+        challengeId: reservation.id,
+        providerMessage: error instanceof EsmsProviderError ? error.providerMessage : undefined,
+      },
+      "eSMS Verify send failed",
+    );
     res.status(502).json({ error: "Le service SMS est momentanément indisponible." });
     return;
   }
@@ -458,7 +466,14 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       safeProviderErrorResponse(res, error);
       return;
     }
-    req.log.warn({ err: error, challengeId: parsed.data.challengeId }, "eSMS Verify check failed");
+    req.log.warn(
+      {
+        err: error,
+        challengeId: parsed.data.challengeId,
+        providerMessage: error instanceof EsmsProviderError ? error.providerMessage : undefined,
+      },
+      "eSMS Verify check failed",
+    );
     res.status(502).json({ error: "Le service SMS est momentanément indisponible." });
     return;
   }
