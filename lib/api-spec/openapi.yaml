@@ -18,6 +18,8 @@ tags:
     description: Development database diagnostics.
   - name: identity-verification
     description: Didit identity verification for development and sandbox testing.
+  - name: phone-verification
+    description: Public signup phone verification through eSMS Africa.
   - name: admin
     description: Protected SendFlow back-office read operations.
   - name: pricing
@@ -36,6 +38,110 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/send-otp:
+    post:
+      operationId: sendPhoneOtp
+      tags: [phone-verification]
+      summary: Send a signup verification code
+      description: Starts an eSMS Africa Verify request. Provider credentials stay on the server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneOtpSendInput"
+      responses:
+        "202":
+          description: Verification code sent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpSendResult"
+        "400":
+          description: Invalid phone number.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Untrusted request origin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Phone or requester has reached an OTP send limit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+        "502":
+          description: eSMS Africa Verify is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: OTP storage or provider configuration is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/verify-otp:
+    post:
+      operationId: verifyPhoneOtp
+      tags: [phone-verification]
+      summary: Check a signup verification code
+      description: Checks the code with eSMS Africa and persists the verified phone state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneOtpVerifyInput"
+      responses:
+        "200":
+          description: The provider approved the verification code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpVerifyResult"
+        "400":
+          description: Invalid request or code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Untrusted request origin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Verification expired, was already used, or exceeded its attempt limit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: The OTP provider has temporarily limited verification checks.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+        "502":
+          description: eSMS Africa Verify is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: OTP storage or provider configuration is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /storage/public-objects/{filePath}:
     get:
       operationId: getPublicObject
@@ -1658,6 +1764,59 @@ components:
           type: string
       required:
         - error
+    PhoneOtpSendInput:
+      type: object
+      properties:
+        phone:
+          type: string
+          format: phone
+          minLength: 9
+          maxLength: 16
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+      required: [phone]
+    PhoneOtpSendResult:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+        resendAfterSeconds:
+          type: integer
+          minimum: 0
+      required: [challengeId, expiresAt, resendAfterSeconds]
+    PhoneOtpVerifyInput:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: "^[0-9]{6}$"
+      required: [challengeId, code]
+    PhoneOtpVerifyResult:
+      type: object
+      properties:
+        phoneVerified:
+          type: boolean
+        verifiedAt:
+          type: string
+          format: date-time
+      required: [phoneVerified, verifiedAt]
+    PhoneOtpRateLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+        retryAfterSeconds:
+          type: integer
+          minimum: 1
+      required: [error, retryAfterSeconds]
     DatabaseStatus:
       type: object
       properties:

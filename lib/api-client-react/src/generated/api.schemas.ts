@@ -13,6 +13,43 @@ export interface ErrorEnvelope {
   error: string;
 }
 
+export interface PhoneOtpSendInput {
+  /**
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phone: string;
+}
+
+export interface PhoneOtpSendResult {
+  challengeId: string;
+  expiresAt: string;
+  /** @minimum 0 */
+  resendAfterSeconds: number;
+}
+
+export interface PhoneOtpVerifyInput {
+  challengeId: string;
+  /**
+     * @minLength 6
+     * @maxLength 6
+     * @pattern ^[0-9]{6}$
+     */
+  code: string;
+}
+
+export interface PhoneOtpVerifyResult {
+  phoneVerified: boolean;
+  verifiedAt: string;
+}
+
+export interface PhoneOtpRateLimitError {
+  error: string;
+  /** @minimum 1 */
+  retryAfterSeconds: number;
+}
+
 export type DatabaseStatusStatus = typeof DatabaseStatusStatus[keyof typeof DatabaseStatusStatus];
 
 

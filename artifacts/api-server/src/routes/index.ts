@@ -11,6 +11,7 @@ import adminOtpPoliciesRouter from "./admin-otp-policies";
 import adminAggregatorsRouter from "./admin-aggregators";
 import operatorPricingRouter from "./operator-pricing";
 import bannersRouter from "./banners";
+import phoneOtpRouter from "./phone-otp";
 
 const router: IRouter = Router();
 router.use(healthRouter);
@@ -25,4 +26,5 @@ router.use(adminOtpPoliciesRouter);
 router.use(adminAggregatorsRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);
+router.use(phoneOtpRouter);
 export default router;

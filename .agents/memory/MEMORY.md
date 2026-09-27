@@ -9,3 +9,4 @@
 - [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
 - [Production Neon database](neon-production-database.md) — All app environments use Neon by choice; treat previews as live and gate schema changes explicitly.
+- [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.

@@ -18,6 +18,54 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * Starts an eSMS Africa Verify request. Provider credentials stay on the server.
+ * @summary Send a signup verification code
+ */
+export const sendPhoneOtpBodyPhoneMin = 9;
+export const sendPhoneOtpBodyPhoneMax = 16;
+
+
+export const sendPhoneOtpBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+
+
+export const SendPhoneOtpBody = zod.object({
+  "phone": zod.string().min(sendPhoneOtpBodyPhoneMin).max(sendPhoneOtpBodyPhoneMax).regex(sendPhoneOtpBodyPhoneRegExp)
+})
+
+export const sendPhoneOtpResponseResendAfterSecondsMin = 0;
+
+
+
+export const SendPhoneOtpResponse = zod.object({
+  "challengeId": zod.string().uuid(),
+  "expiresAt": zod.coerce.date(),
+  "resendAfterSeconds": zod.number().int().min(sendPhoneOtpResponseResendAfterSecondsMin)
+})
+
+
+/**
+ * Checks the code with eSMS Africa and persists the verified phone state.
+ * @summary Check a signup verification code
+ */
+export const verifyPhoneOtpBodyCodeMin = 6;
+export const verifyPhoneOtpBodyCodeMax = 6;
+
+
+export const verifyPhoneOtpBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+
+
+export const VerifyPhoneOtpBody = zod.object({
+  "challengeId": zod.string().uuid(),
+  "code": zod.string().min(verifyPhoneOtpBodyCodeMin).max(verifyPhoneOtpBodyCodeMax).regex(verifyPhoneOtpBodyCodeRegExp)
+})
+
+export const VerifyPhoneOtpResponse = zod.object({
+  "phoneVerified": zod.boolean(),
+  "verifiedAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Serve a public object
  */
 export const GetPublicObjectParams = zod.object({

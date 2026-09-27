@@ -61,6 +61,11 @@ import type {
   ManagedOperator,
   NewOperatorInput,
   OperatorUpdate,
+  PhoneOtpRateLimitError,
+  PhoneOtpSendInput,
+  PhoneOtpSendResult,
+  PhoneOtpVerifyInput,
+  PhoneOtpVerifyResult,
   PricingRatesUpdate,
   PublicBannerList,
   PublicPricingCatalog,
@@ -173,6 +178,150 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
+
+export const getSendPhoneOtpUrl = () => {
+
+
+
+
+  return `/api/auth/send-otp`
+}
+
+/**
+ * Starts an eSMS Africa Verify request. Provider credentials stay on the server.
+ * @summary Send a signup verification code
+ */
+export const sendPhoneOtp = async (phoneOtpSendInput: PhoneOtpSendInput, options?: Parameters<typeof customFetch>[1]): Promise<PhoneOtpSendResult> => {
+
+  return customFetch<PhoneOtpSendResult>(getSendPhoneOtpUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(phoneOtpSendInput)
+  }
+);}
+
+
+
+
+
+export const getSendPhoneOtpMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPhoneOtp>>, TError,{data: BodyType<PhoneOtpSendInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendPhoneOtp>>, TError,{data: BodyType<PhoneOtpSendInput>}, TContext> => {
+
+const mutationKey = ['sendPhoneOtp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPhoneOtp>>, {data: BodyType<PhoneOtpSendInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  sendPhoneOtp(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendPhoneOtpMutationResult = NonNullable<Awaited<ReturnType<typeof sendPhoneOtp>>>
+    export type SendPhoneOtpMutationBody = BodyType<PhoneOtpSendInput>
+    export type SendPhoneOtpMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+
+    /**
+ * @summary Send a signup verification code
+ */
+export const useSendPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPhoneOtp>>, TError,{data: BodyType<PhoneOtpSendInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendPhoneOtp>>,
+        TError,
+        {data: BodyType<PhoneOtpSendInput>},
+        TContext
+      > => {
+      return useMutation(getSendPhoneOtpMutationOptions(options));
+    }
+
+export const getVerifyPhoneOtpUrl = () => {
+
+
+
+
+  return `/api/auth/verify-otp`
+}
+
+/**
+ * Checks the code with eSMS Africa and persists the verified phone state.
+ * @summary Check a signup verification code
+ */
+export const verifyPhoneOtp = async (phoneOtpVerifyInput: PhoneOtpVerifyInput, options?: Parameters<typeof customFetch>[1]): Promise<PhoneOtpVerifyResult> => {
+
+  return customFetch<PhoneOtpVerifyResult>(getVerifyPhoneOtpUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(phoneOtpVerifyInput)
+  }
+);}
+
+
+
+
+
+export const getVerifyPhoneOtpMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPhoneOtp>>, TError,{data: BodyType<PhoneOtpVerifyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyPhoneOtp>>, TError,{data: BodyType<PhoneOtpVerifyInput>}, TContext> => {
+
+const mutationKey = ['verifyPhoneOtp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyPhoneOtp>>, {data: BodyType<PhoneOtpVerifyInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyPhoneOtp(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyPhoneOtpMutationResult = NonNullable<Awaited<ReturnType<typeof verifyPhoneOtp>>>
+    export type VerifyPhoneOtpMutationBody = BodyType<PhoneOtpVerifyInput>
+    export type VerifyPhoneOtpMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+
+    /**
+ * @summary Check a signup verification code
+ */
+export const useVerifyPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPhoneOtp>>, TError,{data: BodyType<PhoneOtpVerifyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyPhoneOtp>>,
+        TError,
+        {data: BodyType<PhoneOtpVerifyInput>},
+        TContext
+      > => {
+      return useMutation(getVerifyPhoneOtpMutationOptions(options));
+    }
 
 export const getGetPublicObjectUrl = (filePath: string,) => {
 
