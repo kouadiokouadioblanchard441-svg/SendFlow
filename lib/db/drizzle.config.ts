@@ -1,18 +1,20 @@
 import { defineConfig } from "drizzle-kit";
 
 const databaseTarget = process.env.DRIZZLE_DATABASE_TARGET;
-if (databaseTarget && databaseTarget !== "neon-production") {
+if (databaseTarget !== "neon-production") {
+  if (!databaseTarget) {
+    throw new Error(
+      "Set DRIZZLE_DATABASE_TARGET=neon-production to run schema operations against the SendFlow database.",
+    );
+  }
   throw new Error(`Unsupported DRIZZLE_DATABASE_TARGET: ${databaseTarget}`);
 }
 
-const databaseUrl =
-  databaseTarget === "neon-production"
-    ? process.env.NEON_DATABASE_URL_PRODUCTION
-    : process.env.DATABASE_URL;
+const databaseUrl = process.env.NEON_DATABASE_URL_PRODUCTION;
 
-if (databaseTarget === "neon-production" && !databaseUrl) {
+if (!databaseUrl) {
   throw new Error(
-    "NEON_DATABASE_URL_PRODUCTION is required for the neon-production schema target.",
+    "NEON_DATABASE_URL_PRODUCTION is required for the SendFlow schema target.",
   );
 }
 
