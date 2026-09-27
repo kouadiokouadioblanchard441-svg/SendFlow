@@ -42,8 +42,8 @@ paths:
     post:
       operationId: sendPhoneOtp
       tags: [phone-verification]
-      summary: Send a signup verification code
-      description: Starts an eSMS Africa Verify request. Provider credentials stay on the server.
+      summary: Send a phone verification code
+      description: Starts an eSMS Africa Verify request for signup or account recovery. Provider credentials stay on the server.
       requestBody:
         required: true
         content:
@@ -91,8 +91,8 @@ paths:
     post:
       operationId: verifyPhoneOtp
       tags: [phone-verification]
-      summary: Check a signup verification code
-      description: Checks the code with eSMS Africa and persists the verified phone state.
+      summary: Check a phone verification code
+      description: Checks the code with eSMS Africa and persists the verified phone state for its declared purpose.
       requestBody:
         required: true
         content:
@@ -138,6 +138,295 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "503":
           description: OTP storage or provider configuration is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/register:
+    post:
+      operationId: registerCustomer
+      tags: [account]
+      summary: Create a customer account after phone verification
+      description: Consumes a verified signup challenge, creates the account and wallet, and starts a SendFlow customer session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerRegistrationInput"
+      responses:
+        "201":
+          description: Account created and session cookie issued.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerAuthResult"
+        "400":
+          description: Invalid profile, password, or privacy acceptance.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The verification is invalid or the phone already has an account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Account storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/sign-in:
+    post:
+      operationId: signInCustomer
+      tags: [account]
+      summary: Sign in to a SendFlow customer account
+      description: Validates the phone and password and issues a secure customer session cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerSignInInput"
+      responses:
+        "200":
+          description: Credentials accepted and session cookie issued.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerAuthResult"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Phone or password is incorrect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Too many sign-in attempts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+        "503":
+          description: Account storage or session configuration is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/session:
+    get:
+      operationId: getCustomerSession
+      tags: [account]
+      summary: Get the current SendFlow customer session
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Current customer session state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerSessionResult"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Session storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/sign-out:
+    post:
+      operationId: signOutCustomer
+      tags: [account]
+      summary: Revoke the current SendFlow customer session
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Session revoked and cookie cleared.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerMutationResult"
+        "403":
+          description: Untrusted request origin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/reset-password:
+    post:
+      operationId: resetCustomerPassword
+      tags: [account]
+      summary: Reset a customer password using a verified phone code
+      description: Requires a single-use password-recovery OTP. The response does not reveal whether the phone has an account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerPasswordResetInput"
+      responses:
+        "200":
+          description: Recovery request processed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerMutationResult"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The recovery verification is invalid, expired, or already used.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Account storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/reset-pin:
+    post:
+      operationId: resetCustomerPin
+      tags: [account]
+      summary: Reset a customer PIN using a verified phone code
+      description: Requires a single-use PIN-recovery OTP. Existing sessions are revoked and the response does not reveal whether the phone has an account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerPinResetInput"
+      responses:
+        "200":
+          description: Recovery request processed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerMutationResult"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The recovery verification is invalid, expired, or already used.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Account storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/unlock:
+    post:
+      operationId: unlockCustomerSession
+      tags: [account]
+      summary: Verify the customer PIN for the current session
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerPinUnlockInput"
+      responses:
+        "200":
+          description: PIN accepted; the session is temporarily unlocked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPinStateResult"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: PIN is incorrect or not configured.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Too many PIN attempts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+        "503":
+          description: Account storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /me/pin:
+    put:
+      operationId: setCustomerPin
+      tags: [account]
+      summary: Set or change the customer PIN
+      description: First-time setup needs an authenticated session; changing an existing PIN also requires the current PIN.
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerPinSetInput"
+      responses:
+        "200":
+          description: PIN saved and the current session temporarily unlocked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPinStateResult"
+        "400":
+          description: Invalid PIN or current PIN required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required or the current PIN is incorrect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Too many PIN attempts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+        "503":
+          description: Account storage is unavailable.
           content:
             application/json:
               schema:
@@ -198,6 +487,8 @@ paths:
       operationId: getCurrentAccount
       tags: [account]
       summary: Get the authenticated SendFlow account
+      security:
+        - sendFlowSession: []
       responses:
         "200":
           description: Current account and wallet.
@@ -224,7 +515,7 @@ paths:
       summary: Get the authenticated account's monthly transfer limit
       description: Returns the server-calculated monthly limit and the user's pending or successful outgoing transfer usage for the current calendar month.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: Current monthly account limit.
@@ -250,7 +541,7 @@ paths:
       tags: [identity-verification]
       summary: Get the current identity verification status
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: Current verification status.
@@ -276,7 +567,7 @@ paths:
       summary: Create a Didit verification session
       description: Creates a development or sandbox verification session. Didit credentials remain server-side.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: false
         content:
@@ -1805,6 +2096,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    sendFlowSession:
+      type: apiKey
+      in: cookie
+      name: __Host-sendflow_session
   schemas:
     HealthStatus:
       type: object
@@ -1829,7 +2124,10 @@ components:
           minLength: 9
           maxLength: 16
           pattern: "^\\+[1-9][0-9]{7,14}$"
-      required: [phone]
+        purpose:
+          type: string
+          enum: [signup, password_reset, pin_reset]
+      required: [phone, purpose]
     PhoneOtpSendResult:
       type: object
       properties:
@@ -1849,12 +2147,15 @@ components:
         challengeId:
           type: string
           format: uuid
+        purpose:
+          type: string
+          enum: [signup, password_reset, pin_reset]
         code:
           type: string
           minLength: 6
           maxLength: 6
           pattern: "^[0-9]{6}$"
-      required: [challengeId, code]
+      required: [challengeId, purpose, code]
     PhoneOtpVerifyResult:
       type: object
       properties:
@@ -1873,6 +2174,151 @@ components:
           type: integer
           minimum: 1
       required: [error, retryAfterSeconds]
+    CustomerRegistrationInput:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        phone:
+          type: string
+          format: phone
+          minLength: 9
+          maxLength: 16
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+        fullName:
+          type: string
+          minLength: 2
+          maxLength: 120
+        birthDate:
+          type: string
+          format: date
+        countryCode:
+          type: string
+          pattern: "^[A-Z]{2}$"
+        password:
+          type: string
+          minLength: 4
+          maxLength: 64
+        acceptedPrivacy:
+          type: boolean
+      required: [challengeId, phone, fullName, birthDate, password, acceptedPrivacy]
+    CustomerSignInInput:
+      type: object
+      properties:
+        phone:
+          type: string
+          format: phone
+          minLength: 9
+          maxLength: 16
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+        password:
+          type: string
+          minLength: 4
+          maxLength: 64
+      required: [phone, password]
+    CustomerPasswordResetInput:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        phone:
+          type: string
+          format: phone
+          minLength: 9
+          maxLength: 16
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+        newPassword:
+          type: string
+          minLength: 4
+          maxLength: 64
+      required: [challengeId, phone, newPassword]
+    CustomerPinResetInput:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        phone:
+          type: string
+          format: phone
+          minLength: 9
+          maxLength: 16
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+        newPin:
+          type: string
+          minLength: 4
+          maxLength: 4
+          pattern: "^[0-9]{4}$"
+      required: [challengeId, phone, newPin]
+    CustomerPinUnlockInput:
+      type: object
+      properties:
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 4
+          pattern: "^[0-9]{4}$"
+      required: [pin]
+    CustomerPinSetInput:
+      type: object
+      properties:
+        currentPin:
+          type: string
+          minLength: 4
+          maxLength: 4
+          pattern: "^[0-9]{4}$"
+        newPin:
+          type: string
+          minLength: 4
+          maxLength: 4
+          pattern: "^[0-9]{4}$"
+      required: [newPin]
+    CustomerAuthResult:
+      type: object
+      properties:
+        userId:
+          type: string
+        phone:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        countryCode:
+          type: ["string", "null"]
+        pinConfigured:
+          type: boolean
+      required: [userId, phone, displayName, countryCode, pinConfigured]
+    CustomerSessionResult:
+      type: object
+      properties:
+        userId:
+          type: string
+        phone:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        countryCode:
+          type: ["string", "null"]
+        pinConfigured:
+          type: boolean
+        pinUnlocked:
+          type: boolean
+      required: [userId, phone, displayName, countryCode, pinConfigured, pinUnlocked]
+    CustomerPinStateResult:
+      type: object
+      properties:
+        pinConfigured:
+          type: boolean
+        pinUnlocked:
+          type: boolean
+      required: [pinConfigured, pinUnlocked]
+    CustomerMutationResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
     DatabaseStatus:
       type: object
       properties:

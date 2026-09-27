@@ -5,9 +5,11 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { PhoneOtpVerifyInputPurpose } from './phoneOtpVerifyInputPurpose';
 
 export interface PhoneOtpVerifyInput {
   challengeId: string;
+  purpose: PhoneOtpVerifyInputPurpose;
   /**
      * @minLength 6
      * @maxLength 6

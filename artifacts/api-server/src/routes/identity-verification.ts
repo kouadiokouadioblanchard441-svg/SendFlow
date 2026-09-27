@@ -1,5 +1,4 @@
-import { getAuth } from "@clerk/express";
-import { Router, type IRouter, type Request } from "express";
+import { Router, type IRouter } from "express";
 import {
   and,
   desc,
@@ -31,26 +30,10 @@ import {
   isSandboxEnvironment,
   isValidDiditSignature,
 } from "../lib/didit";
+import { requireCustomerSession } from "../lib/customer-session";
+import { isTrustedOrigin } from "../lib/request-security";
 
 const router: IRouter = Router();
-
-function isTrustedOrigin(req: Request) {
-  const origin = req.get("origin");
-  if (!origin) return false;
-
-  const configuredOrigins = [
-    process.env.CORS_ALLOWED_ORIGINS,
-    process.env.REPLIT_DOMAINS,
-    process.env.REPLIT_DEV_DOMAIN,
-  ]
-    .filter(Boolean)
-    .flatMap((value) => value!.split(","))
-    .map((value) => value.trim().replace(/\/+$/, ""))
-    .filter(Boolean)
-    .map((value) => (/^https?:\/\//i.test(value) ? value : `https://${value}`));
-
-  return configuredOrigins.includes(origin.replace(/\/+$/, ""));
-}
 
 function currentStatus(status: string): "unverified" | "pending" | "verified" | "failed" | "review" {
   if (status === "Approved") return "verified";
@@ -74,11 +57,9 @@ function statusRank(status: string) {
 }
 
 router.get("/me/account-limit", async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+  const { userId } = session;
 
   try {
     const [user] = await db
@@ -143,11 +124,9 @@ router.get("/me/account-limit", async (req, res): Promise<void> => {
 });
 
 router.get("/me/identity-verification", async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+  const { userId } = session;
 
   try {
     const [user] = await db
@@ -188,11 +167,9 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
     return;
   }
 
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+  const { userId } = session;
 
   const parsed = CreateIdentityVerificationSessionBody.safeParse(req.body);
   if (!parsed.success) {
@@ -208,7 +185,6 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
 
   try {
     const result = await db.transaction(async (tx) => {
-      await tx.insert(usersTable).values({ id: userId }).onConflictDoNothing();
       const [lockedUser] = await tx
         .select({ id: usersTable.id, status: usersTable.status })
         .from(usersTable)

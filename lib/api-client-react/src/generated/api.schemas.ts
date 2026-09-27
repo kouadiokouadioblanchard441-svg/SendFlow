@@ -13,6 +13,15 @@ export interface ErrorEnvelope {
   error: string;
 }
 
+export type PhoneOtpSendInputPurpose = typeof PhoneOtpSendInputPurpose[keyof typeof PhoneOtpSendInputPurpose];
+
+
+export const PhoneOtpSendInputPurpose = {
+  signup: 'signup',
+  password_reset: 'password_reset',
+  pin_reset: 'pin_reset',
+} as const;
+
 export interface PhoneOtpSendInput {
   /**
      * @minLength 9
@@ -20,6 +29,7 @@ export interface PhoneOtpSendInput {
      * @pattern ^\+[1-9][0-9]{7,14}$
      */
   phone: string;
+  purpose: PhoneOtpSendInputPurpose;
 }
 
 export interface PhoneOtpSendResult {
@@ -29,8 +39,18 @@ export interface PhoneOtpSendResult {
   resendAfterSeconds: number;
 }
 
+export type PhoneOtpVerifyInputPurpose = typeof PhoneOtpVerifyInputPurpose[keyof typeof PhoneOtpVerifyInputPurpose];
+
+
+export const PhoneOtpVerifyInputPurpose = {
+  signup: 'signup',
+  password_reset: 'password_reset',
+  pin_reset: 'pin_reset',
+} as const;
+
 export interface PhoneOtpVerifyInput {
   challengeId: string;
+  purpose: PhoneOtpVerifyInputPurpose;
   /**
      * @minLength 6
      * @maxLength 6
@@ -48,6 +68,129 @@ export interface PhoneOtpRateLimitError {
   error: string;
   /** @minimum 1 */
   retryAfterSeconds: number;
+}
+
+export interface CustomerRegistrationInput {
+  challengeId: string;
+  /**
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phone: string;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  fullName: string;
+  birthDate: string;
+  /** @pattern ^[A-Z]{2}$ */
+  countryCode?: string;
+  /**
+     * @minLength 4
+     * @maxLength 64
+     */
+  password: string;
+  acceptedPrivacy: boolean;
+}
+
+export interface CustomerSignInInput {
+  /**
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phone: string;
+  /**
+     * @minLength 4
+     * @maxLength 64
+     */
+  password: string;
+}
+
+export interface CustomerPasswordResetInput {
+  challengeId: string;
+  /**
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phone: string;
+  /**
+     * @minLength 4
+     * @maxLength 64
+     */
+  newPassword: string;
+}
+
+export interface CustomerPinResetInput {
+  challengeId: string;
+  /**
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phone: string;
+  /**
+     * @minLength 4
+     * @maxLength 4
+     * @pattern ^[0-9]{4}$
+     */
+  newPin: string;
+}
+
+export interface CustomerPinUnlockInput {
+  /**
+     * @minLength 4
+     * @maxLength 4
+     * @pattern ^[0-9]{4}$
+     */
+  pin: string;
+}
+
+export interface CustomerPinSetInput {
+  /**
+     * @minLength 4
+     * @maxLength 4
+     * @pattern ^[0-9]{4}$
+     */
+  currentPin?: string;
+  /**
+     * @minLength 4
+     * @maxLength 4
+     * @pattern ^[0-9]{4}$
+     */
+  newPin: string;
+}
+
+export interface CustomerAuthResult {
+  userId: string;
+  phone: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  countryCode: string | null;
+  pinConfigured: boolean;
+}
+
+export interface CustomerSessionResult {
+  userId: string;
+  phone: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  countryCode: string | null;
+  pinConfigured: boolean;
+  pinUnlocked: boolean;
+}
+
+export interface CustomerPinStateResult {
+  pinConfigured: boolean;
+  pinUnlocked: boolean;
+}
+
+export interface CustomerMutationResult {
+  success: boolean;
 }
 
 export type DatabaseStatusStatus = typeof DatabaseStatusStatus[keyof typeof DatabaseStatusStatus];

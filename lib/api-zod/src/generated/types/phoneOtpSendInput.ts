@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { PhoneOtpSendInputPurpose } from './phoneOtpSendInputPurpose';
 
 export interface PhoneOtpSendInput {
   /**
@@ -13,4 +14,5 @@ export interface PhoneOtpSendInput {
      * @pattern ^\+[1-9][0-9]{7,14}$
      */
   phone: string;
+  purpose: PhoneOtpSendInputPurpose;
 }

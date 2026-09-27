@@ -3,7 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
-import { savePin } from '@/lib/pin-storage';
+import { useResetCustomerPassword, useResetCustomerPin, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
 import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import { getPhoneLengthMessage, isValidPhoneForCountry } from '@/lib/phone-rules';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -66,12 +66,17 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [phoneDialCode, setPhoneDialCode] = useState(DEFAULT_ACCOUNT_COUNTRY.dialCode);
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [otpError, setOtpError] = useState('');
   const [newSecret, setNewSecret] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [secretError, setSecretError] = useState('');
+  const [challengeId, setChallengeId] = useState('');
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const sendOtp = useSendPhoneOtp();
+  const verifyOtp = useVerifyPhoneOtp();
+  const resetPassword = useResetCustomerPassword();
+  const resetPin = useResetCustomerPin();
 
   const isPassword = mode === 'password';
   const secretLabel = isPassword ? 'Nouveau mot de passe' : 'Nouveau code secret';
@@ -89,14 +94,23 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
     if (step === 'verify') otpRefs.current[0]?.focus();
   }, [step]);
 
-  const handlePhoneSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handlePhoneSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!isValidPhoneForCountry(phone, phoneDialCode, { min: 8, max: 10 })) {
       setPhoneError(getPhoneLengthMessage(phoneDialCode));
       return;
     }
     setPhoneError('');
-    setStep('verify');
+    try {
+      const response = await sendOtp.mutateAsync({
+        data: { phone: `${phoneDialCode}${phone.replace(/\D/g, '')}`, purpose: isPassword ? 'password_reset' : 'pin_reset' },
+      });
+      setChallengeId(response.challengeId);
+      setStep('verify');
+    } catch (error) {
+      const candidate = error as { data?: { error?: string } };
+      setPhoneError(candidate.data?.error ?? 'Impossible d’envoyer le code. Réessayez.');
+    }
   };
 
   const updateOtp = (index: number, value: string) => {
@@ -114,18 +128,23 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
     }
   };
 
-  const handleVerify = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (otp.join('').length !== 4) {
-      setOtpError('Saisissez le code de vérification à 4 chiffres.');
+    if (otp.join('').length !== 6) {
+      setOtpError('Saisissez le code de vérification à 6 chiffres.');
       return;
     }
     setOtpError('');
-    if (!isPassword) {
-      setLocation('/create-pin');
-      return;
+    try {
+      const response = await verifyOtp.mutateAsync({
+        data: { challengeId, purpose: isPassword ? 'password_reset' : 'pin_reset', code: otp.join('') },
+      });
+      if (!response.phoneVerified) throw new Error('Le numéro n’a pas pu être vérifié.');
+      setStep('secret');
+    } catch (error) {
+      const candidate = error as { data?: { error?: string } };
+      setOtpError(candidate.data?.error ?? 'Code incorrect ou expiré.');
     }
-    setStep('secret');
   };
 
   const handleSecretSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -140,9 +159,23 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
     }
 
     setSecretError('');
-    if (!isPassword) await savePin(newSecret);
-    window.sessionStorage.setItem('sendflow.reset-complete', mode);
-    setLocation('/sign-in');
+    try {
+      const fullPhone = `${phoneDialCode}${phone.replace(/\D/g, '')}`;
+      if (isPassword) {
+        await resetPassword.mutateAsync({ data: { challengeId, phone: fullPhone, newPassword: newSecret } });
+      } else {
+        if (!/^\d{4}$/.test(newSecret)) {
+          setSecretError('Le code PIN doit contenir 4 chiffres.');
+          return;
+        }
+        await resetPin.mutateAsync({ data: { challengeId, phone: fullPhone, newPin: newSecret } });
+      }
+      window.sessionStorage.removeItem('sendflow.pin.unlocked');
+      setLocation('/sign-in');
+    } catch (error) {
+      const candidate = error as { data?: { error?: string } };
+      setSecretError(candidate.data?.error ?? 'Impossible de réinitialiser ce secret.');
+    }
   };
 
   return (
@@ -201,7 +234,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
             </header>
 
             <form className="sendflow-reset-form sendflow-reset-verify-form" onSubmit={handleVerify} noValidate>
-              <div className="sendflow-reset-otp" aria-label="Code de vérification à quatre chiffres">
+              <div className="sendflow-reset-otp" aria-label="Code de vérification à six chiffres">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
@@ -215,7 +248,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                     inputMode="numeric"
                     autoComplete={index === 0 ? 'one-time-code' : 'off'}
                     maxLength={1}
-                    aria-label={`Chiffre ${index + 1} sur 4`}
+                    aria-label={`Chiffre ${index + 1} sur 6`}
                   />
                 ))}
               </div>

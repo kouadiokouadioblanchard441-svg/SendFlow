@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import {
   and,
+  customerSessionsTable,
   db,
   eq,
   isNull,
@@ -270,6 +271,18 @@ async function applyUserAction(
         .returning({ id: usersTable.id });
 
       if (!updated) throw new Error("User status was not updated");
+
+      if (action === "suspend_user" || action === "delete_user") {
+        await tx
+          .update(customerSessionsTable)
+          .set({ revokedAt: now, pinVerifiedUntil: null })
+          .where(
+            and(
+              eq(customerSessionsTable.userId, userId),
+              isNull(customerSessionsTable.revokedAt),
+            ),
+          );
+      }
 
       await recordAdminAudit({
         adminUserId,

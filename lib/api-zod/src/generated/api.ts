@@ -18,8 +18,8 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * Starts an eSMS Africa Verify request. Provider credentials stay on the server.
- * @summary Send a signup verification code
+ * Starts an eSMS Africa Verify request for signup or account recovery. Provider credentials stay on the server.
+ * @summary Send a phone verification code
  */
 export const sendPhoneOtpBodyPhoneMin = 9;
 export const sendPhoneOtpBodyPhoneMax = 16;
@@ -29,7 +29,8 @@ export const sendPhoneOtpBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
 
 
 export const SendPhoneOtpBody = zod.object({
-  "phone": zod.string().min(sendPhoneOtpBodyPhoneMin).max(sendPhoneOtpBodyPhoneMax).regex(sendPhoneOtpBodyPhoneRegExp)
+  "phone": zod.string().min(sendPhoneOtpBodyPhoneMin).max(sendPhoneOtpBodyPhoneMax).regex(sendPhoneOtpBodyPhoneRegExp),
+  "purpose": zod.enum(['signup', 'password_reset', 'pin_reset'])
 })
 
 export const sendPhoneOtpResponseResendAfterSecondsMin = 0;
@@ -44,8 +45,8 @@ export const SendPhoneOtpResponse = zod.object({
 
 
 /**
- * Checks the code with eSMS Africa and persists the verified phone state.
- * @summary Check a signup verification code
+ * Checks the code with eSMS Africa and persists the verified phone state for its declared purpose.
+ * @summary Check a phone verification code
  */
 export const verifyPhoneOtpBodyCodeMin = 6;
 export const verifyPhoneOtpBodyCodeMax = 6;
@@ -56,12 +57,198 @@ export const verifyPhoneOtpBodyCodeRegExp = new RegExp('^[0-9]{6}$');
 
 export const VerifyPhoneOtpBody = zod.object({
   "challengeId": zod.string().uuid(),
+  "purpose": zod.enum(['signup', 'password_reset', 'pin_reset']),
   "code": zod.string().min(verifyPhoneOtpBodyCodeMin).max(verifyPhoneOtpBodyCodeMax).regex(verifyPhoneOtpBodyCodeRegExp)
 })
 
 export const VerifyPhoneOtpResponse = zod.object({
   "phoneVerified": zod.boolean(),
   "verifiedAt": zod.coerce.date()
+})
+
+
+/**
+ * Consumes a verified signup challenge, creates the account and wallet, and starts a SendFlow customer session.
+ * @summary Create a customer account after phone verification
+ */
+export const registerCustomerBodyPhoneMin = 9;
+export const registerCustomerBodyPhoneMax = 16;
+
+
+export const registerCustomerBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const registerCustomerBodyFullNameMin = 2;
+export const registerCustomerBodyFullNameMax = 120;
+
+export const registerCustomerBodyCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const registerCustomerBodyPasswordMin = 4;
+export const registerCustomerBodyPasswordMax = 64;
+
+
+
+export const RegisterCustomerBody = zod.object({
+  "challengeId": zod.string().uuid(),
+  "phone": zod.string().min(registerCustomerBodyPhoneMin).max(registerCustomerBodyPhoneMax).regex(registerCustomerBodyPhoneRegExp),
+  "fullName": zod.string().min(registerCustomerBodyFullNameMin).max(registerCustomerBodyFullNameMax),
+  "birthDate": zod.coerce.date(),
+  "countryCode": zod.string().regex(registerCustomerBodyCountryCodeRegExp).optional(),
+  "password": zod.string().min(registerCustomerBodyPasswordMin).max(registerCustomerBodyPasswordMax),
+  "acceptedPrivacy": zod.boolean()
+})
+
+export const RegisterCustomerResponse = zod.object({
+  "userId": zod.string(),
+  "phone": zod.string(),
+  "displayName": zod.string().nullable(),
+  "countryCode": zod.string().nullable(),
+  "pinConfigured": zod.boolean()
+})
+
+
+/**
+ * Validates the phone and password and issues a secure customer session cookie.
+ * @summary Sign in to a SendFlow customer account
+ */
+export const signInCustomerBodyPhoneMin = 9;
+export const signInCustomerBodyPhoneMax = 16;
+
+
+export const signInCustomerBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const signInCustomerBodyPasswordMin = 4;
+export const signInCustomerBodyPasswordMax = 64;
+
+
+
+export const SignInCustomerBody = zod.object({
+  "phone": zod.string().min(signInCustomerBodyPhoneMin).max(signInCustomerBodyPhoneMax).regex(signInCustomerBodyPhoneRegExp),
+  "password": zod.string().min(signInCustomerBodyPasswordMin).max(signInCustomerBodyPasswordMax)
+})
+
+export const SignInCustomerResponse = zod.object({
+  "userId": zod.string(),
+  "phone": zod.string(),
+  "displayName": zod.string().nullable(),
+  "countryCode": zod.string().nullable(),
+  "pinConfigured": zod.boolean()
+})
+
+
+/**
+ * @summary Get the current SendFlow customer session
+ */
+export const GetCustomerSessionResponse = zod.object({
+  "userId": zod.string(),
+  "phone": zod.string(),
+  "displayName": zod.string().nullable(),
+  "countryCode": zod.string().nullable(),
+  "pinConfigured": zod.boolean(),
+  "pinUnlocked": zod.boolean()
+})
+
+
+/**
+ * @summary Revoke the current SendFlow customer session
+ */
+export const SignOutCustomerResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * Requires a single-use password-recovery OTP. The response does not reveal whether the phone has an account.
+ * @summary Reset a customer password using a verified phone code
+ */
+export const resetCustomerPasswordBodyPhoneMin = 9;
+export const resetCustomerPasswordBodyPhoneMax = 16;
+
+
+export const resetCustomerPasswordBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const resetCustomerPasswordBodyNewPasswordMin = 4;
+export const resetCustomerPasswordBodyNewPasswordMax = 64;
+
+
+
+export const ResetCustomerPasswordBody = zod.object({
+  "challengeId": zod.string().uuid(),
+  "phone": zod.string().min(resetCustomerPasswordBodyPhoneMin).max(resetCustomerPasswordBodyPhoneMax).regex(resetCustomerPasswordBodyPhoneRegExp),
+  "newPassword": zod.string().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax)
+})
+
+export const ResetCustomerPasswordResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * Requires a single-use PIN-recovery OTP. Existing sessions are revoked and the response does not reveal whether the phone has an account.
+ * @summary Reset a customer PIN using a verified phone code
+ */
+export const resetCustomerPinBodyPhoneMin = 9;
+export const resetCustomerPinBodyPhoneMax = 16;
+
+
+export const resetCustomerPinBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const resetCustomerPinBodyNewPinMin = 4;
+export const resetCustomerPinBodyNewPinMax = 4;
+
+
+export const resetCustomerPinBodyNewPinRegExp = new RegExp('^[0-9]{4}$');
+
+
+export const ResetCustomerPinBody = zod.object({
+  "challengeId": zod.string().uuid(),
+  "phone": zod.string().min(resetCustomerPinBodyPhoneMin).max(resetCustomerPinBodyPhoneMax).regex(resetCustomerPinBodyPhoneRegExp),
+  "newPin": zod.string().min(resetCustomerPinBodyNewPinMin).max(resetCustomerPinBodyNewPinMax).regex(resetCustomerPinBodyNewPinRegExp)
+})
+
+export const ResetCustomerPinResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Verify the customer PIN for the current session
+ */
+export const unlockCustomerSessionBodyPinMin = 4;
+export const unlockCustomerSessionBodyPinMax = 4;
+
+
+export const unlockCustomerSessionBodyPinRegExp = new RegExp('^[0-9]{4}$');
+
+
+export const UnlockCustomerSessionBody = zod.object({
+  "pin": zod.string().min(unlockCustomerSessionBodyPinMin).max(unlockCustomerSessionBodyPinMax).regex(unlockCustomerSessionBodyPinRegExp)
+})
+
+export const UnlockCustomerSessionResponse = zod.object({
+  "pinConfigured": zod.boolean(),
+  "pinUnlocked": zod.boolean()
+})
+
+
+/**
+ * First-time setup needs an authenticated session; changing an existing PIN also requires the current PIN.
+ * @summary Set or change the customer PIN
+ */
+export const setCustomerPinBodyCurrentPinMin = 4;
+export const setCustomerPinBodyCurrentPinMax = 4;
+
+
+export const setCustomerPinBodyCurrentPinRegExp = new RegExp('^[0-9]{4}$');
+export const setCustomerPinBodyNewPinMin = 4;
+export const setCustomerPinBodyNewPinMax = 4;
+
+
+export const setCustomerPinBodyNewPinRegExp = new RegExp('^[0-9]{4}$');
+
+
+export const SetCustomerPinBody = zod.object({
+  "currentPin": zod.string().min(setCustomerPinBodyCurrentPinMin).max(setCustomerPinBodyCurrentPinMax).regex(setCustomerPinBodyCurrentPinRegExp).optional(),
+  "newPin": zod.string().min(setCustomerPinBodyNewPinMin).max(setCustomerPinBodyNewPinMax).regex(setCustomerPinBodyNewPinRegExp)
+})
+
+export const SetCustomerPinResponse = zod.object({
+  "pinConfigured": zod.boolean(),
+  "pinUnlocked": zod.boolean()
 })
 
 

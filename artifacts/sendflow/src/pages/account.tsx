@@ -19,13 +19,12 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
-import { useListPublishedBanners, getListPublishedBannersQueryKey } from '@workspace/api-client-react';
+import { useListPublishedBanners, getListPublishedBannersQueryKey, useSignOutCustomer } from '@workspace/api-client-react';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { TransactionCard } from '@/components/transaction-card';
 import { transactions } from '@/lib/transactions';
 import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
-import { DEMO_SESSION_KEY } from '@/lib/demo-account';
 import { readAccountProfile } from '@/lib/account-profile';
 import { getAvatarForUser, getCurrentAvatarUserKey } from '@/lib/avatar-bank';
 import notificationBell from '@assets/633486_1789677628502.png';
@@ -84,6 +83,7 @@ export default function AccountPage() {
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [carouselPaused, setCarouselPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const signOutCustomer = useSignOutCustomer();
 
   useEffect(() => {
     setActiveBannerIndex((current) => publishedBanners.length ? Math.min(current, publishedBanners.length - 1) : 0);
@@ -377,7 +377,7 @@ export default function AccountPage() {
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-limit'); }} data-testid="button-menu-limit"><WalletCards size={19} />Plafond du compte<ChevronRight size={17} /></button>
                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/confidentialite'); }} data-testid="button-menu-privacy"><FileText size={19} />Politique de confidentialité<ChevronRight size={17} /></button>
             </div>
-              <div className="sendflow-menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/customer-service'); }} data-testid="button-menu-help"><Headphones size={19} />Service client<ChevronRight size={17} /></button><button type="button" onClick={() => { window.sessionStorage.removeItem('sendflow.pin.unlocked'); window.sessionStorage.removeItem(DEMO_SESSION_KEY); window.sessionStorage.removeItem('sendflow.avatar.user-key'); setLocation('/sign-in'); }} data-testid="button-menu-logout"><LogOut size={19} />Déconnecter</button></div>
+               <div className="sendflow-menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/customer-service'); }} data-testid="button-menu-help"><Headphones size={19} />Service client<ChevronRight size={17} /></button><button type="button" disabled={signOutCustomer.isPending} onClick={async () => { try { await signOutCustomer.mutateAsync(); window.sessionStorage.removeItem('sendflow.pin.unlocked'); window.sessionStorage.removeItem('sendflow.avatar.user-key'); setLocation('/sign-in'); } catch { /* Keep the session presentation intact until the server confirms logout. */ } }} data-testid="button-menu-logout"><LogOut size={19} />{signOutCustomer.isPending ? 'Déconnexion…' : 'Déconnecter'}</button></div>
               <p className="sendflow-menu-copyright">© 2026 SendFlow</p>
           </aside>
         </div>

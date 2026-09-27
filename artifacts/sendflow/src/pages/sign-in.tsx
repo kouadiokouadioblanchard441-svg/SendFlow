@@ -3,10 +3,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
-import { normalizePhone, validateSignIn, type SignInField } from '@/lib/auth-validation';
-import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
-import { hasPin } from '@/lib/pin-storage';
-import { AVATAR_USER_KEY } from '@/lib/avatar-bank';
+import { validateSignIn, type SignInField } from '@/lib/auth-validation';
+import { useSignInCustomer } from '@workspace/api-client-react';
 import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -32,6 +30,8 @@ export default function SigninPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignInField, boolean>>>({});
   const [phoneDialCode, setPhoneDialCode] = useState(DEFAULT_ACCOUNT_COUNTRY.dialCode);
+  const signInCustomer = useSignInCustomer();
+  const [requestError, setRequestError] = useState('');
 
   useSeo({
     path: '/sign-in',
@@ -56,27 +56,27 @@ export default function SigninPage() {
   const visibleError = (field: SignInField) =>
     (submitAttempted || touched[field]) ? errors[field] : undefined;
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
     if (!canSubmit || isSubmitting) return;
     setIsSubmitting(true);
-    setSubmitted(true);
-
-    const isDemoAccount =
-      normalizePhone(form.phone) === DEMO_ACCOUNT.phone &&
-      form.password === DEMO_ACCOUNT.password;
-
-    if (isDemoAccount) {
-      window.sessionStorage.setItem(DEMO_SESSION_KEY, 'true');
-      window.sessionStorage.setItem(AVATAR_USER_KEY, `phone:${normalizePhone(form.phone)}`);
-      setLocation('/pin');
-      return;
+    setSubmitted(false);
+    setRequestError('');
+    try {
+      const digits = form.phone.replace(/\D/g, '');
+      const response = await signInCustomer.mutateAsync({
+        data: { phone: `${phoneDialCode}${digits}`, password: form.password },
+      });
+      window.sessionStorage.removeItem('sendflow.pin.unlocked');
+      setSubmitted(true);
+      setLocation(response.pinConfigured ? '/pin' : '/create-pin');
+    } catch (error) {
+      const candidate = error as { data?: { error?: string }; message?: string };
+      setRequestError(candidate.data?.error ?? 'Numéro ou code secret incorrect.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    window.sessionStorage.removeItem(DEMO_SESSION_KEY);
-    window.sessionStorage.setItem(AVATAR_USER_KEY, `phone:${normalizePhone(form.phone)}`);
-    setLocation(hasPin() ? '/pin' : '/create-pin');
   };
 
   return (
@@ -151,6 +151,7 @@ export default function SigninPage() {
               {isSubmitting ? 'Connexion…' : 'Se connecter'}
             </button>
 
+            {requestError && <p className="sendflow-signup-error" role="alert">{requestError}</p>}
             {submitted && <p className="sendflow-signup-feedback" role="status" aria-live="polite">Connexion en cours…</p>}
           </form>
 

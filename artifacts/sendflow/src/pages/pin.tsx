@@ -2,8 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { ArrowLeft, Delete } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
-import { DEMO_ACCOUNT, DEMO_SESSION_KEY } from '@/lib/demo-account';
-import { savePin, verifyPin } from '@/lib/pin-storage';
+import { useSetCustomerPin, useUnlockCustomerSession } from '@workspace/api-client-react';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import pinCharacterPrimary from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
@@ -226,7 +225,8 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
-  const isDemoSession = window.sessionStorage.getItem(DEMO_SESSION_KEY) === 'true';
+  const setCustomerPin = useSetCustomerPin();
+  const unlockCustomerSession = useUnlockCustomerSession();
 
   useSeo({
     path: mode === 'create' ? '/create-pin' : '/pin',
@@ -257,29 +257,22 @@ export default function PinPage({ mode }: { mode: PinMode }) {
           return;
         }
 
-        await savePin(nextEntry);
-        setLocation('/sign-in');
+        await setCustomerPin.mutateAsync({ data: { newPin: nextEntry } });
+        window.sessionStorage.setItem('sendflow.pin.unlocked', 'true');
+        setLocation('/account');
         return;
       }
 
-      const isCorrect = isDemoSession && nextEntry === DEMO_ACCOUNT.pin
-        ? true
-        : await verifyPin(nextEntry);
-      if (!isCorrect) {
-        setEntry('');
-        setError('Code PIN incorrect. Veuillez réessayer.');
-        setProcessing(false);
-        return;
-      }
-
+      await unlockCustomerSession.mutateAsync({ data: { pin: nextEntry } });
       window.sessionStorage.setItem('sendflow.pin.unlocked', 'true');
       setLocation('/account');
-    } catch {
+    } catch (error) {
       setEntry('');
-      setError('Une erreur est survenue. Veuillez réessayer.');
+      const candidate = error as { data?: { error?: string } };
+      setError(candidate.data?.error ?? 'Code PIN incorrect. Veuillez réessayer.');
       setProcessing(false);
     }
-  }, [confirming, createdPin, isDemoSession, mode, setLocation]);
+  }, [confirming, createdPin, mode, setCustomerPin, unlockCustomerSession, setLocation]);
 
   const appendDigit = useCallback((digit: string) => {
     if (processing || entry.length >= PIN_LENGTH) return;
@@ -375,10 +368,12 @@ export function ChangePinPage() {
   const [entry, setEntry] = useState('');
   const [keypad, setKeypad] = useState<PinKey[]>(createShuffledKeypad);
   const [newPin, setNewPin] = useState('');
+  const [currentPin, setCurrentPin] = useState('');
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
-  const isDemoSession = window.sessionStorage.getItem(DEMO_SESSION_KEY) === 'true';
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
+  const setCustomerPin = useSetCustomerPin();
+  const unlockCustomerSession = useUnlockCustomerSession();
 
   useSeo({
     path: '/change-pin',
@@ -395,17 +390,9 @@ export function ChangePinPage() {
 
     try {
       if (step === 'current') {
-        const isCorrect = isDemoSession && nextEntry === DEMO_ACCOUNT.pin
-          ? true
-          : await verifyPin(nextEntry);
+        await unlockCustomerSession.mutateAsync({ data: { pin: nextEntry } });
 
-        if (!isCorrect) {
-          setEntry('');
-          setError('Code PIN incorrect. Veuillez réessayer.');
-          setProcessing(false);
-          return;
-        }
-
+        setCurrentPin(nextEntry);
         setStep('new');
         setEntry('');
         setError('');
@@ -429,15 +416,16 @@ export function ChangePinPage() {
         return;
       }
 
-      await savePin(nextEntry);
+      await setCustomerPin.mutateAsync({ data: { newPin: nextEntry, currentPin } });
       window.sessionStorage.setItem(PIN_CHANGE_SUCCESS_KEY, 'true');
       setLocation('/change-pin-success');
-    } catch {
+    } catch (error) {
       setEntry('');
-      setError('Une erreur est survenue. Veuillez réessayer.');
+      const candidate = error as { data?: { error?: string } };
+      setError(candidate.data?.error ?? 'Code PIN incorrect. Veuillez réessayer.');
       setProcessing(false);
     }
-  }, [isDemoSession, newPin, setLocation, step]);
+  }, [currentPin, newPin, setCustomerPin, setLocation, step, unlockCustomerSession]);
 
   const appendDigit = useCallback((digit: string) => {
     if (processing || entry.length >= PIN_LENGTH) return;

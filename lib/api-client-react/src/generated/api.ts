@@ -47,6 +47,16 @@ import type {
   BannerUpdate,
   CreatePaymentAggregatorRequest,
   CurrentAccount,
+  CustomerAuthResult,
+  CustomerMutationResult,
+  CustomerPasswordResetInput,
+  CustomerPinResetInput,
+  CustomerPinSetInput,
+  CustomerPinStateResult,
+  CustomerPinUnlockInput,
+  CustomerRegistrationInput,
+  CustomerSessionResult,
+  CustomerSignInInput,
   DatabaseStatus,
   DeleteAdminBannerResult,
   DiditWebhookPayload,
@@ -190,8 +200,8 @@ export const getSendPhoneOtpUrl = () => {
 }
 
 /**
- * Starts an eSMS Africa Verify request. Provider credentials stay on the server.
- * @summary Send a signup verification code
+ * Starts an eSMS Africa Verify request for signup or account recovery. Provider credentials stay on the server.
+ * @summary Send a phone verification code
  */
 export const sendPhoneOtp = async (phoneOtpSendInput: PhoneOtpSendInput, options?: Parameters<typeof customFetch>[1]): Promise<PhoneOtpSendResult> => {
 
@@ -240,7 +250,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SendPhoneOtpMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
 
     /**
- * @summary Send a signup verification code
+ * @summary Send a phone verification code
  */
 export const useSendPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPhoneOtp>>, TError,{data: BodyType<PhoneOtpSendInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -262,8 +272,8 @@ export const getVerifyPhoneOtpUrl = () => {
 }
 
 /**
- * Checks the code with eSMS Africa and persists the verified phone state.
- * @summary Check a signup verification code
+ * Checks the code with eSMS Africa and persists the verified phone state for its declared purpose.
+ * @summary Check a phone verification code
  */
 export const verifyPhoneOtp = async (phoneOtpVerifyInput: PhoneOtpVerifyInput, options?: Parameters<typeof customFetch>[1]): Promise<PhoneOtpVerifyResult> => {
 
@@ -312,7 +322,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type VerifyPhoneOtpMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
 
     /**
- * @summary Check a signup verification code
+ * @summary Check a phone verification code
  */
 export const useVerifyPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPhoneOtp>>, TError,{data: BodyType<PhoneOtpVerifyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -323,6 +333,585 @@ export const useVerifyPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRat
         TContext
       > => {
       return useMutation(getVerifyPhoneOtpMutationOptions(options));
+    }
+
+export const getRegisterCustomerUrl = () => {
+
+
+
+
+  return `/api/auth/register`
+}
+
+/**
+ * Consumes a verified signup challenge, creates the account and wallet, and starts a SendFlow customer session.
+ * @summary Create a customer account after phone verification
+ */
+export const registerCustomer = async (customerRegistrationInput: CustomerRegistrationInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult> => {
+
+  return customFetch<CustomerAuthResult>(getRegisterCustomerUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerRegistrationInput)
+  }
+);}
+
+
+
+
+
+export const getRegisterCustomerMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerCustomer>>, TError,{data: BodyType<CustomerRegistrationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerCustomer>>, TError,{data: BodyType<CustomerRegistrationInput>}, TContext> => {
+
+const mutationKey = ['registerCustomer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerCustomer>>, {data: BodyType<CustomerRegistrationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerCustomer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof registerCustomer>>>
+    export type RegisterCustomerMutationBody = BodyType<CustomerRegistrationInput>
+    export type RegisterCustomerMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Create a customer account after phone verification
+ */
+export const useRegisterCustomer = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerCustomer>>, TError,{data: BodyType<CustomerRegistrationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerCustomer>>,
+        TError,
+        {data: BodyType<CustomerRegistrationInput>},
+        TContext
+      > => {
+      return useMutation(getRegisterCustomerMutationOptions(options));
+    }
+
+export const getSignInCustomerUrl = () => {
+
+
+
+
+  return `/api/auth/sign-in`
+}
+
+/**
+ * Validates the phone and password and issues a secure customer session cookie.
+ * @summary Sign in to a SendFlow customer account
+ */
+export const signInCustomer = async (customerSignInInput: CustomerSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult> => {
+
+  return customFetch<CustomerAuthResult>(getSignInCustomerUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerSignInInput)
+  }
+);}
+
+
+
+
+
+export const getSignInCustomerMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInCustomer>>, TError,{data: BodyType<CustomerSignInInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signInCustomer>>, TError,{data: BodyType<CustomerSignInInput>}, TContext> => {
+
+const mutationKey = ['signInCustomer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signInCustomer>>, {data: BodyType<CustomerSignInInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  signInCustomer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignInCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof signInCustomer>>>
+    export type SignInCustomerMutationBody = BodyType<CustomerSignInInput>
+    export type SignInCustomerMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+
+    /**
+ * @summary Sign in to a SendFlow customer account
+ */
+export const useSignInCustomer = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInCustomer>>, TError,{data: BodyType<CustomerSignInInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof signInCustomer>>,
+        TError,
+        {data: BodyType<CustomerSignInInput>},
+        TContext
+      > => {
+      return useMutation(getSignInCustomerMutationOptions(options));
+    }
+
+export const getGetCustomerSessionUrl = () => {
+
+
+
+
+  return `/api/auth/session`
+}
+
+/**
+ * @summary Get the current SendFlow customer session
+ */
+export const getCustomerSession = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerSessionResult> => {
+
+  return customFetch<CustomerSessionResult>(getGetCustomerSessionUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerSessionQueryKey = () => {
+    return [
+    `/api/auth/session`
+    ] as const;
+    }
+
+
+export const getGetCustomerSessionQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerSession>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerSessionQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerSession>>> = ({ signal }) => getCustomerSession({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerSession>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerSession>>>
+export type GetCustomerSessionQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get the current SendFlow customer session
+ */
+
+export function useGetCustomerSession<TData = Awaited<ReturnType<typeof getCustomerSession>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerSessionQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSignOutCustomerUrl = () => {
+
+
+
+
+  return `/api/auth/sign-out`
+}
+
+/**
+ * @summary Revoke the current SendFlow customer session
+ */
+export const signOutCustomer = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerMutationResult> => {
+
+  return customFetch<CustomerMutationResult>(getSignOutCustomerUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSignOutCustomerMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signOutCustomer>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signOutCustomer>>, TError,void, TContext> => {
+
+const mutationKey = ['signOutCustomer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signOutCustomer>>, void> = () => {
+
+
+          return  signOutCustomer(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignOutCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof signOutCustomer>>>
+
+    export type SignOutCustomerMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Revoke the current SendFlow customer session
+ */
+export const useSignOutCustomer = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signOutCustomer>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof signOutCustomer>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getSignOutCustomerMutationOptions(options));
+    }
+
+export const getResetCustomerPasswordUrl = () => {
+
+
+
+
+  return `/api/auth/reset-password`
+}
+
+/**
+ * Requires a single-use password-recovery OTP. The response does not reveal whether the phone has an account.
+ * @summary Reset a customer password using a verified phone code
+ */
+export const resetCustomerPassword = async (customerPasswordResetInput: CustomerPasswordResetInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerMutationResult> => {
+
+  return customFetch<CustomerMutationResult>(getResetCustomerPasswordUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerPasswordResetInput)
+  }
+);}
+
+
+
+
+
+export const getResetCustomerPasswordMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetCustomerPassword>>, TError,{data: BodyType<CustomerPasswordResetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetCustomerPassword>>, TError,{data: BodyType<CustomerPasswordResetInput>}, TContext> => {
+
+const mutationKey = ['resetCustomerPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetCustomerPassword>>, {data: BodyType<CustomerPasswordResetInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  resetCustomerPassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetCustomerPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof resetCustomerPassword>>>
+    export type ResetCustomerPasswordMutationBody = BodyType<CustomerPasswordResetInput>
+    export type ResetCustomerPasswordMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Reset a customer password using a verified phone code
+ */
+export const useResetCustomerPassword = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetCustomerPassword>>, TError,{data: BodyType<CustomerPasswordResetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof resetCustomerPassword>>,
+        TError,
+        {data: BodyType<CustomerPasswordResetInput>},
+        TContext
+      > => {
+      return useMutation(getResetCustomerPasswordMutationOptions(options));
+    }
+
+export const getResetCustomerPinUrl = () => {
+
+
+
+
+  return `/api/auth/reset-pin`
+}
+
+/**
+ * Requires a single-use PIN-recovery OTP. Existing sessions are revoked and the response does not reveal whether the phone has an account.
+ * @summary Reset a customer PIN using a verified phone code
+ */
+export const resetCustomerPin = async (customerPinResetInput: CustomerPinResetInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerMutationResult> => {
+
+  return customFetch<CustomerMutationResult>(getResetCustomerPinUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerPinResetInput)
+  }
+);}
+
+
+
+
+
+export const getResetCustomerPinMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetCustomerPin>>, TError,{data: BodyType<CustomerPinResetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetCustomerPin>>, TError,{data: BodyType<CustomerPinResetInput>}, TContext> => {
+
+const mutationKey = ['resetCustomerPin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetCustomerPin>>, {data: BodyType<CustomerPinResetInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  resetCustomerPin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetCustomerPinMutationResult = NonNullable<Awaited<ReturnType<typeof resetCustomerPin>>>
+    export type ResetCustomerPinMutationBody = BodyType<CustomerPinResetInput>
+    export type ResetCustomerPinMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Reset a customer PIN using a verified phone code
+ */
+export const useResetCustomerPin = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetCustomerPin>>, TError,{data: BodyType<CustomerPinResetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof resetCustomerPin>>,
+        TError,
+        {data: BodyType<CustomerPinResetInput>},
+        TContext
+      > => {
+      return useMutation(getResetCustomerPinMutationOptions(options));
+    }
+
+export const getUnlockCustomerSessionUrl = () => {
+
+
+
+
+  return `/api/auth/unlock`
+}
+
+/**
+ * @summary Verify the customer PIN for the current session
+ */
+export const unlockCustomerSession = async (customerPinUnlockInput: CustomerPinUnlockInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerPinStateResult> => {
+
+  return customFetch<CustomerPinStateResult>(getUnlockCustomerSessionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerPinUnlockInput)
+  }
+);}
+
+
+
+
+
+export const getUnlockCustomerSessionMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlockCustomerSession>>, TError,{data: BodyType<CustomerPinUnlockInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unlockCustomerSession>>, TError,{data: BodyType<CustomerPinUnlockInput>}, TContext> => {
+
+const mutationKey = ['unlockCustomerSession'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unlockCustomerSession>>, {data: BodyType<CustomerPinUnlockInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  unlockCustomerSession(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnlockCustomerSessionMutationResult = NonNullable<Awaited<ReturnType<typeof unlockCustomerSession>>>
+    export type UnlockCustomerSessionMutationBody = BodyType<CustomerPinUnlockInput>
+    export type UnlockCustomerSessionMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+
+    /**
+ * @summary Verify the customer PIN for the current session
+ */
+export const useUnlockCustomerSession = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlockCustomerSession>>, TError,{data: BodyType<CustomerPinUnlockInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unlockCustomerSession>>,
+        TError,
+        {data: BodyType<CustomerPinUnlockInput>},
+        TContext
+      > => {
+      return useMutation(getUnlockCustomerSessionMutationOptions(options));
+    }
+
+export const getSetCustomerPinUrl = () => {
+
+
+
+
+  return `/api/me/pin`
+}
+
+/**
+ * First-time setup needs an authenticated session; changing an existing PIN also requires the current PIN.
+ * @summary Set or change the customer PIN
+ */
+export const setCustomerPin = async (customerPinSetInput: CustomerPinSetInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerPinStateResult> => {
+
+  return customFetch<CustomerPinStateResult>(getSetCustomerPinUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerPinSetInput)
+  }
+);}
+
+
+
+
+
+export const getSetCustomerPinMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCustomerPin>>, TError,{data: BodyType<CustomerPinSetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setCustomerPin>>, TError,{data: BodyType<CustomerPinSetInput>}, TContext> => {
+
+const mutationKey = ['setCustomerPin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setCustomerPin>>, {data: BodyType<CustomerPinSetInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setCustomerPin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetCustomerPinMutationResult = NonNullable<Awaited<ReturnType<typeof setCustomerPin>>>
+    export type SetCustomerPinMutationBody = BodyType<CustomerPinSetInput>
+    export type SetCustomerPinMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+
+    /**
+ * @summary Set or change the customer PIN
+ */
+export const useSetCustomerPin = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCustomerPin>>, TError,{data: BodyType<CustomerPinSetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setCustomerPin>>,
+        TError,
+        {data: BodyType<CustomerPinSetInput>},
+        TContext
+      > => {
+      return useMutation(getSetCustomerPinMutationOptions(options));
     }
 
 export const getGetPublicObjectUrl = (filePath: string,) => {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Check, Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
-import { useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
+import { useRegisterCustomer, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpField } from '@/lib/auth-validation';
@@ -25,7 +25,7 @@ type SignUpForm = {
 
 const initialForm: SignUpForm = {
   fullName: '',
-  birthDate: '2000-01-01',
+  birthDate: '',
   phone: '',
   password: '',
   confirmation: '',
@@ -135,6 +135,7 @@ export default function SignupPage() {
   const [verificationError, setVerificationError] = useState('');
   const sendPhoneOtp = useSendPhoneOtp();
   const verifyPhoneOtp = useVerifyPhoneOtp();
+  const registerCustomer = useRegisterCustomer();
 
   useSeo({
     path: '/sign-up',
@@ -149,7 +150,7 @@ export default function SignupPage() {
   const normalizedPhone = normalizePhoneDigits(form.phone);
   const e164Phone = `${signupCountry.dialCode}${normalizedPhone}`;
   const isSending = sendPhoneOtp.isPending;
-  const isChecking = verifyPhoneOtp.isPending;
+  const isChecking = verifyPhoneOtp.isPending || registerCustomer.isPending;
 
   const update = <K extends keyof SignUpForm>(key: K, value: SignUpForm[K]) => {
     setSubmitted(false);
@@ -215,7 +216,7 @@ export default function SignupPage() {
   const sendCode = async () => {
     setVerificationError('');
     try {
-      const response = await sendPhoneOtp.mutateAsync({ data: { phone: e164Phone } });
+      const response = await sendPhoneOtp.mutateAsync({ data: { phone: e164Phone, purpose: 'signup' } });
       setChallengeId(response.challengeId);
       setChallengeExpiresAt(response.expiresAt);
       setResendAvailableAt(Date.now() + response.resendAfterSeconds * 1000);
@@ -250,11 +251,21 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await verifyPhoneOtp.mutateAsync({ data: { challengeId, code: otpCode } });
+      const response = await verifyPhoneOtp.mutateAsync({ data: { challengeId, purpose: 'signup', code: otpCode } });
       if (!response.phoneVerified) {
         setVerificationError('Le numéro n’a pas pu être vérifié. Vérifiez le code puis réessayez.');
         return;
       }
+      await registerCustomer.mutateAsync({
+        data: {
+          challengeId,
+          phone: e164Phone,
+          fullName: form.fullName.trim().replace(/\s+/g, ' '),
+          birthDate: form.birthDate,
+          password: form.password,
+          acceptedPrivacy: true,
+        },
+      });
       savePendingSignup();
       setSubmitted(true);
       setStep('success');

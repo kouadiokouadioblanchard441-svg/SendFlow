@@ -1,5 +1,5 @@
 import { createInsertSchema } from "drizzle-zod";
-import { pgEnum, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { date, pgEnum, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { z } from "zod/v4";
 
 export const userAccountStatusEnum = pgEnum("sf_user_account_status", ["active", "suspended", "deleted"]);
@@ -9,6 +9,7 @@ export const usersTable = pgTable("sf_users", {
   phone: varchar("phone", { length: 32 }).unique(),
   displayName: varchar("display_name", { length: 120 }),
   countryCode: varchar("country_code", { length: 2 }),
+  birthDate: date("birth_date", { mode: "string" }),
   status: userAccountStatusEnum("status").notNull().default("active"),
   suspendedAt: timestamp("suspended_at", { withTimezone: true }),
   suspendedBy: varchar("suspended_by", { length: 255 }),

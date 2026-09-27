@@ -1,10 +1,10 @@
 ---
-name: SendFlow signup authentication
-description: SendFlow's phone/PIN screens are local-only; the production identity provider and server-session bridge are not yet connected.
+name: SendFlow customer authentication
+description: User-approved design for customer phone OTP identity, server sessions, and separation from administrator login.
 ---
 
-The user wants to retain the phone/PIN experience and plans to integrate a compatible OTP service themselves. The exact provider and how its verified identity will authorize API sessions remain unresolved. Do not add Twilio or replace Clerk without an explicit request.
+Customer accounts use eSMS Verify phone OTP for signup, password recovery, and PIN recovery. Challenges are bound to a declared purpose and consumed once. Customer identity comes from a server-validated opaque session in a `__Host-`, HttpOnly, Secure cookie; only a hash of the token is stored. Passwords and PINs use salted scrypt hashes. Clerk remains reserved for administrator authentication.
 
-**Why:** The configured Replit-managed Clerk does not support phone/SMS sign-in, while the current SendFlow forms and PIN store only browser-local state and do not create an authenticated server session.
+**Why:** The user selected phone + eSMS customer accounts and sessions while keeping Clerk for admins. Client-side identity state cannot authenticate protected API requests.
 
-**How to apply:** Keep protected APIs fail-closed until a real server-verifiable session is established. Treat client-side PIN/OTP state as UI state only; confirm provider/session ownership before changing the login architecture.
+**How to apply:** Keep OTP/provider requests server-side and derive identity only from the validated session cookie. Never treat browser-supplied user IDs or local PIN state as authentication. Do not send real paid SMS during tests.

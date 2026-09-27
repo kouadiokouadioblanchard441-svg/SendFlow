@@ -1,5 +1,4 @@
-import { createHmac } from "node:crypto";
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type Response } from "express";
 import {
   and,
   db,
@@ -24,6 +23,7 @@ import {
   EsmsRateLimitError,
   getEsmsVerifyClient,
 } from "../lib/esms-verify";
+import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
 
 const router: IRouter = Router();
 const OTP_LIFETIME_SECONDS = 5 * 60;
@@ -32,38 +32,6 @@ const MAX_SENDS_PER_PHONE_PER_HOUR = 5;
 const MAX_SENDS_PER_REQUESTER_PER_HOUR = 60;
 const MAX_CODE_CHECKS = 5;
 const HOUR_MS = 60 * 60 * 1000;
-
-function isTrustedOrigin(req: Request) {
-  const origin = req.get("origin");
-  if (!origin) return false;
-
-  const configuredOrigins = [
-    process.env.CORS_ALLOWED_ORIGINS,
-    process.env.REPLIT_DOMAINS,
-    process.env.REPLIT_DEV_DOMAIN,
-  ]
-    .filter(Boolean)
-    .flatMap((value) => value!.split(","))
-    .map((value) => value.trim().replace(/\/+$/, ""))
-    .filter(Boolean)
-    .map((value) => (/^https?:\/\//i.test(value) ? value : `https://${value}`));
-
-  return configuredOrigins.includes(origin.replace(/\/+$/, ""));
-}
-
-function getFingerprintKey() {
-  const key = process.env.SESSION_SECRET?.trim();
-  if (!key) throw new Error("OTP fingerprinting is not configured");
-  return key;
-}
-
-function fingerprint(value: string) {
-  return createHmac("sha256", getFingerprintKey()).update(value).digest("hex");
-}
-
-function requesterAddress(req: Request) {
-  return req.ip || req.socket.remoteAddress || "unknown";
-}
 
 function retryAfterSeconds(until: Date, now = new Date()) {
   return Math.max(1, Math.ceil((until.getTime() - now.getTime()) / 1000));
@@ -297,6 +265,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
         .values({
           phoneHash,
           requesterHash,
+          purpose: parsed.data.purpose,
           status: "starting",
           phoneVerified: false,
           checkAttempts: 0,
@@ -488,14 +457,19 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         return event.id;
       };
 
-      if (challenge.phoneVerified && challenge.verifiedAt) {
-        const eventId = await createEvent("already_verified");
-        return { kind: "verified", verifiedAt: challenge.verifiedAt, eventId } as const;
+      if (challenge.purpose !== parsed.data.purpose) {
+        const eventId = await createEvent("challenge_inactive");
+        return { kind: "inactive", eventId } as const;
+      }
+
+      if (challenge.consumedAt) {
+        const eventId = await createEvent("challenge_inactive");
+        return { kind: "inactive", eventId } as const;
       }
 
       if (
         challenge.status === "expired"
-        || (challenge.status === "pending" && challenge.expiresAt <= now)
+        || (["pending", "verified"].includes(challenge.status) && challenge.expiresAt <= now)
       ) {
         await tx
           .update(phoneOtpChallengesTable)
@@ -503,6 +477,11 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
           .where(eq(phoneOtpChallengesTable.id, challenge.id));
         const eventId = await createEvent("challenge_expired");
         return { kind: "expired", eventId } as const;
+      }
+
+      if (challenge.phoneVerified && challenge.verifiedAt) {
+        const eventId = await createEvent("already_verified");
+        return { kind: "verified", verifiedAt: challenge.verifiedAt, eventId } as const;
       }
 
       if (
@@ -681,6 +660,34 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
             outcome: "state_conflict",
             providerHttpStatus: providerResult.statusCode,
             diagnosticMessage: "eSMS Verify approved the code, but the challenge was unavailable.",
+            completedAt: new Date(),
+          })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId));
+        return { kind: "inactive" } as const;
+      }
+      if (challenge.consumedAt) {
+        await tx
+          .update(phoneOtpEventsTable)
+          .set({
+            outcome: "state_conflict",
+            providerHttpStatus: providerResult.statusCode,
+            diagnosticMessage: "The OTP challenge was consumed while verification was in progress.",
+            completedAt: new Date(),
+          })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId));
+        return { kind: "inactive" } as const;
+      }
+      if (challenge.expiresAt <= verifiedAt) {
+        await tx
+          .update(phoneOtpChallengesTable)
+          .set({ status: "expired" })
+          .where(eq(phoneOtpChallengesTable.id, challenge.id));
+        await tx
+          .update(phoneOtpEventsTable)
+          .set({
+            outcome: "challenge_expired",
+            providerHttpStatus: providerResult.statusCode,
+            diagnosticMessage: "The OTP challenge expired before the provider check completed.",
             completedAt: new Date(),
           })
           .where(eq(phoneOtpEventsTable.id, reservation.eventId));

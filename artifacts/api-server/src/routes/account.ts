@@ -1,82 +1,43 @@
-import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { GetCurrentAccountResponse } from "@workspace/api-zod";
-import { db, eq, usersTable, walletsTable } from "@workspace/db";
-import { recordLoginActivity } from "../lib/login-activity";
+import { db, eq, walletsTable } from "@workspace/db";
+import { requireCustomerSession } from "../lib/customer-session";
 
 const router: IRouter = Router();
 
 router.get("/me", async (req, res): Promise<void> => {
-  const { userId, sessionId } = getAuth(req);
-
-  if (!userId) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
-
-  const [existingUser] = await db
-    .select({ status: usersTable.status })
-    .from(usersTable)
-    .where(eq(usersTable.id, userId));
-
-  if (existingUser?.status === "suspended") {
-    res.status(403).json({ error: "Account suspended" });
-    return;
-  }
-  if (existingUser?.status === "deleted") {
-    res.status(403).json({ error: "Account deleted" });
-    return;
-  }
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
 
   try {
-    const account = await db.transaction(async (tx) => {
-      const [user] = await tx
-        .insert(usersTable)
-        .values({ id: userId })
-        .onConflictDoUpdate({
-          target: usersTable.id,
-          set: { lastSeenAt: new Date() },
-        })
-        .returning();
+    const [wallet] = await db
+      .select()
+      .from(walletsTable)
+      .where(eq(walletsTable.userId, session.userId))
+      .limit(1);
 
-      let [wallet] = await tx
-        .insert(walletsTable)
-        .values({ userId })
-        .onConflictDoNothing()
-        .returning();
+    if (!wallet) {
+      req.log.error({ userId: session.userId }, "Customer wallet is missing");
+      res.status(503).json({ error: "Account storage unavailable" });
+      return;
+    }
 
-      if (!wallet) {
-        [wallet] = await tx
-          .select()
-          .from(walletsTable)
-            .where(eq(walletsTable.userId, userId));
-      }
-
-      if (!user || !wallet) {
-        throw new Error("Account could not be initialized");
-      }
-
-      if (sessionId) {
-        await recordLoginActivity(req, user.id, sessionId, tx);
-      }
-
-      return {
-        userId: user.id,
-        phone: user.phone,
-        displayName: user.displayName,
-        countryCode: user.countryCode,
+    res.json(
+      GetCurrentAccountResponse.parse({
+        userId: session.userId,
+        phone: session.phone,
+        displayName: session.displayName,
+        countryCode: session.countryCode,
         wallet: {
           id: wallet.id,
           currency: wallet.currency,
           balanceMinor: wallet.balanceMinor,
           status: wallet.status,
         },
-      };
-    });
-
-    res.json(GetCurrentAccountResponse.parse(account));
+      }),
+    );
   } catch (error) {
-    req.log.error({ err: error, userId }, "Account initialization failed");
+    req.log.error({ err: error, userId: session.userId }, "Account lookup failed");
     res.status(503).json({ error: "Account storage unavailable" });
   }
 });
