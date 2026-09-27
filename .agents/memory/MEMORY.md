@@ -8,3 +8,4 @@
 - [Didit development integration](didit-development.md) — Keep identity verification server-side and sandbox-only until secure provider configuration is available.
 - [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
+- [Production Neon database](neon-production-database.md) — Keep Neon isolated to production; use an explicit migration target and confirm financial seed values before startup.
