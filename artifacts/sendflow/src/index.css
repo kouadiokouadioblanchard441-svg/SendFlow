@@ -1153,6 +1153,29 @@
 .sendflow-admin-list-card { border: 1px solid var(--admin-line); background: var(--admin-surface); box-shadow: 0 7px 20px rgba(63,45,82,.035); }
 .sendflow-admin-filterbar { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--admin-line); padding: 15px; }
 .sendflow-admin-login-toolbar { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--admin-line); padding: 15px; }
+.sendflow-admin-otp-notice { margin: -8px 0 22px; border-color: #ddd3f0; background: #f8f5fd; color: var(--admin-ink); }
+.sendflow-admin-otp-notice > svg { color: var(--admin-violet); }
+.sendflow-admin-otp-notice [data-slot="alert-title"] { color: var(--admin-violet-deep); }
+.sendflow-admin-otp-card { overflow: hidden; }
+.sendflow-admin-otp-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--admin-line); padding-bottom: 18px; }
+.sendflow-admin-otp-card-header h3 { font-size: 16px; }
+.sendflow-admin-otp-toolbar { display: flex; align-items: flex-end; gap: 12px; border-bottom: 1px solid var(--admin-line); padding: 15px; }
+.sendflow-admin-otp-filter, .sendflow-admin-otp-date-field { display: grid; gap: 6px; min-width: 168px; }
+.sendflow-admin-otp-filter label, .sendflow-admin-otp-date-field label { margin-left: 2px; color: var(--admin-muted); font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.sendflow-admin-otp-filter [data-slot="select-trigger"], .sendflow-admin-otp-date-field input { height: 35px; border-color: var(--admin-line); background: #faf8fc; font-size: 12px; }
+.sendflow-admin-otp-table { min-width: 1080px !important; }
+.sendflow-admin-otp-table td { white-space: normal !important; vertical-align: top; }
+.sendflow-admin-otp-event-cell, .sendflow-admin-otp-outcome-cell { display: flex; align-items: flex-start; gap: 8px; }
+.sendflow-admin-otp-event-cell > svg { flex: none; margin-top: 2px; color: var(--admin-violet); }
+.sendflow-admin-otp-event-cell strong, .sendflow-admin-otp-outcome-cell small { display: block; }
+.sendflow-admin-otp-event-cell small, .sendflow-admin-otp-outcome-cell small { margin-top: 4px; color: var(--admin-muted); font-size: 10px; }
+.sendflow-admin-otp-outcome-cell { flex-direction: column; gap: 0; }
+.sendflow-admin-otp-outcome-success { --badge-outline: #a6d8bf; color: #1b7048; background: #eef9f2; }
+.sendflow-admin-otp-outcome-neutral { --badge-outline: #c6b9e4; color: var(--admin-violet-deep); background: #f4f0fb; }
+.sendflow-admin-otp-outcome-caution { --badge-outline: #e6c994; color: #93671d; background: #fff8e9; }
+.sendflow-admin-otp-outcome-danger { --badge-outline: #e8b9bd; color: #a23b49; background: #fff1f1; }
+.sendflow-admin-otp-challenge { max-width: 150px; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px !important; }
+.sendflow-admin-otp-diagnostic { display: block; max-width: 260px; overflow-wrap: anywhere; color: #554d61; font-size: 11px; line-height: 1.45; }
 .sendflow-admin-search { display: flex; min-width: 240px; flex: 1; align-items: center; gap: 9px; border: 1px solid var(--admin-line); border-radius: 9px; background: #fbf9fc; color: var(--admin-muted); padding-left: 11px; }
 .sendflow-admin-search input { height: 37px; border: 0; background: transparent; box-shadow: none; font-size: 12px; }
 .sendflow-admin-status-filter { width: 160px; height: 37px; font-size: 12px; }
@@ -1420,6 +1443,27 @@
     flex-direction: column;
     gap: 9px;
     padding: 12px;
+  }
+
+  .sendflow-admin-otp-card-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sendflow-admin-otp-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .sendflow-admin-otp-filter,
+  .sendflow-admin-otp-date-field {
+    min-width: 0;
+  }
+
+  .sendflow-admin-otp-notice {
+    margin-top: 0;
   }
 
   .sendflow-admin-search {

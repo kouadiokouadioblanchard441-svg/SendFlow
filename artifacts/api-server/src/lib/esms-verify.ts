@@ -147,7 +147,7 @@ export function createEsmsVerifyClient({
   }
 
   return {
-    async start(to: string): Promise<{ verificationId: string }> {
+    async start(to: string): Promise<{ verificationId: string; statusCode: number }> {
       const { response, payload } = await post("/verify/start", {
         to,
         app_id: normalizedAppId,
@@ -167,17 +167,26 @@ export function createEsmsVerifyClient({
         throw new EsmsProviderError("eSMS Verify returned an unexpected start response", response.status);
       }
 
-      return { verificationId };
+      return { verificationId, statusCode: response.status };
     },
 
-    async check(verificationId: string, code: string): Promise<{ approved: boolean }> {
+    async check(
+      verificationId: string,
+      code: string,
+    ): Promise<{ approved: boolean; statusCode: number; providerMessage?: string }> {
       const { response, payload } = await post("/verify/check", {
         verification_id: verificationId,
         code,
       });
 
       if (!response.ok) {
-        if ([400, 409, 422].includes(response.status)) return { approved: false };
+        if ([400, 409, 422].includes(response.status)) {
+          return {
+            approved: false,
+            statusCode: response.status,
+            providerMessage: getProviderMessage(payload),
+          };
+        }
         throw new EsmsProviderError(
           "eSMS Verify could not check the code",
           response.status,
@@ -190,7 +199,7 @@ export function createEsmsVerifyClient({
         throw new EsmsProviderError("eSMS Verify returned an unexpected check response", response.status);
       }
 
-      return { approved: status.toLowerCase() === "approved" };
+      return { approved: status.toLowerCase() === "approved", statusCode: response.status };
     },
   };
 }

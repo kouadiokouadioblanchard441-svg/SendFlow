@@ -48,7 +48,7 @@ test("starts verification using the server-side app id and bearer key", async ()
     { body: { verification_id: "verify_123", status: "pending" } },
   ]);
 
-  assert.deepEqual(await client.start("+2250102030405"), { verificationId: "verify_123" });
+  assert.deepEqual(await client.start("+2250102030405"), { verificationId: "verify_123", statusCode: 200 });
   assert.equal(requests[0].url, "https://sms.esmsafrica.io/api/verify/start");
   assert.equal(requests[0].init.method, "POST");
   assert.equal(requests[0].init.headers.Authorization, "Bearer esms_test_fake-key");
@@ -64,8 +64,8 @@ test("checks the exact provider verification id and distinguishes approved codes
     { body: { status: "pending" } },
   ]);
 
-  assert.deepEqual(await client.check("verify_123", "123456"), { approved: true });
-  assert.deepEqual(await client.check("verify_123", "000000"), { approved: false });
+  assert.deepEqual(await client.check("verify_123", "123456"), { approved: true, statusCode: 200 });
+  assert.deepEqual(await client.check("verify_123", "000000"), { approved: false, statusCode: 200 });
   assert.equal(requests[0].url, "https://sms.esmsafrica.io/api/verify/check");
   assert.deepEqual(JSON.parse(requests[0].init.body), {
     verification_id: "verify_123",
@@ -78,7 +78,11 @@ test("treats provider invalid-code responses as a rejected check", async () => {
     { status: 422, body: { error: "invalid code" } },
   ]);
 
-  assert.deepEqual(await client.check("verify_123", "000000"), { approved: false });
+  assert.deepEqual(await client.check("verify_123", "000000"), {
+    approved: false,
+    statusCode: 422,
+    providerMessage: "invalid code",
+  });
 });
 
 test("retains a sanitized provider message for server-side diagnostics", async () => {

@@ -50,6 +50,7 @@ import {
   useGetAdminOverview,
   useListAdminTransactions,
   useListAdminLoginActivity,
+  useListAdminOtpActivity,
   useListAdminUsers,
   useListAdminBanners,
   useCreateAdminBanner,
@@ -69,10 +70,12 @@ import {
 } from '@workspace/api-client-react';
 import type {
   AdminBanner,
+  AdminOtpActivityEvent,
   AdminOtpPolicy,
   AdminPaymentAggregator,
   BannerInput,
   BannerUpdate,
+  ListAdminOtpActivityOutcome,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -147,7 +150,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -159,6 +162,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   international: { title: 'Transferts internationaux', eyebrow: 'Flux sortants' },
   transfers: { title: 'Transferts', eyebrow: 'Flux sortants' },
   'login-activity': { title: 'Connexions', eyebrow: 'Sécurité' },
+  'otp-activity': { title: 'Activité OTP', eyebrow: 'Sécurité' },
   banners: { title: 'Bannières', eyebrow: 'Contenu client' },
   'otp-policies': { title: 'Politiques OTP', eyebrow: 'Orange Money' },
   aggregators: { title: 'Partenaires de paiement', eyebrow: 'Routage multi-agrégateurs' },
@@ -179,6 +183,7 @@ const navGroups: Array<{
       { href: '/admin/international', label: 'International', section: 'international', icon: Globe2 },
       { href: '/admin/transfers', label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
       { href: '/admin/login-activity', label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
+      { href: '/admin/otp-activity', label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
     ],
   },
   {
@@ -1005,6 +1010,225 @@ function LoginActivityPage() {
                           <div className="sendflow-admin-reference-cell">
                             <strong className="sendflow-admin-login-session" title={item.sessionId}>{item.sessionId}</strong>
                             <small>{item.locationSource ? `Localisation : ${item.locationSource}` : 'Ville non fournie par le proxy'}</small>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              <Pager page={result?.page ?? page} pageSize={result?.pageSize ?? pageSize} total={result?.total ?? 0} onPage={setPage} />
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </AdminShell>
+  );
+}
+
+const otpOutcomeOptions: Array<{ value: ListAdminOtpActivityOutcome; label: string }> = [
+  { value: 'requested', label: 'Demandé' },
+  { value: 'provider_accepted', label: 'Accepté par le fournisseur' },
+  { value: 'provider_rejected', label: 'Refusé par le fournisseur' },
+  { value: 'provider_error', label: 'Erreur du fournisseur' },
+  { value: 'provider_rate_limited', label: 'Limité par le fournisseur' },
+  { value: 'challenge_inactive', label: 'Challenge inactif' },
+  { value: 'challenge_expired', label: 'Challenge expiré' },
+  { value: 'challenge_locked', label: 'Challenge verrouillé' },
+  { value: 'already_verified', label: 'Déjà vérifié' },
+  { value: 'not_approved', label: 'Non approuvé' },
+  { value: 'verified', label: 'Vérification réussie' },
+  { value: 'state_conflict', label: 'Conflit d’état' },
+  { value: 'storage_error', label: 'Erreur de stockage' },
+];
+
+function otpOutcomeLabel(outcome: string) {
+  return otpOutcomeOptions.find((option) => option.value === outcome)?.label ?? outcome;
+}
+
+function shortenChallengeId(challengeId: string | null) {
+  if (!challengeId) return 'Aucun challenge lié';
+  if (challengeId.length <= 16) return challengeId;
+  return `${challengeId.slice(0, 8)}…${challengeId.slice(-4)}`;
+}
+
+function otpChallengeStateLabel(status: string | null) {
+  if (!status) return 'État du challenge non renseigné';
+  if (status === 'pending') return 'Challenge en attente · réception indéterminée';
+  if (status === 'expired') return 'Challenge expiré · réception indéterminée';
+  return `État du challenge : ${status}`;
+}
+
+function otpOutcomeTone(outcome: string) {
+  if (outcome === 'verified') return 'sendflow-admin-otp-outcome-success';
+  if (outcome === 'provider_accepted' || outcome === 'requested') return 'sendflow-admin-otp-outcome-neutral';
+  if (outcome === 'provider_rejected' || outcome === 'provider_error' || outcome === 'storage_error') return 'sendflow-admin-otp-outcome-danger';
+  return 'sendflow-admin-otp-outcome-caution';
+}
+
+function OtpActivityPage() {
+  const [eventType, setEventType] = useState<'all' | 'send' | 'verify'>('all');
+  const [outcome, setOutcome] = useState<ListAdminOtpActivityOutcome | 'all'>('all');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const params = useMemo(() => ({
+    ...(eventType !== 'all' ? { eventType } : {}),
+    ...(outcome !== 'all' ? { outcome } : {}),
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+    page,
+    pageSize,
+  }), [eventType, outcome, from, to, page]);
+  const query = useListAdminOtpActivity(params);
+  const result = query.data;
+  const items = result?.items ?? [];
+  const verifiedChallengeIds = useMemo(
+    () => new Set(items.filter((item) => item.eventType === 'verify' && item.outcome === 'verified' && item.challengeId).map((item) => item.challengeId)),
+    [items],
+  );
+
+  const updateFilter = <T,>(setter: (value: T) => void, value: T) => {
+    setter(value);
+    setPage(1);
+  };
+
+  return (
+    <AdminShell section="otp-activity">
+      <div className="sendflow-admin-page-intro sendflow-admin-list-intro">
+        <div>
+          <p className="sendflow-admin-overline">Journal de sécurité</p>
+          <h2 data-testid="heading-admin-otp-activity-list">Demandes de vérification téléphonique</h2>
+          <p className="sendflow-admin-subtitle" data-testid="text-admin-otp-activity-subtitle">
+            Une vue épurée et en lecture seule des envois et vérifications OTP.
+          </p>
+        </div>
+        <div className="sendflow-admin-readonly-chip" data-testid="status-admin-otp-readonly">
+          <ShieldCheck className="size-4" aria-hidden="true" /> Consultation uniquement
+        </div>
+      </div>
+
+      <Alert className="sendflow-admin-otp-notice" data-testid="alert-admin-otp-retention">
+        <ShieldCheck className="size-4" />
+        <AlertTitle>Secrets d’authentification exclus du journal</AlertTitle>
+        <AlertDescription>
+          Les valeurs OTP et les corps SMS ne sont intentionnellement pas conservés. Le diagnostic affiché est un diagnostic eSMS/SendFlow assaini, jamais le contenu d’un message.
+        </AlertDescription>
+      </Alert>
+
+      <Card className="sendflow-admin-list-card sendflow-admin-otp-card">
+        <CardHeader className="sendflow-admin-otp-card-header">
+          <div>
+            <CardTitle>Événements OTP</CardTitle>
+            <CardDescription>Filtrez les requêtes transmises à eSMS par type, résultat ou période UTC. Les demandes bloquées par SendFlow avant l’appel au fournisseur ne sont pas enregistrées ici.</CardDescription>
+          </div>
+          <span className="sendflow-admin-data-source" data-testid="text-admin-otp-data-source"><Database className="size-3.5" aria-hidden="true" /> Source serveur</span>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="sendflow-admin-otp-toolbar" data-testid="form-admin-otp-filters">
+            <div className="sendflow-admin-otp-filter">
+              <Label htmlFor="admin-otp-event-type">Type</Label>
+              <Select value={eventType} onValueChange={(value) => updateFilter(setEventType, value as 'all' | 'send' | 'verify')}>
+                <SelectTrigger id="admin-otp-event-type" data-testid="select-admin-otp-event-type"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les événements</SelectItem>
+                  <SelectItem value="send">Envois</SelectItem>
+                  <SelectItem value="verify">Vérifications</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="sendflow-admin-otp-filter">
+              <Label htmlFor="admin-otp-outcome">Résultat</Label>
+              <Select value={outcome} onValueChange={(value) => updateFilter(setOutcome, value as ListAdminOtpActivityOutcome | 'all')}>
+                <SelectTrigger id="admin-otp-outcome" data-testid="select-admin-otp-outcome"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les résultats</SelectItem>
+                  {otpOutcomeOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="sendflow-admin-otp-date-field">
+              <Label htmlFor="admin-otp-from">Du</Label>
+              <Input id="admin-otp-from" type="date" max={to || undefined} value={from} onChange={(event) => updateFilter(setFrom, event.target.value)} data-testid="input-admin-otp-date-from" />
+            </div>
+            <div className="sendflow-admin-otp-date-field">
+              <Label htmlFor="admin-otp-to">Au</Label>
+              <Input id="admin-otp-to" type="date" min={from || undefined} value={to} onChange={(event) => updateFilter(setTo, event.target.value)} data-testid="input-admin-otp-date-to" />
+            </div>
+          </div>
+
+          {query.isLoading && (
+            <div className="sendflow-admin-table-skeleton" data-testid="loading-admin-otp-activity">
+              {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-14 w-full" />)}
+            </div>
+          )}
+          {query.isError && <div className="p-5"><QueryState error={query.error} onRetry={() => void query.refetch()} /></div>}
+          {!query.isLoading && !query.isError && items.length === 0 && (
+            <EmptyState label="Aucun événement OTP ne correspond à ces filtres." />
+          )}
+          {!query.isLoading && !query.isError && items.length > 0 && (
+            <>
+              <Table className="sendflow-admin-otp-table">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Événement</TableHead>
+                    <TableHead>Résultat</TableHead>
+                    <TableHead>Challenge</TableHead>
+                    <TableHead>Diagnostic assaini</TableHead>
+                    <TableHead>Fournisseur</TableHead>
+                    <TableHead>Chronologie</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item: AdminOtpActivityEvent) => {
+                    const isAcceptedSend = item.eventType === 'send' && item.outcome === 'provider_accepted';
+                    const hasLaterVerification = Boolean(item.challengeId && verifiedChallengeIds.has(item.challengeId));
+                    return (
+                      <TableRow key={item.id} data-testid={`row-admin-otp-event-${item.id}`}>
+                        <TableCell>
+                          <div className="sendflow-admin-otp-event-cell">
+                            {item.eventType === 'send' ? <ArrowUpRight className="size-4" aria-hidden="true" /> : <CheckCircle2 className="size-4" aria-hidden="true" />}
+                            <div>
+                              <strong data-testid={`text-otp-event-type-${item.id}`}>{item.eventType === 'send' ? 'Envoi OTP' : 'Vérification OTP'}</strong>
+                              <small data-testid={`text-otp-attempt-${item.id}`}>{item.attemptNumber ? `Tentative ${item.attemptNumber}` : 'Tentative non renseignée'}</small>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-otp-outcome-cell">
+                            <Badge variant="outline" className={`sendflow-admin-status-badge ${otpOutcomeTone(item.outcome)}`} data-testid={`status-otp-outcome-${item.id}`}>
+                              {otpOutcomeLabel(item.outcome)}
+                            </Badge>
+                            {isAcceptedSend && (
+                              <small data-testid={`text-otp-delivery-${item.id}`}>
+                                {hasLaterVerification ? 'Vérification réussie ultérieurement' : 'Livraison non confirmée'}
+                              </small>
+                            )}
+                            {item.eventType === 'verify' && item.outcome === 'verified' && <small data-testid={`text-otp-verified-${item.id}`}>Téléphone vérifié</small>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-reference-cell">
+                            <strong className="sendflow-admin-otp-challenge" title={item.challengeId ?? undefined} data-testid={`text-otp-challenge-${item.id}`}>{shortenChallengeId(item.challengeId)}</strong>
+                            <small data-testid={`text-otp-challenge-status-${item.id}`}>{otpChallengeStateLabel(item.challengeStatus)}</small>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="sendflow-admin-otp-diagnostic" data-testid={`text-otp-diagnostic-${item.id}`}>
+                            {item.diagnosticMessage || 'Aucun diagnostic fourni'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-reference-cell">
+                            <strong data-testid={`text-otp-provider-status-${item.id}`}>{item.providerHttpStatus ? `HTTP ${item.providerHttpStatus}` : 'Statut HTTP non renseigné'}</strong>
+                            <small>Réponse technique uniquement</small>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="sendflow-admin-reference-cell">
+                            <strong data-testid={`text-otp-created-${item.id}`}>{formatDate(item.createdAt)}</strong>
+                            <small data-testid={`text-otp-completed-${item.id}`}>{item.completedAt ? `Terminé ${formatDate(item.completedAt)}` : 'En cours ou non terminé'}</small>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -2049,6 +2273,7 @@ export function AdminRouter() {
   const [isInternational] = useRoute('/admin/international');
   const [isTransfers] = useRoute('/admin/transfers');
   const [isLoginActivity] = useRoute('/admin/login-activity');
+  const [isOtpActivity] = useRoute('/admin/otp-activity');
   const [isBanners] = useRoute('/admin/banners');
   const [isOtpPolicies] = useRoute('/admin/otp-policies');
   const [isAggregators] = useRoute('/admin/aggregators');
@@ -2062,6 +2287,7 @@ export function AdminRouter() {
   if (isInternational) return <TransactionsPage section="international" />;
   if (isTransfers) return <TransactionsPage section="transfers" />;
   if (isLoginActivity) return <LoginActivityPage />;
+  if (isOtpActivity) return <OtpActivityPage />;
   if (isBanners) return <BannersPage />;
   if (isOtpPolicies) return <OtpPoliciesPage />;
   if (isAggregators) return <AggregatorsPage />;

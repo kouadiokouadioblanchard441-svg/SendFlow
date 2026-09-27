@@ -27,6 +27,7 @@ import type {
   AdminBannerReorderRequest,
   AdminLoginActivityPage,
   AdminOperatorPricingCatalog,
+  AdminOtpActivityPage,
   AdminOtpPolicy,
   AdminOtpPolicyList,
   AdminOtpPolicyUpdate,
@@ -56,6 +57,7 @@ import type {
   IdentityVerificationSessionResult,
   IdentityVerificationStatusResult,
   ListAdminLoginActivityParams,
+  ListAdminOtpActivityParams,
   ListAdminTransactionsParams,
   ListAdminUsersParams,
   ManagedOperator,
@@ -2263,6 +2265,91 @@ export function useListAdminLoginActivity<TData = Awaited<ReturnType<typeof list
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListAdminLoginActivityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminOtpActivityUrl = (params?: ListAdminOtpActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/otp-activity?${stringifiedParams}` : `/api/admin/otp-activity`
+}
+
+/**
+ * Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient phone numbers, API credentials, and provider verification identifiers are never included.
+ * @summary List OTP send and verification activity
+ */
+export const listAdminOtpActivity = async (params?: ListAdminOtpActivityParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminOtpActivityPage> => {
+
+  return customFetch<AdminOtpActivityPage>(getListAdminOtpActivityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminOtpActivityQueryKey = (params?: ListAdminOtpActivityParams,) => {
+    return [
+    `/api/admin/otp-activity`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminOtpActivityQueryOptions = <TData = Awaited<ReturnType<typeof listAdminOtpActivity>>, TError = ErrorType<ErrorEnvelope>>(params?: ListAdminOtpActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminOtpActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminOtpActivityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminOtpActivity>>> = ({ signal }) => listAdminOtpActivity(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminOtpActivity>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminOtpActivityQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminOtpActivity>>>
+export type ListAdminOtpActivityQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List OTP send and verification activity
+ */
+
+export function useListAdminOtpActivity<TData = Awaited<ReturnType<typeof listAdminOtpActivity>>, TError = ErrorType<ErrorEnvelope>>(
+ params?: ListAdminOtpActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminOtpActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminOtpActivityQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

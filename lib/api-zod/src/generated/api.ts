@@ -911,6 +911,46 @@ export const ListAdminLoginActivityResponse = zod.object({
 
 
 /**
+ * Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient phone numbers, API credentials, and provider verification identifiers are never included.
+ * @summary List OTP send and verification activity
+ */
+export const listAdminOtpActivityQueryPageDefault = 1;
+export const listAdminOtpActivityQueryPageMax = 1000;
+
+export const listAdminOtpActivityQueryPageSizeDefault = 20;
+export const listAdminOtpActivityQueryPageSizeMax = 50;
+
+
+
+export const ListAdminOtpActivityQueryParams = zod.object({
+  "eventType": zod.enum(['send', 'verify']).optional(),
+  "outcome": zod.enum(['requested', 'rate_limited', 'configuration_error', 'reservation_error', 'provider_accepted', 'provider_rejected', 'provider_error', 'provider_rate_limited', 'challenge_inactive', 'challenge_expired', 'challenge_locked', 'already_verified', 'not_approved', 'verified', 'state_conflict', 'storage_error']).optional(),
+  "from": zod.date().optional().describe('Inclusive UTC calendar date.'),
+  "to": zod.date().optional().describe('Inclusive UTC calendar date.'),
+  "page": zod.coerce.number().int().min(1).max(listAdminOtpActivityQueryPageMax).default(listAdminOtpActivityQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listAdminOtpActivityQueryPageSizeMax).default(listAdminOtpActivityQueryPageSizeDefault)
+})
+
+export const ListAdminOtpActivityResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "challengeId": zod.string().uuid().nullable(),
+  "eventType": zod.enum(['send', 'verify']),
+  "outcome": zod.enum(['requested', 'rate_limited', 'configuration_error', 'reservation_error', 'provider_accepted', 'provider_rejected', 'provider_error', 'provider_rate_limited', 'challenge_inactive', 'challenge_expired', 'challenge_locked', 'already_verified', 'not_approved', 'verified', 'state_conflict', 'storage_error']),
+  "challengeStatus": zod.string().nullable(),
+  "providerHttpStatus": zod.number().int().nullable(),
+  "diagnosticMessage": zod.string().nullable(),
+  "attemptNumber": zod.number().int().nullable(),
+  "createdAt": zod.coerce.date(),
+  "completedAt": zod.coerce.date().nullable()
+})),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "total": zod.number().int()
+})
+
+
+/**
  * @summary List SendFlow users for administrators
  */
 export const listAdminUsersQuerySearchMax = 120;

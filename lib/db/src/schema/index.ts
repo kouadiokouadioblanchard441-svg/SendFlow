@@ -6,6 +6,7 @@ export * from "./login-events";
 export * from "./operator-otp-policies";
 export * from "./operator-pricing";
 export * from "./phone-otp-challenges";
+export * from "./phone-otp-events";
 export * from "./payment-aggregator-routing";
 export * from "./transactions";
 export * from "./users";

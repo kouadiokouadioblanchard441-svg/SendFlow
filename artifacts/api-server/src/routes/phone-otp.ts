@@ -8,7 +8,9 @@ import {
   gte,
   lt,
   phoneOtpChallengesTable,
+  phoneOtpEventsTable,
   sql,
+  type PhoneOtpEventOutcome,
 } from "@workspace/db";
 import {
   SendPhoneOtpBody,
@@ -94,6 +96,67 @@ function safeProviderErrorResponse(
   res.status(502).json({ error: "Le service SMS est momentanément indisponible." });
 }
 
+function providerFailureDetails(error: unknown): {
+  outcome: PhoneOtpEventOutcome;
+  providerHttpStatus: number | null;
+  diagnosticMessage: string;
+} {
+  if (error instanceof EsmsRateLimitError) {
+    return {
+      outcome: "provider_rate_limited",
+      providerHttpStatus: 429,
+      diagnosticMessage: error.message,
+    };
+  }
+
+  if (error instanceof EsmsConfigurationError) {
+    return {
+      outcome: "configuration_error",
+      providerHttpStatus: null,
+      diagnosticMessage: error.message,
+    };
+  }
+
+  if (error instanceof EsmsProviderError) {
+    const statusCode = error.statusCode ?? null;
+    return {
+      outcome: statusCode !== null && statusCode >= 400 && statusCode < 500
+        ? "provider_rejected"
+        : "provider_error",
+      providerHttpStatus: statusCode,
+      diagnosticMessage: error.providerMessage ?? error.message,
+    };
+  }
+
+  return {
+    outcome: "provider_error",
+    providerHttpStatus: null,
+    diagnosticMessage: "eSMS Verify request failed.",
+  };
+}
+
+async function completePhoneOtpEvent(
+  eventId: string,
+  outcome: PhoneOtpEventOutcome,
+  details: {
+    providerHttpStatus?: number | null;
+    diagnosticMessage?: string | null;
+  } = {},
+) {
+  const [event] = await db
+    .update(phoneOtpEventsTable)
+    .set({
+      outcome,
+      providerHttpStatus: details.providerHttpStatus ?? null,
+      diagnosticMessage: details.diagnosticMessage ?? null,
+      completedAt: new Date(),
+    })
+    .where(eq(phoneOtpEventsTable.id, eventId))
+    .returning({ id: phoneOtpEventsTable.id });
+
+  if (!event) throw new Error("OTP activity event was not found");
+}
+
 router.post("/auth/send-otp", async (req, res): Promise<void> => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requête non autorisée." });
@@ -135,7 +198,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
 
   let reservation:
     | { rateLimited: true; retryAfterSeconds: number; reason: "cooldown" | "phone" | "requester" }
-    | { rateLimited: false; id: string };
+    | { rateLimited: false; id: string; eventId: string };
 
   try {
     reservation = await db.transaction(async (tx) => {
@@ -244,7 +307,16 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
         .returning({ id: phoneOtpChallengesTable.id });
 
       if (!challenge) throw new Error("OTP challenge could not be reserved");
-      return { rateLimited: false, id: challenge.id } as const;
+      const [event] = await tx
+        .insert(phoneOtpEventsTable)
+        .values({
+          challengeId: challenge.id,
+          eventType: "send",
+          outcome: "requested",
+        })
+        .returning({ id: phoneOtpEventsTable.id });
+      if (!event) throw new Error("OTP activity event could not be created");
+      return { rateLimited: false, id: challenge.id, eventId: event.id } as const;
     });
   } catch (error) {
     req.log.error({ err: error }, "Phone OTP send reservation failed");
@@ -260,20 +332,27 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     return;
   }
 
-  let providerResult: { verificationId: string };
+  let providerResult: { verificationId: string; statusCode: number };
   try {
     providerResult = await esms.start(parsed.data.phone);
   } catch (error) {
     try {
-      await db
-        .update(phoneOtpChallengesTable)
-        .set({ status: "failed" })
-        .where(
-          and(
-            eq(phoneOtpChallengesTable.id, reservation.id),
-            eq(phoneOtpChallengesTable.status, "starting"),
-          ),
-        );
+      const failure = providerFailureDetails(error);
+      await db.transaction(async (tx) => {
+        await tx
+          .update(phoneOtpChallengesTable)
+          .set({ status: "failed" })
+          .where(
+            and(
+              eq(phoneOtpChallengesTable.id, reservation.id),
+              eq(phoneOtpChallengesTable.status, "starting"),
+            ),
+          );
+        await tx
+          .update(phoneOtpEventsTable)
+          .set({ ...failure, completedAt: new Date() })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId));
+      });
     } catch (storageError) {
       req.log.error(
         { err: storageError, challengeId: reservation.id },
@@ -303,24 +382,41 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   }
 
   try {
-    const [challenge] = await db
-      .update(phoneOtpChallengesTable)
-      .set({
-        providerVerificationId: providerResult.verificationId,
-        status: "pending",
-      })
-      .where(
-        and(
-          eq(phoneOtpChallengesTable.id, reservation.id),
-          eq(phoneOtpChallengesTable.status, "starting"),
-        ),
-      )
-      .returning({
-        id: phoneOtpChallengesTable.id,
-        expiresAt: phoneOtpChallengesTable.expiresAt,
+    const challenge = await db.transaction(async (tx) => {
+      const [updatedChallenge] = await tx
+        .update(phoneOtpChallengesTable)
+        .set({
+          providerVerificationId: providerResult.verificationId,
+          status: "pending",
+        })
+        .where(
+          and(
+            eq(phoneOtpChallengesTable.id, reservation.id),
+            eq(phoneOtpChallengesTable.status, "starting"),
+          ),
+        )
+        .returning({
+          id: phoneOtpChallengesTable.id,
+          expiresAt: phoneOtpChallengesTable.expiresAt,
+        });
+
+      if (!updatedChallenge) throw new Error("OTP challenge state could not be updated");
+
+      const [updatedEvent] = await tx
+        .update(phoneOtpEventsTable)
+        .set({
+          outcome: "provider_accepted",
+          providerHttpStatus: providerResult.statusCode,
+          diagnosticMessage: null,
+          completedAt: new Date(),
+        })
+        .where(eq(phoneOtpEventsTable.id, reservation.eventId))
+        .returning({ id: phoneOtpEventsTable.id });
+
+      if (!updatedEvent) throw new Error("OTP activity event could not be updated");
+      return updatedChallenge;
       });
 
-    if (!challenge) throw new Error("OTP challenge state could not be updated");
     res.status(202).json(
       SendPhoneOtpResponse.parse({
         challengeId: challenge.id,
@@ -359,9 +455,10 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
 
   const now = new Date();
   let reservation:
-    | { kind: "missing" | "expired" | "locked" | "inactive" }
-    | { kind: "verified"; verifiedAt: Date }
-    | { kind: "check"; verificationId: string; attemptNumber: number };
+    | { kind: "missing" }
+    | { kind: "expired" | "locked" | "inactive"; eventId: string }
+    | { kind: "verified"; verifiedAt: Date; eventId: string }
+    | { kind: "check"; verificationId: string; attemptNumber: number; eventId: string };
 
   try {
     reservation = await db.transaction(async (tx) => {
@@ -372,28 +469,57 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         .for("update");
 
       if (!challenge) return { kind: "missing" } as const;
+      const createEvent = async (
+        outcome: PhoneOtpEventOutcome,
+        attemptNumber?: number,
+      ) => {
+        const [event] = await tx
+          .insert(phoneOtpEventsTable)
+          .values({
+            challengeId: challenge.id,
+            eventType: "verify",
+            outcome,
+            attemptNumber,
+            completedAt: outcome === "requested" ? null : now,
+          })
+          .returning({ id: phoneOtpEventsTable.id });
+
+        if (!event) throw new Error("OTP activity event could not be created");
+        return event.id;
+      };
+
       if (challenge.phoneVerified && challenge.verifiedAt) {
-        return { kind: "verified", verifiedAt: challenge.verifiedAt } as const;
+        const eventId = await createEvent("already_verified");
+        return { kind: "verified", verifiedAt: challenge.verifiedAt, eventId } as const;
       }
 
-      if (challenge.status !== "pending" || !challenge.providerVerificationId) {
-        return { kind: "inactive" } as const;
-      }
-
-      if (challenge.expiresAt <= now) {
+      if (
+        challenge.status === "expired"
+        || (challenge.status === "pending" && challenge.expiresAt <= now)
+      ) {
         await tx
           .update(phoneOtpChallengesTable)
           .set({ status: "expired" })
           .where(eq(phoneOtpChallengesTable.id, challenge.id));
-        return { kind: "expired" } as const;
+        const eventId = await createEvent("challenge_expired");
+        return { kind: "expired", eventId } as const;
       }
 
-      if (challenge.checkAttempts >= MAX_CODE_CHECKS) {
+      if (
+        challenge.status === "locked"
+        || (challenge.status === "pending" && challenge.checkAttempts >= MAX_CODE_CHECKS)
+      ) {
         await tx
           .update(phoneOtpChallengesTable)
           .set({ status: "locked" })
           .where(eq(phoneOtpChallengesTable.id, challenge.id));
-        return { kind: "locked" } as const;
+        const eventId = await createEvent("challenge_locked");
+        return { kind: "locked", eventId } as const;
+      }
+
+      if (challenge.status !== "pending" || !challenge.providerVerificationId) {
+        const eventId = await createEvent("challenge_inactive");
+        return { kind: "inactive", eventId } as const;
       }
 
       const attemptNumber = challenge.checkAttempts + 1;
@@ -401,11 +527,13 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         .update(phoneOtpChallengesTable)
         .set({ checkAttempts: attemptNumber })
         .where(eq(phoneOtpChallengesTable.id, challenge.id));
+      const eventId = await createEvent("requested", attemptNumber);
 
       return {
         kind: "check",
         verificationId: challenge.providerVerificationId,
         attemptNumber,
+        eventId,
       } as const;
     });
   } catch (error) {
@@ -440,21 +568,28 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
     return;
   }
 
-  let providerResult: { approved: boolean };
+  let providerResult: { approved: boolean; statusCode: number; providerMessage?: string };
   try {
     providerResult = await esms.check(reservation.verificationId, parsed.data.code);
   } catch (error) {
     try {
-      await db
-        .update(phoneOtpChallengesTable)
-        .set({ checkAttempts: sql`${phoneOtpChallengesTable.checkAttempts} - 1` })
-        .where(
-          and(
-            eq(phoneOtpChallengesTable.id, parsed.data.challengeId),
-            eq(phoneOtpChallengesTable.status, "pending"),
-            eq(phoneOtpChallengesTable.checkAttempts, reservation.attemptNumber),
-          ),
-        );
+      const failure = providerFailureDetails(error);
+      await db.transaction(async (tx) => {
+        await tx
+          .update(phoneOtpChallengesTable)
+          .set({ checkAttempts: sql`${phoneOtpChallengesTable.checkAttempts} - 1` })
+          .where(
+            and(
+              eq(phoneOtpChallengesTable.id, parsed.data.challengeId),
+              eq(phoneOtpChallengesTable.status, "pending"),
+              eq(phoneOtpChallengesTable.checkAttempts, reservation.attemptNumber),
+            ),
+          );
+        await tx
+          .update(phoneOtpEventsTable)
+          .set({ ...failure, completedAt: new Date() })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId));
+      });
     } catch (storageError) {
       req.log.error(
         { err: storageError, challengeId: parsed.data.challengeId },
@@ -479,28 +614,53 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
   }
 
   if (!providerResult.approved) {
-    if (reservation.attemptNumber >= MAX_CODE_CHECKS) {
-      try {
-        await db
-          .update(phoneOtpChallengesTable)
-          .set({ status: "locked" })
-          .where(
-            and(
-              eq(phoneOtpChallengesTable.id, parsed.data.challengeId),
-              eq(phoneOtpChallengesTable.status, "pending"),
-              gte(phoneOtpChallengesTable.checkAttempts, MAX_CODE_CHECKS),
-            ),
-          );
-      } catch (error) {
-        req.log.error({ err: error, challengeId: parsed.data.challengeId }, "OTP challenge lock failed");
-        res.status(503).json({ error: "Le service de vérification SMS est indisponible." });
-        return;
-      }
+    try {
+      await db.transaction(async (tx) => {
+        if (reservation.attemptNumber >= MAX_CODE_CHECKS) {
+          await tx
+            .update(phoneOtpChallengesTable)
+            .set({ status: "locked" })
+            .where(
+              and(
+                eq(phoneOtpChallengesTable.id, parsed.data.challengeId),
+                eq(phoneOtpChallengesTable.status, "pending"),
+                gte(phoneOtpChallengesTable.checkAttempts, MAX_CODE_CHECKS),
+              ),
+            );
+        }
 
-      res.status(409).json({ error: "Trop de codes incorrects. Demandez un nouveau code." });
+        const [updatedEvent] = await tx
+          .update(phoneOtpEventsTable)
+          .set({
+            outcome: "not_approved",
+            providerHttpStatus: providerResult.statusCode,
+            diagnosticMessage: providerResult.providerMessage
+              ?? "eSMS Verify did not approve the code.",
+            completedAt: new Date(),
+          })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId))
+          .returning({ id: phoneOtpEventsTable.id });
+
+        if (!updatedEvent) throw new Error("OTP activity event could not be updated");
+      });
+    } catch (error) {
+      req.log.error({ err: error, challengeId: parsed.data.challengeId }, "OTP rejection could not be recorded");
+      try {
+        await completePhoneOtpEvent(reservation.eventId, "storage_error", {
+          providerHttpStatus: providerResult.statusCode,
+          diagnosticMessage: "eSMS Verify rejection could not be recorded.",
+        });
+      } catch (storageError) {
+        req.log.error({ err: storageError }, "OTP rejection storage error could not be recorded");
+      }
+      res.status(503).json({ error: "Le service de vérification SMS est indisponible." });
       return;
     }
 
+    if (reservation.attemptNumber >= MAX_CODE_CHECKS) {
+      res.status(409).json({ error: "Trop de codes incorrects. Demandez un nouveau code." });
+      return;
+    }
     res.status(400).json({ error: "Code incorrect. Vérifiez le code reçu par SMS." });
     return;
   }
@@ -514,11 +674,40 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         .where(eq(phoneOtpChallengesTable.id, parsed.data.challengeId))
         .for("update");
 
-      if (!challenge) return { kind: "inactive" } as const;
+      if (!challenge) {
+        await tx
+          .update(phoneOtpEventsTable)
+          .set({
+            outcome: "state_conflict",
+            providerHttpStatus: providerResult.statusCode,
+            diagnosticMessage: "eSMS Verify approved the code, but the challenge was unavailable.",
+            completedAt: new Date(),
+          })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId));
+        return { kind: "inactive" } as const;
+      }
       if (challenge.phoneVerified && challenge.verifiedAt) {
+        await tx
+          .update(phoneOtpEventsTable)
+          .set({
+            outcome: "verified",
+            providerHttpStatus: providerResult.statusCode,
+            diagnosticMessage: null,
+            completedAt: new Date(),
+          })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId));
         return { kind: "verified", verifiedAt: challenge.verifiedAt } as const;
       }
       if (!["pending", "locked"].includes(challenge.status)) {
+        await tx
+          .update(phoneOtpEventsTable)
+          .set({
+            outcome: "state_conflict",
+            providerHttpStatus: providerResult.statusCode,
+            diagnosticMessage: "eSMS Verify approved the code, but the challenge was no longer active.",
+            completedAt: new Date(),
+          })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId));
         return { kind: "inactive" } as const;
       }
 
@@ -533,6 +722,18 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         .returning({ verifiedAt: phoneOtpChallengesTable.verifiedAt });
 
       if (!updated?.verifiedAt) throw new Error("Verified OTP state was not stored");
+      const [updatedEvent] = await tx
+        .update(phoneOtpEventsTable)
+        .set({
+          outcome: "verified",
+          providerHttpStatus: providerResult.statusCode,
+          diagnosticMessage: null,
+          completedAt: new Date(),
+        })
+        .where(eq(phoneOtpEventsTable.id, reservation.eventId))
+        .returning({ id: phoneOtpEventsTable.id });
+
+      if (!updatedEvent) throw new Error("OTP activity event could not be updated");
       return { kind: "verified", verifiedAt: updated.verifiedAt } as const;
     });
 
@@ -549,6 +750,14 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
     );
   } catch (error) {
     req.log.error({ err: error, challengeId: parsed.data.challengeId }, "Verified OTP state could not be stored");
+    try {
+      await completePhoneOtpEvent(reservation.eventId, "storage_error", {
+        providerHttpStatus: providerResult.statusCode,
+        diagnosticMessage: "Verified OTP result could not be persisted.",
+      });
+    } catch (storageError) {
+      req.log.error({ err: storageError }, "Verified OTP storage error could not be recorded");
+    }
     res.status(503).json({ error: "La vérification SMS n'a pas pu être enregistrée." });
   }
 });

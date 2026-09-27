@@ -1185,6 +1185,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/otp-activity:
+    get:
+      operationId: listAdminOtpActivity
+      tags: [admin]
+      summary: List OTP send and verification activity
+      description: Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient phone numbers, API credentials, and provider verification identifiers are never included.
+      security:
+        - clerkSession: []
+      parameters:
+        - name: eventType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [send, verify]
+        - name: outcome
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [requested, rate_limited, configuration_error, reservation_error, provider_accepted, provider_rejected, provider_error, provider_rate_limited, challenge_inactive, challenge_expired, challenge_locked, already_verified, not_approved, verified, state_conflict, storage_error]
+        - $ref: "#/components/parameters/AdminFrom"
+        - $ref: "#/components/parameters/AdminTo"
+        - $ref: "#/components/parameters/AdminPage"
+        - $ref: "#/components/parameters/AdminPageSize"
+      responses:
+        "200":
+          description: Paginated OTP activity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOtpActivityPage"
+        "400":
+          description: Invalid activity filters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /admin/users:
     get:
       operationId: listAdminUsers
@@ -2210,6 +2266,60 @@ components:
         total:
           type: integer
       required: [items, page, pageSize, total]
+    AdminOtpActivityPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminOtpActivityEvent"
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+      required: [items, page, pageSize, total]
+    AdminOtpActivityEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        challengeId:
+          type: ["string", "null"]
+          format: uuid
+        eventType:
+          type: string
+          enum: [send, verify]
+        outcome:
+          type: string
+          enum: [requested, rate_limited, configuration_error, reservation_error, provider_accepted, provider_rejected, provider_error, provider_rate_limited, challenge_inactive, challenge_expired, challenge_locked, already_verified, not_approved, verified, state_conflict, storage_error]
+        challengeStatus:
+          type: ["string", "null"]
+        providerHttpStatus:
+          type: ["integer", "null"]
+        diagnosticMessage:
+          type: ["string", "null"]
+        attemptNumber:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - id
+        - challengeId
+        - eventType
+        - outcome
+        - challengeStatus
+        - providerHttpStatus
+        - diagnosticMessage
+        - attemptNumber
+        - createdAt
+        - completedAt
     AdminLoginActivity:
       type: object
       properties:

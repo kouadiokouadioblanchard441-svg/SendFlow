@@ -392,6 +392,62 @@ export interface AdminLoginActivityPage {
   total: number;
 }
 
+export type AdminOtpActivityEventEventType = typeof AdminOtpActivityEventEventType[keyof typeof AdminOtpActivityEventEventType];
+
+
+export const AdminOtpActivityEventEventType = {
+  send: 'send',
+  verify: 'verify',
+} as const;
+
+export type AdminOtpActivityEventOutcome = typeof AdminOtpActivityEventOutcome[keyof typeof AdminOtpActivityEventOutcome];
+
+
+export const AdminOtpActivityEventOutcome = {
+  requested: 'requested',
+  rate_limited: 'rate_limited',
+  configuration_error: 'configuration_error',
+  reservation_error: 'reservation_error',
+  provider_accepted: 'provider_accepted',
+  provider_rejected: 'provider_rejected',
+  provider_error: 'provider_error',
+  provider_rate_limited: 'provider_rate_limited',
+  challenge_inactive: 'challenge_inactive',
+  challenge_expired: 'challenge_expired',
+  challenge_locked: 'challenge_locked',
+  already_verified: 'already_verified',
+  not_approved: 'not_approved',
+  verified: 'verified',
+  state_conflict: 'state_conflict',
+  storage_error: 'storage_error',
+} as const;
+
+export interface AdminOtpActivityEvent {
+  id: string;
+  /** @nullable */
+  challengeId: string | null;
+  eventType: AdminOtpActivityEventEventType;
+  outcome: AdminOtpActivityEventOutcome;
+  /** @nullable */
+  challengeStatus: string | null;
+  /** @nullable */
+  providerHttpStatus: number | null;
+  /** @nullable */
+  diagnosticMessage: string | null;
+  /** @nullable */
+  attemptNumber: number | null;
+  createdAt: string;
+  /** @nullable */
+  completedAt: string | null;
+}
+
+export interface AdminOtpActivityPage {
+  items: AdminOtpActivityEvent[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
 export interface PublicBanner {
   id: string;
   title: string;
@@ -1374,6 +1430,59 @@ page?: AdminPageParameter;
  */
 pageSize?: AdminPageSizeParameter;
 };
+
+export type ListAdminOtpActivityParams = {
+eventType?: ListAdminOtpActivityEventType;
+outcome?: ListAdminOtpActivityOutcome;
+/**
+ * Inclusive UTC calendar date.
+ */
+from?: AdminFromParameter;
+/**
+ * Inclusive UTC calendar date.
+ */
+to?: AdminToParameter;
+/**
+ * @minimum 1
+ * @maximum 1000
+ */
+page?: AdminPageParameter;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+pageSize?: AdminPageSizeParameter;
+};
+
+export type ListAdminOtpActivityEventType = typeof ListAdminOtpActivityEventType[keyof typeof ListAdminOtpActivityEventType];
+
+
+export const ListAdminOtpActivityEventType = {
+  send: 'send',
+  verify: 'verify',
+} as const;
+
+export type ListAdminOtpActivityOutcome = typeof ListAdminOtpActivityOutcome[keyof typeof ListAdminOtpActivityOutcome];
+
+
+export const ListAdminOtpActivityOutcome = {
+  requested: 'requested',
+  rate_limited: 'rate_limited',
+  configuration_error: 'configuration_error',
+  reservation_error: 'reservation_error',
+  provider_accepted: 'provider_accepted',
+  provider_rejected: 'provider_rejected',
+  provider_error: 'provider_error',
+  provider_rate_limited: 'provider_rate_limited',
+  challenge_inactive: 'challenge_inactive',
+  challenge_expired: 'challenge_expired',
+  challenge_locked: 'challenge_locked',
+  already_verified: 'already_verified',
+  not_approved: 'not_approved',
+  verified: 'verified',
+  state_conflict: 'state_conflict',
+  storage_error: 'storage_error',
+} as const;
 
 export type ListAdminUsersParams = {
 /**
