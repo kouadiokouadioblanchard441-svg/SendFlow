@@ -65,12 +65,7 @@ type ContactsNavigator = Navigator & {
   contacts?: ContactsManager;
 };
 
-const savedContacts: SavedContact[] = [
-  { id: 'contact-aicha', name: 'Aïcha Koné', phone: '0708123456', initials: 'AK' },
-  { id: 'contact-mariam', name: 'Mariam A.', phone: '0595857098', initials: 'MA' },
-  { id: 'contact-yannick', name: 'Yannick Kouassi', phone: '0509071623', initials: 'YK' },
-  { id: 'contact-fatou', name: 'Fatou Traoré', phone: '0585325450', initials: 'FT' },
-];
+const savedContacts: SavedContact[] = [];
 
 function OperatorMark({ operator }: { operator: TransferOperator }) {
   if (operator.brand === 'wave') {
@@ -111,15 +106,15 @@ export default function InterNetworkTransferPage() {
       })),
     [pricingCountry?.dialCode, pricingCountry?.flag, pricingQuery.data?.operators],
   );
-  const [amount, setAmount] = useState('20000');
-  const [sourceNumber, setSourceNumber] = useState('0595857098');
+  const [amount, setAmount] = useState('');
+  const [sourceNumber, setSourceNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [recipientNumber, setRecipientNumber] = useState('');
   const [supportFees, setSupportFees] = useState(true);
   const [copied, setCopied] = useState(false);
   const [requestState, setRequestState] = useState<TransferRequestState>('idle');
-  const [sourceOperatorId, setSourceOperatorId] = useState<string | null>('orange-ci');
-  const [destinationOperatorId, setDestinationOperatorId] = useState<string | null>('wave-ci');
+  const [sourceOperatorId, setSourceOperatorId] = useState<string | null>(null);
+  const [destinationOperatorId, setDestinationOperatorId] = useState<string | null>(null);
   const sourceOperator = availableOperators.find((item) => item.id === sourceOperatorId)
     ?? availableOperators[0]
     ?? null;
@@ -301,13 +296,12 @@ export default function InterNetworkTransferPage() {
             </button>
             <button
               type="button"
-              className="sendflow-transfer-header-button has-notification"
+              className="sendflow-transfer-header-button"
               onClick={() => setLocation('/notifications')}
               aria-label="Voir les notifications"
               data-testid="button-transfer-notifications"
             >
               <Bell size={23} strokeWidth={2.1} />
-              <span aria-hidden="true">8</span>
             </button>
           </div>
         </div>
@@ -609,7 +603,9 @@ export default function InterNetworkTransferPage() {
               )}
 
               <div className="sendflow-transfer-contact-list">
-                {savedContacts.map((contact) => (
+                {savedContacts.length === 0 ? (
+                  <p className="sendflow-transfer-contact-notice">Aucun contact enregistré pour le moment.</p>
+                ) : savedContacts.map((contact) => (
                   <button
                     type="button"
                     className="sendflow-transfer-contact-option"

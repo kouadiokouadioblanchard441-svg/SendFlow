@@ -208,9 +208,8 @@ export default function InternationalTransferPage() {
             <button type="button" className="sendflow-transfer-header-button" onClick={() => setLocation('/history')} aria-label="Voir l’historique des transactions" data-testid="button-international-history">
               <History size={22} strokeWidth={2.1} />
             </button>
-            <button type="button" className="sendflow-transfer-header-button has-notification" onClick={() => setLocation('/notifications')} aria-label="Voir les notifications" data-testid="button-international-notifications">
+            <button type="button" className="sendflow-transfer-header-button" onClick={() => setLocation('/notifications')} aria-label="Voir les notifications" data-testid="button-international-notifications">
               <Bell size={23} strokeWidth={2.1} />
-              <span aria-hidden="true">8</span>
             </button>
           </div>
         </div>

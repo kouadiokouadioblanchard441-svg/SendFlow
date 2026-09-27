@@ -19,10 +19,18 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
-import { useListPublishedBanners, getListPublishedBannersQueryKey, useSignOutCustomer } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useGetCurrentAccount,
+  getGetCurrentAccountQueryKey,
+  useListPublishedBanners,
+  getListPublishedBannersQueryKey,
+  useSignOutCustomer,
+} from '@workspace/api-client-react';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { TransactionCard } from '@/components/transaction-card';
-import { transactions } from '@/lib/transactions';
+import { useCustomerTransactions } from '@/lib/customer-transactions';
+import { formatCurrencyMinor, toTransactionView } from '@/lib/transactions';
 import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 import { readAccountProfile } from '@/lib/account-profile';
@@ -72,6 +80,11 @@ export default function AccountPage() {
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountProfile = readAccountProfile();
   const profileAvatar = getAvatarForUser(getCurrentAvatarUserKey(accountProfile));
+  const accountQuery = useGetCurrentAccount({
+    query: { queryKey: getGetCurrentAccountQueryKey(), enabled: isUnlocked },
+  });
+  const transactionsQuery = useCustomerTransactions(accountQuery.data?.userId);
+  const recentTransactions = transactionsQuery.data?.items.slice(0, 5) ?? [];
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetName>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(() => (
@@ -84,6 +97,7 @@ export default function AccountPage() {
   const [carouselPaused, setCarouselPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const signOutCustomer = useSignOutCustomer();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setActiveBannerIndex((current) => publishedBanners.length ? Math.min(current, publishedBanners.length - 1) : 0);
@@ -210,11 +224,27 @@ export default function AccountPage() {
               </button>
             </div>
             <div className="sendflow-wallet-balance-row">
-              <strong>{walletVisible ? '0' : '••••'}</strong>
-              <span>FCFA</span>
+              <strong>
+                {walletVisible
+                  ? accountQuery.isLoading
+                    ? '…'
+                    : accountQuery.isError || !accountQuery.data
+                      ? '—'
+                      : formatCurrencyMinor(
+                          accountQuery.data.wallet.balanceMinor,
+                          accountQuery.data.wallet.currency,
+                        )
+                  : '••••'}
+              </strong>
             </div>
             <div className="sendflow-wallet-footer">
-              <span>Solde disponible</span>
+              <span>
+                {accountQuery.isError
+                  ? 'Solde indisponible'
+                  : accountQuery.data?.wallet.status === 'active'
+                    ? 'Solde disponible'
+                    : 'Statut du wallet indisponible'}
+              </span>
             </div>
           </section>
 
@@ -347,14 +377,26 @@ export default function AccountPage() {
               <button type="button" className="sendflow-see-all" onClick={openHistory} data-testid="button-view-all-transactions">Voir tout <ChevronRight size={18} /></button>
             </div>
             <div className="sendflow-transaction-list">
-              {transactions.slice(0, 5).map((transaction) => (
+              {accountQuery.isLoading && <p className="sendflow-history-empty">Chargement de votre compte…</p>}
+              {accountQuery.isError && <p className="sendflow-history-empty" role="alert">Impossible de charger vos données de compte.</p>}
+              {transactionsQuery.isLoading && <p className="sendflow-history-empty">Chargement des transactions…</p>}
+              {transactionsQuery.isError && (
+                <p className="sendflow-history-empty" role="alert">
+                  Historique indisponible.
+                  <button type="button" onClick={() => void transactionsQuery.refetch()}>Réessayer</button>
+                </p>
+              )}
+              {!accountQuery.isLoading && !accountQuery.isError && !transactionsQuery.isLoading && !transactionsQuery.isError && recentTransactions.map((record) => (
                 <TransactionCard
-                  key={transaction.id}
-                  transaction={transaction}
-                  onClick={() => openTransaction(transaction.id)}
-                  testId={`button-transaction-${transaction.id}`}
+                  key={record.id}
+                  transaction={toTransactionView(record)}
+                  onClick={() => openTransaction(record.id)}
+                  testId={`button-transaction-${record.id}`}
                 />
               ))}
+              {!accountQuery.isLoading && !accountQuery.isError && !transactionsQuery.isLoading && !transactionsQuery.isError && recentTransactions.length === 0 && (
+                <p className="sendflow-history-empty">Aucune transaction pour le moment.</p>
+              )}
             </div>
           </section>
         </section>
@@ -377,7 +419,7 @@ export default function AccountPage() {
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-limit'); }} data-testid="button-menu-limit"><WalletCards size={19} />Plafond du compte<ChevronRight size={17} /></button>
                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/confidentialite'); }} data-testid="button-menu-privacy"><FileText size={19} />Politique de confidentialité<ChevronRight size={17} /></button>
             </div>
-               <div className="sendflow-menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/customer-service'); }} data-testid="button-menu-help"><Headphones size={19} />Service client<ChevronRight size={17} /></button><button type="button" disabled={signOutCustomer.isPending} onClick={async () => { try { await signOutCustomer.mutateAsync(); window.sessionStorage.removeItem('sendflow.pin.unlocked'); window.sessionStorage.removeItem('sendflow.avatar.user-key'); setLocation('/sign-in'); } catch { /* Keep the session presentation intact until the server confirms logout. */ } }} data-testid="button-menu-logout"><LogOut size={19} />{signOutCustomer.isPending ? 'Déconnexion…' : 'Déconnecter'}</button></div>
+                <div className="sendflow-menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/customer-service'); }} data-testid="button-menu-help"><Headphones size={19} />Service client<ChevronRight size={17} /></button><button type="button" disabled={signOutCustomer.isPending} onClick={async () => { try { await signOutCustomer.mutateAsync(); queryClient.clear(); window.sessionStorage.removeItem('sendflow.pin.unlocked'); window.sessionStorage.removeItem('sendflow.avatar.user-key'); setLocation('/sign-in'); } catch { /* Keep the session presentation intact until the server confirms logout. */ } }} data-testid="button-menu-logout"><LogOut size={19} />{signOutCustomer.isPending ? 'Déconnexion…' : 'Déconnecter'}</button></div>
               <p className="sendflow-menu-copyright">© 2026 SendFlow</p>
           </aside>
         </div>

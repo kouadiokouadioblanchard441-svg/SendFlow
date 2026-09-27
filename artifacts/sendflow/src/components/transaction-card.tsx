@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
-import { operatorNames, transactionDetails, type OperatorCode, type Transaction } from '@/lib/transactions';
+import { operatorNames, type OperatorCode, type Transaction } from '@/lib/transactions';
 
 const operatorLogos: Partial<Record<OperatorCode, string>> = {
   sendflow: sendflowMark,
@@ -29,7 +29,17 @@ export function OperatorLogo({ operator }: { operator: OperatorCode }) {
 
   return (
     <span className={`sendflow-transaction-logo is-${operator}`}>
-      <strong>{operator === 'mtn' ? 'MTN' : operator === 'tmoney' ? 'T' : 'M'}</strong>
+      <strong>
+        {operator === 'orange'
+          ? 'O'
+          : operator === 'mtn'
+            ? 'MTN'
+            : operator === 'tmoney'
+              ? 'T'
+              : operator === 'moov'
+                ? 'M'
+                : '—'}
+      </strong>
     </span>
   );
 }
@@ -37,9 +47,16 @@ export function OperatorLogo({ operator }: { operator: OperatorCode }) {
 function TransactionCardContent({ transaction }: { transaction: Transaction }) {
   const amountPrefix = transaction.kind === 'deposit' ? '+ ' : transaction.kind === 'international' ? '- ' : '';
   const amountClass = transaction.kind === 'deposit' ? 'is-deposit' : transaction.kind === 'international' ? 'is-international' : '';
-  const transactionStatus = transactionDetails[transaction.id]?.status;
-  const statusLabel = transactionStatus === 'Réussie' ? 'RÉUSSIE' : transactionStatus === 'En cours' ? 'ATTENTE' : transactionStatus === 'Échouée' ? 'ÉCHEC' : null;
-  const statusClass = transactionStatus === 'Réussie' ? 'is-success' : transactionStatus === 'En cours' ? 'is-pending' : transactionStatus === 'Échouée' ? 'is-failed' : '';
+  const statusLabel = transaction.status === 'succeeded'
+    ? 'RÉUSSIE'
+    : transaction.status === 'pending'
+      ? 'ATTENTE'
+      : 'ÉCHEC';
+  const statusClass = transaction.status === 'succeeded'
+    ? 'is-success'
+    : transaction.status === 'pending'
+      ? 'is-pending'
+      : 'is-failed';
 
   return (
     <>

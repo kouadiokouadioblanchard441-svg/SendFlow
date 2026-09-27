@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
+import { getGetCurrentAccountQueryKey, useGetCurrentAccount } from '@workspace/api-client-react';
 import { TransactionCard } from '@/components/transaction-card';
-import { transactions } from '@/lib/transactions';
+import { useCustomerTransactions } from '@/lib/customer-transactions';
+import { toTransactionView } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -11,6 +13,11 @@ export default function HistoryPage() {
   const [, setLocation] = useLocation();
   const [query, setQuery] = useState('');
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
+  const accountQuery = useGetCurrentAccount({
+    query: { queryKey: getGetCurrentAccountQueryKey(), enabled: isUnlocked },
+  });
+  const transactionsQuery = useCustomerTransactions(accountQuery.data?.userId);
+  const transactions = transactionsQuery.data?.items ?? [];
 
   useSeo({
     path: '/history',
@@ -25,11 +32,11 @@ export default function HistoryPage() {
     if (!normalizedQuery) return transactions;
 
     return transactions.filter((transaction) =>
-      `${transaction.sender} ${transaction.recipient} ${transaction.date} ${transaction.amount}`
+      `${transaction.senderPhone} ${transaction.recipientPhone} ${transaction.reference} ${transaction.amountMinor}`
         .toLowerCase()
         .includes(normalizedQuery),
     );
-  }, [query]);
+  }, [query, transactions]);
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
@@ -63,16 +70,25 @@ export default function HistoryPage() {
         <h1 id="history-title">Historique des transactions</h1>
 
         <div className="sendflow-history-list">
-          {visibleTransactions.map((transaction, index) => (
+          {accountQuery.isLoading && <p className="sendflow-history-empty">Chargement de votre compte…</p>}
+          {accountQuery.isError && <p className="sendflow-history-empty" role="alert">Impossible de charger votre compte. Reconnectez-vous puis réessayez.</p>}
+          {transactionsQuery.isLoading && <p className="sendflow-history-empty">Chargement des transactions…</p>}
+          {transactionsQuery.isError && (
+            <div className="sendflow-history-empty" role="alert">
+              <p>Impossible de charger votre historique.</p>
+              <button type="button" onClick={() => void transactionsQuery.refetch()}>Réessayer</button>
+            </div>
+          )}
+          {!accountQuery.isLoading && !accountQuery.isError && !transactionsQuery.isLoading && !transactionsQuery.isError && visibleTransactions.map((record, index) => (
             <TransactionCard
-              key={transaction.id}
-              transaction={transaction}
+              key={record.id}
+              transaction={toTransactionView(record)}
               className={index === 0 ? 'is-highlighted' : ''}
-              onClick={() => setLocation(`/transaction/${encodeURIComponent(transaction.id)}`)}
-              testId={`history-transaction-${transaction.id}`}
+              onClick={() => setLocation(`/transaction/${encodeURIComponent(record.id)}`)}
+              testId={`history-transaction-${record.id}`}
             />
           ))}
-          {visibleTransactions.length === 0 && (
+          {!accountQuery.isLoading && !accountQuery.isError && !transactionsQuery.isLoading && !transactionsQuery.isError && visibleTransactions.length === 0 && (
             <p className="sendflow-history-empty">Aucune transaction trouvée.</p>
           )}
         </div>

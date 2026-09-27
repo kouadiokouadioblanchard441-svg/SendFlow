@@ -1,13 +1,14 @@
 import { ArrowLeft, CircleHelp, Download, Star } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
+import { getGetCurrentAccountQueryKey, useGetCurrentAccount } from '@workspace/api-client-react';
 import { OperatorLogo } from '@/components/transaction-card';
 import { customerServiceProvider } from '@/lib/customer-service';
+import { useCustomerTransaction } from '@/lib/customer-transactions';
 import {
+  formatCurrencyMinor,
+  formatTransactionDate,
+  operatorCodeFor,
   operatorNames,
-  transactionDetails,
-  transactions,
-  type Transaction,
-  type TransactionDetail,
 } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
 
@@ -19,31 +20,6 @@ function readTransactionId(location: string): string {
   } catch {
     return '';
   }
-}
-
-function getFallbackReference(transactionId: string): string {
-  const sequence = transactionId.match(/\d+$/)?.[0]?.padStart(4, '0') ?? '0000';
-  const suffix = transactionId.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(-8).padStart(8, '0');
-
-  return `SF-00000000-${sequence}-${suffix}`;
-}
-
-function getTransactionDetail(transaction: Transaction): TransactionDetail {
-  return transactionDetails[transaction.id] ?? {
-    nature: transaction.kind === 'deposit' ? "Dépôt d'argent" : "Transfert d'argent",
-    sentAmount: `${transaction.amount} Fcfa`,
-    fee: '0 Fcfa',
-    total: `${transaction.amount} Fcfa`,
-    senderCountry: "Côte d'Ivoire",
-    senderFlag: '🇨🇮',
-    recipientCountry: "Côte d'Ivoire",
-    recipientFlag: '🇨🇮',
-    debitedNumber: transaction.sender,
-    beneficiary: transaction.recipient,
-    status: 'En cours',
-    dateTime: transaction.date,
-    reference: getFallbackReference(transaction.id),
-  };
 }
 
 function DetailRow({
@@ -69,8 +45,11 @@ export default function TransactionDetailPage() {
   const [location, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const transactionId = readTransactionId(location);
-  const transaction = transactions.find((candidate) => candidate.id === transactionId);
-  const detail = transaction ? getTransactionDetail(transaction) : undefined;
+  const accountQuery = useGetCurrentAccount({
+    query: { queryKey: getGetCurrentAccountQueryKey(), enabled: isUnlocked },
+  });
+  const detailQuery = useCustomerTransaction(accountQuery.data?.userId, transactionId);
+  const transaction = detailQuery.data;
 
   useSeo({
     path: location,
@@ -81,21 +60,53 @@ export default function TransactionDetailPage() {
   });
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
-  if (!transaction || !detail) return <Redirect to="/history" />;
+  if (accountQuery.isLoading || detailQuery.isLoading) {
+    return <main className="sendflow-receipt-shell" role="status">Chargement des détails de transaction…</main>;
+  }
+  if (accountQuery.isError || detailQuery.isError || !transaction) {
+    return (
+      <main className="sendflow-receipt-shell">
+        <p role="alert">Impossible de charger les détails réels de cette transaction.</p>
+        <button type="button" onClick={() => void detailQuery.refetch()}>Réessayer</button>
+        <button type="button" onClick={() => setLocation('/history')}>Retour à l’historique</button>
+      </main>
+    );
+  }
 
   const isDeposit = transaction.kind === 'deposit';
-  const statusLabel = detail.status === 'Réussie' ? 'RÉUSSIE' : detail.status === 'En cours' ? 'ATTENTE' : 'ÉCHEC';
+  const statusLabel = transaction.status === 'succeeded'
+    ? 'RÉUSSIE'
+    : transaction.status === 'pending'
+      ? 'ATTENTE'
+      : 'ÉCHEC';
+  const statusClass = transaction.status === 'succeeded'
+    ? 'success'
+    : transaction.status === 'pending'
+      ? 'pending'
+      : 'failed';
+  const sentAmount = formatCurrencyMinor(transaction.amountMinor, transaction.currency);
+  const fee = formatCurrencyMinor(transaction.feeMinor, transaction.currency);
+  const total = formatCurrencyMinor(
+    transaction.amountMinor + transaction.feeMinor,
+    transaction.currency,
+  );
+  const transactionKindLabel = isDeposit
+    ? "Dépôt d'argent"
+    : transaction.kind === 'inter-network'
+      ? 'Transfert inter réseau'
+      : 'Transfert international';
+  const operatorName = operatorNames[operatorCodeFor(transaction.toOperator)];
   const supportContact = customerServiceProvider.getContact();
   const whatsappMessage = [
     "Bonjour, je souhaite obtenir de l'aide concernant une transaction SendFlow.",
     '',
-    `Montant envoyé : ${detail.sentAmount}`,
-    `Total payé : ${detail.total}`,
-    `Numéro débité : ${detail.debitedNumber}`,
-    `Bénéficiaire : ${detail.beneficiary}`,
-    `Opérateur : ${operatorNames[transaction.toOperator]}`,
-    `Référence : ${detail.reference}`,
-    `Date : ${detail.dateTime}`,
+    `Montant envoyé : ${sentAmount}`,
+    `Total payé : ${total}`,
+    `Numéro débité : ${transaction.senderPhone}`,
+    `Bénéficiaire : ${transaction.recipientPhone}`,
+    `Opérateur : ${operatorName}`,
+    `Référence : ${transaction.providerReference ?? transaction.reference}`,
+    `Date : ${formatTransactionDate(transaction.createdAt)}`,
     '',
     'Pouvez-vous m’aider à vérifier cette opération ?',
   ].join('\n');
@@ -137,37 +148,35 @@ export default function TransactionDetailPage() {
 
       <section className="sendflow-receipt-summary" aria-labelledby="receipt-summary-title">
         <div className="sendflow-receipt-summary-copy">
-          <p id="receipt-summary-title" className="sendflow-receipt-total">{detail.total}</p>
+          <p id="receipt-summary-title" className="sendflow-receipt-total">{total}</p>
           <p className="sendflow-receipt-recipient">
-            {isDeposit ? 'Dépôt sur votre wallet' : `Envoi au ${detail.beneficiary}`}
+            {isDeposit ? 'Dépôt sur votre wallet' : `Envoi au ${transaction.recipientPhone}`}
             <span aria-hidden="true"> • </span>
-            {detail.recipientCountry} {detail.recipientFlag}
+            {operatorName}
           </p>
         </div>
-        <div className={`sendflow-receipt-operator is-${transaction.toOperator}`}>
-          <OperatorLogo operator={transaction.toOperator} />
+        <div className={`sendflow-receipt-operator is-${operatorCodeFor(transaction.toOperator)}`}>
+          <OperatorLogo operator={operatorCodeFor(transaction.toOperator)} />
         </div>
       </section>
 
       <section className="sendflow-receipt-card" aria-labelledby="receipt-details-title">
         <h2 id="receipt-details-title">Détails transaction</h2>
         <dl>
-          <DetailRow label="Nature de la transaction" value={detail.nature} />
-          <DetailRow label="Montant envoyé" value={detail.sentAmount} />
-          <DetailRow label="Frais" value={detail.fee} />
-          <DetailRow label="Total payé" value={detail.total} emphasized separated />
-          <DetailRow
-            label="Pays de l'expéditeur"
-            value={<>{detail.senderCountry} {detail.senderFlag}</>}
-          />
-          <DetailRow label="Numéro débité" value={detail.debitedNumber} />
-          <DetailRow label="Bénéficiaire" value={detail.beneficiary} />
+          <DetailRow label="Nature de la transaction" value={transactionKindLabel} />
+          <DetailRow label="Montant envoyé" value={sentAmount} />
+          <DetailRow label="Frais enregistrés" value={fee} />
+          <DetailRow label="Total enregistré" value={total} emphasized separated />
+          <DetailRow label="Réseau bénéficiaire" value={operatorName} />
+          <DetailRow label="Numéro débité" value={transaction.senderPhone} />
+          <DetailRow label="Bénéficiaire" value={transaction.recipientPhone} />
           <DetailRow
             label="Statut"
-            value={<span className={`sendflow-receipt-status is-${detail.status === 'Réussie' ? 'success' : detail.status === 'Échouée' ? 'failed' : 'pending'} is-prominent`}>{statusLabel}</span>}
+            value={<span className={`sendflow-receipt-status is-${statusClass} is-prominent`}>{statusLabel}</span>}
           />
-          <DetailRow label="Date et heure" value={detail.dateTime} separated />
-          <DetailRow label="ID transaction" value={detail.reference} />
+          <DetailRow label="Date et heure" value={formatTransactionDate(transaction.createdAt)} separated />
+          <DetailRow label="Référence SendFlow" value={transaction.reference} />
+          {transaction.providerReference && <DetailRow label="Référence opérateur" value={transaction.providerReference} />}
         </dl>
       </section>
 
