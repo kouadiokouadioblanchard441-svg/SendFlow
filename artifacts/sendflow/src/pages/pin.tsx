@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Delete } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
@@ -15,16 +15,13 @@ type PinKey = (typeof PIN_DIGITS)[number] | '' | 'backspace';
 const PIN_LENGTH = 4;
 const PIN_CHANGE_SUCCESS_KEY = 'sendflow.pin.change-success';
 
-function createShuffledKeypad(previous?: readonly PinKey[]): PinKey[] {
-  const previousDigits = previous?.slice(0, PIN_DIGITS.length).join('');
+function createShuffledKeypad(): PinKey[] {
   const digits = [...PIN_DIGITS];
 
-  do {
-    for (let index = digits.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(Math.random() * (index + 1));
-      [digits[index], digits[swapIndex]] = [digits[swapIndex], digits[index]];
-    }
-  } while (previousDigits && digits.join('') === previousDigits);
+  for (let index = digits.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [digits[index], digits[swapIndex]] = [digits[swapIndex], digits[index]];
+  }
 
   // Keep the empty slot and delete action stable so the keypad stays easy to scan.
   return [...digits.slice(0, 9), '', digits[9], 'backspace'];
@@ -77,53 +74,6 @@ function PinKeypad({
   onDigit: (digit: string) => void;
   onDelete: () => void;
 }) {
-  const keyRefs = useRef(new Map<string, HTMLElement>());
-  const previousPositions = useRef(new Map<string, { left: number; top: number }>());
-  const activeAnimations = useRef<Animation[]>([]);
-
-  useLayoutEffect(() => {
-    activeAnimations.current.forEach((animation) => animation.cancel());
-    activeAnimations.current = [];
-
-    const nextPositions = new Map<string, { left: number; top: number }>();
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
-    keys.forEach((key, index) => {
-      const keyId = key === '' ? `empty-${index}` : key;
-      const node = keyRefs.current.get(keyId);
-      if (!node) return;
-
-      const rect = node.getBoundingClientRect();
-      const currentPosition = { left: rect.left, top: rect.top };
-      const previousPosition = previousPositions.current.get(keyId);
-      nextPositions.set(keyId, currentPosition);
-
-      if (reduceMotion || !previousPosition || typeof node.animate !== 'function') return;
-
-      const deltaX = previousPosition.left - currentPosition.left;
-      const deltaY = previousPosition.top - currentPosition.top;
-      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return;
-
-      activeAnimations.current.push(node.animate(
-        [
-          { transform: `translate(${deltaX}px, ${deltaY}px)` },
-          { transform: 'translate(0, 0)' },
-        ],
-        {
-          duration: 145,
-          easing: 'cubic-bezier(.22, .8, .32, 1)',
-          fill: 'none',
-        },
-      ));
-    });
-
-    previousPositions.current = nextPositions;
-  }, [keys]);
-
-  useEffect(() => () => {
-    activeAnimations.current.forEach((animation) => animation.cancel());
-  }, []);
-
   return (
     <div className="sendflow-pin-keypad" aria-label="Pavé numérique">
       {keys.map((key, index) => {
@@ -132,10 +82,6 @@ function PinKeypad({
           return (
             <span
               key={keyId}
-              ref={(node) => {
-                if (node) keyRefs.current.set(keyId, node);
-                else keyRefs.current.delete(keyId);
-              }}
               aria-hidden="true"
             />
           );
@@ -145,10 +91,6 @@ function PinKeypad({
           return (
             <button
               key={key}
-              ref={(node) => {
-                if (node) keyRefs.current.set(keyId, node);
-                else keyRefs.current.delete(keyId);
-              }}
               type="button"
               className="sendflow-pin-key sendflow-pin-delete"
               onClick={onDelete}
@@ -163,10 +105,6 @@ function PinKeypad({
         return (
           <button
             key={key}
-            ref={(node) => {
-              if (node) keyRefs.current.set(keyId, node);
-              else keyRefs.current.delete(keyId);
-            }}
             type="button"
             className="sendflow-pin-key"
             onClick={() => onDigit(key)}
@@ -220,7 +158,7 @@ function PinBackgroundArt() {
 export default function PinPage({ mode }: { mode: PinMode }) {
   const [, setLocation] = useLocation();
   const [entry, setEntry] = useState('');
-  const [keypad, setKeypad] = useState<PinKey[]>(createShuffledKeypad);
+  const [keypad] = useState<PinKey[]>(createShuffledKeypad);
   const [createdPin, setCreatedPin] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
@@ -279,7 +217,6 @@ export default function PinPage({ mode }: { mode: PinMode }) {
     setError('');
     const nextEntry = `${entry}${digit}`;
     setEntry(nextEntry);
-    setKeypad(createShuffledKeypad(keypad));
 
     if (nextEntry.length === PIN_LENGTH) {
       void completeEntry(nextEntry);
@@ -366,7 +303,7 @@ export function ChangePinPage() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<ChangePinStep>('current');
   const [entry, setEntry] = useState('');
-  const [keypad, setKeypad] = useState<PinKey[]>(createShuffledKeypad);
+  const [keypad] = useState<PinKey[]>(createShuffledKeypad);
   const [newPin, setNewPin] = useState('');
   const [currentPin, setCurrentPin] = useState('');
   const [error, setError] = useState('');
@@ -432,7 +369,6 @@ export function ChangePinPage() {
     setError('');
     const nextEntry = `${entry}${digit}`;
     setEntry(nextEntry);
-    setKeypad(createShuffledKeypad(keypad));
 
     if (nextEntry.length === PIN_LENGTH) {
       void completeEntry(nextEntry);
