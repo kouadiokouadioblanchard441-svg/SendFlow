@@ -9,6 +9,7 @@ import {
   gte,
   isNull,
   phoneOtpChallengesTable,
+  registrationSettingsTable,
   usersTable,
   walletsTable,
 } from "@workspace/db";
@@ -119,25 +120,42 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const now = new Date();
   try {
-    const [availableChallenge] = await db
-      .select({ id: phoneOtpChallengesTable.id })
-      .from(phoneOtpChallengesTable)
-      .where(verifiedCustomerOtpCondition(parsed.data.challengeId, parsed.data.phone, "signup", now))
-      .limit(1);
-    if (!availableChallenge) {
-      res.status(409).json({ error: "La vérification du téléphone a expiré ou a déjà été utilisée." });
-      return;
+    const [currentSetting] = await db.select({
+      smsVerificationEnabled: registrationSettingsTable.smsVerificationEnabled,
+    }).from(registrationSettingsTable).where(eq(registrationSettingsTable.id, "signup")).limit(1);
+    if (!currentSetting) throw new Error("Signup setting is missing");
+    if (!currentSetting.smsVerificationEnabled) {
+      const buckets = [
+        fingerprint(`signup-no-sms-phone:${parsed.data.phone}`),
+        fingerprint(`signup-no-sms-requester:${requesterAddress(req)}`),
+      ];
+      const retry = await getAuthRateLimit(buckets);
+      if (retry !== null) {
+        sendRateLimit(res, retry);
+        return;
+      }
+      // Count attempts even if the phone is already in use; OTP rate limits do not apply here.
+      await recordAuthFailure(buckets);
     }
-
     const passwordHash = await hashCustomerSecret(parsed.data.password);
     const sessionTokenAndAccount = await db.transaction(async (tx) => {
-      const [challenge] = await tx
-        .select({ id: phoneOtpChallengesTable.id })
-        .from(phoneOtpChallengesTable)
-        .where(verifiedCustomerOtpCondition(parsed.data.challengeId, parsed.data.phone, "signup", now))
-        .for("update");
-
-      if (!challenge) return { kind: "invalid" } as const;
+      // A shared row lock serializes signup with an administrator switching the policy.
+      const [setting] = await tx.select()
+        .from(registrationSettingsTable)
+        .where(eq(registrationSettingsTable.id, "signup"))
+        .for("share");
+      if (!setting) throw new Error("Signup setting is missing");
+      const requiresOtp = setting.smsVerificationEnabled;
+      let challenge: { id: string } | undefined;
+      if (requiresOtp) {
+        if (!parsed.data.challengeId) return { kind: "invalid" } as const;
+        [challenge] = await tx
+          .select({ id: phoneOtpChallengesTable.id })
+          .from(phoneOtpChallengesTable)
+          .where(verifiedCustomerOtpCondition(parsed.data.challengeId, parsed.data.phone, "signup", now))
+          .for("update");
+        if (!challenge) return { kind: "invalid" } as const;
+      }
 
       const [existingUser] = await tx
         .select({ id: usersTable.id })
@@ -145,10 +163,12 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         .where(eq(usersTable.phone, parsed.data.phone))
         .limit(1);
 
-      await tx
-        .update(phoneOtpChallengesTable)
-        .set({ consumedAt: now })
-        .where(eq(phoneOtpChallengesTable.id, challenge.id));
+      if (challenge) {
+        await tx
+          .update(phoneOtpChallengesTable)
+          .set({ consumedAt: now })
+          .where(eq(phoneOtpChallengesTable.id, challenge.id));
+      }
 
       if (existingUser) return { kind: "exists" } as const;
 
@@ -158,6 +178,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         .values({
           id: userId,
           phone: parsed.data.phone,
+          phoneVerifiedAt: requiresOtp ? now : null,
           displayName: fullName,
           countryCode: parsed.data.countryCode ?? null,
           birthDate,

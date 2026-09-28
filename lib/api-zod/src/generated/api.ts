@@ -68,8 +68,16 @@ export const VerifyPhoneOtpResponse = zod.object({
 
 
 /**
- * Consumes a verified signup challenge, creates the account and wallet, and starts a SendFlow customer session.
- * @summary Create a customer account after phone verification
+ * @summary Check whether phone SMS verification is required for signup
+ */
+export const GetRegistrationSettingsResponse = zod.object({
+  "smsVerificationEnabled": zod.boolean()
+})
+
+
+/**
+ * Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account and wallet and starts a customer session.
+ * @summary Create a customer account under the current verification policy
  */
 export const registerCustomerBodyPhoneMin = 9;
 export const registerCustomerBodyPhoneMax = 16;
@@ -86,7 +94,7 @@ export const registerCustomerBodyPasswordMax = 64;
 
 
 export const RegisterCustomerBody = zod.object({
-  "challengeId": zod.string().uuid(),
+  "challengeId": zod.string().uuid().optional(),
   "phone": zod.string().min(registerCustomerBodyPhoneMin).max(registerCustomerBodyPhoneMax).regex(registerCustomerBodyPhoneRegExp),
   "fullName": zod.string().min(registerCustomerBodyFullNameMin).max(registerCustomerBodyFullNameMax),
   "birthDate": zod.coerce.date(),
@@ -877,6 +885,38 @@ export const UpdateAdminOperatorPricingResponse = zod.object({
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date()
 }))
+})
+
+
+/**
+ * @summary Read the signup SMS verification setting
+ */
+export const GetAdminRegistrationSettingsResponse = zod.object({
+  "smsVerificationEnabled": zod.boolean(),
+  "version": zod.number().int(),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Turn signup SMS verification on or off
+ */
+
+export const updateAdminRegistrationSettingsBodyReasonMin = 3;
+export const updateAdminRegistrationSettingsBodyReasonMax = 500;
+
+
+
+export const UpdateAdminRegistrationSettingsBody = zod.object({
+  "smsVerificationEnabled": zod.boolean(),
+  "expectedVersion": zod.number().int().min(1),
+  "reason": zod.string().min(updateAdminRegistrationSettingsBodyReasonMin).max(updateAdminRegistrationSettingsBodyReasonMax)
+})
+
+export const UpdateAdminRegistrationSettingsResponse = zod.object({
+  "smsVerificationEnabled": zod.boolean(),
+  "version": zod.number().int(),
+  "updatedAt": zod.coerce.date().nullable()
 })
 
 

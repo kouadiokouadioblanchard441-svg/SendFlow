@@ -7,6 +7,7 @@ export const userAccountStatusEnum = pgEnum("sf_user_account_status", ["active",
 export const usersTable = pgTable("sf_users", {
   id: text("id").primaryKey(),
   phone: varchar("phone", { length: 32 }).unique(),
+  phoneVerifiedAt: timestamp("phone_verified_at", { withTimezone: true }),
   displayName: varchar("display_name", { length: 120 }),
   countryCode: varchar("country_code", { length: 2 }),
   birthDate: date("birth_date", { mode: "string" }),

@@ -15,6 +15,7 @@ import bannersRouter from "./banners";
 import phoneOtpRouter from "./phone-otp";
 import customerAuthRouter from "./customer-auth";
 import customerRecoveryRouter from "./customer-recovery";
+import registrationSettingsRouter from "./registration-settings";
 
 const router: IRouter = Router();
 router.use(healthRouter);
@@ -32,5 +33,6 @@ router.use(operatorPricingRouter);
 router.use(bannersRouter);
 router.use(customerAuthRouter);
 router.use(customerRecoveryRouter);
+router.use(registrationSettingsRouter);
 router.use(phoneOtpRouter);
 export default router;

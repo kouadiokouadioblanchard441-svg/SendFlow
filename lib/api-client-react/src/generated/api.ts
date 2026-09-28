@@ -36,6 +36,7 @@ import type {
   AdminPaymentAggregatorRouteUpdate,
   AdminPaymentRouting,
   AdminPricingRatesUpdateResult,
+  AdminRegistrationSettings,
   AdminTransactionDetail,
   AdminTransactionPage,
   AdminUserActionRequest,
@@ -81,6 +82,8 @@ import type {
   PricingRatesUpdate,
   PublicBannerList,
   PublicPricingCatalog,
+  PublicRegistrationSettings,
+  RegistrationSettingsUpdate,
   UpdatePaymentAggregatorRequest,
   UpdatePaymentAggregatorRouteRequest,
   WebhookReceipt
@@ -335,6 +338,83 @@ export const useVerifyPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRat
       return useMutation(getVerifyPhoneOtpMutationOptions(options));
     }
 
+export const getGetRegistrationSettingsUrl = () => {
+
+
+
+
+  return `/api/auth/registration-settings`
+}
+
+/**
+ * @summary Check whether phone SMS verification is required for signup
+ */
+export const getRegistrationSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicRegistrationSettings> => {
+
+  return customFetch<PublicRegistrationSettings>(getGetRegistrationSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRegistrationSettingsQueryKey = () => {
+    return [
+    `/api/auth/registration-settings`
+    ] as const;
+    }
+
+
+export const getGetRegistrationSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getRegistrationSettings>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRegistrationSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRegistrationSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRegistrationSettings>>> = ({ signal }) => getRegistrationSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRegistrationSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRegistrationSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getRegistrationSettings>>>
+export type GetRegistrationSettingsQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Check whether phone SMS verification is required for signup
+ */
+
+export function useGetRegistrationSettings<TData = Awaited<ReturnType<typeof getRegistrationSettings>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRegistrationSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRegistrationSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getRegisterCustomerUrl = () => {
 
 
@@ -344,8 +424,8 @@ export const getRegisterCustomerUrl = () => {
 }
 
 /**
- * Consumes a verified signup challenge, creates the account and wallet, and starts a SendFlow customer session.
- * @summary Create a customer account after phone verification
+ * Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account and wallet and starts a customer session.
+ * @summary Create a customer account under the current verification policy
  */
 export const registerCustomer = async (customerRegistrationInput: CustomerRegistrationInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult> => {
 
@@ -394,7 +474,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RegisterCustomerMutationError = ErrorType<ErrorEnvelope>
 
     /**
- * @summary Create a customer account after phone verification
+ * @summary Create a customer account under the current verification policy
  */
 export const useRegisterCustomer = <TError = ErrorType<ErrorEnvelope>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerCustomer>>, TError,{data: BodyType<CustomerRegistrationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -2414,6 +2494,154 @@ export const useUpdateAdminOperatorPricing = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getUpdateAdminOperatorPricingMutationOptions(options));
+    }
+
+export const getGetAdminRegistrationSettingsUrl = () => {
+
+
+
+
+  return `/api/admin/registration-settings`
+}
+
+/**
+ * @summary Read the signup SMS verification setting
+ */
+export const getAdminRegistrationSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminRegistrationSettings> => {
+
+  return customFetch<AdminRegistrationSettings>(getGetAdminRegistrationSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminRegistrationSettingsQueryKey = () => {
+    return [
+    `/api/admin/registration-settings`
+    ] as const;
+    }
+
+
+export const getGetAdminRegistrationSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminRegistrationSettings>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminRegistrationSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminRegistrationSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminRegistrationSettings>>> = ({ signal }) => getAdminRegistrationSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminRegistrationSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminRegistrationSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminRegistrationSettings>>>
+export type GetAdminRegistrationSettingsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read the signup SMS verification setting
+ */
+
+export function useGetAdminRegistrationSettings<TData = Awaited<ReturnType<typeof getAdminRegistrationSettings>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminRegistrationSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminRegistrationSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateAdminRegistrationSettingsUrl = () => {
+
+
+
+
+  return `/api/admin/registration-settings`
+}
+
+/**
+ * @summary Turn signup SMS verification on or off
+ */
+export const updateAdminRegistrationSettings = async (registrationSettingsUpdate: RegistrationSettingsUpdate, options?: Parameters<typeof customFetch>[1]): Promise<AdminRegistrationSettings> => {
+
+  return customFetch<AdminRegistrationSettings>(getUpdateAdminRegistrationSettingsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(registrationSettingsUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminRegistrationSettingsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminRegistrationSettings>>, TError,{data: BodyType<RegistrationSettingsUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminRegistrationSettings>>, TError,{data: BodyType<RegistrationSettingsUpdate>}, TContext> => {
+
+const mutationKey = ['updateAdminRegistrationSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminRegistrationSettings>>, {data: BodyType<RegistrationSettingsUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateAdminRegistrationSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminRegistrationSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminRegistrationSettings>>>
+    export type UpdateAdminRegistrationSettingsMutationBody = BodyType<RegistrationSettingsUpdate>
+    export type UpdateAdminRegistrationSettingsMutationError = ErrorType<void>
+
+    /**
+ * @summary Turn signup SMS verification on or off
+ */
+export const useUpdateAdminRegistrationSettings = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminRegistrationSettings>>, TError,{data: BodyType<RegistrationSettingsUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminRegistrationSettings>>,
+        TError,
+        {data: BodyType<RegistrationSettingsUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminRegistrationSettingsMutationOptions(options));
     }
 
 export const getListAdminOtpPoliciesUrl = () => {

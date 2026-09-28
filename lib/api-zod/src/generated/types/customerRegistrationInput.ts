@@ -7,7 +7,7 @@
  */
 
 export interface CustomerRegistrationInput {
-  challengeId: string;
+  challengeId?: string;
   /**
      * @minLength 9
      * @maxLength 16

@@ -49,7 +49,8 @@ export type AdminAuditAction =
   | "view_operator_pricing"
   | "create_operator"
   | "update_operator"
-  | "update_operator_pricing";
+  | "update_operator_pricing"
+  | "update_registration_settings";
 export type AdminAuditResourceType =
   | "dashboard"
   | "user"
@@ -62,4 +63,5 @@ export type AdminAuditResourceType =
   | "payment_aggregator"
   | "payment_route"
   | "operator"
-  | "operator_pricing";
+  | "operator_pricing"
+  | "registration_settings";

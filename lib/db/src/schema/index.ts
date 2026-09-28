@@ -11,6 +11,7 @@ export * from "./operator-pricing";
 export * from "./phone-otp-challenges";
 export * from "./phone-otp-events";
 export * from "./payment-aggregator-routing";
+export * from "./registration-settings";
 export * from "./transactions";
 export * from "./users";
 export * from "./wallets";

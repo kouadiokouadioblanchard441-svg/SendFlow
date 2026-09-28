@@ -60,6 +60,10 @@ import {
   useListAdminOtpPolicies,
   useUpdateAdminOtpPolicy,
   getListAdminOtpPoliciesQueryKey,
+  getGetAdminRegistrationSettingsQueryKey,
+  getGetRegistrationSettingsQueryKey,
+  useGetAdminRegistrationSettings,
+  useUpdateAdminRegistrationSettings,
   useGetAdminPaymentRouting,
   useCreateAdminAggregator,
   useUpdateAdminAggregator,
@@ -150,7 +154,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -167,6 +171,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'otp-policies': { title: 'Politiques OTP', eyebrow: 'Orange Money' },
   aggregators: { title: 'Partenaires de paiement', eyebrow: 'Routage multi-agrégateurs' },
   'operator-pricing': { title: 'Opérateurs et tarifs', eyebrow: 'Catalogue client' },
+  'registration-settings': { title: 'Inscription', eyebrow: 'Sécurité des comptes' },
 };
 
 const navGroups: Array<{
@@ -193,6 +198,7 @@ const navGroups: Array<{
       { href: '/admin/otp-policies', label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
       { href: '/admin/aggregators', label: 'Agrégateurs', section: 'aggregators', icon: Network },
       { href: '/admin/operator-pricing', label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
+      { href: '/admin/registration-settings', label: 'Vérification à l’inscription', section: 'registration-settings', icon: ShieldCheck },
     ],
   },
 ];
@@ -2263,6 +2269,185 @@ function OtpPoliciesPage() {
   );
 }
 
+function RegistrationSettingsPage() {
+  const queryClient = useQueryClient();
+  const query = useGetAdminRegistrationSettings({
+    query: { queryKey: getGetAdminRegistrationSettingsQueryKey() },
+  });
+  const mutation = useUpdateAdminRegistrationSettings();
+  const [pendingValue, setPendingValue] = useState<boolean | null>(null);
+  const [reason, setReason] = useState('');
+  const [mutationError, setMutationError] = useState('');
+  const [feedback, setFeedback] = useState('');
+
+  const closeConfirmation = (open: boolean) => {
+    if (!open && !mutation.isPending) {
+      setPendingValue(null);
+      setReason('');
+      setMutationError('');
+    }
+  };
+
+  const saveSettings = () => {
+    const current = query.data;
+    if (!current || pendingValue === null || reason.trim().length < 3) return;
+
+    setMutationError('');
+    setFeedback('');
+    mutation.mutate(
+      {
+        data: {
+          smsVerificationEnabled: pendingValue,
+          expectedVersion: current.version,
+          reason: reason.trim(),
+        },
+      },
+      {
+        onSuccess: async () => {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: getGetAdminRegistrationSettingsQueryKey() }),
+            queryClient.invalidateQueries({ queryKey: getGetRegistrationSettingsQueryKey() }),
+          ]);
+          setPendingValue(null);
+          setReason('');
+          setFeedback('Le paramètre d’inscription a été mis à jour.');
+        },
+        onError: (error) => {
+          const status = getErrorStatus(error);
+          void query.refetch();
+          setMutationError(
+            status === 409
+              ? 'Le paramètre a été modifié par une autre session. L’état serveur est en cours d’actualisation ; vérifiez-le avant de réessayer.'
+              : 'La modification a échoué. L’état serveur est en cours d’actualisation ; vérifiez-le avant de réessayer.',
+          );
+        },
+      },
+    );
+  };
+
+  return (
+    <AdminShell section="registration-settings">
+      <div className="sendflow-admin-page-intro">
+        <div>
+          <p className="sendflow-admin-overline">Sécurité · Création de compte</p>
+          <h2 data-testid="heading-admin-registration-settings">Vérification SMS à l’inscription</h2>
+          <p className="sendflow-admin-subtitle">
+            Contrôlez si un nouveau numéro doit être vérifié par SMS avant la création du compte.
+          </p>
+        </div>
+      </div>
+
+      <Alert>
+        <CircleAlert className="size-4" />
+        <AlertTitle>Impact sur la sécurité des comptes</AlertTitle>
+        <AlertDescription>
+          Si vous désactivez la vérification SMS, les personnes pourront s’inscrire avec un numéro qui n’a pas été vérifié.
+          Chaque changement est enregistré avec son motif d’audit.
+        </AlertDescription>
+      </Alert>
+
+      {feedback && (
+        <Alert data-testid="status-registration-settings-feedback">
+          <CheckCircle2 className="size-4" />
+          <AlertDescription>{feedback}</AlertDescription>
+        </Alert>
+      )}
+      {query.isError && <QueryState error={query.error} onRetry={() => { void query.refetch(); }} />}
+      {query.isLoading && (
+        <div data-testid="loading-admin-registration-settings">
+          <Skeleton className="h-56 rounded-2xl" />
+        </div>
+      )}
+      {query.data && !query.isError && (
+        <Card data-testid="card-admin-registration-settings">
+          <CardHeader>
+            <CardTitle>Politique de vérification</CardTitle>
+            <CardDescription>
+              L’état affiché provient du serveur. Une demande de changement n’est pas appliquée visuellement avant sa confirmation par le serveur.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold">
+                  {query.data.smsVerificationEnabled ? 'Vérification SMS activée' : 'Vérification SMS désactivée'}
+                </p>
+                <p className="text-sm text-muted-foreground" data-testid="text-registration-settings-version">
+                  Version {query.data.version} · Modifiée {formatDate(query.data.updatedAt)}
+                </p>
+              </div>
+              <Switch
+                checked={query.data.smsVerificationEnabled}
+                disabled={mutation.isPending || query.isFetching || query.isError}
+                onCheckedChange={(enabled) => {
+                  setPendingValue(enabled);
+                  setReason('');
+                  setMutationError('');
+                  setFeedback('');
+                }}
+                aria-label="Activer ou désactiver la vérification SMS à l’inscription"
+                data-testid="switch-registration-sms-verification"
+              />
+            </div>
+            {!query.data.smsVerificationEnabled && (
+              <Alert variant="destructive" data-testid="warning-registration-unverified-numbers">
+                <CircleAlert className="size-4" />
+                <AlertTitle>Les numéros non vérifiés sont autorisés</AlertTitle>
+                <AlertDescription>
+                  La vérification étant désactivée, un numéro de téléphone non vérifié pourra être utilisé pour créer un compte.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={pendingValue !== null} onOpenChange={closeConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer le changement de vérification SMS</DialogTitle>
+            <DialogDescription>
+              {pendingValue === false
+                ? 'Vous allez désactiver la vérification SMS. Les personnes pourront créer un compte avec un numéro non vérifié.'
+                : 'Vous allez exiger la vérification SMS des numéros avant la création d’un compte.'}
+              {' '}Cette action sera enregistrée dans le journal d’audit.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="registration-settings-reason">Motif d’audit (3 caractères minimum)</Label>
+            <Textarea
+              id="registration-settings-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              maxLength={500}
+              placeholder="Expliquez pourquoi vous modifiez cette politique"
+              data-testid="input-registration-settings-reason"
+            />
+          </div>
+          {mutationError && (
+            <Alert variant="destructive" data-testid="error-registration-settings-update">
+              <AlertDescription>{mutationError}</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => closeConfirmation(false)} disabled={mutation.isPending}>
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={saveSettings}
+              disabled={!query.data || pendingValue === null || reason.trim().length < 3 || mutation.isPending}
+              data-testid="button-confirm-registration-settings"
+            >
+              {mutation.isPending ? 'Enregistrement…' : 'Confirmer le changement'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AdminShell>
+  );
+}
+
 export function AdminRouter() {
   const [isUserDetail, userRoute] = useRoute('/admin/users/:userId');
   const [isTransactionDetail, transactionRoute] = useRoute('/admin/transactions/:transactionId');
@@ -2278,6 +2463,7 @@ export function AdminRouter() {
   const [isOtpPolicies] = useRoute('/admin/otp-policies');
   const [isAggregators] = useRoute('/admin/aggregators');
   const [isOperatorPricing] = useRoute('/admin/operator-pricing');
+  const [isRegistrationSettings] = useRoute('/admin/registration-settings');
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -2292,5 +2478,6 @@ export function AdminRouter() {
   if (isOtpPolicies) return <OtpPoliciesPage />;
   if (isAggregators) return <AggregatorsPage />;
   if (isOperatorPricing) return <AdminShell section="operator-pricing"><AdminOperatorPricingPage /></AdminShell>;
+  if (isRegistrationSettings) return <RegistrationSettingsPage />;
   return <OverviewPage />;
 }

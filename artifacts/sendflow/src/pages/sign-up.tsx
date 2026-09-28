@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Check, Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
-import { useRegisterCustomer, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
+import { getGetRegistrationSettingsQueryKey, useGetRegistrationSettings, useRegisterCustomer, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpField } from '@/lib/auth-validation';
@@ -133,9 +133,13 @@ export default function SignupPage() {
   const [resendInSeconds, setResendInSeconds] = useState(0);
   const [otpCode, setOtpCode] = useState('');
   const [verificationError, setVerificationError] = useState('');
+  const [verifiedOnSignup, setVerifiedOnSignup] = useState(false);
   const sendPhoneOtp = useSendPhoneOtp();
   const verifyPhoneOtp = useVerifyPhoneOtp();
   const registerCustomer = useRegisterCustomer();
+  const registrationSettings = useGetRegistrationSettings({
+    query: { queryKey: getGetRegistrationSettingsQueryKey(), staleTime: 0, refetchOnWindowFocus: true },
+  });
 
   useSeo({
     path: '/sign-up',
@@ -149,7 +153,7 @@ export default function SignupPage() {
   const canSubmit = Object.keys(errors).length === 0;
   const normalizedPhone = normalizePhoneDigits(form.phone);
   const e164Phone = `${signupCountry.dialCode}${normalizedPhone}`;
-  const isSending = sendPhoneOtp.isPending;
+  const isSending = sendPhoneOtp.isPending || registerCustomer.isPending || registrationSettings.isFetching;
   const isChecking = verifyPhoneOtp.isPending || registerCustomer.isPending;
 
   const update = <K extends keyof SignUpForm>(key: K, value: SignUpForm[K]) => {
@@ -235,7 +239,31 @@ export default function SignupPage() {
     event.preventDefault();
     setSubmitAttempted(true);
     if (!canSubmit || isSending) return;
-    await sendCode();
+    setVerificationError('');
+    try {
+      const refreshed = await registrationSettings.refetch();
+      if (refreshed.error || !refreshed.data) throw new Error('Le réglage de vérification est indisponible. Réessayez.');
+      if (refreshed.data.smsVerificationEnabled) {
+        await sendCode();
+      } else {
+        await registerCustomer.mutateAsync({
+          data: {
+            phone: e164Phone,
+            fullName: form.fullName.trim().replace(/\s+/g, ' '),
+            birthDate: form.birthDate,
+            password: form.password,
+            acceptedPrivacy: true,
+          },
+        });
+        savePendingSignup();
+        setVerifiedOnSignup(false);
+        setSubmitted(true);
+        setStep('success');
+      }
+    } catch (error) {
+      setVerificationError(getRequestErrorMessage(error, 'La création du compte a échoué. Réessayez.'));
+      void registrationSettings.refetch();
+    }
   };
 
   const handleVerification = async (event: FormEvent<HTMLFormElement>) => {
@@ -267,6 +295,7 @@ export default function SignupPage() {
         },
       });
       savePendingSignup();
+      setVerifiedOnSignup(true);
       setSubmitted(true);
       setStep('success');
     } catch (error) {
@@ -295,7 +324,7 @@ export default function SignupPage() {
 
           <header className="sendflow-signup-heading">
             <h1 id="signup-title">
-              {step === 'form' ? 'Bienvenue sur SendFlow' : step === 'verification' ? 'Vérifions votre numéro' : 'Numéro vérifié'}
+              {step === 'form' ? 'Bienvenue sur SendFlow' : step === 'verification' ? 'Vérifions votre numéro' : verifiedOnSignup ? 'Numéro vérifié' : 'Compte créé'}
             </h1>
             <p>
               {step === 'form' ? 'Créons votre compte' : step === 'verification' ? 'Une étape rapide avant de continuer' : 'Votre compte peut maintenant être sécurisé'}
@@ -412,10 +441,20 @@ export default function SignupPage() {
             <button
               type="submit"
               className="sendflow-signup-submit"
-              disabled={!canSubmit || isSending}
+              disabled={!canSubmit || isSending || !registrationSettings.data || registrationSettings.isError}
             >
-              {isSending ? 'Envoi du code…' : 'Continuer'}
+              {isSending ? 'Patientez…' : registrationSettings.data?.smsVerificationEnabled ? 'Continuer' : 'Créer mon compte'}
             </button>
+            {registrationSettings.data && !registrationSettings.data.smsVerificationEnabled && (
+              <p className="sendflow-signup-feedback" role="status">
+                La vérification SMS est désactivée. Ce numéro ne sera pas vérifié lors de l’inscription.
+              </p>
+            )}
+            {registrationSettings.isError && (
+              <p className="sendflow-signup-verification-error" role="alert">
+                Impossible de vérifier les paramètres d’inscription. Réessayez dans quelques instants.
+              </p>
+            )}
 
             {verificationError && (
               <p className="sendflow-signup-verification-error" role="alert" data-testid="error-send-phone-otp">
@@ -517,11 +556,11 @@ export default function SignupPage() {
           )}
 
           {step === 'success' && (
-            <div className="sendflow-signup-verification-success" role="status" aria-live="polite" data-testid="status-phone-verified">
+            <div className="sendflow-signup-verification-success" role="status" aria-live="polite" data-testid={verifiedOnSignup ? 'status-phone-verified' : 'status-account-created'}>
               <span className="sendflow-signup-verification-success-mark" aria-hidden="true">
                 <Check size={25} strokeWidth={2.2} />
               </span>
-              <strong>Votre numéro est vérifié</strong>
+              <strong>{verifiedOnSignup ? 'Votre numéro est vérifié' : 'Votre compte est créé sans vérification du numéro'}</strong>
               <p>Préparation de la suite de votre inscription…</p>
             </div>
           )}

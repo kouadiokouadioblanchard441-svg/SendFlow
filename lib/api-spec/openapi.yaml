@@ -142,12 +142,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/registration-settings:
+    get:
+      operationId: getRegistrationSettings
+      tags: [account]
+      summary: Check whether phone SMS verification is required for signup
+      responses:
+        "200":
+          description: Current signup verification requirement.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicRegistrationSettings"
+        "503":
+          description: Registration settings could not be read.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /auth/register:
     post:
       operationId: registerCustomer
       tags: [account]
-      summary: Create a customer account after phone verification
-      description: Consumes a verified signup challenge, creates the account and wallet, and starts a SendFlow customer session.
+      summary: Create a customer account under the current verification policy
+      description: Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account and wallet and starts a customer session.
       requestBody:
         required: true
         content:
@@ -1206,6 +1224,55 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /admin/registration-settings:
+    get:
+      operationId: getAdminRegistrationSettings
+      tags: [admin]
+      summary: Read the signup SMS verification setting
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Current setting and version.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminRegistrationSettings"
+        "401":
+          description: Authentication is required.
+        "403":
+          description: Administrator access is required.
+        "503":
+          description: Setting unavailable.
+    patch:
+      operationId: updateAdminRegistrationSettings
+      tags: [admin]
+      summary: Turn signup SMS verification on or off
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegistrationSettingsUpdate"
+      responses:
+        "200":
+          description: Updated setting.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminRegistrationSettings"
+        "400":
+          description: Invalid update or audit reason.
+        "401":
+          description: Authentication is required.
+        "403":
+          description: Administrator mutation access is required.
+        "409":
+          description: Setting was modified by another administrator.
+        "503":
+          description: Setting unavailable.
   /admin/otp-policies:
     get:
       operationId: listAdminOtpPolicies
@@ -2174,6 +2241,36 @@ components:
           type: integer
           minimum: 1
       required: [error, retryAfterSeconds]
+    PublicRegistrationSettings:
+      type: object
+      properties:
+        smsVerificationEnabled:
+          type: boolean
+      required: [smsVerificationEnabled]
+    AdminRegistrationSettings:
+      type: object
+      properties:
+        smsVerificationEnabled:
+          type: boolean
+        version:
+          type: integer
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [smsVerificationEnabled, version, updatedAt]
+    RegistrationSettingsUpdate:
+      type: object
+      properties:
+        smsVerificationEnabled:
+          type: boolean
+        expectedVersion:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [smsVerificationEnabled, expectedVersion, reason]
     CustomerRegistrationInput:
       type: object
       properties:
@@ -2202,7 +2299,7 @@ components:
           maxLength: 64
         acceptedPrivacy:
           type: boolean
-      required: [challengeId, phone, fullName, birthDate, password, acceptedPrivacy]
+      required: [phone, fullName, birthDate, password, acceptedPrivacy]
     CustomerSignInInput:
       type: object
       properties:

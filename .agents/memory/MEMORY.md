@@ -12,3 +12,4 @@
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle pushes against shared Neon](drizzle-scoped-pushes.md) — Narrow schema snapshots can trigger unrelated type/table diffs; stop on drift instead of forcing a production push.
 - [eSMS Verify balance requirement](esms-verify-balance.md) — Test-prefixed keys still need available Verify credit; a start request can fail with HTTP 402.
+- [Unverified signup accounts](unverified-signup-accounts.md) — SMS-free signup allows viewing, not phone ownership; future financial operations need OTP verification.

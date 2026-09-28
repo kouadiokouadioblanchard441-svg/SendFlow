@@ -70,8 +70,30 @@ export interface PhoneOtpRateLimitError {
   retryAfterSeconds: number;
 }
 
+export interface PublicRegistrationSettings {
+  smsVerificationEnabled: boolean;
+}
+
+export interface AdminRegistrationSettings {
+  smsVerificationEnabled: boolean;
+  version: number;
+  /** @nullable */
+  updatedAt: string | null;
+}
+
+export interface RegistrationSettingsUpdate {
+  smsVerificationEnabled: boolean;
+  /** @minimum 1 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
 export interface CustomerRegistrationInput {
-  challengeId: string;
+  challengeId?: string;
   /**
      * @minLength 9
      * @maxLength 16
