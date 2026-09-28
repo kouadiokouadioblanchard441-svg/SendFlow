@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Delete } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
@@ -15,12 +15,22 @@ type PinKey = (typeof PIN_DIGITS)[number] | '' | 'backspace';
 const PIN_LENGTH = 4;
 const PIN_CHANGE_SUCCESS_KEY = 'sendflow.pin.change-success';
 
-function createShuffledKeypad(): PinKey[] {
+function createShuffledKeypad(previous?: readonly PinKey[]): PinKey[] {
   const digits = [...PIN_DIGITS];
+  const previousDigits = previous?.filter((key) => key !== '' && key !== 'backspace').join('');
+  const randomValue = new Uint32Array(1);
 
   for (let index = digits.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
+    const choices = index + 1;
+    const ceiling = Math.floor(0x1_0000_0000 / choices) * choices;
+    do {
+      crypto.getRandomValues(randomValue);
+    } while (randomValue[0]! >= ceiling);
+    const swapIndex = randomValue[0]! % choices;
     [digits[index], digits[swapIndex]] = [digits[swapIndex], digits[index]];
+  }
+  if (digits.join('') === previousDigits) {
+    [digits[0], digits[1]] = [digits[1], digits[0]];
   }
 
   // Keep the empty slot and delete action stable so the keypad stays easy to scan.
@@ -158,7 +168,9 @@ function PinBackgroundArt() {
 export default function PinPage({ mode }: { mode: PinMode }) {
   const [, setLocation] = useLocation();
   const [entry, setEntry] = useState('');
-  const [keypad] = useState<PinKey[]>(createShuffledKeypad);
+  const entryRef = useRef('');
+  const processingRef = useRef(false);
+  const [keypad, setKeypad] = useState<PinKey[]>(createShuffledKeypad);
   const [createdPin, setCreatedPin] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
@@ -175,23 +187,29 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   });
 
   const copy = getPinCopy(mode, confirming);
+  const clearEntry = useCallback(() => {
+    entryRef.current = '';
+    setEntry('');
+  }, []);
   const completeEntry = useCallback(async (nextEntry: string) => {
     setProcessing(true);
 
     try {
       if (mode === 'create' && !confirming) {
         setCreatedPin(nextEntry);
-        setEntry('');
+        clearEntry();
         setConfirming(true);
         setProcessing(false);
+        processingRef.current = false;
         return;
       }
 
       if (mode === 'create') {
         if (nextEntry !== createdPin) {
-          setEntry('');
+          clearEntry();
           setError('Les deux codes PIN ne correspondent pas.');
           setProcessing(false);
+          processingRef.current = false;
           return;
         }
 
@@ -205,39 +223,45 @@ export default function PinPage({ mode }: { mode: PinMode }) {
       window.sessionStorage.setItem('sendflow.pin.unlocked', 'true');
       setLocation('/account');
     } catch (error) {
-      setEntry('');
+      clearEntry();
       const candidate = error as { data?: { error?: string } };
       setError(candidate.data?.error ?? 'Code PIN incorrect. Veuillez réessayer.');
       setProcessing(false);
+      processingRef.current = false;
     }
-  }, [confirming, createdPin, mode, setCustomerPin, unlockCustomerSession, setLocation]);
+  }, [clearEntry, confirming, createdPin, mode, setCustomerPin, unlockCustomerSession, setLocation]);
 
   const appendDigit = useCallback((digit: string) => {
-    if (processing || entry.length >= PIN_LENGTH) return;
+    if (processing || processingRef.current || entryRef.current.length >= PIN_LENGTH || !/^\d$/.test(digit)) return;
     setError('');
-    const nextEntry = `${entry}${digit}`;
+    const nextEntry = `${entryRef.current}${digit}`;
+    entryRef.current = nextEntry;
     setEntry(nextEntry);
+    setKeypad((previous) => createShuffledKeypad(previous));
 
     if (nextEntry.length === PIN_LENGTH) {
+      processingRef.current = true;
       void completeEntry(nextEntry);
     }
-  }, [completeEntry, entry, processing]);
+  }, [completeEntry, processing]);
 
   const removeDigit = useCallback(() => {
-    if (processing) return;
+    if (processing || processingRef.current) return;
     setError('');
-    setEntry((current) => current.slice(0, -1));
+    const nextEntry = entryRef.current.slice(0, -1);
+    entryRef.current = nextEntry;
+    setEntry(nextEntry);
   }, [processing]);
 
   usePinKeyboard(appendDigit, removeDigit);
 
   const handleBack = () => {
-    if (processing) return;
+    if (processing || processingRef.current) return;
 
     if (mode === 'create' && confirming) {
       setConfirming(false);
       setCreatedPin('');
-      setEntry('');
+      clearEntry();
       setError('');
       return;
     }
@@ -303,7 +327,9 @@ export function ChangePinPage() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<ChangePinStep>('current');
   const [entry, setEntry] = useState('');
-  const [keypad] = useState<PinKey[]>(createShuffledKeypad);
+  const entryRef = useRef('');
+  const processingRef = useRef(false);
+  const [keypad, setKeypad] = useState<PinKey[]>(createShuffledKeypad);
   const [newPin, setNewPin] = useState('');
   const [currentPin, setCurrentPin] = useState('');
   const [error, setError] = useState('');
@@ -321,6 +347,10 @@ export function ChangePinPage() {
   });
 
   const copy = getChangePinCopy(step);
+  const clearEntry = useCallback(() => {
+    entryRef.current = '';
+    setEntry('');
+  }, []);
 
   const completeEntry = useCallback(async (nextEntry: string) => {
     setProcessing(true);
@@ -331,25 +361,28 @@ export function ChangePinPage() {
 
         setCurrentPin(nextEntry);
         setStep('new');
-        setEntry('');
+        clearEntry();
         setError('');
         setProcessing(false);
+        processingRef.current = false;
         return;
       }
 
       if (step === 'new') {
         setNewPin(nextEntry);
         setStep('confirm');
-        setEntry('');
+        clearEntry();
         setError('');
         setProcessing(false);
+        processingRef.current = false;
         return;
       }
 
       if (nextEntry !== newPin) {
-        setEntry('');
+        clearEntry();
         setError('Les deux codes PIN ne correspondent pas.');
         setProcessing(false);
+        processingRef.current = false;
         return;
       }
 
@@ -357,45 +390,51 @@ export function ChangePinPage() {
       window.sessionStorage.setItem(PIN_CHANGE_SUCCESS_KEY, 'true');
       setLocation('/change-pin-success');
     } catch (error) {
-      setEntry('');
+      clearEntry();
       const candidate = error as { data?: { error?: string } };
       setError(candidate.data?.error ?? 'Code PIN incorrect. Veuillez réessayer.');
       setProcessing(false);
+      processingRef.current = false;
     }
-  }, [currentPin, newPin, setCustomerPin, setLocation, step, unlockCustomerSession]);
+  }, [clearEntry, currentPin, newPin, setCustomerPin, setLocation, step, unlockCustomerSession]);
 
   const appendDigit = useCallback((digit: string) => {
-    if (processing || entry.length >= PIN_LENGTH) return;
+    if (processing || processingRef.current || entryRef.current.length >= PIN_LENGTH || !/^\d$/.test(digit)) return;
     setError('');
-    const nextEntry = `${entry}${digit}`;
+    const nextEntry = `${entryRef.current}${digit}`;
+    entryRef.current = nextEntry;
     setEntry(nextEntry);
+    setKeypad((previous) => createShuffledKeypad(previous));
 
     if (nextEntry.length === PIN_LENGTH) {
+      processingRef.current = true;
       void completeEntry(nextEntry);
     }
-  }, [completeEntry, entry, processing]);
+  }, [completeEntry, processing]);
 
   const removeDigit = useCallback(() => {
-    if (processing) return;
+    if (processing || processingRef.current) return;
     setError('');
-    setEntry((current) => current.slice(0, -1));
+    const nextEntry = entryRef.current.slice(0, -1);
+    entryRef.current = nextEntry;
+    setEntry(nextEntry);
   }, [processing]);
 
   usePinKeyboard(appendDigit, removeDigit);
 
   const handleBack = () => {
-    if (processing) return;
+    if (processing || processingRef.current) return;
 
     if (step === 'confirm') {
       setStep('new');
-      setEntry('');
+      clearEntry();
       setError('');
       return;
     }
 
     if (step === 'new') {
       setStep('current');
-      setEntry('');
+      clearEntry();
       setError('');
       return;
     }
