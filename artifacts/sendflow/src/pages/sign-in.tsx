@@ -5,6 +5,8 @@ import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { validateSignIn, type SignInField } from '@/lib/auth-validation';
 import { useSignInCustomer } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { clearPinUnlock } from '@/lib/pin-unlock';
 import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -23,6 +25,7 @@ const initialForm: SignInForm = {
 
 export default function SigninPage() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<SignInForm>(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -68,7 +71,8 @@ export default function SigninPage() {
       const response = await signInCustomer.mutateAsync({
         data: { phone: `${phoneDialCode}${digits}`, password: form.password },
       });
-      window.sessionStorage.removeItem('sendflow.pin.unlocked');
+      queryClient.clear();
+      clearPinUnlock();
       setSubmitted(true);
       setLocation(response.pinConfigured ? '/pin' : '/create-pin');
     } catch (error) {

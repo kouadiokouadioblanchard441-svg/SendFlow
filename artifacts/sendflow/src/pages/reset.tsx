@@ -4,6 +4,7 @@ import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { useResetCustomerPassword, useResetCustomerPin, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
+import { clearPinUnlock } from '@/lib/pin-unlock';
 import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import { getPhoneLengthMessage, isValidPhoneForCountry } from '@/lib/phone-rules';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -170,7 +171,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
         }
         await resetPin.mutateAsync({ data: { challengeId, phone: fullPhone, newPin: newSecret } });
       }
-      window.sessionStorage.removeItem('sendflow.pin.unlocked');
+      clearPinUnlock();
       setLocation('/sign-in');
     } catch (error) {
       const candidate = error as { data?: { error?: string } };

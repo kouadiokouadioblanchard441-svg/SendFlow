@@ -29,6 +29,7 @@ import {
   clearAuthFailures,
   getAuthRateLimit,
   recordAuthFailure,
+  withPinAttemptLock,
 } from "../lib/customer-auth-rate-limit";
 import { hashCustomerSecret, hashCustomerSessionToken, verifyCustomerSecret } from "../lib/customer-auth-crypto";
 import {
@@ -423,50 +424,56 @@ router.post("/auth/unlock", async (req, res): Promise<void> => {
     }
 
     const buckets = getPinAttemptBuckets(session.userId, req);
-    const retry = await getAuthRateLimit(buckets);
-    if (retry !== null) {
-      sendRateLimit(res, retry);
+    const result = await withPinAttemptLock(buckets, async (tx) => {
+      const retry = await getAuthRateLimit(buckets, new Date(), tx);
+      if (retry !== null) return { kind: "rate", retry } as const;
+
+      const [credential] = await tx
+        .select({ pinHash: customerCredentialsTable.pinHash })
+        .from(customerCredentialsTable)
+        .where(eq(customerCredentialsTable.userId, session.userId))
+        .limit(1);
+      if (!credential?.pinHash || !await verifyCustomerSecret(parsed.data.pin, credential.pinHash)) {
+        await recordAuthFailure(buckets, new Date(), tx);
+        const retryAfterFailure = await getAuthRateLimit(buckets, new Date(), tx);
+        return retryAfterFailure !== null
+          ? { kind: "rate", retry: retryAfterFailure } as const
+          : { kind: "invalid" } as const;
+      }
+
+      const now = new Date();
+      const [updatedSession] = await tx
+        .update(customerSessionsTable)
+        .set({
+          pinVerifiedUntil: new Date(now.getTime() + CUSTOMER_PIN_UNLOCK_TTL_MS),
+          lastSeenAt: now,
+        })
+        .where(
+          and(
+            eq(customerSessionsTable.id, session.sessionId),
+            eq(customerSessionsTable.userId, session.userId),
+            isNull(customerSessionsTable.revokedAt),
+            gte(customerSessionsTable.expiresAt, now),
+          ),
+        )
+        .returning({ id: customerSessionsTable.id });
+      if (!updatedSession) return { kind: "expired" } as const;
+
+      await clearAuthFailures(buckets, tx);
+      return { kind: "success" } as const;
+    });
+    if (result.kind === "rate") {
+      sendRateLimit(res, result.retry);
       return;
     }
-
-    const [credential] = await db
-      .select({ pinHash: customerCredentialsTable.pinHash })
-      .from(customerCredentialsTable)
-      .where(eq(customerCredentialsTable.userId, session.userId))
-      .limit(1);
-    if (!credential?.pinHash || !await verifyCustomerSecret(parsed.data.pin, credential.pinHash)) {
-      await recordAuthFailure(buckets);
-      const retryAfterFailure = await getAuthRateLimit(buckets);
-      if (retryAfterFailure !== null) {
-        sendRateLimit(res, retryAfterFailure);
-        return;
-      }
+    if (result.kind === "invalid") {
       res.status(401).json({ error: "Code PIN incorrect." });
       return;
     }
-
-    const now = new Date();
-    const [updatedSession] = await db
-      .update(customerSessionsTable)
-      .set({
-        pinVerifiedUntil: new Date(now.getTime() + CUSTOMER_PIN_UNLOCK_TTL_MS),
-        lastSeenAt: now,
-      })
-      .where(
-        and(
-          eq(customerSessionsTable.id, session.sessionId),
-          eq(customerSessionsTable.userId, session.userId),
-          isNull(customerSessionsTable.revokedAt),
-          gte(customerSessionsTable.expiresAt, now),
-        ),
-      )
-      .returning({ id: customerSessionsTable.id });
-    if (!updatedSession) {
+    if (result.kind === "expired") {
       res.status(401).json({ error: "Session expirée. Connectez-vous à nouveau." });
       return;
     }
-
-    await clearAuthFailures(buckets);
     res.json(UnlockCustomerSessionResponse.parse({ pinConfigured: true, pinUnlocked: true }));
   } catch (error) {
     req.log.error({ errorCode: safeErrorCode(error) }, "Customer PIN unlock failed");
@@ -490,46 +497,31 @@ router.put("/me/pin", async (req, res): Promise<void> => {
     const session = await requireCustomerSession(req, res);
     if (!session) return;
     const buckets = getPinAttemptBuckets(session.userId, req);
-    const retry = await getAuthRateLimit(buckets);
-    if (retry !== null) {
-      sendRateLimit(res, retry);
-      return;
-    }
+    const result = await withPinAttemptLock(buckets, async (tx) => {
+      const retry = await getAuthRateLimit(buckets, new Date(), tx);
+      if (retry !== null) return { kind: "rate", retry } as const;
 
-    const [credential] = await db
-      .select({ pinHash: customerCredentialsTable.pinHash })
-      .from(customerCredentialsTable)
-      .where(eq(customerCredentialsTable.userId, session.userId))
-      .limit(1);
-    if (!credential) {
-      res.status(503).json({ error: "Données du compte indisponibles." });
-      return;
-    }
+      const [credential] = await tx
+        .select({ pinHash: customerCredentialsTable.pinHash })
+        .from(customerCredentialsTable)
+        .where(eq(customerCredentialsTable.userId, session.userId))
+        .limit(1);
+      if (!credential) return { kind: "unavailable" } as const;
 
-    if (credential.pinHash) {
-      if (!parsed.data.currentPin) {
-        res.status(400).json({ error: "Saisissez votre code PIN actuel." });
-        return;
-      }
-      if (!await verifyCustomerSecret(parsed.data.currentPin, credential.pinHash)) {
-        await recordAuthFailure(buckets);
-        const retryAfterFailure = await getAuthRateLimit(buckets);
-        if (retryAfterFailure !== null) {
-          sendRateLimit(res, retryAfterFailure);
-          return;
+      if (credential.pinHash) {
+        if (!parsed.data.currentPin) return { kind: "missing" } as const;
+        if (!await verifyCustomerSecret(parsed.data.currentPin, credential.pinHash)) {
+          await recordAuthFailure(buckets, new Date(), tx);
+          const retryAfterFailure = await getAuthRateLimit(buckets, new Date(), tx);
+          return retryAfterFailure !== null
+            ? { kind: "rate", retry: retryAfterFailure } as const
+            : { kind: "invalid" } as const;
         }
-        res.status(401).json({ error: "Code PIN actuel incorrect." });
-        return;
+        if (parsed.data.currentPin === parsed.data.newPin) return { kind: "unchanged" } as const;
       }
-      if (parsed.data.currentPin === parsed.data.newPin) {
-        res.status(400).json({ error: "Choisissez un code PIN différent de l’actuel." });
-        return;
-      }
-    }
 
-    const newPinHash = await hashCustomerSecret(parsed.data.newPin);
-    const now = new Date();
-    const updated = await db.transaction(async (tx) => {
+      const newPinHash = await hashCustomerSecret(parsed.data.newPin);
+      const now = new Date();
       const pinCondition = credential.pinHash
         ? eq(customerCredentialsTable.pinHash, credential.pinHash)
         : isNull(customerCredentialsTable.pinHash);
@@ -548,7 +540,7 @@ router.put("/me/pin", async (req, res): Promise<void> => {
         )
         .returning({ userId: customerCredentialsTable.userId });
 
-      if (!updatedCredential) return false;
+      if (!updatedCredential) return { kind: "changed" } as const;
       const [updatedSession] = await tx
         .update(customerSessionsTable)
         .set({
@@ -565,15 +557,35 @@ router.put("/me/pin", async (req, res): Promise<void> => {
         )
         .returning({ id: customerSessionsTable.id });
       if (!updatedSession) throw new Error("Customer session expired during PIN update");
-      return true;
+      await clearAuthFailures(buckets, tx);
+      return { kind: "success" } as const;
     });
 
-    if (!updated) {
+    if (result.kind === "rate") {
+      sendRateLimit(res, result.retry);
+      return;
+    }
+    if (result.kind === "unavailable") {
+      res.status(503).json({ error: "Données du compte indisponibles." });
+      return;
+    }
+    if (result.kind === "missing") {
+      res.status(400).json({ error: "Saisissez votre code PIN actuel." });
+      return;
+    }
+    if (result.kind === "invalid") {
+      res.status(401).json({ error: "Code PIN actuel incorrect." });
+      return;
+    }
+    if (result.kind === "unchanged") {
+      res.status(400).json({ error: "Choisissez un code PIN différent de l’actuel." });
+      return;
+    }
+    if (result.kind === "changed") {
       res.status(401).json({ error: "Le code PIN a changé. Connectez-vous à nouveau." });
       return;
     }
 
-    await clearAuthFailures(buckets);
     res.json(SetCustomerPinResponse.parse({ pinConfigured: true, pinUnlocked: true }));
   } catch (error) {
     req.log.error({ errorCode: safeErrorCode(error) }, "Customer PIN update failed");

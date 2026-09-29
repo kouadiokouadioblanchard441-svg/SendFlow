@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, type ReactElement } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { ClerkProvider } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Redirect, Route, Router as WouterRouter, Switch } from 'wouter';
+import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { LegalMentionsPage, PrivacyPage, type LegalPageProps } from '@/pages/legal';
@@ -26,6 +26,7 @@ import SigninPage from '@/pages/sign-in';
 import SignupPage from '@/pages/sign-up';
 import OnboardingPage from '@/pages/onboarding';
 import { useSeo } from '@/lib/seo';
+import { getPinUnlockExpiry } from '@/lib/pin-unlock';
 
 const AdminRouter = lazy(() => import('@/pages/admin').then((module) => ({ default: module.AdminRouter })));
 
@@ -46,6 +47,41 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const protectedCustomerPaths = new Set([
+  '/account', '/account-info', '/account-limit', '/customer-service',
+  '/deposit', '/international-transfer', '/inter-transfer', '/history',
+  '/notifications', '/change-pin', '/change-pin-success', '/pricing',
+]);
+
+function CustomerPinGuard({ children }: { children: ReactNode }) {
+  const [path] = useLocation();
+  const [, forceRefresh] = useState(0);
+  const expiry = getPinUnlockExpiry();
+
+  useEffect(() => {
+    if (expiry === null) return;
+    const lockIfExpired = () => {
+      if (getPinUnlockExpiry() !== null) return;
+      queryClient.clear();
+      forceRefresh((value) => value + 1);
+    };
+    const timer = window.setTimeout(lockIfExpired, Math.max(0, expiry - Date.now()) + 1);
+    window.addEventListener('focus', lockIfExpired);
+    document.addEventListener('visibilitychange', lockIfExpired);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('focus', lockIfExpired);
+      document.removeEventListener('visibilitychange', lockIfExpired);
+    };
+  }, [expiry]);
+
+  const isProtected = protectedCustomerPaths.has(path)
+    || path.startsWith('/transaction/')
+    || path.startsWith('/notifications/');
+  if (isProtected && expiry === null) return <Redirect to="/pin" />;
+  return <>{children}</>;
+}
 const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -173,6 +209,7 @@ function App() {
       >
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
+            <CustomerPinGuard>
             <Switch>
               <Route
                 path="/admin/*?"
@@ -227,6 +264,7 @@ function App() {
               />
               <Route component={NotFoundRoute} />
             </Switch>
+            </CustomerPinGuard>
             <Toaster />
           </TooltipProvider>
         </QueryClientProvider>

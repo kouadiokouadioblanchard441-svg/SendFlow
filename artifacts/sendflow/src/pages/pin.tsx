@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Delete } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
+import { markPinUnlocked } from '@/lib/pin-unlock';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSetCustomerPin, useUnlockCustomerSession } from '@workspace/api-client-react';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -167,6 +169,7 @@ function PinBackgroundArt() {
 
 export default function PinPage({ mode }: { mode: PinMode }) {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [entry, setEntry] = useState('');
   const entryRef = useRef('');
   const processingRef = useRef(false);
@@ -214,22 +217,36 @@ export default function PinPage({ mode }: { mode: PinMode }) {
         }
 
         await setCustomerPin.mutateAsync({ data: { newPin: nextEntry } });
-        window.sessionStorage.setItem('sendflow.pin.unlocked', 'true');
+        queryClient.clear();
+        markPinUnlocked();
         setLocation('/account');
         return;
       }
 
       await unlockCustomerSession.mutateAsync({ data: { pin: nextEntry } });
-      window.sessionStorage.setItem('sendflow.pin.unlocked', 'true');
+      queryClient.clear();
+      markPinUnlocked();
       setLocation('/account');
     } catch (error) {
       clearEntry();
-      const candidate = error as { data?: { error?: string } };
+      const candidate = error as { status?: number; data?: { error?: string } };
+      if (
+        candidate.status === 401
+        && mode === 'enter'
+        && (
+          candidate.data?.error === 'Authentication required'
+          || candidate.data?.error === 'Session expirée. Connectez-vous à nouveau.'
+        )
+      ) {
+        queryClient.clear();
+        setLocation('/sign-in');
+        return;
+      }
       setError(candidate.data?.error ?? 'Code PIN incorrect. Veuillez réessayer.');
       setProcessing(false);
       processingRef.current = false;
     }
-  }, [clearEntry, confirming, createdPin, mode, setCustomerPin, unlockCustomerSession, setLocation]);
+  }, [clearEntry, confirming, createdPin, mode, queryClient, setCustomerPin, unlockCustomerSession, setLocation]);
 
   const appendDigit = useCallback((digit: string) => {
     if (processing || processingRef.current || entryRef.current.length >= PIN_LENGTH || !/^\d$/.test(digit)) return;
@@ -325,6 +342,7 @@ function getChangePinCopy(step: ChangePinStep) {
 
 export function ChangePinPage() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<ChangePinStep>('current');
   const [entry, setEntry] = useState('');
   const entryRef = useRef('');
@@ -387,16 +405,18 @@ export function ChangePinPage() {
       }
 
       await setCustomerPin.mutateAsync({ data: { newPin: nextEntry, currentPin } });
+      queryClient.clear();
+      markPinUnlocked();
       window.sessionStorage.setItem(PIN_CHANGE_SUCCESS_KEY, 'true');
       setLocation('/change-pin-success');
     } catch (error) {
       clearEntry();
-      const candidate = error as { data?: { error?: string } };
+    const candidate = error as { data?: { error?: string } };
       setError(candidate.data?.error ?? 'Code PIN incorrect. Veuillez réessayer.');
       setProcessing(false);
       processingRef.current = false;
     }
-  }, [clearEntry, currentPin, newPin, setCustomerPin, setLocation, step, unlockCustomerSession]);
+  }, [clearEntry, currentPin, newPin, queryClient, setCustomerPin, setLocation, step, unlockCustomerSession]);
 
   const appendDigit = useCallback((digit: string) => {
     if (processing || processingRef.current || entryRef.current.length >= PIN_LENGTH || !/^\d$/.test(digit)) return;
