@@ -12,8 +12,8 @@ export function calculateTransferAmountBreakdown(
   if (!Number.isSafeInteger(amount) || amount < 0) {
     throw new RangeError('Transfer amount must be a non-negative safe integer.');
   }
-  if (feeRate !== undefined && (!Number.isFinite(feeRate) || feeRate < 0)) {
-    throw new RangeError('Transfer fee rate must be a finite non-negative number.');
+  if (feeRate !== undefined && (!Number.isFinite(feeRate) || feeRate < 0 || feeRate > 1)) {
+    throw new RangeError('Transfer fee rate must be a finite number between 0 and 1.');
   }
   if (feeRate === undefined) {
     return { feeAmount: null, recipientAmount: null, totalDebit: null };

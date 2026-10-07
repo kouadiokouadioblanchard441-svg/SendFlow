@@ -263,7 +263,11 @@ export default function DepositPage() {
                       onChange={(event) => setOtp(event.target.value)}
                       placeholder="Code OTP"
                       aria-label="Code OTP"
+                      aria-invalid={submitAttempted && !otp.trim()}
                     />
+                    {submitAttempted && !otp.trim() && (
+                      <p className="sendflow-international-field-error" role="alert">Saisissez le code OTP demandé par l’opérateur.</p>
+                    )}
                   </>
                 )}
               </>
@@ -289,7 +293,9 @@ export default function DepositPage() {
               <div>
                 <span>{feeRate === undefined ? 'Frais à confirmer' : `Frais (${formatPricingFeeRate(feeRate)})`}</span>
                 <strong className="sendflow-deposit-fee-amount">
-                  {feeAmount > 0 ? `- ${feeAmount.toLocaleString('fr-FR')} Fcfa` : '—'}
+                  {amountBreakdown.feeAmount === null
+                    ? 'À confirmer'
+                    : `${feeAmount === 0 ? '' : '- '}${feeAmount.toLocaleString('fr-FR')} Fcfa`}
                 </strong>
               </div>
               <div>
@@ -301,11 +307,14 @@ export default function DepositPage() {
                 <strong>{amountBreakdown.totalDebit === null ? 'À confirmer' : `${amountBreakdown.totalDebit.toLocaleString('fr-FR')} Fcfa`}</strong>
               </div>
             </div>
+            {submitAttempted && feeRate === undefined && (
+              <p className="sendflow-international-field-error" role="alert">Les frais de cet opérateur ne sont pas disponibles. Le dépôt ne peut pas être préparé.</p>
+            )}
 
             <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status" data-testid="notice-transfer-provider-unavailable">
               {transactionUnavailableReason}
             </p>
-            <button type="submit" className="sendflow-transfer-submit" disabled={!canSubmit || !transactionSubmissionAvailable || requestState !== 'idle'}>
+            <button type="submit" className="sendflow-transfer-submit" disabled={!transactionSubmissionAvailable || requestState !== 'idle'}>
               {transactionSubmissionAvailable ? `Déposer ${walletAmount.toLocaleString('fr-FR')} FCFA` : 'Opérations indisponibles'}
             </button>
           </section>

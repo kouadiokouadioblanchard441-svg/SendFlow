@@ -26,9 +26,26 @@ test('unknown fees produce no authoritative totals', () => {
   });
 });
 
+test('a confirmed zero-percent fee is distinct from an unknown fee', () => {
+  assert.deepEqual(calculateTransferAmountBreakdown(10_000, 0, true), {
+    feeAmount: 0,
+    recipientAmount: 10_000,
+    totalDebit: 10_000,
+  });
+});
+
+test('a fee equal to the transfer amount cannot produce a negative recipient amount', () => {
+  assert.deepEqual(calculateTransferAmountBreakdown(10_000, 1, false), {
+    feeAmount: 10_000,
+    recipientAmount: 0,
+    totalDebit: 10_000,
+  });
+});
+
 test('invalid amounts, rates, and overflowing totals fail explicitly', () => {
   assert.throws(() => calculateTransferAmountBreakdown(-1, 0.01, true), RangeError);
   assert.throws(() => calculateTransferAmountBreakdown(10, -0.01, true), RangeError);
   assert.throws(() => calculateTransferAmountBreakdown(10, Number.NaN, true), RangeError);
+  assert.throws(() => calculateTransferAmountBreakdown(10, 1.01, true), RangeError);
   assert.throws(() => calculateTransferAmountBreakdown(Number.MAX_SAFE_INTEGER, 1, true), RangeError);
 });
