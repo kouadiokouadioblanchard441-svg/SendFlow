@@ -1635,6 +1635,16 @@ export type GetCustomerTransactionsParams = {
  * @maxLength 64
  */
 cursor?: string;
+/**
+ * @maxLength 80
+ */
+search?: string;
+/**
+ * Number of records in this page. Defaults to 50.
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
 };
 
 export type GetAdminOverviewParams = {

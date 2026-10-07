@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { getGetCurrentAccountQueryKey, useGetCurrentAccount } from '@workspace/api-client-react';
@@ -12,12 +12,18 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 export default function HistoryPage() {
   const [, setLocation] = useLocation();
   const [query, setQuery] = useState('');
+  const [search, setSearch] = useState('');
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountQuery = useGetCurrentAccount({
     query: { queryKey: getGetCurrentAccountQueryKey(), enabled: isUnlocked },
   });
-  const transactionsQuery = useCustomerTransactions(accountQuery.data?.userId);
-  const transactions = transactionsQuery.data?.items ?? [];
+  const transactionsQuery = useCustomerTransactions(accountQuery.data?.userId, search);
+  const transactions = transactionsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setSearch(query.trim()), 250);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
 
   useSeo({
     path: '/history',
@@ -26,17 +32,6 @@ export default function HistoryPage() {
     description: 'Consultez vos transactions SendFlow.',
     robots: 'noindex,nofollow',
   });
-
-  const visibleTransactions = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return transactions;
-
-    return transactions.filter((transaction) =>
-      `${transaction.senderPhone} ${transaction.recipientPhone} ${transaction.reference} ${transaction.amountMinor}`
-        .toLowerCase()
-        .includes(normalizedQuery),
-    );
-  }, [query, transactions]);
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
@@ -62,8 +57,10 @@ export default function HistoryPage() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Rechercher par numéro"
-            aria-label="Rechercher par numéro"
+            maxLength={80}
+            placeholder="Rechercher par numéro ou référence"
+            aria-label="Rechercher par numéro ou référence"
+            data-testid="input-history-search"
           />
         </label>
 
@@ -71,15 +68,24 @@ export default function HistoryPage() {
 
         <div className="sendflow-history-list">
           {accountQuery.isLoading && <p className="sendflow-history-empty">Chargement de votre compte…</p>}
-          {accountQuery.isError && <p className="sendflow-history-empty" role="alert">Impossible de charger votre compte. Reconnectez-vous puis réessayez.</p>}
-          {transactionsQuery.isLoading && <p className="sendflow-history-empty">Chargement des transactions…</p>}
-          {transactionsQuery.isError && (
+          {accountQuery.isError && (
             <div className="sendflow-history-empty" role="alert">
-              <p>Impossible de charger votre historique.</p>
-              <button type="button" onClick={() => void transactionsQuery.refetch()}>Réessayer</button>
+              <p>Impossible de charger votre compte. Vérifiez votre session puis réessayez.</p>
+              <button type="button" onClick={() => void accountQuery.refetch()} disabled={accountQuery.isFetching} data-testid="button-history-retry-account">
+                {accountQuery.isFetching ? 'Chargement…' : 'Réessayer'}
+              </button>
             </div>
           )}
-          {!accountQuery.isLoading && !accountQuery.isError && !transactionsQuery.isLoading && !transactionsQuery.isError && visibleTransactions.map((record, index) => (
+          {transactionsQuery.isLoading && <p className="sendflow-history-empty">Chargement des transactions…</p>}
+          {transactionsQuery.isError && !transactionsQuery.isFetchNextPageError && (
+            <div className="sendflow-history-empty" role="alert">
+              <p>Impossible de charger votre historique.</p>
+              <button type="button" onClick={() => void transactionsQuery.refetch()} disabled={transactionsQuery.isFetching} data-testid="button-history-retry-transactions">
+                {transactionsQuery.isFetching ? 'Chargement…' : 'Réessayer'}
+              </button>
+            </div>
+          )}
+          {!accountQuery.isLoading && !accountQuery.isError && !transactionsQuery.isLoading && (!transactionsQuery.isError || transactionsQuery.isFetchNextPageError) && transactions.map((record, index) => (
             <TransactionCard
               key={record.id}
               transaction={toTransactionView(record)}
@@ -88,8 +94,24 @@ export default function HistoryPage() {
               testId={`history-transaction-${record.id}`}
             />
           ))}
-          {!accountQuery.isLoading && !accountQuery.isError && !transactionsQuery.isLoading && !transactionsQuery.isError && visibleTransactions.length === 0 && (
-            <p className="sendflow-history-empty">Aucune transaction trouvée.</p>
+          {!accountQuery.isLoading && !accountQuery.isError && !transactionsQuery.isLoading && !transactionsQuery.isError && transactions.length === 0 && (
+            <p className="sendflow-history-empty">
+              {search ? 'Aucune transaction ne correspond à cette recherche.' : 'Aucune transaction trouvée.'}
+            </p>
+          )}
+          {transactionsQuery.isFetchNextPageError && (
+            <p className="sendflow-history-empty" role="alert">Impossible de charger les transactions plus anciennes. Réessayez.</p>
+          )}
+          {transactionsQuery.hasNextPage && (
+            <button
+              type="button"
+              className="sendflow-history-load-more"
+              onClick={() => void transactionsQuery.fetchNextPage()}
+              disabled={transactionsQuery.isFetchingNextPage}
+              data-testid="button-history-load-more"
+            >
+              {transactionsQuery.isFetchingNextPage ? 'Chargement…' : transactionsQuery.isFetchNextPageError ? 'Réessayer' : 'Charger les plus anciennes'}
+            </button>
           )}
         </div>
       </section>

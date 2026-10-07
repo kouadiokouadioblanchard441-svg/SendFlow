@@ -64,10 +64,13 @@ export default function TransactionDetailPage() {
     return <main className="sendflow-receipt-shell" role="status">Chargement des détails de transaction…</main>;
   }
   if (accountQuery.isError || detailQuery.isError || !transaction) {
+    const retryFailedRequest = accountQuery.isError
+      ? () => void accountQuery.refetch()
+      : () => void detailQuery.refetch();
     return (
       <main className="sendflow-receipt-shell">
         <p role="alert">Impossible de charger les détails réels de cette transaction.</p>
-        <button type="button" onClick={() => void detailQuery.refetch()}>Réessayer</button>
+        <button type="button" onClick={retryFailedRequest} disabled={accountQuery.isFetching || detailQuery.isFetching}>Réessayer</button>
         <button type="button" onClick={() => setLocation('/history')}>Retour à l’historique</button>
       </main>
     );
@@ -86,22 +89,31 @@ export default function TransactionDetailPage() {
       : 'failed';
   const sentAmount = formatCurrencyMinor(transaction.amountMinor, transaction.currency);
   const fee = formatCurrencyMinor(transaction.feeMinor, transaction.currency);
-  const total = formatCurrencyMinor(
-    transaction.amountMinor + transaction.feeMinor,
-    transaction.currency,
-  );
+  const totalMinor = transaction.amountMinor + transaction.feeMinor;
+  if (!Number.isSafeInteger(totalMinor)) {
+    return (
+      <main className="sendflow-receipt-shell">
+        <p role="alert">Les montants de cette transaction ne peuvent pas être vérifiés.</p>
+        <button type="button" onClick={() => setLocation('/history')}>Retour à l’historique</button>
+      </main>
+    );
+  }
+  const total = formatCurrencyMinor(totalMinor, transaction.currency);
   const transactionKindLabel = isDeposit
     ? "Dépôt d'argent"
     : transaction.kind === 'inter-network'
       ? 'Transfert inter réseau'
       : 'Transfert international';
-  const operatorName = operatorNames[operatorCodeFor(transaction.toOperator)];
+  const transactionOperator = operatorCodeFor(
+    isDeposit ? transaction.fromOperator : transaction.toOperator,
+  );
+  const operatorName = operatorNames[transactionOperator];
   const supportContact = customerServiceProvider.getContact();
   const whatsappMessage = [
     "Bonjour, je souhaite obtenir de l'aide concernant une transaction SendFlow.",
     '',
     `Montant envoyé : ${sentAmount}`,
-    `Total payé : ${total}`,
+    `Montant total de l’opération : ${total}`,
     `Numéro débité : ${transaction.senderPhone}`,
     `Bénéficiaire : ${transaction.recipientPhone}`,
     `Opérateur : ${operatorName}`,
@@ -155,8 +167,8 @@ export default function TransactionDetailPage() {
             {operatorName}
           </p>
         </div>
-        <div className={`sendflow-receipt-operator is-${operatorCodeFor(transaction.toOperator)}`}>
-          <OperatorLogo operator={operatorCodeFor(transaction.toOperator)} />
+        <div className={`sendflow-receipt-operator is-${transactionOperator}`}>
+          <OperatorLogo operator={transactionOperator} />
         </div>
       </section>
 
@@ -164,7 +176,7 @@ export default function TransactionDetailPage() {
         <h2 id="receipt-details-title">Détails transaction</h2>
         <dl>
           <DetailRow label="Nature de la transaction" value={transactionKindLabel} />
-          <DetailRow label="Montant envoyé" value={sentAmount} />
+          <DetailRow label={isDeposit ? 'Montant du dépôt' : 'Montant envoyé'} value={sentAmount} />
           <DetailRow label="Frais enregistrés" value={fee} />
           <DetailRow label="Total enregistré" value={total} emphasized separated />
           <DetailRow label="Réseau bénéficiaire" value={operatorName} />

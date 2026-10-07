@@ -319,15 +319,22 @@ export const GetCurrentAccountLimitResponse = zod.object({
 
 
 /**
- * Returns one page of the current customer's transactions, newest first. Use nextCursor to load older records.
+ * Returns one page of the current customer's transactions, newest first. Search matches phone numbers and references across all records. Use nextCursor to load older records.
  * @summary List the authenticated customer's transactions
  */
 export const getCustomerTransactionsQueryCursorMax = 64;
 
+export const getCustomerTransactionsQuerySearchMax = 80;
+
+export const getCustomerTransactionsQueryLimitDefault = 50;
+export const getCustomerTransactionsQueryLimitMax = 50;
+
 
 
 export const GetCustomerTransactionsQueryParams = zod.object({
-  "cursor": zod.coerce.string().max(getCustomerTransactionsQueryCursorMax).optional()
+  "cursor": zod.coerce.string().max(getCustomerTransactionsQueryCursorMax).optional(),
+  "search": zod.coerce.string().max(getCustomerTransactionsQuerySearchMax).optional(),
+  "limit": zod.coerce.number().int().min(1).max(getCustomerTransactionsQueryLimitMax).default(getCustomerTransactionsQueryLimitDefault).describe('Number of records in this page. Defaults to 50.')
 })
 
 export const getCustomerTransactionsResponseItemsItemSenderPhoneMax = 32;

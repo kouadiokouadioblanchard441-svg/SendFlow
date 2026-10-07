@@ -84,8 +84,8 @@ export default function AccountPage() {
   const accountQuery = useGetCurrentAccount({
     query: { queryKey: getGetCurrentAccountQueryKey(), enabled: isUnlocked },
   });
-  const transactionsQuery = useCustomerTransactions(accountQuery.data?.userId);
-  const recentTransactions = transactionsQuery.data?.items.slice(0, 5) ?? [];
+  const transactionsQuery = useCustomerTransactions(accountQuery.data?.userId, '', 5);
+  const recentTransactions = transactionsQuery.data?.pages.flatMap((page) => page.items).slice(0, 5) ?? [];
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetName>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(() => (

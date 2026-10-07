@@ -558,7 +558,7 @@ paths:
       operationId: getCustomerTransactions
       tags: [account]
       summary: List the authenticated customer's transactions
-      description: Returns one page of the current customer's transactions, newest first. Use nextCursor to load older records.
+      description: Returns one page of the current customer's transactions, newest first. Search matches phone numbers and references across all records. Use nextCursor to load older records.
       security:
         - sendFlowSession: []
       parameters:
@@ -568,6 +568,21 @@ paths:
           schema:
             type: string
             maxLength: 64
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 80
+        - name: limit
+          in: query
+          required: false
+          description: Number of records in this page. Defaults to 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 50
       responses:
         "200":
           description: A page of customer-owned transactions.

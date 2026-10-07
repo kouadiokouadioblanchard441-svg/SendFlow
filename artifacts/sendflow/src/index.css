@@ -4109,6 +4109,8 @@
 .sendflow-history-list .sendflow-transaction-copy small { font-size: clamp(10.5px, 1.9vw, 12px); }
 .sendflow-history-list .sendflow-transaction-amount { font-size: clamp(14px, 2.8vw, 16px); }
 .sendflow-history-empty { margin: 0; color: #89858d; font-size: 14px; text-align: center; }
+.sendflow-history-load-more { width: min(100%, 360px); min-height: 46px; justify-self: center; border: 1px solid #d8ccec; border-radius: 12px; background: #fff; color: #6334c4; cursor: pointer; padding: 0 16px; font: inherit; font-size: 14px; font-weight: 700; }
+.sendflow-history-load-more:disabled { cursor: wait; opacity: .65; }
 
 /* Transaction receipt — a complete, printable detail view */
 .sendflow-receipt-shell {

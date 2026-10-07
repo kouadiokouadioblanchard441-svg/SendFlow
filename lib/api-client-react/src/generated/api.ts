@@ -1323,7 +1323,7 @@ export const getGetCustomerTransactionsUrl = (params?: GetCustomerTransactionsPa
 }
 
 /**
- * Returns one page of the current customer's transactions, newest first. Use nextCursor to load older records.
+ * Returns one page of the current customer's transactions, newest first. Search matches phone numbers and references across all records. Use nextCursor to load older records.
  * @summary List the authenticated customer's transactions
  */
 export const getCustomerTransactions = async (params?: GetCustomerTransactionsParams, options?: Parameters<typeof customFetch>[1]): Promise<CustomerTransactionPage> => {
