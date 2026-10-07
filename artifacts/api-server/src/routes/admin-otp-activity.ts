@@ -29,7 +29,7 @@ function parseDateRange(query: Record<string, unknown>) {
   };
 }
 
-router.get("/admin/otp-activity", async (req, res): Promise<void> => {
+router.get("/otp-activity", async (req, res): Promise<void> => {
   res.setHeader("Cache-Control", "no-store");
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;

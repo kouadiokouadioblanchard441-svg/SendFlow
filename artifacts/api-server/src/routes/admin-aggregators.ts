@@ -70,7 +70,7 @@ async function findAggregator(code: string) {
   return stored;
 }
 
-router.get("/admin/payment-routing", async (req, res): Promise<void> => {
+router.get("/payment-routing", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 
@@ -135,7 +135,7 @@ router.get("/admin/payment-routing", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/admin/payment-aggregators", async (req, res): Promise<void> => {
+router.post("/payment-aggregators", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -192,7 +192,7 @@ router.post("/admin/payment-aggregators", async (req, res): Promise<void> => {
   }
 });
 
-router.patch("/admin/payment-aggregators", async (req, res): Promise<void> => {
+router.patch("/payment-aggregators", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -269,7 +269,7 @@ router.patch("/admin/payment-aggregators", async (req, res): Promise<void> => {
   }
 });
 
-router.put("/admin/payment-aggregator-routes", async (req, res): Promise<void> => {
+router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 

@@ -192,7 +192,7 @@ async function getKindSummary(
   };
 }
 
-router.get("/admin/overview", async (req, res): Promise<void> => {
+router.get("/overview", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 
@@ -262,7 +262,7 @@ router.get("/admin/overview", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/admin/users", async (req, res): Promise<void> => {
+router.get("/users", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 
@@ -342,7 +342,7 @@ router.get("/admin/users", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/admin/users/:userId", async (req, res): Promise<void> => {
+router.get("/users/:userId", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 
@@ -412,7 +412,7 @@ router.get("/admin/users/:userId", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/admin/transactions", async (req, res): Promise<void> => {
+router.get("/transactions", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 
@@ -504,7 +504,7 @@ router.get("/admin/transactions", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/admin/transactions/:transactionId", async (req, res): Promise<void> => {
+router.get("/transactions/:transactionId", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 

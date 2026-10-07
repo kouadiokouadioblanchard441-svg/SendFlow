@@ -11,12 +11,12 @@ import adminLoginActivityRouter from "./admin-login-activity";
 import adminOtpActivityRouter from "./admin-otp-activity";
 import adminOtpPoliciesRouter from "./admin-otp-policies";
 import adminAggregatorsRouter from "./admin-aggregators";
-import operatorPricingRouter from "./operator-pricing";
-import bannersRouter from "./banners";
+import operatorPricingRouter, { adminRoutes as adminOperatorPricingRoutes } from "./operator-pricing";
+import bannersRouter, { adminRoutes as adminBannersRoutes } from "./banners";
 import phoneOtpRouter from "./phone-otp";
 import customerAuthRouter from "./customer-auth";
 import customerRecoveryRouter from "./customer-recovery";
-import registrationSettingsRouter from "./registration-settings";
+import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRoutes } from "./registration-settings";
 import { ADMIN_ROUTE_PREFIX } from "../lib/admin-route-prefix";
 
 const router: IRouter = Router();
@@ -28,15 +28,6 @@ router.use(storageRouter);
 router.use(databaseRouter);
 router.use(accountRouter);
 router.use(identityVerificationRouter);
-router.use("/admin", (_req, res) => {
-  res.sendStatus(404);
-});
-router.use(adminRouter);
-router.use(adminActionsRouter);
-router.use(adminLoginActivityRouter);
-router.use(adminOtpActivityRouter);
-router.use(adminOtpPoliciesRouter);
-router.use(adminAggregatorsRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);
 router.use(registrationSettingsRouter);
@@ -47,15 +38,11 @@ adminHandlers.use(adminLoginActivityRouter);
 adminHandlers.use(adminOtpActivityRouter);
 adminHandlers.use(adminOtpPoliciesRouter);
 adminHandlers.use(adminAggregatorsRouter);
-adminHandlers.use(operatorPricingRouter);
-adminHandlers.use(bannersRouter);
-adminHandlers.use(registrationSettingsRouter);
+adminHandlers.use(adminOperatorPricingRoutes);
+adminHandlers.use(adminBannersRoutes);
+adminHandlers.use(adminRegistrationSettingsRoutes);
 
 adminSurface.use(adminAccessRouter);
-adminSurface.use((req, _res, next) => {
-  req.url = `/admin${req.url === "/" ? "" : req.url}`;
-  next();
-});
 adminSurface.use(adminHandlers);
 
 router.use(ADMIN_ROUTE_PREFIX, adminSurface);

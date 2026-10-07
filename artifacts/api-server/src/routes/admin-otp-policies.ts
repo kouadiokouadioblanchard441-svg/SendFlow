@@ -43,7 +43,7 @@ function toAdminOtpPolicy(catalogEntry: PolicyCatalogEntry, stored?: typeof oper
   };
 }
 
-router.get("/admin/otp-policies", async (req, res): Promise<void> => {
+router.get("/otp-policies", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 
@@ -69,7 +69,7 @@ router.get("/admin/otp-policies", async (req, res): Promise<void> => {
   }
 });
 
-router.patch("/admin/otp-policies/:countryCode/:operatorId", async (req, res): Promise<void> => {
+router.patch("/otp-policies/:countryCode/:operatorId", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 

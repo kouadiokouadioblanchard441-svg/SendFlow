@@ -52,7 +52,7 @@ function isConfiguredAdminUser(userId: string) {
   );
 }
 
-router.post("/admin/users/:userId/wallet-adjustments", async (req, res): Promise<void> => {
+router.post("/users/:userId/wallet-adjustments", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -307,19 +307,19 @@ async function applyUserAction(
   }
 }
 
-router.post("/admin/users/:userId/suspend", (req, res) => {
+router.post("/users/:userId/suspend", (req, res) => {
   void applyUserAction(req, res, "suspend_user", req.body);
 });
 
-router.post("/admin/users/:userId/restore", (req, res) => {
+router.post("/users/:userId/restore", (req, res) => {
   void applyUserAction(req, res, "restore_user", req.body);
 });
 
-router.post("/admin/users/:userId/delete", (req, res) => {
+router.post("/users/:userId/delete", (req, res) => {
   void applyUserAction(req, res, "delete_user", req.body);
 });
 
-router.post("/admin/transactions/:transactionId/archive", async (req, res): Promise<void> => {
+router.post("/transactions/:transactionId/archive", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 

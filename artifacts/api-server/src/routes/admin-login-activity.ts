@@ -30,7 +30,7 @@ function parseDateRange(query: Record<string, unknown>) {
   };
 }
 
-router.get("/admin/login-activity", async (req, res): Promise<void> => {
+router.get("/login-activity", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 
