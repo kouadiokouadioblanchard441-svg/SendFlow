@@ -26,6 +26,7 @@ import { recordAdminAudit } from "../lib/admin-audit";
 import { respondAdminAuthError } from "./admin";
 
 const router: IRouter = Router();
+const adminRoutes: IRouter = Router();
 
 function isSecureImageUrl(value: string | null | undefined): boolean {
   if (value == null) return true;
@@ -111,7 +112,7 @@ router.get("/banners", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/admin/banners", async (req, res): Promise<void> => {
+adminRoutes.get("/banners", async (req, res): Promise<void> => {
   if (!respondAdminAuthError(req, res)) return;
 
   try {
@@ -127,7 +128,7 @@ router.get("/admin/banners", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/admin/banners", async (req, res): Promise<void> => {
+adminRoutes.post("/banners", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -184,7 +185,7 @@ router.post("/admin/banners", async (req, res): Promise<void> => {
   }
 });
 
-router.patch("/admin/banners/reorder", async (req, res): Promise<void> => {
+adminRoutes.patch("/banners/reorder", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -262,7 +263,7 @@ router.patch("/admin/banners/reorder", async (req, res): Promise<void> => {
   }
 });
 
-router.patch("/admin/banners/:bannerId", async (req, res): Promise<void> => {
+adminRoutes.patch("/banners/:bannerId", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -337,7 +338,7 @@ router.patch("/admin/banners/:bannerId", async (req, res): Promise<void> => {
   }
 });
 
-router.delete("/admin/banners/:bannerId", async (req, res): Promise<void> => {
+adminRoutes.delete("/banners/:bannerId", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -375,4 +376,5 @@ router.delete("/admin/banners/:bannerId", async (req, res): Promise<void> => {
   }
 });
 
+export { adminRoutes };
 export default router;

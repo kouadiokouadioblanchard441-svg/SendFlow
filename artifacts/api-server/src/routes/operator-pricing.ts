@@ -29,6 +29,7 @@ import {
 import { respondAdminAuthError } from "./admin";
 
 const router: IRouter = Router();
+const adminRoutes: IRouter = Router();
 const defaultOtpOperatorIds = new Set(["orange-ci", "orange-sn", "orange-bf", "orange-ml"]);
 const otpCommands: Record<string, string> = {
   "orange-ci": "#144*82# option 2",
@@ -127,7 +128,7 @@ router.get("/pricing", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/admin/operator-pricing", async (req, res): Promise<void> => {
+adminRoutes.get("/operator-pricing", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
 
@@ -171,7 +172,7 @@ router.get("/admin/operator-pricing", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/admin/operators", async (req, res): Promise<void> => {
+adminRoutes.post("/operators", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -255,7 +256,7 @@ router.post("/admin/operators", async (req, res): Promise<void> => {
   }
 });
 
-router.patch("/admin/operators/:operatorId", async (req, res): Promise<void> => {
+adminRoutes.patch("/operators/:operatorId", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -326,7 +327,7 @@ router.patch("/admin/operators/:operatorId", async (req, res): Promise<void> => 
 
 class PricingRateConflictError extends Error {}
 
-router.put("/admin/operator-pricing-rates", async (req, res): Promise<void> => {
+adminRoutes.put("/operator-pricing-rates", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
 
@@ -414,4 +415,5 @@ router.put("/admin/operator-pricing-rates", async (req, res): Promise<void> => {
   }
 });
 
+export { adminRoutes };
 export default router;

@@ -11,6 +11,7 @@ import { respondAdminAuthError } from "./admin";
 import { isTrustedOrigin } from "../lib/request-security";
 
 const router: IRouter = Router();
+const adminRoutes: IRouter = Router();
 const SETTING_ID = "signup";
 
 function present(row: typeof registrationSettingsTable.$inferSelect) {
@@ -34,7 +35,7 @@ router.get("/auth/registration-settings", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/admin/registration-settings", async (req, res): Promise<void> => {
+adminRoutes.get("/registration-settings", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
   try {
@@ -49,7 +50,7 @@ router.get("/admin/registration-settings", async (req, res): Promise<void> => {
   }
 });
 
-router.patch("/admin/registration-settings", async (req, res): Promise<void> => {
+adminRoutes.patch("/registration-settings", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
   if (!isTrustedOrigin(req)) {
@@ -99,4 +100,5 @@ router.patch("/admin/registration-settings", async (req, res): Promise<void> => 
   }
 });
 
+export { adminRoutes };
 export default router;
