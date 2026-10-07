@@ -15,3 +15,4 @@
 - [Unverified signup accounts](unverified-signup-accounts.md) — SMS-free signup allows viewing, not phone ownership; future financial operations need OTP verification.
 - [SendFlow PIN keypad](pin-keypad-behavior.md) — User explicitly wants digits to reshuffle after every PIN entry, including confirmation; fix mismatches without freezing it.
 - [PIN unlock boundaries](pin-unlock-boundaries.md) — Serialize concurrent PIN guesses; expire browser access and cached account data before the server unlock expires.
+- [Financial app hardening](financial-app-hardening.md) — Treat every SendFlow page as part of a financial application; prioritize data security, integrity, and safe failure behavior.
