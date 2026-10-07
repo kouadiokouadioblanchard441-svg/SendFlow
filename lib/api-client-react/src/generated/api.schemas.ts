@@ -1612,6 +1612,25 @@ export interface AdminActionResult {
   status: AdminActionResultStatus;
 }
 
+export interface AdminAccessStatus {
+  isAdmin: boolean;
+  pinUnlocked: boolean;
+}
+
+export interface AdminPinInput {
+  /**
+     * @minLength 8
+     * @maxLength 8
+     * @pattern ^[0-9]{8}$
+     */
+  pin: string;
+}
+
+export interface AdminPinUnlockResponse {
+  pinUnlocked: boolean;
+  expiresAt: string;
+}
+
 /**
  * Inclusive UTC calendar date.
  */

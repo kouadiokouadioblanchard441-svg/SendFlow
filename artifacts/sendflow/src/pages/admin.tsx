@@ -40,6 +40,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { AdminActionDialog } from '@/components/admin-action-dialog';
+import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
@@ -181,24 +182,24 @@ const navGroups: Array<{
   {
     label: 'Surveillance',
     items: [
-      { href: '/admin', label: 'Vue d’ensemble', section: 'overview', icon: LayoutDashboard },
-      { href: '/admin/transactions', label: 'Transactions', section: 'transactions', icon: ArrowLeftRight },
-      { href: '/admin/users', label: 'Utilisateurs', section: 'users', icon: Users },
-      { href: '/admin/deposits', label: 'Dépôts', section: 'deposits', icon: ArrowDownToLine },
-      { href: '/admin/international', label: 'International', section: 'international', icon: Globe2 },
-      { href: '/admin/transfers', label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
-      { href: '/admin/login-activity', label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
-      { href: '/admin/otp-activity', label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
+      { href: adminRoute(), label: 'Vue d’ensemble', section: 'overview', icon: LayoutDashboard },
+      { href: adminRoute('/transactions'), label: 'Transactions', section: 'transactions', icon: ArrowLeftRight },
+      { href: adminRoute('/users'), label: 'Utilisateurs', section: 'users', icon: Users },
+      { href: adminRoute('/deposits'), label: 'Dépôts', section: 'deposits', icon: ArrowDownToLine },
+      { href: adminRoute('/international'), label: 'International', section: 'international', icon: Globe2 },
+      { href: adminRoute('/transfers'), label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
+      { href: adminRoute('/login-activity'), label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
+      { href: adminRoute('/otp-activity'), label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
     ],
   },
   {
     label: 'Configuration',
     items: [
-      { href: '/admin/banners', label: 'Bannières client', section: 'banners', icon: Radio },
-      { href: '/admin/otp-policies', label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
-      { href: '/admin/aggregators', label: 'Agrégateurs', section: 'aggregators', icon: Network },
-      { href: '/admin/operator-pricing', label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
-      { href: '/admin/registration-settings', label: 'Vérification à l’inscription', section: 'registration-settings', icon: ShieldCheck },
+      { href: adminRoute('/banners'), label: 'Bannières client', section: 'banners', icon: Radio },
+      { href: adminRoute('/otp-policies'), label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
+      { href: adminRoute('/aggregators'), label: 'Agrégateurs', section: 'aggregators', icon: Network },
+      { href: adminRoute('/operator-pricing'), label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
+      { href: adminRoute('/registration-settings'), label: 'Vérification à l’inscription', section: 'registration-settings', icon: ShieldCheck },
     ],
   },
 ];
@@ -380,7 +381,7 @@ function AdminShell({ section, children }: { section: AdminSection; children: Re
     <SidebarProvider className="sendflow-admin-app">
       <Sidebar collapsible="offcanvas" className="sendflow-admin-sidebar">
         <SidebarHeader className="sendflow-admin-sidebar-header">
-          <Link href="/admin" className="sendflow-admin-brand" data-testid="link-admin-brand">
+          <Link href={adminRoute()} className="sendflow-admin-brand" data-testid="link-admin-brand">
             <span className="sendflow-admin-brand-mark">
               <img src={sendflowMark} alt="SendFlow" />
             </span>
@@ -622,7 +623,7 @@ function UsersPage() {
                 <TableBody>
                   {items.map((user) => (
                     <TableRow key={user.id} data-testid={`row-admin-user-${user.id}`}>
-                     <TableCell><div className="sendflow-admin-user-cell"><span className="sendflow-admin-avatar"><UserRound className="size-4" aria-hidden="true" /></span><span><Link href={`/admin/users/${user.id}`} className="sendflow-admin-user-link"><strong data-testid={`text-user-name-${user.id}`}>{user.displayName || 'Nom non renseigné'}</strong></Link><small data-testid={`text-user-phone-${user.id}`}>{user.phone || 'Téléphone non renseigné'}</small></span></div></TableCell>
+                      <TableCell><div className="sendflow-admin-user-cell"><span className="sendflow-admin-avatar"><UserRound className="size-4" aria-hidden="true" /></span><span><Link href={adminRoute(`/users/${user.id}`)} className="sendflow-admin-user-link"><strong data-testid={`text-user-name-${user.id}`}>{user.displayName || 'Nom non renseigné'}</strong></Link><small data-testid={`text-user-phone-${user.id}`}>{user.phone || 'Téléphone non renseigné'}</small></span></div></TableCell>
                       <TableCell data-testid={`text-user-country-${user.id}`}>{user.countryCode || '—'}</TableCell>
                       <TableCell data-testid={`text-user-created-${user.id}`}>{formatDate(user.createdAt)}</TableCell>
                       <TableCell data-testid={`text-user-lastseen-${user.id}`}>{formatDate(user.lastSeenAt)}</TableCell>
@@ -662,7 +663,7 @@ function UserDetailPage({ userId }: { userId: string }) {
     <AdminShell section="users">
       <div className="sendflow-admin-page-intro sendflow-admin-detail-intro">
         <div>
-          <Link href="/admin/users" className="sendflow-admin-back-link" data-testid="link-admin-users-back">
+          <Link href={adminRoute('/users')} className="sendflow-admin-back-link" data-testid="link-admin-users-back">
             <ArrowLeft className="size-4" /> Retour aux utilisateurs
           </Link>
           <p className="sendflow-admin-overline">Fiche sécurisée</p>
@@ -770,7 +771,7 @@ function UserDetailPage({ userId }: { userId: string }) {
                     <TableBody>
                       {transactions.map((transaction) => (
                         <TableRow key={transaction.id} data-testid={`row-admin-user-transaction-${transaction.id}`}>
-                          <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/transactions/${transaction.id}`} className="sendflow-admin-transaction-link"><strong>{transaction.reference}</strong></Link><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
+                          <TableCell><div className="sendflow-admin-reference-cell"><Link href={adminRoute(`/transactions/${transaction.id}`)} className="sendflow-admin-transaction-link"><strong>{transaction.reference}</strong></Link><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
                           <TableCell data-testid={`text-admin-user-transaction-kind-${transaction.id}`}>{transactionKindLabel(transaction.kind)}</TableCell>
                           <TableCell><AdminOperatorRoute fromOperator={transaction.fromOperator} toOperator={transaction.toOperator} /></TableCell>
                           <TableCell><StatusBadge status={transaction.status} id={`user-${transaction.id}`} /></TableCell>
@@ -801,7 +802,7 @@ function TransactionDetailPage({ transactionId }: { transactionId: string }) {
     <AdminShell section="transactions">
       <div className="sendflow-admin-page-intro sendflow-admin-detail-intro">
         <div>
-          <Link href="/admin/transactions" className="sendflow-admin-back-link" data-testid="link-admin-transactions-back">
+          <Link href={adminRoute('/transactions')} className="sendflow-admin-back-link" data-testid="link-admin-transactions-back">
             <ArrowLeft className="size-4" /> Retour aux transactions
           </Link>
           <p className="sendflow-admin-overline">Fiche transaction</p>
@@ -873,7 +874,7 @@ function TransactionDetailPage({ transactionId }: { transactionId: string }) {
                 <CardDescription>Contexte applicatif et références opérateur.</CardDescription>
               </CardHeader>
               <CardContent className="sendflow-admin-detail-list">
-                <div><span>Utilisateur</span><Link href={`/admin/users/${transaction.userId}`} className="sendflow-admin-detail-link" data-testid="link-admin-transaction-user">{transaction.displayName || transaction.userId}</Link></div>
+                <div><span>Utilisateur</span><Link href={adminRoute(`/users/${transaction.userId}`)} className="sendflow-admin-detail-link" data-testid="link-admin-transaction-user">{transaction.displayName || transaction.userId}</Link></div>
                 <div><span>Téléphone du compte</span><strong data-testid="text-admin-transaction-user-phone">{transaction.userPhone || 'Non renseigné'}</strong></div>
                 <div><span>Réseau de départ</span><strong data-testid="text-admin-transaction-from-operator"><AdminOperatorLabel operator={transaction.fromOperator} /></strong></div>
                 <div><span>Réseau d’arrivée</span><strong data-testid="text-admin-transaction-to-operator"><AdminOperatorLabel operator={transaction.toOperator} /></strong></div>
@@ -978,7 +979,7 @@ function LoginActivityPage() {
                       <TableRow key={item.id} data-testid={`row-admin-login-event-${item.id}`}>
                         <TableCell>
                           <div className="sendflow-admin-reference-cell">
-                            <Link href={`/admin/users/${item.userId}`} className="sendflow-admin-detail-link">
+                            <Link href={adminRoute(`/users/${item.userId}`)} className="sendflow-admin-detail-link">
                               <strong data-testid={`text-login-user-${item.id}`}>{item.displayName || 'Nom non renseigné'}</strong>
                             </Link>
                             <small>{item.phone || item.userId}</small>
@@ -1316,10 +1317,10 @@ function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 
                 <TableBody>
                   {items.map((transaction) => (
                     <TableRow key={transaction.id} data-testid={`row-admin-transaction-${transaction.id}`}>
-                      <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/transactions/${transaction.id}`} className="sendflow-admin-transaction-link"><strong data-testid={`text-transaction-reference-${transaction.id}`}>{transaction.reference}</strong></Link><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
+                      <TableCell><div className="sendflow-admin-reference-cell"><Link href={adminRoute(`/transactions/${transaction.id}`)} className="sendflow-admin-transaction-link"><strong data-testid={`text-transaction-reference-${transaction.id}`}>{transaction.reference}</strong></Link><small>{transaction.providerReference || 'Référence opérateur indisponible'}</small></div></TableCell>
                       <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-source-${transaction.id}`}>{transaction.senderPhone}</strong><small><AdminOperatorLabel operator={transaction.fromOperator} /></small></div></TableCell>
                       <TableCell><div className="sendflow-admin-reference-cell"><strong data-testid={`text-transaction-destination-${transaction.id}`}>{transaction.recipientPhone}</strong><small><AdminOperatorLabel operator={transaction.toOperator} /></small></div></TableCell>
-                      <TableCell><div className="sendflow-admin-reference-cell"><Link href={`/admin/users/${transaction.userId}`} className="sendflow-admin-detail-link"><strong data-testid={`text-transaction-user-${transaction.id}`}>{transaction.displayName || 'Nom non renseigné'}</strong></Link><small>{transaction.userId}</small></div></TableCell>
+                      <TableCell><div className="sendflow-admin-reference-cell"><Link href={adminRoute(`/users/${transaction.userId}`)} className="sendflow-admin-detail-link"><strong data-testid={`text-transaction-user-${transaction.id}`}>{transaction.displayName || 'Nom non renseigné'}</strong></Link><small>{transaction.userId}</small></div></TableCell>
                       <TableCell data-testid={`text-transaction-kind-${transaction.id}`}>{transactionKindLabel(transaction.kind)}</TableCell>
                       <TableCell><StatusBadge status={transaction.status} id={transaction.id} /></TableCell>
                       <TableCell className="font-semibold tabular-nums" data-testid={`text-transaction-amount-${transaction.id}`}>{formatMoney(transaction.amountMinor, transaction.currency)}</TableCell>
@@ -2449,21 +2450,21 @@ function RegistrationSettingsPage() {
 }
 
 export function AdminRouter() {
-  const [isUserDetail, userRoute] = useRoute('/admin/users/:userId');
-  const [isTransactionDetail, transactionRoute] = useRoute('/admin/transactions/:transactionId');
-  const [isOverview] = useRoute('/admin');
-  const [isUsers] = useRoute('/admin/users');
-  const [isTransactions] = useRoute('/admin/transactions');
-  const [isDeposits] = useRoute('/admin/deposits');
-  const [isInternational] = useRoute('/admin/international');
-  const [isTransfers] = useRoute('/admin/transfers');
-  const [isLoginActivity] = useRoute('/admin/login-activity');
-  const [isOtpActivity] = useRoute('/admin/otp-activity');
-  const [isBanners] = useRoute('/admin/banners');
-  const [isOtpPolicies] = useRoute('/admin/otp-policies');
-  const [isAggregators] = useRoute('/admin/aggregators');
-  const [isOperatorPricing] = useRoute('/admin/operator-pricing');
-  const [isRegistrationSettings] = useRoute('/admin/registration-settings');
+  const [isUserDetail, userRoute] = useRoute(adminRoute('/users/:userId'));
+  const [isTransactionDetail, transactionRoute] = useRoute(adminRoute('/transactions/:transactionId'));
+  const [isOverview] = useRoute(adminRoute());
+  const [isUsers] = useRoute(adminRoute('/users'));
+  const [isTransactions] = useRoute(adminRoute('/transactions'));
+  const [isDeposits] = useRoute(adminRoute('/deposits'));
+  const [isInternational] = useRoute(adminRoute('/international'));
+  const [isTransfers] = useRoute(adminRoute('/transfers'));
+  const [isLoginActivity] = useRoute(adminRoute('/login-activity'));
+  const [isOtpActivity] = useRoute(adminRoute('/otp-activity'));
+  const [isBanners] = useRoute(adminRoute('/banners'));
+  const [isOtpPolicies] = useRoute(adminRoute('/otp-policies'));
+  const [isAggregators] = useRoute(adminRoute('/aggregators'));
+  const [isOperatorPricing] = useRoute(adminRoute('/operator-pricing'));
+  const [isRegistrationSettings] = useRoute(adminRoute('/registration-settings'));
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;

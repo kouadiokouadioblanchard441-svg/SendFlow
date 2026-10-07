@@ -21,6 +21,7 @@ import type {
 
 import type {
   AccountLimitResult,
+  AdminAccessStatus,
   AdminActionResult,
   AdminBanner,
   AdminBannerList,
@@ -35,6 +36,8 @@ import type {
   AdminPaymentAggregator,
   AdminPaymentAggregatorRouteUpdate,
   AdminPaymentRouting,
+  AdminPinInput,
+  AdminPinUnlockResponse,
   AdminPricingRatesUpdateResult,
   AdminRegistrationSettings,
   AdminTransactionDetail,
@@ -1690,6 +1693,155 @@ export const useReceiveDiditWebhook = <TError = ErrorType<ErrorEnvelope>,
       return useMutation(getReceiveDiditWebhookMutationOptions(options));
     }
 
+export const getGetAdminAccessStatusUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/access`
+}
+
+/**
+ * Returns whether the signed-in Clerk user is authorized and whether the administrator PIN session is active.
+ * @summary Check administrator access status
+ */
+export const getAdminAccessStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminAccessStatus> => {
+
+  return customFetch<AdminAccessStatus>(getGetAdminAccessStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminAccessStatusQueryKey = () => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/access`
+    ] as const;
+    }
+
+
+export const getGetAdminAccessStatusQueryOptions = <TData = Awaited<ReturnType<typeof getAdminAccessStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminAccessStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminAccessStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminAccessStatus>>> = ({ signal }) => getAdminAccessStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminAccessStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminAccessStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminAccessStatus>>>
+export type GetAdminAccessStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Check administrator access status
+ */
+
+export function useGetAdminAccessStatus<TData = Awaited<ReturnType<typeof getAdminAccessStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminAccessStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminAccessStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUnlockAdminPinUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/pin/unlock`
+}
+
+/**
+ * @summary Unlock the administrator panel with a PIN
+ */
+export const unlockAdminPin = async (adminPinInput: AdminPinInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminPinUnlockResponse> => {
+
+  return customFetch<AdminPinUnlockResponse>(getUnlockAdminPinUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminPinInput)
+  }
+);}
+
+
+
+
+
+export const getUnlockAdminPinMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlockAdminPin>>, TError,{data: BodyType<AdminPinInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unlockAdminPin>>, TError,{data: BodyType<AdminPinInput>}, TContext> => {
+
+const mutationKey = ['unlockAdminPin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unlockAdminPin>>, {data: BodyType<AdminPinInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  unlockAdminPin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnlockAdminPinMutationResult = NonNullable<Awaited<ReturnType<typeof unlockAdminPin>>>
+    export type UnlockAdminPinMutationBody = BodyType<AdminPinInput>
+    export type UnlockAdminPinMutationError = ErrorType<ErrorEnvelope>
+
+    /**
+ * @summary Unlock the administrator panel with a PIN
+ */
+export const useUnlockAdminPin = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlockAdminPin>>, TError,{data: BodyType<AdminPinInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unlockAdminPin>>,
+        TError,
+        {data: BodyType<AdminPinInput>},
+        TContext
+      > => {
+      return useMutation(getUnlockAdminPinMutationOptions(options));
+    }
+
 export const getGetAdminOverviewUrl = (params?: GetAdminOverviewParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1702,7 +1854,7 @@ export const getGetAdminOverviewUrl = (params?: GetAdminOverviewParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/admin/overview?${stringifiedParams}` : `/api/admin/overview`
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/overview?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/overview`
 }
 
 /**
@@ -1726,7 +1878,7 @@ export const getAdminOverview = async (params?: GetAdminOverviewParams, options?
 
 export const getGetAdminOverviewQueryKey = (params?: GetAdminOverviewParams,) => {
     return [
-    `/api/admin/overview`, ...(params ? [params] : [])
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/overview`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -1936,7 +2088,7 @@ export const getListAdminBannersUrl = () => {
 
 
 
-  return `/api/admin/banners`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners`
 }
 
 /**
@@ -1959,7 +2111,7 @@ export const listAdminBanners = async ( options?: Parameters<typeof customFetch>
 
 export const getListAdminBannersQueryKey = () => {
     return [
-    `/api/admin/banners`
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/banners`
     ] as const;
     }
 
@@ -2013,7 +2165,7 @@ export const getCreateAdminBannerUrl = () => {
 
 
 
-  return `/api/admin/banners`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners`
 }
 
 /**
@@ -2084,7 +2236,7 @@ export const getGetAdminPaymentRoutingUrl = () => {
 
 
 
-  return `/api/admin/payment-routing`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-routing`
 }
 
 /**
@@ -2107,7 +2259,7 @@ export const getAdminPaymentRouting = async ( options?: Parameters<typeof custom
 
 export const getGetAdminPaymentRoutingQueryKey = () => {
     return [
-    `/api/admin/payment-routing`
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-routing`
     ] as const;
     }
 
@@ -2161,7 +2313,7 @@ export const getCreateAdminAggregatorUrl = () => {
 
 
 
-  return `/api/admin/payment-aggregators`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-aggregators`
 }
 
 /**
@@ -2232,7 +2384,7 @@ export const getUpdateAdminAggregatorUrl = () => {
 
 
 
-  return `/api/admin/payment-aggregators`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-aggregators`
 }
 
 /**
@@ -2303,7 +2455,7 @@ export const getUpdateAdminAggregatorRouteUrl = () => {
 
 
 
-  return `/api/admin/payment-aggregator-routes`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-aggregator-routes`
 }
 
 /**
@@ -2374,7 +2526,7 @@ export const getGetAdminOperatorPricingUrl = () => {
 
 
 
-  return `/api/admin/operator-pricing`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operator-pricing`
 }
 
 /**
@@ -2397,7 +2549,7 @@ export const getAdminOperatorPricing = async ( options?: Parameters<typeof custo
 
 export const getGetAdminOperatorPricingQueryKey = () => {
     return [
-    `/api/admin/operator-pricing`
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/operator-pricing`
     ] as const;
     }
 
@@ -2451,7 +2603,7 @@ export const getCreateAdminOperatorUrl = () => {
 
 
 
-  return `/api/admin/operators`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators`
 }
 
 /**
@@ -2522,7 +2674,7 @@ export const getUpdateAdminOperatorUrl = (operatorId: string,) => {
 
 
 
-  return `/api/admin/operators/${operatorId}`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators/${operatorId}`
 }
 
 /**
@@ -2594,7 +2746,7 @@ export const getUpdateAdminOperatorPricingUrl = () => {
 
 
 
-  return `/api/admin/operator-pricing-rates`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operator-pricing-rates`
 }
 
 /**
@@ -2666,7 +2818,7 @@ export const getGetAdminRegistrationSettingsUrl = () => {
 
 
 
-  return `/api/admin/registration-settings`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/registration-settings`
 }
 
 /**
@@ -2689,7 +2841,7 @@ export const getAdminRegistrationSettings = async ( options?: Parameters<typeof 
 
 export const getGetAdminRegistrationSettingsQueryKey = () => {
     return [
-    `/api/admin/registration-settings`
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/registration-settings`
     ] as const;
     }
 
@@ -2743,7 +2895,7 @@ export const getUpdateAdminRegistrationSettingsUrl = () => {
 
 
 
-  return `/api/admin/registration-settings`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/registration-settings`
 }
 
 /**
@@ -2814,7 +2966,7 @@ export const getListAdminOtpPoliciesUrl = () => {
 
 
 
-  return `/api/admin/otp-policies`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-policies`
 }
 
 /**
@@ -2837,7 +2989,7 @@ export const listAdminOtpPolicies = async ( options?: Parameters<typeof customFe
 
 export const getListAdminOtpPoliciesQueryKey = () => {
     return [
-    `/api/admin/otp-policies`
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-policies`
     ] as const;
     }
 
@@ -2892,7 +3044,7 @@ export const getUpdateAdminOtpPolicyUrl = (countryCode: string,
 
 
 
-  return `/api/admin/otp-policies/${countryCode}/${operatorId}`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-policies/${countryCode}/${operatorId}`
 }
 
 /**
@@ -2965,7 +3117,7 @@ export const getReorderAdminBannersUrl = () => {
 
 
 
-  return `/api/admin/banners/reorder`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners/reorder`
 }
 
 /**
@@ -3036,7 +3188,7 @@ export const getUpdateAdminBannerUrl = (bannerId: string,) => {
 
 
 
-  return `/api/admin/banners/${bannerId}`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners/${bannerId}`
 }
 
 /**
@@ -3108,7 +3260,7 @@ export const getDeleteAdminBannerUrl = (bannerId: string,) => {
 
 
 
-  return `/api/admin/banners/${bannerId}`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners/${bannerId}`
 }
 
 /**
@@ -3186,7 +3338,7 @@ export const getListAdminLoginActivityUrl = (params?: ListAdminLoginActivityPara
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/admin/login-activity?${stringifiedParams}` : `/api/admin/login-activity`
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/login-activity?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/login-activity`
 }
 
 /**
@@ -3210,7 +3362,7 @@ export const listAdminLoginActivity = async (params?: ListAdminLoginActivityPara
 
 export const getListAdminLoginActivityQueryKey = (params?: ListAdminLoginActivityParams,) => {
     return [
-    `/api/admin/login-activity`, ...(params ? [params] : [])
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/login-activity`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -3271,7 +3423,7 @@ export const getListAdminOtpActivityUrl = (params?: ListAdminOtpActivityParams,)
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/admin/otp-activity?${stringifiedParams}` : `/api/admin/otp-activity`
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-activity?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-activity`
 }
 
 /**
@@ -3295,7 +3447,7 @@ export const listAdminOtpActivity = async (params?: ListAdminOtpActivityParams, 
 
 export const getListAdminOtpActivityQueryKey = (params?: ListAdminOtpActivityParams,) => {
     return [
-    `/api/admin/otp-activity`, ...(params ? [params] : [])
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-activity`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -3356,7 +3508,7 @@ export const getListAdminUsersUrl = (params?: ListAdminUsersParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/admin/users?${stringifiedParams}` : `/api/admin/users`
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/users?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/users`
 }
 
 /**
@@ -3379,7 +3531,7 @@ export const listAdminUsers = async (params?: ListAdminUsersParams, options?: Pa
 
 export const getListAdminUsersQueryKey = (params?: ListAdminUsersParams,) => {
     return [
-    `/api/admin/users`, ...(params ? [params] : [])
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/users`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -3433,7 +3585,7 @@ export const getGetAdminUserUrl = (userId: string,) => {
 
 
 
-  return `/api/admin/users/${userId}`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}`
 }
 
 /**
@@ -3457,7 +3609,7 @@ export const getAdminUser = async (userId: string, options?: Parameters<typeof c
 
 export const getGetAdminUserQueryKey = (userId: string,) => {
     return [
-    `/api/admin/users/${userId}`
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}`
     ] as const;
     }
 
@@ -3518,7 +3670,7 @@ export const getListAdminTransactionsUrl = (params?: ListAdminTransactionsParams
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/admin/transactions?${stringifiedParams}` : `/api/admin/transactions`
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions`
 }
 
 /**
@@ -3541,7 +3693,7 @@ export const listAdminTransactions = async (params?: ListAdminTransactionsParams
 
 export const getListAdminTransactionsQueryKey = (params?: ListAdminTransactionsParams,) => {
     return [
-    `/api/admin/transactions`, ...(params ? [params] : [])
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -3595,7 +3747,7 @@ export const getGetAdminTransactionUrl = (transactionId: string,) => {
 
 
 
-  return `/api/admin/transactions/${transactionId}`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions/${transactionId}`
 }
 
 /**
@@ -3619,7 +3771,7 @@ export const getAdminTransaction = async (transactionId: string, options?: Param
 
 export const getGetAdminTransactionQueryKey = (transactionId: string,) => {
     return [
-    `/api/admin/transactions/${transactionId}`
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions/${transactionId}`
     ] as const;
     }
 
@@ -3673,7 +3825,7 @@ export const getCreateAdminWalletAdjustmentUrl = (userId: string,) => {
 
 
 
-  return `/api/admin/users/${userId}/wallet-adjustments`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/wallet-adjustments`
 }
 
 /**
@@ -3746,7 +3898,7 @@ export const getSuspendAdminUserUrl = (userId: string,) => {
 
 
 
-  return `/api/admin/users/${userId}/suspend`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/suspend`
 }
 
 /**
@@ -3818,7 +3970,7 @@ export const getRestoreAdminUserUrl = (userId: string,) => {
 
 
 
-  return `/api/admin/users/${userId}/restore`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/restore`
 }
 
 /**
@@ -3890,7 +4042,7 @@ export const getDeleteAdminUserUrl = (userId: string,) => {
 
 
 
-  return `/api/admin/users/${userId}/delete`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/delete`
 }
 
 /**
@@ -3963,7 +4115,7 @@ export const getArchiveAdminTransactionUrl = (transactionId: string,) => {
 
 
 
-  return `/api/admin/transactions/${transactionId}/archive`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions/${transactionId}/archive`
 }
 
 /**

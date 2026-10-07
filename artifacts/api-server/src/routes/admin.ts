@@ -1,6 +1,7 @@
 import { getAuth } from "@clerk/express";
-import { Router, type IRouter, type Request } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import { recordAdminAudit } from "../lib/admin-audit";
+import { hasAdminPinSession } from "../lib/admin-pin-session";
 import {
   GetAdminTransactionParams,
   GetAdminTransactionResponse,
@@ -74,9 +75,9 @@ export function getAdminUserId(req: Request, permission: AdminPermission = "read
   return { userId, error: null };
 }
 
-export function respondAdminAuthError(
+export function respondAdminIdentityError(
   req: Request,
-  res: Parameters<Parameters<IRouter["get"]>[1]>[1],
+  res: Response,
   permission: AdminPermission = "read",
 ) {
   const auth = getAdminUserId(req, permission);
@@ -91,6 +92,25 @@ export function respondAdminAuthError(
     res.status(503).json({ error: auth.error });
   }
   return null;
+}
+
+export function respondAdminAuthError(
+  req: Request,
+  res: Response,
+  permission: AdminPermission = "read",
+) {
+  const userId = respondAdminIdentityError(req, res, permission);
+  if (!userId) return null;
+
+  if (!hasAdminPinSession(req, userId)) {
+    res.status(403).json({
+      error: "Administrator PIN required",
+      code: "ADMIN_PIN_REQUIRED",
+    });
+    return null;
+  }
+
+  return userId;
 }
 
 function parseDateRange(query: Record<string, unknown>): DateRange {

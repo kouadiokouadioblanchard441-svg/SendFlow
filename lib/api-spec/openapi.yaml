@@ -785,7 +785,72 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/overview:
+  /DMgrgmt-1np5g23g12bGFtMwh/access:
+    get:
+      operationId: getAdminAccessStatus
+      tags: [admin]
+      summary: Check administrator access status
+      description: Returns whether the signed-in Clerk user is authorized and whether the administrator PIN session is active.
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Administrator access status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAccessStatus"
+  /DMgrgmt-1np5g23g12bGFtMwh/pin/unlock:
+    post:
+      operationId: unlockAdminPin
+      tags: [admin]
+      summary: Unlock the administrator panel with a PIN
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminPinInput"
+      responses:
+        "200":
+          description: Administrator PIN accepted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPinUnlockResponse"
+        "400":
+          description: The PIN format is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator or the PIN is incorrect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Too many incorrect PIN attempts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator PIN access is not configured or rate-limit storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMwh/overview:
     get:
       operationId: getAdminOverview
       tags: [admin]
@@ -859,7 +924,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/banners:
+  /DMgrgmt-1np5g23g12bGFtMwh/banners:
     get:
       operationId: listAdminBanners
       tags: [admin]
@@ -934,7 +999,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/payment-routing:
+  /DMgrgmt-1np5g23g12bGFtMwh/payment-routing:
     get:
       operationId: getAdminPaymentRouting
       tags: [admin]
@@ -966,7 +1031,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/payment-aggregators:
+  /DMgrgmt-1np5g23g12bGFtMwh/payment-aggregators:
     post:
       operationId: createAdminAggregator
       tags: [admin]
@@ -1071,7 +1136,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/payment-aggregator-routes:
+  /DMgrgmt-1np5g23g12bGFtMwh/payment-aggregator-routes:
     put:
       operationId: updateAdminAggregatorRoute
       tags: [admin]
@@ -1127,7 +1192,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/operator-pricing:
+  /DMgrgmt-1np5g23g12bGFtMwh/operator-pricing:
     get:
       operationId: getAdminOperatorPricing
       tags: [admin]
@@ -1159,7 +1224,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/operators:
+  /DMgrgmt-1np5g23g12bGFtMwh/operators:
     post:
       operationId: createAdminOperator
       tags: [admin]
@@ -1209,7 +1274,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/operators/{operatorId}:
+  /DMgrgmt-1np5g23g12bGFtMwh/operators/{operatorId}:
     parameters:
       - $ref: "#/components/parameters/AdminOperatorId"
     patch:
@@ -1267,7 +1332,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/operator-pricing-rates:
+  /DMgrgmt-1np5g23g12bGFtMwh/operator-pricing-rates:
     put:
       operationId: updateAdminOperatorPricing
       tags: [admin]
@@ -1324,7 +1389,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/registration-settings:
+  /DMgrgmt-1np5g23g12bGFtMwh/registration-settings:
     get:
       operationId: getAdminRegistrationSettings
       tags: [admin]
@@ -1373,7 +1438,7 @@ paths:
           description: Setting was modified by another administrator.
         "503":
           description: Setting unavailable.
-  /admin/otp-policies:
+  /DMgrgmt-1np5g23g12bGFtMwh/otp-policies:
     get:
       operationId: listAdminOtpPolicies
       tags: [admin]
@@ -1405,7 +1470,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/otp-policies/{countryCode}/{operatorId}:
+  /DMgrgmt-1np5g23g12bGFtMwh/otp-policies/{countryCode}/{operatorId}:
     parameters:
       - $ref: "#/components/parameters/AdminOtpPolicyCountryCode"
       - $ref: "#/components/parameters/AdminOtpPolicyOperatorId"
@@ -1464,7 +1529,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/banners/reorder:
+  /DMgrgmt-1np5g23g12bGFtMwh/banners/reorder:
     patch:
       operationId: reorderAdminBanners
       tags: [admin]
@@ -1514,7 +1579,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/banners/{bannerId}:
+  /DMgrgmt-1np5g23g12bGFtMwh/banners/{bannerId}:
     parameters:
       - $ref: "#/components/parameters/AdminBannerId"
     patch:
@@ -1603,7 +1668,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/login-activity:
+  /DMgrgmt-1np5g23g12bGFtMwh/login-activity:
     get:
       operationId: listAdminLoginActivity
       tags: [admin]
@@ -1643,7 +1708,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/otp-activity:
+  /DMgrgmt-1np5g23g12bGFtMwh/otp-activity:
     get:
       operationId: listAdminOtpActivity
       tags: [admin]
@@ -1699,7 +1764,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/users:
+  /DMgrgmt-1np5g23g12bGFtMwh/users:
     get:
       operationId: listAdminUsers
       tags: [admin]
@@ -1735,7 +1800,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/users/{userId}:
+  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}:
     get:
       operationId: getAdminUser
       tags: [admin]
@@ -1782,7 +1847,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/transactions:
+  /DMgrgmt-1np5g23g12bGFtMwh/transactions:
     get:
       operationId: listAdminTransactions
       tags: [admin]
@@ -1839,7 +1904,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/transactions/{transactionId}:
+  /DMgrgmt-1np5g23g12bGFtMwh/transactions/{transactionId}:
     get:
       operationId: getAdminTransaction
       tags: [admin]
@@ -1886,7 +1951,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/users/{userId}/wallet-adjustments:
+  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/wallet-adjustments:
     post:
       operationId: createAdminWalletAdjustment
       tags: [admin]
@@ -1951,7 +2016,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/users/{userId}/suspend:
+  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/suspend:
     post:
       operationId: suspendAdminUser
       tags: [admin]
@@ -2003,7 +2068,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/users/{userId}/restore:
+  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/restore:
     post:
       operationId: restoreAdminUser
       tags: [admin]
@@ -2055,7 +2120,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/users/{userId}/delete:
+  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/delete:
     post:
       operationId: deleteAdminUser
       tags: [admin]
@@ -2108,7 +2173,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /admin/transactions/{transactionId}/archive:
+  /DMgrgmt-1np5g23g12bGFtMwh/transactions/{transactionId}/archive:
     post:
       operationId: archiveAdminTransaction
       tags: [admin]
@@ -3926,4 +3991,30 @@ components:
           type: string
           enum: [active, suspended, deleted, archived]
       required: [resourceId, action, status]
+    AdminAccessStatus:
+      type: object
+      properties:
+        isAdmin:
+          type: boolean
+        pinUnlocked:
+          type: boolean
+      required: [isAdmin, pinUnlocked]
+    AdminPinInput:
+      type: object
+      properties:
+        pin:
+          type: string
+          minLength: 8
+          maxLength: 8
+          pattern: "^[0-9]{8}$"
+      required: [pin]
+    AdminPinUnlockResponse:
+      type: object
+      properties:
+        pinUnlocked:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+      required: [pinUnlocked, expiresAt]
 

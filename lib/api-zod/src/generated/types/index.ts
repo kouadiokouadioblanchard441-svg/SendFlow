@@ -8,6 +8,7 @@
 
 export * from './accountLimitResult';
 export * from './accountLimitResultCurrency';
+export * from './adminAccessStatus';
 export * from './adminActionResult';
 export * from './adminActionResultAction';
 export * from './adminActionResultStatus';
@@ -51,6 +52,8 @@ export * from './adminPaymentAggregatorRouteUpdateCountryCode';
 export * from './adminPaymentAggregatorRouteUpdateScopeType';
 export * from './adminPaymentRouting';
 export * from './adminPeriod';
+export * from './adminPinInput';
+export * from './adminPinUnlockResponse';
 export * from './adminPricingRatesUpdateResult';
 export * from './adminPricingRatesUpdateResultItemsItem';
 export * from './adminPricingRatesUpdateResultItemsItemCategoryId';

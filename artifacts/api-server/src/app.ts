@@ -3,6 +3,7 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware, getAuth } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
+import { ADMIN_ROUTE_PREFIX } from "./lib/admin-route-prefix";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middlewares/clerkProxyMiddleware";
@@ -89,7 +90,7 @@ app.use("/api/auth", (_req, res, next) => {
   next();
 });
 
-app.use("/api/admin", (req, res, next) => {
+app.use(`/api${ADMIN_ROUTE_PREFIX}`, (req, res, next) => {
   res.setHeader("Cache-Control", "no-store, private");
 
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {

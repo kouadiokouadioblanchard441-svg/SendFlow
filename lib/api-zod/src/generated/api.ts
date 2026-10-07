@@ -486,6 +486,36 @@ export const ReceiveDiditWebhookResponse = zod.object({
 
 
 /**
+ * Returns whether the signed-in Clerk user is authorized and whether the administrator PIN session is active.
+ * @summary Check administrator access status
+ */
+export const GetAdminAccessStatusResponse = zod.object({
+  "isAdmin": zod.boolean(),
+  "pinUnlocked": zod.boolean()
+})
+
+
+/**
+ * @summary Unlock the administrator panel with a PIN
+ */
+export const unlockAdminPinBodyPinMin = 8;
+export const unlockAdminPinBodyPinMax = 8;
+
+
+export const unlockAdminPinBodyPinRegExp = new RegExp('^[0-9]{8}$');
+
+
+export const UnlockAdminPinBody = zod.object({
+  "pin": zod.string().min(unlockAdminPinBodyPinMin).max(unlockAdminPinBodyPinMax).regex(unlockAdminPinBodyPinRegExp)
+})
+
+export const UnlockAdminPinResponse = zod.object({
+  "pinUnlocked": zod.boolean(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
  * Returns server-calculated platform metrics for an authorized administrator.
  * @summary Get the SendFlow administration overview
  */

@@ -1,9 +1,17 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, CalendarDays, Check } from 'lucide-react';
+import { useUser } from '@clerk/react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getGetAdminAccessStatusQueryKey,
+  useGetAdminAccessStatus,
+} from '@workspace/api-client-react';
+import { ArrowLeft, CalendarDays, Check, ShieldCheck } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
+import { AdminPinDialog } from '@/components/admin-pin-dialog';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
 import { readAccountCountry } from '@/lib/account-country';
 import { readAccountProfile, saveAccountProfile, type AccountProfile } from '@/lib/account-profile';
+import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 import { useSeo } from '@/lib/seo';
 import accountInfoIllustration from '@assets/generated_images/sendflow-account-info-profile-3d-transparent.png';
 
@@ -95,6 +103,18 @@ function ProfileField({
 
 export default function AccountInfoPage() {
   const [, setLocation] = useLocation();
+  const { isLoaded: clerkLoaded, user } = useUser();
+  const queryClient = useQueryClient();
+  const adminAccessQuery = useGetAdminAccessStatus({
+    query: {
+      queryKey: getGetAdminAccessStatusQueryKey(),
+      enabled: clerkLoaded && Boolean(user),
+      retry: false,
+      refetchInterval: 30_000,
+      refetchOnWindowFocus: true,
+    },
+  });
+  const [adminPinOpen, setAdminPinOpen] = useState(false);
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountCountry = readAccountCountry();
   const [form, setForm] = useState<AccountProfile>(() => readAccountProfile());
@@ -225,6 +245,32 @@ export default function AccountInfoPage() {
               {saved ? 'Vos informations sont enregistrées sur cet appareil.' : ''}
             </p>
           </form>
+          {adminAccessQuery.data?.isAdmin === true && (
+            <section className="mt-6 space-y-2" aria-label="Accès administrateur">
+              <button
+                type="button"
+                className="sendflow-account-info-submit"
+                onClick={() => setAdminPinOpen(true)}
+                data-testid="button-open-admin"
+              >
+                <ShieldCheck size={18} aria-hidden="true" />
+                Espace administrateur
+              </button>
+              <p className="sendflow-account-info-hint">
+                Accès réservé au compte administrateur.
+              </p>
+              <AdminPinDialog
+                open={adminPinOpen}
+                onOpenChange={setAdminPinOpen}
+                onUnlocked={async () => {
+                  await queryClient.invalidateQueries({
+                    queryKey: getGetAdminAccessStatusQueryKey(),
+                  });
+                  setLocation(ADMIN_ROUTE_PATH);
+                }}
+              />
+            </section>
+          )}
         </div>
       </section>
     </main>

@@ -27,8 +27,12 @@ import SignupPage from '@/pages/sign-up';
 import OnboardingPage from '@/pages/onboarding';
 import { useSeo } from '@/lib/seo';
 import { getPinUnlockExpiry } from '@/lib/pin-unlock';
+import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 
-const AdminRouter = lazy(() => import('@/pages/admin').then((module) => ({ default: module.AdminRouter })));
+const AdminAccessPage = lazy(() => import('@/pages/admin-access'));
+const AdminSignInPage = lazy(() => import('@/pages/admin-access').then((module) => ({
+  default: module.AdminSignInPage,
+})));
 
 function getHttpStatus(error: unknown) {
   if (!error || typeof error !== 'object') return undefined;
@@ -78,7 +82,9 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
 
   const isProtected = protectedCustomerPaths.has(path)
     || path.startsWith('/transaction/')
-    || path.startsWith('/notifications/');
+    || path.startsWith('/notifications/')
+    || path === ADMIN_ROUTE_PATH
+    || path.startsWith(`${ADMIN_ROUTE_PATH}/`);
   if (isProtected && expiry === null) return <Redirect to="/pin" />;
   return <>{children}</>;
 }
@@ -168,14 +174,14 @@ function App() {
       <ClerkProvider
         publishableKey={clerkPubKey}
         proxyUrl={clerkProxyUrl}
-        signInUrl={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
+        signInUrl={`${basePath}${ADMIN_ROUTE_PATH}/sign-in`}
+        signUpUrl={`${basePath}${ADMIN_ROUTE_PATH}/sign-in`}
         appearance={{
           theme: shadcn,
           cssLayerName: 'clerk',
           options: {
             logoPlacement: 'inside',
-            logoLinkUrl: `${basePath}/sign-in`,
+            logoLinkUrl: `${basePath}${ADMIN_ROUTE_PATH}/sign-in`,
             logoImageUrl: `${window.location.origin}${basePath}/sendflow-favicon.png`,
           },
           variables: {
@@ -212,10 +218,18 @@ function App() {
             <CustomerPinGuard>
             <Switch>
               <Route
-                path="/admin/*?"
+                path={`${ADMIN_ROUTE_PATH}/sign-in/*?`}
                 component={() => (
-                  <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement du panel administrateur…</div>}>
-                    <AdminRouter />
+                  <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de la connexion administrateur…</div>}>
+                    <AdminSignInPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path={`${ADMIN_ROUTE_PATH}/*?`}
+                component={() => (
+                  <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de l’espace administrateur…</div>}>
+                    <AdminAccessPage />
                   </Suspense>
                 )}
               />
