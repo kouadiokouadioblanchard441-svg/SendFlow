@@ -58,11 +58,14 @@ import type {
   CustomerRegistrationInput,
   CustomerSessionResult,
   CustomerSignInInput,
+  CustomerTransaction,
+  CustomerTransactionPage,
   DatabaseStatus,
   DeleteAdminBannerResult,
   DiditWebhookPayload,
   ErrorEnvelope,
   GetAdminOverviewParams,
+  GetCustomerTransactionsParams,
   HealthStatus,
   IdentityVerificationSessionRequest,
   IdentityVerificationSessionResult,
@@ -1292,6 +1295,168 @@ export function useGetCurrentAccountLimit<TData = Awaited<ReturnType<typeof getC
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetCurrentAccountLimitQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCustomerTransactionsUrl = (params?: GetCustomerTransactionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/me/transactions?${stringifiedParams}` : `/api/me/transactions`
+}
+
+/**
+ * Returns one page of the current customer's transactions, newest first. Use nextCursor to load older records.
+ * @summary List the authenticated customer's transactions
+ */
+export const getCustomerTransactions = async (params?: GetCustomerTransactionsParams, options?: Parameters<typeof customFetch>[1]): Promise<CustomerTransactionPage> => {
+
+  return customFetch<CustomerTransactionPage>(getGetCustomerTransactionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerTransactionsQueryKey = (params?: GetCustomerTransactionsParams,) => {
+    return [
+    `/api/me/transactions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCustomerTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerTransactions>>, TError = ErrorType<ErrorEnvelope>>(params?: GetCustomerTransactionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerTransactionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerTransactions>>> = ({ signal }) => getCustomerTransactions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerTransactions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerTransactionsQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerTransactions>>>
+export type GetCustomerTransactionsQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List the authenticated customer's transactions
+ */
+
+export function useGetCustomerTransactions<TData = Awaited<ReturnType<typeof getCustomerTransactions>>, TError = ErrorType<ErrorEnvelope>>(
+ params?: GetCustomerTransactionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerTransactionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCustomerTransactionUrl = (transactionId: string,) => {
+
+
+
+
+  return `/api/me/transactions/${transactionId}`
+}
+
+/**
+ * @summary Get one transaction owned by the authenticated customer
+ */
+export const getCustomerTransaction = async (transactionId: string, options?: Parameters<typeof customFetch>[1]): Promise<CustomerTransaction> => {
+
+  return customFetch<CustomerTransaction>(getGetCustomerTransactionUrl(transactionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerTransactionQueryKey = (transactionId: string,) => {
+    return [
+    `/api/me/transactions/${transactionId}`
+    ] as const;
+    }
+
+
+export const getGetCustomerTransactionQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerTransaction>>, TError = ErrorType<ErrorEnvelope>>(transactionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerTransaction>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerTransactionQueryKey(transactionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerTransaction>>> = ({ signal }) => getCustomerTransaction(transactionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: transactionId !== null && transactionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerTransaction>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerTransactionQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerTransaction>>>
+export type GetCustomerTransactionQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get one transaction owned by the authenticated customer
+ */
+
+export function useGetCustomerTransaction<TData = Awaited<ReturnType<typeof getCustomerTransaction>>, TError = ErrorType<ErrorEnvelope>>(
+ transactionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerTransaction>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerTransactionQueryOptions(transactionId,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -319,6 +319,106 @@ export const GetCurrentAccountLimitResponse = zod.object({
 
 
 /**
+ * Returns one page of the current customer's transactions, newest first. Use nextCursor to load older records.
+ * @summary List the authenticated customer's transactions
+ */
+export const getCustomerTransactionsQueryCursorMax = 64;
+
+
+
+export const GetCustomerTransactionsQueryParams = zod.object({
+  "cursor": zod.coerce.string().max(getCustomerTransactionsQueryCursorMax).optional()
+})
+
+export const getCustomerTransactionsResponseItemsItemSenderPhoneMax = 32;
+
+export const getCustomerTransactionsResponseItemsItemRecipientPhoneMax = 32;
+
+export const getCustomerTransactionsResponseItemsItemCurrencyMin = 3;
+export const getCustomerTransactionsResponseItemsItemCurrencyMax = 3;
+
+
+export const getCustomerTransactionsResponseItemsItemCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getCustomerTransactionsResponseItemsItemAmountMinorMin = 0;
+export const getCustomerTransactionsResponseItemsItemAmountMinorMax = 9007199254740991;
+
+export const getCustomerTransactionsResponseItemsItemFeeMinorMin = 0;
+export const getCustomerTransactionsResponseItemsItemFeeMinorMax = 9007199254740991;
+
+export const getCustomerTransactionsResponseItemsItemReferenceMax = 64;
+
+export const getCustomerTransactionsResponseItemsItemProviderReferenceMax = 128;
+
+export const getCustomerTransactionsResponseNextCursorMax = 64;
+
+
+
+export const GetCustomerTransactionsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "kind": zod.enum(['deposit', 'inter-network', 'international']),
+  "status": zod.enum(['pending', 'succeeded', 'failed']),
+  "fromOperator": zod.string().nullable(),
+  "toOperator": zod.string().nullable(),
+  "senderPhone": zod.string().min(1).max(getCustomerTransactionsResponseItemsItemSenderPhoneMax),
+  "recipientPhone": zod.string().min(1).max(getCustomerTransactionsResponseItemsItemRecipientPhoneMax),
+  "currency": zod.string().min(getCustomerTransactionsResponseItemsItemCurrencyMin).max(getCustomerTransactionsResponseItemsItemCurrencyMax).regex(getCustomerTransactionsResponseItemsItemCurrencyRegExp),
+  "amountMinor": zod.number().int().min(getCustomerTransactionsResponseItemsItemAmountMinorMin).max(getCustomerTransactionsResponseItemsItemAmountMinorMax),
+  "feeMinor": zod.number().int().min(getCustomerTransactionsResponseItemsItemFeeMinorMin).max(getCustomerTransactionsResponseItemsItemFeeMinorMax),
+  "reference": zod.string().min(1).max(getCustomerTransactionsResponseItemsItemReferenceMax),
+  "providerReference": zod.string().max(getCustomerTransactionsResponseItemsItemProviderReferenceMax).nullable(),
+  "createdAt": zod.coerce.date()
+})),
+  "nextCursor": zod.string().max(getCustomerTransactionsResponseNextCursorMax).nullable()
+})
+
+
+/**
+ * @summary Get one transaction owned by the authenticated customer
+ */
+export const GetCustomerTransactionParams = zod.object({
+  "transactionId": zod.coerce.string().uuid()
+})
+
+export const getCustomerTransactionResponseSenderPhoneMax = 32;
+
+export const getCustomerTransactionResponseRecipientPhoneMax = 32;
+
+export const getCustomerTransactionResponseCurrencyMin = 3;
+export const getCustomerTransactionResponseCurrencyMax = 3;
+
+
+export const getCustomerTransactionResponseCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getCustomerTransactionResponseAmountMinorMin = 0;
+export const getCustomerTransactionResponseAmountMinorMax = 9007199254740991;
+
+export const getCustomerTransactionResponseFeeMinorMin = 0;
+export const getCustomerTransactionResponseFeeMinorMax = 9007199254740991;
+
+export const getCustomerTransactionResponseReferenceMax = 64;
+
+export const getCustomerTransactionResponseProviderReferenceMax = 128;
+
+
+
+export const GetCustomerTransactionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "kind": zod.enum(['deposit', 'inter-network', 'international']),
+  "status": zod.enum(['pending', 'succeeded', 'failed']),
+  "fromOperator": zod.string().nullable(),
+  "toOperator": zod.string().nullable(),
+  "senderPhone": zod.string().min(1).max(getCustomerTransactionResponseSenderPhoneMax),
+  "recipientPhone": zod.string().min(1).max(getCustomerTransactionResponseRecipientPhoneMax),
+  "currency": zod.string().min(getCustomerTransactionResponseCurrencyMin).max(getCustomerTransactionResponseCurrencyMax).regex(getCustomerTransactionResponseCurrencyRegExp),
+  "amountMinor": zod.number().int().min(getCustomerTransactionResponseAmountMinorMin).max(getCustomerTransactionResponseAmountMinorMax),
+  "feeMinor": zod.number().int().min(getCustomerTransactionResponseFeeMinorMin).max(getCustomerTransactionResponseFeeMinorMax),
+  "reference": zod.string().min(1).max(getCustomerTransactionResponseReferenceMax),
+  "providerReference": zod.string().max(getCustomerTransactionResponseProviderReferenceMax).nullable(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Get the current identity verification status
  */
 export const GetIdentityVerificationStatusResponse = zod.object({

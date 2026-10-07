@@ -553,6 +553,91 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/transactions:
+    get:
+      operationId: getCustomerTransactions
+      tags: [account]
+      summary: List the authenticated customer's transactions
+      description: Returns one page of the current customer's transactions, newest first. Use nextCursor to load older records.
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        "200":
+          description: A page of customer-owned transactions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerTransactionPage"
+        "400":
+          description: The cursor is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Transaction history is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /me/transactions/{transactionId}:
+    get:
+      operationId: getCustomerTransaction
+      tags: [account]
+      summary: Get one transaction owned by the authenticated customer
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The requested customer-owned transaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerTransaction"
+        "400":
+          description: The transaction identifier is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: The transaction does not exist for this customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Transaction details are unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /me/identity-verification:
     get:
       operationId: getIdentityVerificationStatus
@@ -2459,6 +2544,78 @@ components:
       required:
         - userId
         - wallet
+    CustomerTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [deposit, inter-network, international]
+        status:
+          type: string
+          enum: [pending, succeeded, failed]
+        fromOperator:
+          type: ["string", "null"]
+        toOperator:
+          type: ["string", "null"]
+        senderPhone:
+          type: string
+          minLength: 1
+          maxLength: 32
+        recipientPhone:
+          type: string
+          minLength: 1
+          maxLength: 32
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: "^[A-Z]{3}$"
+        amountMinor:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        feeMinor:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        reference:
+          type: string
+          minLength: 1
+          maxLength: 64
+        providerReference:
+          type: ["string", "null"]
+          maxLength: 128
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - kind
+        - status
+        - fromOperator
+        - toOperator
+        - senderPhone
+        - recipientPhone
+        - currency
+        - amountMinor
+        - feeMinor
+        - reference
+        - providerReference
+        - createdAt
+    CustomerTransactionPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerTransaction"
+        nextCursor:
+          type: ["string", "null"]
+          maxLength: 64
+      required: [items, nextCursor]
     IdentityVerificationStatus:
       type: string
       enum: [unverified, pending, review, verified, failed]

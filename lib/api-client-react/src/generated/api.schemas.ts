@@ -253,6 +253,80 @@ export interface CurrentAccount {
   wallet: WalletSummary;
 }
 
+export type CustomerTransactionKind = typeof CustomerTransactionKind[keyof typeof CustomerTransactionKind];
+
+
+export const CustomerTransactionKind = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
+} as const;
+
+export type CustomerTransactionStatus = typeof CustomerTransactionStatus[keyof typeof CustomerTransactionStatus];
+
+
+export const CustomerTransactionStatus = {
+  pending: 'pending',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export interface CustomerTransaction {
+  id: string;
+  kind: CustomerTransactionKind;
+  status: CustomerTransactionStatus;
+  /** @nullable */
+  fromOperator: string | null;
+  /** @nullable */
+  toOperator: string | null;
+  /**
+     * @minLength 1
+     * @maxLength 32
+     */
+  senderPhone: string;
+  /**
+     * @minLength 1
+     * @maxLength 32
+     */
+  recipientPhone: string;
+  /**
+     * @minLength 3
+     * @maxLength 3
+     * @pattern ^[A-Z]{3}$
+     */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  feeMinor: number;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  reference: string;
+  /**
+     * @maxLength 128
+     * @nullable
+     */
+  providerReference: string | null;
+  createdAt: string;
+}
+
+export interface CustomerTransactionPage {
+  items: CustomerTransaction[];
+  /**
+     * @maxLength 64
+     * @nullable
+     */
+  nextCursor: string | null;
+}
+
 export type IdentityVerificationStatus = typeof IdentityVerificationStatus[keyof typeof IdentityVerificationStatus];
 
 
@@ -1555,6 +1629,13 @@ export type AdminPageParameter = number;
 export type AdminPageSizeParameter = number;
 
 export type AdminUserIdFilterParameter = string;
+
+export type GetCustomerTransactionsParams = {
+/**
+ * @maxLength 64
+ */
+cursor?: string;
+};
 
 export type GetAdminOverviewParams = {
 /**
