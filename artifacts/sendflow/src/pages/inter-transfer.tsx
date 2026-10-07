@@ -15,6 +15,7 @@ import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { useSeo } from '@/lib/seo';
 import { formatPricingFeeRate } from '@/lib/pricing';
+import { calculateTransferAmountBreakdown } from '@/lib/transfer-amounts';
 import {
   isValidIvoryCoastPhone,
   isValidTransactionAmount,
@@ -253,10 +254,9 @@ export default function InterNetworkTransferPage() {
 
   const enteredAmount = parseWholeAmount(amount);
   const feeRate = sourceOperator.feeRate;
-  const feeAmount = enteredAmount > 0 && feeRate !== undefined ? Math.ceil(enteredAmount * feeRate) : 0;
-  const recipientAmount = supportFees
-    ? enteredAmount
-    : Math.max(enteredAmount - feeAmount, 0);
+  const amountBreakdown = calculateTransferAmountBreakdown(enteredAmount, feeRate, supportFees);
+  const feeAmount = amountBreakdown.feeAmount ?? 0;
+  const recipientAmount = amountBreakdown.recipientAmount ?? enteredAmount;
   const canSubmit =
     feeRate !== undefined &&
     isValidTransactionAmount(enteredAmount) &&
@@ -465,10 +465,21 @@ export default function InterNetworkTransferPage() {
                 Entrez un numéro bénéficiaire ivoirien valide de 10 chiffres.
               </p>
             )}
-            <div className="sendflow-transfer-fees">
-              Frais: <strong>{feeRate === undefined
-                ? 'À confirmer'
-                : `${formatPricingFeeRate(feeRate)} · ${feeAmount.toLocaleString('fr-FR')} Fcfa`}</strong>
+            <div className="sendflow-deposit-summary" aria-live="polite">
+              <div>
+                <span>{feeRate === undefined ? 'Frais à confirmer' : `Frais (${formatPricingFeeRate(feeRate)})`}</span>
+                <strong className="sendflow-deposit-fee-amount">
+                  {amountBreakdown.feeAmount === null ? '—' : `${feeAmount.toLocaleString('fr-FR')} Fcfa`}
+                </strong>
+              </div>
+              <div>
+                <span>Le bénéficiaire reçoit</span>
+                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${recipientAmount.toLocaleString('fr-FR')} Fcfa`}</strong>
+              </div>
+              <div>
+                <span>Total prélevé sur le numéro source</span>
+                <strong>{amountBreakdown.totalDebit === null ? 'À confirmer' : `${amountBreakdown.totalDebit.toLocaleString('fr-FR')} Fcfa`}</strong>
+              </div>
             </div>
 
             <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status" data-testid="notice-transfer-provider-unavailable">

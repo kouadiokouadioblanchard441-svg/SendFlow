@@ -21,6 +21,7 @@ import {
   getPhoneDigitsForCountry,
 } from '@/lib/transfer-validation';
 import { formatPricingFeeRate } from '@/lib/pricing';
+import { calculateTransferAmountBreakdown } from '@/lib/transfer-amounts';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
@@ -158,9 +159,9 @@ export default function InternationalTransferPage() {
 
   const enteredAmount = parseWholeAmount(amount);
   const feeRate = operator.feeRate;
-  const feeAmount = enteredAmount > 0 && feeRate !== undefined ? Math.ceil(enteredAmount * feeRate) : 0;
-  const recipientAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
-  const walletDebit = payFees ? enteredAmount + feeAmount : enteredAmount;
+  const amountBreakdown = calculateTransferAmountBreakdown(enteredAmount, feeRate, payFees);
+  const feeAmount = amountBreakdown.feeAmount ?? 0;
+  const recipientAmount = amountBreakdown.recipientAmount ?? enteredAmount;
   const hasValidRecipient = isValidInternationalPhone(recipientNumber, country.dialCode);
   const recipientPhoneDigits = getPhoneDigitsForCountry(country.dialCode);
   const recipientPhoneMaxDigits = recipientPhoneDigits ?? 15;
@@ -335,16 +336,16 @@ export default function InternationalTransferPage() {
               <div>
                 <span>{feeRate === undefined ? 'Frais à confirmer' : `Frais (${formatPricingFeeRate(feeRate)})`}</span>
                 <strong className="sendflow-deposit-fee-amount">
-                  {feeAmount > 0 ? `- ${feeAmount.toLocaleString('fr-FR')} Fcfa` : '—'}
+                  {amountBreakdown.feeAmount === null || feeAmount === 0 ? '—' : `- ${feeAmount.toLocaleString('fr-FR')} Fcfa`}
                 </strong>
               </div>
               <div>
                 <span>Le bénéficiaire reçoit</span>
-                <strong>{recipientAmount.toLocaleString('fr-FR')} Fcfa</strong>
+                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${recipientAmount.toLocaleString('fr-FR')} Fcfa`}</strong>
               </div>
               <div>
                 <span>Wallet débité</span>
-                <strong>{walletDebit.toLocaleString('fr-FR')} Fcfa</strong>
+                <strong>{amountBreakdown.totalDebit === null ? 'À confirmer' : `${amountBreakdown.totalDebit.toLocaleString('fr-FR')} Fcfa`}</strong>
               </div>
             </div>
 

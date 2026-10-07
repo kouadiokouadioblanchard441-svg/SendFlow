@@ -13,6 +13,7 @@ import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { readAccountCountry } from '@/lib/account-country';
 import { formatPricingFeeRate } from '@/lib/pricing';
+import { calculateTransferAmountBreakdown } from '@/lib/transfer-amounts';
 import { useSeo } from '@/lib/seo';
 import {
   isValidIvoryCoastPhone,
@@ -120,9 +121,9 @@ export default function DepositPage() {
 
   const enteredAmount = parseWholeAmount(amount);
   const feeRate = operator?.feeRate;
-  const feeAmount = enteredAmount > 0 && feeRate !== undefined ? Math.ceil(enteredAmount * feeRate) : 0;
-  const walletAmount = payFees ? enteredAmount : Math.max(enteredAmount - feeAmount, 0);
-  const totalDebited = payFees ? enteredAmount + feeAmount : enteredAmount;
+  const amountBreakdown = calculateTransferAmountBreakdown(enteredAmount, feeRate, payFees);
+  const feeAmount = amountBreakdown.feeAmount ?? 0;
+  const walletAmount = amountBreakdown.recipientAmount ?? enteredAmount;
   const hasValidSourceNumber = isValidIvoryCoastPhone(sourceNumber);
   const canSubmit = Boolean(
     operator &&
@@ -293,14 +294,12 @@ export default function DepositPage() {
               </div>
               <div>
                 <span>Le wallet reçoit</span>
-                <strong>{walletAmount.toLocaleString('fr-FR')} Fcfa</strong>
+                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${walletAmount.toLocaleString('fr-FR')} Fcfa`}</strong>
               </div>
-              {payFees && (
-                <div>
-                  <span>Total débité</span>
-                  <strong>{totalDebited.toLocaleString('fr-FR')} Fcfa</strong>
-                </div>
-              )}
+              <div>
+                <span>Total débité</span>
+                <strong>{amountBreakdown.totalDebit === null ? 'À confirmer' : `${amountBreakdown.totalDebit.toLocaleString('fr-FR')} Fcfa`}</strong>
+              </div>
             </div>
 
             <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status" data-testid="notice-transfer-provider-unavailable">
