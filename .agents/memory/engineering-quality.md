@@ -1,10 +1,10 @@
 ---
 name: SendFlow engineering quality
-description: The user's standing expectation for code quality while SendFlow is being built.
+description: SendFlow is a large financial application; this records the user's standing code-quality expectation.
 ---
 
-Do not take shortcuts merely to move faster. Code for SendFlow must be solid and robust.
+SendFlow is a large financial application under active development. Do not take shortcuts merely to move faster; its code must be solid and robust.
 
-**Why:** The user said SendFlow is a large application under active development and expects solid, robust code.
+**Why:** The user emphasized that SendFlow is a large financial application and expects solid, robust code.
 
 **How to apply:** Prefer robust solutions over shortcuts taken only to save time.

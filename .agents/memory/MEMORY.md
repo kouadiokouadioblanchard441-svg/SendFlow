@@ -16,4 +16,4 @@
 - [SendFlow PIN keypad](pin-keypad-behavior.md) — User explicitly wants digits to reshuffle after every PIN entry, including confirmation; fix mismatches without freezing it.
 - [PIN unlock boundaries](pin-unlock-boundaries.md) — Serialize concurrent PIN guesses; expire browser access and cached account data before the server unlock expires.
 - [Financial app hardening](financial-app-hardening.md) — Never put secrets or sensitive values in code; verify all sensitive access and operations on the server.
-- [Engineering quality](engineering-quality.md) — For SendFlow, prioritize robust code over shortcuts taken only to move faster.
+- [Engineering quality](engineering-quality.md) — SendFlow is a large financial app; prioritize robust code over shortcuts taken only to move faster.
