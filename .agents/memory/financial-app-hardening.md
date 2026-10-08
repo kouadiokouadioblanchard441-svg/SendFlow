@@ -9,6 +9,12 @@ The server is the only authority for SendFlow. The frontend is untrusted and mus
 
 **How to apply:** Treat client claims, browser state, and persisted values as untrusted inputs. Keep credentials in Replit Secrets and access them only from server code; do not expose their values to the frontend. The server must check Clerk identity, allowlists, PIN sessions, resource ownership, schemas, and financial invariants before returning or changing data. Fail closed on validation or storage errors, prevent duplicate or partial operations, and test without modifying real accounts or the shared Neon database.
 
+The current Clerk browser flow may expose its publishable key in the client bundle. This key is public by design and is intentionally retained; this exception does not apply to secret keys or sensitive values.
+
+**Why:** The user chose to retain the Clerk publishable key after confirming it is present in the browser bundle and is not a secret.
+
+**How to apply:** Keep the Clerk publishable key as public client configuration for the current auth flow. Keep Clerk secret keys, API credentials, session secrets, database credentials, and sensitive data server-side.
+
 For paginated transaction history, keep timestamp comparisons in PostgreSQL and use a validated transaction ID as the cursor. Do not round-trip cursor timestamps through JavaScript `Date`.
 
 **Why:** PostgreSQL timestamps can retain microseconds while JavaScript `Date` keeps milliseconds; rounding a cursor can silently omit or repeat financial records created within the same millisecond.
