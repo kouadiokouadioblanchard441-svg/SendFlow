@@ -3,11 +3,11 @@ name: Financial app hardening
 description: Project-wide quality and security priorities for SendFlow.
 ---
 
-The server is the only authority for SendFlow. Never rely on a client-side check or a database value alone to authorize access or an operation; validate identities, ownership, state, and business rules on the server. Keep sensitive values out of source and client bundles, and read secrets only in server code from Replit Secrets.
+The server is the only authority for SendFlow. The frontend is untrusted and must never be the security authority. Never hardcode or store secret keys, tokens, credentials, or sensitive personal or financial values in frontend or backend source or client bundles. Load required secrets only into the server runtime from Replit Secrets. Verify identities, ownership, state, and business rules on the server before accessing or changing data.
 
-**Why:** The user explicitly requires every sensitive decision to be checked by the server, does not want the client or database treated as authorization, and requires sensitive information to remain server-side and out of code.
+**Why:** The user explicitly requires no keys or sensitive information in frontend or backend code, and requires sensitive checks to be performed on their server.
 
-**How to apply:** Treat client claims, browser state, and persisted values as inputs to verify. The server must check Clerk identity, allowlists, PIN sessions, resource ownership, schemas, and financial invariants before returning or changing data. Fail closed on validation or storage errors, prevent duplicate or partial operations, and test without modifying real accounts or the shared Neon database.
+**How to apply:** Treat client claims, browser state, and persisted values as untrusted inputs. Keep credentials in Replit Secrets and access them only from server code; do not expose their values to the frontend. The server must check Clerk identity, allowlists, PIN sessions, resource ownership, schemas, and financial invariants before returning or changing data. Fail closed on validation or storage errors, prevent duplicate or partial operations, and test without modifying real accounts or the shared Neon database.
 
 For paginated transaction history, keep timestamp comparisons in PostgreSQL and use a validated transaction ID as the cursor. Do not round-trip cursor timestamps through JavaScript `Date`.
 
