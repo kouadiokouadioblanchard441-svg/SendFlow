@@ -1,10 +1,10 @@
 ---
-name: Production Neon database
-description: Safe separation and schema handling for the production Neon PostgreSQL connection.
+name: Database environment isolation
+description: Keep Replit development/testing data separate from Plesk production data.
 ---
 
-All SendFlow runtime environments intentionally use the shared Neon connection. Treat development previews and tests as live production access; do not add synthetic or disposable financial records.
+Replit uses a separate database for development and tests. Plesk production has its own database, secrets, data, and migration process. Do not use the production database for preview or route-level tests.
 
-**Why:** The user chose Neon as the single database and authorized retiring Replit's separate development database. Replit database removal is managed through the Database pane, not by changing `DATABASE_URL` manually.
+**Why:** The user selected separate databases for Replit and Plesk.
 
-**How to apply:** Keep runtime code on the Neon secret in every environment. Require `DRIZZLE_DATABASE_TARGET=neon-production` for schema changes, and verify previews against production with read-only checks unless the user explicitly authorizes a write.
+**How to apply:** Verify the database target explicitly before schema changes, migrations, or integration tests. Keep Replit development/test and Plesk production credentials and data isolated.

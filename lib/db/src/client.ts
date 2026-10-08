@@ -1,13 +1,8 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { resolveRuntimeDatabaseUrl } from "./connection-config.ts";
 
-const connectionString = process.env.NEON_DATABASE_URL_PRODUCTION;
-
-if (!connectionString) {
-  throw new Error(
-    "NEON_DATABASE_URL_PRODUCTION is required to initialize the SendFlow database client.",
-  );
-}
+const connectionString = resolveRuntimeDatabaseUrl(process.env);
 
 export const pool = new Pool({
   connectionString,

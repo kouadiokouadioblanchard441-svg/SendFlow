@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "push": "drizzle-kit push",
+    "test": "node --experimental-strip-types --test src/connection-config.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
