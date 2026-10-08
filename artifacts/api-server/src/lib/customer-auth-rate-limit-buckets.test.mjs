@@ -4,6 +4,8 @@ import test from "node:test";
 const {
   getCustomerAccessAttemptBuckets,
   getCustomerAccessAttemptBucketsForRequest,
+  getCustomerLoginPhoneAttemptBucket,
+  getCustomerPinAttemptBucket,
 } = await import("./customer-auth-rate-limit-buckets.ts");
 
 const fingerprint = (value) => `test:${value}`;
@@ -40,4 +42,16 @@ test("different accounts share only the requester bucket, not the account bucket
 
   assert.notEqual(firstAccount[0], secondAccount[0]);
   assert.equal(firstAccount[1], secondAccount[1]);
+});
+
+test("recovery uses the same phone and PIN attempt bucket identities as authentication", () => {
+  const phone = "+2250700000000";
+  assert.equal(
+    getCustomerLoginPhoneAttemptBucket(phone, fingerprint),
+    fingerprint(`customer-login-phone:${phone}`),
+  );
+  assert.equal(
+    getCustomerPinAttemptBucket("customer-123", fingerprint),
+    fingerprint("customer-pin-user:customer-123"),
+  );
 });

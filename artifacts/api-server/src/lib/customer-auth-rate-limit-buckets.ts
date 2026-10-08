@@ -7,6 +7,20 @@ export function getCustomerAccessPhoneAttemptBucket(
   return fingerprint(`customer-access-phone:${phoneHash}`);
 }
 
+export function getCustomerLoginPhoneAttemptBucket(
+  phone: string,
+  fingerprint: BucketFingerprinter,
+) {
+  return fingerprint(`customer-login-phone:${phone}`);
+}
+
+export function getCustomerPinAttemptBucket(
+  userId: string,
+  fingerprint: BucketFingerprinter,
+) {
+  return fingerprint(`customer-pin-user:${userId}`);
+}
+
 export function getCustomerAccessAttemptBuckets(
   phoneHash: string | null,
   requesterHash: string,

@@ -29,6 +29,8 @@ import {
   CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
   clearAuthFailures,
   getCustomerAccessAttemptBucketsForRequest,
+  getCustomerLoginPhoneAttemptBucket,
+  getCustomerPinAttemptBucket,
   getAuthRateLimit,
   formatAuthRateLimitMessage,
   recordAuthFailure,
@@ -88,7 +90,7 @@ function getLoginAttemptBuckets(phone: string | null, req: Parameters<typeof req
   const address = requesterAddress(req);
   return [
     ...getCustomerAccessAttemptBucketsForRequest(phone, address),
-    ...(phone ? [fingerprint(`customer-login-phone:${phone}`)] : []),
+    ...(phone ? [getCustomerLoginPhoneAttemptBucket(phone)] : []),
     fingerprint(`customer-login-requester:${address}`),
   ];
 }
@@ -107,7 +109,7 @@ function getLoginPhoneFromBody(body: unknown) {
 
 function getPinAttemptBuckets(userId: string, req: Parameters<typeof requesterAddress>[0]) {
   return [
-    fingerprint(`customer-pin-user:${userId}`),
+    getCustomerPinAttemptBucket(userId),
     fingerprint(`customer-pin-requester:${requesterAddress(req)}`),
   ];
 }

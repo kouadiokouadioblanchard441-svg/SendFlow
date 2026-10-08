@@ -11,6 +11,8 @@ import {
   getCustomerAccessAttemptBuckets as createCustomerAccessAttemptBuckets,
   getCustomerAccessAttemptBucketsForRequest as createCustomerAccessAttemptBucketsForRequest,
   getCustomerAccessPhoneAttemptBucket as createCustomerAccessPhoneAttemptBucket,
+  getCustomerLoginPhoneAttemptBucket as createCustomerLoginPhoneAttemptBucket,
+  getCustomerPinAttemptBucket as createCustomerPinAttemptBucket,
 } from "./customer-auth-rate-limit-buckets";
 
 export {
@@ -24,6 +26,14 @@ export type AuthRateLimitDatabase = Pick<typeof db, "select" | "insert" | "delet
 
 export function getCustomerAccessPhoneAttemptBucket(phoneHash: string) {
   return createCustomerAccessPhoneAttemptBucket(phoneHash, fingerprint);
+}
+
+export function getCustomerLoginPhoneAttemptBucket(phone: string) {
+  return createCustomerLoginPhoneAttemptBucket(phone, fingerprint);
+}
+
+export function getCustomerPinAttemptBucket(userId: string) {
+  return createCustomerPinAttemptBucket(userId, fingerprint);
 }
 
 export function getCustomerAccessAttemptBuckets(phoneHash: string | null, requesterHash: string) {

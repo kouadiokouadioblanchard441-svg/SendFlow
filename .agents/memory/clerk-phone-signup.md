@@ -14,3 +14,9 @@ For the shared customer login/signup lockout, successful signup OTP verification
 **Why:** OTP verification is an intermediate signup step, not proof that the full authentication flow succeeded. Clearing the counter there would let repeated signup attempts erase the shared lockout.
 
 **How to apply:** Keep failure-counter resets at completed login or account creation, not at OTP approval.
+
+After a successful password recovery, clear only the phone-scoped shared access and legacy login-phone buckets. Acquire those same attempt locks first, and clear them in the transaction that consumes the OTP, changes the password, and revokes sessions; keep the requester-wide bucket.
+
+**Why:** Clearing after commit can race with sign-in failures or report recovery failure after the password has already changed.
+
+**How to apply:** Keep password recovery ordered like other customer-access operations: attempt-bucket locks before challenge/user rows, with the reset and counter clear committed atomically.

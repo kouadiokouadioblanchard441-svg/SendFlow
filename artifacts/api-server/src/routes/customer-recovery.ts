@@ -18,6 +18,10 @@ import {
 import {
   clearAuthFailures,
   getCustomerAccessPhoneAttemptBucket,
+  getCustomerLoginPhoneAttemptBucket,
+  getCustomerPinAttemptBucket,
+  withAuthAttemptLock,
+  withPinAttemptLock,
 } from "../lib/customer-auth-rate-limit";
 import { hashCustomerSecret } from "../lib/customer-auth-crypto";
 import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
@@ -45,6 +49,10 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
 
   const now = new Date();
   try {
+    const authAttemptBuckets = [
+      getCustomerAccessPhoneAttemptBucket(fingerprint(`phone:${parsed.data.phone}`)),
+      getCustomerLoginPhoneAttemptBucket(parsed.data.phone),
+    ];
     const [availableChallenge] = await db
       .select({ id: phoneOtpChallengesTable.id })
       .from(phoneOtpChallengesTable)
@@ -63,7 +71,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     }
 
     const passwordHash = await hashCustomerSecret(parsed.data.newPassword);
-    const result = await db.transaction(async (tx) => {
+    const result = await withAuthAttemptLock(authAttemptBuckets, async (tx) => {
       const [challenge] = await tx
         .select({ id: phoneOtpChallengesTable.id })
         .from(phoneOtpChallengesTable)
@@ -89,7 +97,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
         .set({ consumedAt: now })
         .where(eq(phoneOtpChallengesTable.id, challenge.id));
 
-      if (!user || user.status !== "active") return { kind: "processed", userId: null } as const;
+      if (!user || user.status !== "active") return { kind: "processed" } as const;
 
       const [credential] = await tx
         .update(customerCredentialsTable)
@@ -101,7 +109,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
         .where(eq(customerCredentialsTable.userId, user.id))
         .returning({ userId: customerCredentialsTable.userId });
 
-      if (!credential) return { kind: "processed", userId: null } as const;
+      if (!credential) return { kind: "processed" } as const;
 
       await tx
         .update(customerSessionsTable)
@@ -113,7 +121,8 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
           ),
         );
 
-      return { kind: "processed", userId: user.id } as const;
+      await clearAuthFailures(authAttemptBuckets, tx);
+      return { kind: "processed" } as const;
     });
 
     if (result.kind === "invalid") {
@@ -121,12 +130,6 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
       return;
     }
 
-    if (result.userId) {
-      await clearAuthFailures([
-        getCustomerAccessPhoneAttemptBucket(fingerprint(`phone:${parsed.data.phone}`)),
-        fingerprint(`customer-login-phone:${parsed.data.phone}`),
-      ]);
-    }
     res.json(ResetCustomerPasswordResponse.parse({ success: true }));
   } catch (error) {
     req.log.error({ errorCode: safeErrorCode(error) }, "Customer password recovery failed");
@@ -165,8 +168,17 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
       return;
     }
 
+    // PIN checks share this user bucket, so acquire it before locking challenge or account rows.
+    const [attemptUser] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.phone, parsed.data.phone))
+      .limit(1);
+    const pinAttemptBuckets = attemptUser
+      ? [getCustomerPinAttemptBucket(attemptUser.id)]
+      : [];
     const pinHash = await hashCustomerSecret(parsed.data.newPin);
-    const result = await db.transaction(async (tx) => {
+    const result = await withPinAttemptLock(pinAttemptBuckets, async (tx) => {
       const [challenge] = await tx
         .select({ id: phoneOtpChallengesTable.id })
         .from(phoneOtpChallengesTable)
@@ -192,7 +204,9 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
         .set({ consumedAt: now })
         .where(eq(phoneOtpChallengesTable.id, challenge.id));
 
-      if (!user || user.status !== "active") return { kind: "processed", userId: null } as const;
+      if (!user || !attemptUser || user.id !== attemptUser.id || user.status !== "active") {
+        return { kind: "processed" } as const;
+      }
 
       const [credential] = await tx
         .update(customerCredentialsTable)
@@ -204,7 +218,7 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
         .where(eq(customerCredentialsTable.userId, user.id))
         .returning({ userId: customerCredentialsTable.userId });
 
-      if (!credential) return { kind: "processed", userId: null } as const;
+      if (!credential) return { kind: "processed" } as const;
 
       await tx
         .update(customerSessionsTable)
@@ -216,7 +230,8 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
           ),
         );
 
-      return { kind: "processed", userId: user.id } as const;
+      await clearAuthFailures(pinAttemptBuckets, tx);
+      return { kind: "processed" } as const;
     });
 
     if (result.kind === "invalid") {
@@ -224,11 +239,6 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
       return;
     }
 
-    if (result.userId) {
-      await clearAuthFailures([
-        fingerprint(`customer-pin-user:${result.userId}`),
-      ]);
-    }
     res.json(ResetCustomerPinResponse.parse({ success: true }));
   } catch (error) {
     req.log.error({ errorCode: safeErrorCode(error) }, "Customer PIN recovery failed");
