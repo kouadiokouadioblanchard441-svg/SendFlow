@@ -33,6 +33,24 @@ export function resolveRuntimeDatabaseUrl(environment: Environment): string {
     return requireDatabaseUrl(environment, "DATABASE_URL", "Replit development");
   }
 
+  if (target === "shared-neon") {
+    if (environment.NODE_ENV === "production") {
+      throw new Error(
+        "SENDFLOW_DATABASE_TARGET=shared-neon cannot be used when NODE_ENV=production.",
+      );
+    }
+    if (!environment.REPL_ID) {
+      throw new Error(
+        "SENDFLOW_DATABASE_TARGET=shared-neon can only be used inside Replit.",
+      );
+    }
+    return requireDatabaseUrl(
+      environment,
+      "NEON_DATABASE_URL_PRODUCTION",
+      "Replit shared Neon",
+    );
+  }
+
   if (target === "production") {
     requirePleskProduction(environment, "SENDFLOW_DATABASE_TARGET=production");
     return requireDatabaseUrl(
@@ -43,7 +61,7 @@ export function resolveRuntimeDatabaseUrl(environment: Environment): string {
   }
 
   throw new Error(
-    "SENDFLOW_DATABASE_TARGET must explicitly be 'development' or 'production'.",
+    "SENDFLOW_DATABASE_TARGET must explicitly be 'development', 'shared-neon', or 'production'.",
   );
 }
 

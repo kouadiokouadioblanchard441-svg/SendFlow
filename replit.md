@@ -25,8 +25,8 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 - Les parcours d’inscription et de connexion sont la porte d’entrée publique de l’application.
 - Les anciennes surfaces de présentation ont été retirées du produit ; les prochaines fonctionnalités doivent être ajoutées derrière l’accès applicatif.
-- La base PostgreSQL actuellement branchée dans Replit est exclusivement dédiée au développement et aux tests de SendFlow. Elle ne doit pas recevoir de données de production ni servir à des transferts d’argent réels.
-- La base de production destinée à Plesk sera une cible séparée, avec ses propres variables d’environnement, secrets, données et procédure de migration contrôlée.
+- Neon est la base de référence partagée par Plesk en production et par les aperçus/tests Replit. Les lignes de la base Replit précédente ne sont pas importées.
+- Les aperçus et tests Replit voient les données réelles de Neon. Ne pas y lancer de scénarios qui créent des comptes réels, envoient des SMS payants ou modifient des transferts ou soldes. Vérifier le schéma Neon avant chaque évolution et utiliser des migrations additives ciblées, pas un push Drizzle global.
 
 ## Product
 
