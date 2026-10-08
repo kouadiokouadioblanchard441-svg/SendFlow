@@ -27,6 +27,7 @@ import SignupPage from '@/pages/sign-up';
 import OnboardingPage from '@/pages/onboarding';
 import { useSeo } from '@/lib/seo';
 import { getPinUnlockExpiry } from '@/lib/pin-unlock';
+import { requiresCustomerPinUnlock } from '@/lib/customer-route-guard';
 import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 
 const AdminAccessPage = lazy(() => import('@/pages/admin-access'));
@@ -52,12 +53,6 @@ const queryClient = new QueryClient({
   },
 });
 
-const protectedCustomerPaths = new Set([
-  '/account', '/account-info', '/account-limit', '/customer-service',
-  '/deposit', '/international-transfer', '/inter-transfer', '/history',
-  '/notifications', '/change-pin', '/change-pin-success', '/pricing',
-]);
-
 function CustomerPinGuard({ children }: { children: ReactNode }) {
   const [path] = useLocation();
   const [, forceRefresh] = useState(0);
@@ -80,11 +75,7 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
     };
   }, [expiry]);
 
-  const isProtected = protectedCustomerPaths.has(path)
-    || path.startsWith('/transaction/')
-    || path.startsWith('/notifications/')
-    || path === ADMIN_ROUTE_PATH
-    || path.startsWith(`${ADMIN_ROUTE_PATH}/`);
+  const isProtected = requiresCustomerPinUnlock(path);
   if (isProtected && expiry === null) return <Redirect to="/pin" />;
   return <>{children}</>;
 }

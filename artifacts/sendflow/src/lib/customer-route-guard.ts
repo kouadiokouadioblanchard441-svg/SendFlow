@@ -13,10 +13,8 @@ const protectedCustomerPaths = new Set([
   '/pricing',
 ]);
 
-export function requiresCustomerPinUnlock(path: string, adminRoutePath: string) {
+export function requiresCustomerPinUnlock(path: string) {
   return protectedCustomerPaths.has(path)
     || path.startsWith('/transaction/')
-    || path.startsWith('/notifications/')
-    || path === adminRoutePath
-    || path.startsWith(`${adminRoutePath}/`);
+    || path.startsWith('/notifications/');
 }
