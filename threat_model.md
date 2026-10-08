@@ -9,9 +9,13 @@ sessions. Clerk is used for administrator authentication, not as the customer
 identity mechanism. Didit is used by the API server for development identity
 verification and must not be treated as production money-movement authorization.
 
-The detailed baseline for customer OTP and authentication, including observed
-controls, exploitable conditions that still need attack tests, and security
-invariants, is maintained in [SECURITY-THREAT-MODEL.md](SECURITY-THREAT-MODEL.md).
+The consolidated pre-remediation baseline in
+[SECURITY-THREAT-MODEL.md](SECURITY-THREAT-MODEL.md) covers customer OTP and
+authentication, wallet and transaction access, administrator actions, Didit
+webhooks, API/runtime controls, environment boundaries, dependency findings,
+and the attack tests still required. It is a static assessment, not a security
+sign-off; no application code or user-facing page was changed during this
+modeling phase.
 
 ## Assets
 
