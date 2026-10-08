@@ -52,21 +52,23 @@ remediate are:
    against a transfer operation. Until a server-side transfer service exists,
    the returned limit is informational only.
 9. Administrator access uses a Clerk allowlist and a separate 15-minute PIN
-   cookie; sensitive changes are checked and audited. The PIN cookie is
-   stateless, however, so a still-valid cookie may become usable again if the
-   same administrator signs back into Clerk before its expiry.
-10. The Didit signature code follows the published V2 sorted-JSON HMAC approach
-    and checks a five-minute timestamp window, but it accepts any
-    `webhook_type` while applying the supplied KYC status. No route-level
-    signature, event-type, replay, or concurrency tests were found.
+    cookie; the signed cookie is now bound to the current Clerk session ID, so a
+    later Clerk session cannot reuse it. The token remains stateless and no
+    HTTP-level sign-out/re-authentication test has been run.
+10. The Didit webhook now requires a configured `sandbox`/`live` environment
+    match and only applies `status.updated`; other signed event types are
+    acknowledged before KYC schema parsing or database access. Pure policy
+    tests cover the event and environment rules, but no route-level signature,
+    replay, or concurrency tests have been run.
 11. No project-wide request rate limiter, Content-Security-Policy, application-
     level phone-number encryption, or automated anomaly detection was observed
     in the inspected API configuration. The frontend's final production
     response headers were not available for this review.
-12. Project environment guidance and runtime configuration do not establish
-    which database each deployment uses: the API client unconditionally reads
-    `NEON_DATABASE_URL_PRODUCTION`, while `replit.md` says Replit's database is
-    development/test-only and Plesk production must use a separate database.
+12. The API now selects the database target explicitly: Replit development uses
+     its own `DATABASE_URL`, while production requires `NODE_ENV=production`
+     and rejects the Replit runtime. However, `NEON_DATABASE_URL_PRODUCTION`
+     remains in Replit's shared secrets, so its credential is still available
+     to development processes until the user removes it.
 13. The dependency scan found one high and one moderate advisory. The high
     advisory is in a production transitive dependency; exploitability through
     the current static proxy configuration has not been established.
@@ -527,19 +529,19 @@ delivery, or financial-route authorization.
 ### Administrator session and abuse risks
 
 The administrator PIN cookie is HttpOnly, Secure, SameSite=Strict, tied to the
-Clerk user ID, signed with an HMAC derived from the configured PIN and
-`SESSION_SECRET`, and valid for 15 minutes. Failed PIN attempts are
-database-backed and serialized by attempt bucket. Every admin data/action route
-rechecks Clerk identity and allowlist membership before accepting the PIN
-cookie, so the PIN cookie alone is insufficient.
+Clerk user ID and current Clerk session ID, signed with an HMAC derived from
+the configured PIN and `SESSION_SECRET`, and valid for 15 minutes. Failed PIN
+attempts are database-backed and serialized by attempt bucket. Every admin
+data/action route rechecks Clerk identity, session ID, and allowlist membership
+before accepting the PIN cookie, so the PIN cookie alone is insufficient.
 
-The cookie is stateless: there is no server-side administrator PIN-session row
-to revoke. Clerk sign-out blocks requests while the Clerk session is absent,
-but it does not invalidate the PIN cookie itself. If the same administrator
-signs back in during the remaining 15-minute lifetime, the old cookie can
-validate again. This is a source-based risk requiring an HTTP test. Admin
-actions are not additionally confirmed by a transaction-specific PIN bound to
-the wallet, direction, amount, or target user.
+The cookie remains stateless, with no server-side row for immediate revocation.
+Clerk sign-out blocks requests while the Clerk session is absent; after
+re-authentication, a different Clerk session ID makes the old PIN cookie
+invalid. A unit test proves binding to a different session ID, but no HTTP-level
+sign-out/re-authentication test has been run. Admin actions are not additionally
+confirmed by a transaction-specific PIN bound to the wallet, direction, amount,
+or target user.
 
 ### Wallet/transaction STRIDE
 
@@ -550,7 +552,7 @@ the wallet, direction, amount, or target user.
 | **Repudiation** | Admin reads and mutations create audit rows; wallet ledger records before/after balances and administrator ID. | No tamper-evident audit store or audit of customer transaction-history reads was observed. Audit rows do not include trusted request context. |
 | **Information disclosure** | Customer queries are owner-scoped and non-cacheable; admin pages require PIN. | Phones and transaction references are plaintext in database rows. Admin read access is broad within the allowlist. No route tests prove IDOR resistance. |
 | **Denial of service** | Admin PIN has a persisted, serialized attempt limiter. Database mutations have locks and safe amount validation. | No global API limiter or anomaly detection was observed. Repeated authenticated wallet/configuration actions are not shown to have a separate volume cap. |
-| **Elevation of privilege** | Read and mutation admin allowlists are separate; customer routes use server-side ownership checks. | Mutation admins share a broad role. The stateless PIN cookie can outlive Clerk sign-out, and no transaction-bound step-up authorization exists. |
+| **Elevation of privilege** | Read and mutation admin allowlists are separate; customer routes use server-side ownership checks. The PIN cookie is bound to the active Clerk session ID. | Mutation admins share a broad role, and no transaction-bound step-up authorization exists. HTTP-level sign-out/re-authentication behavior remains untested. |
 
 ### Wallet and transaction attack cases (planned, not executed)
 
@@ -559,7 +561,7 @@ the wallet, direction, amount, or target user.
 | **WALLET-01 / High** | Submit a wallet adjustment with a non-admin identity, a read-only admin, or no/expired PIN. | The route checks mutation allowlist and PIN before database mutation. | HTTP tests assert denial and unchanged wallet, ledger, and audit tables. |
 | **WALLET-02 / High** | Race two distinct adjustments against the same balance, or replay one idempotency key concurrently. | Row locks and unique key constrain effects; duplicate response behavior under a database race is unproven. | Isolated PostgreSQL concurrency test proves the balance and ledger change exactly once and documents duplicate response semantics. |
 | **WALLET-03 / High** | Use a stale expected balance, debit more than the balance, or submit an overflow-sized amount. | Source validates expected balance, safe integers, and nonnegative result. | Route tests prove no ledger row, balance change, or audit row on rejected requests. |
-| **ADMIN-01 / High** | Reuse the administrator PIN cookie after Clerk sign-out and then sign in again as the same user before 15 minutes elapse. | Clerk sign-out blocks access while signed out; the PIN cookie itself is not server-revoked. | HTTP test proves sign-out plus reauthentication does not revive old step-up authorization, or explicitly documents the accepted window. |
+| **ADMIN-01 / High** | Reuse the administrator PIN cookie after Clerk sign-out and then sign in again as the same user before 15 minutes elapse. | The token is bound to the original Clerk session ID; a unit test rejects a different ID. | HTTP test proves sign-out plus reauthentication receives a different session ID and cannot revive old step-up authorization. |
 | **TX-01 / Release gate** | Bypass the disabled transfer UI and call a customer transfer endpoint directly. | No customer transaction-creation endpoint exists. | Keep transfer submission unavailable until a server route has authentication, verified-phone checks, transaction-bound PIN/OTP, atomic limit reservation, idempotency, ledger/provider reconciliation, and adversarial tests. |
 | **TX-02 / High when implemented** | Exceed a monthly account limit with concurrent transfers, including one account with no verified phone. | The current `/me/account-limit` route only calculates and returns a display value; there is no transaction route enforcing it. | Future tests must show the limit and phone-verification state are enforced server-side under concurrent reservation, including pending transactions. |
 | **TX-03 / Medium** | Read a transaction by another customer's ID or cursor. | List cursor lookup and detail query include the authenticated owner ID. | HTTP tests prove foreign cursors/references reveal no transaction fields and valid-owner requests still work. |
@@ -584,12 +586,21 @@ the wallet, direction, amount, or target user.
   five-minute timestamp check. The implementation appears aligned with that
   documented V2 construction; no cryptographic test fixtures or live provider
   delivery were exercised.
-- The webhook validates event ID, session ID, event type, and a known status,
-  then locks the stored verification session. It records the event and updates
-  the verification in one database transaction. Event ID is the primary key;
-  a duplicate ID with a different session or type is rejected. An approved
-  status has a higher rank than all other statuses and cannot be downgraded by a
-  lower-ranked event.
+- After signature validation, the webhook requires its signed `environment`
+  field to exactly match the server's configured `sandbox` or `live` target.
+  Only `status.updated` proceeds to the KYC schema and database; other signed
+  event types are acknowledged without entering a transaction. Didit's V3
+  guide documents both `status.updated` and `data.updated`, and includes a
+  `status` field on both, so event-type filtering is required.
+- For supported events, the webhook validates event ID, session ID, type, and a
+  known status, then locks the stored verification session. It records the
+  event and updates the verification in one database transaction. Event ID is
+  the primary key; a duplicate ID with a different session or type is rejected.
+  An approved status has a higher rank than all other statuses and cannot be
+  downgraded by a lower-ranked event.
+- Isolated unit tests cover the supported event type and environment policy.
+  They do not exercise signature verification, Express routing, database
+  behavior, or real Didit delivery.
 - Identity-verification state stores provider session ID, vendor data,
   verification URL, status, and last webhook event/type. The user's own
   verification status endpoint returns their stored verification summary.
@@ -599,47 +610,42 @@ the wallet, direction, amount, or target user.
 
 ### Didit residual risks
 
-1. `webhook_type` is accepted as any non-empty string and is not restricted to
-   Didit's `status.updated` event. The handler nevertheless uses the supplied
-   `status` to update KYC. A validly signed non-status event that carries a
-   session ID and status could therefore influence KYC state. Validate allowed
-   event types and their exact schemas before using them as authorization
-   inputs.
-2. A duplicate event ID is compared only on session ID and event type, not on
+1. A duplicate event ID is compared only on session ID and event type, not on
    status or a payload digest. Reuse of an ID with the same session/type but a
    different signed status is treated as a duplicate instead of a conflict.
-3. `X-Timestamp` is checked separately from the payload signature. A captured
+2. `X-Timestamp` is checked separately from the payload signature. A captured
    signed payload can be replayed with a fresh timestamp header; the persisted
    event ID deduplication is the effective replay control and currently has no
    observed cleanup job. Keep these controls independent and test replay after
    both successful and failed deliveries.
-4. The webhook does not compare the payload's environment/workflow metadata to
-   the current deployment or stored session. The provider session ID is the
-   database anchor, but the webhook secret, workflow, and database must still
-   be isolated between sandbox and live deployments.
-5. Signature verification recursively canonicalizes any parsed request object
+3. The webhook compares the signed `environment` to the configured deployment,
+   but does not compare workflow or application metadata to the stored session.
+   The provider session ID remains the database anchor; provider secrets and
+   databases must still be isolated between sandbox and live deployments.
+4. Signature verification recursively canonicalizes any parsed request object
    before validating the schema. The 100-KB parser limit bounds bytes but no
    explicit JSON depth or webhook rate limit was observed. Malformed
    multibyte signature values may also cause a byte-length mismatch at
    `timingSafeEqual`; error handling for invalid signatures has not been tested.
-6. The webhook event table has no retention policy or foreign-key relation to
+5. The webhook event table has no retention policy or foreign-key relation to
    the verification record. Event and OTP telemetry growth/retention must be
    bounded without deleting replay-protection state too early.
-7. `/me/account-limit` reads the newest Didit status and reports 150,000 XOF
+6. `/me/account-limit` reads the newest Didit status and reports 150,000 XOF
    for non-verified states or 10,000,000 XOF for verified status. It sums
    pending/succeeded inter-network and international transactions for the
    current month. This is a display calculation only: no transfer API currently
    consumes or atomically enforces it.
-8. No Didit route tests were found. Signature vectors, malformed signatures,
-   stale timestamps, unknown sessions, non-status event types, duplicate IDs,
-   conflicts, out-of-order statuses, and parallel delivery remain unproven.
+7. No Didit HTTP route tests were run. Signature vectors, malformed signatures,
+   stale timestamps, unknown sessions, ignored non-status event responses,
+   environment rejection, duplicate IDs, conflicts, out-of-order statuses, and
+   parallel delivery remain unproven.
 
 ### Didit attack cases (planned, not executed)
 
 | ID / priority | Attack objective | Required proof |
 | --- | --- | --- |
 | **DIDIT-01 / High** | Send an invalid signature, stale timestamp, malformed signature, or deeply nested body. | All invalid inputs fail closed without an uncaught error, state change, or unbounded resource use; valid Unicode/nested payloads match published V2 test vectors. |
-| **DIDIT-02 / High** | Send a validly signed event with an unsupported `webhook_type`, wrong environment/workflow, or unexpected session metadata. | Only explicitly supported status events matching the deployment and stored session can change KYC state. |
+| **DIDIT-02 / High** | Send a validly signed event with an unsupported `webhook_type`, wrong environment/workflow, or unexpected session metadata. | Unsupported event types are acknowledged without database work; wrong environments are rejected; route tests must prove only supported events matching the deployment and stored session can change KYC state. |
 | **DIDIT-03 / High** | Replay a valid event and race two deliveries with the same event ID; then reuse that ID with changed status. | Exactly one status transition is applied; identical retries are acknowledged; any changed signed content conflicts and is observable. |
 | **DIDIT-04 / Medium** | Deliver statuses out of order, including a terminal failure after approval. | State transitions follow an explicit allowlist/order and an approved state cannot be downgraded by stale events. |
 | **DIDIT-05 / High before production** | Deliver a sandbox-signed webhook to production or a live-signed webhook to a sandbox deployment. | Separate database, workflow, secret, and environment binding reject cross-environment events. |
@@ -693,20 +699,20 @@ the wallet, direction, amount, or target user.
 
 ### Database/environment separation
 
-`lib/db/src/client.ts` reads `NEON_DATABASE_URL_PRODUCTION` unconditionally.
-`replit.md` says the PostgreSQL database connected in Replit is only for
-development/tests and that Plesk production must have its own database, secrets,
-data, and migration process. The actual target of that variable in each
-deployment was not inspected. This mismatch means environment isolation is
-unproven; no database query, migration, or test write was run during this
-assessment. Do not change the database target or run route tests against it
-until the intended architecture and an isolated test database are confirmed.
+The database target is now explicit. Replit development selects its managed
+`DATABASE_URL`; the production target requires `NODE_ENV=production` and rejects
+the Replit runtime. Drizzle also separates Replit development from Plesk
+production. However, `NEON_DATABASE_URL_PRODUCTION` remains in Replit's shared
+secrets, so development processes still receive that credential even though
+the current database client does not select it. The user must remove the shared
+production secret to complete credential isolation. The development database
+was checked read-only; no production database query, write, or migration was
+run.
 
 Didit API configuration does enforce `sandbox` outside `NODE_ENV=production`
-and `live` in production for outbound session creation. The webhook handler
-does not independently validate signed payload environment/workflow metadata.
-Separate secrets and endpoints alone are insufficient if the database is
-shared across environments.
+and `live` in production for outbound session creation. The webhook now checks
+the signed `environment` value too, but does not compare workflow/application
+metadata to the stored session. Separate secrets and databases remain required.
 
 ### Automated scan results (2026-10-08)
 
@@ -734,14 +740,16 @@ Findings:
   `@tailwindcss/typography`; no untrusted runtime selector parser was observed.
   Advisory: <https://osv.dev/vulnerability/GHSA-rj75-hqrm-r3gf>.
 
-No package was changed as part of this pre-remediation model.
+No package was upgraded during this security hardening; both dependency
+findings remain open.
 
 ## Consolidated security release gates
 
-1. **Environment separation:** resolve the documented/runtime database mismatch;
-   prove each deployment receives only its intended database, secrets, Didit
-   environment, and provider credentials. Build tests against a genuinely
-   isolated database before running any route-level mutation/concurrency test.
+1. **Environment separation:** remove the shared production database credential
+   from Replit and prove each deployment receives only its intended database,
+   secrets, Didit environment, and provider credentials. Build tests against a
+   genuinely isolated database before running any route-level
+   mutation/concurrency test.
 2. **Authentication and ownership:** preserve OTP purpose binding, server-side
    session identity, serialized attempt limits, account status checks, and full
    session revocation. Test every protected route over HTTP.
@@ -749,12 +757,14 @@ No package was changed as part of this pre-remediation model.
    provider flow exists. That flow must enforce verified phone ownership,
    transaction-specific step-up, dynamic limit reservation, replay-safe
    idempotency, and a reconciled ledger under concurrent/retried requests.
-4. **Administrator:** retain separate read/mutation allowlists; add/test
-   explicit server-side revocation on logout and an appropriate step-up for
-   financial changes. Prove every mutation and its audit row are atomic.
-5. **Didit:** enforce supported event types and environment/session binding;
-   compare idempotency content, define retention, rate-limit the public webhook,
-   and test V2 signatures against published vectors before trusting approvals.
+4. **Administrator:** retain separate read/mutation allowlists; the PIN cookie
+   is bound to the current Clerk session ID. Add an HTTP-level logout/re-login
+   test and an appropriate step-up for financial changes. Prove every mutation
+   and its audit row are atomic.
+5. **Didit:** supported event types and configured environment matching are
+   implemented. Compare idempotency content, bind any available workflow or
+   application metadata, define retention, rate-limit the public webhook, and
+   test V2 signatures and route behavior before trusting approvals.
 6. **Privacy and monitoring:** define phone encryption/key rotation and
    retention, prove log masking, add actionable anomaly detection, and make
    security audit data tamper-resistant enough for its stated use.
@@ -767,11 +777,13 @@ No package was changed as part of this pre-remediation model.
 
 ## Scope boundary
 
-This document now models the observed OTP/auth, account/wallet, transaction,
-administrator, Didit/KYC, API runtime, environment, and dependency boundaries
-before application remediation. It is a static baseline, not a penetration
-test or security sign-off. The actual transfer feature does not exist in the
-API and remains disabled in the UI. No application code or user-facing page was
-modified; no live SMS, Didit API request, database write, or migration was
-performed. The database deployment target and actual production frontend
-headers remain unresolved verification items.
+This document models the observed OTP/auth, account/wallet, transaction,
+administrator, Didit/KYC, API runtime, environment, and dependency boundaries.
+It is a source-based assessment, not a penetration test or security sign-off.
+Server-side hardening now binds the admin PIN cookie to the active Clerk session
+and filters Didit status events by event type and deployment environment; no
+user-facing page was modified. The transfer feature does not exist in the API
+and remains disabled in the UI. No live SMS, Didit API request, database write,
+or migration was performed. Shared production database credentials in Replit,
+production configuration, and actual production frontend headers remain
+unresolved verification items.

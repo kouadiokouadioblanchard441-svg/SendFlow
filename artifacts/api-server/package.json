@@ -9,6 +9,7 @@
     "start": "node --enable-source-maps ./dist/index.mjs",
     "test:otp": "node --experimental-strip-types --test src/lib/esms-verify.test.mjs",
     "test:auth": "node --experimental-strip-types --test src/lib/customer-auth-crypto.test.mjs src/lib/admin-pin-session.test.mjs",
+    "test:security": "node --experimental-strip-types --test src/lib/admin-pin-session.test.mjs src/lib/didit-webhook-policy.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

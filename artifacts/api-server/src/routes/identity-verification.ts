@@ -30,6 +30,10 @@ import {
   isSandboxEnvironment,
   isValidDiditSignature,
 } from "../lib/didit";
+import {
+  isDiditStatusUpdateEvent,
+  isExpectedDiditWebhookEnvironment,
+} from "../lib/didit-webhook-policy";
 import { requireCustomerSession } from "../lib/customer-session";
 import { isTrustedOrigin } from "../lib/request-security";
 
@@ -273,6 +277,36 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
     !isValidDiditSignature(req.body, req.header("X-Signature-V2") ?? undefined)
   ) {
     res.status(401).json({ error: "Invalid webhook signature" });
+    return;
+  }
+
+  const webhookBody =
+    req.body && typeof req.body === "object" && !Array.isArray(req.body)
+      ? (req.body as Record<string, unknown>)
+      : null;
+  const rawEventType = webhookBody?.webhook_type;
+  if (typeof rawEventType !== "string" || rawEventType.trim().length === 0) {
+    res.status(400).json({ error: "Invalid Didit webhook payload" });
+    return;
+  }
+
+  if (
+    !isExpectedDiditWebhookEnvironment(
+      webhookBody?.environment,
+      process.env.DIDIT_ENVIRONMENT,
+    )
+  ) {
+    req.log.warn("Didit webhook environment does not match server configuration");
+    res.status(403).json({ error: "Didit webhook environment mismatch" });
+    return;
+  }
+
+  if (!isDiditStatusUpdateEvent(rawEventType)) {
+    req.log.info(
+      { eventType: rawEventType.slice(0, 128) },
+      "Ignoring non-status Didit webhook event",
+    );
+    res.json(ReceiveDiditWebhookResponse.parse({ received: true, duplicate: false }));
     return;
   }
 

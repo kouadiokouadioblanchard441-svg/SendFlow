@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import {
   GetAdminAccessStatusResponse,
@@ -23,10 +24,14 @@ const router: IRouter = Router();
 
 router.get("/access", (req, res): void => {
   const auth = getAdminUserId(req);
+  const { sessionId } = getAuth(req);
   const isAdmin = auth.userId !== null;
   const response = GetAdminAccessStatusResponse.parse({
     isAdmin,
-    pinUnlocked: isAdmin && hasAdminPinSession(req, auth.userId!),
+    pinUnlocked:
+      isAdmin &&
+      Boolean(sessionId) &&
+      hasAdminPinSession(req, auth.userId!, sessionId),
   });
   res.json(response);
 });
@@ -34,6 +39,12 @@ router.get("/access", (req, res): void => {
 router.post("/pin/unlock", async (req, res): Promise<void> => {
   const adminUserId = respondAdminIdentityError(req, res);
   if (!adminUserId) return;
+
+  const { sessionId } = getAuth(req);
+  if (!sessionId) {
+    res.status(401).json({ error: "Session administrateur invalide." });
+    return;
+  }
 
   const parsed = UnlockAdminPinBody.safeParse(req.body);
   if (!parsed.success) {
@@ -83,7 +94,7 @@ router.post("/pin/unlock", async (req, res): Promise<void> => {
     return;
   }
 
-  const expiresAt = setAdminPinSessionCookie(res, adminUserId);
+  const expiresAt = setAdminPinSessionCookie(res, adminUserId, sessionId);
   if (!expiresAt) {
     req.log.error("Administrator PIN session signing is not configured");
     res.status(503).json({ error: "La session PIN administrateur n’est pas configurée." });

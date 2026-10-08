@@ -12,6 +12,7 @@ const ADMIN_PIN_PATTERN = /^[0-9]{8}$/;
 
 type AdminPinSessionPayload = {
   userId: string;
+  clerkSessionId: string;
   expiresAt: number;
   nonce: string;
 };
@@ -49,13 +50,20 @@ export function verifyAdminPin(candidate: string) {
     && timingSafeEqual(candidateBytes, expectedBytes);
 }
 
-export function createAdminPinSessionToken(userId: string, now = Date.now()) {
+export function createAdminPinSessionToken(
+  userId: string,
+  clerkSessionId: string,
+  now = Date.now(),
+) {
+  if (!clerkSessionId || clerkSessionId.length > 255) return null;
+
   const pin = getAdminPinSecret();
   const key = pin ? getSigningKey(pin) : null;
   if (!key) return null;
 
   const payload: AdminPinSessionPayload = {
     userId,
+    clerkSessionId,
     expiresAt: now + ADMIN_PIN_SESSION_TTL_MS,
     nonce: randomBytes(16).toString("base64url"),
   };
@@ -71,9 +79,12 @@ export function createAdminPinSessionToken(userId: string, now = Date.now()) {
 export function verifyAdminPinSessionToken(
   token: string | undefined,
   userId: string,
+  clerkSessionId: string | null | undefined,
   now = Date.now(),
 ) {
-  if (!token || token.length > 2048) return false;
+  if (!token || token.length > 2048 || !clerkSessionId || clerkSessionId.length > 255) {
+    return false;
+  }
 
   const [encodedPayload, providedSignature, ...extra] = token.split(".");
   if (!encodedPayload || !providedSignature || extra.length > 0) return false;
@@ -97,6 +108,7 @@ export function verifyAdminPinSessionToken(
       Buffer.from(encodedPayload, "base64url").toString("utf8"),
     ) as Partial<AdminPinSessionPayload>;
     return payload.userId === userId
+      && payload.clerkSessionId === clerkSessionId
       && typeof payload.expiresAt === "number"
       && Number.isSafeInteger(payload.expiresAt)
       && payload.expiresAt > now
@@ -120,12 +132,26 @@ function readCookie(req: Request, name: string) {
   return undefined;
 }
 
-export function hasAdminPinSession(req: Request, userId: string, now = Date.now()) {
-  return verifyAdminPinSessionToken(readCookie(req, ADMIN_PIN_COOKIE), userId, now);
+export function hasAdminPinSession(
+  req: Request,
+  userId: string,
+  clerkSessionId: string | null | undefined,
+  now = Date.now(),
+) {
+  return verifyAdminPinSessionToken(
+    readCookie(req, ADMIN_PIN_COOKIE),
+    userId,
+    clerkSessionId,
+    now,
+  );
 }
 
-export function setAdminPinSessionCookie(res: Response, userId: string) {
-  const session = createAdminPinSessionToken(userId);
+export function setAdminPinSessionCookie(
+  res: Response,
+  userId: string,
+  clerkSessionId: string,
+) {
+  const session = createAdminPinSessionToken(userId, clerkSessionId);
   if (!session) return null;
 
   const maxAge = Math.max(0, session.expiresAt - Date.now());

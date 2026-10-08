@@ -19,29 +19,84 @@ test("accepts only the configured eight-digit administrator PIN", () => {
   assert.equal(verifyAdminPin("8216043"), false);
 });
 
-test("administrator PIN sessions expire and are bound to the Clerk user", () => {
+test("administrator PIN sessions expire and are bound to the Clerk user and session", () => {
   const now = 1_800_000_000_000;
-  const session = createAdminPinSessionToken("user_admin_test", now);
+  const session = createAdminPinSessionToken(
+    "user_admin_test",
+    "clerk_session_first",
+    now,
+  );
 
   assert.ok(session);
-  assert.equal(verifyAdminPinSessionToken(session.token, "user_admin_test", now), true);
-  assert.equal(verifyAdminPinSessionToken(session.token, "user_other_test", now), false);
-  assert.equal(verifyAdminPinSessionToken(session.token, "user_admin_test", session.expiresAt), false);
+  assert.equal(
+    verifyAdminPinSessionToken(
+      session.token,
+      "user_admin_test",
+      "clerk_session_first",
+      now,
+    ),
+    true,
+  );
+  assert.equal(
+    verifyAdminPinSessionToken(
+      session.token,
+      "user_other_test",
+      "clerk_session_first",
+      now,
+    ),
+    false,
+  );
+  assert.equal(
+    verifyAdminPinSessionToken(
+      session.token,
+      "user_admin_test",
+      "clerk_session_second",
+      now,
+    ),
+    false,
+  );
+  assert.equal(
+    verifyAdminPinSessionToken(
+      session.token,
+      "user_admin_test",
+      "clerk_session_first",
+      session.expiresAt,
+    ),
+    false,
+  );
 });
 
 test("changing the administrator PIN invalidates existing sessions", () => {
   const now = 1_800_000_000_000;
-  const session = createAdminPinSessionToken("user_admin_test", now);
+  const session = createAdminPinSessionToken(
+    "user_admin_test",
+    "clerk_session_first",
+    now,
+  );
 
   assert.ok(session);
   process.env.SENDFLOW_ADMIN_PIN = "82160438";
-  assert.equal(verifyAdminPinSessionToken(session.token, "user_admin_test", now), false);
+  assert.equal(
+    verifyAdminPinSessionToken(
+      session.token,
+      "user_admin_test",
+      "clerk_session_first",
+      now,
+    ),
+    false,
+  );
   process.env.SENDFLOW_ADMIN_PIN = "82160437";
 });
 
 test("rejects malformed session tokens", () => {
-  assert.equal(verifyAdminPinSessionToken("not-a-session", "user_admin_test"), false);
-  assert.equal(verifyAdminPinSessionToken(undefined, "user_admin_test"), false);
+  assert.equal(
+    verifyAdminPinSessionToken("not-a-session", "user_admin_test", "clerk_session_first"),
+    false,
+  );
+  assert.equal(
+    verifyAdminPinSessionToken(undefined, "user_admin_test", "clerk_session_first"),
+    false,
+  );
 });
 
 test.after(() => {

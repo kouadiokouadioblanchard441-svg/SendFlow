@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { resolveRuntimeDatabaseUrl } from "./connection-config.ts";
+import { resolveRuntimeDatabaseUrl } from "./connection-config";
 
 const connectionString = resolveRuntimeDatabaseUrl(process.env);
 

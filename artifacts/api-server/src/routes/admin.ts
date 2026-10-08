@@ -102,7 +102,8 @@ export function respondAdminAuthError(
   const userId = respondAdminIdentityError(req, res, permission);
   if (!userId) return null;
 
-  if (!hasAdminPinSession(req, userId)) {
+  const { sessionId } = getAuth(req);
+  if (!sessionId || !hasAdminPinSession(req, userId, sessionId)) {
     res.status(403).json({
       error: "Administrator PIN required",
       code: "ADMIN_PIN_REQUIRED",

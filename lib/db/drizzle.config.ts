@@ -1,5 +1,5 @@
 import { defineConfig } from "drizzle-kit";
-import { resolveDrizzleDatabaseUrl } from "./src/connection-config.ts";
+import { resolveDrizzleDatabaseUrl } from "./src/connection-config";
 
 const databaseUrl = resolveDrizzleDatabaseUrl(process.env);
 
