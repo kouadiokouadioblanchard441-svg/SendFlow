@@ -24,6 +24,17 @@ import {
   getEsmsVerifyClient,
 } from "../lib/esms-verify";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
+import {
+  CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
+  clearAuthFailures,
+  formatAuthRateLimitMessage,
+  getCustomerAccessAttemptBuckets,
+  getCustomerAccessAttemptBucketsForRequest,
+  getAuthRateLimit,
+  recordAuthFailureAndGetRetryAfter,
+  withAuthAttemptLock,
+  type AuthRateLimitDatabase,
+} from "../lib/customer-auth-rate-limit";
 
 const router: IRouter = Router();
 const OTP_LIFETIME_SECONDS = 5 * 60;
@@ -31,6 +42,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 const MAX_SENDS_PER_PHONE_PER_HOUR = 5;
 const MAX_SENDS_PER_REQUESTER_PER_HOUR = 60;
 const MAX_CODE_CHECKS = 5;
+const MAX_SIGNUP_CODE_CHECKS = CUSTOMER_ACCESS_RATE_LIMIT_POLICY.maxFailures;
 const HOUR_MS = 60 * 60 * 1000;
 
 function retryAfterSeconds(until: Date, now = new Date()) {
@@ -46,6 +58,82 @@ function sendRateLimitResponse(
     error,
     retryAfterSeconds: Math.max(1, seconds),
   });
+}
+
+function hasSignupPurpose(body: unknown) {
+  return typeof body === "object"
+    && body !== null
+    && "purpose" in body
+    && body.purpose === "signup";
+}
+
+async function getSignupAttemptBucketsForVerifyRequest(
+  req: Parameters<typeof requesterAddress>[0],
+) {
+  let challengeId: string | null = null;
+  if (typeof req.body === "object" && req.body !== null && !Array.isArray(req.body)) {
+    const parsedId = VerifyPhoneOtpBody.shape.challengeId.safeParse(
+      (req.body as { challengeId?: unknown }).challengeId,
+    );
+    if (parsedId.success) challengeId = parsedId.data;
+  }
+
+  if (challengeId) {
+    const [challengeIdentity] = await db
+      .select({
+        phoneHash: phoneOtpChallengesTable.phoneHash,
+        requesterHash: phoneOtpChallengesTable.requesterHash,
+      })
+      .from(phoneOtpChallengesTable)
+      .where(eq(phoneOtpChallengesTable.id, challengeId))
+      .limit(1);
+    if (challengeIdentity) {
+      return getCustomerAccessAttemptBuckets(
+        challengeIdentity.phoneHash,
+        challengeIdentity.requesterHash,
+      );
+    }
+  }
+
+  return getCustomerAccessAttemptBucketsForRequest(null, requesterAddress(req));
+}
+
+async function isSignupRateLimited(
+  req: Parameters<typeof requesterAddress>[0],
+  res: Response,
+  buckets: string[],
+) {
+  try {
+    const retry = await withAuthAttemptLock(buckets, (tx) => getAuthRateLimit(buckets, new Date(), tx));
+    if (retry === null) return false;
+    sendRateLimitResponse(res, formatAuthRateLimitMessage(retry), retry);
+    return true;
+  } catch (error) {
+    req.log.error({ err: error }, "Signup rate-limit lookup failed");
+    res.status(503).json({ error: "La vérification du compte est momentanément indisponible." });
+    return true;
+  }
+}
+
+async function recordSignupFailure(
+  req: Parameters<typeof requesterAddress>[0],
+  res: Response,
+  buckets: string[],
+) {
+  try {
+    const retry = await recordAuthFailureAndGetRetryAfter(
+      buckets,
+      new Date(),
+      CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
+    );
+    if (retry === null) return false;
+    sendRateLimitResponse(res, formatAuthRateLimitMessage(retry), retry);
+    return true;
+  } catch (error) {
+    req.log.error({ err: error }, "Signup rate-limit storage failed");
+    res.status(503).json({ error: "La vérification du compte est momentanément indisponible." });
+    return true;
+  }
 }
 
 function safeProviderErrorResponse(
@@ -133,19 +221,18 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
 
   const parsed = SendPhoneOtpBody.safeParse(req.body);
   if (!parsed.success) {
+    if (hasSignupPurpose(req.body)) {
+      try {
+        const buckets = getCustomerAccessAttemptBucketsForRequest(null, requesterAddress(req));
+        if (await recordSignupFailure(req, res, buckets)) return;
+      } catch (error) {
+        req.log.error({ err: error }, "Invalid signup OTP request could not be rate-limited");
+        res.status(503).json({ error: "La vérification du compte est momentanément indisponible." });
+        return;
+      }
+    }
     res.status(400).json({ error: "Numéro de téléphone invalide." });
     return;
-  }
-
-  let esms;
-  try {
-    esms = getEsmsVerifyClient();
-  } catch (error) {
-    if (error instanceof EsmsConfigurationError) {
-      res.status(503).json({ error: "Le service de vérification SMS n'est pas configuré." });
-      return;
-    }
-    throw error;
   }
 
   let phoneHash: string;
@@ -159,23 +246,62 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     return;
   }
 
+  let signupBuckets: string[] | null = null;
+  if (parsed.data.purpose === "signup") {
+    try {
+      signupBuckets = getCustomerAccessAttemptBuckets(phoneHash, requesterHash);
+      if (await isSignupRateLimited(req, res, signupBuckets)) return;
+    } catch (error) {
+      req.log.error({ err: error }, "Signup OTP rate-limit identity could not be computed");
+      res.status(503).json({ error: "La vérification du compte est momentanément indisponible." });
+      return;
+    }
+  }
+
+  let esms;
+  try {
+    esms = getEsmsVerifyClient();
+  } catch (error) {
+    if (error instanceof EsmsConfigurationError) {
+      res.status(503).json({ error: "Le service de vérification SMS n'est pas configuré." });
+      return;
+    }
+    throw error;
+  }
+
   const now = new Date();
   const hourAgo = new Date(now.getTime() - HOUR_MS);
   const expiresAt = new Date(now.getTime() + OTP_LIFETIME_SECONDS * 1000);
   const resendAt = new Date(now.getTime() + RESEND_COOLDOWN_SECONDS * 1000);
 
   let reservation:
-    | { rateLimited: true; retryAfterSeconds: number; reason: "cooldown" | "phone" | "requester" }
+    | {
+        rateLimited: true;
+        retryAfterSeconds: number;
+        reason: "cooldown" | "phone" | "requester" | "account";
+      }
     | { rateLimited: false; id: string; eventId: string };
 
   try {
     reservation = await db.transaction(async (tx) => {
       const lockKeys = [
+        ...(signupBuckets ?? []),
         `sendflow-otp-phone:${phoneHash}`,
         `sendflow-otp-requester:${requesterHash}`,
       ].sort();
       for (const lockKey of lockKeys) {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
+      }
+
+      if (signupBuckets) {
+        const accountRetry = await getAuthRateLimit(signupBuckets, now, tx);
+        if (accountRetry !== null) {
+          return {
+            rateLimited: true,
+            retryAfterSeconds: accountRetry,
+            reason: "account",
+          } as const;
+        }
       }
 
       await tx
@@ -294,9 +420,11 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   }
 
   if (reservation.rateLimited) {
-    const message = reservation.reason === "cooldown"
-      ? "Attendez avant de demander un nouveau code."
-      : "Trop de demandes de code. Réessayez plus tard.";
+    const message = reservation.reason === "account"
+      ? formatAuthRateLimitMessage(reservation.retryAfterSeconds)
+      : reservation.reason === "cooldown"
+        ? "Attendez avant de demander un nouveau code."
+        : "Trop de demandes de code. Réessayez plus tard.";
     sendRateLimitResponse(res, message, reservation.retryAfterSeconds);
     return;
   }
@@ -407,8 +535,30 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
 
   const parsed = VerifyPhoneOtpBody.safeParse(req.body);
   if (!parsed.success) {
+    if (hasSignupPurpose(req.body)) {
+      try {
+        const buckets = await getSignupAttemptBucketsForVerifyRequest(req);
+        if (await recordSignupFailure(req, res, buckets)) return;
+      } catch (error) {
+        req.log.error({ err: error }, "Invalid signup OTP check could not be rate-limited");
+        res.status(503).json({ error: "La vérification du compte est momentanément indisponible." });
+        return;
+      }
+    }
     res.status(400).json({ error: "Code de vérification invalide." });
     return;
+  }
+
+  let signupBuckets: string[] | null = null;
+  if (parsed.data.purpose === "signup") {
+    try {
+      signupBuckets = await getSignupAttemptBucketsForVerifyRequest(req);
+    } catch (error) {
+      req.log.error({ err: error }, "Signup OTP rate-limit identity lookup failed");
+      res.status(503).json({ error: "La vérification du compte est momentanément indisponible." });
+      return;
+    }
+    if (await isSignupRateLimited(req, res, signupBuckets)) return;
   }
 
   let esms;
@@ -423,14 +573,17 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
   }
 
   const now = new Date();
+  const maxCodeChecks = parsed.data.purpose === "signup"
+    ? MAX_SIGNUP_CODE_CHECKS
+    : MAX_CODE_CHECKS;
   let reservation:
     | { kind: "missing" }
+    | { kind: "rate"; retry: number }
     | { kind: "expired" | "locked" | "inactive"; eventId: string }
     | { kind: "verified"; verifiedAt: Date; eventId: string }
     | { kind: "check"; verificationId: string; attemptNumber: number; eventId: string };
 
-  try {
-    reservation = await db.transaction(async (tx) => {
+  const reserveVerification = async (tx: AuthRateLimitDatabase) => {
       const [challenge] = await tx
         .select()
         .from(phoneOtpChallengesTable)
@@ -486,7 +639,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
 
       if (
         challenge.status === "locked"
-        || (challenge.status === "pending" && challenge.checkAttempts >= MAX_CODE_CHECKS)
+        || (challenge.status === "pending" && challenge.checkAttempts >= maxCodeChecks)
       ) {
         await tx
           .update(phoneOtpChallengesTable)
@@ -514,11 +667,32 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         attemptNumber,
         eventId,
       } as const;
-    });
+  };
+
+  try {
+    if (signupBuckets) {
+      const buckets = signupBuckets;
+      reservation = await withAuthAttemptLock(buckets, async (tx) => {
+        const retry = await getAuthRateLimit(buckets, new Date(), tx);
+        if (retry !== null) return { kind: "rate", retry } as const;
+        return reserveVerification(tx);
+      });
+    } else {
+      reservation = await db.transaction(reserveVerification);
+    }
   } catch (error) {
     req.log.error({ err: error }, "Phone OTP verification reservation failed");
     res.status(503).json({ error: "Le service de vérification SMS est indisponible." });
     return;
+  }
+
+  if (reservation.kind === "rate") {
+    sendRateLimitResponse(res, formatAuthRateLimitMessage(reservation.retry), reservation.retry);
+    return;
+  }
+
+  if (reservation.kind === "missing" || reservation.kind === "inactive" || reservation.kind === "expired" || reservation.kind === "locked") {
+    if (signupBuckets && await recordSignupFailure(req, res, signupBuckets)) return;
   }
 
   if (reservation.kind === "missing" || reservation.kind === "inactive") {
@@ -595,7 +769,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
   if (!providerResult.approved) {
     try {
       await db.transaction(async (tx) => {
-        if (reservation.attemptNumber >= MAX_CODE_CHECKS) {
+        if (reservation.attemptNumber >= maxCodeChecks) {
           await tx
             .update(phoneOtpChallengesTable)
             .set({ status: "locked" })
@@ -603,7 +777,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
               and(
                 eq(phoneOtpChallengesTable.id, parsed.data.challengeId),
                 eq(phoneOtpChallengesTable.status, "pending"),
-                gte(phoneOtpChallengesTable.checkAttempts, MAX_CODE_CHECKS),
+              gte(phoneOtpChallengesTable.checkAttempts, maxCodeChecks),
               ),
             );
         }
@@ -636,7 +810,9 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       return;
     }
 
-    if (reservation.attemptNumber >= MAX_CODE_CHECKS) {
+    if (signupBuckets && await recordSignupFailure(req, res, signupBuckets)) return;
+
+    if (reservation.attemptNumber >= maxCodeChecks) {
       res.status(409).json({ error: "Trop de codes incorrects. Demandez un nouveau code." });
       return;
     }
@@ -646,7 +822,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
 
   try {
     const verifiedAt = new Date();
-    const outcome = await db.transaction(async (tx) => {
+    const finalizeVerification = async (tx: AuthRateLimitDatabase) => {
       const [challenge] = await tx
         .select()
         .from(phoneOtpChallengesTable)
@@ -742,7 +918,50 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
 
       if (!updatedEvent) throw new Error("OTP activity event could not be updated");
       return { kind: "verified", verifiedAt: updated.verifiedAt } as const;
-    });
+    };
+
+    let outcome:
+      | { kind: "inactive" }
+      | { kind: "verified"; verifiedAt: Date }
+      | { kind: "rate"; retry: number };
+
+    if (signupBuckets) {
+      outcome = await withAuthAttemptLock(signupBuckets, async (tx) => {
+        const retry = await getAuthRateLimit(signupBuckets, new Date(), tx);
+        if (retry !== null) {
+          await tx
+            .update(phoneOtpChallengesTable)
+            .set({ status: "locked" })
+            .where(
+              and(
+                eq(phoneOtpChallengesTable.id, parsed.data.challengeId),
+                eq(phoneOtpChallengesTable.status, "pending"),
+              ),
+            );
+
+          const [updatedEvent] = await tx
+            .update(phoneOtpEventsTable)
+            .set({
+              outcome: "challenge_locked",
+              providerHttpStatus: providerResult.statusCode,
+              diagnosticMessage: "Customer access was rate-limited during OTP verification.",
+              completedAt: new Date(),
+            })
+            .where(eq(phoneOtpEventsTable.id, reservation.eventId))
+            .returning({ id: phoneOtpEventsTable.id });
+          if (!updatedEvent) throw new Error("OTP activity event could not be updated");
+          return { kind: "rate", retry } as const;
+        }
+        return finalizeVerification(tx);
+      });
+    } else {
+      outcome = await db.transaction(finalizeVerification);
+    }
+
+    if (outcome.kind === "rate") {
+      sendRateLimitResponse(res, formatAuthRateLimitMessage(outcome.retry), outcome.retry);
+      return;
+    }
 
     if (outcome.kind !== "verified") {
       res.status(409).json({ error: "Cette vérification n'est plus active. Demandez un nouveau code." });

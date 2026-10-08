@@ -26,9 +26,14 @@ import {
   UnlockCustomerSessionResponse,
 } from "@workspace/api-zod";
 import {
+  CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
   clearAuthFailures,
+  getCustomerAccessAttemptBucketsForRequest,
   getAuthRateLimit,
+  formatAuthRateLimitMessage,
   recordAuthFailure,
+  recordAuthFailureAndGetRetryAfter,
+  withAuthAttemptLock,
   withPinAttemptLock,
 } from "../lib/customer-auth-rate-limit";
 import { hashCustomerSecret, hashCustomerSessionToken, verifyCustomerSecret } from "../lib/customer-auth-crypto";
@@ -57,7 +62,7 @@ function safeErrorCode(error: unknown) {
 
 function sendRateLimit(res: Response, seconds: number) {
   res.status(429).json({
-    error: "Trop de tentatives. Réessayez plus tard.",
+    error: formatAuthRateLimitMessage(seconds),
     retryAfterSeconds: Math.max(1, seconds),
   });
 }
@@ -79,11 +84,25 @@ function isAdultBirthDate(value: string, now = new Date()) {
   return parsed.getTime() <= cutoff.getTime();
 }
 
-function getLoginAttemptBuckets(phone: string, req: Parameters<typeof requesterAddress>[0]) {
+function getLoginAttemptBuckets(phone: string | null, req: Parameters<typeof requesterAddress>[0]) {
+  const address = requesterAddress(req);
   return [
-    fingerprint(`customer-login-phone:${phone}`),
-    fingerprint(`customer-login-requester:${requesterAddress(req)}`),
+    ...getCustomerAccessAttemptBucketsForRequest(phone, address),
+    ...(phone ? [fingerprint(`customer-login-phone:${phone}`)] : []),
+    fingerprint(`customer-login-requester:${address}`),
   ];
+}
+
+function getSignupPhoneFromBody(body: unknown) {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const phone = RegisterCustomerBody.shape.phone.safeParse((body as { phone?: unknown }).phone);
+  return phone.success ? phone.data : null;
+}
+
+function getLoginPhoneFromBody(body: unknown) {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const phone = SignInCustomerBody.shape.phone.safeParse((body as { phone?: unknown }).phone);
+  return phone.success ? phone.data : null;
 }
 
 function getPinAttemptBuckets(userId: string, req: Parameters<typeof requesterAddress>[0]) {
@@ -100,46 +119,46 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }
 
   const parsed = RegisterCustomerBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Vérifiez les informations du compte." });
-    return;
-  }
-
-  const fullName = formatName(parsed.data.fullName);
-  const birthDate = parsed.data.birthDate.toISOString().slice(0, 10);
-  if (
-    fullName.length < 2
-    || fullName.length > 120
-    || fullName.split(" ").filter(Boolean).length < 2
-    || !/\p{L}/u.test(fullName)
-    || !isAdultBirthDate(birthDate)
-    || parsed.data.acceptedPrivacy !== true
-  ) {
-    res.status(400).json({ error: "Vérifiez le nom, la date de naissance et l’acceptation de la politique." });
-    return;
-  }
-
-  const now = new Date();
+  const phone = parsed.success ? parsed.data.phone : getSignupPhoneFromBody(req.body);
+  let buckets: string[] = [];
   try {
-    const [currentSetting] = await db.select({
-      smsVerificationEnabled: registrationSettingsTable.smsVerificationEnabled,
-    }).from(registrationSettingsTable).where(eq(registrationSettingsTable.id, "signup")).limit(1);
-    if (!currentSetting) throw new Error("Signup setting is missing");
-    if (!currentSetting.smsVerificationEnabled) {
-      const buckets = [
-        fingerprint(`signup-no-sms-phone:${parsed.data.phone}`),
-        fingerprint(`signup-no-sms-requester:${requesterAddress(req)}`),
-      ];
-      const retry = await getAuthRateLimit(buckets);
-      if (retry !== null) {
-        sendRateLimit(res, retry);
-        return;
-      }
-      // Count attempts even if the phone is already in use; OTP rate limits do not apply here.
-      await recordAuthFailure(buckets);
+    buckets = getCustomerAccessAttemptBucketsForRequest(phone, requesterAddress(req));
+    const preliminaryRetry = await getAuthRateLimit(buckets);
+    if (preliminaryRetry !== null) {
+      sendRateLimit(res, preliminaryRetry);
+      return;
     }
-    const passwordHash = await hashCustomerSecret(parsed.data.password);
-    const sessionTokenAndAccount = await db.transaction(async (tx) => {
+
+    const normalizedName = parsed.success ? formatName(parsed.data.fullName) : "";
+    const birthDate = parsed.success ? parsed.data.birthDate.toISOString().slice(0, 10) : "";
+    const profileIsValid = parsed.success
+      && normalizedName.length >= 2
+      && normalizedName.length <= 120
+      && normalizedName.split(" ").filter(Boolean).length >= 2
+      && /\p{L}/u.test(normalizedName)
+      && isAdultBirthDate(birthDate)
+      && parsed.data.acceptedPrivacy === true;
+
+    const signupResult = await withAuthAttemptLock(buckets, async (tx) => {
+      const now = new Date();
+      const retry = await getAuthRateLimit(buckets, now, tx);
+      if (retry !== null) return { kind: "rate", retry } as const;
+
+      const registerFailure = async (kind: "invalid-body" | "invalid-profile" | "invalid-challenge" | "exists") => {
+        const retryAfter = await recordAuthFailureAndGetRetryAfter(
+          buckets,
+          now,
+          CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
+          tx,
+        );
+        return retryAfter !== null
+          ? { kind: "rate", retry: retryAfter } as const
+          : { kind } as const;
+      };
+
+      if (!parsed.success) return registerFailure("invalid-body");
+      if (!profileIsValid) return registerFailure("invalid-profile");
+
       // A shared row lock serializes signup with an administrator switching the policy.
       const [setting] = await tx.select()
         .from(registrationSettingsTable)
@@ -149,13 +168,13 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       const requiresOtp = setting.smsVerificationEnabled;
       let challenge: { id: string } | undefined;
       if (requiresOtp) {
-        if (!parsed.data.challengeId) return { kind: "invalid" } as const;
+        if (!parsed.data.challengeId) return registerFailure("invalid-challenge");
         [challenge] = await tx
           .select({ id: phoneOtpChallengesTable.id })
           .from(phoneOtpChallengesTable)
           .where(verifiedCustomerOtpCondition(parsed.data.challengeId, parsed.data.phone, "signup", now))
           .for("update");
-        if (!challenge) return { kind: "invalid" } as const;
+        if (!challenge) return registerFailure("invalid-challenge");
       }
 
       const [existingUser] = await tx
@@ -171,8 +190,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
           .where(eq(phoneOtpChallengesTable.id, challenge.id));
       }
 
-      if (existingUser) return { kind: "exists" } as const;
+      if (existingUser) return registerFailure("exists");
 
+      const passwordHash = await hashCustomerSecret(parsed.data.password);
       const userId = randomUUID();
       const [user] = await tx
         .insert(usersTable)
@@ -180,7 +200,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
           id: userId,
           phone: parsed.data.phone,
           phoneVerifiedAt: requiresOtp ? now : null,
-          displayName: fullName,
+          displayName: normalizedName,
           countryCode: parsed.data.countryCode ?? null,
           birthDate,
           lastSeenAt: now,
@@ -209,6 +229,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
       const session = await insertCustomerSession(tx, userId, now);
       await recordLoginActivity(req, userId, session.sessionId, tx);
+      await clearAuthFailures(buckets, tx);
 
       return {
         kind: "created",
@@ -223,19 +244,41 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       } as const;
     });
 
-    if (sessionTokenAndAccount.kind === "invalid") {
+    if (signupResult.kind === "rate") {
+      sendRateLimit(res, signupResult.retry);
+      return;
+    }
+    if (signupResult.kind === "invalid-body") {
+      res.status(400).json({ error: "Vérifiez les informations du compte." });
+      return;
+    }
+    if (signupResult.kind === "invalid-profile") {
+      res.status(400).json({ error: "Vérifiez le nom, la date de naissance et l’acceptation de la politique." });
+      return;
+    }
+    if (signupResult.kind === "invalid-challenge") {
       res.status(409).json({ error: "La vérification du téléphone a expiré ou a déjà été utilisée." });
       return;
     }
-    if (sessionTokenAndAccount.kind === "exists") {
+    if (signupResult.kind === "exists") {
       res.status(409).json({ error: "Ce numéro est déjà associé à un compte. Connectez-vous ou réinitialisez votre code secret." });
       return;
     }
+    if (signupResult.kind !== "created") return;
 
-    setCustomerSessionCookie(res, sessionTokenAndAccount.session.token);
-    res.status(201).json(RegisterCustomerResponse.parse(sessionTokenAndAccount.account));
+    setCustomerSessionCookie(res, signupResult.session.token);
+    res.status(201).json(RegisterCustomerResponse.parse(signupResult.account));
   } catch (error) {
     if (safeErrorCode(error) === "23505") {
+      const retry = await recordAuthFailureAndGetRetryAfter(
+        buckets,
+        new Date(),
+        CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
+      );
+      if (retry !== null) {
+        sendRateLimit(res, retry);
+        return;
+      }
       res.status(409).json({ error: "Ce numéro est déjà associé à un compte. Connectez-vous ou réinitialisez votre code secret." });
       return;
     }
@@ -252,49 +295,35 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
 
   const parsed = SignInCustomerBody.safeParse(req.body);
   if (!parsed.success) {
+    try {
+      const phone = getLoginPhoneFromBody(req.body);
+      const buckets = getLoginAttemptBuckets(phone, req);
+      const retry = await recordAuthFailureAndGetRetryAfter(
+        buckets,
+        new Date(),
+        CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
+      );
+      if (retry !== null) {
+        sendRateLimit(res, retry);
+        return;
+      }
+    } catch (error) {
+      req.log.error({ errorCode: safeErrorCode(error) }, "Customer sign-in rate-limit storage failed");
+      res.status(503).json({ error: "La connexion est momentanément indisponible." });
+      return;
+    }
     res.status(400).json({ error: "Numéro ou code secret invalide." });
     return;
   }
 
   try {
     const buckets = getLoginAttemptBuckets(parsed.data.phone, req);
-    const retry = await getAuthRateLimit(buckets);
-    if (retry !== null) {
-      sendRateLimit(res, retry);
-      return;
-    }
+    const result = await withAuthAttemptLock(buckets, async (tx) => {
+      const now = new Date();
+      const retry = await getAuthRateLimit(buckets, now, tx);
+      if (retry !== null) return { kind: "rate", retry } as const;
 
-    const [record] = await db
-      .select({
-        userId: usersTable.id,
-        phone: usersTable.phone,
-        displayName: usersTable.displayName,
-        countryCode: usersTable.countryCode,
-        accountStatus: usersTable.status,
-        passwordHash: customerCredentialsTable.passwordHash,
-        pinHash: customerCredentialsTable.pinHash,
-      })
-      .from(usersTable)
-      .innerJoin(customerCredentialsTable, eq(customerCredentialsTable.userId, usersTable.id))
-      .where(eq(usersTable.phone, parsed.data.phone))
-      .limit(1);
-
-    const encodedHash = record?.passwordHash ?? await DUMMY_PASSWORD_HASH;
-    const validPassword = await verifyCustomerSecret(parsed.data.password, encodedHash);
-    if (!record || record.accountStatus !== "active" || !validPassword) {
-      await recordAuthFailure(buckets);
-      const retryAfterFailure = await getAuthRateLimit(buckets);
-      if (retryAfterFailure !== null) {
-        sendRateLimit(res, retryAfterFailure);
-        return;
-      }
-      res.status(401).json({ error: "Numéro ou code secret incorrect." });
-      return;
-    }
-
-    const now = new Date();
-    const result = await db.transaction(async (tx) => {
-      const [freshRecord] = await tx
+      const [record] = await tx
         .select({
           userId: usersTable.id,
           phone: usersTable.phone,
@@ -306,45 +335,53 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         })
         .from(usersTable)
         .innerJoin(customerCredentialsTable, eq(customerCredentialsTable.userId, usersTable.id))
-        .where(eq(usersTable.id, record.userId))
+        .where(eq(usersTable.phone, parsed.data.phone))
         .for("update");
 
-      if (
-        !freshRecord
-        || freshRecord.accountStatus !== "active"
-        || freshRecord.passwordHash !== record.passwordHash
-        || freshRecord.phone !== parsed.data.phone
-      ) {
-        return { kind: "invalid" } as const;
+      const encodedHash = record?.passwordHash ?? await DUMMY_PASSWORD_HASH;
+      const validPassword = await verifyCustomerSecret(parsed.data.password, encodedHash);
+      if (!record || record.accountStatus !== "active" || !validPassword) {
+        const retryAfterFailure = await recordAuthFailureAndGetRetryAfter(
+          buckets,
+          now,
+          CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
+          tx,
+        );
+        return retryAfterFailure !== null
+          ? { kind: "rate", retry: retryAfterFailure } as const
+          : { kind: "invalid" } as const;
       }
 
       await tx
         .update(usersTable)
         .set({ lastSeenAt: now })
-        .where(eq(usersTable.id, freshRecord.userId));
-      const session = await insertCustomerSession(tx, freshRecord.userId, now);
-      await recordLoginActivity(req, freshRecord.userId, session.sessionId, tx);
+        .where(eq(usersTable.id, record.userId));
+      const session = await insertCustomerSession(tx, record.userId, now);
+      await recordLoginActivity(req, record.userId, session.sessionId, tx);
+      await clearAuthFailures(buckets, tx);
 
       return {
         kind: "signed-in",
         session,
         account: {
-          userId: freshRecord.userId,
-          phone: freshRecord.phone,
-          displayName: freshRecord.displayName,
-          countryCode: freshRecord.countryCode,
-          pinConfigured: freshRecord.pinHash !== null,
+          userId: record.userId,
+          phone: record.phone,
+          displayName: record.displayName,
+          countryCode: record.countryCode,
+          pinConfigured: record.pinHash !== null,
         },
       } as const;
     });
 
+    if (result.kind === "rate") {
+      sendRateLimit(res, result.retry);
+      return;
+    }
     if (result.kind !== "signed-in") {
-      await recordAuthFailure(buckets);
       res.status(401).json({ error: "Numéro ou code secret incorrect." });
       return;
     }
 
-    await clearAuthFailures(buckets);
     setCustomerSessionCookie(res, result.session.token);
     res.json(SignInCustomerResponse.parse(result.account));
   } catch (error) {

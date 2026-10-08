@@ -15,7 +15,10 @@ import {
   ResetCustomerPinBody,
   ResetCustomerPinResponse,
 } from "@workspace/api-zod";
-import { clearAuthFailures } from "../lib/customer-auth-rate-limit";
+import {
+  clearAuthFailures,
+  getCustomerAccessPhoneAttemptBucket,
+} from "../lib/customer-auth-rate-limit";
 import { hashCustomerSecret } from "../lib/customer-auth-crypto";
 import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
 import { fingerprint, isTrustedOrigin } from "../lib/request-security";
@@ -119,7 +122,10 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     }
 
     if (result.userId) {
-      await clearAuthFailures([fingerprint(`customer-login-phone:${parsed.data.phone}`)]);
+      await clearAuthFailures([
+        getCustomerAccessPhoneAttemptBucket(fingerprint(`phone:${parsed.data.phone}`)),
+        fingerprint(`customer-login-phone:${parsed.data.phone}`),
+      ]);
     }
     res.json(ResetCustomerPasswordResponse.parse({ success: true }));
   } catch (error) {

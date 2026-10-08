@@ -70,7 +70,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "429":
-          description: Phone or requester has reached an OTP send limit.
+          description: Phone or requester has reached an OTP send limit, or signup is temporarily locked after three failed attempts.
           content:
             application/json:
               schema:
@@ -125,7 +125,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "429":
-          description: The OTP provider has temporarily limited verification checks.
+          description: The OTP provider has limited verification checks, or signup is locked after three failed attempts.
           content:
             application/json:
               schema:
@@ -191,6 +191,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Too many invalid sign-up attempts; retryAfterSeconds gives the remaining lockout time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpRateLimitError"
         "503":
           description: Account storage is unavailable.
           content:
@@ -229,7 +235,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "429":
-          description: Too many sign-in attempts.
+          description: Three failed sign-in attempts lock the phone and requester for 20 minutes.
           content:
             application/json:
               schema:

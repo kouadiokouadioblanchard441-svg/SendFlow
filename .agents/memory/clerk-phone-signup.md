@@ -8,3 +8,9 @@ Customer accounts use eSMS Verify phone OTP for signup, password recovery, and P
 **Why:** The user selected phone + eSMS customer accounts and sessions while keeping Clerk for admins. Client-side identity state cannot authenticate protected API requests.
 
 **How to apply:** Keep OTP/provider requests server-side and derive identity only from the validated session cookie. Never treat browser-supplied user IDs or local PIN state as authentication. Do not send real paid SMS during tests.
+
+For the shared customer login/signup lockout, successful signup OTP verification alone does not clear failed attempts; only a successful login or completed account creation does.
+
+**Why:** OTP verification is an intermediate signup step, not proof that the full authentication flow succeeded. Clearing the counter there would let repeated signup attempts erase the shared lockout.
+
+**How to apply:** Keep failure-counter resets at completed login or account creation, not at OTP approval.
