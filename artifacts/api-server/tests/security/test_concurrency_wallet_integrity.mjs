@@ -121,6 +121,11 @@ function adjustment(overrides = {}) {
   };
 }
 
+function checkConstraintMentions(source, field, operator) {
+  const checks = [...source.matchAll(/check\s*\([\s\S]*?\)/g)].map(([block]) => block);
+  return checks.some((block) => block.includes(field) && operator.test(block));
+}
+
 test("1,000 concurrent stale-balance requests cannot overdraw or lose a wallet update", async () => {
   assert.match(adminActions, /db\.transaction\(async \(tx\)/);
   assert.match(adminActions, /\.from\(walletsTable\)[\s\S]*?\.for\("update"\)/);
@@ -188,8 +193,15 @@ test("malformed and out-of-range values do not mutate wallet state; database con
   assert.equal(wallet.entries.length, 0);
 
   // Red baseline: current application validation exists, but SQL-level checks do not.
-  assert.match(walletSchema, /check\([\s\S]*?balanceMinor[\s\S]*?>=\s*0/);
-  assert.match(transactionSchema, /check\([\s\S]*?amountMinor[\s\S]*?>\s*0/);
-  assert.match(transactionSchema, /check\([\s\S]*?feeMinor[\s\S]*?>=\s*0/);
-  assert.match(ledgerSchema, /check\([\s\S]*?amountMinor[\s\S]*?>\s*0/);
+  const missingConstraints = [
+    !checkConstraintMentions(walletSchema, "balanceMinor", />=\s*0/) && "sf_wallets.balance_minor >= 0",
+    !checkConstraintMentions(transactionSchema, "amountMinor", />\s*0/) && "sf_transactions.amount_minor > 0",
+    !checkConstraintMentions(transactionSchema, "feeMinor", />=\s*0/) && "sf_transactions.fee_minor >= 0",
+    !checkConstraintMentions(ledgerSchema, "amountMinor", />\s*0/) && "sf_wallet_ledger.amount_minor > 0",
+  ].filter(Boolean);
+  assert.deepEqual(
+    missingConstraints,
+    [],
+    `Missing database CHECK constraints: ${missingConstraints.join(", ")}`,
+  );
 });
