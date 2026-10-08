@@ -3,16 +3,28 @@
 ## Project Overview
 
 SendFlow is a mobile-first financial transfer application with a React frontend,
-an Express API, Clerk authentication, and PostgreSQL storage. Didit is used by
-the API server for development identity verification. The current integration
-is intended for Didit sandbox testing only and must not be treated as a
-production money-movement authorization until authentication, verification
-policy, and transfer controls are fully implemented and tested.
+an Express API, and PostgreSQL storage. Customer accounts use phone/password
+authentication, eSMS Verify for signup and recovery, and server-owned opaque
+sessions. Clerk is used for administrator authentication, not as the customer
+identity mechanism. Didit is used by the API server for development identity
+verification and must not be treated as production money-movement authorization.
+
+The detailed baseline for customer OTP and authentication, including observed
+controls, exploitable conditions that still need attack tests, and security
+invariants, is maintained in [SECURITY-THREAT-MODEL.md](SECURITY-THREAT-MODEL.md).
 
 ## Assets
 
 - **Clerk sessions and account identity** — compromise could expose or alter a
   user's wallet, identity status, and transfer permissions.
+- **Customer phone, password/PIN hashes, and account profile** — phone numbers
+  are used as customer identifiers; the database stores them in plaintext,
+  while passwords and PINs are stored as salted scrypt hashes.
+- **Customer bearer sessions and OTP challenges** — a stolen session cookie can
+  impersonate a customer until expiry or revocation; a verified challenge can
+  authorize signup or a recovery action for its declared purpose.
+- **OTP and login security state** — attempt counters, challenge state, and
+  login activity support abuse controls and incident investigation.
 - **Didit credentials and webhook secret** — compromise could create fraudulent
   verification sessions or forge verification status events.
 - **Identity verification state** — determines whether the account may receive
@@ -28,6 +40,15 @@ policy, and transfer controls are fully implemented and tested.
 
 - **Browser to API** — the browser is untrusted; every account and verification
   operation must be authenticated and authorized by the API.
+- **Public auth endpoints to customer identity** — signup, sign-in, OTP, and
+  recovery routes are Internet-facing; Origin validation is a CSRF control, not
+  proof that a request came from a human or trusted client.
+- **API to eSMS Verify** — customer phone numbers and OTP checks cross to a
+  third-party provider; the provider response is trusted only after the API
+  validates its shape and status.
+- **Customer session to protected API** — the API derives the customer identity
+  from a validated, database-backed cookie, never from a browser-supplied user
+  identifier.
 - **Didit to API webhook** — the public webhook accepts only payloads with a
   valid `X-Signature-V2`; payload fields are not trusted before validation.
 - **API to Didit** — API credentials stay server-side, outbound requests use a
@@ -40,6 +61,12 @@ policy, and transfer controls are fully implemented and tested.
 ## Scan Anchors
 
 - **Production API entry point:** `artifacts/api-server/src/app.ts`
+- **Customer auth/OTP entry points:** `artifacts/api-server/src/routes/customer-auth.ts`,
+  `customer-recovery.ts`, and `phone-otp.ts`
+- **Customer session and OTP controls:** `artifacts/api-server/src/lib/customer-session.ts`,
+  `customer-auth-rate-limit.ts`, and `customer-auth-otp.ts`
+- **Customer auth persistence:** `lib/db/src/schema/customer-credentials.ts`,
+  `customer-sessions.ts`, `phone-otp-challenges.ts`, and `phone-otp-events.ts`
 - **Highest-risk provider code:** `artifacts/api-server/src/lib/didit.ts`
 - **Highest-risk routes:** `artifacts/api-server/src/routes/identity-verification.ts`
 - **Identity persistence:** `lib/db/src/schema/identity-verification.ts`
@@ -49,6 +76,10 @@ policy, and transfer controls are fully implemented and tested.
   `artifacts/sendflow/src/pages/account-limit.tsx`
 
 ## Threat Categories
+
+The customer authentication and OTP flows have a separate, evidence-based
+STRIDE assessment in `SECURITY-THREAT-MODEL.md`. It is a static baseline, not a
+claim that the controls have passed route-level or production attack testing.
 
 ### Spoofing
 
