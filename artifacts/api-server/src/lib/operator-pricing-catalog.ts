@@ -4,6 +4,7 @@ import {
   operatorPricingRatesTable,
 } from "@workspace/db";
 import { aggregatorCountryCatalog } from "../routes/aggregator-catalog";
+import { shouldSeedOperatorPricingCatalog } from "./operator-pricing-seed-policy";
 
 export const pricingCategories = [
   {
@@ -107,6 +108,8 @@ const initialRates = initialOperators.flatMap((operator) =>
 let seedPromise: Promise<void> | undefined;
 
 export async function ensureOperatorPricingSeeded(): Promise<void> {
+  if (!shouldSeedOperatorPricingCatalog(process.env)) return;
+
   if (!seedPromise) {
     seedPromise = (async () => {
       const [existingOperator] = await db

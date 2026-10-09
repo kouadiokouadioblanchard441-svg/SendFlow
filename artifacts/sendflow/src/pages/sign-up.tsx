@@ -208,12 +208,12 @@ export default function SignupPage() {
     setVerificationError('');
   };
 
-  const savePendingSignup = () => {
+  const savePendingSignup = (userId: string) => {
     saveAccountCountry(signupCountry);
     saveAccountProfile({
       ...splitFullName(form.fullName),
       birthDate: form.birthDate,
-    });
+    }, userId);
     window.sessionStorage.setItem('sendflow.pending-signup', 'true');
   };
 
@@ -246,7 +246,7 @@ export default function SignupPage() {
       if (refreshed.data.smsVerificationEnabled) {
         await sendCode();
       } else {
-        await registerCustomer.mutateAsync({
+        const account = await registerCustomer.mutateAsync({
           data: {
             phone: e164Phone,
             fullName: form.fullName.trim().replace(/\s+/g, ' '),
@@ -255,7 +255,7 @@ export default function SignupPage() {
             acceptedPrivacy: true,
           },
         });
-        savePendingSignup();
+        savePendingSignup(account.userId);
         setVerifiedOnSignup(false);
         setSubmitted(true);
         setStep('success');
@@ -284,7 +284,7 @@ export default function SignupPage() {
         setVerificationError('Le numéro n’a pas pu être vérifié. Vérifiez le code puis réessayez.');
         return;
       }
-      await registerCustomer.mutateAsync({
+      const account = await registerCustomer.mutateAsync({
         data: {
           challengeId,
           phone: e164Phone,
@@ -294,7 +294,7 @@ export default function SignupPage() {
           acceptedPrivacy: true,
         },
       });
-      savePendingSignup();
+      savePendingSignup(account.userId);
       setVerifiedOnSignup(true);
       setSubmitted(true);
       setStep('success');

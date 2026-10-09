@@ -5,6 +5,7 @@ export type AccountProfile = {
 };
 
 export const ACCOUNT_PROFILE_KEY = 'sendflow.account.profile';
+const ACCOUNT_PROFILE_STORAGE_PREFIX = `${ACCOUNT_PROFILE_KEY}:`;
 
 const DEFAULT_ACCOUNT_PROFILE: AccountProfile = {
   lastName: 'A.',
@@ -25,8 +26,21 @@ export function splitFullName(fullName: string): Pick<AccountProfile, 'lastName'
   };
 }
 
-export function readAccountProfile(): AccountProfile {
-  const storedProfile = window.localStorage.getItem(ACCOUNT_PROFILE_KEY);
+function getAccountProfileStorageKey(userId: string): string {
+  return `${ACCOUNT_PROFILE_STORAGE_PREFIX}${userId}`;
+}
+
+export function clearLegacyAccountProfile(): void {
+  window.localStorage.removeItem(ACCOUNT_PROFILE_KEY);
+}
+
+export function readAccountProfile(userId?: string): AccountProfile {
+  if (typeof userId !== 'string' || !userId.trim()) return DEFAULT_ACCOUNT_PROFILE;
+
+  // Old profiles have no account owner, so they cannot be safely migrated.
+  clearLegacyAccountProfile();
+  const storageKey = getAccountProfileStorageKey(userId);
+  const storedProfile = window.localStorage.getItem(storageKey);
   if (!storedProfile) return DEFAULT_ACCOUNT_PROFILE;
 
   try {
@@ -43,12 +57,20 @@ export function readAccountProfile(): AccountProfile {
       };
     }
   } catch {
-    window.localStorage.removeItem(ACCOUNT_PROFILE_KEY);
+    window.localStorage.removeItem(storageKey);
   }
 
   return DEFAULT_ACCOUNT_PROFILE;
 }
 
-export function saveAccountProfile(profile: AccountProfile) {
-  window.localStorage.setItem(ACCOUNT_PROFILE_KEY, JSON.stringify(profile));
+export function saveAccountProfile(profile: AccountProfile, userId: string): void {
+  if (!userId.trim()) {
+    throw new Error('A customer account is required to save profile information.');
+  }
+
+  clearLegacyAccountProfile();
+  window.localStorage.setItem(
+    getAccountProfileStorageKey(userId),
+    JSON.stringify(profile),
+  );
 }

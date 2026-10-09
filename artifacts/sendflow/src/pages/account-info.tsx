@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUser } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetAdminAccessStatusQueryKey,
+  getGetCurrentAccountQueryKey,
   useGetAdminAccessStatus,
+  useGetCurrentAccount,
 } from '@workspace/api-client-react';
 import { ArrowLeft, CalendarDays, Check, ShieldCheck } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
@@ -105,6 +107,7 @@ export default function AccountInfoPage() {
   const [, setLocation] = useLocation();
   const { isLoaded: clerkLoaded, user } = useUser();
   const queryClient = useQueryClient();
+  const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const adminAccessQuery = useGetAdminAccessStatus({
     query: {
       queryKey: getGetAdminAccessStatusQueryKey(),
@@ -114,13 +117,26 @@ export default function AccountInfoPage() {
       refetchOnWindowFocus: true,
     },
   });
+  const accountQuery = useGetCurrentAccount({
+    query: {
+      queryKey: getGetCurrentAccountQueryKey(),
+      enabled: isUnlocked,
+      retry: false,
+    },
+  });
   const [adminPinOpen, setAdminPinOpen] = useState(false);
-  const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountCountry = readAccountCountry();
   const [form, setForm] = useState<AccountProfile>(() => readAccountProfile());
+  const hasEditedProfile = useRef(false);
   const [touched, setTouched] = useState<Partial<Record<AccountProfileField, boolean>>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const userId = accountQuery.data?.userId;
+    if (!userId || hasEditedProfile.current) return;
+    setForm(readAccountProfile(userId));
+  }, [accountQuery.data?.userId]);
 
   useSeo({
     path: '/account-info',
@@ -131,13 +147,14 @@ export default function AccountInfoPage() {
   });
 
   const errors = useMemo(() => validateProfile(form), [form]);
-  const canSubmit = Object.keys(errors).length === 0;
+  const canSubmit = Object.keys(errors).length === 0 && Boolean(accountQuery.data?.userId);
   const visibleError = (field: AccountProfileField) =>
     (submitAttempted || touched[field]) ? errors[field] : undefined;
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
   const update = <K extends AccountProfileField>(key: K, value: AccountProfile[K]) => {
+    hasEditedProfile.current = true;
     setSaved(false);
     setForm((current) => ({ ...current, [key]: value }));
   };
@@ -145,14 +162,15 @@ export default function AccountInfoPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!canSubmit) return;
+    const userId = accountQuery.data?.userId;
+    if (!canSubmit || !userId) return;
 
     const normalizedProfile: AccountProfile = {
       lastName: form.lastName.trim().replace(/\s+/g, ' '),
       firstName: form.firstName.trim().replace(/\s+/g, ' '),
       birthDate: form.birthDate,
     };
-    saveAccountProfile(normalizedProfile);
+    saveAccountProfile(normalizedProfile, userId);
     setForm(normalizedProfile);
     setSaved(true);
   };

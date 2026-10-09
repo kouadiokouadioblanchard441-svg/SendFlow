@@ -7,6 +7,7 @@ import { validateSignIn, type SignInField } from '@/lib/auth-validation';
 import { useSignInCustomer } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearPinUnlock } from '@/lib/pin-unlock';
+import { clearLegacyAccountProfile } from '@/lib/account-profile';
 import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -71,6 +72,7 @@ export default function SigninPage() {
       const response = await signInCustomer.mutateAsync({
         data: { phone: `${phoneDialCode}${digits}`, password: form.password },
       });
+      clearLegacyAccountProfile();
       queryClient.clear();
       clearPinUnlock();
       setSubmitted(true);
