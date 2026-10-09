@@ -14,3 +14,9 @@ Didit's session webhook envelope includes an environment (`sandbox` or `live`) a
 **Why:** A status field alone does not establish that an event represents a verification status transition.
 
 **How to apply:** After signature and freshness checks, require an exact environment match and allow only `status.updated` into KYC schema validation and database processing. Acknowledge other signed event types without changing state.
+
+An `Approved` verification remains valid for account limits until an explicit revocation flow exists. Reuse that record rather than creating a new session; unfinished states, including `In Review`, should also be reused.
+
+**Why:** The customer flow only offers a retry after a failed verification and has no re-verification or revocation path. Starting another session after approval could replace the latest status and lower the customer's limit.
+
+**How to apply:** Prefer an existing approved record when returning identity status or account limits, and include all unfinished provider states in the session-reuse check. Revisit this only alongside an explicit, audited revocation or renewal feature.

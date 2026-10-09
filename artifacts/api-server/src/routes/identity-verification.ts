@@ -34,6 +34,10 @@ import {
   isDiditStatusUpdateEvent,
   isExpectedDiditWebhookEnvironment,
 } from "../lib/didit-webhook-policy";
+import {
+  ACTIVE_DIDIT_VERIFICATION_STATUSES,
+  isReusableDiditVerificationStatus,
+} from "../lib/didit-verification-policy";
 import { requireCustomerSession } from "../lib/customer-session";
 import { isTrustedOrigin } from "../lib/request-security";
 
@@ -76,14 +80,27 @@ router.get("/me/account-limit", async (req, res): Promise<void> => {
       return;
     }
 
-    const [verification] = await db
+    const [approvedVerification] = await db
       .select({ status: identityVerificationsTable.status })
       .from(identityVerificationsTable)
-      .where(eq(identityVerificationsTable.userId, userId))
+      .where(
+        and(
+          eq(identityVerificationsTable.userId, userId),
+          eq(identityVerificationsTable.status, "Approved"),
+        ),
+      )
       .orderBy(desc(identityVerificationsTable.createdAt))
       .limit(1);
+    const [latestVerification] = approvedVerification
+      ? [approvedVerification]
+      : await db
+          .select({ status: identityVerificationsTable.status })
+          .from(identityVerificationsTable)
+          .where(eq(identityVerificationsTable.userId, userId))
+          .orderBy(desc(identityVerificationsTable.createdAt))
+          .limit(1);
 
-    const status = verification ? currentStatus(verification.status) : "unverified";
+    const status = latestVerification ? currentStatus(latestVerification.status) : "unverified";
     const monthlyLimit = status === "verified" ? 10_000_000 : 150_000;
     const now = new Date();
     const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -143,12 +160,25 @@ router.get("/me/identity-verification", async (req, res): Promise<void> => {
       return;
     }
 
-    const [verification] = await db
+    const [approvedVerification] = await db
       .select()
       .from(identityVerificationsTable)
-      .where(eq(identityVerificationsTable.userId, userId))
+      .where(
+        and(
+          eq(identityVerificationsTable.userId, userId),
+          eq(identityVerificationsTable.status, "Approved"),
+        ),
+      )
       .orderBy(desc(identityVerificationsTable.createdAt))
       .limit(1);
+    const [verification] = approvedVerification
+      ? [approvedVerification]
+      : await db
+          .select()
+          .from(identityVerificationsTable)
+          .where(eq(identityVerificationsTable.userId, userId))
+          .orderBy(desc(identityVerificationsTable.createdAt))
+          .limit(1);
 
     res.json(
       GetIdentityVerificationStatusResponse.parse({
@@ -199,24 +229,35 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
       const inactiveAccount = inactiveAccountMessage(lockedUser.status);
       if (inactiveAccount) return { blockedAccount: inactiveAccount } as const;
 
+      const [approvedVerification] = await tx
+        .select()
+        .from(identityVerificationsTable)
+        .where(
+          and(
+            eq(identityVerificationsTable.userId, userId),
+            eq(identityVerificationsTable.status, "Approved"),
+          ),
+        )
+        .orderBy(desc(identityVerificationsTable.createdAt))
+        .limit(1);
+
+      if (approvedVerification) {
+        return { blockedAccount: null, verification: approvedVerification, reused: true } as const;
+      }
+
       const [existing] = await tx
         .select()
         .from(identityVerificationsTable)
         .where(
           and(
             eq(identityVerificationsTable.userId, userId),
-            inArray(identityVerificationsTable.status, [
-              "Not Started",
-              "Awaiting User",
-              "In Progress",
-              "Resubmitted",
-            ]),
+            inArray(identityVerificationsTable.status, ACTIVE_DIDIT_VERIFICATION_STATUSES),
           ),
         )
         .orderBy(desc(identityVerificationsTable.createdAt))
         .limit(1);
 
-      if (existing) {
+      if (existing && isReusableDiditVerificationStatus(existing.status)) {
         return { blockedAccount: null, verification: existing, reused: true } as const;
       }
 

@@ -25,6 +25,7 @@ import {
 } from "../lib/customer-auth-rate-limit";
 import { hashCustomerSecret } from "../lib/customer-auth-crypto";
 import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
+import { hashSecretForClaimedOtpChallenge } from "../lib/customer-recovery-policy";
 import { fingerprint, isTrustedOrigin } from "../lib/request-security";
 
 const router: IRouter = Router();
@@ -70,7 +71,6 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
       return;
     }
 
-    const passwordHash = await hashCustomerSecret(parsed.data.newPassword);
     const result = await withAuthAttemptLock(authAttemptBuckets, async (tx) => {
       const [challenge] = await tx
         .select({ id: phoneOtpChallengesTable.id })
@@ -84,7 +84,11 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
           ),
         )
         .for("update");
-      if (!challenge) return { kind: "invalid" } as const;
+      const passwordHash = await hashSecretForClaimedOtpChallenge(
+        challenge,
+        () => hashCustomerSecret(parsed.data.newPassword),
+      );
+      if (passwordHash === null) return { kind: "invalid" } as const;
 
       const [user] = await tx
         .select({ id: usersTable.id, status: usersTable.status })
@@ -177,7 +181,6 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
     const pinAttemptBuckets = attemptUser
       ? [getCustomerPinAttemptBucket(attemptUser.id)]
       : [];
-    const pinHash = await hashCustomerSecret(parsed.data.newPin);
     const result = await withPinAttemptLock(pinAttemptBuckets, async (tx) => {
       const [challenge] = await tx
         .select({ id: phoneOtpChallengesTable.id })
@@ -191,7 +194,11 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
           ),
         )
         .for("update");
-      if (!challenge) return { kind: "invalid" } as const;
+      const pinHash = await hashSecretForClaimedOtpChallenge(
+        challenge,
+        () => hashCustomerSecret(parsed.data.newPin),
+      );
+      if (pinHash === null) return { kind: "invalid" } as const;
 
       const [user] = await tx
         .select({ id: usersTable.id, status: usersTable.status })
