@@ -8,3 +8,9 @@ SendFlow is a large financial application under active development. Do not take 
 **Why:** The user emphasized that SendFlow is a large financial application and expects solid, robust code.
 
 **How to apply:** Prefer robust solutions over shortcuts taken only to save time.
+
+Do not move to dependent feature work until the relevant financial logic is checked beyond compilation and the happy path: validate business invariants, invalid and failure paths, concurrency, idempotency, persistence, and recovery with isolated tests. If a guarantee depends on live infrastructure or data that cannot be tested safely, report it as unverified instead of claiming completion.
+
+**Why:** The user explicitly requires SendFlow's logic to be solid and correctly applied before development continues.
+
+**How to apply:** For each financial or security change, define the invariant and its trust boundary, exercise failure and concurrent cases without touching shared Neon or real services, and list any infrastructure-dependent checks that remain blocked before starting dependent work.
