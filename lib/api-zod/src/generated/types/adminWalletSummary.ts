@@ -9,6 +9,7 @@ import type { AdminWalletSummaryStatus } from './adminWalletSummaryStatus';
 
 export interface AdminWalletSummary {
   currency: string;
+  /** @maximum 9007199254740991 */
   balanceMinor: bigint;
   status: AdminWalletSummaryStatus;
 }

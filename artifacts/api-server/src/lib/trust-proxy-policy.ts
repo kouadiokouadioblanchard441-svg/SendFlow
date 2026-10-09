@@ -1,7 +1,15 @@
 const MAX_TRUSTED_PROXY_HOPS = 16;
 
-export function parseTrustProxyHops(value: string | undefined): number {
-  if (value === undefined || value.trim() === "") return 1;
+export function parseTrustProxyHops(
+  value: string | undefined,
+  nodeEnvironment = "development",
+): number {
+  if (value === undefined || value.trim() === "") {
+    if (nodeEnvironment === "production") {
+      throw new Error("TRUST_PROXY_HOPS must be explicitly configured in production");
+    }
+    return 1;
+  }
   if (!/^(0|[1-9]\d*)$/.test(value.trim())) {
     throw new Error("TRUST_PROXY_HOPS must be a non-negative integer");
   }

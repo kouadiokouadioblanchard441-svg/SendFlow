@@ -10,6 +10,7 @@ import type { AdminWalletDetailStatus } from './adminWalletDetailStatus';
 export interface AdminWalletDetail {
   id: string;
   currency: string;
+  /** @maximum 9007199254740991 */
   balanceMinor: bigint;
   status: AdminWalletDetailStatus;
   createdAt: Date;

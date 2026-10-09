@@ -39,10 +39,44 @@ export function getAllowedOrigins(
   const developmentOrigin = environment.REPLIT_DEV_DOMAIN
     ? normalizeConfiguredOrigin(environment.REPLIT_DEV_DOMAIN)
     : null;
+  if (environment.NODE_ENV === "production") {
+    const configuredValues = (environment.CORS_ALLOWED_ORIGINS ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (configuredValues.length === 0) {
+      throw new Error("CORS_ALLOWED_ORIGINS must be explicitly configured in production");
+    }
+
+    const configuredOrigins = configuredValues.map(normalizeConfiguredOrigin);
+    if (configuredOrigins.some((origin) => origin === null)) {
+      throw new Error("CORS_ALLOWED_ORIGINS contains an invalid origin");
+    }
+
+    const origins = configuredOrigins as string[];
+    if (origins.some((origin) => !origin.startsWith("https://"))) {
+      throw new Error("CORS_ALLOWED_ORIGINS must contain HTTPS origins in production");
+    }
+    if (
+      origins.some((origin) => {
+        const hostname = new URL(origin).hostname.toLowerCase();
+        return (
+          origin === developmentOrigin ||
+          hostname === "replit.dev" ||
+          hostname.endsWith(".replit.dev")
+        );
+      })
+    ) {
+      throw new Error("CORS_ALLOWED_ORIGINS must not include Replit development origins");
+    }
+
+    return new Set(origins);
+  }
+
   const configuredValues = [
     environment.CORS_ALLOWED_ORIGINS,
     environment.REPLIT_DOMAINS,
-    environment.NODE_ENV === "production" ? undefined : environment.REPLIT_DEV_DOMAIN,
+    environment.REPLIT_DEV_DOMAIN,
   ];
 
   const origins = configuredValues
@@ -51,13 +85,6 @@ export function getAllowedOrigins(
     .map(normalizeConfiguredOrigin)
     .filter((origin): origin is string => origin !== null);
 
-  if (environment.NODE_ENV === "production") {
-    return new Set(
-      origins.filter(
-        (origin) => origin.startsWith("https://") && origin !== developmentOrigin,
-      ),
-    );
-  }
   return new Set(origins);
 }
 

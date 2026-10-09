@@ -9,5 +9,6 @@
 export type AdminOverviewDeposits = {
   succeeded: number;
   pending: number;
+  /** @maximum 9007199254740991 */
   volumeMinor: bigint;
 };

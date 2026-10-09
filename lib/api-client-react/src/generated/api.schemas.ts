@@ -238,6 +238,7 @@ export const WalletSummaryStatus = {
 export interface WalletSummary {
   id: string;
   currency: string;
+  /** @maximum 9007199254740991 */
   balanceMinor: number;
   status: WalletSummaryStatus;
 }
@@ -423,6 +424,7 @@ export const AdminWalletSummaryStatus = {
 
 export interface AdminWalletSummary {
   currency: string;
+  /** @maximum 9007199254740991 */
   balanceMinor: number;
   status: AdminWalletSummaryStatus;
 }
@@ -486,6 +488,7 @@ export const AdminWalletDetailStatus = {
 export interface AdminWalletDetail {
   id: string;
   currency: string;
+  /** @maximum 9007199254740991 */
   balanceMinor: number;
   status: AdminWalletDetailStatus;
   createdAt: string;
@@ -497,7 +500,9 @@ export interface AdminUserTransactionSummary {
   succeeded: number;
   pending: number;
   failed: number;
+  /** @maximum 9007199254740991 */
   volumeMinor: number;
+  /** @maximum 9007199254740991 */
   feesMinor: number;
 }
 
@@ -532,7 +537,9 @@ export interface AdminTransactionSummary {
   toOperator: string | null;
   senderPhone: string;
   recipientPhone: string;
+  /** @maximum 9007199254740991 */
   amountMinor: number;
+  /** @maximum 9007199254740991 */
   feeMinor: number;
   currency: string;
   reference: string;
@@ -550,6 +557,7 @@ export type AdminOverviewUsers = {
 
 export type AdminOverviewWallets = {
   active: number;
+  /** @maximum 9007199254740991 */
   balanceMinor: number;
 };
 
@@ -558,19 +566,23 @@ export type AdminOverviewTransactions = {
   succeeded: number;
   pending: number;
   failed: number;
+  /** @maximum 9007199254740991 */
   volumeMinor: number;
+  /** @maximum 9007199254740991 */
   feesMinor: number;
 };
 
 export type AdminOverviewDeposits = {
   succeeded: number;
   pending: number;
+  /** @maximum 9007199254740991 */
   volumeMinor: number;
 };
 
 export type AdminOverviewTransfers = {
   succeeded: number;
   pending: number;
+  /** @maximum 9007199254740991 */
   volumeMinor: number;
 };
 
@@ -1470,7 +1482,9 @@ export interface AdminTransactionDetail {
   toOperator: string | null;
   senderPhone: string;
   recipientPhone: string;
+  /** @maximum 9007199254740991 */
   amountMinor: number;
+  /** @maximum 9007199254740991 */
   feeMinor: number;
   currency: string;
   reference: string;
@@ -1531,7 +1545,10 @@ export const AdminWalletAdjustmentRequestConfirmation = {
 
 export interface AdminWalletAdjustmentRequest {
   direction: AdminWalletAdjustmentRequestDirection;
-  /** @minimum 1 */
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
   amountMinor: number;
   /**
      * @minLength 10
@@ -1545,7 +1562,10 @@ export interface AdminWalletAdjustmentRequest {
      * @maxLength 128
      */
   idempotencyKey: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   expectedBalanceMinor: number;
 }
 
@@ -1579,8 +1599,11 @@ export interface AdminWalletAdjustmentResult {
   userId: string;
   walletId: string;
   direction: AdminWalletAdjustmentResultDirection;
+  /** @maximum 9007199254740991 */
   amountMinor: number;
+  /** @maximum 9007199254740991 */
   balanceBeforeMinor: number;
+  /** @maximum 9007199254740991 */
   balanceAfterMinor: number;
   currency: string;
   duplicate: boolean;

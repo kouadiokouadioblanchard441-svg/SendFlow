@@ -77,6 +77,10 @@ router.post("/users/:userId/wallet-adjustments", async (req, res): Promise<void>
     res.status(400).json({ error: "A valid expected wallet balance is required" });
     return;
   }
+  if (!Number.isSafeInteger(adjustment.amountMinor) || adjustment.amountMinor <= 0) {
+    res.status(400).json({ error: "Adjustment amount is outside the safe integer range" });
+    return;
+  }
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -106,10 +110,19 @@ router.post("/users/:userId/wallet-adjustments", async (req, res): Promise<void>
       if (existing) {
         if (
           existing.userId !== userId
+          || existing.walletId !== wallet.id
           || existing.direction !== adjustment.direction
           || existing.amountMinor !== adjustment.amountMinor
           || existing.reason !== adjustment.reason
           || existing.adminUserId !== adminUserId
+          || existing.currency !== wallet.currency
+          || existing.balanceBeforeMinor !== adjustment.expectedBalanceMinor
+          || !Number.isSafeInteger(existing.balanceAfterMinor)
+          || existing.balanceAfterMinor !== (
+            existing.direction === "credit"
+              ? existing.balanceBeforeMinor + existing.amountMinor
+              : existing.balanceBeforeMinor - existing.amountMinor
+          )
         ) {
           throw new AdminActionError(409, "Idempotency key belongs to another wallet adjustment");
         }
@@ -123,10 +136,6 @@ router.post("/users/:userId/wallet-adjustments", async (req, res): Promise<void>
 
       if (adjustment.expectedBalanceMinor !== wallet.balanceMinor) {
         throw new AdminActionError(409, "Wallet balance changed; refresh before retrying");
-      }
-
-      if (!Number.isSafeInteger(adjustment.amountMinor) || adjustment.amountMinor <= 0) {
-        throw new AdminActionError(400, "Adjustment amount is outside the safe integer range");
       }
 
       const balanceBeforeMinor = wallet.balanceMinor;

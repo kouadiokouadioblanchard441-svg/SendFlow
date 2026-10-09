@@ -1,4 +1,5 @@
-import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { boolean, check, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 export const identityVerificationsTable = pgTable("sf_identity_verifications", {
@@ -25,6 +26,12 @@ export const identityWebhookEventsTable = pgTable("sf_identity_webhook_events", 
   receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export type IdentityVerificationAttemptStatus =
+  | "creating"
+  | "completed"
+  | "failed"
+  | "abandoned";
+
 export const identityVerificationAttemptsTable = pgTable(
   "sf_identity_verification_attempts",
   {
@@ -32,14 +39,23 @@ export const identityVerificationAttemptsTable = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => usersTable.id, { onDelete: "cascade" }),
+    status: text("status")
+      .$type<IdentityVerificationAttemptStatus>()
+      .notNull()
+      .default("creating"),
+    providerSessionId: text("provider_session_id").unique(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    index("sf_identity_verification_attempts_user_created_idx").on(
+  (table) => ({
+    statusConstraint: check(
+      "sf_identity_verification_attempts_status_check",
+      sql`${table.status} in ('creating', 'completed', 'failed', 'abandoned')`,
+    ),
+    userCreatedIndex: index("sf_identity_verification_attempts_user_created_idx").on(
       table.userId,
       table.createdAt,
     ),
-  ],
+  }),
 );
 
 export type IdentityVerification = typeof identityVerificationsTable.$inferSelect;

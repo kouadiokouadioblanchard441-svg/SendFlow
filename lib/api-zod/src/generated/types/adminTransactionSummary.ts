@@ -21,7 +21,9 @@ export interface AdminTransactionSummary {
   toOperator: string | null;
   senderPhone: string;
   recipientPhone: string;
+  /** @maximum 9007199254740991 */
   amountMinor: bigint;
+  /** @maximum 9007199254740991 */
   feeMinor: bigint;
   currency: string;
   reference: string;

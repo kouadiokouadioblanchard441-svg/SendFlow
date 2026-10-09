@@ -282,6 +282,10 @@ export const DatabaseHealthCheckResponse = zod.object({
 /**
  * @summary Get the authenticated SendFlow account
  */
+export const getCurrentAccountResponseWalletBalanceMinorMax = 9007199254740991;
+
+
+
 export const GetCurrentAccountResponse = zod.object({
   "userId": zod.string(),
   "phone": zod.string().nullish(),
@@ -290,7 +294,7 @@ export const GetCurrentAccountResponse = zod.object({
   "wallet": zod.object({
   "id": zod.string().uuid(),
   "currency": zod.string(),
-  "balanceMinor": zod.number().int(),
+  "balanceMinor": zod.number().int().max(getCurrentAccountResponseWalletBalanceMinorMax),
   "status": zod.enum(['active', 'locked', 'closed'])
 })
 })
@@ -524,6 +528,18 @@ export const GetAdminOverviewQueryParams = zod.object({
   "to": zod.date().optional().describe('Inclusive UTC calendar date.')
 })
 
+export const getAdminOverviewResponseWalletsBalanceMinorMax = 9007199254740991;
+
+export const getAdminOverviewResponseTransactionsVolumeMinorMax = 9007199254740991;
+
+export const getAdminOverviewResponseTransactionsFeesMinorMax = 9007199254740991;
+
+export const getAdminOverviewResponseDepositsVolumeMinorMax = 9007199254740991;
+
+export const getAdminOverviewResponseTransfersVolumeMinorMax = 9007199254740991;
+
+
+
 export const GetAdminOverviewResponse = zod.object({
   "period": zod.object({
   "from": zod.coerce.date().nullable(),
@@ -535,25 +551,25 @@ export const GetAdminOverviewResponse = zod.object({
 }),
   "wallets": zod.object({
   "active": zod.number().int(),
-  "balanceMinor": zod.number().int()
+  "balanceMinor": zod.number().int().max(getAdminOverviewResponseWalletsBalanceMinorMax)
 }),
   "transactions": zod.object({
   "total": zod.number().int(),
   "succeeded": zod.number().int(),
   "pending": zod.number().int(),
   "failed": zod.number().int(),
-  "volumeMinor": zod.number().int(),
-  "feesMinor": zod.number().int()
+  "volumeMinor": zod.number().int().max(getAdminOverviewResponseTransactionsVolumeMinorMax),
+  "feesMinor": zod.number().int().max(getAdminOverviewResponseTransactionsFeesMinorMax)
 }),
   "deposits": zod.object({
   "succeeded": zod.number().int(),
   "pending": zod.number().int(),
-  "volumeMinor": zod.number().int()
+  "volumeMinor": zod.number().int().max(getAdminOverviewResponseDepositsVolumeMinorMax)
 }),
   "transfers": zod.object({
   "succeeded": zod.number().int(),
   "pending": zod.number().int(),
-  "volumeMinor": zod.number().int()
+  "volumeMinor": zod.number().int().max(getAdminOverviewResponseTransfersVolumeMinorMax)
 })
 })
 
@@ -1333,6 +1349,10 @@ export const ListAdminUsersQueryParams = zod.object({
   "pageSize": zod.coerce.number().int().min(1).max(listAdminUsersQueryPageSizeMax).default(listAdminUsersQueryPageSizeDefault)
 })
 
+export const listAdminUsersResponseItemsItemWalletBalanceMinorMax = 9007199254740991;
+
+
+
 export const ListAdminUsersResponse = zod.object({
   "items": zod.array(zod.object({
   "id": zod.string(),
@@ -1346,7 +1366,7 @@ export const ListAdminUsersResponse = zod.object({
   "lastSeenAt": zod.coerce.date().nullable(),
   "wallet": zod.object({
   "currency": zod.string(),
-  "balanceMinor": zod.number().int(),
+  "balanceMinor": zod.number().int().max(listAdminUsersResponseItemsItemWalletBalanceMinorMax),
   "status": zod.enum(['active', 'locked', 'closed'])
 })
 })),
@@ -1367,6 +1387,14 @@ export const GetAdminUserParams = zod.object({
   "userId": zod.coerce.string().min(1)
 })
 
+export const getAdminUserResponseWalletOneBalanceMinorMax = 9007199254740991;
+
+export const getAdminUserResponseTransactionSummaryVolumeMinorMax = 9007199254740991;
+
+export const getAdminUserResponseTransactionSummaryFeesMinorMax = 9007199254740991;
+
+
+
 export const GetAdminUserResponse = zod.object({
   "user": zod.object({
   "id": zod.string(),
@@ -1383,7 +1411,7 @@ export const GetAdminUserResponse = zod.object({
   "wallet": zod.object({
   "id": zod.string().uuid(),
   "currency": zod.string(),
-  "balanceMinor": zod.number().int(),
+  "balanceMinor": zod.number().int().max(getAdminUserResponseWalletOneBalanceMinorMax),
   "status": zod.enum(['active', 'locked', 'closed']),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
@@ -1393,8 +1421,8 @@ export const GetAdminUserResponse = zod.object({
   "succeeded": zod.number().int(),
   "pending": zod.number().int(),
   "failed": zod.number().int(),
-  "volumeMinor": zod.number().int(),
-  "feesMinor": zod.number().int()
+  "volumeMinor": zod.number().int().max(getAdminUserResponseTransactionSummaryVolumeMinorMax),
+  "feesMinor": zod.number().int().max(getAdminUserResponseTransactionSummaryFeesMinorMax)
 })
 })
 
@@ -1424,6 +1452,12 @@ export const ListAdminTransactionsQueryParams = zod.object({
   "pageSize": zod.coerce.number().int().min(1).max(listAdminTransactionsQueryPageSizeMax).default(listAdminTransactionsQueryPageSizeDefault)
 })
 
+export const listAdminTransactionsResponseItemsItemAmountMinorMax = 9007199254740991;
+
+export const listAdminTransactionsResponseItemsItemFeeMinorMax = 9007199254740991;
+
+
+
 export const ListAdminTransactionsResponse = zod.object({
   "items": zod.array(zod.object({
   "id": zod.string().uuid(),
@@ -1435,8 +1469,8 @@ export const ListAdminTransactionsResponse = zod.object({
   "toOperator": zod.string().nullable(),
   "senderPhone": zod.string(),
   "recipientPhone": zod.string(),
-  "amountMinor": zod.number().int(),
-  "feeMinor": zod.number().int(),
+  "amountMinor": zod.number().int().max(listAdminTransactionsResponseItemsItemAmountMinorMax),
+  "feeMinor": zod.number().int().max(listAdminTransactionsResponseItemsItemFeeMinorMax),
   "currency": zod.string(),
   "reference": zod.string(),
   "providerReference": zod.string().nullish(),
@@ -1457,6 +1491,12 @@ export const GetAdminTransactionParams = zod.object({
   "transactionId": zod.coerce.string().uuid()
 })
 
+export const getAdminTransactionResponseAmountMinorMax = 9007199254740991;
+
+export const getAdminTransactionResponseFeeMinorMax = 9007199254740991;
+
+
+
 export const GetAdminTransactionResponse = zod.object({
   "id": zod.string().uuid(),
   "userId": zod.string(),
@@ -1468,8 +1508,8 @@ export const GetAdminTransactionResponse = zod.object({
   "toOperator": zod.string().nullable(),
   "senderPhone": zod.string(),
   "recipientPhone": zod.string(),
-  "amountMinor": zod.number().int(),
-  "feeMinor": zod.number().int(),
+  "amountMinor": zod.number().int().max(getAdminTransactionResponseAmountMinorMax),
+  "feeMinor": zod.number().int().max(getAdminTransactionResponseFeeMinorMax),
   "currency": zod.string(),
   "reference": zod.string(),
   "providerReference": zod.string().nullable(),
@@ -1490,6 +1530,7 @@ export const CreateAdminWalletAdjustmentParams = zod.object({
   "userId": zod.coerce.string().min(1)
 })
 
+export const createAdminWalletAdjustmentBodyAmountMinorMax = 9007199254740991;
 
 export const createAdminWalletAdjustmentBodyReasonMin = 10;
 export const createAdminWalletAdjustmentBodyReasonMax = 500;
@@ -1500,26 +1541,35 @@ export const createAdminWalletAdjustmentBodyIdempotencyKeyMin = 16;
 export const createAdminWalletAdjustmentBodyIdempotencyKeyMax = 128;
 
 export const createAdminWalletAdjustmentBodyExpectedBalanceMinorMin = 0;
+export const createAdminWalletAdjustmentBodyExpectedBalanceMinorMax = 9007199254740991;
 
 
 
 export const CreateAdminWalletAdjustmentBody = zod.object({
   "direction": zod.enum(['credit', 'debit']),
-  "amountMinor": zod.number().int().min(1),
+  "amountMinor": zod.number().int().min(1).max(createAdminWalletAdjustmentBodyAmountMinorMax),
   "reason": zod.string().min(createAdminWalletAdjustmentBodyReasonMin).max(createAdminWalletAdjustmentBodyReasonMax).regex(createAdminWalletAdjustmentBodyReasonRegExp),
   "confirmation": zod.enum(['CREDIT', 'DEBIT']),
   "idempotencyKey": zod.string().min(createAdminWalletAdjustmentBodyIdempotencyKeyMin).max(createAdminWalletAdjustmentBodyIdempotencyKeyMax),
-  "expectedBalanceMinor": zod.number().int().min(createAdminWalletAdjustmentBodyExpectedBalanceMinorMin)
+  "expectedBalanceMinor": zod.number().int().min(createAdminWalletAdjustmentBodyExpectedBalanceMinorMin).max(createAdminWalletAdjustmentBodyExpectedBalanceMinorMax)
 })
+
+export const createAdminWalletAdjustmentResponseAmountMinorMax = 9007199254740991;
+
+export const createAdminWalletAdjustmentResponseBalanceBeforeMinorMax = 9007199254740991;
+
+export const createAdminWalletAdjustmentResponseBalanceAfterMinorMax = 9007199254740991;
+
+
 
 export const CreateAdminWalletAdjustmentResponse = zod.object({
   "ledgerEntryId": zod.string().uuid(),
   "userId": zod.string(),
   "walletId": zod.string().uuid(),
   "direction": zod.enum(['credit', 'debit']),
-  "amountMinor": zod.number().int(),
-  "balanceBeforeMinor": zod.number().int(),
-  "balanceAfterMinor": zod.number().int(),
+  "amountMinor": zod.number().int().max(createAdminWalletAdjustmentResponseAmountMinorMax),
+  "balanceBeforeMinor": zod.number().int().max(createAdminWalletAdjustmentResponseBalanceBeforeMinorMax),
+  "balanceAfterMinor": zod.number().int().max(createAdminWalletAdjustmentResponseBalanceAfterMinorMax),
   "currency": zod.string(),
   "duplicate": zod.boolean()
 })

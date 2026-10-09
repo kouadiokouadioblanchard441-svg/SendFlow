@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   DIDIT_SESSION_ATTEMPT_LIMIT,
   DIDIT_SESSION_ATTEMPT_WINDOW_MS,
+  DIDIT_SESSION_CREATION_LEASE_MS,
+  getDiditSessionCreationRetryAfter,
   getDiditSessionRetryAfter,
 } from "./didit-session-rate-limit.ts";
 
@@ -38,4 +40,25 @@ test("expired Didit attempts do not consume the rolling 24-hour allowance", () =
   ];
 
   assert.equal(getDiditSessionRetryAfter(attempts, start), null);
+});
+
+test("an unexpired session reservation blocks duplicate provider requests with a bounded retry", () => {
+  assert.equal(
+    getDiditSessionCreationRetryAfter(
+      [new Date(start.getTime() - DIDIT_SESSION_CREATION_LEASE_MS + 5_000)],
+      start,
+    ),
+    5,
+  );
+  assert.equal(
+    getDiditSessionCreationRetryAfter(
+      [new Date(start.getTime() - DIDIT_SESSION_CREATION_LEASE_MS)],
+      start,
+    ),
+    null,
+  );
+});
+
+test("invalid reservation timestamps do not block new requests", () => {
+  assert.equal(getDiditSessionCreationRetryAfter([new Date(Number.NaN)], start), null);
 });

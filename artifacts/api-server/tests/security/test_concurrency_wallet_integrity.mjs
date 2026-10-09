@@ -27,6 +27,10 @@ const ledgerSchema = readFileSync(
   new URL("../../../../lib/db/src/schema/wallet-ledger.ts", import.meta.url),
   "utf8",
 );
+const walletMigration = readFileSync(
+  new URL("../../../../lib/db/migrations/2026-10-09-wallet-safe-range-ledger-checks.sql", import.meta.url),
+  "utf8",
+);
 
 class AsyncMutex {
   #tail = Promise.resolve();
@@ -64,10 +68,19 @@ class WalletAdjustmentModel {
       if (existing) {
         const sameRequest =
           existing.userId === request.userId
+          && existing.walletId === request.walletId
           && existing.adminUserId === request.adminUserId
           && existing.direction === request.direction
           && existing.amountMinor === request.amountMinor
-          && existing.reason === request.reason;
+          && existing.reason === request.reason
+          && existing.currency === request.currency
+          && existing.balanceBeforeMinor === request.expectedBalanceMinor
+          && Number.isSafeInteger(existing.balanceAfterMinor)
+          && existing.balanceAfterMinor === (
+            existing.direction === "credit"
+              ? existing.balanceBeforeMinor + existing.amountMinor
+              : existing.balanceBeforeMinor - existing.amountMinor
+          );
         return sameRequest
           ? { status: 200, duplicate: true, entry: existing }
           : { status: 409, duplicate: false };
@@ -111,9 +124,11 @@ class WalletAdjustmentModel {
 function adjustment(overrides = {}) {
   return {
     userId: "test-user",
+    walletId: "test-wallet",
     adminUserId: "test-admin",
     direction: "debit",
     amountMinor: 1,
+    currency: "XOF",
     reason: "Local wallet integrity stress test",
     expectedBalanceMinor: 100,
     idempotencyKey: "local-wallet-stress-key-0001",
@@ -152,6 +167,8 @@ test("1,000 replays of one idempotency key create only one ledger effect", async
   assert.match(transactionSchema, /idempotencyKey:[\s\S]*?\.unique\(\)/);
   assert.match(adminActions, /walletLedgerTable\.idempotencyKey, adjustment\.idempotencyKey/);
   assert.match(adminActions, /existing\.amountMinor !== adjustment\.amountMinor/);
+  assert.match(adminActions, /existing\.balanceBeforeMinor !== adjustment\.expectedBalanceMinor/);
+  assert.match(adminActions, /existing\.balanceAfterMinor !== \(/);
 
   const wallet = new WalletAdjustmentModel(100);
   const request = adjustment({ amountMinor: 7 });
@@ -169,6 +186,11 @@ test("1,000 replays of one idempotency key create only one ledger effect", async
     amountMinor: 8,
   });
   assert.equal(reusedKeyWithDifferentAmount.status, 409);
+  const reusedKeyWithDifferentExpectedBalance = await wallet.adjust({
+    ...request,
+    expectedBalanceMinor: 99,
+  });
+  assert.equal(reusedKeyWithDifferentExpectedBalance.status, 409);
   assert.equal(wallet.balanceMinor, 93);
   assert.equal(wallet.entries.length, 1);
 });
@@ -192,12 +214,20 @@ test("malformed and out-of-range values do not mutate wallet state; database con
   assert.equal(wallet.balanceMinor, 100);
   assert.equal(wallet.entries.length, 0);
 
-  // Red baseline: current application validation exists, but SQL-level checks do not.
+  // Check that the schema and additive migration both enforce independent DB-level invariants.
   const missingConstraints = [
     !checkConstraintMentions(walletSchema, "balanceMinor", />=\s*0/) && "sf_wallets.balance_minor >= 0",
     !checkConstraintMentions(transactionSchema, "amountMinor", />\s*0/) && "sf_transactions.amount_minor > 0",
     !checkConstraintMentions(transactionSchema, "feeMinor", />=\s*0/) && "sf_transactions.fee_minor >= 0",
     !checkConstraintMentions(ledgerSchema, "amountMinor", />\s*0/) && "sf_wallet_ledger.amount_minor > 0",
+    !checkConstraintMentions(ledgerSchema, "balanceBeforeMinor", />=\s*0/) && "sf_wallet_ledger.balance_before_minor >= 0",
+    !checkConstraintMentions(ledgerSchema, "balanceAfterMinor", />=\s*0/) && "sf_wallet_ledger.balance_after_minor >= 0",
+    !ledgerSchema.includes("balanceReconcilesCheck") && "sf_wallet_ledger balance reconciliation",
+    !walletSchema.includes("9007199254740991") && "sf_wallets safe-integer maximum",
+    !transactionSchema.includes("9007199254740991") && "sf_transactions safe-integer maximum",
+    !ledgerSchema.includes("9007199254740991") && "sf_wallet_ledger safe-integer maximum",
+    !/NOT VALID/.test(walletMigration) && "additive constraints must not scan historical rows during installation",
+    !walletMigration.includes("sf_wallet_ledger_balance_reconciles_check") && "wallet ledger must reconcile its before/after balances",
   ].filter(Boolean);
   assert.deepEqual(
     missingConstraints,

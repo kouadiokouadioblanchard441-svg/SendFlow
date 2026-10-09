@@ -102,9 +102,11 @@ export default function AccountLimitPage() {
             ? 'Votre session sécurisée a expiré. Veuillez vous reconnecter.'
             : response.status === 429
               ? body?.error ?? 'Vous avez atteint la limite de nouvelles tentatives. Réessayez plus tard.'
-            : response.status === 503
-              ? 'Le service de vérification est temporairement indisponible. Veuillez réessayer plus tard.'
-              : 'Impossible de démarrer la vérification pour le moment.',
+              : response.status === 409
+                ? body?.error ?? 'Une vérification est déjà en cours. Réessayez dans quelques secondes.'
+                : response.status === 503
+                  ? 'Le service de vérification est temporairement indisponible. Veuillez réessayer plus tard.'
+                  : 'Impossible de démarrer la vérification pour le moment.',
         );
       }
       if (!body?.verificationUrl) {

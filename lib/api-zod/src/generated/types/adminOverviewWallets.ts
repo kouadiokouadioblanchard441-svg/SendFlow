@@ -8,5 +8,6 @@
 
 export type AdminOverviewWallets = {
   active: number;
+  /** @maximum 9007199254740991 */
   balanceMinor: bigint;
 };

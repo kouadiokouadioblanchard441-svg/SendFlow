@@ -20,15 +20,30 @@ test("origin configuration is canonicalized without accepting URL paths", () => 
   assert.equal(normalizeHttpOrigin("https://user@sendflow.example"), null);
 });
 
-test("production origin policy excludes the Replit development hostname", () => {
+test("production origin policy trusts only explicit HTTPS origins", () => {
   const origins = getAllowedOrigins({
     NODE_ENV: "production",
-    CORS_ALLOWED_ORIGINS: "https://sendflow.example, https://sendflow-preview.replit.dev",
-    REPLIT_DOMAINS: "sendflow.example, http://insecure.example",
+    CORS_ALLOWED_ORIGINS: "https://sendflow.example",
+    REPLIT_DOMAINS: "https://untrusted-replit-domain.example",
     REPLIT_DEV_DOMAIN: "sendflow-preview.replit.dev",
   });
 
   assert.deepEqual([...origins], ["https://sendflow.example"]);
+});
+
+test("production origin policy fails closed on missing, invalid, insecure, or preview origins", () => {
+  for (const environment of [
+    { NODE_ENV: "production" },
+    { NODE_ENV: "production", CORS_ALLOWED_ORIGINS: "not a valid URL/path" },
+    { NODE_ENV: "production", CORS_ALLOWED_ORIGINS: "http://sendflow.example" },
+    {
+      NODE_ENV: "production",
+      CORS_ALLOWED_ORIGINS: "https://another-preview.replit.dev",
+      REPLIT_DEV_DOMAIN: "sendflow-preview.replit.dev",
+    },
+  ]) {
+    assert.throws(() => getAllowedOrigins(environment), /CORS_ALLOWED_ORIGINS/);
+  }
 });
 
 test("development origin policy includes the configured preview hostname", () => {

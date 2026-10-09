@@ -11,6 +11,7 @@ import {
   identityVerificationsTable,
   identityVerificationAttemptsTable,
   identityWebhookEventsTable,
+  lte,
   lt,
   sql,
   transactionsTable,
@@ -45,6 +46,8 @@ import {
 import {
   DIDIT_SESSION_ATTEMPT_LIMIT,
   DIDIT_SESSION_ATTEMPT_WINDOW_MS,
+  DIDIT_SESSION_CREATION_LEASE_MS,
+  getDiditSessionCreationRetryAfter,
   getDiditSessionRetryAfter,
 } from "../lib/didit-session-rate-limit";
 import { requireCustomerSession } from "../lib/customer-session";
@@ -63,6 +66,155 @@ function inactiveAccountMessage(status: "active" | "suspended" | "deleted" | und
   if (status === "suspended") return "Account suspended";
   if (status === "deleted") return "Account deleted";
   return null;
+}
+
+async function markDiditAttemptFailed(
+  userId: string,
+  attemptId: string,
+  providerSessionId?: string,
+): Promise<void> {
+  const update = providerSessionId
+    ? { status: "failed" as const, providerSessionId }
+    : { status: "failed" as const };
+  const [updated] = await db
+    .update(identityVerificationAttemptsTable)
+    .set(update)
+    .where(
+      and(
+        eq(identityVerificationAttemptsTable.id, attemptId),
+        eq(identityVerificationAttemptsTable.userId, userId),
+        eq(identityVerificationAttemptsTable.status, "creating"),
+      ),
+    )
+    .returning({ id: identityVerificationAttemptsTable.id });
+
+  if (!updated) {
+    throw new Error("Didit attempt reservation could not be marked failed");
+  }
+}
+
+async function reserveDiditSessionAttempt(userId: string) {
+  return db.transaction(async (tx) => {
+    const [lockedUser] = await tx
+      .select({ id: usersTable.id, status: usersTable.status })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .for("update");
+
+    if (!lockedUser) throw new Error("Account could not be locked");
+    const inactiveAccount = inactiveAccountMessage(lockedUser.status);
+    if (inactiveAccount) return { kind: "blocked", message: inactiveAccount } as const;
+
+    const [approvedVerification] = await tx
+      .select()
+      .from(identityVerificationsTable)
+      .where(
+        and(
+          eq(identityVerificationsTable.userId, userId),
+          eq(identityVerificationsTable.status, "Approved"),
+        ),
+      )
+      .orderBy(desc(identityVerificationsTable.createdAt))
+      .limit(1);
+    if (approvedVerification) {
+      return { kind: "reused", verification: approvedVerification } as const;
+    }
+
+    const [existing] = await tx
+      .select()
+      .from(identityVerificationsTable)
+      .where(
+        and(
+          eq(identityVerificationsTable.userId, userId),
+          inArray(identityVerificationsTable.status, ACTIVE_DIDIT_VERIFICATION_STATUSES),
+        ),
+      )
+      .orderBy(desc(identityVerificationsTable.createdAt))
+      .limit(1);
+    if (existing && isReusableDiditVerificationStatus(existing.status)) {
+      return { kind: "reused", verification: existing } as const;
+    }
+
+    // Capture time after acquiring the per-user lock so a long lock wait cannot
+    // extend the rolling window or create a reservation with an old timestamp.
+    const reservationTime = new Date();
+    const attemptsSince = new Date(
+      reservationTime.getTime() - DIDIT_SESSION_ATTEMPT_WINDOW_MS,
+    );
+    const leaseCutoff = new Date(
+      reservationTime.getTime() - DIDIT_SESSION_CREATION_LEASE_MS,
+    );
+
+    await tx
+      .delete(identityVerificationAttemptsTable)
+      .where(
+        and(
+          eq(identityVerificationAttemptsTable.userId, userId),
+          lte(identityVerificationAttemptsTable.createdAt, attemptsSince),
+        ),
+      );
+
+    await tx
+      .update(identityVerificationAttemptsTable)
+      .set({ status: "abandoned" })
+      .where(
+        and(
+          eq(identityVerificationAttemptsTable.userId, userId),
+          eq(identityVerificationAttemptsTable.status, "creating"),
+          gt(identityVerificationAttemptsTable.createdAt, attemptsSince),
+          lte(identityVerificationAttemptsTable.createdAt, leaseCutoff),
+        ),
+      );
+
+    const [pendingAttempt] = await tx
+      .select({ createdAt: identityVerificationAttemptsTable.createdAt })
+      .from(identityVerificationAttemptsTable)
+      .where(
+        and(
+          eq(identityVerificationAttemptsTable.userId, userId),
+          eq(identityVerificationAttemptsTable.status, "creating"),
+          gt(identityVerificationAttemptsTable.createdAt, leaseCutoff),
+        ),
+      )
+      .orderBy(asc(identityVerificationAttemptsTable.createdAt))
+      .limit(1);
+    if (pendingAttempt) {
+      const retryAfterSeconds = getDiditSessionCreationRetryAfter(
+        [pendingAttempt.createdAt],
+        reservationTime,
+      );
+      if (retryAfterSeconds !== null) {
+        return { kind: "in_progress", retryAfterSeconds } as const;
+      }
+    }
+
+    const attempts = await tx
+      .select({ createdAt: identityVerificationAttemptsTable.createdAt })
+      .from(identityVerificationAttemptsTable)
+      .where(
+        and(
+          eq(identityVerificationAttemptsTable.userId, userId),
+          gt(identityVerificationAttemptsTable.createdAt, attemptsSince),
+        ),
+      )
+      .orderBy(asc(identityVerificationAttemptsTable.createdAt))
+      .limit(DIDIT_SESSION_ATTEMPT_LIMIT);
+    const retryAfterSeconds = getDiditSessionRetryAfter(
+      attempts.map((attempt) => attempt.createdAt),
+      reservationTime,
+    );
+    if (retryAfterSeconds !== null) {
+      return { kind: "rate_limited", retryAfterSeconds } as const;
+    }
+
+    const [attempt] = await tx
+      .insert(identityVerificationAttemptsTable)
+      .values({ userId, createdAt: reservationTime })
+      .returning({ id: identityVerificationAttemptsTable.id });
+    if (!attempt) throw new Error("Didit session attempt was not reserved");
+
+    return { kind: "reserved", attemptId: attempt.id } as const;
+  });
 }
 
 function statusRank(status: string) {
@@ -226,85 +378,110 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
     return;
   }
 
+  let callback: string | undefined;
   try {
     assertDiditConfiguration();
-    const callback = getSafeCallbackUrl();
-    const now = new Date();
-    const result = await db.transaction(async (tx) => {
-      const [lockedUser] = await tx
-        .select({ id: usersTable.id, status: usersTable.status })
-        .from(usersTable)
-        .where(eq(usersTable.id, userId))
-        .for("update");
+    callback = getSafeCallbackUrl();
+  } catch (error) {
+    if (error instanceof DiditConfigurationError) {
+      res.status(503).json({ error: "Didit development credentials are not configured" });
+      return;
+    }
+    req.log.error({ err: error, userId }, "Didit configuration could not be checked");
+    res.status(503).json({ error: "Identity verification configuration unavailable" });
+    return;
+  }
 
-      if (!lockedUser) throw new Error("Account could not be locked");
-      const inactiveAccount = inactiveAccountMessage(lockedUser.status);
-      if (inactiveAccount) return { blockedAccount: inactiveAccount } as const;
+  let reservation: Awaited<ReturnType<typeof reserveDiditSessionAttempt>>;
+  try {
+    reservation = await reserveDiditSessionAttempt(userId);
+  } catch (error) {
+    req.log.error({ err: error, userId }, "Didit session reservation failed");
+    res.status(503).json({ error: "Identity verification storage unavailable" });
+    return;
+  }
 
-      const [approvedVerification] = await tx
-        .select()
-        .from(identityVerificationsTable)
-        .where(
-          and(
-            eq(identityVerificationsTable.userId, userId),
-            eq(identityVerificationsTable.status, "Approved"),
-          ),
-        )
-        .orderBy(desc(identityVerificationsTable.createdAt))
-        .limit(1);
+  if (reservation.kind === "blocked") {
+    res.status(403).json({ error: reservation.message });
+    return;
+  }
 
-      if (approvedVerification) {
-        return { blockedAccount: null, verification: approvedVerification, reused: true } as const;
-      }
+  if (reservation.kind === "reused") {
+    const { verification } = reservation;
+    res.status(200).json(
+      CreateIdentityVerificationSessionResponse.parse({
+        sessionId: verification.providerSessionId,
+        verificationUrl: verification.verificationUrl,
+        status: currentStatus(verification.status),
+        diditStatus: verification.status,
+        sandboxScenario: verification.sandboxScenario,
+        reused: true,
+      }),
+    );
+    return;
+  }
 
-      const [existing] = await tx
-        .select()
-        .from(identityVerificationsTable)
-        .where(
-          and(
-            eq(identityVerificationsTable.userId, userId),
-            inArray(identityVerificationsTable.status, ACTIVE_DIDIT_VERIFICATION_STATUSES),
-          ),
-        )
-        .orderBy(desc(identityVerificationsTable.createdAt))
-        .limit(1);
+  if (reservation.kind === "in_progress" || reservation.kind === "rate_limited") {
+    res.setHeader("Retry-After", String(reservation.retryAfterSeconds));
+    if (reservation.kind === "in_progress") {
+      res.status(409).json({
+        error: "Une création de vérification est déjà en cours. Réessayez après le délai indiqué.",
+      });
+      return;
+    }
+    res.status(429).json({
+      error: "Vous avez atteint la limite de 3 tentatives de vérification sur 24 heures. Réessayez plus tard.",
+    });
+    return;
+  }
 
-      if (existing && isReusableDiditVerificationStatus(existing.status)) {
-        return { blockedAccount: null, verification: existing, reused: true } as const;
-      }
+  let diditSession: Awaited<ReturnType<typeof createDiditSession>>;
+  try {
+    diditSession = await createDiditSession({
+      vendorData: `sendflow:user:${userId}`,
+      sandboxScenario: scenario,
+      callback,
+    });
+  } catch (providerError) {
+    try {
+      await markDiditAttemptFailed(userId, reservation.attemptId);
+    } catch (storageError) {
+      req.log.error(
+        { err: storageError, userId, attemptId: reservation.attemptId },
+        "Failed Didit request could not be recorded",
+      );
+      res.status(503).json({ error: "Identity verification storage unavailable" });
+      return;
+    }
 
-      const attemptsSince = new Date(now.getTime() - DIDIT_SESSION_ATTEMPT_WINDOW_MS);
-      const attempts = await tx
-        .select({ createdAt: identityVerificationAttemptsTable.createdAt })
+    if (providerError instanceof DiditConfigurationError) {
+      res.status(503).json({ error: "Didit development credentials are not configured" });
+      return;
+    }
+    req.log.error({ err: providerError, userId }, "Didit session creation failed");
+    res.status(502).json({ error: "Identity verification provider unavailable" });
+    return;
+  }
+
+  const vendorData = `sendflow:user:${userId}`;
+  let verification: typeof identityVerificationsTable.$inferSelect;
+  try {
+    verification = await db.transaction(async (tx) => {
+      const [attempt] = await tx
+        .select({ status: identityVerificationAttemptsTable.status })
         .from(identityVerificationAttemptsTable)
         .where(
           and(
+            eq(identityVerificationAttemptsTable.id, reservation.attemptId),
             eq(identityVerificationAttemptsTable.userId, userId),
-            gt(identityVerificationAttemptsTable.createdAt, attemptsSince),
           ),
         )
-        .orderBy(asc(identityVerificationAttemptsTable.createdAt))
-        .limit(DIDIT_SESSION_ATTEMPT_LIMIT);
-      const retryAfterSeconds = getDiditSessionRetryAfter(attempts.map((attempt) => attempt.createdAt), now);
-      if (retryAfterSeconds !== null) {
-        return { blockedAccount: null, retryAfterSeconds } as const;
+        .for("update");
+      if (!attempt || attempt.status !== "creating") {
+        throw new Error("Didit session reservation is no longer active");
       }
 
-      await tx.insert(identityVerificationAttemptsTable).values({ userId });
-
-      const vendorData = `sendflow:user:${userId}`;
-      let diditSession: Awaited<ReturnType<typeof createDiditSession>>;
-      try {
-        diditSession = await createDiditSession({
-          vendorData,
-          sandboxScenario: scenario,
-          callback,
-        });
-      } catch (providerError) {
-        return { blockedAccount: null, providerError } as const;
-      }
-
-      const [verification] = await tx
+      const [storedVerification] = await tx
         .insert(identityVerificationsTable)
         .values({
           userId,
@@ -315,55 +492,61 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
           sandboxScenario: scenario ?? null,
         })
         .returning();
-
-      if (!verification) throw new Error("Identity verification session was not stored");
-      return { blockedAccount: null, verification, reused: false } as const;
-    });
-
-    if (result.blockedAccount) {
-      res.status(403).json({ error: result.blockedAccount });
-      return;
-    }
-
-    if ("retryAfterSeconds" in result) {
-      res.setHeader("Retry-After", String(result.retryAfterSeconds));
-      res.status(429).json({
-        error: "Vous avez atteint la limite de 3 tentatives de vérification sur 24 heures. Réessayez plus tard.",
-      });
-      return;
-    }
-
-    if ("providerError" in result) {
-      if (result.providerError instanceof DiditConfigurationError) {
-        res.status(503).json({ error: "Didit development credentials are not configured" });
-        return;
+      if (!storedVerification) {
+        throw new Error("Identity verification session was not stored");
       }
-      req.log.error({ err: result.providerError, userId }, "Didit session creation failed");
-      res.status(502).json({ error: "Identity verification provider unavailable" });
-      return;
-    }
 
-    const { verification, reused } = result;
+      const [completedAttempt] = await tx
+        .update(identityVerificationAttemptsTable)
+        .set({
+          status: "completed",
+          providerSessionId: diditSession.session_id,
+        })
+        .where(
+          and(
+            eq(identityVerificationAttemptsTable.id, reservation.attemptId),
+            eq(identityVerificationAttemptsTable.userId, userId),
+            eq(identityVerificationAttemptsTable.status, "creating"),
+          ),
+        )
+        .returning({ id: identityVerificationAttemptsTable.id });
+      if (!completedAttempt) {
+        throw new Error("Didit session attempt could not be completed");
+      }
 
-    res.status(reused ? 200 : 201).json(
-      CreateIdentityVerificationSessionResponse.parse({
-        sessionId: verification.providerSessionId,
-        verificationUrl: verification.verificationUrl,
-        status: currentStatus(verification.status),
-        diditStatus: verification.status,
-        sandboxScenario: verification.sandboxScenario,
-        reused,
-      }),
+      return storedVerification;
+    });
+  } catch (storageError) {
+    req.log.error(
+      { err: storageError, userId, attemptId: reservation.attemptId },
+      "Created Didit session could not be persisted",
     );
-  } catch (error) {
-    if (error instanceof DiditConfigurationError) {
-      res.status(503).json({ error: "Didit development credentials are not configured" });
-      return;
+    try {
+      await markDiditAttemptFailed(
+        userId,
+        reservation.attemptId,
+        diditSession.session_id,
+      );
+    } catch (markError) {
+      req.log.error(
+        { err: markError, userId, attemptId: reservation.attemptId },
+        "Didit session persistence failure could not be recorded",
+      );
     }
-
-    req.log.error({ err: error, userId }, "Didit session creation failed");
-    res.status(502).json({ error: "Identity verification provider unavailable" });
+    res.status(503).json({ error: "Identity verification storage unavailable" });
+    return;
   }
+
+  res.status(201).json(
+    CreateIdentityVerificationSessionResponse.parse({
+      sessionId: verification.providerSessionId,
+      verificationUrl: verification.verificationUrl,
+      status: currentStatus(verification.status),
+      diditStatus: verification.status,
+      sandboxScenario: verification.sandboxScenario,
+      reused: false,
+    }),
+  );
 });
 
 router.post("/webhooks/didit", async (req, res): Promise<void> => {

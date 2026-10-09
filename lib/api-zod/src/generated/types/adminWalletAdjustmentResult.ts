@@ -12,8 +12,11 @@ export interface AdminWalletAdjustmentResult {
   userId: string;
   walletId: string;
   direction: AdminWalletAdjustmentResultDirection;
+  /** @maximum 9007199254740991 */
   amountMinor: bigint;
+  /** @maximum 9007199254740991 */
   balanceBeforeMinor: bigint;
+  /** @maximum 9007199254740991 */
   balanceAfterMinor: bigint;
   currency: string;
   duplicate: boolean;

@@ -10,7 +10,10 @@ import type { AdminWalletAdjustmentRequestDirection } from './adminWalletAdjustm
 
 export interface AdminWalletAdjustmentRequest {
   direction: AdminWalletAdjustmentRequestDirection;
-  /** @minimum 1 */
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
   amountMinor: bigint;
   /**
      * @minLength 10
@@ -24,6 +27,9 @@ export interface AdminWalletAdjustmentRequest {
      * @maxLength 128
      */
   idempotencyKey: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   expectedBalanceMinor: bigint;
 }

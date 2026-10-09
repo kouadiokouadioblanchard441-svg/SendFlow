@@ -10,6 +10,7 @@ import type { WalletSummaryStatus } from './walletSummaryStatus';
 export interface WalletSummary {
   id: string;
   currency: string;
+  /** @maximum 9007199254740991 */
   balanceMinor: bigint;
   status: WalletSummaryStatus;
 }

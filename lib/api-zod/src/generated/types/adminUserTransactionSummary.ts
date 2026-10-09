@@ -11,6 +11,8 @@ export interface AdminUserTransactionSummary {
   succeeded: number;
   pending: number;
   failed: number;
+  /** @maximum 9007199254740991 */
   volumeMinor: bigint;
+  /** @maximum 9007199254740991 */
   feesMinor: bigint;
 }

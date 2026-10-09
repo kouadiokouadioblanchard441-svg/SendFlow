@@ -25,6 +25,10 @@ export const walletsTable = pgTable(
       "sf_wallets_balance_minor_nonnegative_check",
       sql`${table.balanceMinor} >= 0`,
     ),
+    balanceSafeIntegerCheck: check(
+      "sf_wallets_balance_minor_safe_integer_check",
+      sql`${table.balanceMinor} <= 9007199254740991`,
+    ),
   }),
 );
 

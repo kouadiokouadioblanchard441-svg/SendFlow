@@ -56,9 +56,17 @@ export const transactionsTable = pgTable(
       "sf_transactions_amount_minor_positive_check",
       sql`${table.amountMinor} > 0`,
     ),
+    amountSafeIntegerCheck: check(
+      "sf_transactions_amount_minor_safe_integer_check",
+      sql`${table.amountMinor} <= 9007199254740991`,
+    ),
     feeNonNegativeCheck: check(
       "sf_transactions_fee_minor_nonnegative_check",
       sql`${table.feeMinor} >= 0`,
+    ),
+    feeSafeIntegerCheck: check(
+      "sf_transactions_fee_minor_safe_integer_check",
+      sql`${table.feeMinor} <= 9007199254740991`,
     ),
     userTransactionsIndex: index("sf_transactions_user_created_idx").on(
       table.userId,

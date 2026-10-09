@@ -15,6 +15,12 @@ Financial amount and balance invariants must also be enforced by database `CHECK
 
 **How to apply:** Keep matching checks in the Drizzle schema and a targeted additive migration. Never execute that migration against shared Neon during tests or previews; review historical values and obtain authorization before applying or validating it.
 
+Treat existing versioned SQL migrations as immutable: add a new migration for schema changes rather than editing an earlier file that may already have been applied.
+
+**Why:** Rewriting an idempotent migration does not update databases where its original definition already ran, leaving runtime code and deployed schema out of sync.
+
+**How to apply:** Preserve existing migration contents, name follow-up migrations clearly, and state their prerequisites. Test them only against a disposable isolated PostgreSQL database before considering deployment.
+
 The current Clerk browser flow may expose its publishable key in the client bundle. This key is public by design and is intentionally retained; this exception does not apply to secret keys or sensitive values.
 
 **Why:** The user chose to retain the Clerk publishable key after confirming it is present in the browser bundle and is not a secret.

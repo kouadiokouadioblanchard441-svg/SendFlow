@@ -734,6 +734,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Another Didit session reservation is still being processed.
+          headers:
+            Retry-After:
+              description: Seconds until the in-progress reservation expires.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
         "502":
           description: Didit is unavailable.
           content:
@@ -741,7 +752,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "503":
-          description: Didit development credentials are not configured.
+          description: Didit configuration or identity-verification storage is unavailable.
           content:
             application/json:
               schema:
@@ -2617,6 +2628,7 @@ components:
         balanceMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         status:
           type: string
           enum: [active, locked, closed]
@@ -2859,6 +2871,7 @@ components:
         balanceMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         status:
           type: string
           enum: [active, locked, closed]
@@ -2883,9 +2896,11 @@ components:
         volumeMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         feesMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
       required: [total, succeeded, pending, failed, volumeMinor, feesMinor]
     AdminWalletSummary:
       type: object
@@ -2895,6 +2910,7 @@ components:
         balanceMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         status:
           type: string
           enum: [active, locked, closed]
@@ -2926,9 +2942,11 @@ components:
         amountMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         feeMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         currency:
           type: string
         reference:
@@ -2979,6 +2997,7 @@ components:
             balanceMinor:
               type: integer
               format: int64
+              maximum: 9007199254740991
           required: [active, balanceMinor]
         transactions:
           type: object
@@ -2994,9 +3013,11 @@ components:
             volumeMinor:
               type: integer
               format: int64
+              maximum: 9007199254740991
             feesMinor:
               type: integer
               format: int64
+              maximum: 9007199254740991
           required: [total, succeeded, pending, failed, volumeMinor, feesMinor]
         deposits:
           type: object
@@ -3008,6 +3029,7 @@ components:
             volumeMinor:
               type: integer
               format: int64
+              maximum: 9007199254740991
           required: [succeeded, pending, volumeMinor]
         transfers:
           type: object
@@ -3019,6 +3041,7 @@ components:
             volumeMinor:
               type: integer
               format: int64
+              maximum: 9007199254740991
           required: [succeeded, pending, volumeMinor]
       required: [period, users, wallets, transactions, deposits, transfers]
     AdminUserPage:
@@ -3854,9 +3877,11 @@ components:
         amountMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         feeMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         currency:
           type: string
         reference:
@@ -3939,6 +3964,7 @@ components:
           type: integer
           format: int64
           minimum: 1
+          maximum: 9007199254740991
         reason:
           type: string
           minLength: 10
@@ -3955,6 +3981,7 @@ components:
           type: integer
           format: int64
           minimum: 0
+          maximum: 9007199254740991
       required: [direction, amountMinor, reason, confirmation, idempotencyKey, expectedBalanceMinor]
     AdminUserActionRequest:
       type: object
@@ -3985,12 +4012,15 @@ components:
         amountMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         balanceBeforeMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         balanceAfterMinor:
           type: integer
           format: int64
+          maximum: 9007199254740991
         currency:
           type: string
         duplicate:
