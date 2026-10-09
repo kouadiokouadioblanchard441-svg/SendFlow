@@ -12,3 +12,11 @@ The user requires phase-gated execution: complete one phase, deliver its report 
 **Why:** The user specified a strict approval protocol and requires the application UI to remain inside Capacitor's native WebView while the backend stays remote. The public app/API domain was confirmed as `app.africa.sendflow.africa`.
 
 **How to apply:** Work only on the currently approved phase. Preserve existing product behavior and UI; keep secrets and financial decisions server-side. Use the confirmed HTTPS origin and `/api` routing when configuring the client and allowed origins. Do not install Capacitor, create Android files, or proceed to another phase until the user approves the preceding phase.
+
+## Replit Android build toolchain
+
+For Android builds in this Replit, use JDK 21 for Gradle. The default GraalVM 19 cannot run the Android JDK image transform, while JDK 17 is below this project’s Java 21 source level. Nix SDK outputs are read-only, so include every tool version Gradle requests; with API 36, include Build Tools 35.0.0 and 36.0.0. The build does not need an emulator or system image.
+
+**Why:** Gradle first attempted to install Build Tools 35 into the immutable Nix SDK, then failed on the workspace JDK 19 and JDK 17. The build succeeded with the SDK packages precomposed and JDK 21.
+
+**How to apply:** Set `ANDROID_SDK_ROOT` and `ANDROID_HOME` to the composed SDK and `JAVA_HOME` to JDK 21 for Android builds. Keep `NIXPKGS_ACCEPT_ANDROID_SDK_LICENSE=1` scoped to the approved Nix invocation; do not persist it in project environment configuration without explicit consent.

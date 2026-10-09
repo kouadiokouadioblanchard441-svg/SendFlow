@@ -18,4 +18,4 @@
 - [Customer password compatibility](customer-password-compatibility.md) — New and reset passwords require eight characters; keep legacy sign-in compatible until users can upgrade safely.
 - [Financial app hardening](financial-app-hardening.md) — Never put secrets or sensitive values in code; verify all sensitive access and operations on the server.
 - [Engineering quality](engineering-quality.md) — SendFlow is a large financial app; prioritize robust code over shortcuts taken only to move faster.
-- [SendFlow Capacitor direction](capacitor-direction.md) — The app will use Capacitor; wait for the user's implementation instructions before making Capacitor-specific changes.
+- [SendFlow Capacitor direction](capacitor-direction.md) — Keep UI/backend boundaries, wait for phase approval, and use the Replit JDK 21 Android toolchain.
