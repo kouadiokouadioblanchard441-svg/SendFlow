@@ -11,6 +11,9 @@
     "test:auth-routing": "node --experimental-strip-types --test src/lib/customer-route-guard.test.mjs src/lib/customer-password-validation.test.mjs src/lib/account-profile.test.mjs"
   },
   "devDependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/cli": "8.5.3",
+    "@capacitor/core": "8.5.3",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.7",
