@@ -1,6 +1,8 @@
 import { createInsertSchema } from "drizzle-zod";
+import { sql } from "drizzle-orm";
 import {
   bigint,
+  check,
   index,
   pgEnum,
   pgTable,
@@ -50,6 +52,14 @@ export const transactionsTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
+    amountPositiveCheck: check(
+      "sf_transactions_amount_minor_positive_check",
+      sql`${table.amountMinor} > 0`,
+    ),
+    feeNonNegativeCheck: check(
+      "sf_transactions_fee_minor_nonnegative_check",
+      sql`${table.feeMinor} >= 0`,
+    ),
     userTransactionsIndex: index("sf_transactions_user_created_idx").on(
       table.userId,
       table.createdAt,

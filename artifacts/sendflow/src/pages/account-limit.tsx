@@ -90,12 +90,18 @@ export default function AccountLimitPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
-      const body = await response.json().catch(() => null) as { status?: typeof verificationStatus; verificationUrl?: string } | null;
+      const body = await response.json().catch(() => null) as {
+        status?: typeof verificationStatus;
+        verificationUrl?: string;
+        error?: string;
+      } | null;
 
       if (!response.ok) {
         throw new Error(
           response.status === 401
             ? 'Votre session sécurisée a expiré. Veuillez vous reconnecter.'
+            : response.status === 429
+              ? body?.error ?? 'Vous avez atteint la limite de nouvelles tentatives. Réessayez plus tard.'
             : response.status === 503
               ? 'Le service de vérification est temporairement indisponible. Veuillez réessayer plus tard.'
               : 'Impossible de démarrer la vérification pour le moment.',

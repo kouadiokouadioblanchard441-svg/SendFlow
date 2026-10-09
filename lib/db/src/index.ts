@@ -6,6 +6,7 @@ export {
   desc,
   eq,
   gte,
+  gt,
   ilike,
   inArray,
   isNull,

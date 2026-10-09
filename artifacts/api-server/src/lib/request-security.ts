@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import type { Request } from "express";
+import { getAllowedOrigins, normalizeHttpOrigin } from "./origin-policy";
 
 function fingerprintKey() {
   const key = process.env.SESSION_SECRET?.trim();
@@ -16,19 +17,6 @@ export function requesterAddress(req: Request) {
 }
 
 export function isTrustedOrigin(req: Request) {
-  const origin = req.get("origin");
-  if (!origin) return false;
-
-  const configuredOrigins = [
-    process.env.CORS_ALLOWED_ORIGINS,
-    process.env.REPLIT_DOMAINS,
-    process.env.REPLIT_DEV_DOMAIN,
-  ]
-    .filter(Boolean)
-    .flatMap((value) => value!.split(","))
-    .map((value) => value.trim().replace(/\/+$/, ""))
-    .filter(Boolean)
-    .map((value) => (/^https?:\/\//i.test(value) ? value : `https://${value}`));
-
-  return configuredOrigins.includes(origin.replace(/\/+$/, ""));
+  const origin = normalizeHttpOrigin(req.get("origin"));
+  return origin !== null && getAllowedOrigins(process.env).has(origin);
 }

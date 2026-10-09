@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 export const identityVerificationsTable = pgTable("sf_identity_verifications", {
@@ -25,5 +25,23 @@ export const identityWebhookEventsTable = pgTable("sf_identity_webhook_events", 
   receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const identityVerificationAttemptsTable = pgTable(
+  "sf_identity_verification_attempts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("sf_identity_verification_attempts_user_created_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export type IdentityVerification = typeof identityVerificationsTable.$inferSelect;
 export type IdentityWebhookEvent = typeof identityWebhookEventsTable.$inferSelect;
+export type IdentityVerificationAttempt = typeof identityVerificationAttemptsTable.$inferSelect;

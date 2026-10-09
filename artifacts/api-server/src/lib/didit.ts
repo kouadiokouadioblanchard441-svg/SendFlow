@@ -41,6 +41,10 @@ function getRequiredConfig() {
   return { apiKey, workflowId, environment };
 }
 
+export function assertDiditConfiguration(): void {
+  getRequiredConfig();
+}
+
 function diditUrl(path: string) {
   return `${DIDIT_API_BASE_URL}${path}`;
 }

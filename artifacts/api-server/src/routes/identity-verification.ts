@@ -1,12 +1,15 @@
 import { Router, type IRouter } from "express";
 import {
+  asc,
   and,
   desc,
   db,
   eq,
   gte,
+  gt,
   inArray,
   identityVerificationsTable,
+  identityVerificationAttemptsTable,
   identityWebhookEventsTable,
   lt,
   sql,
@@ -23,6 +26,7 @@ import {
 } from "@workspace/api-zod";
 import {
   createDiditSession,
+  assertDiditConfiguration,
   DiditConfigurationError,
   getSafeCallbackUrl,
   isFreshDiditTimestamp,
@@ -38,6 +42,11 @@ import {
   ACTIVE_DIDIT_VERIFICATION_STATUSES,
   isReusableDiditVerificationStatus,
 } from "../lib/didit-verification-policy";
+import {
+  DIDIT_SESSION_ATTEMPT_LIMIT,
+  DIDIT_SESSION_ATTEMPT_WINDOW_MS,
+  getDiditSessionRetryAfter,
+} from "../lib/didit-session-rate-limit";
 import { requireCustomerSession } from "../lib/customer-session";
 import { isTrustedOrigin } from "../lib/request-security";
 
@@ -218,6 +227,9 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
   }
 
   try {
+    assertDiditConfiguration();
+    const callback = getSafeCallbackUrl();
+    const now = new Date();
     const result = await db.transaction(async (tx) => {
       const [lockedUser] = await tx
         .select({ id: usersTable.id, status: usersTable.status })
@@ -261,12 +273,36 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
         return { blockedAccount: null, verification: existing, reused: true } as const;
       }
 
+      const attemptsSince = new Date(now.getTime() - DIDIT_SESSION_ATTEMPT_WINDOW_MS);
+      const attempts = await tx
+        .select({ createdAt: identityVerificationAttemptsTable.createdAt })
+        .from(identityVerificationAttemptsTable)
+        .where(
+          and(
+            eq(identityVerificationAttemptsTable.userId, userId),
+            gt(identityVerificationAttemptsTable.createdAt, attemptsSince),
+          ),
+        )
+        .orderBy(asc(identityVerificationAttemptsTable.createdAt))
+        .limit(DIDIT_SESSION_ATTEMPT_LIMIT);
+      const retryAfterSeconds = getDiditSessionRetryAfter(attempts.map((attempt) => attempt.createdAt), now);
+      if (retryAfterSeconds !== null) {
+        return { blockedAccount: null, retryAfterSeconds } as const;
+      }
+
+      await tx.insert(identityVerificationAttemptsTable).values({ userId });
+
       const vendorData = `sendflow:user:${userId}`;
-      const diditSession = await createDiditSession({
-        vendorData,
-        sandboxScenario: scenario,
-        callback: getSafeCallbackUrl(),
-      });
+      let diditSession: Awaited<ReturnType<typeof createDiditSession>>;
+      try {
+        diditSession = await createDiditSession({
+          vendorData,
+          sandboxScenario: scenario,
+          callback,
+        });
+      } catch (providerError) {
+        return { blockedAccount: null, providerError } as const;
+      }
 
       const [verification] = await tx
         .insert(identityVerificationsTable)
@@ -286,6 +322,24 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
 
     if (result.blockedAccount) {
       res.status(403).json({ error: result.blockedAccount });
+      return;
+    }
+
+    if ("retryAfterSeconds" in result) {
+      res.setHeader("Retry-After", String(result.retryAfterSeconds));
+      res.status(429).json({
+        error: "Vous avez atteint la limite de 3 tentatives de vérification sur 24 heures. Réessayez plus tard.",
+      });
+      return;
+    }
+
+    if ("providerError" in result) {
+      if (result.providerError instanceof DiditConfigurationError) {
+        res.status(503).json({ error: "Didit development credentials are not configured" });
+        return;
+      }
+      req.log.error({ err: result.providerError, userId }, "Didit session creation failed");
+      res.status(502).json({ error: "Identity verification provider unavailable" });
       return;
     }
 

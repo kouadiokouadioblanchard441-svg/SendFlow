@@ -5,6 +5,8 @@ import { clerkMiddleware, getAuth } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import { ADMIN_ROUTE_PREFIX } from "./lib/admin-route-prefix";
 import { shouldBlockSharedNeonApiRequest } from "./lib/shared-neon-preview-guard";
+import { getAllowedOrigins, normalizeHttpOrigin } from "./lib/origin-policy";
+import { parseTrustProxyHops } from "./lib/trust-proxy-policy";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middlewares/clerkProxyMiddleware";
@@ -12,7 +14,7 @@ import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./mid
 const app: Express = express();
 
 app.disable("x-powered-by");
-app.set("trust proxy", 1);
+app.set("trust proxy", parseTrustProxyHops(process.env.TRUST_PROXY_HOPS));
 app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
@@ -42,26 +44,14 @@ app.use(
 );
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-const originValues = [
-  process.env.CORS_ALLOWED_ORIGINS,
-  process.env.REPLIT_DOMAINS,
-  process.env.REPLIT_DEV_DOMAIN,
-]
-  .filter(Boolean)
-  .flatMap((value) => value!.split(","))
-  .map((value) => value.trim())
-  .filter(Boolean)
-  .flatMap((value) => {
-    const normalized = value.replace(/\/+$/, "");
-    return /^https?:\/\//i.test(normalized) ? [normalized] : [`https://${normalized}`];
-  });
-const allowedOrigins = new Set(originValues);
+const allowedOrigins = getAllowedOrigins(process.env);
 
 app.use(
   cors({
     credentials: true,
     origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) {
+      const normalizedOrigin = normalizeHttpOrigin(origin);
+      if (!origin || (normalizedOrigin && allowedOrigins.has(normalizedOrigin))) {
         callback(null, true);
         return;
       }
@@ -131,10 +121,8 @@ app.use(`/api${ADMIN_ROUTE_PREFIX}`, (req, res, next) => {
     return;
   }
 
-  let providedOrigin: string;
-  try {
-    providedOrigin = new URL(origin).origin;
-  } catch {
+  const providedOrigin = normalizeHttpOrigin(origin);
+  if (!providedOrigin) {
     res.status(403).json({ error: "Invalid administrator request origin" });
     return;
   }

@@ -723,6 +723,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: The user has reached the rolling Didit session attempt limit.
+          headers:
+            Retry-After:
+              description: Seconds until the oldest counted attempt expires.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
         "502":
           description: Didit is unavailable.
           content:

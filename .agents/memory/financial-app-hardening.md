@@ -9,6 +9,12 @@ The server is the only authority for SendFlow. The frontend is untrusted and mus
 
 **How to apply:** Treat client claims, browser state, and persisted values as untrusted inputs. Keep credentials in Replit Secrets and access them only from server code; do not expose their values to the frontend. The server must check Clerk identity, allowlists, PIN sessions, resource ownership, schemas, and financial invariants before returning or changing data. Fail closed on validation or storage errors, prevent duplicate or partial operations, and test without modifying real accounts or the shared Neon database.
 
+Financial amount and balance invariants must also be enforced by database `CHECK` constraints; route validation alone does not protect alternate or future write paths. When historical rows cannot be reviewed, prepare additive `NOT VALID` constraints to protect new writes, then validate existing data separately after an authorized review.
+
+**Why:** Direct SQL and future code paths can bypass application validation, while the shared Neon database must not be inspected or changed without authorization.
+
+**How to apply:** Keep matching checks in the Drizzle schema and a targeted additive migration. Never execute that migration against shared Neon during tests or previews; review historical values and obtain authorization before applying or validating it.
+
 The current Clerk browser flow may expose its publishable key in the client bundle. This key is public by design and is intentionally retained; this exception does not apply to secret keys or sensitive values.
 
 **Why:** The user chose to retain the Clerk publishable key after confirming it is present in the browser bundle and is not a secret.

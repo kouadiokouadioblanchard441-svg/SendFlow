@@ -1,4 +1,15 @@
-import { bigint, index, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  bigint,
+  check,
+  index,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 import { walletsTable } from "./wallets";
 
@@ -25,6 +36,10 @@ export const walletLedgerTable = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
+    amountPositiveCheck: check(
+      "sf_wallet_ledger_amount_minor_positive_check",
+      sql`${table.amountMinor} > 0`,
+    ),
     walletCreatedIndex: index("sf_wallet_ledger_wallet_created_idx").on(table.walletId, table.createdAt),
     userCreatedIndex: index("sf_wallet_ledger_user_created_idx").on(table.userId, table.createdAt),
   }),

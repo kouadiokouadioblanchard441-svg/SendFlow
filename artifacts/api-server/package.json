@@ -9,7 +9,7 @@
     "start": "node --enable-source-maps ./dist/index.mjs",
     "test:otp": "node --experimental-strip-types --test src/lib/esms-verify.test.mjs",
     "test:auth": "node --experimental-strip-types --test src/lib/customer-auth-crypto.test.mjs src/lib/admin-pin-session.test.mjs src/lib/customer-auth-rate-limit-policy.test.mjs src/lib/customer-auth-rate-limit-buckets.test.mjs src/lib/customer-pin-session-policy.test.mjs src/lib/customer-password-policy.test.mjs src/lib/customer-recovery-policy.test.mjs",
-    "test:security": "node --experimental-strip-types --test src/lib/admin-pin-session.test.mjs src/lib/didit-webhook-policy.test.mjs src/lib/didit-verification-policy.test.mjs src/lib/shared-neon-preview-guard.test.mjs src/lib/customer-pin-session-policy.test.mjs",
+    "test:security": "node --experimental-strip-types --test src/lib/admin-pin-session.test.mjs src/lib/didit-webhook-policy.test.mjs src/lib/didit-verification-policy.test.mjs src/lib/didit-session-rate-limit.test.mjs src/lib/origin-policy.test.mjs src/lib/trust-proxy-policy.test.mjs src/lib/shared-neon-preview-guard.test.mjs src/lib/customer-pin-session-policy.test.mjs",
     "test:wallet-integrity": "node --test tests/security/test_concurrency_wallet_integrity.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -21,7 +21,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "http-proxy-middleware": "^4.2.0",
+    "http-proxy": "^1.18.1",
     "pino": "^9.14.0",
     "pino-http": "^10.5.0"
   },
@@ -29,6 +29,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/http-proxy": "^1.17.17",
     "@types/node": "catalog:",
     "esbuild": "0.28.1",
     "esbuild-plugin-pino": "^2.3.3",
