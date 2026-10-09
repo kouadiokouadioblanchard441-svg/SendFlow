@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import type { AccountLimitResult } from '@workspace/api-client-react';
+import { resolveApiUrl } from '@workspace/api-client-react';
 import { formatAccountLimitAmount } from '@/lib/account-limit';
 import { useSeo } from '@/lib/seo';
 import limitVerificationIllustration from '@assets/generated_images/sendflow-account-limit-verification-3d-transparent.png';
@@ -46,7 +47,7 @@ export default function AccountLimitPage() {
 
     let cancelled = false;
     setIsLoading(true);
-    fetch('/api/me/account-limit', { credentials: 'include' })
+    fetch(resolveApiUrl('/api/me/account-limit'), { credentials: 'include' })
       .then(async (response) => {
         const body = await response.json().catch(() => null) as (AccountLimitResult & { error?: string }) | null;
         if (!response.ok) {
@@ -84,7 +85,7 @@ export default function AccountLimitPage() {
     setStatusMessage(null);
 
     try {
-      const response = await fetch('/api/me/identity-verification', {
+      const response = await fetch(resolveApiUrl('/api/me/identity-verification'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

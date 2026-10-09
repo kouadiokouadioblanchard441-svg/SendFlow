@@ -51,7 +51,7 @@ export function setCustomerSessionCookie(res: Response, token: string) {
   res.cookie(CUSTOMER_SESSION_COOKIE, token, {
     httpOnly: true,
     secure: true,
-    sameSite: "lax",
+    sameSite: "none",
     path: "/",
     maxAge: CUSTOMER_SESSION_TTL_MS,
   });
@@ -61,7 +61,7 @@ export function clearCustomerSessionCookie(res: Response) {
   res.clearCookie(CUSTOMER_SESSION_COOKIE, {
     httpOnly: true,
     secure: true,
-    sameSite: "lax",
+    sameSite: "none",
     path: "/",
   });
 }
