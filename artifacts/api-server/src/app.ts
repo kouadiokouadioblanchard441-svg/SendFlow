@@ -4,6 +4,7 @@ import pinoHttp from "pino-http";
 import { clerkMiddleware, getAuth } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import { ADMIN_ROUTE_PREFIX } from "./lib/admin-route-prefix";
+import { shouldBlockSharedNeonApiRequest } from "./lib/shared-neon-preview-guard";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middlewares/clerkProxyMiddleware";
@@ -69,6 +70,27 @@ app.use(
     },
   }),
 );
+app.use("/api", (req, res, next) => {
+  if (
+    !shouldBlockSharedNeonApiRequest(
+      req.method,
+      req.originalUrl,
+    )
+  ) {
+    next();
+    return;
+  }
+
+  const path = req.originalUrl.split("?")[0] ?? "";
+  req.log.warn(
+    { method: req.method, path },
+    "Blocked live-data API request in shared-Neon runtime",
+  );
+  res.setHeader("Cache-Control", "no-store, private");
+  res.status(503).json({
+    error: "Les opérations sur les comptes ne sont pas disponibles dans cet aperçu.",
+  });
+});
 app.use(express.json({ limit: "100kb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
 app.use(

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { getGetCustomerSessionQueryKey, useGetCustomerSession } from '@workspace/api-client-react';
 import { LegalMentionsPage, PrivacyPage, type LegalPageProps } from '@/pages/legal';
 import NotFound from '@/pages/not-found';
 import AccountPage from '@/pages/account';
@@ -26,8 +27,8 @@ import SigninPage from '@/pages/sign-in';
 import SignupPage from '@/pages/sign-up';
 import OnboardingPage from '@/pages/onboarding';
 import { useSeo } from '@/lib/seo';
-import { getPinUnlockExpiry } from '@/lib/pin-unlock';
-import { requiresCustomerPinUnlock } from '@/lib/customer-route-guard';
+import { clearPinUnlock, getPinUnlockExpiry } from '@/lib/pin-unlock';
+import { requiresCustomerPinUnlock, shouldRelockCustomerPinUnlock } from '@/lib/customer-route-guard';
 import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 
 const AdminAccessPage = lazy(() => import('@/pages/admin-access'));
@@ -54,9 +55,39 @@ const queryClient = new QueryClient({
 });
 
 function CustomerPinGuard({ children }: { children: ReactNode }) {
-  const [path] = useLocation();
+  const [path, setLocation] = useLocation();
   const [, forceRefresh] = useState(0);
   const expiry = getPinUnlockExpiry();
+  const sessionQuery = useGetCustomerSession({
+    query: {
+      queryKey: getGetCustomerSessionQueryKey(),
+      enabled: expiry !== null,
+      retry: false,
+      refetchInterval: expiry !== null ? 30_000 : false,
+      refetchOnWindowFocus: true,
+      staleTime: 0,
+    },
+  });
+
+  useEffect(() => {
+    const sessionStatus = getHttpStatus(sessionQuery.error);
+    if (!shouldRelockCustomerPinUnlock(sessionQuery.data?.pinUnlocked, sessionStatus)) return;
+
+    clearPinUnlock();
+    queryClient.clear();
+    forceRefresh((value) => value + 1);
+
+    if (sessionStatus === 401) {
+      setLocation('/sign-in');
+    } else if (sessionQuery.data?.pinConfigured === false) {
+      setLocation('/create-pin');
+    }
+  }, [
+    sessionQuery.data?.pinConfigured,
+    sessionQuery.data?.pinUnlocked,
+    sessionQuery.error,
+    setLocation,
+  ]);
 
   useEffect(() => {
     if (expiry === null) return;

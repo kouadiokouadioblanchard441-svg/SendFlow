@@ -109,7 +109,7 @@ export interface CustomerRegistrationInput {
   /** @pattern ^[A-Z]{2}$ */
   countryCode?: string;
   /**
-     * @minLength 4
+     * @minLength 8
      * @maxLength 64
      */
   password: string;
@@ -139,7 +139,7 @@ export interface CustomerPasswordResetInput {
      */
   phone: string;
   /**
-     * @minLength 4
+     * @minLength 8
      * @maxLength 64
      */
   newPassword: string;

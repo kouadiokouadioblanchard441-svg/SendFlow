@@ -18,3 +18,11 @@ export function requiresCustomerPinUnlock(path: string) {
     || path.startsWith('/transaction/')
     || path.startsWith('/notifications/');
 }
+
+export function shouldRelockCustomerPinUnlock(
+  pinUnlocked: boolean | undefined,
+  sessionStatusCode: number | undefined,
+) {
+  return pinUnlocked === false
+    || (sessionStatusCode !== undefined && sessionStatusCode >= 400 && sessionStatusCode < 600);
+}

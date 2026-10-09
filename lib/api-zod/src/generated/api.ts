@@ -88,7 +88,7 @@ export const registerCustomerBodyFullNameMin = 2;
 export const registerCustomerBodyFullNameMax = 120;
 
 export const registerCustomerBodyCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
-export const registerCustomerBodyPasswordMin = 4;
+export const registerCustomerBodyPasswordMin = 8;
 export const registerCustomerBodyPasswordMax = 64;
 
 
@@ -170,7 +170,7 @@ export const resetCustomerPasswordBodyPhoneMax = 16;
 
 
 export const resetCustomerPasswordBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
-export const resetCustomerPasswordBodyNewPasswordMin = 4;
+export const resetCustomerPasswordBodyNewPasswordMin = 8;
 export const resetCustomerPasswordBodyNewPasswordMax = 64;
 
 

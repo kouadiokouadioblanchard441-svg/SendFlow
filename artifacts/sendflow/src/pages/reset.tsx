@@ -6,6 +6,7 @@ import { CountryPhoneField } from '@/components/country-phone-field';
 import { useResetCustomerPassword, useResetCustomerPin, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
 import { clearPinUnlock } from '@/lib/pin-unlock';
 import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
+import { NEW_CUSTOMER_PASSWORD_MIN_LENGTH } from '@/lib/customer-password-validation';
 import { getPhoneLengthMessage, isValidPhoneForCountry } from '@/lib/phone-rules';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -150,8 +151,9 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
 
   const handleSecretSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (newSecret.length < 4) {
-      setSecretError(`${secretLabel} doit contenir au moins 4 caractères.`);
+    const minimumLength = isPassword ? NEW_CUSTOMER_PASSWORD_MIN_LENGTH : 4;
+    if (newSecret.length < minimumLength) {
+      setSecretError(`${secretLabel} doit contenir au moins ${minimumLength} caractères.`);
       return;
     }
     if (newSecret !== confirmation) {

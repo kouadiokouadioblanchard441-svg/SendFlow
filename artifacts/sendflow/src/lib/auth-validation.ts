@@ -1,4 +1,8 @@
 import { getPhoneDigitsForCountry, getPhoneLengthMessage, normalizePhoneDigits } from '@/lib/phone-rules';
+import {
+  LEGACY_CUSTOMER_PASSWORD_MIN_LENGTH,
+  validateCustomerPassword,
+} from '@/lib/customer-password-validation';
 
 export type SignUpValidationInput = {
   fullName: string;
@@ -42,13 +46,6 @@ function validatePhone(phone: string, dialCode = '+225') {
     return getPhoneLengthMessage(dialCode);
   }
 
-  return undefined;
-}
-
-function validatePassword(password: string) {
-  if (!password) return 'Le code secret est requis.';
-  if (password.length < 4) return 'Le code secret doit contenir au moins 4 caractères.';
-  if (password.length > 64) return 'Le code secret ne peut pas dépasser 64 caractères.';
   return undefined;
 }
 
@@ -97,7 +94,7 @@ export function validateSignUp(form: SignUpValidationInput, dialCode = '+225'): 
   const phoneError = validatePhone(form.phone, dialCode);
   if (phoneError) errors.phone = phoneError;
 
-  const passwordError = validatePassword(form.password);
+  const passwordError = validateCustomerPassword(form.password);
   if (passwordError) errors.password = passwordError;
 
   if (!form.confirmation) {
@@ -116,7 +113,8 @@ export function validateSignUp(form: SignUpValidationInput, dialCode = '+225'): 
 export function validateSignIn(form: SignInValidationInput, dialCode = '+225'): FieldErrors<SignInField> {
   const errors: FieldErrors<SignInField> = {};
   const phoneError = validatePhone(form.phone, dialCode);
-  const passwordError = validatePassword(form.password);
+  // Keep accepting existing four-character customer secrets at sign-in.
+  const passwordError = validateCustomerPassword(form.password, LEGACY_CUSTOMER_PASSWORD_MIN_LENGTH);
 
   if (phoneError) errors.phone = phoneError;
   if (passwordError) errors.password = passwordError;

@@ -51,6 +51,7 @@ import {
 import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
 import { recordLoginActivity } from "../lib/login-activity";
+import { createCustomerPinRotationSessionPolicy } from "../lib/customer-pin-session-policy";
 
 const router: IRouter = Router();
 const PRIVACY_POLICY_VERSION = "sendflow-privacy-v1";
@@ -394,7 +395,7 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
 
 router.get("/auth/session", async (req, res): Promise<void> => {
   try {
-    const session = await getCustomerSession(req);
+    const session = await getCustomerSession(req, { touchLastSeen: false });
     if (!session) {
       res.status(401).json({ error: "Authentication required" });
       return;
@@ -580,16 +581,31 @@ router.put("/me/pin", async (req, res): Promise<void> => {
         .returning({ userId: customerCredentialsTable.userId });
 
       if (!updatedCredential) return { kind: "changed" } as const;
+      const pinRotationPolicy = createCustomerPinRotationSessionPolicy(
+        session.userId,
+        session.sessionId,
+        now,
+        CUSTOMER_PIN_UNLOCK_TTL_MS,
+      );
+      await tx
+        .update(customerSessionsTable)
+        .set({ pinVerifiedUntil: null })
+        .where(
+          and(
+            eq(customerSessionsTable.userId, pinRotationPolicy.relockActiveSessionsForUserId),
+            isNull(customerSessionsTable.revokedAt),
+          ),
+        );
       const [updatedSession] = await tx
         .update(customerSessionsTable)
         .set({
-          pinVerifiedUntil: new Date(now.getTime() + CUSTOMER_PIN_UNLOCK_TTL_MS),
+          pinVerifiedUntil: pinRotationPolicy.unlockCurrentSessionUntil,
           lastSeenAt: now,
         })
         .where(
           and(
-            eq(customerSessionsTable.id, session.sessionId),
-            eq(customerSessionsTable.userId, session.userId),
+            eq(customerSessionsTable.id, pinRotationPolicy.currentSessionId),
+            eq(customerSessionsTable.userId, pinRotationPolicy.relockActiveSessionsForUserId),
             isNull(customerSessionsTable.revokedAt),
             gte(customerSessionsTable.expiresAt, now),
           ),

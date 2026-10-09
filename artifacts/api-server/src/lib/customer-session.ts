@@ -66,7 +66,10 @@ export function clearCustomerSessionCookie(res: Response) {
   });
 }
 
-export async function getCustomerSession(req: Request): Promise<CustomerSessionContext | null> {
+export async function getCustomerSession(
+  req: Request,
+  { touchLastSeen = true }: { touchLastSeen?: boolean } = {},
+): Promise<CustomerSessionContext | null> {
   const token = readSessionCookie(req);
   if (!token) return null;
 
@@ -104,10 +107,12 @@ export async function getCustomerSession(req: Request): Promise<CustomerSessionC
     return null;
   }
 
-  await db
-    .update(customerSessionsTable)
-    .set({ lastSeenAt: now })
-    .where(eq(customerSessionsTable.id, row.sessionId));
+  if (touchLastSeen) {
+    await db
+      .update(customerSessionsTable)
+      .set({ lastSeenAt: now })
+      .where(eq(customerSessionsTable.id, row.sessionId));
+  }
 
   return {
     sessionId: row.sessionId,

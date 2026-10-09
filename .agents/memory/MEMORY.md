@@ -8,12 +8,13 @@
 - [Didit development integration](didit-development.md) — Keep identity verification server-side and sandbox-only until secure provider configuration is available.
 - [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
-- [Database environment isolation](neon-production-database.md) — Keep Replit development/tests and Plesk production on separate databases; never test against production.
+- [Database environment isolation](neon-production-database.md) — Against shared Neon, previews must block private reads and writes and fail closed on unlisted API routes.
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle production schema pushes](drizzle-scoped-pushes.md) — Keep production migrations additive and explicitly targeted; stop on unrelated Drizzle drift.
 - [eSMS Verify balance requirement](esms-verify-balance.md) — Test-prefixed keys still need available Verify credit; a start request can fail with HTTP 402.
 - [Unverified signup accounts](unverified-signup-accounts.md) — SMS-free signup allows viewing, not phone ownership; future financial operations need OTP verification.
 - [SendFlow PIN keypad](pin-keypad-behavior.md) — User explicitly wants digits to reshuffle after every PIN entry, including confirmation; fix mismatches without freezing it.
-- [PIN unlock boundaries](pin-unlock-boundaries.md) — Serialize concurrent PIN guesses; expire browser access and cached account data before the server unlock expires.
+- [PIN unlock boundaries](pin-unlock-boundaries.md) — Serialize PIN guesses, relock other sessions on PIN change, and clear browser caches when server unlock ends.
+- [Customer password compatibility](customer-password-compatibility.md) — New and reset passwords require eight characters; keep legacy sign-in compatible until users can upgrade safely.
 - [Financial app hardening](financial-app-hardening.md) — Never put secrets or sensitive values in code; verify all sensitive access and operations on the server.
 - [Engineering quality](engineering-quality.md) — SendFlow is a large financial app; prioritize robust code over shortcuts taken only to move faster.

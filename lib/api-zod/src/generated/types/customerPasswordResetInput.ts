@@ -15,7 +15,7 @@ export interface CustomerPasswordResetInput {
      */
   phone: string;
   /**
-     * @minLength 4
+     * @minLength 8
      * @maxLength 64
      */
   newPassword: string;

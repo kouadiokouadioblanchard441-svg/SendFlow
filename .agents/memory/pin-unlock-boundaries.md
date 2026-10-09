@@ -14,3 +14,9 @@ PIN recovery must acquire the same user-scoped PIN attempt bucket before locking
 **Why:** A detached counter clear can race with a concurrent PIN check, and a failure after the PIN transaction commits can leave the user uncertain whether recovery succeeded.
 
 **How to apply:** Reuse the authentication bucket identity and lock order for recovery; commit the challenge consumption, PIN update, session revocation, and user-counter clear together.
+
+After a customer changes their PIN, every other active session for that user must be relocked in the same transaction; only the current valid session remains unlocked. Browsers must revalidate server PIN state and clear cached account data when the server reports a lock or invalid session. A session-status read should not extend activity timestamps.
+
+**Why:** Another device must not retain financial-data access under a PIN that has just been changed, and locally cached data must not outlive the server's access decision.
+
+**How to apply:** Keep the relock and current-session unlock atomic, and verify the behavior with an isolated database rather than the shared Neon environment.

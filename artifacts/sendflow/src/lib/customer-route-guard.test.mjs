@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { requiresCustomerPinUnlock } from './customer-route-guard.ts';
+import { requiresCustomerPinUnlock, shouldRelockCustomerPinUnlock } from './customer-route-guard.ts';
 
 const adminRoutePath = '/admin-control-test';
 
@@ -16,4 +16,12 @@ test('public customer login and Clerk admin routes do not require customer PIN u
   assert.equal(requiresCustomerPinUnlock(adminRoutePath), false);
   assert.equal(requiresCustomerPinUnlock(`${adminRoutePath}/sign-in`), false);
   assert.equal(requiresCustomerPinUnlock(`${adminRoutePath}/users`), false);
+});
+
+test('remote customer session lock or authorization failure clears the local PIN unlock', () => {
+  assert.equal(shouldRelockCustomerPinUnlock(false, undefined), true);
+  assert.equal(shouldRelockCustomerPinUnlock(undefined, 401), true);
+  assert.equal(shouldRelockCustomerPinUnlock(undefined, 503), true);
+  assert.equal(shouldRelockCustomerPinUnlock(true, undefined), false);
+  assert.equal(shouldRelockCustomerPinUnlock(undefined, undefined), false);
 });

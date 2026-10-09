@@ -2466,7 +2466,7 @@ components:
           pattern: "^[A-Z]{2}$"
         password:
           type: string
-          minLength: 4
+          minLength: 8
           maxLength: 64
         acceptedPrivacy:
           type: boolean
@@ -2499,7 +2499,7 @@ components:
           pattern: "^\\+[1-9][0-9]{7,14}$"
         newPassword:
           type: string
-          minLength: 4
+          minLength: 8
           maxLength: 64
       required: [challengeId, phone, newPassword]
     CustomerPinResetInput:
