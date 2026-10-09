@@ -9,7 +9,10 @@
     "build:capacitor": "vite build --config vite.config.ts --mode capacitor --base=./",
     "android:sync": "pnpm run build:capacitor && cap sync android",
     "android:open": "cap open android",
-    "android:debug": "pnpm run android:sync && cd android && ./gradlew assembleDebug",
+    "build:android": "pnpm run android:sync && cd android && ./gradlew assembleDebug",
+    "build:android:release": "pnpm run android:sync && cd android && env -u ANDROID_SIGN_RELEASE ./gradlew bundleRelease",
+    "build:android:release:signed": "pnpm run android:sync && bash scripts/android-release-signed.sh",
+    "android:debug": "pnpm run build:android",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:auth-routing": "node --experimental-strip-types --test src/lib/customer-route-guard.test.mjs src/lib/customer-password-validation.test.mjs src/lib/account-profile.test.mjs"

@@ -1,5 +1,28 @@
 apply plugin: 'com.android.application'
 
+// Release credentials are read only from the build environment, never from source or Gradle files.
+def releaseSigningEnabled = System.getenv("ANDROID_SIGN_RELEASE") == "true"
+def releaseStorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+def releaseStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+
+if (releaseSigningEnabled) {
+    def missingSigningVariables = [
+        "ANDROID_KEYSTORE_PATH": releaseStorePath,
+        "ANDROID_KEYSTORE_PASSWORD": releaseStorePassword,
+        "ANDROID_KEY_ALIAS": releaseKeyAlias,
+        "ANDROID_KEY_PASSWORD": releaseKeyPassword
+    ].findAll { name, value -> !value?.trim() }.keySet()
+
+    if (!missingSigningVariables.isEmpty()) {
+        throw new GradleException("Release signing requested but missing environment variables: ${missingSigningVariables.join(', ')}")
+    }
+    if (!new File(releaseStorePath).isFile()) {
+        throw new GradleException("Release signing requested but ANDROID_KEYSTORE_PATH is not a readable file.")
+    }
+}
+
 android {
     namespace = "africa.sendflow.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,10 +39,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (releaseSigningEnabled) {
+            release {
+                storeFile file(releaseStorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Without ANDROID_SIGN_RELEASE=true the release bundle is intentionally unsigned.
+            if (releaseSigningEnabled) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

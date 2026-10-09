@@ -17,6 +17,8 @@ const basePath = process.env.BASE_PATH ?? '/';
 
 export default defineConfig({
   base: basePath,
+  // Keep environment files at the workspace root; capacitor mode has its own public API origin.
+  envDir: path.resolve(import.meta.dirname, '../..'),
   plugins: [
     react(),
     tailwindcss({ optimize: false }),
