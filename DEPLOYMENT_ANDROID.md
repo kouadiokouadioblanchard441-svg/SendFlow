@@ -6,7 +6,7 @@ This guide prepares a Google Play upload bundle without changing SendFlow's fina
 
 - Capacitor packages the local Vite output from `artifacts/sendflow/dist/public`; no remote `server.url` or live-reload origin is configured.
 - Capacitor mode reads the public API origin from the workspace-root `.env.capacitor`. It must remain an HTTPS origin. Local web previews do not inherit this production origin.
-- `VITE_CLERK_PUBLISHABLE_KEY` is a public Clerk key used by the admin-only Clerk UI. Customer authentication remains server-owned OTP. Put the real publishable key in Replit Secrets; never put Clerk secret keys in a `VITE_*` variable.
+- `VITE_CLERK_PUBLISHABLE_KEY` is a public Clerk key used by the admin-only Clerk UI. Customer authentication remains server-owned OTP. The current preview reports development Clerk keys; use the production publishable key from Replit Secrets for a production release. Never put Clerk secret keys in a `VITE_*` variable.
 - Stripe is not currently used by the SendFlow client, so no Stripe key is configured.
 - Android uses minimum SDK 24 and target/compile SDK 36. SDK 36 is retained rather than downgrading to the lower values in the original request.
 - The Android Gradle Wrapper is pinned by `android/gradle/wrapper/gradle-wrapper.properties`; a separately installed global Gradle is not needed.
@@ -15,9 +15,9 @@ This guide prepares a Google Play upload bundle without changing SendFlow's fina
 
 ## Build environment
 
-The current Replit development environment has `JAVA_HOME`, `ANDROID_HOME`, and `ANDROID_SDK_ROOT` set to JDK 21 and an Android SDK containing API 36 plus Build Tools 35.0.0 and 36.0.0. The build tools are required together by the current Android Gradle Plugin. Keep the SDK license acceptance scoped to an explicitly authorized Nix setup; do not commit license-acceptance flags or SDK license files.
+The project pins JDK 21 in `.replit` and declares the Android SDK composition in the workspace-root `android-sdk.nix`. That expression pins API 36 and Build Tools 35.0.0/36.0.0, excludes emulator images and unused native toolchains, and records the explicitly authorized Android SDK license acceptance. Android commands resolve this composition through Nix before invoking Gradle, so the SDK is reproducible after a Repl restart or fresh environment.
 
-The SDK environment variables currently point to Nix store outputs in this Repl. Before moving the project to a fresh Repl, ensure the same SDK composition is provisioned there and that the relevant Android SDK license is accepted in that environment.
+`ANDROID_HOME` and `ANDROID_SDK_ROOT` are set by the Android command wrapper from the resolved Nix output rather than hard-coded to one Nix store path. The wrapper also resolves JDK 21 from the pinned Nix channel. Do not copy Android SDK license files into the repository.
 
 ## Generate and protect the upload keystore
 
@@ -70,7 +70,7 @@ pnpm --filter @workspace/sendflow run build:android:release
 pnpm --filter @workspace/sendflow run build:android:release:signed
 ```
 
-The signed script ultimately runs the Gradle Wrapper command `./gradlew bundleRelease` from `artifacts/sendflow/android`, with signing enabled only for that invocation. The resulting bundle is:
+The signed script resolves the pinned SDK, then runs the Gradle Wrapper command `./gradlew bundleRelease` from `artifacts/sendflow/android`, with signing enabled only for that invocation. The resulting bundle is:
 
 ```text
 artifacts/sendflow/android/app/build/outputs/bundle/release/app-release.aab

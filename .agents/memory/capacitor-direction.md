@@ -15,8 +15,8 @@ The user requires phase-gated execution: complete one phase, deliver its report 
 
 ## Replit Android build toolchain
 
-For Android builds in this Replit, use JDK 21 for Gradle. The default GraalVM 19 cannot run the Android JDK image transform, while JDK 17 is below this project’s Java 21 source level. Nix SDK outputs are read-only, so include every tool version Gradle requests; with API 36, include Build Tools 35.0.0 and 36.0.0. The build does not need an emulator or system image.
+For Android builds in this Replit, use JDK 21 for Gradle. The default GraalVM 19 cannot run the Android JDK image transform, while JDK 17 is below this project’s Java 21 source level. Nix SDK outputs are read-only, so include every tool version Gradle requests; with API 36, include Build Tools 35.0.0 and 36.0.0. The build does not need an emulator or system image. The project owner explicitly authorized persistent Android SDK license acceptance, scoped to this pinned SDK composition.
 
-**Why:** Gradle first attempted to install Build Tools 35 into the immutable Nix SDK, then failed on the workspace JDK 19 and JDK 17. The build succeeded with the SDK packages precomposed and JDK 21.
+**Why:** Gradle first attempted to install Build Tools 35 into the immutable Nix SDK, then failed on the workspace JDK 19 and JDK 17. The build succeeded with the SDK packages precomposed and JDK 21. The owner approved persisting license acceptance so the same SDK can be reconstructed in a fresh Repl.
 
-**How to apply:** Set `ANDROID_SDK_ROOT` and `ANDROID_HOME` to the composed SDK and `JAVA_HOME` to JDK 21 for Android builds. Keep `NIXPKGS_ACCEPT_ANDROID_SDK_LICENSE=1` scoped to the approved Nix invocation; do not persist it in project environment configuration without explicit consent.
+**How to apply:** Keep license acceptance attached only to SendFlow's declared SDK composition. Do not broaden it to a global environment variable or commit Android license files. Derive Android build environment paths from the pinned SDK and JDK packages rather than copying machine-specific store paths.

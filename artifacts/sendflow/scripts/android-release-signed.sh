@@ -21,6 +21,4 @@ export ANDROID_KEYSTORE_PATH="$keystore_file"
 export ANDROID_SIGN_RELEASE=true
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-android_dir="$script_dir/../android"
-cd "$android_dir"
-./gradlew bundleRelease
+bash "$script_dir/with-android-sdk.sh" bundleRelease
