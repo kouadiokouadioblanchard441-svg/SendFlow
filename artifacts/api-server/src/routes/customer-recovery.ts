@@ -6,6 +6,7 @@ import {
   db,
   eq,
   isNull,
+  or,
   phoneOtpChallengesTable,
   usersTable,
 } from "@workspace/db";
@@ -24,6 +25,7 @@ import {
   withPinAttemptLock,
 } from "../lib/customer-auth-rate-limit";
 import { hashCustomerSecret } from "../lib/customer-auth-crypto";
+import { createSensitiveDataLookupIndex } from "../lib/sensitive-data-crypto";
 import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
 import { hashSecretForClaimedOtpChallenge } from "../lib/customer-recovery-policy";
 import { fingerprint, isTrustedOrigin } from "../lib/request-security";
@@ -93,7 +95,10 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
       const [user] = await tx
         .select({ id: usersTable.id, status: usersTable.status })
         .from(usersTable)
-        .where(eq(usersTable.phone, parsed.data.phone))
+        .where(or(
+          eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
+          eq(usersTable.phone, parsed.data.phone),
+        ))
         .for("update");
 
       await tx
@@ -176,7 +181,10 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
     const [attemptUser] = await db
       .select({ id: usersTable.id })
       .from(usersTable)
-      .where(eq(usersTable.phone, parsed.data.phone))
+      .where(or(
+        eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
+        eq(usersTable.phone, parsed.data.phone),
+      ))
       .limit(1);
     const pinAttemptBuckets = attemptUser
       ? [getCustomerPinAttemptBucket(attemptUser.id)]
@@ -203,7 +211,10 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
       const [user] = await tx
         .select({ id: usersTable.id, status: usersTable.status })
         .from(usersTable)
-        .where(eq(usersTable.phone, parsed.data.phone))
+        .where(or(
+          eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
+          eq(usersTable.phone, parsed.data.phone),
+        ))
         .for("update");
 
       await tx

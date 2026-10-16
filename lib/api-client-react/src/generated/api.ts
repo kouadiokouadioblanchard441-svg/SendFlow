@@ -90,6 +90,8 @@ import type {
   PublicPricingCatalog,
   PublicRegistrationSettings,
   RegistrationSettingsUpdate,
+  TransferQuoteInput,
+  TransferQuoteResult,
   UpdatePaymentAggregatorRequest,
   UpdatePaymentAggregatorRouteRequest,
   WebhookReceipt
@@ -1448,6 +1450,95 @@ export function useGetCurrentAccountLimit<TData = Awaited<ReturnType<typeof getC
 
 
 
+
+export const getCreateCustomerTransferQuoteUrl = () => {
+
+
+
+
+  return `/api/me/transfer-quote`
+}
+
+/**
+ * Requires an authenticated session with a recently verified PIN. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * @summary Validate a transfer and calculate its server-side quote
+ */
+export const createCustomerTransferQuote = async (transferQuoteInput: TransferQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<TransferQuoteResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<TransferQuoteResult>(getCreateCustomerTransferQuoteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(transferQuoteInput)
+  }
+);}
+
+
+
+
+
+export const getCreateCustomerTransferQuoteMutationKey = () => ['createCustomerTransferQuote'] as const;
+
+export const getCreateCustomerTransferQuoteMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomerTransferQuote>>, TError,CreateCustomerTransferQuoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCustomerTransferQuote>>, TError,CreateCustomerTransferQuoteMutationVariables, TContext> => {
+
+const mutationKey = getCreateCustomerTransferQuoteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCustomerTransferQuote>>, CreateCustomerTransferQuoteMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCustomerTransferQuote(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCustomerTransferQuoteMutationResult = NonNullable<Awaited<ReturnType<typeof createCustomerTransferQuote>>>
+    export type CreateCustomerTransferQuoteMutationBody = BodyType<TransferQuoteInput>
+    export type CreateCustomerTransferQuoteMutationError = ErrorType<ErrorEnvelope>
+    export type CreateCustomerTransferQuoteMutationVariables = {data: BodyType<TransferQuoteInput>}
+
+    /**
+ * @summary Validate a transfer and calculate its server-side quote
+ */
+export const useCreateCustomerTransferQuote = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomerTransferQuote>>, TError,CreateCustomerTransferQuoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCustomerTransferQuote>>,
+        TError,
+        CreateCustomerTransferQuoteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateCustomerTransferQuoteMutationOptions(options));
+    }
 
 export const getGetCustomerTransactionsUrl = (params?: GetCustomerTransactionsParams,) => {
   const normalizedParams = new URLSearchParams();

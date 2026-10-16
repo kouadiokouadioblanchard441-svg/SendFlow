@@ -87,7 +87,7 @@ export const registerCustomerBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$
 export const registerCustomerBodyFullNameMin = 2;
 export const registerCustomerBodyFullNameMax = 120;
 
-export const registerCustomerBodyCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const registerCustomerBodyCountryCodeRegExp = new RegExp('^[A-Za-z]{2}$');
 export const registerCustomerBodyPasswordMin = 8;
 export const registerCustomerBodyPasswordMax = 64;
 
@@ -319,6 +319,75 @@ export const GetCurrentAccountLimitResponse = zod.object({
   "remainingAmount": zod.number().int().min(getCurrentAccountLimitResponseRemainingAmountMin),
   "periodStart": zod.coerce.date(),
   "periodEnd": zod.coerce.date()
+})
+
+
+/**
+ * Requires an authenticated session with a recently verified PIN. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * @summary Validate a transfer and calculate its server-side quote
+ */
+export const createCustomerTransferQuoteBodySourceOperatorIdMin = 2;
+export const createCustomerTransferQuoteBodySourceOperatorIdMax = 60;
+
+export const createCustomerTransferQuoteBodyDestinationOperatorIdMin = 2;
+export const createCustomerTransferQuoteBodyDestinationOperatorIdMax = 60;
+
+export const createCustomerTransferQuoteBodyDestinationCountryCodeMin = 2;
+export const createCustomerTransferQuoteBodyDestinationCountryCodeMax = 2;
+
+
+export const createCustomerTransferQuoteBodyDestinationCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const createCustomerTransferQuoteBodySenderPhoneMin = 8;
+export const createCustomerTransferQuoteBodySenderPhoneMax = 16;
+
+
+export const createCustomerTransferQuoteBodySenderPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const createCustomerTransferQuoteBodyRecipientPhoneMin = 8;
+export const createCustomerTransferQuoteBodyRecipientPhoneMax = 16;
+
+
+export const createCustomerTransferQuoteBodyRecipientPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const createCustomerTransferQuoteBodyAmountMinorMax = 9007199254740991;
+
+
+
+export const CreateCustomerTransferQuoteBody = zod.object({
+  "kind": zod.enum(['deposit', 'inter-network', 'international']),
+  "sourceOperatorId": zod.string().min(createCustomerTransferQuoteBodySourceOperatorIdMin).max(createCustomerTransferQuoteBodySourceOperatorIdMax).optional(),
+  "destinationOperatorId": zod.string().min(createCustomerTransferQuoteBodyDestinationOperatorIdMin).max(createCustomerTransferQuoteBodyDestinationOperatorIdMax).optional(),
+  "destinationCountryCode": zod.string().min(createCustomerTransferQuoteBodyDestinationCountryCodeMin).max(createCustomerTransferQuoteBodyDestinationCountryCodeMax).regex(createCustomerTransferQuoteBodyDestinationCountryCodeRegExp).optional(),
+  "senderPhone": zod.string().min(createCustomerTransferQuoteBodySenderPhoneMin).max(createCustomerTransferQuoteBodySenderPhoneMax).regex(createCustomerTransferQuoteBodySenderPhoneRegExp).optional(),
+  "recipientPhone": zod.string().min(createCustomerTransferQuoteBodyRecipientPhoneMin).max(createCustomerTransferQuoteBodyRecipientPhoneMax).regex(createCustomerTransferQuoteBodyRecipientPhoneRegExp).optional(),
+  "amountMinor": zod.number().int().min(1).max(createCustomerTransferQuoteBodyAmountMinorMax),
+  "senderPaysFees": zod.boolean()
+})
+
+export const createCustomerTransferQuoteResponseAmountMinorMax = 9007199254740991;
+
+export const createCustomerTransferQuoteResponseFeeMinorMin = 0;
+export const createCustomerTransferQuoteResponseFeeMinorMax = 9007199254740991;
+
+export const createCustomerTransferQuoteResponseRecipientAmountMinorMin = 0;
+export const createCustomerTransferQuoteResponseRecipientAmountMinorMax = 9007199254740991;
+
+export const createCustomerTransferQuoteResponseTotalDebitMinorMax = 9007199254740991;
+
+export const createCustomerTransferQuoteResponseFeePercentMin = 0;
+export const createCustomerTransferQuoteResponseFeePercentMax = 100;
+
+
+
+
+export const CreateCustomerTransferQuoteResponse = zod.object({
+  "kind": zod.enum(['deposit', 'inter-network', 'international']),
+  "currency": zod.enum(['XOF']),
+  "amountMinor": zod.number().int().min(1).max(createCustomerTransferQuoteResponseAmountMinorMax),
+  "feeMinor": zod.number().int().min(createCustomerTransferQuoteResponseFeeMinorMin).max(createCustomerTransferQuoteResponseFeeMinorMax),
+  "recipientAmountMinor": zod.number().int().min(createCustomerTransferQuoteResponseRecipientAmountMinorMin).max(createCustomerTransferQuoteResponseRecipientAmountMinorMax),
+  "totalDebitMinor": zod.number().int().min(1).max(createCustomerTransferQuoteResponseTotalDebitMinorMax),
+  "senderPaysFees": zod.boolean(),
+  "feePercent": zod.number().min(createCustomerTransferQuoteResponseFeePercentMin).max(createCustomerTransferQuoteResponseFeePercentMax),
+  "pricingVersion": zod.number().int().min(1)
 })
 
 

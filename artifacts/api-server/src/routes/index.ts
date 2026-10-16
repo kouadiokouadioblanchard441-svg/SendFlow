@@ -17,6 +17,7 @@ import phoneOtpRouter from "./phone-otp";
 import customerAuthRouter from "./customer-auth";
 import customerRecoveryRouter from "./customer-recovery";
 import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRoutes } from "./registration-settings";
+import transferQuoteRouter from "./transfer-quote";
 import { ADMIN_ROUTE_PREFIX } from "../lib/admin-route-prefix";
 
 const router: IRouter = Router();
@@ -27,6 +28,7 @@ router.use(healthRouter);
 router.use(storageRouter);
 router.use(databaseRouter);
 router.use(accountRouter);
+router.use(transferQuoteRouter);
 router.use(identityVerificationRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);

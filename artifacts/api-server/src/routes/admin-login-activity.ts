@@ -16,6 +16,11 @@ import {
 import { ListAdminLoginActivityQueryParams, ListAdminLoginActivityResponse } from "@workspace/api-zod";
 import { recordAdminAudit } from "../lib/admin-audit";
 import { loginActivityAuditAction } from "../lib/login-activity";
+import {
+  createSensitiveDataLookupIndex,
+  decryptSensitiveDataIfEncrypted,
+  normalizeSensitiveNameForLookup,
+} from "../lib/sensitive-data-crypto";
 import { respondAdminAuthError } from "./admin";
 
 const router: IRouter = Router();
@@ -65,6 +70,11 @@ router.get("/login-activity", async (req, res): Promise<void> => {
           ilike(usersTable.displayName, `%${search}%`),
           ilike(usersTable.phone, `%${search}%`),
           ilike(usersTable.id, `%${search}%`),
+          eq(
+            usersTable.displayNameLookupHash,
+            createSensitiveDataLookupIndex(normalizeSensitiveNameForLookup(search), "user-name"),
+          ),
+          eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(search, "user-phone")),
         )
       : undefined,
   ].filter(Boolean);
@@ -115,7 +125,11 @@ router.get("/login-activity", async (req, res): Promise<void> => {
 
     res.json(
       ListAdminLoginActivityResponse.parse({
-        items,
+        items: items.map((item) => ({
+          ...item,
+          displayName: decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          phone: decryptSensitiveDataIfEncrypted(item.phone, "user-phone"),
+        })),
         page,
         pageSize,
         total: Number(total[0]?.value ?? 0),

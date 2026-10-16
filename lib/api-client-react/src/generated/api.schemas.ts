@@ -106,7 +106,7 @@ export interface CustomerRegistrationInput {
      */
   fullName: string;
   birthDate: string;
-  /** @pattern ^[A-Z]{2}$ */
+  /** @pattern ^[A-Za-z]{2}$ */
   countryCode?: string;
   /**
      * @minLength 8
@@ -252,6 +252,102 @@ export interface CurrentAccount {
   /** @nullable */
   countryCode?: string | null;
   wallet: WalletSummary;
+}
+
+export type TransferQuoteInputKind = typeof TransferQuoteInputKind[keyof typeof TransferQuoteInputKind];
+
+
+export const TransferQuoteInputKind = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
+} as const;
+
+export interface TransferQuoteInput {
+  kind: TransferQuoteInputKind;
+  /**
+     * @minLength 2
+     * @maxLength 60
+     */
+  sourceOperatorId?: string;
+  /**
+     * @minLength 2
+     * @maxLength 60
+     */
+  destinationOperatorId?: string;
+  /**
+     * @minLength 2
+     * @maxLength 2
+     * @pattern ^[A-Z]{2}$
+     */
+  destinationCountryCode?: string;
+  /**
+     * @minLength 8
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  senderPhone?: string;
+  /**
+     * @minLength 8
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  recipientPhone?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  senderPaysFees: boolean;
+}
+
+export type TransferQuoteResultKind = typeof TransferQuoteResultKind[keyof typeof TransferQuoteResultKind];
+
+
+export const TransferQuoteResultKind = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
+} as const;
+
+export type TransferQuoteResultCurrency = typeof TransferQuoteResultCurrency[keyof typeof TransferQuoteResultCurrency];
+
+
+export const TransferQuoteResultCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface TransferQuoteResult {
+  kind: TransferQuoteResultKind;
+  currency: TransferQuoteResultCurrency;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  feeMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  recipientAmountMinor: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  totalDebitMinor: number;
+  senderPaysFees: boolean;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  feePercent: number;
+  /** @minimum 1 */
+  pricingVersion: number;
 }
 
 export type CustomerTransactionKind = typeof CustomerTransactionKind[keyof typeof CustomerTransactionKind];

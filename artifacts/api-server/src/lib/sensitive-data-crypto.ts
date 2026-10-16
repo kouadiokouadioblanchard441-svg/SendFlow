@@ -75,6 +75,14 @@ export function decryptSensitiveData(
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
 }
 
+export function decryptSensitiveDataIfEncrypted(
+  value: string | null,
+  purpose: SensitiveDataPurpose,
+): string | null {
+  if (value === null || !value.startsWith(`${FORMAT_VERSION}.`)) return value;
+  return decryptSensitiveData(value, purpose);
+}
+
 export function createSensitiveDataLookupIndex(
   value: string,
   purpose: SensitiveDataPurpose,
@@ -84,4 +92,8 @@ export function createSensitiveDataLookupIndex(
     .update(`sendflow:${purpose}:v1\0`, "utf8")
     .update(value, "utf8")
     .digest("hex");
+}
+
+export function normalizeSensitiveNameForLookup(value: string) {
+  return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
 }

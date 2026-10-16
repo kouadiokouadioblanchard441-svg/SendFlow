@@ -20,7 +20,7 @@ export interface CustomerRegistrationInput {
      */
   fullName: string;
   birthDate: Date;
-  /** @pattern ^[A-Z]{2}$ */
+  /** @pattern ^[A-Za-z]{2}$ */
   countryCode?: string;
   /**
      * @minLength 8

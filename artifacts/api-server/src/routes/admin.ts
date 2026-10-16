@@ -3,6 +3,11 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { recordAdminAudit } from "../lib/admin-audit";
 import { hasAdminPinSession } from "../lib/admin-pin-session";
 import {
+  createSensitiveDataLookupIndex,
+  decryptSensitiveDataIfEncrypted,
+  normalizeSensitiveNameForLookup,
+} from "../lib/sensitive-data-crypto";
+import {
   GetAdminTransactionParams,
   GetAdminTransactionResponse,
   GetAdminUserParams,
@@ -284,6 +289,14 @@ router.get("/users", async (req, res): Promise<void> => {
         ilike(usersTable.displayName, `%${search}%`),
         ilike(usersTable.phone, `%${search}%`),
         ilike(usersTable.id, `%${search}%`),
+        eq(
+          usersTable.displayNameLookupHash,
+          createSensitiveDataLookupIndex(normalizeSensitiveNameForLookup(search), "user-name"),
+        ),
+        eq(
+          usersTable.phoneLookupHash,
+          createSensitiveDataLookupIndex(search, "user-phone"),
+        ),
       )
     : undefined;
 
@@ -318,6 +331,8 @@ router.get("/users", async (req, res): Promise<void> => {
     const response = ListAdminUsersResponse.parse({
         items: items.map((item) => ({
           ...item,
+          displayName: decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          phone: decryptSensitiveDataIfEncrypted(item.phone, "user-phone"),
           wallet: item.wallet?.currency
             ? item.wallet
             : {
@@ -402,7 +417,11 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
 
     res.json(
       GetAdminUserResponse.parse({
-        user,
+        user: {
+          ...user,
+          displayName: decryptSensitiveDataIfEncrypted(user.displayName, "user-name"),
+          phone: decryptSensitiveDataIfEncrypted(user.phone, "user-phone"),
+        },
         wallet: wallet ?? null,
         transactionSummary,
       }),
@@ -447,6 +466,22 @@ router.get("/transactions", async (req, res): Promise<void> => {
           ilike(transactionsTable.senderPhone, `%${search}%`),
           ilike(transactionsTable.recipientPhone, `%${search}%`),
           ilike(usersTable.displayName, `%${search}%`),
+          eq(
+            transactionsTable.senderPhoneLookupHash,
+            createSensitiveDataLookupIndex(search, "transaction-sender-phone"),
+          ),
+          eq(
+            transactionsTable.recipientPhoneLookupHash,
+            createSensitiveDataLookupIndex(search, "transaction-recipient-phone"),
+          ),
+          eq(
+            transactionsTable.providerReferenceLookupHash,
+            createSensitiveDataLookupIndex(search, "provider-reference"),
+          ),
+          eq(
+            usersTable.displayNameLookupHash,
+            createSensitiveDataLookupIndex(normalizeSensitiveNameForLookup(search), "user-name"),
+          ),
         )
       : undefined,
   ].filter(Boolean);
@@ -487,7 +522,13 @@ router.get("/transactions", async (req, res): Promise<void> => {
     ]);
 
     const response = ListAdminTransactionsResponse.parse({
-        items,
+        items: items.map((item) => ({
+          ...item,
+          displayName: decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          senderPhone: decryptSensitiveDataIfEncrypted(item.senderPhone, "transaction-sender-phone"),
+          recipientPhone: decryptSensitiveDataIfEncrypted(item.recipientPhone, "transaction-recipient-phone"),
+          providerReference: decryptSensitiveDataIfEncrypted(item.providerReference, "provider-reference"),
+        })),
         page,
         pageSize,
         total: Number(total[0]?.value ?? 0),
@@ -555,7 +596,14 @@ router.get("/transactions/:transactionId", async (req, res): Promise<void> => {
       resourceId: transactionId,
     });
 
-    res.json(GetAdminTransactionResponse.parse(transaction));
+    res.json(GetAdminTransactionResponse.parse({
+      ...transaction,
+      displayName: decryptSensitiveDataIfEncrypted(transaction.displayName, "user-name"),
+      userPhone: decryptSensitiveDataIfEncrypted(transaction.userPhone, "user-phone"),
+      senderPhone: decryptSensitiveDataIfEncrypted(transaction.senderPhone, "transaction-sender-phone"),
+      recipientPhone: decryptSensitiveDataIfEncrypted(transaction.recipientPhone, "transaction-recipient-phone"),
+      providerReference: decryptSensitiveDataIfEncrypted(transaction.providerReference, "provider-reference"),
+    }));
   } catch (error) {
     req.log.error({ err: error, transactionId }, "Admin transaction detail lookup failed");
     res.status(503).json({ error: "Administrator storage unavailable" });

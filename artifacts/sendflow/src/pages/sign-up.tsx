@@ -445,11 +445,6 @@ export default function SignupPage() {
             >
               {isSending ? 'Patientez…' : registrationSettings.data?.smsVerificationEnabled ? 'Continuer' : 'Créer mon compte'}
             </button>
-            {registrationSettings.data && !registrationSettings.data.smsVerificationEnabled && (
-              <p className="sendflow-signup-feedback" role="status">
-                La vérification SMS est désactivée. Ce numéro ne sera pas vérifié lors de l’inscription.
-              </p>
-            )}
             {registrationSettings.isError && (
               <p className="sendflow-signup-verification-error" role="alert">
                 Impossible de vérifier les paramètres d’inscription. Réessayez dans quelques instants.

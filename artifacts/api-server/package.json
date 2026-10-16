@@ -12,6 +12,8 @@
     "test:security": "node --experimental-strip-types --test src/lib/admin-pin-session.test.mjs src/lib/didit-webhook-policy.test.mjs src/lib/didit-verification-policy.test.mjs src/lib/didit-session-rate-limit.test.mjs src/lib/didit-session-reservation.test.mjs src/lib/origin-policy.test.mjs src/lib/trust-proxy-policy.test.mjs src/lib/shared-neon-preview-guard.test.mjs src/lib/operator-pricing-seed-policy.test.mjs src/lib/customer-pin-session-policy.test.mjs",
     "test:wallet-integrity": "node --test tests/security/test_concurrency_wallet_integrity.mjs",
     "test:sensitive-data-crypto": "node --experimental-strip-types --test src/lib/sensitive-data-crypto.test.mjs",
+    "test:transfer-quote": "node --experimental-strip-types --test src/lib/transfer-quote-policy.test.mjs",
+    "pii:backfill": "node --experimental-strip-types scripts/backfill-sensitive-data.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -23,6 +25,7 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "http-proxy": "^1.18.1",
+    "pg": "8.16.3",
     "pino": "^9.14.0",
     "pino-http": "^10.5.0"
   },

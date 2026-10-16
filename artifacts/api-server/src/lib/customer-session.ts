@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { and, db, eq, gte, isNull, customerCredentialsTable, customerSessionsTable, usersTable } from "@workspace/db";
 import { createCustomerSessionToken, hashCustomerSessionToken, isCustomerSessionToken } from "./customer-auth-crypto";
+import { decryptSensitiveDataIfEncrypted } from "./sensitive-data-crypto";
 
 export const CUSTOMER_SESSION_COOKIE = "__Host-sendflow_session";
 export const CUSTOMER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -117,8 +118,8 @@ export async function getCustomerSession(
   return {
     sessionId: row.sessionId,
     userId: row.userId,
-    phone: row.phone ?? "",
-    displayName: row.displayName,
+    phone: decryptSensitiveDataIfEncrypted(row.phone, "user-phone") ?? "",
+    displayName: decryptSensitiveDataIfEncrypted(row.displayName, "user-name"),
     countryCode: row.countryCode,
     pinConfigured: row.credentialPinHash !== null,
     pinUnlocked: row.credentialPinHash !== null

@@ -8,6 +8,7 @@ import {
   eq,
   gte,
   isNull,
+  or,
   phoneOtpChallengesTable,
   registrationSettingsTable,
   usersTable,
@@ -39,6 +40,12 @@ import {
   withPinAttemptLock,
 } from "../lib/customer-auth-rate-limit";
 import { hashCustomerSecret, hashCustomerSessionToken, verifyCustomerSecret } from "../lib/customer-auth-crypto";
+import {
+  createSensitiveDataLookupIndex,
+  decryptSensitiveDataIfEncrypted,
+  encryptSensitiveData,
+  normalizeSensitiveNameForLookup,
+} from "../lib/sensitive-data-crypto";
 import {
   CUSTOMER_PIN_UNLOCK_TTL_MS,
   getCustomerSession,
@@ -183,7 +190,10 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       const [existingUser] = await tx
         .select({ id: usersTable.id })
         .from(usersTable)
-        .where(eq(usersTable.phone, parsed.data.phone))
+        .where(or(
+          eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
+          eq(usersTable.phone, parsed.data.phone),
+        ))
         .limit(1);
 
       if (challenge) {
@@ -201,11 +211,17 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         .insert(usersTable)
         .values({
           id: userId,
-          phone: parsed.data.phone,
+          phone: encryptSensitiveData(parsed.data.phone, "user-phone"),
+          phoneLookupHash: createSensitiveDataLookupIndex(parsed.data.phone, "user-phone"),
           phoneVerifiedAt: requiresOtp ? now : null,
-          displayName: normalizedName,
+          displayName: encryptSensitiveData(normalizedName, "user-name"),
+          displayNameLookupHash: createSensitiveDataLookupIndex(
+            normalizeSensitiveNameForLookup(normalizedName),
+            "user-name",
+          ),
           countryCode: parsed.data.countryCode ?? null,
-          birthDate,
+          birthDate: null,
+          birthDateEncrypted: encryptSensitiveData(birthDate, "user-birth-date"),
           lastSeenAt: now,
         })
         .returning({
@@ -239,8 +255,8 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         session,
         account: {
           userId: user.id,
-          phone: user.phone,
-          displayName: user.displayName,
+          phone: decryptSensitiveDataIfEncrypted(user.phone, "user-phone"),
+          displayName: decryptSensitiveDataIfEncrypted(user.displayName, "user-name"),
           countryCode: user.countryCode,
           pinConfigured: false,
         },
@@ -338,7 +354,10 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         })
         .from(usersTable)
         .innerJoin(customerCredentialsTable, eq(customerCredentialsTable.userId, usersTable.id))
-        .where(eq(usersTable.phone, parsed.data.phone))
+        .where(or(
+          eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
+          eq(usersTable.phone, parsed.data.phone),
+        ))
         .for("update");
 
       const encodedHash = record?.passwordHash ?? await DUMMY_PASSWORD_HASH;
@@ -368,8 +387,8 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         session,
         account: {
           userId: record.userId,
-          phone: record.phone,
-          displayName: record.displayName,
+          phone: decryptSensitiveDataIfEncrypted(record.phone, "user-phone") ?? "",
+          displayName: decryptSensitiveDataIfEncrypted(record.displayName, "user-name"),
           countryCode: record.countryCode,
           pinConfigured: record.pinHash !== null,
         },

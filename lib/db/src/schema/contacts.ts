@@ -10,8 +10,8 @@ export const contactsTable = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => usersTable.id, { onDelete: "cascade" }),
-    label: varchar("label", { length: 120 }).notNull(),
-    phone: varchar("phone", { length: 32 }).notNull(),
+    label: varchar("label", { length: 512 }).notNull(),
+    phone: varchar("phone", { length: 512 }).notNull(),
     countryCode: varchar("country_code", { length: 2 }).notNull(),
     operator: varchar("operator", { length: 32 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

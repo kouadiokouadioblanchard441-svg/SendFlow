@@ -23,6 +23,10 @@ import {
   parseCustomerTransactionCursor,
 } from "../lib/customer-transaction-cursor";
 import { requireCustomerSession } from "../lib/customer-session";
+import {
+  createSensitiveDataLookupIndex,
+  decryptSensitiveDataIfEncrypted,
+} from "../lib/sensitive-data-crypto";
 
 const router: IRouter = Router();
 const DEFAULT_CUSTOMER_TRANSACTION_PAGE_SIZE = 50;
@@ -53,13 +57,13 @@ function serializeCustomerTransaction(
     status: transaction.status,
     fromOperator: transaction.fromOperator,
     toOperator: transaction.toOperator,
-    senderPhone: transaction.senderPhone,
-    recipientPhone: transaction.recipientPhone,
+    senderPhone: decryptSensitiveDataIfEncrypted(transaction.senderPhone, "transaction-sender-phone"),
+    recipientPhone: decryptSensitiveDataIfEncrypted(transaction.recipientPhone, "transaction-recipient-phone"),
     currency: transaction.currency,
     amountMinor: transaction.amountMinor,
     feeMinor: transaction.feeMinor,
     reference: transaction.reference,
-    providerReference: transaction.providerReference,
+    providerReference: decryptSensitiveDataIfEncrypted(transaction.providerReference, "provider-reference"),
     createdAt: transaction.createdAt.toISOString(),
   };
 }
@@ -143,6 +147,8 @@ router.get("/me/transactions", async (req, res): Promise<void> => {
         ilike(transactionsTable.senderPhone, searchPattern),
         ilike(transactionsTable.recipientPhone, searchPattern),
         ilike(transactionsTable.reference, searchPattern),
+        eq(transactionsTable.senderPhoneLookupHash, createSensitiveDataLookupIndex(search, "transaction-sender-phone")),
+        eq(transactionsTable.recipientPhoneLookupHash, createSensitiveDataLookupIndex(search, "transaction-recipient-phone")),
       )
     : undefined;
   const cursor = cursorResult.cursor;
@@ -203,6 +209,9 @@ router.get("/me/transactions", async (req, res): Promise<void> => {
     const response = GetCustomerTransactionsResponse.parse({
       items: page.map((transaction) => ({
         ...transaction,
+        senderPhone: decryptSensitiveDataIfEncrypted(transaction.senderPhone, "transaction-sender-phone"),
+        recipientPhone: decryptSensitiveDataIfEncrypted(transaction.recipientPhone, "transaction-recipient-phone"),
+        providerReference: decryptSensitiveDataIfEncrypted(transaction.providerReference, "provider-reference"),
         createdAt: transaction.createdAt.toISOString(),
       })),
       nextCursor: hasMore && lastTransaction
