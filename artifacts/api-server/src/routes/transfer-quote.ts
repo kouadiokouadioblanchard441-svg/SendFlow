@@ -12,6 +12,8 @@ import {
 import { pricingCountryCatalog } from "../lib/operator-pricing-catalog";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { requireCustomerSession } from "../lib/customer-session";
+import { getAccountLimitSnapshot } from "../lib/account-limit";
+import { isWithinMonthlyAccountLimit } from "../lib/account-limit-policy";
 
 const router: IRouter = Router();
 const MAX_SAFE_MINOR = Number.MAX_SAFE_INTEGER;
@@ -26,6 +28,7 @@ function phoneMatchesCountry(phone: string, countryCode: string) {
 router.post("/me/transfer-quote", async (req, res): Promise<void> => {
   const session = await requireCustomerSession(req, res, true);
   if (!session) return;
+  res.setHeader("Cache-Control", "no-store, private");
 
   const parsed = CreateCustomerTransferQuoteBody.safeParse(req.body);
   if (!parsed.success) {
@@ -116,7 +119,16 @@ router.post("/me/transfer-quote", async (req, res): Promise<void> => {
       return;
     }
 
-    res.setHeader("Cache-Control", "no-store, private");
+    if (!isDeposit) {
+      const accountLimit = await getAccountLimitSnapshot(session.userId);
+      if (!isWithinMonthlyAccountLimit(input.amountMinor, accountLimit.remainingAmount)) {
+        res.status(409).json({
+          error: `Ce transfert dépasse votre plafond mensuel restant de ${accountLimit.remainingAmount} FCFA.`,
+        });
+        return;
+      }
+    }
+
     res.json(CreateCustomerTransferQuoteResponse.parse({
       kind: input.kind,
       currency: "XOF",

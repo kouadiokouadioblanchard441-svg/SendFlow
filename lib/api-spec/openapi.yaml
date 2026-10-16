@@ -537,7 +537,7 @@ paths:
       operationId: getCurrentAccountLimit
       tags: [account]
       summary: Get the authenticated account's monthly transfer limit
-      description: Returns the server-calculated monthly limit and the user's pending or successful outgoing transfer usage for the current calendar month.
+      description: Returns the server-calculated monthly limit and the user's successful outgoing transfer usage for the current calendar month.
       security:
         - sendFlowSession: []
       responses:
@@ -564,7 +564,7 @@ paths:
       operationId: createCustomerTransferQuote
       tags: [account]
       summary: Validate a transfer and calculate its server-side quote
-      description: Requires an authenticated session with a recently verified PIN. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+      description: Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
       security:
         - sendFlowSession: []
       requestBody:
@@ -594,6 +594,12 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "403":
           description: PIN verification is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The requested amount exceeds the customer's remaining monthly limit.
           content:
             application/json:
               schema:

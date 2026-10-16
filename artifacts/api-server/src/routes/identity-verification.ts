@@ -5,16 +5,12 @@ import {
   desc,
   db,
   eq,
-  gte,
   gt,
   inArray,
   identityVerificationsTable,
   identityVerificationAttemptsTable,
   identityWebhookEventsTable,
   lte,
-  lt,
-  sql,
-  transactionsTable,
   usersTable,
 } from "@workspace/db";
 import {
@@ -52,15 +48,10 @@ import {
 } from "../lib/didit-session-rate-limit";
 import { requireCustomerSession } from "../lib/customer-session";
 import { isTrustedOrigin } from "../lib/request-security";
+import { getAccountLimitSnapshot } from "../lib/account-limit";
+import { mapDiditStatusToAccountLimitStatus } from "../lib/account-limit-policy";
 
 const router: IRouter = Router();
-
-function currentStatus(status: string): "unverified" | "pending" | "verified" | "failed" | "review" {
-  if (status === "Approved") return "verified";
-  if (status === "Declined" || status === "Expired" || status === "Kyc Expired" || status === "Abandoned") return "failed";
-  if (status === "In Review") return "review";
-  return "pending";
-}
 
 function inactiveAccountMessage(status: "active" | "suspended" | "deleted" | undefined) {
   if (status === "suspended") return "Account suspended";
@@ -242,62 +233,9 @@ router.get("/me/account-limit", async (req, res): Promise<void> => {
       return;
     }
 
-    const [approvedVerification] = await db
-      .select({ status: identityVerificationsTable.status })
-      .from(identityVerificationsTable)
-      .where(
-        and(
-          eq(identityVerificationsTable.userId, userId),
-          eq(identityVerificationsTable.status, "Approved"),
-        ),
-      )
-      .orderBy(desc(identityVerificationsTable.createdAt))
-      .limit(1);
-    const [latestVerification] = approvedVerification
-      ? [approvedVerification]
-      : await db
-          .select({ status: identityVerificationsTable.status })
-          .from(identityVerificationsTable)
-          .where(eq(identityVerificationsTable.userId, userId))
-          .orderBy(desc(identityVerificationsTable.createdAt))
-          .limit(1);
-
-    const status = latestVerification ? currentStatus(latestVerification.status) : "unverified";
-    const monthlyLimit = status === "verified" ? 10_000_000 : 150_000;
-    const now = new Date();
-    const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-
-    const [usage] = await db
-      .select({
-        sentAmount: sql<unknown>`coalesce(sum(${transactionsTable.amountMinor}), 0)`,
-      })
-      .from(transactionsTable)
-      .where(
-        and(
-          eq(transactionsTable.userId, userId),
-          eq(transactionsTable.currency, "XOF"),
-          inArray(transactionsTable.kind, ["inter-network", "international"]),
-          eq(transactionsTable.status, "succeeded"),
-          gte(transactionsTable.createdAt, periodStart),
-          lt(transactionsTable.createdAt, periodEnd),
-        ),
-      );
-
-    const sentAmount = Number(usage?.sentAmount ?? 0);
-    if (!Number.isSafeInteger(sentAmount) || sentAmount < 0) {
-      throw new Error("Account limit usage is outside the safe integer range");
-    }
-
     res.json(
       GetCurrentAccountLimitResponse.parse({
-        status,
-        currency: "XOF",
-        monthlyLimit,
-        sentAmount,
-        remainingAmount: Math.max(0, monthlyLimit - sentAmount),
-        periodStart,
-        periodEnd,
+        ...await getAccountLimitSnapshot(userId),
       }),
     );
   } catch (error) {
@@ -344,7 +282,7 @@ router.get("/me/identity-verification", async (req, res): Promise<void> => {
 
     res.json(
       GetIdentityVerificationStatusResponse.parse({
-        status: verification ? currentStatus(verification.status) : "unverified",
+        status: mapDiditStatusToAccountLimitStatus(verification?.status ?? null),
         diditStatus: verification?.status ?? null,
         sessionId: verification?.providerSessionId ?? null,
         verificationUrl: verification?.verificationUrl ?? null,
@@ -413,7 +351,7 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
       CreateIdentityVerificationSessionResponse.parse({
         sessionId: verification.providerSessionId,
         verificationUrl: verification.verificationUrl,
-        status: currentStatus(verification.status),
+        status: mapDiditStatusToAccountLimitStatus(verification.status),
         diditStatus: verification.status,
         sandboxScenario: verification.sandboxScenario,
         reused: true,
@@ -542,7 +480,7 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
     CreateIdentityVerificationSessionResponse.parse({
       sessionId: verification.providerSessionId,
       verificationUrl: verification.verificationUrl,
-      status: currentStatus(verification.status),
+      status: mapDiditStatusToAccountLimitStatus(verification.status),
       diditStatus: verification.status,
       sandboxScenario: verification.sandboxScenario,
       reused: false,

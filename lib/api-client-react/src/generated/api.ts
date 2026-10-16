@@ -1382,7 +1382,7 @@ export const getGetCurrentAccountLimitUrl = () => {
 }
 
 /**
- * Returns the server-calculated monthly limit and the user's pending or successful outgoing transfer usage for the current calendar month.
+ * Returns the server-calculated monthly limit and the user's successful outgoing transfer usage for the current calendar month.
  * @summary Get the authenticated account's monthly transfer limit
  */
 export const getCurrentAccountLimit = async ( options?: Parameters<typeof customFetch>[1]): Promise<AccountLimitResult> => {
@@ -1460,7 +1460,7 @@ export const getCreateCustomerTransferQuoteUrl = () => {
 }
 
 /**
- * Requires an authenticated session with a recently verified PIN. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuote = async (transferQuoteInput: TransferQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<TransferQuoteResult> => {

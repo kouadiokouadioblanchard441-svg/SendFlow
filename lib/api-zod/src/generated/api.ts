@@ -301,7 +301,7 @@ export const GetCurrentAccountResponse = zod.object({
 
 
 /**
- * Returns the server-calculated monthly limit and the user's pending or successful outgoing transfer usage for the current calendar month.
+ * Returns the server-calculated monthly limit and the user's successful outgoing transfer usage for the current calendar month.
  * @summary Get the authenticated account's monthly transfer limit
  */
 
@@ -323,7 +323,7 @@ export const GetCurrentAccountLimitResponse = zod.object({
 
 
 /**
- * Requires an authenticated session with a recently verified PIN. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuoteBodySourceOperatorIdMin = 2;
