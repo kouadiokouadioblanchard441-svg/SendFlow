@@ -11,6 +11,8 @@ For transfer data the server must validate or process, the user chose HTTPS in t
 
 The user confirmed that encryption at rest must include financial values as well: transaction amounts, fees, and wallet balances.
 
+For large-scale ledger behavior, the user selected numeric SQL columns for amounts, fees, and balances protected by database storage encryption, while personal identifiers use application-level encryption. Server-side transaction processing and SQL financial invariants must remain functional.
+
 **Why:** The user explicitly requested mandatory registration information and both types of encryption.
 
 **How to apply:** Do not describe server-side encryption as strict E2EE. Keep data needed by OTP, validation, or account operations server-processable with transport protection and encryption at rest; reserve strict E2EE for data the server never needs to inspect.
