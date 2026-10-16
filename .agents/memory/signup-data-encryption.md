@@ -1,9 +1,11 @@
 ---
-name: SendFlow signup data encryption
-description: User requirement for mandatory signup fields and use of both server-side and end-to-end encryption where feasible.
+name: SendFlow sensitive-data encryption
+description: User requirements for signup and transfer data to be server-routed and encrypted, with strict E2EE boundaries clarified before implementation.
 ---
 
 The user requires every requested customer-signup field to be mandatory and wants both server-side encryption and true end-to-end encryption where feasible. Define field boundaries before implementation: the server and OTP provider must process the phone number, and current registration logic validates and uses the name and birth date. Passwords must remain non-reversible salted hashes.
+
+Before operator or partner integrations, the user requires every transfer operation to pass through the server and all data to be encrypted end to end. The exact meaning of "end to end" for server-processed transaction data is unresolved and must be clarified before implementation.
 
 **Why:** The user explicitly requested mandatory registration information and both types of encryption.
 
