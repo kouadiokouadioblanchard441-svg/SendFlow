@@ -229,6 +229,7 @@ router.get("/me/account-limit", async (req, res): Promise<void> => {
   const session = await requireCustomerSession(req, res, true);
   if (!session) return;
   const { userId } = session;
+  res.setHeader("Cache-Control", "no-store, private");
 
   try {
     const [user] = await db
