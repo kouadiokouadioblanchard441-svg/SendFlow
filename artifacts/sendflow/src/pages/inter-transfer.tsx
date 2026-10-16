@@ -11,7 +11,11 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
-import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
+import {
+  getGetPublicPricingQueryKey,
+  useCreateCustomerTransferQuote,
+  useGetPublicPricing,
+} from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { useSeo } from '@/lib/seo';
 import { formatPricingFeeRate } from '@/lib/pricing';
@@ -89,6 +93,7 @@ export default function InterNetworkTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
+  const transferQuote = useCreateCustomerTransferQuote();
   const pricingCountry = pricingQuery.data?.countries.find((item) => item.id === 'ci');
   const availableOperators = useMemo<TransferOperator[]>(
     () => (pricingQuery.data?.operators ?? [])
@@ -114,6 +119,8 @@ export default function InterNetworkTransferPage() {
   const [supportFees, setSupportFees] = useState(true);
   const [copied, setCopied] = useState(false);
   const [requestState, setRequestState] = useState<TransferRequestState>('idle');
+  const [dialogFailureTitle, setDialogFailureTitle] = useState('Votre transfert inter réseau n’a pas pu être confirmé');
+  const [dialogFailureCopy, setDialogFailureCopy] = useState('Aucun montant n’a été débité. Vérifiez les informations des deux opérateurs puis réessayez.');
   const [sourceOperatorId, setSourceOperatorId] = useState<string | null>(null);
   const [destinationOperatorId, setDestinationOperatorId] = useState<string | null>(null);
   const sourceOperator = availableOperators.find((item) => item.id === sourceOperatorId)
@@ -313,7 +320,34 @@ export default function InterNetworkTransferPage() {
           onSubmit={(event) => {
             event.preventDefault();
             setSubmitAttempted(true);
-            if (canSubmit && transactionSubmissionAvailable) setRequestState('pending');
+            if (!canSubmit || !sourceOperator || !destinationOperator || transferQuote.isPending) return;
+            void transferQuote.mutateAsync({
+              data: {
+                kind: 'inter-network',
+                sourceOperatorId: sourceOperator.id,
+                destinationOperatorId: destinationOperator.id,
+                senderPhone: `${sourceOperator.prefix}${sourceNumber}`,
+                recipientPhone: `${destinationOperator.prefix}${recipientNumber}`,
+                amountMinor: enteredAmount,
+                senderPaysFees: supportFees,
+              },
+            }).then(() => {
+              setDialogFailureTitle('Vérification terminée');
+              setDialogFailureCopy('Ce montant respecte votre plafond mensuel. Les opérations des opérateurs ne sont pas encore disponibles : aucun transfert n’a été initié et aucun montant n’a été débité.');
+              setRequestState('failure');
+            }).catch((error: unknown) => {
+              const status = typeof error === 'object' && error !== null && 'status' in error
+                ? (error as { status?: number }).status
+                : undefined;
+              if (status === 409) {
+                setDialogFailureTitle('Plafond mensuel dépassé');
+                setDialogFailureCopy('Le montant saisi dépasse le plafond encore disponible pour ce mois. Réduisez le montant ou consultez « Plafond du compte ». Votre transfert n’a pas été initié et aucun montant n’a été débité.');
+              } else {
+                setDialogFailureTitle('Vérification indisponible');
+                setDialogFailureCopy('Nous ne pouvons pas vérifier ce montant pour le moment. Aucun transfert n’a été initié et aucun montant n’a été débité. Veuillez réessayer plus tard.');
+              }
+              setRequestState('failure');
+            });
           }}
         >
           <section className="sendflow-transfer-section" aria-labelledby="transfer-from-title">
@@ -492,9 +526,11 @@ export default function InterNetworkTransferPage() {
             <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status" data-testid="notice-transfer-provider-unavailable">
               {transactionUnavailableReason}
             </p>
-            <button type="submit" className="sendflow-transfer-submit" disabled={!transactionSubmissionAvailable || requestState !== 'idle'}>
-              {!transactionSubmissionAvailable
-                ? 'Opérations indisponibles'
+            <button type="submit" className="sendflow-transfer-submit" disabled={transferQuote.isPending || requestState !== 'idle'}>
+              {transferQuote.isPending
+                ? 'Vérification en cours'
+                : !transactionSubmissionAvailable
+                  ? 'Vérifier le plafond'
                 : requestState === 'pending'
                 ? 'Confirmation en cours'
                 : requestState === 'success'
@@ -517,11 +553,11 @@ export default function InterNetworkTransferPage() {
           pendingCopy="Votre transfert inter-réseau est en attente. Veuillez patienter."
           successTitle="Votre transfert inter réseau est confirmé"
           successCopy={`Le transfert de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${recipientNumber} a été confirmé avec succès.`}
-          failureTitle="Votre transfert inter réseau n’a pas pu être confirmé"
-          failureCopy="Aucun montant n’a été débité. Vérifiez les informations des deux opérateurs puis réessayez."
+          failureTitle={dialogFailureTitle}
+          failureCopy={dialogFailureCopy}
           cancelLabel="Annuler le transfert inter-réseau"
           successButtonLabel="Fermer le transfert inter-réseau"
-          failureButtonLabel="Réessayer le transfert inter-réseau"
+          failureButtonLabel="Fermer"
           onClose={() => setRequestState('idle')}
         />
 

@@ -9,7 +9,11 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
-import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
+import {
+  getGetPublicPricingQueryKey,
+  useCreateCustomerTransferQuote,
+  useGetPublicPricing,
+} from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { useSeo } from '@/lib/seo';
@@ -60,6 +64,7 @@ export default function InternationalTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
+  const transferQuote = useCreateCustomerTransferQuote();
   const pricingOperators = pricingQuery.data?.operators ?? [];
   const [countryId, setCountryId] = useState('ci');
   const [operatorId, setOperatorId] = useState<string | null>('orange-ci');
@@ -89,6 +94,8 @@ export default function InternationalTransferPage() {
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [requestState, setRequestState] = useState<TransferRequestState>('idle');
+  const [dialogFailureTitle, setDialogFailureTitle] = useState('Votre transfert international n’a pas pu être confirmé');
+  const [dialogFailureCopy, setDialogFailureCopy] = useState('Aucun montant n’a été débité. Vérifiez les informations du bénéficiaire puis réessayez.');
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useSeo({
@@ -222,7 +229,33 @@ export default function InternationalTransferPage() {
           onSubmit={(event) => {
             event.preventDefault();
             setSubmitAttempted(true);
-            if (canSubmit && transactionSubmissionAvailable) setRequestState('pending');
+            if (!canSubmit || !operator || transferQuote.isPending) return;
+            void transferQuote.mutateAsync({
+              data: {
+                kind: 'international',
+                destinationOperatorId: operator.id,
+                destinationCountryCode: country.id.toUpperCase(),
+                recipientPhone: `${country.dialCode}${recipientNumber}`,
+                amountMinor: enteredAmount,
+                senderPaysFees: payFees,
+              },
+            }).then(() => {
+              setDialogFailureTitle('Vérification terminée');
+              setDialogFailureCopy('Ce montant respecte votre plafond mensuel. Les opérations des opérateurs ne sont pas encore disponibles : aucun transfert n’a été initié et aucun montant n’a été débité.');
+              setRequestState('failure');
+            }).catch((error: unknown) => {
+              const status = typeof error === 'object' && error !== null && 'status' in error
+                ? (error as { status?: number }).status
+                : undefined;
+              if (status === 409) {
+                setDialogFailureTitle('Plafond mensuel dépassé');
+                setDialogFailureCopy('Le montant saisi dépasse le plafond encore disponible pour ce mois. Réduisez le montant ou consultez « Plafond du compte ». Votre transfert n’a pas été initié et aucun montant n’a été débité.');
+              } else {
+                setDialogFailureTitle('Vérification indisponible');
+                setDialogFailureCopy('Nous ne pouvons pas vérifier ce montant pour le moment. Aucun transfert n’a été initié et aucun montant n’a été débité. Veuillez réessayer plus tard.');
+              }
+              setRequestState('failure');
+            });
           }}
         >
           <section className="sendflow-transfer-section" aria-labelledby="international-from-title">
@@ -360,9 +393,11 @@ export default function InternationalTransferPage() {
             <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status" data-testid="notice-transfer-provider-unavailable">
               {transactionUnavailableReason}
             </p>
-            <button type="submit" className="sendflow-transfer-submit" disabled={!transactionSubmissionAvailable || requestState !== 'idle'}>
-              {!transactionSubmissionAvailable
-                ? 'Opérations indisponibles'
+            <button type="submit" className="sendflow-transfer-submit" disabled={transferQuote.isPending || requestState !== 'idle'}>
+              {transferQuote.isPending
+                ? 'Vérification en cours'
+                : !transactionSubmissionAvailable
+                  ? 'Vérifier le plafond'
                 : requestState === 'pending'
                 ? 'Confirmation en cours'
                 : requestState === 'success'
@@ -385,11 +420,11 @@ export default function InternationalTransferPage() {
           pendingCopy="Votre traitement est en attente du montant. Veuillez patienter."
           successTitle="Votre transfert international est confirmé"
           successCopy={`Le transfert de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${country.name} a été confirmé avec succès.`}
-          failureTitle="Votre transfert international n’a pas pu être confirmé"
-          failureCopy="Aucun montant n’a été débité. Vérifiez les informations du bénéficiaire puis réessayez."
+          failureTitle={dialogFailureTitle}
+          failureCopy={dialogFailureCopy}
           cancelLabel="Annuler l’envoi international"
           successButtonLabel="Fermer le transfert international"
-          failureButtonLabel="Réessayer l’envoi international"
+          failureButtonLabel="Fermer"
           onClose={() => setRequestState('idle')}
         />
 
