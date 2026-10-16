@@ -19,3 +19,4 @@
 - [Financial app hardening](financial-app-hardening.md) — Never put secrets or sensitive values in code; verify all sensitive access and operations on the server.
 - [Engineering quality](engineering-quality.md) — SendFlow is a large financial app; prioritize robust code over shortcuts taken only to move faster.
 - [SendFlow Capacitor direction](capacitor-direction.md) — Keep UI/backend boundaries, wait for phase approval, and use the Replit JDK 21 Android toolchain.
+- [Signup data encryption](signup-data-encryption.md) — Separate server-processed signup data from fields that can truly remain client-only E2EE.
