@@ -277,7 +277,7 @@ router.get("/me/account-limit", async (req, res): Promise<void> => {
           eq(transactionsTable.userId, userId),
           eq(transactionsTable.currency, "XOF"),
           inArray(transactionsTable.kind, ["inter-network", "international"]),
-          inArray(transactionsTable.status, ["pending", "succeeded"]),
+          eq(transactionsTable.status, "succeeded"),
           gte(transactionsTable.createdAt, periodStart),
           lt(transactionsTable.createdAt, periodEnd),
         ),
