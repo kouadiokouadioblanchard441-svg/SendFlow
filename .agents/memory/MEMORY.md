@@ -3,6 +3,7 @@
 - [Free image cleanup](free-image-cleanup.md) — Generated PNGs may include a baked checkerboard; local ImageMagick cleanup can restore usable alpha when automated removal is unavailable.
 - [Partner logo sourcing](partner-logo-sourcing.md) — Never substitute one operator’s asset for another; use an explicit wordmark until an approved official logo is available.
 - [SendFlow customer authentication](clerk-phone-signup.md) — Customer accounts use purpose-bound eSMS OTP and server-owned sessions; Clerk remains admin-only.
+- [SendFlow transfer business rules](transfer-business-rules.md) — Keep the user-confirmed funding direction and sender/recipient fee calculations consistent across the three transfer types.
 - [Preview session reset](preview-session-reset.md) — App screenshots start a fresh browser session, so sessionStorage cannot be used to target a later onboarding slide.
 - [Mobile overlay positioning](mobile-overlay-positioning.md) — Render full-screen mobile overlays at document level when animated cards could create a fixed-position containing block.
 - [Didit development integration](didit-development.md) — Keep identity verification server-side and sandbox-only until secure provider configuration is available.
