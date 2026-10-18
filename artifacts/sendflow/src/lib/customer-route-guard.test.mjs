@@ -10,7 +10,7 @@ test('customer routes still require customer PIN unlock', () => {
   assert.equal(requiresCustomerPinUnlock('/notifications/test-id'), true);
 });
 
-test('public customer login and Clerk admin routes do not require customer PIN unlock', () => {
+test('public customer login and admin routes do not require customer PIN unlock', () => {
   assert.equal(requiresCustomerPinUnlock('/sign-in'), false);
   assert.equal(requiresCustomerPinUnlock('/sign-up'), false);
   assert.equal(requiresCustomerPinUnlock(adminRoutePath), false);

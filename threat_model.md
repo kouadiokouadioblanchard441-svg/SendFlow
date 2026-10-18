@@ -1,12 +1,13 @@
 # Threat Model
 
+> **Current status (2026-10-18):** The external identity provider has been removed from the application. Customer authentication continues to use SendFlow's server-owned sessions. Administrator access is fail-closed and unavailable until phone OTP and a database role are configured. The older security assessment below is a historical snapshot and does not describe the current administrator boundary.
+
 ## Project Overview
 
 SendFlow is a mobile-first financial transfer application with a React frontend,
 an Express API, and PostgreSQL storage. Customer accounts use phone/password
 authentication, eSMS Verify for signup and recovery, and server-owned opaque
-sessions. Clerk is used for administrator authentication, not as the customer
-identity mechanism. Didit is used by the API server for development identity
+sessions. Administrator access is currently disabled. Didit is used by the API server for development identity
 verification and must not be treated as production money-movement authorization.
 
 The consolidated pre-remediation baseline in
@@ -19,8 +20,7 @@ modeling phase.
 
 ## Assets
 
-- **Clerk sessions and account identity** — compromise could expose or alter a
-  user's wallet, identity status, and transfer permissions.
+- **Administrator sessions and role** — administrator access remains disabled until SendFlow-owned phone OTP and database authorization are configured.
 - **Customer phone, password/PIN hashes, and account profile** — phone numbers
   are used as customer identifiers; the database stores them in plaintext,
   while passwords and PINs are stored as salted scrypt hashes.
@@ -74,7 +74,7 @@ modeling phase.
 - **Highest-risk provider code:** `artifacts/api-server/src/lib/didit.ts`
 - **Highest-risk routes:** `artifacts/api-server/src/routes/identity-verification.ts`
 - **Identity persistence:** `lib/db/src/schema/identity-verification.ts`
-- **Authenticated user boundary:** Clerk middleware plus `getAuth(req)` checks
+- **Authenticated user boundary:** validated SendFlow session cookies and server-side ownership checks
 - **Public surface:** `/api/webhooks/didit`; it must remain signature-protected
 - **Development-only UI behavior:** sandbox scenario selector in
   `artifacts/sendflow/src/pages/account-limit.tsx`
@@ -88,7 +88,7 @@ claim that the controls have passed route-level or production attack testing.
 ### Spoofing
 
 An attacker must not be able to create a verification session for another user
-or report an approved verification. Protected routes require Clerk identity,
+or report an approved verification. Protected routes require a validated SendFlow session,
 and webhooks require both the Didit HMAC signature and a fresh `X-Timestamp`
 within five minutes. The webhook secret must never be sent to the browser or
 written to logs.
@@ -96,8 +96,8 @@ written to logs.
 ### Tampering
 
 The client must not choose the verified status, Didit session ID, callback URL,
-or account owner. The API creates provider sessions using the authenticated
-Clerk subject, validates provider response URLs, and applies only validated
+or account owner. The API creates provider sessions using the user ID derived
+from the validated SendFlow session, validates provider response URLs, and applies only validated
 webhook statuses. Status updates must not allow an older event to downgrade an
 already approved session.
 

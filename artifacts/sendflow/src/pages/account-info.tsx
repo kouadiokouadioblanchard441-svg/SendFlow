@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useUser } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetAdminAccessStatusQueryKey,
@@ -105,13 +104,12 @@ function ProfileField({
 
 export default function AccountInfoPage() {
   const [, setLocation] = useLocation();
-  const { isLoaded: clerkLoaded, user } = useUser();
   const queryClient = useQueryClient();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const adminAccessQuery = useGetAdminAccessStatus({
     query: {
       queryKey: getGetAdminAccessStatusQueryKey(),
-      enabled: clerkLoaded && Boolean(user),
+      enabled: isUnlocked,
       retry: false,
       refetchInterval: 30_000,
       refetchOnWindowFocus: true,

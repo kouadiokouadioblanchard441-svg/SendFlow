@@ -35,7 +35,7 @@ test("blocks account, recovery, OTP, private data, identity, and admin paths in 
   }
 });
 
-test("keeps only public reads and Clerk development sign-in available", () => {
+test("keeps only public reads and preflight requests available", () => {
   const allowedRequests = [
     ["GET", "/api/auth/registration-settings"],
     ["GET", "/api/banners"],
@@ -44,7 +44,7 @@ test("keeps only public reads and Clerk development sign-in available", () => {
     ["GET", "/api/pricing"],
     ["GET", "/api/storage/public-objects/banners/hero.png"],
     ["OPTIONS", "/api/auth/sign-in"],
-    ["POST", "/api/__clerk/v1/client/sign_ins"],
+    ["OPTIONS", "/api/auth/send-otp"],
   ];
 
   for (const [method, path] of allowedRequests) {

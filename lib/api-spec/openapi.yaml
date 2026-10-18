@@ -869,9 +869,9 @@ paths:
       operationId: getAdminAccessStatus
       tags: [admin]
       summary: Check administrator access status
-      description: Returns whether the signed-in Clerk user is authorized and whether the administrator PIN session is active.
+      description: Returns whether the current SendFlow session is authorized and whether the administrator PIN session is active.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: Administrator access status.
@@ -885,7 +885,7 @@ paths:
       tags: [admin]
       summary: Unlock the administrator panel with a PIN
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -936,7 +936,7 @@ paths:
       summary: Get the SendFlow administration overview
       description: Returns server-calculated platform metrics for an authorized administrator.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminFrom"
         - $ref: "#/components/parameters/AdminTo"
@@ -1009,7 +1009,7 @@ paths:
       tags: [admin]
       summary: List all banners for administrators
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: All banners, including inactive and scheduled entries.
@@ -1040,7 +1040,7 @@ paths:
       tags: [admin]
       summary: Create a banner
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1084,7 +1084,7 @@ paths:
       tags: [admin]
       summary: List aggregator partners and country/operator routing
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: Aggregator partners and effective routes for all supported countries and operators.
@@ -1116,7 +1116,7 @@ paths:
       tags: [admin]
       summary: Add an aggregator partner to the routing catalog
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1165,7 +1165,7 @@ paths:
       tags: [admin]
       summary: Update an aggregator partner in the routing catalog
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1221,7 +1221,7 @@ paths:
       tags: [admin]
       summary: Assign a partner to a country or operator
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1277,7 +1277,7 @@ paths:
       tags: [admin]
       summary: List operator availability and fee rates by country and section
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: Operators and pricing sections for all supported countries, including disabled operators.
@@ -1309,7 +1309,7 @@ paths:
       tags: [admin]
       summary: Add an operator to a country
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1361,7 +1361,7 @@ paths:
       tags: [admin]
       summary: Edit or enable/disable a country operator
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1418,7 +1418,7 @@ paths:
       summary: Update a country's pricing section rates
       description: Updates all changed operator rates for one country and one pricing section atomically.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1474,7 +1474,7 @@ paths:
       tags: [admin]
       summary: Read the signup SMS verification setting
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: Current setting and version.
@@ -1493,7 +1493,7 @@ paths:
       tags: [admin]
       summary: Turn signup SMS verification on or off
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1523,7 +1523,7 @@ paths:
       tags: [admin]
       summary: List Orange Money OTP policies for supported countries
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: Current policy values and official API connection status.
@@ -1558,7 +1558,7 @@ paths:
       tags: [admin]
       summary: Update whether OTP is required for a supported Orange Money operator
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1614,7 +1614,7 @@ paths:
       tags: [admin]
       summary: Reorder all administrator banners atomically
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1666,7 +1666,7 @@ paths:
       tags: [admin]
       summary: Update a banner
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       requestBody:
         required: true
         content:
@@ -1715,7 +1715,7 @@ paths:
       tags: [admin]
       summary: Delete a banner
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       responses:
         "200":
           description: Banner deleted.
@@ -1754,7 +1754,7 @@ paths:
       summary: List authenticated user sessions
       description: Returns server-recorded session starts with network and device metadata for an authorized administrator.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminSearch"
         - $ref: "#/components/parameters/AdminUserIdFilter"
@@ -1794,7 +1794,7 @@ paths:
       summary: List OTP send and verification activity
       description: Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient phone numbers, API credentials, and provider verification identifiers are never included.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - name: eventType
           in: query
@@ -1849,7 +1849,7 @@ paths:
       tags: [admin]
       summary: List SendFlow users for administrators
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminSearch"
         - $ref: "#/components/parameters/AdminPage"
@@ -1886,7 +1886,7 @@ paths:
       summary: Get a SendFlow user detail for administrators
       description: Returns the persisted profile, wallet, and transaction summary for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminUserId"
       responses:
@@ -1932,7 +1932,7 @@ paths:
       tags: [admin]
       summary: List SendFlow transactions for administrators
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminSearch"
         - $ref: "#/components/parameters/AdminUserIdFilter"
@@ -1990,7 +1990,7 @@ paths:
       summary: Get a SendFlow transaction detail for administrators
       description: Returns the persisted transaction endpoints, user, operators, references, amounts, fees, and status for an authorized administrator.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminTransactionId"
       responses:
@@ -2037,7 +2037,7 @@ paths:
       summary: Create an audited wallet credit or debit
       description: Adjusts a wallet through an immutable ledger entry. Direct balance overwrites are not supported.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminUserId"
       requestBody:
@@ -2101,7 +2101,7 @@ paths:
       tags: [admin]
       summary: Suspend a SendFlow user with an audit trail
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminUserId"
       requestBody:
@@ -2153,7 +2153,7 @@ paths:
       tags: [admin]
       summary: Restore a suspended SendFlow user with an audit trail
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminUserId"
       requestBody:
@@ -2206,7 +2206,7 @@ paths:
       summary: Soft-delete a SendFlow user with an audit trail
       description: Retains financial records and anonymizes no data automatically. This is reversible only through a documented recovery process.
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminUserId"
       requestBody:
@@ -2258,7 +2258,7 @@ paths:
       tags: [admin]
       summary: Archive a transaction without deleting its financial record
       security:
-        - clerkSession: []
+        - sendFlowSession: []
       parameters:
         - $ref: "#/components/parameters/AdminTransactionId"
       requestBody:
@@ -2403,10 +2403,6 @@ components:
         maxLength: 60
         pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
   securitySchemes:
-    clerkSession:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
     sendFlowSession:
       type: apiKey
       in: cookie

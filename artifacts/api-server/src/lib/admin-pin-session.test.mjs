@@ -19,11 +19,11 @@ test("accepts only the configured eight-digit administrator PIN", () => {
   assert.equal(verifyAdminPin("8216043"), false);
 });
 
-test("administrator PIN sessions expire and are bound to the Clerk user and session", () => {
+test("administrator PIN sessions expire and are bound to the SendFlow user and session", () => {
   const now = 1_800_000_000_000;
   const session = createAdminPinSessionToken(
     "user_admin_test",
-    "clerk_session_first",
+    "sendflow_session_first",
     now,
   );
 
@@ -32,7 +32,7 @@ test("administrator PIN sessions expire and are bound to the Clerk user and sess
     verifyAdminPinSessionToken(
       session.token,
       "user_admin_test",
-      "clerk_session_first",
+      "sendflow_session_first",
       now,
     ),
     true,
@@ -41,7 +41,7 @@ test("administrator PIN sessions expire and are bound to the Clerk user and sess
     verifyAdminPinSessionToken(
       session.token,
       "user_other_test",
-      "clerk_session_first",
+      "sendflow_session_first",
       now,
     ),
     false,
@@ -50,7 +50,7 @@ test("administrator PIN sessions expire and are bound to the Clerk user and sess
     verifyAdminPinSessionToken(
       session.token,
       "user_admin_test",
-      "clerk_session_second",
+      "sendflow_session_second",
       now,
     ),
     false,
@@ -59,7 +59,7 @@ test("administrator PIN sessions expire and are bound to the Clerk user and sess
     verifyAdminPinSessionToken(
       session.token,
       "user_admin_test",
-      "clerk_session_first",
+      "sendflow_session_first",
       session.expiresAt,
     ),
     false,
@@ -70,7 +70,7 @@ test("changing the administrator PIN invalidates existing sessions", () => {
   const now = 1_800_000_000_000;
   const session = createAdminPinSessionToken(
     "user_admin_test",
-    "clerk_session_first",
+    "sendflow_session_first",
     now,
   );
 
@@ -80,7 +80,7 @@ test("changing the administrator PIN invalidates existing sessions", () => {
     verifyAdminPinSessionToken(
       session.token,
       "user_admin_test",
-      "clerk_session_first",
+    "sendflow_session_first",
       now,
     ),
     false,
@@ -90,11 +90,11 @@ test("changing the administrator PIN invalidates existing sessions", () => {
 
 test("rejects malformed session tokens", () => {
   assert.equal(
-    verifyAdminPinSessionToken("not-a-session", "user_admin_test", "clerk_session_first"),
+    verifyAdminPinSessionToken("not-a-session", "user_admin_test", "sendflow_session_first"),
     false,
   );
   assert.equal(
-    verifyAdminPinSessionToken(undefined, "user_admin_test", "clerk_session_first"),
+    verifyAdminPinSessionToken(undefined, "user_admin_test", "sendflow_session_first"),
     false,
   );
 });

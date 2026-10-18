@@ -1,5 +1,4 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { SignIn, useUser } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Redirect, useLocation } from "wouter";
 import {
@@ -14,8 +13,6 @@ import { useSeo } from "@/lib/seo";
 const AdminRouter = lazy(() => import("@/pages/admin").then((module) => ({
   default: module.AdminRouter,
 })));
-
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function AdminPageLoading() {
   return (
@@ -40,26 +37,23 @@ export function AdminSignInPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-4">
-      <SignIn
-        routing="path"
-        path={`${basePath}${ADMIN_ROUTE_PATH}/sign-in`}
-        forceRedirectUrl={`${basePath}${ADMIN_ROUTE_PATH}`}
-        fallbackRedirectUrl={`${basePath}${ADMIN_ROUTE_PATH}`}
-        signUpUrl={`${basePath}${ADMIN_ROUTE_PATH}/sign-in`}
-        appearance={{ elements: { footerAction: "hidden" } }}
-      />
+      <section className="w-full max-w-md space-y-4 rounded-2xl border bg-card p-6 text-card-foreground shadow-sm">
+        <h1 className="text-xl font-semibold">Connexion administrateur indisponible</h1>
+        <p className="text-sm text-muted-foreground">
+          Le compte administrateur SendFlow sera configuré séparément. Aucun accès administrateur n’est actif pour le moment.
+        </p>
+      </section>
     </main>
   );
 }
 
 export default function AdminAccessPage() {
-  const { isLoaded, user } = useUser();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const accessQuery = useGetAdminAccessStatus({
     query: {
       queryKey: getGetAdminAccessStatusQueryKey(),
-      enabled: isLoaded && Boolean(user),
+      enabled: true,
       retry: false,
       refetchInterval: 15_000,
       refetchOnWindowFocus: true,
@@ -81,8 +75,6 @@ export default function AdminAccessPage() {
     robots: "noindex,nofollow",
   });
 
-  if (!isLoaded) return <AdminPageLoading />;
-  if (!user) return <Redirect to={adminRoute("/sign-in")} />;
   if (accessQuery.isLoading) return <AdminPageLoading />;
 
   if (accessQuery.isError) {
@@ -102,19 +94,7 @@ export default function AdminAccessPage() {
   }
 
   if (!accessQuery.data?.isAdmin) {
-    return (
-      <main className="flex min-h-[60vh] items-center justify-center p-6">
-        <section className="w-full max-w-md space-y-4 rounded-2xl border bg-card p-6 text-card-foreground shadow-sm">
-          <h1 className="text-xl font-semibold">Accès refusé</h1>
-          <p className="text-sm text-muted-foreground">
-            Ce compte n’est pas autorisé à ouvrir l’espace administrateur.
-          </p>
-          <Button variant="outline" onClick={() => setLocation("/account-info")}>
-            Retour au profil
-          </Button>
-        </section>
-      </main>
-    );
+    return <Redirect to={adminRoute("/sign-in")} />;
   }
 
   if (!accessQuery.data.pinUnlocked) {

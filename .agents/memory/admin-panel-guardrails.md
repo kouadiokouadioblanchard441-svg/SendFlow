@@ -75,13 +75,13 @@ The admin console must use real icon components or approved image assets for fin
 
 **How to apply:** Prefer Lucide icons for generic concepts, use only approved operator assets when available, and use a clearly generic icon for operators without an approved logo.
 
-The phone-first customer sign-in screen is a local demo flow and does not establish the Clerk identity required by admin API routes. Keep the customer PIN route guard limited to customer pages; do not redirect administrator routes through the customer `/pin` screen. Admin access uses Clerk identity, server-side admin authorization, and a separate administrator PIN.
+Administrator access is currently disabled. Keep admin APIs deny-by-default until SendFlow phone OTP authentication and a database administrator role are implemented; the administrator PIN remains a separate step-up check. Do not redirect administrator routes through the customer `/pin` screen.
 
-**Why:** Customer UI session flags and demo credentials are not an administrator authorization boundary. Sending an administrator through the customer PIN flow can block Clerk sign-in without granting any additional authorization.
+**Why:** Customer UI session flags and demo credentials are not an administrator authorization boundary, and the user chose to keep authentication and authorization inside SendFlow rather than use an external identity service.
 
-**How to apply:** Keep admin APIs deny-by-default. Route administrators through the real identity provider, then enforce server-side administrator authorization and PIN verification; customer sign-in and PIN state must never grant panel access.
+**How to apply:** Do not re-enable administrator routes until the server verifies an OTP-authenticated SendFlow session and its database role, then separately enforces PIN verification. Customer sign-in and PIN state alone must never grant panel access.
 
-The login-activity view records one event per Clerk session when the authenticated account endpoint is called. It stores the server-observed IP and user-agent-derived device/browser/OS, but leaves location blank until a proxy contract is verified.
+The login-activity view must derive its identity and session data from the server-validated SendFlow session, not client-supplied account identifiers. It stores server-observed network and device metadata, but leaves location blank until a proxy contract is verified.
 
 **Why:** IP geolocation is personal-data processing, and client-supplied headers can be forged unless a trusted proxy strips or overwrites them. A guessed city is worse than an honest unknown.
 

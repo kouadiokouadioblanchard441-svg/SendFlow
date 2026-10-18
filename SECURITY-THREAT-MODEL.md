@@ -6,6 +6,7 @@ history and administrative wallet actions, administrator access, Didit KYC and
 webhooks, API-level security controls, deployment boundaries, and dependency
 risks.
 **Assessment date:** 2026-10-08  
+**Historical status note (2026-10-18):** This assessment predates removal of the external authentication provider. The current application has no related runtime dependency, secret configuration, middleware, or proxy. Administrator access is fail-closed until SendFlow-owned OTP and database-role authorization are implemented. References below describe only the assessed baseline.
 **Method:** code/schema review, existing unit tests, automated dependency/SAST/
 privacy scans, and review of Didit's published webhook guide. No route-level
 attack was sent, no SMS or Didit API request was made, and no account or

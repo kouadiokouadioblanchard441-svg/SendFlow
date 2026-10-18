@@ -2,7 +2,7 @@
 - [App Storage constraints](app-storage-constraints.md) — Provisioning may require workspace credits before public asset migration can run.
 - [Free image cleanup](free-image-cleanup.md) — Generated PNGs may include a baked checkerboard; local ImageMagick cleanup can restore usable alpha when automated removal is unavailable.
 - [Partner logo sourcing](partner-logo-sourcing.md) — Never substitute one operator’s asset for another; use an explicit wordmark until an approved official logo is available.
-- [SendFlow customer authentication](clerk-phone-signup.md) — Customer accounts use purpose-bound eSMS OTP and server-owned sessions; Clerk remains admin-only.
+- [SendFlow authentication](sendflow-authentication.md) — Customer sessions are server-owned; administrator access stays closed until SendFlow OTP and database roles are configured.
 - [SendFlow transfer business rules](transfer-business-rules.md) — Keep the user-confirmed funding direction and sender/recipient fee calculations consistent across the three transfer types.
 - [Preview session reset](preview-session-reset.md) — App screenshots start a fresh browser session, so sessionStorage cannot be used to target a later onboarding slide.
 - [Mobile overlay positioning](mobile-overlay-positioning.md) — Render full-screen mobile overlays at document level when animated cards could create a fixed-position containing block.

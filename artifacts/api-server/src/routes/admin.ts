@@ -1,7 +1,5 @@
-import { getAuth } from "@clerk/express";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { recordAdminAudit } from "../lib/admin-audit";
-import { hasAdminPinSession } from "../lib/admin-pin-session";
 import {
   createSensitiveDataLookupIndex,
   decryptSensitiveDataIfEncrypted,
@@ -48,36 +46,9 @@ type DateRange = {
 export type AdminPermission = "read" | "mutate";
 
 export function getAdminUserId(req: Request, permission: AdminPermission = "read") {
-  const { userId } = getAuth(req);
-  if (!userId) return { userId: null, error: "Authentication required" as const };
-
-  const configuredAdminValue = permission === "mutate"
-    ? process.env.SENDFLOW_MUTATION_ADMIN_USER_IDS
-    : process.env.SENDFLOW_ADMIN_USER_IDS;
-  const configuredAdmins = (configuredAdminValue ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-
-  if (configuredAdmins.length === 0) {
-    return {
-      userId: null,
-      error: permission === "mutate"
-        ? "Administrator mutation access is not configured"
-        : "Administrator access is not configured",
-    } as const;
-  }
-
-  if (!configuredAdmins.includes(userId)) {
-    return {
-      userId: null,
-      error: permission === "mutate"
-        ? "Administrator mutation access denied"
-        : "Administrator access denied",
-    } as const;
-  }
-
-  return { userId, error: null };
+  void req;
+  void permission;
+  return { userId: null, error: "Administrator access is not configured" as const };
 }
 
 export function respondAdminIdentityError(
@@ -88,14 +59,8 @@ export function respondAdminIdentityError(
   const auth = getAdminUserId(req, permission);
   if (auth.userId) return auth.userId;
 
-  if (auth.error === "Authentication required") {
-    res.status(401).json({ error: auth.error });
-  } else if (auth.error === "Administrator access denied" || auth.error === "Administrator mutation access denied") {
-    res.status(403).json({ error: auth.error });
-  } else {
-    req.log.error("Administrator access is not configured");
-    res.status(503).json({ error: auth.error });
-  }
+  req.log.error("Administrator access is not configured");
+  res.status(503).json({ error: auth.error });
   return null;
 }
 
@@ -104,19 +69,8 @@ export function respondAdminAuthError(
   res: Response,
   permission: AdminPermission = "read",
 ) {
-  const userId = respondAdminIdentityError(req, res, permission);
-  if (!userId) return null;
-
-  const { sessionId } = getAuth(req);
-  if (!sessionId || !hasAdminPinSession(req, userId, sessionId)) {
-    res.status(403).json({
-      error: "Administrator PIN required",
-      code: "ADMIN_PIN_REQUIRED",
-    });
-    return null;
-  }
-
-  return userId;
+  respondAdminIdentityError(req, res, permission);
+  return null;
 }
 
 function parseDateRange(query: Record<string, unknown>): DateRange {

@@ -56,9 +56,6 @@ export function shouldBlockSharedNeonApiRequest(
   const pathname = normalizeRequestPath(requestPath);
   if (!pathname) return true;
 
-  // Clerk's development sign-in proxy does not read or mutate SendFlow data.
-  if (isPathOrChild(pathname, "/api/__clerk")) return false;
-
   const normalizedMethod = method.toUpperCase();
   if (normalizedMethod === "OPTIONS") return false;
   if (normalizedMethod !== "GET") return true;

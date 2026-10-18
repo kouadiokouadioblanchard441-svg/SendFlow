@@ -1,7 +1,4 @@
 import { lazy, Suspense, useEffect, useState, type ReactElement, type ReactNode } from 'react';
-import { ClerkProvider } from '@clerk/react';
-import { publishableKeyFromHost } from '@clerk/react/internal';
-import { shadcn } from '@clerk/themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
@@ -110,8 +107,6 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
   if (isProtected && expiry === null) return <Redirect to="/pin" />;
   return <>{children}</>;
 }
-const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 function PublicLegalRoute({
@@ -193,51 +188,9 @@ function App() {
 
   return (
     <WouterRouter base={basePath}>
-      <ClerkProvider
-        publishableKey={clerkPubKey}
-        proxyUrl={clerkProxyUrl}
-        signInUrl={`${basePath}${ADMIN_ROUTE_PATH}/sign-in`}
-        signUpUrl={`${basePath}${ADMIN_ROUTE_PATH}/sign-in`}
-        appearance={{
-          theme: shadcn,
-          cssLayerName: 'clerk',
-          options: {
-            logoPlacement: 'inside',
-            logoLinkUrl: `${basePath}${ADMIN_ROUTE_PATH}/sign-in`,
-            logoImageUrl: `${window.location.origin}${basePath}/sendflow-favicon.png`,
-          },
-          variables: {
-            colorPrimary: '#6d35d8',
-            colorForeground: '#17131f',
-            colorMutedForeground: '#667386',
-            colorBackground: '#ffffff',
-            colorInput: '#f8f5ff',
-            colorInputForeground: '#17131f',
-            colorNeutral: '#e2e8ef',
-            colorDanger: '#c53b3b',
-            fontFamily: 'DM Sans',
-            borderRadius: '0.75rem',
-          },
-          elements: {
-            rootBox: 'w-full flex justify-center',
-            cardBox: 'bg-white rounded-2xl w-[440px] max-w-full overflow-hidden',
-            card: '!shadow-none !border-0 !bg-transparent',
-            footer: '!shadow-none !border-0 !bg-transparent',
-            headerTitle: 'text-[#17131f]',
-            headerSubtitle: 'text-[#667386]',
-            socialButtonsBlockButtonText: 'text-[#17131f]',
-            formFieldLabel: 'text-[#17131f]',
-            footerActionLink: 'text-[#6d35d8]',
-            footerActionText: 'text-[#667386]',
-            dividerText: 'text-[#667386]',
-            formButtonPrimary: 'bg-[#6d35d8] hover:bg-[#5421b8]',
-            formFieldInput: 'bg-[#f8f5ff] text-[#17131f] border-[#e2e8ef]',
-          },
-        }}
-      >
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <CustomerPinGuard>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <CustomerPinGuard>
             <Switch>
               <Route
                 path={`${ADMIN_ROUTE_PATH}/sign-in/*?`}
@@ -300,11 +253,10 @@ function App() {
               />
               <Route component={NotFoundRoute} />
             </Switch>
-            </CustomerPinGuard>
-            <Toaster />
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ClerkProvider>
+          </CustomerPinGuard>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
     </WouterRouter>
   );
 }

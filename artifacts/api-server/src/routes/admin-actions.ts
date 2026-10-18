@@ -43,15 +43,6 @@ function actionErrorResponse(res: Parameters<Parameters<IRouter["post"]>[1]>[1],
   res.status(503).json({ error: "Administrator action storage unavailable" });
 }
 
-function isConfiguredAdminUser(userId: string) {
-  return [
-    process.env.SENDFLOW_ADMIN_USER_IDS,
-    process.env.SENDFLOW_MUTATION_ADMIN_USER_IDS,
-  ].some((configuredIds) =>
-    (configuredIds ?? "").split(",").some((configuredId) => configuredId.trim() === userId)
-  );
-}
-
 router.post("/users/:userId/wallet-adjustments", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
@@ -235,7 +226,7 @@ async function applyUserAction(
     res.status(400).json({ error: "A meaningful reason of at least 10 non-whitespace characters is required" });
     return;
   }
-  if ((action === "suspend_user" || action === "delete_user") && isConfiguredAdminUser(userId)) {
+  if ((action === "suspend_user" || action === "delete_user") && userId === adminUserId) {
     res.status(409).json({ error: "Administrator accounts cannot be suspended or deleted from this panel" });
     return;
   }

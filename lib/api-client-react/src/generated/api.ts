@@ -1966,7 +1966,7 @@ export const getGetAdminAccessStatusUrl = () => {
 }
 
 /**
- * Returns whether the signed-in Clerk user is authorized and whether the administrator PIN session is active.
+ * Returns whether the current SendFlow session is authorized and whether the administrator PIN session is active.
  * @summary Check administrator access status
  */
 export const getAdminAccessStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminAccessStatus> => {

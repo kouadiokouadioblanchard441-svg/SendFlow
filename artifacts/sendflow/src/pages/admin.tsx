@@ -930,7 +930,7 @@ function LoginActivityPage() {
           <p className="sendflow-admin-overline">Sécurité et traçabilité</p>
           <h2 data-testid="heading-admin-login-activity-list">Connexions utilisateurs</h2>
           <p className="sendflow-admin-subtitle">
-            Une ligne est enregistrée par session Clerk détectée par SendFlow, avec les métadonnées réseau et appareil disponibles.
+            Une ligne est enregistrée par session SendFlow détectée, avec les métadonnées réseau et appareil disponibles.
           </p>
         </div>
         <div className="sendflow-admin-readonly-chip"><ShieldCheck className="size-4" /> Données sensibles</div>

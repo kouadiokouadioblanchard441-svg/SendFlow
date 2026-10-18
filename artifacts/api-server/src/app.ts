@@ -1,15 +1,12 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { clerkMiddleware, getAuth } from "@clerk/express";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
 import { ADMIN_ROUTE_PREFIX } from "./lib/admin-route-prefix";
 import { shouldBlockSharedNeonApiRequest } from "./lib/shared-neon-preview-guard";
 import { getAllowedOrigins, normalizeHttpOrigin } from "./lib/origin-policy";
 import { parseTrustProxyHops } from "./lib/trust-proxy-policy";
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middlewares/clerkProxyMiddleware";
 
 const app: Express = express();
 
@@ -45,8 +42,6 @@ app.use(
     },
   }),
 );
-app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
-
 const allowedOrigins = getAllowedOrigins(process.env);
 
 app.use(
@@ -86,15 +81,6 @@ app.use("/api", (req, res, next) => {
 });
 app.use(express.json({ limit: "100kb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
-);
-
 app.use("/api/me", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store, private");
   next();
@@ -115,12 +101,7 @@ app.use(`/api${ADMIN_ROUTE_PREFIX}`, (req, res, next) => {
 
   const origin = req.get("origin");
   if (!origin) {
-    const { userId } = getAuth(req);
-    if (userId && req.headers.cookie) {
-      res.status(403).json({ error: "Origin header is required for administrator actions" });
-      return;
-    }
-    next();
+    res.status(403).json({ error: "Origin header is required for administrator actions" });
     return;
   }
 

@@ -6,7 +6,7 @@ This guide prepares a Google Play upload bundle without changing SendFlow's fina
 
 - Capacitor packages the local Vite output from `artifacts/sendflow/dist/public`; no remote `server.url` or live-reload origin is configured.
 - Capacitor mode reads the public API origin from the workspace-root `.env.capacitor`. It must remain an HTTPS origin. Local web previews do not inherit this production origin.
-- `VITE_CLERK_PUBLISHABLE_KEY` is a public Clerk key used by the admin-only Clerk UI. Customer authentication remains server-owned OTP. The current preview reports development Clerk keys; use the production publishable key from Replit Secrets for a production release. Never put Clerk secret keys in a `VITE_*` variable.
+- Administrator access is intentionally unavailable until SendFlow phone OTP authentication and the database administrator role are configured. No external identity-provider keys are needed.
 - Stripe is not currently used by the SendFlow client, so no Stripe key is configured.
 - Android uses minimum SDK 24 and target/compile SDK 36. SDK 36 is retained rather than downgrading to the lower values in the original request.
 - The Android Gradle Wrapper is pinned by `android/gradle/wrapper/gradle-wrapper.properties`; a separately installed global Gradle is not needed.

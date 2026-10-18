@@ -5,7 +5,7 @@ description: Neon is shared by Plesk production and Replit previews/tests; prote
 
 SendFlow uses the same Neon database for Plesk production and Replit previews/tests. The user chose not to copy rows from the former Replit development database. Preview and test processes can therefore see and potentially change live records.
 
-In the shared-Neon preview, allow only known public GET routes, CORS preflights, and the development Clerk proxy. Block private/customer/admin reads, all writes, malformed paths, and unlisted GET routes before request-body parsing and route handling.
+In the shared-Neon preview, allow only known public GET routes and CORS preflights. Block private/customer/admin reads, all writes, malformed paths, and unlisted GET routes before request-body parsing and route handling.
 
 **Why:** The user selected one shared Neon database and schema-only cutover.
 
