@@ -40,20 +40,23 @@ test("API runtime keeps SQL behind parameterized Drizzle statements", async () =
 
   for (const filePath of runtimeFiles) {
     const source = await readFile(filePath, "utf8");
+    const executableSource = source
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|\s)\/\/.*$/gm, "$1");
     const relativePath = path.relative(sourceDirectory, filePath);
 
-    if (/from\s+["'](?:pg|node-postgres)["']/.test(source)) {
+    if (/from\s+["'](?:pg|node-postgres)["']/.test(executableSource)) {
       violations.push(`${relativePath}: direct PostgreSQL driver import`);
     }
-    if (/\b(?:pool|client)\.query\s*\(/.test(source)) {
+    if (/\b(?:pool|client)\.query\s*\(/.test(executableSource)) {
       violations.push(`${relativePath}: direct PostgreSQL query call`);
     }
-    if (/\bsql\.raw\s*\(/.test(source)) {
+    if (/\bsql\.raw\s*\(/.test(executableSource)) {
       violations.push(`${relativePath}: raw Drizzle SQL fragment`);
     }
 
-    for (const match of source.matchAll(/\b(?:db|tx)\.execute\s*\(/g)) {
-      const statementStart = source.slice(match.index + match[0].length);
+    for (const match of executableSource.matchAll(/\b(?:db|tx)\.execute\s*\(/g)) {
+      const statementStart = executableSource.slice(match.index + match[0].length);
       if (!/^\s*sql\s*`/.test(statementStart)) {
         violations.push(
           `${relativePath}: execute() must receive a parameterized sql template`,

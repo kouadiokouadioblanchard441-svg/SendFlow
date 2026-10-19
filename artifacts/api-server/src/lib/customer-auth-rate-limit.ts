@@ -51,6 +51,8 @@ export async function withAuthAttemptLock<T>(
   return db.transaction(async (tx) => {
     // Lock both the account and requester buckets in a consistent order, across API instances.
     for (const bucket of [...new Set(buckets)].sort()) {
+      // SÉCURITÉ SQLi : Drizzle lie `bucket` comme paramètre; le contenu ne peut
+      // pas modifier la fonction SQL ni ajouter une clause.
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${bucket}, 0))`);
     }
     return action(tx);

@@ -73,6 +73,12 @@ router.get("/me", async (req, res): Promise<void> => {
   if (!session) return;
 
   try {
+    /**
+     * 🛡️ SÉCURITÉ SQLi :
+     * `eq` lie `session.userId` comme une valeur PostgreSQL; cette valeur
+     * n'est pas analysée comme du texte SQL. L'identité vient de la session
+     * serveur, pas d'un identifiant choisi par le navigateur.
+     */
     const [wallet] = await db
       .select()
       .from(walletsTable)
@@ -140,6 +146,8 @@ router.get("/me/transactions", async (req, res): Promise<void> => {
     }
   }
   const search = typeof rawSearch === "string" ? rawSearch.trim() : "";
+  // SÉCURITÉ SQLi : `ilike()` lie le motif via Drizzle. Cet échappement
+  // supplémentaire donne à %, _ et \ un sens littéral dans la recherche.
   const escapedSearch = search.replace(/[\\%_]/g, "\\$&");
   const searchPattern = search ? `%${escapedSearch}%` : undefined;
   const searchCondition = searchPattern
@@ -171,6 +179,8 @@ router.get("/me/transactions", async (req, res): Promise<void> => {
       }
     }
 
+    // SÉCURITÉ SQLi : le template `sql` Drizzle lie `cursor` et `session.userId`;
+    // la validation UUID et le filtre de propriété apportent des contrôles distincts.
     const cursorCreatedAt = cursor
       ? sql<Date>`(
           select ${transactionsTable.createdAt}

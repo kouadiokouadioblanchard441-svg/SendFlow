@@ -44,6 +44,9 @@ const backfillHashColumns = new Set([
   "provider_reference_lookup_hash",
 ]);
 
+// SÉCURITÉ SQLi : les noms de table/colonne ne peuvent pas être des paramètres.
+// Ils sont vérifiés contre ces listes avant d'être insérés dans la requête;
+// les valeurs de données restent passées avec des placeholders PostgreSQL.
 async function countLegacyRows(table, columns) {
   const allowedColumns = backfillTableColumns[table];
   if (!allowedColumns || columns.some((column) => !allowedColumns.has(column))) {
@@ -131,6 +134,8 @@ async function backfillUsers(client) {
 }
 
 async function backfillSimpleTable(client, table, idColumn, fields) {
+  // SÉCURITÉ SQLi : autoriser explicitement tous les identifiants interpolés
+  // avant de fabriquer le SELECT; les valeurs sont toujours liées avec $1/$2.
   const allowedColumns = backfillTableColumns[table];
   if (
     !allowedColumns

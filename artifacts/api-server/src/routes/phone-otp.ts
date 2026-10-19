@@ -290,6 +290,8 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
         `sendflow-otp-requester:${requesterHash}`,
       ].sort();
       for (const lockKey of lockKeys) {
+        // SÉCURITÉ SQLi : le template `sql` lie `lockKey` comme valeur;
+        // ne pas remplacer cette interpolation par une concaténation ou sql.raw().
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
       }
 

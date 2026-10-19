@@ -238,6 +238,8 @@ router.get("/users", async (req, res): Promise<void> => {
 
   const { search, page, pageSize } = parsed.data;
   const offset = (page - 1) * pageSize;
+  // SÉCURITÉ SQLi : `ilike()` passe le motif comme paramètre Drizzle.
+  // `%` et `_` restent des jokers de recherche ici; ils ne deviennent pas du SQL.
   const searchFilter = search
     ? or(
         ilike(usersTable.displayName, `%${search}%`),
