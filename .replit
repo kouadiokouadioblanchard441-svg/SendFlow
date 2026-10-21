@@ -33,4 +33,5 @@ DIDIT_ENVIRONMENT = "sandbox"
 SENDFLOW_ADMIN_USER_IDS = "Il ne faut rien ajouter "
 SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "
 SENDFLOW_DATABASE_TARGET = "shared-neon"
+TRUST_PROXY_HOPS = "1"
 # Android SDK and JDK paths are resolved by android-sdk.nix and the Android build wrapper.
