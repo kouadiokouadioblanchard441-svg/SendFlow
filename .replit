@@ -29,7 +29,7 @@ packages = ["jdk21"]
 [userenv.shared]
 
 [userenv.development]
-DIDIT_ENVIRONMENT = "sandbox"
+DIDIT_ENVIRONMENT = "live"
 SENDFLOW_ADMIN_USER_IDS = "Il ne faut rien ajouter "
 SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "
 SENDFLOW_DATABASE_TARGET = "shared-neon"

@@ -1,13 +1,13 @@
 ---
-name: Didit development integration
-description: Constraints for keeping identity verification in development until Didit sandbox configuration is available.
+name: Didit credentials and runtime separation
+description: User-confirmed live credentials, secret handling, and financial safeguards independent of preview labels.
 ---
 
-The Didit integration must remain server-side. `DIDIT_API_KEY` and `DIDIT_WEBHOOK_SECRET` were supplied through Replit's secret flow; never read, print, or log their values. Session creation also requires a published workflow ID and a `DIDIT_ENVIRONMENT` that matches `NODE_ENV`. The user requires full sandbox testing before public release or real-money operation.
+The user confirmed that the supplied Didit credentials are live/production and repeatedly asked to stop describing them as development or sandbox keys. Keep all provider credentials server-side in the secret manager; never read, print, log, or persist their values in source files. Do not repeatedly request replacement sandbox credentials.
 
-**Why:** The user explicitly requires full development and sandbox testing before any public release or real-money operation. The prior note that the credential request was declined is stale.
+**Why:** The user explicitly corrected the credential classification and requires rigorous organization and financial logic with no secret values in code.
 
-**How to apply:** Keep credentials server-only, verify workflow/environment configuration through the environment tooling before a provider test, reject unsigned webhooks, and do not substitute fake credentials or make live verification calls.
+**How to apply:** Distinguish the provider's actual live mode from the Replit runtime scope. Declare provider mode truthfully, preserve runtime and shared-database protections, and report blocked functionality rather than weakening guards or forcing production runtime in a preview. Configuring live credentials alone does not authorize real provider calls, paid SMS, financial mutations, or migrations. Verify configuration with isolated checks that inherit no real credentials.
 
 Didit's session webhook envelope includes an environment (`sandbox` or `live`) and separates `status.updated` from `data.updated`; both event families can carry a `status` field, but only `status.updated` may change SendFlow's KYC state.
 
