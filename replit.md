@@ -7,6 +7,8 @@ SendFlow est une application de transfert et de gestion de flux destinée aux ut
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
+- `pnpm run check:secrets` — scan versioned and non-ignored text files for credential literals and client/server boundary violations; never prints matched values
+- `pnpm run test:secret-boundaries` — isolated checks for client environment allowlisting, secret detection, and safe application/HTTP logging
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 
 ## Stack

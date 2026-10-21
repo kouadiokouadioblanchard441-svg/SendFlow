@@ -8,6 +8,7 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "test:otp": "node --experimental-strip-types --test src/lib/esms-verify.test.mjs",
+    "test:log-safety": "node --experimental-strip-types --test src/lib/log-safety.test.mjs",
     "test:auth": "node --experimental-strip-types --test src/lib/customer-auth-crypto.test.mjs src/lib/admin-pin-session.test.mjs src/lib/customer-auth-rate-limit-policy.test.mjs src/lib/customer-auth-rate-limit-buckets.test.mjs src/lib/customer-pin-session-policy.test.mjs src/lib/customer-password-policy.test.mjs src/lib/customer-recovery-policy.test.mjs",
     "test:security": "node --experimental-strip-types --test src/lib/account-limit-policy.test.mjs src/lib/admin-pin-session.test.mjs src/lib/didit-webhook-policy.test.mjs src/lib/didit-verification-policy.test.mjs src/lib/didit-session-rate-limit.test.mjs src/lib/didit-session-reservation.test.mjs src/lib/origin-policy.test.mjs src/lib/trust-proxy-policy.test.mjs src/lib/shared-neon-preview-guard.test.mjs src/lib/operator-pricing-seed-policy.test.mjs src/lib/customer-pin-session-policy.test.mjs src/lib/sql-injection-boundary.test.mjs",
     "test:wallet-integrity": "node --test tests/security/test_concurrency_wallet_integrity.mjs",

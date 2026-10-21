@@ -1,7 +1,8 @@
 import path from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
+import { publicClientDefinitions } from '../../scripts/security/public-client-env.mjs';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
@@ -15,10 +16,15 @@ if (Number.isNaN(port) || port <= 0) {
 
 const basePath = process.env.BASE_PATH ?? '/';
 
-export default defineConfig({
+const envDir = path.resolve(import.meta.dirname, '../..');
+
+export default defineConfig(async ({ mode }) => ({
   base: basePath,
   // Keep environment files at the workspace root; capacitor mode has its own public API origin.
-  envDir: path.resolve(import.meta.dirname, '../..'),
+  envDir,
+  // No automatic VITE_* exposure: only the exact public URL names below are embedded.
+  envPrefix: [],
+  define: publicClientDefinitions(loadEnv(mode, envDir, 'VITE_')),
   plugins: [
     react(),
     tailwindcss({ optimize: false }),
@@ -68,4 +74,4 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: true,
   },
-});
+}));

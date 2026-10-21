@@ -48,12 +48,17 @@ Thumbs.db
 .cache/
 .local/
 
-# Local environment values; the checked-in capacitor file contains public URLs only.
-/.env
-/.env.*
-!/.env.example
+# Ignore environment values at every directory depth.
+.env
+.env.*
+!.env.example
+# This checked-in file contains public URLs only.
 !/.env.capacitor
 
 # Android signing material must never enter Git.
 *.jks
 *.keystore
+*.p12
+*.pfx
+*.pem
+*.key

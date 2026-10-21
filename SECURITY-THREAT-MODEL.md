@@ -424,7 +424,7 @@ curl -i "$BASE/api/auth/register" \
     "phone":"+2250000000000",
     "fullName":"Test Customer",
     "birthDate":"1990-01-01",
-    "password":"test",
+    "password":"${ISOLATED_TEST_PASSWORD}",
     "acceptedPrivacy":true
   }'
 ```

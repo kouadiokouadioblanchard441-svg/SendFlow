@@ -7,6 +7,7 @@ import { getAllowedOrigins, normalizeHttpOrigin } from "./lib/origin-policy";
 import { parseTrustProxyHops } from "./lib/trust-proxy-policy";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { errorLogSerializers } from "./lib/log-safety";
 
 const app: Express = express();
 
@@ -26,6 +27,7 @@ app.use(
   pinoHttp({
     logger,
     serializers: {
+      ...errorLogSerializers,
       req(req) {
         const path = req.url?.split("?")[0] ?? "";
         return {

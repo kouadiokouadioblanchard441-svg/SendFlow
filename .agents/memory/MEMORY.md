@@ -21,3 +21,4 @@
 - [Engineering quality](engineering-quality.md) — Treat SendFlow as a large financial app; work robustly and leave customer pages untouched during financial backend work.
 - [SendFlow Capacitor direction](capacitor-direction.md) — Keep UI/backend boundaries, wait for phase approval, and use the Replit JDK 21 Android toolchain.
 - [SendFlow data encryption](signup-data-encryption.md) — Keep transfers server-routed; encrypt ledger storage and application-encrypt personal identifiers without breaking SQL invariants.
+- [Safe HTTP logging](log-safety-boundaries.md) — HTTP middleware can override parent error serializers; protect both levels against credential and personal-data leaks.

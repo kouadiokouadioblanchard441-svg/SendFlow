@@ -17,6 +17,8 @@ const basePath = process.env.BASE_PATH ?? "/";
 
 export default defineConfig({
   base: basePath,
+  // Design previews have no reason to receive project environment values.
+  envPrefix: [],
   plugins: [
     mockupPreviewPlugin(),
     react(),
