@@ -20,3 +20,9 @@ Viewing credentials and sessions must remain unusable by the production API, inc
 **Why:** Replit and Plesk share a database but can run different application versions. A permission check added only to Replit would not constrain an older production recovery endpoint.
 
 **How to apply:** Preserve both application and database enforcement of the viewing realm. Never convert a viewer into a normal financial customer through recovery or grant expiration.
+
+Do not infer Plesk's runtime PostgreSQL role from the shared secret available in Replit.
+
+**Why:** The shared connection can authenticate as the database owner without providing any evidence of which credentials the external Plesk process actually uses.
+
+**How to apply:** Report the observed connection role separately. Confirm the effective/login roles through the actual Plesk runtime connection before judging its permissions or proposing grants.
