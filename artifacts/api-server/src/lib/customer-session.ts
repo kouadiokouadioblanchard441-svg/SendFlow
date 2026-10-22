@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
-import { and, db, eq, gte, isNull, customerCredentialsTable, customerSessionsTable, usersTable } from "@workspace/db";
+import { and, db, eq, gte, isNull, sql, customerCredentialsTable, customerSessionsTable, usersTable } from "@workspace/db";
 import { createCustomerSessionToken, hashCustomerSessionToken, isCustomerSessionToken } from "./customer-auth-crypto";
 import { decryptSensitiveDataIfEncrypted } from "./sensitive-data-crypto";
-import { activePreviewAccountCondition } from "./preview-account-condition";
 import { isSharedNeonPreview } from "./shared-neon-preview-guard";
+import { sharedNeonCustomerCondition } from "./replit-payment-test-access";
 import { previewPasswordForVerification } from "./preview-credential-policy";
 import { formatCustomerDisplayName } from "./customer-profile-policy";
 
@@ -21,6 +21,8 @@ export type CustomerSessionContext = {
   countryCode: string | null;
   pinConfigured: boolean;
   pinUnlocked: boolean;
+  phoneVerified: boolean;
+  paymentTestAccount: boolean;
 };
 
 function readSessionCookie(req: Request) {
@@ -91,6 +93,11 @@ export async function getCustomerSession(
       pinVerifiedUntil: customerSessionsTable.pinVerifiedUntil,
       credentialPinHash: customerCredentialsTable.pinHash,
       credentialPasswordHash: customerCredentialsTable.passwordHash,
+      phoneVerifiedAt: usersTable.phoneVerifiedAt,
+      paymentTestAccount: sql<boolean>`exists (
+        select 1 from public.sf_replit_payment_test_access a
+        where a.user_id=${usersTable.id} and a.state='active'
+      )`,
     })
     .from(customerSessionsTable)
     .innerJoin(usersTable, eq(usersTable.id, customerSessionsTable.userId))
@@ -100,13 +107,18 @@ export async function getCustomerSession(
         eq(customerSessionsTable.tokenHash, tokenHash),
         isNull(customerSessionsTable.revokedAt),
         gte(customerSessionsTable.expiresAt, now),
-        isSharedNeonPreview() ? activePreviewAccountCondition() : undefined,
+        sharedNeonCustomerCondition(),
       ),
     )
     .limit(1);
 
   if (!row) return null;
-  if (isSharedNeonPreview() && !previewPasswordForVerification(row.credentialPasswordHash ?? "")) return null;
+  const paymentTestAccount = isSharedNeonPreview() && row.paymentTestAccount;
+  if (
+    isSharedNeonPreview() &&
+    !paymentTestAccount &&
+    !previewPasswordForVerification(row.credentialPasswordHash ?? "")
+  ) return null;
   if (row.accountStatus !== "active") {
     await db
       .update(customerSessionsTable)
@@ -135,6 +147,8 @@ export async function getCustomerSession(
       && row.pinVerifiedUntil !== null
       && row.pinVerifiedUntil !== undefined
       && row.pinVerifiedUntil >= now,
+    phoneVerified: row.phoneVerifiedAt !== null,
+    paymentTestAccount,
   };
 }
 

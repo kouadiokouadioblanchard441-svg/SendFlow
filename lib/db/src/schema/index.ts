@@ -26,3 +26,4 @@ export * from "./payment-intents";
 export * from "./payment-attempts";
 export * from "./payment-confirmations";
 export * from "./wallet-payment-reservations";
+export * from "./replit-payment-test-access";

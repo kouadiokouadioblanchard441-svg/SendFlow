@@ -10,6 +10,7 @@ import {
   gte,
   isNull,
   or,
+  sql,
   phoneOtpChallengesTable,
   registrationSettingsTable,
   usersTable,
@@ -60,7 +61,10 @@ import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
 import { recordLoginActivity } from "../lib/login-activity";
 import { createCustomerPinRotationSessionPolicy } from "../lib/customer-pin-session-policy";
-import { activePreviewAccountCondition } from "../lib/preview-account-condition";
+import {
+  activeReplitPaymentTestAccountCondition,
+  sharedNeonCustomerCondition,
+} from "../lib/replit-payment-test-access";
 import { isSharedNeonPreview } from "../lib/shared-neon-preview-guard";
 import { previewPasswordForVerification } from "../lib/preview-credential-policy";
 import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
@@ -376,6 +380,10 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
           accountStatus: usersTable.status,
           passwordHash: customerCredentialsTable.passwordHash,
           pinHash: customerCredentialsTable.pinHash,
+          paymentTestAccount: sql<boolean>`exists (
+            select 1 from public.sf_replit_payment_test_access a
+            where a.user_id=${usersTable.id} and a.state='active'
+          )`,
         })
         .from(usersTable)
         .innerJoin(customerCredentialsTable, eq(customerCredentialsTable.userId, usersTable.id))
@@ -384,11 +392,11 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
             eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
             eq(usersTable.phone, parsed.data.phone),
           ),
-          isSharedNeonPreview() ? activePreviewAccountCondition() : undefined,
+          sharedNeonCustomerCondition(),
         ))
         .for("update");
 
-      const scopedHash = isSharedNeonPreview()
+      const scopedHash = isSharedNeonPreview() && !record?.paymentTestAccount
         ? previewPasswordForVerification(record?.passwordHash ?? "")
         : record?.passwordHash;
       const encodedHash = scopedHash || await DUMMY_PASSWORD_HASH;

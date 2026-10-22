@@ -22,6 +22,7 @@
     "test:feexpay-configuration": "node tests/security/run-isolated-finance.mjs --feexpay-configuration-only",
     "test:payment-structures": "node tests/security/run-isolated-finance.mjs --payment-structures-only",
     "payments:schema-plan": "node --experimental-strip-types scripts/migrate-payment-structures.mjs",
+    "payments:test-access-plan": "node --experimental-strip-types scripts/migrate-payment-test-access.mjs",
     "feexpay:configuration-plan": "node --experimental-strip-types scripts/configure-feexpay.mjs",
     "pii:backfill": "node --experimental-strip-types scripts/backfill-sensitive-data.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
