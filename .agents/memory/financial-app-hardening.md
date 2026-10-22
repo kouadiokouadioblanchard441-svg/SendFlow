@@ -3,6 +3,12 @@ name: Financial app hardening
 description: Project-wide quality and security priorities for SendFlow.
 ---
 
+Use the user's nine installed cybersecurity skills for cybersecurity work on SendFlow.
+
+**Why:** The user explicitly asked that these skills be used as cybersecurity competencies for the project.
+
+**How to apply:** Consult the relevant installed skills for the requested work. Distinguish guidance applied from tests actually executed, and disclose when a test requires the unavailable Strix engine.
+
 The server is the only authority for SendFlow. The frontend is untrusted and must never be the security authority. Never hardcode or store secret keys, tokens, credentials, or sensitive personal or financial values in frontend or backend source or client bundles. Load required secrets only into the server runtime from Replit Secrets. Verify identities, ownership, state, and business rules on the server before accessing or changing data.
 
 **Why:** The user explicitly requires no keys or sensitive information in frontend or backend code, and requires sensitive checks to be performed on their server.
