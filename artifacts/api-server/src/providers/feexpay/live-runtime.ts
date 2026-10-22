@@ -12,7 +12,7 @@ export function isFeexpayLiveExecutionAllowed(environment: Environment): boolean
   }
   if (
     environment.FEEXPAY_EXECUTION_HOST !== "replit" ||
-    environment.SENDFLOW_DATABASE_TARGET !== "replit-live"
+    environment.SENDFLOW_DATABASE_TARGET !== "shared-neon"
   ) return false;
   try {
     resolveReplitLiveDatabaseUrl(environment);

@@ -9,6 +9,28 @@ const sharedNeon = {
   SENDFLOW_DATABASE_TARGET: "shared-neon",
 };
 
+test("approval of real FeexPay tests never bypasses shared-Neon HTTP access controls", () => {
+  const approved = {
+    ...sharedNeon,
+    REPLIT_DEV_DOMAIN: "workspace.invalid",
+    FEEXPAY_EXECUTION_HOST: "replit",
+    FEEXPAY_LIVE_ENABLED: "true",
+    SENDFLOW_REPLIT_LIVE_APPROVED: "true",
+    SENDFLOW_SHARED_NEON_LIVE_APPROVED: "true",
+  };
+  for (const [method, path] of [
+    ["GET", "/api/me/profile"],
+    ["GET", "/api/me/transactions"],
+    ["POST", "/api/me/transfers"],
+    ["POST", "/api/wallet/transfer"],
+    ["POST", "/api/auth/register"],
+    ["PATCH", `/api${ADMIN_ROUTE_PREFIX}/registration-settings`],
+  ]) {
+    assert.equal(shouldBlockSharedNeonApiRequest(method, path, approved), true, `${method} ${path}`);
+  }
+  assert.equal(shouldBlockSharedNeonApiRequest("GET", "/api/pricing", approved), false);
+});
+
 test("blocks account, recovery, OTP, private data, identity, and admin paths in shared-Neon preview", () => {
   const blockedRequests = [
     ["POST", "/api/auth/register"],

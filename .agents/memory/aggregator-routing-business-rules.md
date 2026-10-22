@@ -51,8 +51,10 @@ Replit test journey unfinished. The user explicitly chose
 « Vrais paiements FeexPay ici, avec débits, versements et frais possibles ».
 This authorizes preparing real-payment execution in Replit; do not initiate an
 unspecified charge or payout as a test without an approved concrete operation.
-Keep real-payment test records separate from the shared Plesk production data;
-the authorization must not be used to open all production customer data to preview.
+The user explicitly requires « la vraie base de données connecter actuellement »:
+use the existing shared Neon, not a separate preview database. Do not request a
+separate connection again as a prerequisite. This authorization must not open
+all production customer data to preview or bypass account-level permissions.
 
 The user explicitly rejected a FeexPay sandbox integration and chose direct
 production API integration instead.

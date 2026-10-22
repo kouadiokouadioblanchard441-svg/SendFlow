@@ -30,15 +30,15 @@ const replitLive = () => ({
   ...live(),
   NODE_ENV: "development",
   FEEXPAY_EXECUTION_HOST: "replit",
-  SENDFLOW_DATABASE_TARGET: "replit-live",
+  SENDFLOW_DATABASE_TARGET: "shared-neon",
   SENDFLOW_REPLIT_LIVE_APPROVED: "true",
+  SENDFLOW_SHARED_NEON_LIVE_APPROVED: "true",
   REPL_ID: randomUUID(),
   REPLIT_DEV_DOMAIN: "workspace.invalid",
-  NEON_DATABASE_URL_PREVIEW: "postgresql://preview.invalid/sendflow?sslmode=require",
   NEON_DATABASE_URL_PRODUCTION: "postgresql://production.invalid/sendflow?sslmode=require",
 });
 
-test("explicitly approved Replit live uses the real API origin with a separate database (mocked transport)", async () => {
+test("approved Replit live uses the real API origin with the connected shared Neon (mocked transport)", async () => {
   for (const operation of ["payin", "payout"]) {
     let calls = 0;
     const client = new FeexpayClient(replitLive(), async (url, init) => {
@@ -52,19 +52,18 @@ test("explicitly approved Replit live uses the real API origin with a separate d
   }
 });
 
-test("Replit live never dispatches without approval, isolation, runtime identity and its live switch", async () => {
+test("Replit live never dispatches without both approvals, the connected database, runtime identity and its live switch", async () => {
   const variants = [
     { SENDFLOW_REPLIT_LIVE_APPROVED: "false" },
+    { SENDFLOW_SHARED_NEON_LIVE_APPROVED: "false" },
     { FEEXPAY_LIVE_ENABLED: "false" },
-    { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+    { SENDFLOW_DATABASE_TARGET: "production" },
     { SENDFLOW_DATABASE_TARGET: "development" },
     { NODE_ENV: "test" },
     { REPL_ID: undefined },
     { REPLIT_DEV_DOMAIN: undefined },
-    { NEON_DATABASE_URL_PREVIEW: undefined },
     { NEON_DATABASE_URL_PRODUCTION: undefined },
-    { NEON_DATABASE_URL_PREVIEW: "postgresql://production-pooler.invalid/sendflow?sslmode=require" },
-    { NEON_DATABASE_URL_PREVIEW: "postgresql://preview.invalid/sendflow?sslmode=disable" },
+    { NEON_DATABASE_URL_PRODUCTION: "postgresql://production.invalid/sendflow?sslmode=disable" },
     { FEEXPAY_EXECUTION_HOST: "unknown" },
   ];
   for (const variant of variants) {

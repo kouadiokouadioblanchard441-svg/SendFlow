@@ -71,22 +71,23 @@ No environment variable is provisioned automatically by this implementation.
   `SENDFLOW_DATABASE_TARGET=production`, `FEEXPAY_LIVE_ENABLED=true` and
   production runtime, after explicit approval.
 - Replit real-payment testing has been explicitly authorized by the user.
-  It requires `FEEXPAY_EXECUTION_HOST=replit`,
-  `SENDFLOW_REPLIT_LIVE_APPROVED=true`, `SENDFLOW_DATABASE_TARGET=replit-live`,
-  a real Replit runtime, and `NEON_DATABASE_URL_PREVIEW` pointing to a dedicated
-  database distinct from `NEON_DATABASE_URL_PRODUCTION`. Pooled aliases of the
-  production endpoint are rejected. Connections enforce `sslmode=verify-full`.
-  The explicit migration target is `DRIZZLE_DATABASE_TARGET=neon-replit-live`;
-  selecting it does not authorize running migrations without reviewing them.
-  Verify that the database contains no copied production customer data before
-  switching environments. No customer records are copied by this implementation.
+  The user explicitly requires the currently connected real Neon database, not a
+  separate preview database. It requires `FEEXPAY_EXECUTION_HOST=replit`,
+  `SENDFLOW_REPLIT_LIVE_APPROVED=true`,
+  `SENDFLOW_SHARED_NEON_LIVE_APPROVED=true`,
+  `SENDFLOW_DATABASE_TARGET=shared-neon`, and the existing
+  `NEON_DATABASE_URL_PRODUCTION` secret in a Replit development runtime.
+  `NEON_DATABASE_URL_PREVIEW` is not required. Connections enforce
+  `sslmode=verify-full`. This configuration never grants access to private routes,
+  makes a viewer financially eligible, migrates schemas, or moves funds.
+  The existing shared-Neon access middleware remains in force.
   Keep `FEEXPAY_LIVE_ENABLED=false` until the complete server payment lifecycle,
   account entitlements and environment readiness have been verified.
 - Return/cancel URLs, if used: exact HTTPS `FEEXPAY_RETURN_ORIGIN` configured
   server-side. They never confirm a payment.
 
-Live calls remain blocked on shared-Neon previews, managed development databases,
-unapproved runtimes and whenever the live switch is off. Environment authorization
+Live calls remain blocked on unapproved shared-Neon previews, managed development
+databases, unapproved runtimes and whenever the live switch is off. Environment authorization
 is not payment readiness: the existing customer submission lock must remain until
 the transfer service is operational. No call is made just by configuring a host.
 Before activation, verify FeexPay's authorization of the executing server's actual
