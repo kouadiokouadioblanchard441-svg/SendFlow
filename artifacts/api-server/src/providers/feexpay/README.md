@@ -32,8 +32,9 @@ Do not put values in source files, browser configuration or this document.
 No environment variable is provisioned automatically by this implementation.
 
 - Replit tests: mocked transport, with generated synthetic credentials.
-- Optional official sandbox: `FEEXPAY_MODE=sandbox`,
-  `FEEXPAY_SANDBOX_API_KEY`, `FEEXPAY_SANDBOX_SHOP_ID`. No live fallback.
+- Project direction: direct production API integration, not an official sandbox
+  integration. Do not request or provision sandbox credentials for this project.
+  Protocol fixtures use an injected transport and never contact either endpoint.
 - Future Plesk live execution: `FEEXPAY_MODE=live`, `FEEXPAY_API_KEY`,
   `FEEXPAY_SHOP_ID`, `FEEXPAY_EXECUTION_HOST=plesk`,
   `FEEXPAY_LIVE_ENABLED=true` and production runtime, after explicit approval.
@@ -63,8 +64,9 @@ verified operator limits, KYC limits or admin-configured fees.
 
 Per-channel liquidity, merchant country/operator entitlements, provider fees,
 OTP requirements and redirect-based collection behavior must be confirmed
-against the actual account and official sandbox. Documentation coverage alone
-is not proof they are enabled for the merchant.
+against the actual merchant account. Any live verification that could initiate
+an operation requires explicit authorization. Documentation coverage alone is
+not proof they are enabled for the merchant.
 
 ## Local verification
 
