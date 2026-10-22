@@ -37,14 +37,19 @@ operation routing. Installing an API client must not implicitly authorize real
 payments, enable countries, or change customer page appearance.
 
 For FeexPay, use the countries actually available in the official documentation,
-not a user-selected country shortlist. The user chose Plesk for payment execution
-and Replit for the current testing work.
+not a user-selected country shortlist. The user chose Plesk for payment execution,
+but explicitly requires the complete setup and user journeys to work and be
+testable in Replit first, not just catalog entries and isolated API-client tests.
 
-**Why:** The user explicitly specified this coverage and hosting split.
+**Why:** The user specified this coverage and hosting split, then reiterated:
+« Il faut configurer tout ici tout doit fonctionner correctement je dois pouvoir
+tester tout ici d'abord ».
 
 **How to apply:** Separate documented coverage from account entitlements and
-SendFlow activation. Keep Replit tests isolated from real funds; do not interpret
-testing on Replit as permission to execute live Plesk payments.
+SendFlow activation. Do not treat a Plesk-only code gate as a reason to leave the
+Replit test journey unfinished. Clarify whether testing involves real funds
+before changing live execution gates; a request to test here is not by itself
+permission to initiate a charge or payout.
 
 The user explicitly rejected a FeexPay sandbox integration and chose direct
 production API integration instead.
