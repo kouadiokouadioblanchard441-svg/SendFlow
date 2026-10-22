@@ -55,7 +55,9 @@ La version de consentement enregistrée distingue l'autorisation interne du prop
 - Les migrations sont exécutées deux fois sur la base jetable pour vérifier leur réapplication.
 - Le compteur d'appels réseau externes des tests reste à zéro ; aucun mouvement financier n'est créé pour le viewer.
 
-Ces tests ne constituent pas une connexion navigateur au compte Neon réel. L'accès réel reste à provisionner avec les identifiants sécurisés du propriétaire.
+Ces tests ne constituent pas une connexion navigateur au compte Neon réel.
+
+Le 22 octobre 2026, le compte a été provisionné dans la base Neon connectée avec les identifiants transmis via Secrets. Une vérification SQL en lecture seule a confirmé une seule autorisation active, un wallet à zéro, un téléphone non vérifié et un hash réservé au mode visualisation. L'accès expire le 29 octobre 2026 à 11:05:57 UTC. Aucun identifiant n'est reproduit dans ce rapport.
 
 ## Exploitation
 
