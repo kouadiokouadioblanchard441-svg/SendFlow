@@ -5,6 +5,54 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface IpBlockInput {
+  /**
+     * @minLength 2
+     * @maxLength 45
+     */
+  ipAddress: string;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface IpBlockRevocation {
+  /**
+     * @minimum 1
+     * @maximum 2147483646
+     */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface IpBlock {
+  id: string;
+  ipAddress: string;
+  reason: string;
+  blockedBy: string;
+  blockedAt: string;
+  /** @nullable */
+  revokedBy: string | null;
+  /** @nullable */
+  revokedAt: string | null;
+  version: number;
+}
+
+export interface IpBlockList {
+  items: IpBlock[];
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+  /** @nullable */
+  requesterIp: string | null;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -1804,6 +1852,14 @@ export type AdminPageParameter = number;
 export type AdminPageSizeParameter = number;
 
 export type AdminUserIdFilterParameter = string;
+
+export type ListAdminIpBlocksParams = {
+/**
+ * @minimum 1
+ * @maximum 10000
+ */
+page?: number;
+};
 
 export type GetCustomerTransactionsParams = {
 /**

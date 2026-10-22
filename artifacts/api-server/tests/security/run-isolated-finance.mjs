@@ -43,6 +43,10 @@ try {
   const previewMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-preview-access.sql"), "utf8");
   await owner.query(previewMigration);
   await owner.query(previewMigration);
+  const ipMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-ip-blocklist.sql"), "utf8");
+  await owner.query("DROP TABLE sf_ip_blocklist");
+  await owner.query(ipMigration);
+  await owner.query(ipMigration);
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app;
@@ -62,6 +66,11 @@ try {
       export { provisionPreviewAccount } from "./src/services/provision-preview-account";
       export { createSensitiveDataLookupIndex } from "./src/lib/sensitive-data-crypto";
       export { decryptSensitiveData } from "./src/lib/sensitive-data-crypto";
+      export { createIpBlock, revokeIpBlock, listIpBlocks } from "./src/services/ip-blocklist";
+      export { isIpBlocked, enforceIpAccess } from "@workspace/db/ip-blocklist";
+      export { createAdminIpBlocklistRouter } from "./src/routes/admin-ip-blocklist";
+      export { createSiteServer } from "../sendflow/server/site-server";
+      export { default as express } from "express";
     `, resolveDir: apiDir },
     outfile: runtime, bundle: true, platform: "node", format: "cjs", logLevel: "silent",
     plugins: [{ name: "external-installed-packages", setup(builder) {

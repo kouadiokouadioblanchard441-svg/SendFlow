@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { createHmac, randomBytes, randomUUID, randomInt } from "node:crypto";
 import http from "node:http";
 import pg from "pg";
+import "./ip-blocklist.integration.mjs";
 
 const runtimePath = process.env.SENDFLOW_ISOLATED_RUNTIME;
 const socket = process.env.SENDFLOW_FIXTURE_SOCKET;

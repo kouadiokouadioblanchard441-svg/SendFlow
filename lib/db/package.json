@@ -22,6 +22,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./ip-blocklist": "./src/ip-blocklist.ts",
+    "./ip-access-policy": "./src/ip-access-policy.ts",
     "./schema": "./src/schema/index.ts"
   }
 }

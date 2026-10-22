@@ -25,6 +25,74 @@ tags:
   - name: pricing
     description: Public operator availability and customer pricing.
 paths:
+  /DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist:
+    get:
+      operationId: listAdminIpBlocks
+      tags: [admin]
+      summary: List IP blocks with administrative authorization
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, maximum: 10000, default: 1 }
+      responses:
+        "200":
+          description: Persistent blocklist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IpBlockList"
+        "503":
+          description: Administrator access or storage unavailable
+    post:
+      operationId: createAdminIpBlock
+      tags: [admin]
+      summary: Permanently block one IP until audited revocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IpBlockInput"
+      responses:
+        "201":
+          description: IP blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IpBlock"
+        "400":
+          description: Invalid IP or reason
+        "409":
+          description: Already blocked or self-block rejected
+        "503":
+          description: Administrator access or storage unavailable
+  /DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist/{id}/revoke:
+    post:
+      operationId: revokeAdminIpBlock
+      tags: [admin]
+      summary: Revoke an IP block with optimistic concurrency and audit
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IpBlockRevocation"
+      responses:
+        "200":
+          description: Block revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IpBlock"
+        "409":
+          description: Block changed or already revoked
+        "503":
+          description: Administrator access or storage unavailable
   /healthz:
     get:
       operationId: healthCheck
@@ -2496,6 +2564,44 @@ components:
       in: cookie
       name: __Host-sendflow_session
   schemas:
+    IpBlockInput:
+      type: object
+      additionalProperties: false
+      required: [ipAddress, reason]
+      properties:
+        ipAddress: { type: string, minLength: 2, maxLength: 45 }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    IpBlockRevocation:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, reason]
+      properties:
+        expectedVersion: { type: integer, minimum: 1, maximum: 2147483646 }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    IpBlock:
+      type: object
+      required: [id, ipAddress, reason, blockedBy, blockedAt, revokedBy, revokedAt, version]
+      properties:
+        id: { type: string, format: uuid }
+        ipAddress: { type: string }
+        reason: { type: string }
+        blockedBy: { type: string }
+        blockedAt: { type: string, format: date-time }
+        revokedBy: { type: [string, "null"] }
+        revokedAt: { type: [string, "null"], format: date-time }
+        version: { type: integer }
+    IpBlockList:
+      type: object
+      required: [items, page, pageSize, hasMore, requesterIp]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/IpBlock"
+        page: { type: integer }
+        pageSize: { type: integer }
+        hasMore: { type: boolean }
+        requesterIp: { type: [string, "null"] }
     HealthStatus:
       type: object
       properties:

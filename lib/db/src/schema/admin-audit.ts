@@ -24,6 +24,9 @@ export const adminAuditLogsTable = pgTable(
 );
 
 export type AdminAuditAction =
+  | "block_ip"
+  | "unblock_ip"
+  | "view_ip_blocklist"
   | "view_admin_overview"
   | "view_user_list"
   | "view_user_detail"
@@ -52,6 +55,7 @@ export type AdminAuditAction =
   | "update_operator_pricing"
   | "update_registration_settings";
 export type AdminAuditResourceType =
+  | "ip_block"
   | "dashboard"
   | "user"
   | "transaction"

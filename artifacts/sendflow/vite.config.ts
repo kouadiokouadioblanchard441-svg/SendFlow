@@ -5,6 +5,7 @@ import { defineConfig, loadEnv } from 'vite';
 import { publicClientDefinitions } from '../../scripts/security/public-client-env.mjs';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
+import { ipGatePlugin } from './server/ip-gate-plugin';
 
 const rawPort = process.env.PORT ?? '5173';
 
@@ -26,6 +27,7 @@ export default defineConfig(async ({ mode }) => ({
   envPrefix: [],
   define: publicClientDefinitions(loadEnv(mode, envDir, 'VITE_')),
   plugins: [
+    ipGatePlugin(),
     react(),
     tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),

@@ -10,6 +10,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { errorLogSerializers } from "./lib/log-safety";
 import { httpErrorHandler } from "./lib/http-error-handler";
+import { enforceIpAccess } from "@workspace/db/ip-blocklist";
 
 const app: Express = express();
 
@@ -18,6 +19,10 @@ app.set(
   "trust proxy",
   parseTrustProxyHops(process.env.TRUST_PROXY_HOPS, process.env.NODE_ENV),
 );
+// Before CORS/preflight, body parsing, auth and every API route.
+app.use(async (req, res, next) => {
+  if (await enforceIpAccess(req, res)) next();
+});
 app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");

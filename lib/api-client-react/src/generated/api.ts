@@ -75,6 +75,11 @@ import type {
   IdentityVerificationSessionRequest,
   IdentityVerificationSessionResult,
   IdentityVerificationStatusResult,
+  IpBlock,
+  IpBlockInput,
+  IpBlockList,
+  IpBlockRevocation,
+  ListAdminIpBlocksParams,
   ListAdminLoginActivityParams,
   ListAdminOtpActivityParams,
   ListAdminTransactionsParams,
@@ -125,6 +130,267 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getListAdminIpBlocksUrl = (params?: ListAdminIpBlocksParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist`
+}
+
+/**
+ * @summary List IP blocks with administrative authorization
+ */
+export const listAdminIpBlocks = async (params?: ListAdminIpBlocksParams, options?: Parameters<typeof customFetch>[1]): Promise<IpBlockList> => {
+
+  return customFetch<IpBlockList>(getListAdminIpBlocksUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminIpBlocksQueryKey = (params?: ListAdminIpBlocksParams,) => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminIpBlocksQueryOptions = <TData = Awaited<ReturnType<typeof listAdminIpBlocks>>, TError = ErrorType<void>>(params?: ListAdminIpBlocksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminIpBlocks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminIpBlocksQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminIpBlocks>>> = ({ signal }) => listAdminIpBlocks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminIpBlocks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminIpBlocksQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminIpBlocks>>>
+export type ListAdminIpBlocksQueryError = ErrorType<void>
+
+
+/**
+ * @summary List IP blocks with administrative authorization
+ */
+
+export function useListAdminIpBlocks<TData = Awaited<ReturnType<typeof listAdminIpBlocks>>, TError = ErrorType<void>>(
+ params?: ListAdminIpBlocksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminIpBlocks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminIpBlocksQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAdminIpBlockUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist`
+}
+
+/**
+ * @summary Permanently block one IP until audited revocation
+ */
+export const createAdminIpBlock = async (ipBlockInput: IpBlockInput, options?: Parameters<typeof customFetch>[1]): Promise<IpBlock> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<IpBlock>(getCreateAdminIpBlockUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(ipBlockInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminIpBlockMutationKey = () => ['createAdminIpBlock'] as const;
+
+export const getCreateAdminIpBlockMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminIpBlock>>, TError,CreateAdminIpBlockMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminIpBlock>>, TError,CreateAdminIpBlockMutationVariables, TContext> => {
+
+const mutationKey = getCreateAdminIpBlockMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminIpBlock>>, CreateAdminIpBlockMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminIpBlock(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminIpBlockMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminIpBlock>>>
+    export type CreateAdminIpBlockMutationBody = BodyType<IpBlockInput>
+    export type CreateAdminIpBlockMutationError = ErrorType<void>
+    export type CreateAdminIpBlockMutationVariables = {data: BodyType<IpBlockInput>}
+
+    /**
+ * @summary Permanently block one IP until audited revocation
+ */
+export const useCreateAdminIpBlock = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminIpBlock>>, TError,CreateAdminIpBlockMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminIpBlock>>,
+        TError,
+        CreateAdminIpBlockMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateAdminIpBlockMutationOptions(options));
+    }
+
+export const getRevokeAdminIpBlockUrl = (id: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist/${id}/revoke`
+}
+
+/**
+ * @summary Revoke an IP block with optimistic concurrency and audit
+ */
+export const revokeAdminIpBlock = async (id: string,
+    ipBlockRevocation: IpBlockRevocation, options?: Parameters<typeof customFetch>[1]): Promise<IpBlock> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<IpBlock>(getRevokeAdminIpBlockUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(ipBlockRevocation)
+  }
+);}
+
+
+
+
+
+export const getRevokeAdminIpBlockMutationKey = () => ['revokeAdminIpBlock'] as const;
+
+export const getRevokeAdminIpBlockMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeAdminIpBlock>>, TError,RevokeAdminIpBlockMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeAdminIpBlock>>, TError,RevokeAdminIpBlockMutationVariables, TContext> => {
+
+const mutationKey = getRevokeAdminIpBlockMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeAdminIpBlock>>, RevokeAdminIpBlockMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  revokeAdminIpBlock(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeAdminIpBlockMutationResult = NonNullable<Awaited<ReturnType<typeof revokeAdminIpBlock>>>
+    export type RevokeAdminIpBlockMutationBody = BodyType<IpBlockRevocation>
+    export type RevokeAdminIpBlockMutationError = ErrorType<void>
+    export type RevokeAdminIpBlockMutationVariables = {id: string;data: BodyType<IpBlockRevocation>}
+
+    /**
+ * @summary Revoke an IP block with optimistic concurrency and audit
+ */
+export const useRevokeAdminIpBlock = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeAdminIpBlock>>, TError,RevokeAdminIpBlockMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof revokeAdminIpBlock>>,
+        TError,
+        RevokeAdminIpBlockMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeAdminIpBlockMutationOptions(options));
+    }
 
 export const getHealthCheckUrl = () => {
 

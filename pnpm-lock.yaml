@@ -413,6 +413,10 @@ importers:
         version: 3.25.76
 
   artifacts/sendflow:
+    dependencies:
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../../lib/db
     devDependencies:
       '@capacitor/android':
         specifier: 8.5.3
@@ -555,6 +559,9 @@ importers:
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.1.0)
+      esbuild:
+        specifier: 0.28.1
+        version: 0.28.1
       framer-motion:
         specifier: 'catalog:'
         version: 12.43.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)

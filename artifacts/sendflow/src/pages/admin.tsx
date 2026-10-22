@@ -42,6 +42,7 @@ import {
 import { AdminActionDialog } from '@/components/admin-action-dialog';
 import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
+import AdminIpBlocklist from '@/components/admin-ip-blocklist';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -155,7 +156,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'ip-blocklist';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -173,6 +174,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   aggregators: { title: 'Partenaires de paiement', eyebrow: 'Routage multi-agrégateurs' },
   'operator-pricing': { title: 'Opérateurs et tarifs', eyebrow: 'Catalogue client' },
   'registration-settings': { title: 'Inscription', eyebrow: 'Sécurité des comptes' },
+  'ip-blocklist': { title: 'Blocage d’adresses IP', eyebrow: 'Sécurité réseau' },
 };
 
 const navGroups: Array<{
@@ -190,6 +192,7 @@ const navGroups: Array<{
       { href: adminRoute('/transfers'), label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
       { href: adminRoute('/login-activity'), label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
       { href: adminRoute('/otp-activity'), label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
+      { href: adminRoute('/ip-blocklist'), label: 'Blocage IP', section: 'ip-blocklist', icon: ShieldCheck },
     ],
   },
   {
@@ -2465,6 +2468,7 @@ export function AdminRouter() {
   const [isAggregators] = useRoute(adminRoute('/aggregators'));
   const [isOperatorPricing] = useRoute(adminRoute('/operator-pricing'));
   const [isRegistrationSettings] = useRoute(adminRoute('/registration-settings'));
+  const [isIpBlocklist] = useRoute(adminRoute('/ip-blocklist'));
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -2480,5 +2484,6 @@ export function AdminRouter() {
   if (isAggregators) return <AggregatorsPage />;
   if (isOperatorPricing) return <AdminShell section="operator-pricing"><AdminOperatorPricingPage /></AdminShell>;
   if (isRegistrationSettings) return <RegistrationSettingsPage />;
+  if (isIpBlocklist) return <AdminShell section="ip-blocklist"><AdminIpBlocklist /></AdminShell>;
   return <OverviewPage />;
 }

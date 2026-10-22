@@ -9,6 +9,95 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary List IP blocks with administrative authorization
+ */
+export const listAdminIpBlocksQueryPageDefault = 1;
+export const listAdminIpBlocksQueryPageMax = 10000;
+
+
+
+export const ListAdminIpBlocksQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(listAdminIpBlocksQueryPageMax).default(listAdminIpBlocksQueryPageDefault)
+})
+
+export const ListAdminIpBlocksResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "reason": zod.string(),
+  "blockedBy": zod.string(),
+  "blockedAt": zod.coerce.date(),
+  "revokedBy": zod.string().nullable(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "version": zod.number().int()
+})),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "hasMore": zod.boolean(),
+  "requesterIp": zod.string().nullable()
+})
+
+
+/**
+ * @summary Permanently block one IP until audited revocation
+ */
+export const createAdminIpBlockBodyIpAddressMin = 2;
+export const createAdminIpBlockBodyIpAddressMax = 45;
+
+export const createAdminIpBlockBodyReasonMin = 3;
+export const createAdminIpBlockBodyReasonMax = 500;
+
+
+
+export const CreateAdminIpBlockBody = zod.object({
+  "ipAddress": zod.string().min(createAdminIpBlockBodyIpAddressMin).max(createAdminIpBlockBodyIpAddressMax),
+  "reason": zod.string().min(createAdminIpBlockBodyReasonMin).max(createAdminIpBlockBodyReasonMax)
+})
+
+export const CreateAdminIpBlockResponse = zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "reason": zod.string(),
+  "blockedBy": zod.string(),
+  "blockedAt": zod.coerce.date(),
+  "revokedBy": zod.string().nullable(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "version": zod.number().int()
+})
+
+
+/**
+ * @summary Revoke an IP block with optimistic concurrency and audit
+ */
+export const RevokeAdminIpBlockParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const revokeAdminIpBlockBodyExpectedVersionMax = 2147483646;
+
+export const revokeAdminIpBlockBodyReasonMin = 3;
+export const revokeAdminIpBlockBodyReasonMax = 500;
+
+
+
+export const RevokeAdminIpBlockBody = zod.object({
+  "expectedVersion": zod.number().int().min(1).max(revokeAdminIpBlockBodyExpectedVersionMax),
+  "reason": zod.string().min(revokeAdminIpBlockBodyReasonMin).max(revokeAdminIpBlockBodyReasonMax)
+})
+
+export const RevokeAdminIpBlockResponse = zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "reason": zod.string(),
+  "blockedBy": zod.string(),
+  "blockedAt": zod.coerce.date(),
+  "revokedBy": zod.string().nullable(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "version": zod.number().int()
+})
+
+
+/**
  * Returns server health status
  * @summary Health check
  */
