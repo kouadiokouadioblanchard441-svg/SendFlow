@@ -20,6 +20,8 @@
     "test:transfer-quote": "node --experimental-strip-types --test src/lib/transfer-quote-policy.test.mjs",
     "test:feexpay": "node --experimental-strip-types --test src/providers/feexpay/client.test.mjs",
     "test:feexpay-configuration": "node tests/security/run-isolated-finance.mjs --feexpay-configuration-only",
+    "test:payment-structures": "node tests/security/run-isolated-finance.mjs --payment-structures-only",
+    "payments:schema-plan": "node --experimental-strip-types scripts/migrate-payment-structures.mjs",
     "feexpay:configuration-plan": "node --experimental-strip-types scripts/configure-feexpay.mjs",
     "pii:backfill": "node --experimental-strip-types scripts/backfill-sensitive-data.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"

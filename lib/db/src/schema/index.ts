@@ -22,3 +22,7 @@ export * from "./users";
 export * from "./preview-access";
 export * from "./wallets";
 export * from "./wallet-ledger";
+export * from "./payment-intents";
+export * from "./payment-attempts";
+export * from "./payment-confirmations";
+export * from "./wallet-payment-reservations";

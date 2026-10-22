@@ -15,6 +15,12 @@ In the shared-Neon preview, keep public reads and preflights available. Customer
 
 **How to apply:** Replit development must opt into the shared Neon target explicitly; Plesk keeps its production target. Inspect Neon metadata before schema changes and use reviewed additive migrations only. Do not run tests that create real accounts, send paid SMS, or change live transfers or balances. Keep preview API access fail-closed. Authenticated and mutation tests must use a disposable database.
 
+The user later explicitly requested preparation for real FeexPay tests in Replit against the already connected real Neon, rather than switching to a separate preview database or sandbox credentials.
+
+**Why:** The user repeatedly insisted on the connected real database and selected real payments, including the possibility of charges and fees.
+
+**How to apply:** Respect that target choice without asking again for a separate preview database. Preparation approval does not authorize unrestricted customer access, removal of the viewing-account boundaries, or an unspecified real charge. Keep automated tests isolated; identify and authorize the concrete financial operation before moving real funds.
+
 Viewing credentials and sessions must remain unusable by the production API, including older Plesk code.
 
 **Why:** Replit and Plesk share a database but can run different application versions. A permission check added only to Replit would not constrain an older production recovery endpoint.

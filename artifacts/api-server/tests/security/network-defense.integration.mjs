@@ -102,7 +102,7 @@ test("Trusted IP exceptions never override manual blocks or administrator authen
     const allow=await r.createNetworkException(actor,ip,"Authorized integration test");
     for(let i=0;i<7;i++)assert.equal((await request(server,"/.env",ip)).status,404);
     assert.equal(await state(ip),undefined);
-    assert.equal((await request(server,"/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense",ip)).status,503);
+    assert.equal((await request(server,"/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense",ip)).status,401);
     const manual=await r.createIpBlock(actor,ip,"Manual block overrides trust","203.0.113.1");
     assert.equal((await request(server,"/api/healthz",ip)).status,403);
     await r.revokeIpBlock(actor,manual.id,manual.version,"Fixture cleanup");

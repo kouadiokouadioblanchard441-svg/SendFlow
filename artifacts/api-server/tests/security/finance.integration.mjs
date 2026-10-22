@@ -230,7 +230,7 @@ test("operator logos validate, store bytes in Neon, use version checks, and serv
     rawBody: png,
     headers: { "Content-Type": "image/png", Origin: "https://sendflow-test.invalid" },
   });
-  assert.equal(unauthorized.status, 503);
+  assert.equal(unauthorized.status, 401);
 });
 
 function canonical(value) {
@@ -260,11 +260,11 @@ test("direct private API access requires server authentication; foreign transact
 });
 test("browser flags cannot unlock the administrator or forge a payment status", async () => {
   const before = await owner.query("SELECT status FROM sf_transactions WHERE id=$1", [transactions["fixture-a"]]);
-  assert.equal((await request("/api/DMgrgmt-1np5g23g12bGFtMwh/overview", { user: "fixture-a" })).status, 503);
+  assert.equal((await request("/api/DMgrgmt-1np5g23g12bGFtMwh/overview", { user: "fixture-a" })).status, 401);
   assert.equal((await request(`/api/DMgrgmt-1np5g23g12bGFtMwh/users/fixture-a/wallet-adjustments`, {
     user: "fixture-a", method: "POST", body: { isAdmin: true, ...adjustment() },
     headers: { Origin: "https://sendflow-test.invalid" },
-  })).status, 503);
+  })).status, 401);
   assert.equal((await request(`/api/me/transactions/${transactions["fixture-a"]}`, {
     user: "fixture-a", method: "PATCH", body: { status: "succeeded" },
   })).status, 404);
@@ -324,7 +324,9 @@ test("SQL constraints and append-only triggers prevent alteration of financial h
     await assert.rejects(owner.query(`DELETE FROM ${table}`), (e) => e.code === "23514");
     const field = table === "sf_wallet_ledger" ? "reason" : "action";
     await assert.rejects(owner.query(`UPDATE ${table} SET ${field}=${field}`), (e) => e.code === "23514");
-    await assert.rejects(owner.query(`TRUNCATE ${table}`), (e) => e.code === "23514");
+    // Include referencing tables so the test reaches the append-only trigger,
+    // rather than stopping earlier at PostgreSQL's FK/TRUNCATE protection.
+    await assert.rejects(owner.query(`TRUNCATE ${table} CASCADE`), (e) => e.code === "23514");
   }
   const legacy = (await owner.query("SELECT payload_digest FROM sf_identity_webhook_events WHERE event_id='legacy-fixture'")).rows[0];
   assert.equal(legacy.payload_digest, null);

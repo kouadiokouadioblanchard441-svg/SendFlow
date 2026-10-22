@@ -10,6 +10,7 @@ import { randomBytes } from "node:crypto";
 import { build } from "esbuild";
 import pg from "pg";
 import assert from "node:assert/strict";
+import { applyPaymentStructures, planPaymentStructures } from "../../scripts/payment-structures-migration.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const apiDir = join(root, "artifacts/api-server");
@@ -31,6 +32,10 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  // Exercise the scoped migration rather than accepting Drizzle's approximation
+  // of its triggers, cross-table guards and operational registry.
+  await owner.query(`DROP TABLE sf_wallet_payment_reservations,sf_payment_confirmations,
+    sf_payment_attempts,sf_payment_intents CASCADE`);
   await owner.query("ALTER TABLE sf_operator_catalog DROP COLUMN logo_data, DROP COLUMN logo_content_type");
   const operatorLogoMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-operator-logos.sql"), "utf8");
   await owner.query(operatorLogoMigration);
@@ -88,9 +93,28 @@ try {
   const permanentMigration=readFileSync(join(root,"lib/db/migrations/2026-10-22-network-defense-permanent.sql"),"utf8");
   await owner.query(permanentMigration);
   await owner.query(permanentMigration);
+  const migrationClient = await owner.connect();
+  try {
+    const plan = await planPaymentStructures(migrationClient);
+    // Prove DDL is rolled back if the final migration record cannot be written.
+    const failBeforeCommit = { query: (text, values) => {
+      if (String(text).includes("INSERT INTO public.sf_payment_schema_versions")) {
+        throw Object.assign(new Error("Synthetic isolated migration failure"), { code: "FIXTURE_REGISTRY_FAILURE" });
+      }
+      return migrationClient.query(text, values);
+    } };
+    await assert.rejects(applyPaymentStructures(failBeforeCommit, plan.fingerprint),
+      { code: "FIXTURE_REGISTRY_FAILURE" });
+    assert.equal((await planPaymentStructures(migrationClient)).fingerprint, plan.fingerprint);
+    await applyPaymentStructures(migrationClient, plan.fingerprint);
+    const repeat = await planPaymentStructures(migrationClient);
+    assert.equal(repeat.alreadyApplied, true);
+    assert.deepEqual(await applyPaymentStructures(migrationClient, repeat.fingerprint), { applied: false, alreadyApplied: true });
+  } finally { migrationClient.release(); }
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app`);
+  await owner.query("REVOKE ALL ON sf_payment_schema_versions FROM sf_fixture_app");
   // Exercise the real activation ACL script, not a hand-written approximation.
   execFileSync("psql", ["-X", "-h", socket, "-p", "15432", "-U", "sf_fixture_owner",
     "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-v", "app_role=sf_fixture_app",
@@ -138,7 +162,9 @@ try {
   databaseUrl.searchParams.set("host", socket);
   databaseUrl.searchParams.set("port", "15432");
   databaseUrl.searchParams.set("user", "sf_fixture_app");
-  const testFiles = process.argv.includes("--feexpay-configuration-only")
+  const testFiles = process.argv.includes("--payment-structures-only")
+    ? [join(apiDir, "tests/security/payment-structures.integration.mjs")]
+    : process.argv.includes("--feexpay-configuration-only")
     ? [join(apiDir, "tests/security/feexpay-configuration.integration.mjs")]
     : [join(apiDir, "tests/security/finance.integration.mjs"),
        join(apiDir, "tests/security/catalog.integration.mjs")];

@@ -15,6 +15,7 @@ export type SensitiveDataPurpose =
   | "transaction-sender-phone"
   | "transaction-recipient-phone"
   | "provider-reference"
+  | "payment-confirmation-payload"
   | "identity-webhook-payload";
 
 function deriveKey(purpose: "encryption" | "lookup"): Buffer {

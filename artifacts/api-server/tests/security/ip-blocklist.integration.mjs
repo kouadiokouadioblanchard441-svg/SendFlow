@@ -88,7 +88,7 @@ test("Production admin routes cannot be opened with client-supplied role headers
       const r=await request(server,path,{method,origin:"https://sendflow-test.invalid",
         body:method==="POST"?{ipAddress:"198.51.100.48",reason:"Fake admin"}:undefined,
         extra:{"x-admin-id":"fixture-security-admin","x-role":"admin"}});
-      assert.equal(r.status,503);
+      assert.equal(r.status,401);
     }
     assert.equal(await isIpBlocked("198.51.100.48"),false);
   }finally{await close(server);}
