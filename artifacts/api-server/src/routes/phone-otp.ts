@@ -23,6 +23,7 @@ import {
   EsmsRateLimitError,
   getEsmsVerifyClient,
 } from "../lib/esms-verify";
+import { ExternalProviderCallUnavailableError } from "../lib/provider-call-policy";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
 import {
   CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
@@ -262,6 +263,10 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   try {
     esms = getEsmsVerifyClient();
   } catch (error) {
+    if (error instanceof ExternalProviderCallUnavailableError) {
+      res.status(503).json({ error: "Le service de vérification SMS n'est pas disponible dans cet environnement." });
+      return;
+    }
     if (error instanceof EsmsConfigurationError) {
       res.status(503).json({ error: "Le service de vérification SMS n'est pas configuré." });
       return;
@@ -567,6 +572,10 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
   try {
     esms = getEsmsVerifyClient();
   } catch (error) {
+    if (error instanceof ExternalProviderCallUnavailableError) {
+      res.status(503).json({ error: "Le service de vérification SMS n'est pas disponible dans cet environnement." });
+      return;
+    }
     if (error instanceof EsmsConfigurationError) {
       res.status(503).json({ error: "Le service de vérification SMS n'est pas configuré." });
       return;

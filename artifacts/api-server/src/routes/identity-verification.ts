@@ -31,6 +31,7 @@ import {
   isSandboxEnvironment,
   isValidDiditSignature,
 } from "../lib/didit";
+import { ExternalProviderCallUnavailableError } from "../lib/provider-call-policy";
 import {
   isDiditStatusUpdateEvent,
   isExpectedDiditWebhookEnvironment,
@@ -322,8 +323,11 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
     assertDiditConfiguration();
     callback = getSafeCallbackUrl();
   } catch (error) {
-    if (error instanceof DiditConfigurationError) {
-      res.status(503).json({ error: "Didit development credentials are not configured" });
+    if (
+      error instanceof DiditConfigurationError
+      || error instanceof ExternalProviderCallUnavailableError
+    ) {
+      res.status(503).json({ error: "Identity verification is unavailable in this environment" });
       return;
     }
     req.log.error({ err: error, userId }, "Didit configuration could not be checked");
@@ -393,8 +397,11 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
       return;
     }
 
-    if (providerError instanceof DiditConfigurationError) {
-      res.status(503).json({ error: "Didit development credentials are not configured" });
+    if (
+      providerError instanceof DiditConfigurationError
+      || providerError instanceof ExternalProviderCallUnavailableError
+    ) {
+      res.status(503).json({ error: "Identity verification is unavailable in this environment" });
       return;
     }
     req.log.error({ err: providerError, userId }, "Didit session creation failed");

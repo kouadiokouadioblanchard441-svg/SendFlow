@@ -1,3 +1,5 @@
+import { assertExternalProviderCallsAllowed } from "./provider-call-policy.ts";
+
 const ESMS_VERIFY_BASE_URL = "https://sms.esmsafrica.io/api";
 const ESMS_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -118,6 +120,7 @@ export function createEsmsVerifyClient({
   }
 
   async function post(path: string, body: JsonRecord): Promise<{ response: Response; payload: JsonRecord }> {
+    assertExternalProviderCallsAllowed("eSMS Verify");
     let response: Response;
     try {
       response = await fetchImpl(`${ESMS_VERIFY_BASE_URL}${path}`, {
@@ -205,6 +208,7 @@ export function createEsmsVerifyClient({
 }
 
 export function getEsmsVerifyClient() {
+  assertExternalProviderCallsAllowed("eSMS Verify");
   return createEsmsVerifyClient({
     apiKey: process.env.ESMS_API_KEY,
     appId: process.env.ESMS_VERIFY_APP_ID,

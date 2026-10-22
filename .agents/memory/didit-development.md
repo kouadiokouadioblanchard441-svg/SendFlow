@@ -9,6 +9,12 @@ The user confirmed that the supplied Didit credentials are live/production and r
 
 **How to apply:** Distinguish the provider's actual live mode from the Replit runtime scope. Declare provider mode truthfully, preserve runtime and shared-database protections, and report blocked functionality rather than weakening guards or forcing production runtime in a preview. Configuring live credentials alone does not authorize real provider calls, paid SMS, financial mutations, or migrations. Verify configuration with isolated checks that inherit no real credentials.
 
+Outbound Didit and eSMS requests are production-only. A development or test runtime must reject them before reading provider credentials or attempting network access, even when real credentials are present.
+
+**Why:** Live provider credentials can trigger identity sessions or paid SMS; preview access must not depend only on a manually labeled provider mode.
+
+**How to apply:** Keep the server-side runtime gate at both the provider client and route boundary. Test it with mocked fetch and fixture values; never weaken it just to make preview flows appear functional.
+
 Didit's session webhook envelope includes an environment (`sandbox` or `live`) and separates `status.updated` from `data.updated`; both event families can carry a `status` field, but only `status.updated` may change SendFlow's KYC state.
 
 **Why:** A status field alone does not establish that an event represents a verification status transition.

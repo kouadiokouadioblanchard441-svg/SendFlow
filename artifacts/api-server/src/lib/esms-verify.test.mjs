@@ -1,11 +1,20 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { after, test } from "node:test";
 import {
   createEsmsVerifyClient,
   EsmsConfigurationError,
   EsmsProviderError,
   EsmsRateLimitError,
+  getEsmsVerifyClient,
 } from "./esms-verify.ts";
+import { ExternalProviderCallUnavailableError } from "./provider-call-policy.ts";
+
+const originalNodeEnv = process.env.NODE_ENV;
+process.env.NODE_ENV = "production";
+after(() => {
+  if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+  else process.env.NODE_ENV = originalNodeEnv;
+});
 
 function makeClient(responses) {
   const requests = [];
@@ -124,4 +133,35 @@ test("returns provider rate limits with a bounded retry delay", async () => {
     () => client.start("+2250102030405"),
     (error) => error instanceof EsmsRateLimitError && error.retryAfterSeconds === 42,
   );
+});
+
+test("blocks eSMS configuration and requests outside production before network access", async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  process.env.NODE_ENV = "development";
+  let fetchCalled = false;
+
+  try {
+    assert.throws(
+      () => getEsmsVerifyClient(),
+      ExternalProviderCallUnavailableError,
+    );
+
+    const client = createEsmsVerifyClient({
+      apiKey: "esms_test_fake-key",
+      appId: "vera_sendflow_test",
+      fetchImpl: async () => {
+        fetchCalled = true;
+        throw new Error("Unexpected network request");
+      },
+    });
+
+    await assert.rejects(
+      () => client.start("+2250102030405"),
+      ExternalProviderCallUnavailableError,
+    );
+    assert.equal(fetchCalled, false);
+  } finally {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+  }
 });

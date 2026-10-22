@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { assertExternalProviderCallsAllowed } from "./provider-call-policy.ts";
 
 const DIDIT_API_BASE_URL = "https://verification.didit.me/v3";
 
@@ -42,6 +43,7 @@ function getRequiredConfig() {
 }
 
 export function assertDiditConfiguration(): void {
+  assertExternalProviderCallsAllowed("Didit");
   getRequiredConfig();
 }
 
@@ -53,6 +55,7 @@ async function diditRequest<T>(
   path: string,
   init: RequestInit,
 ): Promise<T> {
+  assertExternalProviderCallsAllowed("Didit");
   const { apiKey } = getRequiredConfig();
   const response = await fetch(diditUrl(path), {
     ...init,
@@ -131,6 +134,7 @@ export type CreateDiditSessionResponse = {
 export async function createDiditSession(
   input: CreateDiditSessionInput,
 ): Promise<CreateDiditSessionResponse> {
+  assertExternalProviderCallsAllowed("Didit");
   const { workflowId, environment } = getRequiredConfig();
   const payload: Record<string, unknown> = {
     workflow_id: workflowId,
