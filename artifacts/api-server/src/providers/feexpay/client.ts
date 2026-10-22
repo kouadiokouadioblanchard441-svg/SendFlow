@@ -1,4 +1,5 @@
 import { feexpayChannels, feexpayCountries } from "./catalog.ts";
+import { isFeexpayLiveExecutionAllowed } from "./live-runtime.ts";
 
 type Environment = Record<string, string | undefined>;
 type Transport = typeof fetch;
@@ -99,11 +100,7 @@ export class FeexpayClient {
     const env = this.#environment;
     const mode = env.FEEXPAY_MODE;
     if (mode !== "live" && mode !== "sandbox") return fail("CONFIGURATION_REQUIRED");
-    if (mode === "live" && (
-      env.NODE_ENV !== "production" || env.FEEXPAY_LIVE_ENABLED !== "true" ||
-      env.FEEXPAY_EXECUTION_HOST !== "plesk" || env.SENDFLOW_DATABASE_TARGET === "shared-neon" ||
-      !!env.REPLIT_DEV_DOMAIN || !!env.REPL_ID
-    )) return fail("LIVE_DISABLED");
+    if (mode === "live" && !isFeexpayLiveExecutionAllowed(env)) return fail("LIVE_DISABLED");
     // Never reuse a live key or shop implicitly in sandbox.
     const key = mode === "sandbox" ? env.FEEXPAY_SANDBOX_API_KEY : env.FEEXPAY_API_KEY;
     const shop = mode === "sandbox" ? env.FEEXPAY_SANDBOX_SHOP_ID : env.FEEXPAY_SHOP_ID;

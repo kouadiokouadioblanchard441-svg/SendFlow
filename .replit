@@ -27,7 +27,7 @@ packages = ["jdk21"]
 [userenv]
 
 [userenv.shared]
-FEEXPAY_EXECUTION_HOST = "plesk"
+FEEXPAY_EXECUTION_HOST = "replit"
 FEEXPAY_LIVE_ENABLED = "false"
 FEEXPAY_MODE = "live"
 
@@ -36,6 +36,7 @@ DIDIT_ENVIRONMENT = "live"
 SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "
 SENDFLOW_DATABASE_TARGET = "shared-neon"
 TRUST_PROXY_HOPS = "1"
+SENDFLOW_REPLIT_LIVE_APPROVED = "true"
 
 [[ports]]
 localPort = 8080

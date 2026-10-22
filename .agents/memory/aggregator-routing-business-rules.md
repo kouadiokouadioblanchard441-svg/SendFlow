@@ -47,9 +47,12 @@ tester tout ici d'abord ».
 
 **How to apply:** Separate documented coverage from account entitlements and
 SendFlow activation. Do not treat a Plesk-only code gate as a reason to leave the
-Replit test journey unfinished. Clarify whether testing involves real funds
-before changing live execution gates; a request to test here is not by itself
-permission to initiate a charge or payout.
+Replit test journey unfinished. The user explicitly chose
+« Vrais paiements FeexPay ici, avec débits, versements et frais possibles ».
+This authorizes preparing real-payment execution in Replit; do not initiate an
+unspecified charge or payout as a test without an approved concrete operation.
+Keep real-payment test records separate from the shared Plesk production data;
+the authorization must not be used to open all production customer data to preview.
 
 The user explicitly rejected a FeexPay sandbox integration and chose direct
 production API integration instead.

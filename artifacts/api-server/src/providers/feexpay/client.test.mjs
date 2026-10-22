@@ -13,6 +13,7 @@ const sandbox = () => ({
 });
 const live = () => ({
   NODE_ENV: "production", FEEXPAY_MODE: "live", FEEXPAY_LIVE_ENABLED: "true",
+  SENDFLOW_DATABASE_TARGET: "production",
   FEEXPAY_EXECUTION_HOST: "plesk", FEEXPAY_API_KEY: randomBytes(24).toString("hex"),
   FEEXPAY_SHOP_ID: randomUUID(),
 });
@@ -24,6 +25,68 @@ const response = (extra = {}) => new Response(JSON.stringify({
   reference: receiptReference, status: "PENDING", amount: 1000, ...extra,
 }), { headers: { "Content-Type": "application/json" } });
 const hasCode = (code) => (error) => error instanceof FeexpayError && error.code === code;
+
+const replitLive = () => ({
+  ...live(),
+  NODE_ENV: "development",
+  FEEXPAY_EXECUTION_HOST: "replit",
+  SENDFLOW_DATABASE_TARGET: "replit-live",
+  SENDFLOW_REPLIT_LIVE_APPROVED: "true",
+  REPL_ID: randomUUID(),
+  REPLIT_DEV_DOMAIN: "workspace.invalid",
+  NEON_DATABASE_URL_PREVIEW: "postgresql://preview.invalid/sendflow?sslmode=require",
+  NEON_DATABASE_URL_PRODUCTION: "postgresql://production.invalid/sendflow?sslmode=require",
+});
+
+test("explicitly approved Replit live uses the real API origin with a separate database (mocked transport)", async () => {
+  for (const operation of ["payin", "payout"]) {
+    let calls = 0;
+    const client = new FeexpayClient(replitLive(), async (url, init) => {
+      calls++;
+      assert.equal(new URL(url).origin, "https://api-v2.feexpay.me");
+      assert.equal(init.method, "POST");
+      return response();
+    });
+    assert.equal((await client.initiate(operation, payment())).status, "PENDING");
+    assert.equal(calls, 1);
+  }
+});
+
+test("Replit live never dispatches without approval, isolation, runtime identity and its live switch", async () => {
+  const variants = [
+    { SENDFLOW_REPLIT_LIVE_APPROVED: "false" },
+    { FEEXPAY_LIVE_ENABLED: "false" },
+    { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+    { SENDFLOW_DATABASE_TARGET: "development" },
+    { NODE_ENV: "test" },
+    { REPL_ID: undefined },
+    { REPLIT_DEV_DOMAIN: undefined },
+    { NEON_DATABASE_URL_PREVIEW: undefined },
+    { NEON_DATABASE_URL_PRODUCTION: undefined },
+    { NEON_DATABASE_URL_PREVIEW: "postgresql://production-pooler.invalid/sendflow?sslmode=require" },
+    { NEON_DATABASE_URL_PREVIEW: "postgresql://preview.invalid/sendflow?sslmode=disable" },
+    { FEEXPAY_EXECUTION_HOST: "unknown" },
+  ];
+  for (const variant of variants) {
+    let calls = 0;
+    const client = new FeexpayClient({ ...replitLive(), ...variant }, async () => {
+      calls++;
+      return response();
+    });
+    await assert.rejects(client.initiate("payin", payment()), hasCode("LIVE_DISABLED"));
+    assert.equal(calls, 0);
+  }
+});
+
+test("Plesk live requires an explicit production database target", async () => {
+  let calls = 0;
+  const client = new FeexpayClient({ ...live(), SENDFLOW_DATABASE_TARGET: undefined }, async () => {
+    calls++;
+    return response();
+  });
+  await assert.rejects(client.initiate("payin", payment()), hasCode("LIVE_DISABLED"));
+  assert.equal(calls, 0);
+});
 
 test("six documented countries, 17 payin channels, 16 payout channels; no invented Coris payout", () => {
   const coverage = getFeexpayCoverage();
@@ -67,7 +130,7 @@ test("shared Togo payout endpoint carries the correct operator network", async (
   }
 });
 
-test("live payments fail closed on Replit, preview, development or missing explicit gates", async () => {
+test("Plesk configuration fails closed on Replit, preview, development or missing explicit gates", async () => {
   const variants = [
     { NODE_ENV: "development" }, { FEEXPAY_LIVE_ENABLED: "false" },
     { FEEXPAY_EXECUTION_HOST: "replit" }, { SENDFLOW_DATABASE_TARGET: "shared-neon" },
