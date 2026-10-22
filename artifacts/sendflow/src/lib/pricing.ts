@@ -13,6 +13,10 @@ export type PricingCountry = {
   dialCode: string;
   initials: string;
   flag: string;
+  enabled: boolean;
+  minPhoneDigits: number;
+  maxPhoneDigits: number;
+  operations: { deposit: boolean; interNetwork: boolean; international: boolean };
 };
 
 export type PricingFeeMap = Partial<Record<PricingCategoryId, number>>;
@@ -28,6 +32,7 @@ export type PricingOperator = {
   requiresOtp: boolean;
   otpCommand: string | null;
   fees: PricingFeeMap;
+  operations: { deposit: boolean; interNetwork: boolean; international: boolean };
 };
 
 export type PricingOperatorRate = PricingOperator & {

@@ -12,6 +12,8 @@ import {
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
 import { OperatorMark } from '@/components/operator-mark';
+import { readAccountCountry } from '@/lib/account-country';
+import { isValidPhoneForCountry } from '@/lib/phone-rules';
 import {
   getGetPublicPricingQueryKey,
   useGetPublicPricing,
@@ -28,7 +30,6 @@ import {
   serverQuoteErrorMessage,
 } from '@/lib/server-transfer-quote';
 import {
-  isValidIvoryCoastPhone,
   isValidTransactionAmount,
   MAX_TRANSACTION_AMOUNT,
   parseWholeAmount,
@@ -36,7 +37,7 @@ import {
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
-type CountryCode = 'ci';
+type CountryCode = string;
 type TransferSide = 'source' | 'destination';
 type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
 
@@ -82,11 +83,17 @@ const savedContacts: SavedContact[] = [];
 export default function InterNetworkTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
-  const pricingCountry = pricingQuery.data?.countries.find((item) => item.id === 'ci');
+  const accountCountry = readAccountCountry();
+  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
+  const pricingCountry = pricingQuery.data?.countries.find((item) =>
+    accountCountry.countryCode ? item.id === accountCountry.countryCode : item.dialCode === accountCountry.dialCode);
+  const phoneMaxDigits = pricingCountry?.maxPhoneDigits ?? 15;
+  const isValidCountryPhone = (value: string) => !!pricingCountry && isValidPhoneForCountry(
+    value, pricingCountry.dialCode, { min: pricingCountry.minPhoneDigits, max: pricingCountry.maxPhoneDigits },
+  );
   const availableOperators = useMemo<TransferOperator[]>(
     () => (pricingQuery.data?.operators ?? [])
-      .filter((item) => item.countryId === 'ci')
+      .filter((item) => item.countryId === pricingCountry?.id && item.operations.interNetwork)
       .map((item) => ({
         id: item.id,
         name: item.name,
@@ -94,13 +101,13 @@ export default function InterNetworkTransferPage() {
         initials: item.initials,
         logoUrl: item.logoUrl,
         brand: item.brand,
-        country: 'ci',
-        prefix: pricingCountry?.dialCode ?? '+225',
-        flag: pricingCountry?.flag ?? '🇨🇮',
+        country: item.countryId,
+        prefix: pricingCountry?.dialCode ?? '',
+        flag: pricingCountry?.flag ?? '',
         requiresOtp: item.requiresOtp,
         otpCommand: item.otpCommand,
       })),
-    [pricingCountry?.dialCode, pricingCountry?.flag, pricingQuery.data?.operators],
+    [pricingCountry, pricingQuery.data?.operators],
   );
   const [amount, setAmount] = useState('');
   const [sourceNumber, setSourceNumber] = useState('');
@@ -126,7 +133,7 @@ export default function InterNetworkTransferPage() {
   const enteredAmount = parseWholeAmount(amount);
   const quoteInput = sourceOperator && destinationOperator
     && isValidTransactionAmount(enteredAmount)
-    && isValidIvoryCoastPhone(sourceNumber) && isValidIvoryCoastPhone(recipientNumber)
+    && isValidCountryPhone(sourceNumber) && isValidCountryPhone(recipientNumber)
     ? {
       kind: 'inter-network' as const,
       sourceOperatorId: sourceOperator.id, destinationOperatorId: destinationOperator.id,
@@ -223,15 +230,17 @@ export default function InterNetworkTransferPage() {
     setContactsOpen(false);
   };
 
-  const normalizeIvoryCoastPhone = (value: string) => {
+  const normalizeCountryPhone = (value: string) => {
     const compact = value.replace(/[^\d+]/g, '');
-    const localNumber = compact.startsWith('+225')
-      ? compact.slice(4)
-      : compact.startsWith('225')
-        ? compact.slice(3)
+    const prefix = pricingCountry?.dialCode ?? '';
+    if (!prefix) return '';
+    const localNumber = compact.startsWith(prefix)
+      ? compact.slice(prefix.length)
+      : compact.startsWith(prefix.slice(1))
+        ? compact.slice(prefix.length - 1)
         : compact;
 
-    return /^0\d{9}$/.test(localNumber) ? localNumber : '';
+    return isValidCountryPhone(localNumber) ? localNumber : '';
   };
 
   const openDeviceContacts = async () => {
@@ -246,10 +255,10 @@ export default function InterNetworkTransferPage() {
 
     try {
       const [contact] = await contactsApi.select(['name', 'tel'], { multiple: false });
-      const phone = contact?.tel?.map(normalizeIvoryCoastPhone).find(Boolean) ?? '';
+      const phone = contact?.tel?.map(normalizeCountryPhone).find(Boolean) ?? '';
 
       if (!phone) {
-        setContactsNotice('Sélectionnez un contact avec un numéro de Côte d’Ivoire en +225.');
+        setContactsNotice(`Sélectionnez un contact avec un numéro du pays sélectionné (${pricingCountry?.dialCode ?? ''}).`);
         setContactsOpen(true);
         return;
       }
@@ -279,8 +288,8 @@ export default function InterNetworkTransferPage() {
   const canSubmit =
     quoteInput !== null &&
     (!sourceOperator.requiresOtp || otp.trim().length > 0) &&
-    isValidIvoryCoastPhone(sourceNumber) &&
-    isValidIvoryCoastPhone(recipientNumber);
+    isValidCountryPhone(sourceNumber) &&
+    isValidCountryPhone(recipientNumber);
 
   return (
     <main className="sendflow-transfer-shell">
@@ -400,23 +409,23 @@ export default function InterNetworkTransferPage() {
                 type="tel"
                 value={sourceNumber}
                 onChange={(event) => {
-                  setSourceNumber(event.target.value.replace(/\D/g, '').slice(0, 10));
+                  setSourceNumber(event.target.value.replace(/\D/g, '').slice(0, phoneMaxDigits));
                   setRequestState('idle');
                   setSubmitAttempted(false);
                 }}
                 aria-label="Numéro source"
                 inputMode="tel"
                 autoComplete="tel"
-                maxLength={10}
-                aria-invalid={submitAttempted && !isValidIvoryCoastPhone(sourceNumber)}
+                maxLength={phoneMaxDigits}
+                aria-invalid={submitAttempted && !isValidCountryPhone(sourceNumber)}
               />
               <span className="sendflow-transfer-flag" aria-label="Côte d’Ivoire">
                 {sourceOperator.flag}
               </span>
             </div>
-            {submitAttempted && !isValidIvoryCoastPhone(sourceNumber) && (
+            {submitAttempted && !isValidCountryPhone(sourceNumber) && (
               <p className="sendflow-international-field-error" role="alert">
-                Entrez un numéro source ivoirien valide de 10 chiffres.
+                Entrez un numéro source valide pour {pricingCountry?.name}.
               </p>
             )}
 
@@ -485,7 +494,7 @@ export default function InterNetworkTransferPage() {
                 type="tel"
                 value={recipientNumber}
                 onChange={(event) => {
-                  setRecipientNumber(event.target.value.replace(/\D/g, '').slice(0, 10));
+                  setRecipientNumber(event.target.value.replace(/\D/g, '').slice(0, phoneMaxDigits));
                   setRequestState('idle');
                   setSubmitAttempted(false);
                 }}
@@ -493,8 +502,8 @@ export default function InterNetworkTransferPage() {
                 aria-label="Numéro du bénéficiaire"
                 inputMode="tel"
                 autoComplete="tel"
-                maxLength={10}
-                aria-invalid={submitAttempted && !isValidIvoryCoastPhone(recipientNumber)}
+                maxLength={phoneMaxDigits}
+                aria-invalid={submitAttempted && !isValidCountryPhone(recipientNumber)}
               />
               <span className="sendflow-transfer-flag" aria-label="Côte d’Ivoire">
                 {destinationOperator.flag}
@@ -509,9 +518,9 @@ export default function InterNetworkTransferPage() {
                 <ContactRound size={27} strokeWidth={1.8} aria-hidden="true" />
               </button>
             </div>
-            {submitAttempted && !isValidIvoryCoastPhone(recipientNumber) && (
+            {submitAttempted && !isValidCountryPhone(recipientNumber) && (
               <p className="sendflow-international-field-error" role="alert">
-                Entrez un numéro bénéficiaire ivoirien valide de 10 chiffres.
+                Entrez un numéro bénéficiaire valide pour {pricingCountry?.name}.
               </p>
             )}
             <div className="sendflow-deposit-summary" aria-live="polite">

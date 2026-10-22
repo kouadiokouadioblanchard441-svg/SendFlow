@@ -1,5 +1,6 @@
 type Environment = Readonly<Record<string, string | undefined>>;
 const publicReadPathPrefixes = [
+  "/api/auth/countries",
   "/api/auth/registration-settings",
   "/api/banners",
   "/api/db-status",

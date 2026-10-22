@@ -7,10 +7,10 @@
  */
 import type { PricingRateChangeInput } from './pricingRateChangeInput';
 import type { PricingRatesUpdateCategoryId } from './pricingRatesUpdateCategoryId';
-import type { PricingRatesUpdateCountryCode } from './pricingRatesUpdateCountryCode';
 
 export interface PricingRatesUpdate {
-  countryCode: PricingRatesUpdateCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   categoryId: PricingRatesUpdateCategoryId;
   /**
      * @minItems 1

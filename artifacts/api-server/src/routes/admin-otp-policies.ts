@@ -1,8 +1,10 @@
 import { Router, type IRouter } from "express";
 import {
   and,
+  countriesTable,
   db,
   eq,
+  operatorCatalogTable,
   operatorOtpPoliciesTable,
 } from "@workspace/db";
 import {
@@ -16,18 +18,18 @@ import { respondAdminAuthError } from "./admin";
 
 const router: IRouter = Router();
 
-const policyCatalog = [
-  { countryCode: "ci", countryName: "Côte d’Ivoire", operatorId: "orange-ci", operatorName: "Orange Money", phonePrefix: "+225" },
-  { countryCode: "bf", countryName: "Burkina Faso", operatorId: "orange-bf", operatorName: "Orange Money", phonePrefix: "+226" },
-  { countryCode: "ml", countryName: "Mali", operatorId: "orange-ml", operatorName: "Orange Money", phonePrefix: "+223" },
-  { countryCode: "sn", countryName: "Sénégal", operatorId: "orange-sn", operatorName: "Orange Money", phonePrefix: "+221" },
-] as const;
-
-type PolicyCatalogEntry = (typeof policyCatalog)[number];
-
-function findCatalogEntry(countryCode: string, operatorId: string): PolicyCatalogEntry | undefined {
-  return policyCatalog.find((item) => item.countryCode === countryCode && item.operatorId === operatorId);
+async function loadPolicyCatalog() {
+  return db.select({
+    countryCode: countriesTable.countryCode,
+    countryName: countriesTable.countryName,
+    phonePrefix: countriesTable.phonePrefix,
+    operatorId: operatorCatalogTable.operatorId,
+    operatorName: operatorCatalogTable.name,
+  }).from(operatorCatalogTable).innerJoin(countriesTable,
+    eq(operatorCatalogTable.countryCode, countriesTable.countryCode));
 }
+
+type PolicyCatalogEntry = Awaited<ReturnType<typeof loadPolicyCatalog>>[number];
 
 function toAdminOtpPolicy(catalogEntry: PolicyCatalogEntry, stored?: typeof operatorOtpPoliciesTable.$inferSelect) {
   return {
@@ -48,7 +50,10 @@ router.get("/otp-policies", async (req, res): Promise<void> => {
   if (!adminUserId) return;
 
   try {
-    const rows = await db.select().from(operatorOtpPoliciesTable);
+    const [rows, policyCatalog] = await Promise.all([
+      db.select().from(operatorOtpPoliciesTable),
+      loadPolicyCatalog(),
+    ]);
     const rowsByKey = new Map(rows.map((row) => [`${row.countryCode}:${row.operatorId}`, row]));
     const items = policyCatalog.map((entry) =>
       toAdminOtpPolicy(entry, rowsByKey.get(`${entry.countryCode}:${entry.operatorId}`)),
@@ -58,7 +63,7 @@ router.get("/otp-policies", async (req, res): Promise<void> => {
       adminUserId,
       action: "view_otp_policies",
       resourceType: "otp_policy",
-      resourceId: "orange-money",
+      resourceId: "catalog",
     });
 
     res.setHeader("Cache-Control", "no-store");
@@ -81,13 +86,14 @@ router.patch("/otp-policies/:countryCode/:operatorId", async (req, res): Promise
   }
 
   const { countryCode, operatorId } = params.data;
-  const catalogEntry = findCatalogEntry(countryCode, operatorId);
-  if (!catalogEntry) {
-    res.status(404).json({ error: "Unsupported country and operator combination" });
-    return;
-  }
-
   try {
+    const catalogEntry = (await loadPolicyCatalog()).find(
+      (entry) => entry.countryCode === countryCode && entry.operatorId === operatorId,
+    );
+    if (!catalogEntry) {
+      res.status(404).json({ error: "Unsupported country and operator combination" });
+      return;
+    }
     const updated = await db.transaction(async (tx) => {
       const keyMatch = and(
         eq(operatorOtpPoliciesTable.countryCode, countryCode),

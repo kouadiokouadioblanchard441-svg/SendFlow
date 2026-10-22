@@ -246,6 +246,7 @@ export default function SignupPage() {
         const account = await registerCustomer.mutateAsync({
           data: {
             phone: e164Phone,
+            countryCode: signupCountry.countryCode,
             fullName: form.fullName.trim().replace(/\s+/g, ' '),
             birthDate: form.birthDate,
             password: form.password,
@@ -285,6 +286,7 @@ export default function SignupPage() {
         data: {
           challengeId,
           phone: e164Phone,
+          countryCode: signupCountry.countryCode,
           fullName: form.fullName.trim().replace(/\s+/g, ' '),
           birthDate: form.birthDate,
           password: form.password,
@@ -381,6 +383,7 @@ export default function SignupPage() {
             </div>
 
             <CountryPhoneField
+              registrationOnly
               value={form.phone}
               onChange={(value) => update('phone', value)}
               onCountryChange={(country) => {

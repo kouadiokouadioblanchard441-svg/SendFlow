@@ -9,6 +9,7 @@ import { createRequire } from "node:module";
 import { randomBytes } from "node:crypto";
 import { build } from "esbuild";
 import pg from "pg";
+import assert from "node:assert/strict";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const apiDir = join(root, "artifacts/api-server");
@@ -34,6 +35,29 @@ try {
   const operatorLogoMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-operator-logos.sql"), "utf8");
   await owner.query(operatorLogoMigration);
   await owner.query(operatorLogoMigration);
+  await owner.query(`DROP TABLE sf_countries, sf_operation_aggregator_routes;
+    ALTER TABLE sf_operator_catalog DROP COLUMN deposit_enabled,
+      DROP COLUMN inter_network_enabled, DROP COLUMN international_enabled;
+    INSERT INTO sf_payment_aggregator_routes
+      (scope_type,scope_key,country_code,aggregator_code,version,created_by,updated_by)
+    VALUES ('country','legacy-fixture','ci','legacy-provider',7,'fixture','fixture')`);
+  const catalogMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-10-22-country-operations-and-routing.sql"), "utf8");
+  await owner.query(catalogMigration);
+  assert.equal((await owner.query(`SELECT count(*)::int AS n
+    FROM sf_operation_aggregator_routes WHERE scope_key='legacy-fixture' AND version=7`)).rows[0].n, 3);
+  // A rerun must not propagate a newly configured deposit to other operations.
+  await owner.query(`INSERT INTO sf_operation_aggregator_routes
+    (scope_type,scope_key,country_code,operation,aggregator_code,created_by,updated_by)
+    VALUES ('country','rerun-fixture','ci','deposit','fixture-provider','fixture','fixture')`);
+  await owner.query(catalogMigration);
+  assert.equal((await owner.query(`SELECT count(*)::int AS n
+    FROM sf_operation_aggregator_routes WHERE scope_key='rerun-fixture'`)).rows[0].n, 1);
+  assert.equal((await owner.query(`SELECT count(*)::int AS n
+    FROM sf_payment_aggregator_routes WHERE scope_key='legacy-fixture' AND version=7`)).rows[0].n, 1);
+  await owner.query(`DELETE FROM sf_operation_aggregator_routes
+    WHERE scope_key IN ('legacy-fixture','rerun-fixture');
+    DELETE FROM sf_payment_aggregator_routes WHERE scope_key='legacy-fixture'`);
   // Simulate upgrading the old schema, including an existing metadata-only receipt.
   await owner.query(`DROP TABLE sf_api_request_limits;
     ALTER TABLE sf_identity_verifications DROP COLUMN last_provider_event_at;
@@ -79,6 +103,8 @@ try {
     stdin: { contents: `
       export { default as app } from "./src/app";
       export { default as operatorPricingRouter } from "./src/routes/operator-pricing";
+      export { default as countryManagementRouter, createAdminCountryRoutes } from "./src/routes/country-management";
+      export { createAdminAggregatorRoutes } from "./src/routes/admin-aggregators";
       export { createAdminOperatorLogoRoutes } from "./src/routes/admin-operator-logos";
       export { pool } from "@workspace/db";
       export { executeAdminWalletAdjustment } from "./src/services/wallet-adjustment";
@@ -112,7 +138,9 @@ try {
   databaseUrl.searchParams.set("host", socket);
   databaseUrl.searchParams.set("port", "15432");
   databaseUrl.searchParams.set("user", "sf_fixture_app");
-  const result = spawnSync(process.execPath, ["--test", join(apiDir, "tests/security/finance.integration.mjs")], {
+  const result = spawnSync(process.execPath, ["--test",
+    join(apiDir, "tests/security/finance.integration.mjs"),
+    join(apiDir, "tests/security/catalog.integration.mjs")], {
     cwd: root, stdio: "inherit", env: {
       ...baseEnv, NODE_PATH: join(apiDir, "node_modules"),
       NODE_ENV: "development", SENDFLOW_DATABASE_TARGET: "development",
@@ -120,7 +148,7 @@ try {
       SENDFLOW_FIXTURE_SOCKET: socket, SESSION_SECRET: randomBytes(32).toString("hex"),
       CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
       DIDIT_WEBHOOK_SECRET: randomBytes(32).toString("hex"),
-      DIDIT_ENVIRONMENT: "sandbox", CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid",
+      DIDIT_ENVIRONMENT: "sandbox", CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", TRUST_PROXY_HOPS: "1",
       DIDIT_WORKFLOW_ID: "fixture-workflow",
       TRUST_PROXY_HOPS: "1", LOG_LEVEL: "silent",
     },

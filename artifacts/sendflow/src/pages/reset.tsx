@@ -98,7 +98,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
 
   const handlePhoneSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isValidPhoneForCountry(phone, phoneDialCode, { min: 8, max: 10 })) {
+    if (!isValidPhoneForCountry(phone, phoneDialCode)) {
       setPhoneError(getPhoneLengthMessage(phoneDialCode));
       return;
     }

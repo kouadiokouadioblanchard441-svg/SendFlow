@@ -8,6 +8,9 @@
 - [Mobile overlay positioning](mobile-overlay-positioning.md) — Render full-screen mobile overlays at document level when animated cards could create a fixed-position containing block.
 - [Didit credentials](didit-development.md) — User supplies live credentials; do not relabel them sandbox or weaken preview safeguards. Keep all secret values out of code.
 - [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.
+- [Aggregator business rules](aggregator-routing-business-rules.md) — “Retrait” means international; manual primary routing and country/operator/operation settings must remain independent.
+- [Country catalog validation](country-catalog-validation.md) — Imported telephone rules need independent numbering-plan and provider-coverage checks before opening countries.
+- [Security test isolation](security-test-isolation.md) — Authentication fixtures must isolate IP quotas as well as account identities; never weaken real rate limiting to make tests pass.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
 - [Operator logo storage](operator-logo-storage.md) — Store uploaded operator logos in the database; this exception does not extend to banners or unrelated media.
 - [Database environment isolation](neon-production-database.md) — Against shared Neon, previews must block private reads and writes and fail closed on unlisted API routes.

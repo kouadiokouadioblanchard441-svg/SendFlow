@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Router, type IRouter, type Response } from "express";
 import {
   and,
+  countriesTable,
   customerCredentialsTable,
   customerSessionsTable,
   db,
@@ -173,6 +174,24 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       if (!parsed.success) return registerFailure("invalid-body");
       if (!profileIsValid) return registerFailure("invalid-profile");
 
+      // Lock configuration through account creation: a simultaneous country
+      // suspension cannot race a new registration. Legacy clients may omit a
+      // country only when the longest matching phone prefix is unambiguous.
+      const requestedCountry = parsed.data.countryCode?.toLowerCase();
+      const countries = await tx.select().from(countriesTable).where(and(
+        eq(countriesTable.enabled, true),
+        requestedCountry ? eq(countriesTable.countryCode, requestedCountry) : undefined,
+      )).for("share");
+      const candidates = countries.filter((country) => {
+        const nationalDigits = parsed.data.phone.length - country.phonePrefix.length;
+        return parsed.data.phone.startsWith(country.phonePrefix)
+          && nationalDigits >= country.minPhoneDigits && nationalDigits <= country.maxPhoneDigits;
+      }).sort((left, right) => right.phonePrefix.length - left.phonePrefix.length);
+      const registrationCountry = candidates[0];
+      if (!registrationCountry || candidates[1]?.phonePrefix.length === registrationCountry.phonePrefix.length) {
+        return registerFailure("invalid-body");
+      }
+
       // A shared row lock serializes signup with an administrator switching the policy.
       const [setting] = await tx.select()
         .from(registrationSettingsTable)
@@ -223,7 +242,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
             normalizeSensitiveNameForLookup(normalizedName),
             "user-name",
           ),
-          countryCode: parsed.data.countryCode ?? null,
+          countryCode: registrationCountry.countryCode,
           birthDate: null,
           birthDateEncrypted: encryptSensitiveData(birthDate, "user-birth-date"),
           lastSeenAt: now,

@@ -1,4 +1,5 @@
 export type AccountCountry = {
+  countryCode?: string;
   name: string;
   dialCode: string;
   flag: string;
@@ -7,6 +8,7 @@ export type AccountCountry = {
 export const ACCOUNT_COUNTRY_KEY = 'sendflow.account.country';
 
 export const DEFAULT_ACCOUNT_COUNTRY: AccountCountry = {
+  countryCode: 'ci',
   name: 'Côte d’Ivoire',
   dialCode: '+225',
   flag: '🇨🇮',
@@ -28,6 +30,7 @@ export function readAccountCountry(): AccountCountry {
       typeof parsed.flag === 'string'
     ) {
       return {
+        ...(typeof parsed.countryCode === 'string' ? { countryCode: parsed.countryCode } : {}),
         name: parsed.name,
         dialCode: parsed.dialCode,
         flag: parsed.flag,

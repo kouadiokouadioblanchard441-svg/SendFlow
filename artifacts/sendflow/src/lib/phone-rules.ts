@@ -1,16 +1,8 @@
-export const PHONE_DIGITS_BY_DIAL_CODE: Record<string, number> = {
-  '+225': 10,
-  '+228': 8,
-  '+226': 8,
-  '+237': 9,
-  '+229': 10,
-  '+223': 9,
-  '+227': 9,
-  '+221': 9,
-};
-
-export function getPhoneDigitsForCountry(dialCode: string): number | undefined {
-  return PHONE_DIGITS_BY_DIAL_CODE[dialCode];
+export function getPhoneDigitsForCountry(
+  _dialCode: string,
+  rules?: { minPhoneDigits: number; maxPhoneDigits: number },
+): number | undefined {
+  return rules && rules.minPhoneDigits === rules.maxPhoneDigits ? rules.maxPhoneDigits : undefined;
 }
 
 export function normalizePhoneDigits(value: string): string {
@@ -20,24 +12,17 @@ export function normalizePhoneDigits(value: string): string {
 export function isValidPhoneForCountry(
   value: string,
   dialCode: string,
-  fallbackRange: { min: number; max: number } = { min: 7, max: 15 },
+  rules?: { min: number; max: number },
 ): boolean {
   const digits = normalizePhoneDigits(value);
-  const expectedDigits = getPhoneDigitsForCountry(dialCode);
-
-  if (expectedDigits) {
-    return digits.length === expectedDigits;
-  }
-
-  return digits.length >= fallbackRange.min && digits.length <= fallbackRange.max;
+  const fullPhone = `${dialCode}${digits}`;
+  return /^\+[1-9][0-9]{7,14}$/.test(fullPhone)
+    && (!rules || (digits.length >= rules.min && digits.length <= rules.max));
 }
 
 export function getPhoneLengthMessage(
-  dialCode: string,
-  fallback = '8 à 10',
+  _dialCode: string,
+  _fallback?: string,
 ): string {
-  const expectedDigits = getPhoneDigitsForCountry(dialCode);
-  return expectedDigits
-    ? `Saisissez un numéro de ${expectedDigits} chiffres.`
-    : `Saisissez un numéro valide de ${fallback} chiffres.`;
+  return 'Saisissez un numéro de téléphone valide pour le pays sélectionné.';
 }

@@ -55,8 +55,9 @@ type InternationalOperator = {
 export default function InternationalTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
-  const pricingOperators = pricingQuery.data?.operators ?? [];
+  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
+  const pricingOperators = useMemo(() => (pricingQuery.data?.operators ?? [])
+    .filter((operator) => operator.operations.international), [pricingQuery.data?.operators]);
   const [countryId, setCountryId] = useState('ci');
   const [operatorId, setOperatorId] = useState<string | null>('orange-ci');
   const transferCountries = useMemo(
@@ -181,8 +182,8 @@ export default function InternationalTransferPage() {
     );
   }
 
-  const recipientPhoneDigits = getPhoneDigitsForCountry(country.dialCode);
-  const recipientPhoneMaxDigits = recipientPhoneDigits ?? 15;
+  const recipientPhoneDigits = getPhoneDigitsForCountry(country.dialCode, country);
+  const recipientPhoneMaxDigits = country.maxPhoneDigits;
   const canSubmit = quoteInput !== null;
 
   const selectCountry = (nextCountry: TransferCountry) => {

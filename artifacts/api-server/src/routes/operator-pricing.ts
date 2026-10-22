@@ -166,6 +166,14 @@ router.get("/pricing", async (req, res): Promise<void> => {
           requiresOtp:
             otpByOperator.get(`${operator.countryCode}:${operator.operatorId}`) ?? true,
           otpCommand: otpCommands[operator.operatorId] ?? null,
+          operations: {
+            deposit: Boolean(countries.find((country) => country.id === operator.countryCode
+              && country.enabled && country.operations.deposit)) && operator.depositEnabled,
+            interNetwork: Boolean(countries.find((country) => country.id === operator.countryCode
+              && country.enabled && country.operations.interNetwork)) && operator.interNetworkEnabled,
+            international: Boolean(countries.find((country) => country.id === operator.countryCode
+              && country.enabled && country.operations.international)) && operator.internationalEnabled,
+          },
           fees,
         };
       });

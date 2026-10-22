@@ -1721,6 +1721,7 @@ export const DeleteAdminOperatorLogoResponse = zod.object({
  * Updates all changed operator rates for one country and one pricing section atomically.
  * @summary Update a country's pricing section rates
  */
+export const updateAdminOperatorPricingBodyCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const updateAdminOperatorPricingBodyUpdatesItemOperatorIdMin = 2;
 export const updateAdminOperatorPricingBodyUpdatesItemOperatorIdMax = 60;
 
@@ -1738,7 +1739,7 @@ export const updateAdminOperatorPricingBodyReasonMax = 500;
 
 
 export const UpdateAdminOperatorPricingBody = zod.object({
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(updateAdminOperatorPricingBodyCountryCodeRegExp),
   "categoryId": zod.enum(['deposit', 'inter-network', 'international']),
   "updates": zod.array(zod.object({
   "operatorId": zod.string().min(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMin).max(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMax).regex(updateAdminOperatorPricingBodyUpdatesItemOperatorIdRegExp),
@@ -1797,15 +1798,17 @@ export const UpdateAdminRegistrationSettingsResponse = zod.object({
 /**
  * @summary List Orange Money OTP policies for supported countries
  */
+export const listAdminOtpPoliciesResponseItemsItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const listAdminOtpPoliciesResponseItemsItemOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
 export const listAdminOtpPoliciesResponseItemsItemVersionMin = 0;
 
 
 
 export const ListAdminOtpPoliciesResponse = zod.object({
   "items": zod.array(zod.object({
-  "countryCode": zod.enum(['ci', 'bf', 'ml', 'sn']),
+  "countryCode": zod.string().regex(listAdminOtpPoliciesResponseItemsItemCountryCodeRegExp),
   "countryName": zod.string(),
-  "operatorId": zod.enum(['orange-ci', 'orange-bf', 'orange-ml', 'orange-sn']),
+  "operatorId": zod.string().regex(listAdminOtpPoliciesResponseItemsItemOperatorIdRegExp),
   "operatorName": zod.string(),
   "phonePrefix": zod.string(),
   "requiresOtp": zod.boolean(),
@@ -1849,14 +1852,16 @@ export const UpdateAdminOtpPolicyBody = zod.object({
   "reason": zod.string().min(updateAdminOtpPolicyBodyReasonMin).max(updateAdminOtpPolicyBodyReasonMax)
 })
 
+export const updateAdminOtpPolicyResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const updateAdminOtpPolicyResponseOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
 export const updateAdminOtpPolicyResponseVersionMin = 0;
 
 
 
 export const UpdateAdminOtpPolicyResponse = zod.object({
-  "countryCode": zod.enum(['ci', 'bf', 'ml', 'sn']),
+  "countryCode": zod.string().regex(updateAdminOtpPolicyResponseCountryCodeRegExp),
   "countryName": zod.string(),
-  "operatorId": zod.enum(['orange-ci', 'orange-bf', 'orange-ml', 'orange-sn']),
+  "operatorId": zod.string().regex(updateAdminOtpPolicyResponseOperatorIdRegExp),
   "operatorName": zod.string(),
   "phonePrefix": zod.string(),
   "requiresOtp": zod.boolean(),

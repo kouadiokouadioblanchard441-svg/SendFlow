@@ -37,10 +37,14 @@ before(async () => {
     [id, randomUUID(), randomUUID()]);
     transactions[id] = tx.rows[0].id;
   }
+  // Configuration activation is explicit and restricted to this disposable cluster.
+  await owner.query(`UPDATE sf_countries SET deposit_enabled=true,
+    inter_network_enabled=true, international_enabled=true WHERE country_code='ci'`);
   for (const id of ["fixture-source", "fixture-destination"]) {
     await owner.query(`INSERT INTO sf_operator_catalog
-      (operator_id,country_code,name,short_name,initials,brand,enabled,created_by,updated_by)
-      VALUES($1,'ci','Fixture operator','Fixture','FX','generic',true,'fixture','fixture')`, [id]);
+      (operator_id,country_code,name,short_name,initials,brand,enabled,
+       deposit_enabled,inter_network_enabled,international_enabled,created_by,updated_by)
+      VALUES($1,'ci','Fixture operator','Fixture','FX','generic',true,true,true,true,'fixture','fixture')`, [id]);
   }
   await owner.query(`INSERT INTO sf_operator_pricing_rates
     (operator_id,country_code,category_id,fee_percent,version,created_by,updated_by)
@@ -559,6 +563,27 @@ test("deposit and international page payloads receive the real server totals for
     assert.equal(i.totalDebitMinor, senderPaysFees ? 10_180 : 10_000);
   }
 });
+test("registration rejects unknown, mismatched, disabled countries and invalid national lengths", async () => {
+  await owner.query(`INSERT INTO sf_countries(country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,enabled,created_by,updated_by)
+    VALUES('xy','Isolated disabled country','+989',8,8,false,'fixture','fixture')`);
+  const before = (await owner.query("SELECT count(*) FROM sf_users")).rows[0].count;
+  const body = { fullName: "Country Fixture", birthDate: "1990-01-01",
+    phone: "+2250000000777", password: "isolated-password-only", acceptedPrivacy: true };
+  for (const [index, change] of [
+    { countryCode: "xx" }, { countryCode: "sn" },
+    { countryCode: "ci", phone: "+225000000777" },
+    { countryCode: "xy", phone: "+98900000000" },
+  ].entries()) {
+    const response = await request("/api/auth/register", {
+      method: "POST",
+      headers: { Origin: "https://sendflow-test.invalid", "X-Forwarded-For": `198.51.100.${160 + index}` },
+      body: { ...body, phone: `+225000000077${index}`, ...change },
+    });
+    assert.equal(response.status, 400);
+  }
+  assert.equal((await owner.query("SELECT count(*) FROM sf_users")).rows[0].count, before);
+});
+
 test("shared-Neon access is confined to one provisioned viewer, with real password/PIN and no provider or financial operation", async () => {
   const originalTarget = process.env.SENDFLOW_DATABASE_TARGET;
   const fixturePhone = "+2250000000002", otherPhone = "+2250000000009";

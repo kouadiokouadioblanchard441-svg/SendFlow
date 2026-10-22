@@ -1,4 +1,4 @@
-import { getPhoneDigitsForCountry, getPhoneLengthMessage, normalizePhoneDigits } from '@/lib/phone-rules';
+import { getPhoneLengthMessage, isValidPhoneForCountry, normalizePhoneDigits } from '@/lib/phone-rules';
 import {
   LEGACY_CUSTOMER_PASSWORD_MIN_LENGTH,
   validateCustomerPassword,
@@ -41,8 +41,7 @@ function validatePhone(phone: string, dialCode = '+225') {
   const digits = normalizePhoneDigits(phone);
 
   if (!digits) return 'Le numéro de téléphone est requis.';
-  const expectedDigits = getPhoneDigitsForCountry(dialCode);
-  if (expectedDigits ? digits.length !== expectedDigits : digits.length < 8 || digits.length > 10) {
+  if (!isValidPhoneForCountry(digits, dialCode)) {
     return getPhoneLengthMessage(dialCode);
   }
 

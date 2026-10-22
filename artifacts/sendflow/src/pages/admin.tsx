@@ -42,6 +42,7 @@ import {
 import { AdminActionDialog } from '@/components/admin-action-dialog';
 import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
+import { AdminCountriesSection } from '@/components/admin-countries-section';
 import AdminIpBlocklist from '@/components/admin-ip-blocklist';
 import AdminNetworkDefense from '@/components/admin-network-defense';
 import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
@@ -1665,12 +1666,14 @@ function BannersPage() {
   );
 }
 
-type PaymentCountryCode = 'ci' | 'sn' | 'bf' | 'bj' | 'ml' | 'ne' | 'tg' | 'cm' | 'cg';
+type PaymentCountryCode = string;
+type PaymentOperation = 'deposit' | 'inter-network' | 'international';
 
 type PaymentRouteEdit = {
   kind: 'route';
   scopeType: 'country' | 'operator';
   countryCode: PaymentCountryCode;
+  operation: PaymentOperation;
   countryName: string;
   operatorId: string | null;
   operatorName: string | null;
@@ -1704,6 +1707,7 @@ function AggregatorsPage() {
   const createAggregator = useCreateAdminAggregator();
   const updateAggregator = useUpdateAdminAggregator();
   const updateRoute = useUpdateAdminAggregatorRoute();
+  const [routingOperation, setRoutingOperation] = useState<PaymentOperation>('deposit');
   const [editing, setEditing] = useState<AggregatorEdit | null>(null);
   const [reason, setReason] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -1764,6 +1768,7 @@ function AggregatorsPage() {
         data: {
           scopeType: editing.scopeType,
           countryCode: editing.countryCode,
+          operation: editing.operation,
           operatorId: editing.operatorId,
           aggregatorCode: editing.aggregatorCode,
           expectedVersion: editing.expectedVersion,
@@ -1894,15 +1899,28 @@ function AggregatorsPage() {
             </div>
           </section>
 
+          <AdminCountriesSection />
           <section className="space-y-3" aria-labelledby="admin-aggregator-routing-title">
             <div>
               <h3 id="admin-aggregator-routing-title" className="text-lg font-semibold">Affectations par pays et opérateur</h3>
               <p className="text-sm text-muted-foreground">
-                Une règle opérateur remplace le service par défaut du pays. « Hériter » réutilise le choix du pays.
+                Une règle opérateur remplace le service du pays pour l’opération sélectionnée uniquement. « Hériter » réutilise ce choix, sans basculement automatique.
               </p>
             </div>
+            <div className="flex flex-wrap gap-2" aria-label="Opération à configurer">
+              {([
+                ['deposit', 'Dépôt'],
+                ['inter-network', 'Inter réseau'],
+                ['international', 'International / retrait'],
+              ] as const).map(([operation, label]) => (
+                <Button key={operation} type="button"
+                  variant={routingOperation === operation ? 'default' : 'outline'}
+                  aria-pressed={routingOperation === operation}
+                  onClick={() => setRoutingOperation(operation)}>{label}</Button>
+              ))}
+            </div>
             <div className="grid gap-4 xl:grid-cols-2" data-testid="list-admin-aggregator-routes">
-              {data.countries.map((country) => {
+              {data.countries.filter((country) => country.operation === routingOperation).map((country) => {
                 const countryAggregatorName = country.defaultAggregatorCode
                   ? aggregatorByCode.get(country.defaultAggregatorCode)?.name ?? country.defaultAggregatorCode
                   : 'Aucun service sélectionné';
@@ -1928,6 +1946,7 @@ function AggregatorsPage() {
                               kind: 'route',
                               scopeType: 'country',
                               countryCode: country.countryCode,
+                              operation: country.operation,
                               countryName: country.countryName,
                               operatorId: null,
                               operatorName: null,
@@ -1974,6 +1993,7 @@ function AggregatorsPage() {
                                   kind: 'route',
                                   scopeType: 'operator',
                                   countryCode: country.countryCode,
+                                  operation: country.operation,
                                   countryName: country.countryName,
                                   operatorId: operator.operatorId,
                                   operatorName: operator.operatorName,

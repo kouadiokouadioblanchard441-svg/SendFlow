@@ -7,7 +7,7 @@ import {
   countriesTable,
 } from "@workspace/db";
 import {
-  CountryCatalog,
+  GetAuthCountriesResponse,
   CreateAdminCountryBody,
   CreateAdminCountryResponse,
   GetAdminCountriesResponse,
@@ -19,7 +19,6 @@ import { recordAdminAudit } from "../lib/admin-audit";
 import { respondAdminAuthError } from "./admin";
 
 const router: IRouter = Router();
-const adminRoutes: IRouter = Router();
 
 function flagFromCountryCode(countryCode: string): string {
   if (!/^[a-z]{2}$/.test(countryCode)) return "";
@@ -51,15 +50,18 @@ router.get("/auth/countries", async (req, res): Promise<void> => {
   try {
     const rows = await db.select().from(countriesTable).orderBy(asc(countriesTable.countryName));
     res.setHeader("Cache-Control", "no-store");
-    res.json(CountryCatalog.parse({ countries: rows.map(toCountry) }));
+    res.json(GetAuthCountriesResponse.parse({ countries: rows.map(toCountry) }));
   } catch (error) {
     req.log.error({ err: error }, "Public country catalog lookup failed");
     res.status(503).json({ error: "Country catalog unavailable" });
   }
 });
 
+export function createAdminCountryRoutes(authorize = respondAdminAuthError): IRouter {
+const adminRoutes: IRouter = Router();
+
 adminRoutes.get("/countries", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res);
+  const adminUserId = authorize(req, res);
   if (!adminUserId) return;
 
   try {
@@ -79,11 +81,13 @@ adminRoutes.get("/countries", async (req, res): Promise<void> => {
 });
 
 adminRoutes.post("/countries", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  const adminUserId = authorize(req, res, "mutate");
   if (!adminUserId) return;
 
   const body = CreateAdminCountryBody.safeParse(req.body);
-  if (!body.success || body.data.reason.trim().length < 3) {
+  if (!body.success || body.data.reason.trim().length < 3
+    || body.data.minPhoneDigits > body.data.maxPhoneDigits
+    || body.data.maxPhoneDigits + body.data.phonePrefix.length - 1 > 15) {
     res.status(400).json({ error: "Invalid country data or audit reason" });
     return;
   }
@@ -133,12 +137,14 @@ adminRoutes.post("/countries", async (req, res): Promise<void> => {
 });
 
 adminRoutes.patch("/countries/:countryCode", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  const adminUserId = authorize(req, res, "mutate");
   if (!adminUserId) return;
 
   const params = UpdateAdminCountryParams.safeParse(req.params);
   const body = UpdateAdminCountryBody.safeParse(req.body);
-  if (!params.success || !body.success || body.data.reason.trim().length < 3) {
+  if (!params.success || !body.success || body.data.reason.trim().length < 3
+    || body.data.minPhoneDigits > body.data.maxPhoneDigits
+    || body.data.maxPhoneDigits + body.data.phonePrefix.length - 1 > 15) {
     res.status(400).json({ error: "Invalid country data or audit reason" });
     return;
   }
@@ -189,5 +195,9 @@ adminRoutes.patch("/countries/:countryCode", async (req, res): Promise<void> => 
   }
 });
 
+return adminRoutes;
+}
+
+const adminRoutes = createAdminCountryRoutes();
 export default router;
 export { adminRoutes };

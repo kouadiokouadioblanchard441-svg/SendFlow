@@ -20,7 +20,7 @@ export const paymentAggregatorsTable = pgTable(
 );
 
 export const paymentAggregatorRoutesTable = pgTable(
-  "sf_payment_aggregator_routes",
+  "sf_operation_aggregator_routes",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     scopeType: varchar("scope_type", { length: 16 }).notNull(),
@@ -36,16 +36,39 @@ export const paymentAggregatorRoutesTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    scopeUnique: uniqueIndex("sf_payment_aggregator_routes_scope_operation_uq").on(
+    scopeUnique: uniqueIndex("sf_operation_aggregator_routes_scope_operation_uq").on(
       table.scopeType,
       table.scopeKey,
       table.operation,
     ),
-    countryIndex: index("sf_payment_aggregator_routes_country_idx").on(table.countryCode),
+    countryIndex: index("sf_operation_aggregator_routes_country_idx").on(table.countryCode),
     operationCheck: check(
-      "sf_payment_aggregator_routes_operation_check",
+      "sf_operation_aggregator_routes_operation_check",
       sql`${table.operation} IN ('deposit', 'inter-network', 'international')`,
     ),
+  }),
+);
+
+// Preserve the pre-operation configuration for old deployments during the
+// additive upgrade. New routes never write this legacy table.
+export const legacyPaymentAggregatorRoutesTable = pgTable(
+  "sf_payment_aggregator_routes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    scopeType: varchar("scope_type", { length: 16 }).notNull(),
+    scopeKey: varchar("scope_key", { length: 100 }).notNull(),
+    countryCode: varchar("country_code", { length: 2 }).notNull(),
+    operatorId: varchar("operator_id", { length: 60 }),
+    aggregatorCode: varchar("aggregator_code", { length: 60 }),
+    version: integer("version").notNull().default(1),
+    createdBy: varchar("created_by", { length: 255 }).notNull(),
+    updatedBy: varchar("updated_by", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    scopeUnique: uniqueIndex("sf_payment_aggregator_routes_scope_uq").on(table.scopeType, table.scopeKey),
+    countryIndex: index("sf_payment_aggregator_routes_country_idx").on(table.countryCode),
   }),
 );
 

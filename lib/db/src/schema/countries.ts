@@ -38,7 +38,7 @@ export const countriesTable = pgTable(
     ),
     phoneDigitsRange: check(
       "sf_countries_phone_digits_range_check",
-      sql`${table.minPhoneDigits} BETWEEN 4 AND 15 AND ${table.maxPhoneDigits} BETWEEN ${table.minPhoneDigits} AND 15`,
+      sql`${table.minPhoneDigits} BETWEEN 4 AND 15 AND ${table.maxPhoneDigits} BETWEEN ${table.minPhoneDigits} AND 15 AND ${table.maxPhoneDigits} + length(${table.phonePrefix}) - 1 <= 15`,
     ),
   }),
 );

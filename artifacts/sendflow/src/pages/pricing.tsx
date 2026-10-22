@@ -30,7 +30,7 @@ function CategoryIcon({ categoryId }: { categoryId: PricingCategoryId }) {
 export default function PricingPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
+  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
   const categories = pricingQuery.data?.categories ?? [];
   const countries = pricingQuery.data?.countries ?? [];
   const [categoryId, setCategoryId] = useState<PricingCategoryId>('deposit');
@@ -40,8 +40,9 @@ export default function PricingPage() {
   const country = countries.find((item) => item.id === countryId) ?? countries[0];
   const category = categories.find((item) => item.id === categoryId) ?? categories[0];
   const listedOperators = useMemo(
-    () => pricingQuery.data?.operators.filter((operator) => operator.countryId === country?.id) ?? [],
-    [pricingQuery.data?.operators, country?.id],
+    () => pricingQuery.data?.operators.filter((operator) => operator.countryId === country?.id
+      && operator.operations[categoryId === 'inter-network' ? 'interNetwork' : categoryId]) ?? [],
+    [pricingQuery.data?.operators, country?.id, categoryId],
   );
 
   useSeo({

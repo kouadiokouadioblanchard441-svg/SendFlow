@@ -4071,12 +4071,12 @@ components:
       properties:
         countryCode:
           type: string
-          enum: [ci, bf, ml, sn]
+          pattern: "^[a-z]{2}$"
         countryName:
           type: string
         operatorId:
           type: string
-          enum: [orange-ci, orange-bf, orange-ml, orange-sn]
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
         operatorName:
           type: string
         phonePrefix:
@@ -4560,7 +4560,7 @@ components:
       properties:
         countryCode:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
         categoryId:
           type: string
           enum: [deposit, inter-network, international]

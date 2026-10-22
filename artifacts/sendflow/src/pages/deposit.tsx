@@ -14,10 +14,10 @@ import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { readAccountCountry } from '@/lib/account-country';
 import { useServerTransferQuote } from '@/hooks/use-server-transfer-quote';
+import { isValidPhoneForCountry } from '@/lib/phone-rules';
 import { formatServerFeePercent as formatPricingFeeRate, formatQuoteAmount, serverQuoteAmounts } from '@/lib/server-transfer-quote';
 import { useSeo } from '@/lib/seo';
 import {
-  isValidIvoryCoastPhone,
   isValidTransactionAmount,
   MAX_TRANSACTION_AMOUNT,
   parseWholeAmount,
@@ -42,12 +42,14 @@ export default function DepositPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountCountry = readAccountCountry();
-  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
-  const pricingCountry = pricingQuery.data?.countries.find((country) => country.dialCode === accountCountry.dialCode);
+  const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
+  const pricingCountry = pricingQuery.data?.countries.find((country) =>
+    accountCountry.countryCode ? country.id === accountCountry.countryCode : country.dialCode === accountCountry.dialCode);
+  const phoneMaxDigits = pricingCountry?.maxPhoneDigits ?? 15;
   const depositOperators = useMemo(() => {
-    if (accountCountry.dialCode !== '+225' || !pricingCountry) return [];
+    if (!pricingCountry) return [];
     return (pricingQuery.data?.operators ?? [])
-      .filter((item) => item.countryId === pricingCountry.id)
+      .filter((item) => item.countryId === pricingCountry.id && item.operations.deposit)
       .map((item) => ({
         id: item.id,
         name: item.name,
@@ -73,7 +75,8 @@ export default function DepositPage() {
   const [requestState, setRequestState] = useState<TransferRequestState>('idle');
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const enteredAmount = parseWholeAmount(amount);
-  const hasValidSourceNumber = isValidIvoryCoastPhone(sourceNumber);
+  const hasValidSourceNumber = !!pricingCountry && isValidPhoneForCountry(sourceNumber,
+    pricingCountry.dialCode, { min: pricingCountry.minPhoneDigits, max: pricingCountry.maxPhoneDigits });
   const quoteInput = operator && isValidTransactionAmount(enteredAmount) && hasValidSourceNumber
     ? {
       kind: 'deposit' as const, sourceOperatorId: operator.id,
@@ -219,21 +222,21 @@ export default function DepositPage() {
                     type="tel"
                     value={sourceNumber}
                     onChange={(event) => {
-                      setSourceNumber(event.target.value.replace(/\D/g, '').slice(0, 10));
+                      setSourceNumber(event.target.value.replace(/\D/g, '').slice(0, phoneMaxDigits));
                       setSubmitAttempted(false);
                     }}
                     aria-label="Numéro source du dépôt"
                     placeholder="Numéro source"
                     inputMode="tel"
                     autoComplete="tel"
-                    maxLength={10}
+                    maxLength={phoneMaxDigits}
                     aria-invalid={submitAttempted && !hasValidSourceNumber}
                   />
                   <span className="sendflow-transfer-flag" aria-label={accountCountry.name}>{accountCountry.flag}</span>
                 </div>
                 {submitAttempted && !hasValidSourceNumber && (
                   <p className="sendflow-international-field-error" role="alert">
-                    Entrez un numéro ivoirien valide de 10 chiffres.
+                    Entrez un numéro valide pour {pricingCountry?.name}.
                   </p>
                 )}
 

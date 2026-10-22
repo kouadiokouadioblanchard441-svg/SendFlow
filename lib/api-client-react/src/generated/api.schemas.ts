@@ -935,26 +935,6 @@ export interface PublicBanner {
   sortOrder: number;
 }
 
-export type AdminOtpPolicyCountryCode = typeof AdminOtpPolicyCountryCode[keyof typeof AdminOtpPolicyCountryCode];
-
-
-export const AdminOtpPolicyCountryCode = {
-  ci: 'ci',
-  bf: 'bf',
-  ml: 'ml',
-  sn: 'sn',
-} as const;
-
-export type AdminOtpPolicyOperatorId = typeof AdminOtpPolicyOperatorId[keyof typeof AdminOtpPolicyOperatorId];
-
-
-export const AdminOtpPolicyOperatorId = {
-  'orange-ci': 'orange-ci',
-  'orange-bf': 'orange-bf',
-  'orange-ml': 'orange-ml',
-  'orange-sn': 'orange-sn',
-} as const;
-
 /**
  * The official operator API is not connected, so OTPs cannot be verified yet.
  */
@@ -966,9 +946,11 @@ export const AdminOtpPolicyProviderStatus = {
 } as const;
 
 export interface AdminOtpPolicy {
-  countryCode: AdminOtpPolicyCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   countryName: string;
-  operatorId: AdminOtpPolicyOperatorId;
+  /** @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$ */
+  operatorId: string;
   operatorName: string;
   phonePrefix: string;
   requiresOtp: boolean;
@@ -1397,21 +1379,6 @@ export interface PricingRateChangeInput {
   expectedVersion: number;
 }
 
-export type PricingRatesUpdateCountryCode = typeof PricingRatesUpdateCountryCode[keyof typeof PricingRatesUpdateCountryCode];
-
-
-export const PricingRatesUpdateCountryCode = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
-} as const;
-
 export type PricingRatesUpdateCategoryId = typeof PricingRatesUpdateCategoryId[keyof typeof PricingRatesUpdateCategoryId];
 
 
@@ -1422,7 +1389,8 @@ export const PricingRatesUpdateCategoryId = {
 } as const;
 
 export interface PricingRatesUpdate {
-  countryCode: PricingRatesUpdateCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   categoryId: PricingRatesUpdateCategoryId;
   /**
      * @minItems 1

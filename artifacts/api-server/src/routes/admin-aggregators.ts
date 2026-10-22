@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import {
   and,
+  countriesTable,
   db,
   eq,
   operatorCatalogTable,
@@ -19,13 +20,11 @@ import {
 import { recordAdminAudit } from "../lib/admin-audit";
 import { respondAdminAuthError } from "./admin";
 import {
-  aggregatorCountryCatalog,
   builtInAggregatorCatalog,
-  findAggregatorCountry,
   getAggregatorRouteScopeKey,
 } from "./aggregator-catalog";
+import { pricingCategories } from "../lib/operator-pricing-catalog";
 
-const router: IRouter = Router();
 
 function toAdminAggregator(
   code: string,
@@ -70,25 +69,30 @@ async function findAggregator(code: string) {
   return stored;
 }
 
+export function createAdminAggregatorRoutes(authorize = respondAdminAuthError): IRouter {
+const router: IRouter = Router();
+
 router.get("/payment-routing", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res);
+  const adminUserId = authorize(req, res);
   if (!adminUserId) return;
 
   try {
-    const [aggregators, storedRoutes] = await Promise.all([
+    const [aggregators, storedRoutes, countryRows, operatorRows] = await Promise.all([
       listAdminAggregators(),
       db.select().from(paymentAggregatorRoutesTable),
+      db.select().from(countriesTable),
+      db.select().from(operatorCatalogTable),
     ]);
-    const operatorRows = await db.select().from(operatorCatalogTable);
     const routesByScope = new Map(
-      storedRoutes.map((route) => [`${route.scopeType}:${route.scopeKey}`, route]),
+      storedRoutes.map((route) => [`${route.scopeType}:${route.scopeKey}:${route.operation}`, route]),
     );
-    const countries = aggregatorCountryCatalog.map((country) => {
-      const countryRoute = routesByScope.get(`country:${country.countryCode}`);
+    const countries = countryRows.flatMap((country) => pricingCategories.map(({ id: operation }) => {
+      const countryRoute = routesByScope.get(`country:${country.countryCode}:${operation}`);
       const defaultAggregatorCode = countryRoute?.aggregatorCode ?? null;
 
       return {
         countryCode: country.countryCode,
+        operation,
         countryName: country.countryName,
         phonePrefix: country.phonePrefix,
         defaultAggregatorCode,
@@ -103,7 +107,7 @@ router.get("/payment-routing", async (req, res): Promise<void> => {
             country.countryCode,
             operator.operatorId,
           );
-          const operatorRoute = routesByScope.get(`operator:${operatorScopeKey}`);
+          const operatorRoute = routesByScope.get(`operator:${operatorScopeKey}:${operation}`);
           const aggregatorCode = operatorRoute?.aggregatorCode ?? null;
 
           return {
@@ -118,7 +122,7 @@ router.get("/payment-routing", async (req, res): Promise<void> => {
           };
           }),
       };
-    });
+    }));
 
     await recordAdminAudit({
       adminUserId,
@@ -136,7 +140,7 @@ router.get("/payment-routing", async (req, res): Promise<void> => {
 });
 
 router.post("/payment-aggregators", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  const adminUserId = authorize(req, res, "mutate");
   if (!adminUserId) return;
 
   const body = CreateAdminAggregatorBody.safeParse(req.body);
@@ -193,7 +197,7 @@ router.post("/payment-aggregators", async (req, res): Promise<void> => {
 });
 
 router.patch("/payment-aggregators", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  const adminUserId = authorize(req, res, "mutate");
   if (!adminUserId) return;
 
   const body = UpdateAdminAggregatorBody.safeParse(req.body);
@@ -270,7 +274,7 @@ router.patch("/payment-aggregators", async (req, res): Promise<void> => {
 });
 
 router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  const adminUserId = authorize(req, res, "mutate");
   if (!adminUserId) return;
 
   const body = UpdateAdminAggregatorRouteBody.safeParse(req.body);
@@ -279,11 +283,7 @@ router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
     return;
   }
 
-  const { scopeType, countryCode, operatorId, aggregatorCode } = body.data;
-  if (!findAggregatorCountry(countryCode)) {
-    res.status(404).json({ error: "Unsupported country" });
-    return;
-  }
+  const { scopeType, countryCode, operation, operatorId, aggregatorCode } = body.data;
   if (scopeType === "country" && operatorId !== null) {
     res.status(400).json({ error: "Country routes cannot include an operator" });
     return;
@@ -295,6 +295,12 @@ router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
   const scopeKey = getAggregatorRouteScopeKey(scopeType, countryCode, operatorId);
 
   try {
+    const [country] = await db.select({ countryCode: countriesTable.countryCode })
+      .from(countriesTable).where(eq(countriesTable.countryCode, countryCode)).limit(1);
+    if (!country) {
+      res.status(404).json({ error: "Country not found" });
+      return;
+    }
     if (scopeType === "operator" && operatorId) {
       const [operator] = await db
         .select({ operatorId: operatorCatalogTable.operatorId })
@@ -327,6 +333,7 @@ router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
         .where(and(
           eq(paymentAggregatorRoutesTable.scopeType, scopeType),
           eq(paymentAggregatorRoutesTable.scopeKey, scopeKey),
+          eq(paymentAggregatorRoutesTable.operation, operation),
           eq(paymentAggregatorRoutesTable.version, body.data.expectedVersion),
         ))
         .returning();
@@ -338,6 +345,7 @@ router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
             scopeType,
             scopeKey,
             countryCode,
+            operation,
             operatorId,
             aggregatorCode,
             version: 1,
@@ -354,7 +362,7 @@ router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
         adminUserId,
         action: "update_payment_route",
         resourceType: "payment_route",
-        resourceId: `${scopeType}:${scopeKey}`,
+        resourceId: `${scopeType}:${scopeKey}:${operation}`,
         reason: body.data.reason.trim(),
       }, tx);
 
@@ -369,6 +377,7 @@ router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
     res.json(UpdateAdminAggregatorRouteResponse.parse({
       scopeType: updated.scopeType,
       countryCode: updated.countryCode,
+      operation: updated.operation,
       operatorId: updated.operatorId,
       aggregatorCode: updated.aggregatorCode,
       version: updated.version,
@@ -380,4 +389,7 @@ router.put("/payment-aggregator-routes", async (req, res): Promise<void> => {
   }
 });
 
-export default router;
+return router;
+}
+
+export default createAdminAggregatorRoutes();

@@ -5,14 +5,14 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { AdminOtpPolicyCountryCode } from './adminOtpPolicyCountryCode';
-import type { AdminOtpPolicyOperatorId } from './adminOtpPolicyOperatorId';
 import type { AdminOtpPolicyProviderStatus } from './adminOtpPolicyProviderStatus';
 
 export interface AdminOtpPolicy {
-  countryCode: AdminOtpPolicyCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   countryName: string;
-  operatorId: AdminOtpPolicyOperatorId;
+  /** @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$ */
+  operatorId: string;
   operatorName: string;
   phonePrefix: string;
   requiresOtp: boolean;

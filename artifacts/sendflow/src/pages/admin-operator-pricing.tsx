@@ -103,6 +103,7 @@ export default function AdminOperatorPricingPage() {
     (typeof countries)[number]['operators'][number] | null
   >(null);
   const [toggleReason, setToggleReason] = useState('');
+  const [operationToToggle, setOperationToToggle] = useState<CategoryId | null>(null);
   const [logoTarget, setLogoTarget] = useState<
     (typeof countries)[number]['operators'][number] | null
   >(null);
@@ -213,7 +214,13 @@ export default function AdminOperatorPricingPage() {
         data: {
           name: operatorToToggle.name,
           brand: operatorToToggle.brand,
-          enabled: !operatorToToggle.enabled,
+          enabled: operationToToggle ? operatorToToggle.enabled : !operatorToToggle.enabled,
+          depositEnabled: operationToToggle === 'deposit'
+            ? !operatorToToggle.depositEnabled : operatorToToggle.depositEnabled,
+          interNetworkEnabled: operationToToggle === 'inter-network'
+            ? !operatorToToggle.interNetworkEnabled : operatorToToggle.interNetworkEnabled,
+          internationalEnabled: operationToToggle === 'international'
+            ? !operatorToToggle.internationalEnabled : operatorToToggle.internationalEnabled,
           expectedVersion: operatorToToggle.version,
           reason: toggleReason.trim(),
         },
@@ -221,11 +228,11 @@ export default function AdminOperatorPricingPage() {
       {
         onSuccess: async () => {
           await invalidateCatalog();
-          setSuccessMessage(
-            operatorToToggle.enabled
+          setSuccessMessage(operationToToggle
+            ? `${operatorToToggle.name} : disponibilité de cette opération mise à jour pour ce pays uniquement.`
+            : operatorToToggle.enabled
               ? `${operatorToToggle.name} est désactivé et ne sera plus proposé aux clients.`
-              : `${operatorToToggle.name} est activé.`,
-          );
+              : `${operatorToToggle.name} est activé.`);
           setOperatorToToggle(null);
           setToggleReason('');
         },
@@ -519,10 +526,19 @@ export default function AdminOperatorPricingPage() {
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                onClick={() => { setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator); }}
+                                onClick={() => { setOperationToToggle(null); setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator); }}
                                 data-testid={`button-toggle-operator-${operator.operatorId}`}
                               >
                                 {operator.enabled ? 'Désactiver' : 'Activer'}
+                              </Button>
+                              <Button type="button" size="sm" variant="outline"
+                                onClick={() => {
+                                  setOperationToToggle(categoryId);
+                                  setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator);
+                                }}>
+                                {(categoryId === 'deposit' ? operator.depositEnabled
+                                  : categoryId === 'inter-network' ? operator.interNetworkEnabled
+                                    : operator.internationalEnabled) ? 'Désactiver' : 'Activer'} {category?.shortLabel}
                               </Button>
                             </div>
                           </TableCell>
@@ -715,9 +731,11 @@ export default function AdminOperatorPricingPage() {
       >
         <DialogContent data-testid="dialog-toggle-country-operator">
           <DialogHeader>
-            <DialogTitle>{operatorToToggle?.enabled ? 'Désactiver cet opérateur ?' : 'Activer cet opérateur ?'}</DialogTitle>
+            <DialogTitle>{operationToToggle ? `Modifier la disponibilité : ${category?.shortLabel}` : operatorToToggle?.enabled ? 'Désactiver cet opérateur ?' : 'Activer cet opérateur ?'}</DialogTitle>
             <DialogDescription>
-              {operatorToToggle?.enabled
+              {operationToToggle
+                ? `Seule l’opération ${category?.shortLabel} sera modifiée pour cet opérateur dans ce pays. Les autres pays et opérations resteront inchangés.`
+                : operatorToToggle?.enabled
                 ? `${operatorToToggle.name} ne sera plus proposé sur les pages client. Son historique et ses tarifs seront conservés.`
                 : `${operatorToToggle?.name ?? 'Cet opérateur'} sera proposé sur les pages client. Les tarifs non configurés resteront indiqués comme à confirmer.`}
             </DialogDescription>
@@ -741,7 +759,7 @@ export default function AdminOperatorPricingPage() {
               disabled={toggleReason.trim().length < 3 || operatorMutation.isPending}
               data-testid="button-confirm-toggle-operator"
             >
-              {operatorMutation.isPending ? 'Enregistrement…' : operatorToToggle?.enabled ? 'Désactiver' : 'Activer'}
+              {operatorMutation.isPending ? 'Enregistrement…' : operationToToggle ? 'Enregistrer' : operatorToToggle?.enabled ? 'Désactiver' : 'Activer'}
             </Button>
           </DialogFooter>
         </DialogContent>
