@@ -31,6 +31,8 @@ export function useServerTransferQuote(input: TransferQuoteInput | null, enabled
   return {
     data,
     isPending: enabled && input !== null && (key !== settledKey || query.isFetching),
+    isError: enabled && input !== null && key === settledKey && query.isError && !query.isFetching,
+    error: query.error,
     async mutateAsync({ data: requestedInput }: { data: TransferQuoteInput }) {
       const requestedKey = transferQuoteKey(requestedInput);
       if (requestedKey !== activeKey.current) throw cancelledQuote();

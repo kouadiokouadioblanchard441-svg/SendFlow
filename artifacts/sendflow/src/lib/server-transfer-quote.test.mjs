@@ -3,7 +3,8 @@ import test from 'node:test';
 import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import {
   transferQuoteKey, isQuoteForInput, serverQuoteAmounts,
-  formatQuoteAmount, formatServerFeePercent,
+  formatQuoteAmount, formatServerFeePercent, formatPricingVersion,
+  didPricingVersionChange, serverQuoteErrorMessage,
   serverQuoteQueryOptions, visibleServerQuote,
 } from './server-transfer-quote.ts';
 
@@ -19,12 +20,31 @@ const quote = {
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 test('display copies server amounts without calculating or replacing them with entered values', () => {
-  assert.deepEqual(serverQuoteAmounts(quote), { feeAmount: 777, recipientAmount: 10_000, totalDebit: 10_777 });
-  assert.deepEqual(serverQuoteAmounts(undefined), { feeAmount: null, recipientAmount: null, totalDebit: null });
+  assert.deepEqual(serverQuoteAmounts(quote), {
+    feeAmount: 777, recipientAmount: 10_000, totalDebit: 10_777, pricingVersion: 1,
+  });
+  assert.deepEqual(serverQuoteAmounts(undefined), {
+    feeAmount: null, recipientAmount: null, totalDebit: null, pricingVersion: null,
+  });
   assert.equal(serverQuoteAmounts({ ...quote, feeMinor: 0 }).feeAmount, 0);
   assert.equal(formatQuoteAmount(null), 'À confirmer');
   assert.equal(formatQuoteAmount(777), '777');
+  assert.equal(formatQuoteAmount(serverQuoteAmounts(quote).recipientAmount), '10 000');
+  assert.equal(formatQuoteAmount(serverQuoteAmounts(quote).totalDebit), '10 777');
   assert.equal(formatServerFeePercent(7.77), '7,77 %');
+  assert.equal(formatPricingVersion(null), 'À confirmer');
+  assert.equal(formatPricingVersion(1), 'V1');
+});
+test('pricing version changes are detectable and quote errors are mapped without exposing raw server details', () => {
+  assert.equal(didPricingVersionChange(null, 1), false);
+  assert.equal(didPricingVersionChange(1, 1), false);
+  assert.equal(didPricingVersionChange(1, 2), true);
+  assert.match(serverQuoteErrorMessage({ status: 400 }), /opérateurs et les numéros/);
+  assert.match(serverQuoteErrorMessage({ status: 401 }), /session.*expiré/);
+  assert.match(serverQuoteErrorMessage({ status: 409 }), /plafond mensuel/);
+  assert.match(serverQuoteErrorMessage({ status: 429 }), /Patientez une minute/);
+  assert.match(serverQuoteErrorMessage({ status: 503, message: 'sensitive internal detail' }), /aucun montant n’a été débité/i);
+  assert.doesNotMatch(serverQuoteErrorMessage({ status: 503, message: 'sensitive internal detail' }), /sensitive internal detail/);
 });
 test('intent keys cover every quote-relevant field and do not depend on property order', () => {
   const key = transferQuoteKey(input);
@@ -51,7 +71,7 @@ test('responses must match the intent and contain usable XOF amounts', () => {
   assert.equal(isQuoteForInput(input, quote), true);
   for (const patch of [{ amountMinor: 1 }, { senderPaysFees: false }, { kind: 'deposit' },
     { currency: 'EUR' }, { feeMinor: -1 }, { feeMinor: 0.5 }, { totalDebitMinor: Infinity },
-    { recipientAmountMinor: 0 }, { feePercent: NaN }]) {
+    { recipientAmountMinor: 0 }, { feePercent: NaN }, { pricingVersion: 0 }, { pricingVersion: 1.5 }]) {
     assert.equal(isQuoteForInput(input, { ...quote, ...patch }), false);
   }
 });

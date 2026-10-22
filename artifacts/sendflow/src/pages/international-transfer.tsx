@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Bell,
@@ -24,7 +24,14 @@ import {
   getPhoneDigitsForCountry,
 } from '@/lib/transfer-validation';
 import { useServerTransferQuote } from '@/hooks/use-server-transfer-quote';
-import { formatServerFeePercent as formatPricingFeeRate, formatQuoteAmount, serverQuoteAmounts } from '@/lib/server-transfer-quote';
+import {
+  didPricingVersionChange,
+  formatPricingVersion,
+  formatServerFeePercent as formatPricingFeeRate,
+  formatQuoteAmount,
+  serverQuoteAmounts,
+  serverQuoteErrorMessage,
+} from '@/lib/server-transfer-quote';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
@@ -107,6 +114,17 @@ export default function InternationalTransferPage() {
   const amountBreakdown = serverQuoteAmounts(transferQuote.data);
   const feeAmount = amountBreakdown.feeAmount;
   const recipientAmount = amountBreakdown.recipientAmount;
+  const lastPricingVersion = useRef<number | null>(null);
+  const [pricingVersionNotice, setPricingVersionNotice] = useState(false);
+
+  useEffect(() => {
+    const currentVersion = amountBreakdown.pricingVersion;
+    if (currentVersion === null) return;
+    if (didPricingVersionChange(lastPricingVersion.current, currentVersion)) {
+      setPricingVersionNotice(true);
+    }
+    lastPricingVersion.current = currentVersion;
+  }, [amountBreakdown.pricingVersion]);
 
   useSeo({
     path: '/international-transfer',
@@ -251,10 +269,10 @@ export default function InternationalTransferPage() {
                 : undefined;
               if (status === 409) {
                 setDialogFailureTitle('Plafond mensuel dépassé');
-                setDialogFailureCopy('Le montant saisi dépasse le plafond encore disponible pour ce mois. Réduisez le montant ou consultez « Plafond du compte ». Votre transfert n’a pas été initié et aucun montant n’a été débité.');
+                setDialogFailureCopy(`${serverQuoteErrorMessage(error)} Aucun transfert n’a été initié et aucun montant n’a été débité.`);
               } else {
                 setDialogFailureTitle('Vérification indisponible');
-                setDialogFailureCopy('Nous ne pouvons pas vérifier ce montant pour le moment. Aucun transfert n’a été initié et aucun montant n’a été débité. Veuillez réessayer plus tard.');
+                setDialogFailureCopy(serverQuoteErrorMessage(error));
               }
               setRequestState('failure');
             });
@@ -382,9 +400,28 @@ export default function InternationalTransferPage() {
               </div>
               <div>
                 <span>Wallet débité</span>
-                <strong>{amountBreakdown.totalDebit === null ? 'À confirmer' : `${amountBreakdown.totalDebit.toLocaleString('fr-FR')} Fcfa`}</strong>
+                <strong>{`${formatQuoteAmount(amountBreakdown.totalDebit)} Fcfa`}</strong>
+              </div>
+              <div>
+                <span>Version tarifaire</span>
+                <strong>{formatPricingVersion(amountBreakdown.pricingVersion)}</strong>
               </div>
             </div>
+            {quoteInput !== null && transferQuote.isPending && (
+              <p className="sendflow-international-field-error" role="status" data-testid="transfer-quote-loading">
+                Calcul du devis avec les tarifs du serveur…
+              </p>
+            )}
+            {transferQuote.isError && quoteInput !== null && (
+              <p className="sendflow-international-field-error" role="alert" data-testid="transfer-quote-error">
+                {serverQuoteErrorMessage(transferQuote.error)}
+              </p>
+            )}
+            {pricingVersionNotice && (
+              <p className="sendflow-international-field-error" role="status" data-testid="notice-pricing-version-changed">
+                Les tarifs ont changé depuis votre précédent devis. Vérifiez les nouveaux montants avant de continuer.
+              </p>
+            )}
             {submitAttempted && !transferQuote.isPending && feeRate === undefined && (
               <p className="sendflow-international-field-error" role="alert">Les frais de cet opérateur ne sont pas disponibles. Le transfert ne peut pas être préparé.</p>
             )}

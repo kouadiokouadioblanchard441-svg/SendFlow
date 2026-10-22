@@ -15,7 +15,31 @@ export function isQuoteForInput(input: TransferQuoteInput, quote: TransferQuoteR
     && Number.isSafeInteger(quote.feeMinor) && quote.feeMinor >= 0
     && Number.isSafeInteger(quote.recipientAmountMinor) && quote.recipientAmountMinor > 0
     && Number.isSafeInteger(quote.totalDebitMinor) && quote.totalDebitMinor > 0
-    && Number.isFinite(quote.feePercent) && quote.feePercent >= 0 && quote.feePercent <= 100;
+    && Number.isFinite(quote.feePercent) && quote.feePercent >= 0 && quote.feePercent <= 100
+    && Number.isSafeInteger(quote.pricingVersion) && quote.pricingVersion >= 1;
+}
+
+export function didPricingVersionChange(previous: number | null, current: number): boolean {
+  return previous !== null && previous !== current;
+}
+
+export function serverQuoteErrorMessage(error: unknown): string {
+  const status = typeof error === 'object' && error !== null && 'status' in error
+    ? (error as { status?: unknown }).status
+    : undefined;
+  if (status === 400) {
+    return 'Les informations du transfert ne correspondent pas aux tarifs disponibles. Vérifiez le montant, les opérateurs et les numéros.';
+  }
+  if (status === 401 || status === 403) {
+    return 'Votre session de vérification a expiré. Reconnectez-vous avant de demander un nouveau devis.';
+  }
+  if (status === 409) {
+    return 'Ce montant dépasse votre plafond mensuel restant. Réduisez le montant ou consultez le plafond du compte.';
+  }
+  if (status === 429) {
+    return 'Trop de demandes de devis. Patientez une minute avant de réessayer.';
+  }
+  return 'Les tarifs ne peuvent pas être vérifiés pour le moment. Aucun transfert n’a été initié et aucun montant n’a été débité. Réessayez plus tard.';
 }
 
 type QuoteRequester = (input: TransferQuoteInput, options: { signal: AbortSignal }) => Promise<TransferQuoteResult>;
@@ -56,6 +80,7 @@ export function serverQuoteAmounts(quote: TransferQuoteResult | undefined) {
     feeAmount: quote?.feeMinor ?? null,
     recipientAmount: quote?.recipientAmountMinor ?? null,
     totalDebit: quote?.totalDebitMinor ?? null,
+    pricingVersion: quote?.pricingVersion ?? null,
   };
 }
 
@@ -65,4 +90,8 @@ export function formatQuoteAmount(amount: number | null): string {
 
 export function formatServerFeePercent(percent: number): string {
   return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(percent)} %`;
+}
+
+export function formatPricingVersion(version: number | null): string {
+  return version === null ? 'À confirmer' : `V${version}`;
 }
