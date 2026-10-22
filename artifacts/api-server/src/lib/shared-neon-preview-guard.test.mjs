@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { shouldBlockSharedNeonApiRequest } from "./shared-neon-preview-guard.ts";
+import { isViewerRouteCandidate, shouldBlockSharedNeonApiRequest } from "./shared-neon-preview-guard.ts";
+import { isPaymentTestSessionForSharedNeon, isReplitPaymentTestHost } from "./replit-payment-test-access-policy.ts";
 
 const ADMIN_ROUTE_PREFIX = "/DMgrgmt-1np5g23g12bGFtMwh";
 const sharedNeon = {
@@ -123,4 +124,33 @@ test("does not restrict the production or isolated development database targets"
       );
     }
   }
+});
+
+test("admits only exact payment-test route shapes to the server session gate", () => {
+  const id = "123e4567-e89b-42d3-a456-426614174000";
+  for (const [method, path] of [
+    ["POST", "/api/me/payments"],
+    ["GET", "/api/me/payment-readiness"],
+    ["GET", `/api/me/payments/${id}`],
+    ["POST", `/api/me/payments/${id}/reconcile`],
+  ]) {
+    assert.equal(isViewerRouteCandidate(method, path), true, `${method} ${path}`);
+  }
+  for (const [method, path] of [
+    ["DELETE", `/api/me/payments/${id}`],
+    ["POST", `/api/me/payments/${id}/refund`],
+    ["GET", `/api/me/payments/${id}/provider`],
+    ["POST", "/api/me/payments/../admin"],
+  ]) {
+    assert.equal(isViewerRouteCandidate(method, path), false, `${method} ${path}`);
+  }
+});
+
+test("payment-test access is scoped to Replit on shared Neon and never inferred for the viewer", () => {
+  assert.equal(isReplitPaymentTestHost({ SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "replit" }), true);
+  assert.equal(isReplitPaymentTestHost({ SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "plesk" }), false);
+  assert.equal(isReplitPaymentTestHost({ SENDFLOW_DATABASE_TARGET: "production-neon", FEEXPAY_EXECUTION_HOST: "replit" }), false);
+  const sharedReplit = { SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "replit" };
+  assert.equal(isPaymentTestSessionForSharedNeon({ paymentTestAccount: false }, sharedReplit), false);
+  assert.equal(isPaymentTestSessionForSharedNeon({ paymentTestAccount: true }, sharedReplit), true);
 });

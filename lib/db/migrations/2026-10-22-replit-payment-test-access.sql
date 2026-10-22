@@ -2,7 +2,7 @@
 -- verified customer account, separate from the read-only preview viewer.
 CREATE TABLE public.sf_replit_payment_test_access (
   user_id text PRIMARY KEY REFERENCES public.sf_users(id) ON DELETE RESTRICT,
-  state varchar(12) NOT NULL DEFAULT 'active' CHECK (state IN ('active','revoked')),
+  state varchar(12) NOT NULL DEFAULT 'active',
   granted_by varchar(120) NOT NULL,
   reason varchar(500) NOT NULL CHECK (length(reason) BETWEEN 10 AND 500),
   granted_at timestamptz NOT NULL DEFAULT now(),

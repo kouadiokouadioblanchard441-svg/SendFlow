@@ -1,11 +1,8 @@
 import { and, eq, or, sql, usersTable, replitPaymentTestAccessTable } from "@workspace/db";
-import { isSharedNeonPreview } from "./shared-neon-preview-guard";
 import { activePreviewAccountCondition } from "./preview-account-condition";
+import { isReplitPaymentTestHost } from "./replit-payment-test-access-policy";
 
-export function isReplitPaymentTestHost(environment: Readonly<Record<string, string | undefined>> = process.env) {
-  return environment.SENDFLOW_DATABASE_TARGET === "shared-neon"
-    && environment.FEEXPAY_EXECUTION_HOST === "replit";
-}
+export { isPaymentTestSessionForSharedNeon, isReplitPaymentTestHost } from "./replit-payment-test-access-policy";
 
 export function activeReplitPaymentTestAccountCondition(
   environment: Readonly<Record<string, string | undefined>> = process.env,
@@ -25,13 +22,9 @@ export function activeReplitPaymentTestAccountCondition(
 export function sharedNeonCustomerCondition(
   environment: Readonly<Record<string, string | undefined>> = process.env,
 ) {
-  if (!isSharedNeonPreview(environment)) return undefined;
+  if (environment.SENDFLOW_DATABASE_TARGET !== "shared-neon") return undefined;
   return or(
     activePreviewAccountCondition(),
     activeReplitPaymentTestAccountCondition(environment),
   );
-}
-
-export function isPaymentTestSessionForSharedNeon(session: { userId: string; paymentTestAccount: boolean }) {
-  return isSharedNeonPreview() && session.paymentTestAccount;
 }

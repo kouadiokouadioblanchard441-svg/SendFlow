@@ -35,6 +35,10 @@ SELECT format('REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC, %I',p.oid::regprocedur
 \ir role-safety.sql
 REVOKE ALL PRIVILEGES ON public.sf_wallet_ledger,public.sf_admin_audit_logs FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON public.sf_wallet_ledger,public.sf_admin_audit_logs FROM :"app_role";
+-- Replit payment-test access is a database-managed, one-account grant. The
+-- application may read it for session authorization, never grant or revoke it.
+REVOKE ALL PRIVILEGES ON public.sf_replit_payment_test_access FROM PUBLIC, :"app_role";
+GRANT SELECT ON public.sf_replit_payment_test_access TO :"app_role";
 -- Table-level REVOKE does not remove column-level UPDATE grants.
 SELECT format('REVOKE UPDATE (%I) ON %I.%I FROM PUBLIC, %I',a.attname,n.nspname,c.relname,:'app_role')
   FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid JOIN pg_namespace n ON n.oid=c.relnamespace

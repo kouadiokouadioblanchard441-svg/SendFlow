@@ -11,6 +11,7 @@ import { build } from "esbuild";
 import pg from "pg";
 import assert from "node:assert/strict";
 import { applyPaymentStructures, planPaymentStructures } from "../../scripts/payment-structures-migration.mjs";
+import { applyPaymentTestAccess, planPaymentTestAccess } from "../../scripts/payment-test-access-migration.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const apiDir = join(root, "artifacts/api-server");
@@ -34,6 +35,7 @@ try {
   await owner.query(schema);
   // Exercise the scoped migration rather than accepting Drizzle's approximation
   // of its triggers, cross-table guards and operational registry.
+  await owner.query("DROP TABLE sf_replit_payment_test_access CASCADE");
   await owner.query(`DROP TABLE sf_wallet_payment_reservations,sf_payment_confirmations,
     sf_payment_attempts,sf_payment_intents CASCADE`);
   await owner.query("ALTER TABLE sf_operator_catalog DROP COLUMN logo_data, DROP COLUMN logo_content_type");
@@ -110,6 +112,26 @@ try {
     const repeat = await planPaymentStructures(migrationClient);
     assert.equal(repeat.alreadyApplied, true);
     assert.deepEqual(await applyPaymentStructures(migrationClient, repeat.fingerprint), { applied: false, alreadyApplied: true });
+    const accessPlan = await planPaymentTestAccess(migrationClient);
+    const failAccessBeforeCommit = { query: (text, values) => {
+      if (String(text).includes("INSERT INTO public.sf_payment_schema_versions") &&
+        values?.[0] === "replit-payment-test-access") {
+        throw Object.assign(new Error("Synthetic isolated access migration failure"), { code: "FIXTURE_REGISTRY_FAILURE" });
+      }
+      return migrationClient.query(text, values);
+    } };
+    await assert.rejects(
+      applyPaymentTestAccess(failAccessBeforeCommit, accessPlan.fingerprint),
+      { code: "FIXTURE_REGISTRY_FAILURE" },
+    );
+    assert.equal((await planPaymentTestAccess(migrationClient)).fingerprint, accessPlan.fingerprint);
+    await applyPaymentTestAccess(migrationClient, accessPlan.fingerprint);
+    const accessRepeat = await planPaymentTestAccess(migrationClient);
+    assert.equal(accessRepeat.alreadyApplied, true);
+    assert.deepEqual(
+      await applyPaymentTestAccess(migrationClient, accessRepeat.fingerprint),
+      { applied: false, alreadyApplied: true },
+    );
   } finally { migrationClient.release(); }
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
