@@ -25,6 +25,90 @@ tags:
   - name: pricing
     description: Public operator availability and customer pricing.
 paths:
+  /DMgrgmt-1np5g23g12bGFtMwh/network-defense:
+    get:
+      operationId: getAdminNetworkDefense
+      tags: [admin]
+      summary: Read automatic blocks and explicitly trusted IPs
+      responses:
+        "200":
+          description: Server-owned defense state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkDefenseStatus"
+        "503":
+          description: Administrator access or storage unavailable
+  /DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions:
+    post:
+      operationId: createAdminNetworkException
+      tags: [admin]
+      summary: Exempt one IP from automatic detection only, never manual bans or authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IpBlockInput"
+      responses:
+        "201":
+          description: Exception recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkException"
+        "409":
+          description: Already trusted or manually blocked
+  /DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions/{id}/revoke:
+    post:
+      operationId: revokeAdminNetworkException
+      tags: [admin]
+      summary: Revoke a trusted IP using its current version
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IpBlockRevocation"
+      responses:
+        "200":
+          description: Exception revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkException"
+        "409":
+          description: Stale version or already revoked
+  /DMgrgmt-1np5g23g12bGFtMwh/network-defense/blocks/{id}/release:
+    post:
+      operationId: releaseAdminAutomaticBlock
+      tags: [admin]
+      summary: Release an automatic block without changing any manual ban
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IpBlockRevocation"
+      responses:
+        "200":
+          description: Automatic block released
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomaticIpBlock"
+        "409":
+          description: Stale version or no active block
   /DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist:
     get:
       operationId: listAdminIpBlocks
@@ -2564,6 +2648,49 @@ components:
       in: cookie
       name: __Host-sendflow_session
   schemas:
+    AutomaticIpBlock:
+      type: object
+      required: [id, ipAddress, blockedAt, banCount, rule, version, active, trusted]
+      properties:
+        id: { type: string, format: uuid }
+        ipAddress: { type: string }
+        blockedAt: { type: [string, "null"], format: date-time }
+        banCount: { type: integer }
+        active: { type: boolean }
+        trusted: { type: boolean }
+        rule: { type: [string, "null"] }
+        version: { type: integer }
+    NetworkException:
+      type: object
+      required: [id, ipAddress, reason, createdBy, createdAt, revokedAt, version]
+      properties:
+        id: { type: string, format: uuid }
+        ipAddress: { type: string }
+        reason: { type: string }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        revokedAt: { type: [string, "null"], format: date-time }
+        version: { type: integer }
+    NetworkDefensePolicy:
+      type: object
+      required: [requestsPerMinute, probesPerTenMinutes, automaticBlocksPermanent]
+      properties:
+        requestsPerMinute: { type: integer }
+        probesPerTenMinutes: { type: integer }
+        automaticBlocksPermanent: { type: boolean, enum: [true] }
+    NetworkDefenseStatus:
+      type: object
+      required: [blocks, exceptions, policy, requesterIp]
+      properties:
+        blocks:
+          type: array
+          items: { $ref: "#/components/schemas/AutomaticIpBlock" }
+        exceptions:
+          type: array
+          items: { $ref: "#/components/schemas/NetworkException" }
+        policy:
+          $ref: "#/components/schemas/NetworkDefensePolicy"
+        requesterIp: { type: [string, "null"] }
     IpBlockInput:
       type: object
       additionalProperties: false

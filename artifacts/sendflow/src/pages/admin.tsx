@@ -43,6 +43,7 @@ import { AdminActionDialog } from '@/components/admin-action-dialog';
 import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
 import AdminIpBlocklist from '@/components/admin-ip-blocklist';
+import AdminNetworkDefense from '@/components/admin-network-defense';
 import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -156,7 +157,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'ip-blocklist';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'ip-blocklist' | 'network-defense';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -175,6 +176,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'operator-pricing': { title: 'Opérateurs et tarifs', eyebrow: 'Catalogue client' },
   'registration-settings': { title: 'Inscription', eyebrow: 'Sécurité des comptes' },
   'ip-blocklist': { title: 'Blocage d’adresses IP', eyebrow: 'Sécurité réseau' },
+  'network-defense': { title: 'Autodéfense', eyebrow: 'Sécurité réseau' },
 };
 
 const navGroups: Array<{
@@ -193,6 +195,7 @@ const navGroups: Array<{
       { href: adminRoute('/login-activity'), label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
       { href: adminRoute('/otp-activity'), label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
       { href: adminRoute('/ip-blocklist'), label: 'Blocage IP', section: 'ip-blocklist', icon: ShieldCheck },
+      { href: adminRoute('/network-defense'), label: 'Autodéfense', section: 'network-defense', icon: ShieldCheck },
     ],
   },
   {
@@ -2469,6 +2472,7 @@ export function AdminRouter() {
   const [isOperatorPricing] = useRoute(adminRoute('/operator-pricing'));
   const [isRegistrationSettings] = useRoute(adminRoute('/registration-settings'));
   const [isIpBlocklist] = useRoute(adminRoute('/ip-blocklist'));
+  const [isNetworkDefense] = useRoute(adminRoute('/network-defense'));
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -2484,6 +2488,7 @@ export function AdminRouter() {
   if (isAggregators) return <AggregatorsPage />;
   if (isOperatorPricing) return <AdminShell section="operator-pricing"><AdminOperatorPricingPage /></AdminShell>;
   if (isRegistrationSettings) return <RegistrationSettingsPage />;
+  if (isNetworkDefense) return <AdminShell section="network-defense"><AdminNetworkDefense /></AdminShell>;
   if (isIpBlocklist) return <AdminShell section="ip-blocklist"><AdminIpBlocklist /></AdminShell>;
   return <OverviewPage />;
 }

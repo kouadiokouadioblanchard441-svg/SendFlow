@@ -5,6 +5,44 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface AutomaticIpBlock {
+  id: string;
+  ipAddress: string;
+  /** @nullable */
+  blockedAt: string | null;
+  banCount: number;
+  active: boolean;
+  trusted: boolean;
+  /** @nullable */
+  rule: string | null;
+  version: number;
+}
+
+export interface NetworkException {
+  id: string;
+  ipAddress: string;
+  reason: string;
+  createdBy: string;
+  createdAt: string;
+  /** @nullable */
+  revokedAt: string | null;
+  version: number;
+}
+
+export interface NetworkDefensePolicy {
+  requestsPerMinute: number;
+  probesPerTenMinutes: number;
+  automaticBlocksPermanent: true;
+}
+
+export interface NetworkDefenseStatus {
+  blocks: AutomaticIpBlock[];
+  exceptions: NetworkException[];
+  policy: NetworkDefensePolicy;
+  /** @nullable */
+  requesterIp: string | null;
+}
+
 export interface IpBlockInput {
   /**
      * @minLength 2

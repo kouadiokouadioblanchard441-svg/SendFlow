@@ -24,6 +24,7 @@
     ".": "./src/index.ts",
     "./ip-blocklist": "./src/ip-blocklist.ts",
     "./ip-access-policy": "./src/ip-access-policy.ts",
+    "./network-defense": "./src/network-defense.ts",
     "./schema": "./src/schema/index.ts"
   }
 }

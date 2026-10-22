@@ -1,10 +1,11 @@
 // Server-only entry point. Never import this module into browser source.
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { QueryConfig } from "pg";
-import { pool } from "./client";
-import { normalizeIp, requestIp, trustedProxyHops } from "./ip-access-policy";
+import { pool } from "./client.ts";
+import { normalizeIp, requestIp, trustedProxyHops } from "./ip-access-policy.ts";
+import { evaluateNetworkDefense } from "./network-defense.ts";
 
-export { normalizeIp, isBlockableIp, requestIp, trustedProxyHops } from "./ip-access-policy";
+export { normalizeIp, isBlockableIp, requestIp, trustedProxyHops } from "./ip-access-policy.ts";
 
 export async function isIpBlocked(ip: string): Promise<boolean> {
   const normalized = normalizeIp(ip);
@@ -36,6 +37,10 @@ export async function enforceIpAccess(
   if (!ip) return deny(403, "Accès refusé.");
   try {
     if (await lookup(ip)) return deny(403, "Accès refusé.");
+    const decision = await evaluateNetworkDefense(req, ip);
+    if (!decision.allowed) {
+      return deny(decision.status, "Accès refusé.");
+    }
     return true;
   } catch {
     // Never turn a missing table/DB outage into an implicit permission.

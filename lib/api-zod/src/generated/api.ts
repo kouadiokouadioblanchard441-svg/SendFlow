@@ -9,6 +9,126 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Read automatic blocks and explicitly trusted IPs
+ */
+export const GetAdminNetworkDefenseResponse = zod.object({
+  "blocks": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "blockedAt": zod.coerce.date().nullable(),
+  "banCount": zod.number().int(),
+  "active": zod.boolean(),
+  "trusted": zod.boolean(),
+  "rule": zod.string().nullable(),
+  "version": zod.number().int()
+})),
+  "exceptions": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "reason": zod.string(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "version": zod.number().int()
+})),
+  "policy": zod.object({
+  "requestsPerMinute": zod.number().int(),
+  "probesPerTenMinutes": zod.number().int(),
+  "automaticBlocksPermanent": zod.literal(true)
+}),
+  "requesterIp": zod.string().nullable()
+})
+
+
+/**
+ * @summary Exempt one IP from automatic detection only, never manual bans or authentication
+ */
+export const createAdminNetworkExceptionBodyIpAddressMin = 2;
+export const createAdminNetworkExceptionBodyIpAddressMax = 45;
+
+export const createAdminNetworkExceptionBodyReasonMin = 3;
+export const createAdminNetworkExceptionBodyReasonMax = 500;
+
+
+
+export const CreateAdminNetworkExceptionBody = zod.object({
+  "ipAddress": zod.string().min(createAdminNetworkExceptionBodyIpAddressMin).max(createAdminNetworkExceptionBodyIpAddressMax),
+  "reason": zod.string().min(createAdminNetworkExceptionBodyReasonMin).max(createAdminNetworkExceptionBodyReasonMax)
+})
+
+export const CreateAdminNetworkExceptionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "reason": zod.string(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "version": zod.number().int()
+})
+
+
+/**
+ * @summary Revoke a trusted IP using its current version
+ */
+export const RevokeAdminNetworkExceptionParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const revokeAdminNetworkExceptionBodyExpectedVersionMax = 2147483646;
+
+export const revokeAdminNetworkExceptionBodyReasonMin = 3;
+export const revokeAdminNetworkExceptionBodyReasonMax = 500;
+
+
+
+export const RevokeAdminNetworkExceptionBody = zod.object({
+  "expectedVersion": zod.number().int().min(1).max(revokeAdminNetworkExceptionBodyExpectedVersionMax),
+  "reason": zod.string().min(revokeAdminNetworkExceptionBodyReasonMin).max(revokeAdminNetworkExceptionBodyReasonMax)
+})
+
+export const RevokeAdminNetworkExceptionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "reason": zod.string(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "version": zod.number().int()
+})
+
+
+/**
+ * @summary Release an automatic block without changing any manual ban
+ */
+export const ReleaseAdminAutomaticBlockParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const releaseAdminAutomaticBlockBodyExpectedVersionMax = 2147483646;
+
+export const releaseAdminAutomaticBlockBodyReasonMin = 3;
+export const releaseAdminAutomaticBlockBodyReasonMax = 500;
+
+
+
+export const ReleaseAdminAutomaticBlockBody = zod.object({
+  "expectedVersion": zod.number().int().min(1).max(releaseAdminAutomaticBlockBodyExpectedVersionMax),
+  "reason": zod.string().min(releaseAdminAutomaticBlockBodyReasonMin).max(releaseAdminAutomaticBlockBodyReasonMax)
+})
+
+export const ReleaseAdminAutomaticBlockResponse = zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "blockedAt": zod.coerce.date().nullable(),
+  "banCount": zod.number().int(),
+  "active": zod.boolean(),
+  "trusted": zod.boolean(),
+  "rule": zod.string().nullable(),
+  "version": zod.number().int()
+})
+
+
+/**
  * @summary List IP blocks with administrative authorization
  */
 export const listAdminIpBlocksQueryPageDefault = 1;

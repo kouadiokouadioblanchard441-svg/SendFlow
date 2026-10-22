@@ -83,7 +83,7 @@ export default function AdminIpBlocklist() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getListAdminIpBlocksQueryKey() });
   const data = query.data;
   const items = data?.items ?? [];
-  const accessDisabled = [401, 403].includes(errStatus(query.error) ?? 0);
+  const accessDisabled = query.isError || !data;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();

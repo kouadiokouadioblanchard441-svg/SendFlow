@@ -1,4 +1,5 @@
 export { db, pool } from "./client";
+export type { PoolClient } from "pg";
 export {
   and,
   asc,

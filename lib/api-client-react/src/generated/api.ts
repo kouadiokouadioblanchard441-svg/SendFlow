@@ -47,6 +47,7 @@ import type {
   AdminUserPage,
   AdminWalletAdjustmentRequest,
   AdminWalletAdjustmentResult,
+  AutomaticIpBlock,
   BannerInput,
   BannerUpdate,
   CreatePaymentAggregatorRequest,
@@ -85,6 +86,8 @@ import type {
   ListAdminTransactionsParams,
   ListAdminUsersParams,
   ManagedOperator,
+  NetworkDefenseStatus,
+  NetworkException,
   NewOperatorInput,
   OperatorUpdate,
   PhoneOtpRateLimitError,
@@ -130,6 +133,349 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetAdminNetworkDefenseUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense`
+}
+
+/**
+ * @summary Read automatic blocks and explicitly trusted IPs
+ */
+export const getAdminNetworkDefense = async ( options?: Parameters<typeof customFetch>[1]): Promise<NetworkDefenseStatus> => {
+
+  return customFetch<NetworkDefenseStatus>(getGetAdminNetworkDefenseUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminNetworkDefenseQueryKey = () => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense`
+    ] as const;
+    }
+
+
+export const getGetAdminNetworkDefenseQueryOptions = <TData = Awaited<ReturnType<typeof getAdminNetworkDefense>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminNetworkDefense>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminNetworkDefenseQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminNetworkDefense>>> = ({ signal }) => getAdminNetworkDefense({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminNetworkDefense>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminNetworkDefenseQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminNetworkDefense>>>
+export type GetAdminNetworkDefenseQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read automatic blocks and explicitly trusted IPs
+ */
+
+export function useGetAdminNetworkDefense<TData = Awaited<ReturnType<typeof getAdminNetworkDefense>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminNetworkDefense>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminNetworkDefenseQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAdminNetworkExceptionUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions`
+}
+
+/**
+ * @summary Exempt one IP from automatic detection only, never manual bans or authentication
+ */
+export const createAdminNetworkException = async (ipBlockInput: IpBlockInput, options?: Parameters<typeof customFetch>[1]): Promise<NetworkException> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<NetworkException>(getCreateAdminNetworkExceptionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(ipBlockInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminNetworkExceptionMutationKey = () => ['createAdminNetworkException'] as const;
+
+export const getCreateAdminNetworkExceptionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminNetworkException>>, TError,CreateAdminNetworkExceptionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminNetworkException>>, TError,CreateAdminNetworkExceptionMutationVariables, TContext> => {
+
+const mutationKey = getCreateAdminNetworkExceptionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminNetworkException>>, CreateAdminNetworkExceptionMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminNetworkException(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminNetworkExceptionMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminNetworkException>>>
+    export type CreateAdminNetworkExceptionMutationBody = BodyType<IpBlockInput>
+    export type CreateAdminNetworkExceptionMutationError = ErrorType<void>
+    export type CreateAdminNetworkExceptionMutationVariables = {data: BodyType<IpBlockInput>}
+
+    /**
+ * @summary Exempt one IP from automatic detection only, never manual bans or authentication
+ */
+export const useCreateAdminNetworkException = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminNetworkException>>, TError,CreateAdminNetworkExceptionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminNetworkException>>,
+        TError,
+        CreateAdminNetworkExceptionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateAdminNetworkExceptionMutationOptions(options));
+    }
+
+export const getRevokeAdminNetworkExceptionUrl = (id: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions/${id}/revoke`
+}
+
+/**
+ * @summary Revoke a trusted IP using its current version
+ */
+export const revokeAdminNetworkException = async (id: string,
+    ipBlockRevocation: IpBlockRevocation, options?: Parameters<typeof customFetch>[1]): Promise<NetworkException> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<NetworkException>(getRevokeAdminNetworkExceptionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(ipBlockRevocation)
+  }
+);}
+
+
+
+
+
+export const getRevokeAdminNetworkExceptionMutationKey = () => ['revokeAdminNetworkException'] as const;
+
+export const getRevokeAdminNetworkExceptionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeAdminNetworkException>>, TError,RevokeAdminNetworkExceptionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeAdminNetworkException>>, TError,RevokeAdminNetworkExceptionMutationVariables, TContext> => {
+
+const mutationKey = getRevokeAdminNetworkExceptionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeAdminNetworkException>>, RevokeAdminNetworkExceptionMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  revokeAdminNetworkException(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeAdminNetworkExceptionMutationResult = NonNullable<Awaited<ReturnType<typeof revokeAdminNetworkException>>>
+    export type RevokeAdminNetworkExceptionMutationBody = BodyType<IpBlockRevocation>
+    export type RevokeAdminNetworkExceptionMutationError = ErrorType<void>
+    export type RevokeAdminNetworkExceptionMutationVariables = {id: string;data: BodyType<IpBlockRevocation>}
+
+    /**
+ * @summary Revoke a trusted IP using its current version
+ */
+export const useRevokeAdminNetworkException = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeAdminNetworkException>>, TError,RevokeAdminNetworkExceptionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof revokeAdminNetworkException>>,
+        TError,
+        RevokeAdminNetworkExceptionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeAdminNetworkExceptionMutationOptions(options));
+    }
+
+export const getReleaseAdminAutomaticBlockUrl = (id: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense/blocks/${id}/release`
+}
+
+/**
+ * @summary Release an automatic block without changing any manual ban
+ */
+export const releaseAdminAutomaticBlock = async (id: string,
+    ipBlockRevocation: IpBlockRevocation, options?: Parameters<typeof customFetch>[1]): Promise<AutomaticIpBlock> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AutomaticIpBlock>(getReleaseAdminAutomaticBlockUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(ipBlockRevocation)
+  }
+);}
+
+
+
+
+
+export const getReleaseAdminAutomaticBlockMutationKey = () => ['releaseAdminAutomaticBlock'] as const;
+
+export const getReleaseAdminAutomaticBlockMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof releaseAdminAutomaticBlock>>, TError,ReleaseAdminAutomaticBlockMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof releaseAdminAutomaticBlock>>, TError,ReleaseAdminAutomaticBlockMutationVariables, TContext> => {
+
+const mutationKey = getReleaseAdminAutomaticBlockMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof releaseAdminAutomaticBlock>>, ReleaseAdminAutomaticBlockMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  releaseAdminAutomaticBlock(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReleaseAdminAutomaticBlockMutationResult = NonNullable<Awaited<ReturnType<typeof releaseAdminAutomaticBlock>>>
+    export type ReleaseAdminAutomaticBlockMutationBody = BodyType<IpBlockRevocation>
+    export type ReleaseAdminAutomaticBlockMutationError = ErrorType<void>
+    export type ReleaseAdminAutomaticBlockMutationVariables = {id: string;data: BodyType<IpBlockRevocation>}
+
+    /**
+ * @summary Release an automatic block without changing any manual ban
+ */
+export const useReleaseAdminAutomaticBlock = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof releaseAdminAutomaticBlock>>, TError,ReleaseAdminAutomaticBlockMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof releaseAdminAutomaticBlock>>,
+        TError,
+        ReleaseAdminAutomaticBlockMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReleaseAdminAutomaticBlockMutationOptions(options));
+    }
 
 export const getListAdminIpBlocksUrl = (params?: ListAdminIpBlocksParams,) => {
   const normalizedParams = new URLSearchParams();

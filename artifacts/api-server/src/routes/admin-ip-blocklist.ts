@@ -13,7 +13,7 @@ import { createIpBlock, IpBlockError, listIpBlocks, revokeIpBlock } from "../ser
 
 type Authorize = (req: Request, res: Response, permission?: AdminPermission) => string | null;
 
-async function mutationAllowed(req: Request, res: Response, actor: string) {
+export async function mutationAllowed(req: Request, res: Response, actor: string) {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine non autorisée." });
     return false;

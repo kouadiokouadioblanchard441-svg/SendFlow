@@ -37,6 +37,7 @@ export async function createIpBlock(actor: string, requestedIp: string, reason: 
   if (ipAddress === normalizeIp(actorIp)) throw new IpBlockError("Vous ne pouvez pas bloquer votre propre adresse IP.", 409);
   const cleanReason = auditReason(reason);
   return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${ipAddress},0))`);
     const [row] = await tx.insert(ipBlocklistTable).values({ ipAddress, reason: cleanReason, blockedBy: actor })
       .onConflictDoUpdate({
         target: ipBlocklistTable.ipAddress,

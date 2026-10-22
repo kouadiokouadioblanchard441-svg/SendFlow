@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import adminIpBlocklistRouter from "./admin-ip-blocklist";
+import adminNetworkDefenseRouter from "./admin-network-defense";
 import storageRouter from "./storage";
 import databaseRouter from "./database";
 import accountRouter from "./account";
@@ -37,6 +38,7 @@ router.use(registrationSettingsRouter);
 
 adminHandlers.use(adminRouter);
 adminHandlers.use(adminIpBlocklistRouter);
+adminHandlers.use(adminNetworkDefenseRouter);
 adminHandlers.use(adminActionsRouter);
 adminHandlers.use(adminLoginActivityRouter);
 adminHandlers.use(adminOtpActivityRouter);

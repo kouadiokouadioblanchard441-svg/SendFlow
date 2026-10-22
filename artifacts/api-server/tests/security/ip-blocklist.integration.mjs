@@ -134,7 +134,7 @@ test("Site HTML, SPA routes, assets and HEAD are blocked; DB failure fails close
       assert.equal((await request(server,path,{ip:"198.51.100.56"})).status,200);
     }
     assert.equal((await request(server,"/app.js",{method:"HEAD",ip:"198.51.100.55"})).status,403);
-    assert.equal((await request(server,"/.env")).status,404);
+    assert.equal((await request(server,"/.env")).status,403);
     assert.equal((await request(server,"/app.js.map")).status,404);
     await revokeIpBlock("fixture-security-admin",row.id,row.version,"Fixture cleanup");
     assert.equal((await request(server,"/",{ip:"198.51.100.55"})).status,200);

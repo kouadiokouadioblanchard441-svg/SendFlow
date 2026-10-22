@@ -51,6 +51,15 @@ try {
   await owner.query("DROP TABLE sf_ip_blocklist");
   await owner.query(ipMigration);
   await owner.query(ipMigration);
+  await owner.query("DROP TABLE sf_network_defense, sf_network_defense_allowlist, sf_network_defense_events");
+  const defenseMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-network-defense.sql"), "utf8");
+  await owner.query(defenseMigration);
+  await owner.query(defenseMigration);
+  await owner.query(`INSERT INTO sf_network_defense(ip_address,ban_count,blocked_until) VALUES
+    ('198.51.100.240',1,'2000-01-01'),('198.51.100.241',1,now()+interval '1 hour'),('198.51.100.242',1,NULL)`);
+  const permanentMigration=readFileSync(join(root,"lib/db/migrations/2026-10-22-network-defense-permanent.sql"),"utf8");
+  await owner.query(permanentMigration);
+  await owner.query(permanentMigration);
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app`);
@@ -81,6 +90,9 @@ try {
       export { createAdminIpBlocklistRouter } from "./src/routes/admin-ip-blocklist";
       export { createSiteServer } from "../sendflow/server/site-server";
       export { default as express } from "express";
+      export { createNetworkException, revokeNetworkException, releaseAutomaticBlock, readNetworkDefense } from "./src/services/network-defense";
+      export { createAdminNetworkDefenseRouter } from "./src/routes/admin-network-defense";
+      export { evaluateNetworkDefense } from "@workspace/db/network-defense";
     `, resolveDir: apiDir },
     outfile: runtime, bundle: true, platform: "node", format: "cjs", logLevel: "silent",
     plugins: [{ name: "external-installed-packages", setup(builder) {
