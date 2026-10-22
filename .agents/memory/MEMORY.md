@@ -23,3 +23,4 @@
 - [SendFlow data encryption](signup-data-encryption.md) — Keep transfers server-routed; encrypt ledger storage and application-encrypt personal identifiers without breaking SQL invariants.
 - [Safe HTTP logging](log-safety-boundaries.md) — HTTP middleware can override parent error serializers; protect both levels against credential and personal-data leaks.
 - [Strix upload failures](strix-upload-failures.md) — If cloud upload completion is invalid, check scan status and confirm any staged upload before retrying.
+- [Didit event ordering](didit-event-ordering.md) — Retry dispatch times change; order signed record updates and allow AML withdrawals of approval.

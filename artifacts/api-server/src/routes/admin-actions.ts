@@ -9,7 +9,6 @@ import {
   transactionsTable,
   usersTable,
   walletsTable,
-  walletLedgerTable,
 } from "@workspace/db";
 import {
   CreateAdminWalletAdjustmentBody,
@@ -22,6 +21,7 @@ import {
 } from "@workspace/api-zod";
 import { recordAdminAudit } from "../lib/admin-audit";
 import { respondAdminAuthError } from "./admin";
+import { executeAdminWalletAdjustment, WalletAdjustmentError } from "../services/wallet-adjustment";
 
 const router: IRouter = Router();
 
@@ -35,7 +35,7 @@ class AdminActionError extends Error {
 }
 
 function actionErrorResponse(res: Parameters<Parameters<IRouter["post"]>[1]>[1], error: unknown) {
-  if (error instanceof AdminActionError) {
+  if (error instanceof AdminActionError || error instanceof WalletAdjustmentError) {
     res.status(error.statusCode).json({ error: error.message });
     return;
   }
@@ -74,108 +74,7 @@ router.post("/users/:userId/wallet-adjustments", async (req, res): Promise<void>
   }
 
   try {
-    const result = await db.transaction(async (tx) => {
-      const [user] = await tx
-        .select({ id: usersTable.id, status: usersTable.status })
-        .from(usersTable)
-        .where(eq(usersTable.id, userId))
-        .for("update");
-
-      if (!user) throw new AdminActionError(404, "User not found");
-      if (user.status === "deleted") throw new AdminActionError(400, "Deleted users cannot receive wallet adjustments");
-
-      const [wallet] = await tx
-        .select()
-        .from(walletsTable)
-        .where(eq(walletsTable.userId, userId))
-        .for("update");
-
-      if (!wallet) throw new AdminActionError(404, "Wallet not found");
-      if (wallet.status !== "active") throw new AdminActionError(400, "Wallet is not active");
-
-      const [existing] = await tx
-        .select()
-        .from(walletLedgerTable)
-        .where(eq(walletLedgerTable.idempotencyKey, adjustment.idempotencyKey));
-
-      if (existing) {
-        if (
-          existing.userId !== userId
-          || existing.walletId !== wallet.id
-          || existing.direction !== adjustment.direction
-          || existing.amountMinor !== adjustment.amountMinor
-          || existing.reason !== adjustment.reason
-          || existing.adminUserId !== adminUserId
-          || existing.currency !== wallet.currency
-          || existing.balanceBeforeMinor !== adjustment.expectedBalanceMinor
-          || !Number.isSafeInteger(existing.balanceAfterMinor)
-          || existing.balanceAfterMinor !== (
-            existing.direction === "credit"
-              ? existing.balanceBeforeMinor + existing.amountMinor
-              : existing.balanceBeforeMinor - existing.amountMinor
-          )
-        ) {
-          throw new AdminActionError(409, "Idempotency key belongs to another wallet adjustment");
-        }
-
-        return { entry: existing, duplicate: true };
-      }
-
-      if (!Number.isSafeInteger(wallet.balanceMinor) || wallet.balanceMinor < 0) {
-        throw new AdminActionError(409, "Wallet balance is outside the supported safe range");
-      }
-
-      if (adjustment.expectedBalanceMinor !== wallet.balanceMinor) {
-        throw new AdminActionError(409, "Wallet balance changed; refresh before retrying");
-      }
-
-      const balanceBeforeMinor = wallet.balanceMinor;
-      const balanceAfterMinor = adjustment.direction === "credit"
-        ? balanceBeforeMinor + adjustment.amountMinor
-        : balanceBeforeMinor - adjustment.amountMinor;
-
-      if (!Number.isSafeInteger(balanceAfterMinor)) {
-        throw new AdminActionError(400, "Resulting wallet balance is outside the safe integer range");
-      }
-      if (balanceAfterMinor < 0) {
-        throw new AdminActionError(400, "Wallet balance cannot become negative");
-      }
-
-      const [entry] = await tx
-        .insert(walletLedgerTable)
-        .values({
-          walletId: wallet.id,
-          userId,
-          direction: adjustment.direction,
-          amountMinor: adjustment.amountMinor,
-          balanceBeforeMinor,
-          balanceAfterMinor,
-          currency: wallet.currency,
-          reason: adjustment.reason,
-          adminUserId,
-          idempotencyKey: adjustment.idempotencyKey,
-        })
-        .returning();
-
-      if (!entry) throw new Error("Wallet ledger entry was not created");
-
-      await tx
-        .update(walletsTable)
-        .set({ balanceMinor: balanceAfterMinor, updatedAt: new Date() })
-        .where(eq(walletsTable.id, wallet.id));
-
-      await recordAdminAudit({
-        adminUserId,
-        action: adjustment.direction === "credit" ? "credit_wallet" : "debit_wallet",
-        resourceType: "wallet",
-        resourceId: wallet.id,
-        reason: adjustment.reason,
-        amountMinor: adjustment.amountMinor,
-        currency: wallet.currency,
-      }, tx);
-
-      return { entry, duplicate: false };
-    });
+    const result = await executeAdminWalletAdjustment(adminUserId, userId, adjustment);
 
     res.status(result.duplicate ? 200 : 201).json({
       ledgerEntryId: result.entry.id,
@@ -189,7 +88,7 @@ router.post("/users/:userId/wallet-adjustments", async (req, res): Promise<void>
       duplicate: result.duplicate,
     });
   } catch (error) {
-    if (error instanceof AdminActionError) {
+    if (error instanceof AdminActionError || error instanceof WalletAdjustmentError) {
       actionErrorResponse(res, error);
       return;
     }

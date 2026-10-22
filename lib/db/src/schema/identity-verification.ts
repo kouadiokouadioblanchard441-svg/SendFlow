@@ -14,6 +14,7 @@ export const identityVerificationsTable = pgTable("sf_identity_verifications", {
   sandboxScenario: text("sandbox_scenario"),
   lastWebhookEventId: text("last_webhook_event_id"),
   lastWebhookType: text("last_webhook_type"),
+  lastProviderEventAt: timestamp("last_provider_event_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -23,6 +24,10 @@ export const identityWebhookEventsTable = pgTable("sf_identity_webhook_events", 
   providerSessionId: text("provider_session_id").notNull(),
   eventType: text("event_type").notNull(),
   matchedVerification: boolean("matched_verification").notNull().default(false),
+  payloadDigest: text("payload_digest"),
+  encryptedPayload: text("encrypted_payload"),
+  status: text("status"),
+  statusApplied: boolean("status_applied"),
   receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

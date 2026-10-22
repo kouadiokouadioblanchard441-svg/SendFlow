@@ -17,7 +17,7 @@ const migration = readFileSync(
 
 test("Didit reservation is serialized and committed separately from the provider call", () => {
   const reservationStart = route.indexOf("async function reserveDiditSessionAttempt");
-  const reservationEnd = route.indexOf("\nfunction statusRank", reservationStart);
+  const reservationEnd = route.indexOf('\nrouter.get("/me/account-limit"', reservationStart);
   assert.notEqual(reservationStart, -1);
   assert.notEqual(reservationEnd, -1);
 

@@ -1,10 +1,8 @@
 import {
   and,
   db,
-  desc,
   eq,
   gte,
-  identityVerificationsTable,
   inArray,
   lt,
   sql,
@@ -15,28 +13,10 @@ import {
   getUtcMonthRange,
   mapDiditStatusToAccountLimitStatus,
 } from "./account-limit-policy";
+import { loadLatestIdentityVerification } from "../data/identity-verification";
 
 export async function getAccountLimitSnapshot(userId: string, now = new Date()) {
-  const [approvedVerification] = await db
-    .select({ status: identityVerificationsTable.status })
-    .from(identityVerificationsTable)
-    .where(
-      and(
-        eq(identityVerificationsTable.userId, userId),
-        eq(identityVerificationsTable.status, "Approved"),
-      ),
-    )
-    .orderBy(desc(identityVerificationsTable.createdAt))
-    .limit(1);
-
-  const [latestVerification] = approvedVerification
-    ? [approvedVerification]
-    : await db
-        .select({ status: identityVerificationsTable.status })
-        .from(identityVerificationsTable)
-        .where(eq(identityVerificationsTable.userId, userId))
-        .orderBy(desc(identityVerificationsTable.createdAt))
-        .limit(1);
+  const latestVerification = await loadLatestIdentityVerification(userId);
 
   const status = mapDiditStatusToAccountLimitStatus(latestVerification?.status ?? null);
   const monthlyLimit = getMonthlyAccountLimit(status);

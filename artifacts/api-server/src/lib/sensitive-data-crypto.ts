@@ -14,7 +14,8 @@ export type SensitiveDataPurpose =
   | "contact-phone"
   | "transaction-sender-phone"
   | "transaction-recipient-phone"
-  | "provider-reference";
+  | "provider-reference"
+  | "identity-webhook-payload";
 
 function deriveKey(purpose: "encryption" | "lookup"): Buffer {
   const masterKey = process.env.CUSTOMER_PII_ENCRYPTION_KEY;

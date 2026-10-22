@@ -39,7 +39,10 @@ import {
 import {
   ACTIVE_DIDIT_VERIFICATION_STATUSES,
   isReusableDiditVerificationStatus,
+  canApplyDiditStatusTransition,
 } from "../lib/didit-verification-policy";
+import { loadLatestIdentityVerification } from "../data/identity-verification";
+import { prepareIdentityWebhookReceipt, getDiditRecordUpdateTime } from "../lib/identity-webhook-receipt";
 import {
   DIDIT_SESSION_ATTEMPT_LIMIT,
   DIDIT_SESSION_ATTEMPT_WINDOW_MS,
@@ -97,32 +100,7 @@ async function reserveDiditSessionAttempt(userId: string) {
     const inactiveAccount = inactiveAccountMessage(lockedUser.status);
     if (inactiveAccount) return { kind: "blocked", message: inactiveAccount } as const;
 
-    const [approvedVerification] = await tx
-      .select()
-      .from(identityVerificationsTable)
-      .where(
-        and(
-          eq(identityVerificationsTable.userId, userId),
-          eq(identityVerificationsTable.status, "Approved"),
-        ),
-      )
-      .orderBy(desc(identityVerificationsTable.createdAt))
-      .limit(1);
-    if (approvedVerification) {
-      return { kind: "reused", verification: approvedVerification } as const;
-    }
-
-    const [existing] = await tx
-      .select()
-      .from(identityVerificationsTable)
-      .where(
-        and(
-          eq(identityVerificationsTable.userId, userId),
-          inArray(identityVerificationsTable.status, ACTIVE_DIDIT_VERIFICATION_STATUSES),
-        ),
-      )
-      .orderBy(desc(identityVerificationsTable.createdAt))
-      .limit(1);
+    const existing = await loadLatestIdentityVerification(userId, tx);
     if (existing && isReusableDiditVerificationStatus(existing.status)) {
       return { kind: "reused", verification: existing } as const;
     }
@@ -209,14 +187,6 @@ async function reserveDiditSessionAttempt(userId: string) {
   });
 }
 
-function statusRank(status: string) {
-  if (status === "Approved") return 100;
-  if (status === "In Review") return 70;
-  if (["Declined", "Expired", "Kyc Expired", "Abandoned"].includes(status)) return 60;
-  if (["In Progress", "Awaiting User", "Resubmitted"].includes(status)) return 20;
-  return 0;
-}
-
 router.get("/me/account-limit", async (req, res): Promise<void> => {
   const session = await requireCustomerSession(req, res, true);
   if (!session) return;
@@ -261,25 +231,7 @@ router.get("/me/identity-verification", async (req, res): Promise<void> => {
       return;
     }
 
-    const [approvedVerification] = await db
-      .select()
-      .from(identityVerificationsTable)
-      .where(
-        and(
-          eq(identityVerificationsTable.userId, userId),
-          eq(identityVerificationsTable.status, "Approved"),
-        ),
-      )
-      .orderBy(desc(identityVerificationsTable.createdAt))
-      .limit(1);
-    const [verification] = approvedVerification
-      ? [approvedVerification]
-      : await db
-          .select()
-          .from(identityVerificationsTable)
-          .where(eq(identityVerificationsTable.userId, userId))
-          .orderBy(desc(identityVerificationsTable.createdAt))
-          .limit(1);
+    const verification = await loadLatestIdentityVerification(userId);
 
     res.json(
       GetIdentityVerificationStatusResponse.parse({
@@ -545,13 +497,20 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Unknown Didit verification status" });
     return;
   }
+  const providerEventAt = getDiditRecordUpdateTime(req.body);
+  if (!providerEventAt) {
+    res.status(400).json({ error: "Invalid Didit record update timestamp" });
+    return;
+  }
 
   try {
+    const receipt = prepareIdentityWebhookReceipt(req.body);
     const outcome = await db.transaction(async (tx) => {
       const [existingEvent] = await tx
         .select({
           providerSessionId: identityWebhookEventsTable.providerSessionId,
           eventType: identityWebhookEventsTable.eventType,
+          payloadDigest: identityWebhookEventsTable.payloadDigest,
         })
         .from(identityWebhookEventsTable)
         .where(eq(identityWebhookEventsTable.eventId, eventId))
@@ -560,7 +519,8 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
       if (existingEvent) {
         const matches =
           existingEvent.providerSessionId === providerSessionId &&
-          existingEvent.eventType === eventType;
+          existingEvent.eventType === eventType &&
+          (existingEvent.payloadDigest === null || existingEvent.payloadDigest === receipt.payloadDigest);
         return { duplicate: matches, conflict: !matches };
       }
 
@@ -576,7 +536,7 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
 
       const [event] = await tx
         .insert(identityWebhookEventsTable)
-        .values({ eventId, providerSessionId, eventType })
+        .values({ eventId, providerSessionId, eventType, status, ...receipt })
         .onConflictDoNothing()
         .returning();
 
@@ -585,22 +545,28 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
           .select({
             providerSessionId: identityWebhookEventsTable.providerSessionId,
             eventType: identityWebhookEventsTable.eventType,
+            payloadDigest: identityWebhookEventsTable.payloadDigest,
           })
           .from(identityWebhookEventsTable)
           .where(eq(identityWebhookEventsTable.eventId, eventId));
         const matches =
           concurrentEvent?.providerSessionId === providerSessionId &&
-          concurrentEvent.eventType === eventType;
+          concurrentEvent.eventType === eventType &&
+          (concurrentEvent.payloadDigest === null || concurrentEvent.payloadDigest === receipt.payloadDigest);
         return { duplicate: matches, conflict: !matches };
       }
 
-      if (statusRank(status) >= statusRank(verification.status)) {
+      const statusApplied = canApplyDiditStatusTransition(
+        verification.status, status, providerEventAt, verification.lastProviderEventAt,
+      );
+      if (statusApplied) {
         await tx
           .update(identityVerificationsTable)
           .set({
             status,
             lastWebhookEventId: eventId,
             lastWebhookType: eventType,
+            lastProviderEventAt: providerEventAt,
             updatedAt: new Date(),
           })
           .where(eq(identityVerificationsTable.id, verification.id));
@@ -608,7 +574,7 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
 
       await tx
         .update(identityWebhookEventsTable)
-        .set({ matchedVerification: true })
+        .set({ matchedVerification: true, statusApplied })
         .where(eq(identityWebhookEventsTable.eventId, eventId));
 
       return { duplicate: false, conflict: false };

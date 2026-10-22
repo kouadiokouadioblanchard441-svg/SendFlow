@@ -14,7 +14,7 @@ import test from "node:test";
 const adminActions = readFileSync(
   new URL("../../src/routes/admin-actions.ts", import.meta.url),
   "utf8",
-);
+) + readFileSync(new URL("../../src/services/wallet-adjustment.ts", import.meta.url), "utf8");
 const walletSchema = readFileSync(
   new URL("../../../../lib/db/src/schema/wallets.ts", import.meta.url),
   "utf8",

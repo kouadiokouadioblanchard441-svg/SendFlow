@@ -308,3 +308,17 @@ mtime_ms = 1790432613715
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:be4e45fd-f58a-4d75-911e-4566f8276a28/deae0931-4b99-4b21-8124-e4079e6e2d45/4c270fb7-5ac4-4a43-9a59-58c27ca8ebdb"
 storage_version_token = "1790432796419630"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "X4gQeKZqbPZo0pthVnsoC"
+uri = "file://docs/security/sendflow-financial-hardening-2026-10-22.md"
+type = "text"
+title = "SendFlow — rapport des corrections serveur"
+description = "Architecture, fichiers modifiés, tests réellement exécutés, migration non appliquée à Neon et risques restants."
+logical_id = "cee7577b-ea34-479a-a522-cbad4d685a33"
+content_hash = "sha256:a274bb43fbe631ba0b3f804e61b3ecaa7900918c5feab1a907c489cfe2461dbd"
+size = 14661
+mtime_ms = 1792660190809
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/cee7577b-ea34-479a-a522-cbad4d685a33/2cf2e538-3b83-4fe4-9461-8e75bf5233b2"
+storage_version_token = "1792660231548235"
+content_type = "text/markdown"

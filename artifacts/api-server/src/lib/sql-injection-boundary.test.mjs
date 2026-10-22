@@ -31,7 +31,7 @@ async function collectRuntimeFiles(directory) {
 
 test("API runtime keeps SQL behind parameterized Drizzle statements", async () => {
   const runtimeFiles = await Promise.all(
-    ["routes", "lib"].map((directory) =>
+    ["routes", "lib", "services", "data"].map((directory) =>
       collectRuntimeFiles(path.join(sourceDirectory, directory)),
     ),
   ).then((groups) => groups.flat());

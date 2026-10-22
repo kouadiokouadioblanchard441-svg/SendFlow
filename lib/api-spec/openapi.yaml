@@ -604,6 +604,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: The authenticated customer exceeded 60 quote requests in a minute.
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds before retrying.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
         "503":
           description: Pricing or account storage is unavailable.
           content:
@@ -4061,6 +4072,14 @@ components:
     DiditWebhookPayload:
       type: object
       properties:
+        created_at:
+          type: integer
+          minimum: 1
+          description: Signed provider record update time, in Unix seconds; not the refreshed dispatch time.
+        timestamp:
+          type: integer
+          minimum: 1
+          description: Dispatch time, which Didit refreshes on retry.
         event_id:
           type: string
           minLength: 1
@@ -4075,7 +4094,7 @@ components:
           maxLength: 128
         status:
           type: string
-      required: [event_id, session_id, webhook_type, status]
+      required: [event_id, session_id, webhook_type, status, created_at]
     WebhookReceipt:
       type: object
       properties:

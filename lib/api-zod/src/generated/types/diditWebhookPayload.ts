@@ -8,6 +8,16 @@
 
 export interface DiditWebhookPayload {
   /**
+     * Signed provider record update time, in Unix seconds; not the refreshed dispatch time.
+     * @minimum 1
+     */
+  created_at: number;
+  /**
+     * Dispatch time, which Didit refreshes on retry.
+     * @minimum 1
+     */
+  timestamp?: number;
+  /**
      * @minLength 1
      * @maxLength 255
      */
