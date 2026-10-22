@@ -1144,6 +1144,11 @@ export interface PublicPricingOperator {
   shortName: string;
   initials: string;
   brand: PublicPricingOperatorBrand;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  logoUrl: string | null;
   requiresOtp: boolean;
   /** @nullable */
   otpCommand: string | null;
@@ -1216,6 +1221,11 @@ export interface ManagedOperator {
   shortName: string;
   initials: string;
   brand: ManagedOperatorBrand;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  logoUrl: string | null;
   enabled: boolean;
   /** @minimum 1 */
   version: number;

@@ -30,6 +30,10 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  await owner.query("ALTER TABLE sf_operator_catalog DROP COLUMN logo_data, DROP COLUMN logo_content_type");
+  const operatorLogoMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-operator-logos.sql"), "utf8");
+  await owner.query(operatorLogoMigration);
+  await owner.query(operatorLogoMigration);
   // Simulate upgrading the old schema, including an existing metadata-only receipt.
   await owner.query(`DROP TABLE sf_api_request_limits;
     ALTER TABLE sf_identity_verifications DROP COLUMN last_provider_event_at;
@@ -74,6 +78,8 @@ try {
   await build({
     stdin: { contents: `
       export { default as app } from "./src/app";
+      export { default as operatorPricingRouter } from "./src/routes/operator-pricing";
+      export { createAdminOperatorLogoRoutes } from "./src/routes/admin-operator-logos";
       export { pool } from "@workspace/db";
       export { executeAdminWalletAdjustment } from "./src/services/wallet-adjustment";
       export { consumeTransferQuoteQuota } from "./src/data/transfer-quote-quota";

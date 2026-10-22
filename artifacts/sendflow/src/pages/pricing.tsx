@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
+import { OperatorMark } from '@/components/operator-mark';
 import { useSeo } from '@/lib/seo';
 import {
   formatPricingFeeRate,
@@ -18,13 +19,7 @@ import {
   type PricingCountry,
   type PricingOperator,
 } from '@/lib/pricing';
-import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import pricingIllustration from '@assets/generated_images/sendflow-pricing-fees-3d-transparent.png';
-
-function OperatorMark({ operator }: { operator: PricingOperator }) {
-  if (operator.brand === 'wave') return <img src={waveLogo} alt="" />;
-  return <strong>{operator.initials}</strong>;
-}
 
 function CategoryIcon({ categoryId }: { categoryId: PricingCategoryId }) {
   if (categoryId === 'deposit') return <Store size={19} strokeWidth={2.1} />;

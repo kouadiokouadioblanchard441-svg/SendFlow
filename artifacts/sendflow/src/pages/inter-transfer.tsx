@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
+import { OperatorMark } from '@/components/operator-mark';
 import {
   getGetPublicPricingQueryKey,
   useGetPublicPricing,
@@ -32,7 +33,6 @@ import {
   MAX_TRANSACTION_AMOUNT,
   parseWholeAmount,
 } from '@/lib/transfer-validation';
-import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
@@ -44,6 +44,8 @@ type TransferOperator = {
   id: string;
   name: string;
   shortName: string;
+  initials: string;
+  logoUrl: string | null;
   brand: OperatorBrand;
   country: CountryCode;
   prefix: string;
@@ -77,23 +79,6 @@ type ContactsNavigator = Navigator & {
 
 const savedContacts: SavedContact[] = [];
 
-function OperatorMark({ operator }: { operator: TransferOperator }) {
-  if (operator.brand === 'wave') {
-    return <img src={waveLogo} alt="" />;
-  }
-
-  if (operator.brand === 'orange') {
-    return (
-      <>
-        <strong>Orange</strong>
-        <small>Money</small>
-      </>
-    );
-  }
-
-  return <strong>{operator.shortName}</strong>;
-}
-
 export default function InterNetworkTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
@@ -106,6 +91,8 @@ export default function InterNetworkTransferPage() {
         id: item.id,
         name: item.name,
         shortName: item.shortName,
+        initials: item.initials,
+        logoUrl: item.logoUrl,
         brand: item.brand,
         country: 'ci',
         prefix: pricingCountry?.dialCode ?? '+225',

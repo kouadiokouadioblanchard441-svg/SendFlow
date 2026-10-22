@@ -1,14 +1,7 @@
 import { ArrowRight } from 'lucide-react';
-import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
-import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
+import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
 import { operatorNames, type OperatorCode, type Transaction } from '@/lib/transactions';
-
-const operatorLogos: Partial<Record<OperatorCode, string>> = {
-  sendflow: sendflowMark,
-  mixx: mixxLogo,
-  wave: waveLogo,
-};
 
 export function OperatorLogo({ operator }: { operator: OperatorCode }) {
   if (operator === 'sendflow') {
@@ -19,27 +12,9 @@ export function OperatorLogo({ operator }: { operator: OperatorCode }) {
     );
   }
 
-  if (operator === 'mixx' || operator === 'wave') {
-    return (
-      <span className={`sendflow-transaction-logo is-${operator}`}>
-        <img src={operatorLogos[operator]} alt="" />
-      </span>
-    );
-  }
-
   return (
     <span className={`sendflow-transaction-logo is-${operator}`}>
-      <strong>
-        {operator === 'orange'
-          ? 'O'
-          : operator === 'mtn'
-            ? 'MTN'
-            : operator === 'tmoney'
-              ? 'T'
-              : operator === 'moov'
-                ? 'M'
-                : '—'}
-      </strong>
+      <CatalogOperatorIcon operatorCode={operator} />
     </span>
   );
 }

@@ -3156,6 +3156,83 @@ export function useGetPublicPricing<TData = Awaited<ReturnType<typeof getPublicP
 
 
 
+export const getGetPublicOperatorLogoUrl = (operatorId: string,) => {
+
+
+
+
+  return `/api/operators/${operatorId}/logo`
+}
+
+/**
+ * @summary Get an operator logo stored in the catalog
+ */
+export const getPublicOperatorLogo = async (operatorId: string, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetPublicOperatorLogoUrl(operatorId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicOperatorLogoQueryKey = (operatorId: string,) => {
+    return [
+    `/api/operators/${operatorId}/logo`
+    ] as const;
+    }
+
+
+export const getGetPublicOperatorLogoQueryOptions = <TData = Awaited<ReturnType<typeof getPublicOperatorLogo>>, TError = ErrorType<ErrorEnvelope>>(operatorId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicOperatorLogo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicOperatorLogoQueryKey(operatorId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicOperatorLogo>>> = ({ signal }) => getPublicOperatorLogo(operatorId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: operatorId !== null && operatorId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicOperatorLogo>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicOperatorLogoQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicOperatorLogo>>>
+export type GetPublicOperatorLogoQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get an operator logo stored in the catalog
+ */
+
+export function useGetPublicOperatorLogo<TData = Awaited<ReturnType<typeof getPublicOperatorLogo>>, TError = ErrorType<ErrorEnvelope>>(
+ operatorId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicOperatorLogo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicOperatorLogoQueryOptions(operatorId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getListPublishedBannersUrl = () => {
 
 
@@ -3992,6 +4069,174 @@ export const useUpdateAdminOperator = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getUpdateAdminOperatorMutationOptions(options));
+    }
+
+export const getUploadAdminOperatorLogoUrl = (operatorId: string,
+    expectedVersion: number,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators/${operatorId}/logo/${expectedVersion}`
+}
+
+/**
+ * Accepts a validated PNG, JPEG, or WebP image up to 512 KiB. The current operator version is part of the path for optimistic concurrency.
+ * @summary Store an operator logo in the database
+ */
+export const uploadAdminOperatorLogo = async (operatorId: string,
+    expectedVersion: number,
+    uploadAdminOperatorLogoBody: Blob, options?: Parameters<typeof customFetch>[1]): Promise<ManagedOperator> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ManagedOperator>(getUploadAdminOperatorLogoUrl(operatorId,expectedVersion),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'image/png', ...getHeaders(options?.headers) },
+    body: uploadAdminOperatorLogoBody
+  }
+);}
+
+
+
+
+
+export const getUploadAdminOperatorLogoMutationKey = () => ['uploadAdminOperatorLogo'] as const;
+
+export const getUploadAdminOperatorLogoMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadAdminOperatorLogo>>, TError,UploadAdminOperatorLogoMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadAdminOperatorLogo>>, TError,UploadAdminOperatorLogoMutationVariables, TContext> => {
+
+const mutationKey = getUploadAdminOperatorLogoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadAdminOperatorLogo>>, UploadAdminOperatorLogoMutationVariables> = (props) => {
+          const {operatorId,expectedVersion,data} = props ?? {};
+
+          return  uploadAdminOperatorLogo(operatorId,expectedVersion,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadAdminOperatorLogoMutationResult = NonNullable<Awaited<ReturnType<typeof uploadAdminOperatorLogo>>>
+    export type UploadAdminOperatorLogoMutationBody = BodyType<Blob>
+    export type UploadAdminOperatorLogoMutationError = ErrorType<ErrorEnvelope>
+    export type UploadAdminOperatorLogoMutationVariables = {operatorId: string;expectedVersion: number;data: BodyType<Blob>}
+
+    /**
+ * @summary Store an operator logo in the database
+ */
+export const useUploadAdminOperatorLogo = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadAdminOperatorLogo>>, TError,UploadAdminOperatorLogoMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadAdminOperatorLogo>>,
+        TError,
+        UploadAdminOperatorLogoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUploadAdminOperatorLogoMutationOptions(options));
+    }
+
+export const getDeleteAdminOperatorLogoUrl = (operatorId: string,
+    expectedVersion: number,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators/${operatorId}/logo/${expectedVersion}`
+}
+
+/**
+ * @summary Remove an operator logo from the database
+ */
+export const deleteAdminOperatorLogo = async (operatorId: string,
+    expectedVersion: number, options?: Parameters<typeof customFetch>[1]): Promise<ManagedOperator> => {
+
+  return customFetch<ManagedOperator>(getDeleteAdminOperatorLogoUrl(operatorId,expectedVersion),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminOperatorLogoMutationKey = () => ['deleteAdminOperatorLogo'] as const;
+
+export const getDeleteAdminOperatorLogoMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOperatorLogo>>, TError,DeleteAdminOperatorLogoMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOperatorLogo>>, TError,DeleteAdminOperatorLogoMutationVariables, TContext> => {
+
+const mutationKey = getDeleteAdminOperatorLogoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminOperatorLogo>>, DeleteAdminOperatorLogoMutationVariables> = (props) => {
+          const {operatorId,expectedVersion} = props ?? {};
+
+          return  deleteAdminOperatorLogo(operatorId,expectedVersion,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminOperatorLogoMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminOperatorLogo>>>
+
+    export type DeleteAdminOperatorLogoMutationError = ErrorType<ErrorEnvelope>
+    export type DeleteAdminOperatorLogoMutationVariables = {operatorId: string;expectedVersion: number}
+
+    /**
+ * @summary Remove an operator logo from the database
+ */
+export const useDeleteAdminOperatorLogo = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOperatorLogo>>, TError,DeleteAdminOperatorLogoMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminOperatorLogo>>,
+        TError,
+        DeleteAdminOperatorLogoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteAdminOperatorLogoMutationOptions(options));
     }
 
 export const getUpdateAdminOperatorPricingUrl = () => {

@@ -18,7 +18,7 @@ const runtime = createRequire(import.meta.url)(runtimePath);
 const owner = new pg.Pool({ host: socket, port: 15432, database: "postgres", user: "sf_fixture_owner" });
 const { pool, executeAdminWalletAdjustment, consumeTransferQuoteQuota } = runtime;
 const tokens = {}, transactions = {};
-let server;
+let server, logoServer;
 
 before(async () => {
   for (const id of ["fixture-a", "fixture-b", "fixture-wallet"]) {
@@ -40,18 +40,40 @@ before(async () => {
   for (const id of ["fixture-source", "fixture-destination"]) {
     await owner.query(`INSERT INTO sf_operator_catalog
       (operator_id,country_code,name,short_name,initials,brand,enabled,created_by,updated_by)
-      VALUES($1,'ci','Fixture operator','Fixture','FX','fixture',true,'fixture','fixture')`, [id]);
+      VALUES($1,'ci','Fixture operator','Fixture','FX','generic',true,'fixture','fixture')`, [id]);
   }
   await owner.query(`INSERT INTO sf_operator_pricing_rates
     (operator_id,country_code,category_id,fee_percent,version,created_by,updated_by)
     VALUES('fixture-source','ci','inter-network',2,1,'fixture','fixture'),
       ('fixture-source','ci','deposit',1.25,2,'fixture','fixture'),
       ('fixture-destination','ci','international',1.8,3,'fixture','fixture')`);
+  const logoApp = runtime.express();
+  logoApp.use("/api", runtime.operatorPricingRouter);
+  logoApp.use("/api/DMgrgmt-1np5g23g12bGFtMwh", runtime.createAdminOperatorLogoRoutes((req, res) => {
+    if (req.get("x-fixture-admin") === "authorized") return "fixture-admin";
+    res.status(403).json({ error: "Fixture administrator required" });
+    return null;
+  }));
+  logoApp.use((error, _req, res, next) => {
+    if (res.headersSent) {
+      next(error);
+      return;
+    }
+    res.status(error?.status === 413 ? 413 : 400).json({
+      error: error?.status === 413 ? "Logo exceeds 512 KiB" : "Invalid logo request",
+    });
+  });
+  logoServer = logoApp.listen(0, "127.0.0.1");
+  await new Promise((resolve, reject) => {
+    logoServer.once("listening", resolve);
+    logoServer.once("error", reject);
+  });
   server = runtime.app.listen(0, "127.0.0.1");
   await new Promise((resolve, reject) => { server.once("listening", resolve); server.once("error", reject); });
 });
 after(async () => {
   if (server) await new Promise((resolve) => server.close(resolve));
+  if (logoServer) await new Promise((resolve) => logoServer.close(resolve));
   await pool.end();
   await owner.end();
 });
@@ -72,6 +94,141 @@ function request(path, { method = "GET", user, body, rawBody, headers = {} } = {
     req.on("error", reject); req.end(data);
   });
 }
+
+function logoRequest(path, { method = "GET", body, headers = {} } = {}) {
+  return new Promise((resolve, reject) => {
+    const req = http.request({
+      host: "127.0.0.1",
+      port: logoServer.address().port,
+      path,
+      method,
+      headers: {
+        ...(body ? { "Content-Length": body.length } : {}),
+        ...headers,
+      },
+    }, (res) => {
+      const chunks = [];
+      res.on("data", (chunk) => chunks.push(chunk));
+      res.on("end", () => resolve({
+        status: res.statusCode,
+        headers: res.headers,
+        body: Buffer.concat(chunks),
+      }));
+    });
+    req.on("error", reject);
+    req.end(body);
+  });
+}
+
+test("operator logos validate, store bytes in Neon, use version checks, and serve safely from the public catalog", async () => {
+  const png = Buffer.from(
+    "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000b49444154789c636000020000050001a5f645400000000049454e44ae426082",
+    "hex",
+  );
+  const adminPrefix = "/api/DMgrgmt-1np5g23g12bGFtMwh/operators/fixture-source/logo";
+  const response = await logoRequest(`${adminPrefix}/1`, {
+    method: "PUT",
+    body: png,
+    headers: {
+      "Content-Type": "image/png",
+      Origin: "https://sendflow-test.invalid",
+      "X-Fixture-Admin": "authorized",
+    },
+  });
+  assert.equal(response.status, 200);
+  const managed = JSON.parse(response.body.toString("utf8"));
+  assert.equal(managed.logoUrl, "/api/operators/fixture-source/logo?v=2");
+
+  const stored = await owner.query(
+    "SELECT logo_data, logo_content_type, version FROM sf_operator_catalog WHERE operator_id='fixture-source'",
+  );
+  assert.deepEqual(stored.rows[0].logo_data, png);
+  assert.equal(stored.rows[0].logo_content_type, "image/png");
+  assert.equal(stored.rows[0].version, 2);
+
+  const pricingResponse = await logoRequest("/api/pricing");
+  assert.equal(pricingResponse.status, 200);
+  const pricing = JSON.parse(pricingResponse.body.toString("utf8"));
+  const sourceOperator = pricing.operators.find((item) => item.id === "fixture-source");
+  assert.equal(sourceOperator.logoUrl, managed.logoUrl);
+  assert.equal(sourceOperator.fees.deposit, 0.0125);
+  assert.equal(pricingResponse.body.includes(png.toString("base64")), false);
+
+  const publicLogo = await logoRequest(managed.logoUrl);
+  assert.equal(publicLogo.status, 200);
+  assert.equal(publicLogo.headers["content-type"], "image/png");
+  assert.equal(publicLogo.headers["x-content-type-options"], "nosniff");
+  assert.deepEqual(publicLogo.body, png);
+  const cachedLogo = await logoRequest(managed.logoUrl, {
+    headers: { "If-None-Match": publicLogo.headers.etag },
+  });
+  assert.equal(cachedLogo.status, 304);
+
+  const invalidImage = await logoRequest(`${adminPrefix}/2`, {
+    method: "PUT",
+    body: Buffer.from("not an image"),
+    headers: {
+      "Content-Type": "image/png",
+      Origin: "https://sendflow-test.invalid",
+      "X-Fixture-Admin": "authorized",
+    },
+  });
+  assert.equal(invalidImage.status, 400);
+  const unsupportedType = await logoRequest(`${adminPrefix}/2`, {
+    method: "PUT",
+    body: Buffer.from("<svg></svg>"),
+    headers: {
+      "Content-Type": "image/svg+xml",
+      Origin: "https://sendflow-test.invalid",
+      "X-Fixture-Admin": "authorized",
+    },
+  });
+  assert.equal(unsupportedType.status, 415);
+  const oversized = await logoRequest(`${adminPrefix}/2`, {
+    method: "PUT",
+    body: Buffer.alloc(512 * 1024 + 1, 0),
+    headers: {
+      "Content-Type": "image/png",
+      Origin: "https://sendflow-test.invalid",
+      "X-Fixture-Admin": "authorized",
+    },
+  });
+  assert.equal(oversized.status, 413);
+  const staleVersion = await logoRequest(`${adminPrefix}/1`, {
+    method: "PUT",
+    body: png,
+    headers: {
+      "Content-Type": "image/png",
+      Origin: "https://sendflow-test.invalid",
+      "X-Fixture-Admin": "authorized",
+    },
+  });
+  assert.equal(staleVersion.status, 409);
+
+  const removed = await logoRequest(`${adminPrefix}/2`, {
+    method: "DELETE",
+    headers: {
+      Origin: "https://sendflow-test.invalid",
+      "X-Fixture-Admin": "authorized",
+    },
+  });
+  assert.equal(removed.status, 200);
+  assert.equal(JSON.parse(removed.body.toString("utf8")).logoUrl, null);
+  const removedImage = await logoRequest(managed.logoUrl);
+  assert.equal(removedImage.status, 404);
+  const audits = await owner.query(
+    "SELECT count(*)::int AS count FROM sf_admin_audit_logs WHERE admin_user_id='fixture-admin' AND action='update_operator_logo'",
+  );
+  assert.equal(audits.rows[0].count, 2);
+
+  const unauthorized = await request(`${adminPrefix}/3`, {
+    method: "PUT",
+    rawBody: png,
+    headers: { "Content-Type": "image/png", Origin: "https://sendflow-test.invalid" },
+  });
+  assert.equal(unauthorized.status, 503);
+});
+
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
   if (value && typeof value === "object") return Object.fromEntries(

@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  useDeleteAdminOperatorLogo,
   getGetAdminOperatorPricingQueryKey,
   getGetPublicPricingQueryKey,
   useCreateAdminOperator,
   useGetAdminOperatorPricing,
+  useUploadAdminOperatorLogo,
   useUpdateAdminOperator,
   useUpdateAdminOperatorPricing,
 } from '@workspace/api-client-react';
 import type { ManagedOperatorBrand, PublicPricingCategory } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { CircleAlert, Plus, ShieldCheck } from 'lucide-react';
+import { CircleAlert, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { OperatorMark } from '@/components/operator-mark';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -69,6 +72,8 @@ function getMutationError(error: unknown): string {
   if (status === 401) return 'Votre session administrateur a expiré. Reconnectez-vous avant de réessayer.';
   if (status === 403) return 'Votre compte ne peut pas modifier le catalogue.';
   if (status === 409) return 'Une autre personne a modifié ces données. Actualisez la page avant de réessayer.';
+  if (status === 413) return 'Le logo dépasse la taille maximale de 512 Ko.';
+  if (status === 415) return 'Choisissez une image PNG, JPEG ou WebP.';
   return 'La modification n’a pas été enregistrée. Réessayez dans quelques instants.';
 }
 
@@ -79,6 +84,11 @@ export default function AdminOperatorPricingPage() {
   const createMutation = useCreateAdminOperator();
   const operatorMutation = useUpdateAdminOperator();
   const ratesMutation = useUpdateAdminOperatorPricing();
+  const logoUploadHeaders = useRef<Record<string, string>>({ 'Content-Type': 'image/png' });
+  const logoUploadMutation = useUploadAdminOperatorLogo({
+    request: { headers: logoUploadHeaders.current },
+  });
+  const logoDeleteMutation = useDeleteAdminOperatorLogo();
   const countries = query.data?.countries ?? [];
   const categories = query.data?.categories ?? [];
   const [countryCode, setCountryCode] = useState('ci');
@@ -93,6 +103,10 @@ export default function AdminOperatorPricingPage() {
     (typeof countries)[number]['operators'][number] | null
   >(null);
   const [toggleReason, setToggleReason] = useState('');
+  const [logoTarget, setLogoTarget] = useState<
+    (typeof countries)[number]['operators'][number] | null
+  >(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -239,6 +253,58 @@ export default function AdminOperatorPricingPage() {
           setRateDrafts({});
           setRateReason('');
           setSuccessMessage(`Les frais de la section « ${category?.label ?? 'tarification'} » ont été enregistrés.`);
+        },
+        onError: (error) => setErrorMessage(getMutationError(error)),
+      },
+    );
+  };
+
+  const saveLogo = () => {
+    if (!logoTarget || !logoFile) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(logoFile.type)) {
+      setErrorMessage('Choisissez une image PNG, JPEG ou WebP.');
+      return;
+    }
+    if (logoFile.size < 1 || logoFile.size > 512 * 1024) {
+      setErrorMessage('Le logo doit peser au maximum 512 Ko.');
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    logoUploadHeaders.current['Content-Type'] = logoFile.type;
+    logoUploadMutation.mutate(
+      {
+        operatorId: logoTarget.operatorId,
+        expectedVersion: logoTarget.version,
+        data: logoFile,
+      },
+      {
+        onSuccess: async () => {
+          const operatorName = logoTarget.name;
+          await invalidateCatalog();
+          setLogoTarget(null);
+          setLogoFile(null);
+          setSuccessMessage(`Le logo de ${operatorName} a été enregistré dans la base de données.`);
+        },
+        onError: (error) => setErrorMessage(getMutationError(error)),
+      },
+    );
+  };
+
+  const removeLogo = () => {
+    if (!logoTarget?.logoUrl) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    logoDeleteMutation.mutate(
+      { operatorId: logoTarget.operatorId, expectedVersion: logoTarget.version },
+      {
+        onSuccess: async () => {
+          const operatorName = logoTarget.name;
+          await invalidateCatalog();
+          setLogoTarget(null);
+          setLogoFile(null);
+          setSuccessMessage(`Le logo de ${operatorName} a été retiré.`);
         },
         onError: (error) => setErrorMessage(getMutationError(error)),
       },
@@ -392,9 +458,18 @@ export default function AdminOperatorPricingPage() {
                       return (
                         <TableRow key={operator.operatorId} data-testid={`row-admin-operator-${operator.operatorId}`}>
                           <TableCell>
-                            <div className="flex flex-col">
+                            <div className="flex items-center gap-3">
+                              <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted">
+                                <OperatorMark
+                                  operator={operator}
+                                  imageClassName="h-full w-full object-contain p-1"
+                                  fallbackClassName="text-xs"
+                                />
+                              </span>
+                              <span className="flex flex-col">
                               <strong>{operator.name}</strong>
                               <small className="text-muted-foreground">{operator.operatorId} · {brandLabels[operator.brand]}</small>
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -426,15 +501,30 @@ export default function AdminOperatorPricingPage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => { setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator); }}
-                              data-testid={`button-toggle-operator-${operator.operatorId}`}
-                            >
-                              {operator.enabled ? 'Désactiver' : 'Activer'}
-                            </Button>
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setErrorMessage('');
+                                  setLogoFile(null);
+                                  setLogoTarget(operator);
+                                }}
+                                data-testid={`button-manage-operator-logo-${operator.operatorId}`}
+                              >
+                                {operator.logoUrl ? 'Modifier le logo' : 'Ajouter un logo'}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => { setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator); }}
+                                data-testid={`button-toggle-operator-${operator.operatorId}`}
+                              >
+                                {operator.enabled ? 'Désactiver' : 'Activer'}
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -538,6 +628,77 @@ export default function AdminOperatorPricingPage() {
               data-testid="button-confirm-add-operator"
             >
               {createMutation.isPending ? 'Ajout…' : 'Ajouter désactivé'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={logoTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLogoTarget(null);
+            setLogoFile(null);
+          }
+        }}
+      >
+        <DialogContent data-testid="dialog-manage-operator-logo">
+          <DialogHeader>
+            <DialogTitle>{logoTarget?.logoUrl ? 'Modifier le logo' : 'Ajouter un logo'}</DialogTitle>
+            <DialogDescription>
+              Le fichier est vérifié côté serveur puis stocké dans la base de données. Formats PNG, JPEG ou WebP, 512 Ko maximum.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {logoTarget?.logoUrl && (
+              <div className="flex items-center gap-3">
+                <span className="grid size-12 place-items-center overflow-hidden rounded-lg border bg-muted">
+                  <OperatorMark
+                    operator={logoTarget}
+                    imageClassName="h-full w-full object-contain p-1"
+                    fallbackClassName="text-xs"
+                  />
+                </span>
+                <span className="text-sm text-muted-foreground">Logo actuellement enregistré</span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="operator-logo-file">Fichier image · {logoTarget?.name}</Label>
+              <Input
+                id="operator-logo-file"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)}
+                data-testid="input-operator-logo-file"
+              />
+              {logoFile && (
+                <p className="text-sm text-muted-foreground" data-testid="text-selected-operator-logo">
+                  {logoFile.name} · {(logoFile.size / 1024).toFixed(0)} Ko
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="flex-wrap">
+            {logoTarget?.logoUrl && (
+              <Button
+                type="button"
+                variant="destructive"
+                className="mr-auto"
+                onClick={removeLogo}
+                disabled={logoDeleteMutation.isPending || logoUploadMutation.isPending}
+                data-testid="button-remove-operator-logo"
+              >
+                <Trash2 className="mr-2 size-4" />
+                {logoDeleteMutation.isPending ? 'Suppression…' : 'Retirer le logo'}
+              </Button>
+            )}
+            <Button
+              type="button"
+              onClick={saveLogo}
+              disabled={!logoFile || logoUploadMutation.isPending || logoDeleteMutation.isPending}
+              data-testid="button-save-operator-logo"
+            >
+              {logoUploadMutation.isPending ? 'Enregistrement…' : 'Enregistrer le logo'}
             </Button>
           </DialogFooter>
         </DialogContent>

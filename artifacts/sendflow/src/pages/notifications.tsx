@@ -1,28 +1,14 @@
 import { ArrowLeft } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
-import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
+import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
-import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 import { operatorNames } from '@/lib/transactions';
 import { notifications, type SendFlowNotification } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 
-const operatorLogos: Partial<Record<SendFlowNotification['operator'], string>> = {
-  mixx: mixxLogo,
-  sendflow: sendflowMark,
-  wave: waveLogo,
-};
-
-const operatorWordmarks: Partial<Record<SendFlowNotification['operator'], string>> = {
-  tmoney: 'TMoney',
-  moov: 'Moov',
-};
-
 function NotificationOperatorIcon({ notification }: { notification: SendFlowNotification }) {
-  const logo = operatorLogos[notification.operator];
   const operatorName = operatorNames[notification.operator];
-  const wordmark = operatorWordmarks[notification.operator] ?? operatorName;
 
   return (
     <span
@@ -30,7 +16,9 @@ function NotificationOperatorIcon({ notification }: { notification: SendFlowNoti
       role="img"
       aria-label={`Opérateur : ${operatorName}`}
     >
-      {logo ? <img src={logo} alt="" /> : <strong aria-hidden="true">{wordmark}</strong>}
+      {notification.operator === 'sendflow'
+        ? <img src={sendflowMark} alt="" />
+        : <CatalogOperatorIcon operatorCode={notification.operator} />}
     </span>
   );
 }

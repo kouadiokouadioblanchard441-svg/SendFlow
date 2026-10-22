@@ -44,8 +44,7 @@ import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
 import AdminIpBlocklist from '@/components/admin-ip-blocklist';
 import AdminNetworkDefense from '@/components/admin-network-defense';
-import mixxLogo from '@assets/generated_images/sendflow-mixx-logo.png';
-import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
+import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import {
   useGetAdminTransaction,
@@ -290,12 +289,6 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
-const adminOperatorLogos: Record<string, string> = {
-  mixx: mixxLogo,
-  sendflow: sendflowMark,
-  wave: waveLogo,
-};
-
 const adminOperatorNames: Record<string, string> = {
   mtn: 'MTN Mobile Money',
   moov: 'Moov Money',
@@ -318,11 +311,13 @@ function getAdminOperatorName(operator: string | null | undefined) {
 function AdminOperatorIcon({ operator }: { operator: string | null | undefined }) {
   const normalized = normalizeOperator(operator);
   const name = getAdminOperatorName(operator);
-  const logo = adminOperatorLogos[normalized];
+  const isSendFlow = normalized === 'sendflow';
 
   return (
     <span className="sendflow-admin-operator-icon" aria-label={`Icône : ${name}`}>
-      {logo ? <img src={logo} alt="" /> : <Landmark className="size-4" aria-hidden="true" />}
+      {isSendFlow
+        ? <img src={sendflowMark} alt="" />
+        : <CatalogOperatorIcon operatorCode={normalized || 'unknown'} />}
     </span>
   );
 }

@@ -24,6 +24,7 @@ export type PricingOperator = {
   shortName: string;
   initials: string;
   brand: 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
+  logoUrl: string | null;
   requiresOtp: boolean;
   otpCommand: string | null;
   fees: PricingFeeMap;

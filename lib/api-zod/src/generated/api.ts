@@ -946,6 +946,8 @@ export const GetAdminOverviewResponse = zod.object({
 export const getPublicPricingResponseOperatorsItemIdMin = 2;
 export const getPublicPricingResponseOperatorsItemIdMax = 60;
 
+export const getPublicPricingResponseOperatorsItemLogoUrlMax = 200;
+
 export const getPublicPricingResponseOperatorsItemFeesDepositMin = 0;
 export const getPublicPricingResponseOperatorsItemFeesDepositMax = 1;
 
@@ -978,6 +980,7 @@ export const GetPublicPricingResponse = zod.object({
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "logoUrl": zod.string().max(getPublicPricingResponseOperatorsItemLogoUrlMax).nullable(),
   "requiresOtp": zod.boolean(),
   "otpCommand": zod.string().nullable(),
   "fees": zod.object({
@@ -987,6 +990,23 @@ export const GetPublicPricingResponse = zod.object({
 })
 }))
 })
+
+
+/**
+ * @summary Get an operator logo stored in the catalog
+ */
+export const getPublicOperatorLogoPathOperatorIdMin = 2;
+export const getPublicOperatorLogoPathOperatorIdMax = 60;
+
+
+export const getPublicOperatorLogoPathOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+
+
+export const GetPublicOperatorLogoParams = zod.object({
+  "operatorId": zod.coerce.string().min(getPublicOperatorLogoPathOperatorIdMin).max(getPublicOperatorLogoPathOperatorIdMax).regex(getPublicOperatorLogoPathOperatorIdRegExp)
+})
+
+export const GetPublicOperatorLogoResponse = zod.unknown()
 
 
 /**
@@ -1232,6 +1252,8 @@ export const UpdateAdminAggregatorRouteResponse = zod.object({
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMin = 2;
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMax = 60;
 
+export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneLogoUrlMax = 200;
+
 
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMin = 0;
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMax = 100;
@@ -1259,6 +1281,7 @@ export const GetAdminOperatorPricingResponse = zod.object({
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "logoUrl": zod.string().max(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneLogoUrlMax).nullable(),
   "enabled": zod.boolean(),
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date().nullable()
@@ -1295,6 +1318,8 @@ export const CreateAdminOperatorBody = zod.object({
 export const createAdminOperatorResponseOperatorIdMin = 2;
 export const createAdminOperatorResponseOperatorIdMax = 60;
 
+export const createAdminOperatorResponseLogoUrlMax = 200;
+
 
 
 
@@ -1305,6 +1330,7 @@ export const CreateAdminOperatorResponse = zod.object({
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "logoUrl": zod.string().max(createAdminOperatorResponseLogoUrlMax).nullable(),
   "enabled": zod.boolean(),
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date().nullable()
@@ -1345,6 +1371,8 @@ export const UpdateAdminOperatorBody = zod.object({
 export const updateAdminOperatorResponseOperatorIdMin = 2;
 export const updateAdminOperatorResponseOperatorIdMax = 60;
 
+export const updateAdminOperatorResponseLogoUrlMax = 200;
+
 
 
 
@@ -1355,6 +1383,84 @@ export const UpdateAdminOperatorResponse = zod.object({
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "logoUrl": zod.string().max(updateAdminOperatorResponseLogoUrlMax).nullable(),
+  "enabled": zod.boolean(),
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * Accepts a validated PNG, JPEG, or WebP image up to 512 KiB. The current operator version is part of the path for optimistic concurrency.
+ * @summary Store an operator logo in the database
+ */
+export const uploadAdminOperatorLogoPathOperatorIdMin = 2;
+export const uploadAdminOperatorLogoPathOperatorIdMax = 60;
+
+
+export const uploadAdminOperatorLogoPathOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+
+
+
+export const UploadAdminOperatorLogoParams = zod.object({
+  "operatorId": zod.coerce.string().min(uploadAdminOperatorLogoPathOperatorIdMin).max(uploadAdminOperatorLogoPathOperatorIdMax).regex(uploadAdminOperatorLogoPathOperatorIdRegExp),
+  "expectedVersion": zod.coerce.number().int().min(1)
+})
+
+export const uploadAdminOperatorLogoResponseOperatorIdMin = 2;
+export const uploadAdminOperatorLogoResponseOperatorIdMax = 60;
+
+export const uploadAdminOperatorLogoResponseLogoUrlMax = 200;
+
+
+
+
+export const UploadAdminOperatorLogoResponse = zod.object({
+  "operatorId": zod.string().min(uploadAdminOperatorLogoResponseOperatorIdMin).max(uploadAdminOperatorLogoResponseOperatorIdMax),
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "initials": zod.string(),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "logoUrl": zod.string().max(uploadAdminOperatorLogoResponseLogoUrlMax).nullable(),
+  "enabled": zod.boolean(),
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Remove an operator logo from the database
+ */
+export const deleteAdminOperatorLogoPathOperatorIdMin = 2;
+export const deleteAdminOperatorLogoPathOperatorIdMax = 60;
+
+
+export const deleteAdminOperatorLogoPathOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+
+
+
+export const DeleteAdminOperatorLogoParams = zod.object({
+  "operatorId": zod.coerce.string().min(deleteAdminOperatorLogoPathOperatorIdMin).max(deleteAdminOperatorLogoPathOperatorIdMax).regex(deleteAdminOperatorLogoPathOperatorIdRegExp),
+  "expectedVersion": zod.coerce.number().int().min(1)
+})
+
+export const deleteAdminOperatorLogoResponseOperatorIdMin = 2;
+export const deleteAdminOperatorLogoResponseOperatorIdMax = 60;
+
+export const deleteAdminOperatorLogoResponseLogoUrlMax = 200;
+
+
+
+
+export const DeleteAdminOperatorLogoResponse = zod.object({
+  "operatorId": zod.string().min(deleteAdminOperatorLogoResponseOperatorIdMin).max(deleteAdminOperatorLogoResponseOperatorIdMax),
+  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "initials": zod.string(),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
+  "logoUrl": zod.string().max(deleteAdminOperatorLogoResponseLogoUrlMax).nullable(),
   "enabled": zod.boolean(),
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date().nullable()

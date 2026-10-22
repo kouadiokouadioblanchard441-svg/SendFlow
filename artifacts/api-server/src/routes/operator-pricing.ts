@@ -7,6 +7,7 @@ import {
   operatorCatalogTable,
   operatorOtpPoliciesTable,
   operatorPricingRatesTable,
+  sql,
 } from "@workspace/db";
 import {
   CreateAdminOperatorBody,
@@ -19,6 +20,7 @@ import {
   UpdateAdminOperatorResponse,
 } from "@workspace/api-zod";
 import { recordAdminAudit } from "../lib/admin-audit";
+import { operatorLogoUrl, readOperatorLogo } from "../services/operator-logo";
 import {
   createOperatorDisplayFields,
   isPricingCategoryId,
@@ -35,10 +37,32 @@ const otpCommands: Record<string, string> = {
   "orange-ci": "#144*82# option 2",
 };
 
+const operatorMetadataColumns = {
+  operatorId: operatorCatalogTable.operatorId,
+  countryCode: operatorCatalogTable.countryCode,
+  name: operatorCatalogTable.name,
+  shortName: operatorCatalogTable.shortName,
+  initials: operatorCatalogTable.initials,
+  brand: operatorCatalogTable.brand,
+  enabled: operatorCatalogTable.enabled,
+  version: operatorCatalogTable.version,
+  updatedAt: operatorCatalogTable.updatedAt,
+  hasLogo: sql<boolean>`${operatorCatalogTable.logoData} IS NOT NULL`,
+};
+
+type OperatorMetadataRecord = Pick<
+  typeof operatorCatalogTable.$inferSelect,
+  "operatorId" | "countryCode" | "name" | "shortName" | "initials" | "brand" | "enabled" | "version" | "updatedAt"
+> & {
+  hasLogo?: boolean;
+  logoData?: typeof operatorCatalogTable.$inferSelect.logoData;
+};
+
 function toManagedOperator(
-  operator: typeof operatorCatalogTable.$inferSelect,
+  operator: OperatorMetadataRecord,
   rates: Array<typeof operatorPricingRatesTable.$inferSelect> = [],
 ) {
+  const hasLogo = operator.hasLogo ?? Boolean(operator.logoData);
   return {
     operatorId: operator.operatorId,
     countryCode: operator.countryCode,
@@ -46,6 +70,7 @@ function toManagedOperator(
     shortName: operator.shortName,
     initials: operator.initials,
     brand: operator.brand,
+    logoUrl: operatorLogoUrl(operator.operatorId, operator.version, hasLogo),
     enabled: operator.enabled,
     version: operator.version,
     updatedAt: operator.updatedAt?.toISOString() ?? null,
@@ -62,10 +87,39 @@ function toManagedOperator(
   };
 }
 
+router.get("/operators/:operatorId/logo", async (req, res): Promise<void> => {
+  const operatorId = typeof req.params.operatorId === "string" ? req.params.operatorId : "";
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(operatorId)) {
+    res.status(404).json({ error: "Logo not found" });
+    return;
+  }
+
+  try {
+    const logo = await readOperatorLogo(operatorId);
+    if (!logo) {
+      res.status(404).json({ error: "Logo not found" });
+      return;
+    }
+    res.setHeader("Content-Type", logo.contentType);
+    res.setHeader("Content-Length", logo.bytes.length);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("ETag", logo.etag);
+    if (req.get("if-none-match")?.split(/\s*,\s*/).includes(logo.etag)) {
+      res.status(304).end();
+      return;
+    }
+    res.status(200).send(logo.bytes);
+  } catch (error) {
+    req.log.error({ err: error }, "Operator logo lookup failed");
+    res.status(503).json({ error: "Operator logo unavailable" });
+  }
+});
+
 router.get("/pricing", async (req, res): Promise<void> => {
   try {
     const [operators, rates, otpPolicies] = await Promise.all([
-      db.select().from(operatorCatalogTable),
+      db.select(operatorMetadataColumns).from(operatorCatalogTable),
       db.select().from(operatorPricingRatesTable),
       db.select().from(operatorOtpPoliciesTable),
     ]);
@@ -100,6 +154,7 @@ router.get("/pricing", async (req, res): Promise<void> => {
           shortName: operator.shortName,
           initials: operator.initials,
           brand: operator.brand,
+          logoUrl: operatorLogoUrl(operator.operatorId, operator.version, operator.hasLogo),
           requiresOtp:
             otpByOperator.get(`${operator.countryCode}:${operator.operatorId}`) ??
             defaultOtpOperatorIds.has(operator.operatorId),
@@ -134,7 +189,7 @@ adminRoutes.get("/operator-pricing", async (req, res): Promise<void> => {
 
   try {
     const [operators, rates] = await Promise.all([
-      db.select().from(operatorCatalogTable),
+      db.select(operatorMetadataColumns).from(operatorCatalogTable),
       db.select().from(operatorPricingRatesTable),
     ]);
     const rateRowsByOperator = new Map<string, typeof rates>();

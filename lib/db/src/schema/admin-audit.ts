@@ -57,6 +57,7 @@ export type AdminAuditAction =
   | "view_operator_pricing"
   | "create_operator"
   | "update_operator"
+  | "update_operator_logo"
   | "update_operator_pricing"
   | "update_registration_settings";
 export type AdminAuditResourceType =

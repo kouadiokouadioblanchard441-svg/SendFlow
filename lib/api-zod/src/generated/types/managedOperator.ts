@@ -19,6 +19,11 @@ export interface ManagedOperator {
   shortName: string;
   initials: string;
   brand: ManagedOperatorBrand;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  logoUrl: string | null;
   enabled: boolean;
   /** @minimum 1 */
   version: number;

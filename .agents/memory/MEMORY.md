@@ -9,6 +9,7 @@
 - [Didit credentials](didit-development.md) — User supplies live credentials; do not relabel them sandbox or weaken preview safeguards. Keep all secret values out of code.
 - [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
+- [Operator logo storage](operator-logo-storage.md) — Store uploaded operator logos in the database; this exception does not extend to banners or unrelated media.
 - [Database environment isolation](neon-production-database.md) — Against shared Neon, previews must block private reads and writes and fail closed on unlisted API routes.
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle production schema pushes](drizzle-scoped-pushes.md) — Keep production migrations additive and explicitly targeted; stop on unrelated Drizzle drift.

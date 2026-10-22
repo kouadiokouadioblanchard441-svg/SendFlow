@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
+import { OperatorMark } from '@/components/operator-mark';
 import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { readAccountCountry } from '@/lib/account-country';
@@ -23,7 +24,6 @@ import {
 } from '@/lib/transfer-validation';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
-import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
 
 type OperatorBrand = 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
 
@@ -31,27 +31,12 @@ type DepositOperator = {
   id: string;
   name: string;
   shortName: string;
+  initials: string;
+  logoUrl: string | null;
   brand: OperatorBrand;
   requiresOtp: boolean;
   otpCommand: string | null;
 };
-
-function OperatorMark({ operator }: { operator: DepositOperator }) {
-  if (operator.brand === 'wave') {
-    return <img src={waveLogo} alt="" />;
-  }
-
-  if (operator.brand === 'orange') {
-    return (
-      <>
-        <strong>Orange</strong>
-        <small>Money</small>
-      </>
-    );
-  }
-
-  return <strong>{operator.shortName}</strong>;
-}
 
 export default function DepositPage() {
   const [, setLocation] = useLocation();
@@ -67,6 +52,8 @@ export default function DepositPage() {
         id: item.id,
         name: item.name,
         shortName: item.shortName,
+        initials: item.initials,
+        logoUrl: item.logoUrl,
         brand: item.brand,
         requiresOtp: item.requiresOtp,
         otpCommand: item.otpCommand,

@@ -1246,6 +1246,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /operators/{operatorId}/logo:
+    parameters:
+      - $ref: "#/components/parameters/AdminOperatorId"
+    get:
+      operationId: getPublicOperatorLogo
+      tags: [pricing]
+      summary: Get an operator logo stored in the catalog
+      responses:
+        "200":
+          description: Validated operator image.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Operator or logo not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Logo storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /banners:
     get:
       operationId: listPublishedBanners
@@ -1639,6 +1674,139 @@ paths:
                 $ref: "#/components/schemas/ManagedOperator"
         "400":
           description: Invalid operator data or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Operator not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Operator changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMwh/operators/{operatorId}/logo/{expectedVersion}:
+    parameters:
+      - $ref: "#/components/parameters/AdminOperatorId"
+      - $ref: "#/components/parameters/AdminOperatorLogoVersion"
+    put:
+      operationId: uploadAdminOperatorLogo
+      tags: [admin]
+      summary: Store an operator logo in the database
+      description: Accepts a validated PNG, JPEG, or WebP image up to 512 KiB. The current operator version is part of the path for optimistic concurrency.
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+              maxLength: 524288
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+              maxLength: 524288
+          image/webp:
+            schema:
+              type: string
+              format: binary
+              maxLength: 524288
+      responses:
+        "200":
+          description: Logo stored; the updated operator record is returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedOperator"
+        "400":
+          description: Invalid operator version, audit reason, or image contents.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Operator not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Operator changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "413":
+          description: Logo exceeds 512 KiB.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "415":
+          description: Only PNG, JPEG, and WebP images are accepted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteAdminOperatorLogo
+      tags: [admin]
+      summary: Remove an operator logo from the database
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Logo removed; the updated operator record is returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedOperator"
+        "400":
+          description: Invalid operator version or audit reason.
           content:
             application/json:
               schema:
@@ -2664,6 +2832,13 @@ components:
         minLength: 2
         maxLength: 60
         pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    AdminOperatorLogoVersion:
+      name: expectedVersion
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
   securitySchemes:
     sendFlowSession:
       type: apiKey
@@ -3881,6 +4056,9 @@ components:
         brand:
           type: string
           enum: [orange, wave, mtn, moov, generic]
+        logoUrl:
+          type: ["string", "null"]
+          maxLength: 200
         requiresOtp:
           type: boolean
         otpCommand:
@@ -3901,7 +4079,7 @@ components:
               minimum: 0
               maximum: 1
           additionalProperties: false
-      required: [id, countryId, name, shortName, initials, brand, requiresOtp, otpCommand, fees]
+      required: [id, countryId, name, shortName, initials, brand, logoUrl, requiresOtp, otpCommand, fees]
     PublicPricingCatalog:
       type: object
       properties:
@@ -3954,6 +4132,9 @@ components:
         brand:
           type: string
           enum: [orange, wave, mtn, moov, generic]
+        logoUrl:
+          type: ["string", "null"]
+          maxLength: 200
         enabled:
           type: boolean
         version:
@@ -3962,7 +4143,7 @@ components:
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [operatorId, countryCode, name, shortName, initials, brand, enabled, version, updatedAt]
+      required: [operatorId, countryCode, name, shortName, initials, brand, logoUrl, enabled, version, updatedAt]
     AdminOperatorWithPricing:
       allOf:
         - $ref: "#/components/schemas/ManagedOperator"

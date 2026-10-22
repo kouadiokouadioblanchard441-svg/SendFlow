@@ -14,6 +14,7 @@ import adminOtpActivityRouter from "./admin-otp-activity";
 import adminOtpPoliciesRouter from "./admin-otp-policies";
 import adminAggregatorsRouter from "./admin-aggregators";
 import operatorPricingRouter, { adminRoutes as adminOperatorPricingRoutes } from "./operator-pricing";
+import { adminOperatorLogoRoutes } from "./admin-operator-logos";
 import bannersRouter, { adminRoutes as adminBannersRoutes } from "./banners";
 import phoneOtpRouter from "./phone-otp";
 import customerAuthRouter from "./customer-auth";
@@ -45,6 +46,7 @@ adminHandlers.use(adminOtpActivityRouter);
 adminHandlers.use(adminOtpPoliciesRouter);
 adminHandlers.use(adminAggregatorsRouter);
 adminHandlers.use(adminOperatorPricingRoutes);
+adminHandlers.use(adminOperatorLogoRoutes);
 adminHandlers.use(adminBannersRoutes);
 adminHandlers.use(adminRegistrationSettingsRoutes);
 

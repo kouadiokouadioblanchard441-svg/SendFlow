@@ -1,5 +1,7 @@
 import {
   boolean,
+  check,
+  customType,
   index,
   integer,
   numeric,
@@ -9,7 +11,12 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { z } from "zod/v4";
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => "bytea",
+});
 
 export const operatorCatalogTable = pgTable(
   "sf_operator_catalog",
@@ -20,6 +27,8 @@ export const operatorCatalogTable = pgTable(
     shortName: varchar("short_name", { length: 30 }).notNull(),
     initials: varchar("initials", { length: 8 }).notNull(),
     brand: varchar("brand", { length: 16 }).notNull(),
+    logoData: bytea("logo_data"),
+    logoContentType: varchar("logo_content_type", { length: 32 }),
     enabled: boolean("enabled").notNull().default(false),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
@@ -30,6 +39,18 @@ export const operatorCatalogTable = pgTable(
   (table) => ({
     countryIndex: index("sf_operator_catalog_country_idx").on(table.countryCode),
     enabledIndex: index("sf_operator_catalog_enabled_idx").on(table.enabled),
+    logoPairCheck: check(
+      "sf_operator_catalog_logo_pair_check",
+      sql`(${table.logoData} IS NULL) = (${table.logoContentType} IS NULL)`,
+    ),
+    logoSizeCheck: check(
+      "sf_operator_catalog_logo_size_check",
+      sql`${table.logoData} IS NULL OR octet_length(${table.logoData}) BETWEEN 1 AND 524288`,
+    ),
+    logoTypeCheck: check(
+      "sf_operator_catalog_logo_type_check",
+      sql`${table.logoContentType} IS NULL OR ${table.logoContentType} IN ('image/png', 'image/jpeg', 'image/webp')`,
+    ),
   }),
 );
 
