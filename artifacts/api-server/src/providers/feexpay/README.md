@@ -1,5 +1,35 @@
 # FeexPay — server protocol preparation
 
+## Operator configuration, without activation
+
+`pnpm --filter @workspace/api-server run feexpay:configuration-plan` reads shared
+Neon only and reports a fingerprint binding the current catalog and proposed
+changes. It is never an automatic startup seed.
+
+The plan uses exact identities, including TMoney → Togocom and Flooz → Moov in
+Togo. It prepares 46 explicit operator/operation routes across five XOF countries
+and three missing operators, all disabled. Coris Bénin is deposit-only; Congo/XAF
+is excluded until SendFlow supports its currency. Undocumented operators such as
+Telecel Burkina Faso receive no routes.
+
+Country defaults are not changed: these operator routes are explicit exceptions
+and take precedence over a future country default. An administrator must
+explicitly change an operator's assignment to inherit the country default again.
+No existing logos, rates, admin permissions, activation flags, secrets or
+financial records are changed. New operators receive no invented rate or
+substituted logo.
+
+Only after explicit permission to write shared Neon, the command accepts
+`--apply --confirm-shared-neon --expected-hash=<reviewed fingerprint>`.
+A serializable transaction audits each insert and rejects stale plans and
+conflicting manual choices. Errors before commit roll back the entire import;
+an uncertain SQL commit requires reconciliation, never a blind retry.
+Re-applying a freshly reviewed, up-to-date plan is a no-op.
+
+`pnpm --filter @workspace/api-server run test:feexpay-configuration` exercises
+coverage, duplicate/concurrent imports, unchanged prices and audit-failure
+rollback against disposable local PostgreSQL, without using Neon or FeexPay.
+
 ## Scope
 
 This client is not a payment execution service. No public money-moving endpoint,

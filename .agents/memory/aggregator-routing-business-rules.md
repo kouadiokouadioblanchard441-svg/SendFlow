@@ -55,3 +55,25 @@ production API integration instead.
 Use live credentials only through secure server configuration. Keep offline
 transport-mocked tests separate from real provider calls; this choice alone
 does not authorize real charges, payouts or removal of preview safeguards.
+
+Supplier and aggregator names must not appear on customer payment pages,
+transaction history or elsewhere on the customer-facing site.
+
+**Why:** The user explicitly requested no supplier mentions on these surfaces.
+
+**How to apply:** Keep technical partner identity separate from customer-facing
+SendFlow presentation. Check error text, receipts, support messages and
+server-provided content, not just payment form labels. Distinguish Mobile Money
+operator choices from technical aggregators, and do not promise that an external
+provider page or legally required disclosure can be hidden.
+
+Preparatory FeexPay configuration uses explicit operator/operation assignments,
+not new country defaults, and must preserve existing activations and prices.
+
+**Why:** A country default could silently cover undocumented operators; shared
+Neon also serves Plesk, so preparing coverage must not activate real payments.
+
+**How to apply:** Review the dry-run plan before shared-Neon writes. Operator
+assignments take precedence over later country defaults until explicitly changed.
+Keep Coris deposit-only while a single inter-network flag covers both sender and
+recipient eligibility; separating those roles is required before widening it.

@@ -48,6 +48,28 @@ export const feexpayChannels: readonly FeexpayChannel[] = [
   { id: "mtn-cg", countryCode: "CG", operator: "MTN", payinPath: `${payin}mtn_cg`, payoutPath: `${payout}mtn_cg`, sandbox: true },
 ];
 
+/** Explicit identities, never fuzzy matching on editable display names. */
+export function sendflowOperatorId(channel: FeexpayChannel): string {
+  if (channel.id === "togocom-tg") return "tmoney-tg";
+  if (channel.id === "moov-tg") return "flooz-tg";
+  return channel.id;
+}
+
+export function feexpayChannelForOperator(countryCode: string, operatorId: string) {
+  return feexpayChannels.find((channel) =>
+    channel.countryCode.toLowerCase() === countryCode &&
+    sendflowOperatorId(channel) === operatorId,
+  );
+}
+
+export function feexpayOperations(channel: FeexpayChannel) {
+  // The catalog has one inter-network switch for both sender and recipient.
+  // Keep payin-only Coris deposit-only until eligibility can distinguish roles.
+  return channel.payoutPath
+    ? ["deposit", "inter-network", "international"] as const
+    : ["deposit"] as const;
+}
+
 export function getFeexpayCoverage() {
   return feexpayCountries.map((country) => ({
     countryCode: country.countryCode,

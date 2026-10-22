@@ -138,9 +138,11 @@ try {
   databaseUrl.searchParams.set("host", socket);
   databaseUrl.searchParams.set("port", "15432");
   databaseUrl.searchParams.set("user", "sf_fixture_app");
-  const result = spawnSync(process.execPath, ["--test",
-    join(apiDir, "tests/security/finance.integration.mjs"),
-    join(apiDir, "tests/security/catalog.integration.mjs")], {
+  const testFiles = process.argv.includes("--feexpay-configuration-only")
+    ? [join(apiDir, "tests/security/feexpay-configuration.integration.mjs")]
+    : [join(apiDir, "tests/security/finance.integration.mjs"),
+       join(apiDir, "tests/security/catalog.integration.mjs")];
+  const result = spawnSync(process.execPath, ["--experimental-strip-types", "--test", ...testFiles], {
     cwd: root, stdio: "inherit", env: {
       ...baseEnv, NODE_PATH: join(apiDir, "node_modules"),
       NODE_ENV: "development", SENDFLOW_DATABASE_TARGET: "development",
