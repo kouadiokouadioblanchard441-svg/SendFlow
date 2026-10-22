@@ -1,13 +1,13 @@
 ---
 name: Database environment isolation
-description: Keep visualization accounts in isolated Neon and protect any shared-production connection.
+description: Use the connected Neon for visualization accounts without broadly opening production access.
 ---
 
-The user chose a separate Neon database for visualization accounts. Do not create those accounts in the production database or copy real customer rows into the visualization database. Account credentials must not be hardcoded.
+The user wants the visualization account in the already connected Neon database, not a new separate database. Account credentials must not be hardcoded.
 
-**Why:** The user explicitly selected a separate Neon visualization database to sign in and inspect the app without putting an account in source code.
+**Why:** The user explicitly changed the earlier separate-database choice and asked to use the connected database.
 
-**How to apply:** Verify database isolation before enabling customer login in the preview. Keep production connection settings and data untouched.
+**How to apply:** Confirm the database target before provisioning. Authorization to create a visualization account is not authorization to unlock preview access to every production account or to run financial operations.
 
 In the shared-Neon preview, allow only known public GET routes and CORS preflights. Block private/customer/admin reads, all writes, malformed paths, and unlisted GET routes before request-body parsing and route handling.
 
