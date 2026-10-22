@@ -3,6 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CircleAlert, Info, RefreshCw, ShieldCheck, ShieldOff, Unlock } from 'lucide-react';
 import {
   getGetAdminNetworkDefenseQueryKey,
+  getListAdminIpBlocksQueryKey,
+  useAuthorizeAndReleaseNetworkIp,
   useCreateAdminNetworkException,
   useGetAdminNetworkDefense,
   useReleaseAdminAutomaticBlock,
@@ -71,6 +73,7 @@ export default function AdminNetworkDefense() {
   const createException = useCreateAdminNetworkException();
   const revokeException = useRevokeAdminNetworkException();
   const releaseBlock = useReleaseAdminAutomaticBlock();
+  const authorizeIp = useAuthorizeAndReleaseNetworkIp();
 
   const [ip, setIp] = useState('');
   const [reason, setReason] = useState('');
@@ -80,13 +83,17 @@ export default function AdminNetworkDefense() {
 
   const [revokeTarget, setRevokeTarget] = useState<NetworkException | null>(null);
   const [releaseTarget, setReleaseTarget] = useState<AutomaticIpBlock | null>(null);
+  const [authorizeTarget, setAuthorizeTarget] = useState<string | null>(null);
   const [actionReason, setActionReason] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey });
+  const invalidate = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey }),
+    queryClient.invalidateQueries({ queryKey: getListAdminIpBlocksQueryKey() }),
+  ]);
   const data = query.data;
   const unavailable = !data || query.isError;
-  const anyPending = createException.isPending || revokeException.isPending || releaseBlock.isPending;
+  const anyPending = createException.isPending || revokeException.isPending || releaseBlock.isPending || authorizeIp.isPending;
   const blocks = data?.blocks ?? [];
   const exceptions = data?.exceptions ?? [];
   const activeExceptions = exceptions.filter((e) => !e.revokedAt);
@@ -126,6 +133,7 @@ export default function AdminNetworkDefense() {
     setActionReason('');
     setActionError(null);
     setFeedback(null);
+    setAuthorizeTarget(null);
     if (kind === 'revoke') setRevokeTarget(target as NetworkException);
     else setReleaseTarget(target as AutomaticIpBlock);
   };
@@ -134,6 +142,7 @@ export default function AdminNetworkDefense() {
     if (anyPending) return;
     setRevokeTarget(null);
     setReleaseTarget(null);
+    setAuthorizeTarget(null);
   };
 
   const confirmAction = () => {
@@ -143,7 +152,20 @@ export default function AdminNetworkDefense() {
       setActionError(errMessage(err));
       if (errStatus(err) === 409) void invalidate();
     };
-    if (revokeTarget) {
+    if (authorizeTarget) {
+      authorizeIp.mutate(
+        { data: { ipAddress: authorizeTarget, reason: actionReason.trim() } },
+        {
+          onSuccess: (result) => {
+            const released = result.manualBlocksReleased + Number(result.automaticBlockReleased);
+            setFeedback(`L’adresse ${result.ipAddress} est autorisée.${released ? ` ${released} blocage(s) levé(s).` : ' Aucun blocage existant à lever.'}`);
+            setAuthorizeTarget(null);
+            void invalidate();
+          },
+          onError,
+        },
+      );
+    } else if (revokeTarget) {
       revokeException.mutate(
         { id: revokeTarget.id, data: { expectedVersion: revokeTarget.version, reason: actionReason.trim() } },
         { onSuccess: (ex) => { setFeedback(`Exception de ${ex.ipAddress} révoquée.`); setRevokeTarget(null); void invalidate(); }, onError },
@@ -156,7 +178,7 @@ export default function AdminNetworkDefense() {
     }
   };
 
-  const actionTarget = revokeTarget ?? releaseTarget;
+  const actionTarget = revokeTarget ?? releaseTarget ?? authorizeTarget;
 
   return (
     <div className="space-y-6" data-testid="page-admin-network-defense">
@@ -202,7 +224,7 @@ export default function AdminNetworkDefense() {
       <Card>
         <CardHeader>
           <CardTitle>Blocages automatiques</CardTitle>
-          <CardDescription>Échéances indiquées par le serveur ; l’état actif est déterminé par le serveur, pas par l’horloge de ce navigateur.</CardDescription>
+          <CardDescription>Les blocages restent actifs jusqu’à une levée explicite. Autoriser une IP lève atomiquement ses blocages manuels et automatiques.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {query.isLoading && <div className="sendflow-admin-table-skeleton" data-testid="loading-network-blocks">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>}
@@ -230,9 +252,17 @@ export default function AdminNetworkDefense() {
                     </TableCell>
                     <TableCell className="text-right">
                       {b.active && (
-                        <Button variant="outline" size="sm" disabled={unavailable || anyPending} onClick={() => openAction('release', b)} data-testid={`button-release-network-block-${b.id}`}>
-                          <Unlock className="size-4" /> Lever
-                        </Button>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button variant="outline" size="sm" disabled={unavailable || anyPending} onClick={() => openAction('release', b)} data-testid={`button-release-network-block-${b.id}`}>
+                            <Unlock className="size-4" /> Lever
+                          </Button>
+                          <Button variant="destructive" size="sm" disabled={unavailable || anyPending} onClick={() => {
+                            setRevokeTarget(null);setReleaseTarget(null);setAuthorizeTarget(b.ipAddress);
+                            setActionReason('');setActionError(null);setFeedback(null);
+                          }} data-testid={`button-authorize-release-network-block-${b.id}`}>
+                            Autoriser et lever
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -332,9 +362,15 @@ export default function AdminNetworkDefense() {
       <Dialog open={!!actionTarget} onOpenChange={(o) => { if (!o) closeAction(); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{revokeTarget ? `Révoquer l’exception de ${revokeTarget.ipAddress}` : `Lever le blocage automatique de ${releaseTarget?.ipAddress ?? ''}`}</DialogTitle>
+          <DialogTitle>
+            {authorizeTarget ? `Autoriser ${authorizeTarget} et lever ses blocages ?`
+              : revokeTarget ? `Révoquer l’exception de ${revokeTarget.ipAddress}`
+                : `Lever le blocage automatique de ${releaseTarget?.ipAddress ?? ''}`}
+          </DialogTitle>
             <DialogDescription>
-              {revokeTarget
+            {authorizeTarget
+              ? 'Cette décision lève dans une seule opération les blocages manuels et automatiques existants et exempte cette adresse des prochaines détections automatiques. L’authentification, les permissions financières et les signatures des webhooks restent obligatoires. Action auditée.'
+              : revokeTarget
                 ? 'Cette adresse sera de nouveau soumise à la détection automatique. Action auditée.'
                 : 'Seul le blocage automatique est levé ; aucun blocage manuel n’est modifié. La détection peut de nouveau bloquer cette adresse. Action auditée.'}
             </DialogDescription>
@@ -347,7 +383,7 @@ export default function AdminNetworkDefense() {
           <DialogFooter>
             <Button variant="outline" onClick={closeAction} disabled={anyPending} data-testid="button-cancel-network-action">Annuler</Button>
             <Button onClick={confirmAction} disabled={anyPending || unavailable} data-testid="button-confirm-network-action">
-              {anyPending ? 'Envoi…' : revokeTarget ? 'Révoquer' : 'Lever le blocage'}
+              {anyPending ? 'Envoi…' : authorizeTarget ? 'Autoriser et lever' : revokeTarget ? 'Révoquer' : 'Lever le blocage'}
             </Button>
           </DialogFooter>
         </DialogContent>

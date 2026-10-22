@@ -1,13 +1,14 @@
 import { Router, type Request, type Response } from "express";
 import {
   GetAdminNetworkDefenseResponse, CreateAdminNetworkExceptionBody, CreateAdminNetworkExceptionResponse,
+  AuthorizeAndReleaseNetworkIpBody, AuthorizeAndReleaseNetworkIpResponse,
   RevokeAdminNetworkExceptionBody, RevokeAdminNetworkExceptionParams, RevokeAdminNetworkExceptionResponse,
   ReleaseAdminAutomaticBlockBody, ReleaseAdminAutomaticBlockParams, ReleaseAdminAutomaticBlockResponse,
 } from "@workspace/api-zod";
 import { normalizeIp } from "@workspace/db/ip-access-policy";
 import { respondAdminIdentityError, type AdminPermission } from "./admin";
 import { mutationAllowed } from "./admin-ip-blocklist";
-import { createNetworkException, readNetworkDefense, releaseAutomaticBlock, revokeNetworkException } from "../services/network-defense";
+import { authorizeAndReleaseNetworkIp, createNetworkException, readNetworkDefense, releaseAutomaticBlock, revokeNetworkException } from "../services/network-defense";
 import { IpBlockError } from "../services/ip-blocklist";
 import { recordAdminAudit } from "../lib/admin-audit";
 
@@ -35,6 +36,17 @@ export function createAdminNetworkDefenseRouter(authorize:Authorize=respondAdmin
       const parsed=CreateAdminNetworkExceptionBody.strict().safeParse(req.body);
       if(!parsed.success){res.status(400).json({error:"Adresse ou motif invalide."});return;}
       res.status(201).json(CreateAdminNetworkExceptionResponse.parse(await createNetworkException(actor,parsed.data.ipAddress,parsed.data.reason)));
+    }catch(error){fail(req,res,error);}
+  });
+  router.post("/network-defense/authorize-and-release",async(req,res)=>{
+    const actor=authorize(req,res,"mutate");if(!actor)return;
+    try{
+      if(!await mutationAllowed(req,res,actor))return;
+      const parsed=AuthorizeAndReleaseNetworkIpBody.strict().safeParse(req.body);
+      if(!parsed.success){res.status(400).json({error:"Adresse ou motif invalide."});return;}
+      res.json(AuthorizeAndReleaseNetworkIpResponse.parse(
+        await authorizeAndReleaseNetworkIp(actor,parsed.data.ipAddress,parsed.data.reason),
+      ));
     }catch(error){fail(req,res,error);}
   });
   router.post("/network-defense/exceptions/:id/revoke",async(req,res)=>{

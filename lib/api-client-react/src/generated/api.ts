@@ -26,6 +26,7 @@ import type {
   AdminBanner,
   AdminBannerList,
   AdminBannerReorderRequest,
+  AdminIpAuthorizationResult,
   AdminLoginActivityPage,
   AdminOperatorPricingCatalog,
   AdminOtpActivityPage,
@@ -297,6 +298,94 @@ export const useCreateAdminNetworkException = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateAdminNetworkExceptionMutationOptions(options));
+    }
+
+export const getAuthorizeAndReleaseNetworkIpUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense/authorize-and-release`
+}
+
+/**
+ * @summary Explicitly trust one IP and atomically release its manual and automatic bans
+ */
+export const authorizeAndReleaseNetworkIp = async (ipBlockInput: IpBlockInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminIpAuthorizationResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminIpAuthorizationResult>(getAuthorizeAndReleaseNetworkIpUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(ipBlockInput)
+  }
+);}
+
+
+
+
+
+export const getAuthorizeAndReleaseNetworkIpMutationKey = () => ['authorizeAndReleaseNetworkIp'] as const;
+
+export const getAuthorizeAndReleaseNetworkIpMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authorizeAndReleaseNetworkIp>>, TError,AuthorizeAndReleaseNetworkIpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof authorizeAndReleaseNetworkIp>>, TError,AuthorizeAndReleaseNetworkIpMutationVariables, TContext> => {
+
+const mutationKey = getAuthorizeAndReleaseNetworkIpMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authorizeAndReleaseNetworkIp>>, AuthorizeAndReleaseNetworkIpMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  authorizeAndReleaseNetworkIp(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthorizeAndReleaseNetworkIpMutationResult = NonNullable<Awaited<ReturnType<typeof authorizeAndReleaseNetworkIp>>>
+    export type AuthorizeAndReleaseNetworkIpMutationBody = BodyType<IpBlockInput>
+    export type AuthorizeAndReleaseNetworkIpMutationError = ErrorType<void>
+    export type AuthorizeAndReleaseNetworkIpMutationVariables = {data: BodyType<IpBlockInput>}
+
+    /**
+ * @summary Explicitly trust one IP and atomically release its manual and automatic bans
+ */
+export const useAuthorizeAndReleaseNetworkIp = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authorizeAndReleaseNetworkIp>>, TError,AuthorizeAndReleaseNetworkIpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof authorizeAndReleaseNetworkIp>>,
+        TError,
+        AuthorizeAndReleaseNetworkIpMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAuthorizeAndReleaseNetworkIpMutationOptions(options));
     }
 
 export const getRevokeAdminNetworkExceptionUrl = (id: string,) => {

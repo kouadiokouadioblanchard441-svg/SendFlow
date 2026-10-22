@@ -68,6 +68,38 @@ export const CreateAdminNetworkExceptionResponse = zod.object({
 
 
 /**
+ * @summary Explicitly trust one IP and atomically release its manual and automatic bans
+ */
+export const authorizeAndReleaseNetworkIpBodyIpAddressMin = 2;
+export const authorizeAndReleaseNetworkIpBodyIpAddressMax = 45;
+
+export const authorizeAndReleaseNetworkIpBodyReasonMin = 3;
+export const authorizeAndReleaseNetworkIpBodyReasonMax = 500;
+
+
+
+export const AuthorizeAndReleaseNetworkIpBody = zod.object({
+  "ipAddress": zod.string().min(authorizeAndReleaseNetworkIpBodyIpAddressMin).max(authorizeAndReleaseNetworkIpBodyIpAddressMax),
+  "reason": zod.string().min(authorizeAndReleaseNetworkIpBodyReasonMin).max(authorizeAndReleaseNetworkIpBodyReasonMax)
+})
+
+export const AuthorizeAndReleaseNetworkIpResponse = zod.object({
+  "ipAddress": zod.string(),
+  "manualBlocksReleased": zod.number().int(),
+  "automaticBlockReleased": zod.boolean(),
+  "exception": zod.object({
+  "id": zod.string().uuid(),
+  "ipAddress": zod.string(),
+  "reason": zod.string(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "version": zod.number().int()
+})
+})
+
+
+/**
  * @summary Revoke a trusted IP using its current version
  */
 export const RevokeAdminNetworkExceptionParams = zod.object({

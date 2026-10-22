@@ -43,6 +43,13 @@ export interface NetworkDefenseStatus {
   requesterIp: string | null;
 }
 
+export interface AdminIpAuthorizationResult {
+  ipAddress: string;
+  manualBlocksReleased: number;
+  automaticBlockReleased: boolean;
+  exception: NetworkException;
+}
+
 export interface IpBlockInput {
   /**
      * @minLength 2

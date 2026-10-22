@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, CircleAlert, Info, RefreshCw, ShieldBan, ShieldOff } from 'lucide-react';
 import {
+  getGetAdminNetworkDefenseQueryKey,
   getListAdminIpBlocksQueryKey,
+  useAuthorizeAndReleaseNetworkIp,
   useCreateAdminIpBlock,
   useListAdminIpBlocks,
   useRevokeAdminIpBlock,
@@ -69,6 +71,7 @@ export default function AdminIpBlocklist() {
   const query = useListAdminIpBlocks({ page }, { query: { queryKey: getListAdminIpBlocksQueryKey({ page }), refetchInterval: 30_000 } });
   const createBlock = useCreateAdminIpBlock();
   const revokeBlock = useRevokeAdminIpBlock();
+  const authorizeIp = useAuthorizeAndReleaseNetworkIp();
 
   const [ip, setIp] = useState('');
   const [reason, setReason] = useState('');
@@ -79,8 +82,14 @@ export default function AdminIpBlocklist() {
   const [revokeTarget, setRevokeTarget] = useState<IpBlock | null>(null);
   const [revokeReason, setRevokeReason] = useState('');
   const [revokeError, setRevokeError] = useState<string | null>(null);
+  const [authorizeTarget, setAuthorizeTarget] = useState<IpBlock | null>(null);
+  const [authorizeReason, setAuthorizeReason] = useState('');
+  const [authorizeError, setAuthorizeError] = useState<string | null>(null);
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: getListAdminIpBlocksQueryKey() });
+  const invalidate = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: getListAdminIpBlocksQueryKey() }),
+    queryClient.invalidateQueries({ queryKey: getGetAdminNetworkDefenseQueryKey() }),
+  ]);
   const data = query.data;
   const items = data?.items ?? [];
   const accessDisabled = query.isError || !data;
@@ -128,6 +137,30 @@ export default function AdminIpBlocklist() {
         },
         onError: (err) => {
           setRevokeError(errMessage(err));
+          if (errStatus(err) === 409) void invalidate();
+        },
+      },
+    );
+  };
+
+  const confirmAuthorizeAndRelease = () => {
+    if (!authorizeTarget) return;
+    if (authorizeReason.trim().length < 3) {
+      setAuthorizeError('Le motif est obligatoire (3 caractères minimum).');
+      return;
+    }
+    authorizeIp.mutate(
+      { data: { ipAddress: authorizeTarget.ipAddress, reason: authorizeReason.trim() } },
+      {
+        onSuccess: (result) => {
+          const released = result.manualBlocksReleased + Number(result.automaticBlockReleased);
+          setFeedback(`L’adresse ${result.ipAddress} est autorisée.${released ? ` ${released} blocage(s) levé(s).` : ' Aucun blocage existant à lever.'}`);
+          setAuthorizeTarget(null);
+          setAuthorizeReason('');
+          void invalidate();
+        },
+        onError: (err) => {
+          setAuthorizeError(errMessage(err));
           if (errStatus(err) === 409) void invalidate();
         },
       },
@@ -227,11 +260,18 @@ export default function AdminIpBlocklist() {
                       <TableCell className="max-w-[280px] whitespace-normal text-sm" data-testid={`text-ip-block-reason-${b.id}`}>{b.reason}</TableCell>
                       <TableCell className="text-sm"><div>{fmt(b.blockedAt)}</div><small className="text-muted-foreground">par {b.blockedBy}</small></TableCell>
                       <TableCell className="text-sm">{b.revokedAt ? <><div>{fmt(b.revokedAt)}</div><small className="text-muted-foreground">par {b.revokedBy ?? '—'}</small></> : '—'}</TableCell>
-                      <TableCell className="text-right">
+                       <TableCell className="text-right">
                         {active && (
-                          <Button variant="outline" size="sm" onClick={() => { setRevokeTarget(b); setRevokeReason(''); setRevokeError(null); }} data-testid={`button-revoke-ip-block-${b.id}`}>
-                            Révoquer
-                          </Button>
+                           <div className="flex flex-wrap justify-end gap-2">
+                             <Button variant="outline" size="sm" onClick={() => { setRevokeTarget(b); setRevokeReason(''); setRevokeError(null); }} data-testid={`button-revoke-ip-block-${b.id}`}>
+                               Révoquer
+                             </Button>
+                             <Button variant="destructive" size="sm" disabled={accessDisabled || authorizeIp.isPending} onClick={() => {
+                               setAuthorizeTarget(b);setAuthorizeReason('');setAuthorizeError(null);
+                             }} data-testid={`button-authorize-release-ip-${b.id}`}>
+                               Autoriser et lever
+                             </Button>
+                           </div>
                         )}
                       </TableCell>
                     </TableRow>
@@ -284,6 +324,28 @@ export default function AdminIpBlocklist() {
             <Button variant="outline" onClick={() => setRevokeTarget(null)} disabled={revokeBlock.isPending} data-testid="button-cancel-ip-revoke">Annuler</Button>
             <Button onClick={confirmRevoke} disabled={revokeBlock.isPending} data-testid="button-confirm-ip-revoke">
               {revokeBlock.isPending ? 'Révocation…' : 'Révoquer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!authorizeTarget} onOpenChange={(open) => { if (!open && !authorizeIp.isPending) setAuthorizeTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Autoriser {authorizeTarget?.ipAddress} et lever ses blocages ?</DialogTitle>
+            <DialogDescription>
+              Dans une seule opération, cette adresse sera autorisée et tous ses blocages manuels et automatiques actuels seront levés. Elle sera exemptée des futures détections automatiques. Les contrôles d’authentification, les permissions financières et les signatures des webhooks restent obligatoires. La décision est auditée.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="ip-authorize-reason">Motif obligatoire</Label>
+            <Textarea id="ip-authorize-reason" value={authorizeReason} maxLength={500} onChange={(e) => setAuthorizeReason(e.target.value)} data-testid="input-ip-authorize-reason" />
+          </div>
+          {authorizeError && <p className="text-sm text-destructive" data-testid="error-ip-authorize">{authorizeError}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAuthorizeTarget(null)} disabled={authorizeIp.isPending}>Annuler</Button>
+            <Button variant="destructive" onClick={confirmAuthorizeAndRelease} disabled={accessDisabled || authorizeReason.trim().length < 3 || authorizeIp.isPending} data-testid="button-confirm-authorize-release-ip">
+              {authorizeIp.isPending ? 'Autorisation…' : 'Autoriser et lever'}
             </Button>
           </DialogFooter>
         </DialogContent>

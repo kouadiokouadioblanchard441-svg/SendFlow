@@ -119,6 +119,59 @@ test("Trusted IP exceptions never override manual blocks or administrator authen
   }finally{await close(server);}
 });
 
+test("Authorize-and-release atomically unblocks manual and automatic bans and prevents immediate reblocking",async()=>{
+  const ip="198.51.100.207",adminActor="fixture-authorize-release";
+  const app=r.express();app.set("trust proxy",1);app.use(r.express.json());
+  app.use(r.createAdminNetworkDefenseRouter(()=>adminActor));
+  const server=await serve(app);
+  try{
+    await pool.query(`INSERT INTO sf_network_defense(ip_address,blocked_at,ban_count,rule)
+      VALUES($1,now(),1,'reconnaissance')`,[ip]);
+    const manual=await r.createIpBlock(adminActor,ip,"Reviewed false positive","203.0.113.7");
+    assert.equal((await r.evaluateNetworkDefense({url:"/api/healthz"},ip)).allowed,false);
+
+    assert.equal((await request(server,"/network-defense/authorize-and-release",ip,{
+      method:"POST",body:{ipAddress:ip,reason:"Owner approved recovery"},
+    })).status,403);
+    assert.equal((await request(server,"/network-defense/authorize-and-release",ip,{
+      method:"POST",origin:"https://sendflow-test.invalid",
+      body:{ipAddress:ip,reason:"Owner approved recovery",isAdmin:true},
+    })).status,400);
+
+    await assert.rejects(
+      ()=>r.authorizeAndReleaseNetworkIp("x".repeat(256),ip,"Audit failure must roll back all changes"),
+      e=>e.code==="22001",
+    );
+    assert.equal((await pool.query("SELECT revoked_at FROM sf_ip_blocklist WHERE id=$1",[manual.id])).rows[0].revoked_at,null);
+    assert.ok((await state(ip)).blocked_at);
+    assert.equal((await pool.query("SELECT 1 FROM sf_network_defense_allowlist WHERE ip_address=$1",[ip])).rowCount,0);
+
+    const response=await request(server,"/network-defense/authorize-and-release",ip,{
+      method:"POST",origin:"https://sendflow-test.invalid",
+      body:{ipAddress:ip,reason:"Owner approved recovery"},
+    });
+    assert.equal(response.status,200);
+    const result=JSON.parse(response.text);
+    assert.deepEqual({manual:result.manualBlocksReleased,automatic:result.automaticBlockReleased},
+      {manual:1,automatic:true});
+    assert.equal(result.exception.ipAddress,ip);
+    assert.equal((await pool.query("SELECT revoked_at FROM sf_ip_blocklist WHERE id=$1",[manual.id])).rows[0].revoked_at!==null,true);
+    assert.equal((await state(ip)).blocked_at,null);
+    assert.equal((await r.evaluateNetworkDefense({url:"/api/healthz"},ip)).allowed,true);
+    assert.equal((await r.evaluateNetworkDefense({url:"/.env"},ip)).allowed,true);
+
+    const audit=await pool.query(`SELECT action FROM sf_admin_audit_logs
+      WHERE admin_user_id=$1
+      AND action IN ('unblock_ip','release_automatic_ip','authorize_release_network_ip')`,[adminActor]);
+    assert.deepEqual(new Set(audit.rows.map(x=>x.action)),new Set(["unblock_ip","release_automatic_ip","authorize_release_network_ip"]));
+
+    const repeated=await r.authorizeAndReleaseNetworkIp(actor,ip,"Confirm idempotent authorization");
+    assert.equal(repeated.manualBlocksReleased,0);
+    assert.equal(repeated.automaticBlockReleased,false);
+    await r.revokeNetworkException(actor,result.exception.id,result.exception.version,"Fixture cleanup");
+  }finally{await close(server);}
+});
+
 test("Exception audit failure rolls back, and automatic event history cannot be rewritten",async()=>{
   await assert.rejects(()=>r.createNetworkException("x".repeat(256),"198.51.100.205","Atomic exception fixture"));
   assert.equal((await pool.query("SELECT 1 FROM sf_network_defense_allowlist WHERE ip_address='198.51.100.205'")).rowCount,0);

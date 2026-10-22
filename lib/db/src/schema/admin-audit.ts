@@ -25,6 +25,7 @@ export const adminAuditLogsTable = pgTable(
 
 export type AdminAuditAction =
   | "allow_network_ip"
+  | "authorize_release_network_ip"
   | "revoke_network_allow"
   | "release_automatic_ip"
   | "view_network_defense"

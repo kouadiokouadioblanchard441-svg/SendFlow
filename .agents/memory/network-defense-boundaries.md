@@ -14,9 +14,22 @@ deny mobile customers and legitimate service providers.
 refusal from an IP ban, and preserve legitimate customer access.
 All automatic and manual IP bans are permanent until the owner's explicit,
 audited release: no expiry, daily reset, elapsed-time release or restart reset.
-Adding a trusted-IP exception must not release an existing ban.
+Adding a trusted-IP exception alone must not release an existing ban. A separate
+explicit, reasoned administrator action may atomically add an exception and lift
+existing manual and automatic bans; it must audit each changed state and fail all
+changes together if any write or audit fails.
 Trusted-IP exceptions never bypass authentication, financial permissions or
 webhook signatures.
+
+**Why:** The user asked to restore a legitimate blocked IP and keep it from being
+automatically blocked again, while requiring permanent bans to stay until an
+explicit decision. Separating normal exception creation from a confirmed,
+transactional “authorize and release” action prevents accidental unblocking.
+
+**How to apply:** Keep manual and automatic ban precedence intact for ordinary
+exception creation. Use the combined action only after an administrator confirms
+the specific IP and provides an audit reason; do not let trust bypass application
+authentication or financial controls.
 
 **Why permanent bans:** The user explicitly corrected the temporary-ban approach:
 “sa doit être bloqué définitivement jusqu'à ce que je décide”, emphasizing

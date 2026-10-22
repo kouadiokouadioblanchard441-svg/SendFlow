@@ -20,6 +20,7 @@ export * from './adminCountryOperatorPricingCountryCode';
 export * from './adminCountryPaymentRoutes';
 export * from './adminCountryPaymentRoutesCountryCode';
 export * from './adminFromParameter';
+export * from './adminIpAuthorizationResult';
 export * from './adminLoginActivity';
 export * from './adminLoginActivityPage';
 export * from './adminOperatorPaymentRoute';

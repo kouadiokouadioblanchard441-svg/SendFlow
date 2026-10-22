@@ -90,7 +90,7 @@ try {
       export { createAdminIpBlocklistRouter } from "./src/routes/admin-ip-blocklist";
       export { createSiteServer } from "../sendflow/server/site-server";
       export { default as express } from "express";
-      export { createNetworkException, revokeNetworkException, releaseAutomaticBlock, readNetworkDefense } from "./src/services/network-defense";
+      export { authorizeAndReleaseNetworkIp, createNetworkException, revokeNetworkException, releaseAutomaticBlock, readNetworkDefense } from "./src/services/network-defense";
       export { createAdminNetworkDefenseRouter } from "./src/routes/admin-network-defense";
       export { evaluateNetworkDefense } from "@workspace/db/network-defense";
     `, resolveDir: apiDir },

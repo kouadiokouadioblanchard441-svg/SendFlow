@@ -50,7 +50,10 @@ d’hébergeur cloud ne constitue pas une preuve d’attaque.
 Les fenêtres de comptage ne sont PAS des durées de blocage. Une décision de
 blocage ne se termine jamais automatiquement : ni après une journée, ni après
 un redémarrage. Seule une levée explicite, autorisée et journalisée rétablit
-l’accès. Ajouter une exception ne suffit pas à lever un blocage existant.
+l’accès. Ajouter une exception seule ne suffit pas à lever un blocage existant.
+L’action administrateur « Autoriser et lever » est le cas distinct et explicite :
+elle lève, dans une transaction, les blocages manuel et automatique présents,
+puis autorise cette IP pour éviter ses futurs blocages automatiques.
 
 Les requêtes de santé ne créent pas de compteur ; elles restent refusées si un
 blocage s’applique déjà. Les adresses locales, privées et d’infrastructure ne
@@ -78,10 +81,15 @@ IP : ce sont des données de sécurité à accès restreint, pas des données an
 La purge et la durée de conservation doivent encore être définies ; il n’existe
 pas de tâche de purge automatique dans cette livraison.
 
-Une exception ne contourne que la détection automatique future. Elle ne débloque
-aucune IP déjà bloquée, manuellement ou automatiquement, et ne donne aucun droit
-administrateur ou financier. Les décisions de blocage sont prioritaires même si
-une ancienne exception existe en base.
+La création ordinaire d’une exception ne contourne que la détection automatique
+future : elle ne débloque aucune IP déjà bloquée, manuellement ou automatiquement,
+et ne donne aucun droit administrateur ou financier. La nouvelle action « Autoriser
+et lever » est différente : elle exige une confirmation et un motif, retire les
+blocages manuels et automatiques existants, et crée/réactive l’exception dans une
+seule transaction SQL. En cas d’échec de l’un de ces changements ou de son audit,
+toute l’opération est annulée. Chaque blocage effectivement retiré et l’autorisation
+sont journalisés. Les contrôles d’authentification, les permissions financières
+et les signatures des webhooks restent inchangés.
 Les actions exigent les autorisations serveur existantes, une origine approuvée,
 un motif, une validation stricte et, pour les révocations/levées, la version
 actuelle. Les mutations réseau sont limitées à 30/minute par administrateur.
@@ -96,14 +104,15 @@ La lecture du panel est bornée aux 100 enregistrements de blocage récents et
 
 - 4 tests unitaires : IPv4/IPv6, alias IPv4-mapped, entrées invalides,
   confiance proxy et classification des chemins.
-- 28 tests HTTP/SQL dans PostgreSQL jetable, dont les tests financiers existants.
+- 29 tests HTTP/SQL dans PostgreSQL jetable, dont les tests financiers existants.
   Les migrations ciblées ont été exécutées deux fois dans cette base pour vérifier
   leur réexécution.
 - Cas vérifiés : blocage manuel, auto-blocage, double création concurrente,
   absence d’expiration malgré le temps écoulé, conversion des anciens blocages,
   récidive après levée, partage entre deux workers, refus des pages/fichiers,
-  exceptions, priorité du blocage manuel, CSRF, versions périmées, audit atomique,
-  historique protégé et refus des faux privilèges administrateur.
+  exceptions, priorité du blocage manuel, autorisation et levée atomiques des
+  deux types de blocage, refus CSRF, versions périmées, audit atomique, historique
+  protégé et refus des faux privilèges administrateur.
 - Vérification TypeScript complète, build client/serveur et contrôle de secrets
   du dépôt réussis.
 - Après redémarrage : accueil et santé HTTP 200 ; capture mobile de l’accueil
@@ -133,9 +142,11 @@ Les contrôles applicatifs consultent la base à chaque requête et écrivent le
 compteurs : ils ne sont pas une défense suffisante contre une saturation réseau
 ou de base. Il faut une première limitation au reverse proxy/WAF avant l’origine.
 
-En cas de faux positif, une levée explicite ou une exception auditée est possible
-depuis un accès administrateur autorisé et non bloqué. Si tous les accès sont
-perdus, utiliser une maintenance serveur authentifiée ; ne pas créer de route
+En cas de faux positif, utiliser « Lever » pour ne retirer qu’un blocage
+automatique, « Révoquer » pour ne retirer qu’un blocage manuel, ou « Autoriser et
+lever » pour retirer les deux et empêcher les futurs blocages automatiques. Ces
+actions exigent un accès administrateur autorisé et non bloqué. Si tous les accès
+sont perdus, utiliser une maintenance serveur authentifiée ; ne pas créer de route
 publique de secours. Une panne de base laisse volontairement le site en 503.
 
 Un retour à une ancienne version du code peut supprimer la protection automatique.

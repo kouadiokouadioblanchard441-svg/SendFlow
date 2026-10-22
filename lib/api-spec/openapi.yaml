@@ -59,6 +59,28 @@ paths:
                 $ref: "#/components/schemas/NetworkException"
         "409":
           description: Already trusted or manually blocked
+  /DMgrgmt-1np5g23g12bGFtMwh/network-defense/authorize-and-release:
+    post:
+      operationId: authorizeAndReleaseNetworkIp
+      tags: [admin]
+      summary: Explicitly trust one IP and atomically release its manual and automatic bans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IpBlockInput"
+      responses:
+        "200":
+          description: IP is trusted and all current application bans were released atomically
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminIpAuthorizationResult"
+        "400":
+          description: Invalid public IPv4/IPv6 address or reason
+        "409":
+          description: IP cannot be authorized or release operation conflicted
   /DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions/{id}/revoke:
     post:
       operationId: revokeAdminNetworkException
@@ -2691,6 +2713,15 @@ components:
         policy:
           $ref: "#/components/schemas/NetworkDefensePolicy"
         requesterIp: { type: [string, "null"] }
+    AdminIpAuthorizationResult:
+      type: object
+      required: [ipAddress, manualBlocksReleased, automaticBlockReleased, exception]
+      properties:
+        ipAddress: { type: string }
+        manualBlocksReleased: { type: integer }
+        automaticBlockReleased: { type: boolean }
+        exception:
+          $ref: "#/components/schemas/NetworkException"
     IpBlockInput:
       type: object
       additionalProperties: false
