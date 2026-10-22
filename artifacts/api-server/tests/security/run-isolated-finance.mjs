@@ -40,6 +40,9 @@ try {
   const migration = readFileSync(join(root, "lib/db/migrations/2026-10-22-financial-audit-hardening.sql"), "utf8");
   await owner.query(migration);
   await owner.query(migration);
+  const previewMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-preview-access.sql"), "utf8");
+  await owner.query(previewMigration);
+  await owner.query(previewMigration);
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app;
@@ -55,6 +58,9 @@ try {
       export { consumeTransferQuoteQuota } from "./src/data/transfer-quote-quota";
       export { getAccountLimitSnapshot } from "./src/lib/account-limit";
       export { hashCustomerSessionToken } from "./src/lib/customer-auth-crypto";
+      export { hashCustomerSecret } from "./src/lib/customer-auth-crypto";
+      export { provisionPreviewAccount } from "./src/services/provision-preview-account";
+      export { createSensitiveDataLookupIndex } from "./src/lib/sensitive-data-crypto";
       export { decryptSensitiveData } from "./src/lib/sensitive-data-crypto";
     `, resolveDir: apiDir },
     outfile: runtime, bundle: true, platform: "node", format: "cjs", logLevel: "silent",

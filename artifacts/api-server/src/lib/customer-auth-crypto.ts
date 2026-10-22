@@ -76,8 +76,17 @@ export function createCustomerSessionToken() {
   return randomBytes(32).toString("base64url");
 }
 
-export function hashCustomerSessionToken(token: string) {
-  return createHash("sha256").update(token).digest("hex");
+export function hashCustomerSessionToken(
+  token: string,
+  environment: Readonly<Record<string, string | undefined>> = process.env,
+) {
+  // A viewer cookie cannot authenticate against production, even on an older
+  // deployment sharing these tables. Production hashes remain unchanged.
+  const scope = environment.SENDFLOW_DATABASE_TARGET === "shared-neon" ? "sendflow-preview:v1:" : "";
+  const digest = createHash("sha256").update(scope).update(token).digest("hex");
+  // Retain 240 bits while making the realm enforceable by a database trigger.
+  // A legacy production SHA-256 lookup can never produce this prefix.
+  return scope ? `pv1_${digest.slice(0, 60)}` : digest;
 }
 
 export function isCustomerSessionToken(value: string) {

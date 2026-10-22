@@ -59,6 +59,9 @@ import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
 import { recordLoginActivity } from "../lib/login-activity";
 import { createCustomerPinRotationSessionPolicy } from "../lib/customer-pin-session-policy";
+import { activePreviewAccountCondition } from "../lib/preview-account-condition";
+import { isSharedNeonPreview } from "../lib/shared-neon-preview-guard";
+import { previewPasswordForVerification } from "../lib/preview-credential-policy";
 
 const router: IRouter = Router();
 const PRIVACY_POLICY_VERSION = "sendflow-privacy-v1";
@@ -354,15 +357,21 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         })
         .from(usersTable)
         .innerJoin(customerCredentialsTable, eq(customerCredentialsTable.userId, usersTable.id))
-        .where(or(
-          eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
-          eq(usersTable.phone, parsed.data.phone),
+        .where(and(
+          or(
+            eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
+            eq(usersTable.phone, parsed.data.phone),
+          ),
+          isSharedNeonPreview() ? activePreviewAccountCondition() : undefined,
         ))
         .for("update");
 
-      const encodedHash = record?.passwordHash ?? await DUMMY_PASSWORD_HASH;
+      const scopedHash = isSharedNeonPreview()
+        ? previewPasswordForVerification(record?.passwordHash ?? "")
+        : record?.passwordHash;
+      const encodedHash = scopedHash || await DUMMY_PASSWORD_HASH;
       const validPassword = await verifyCustomerSecret(parsed.data.password, encodedHash);
-      if (!record || record.accountStatus !== "active" || !validPassword) {
+      if (!record || !scopedHash || record.accountStatus !== "active" || !validPassword) {
         const retryAfterFailure = await recordAuthFailureAndGetRetryAfter(
           buckets,
           now,

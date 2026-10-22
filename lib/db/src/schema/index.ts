@@ -15,5 +15,6 @@ export * from "./payment-aggregator-routing";
 export * from "./registration-settings";
 export * from "./transactions";
 export * from "./users";
+export * from "./preview-access";
 export * from "./wallets";
 export * from "./wallet-ledger";

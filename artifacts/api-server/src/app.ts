@@ -2,7 +2,8 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { ADMIN_ROUTE_PREFIX } from "./lib/admin-route-prefix";
-import { shouldBlockSharedNeonApiRequest } from "./lib/shared-neon-preview-guard";
+import { shouldBlockSharedNeonApiRequest, isViewerRouteCandidate } from "./lib/shared-neon-preview-guard";
+import { enforcePreviewAccountAccess } from "./lib/preview-access-middleware";
 import { getAllowedOrigins, normalizeHttpOrigin } from "./lib/origin-policy";
 import { parseTrustProxyHops } from "./lib/trust-proxy-policy";
 import router from "./routes";
@@ -66,7 +67,7 @@ app.use("/api", (req, res, next) => {
     !shouldBlockSharedNeonApiRequest(
       req.method,
       req.originalUrl,
-    )
+    ) || isViewerRouteCandidate(req.method, req.originalUrl)
   ) {
     next();
     return;
@@ -84,6 +85,7 @@ app.use("/api", (req, res, next) => {
 });
 app.use(express.json({ limit: "100kb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
+app.use("/api", enforcePreviewAccountAccess);
 app.use("/api/me", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store, private");
   next();

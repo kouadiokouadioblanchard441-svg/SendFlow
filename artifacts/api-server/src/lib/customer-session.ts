@@ -2,6 +2,9 @@ import type { Request, Response } from "express";
 import { and, db, eq, gte, isNull, customerCredentialsTable, customerSessionsTable, usersTable } from "@workspace/db";
 import { createCustomerSessionToken, hashCustomerSessionToken, isCustomerSessionToken } from "./customer-auth-crypto";
 import { decryptSensitiveDataIfEncrypted } from "./sensitive-data-crypto";
+import { activePreviewAccountCondition } from "./preview-account-condition";
+import { isSharedNeonPreview } from "./shared-neon-preview-guard";
+import { previewPasswordForVerification } from "./preview-credential-policy";
 
 export const CUSTOMER_SESSION_COOKIE = "__Host-sendflow_session";
 export const CUSTOMER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -86,6 +89,7 @@ export async function getCustomerSession(
       accountStatus: usersTable.status,
       pinVerifiedUntil: customerSessionsTable.pinVerifiedUntil,
       credentialPinHash: customerCredentialsTable.pinHash,
+      credentialPasswordHash: customerCredentialsTable.passwordHash,
     })
     .from(customerSessionsTable)
     .innerJoin(usersTable, eq(usersTable.id, customerSessionsTable.userId))
@@ -95,11 +99,13 @@ export async function getCustomerSession(
         eq(customerSessionsTable.tokenHash, tokenHash),
         isNull(customerSessionsTable.revokedAt),
         gte(customerSessionsTable.expiresAt, now),
+        isSharedNeonPreview() ? activePreviewAccountCondition() : undefined,
       ),
     )
     .limit(1);
 
   if (!row) return null;
+  if (isSharedNeonPreview() && !previewPasswordForVerification(row.credentialPasswordHash ?? "")) return null;
   if (row.accountStatus !== "active") {
     await db
       .update(customerSessionsTable)

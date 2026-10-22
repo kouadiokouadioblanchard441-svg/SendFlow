@@ -8,7 +8,7 @@ const publicReadPathPrefixes = [
   "/api/storage/public-objects",
 ];
 
-function normalizeRequestPath(requestPath: string): string | null {
+export function normalizeRequestPath(requestPath: string): string | null {
   let pathname = requestPath.split(/[?#]/, 1)[0] || "/";
 
   try {
@@ -36,6 +36,27 @@ function normalizeRequestPath(requestPath: string): string | null {
     .replace(/\/{2,}/g, "/")
     .replace(/\/+$/, "")
     .toLowerCase() || "/";
+}
+
+export function isSharedNeonPreview(environment: Environment = process.env): boolean {
+  return environment.SENDFLOW_DATABASE_TARGET === "shared-neon";
+}
+
+// This is only a route candidate, NOT an authorization. The second gate checks
+// a scoped session; sign-in itself restricts its SQL lookup to the DB grant.
+export function isViewerRouteCandidate(method: string, requestPath: string): boolean {
+  const path = normalizeRequestPath(requestPath);
+  if (!path) return false;
+  if (method.toUpperCase() === "GET") {
+    return ["/api/auth/session", "/api/me", "/api/me/transactions",
+      "/api/me/account-limit", "/api/me/identity-verification"].includes(path)
+      || /^\/api\/me\/transactions\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path);
+  }
+  if (method.toUpperCase() === "POST") {
+    return ["/api/auth/sign-in", "/api/auth/sign-out", "/api/auth/unlock",
+      "/api/me/transfer-quote"].includes(path);
+  }
+  return method.toUpperCase() === "PUT" && path === "/api/me/pin";
 }
 
 function isPathOrChild(pathname: string, prefix: string): boolean {
