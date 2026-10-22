@@ -23,3 +23,15 @@ customer selections from server data, rather than require a new hardcoded countr
 **How to apply:** Treat country creation, phone rules and operation availability as
 separate server-managed configuration. Do not assume that creating a country
 activates payment integrations, fees or operators.
+
+FeexPay is the first payment partner requested by the user. They describe the
+integration as « en SDK, c'est-à-dire l'API directe dans notre application ».
+Use direct provider calls from the server, not a browser SDK that exposes credentials.
+
+**Why:** The user selected FeexPay while reiterating that SendFlow is a large
+financial application; their existing server-only secret and financial-authority
+requirements still apply.
+
+**How to apply:** Connect the provider through the server-owned country/operator/
+operation routing. Installing an API client must not implicitly authorize real
+payments, enable countries, or change customer page appearance.
