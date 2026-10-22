@@ -30,9 +30,9 @@ packages = ["jdk21"]
 
 [userenv.development]
 DIDIT_ENVIRONMENT = "live"
-SENDFLOW_ADMIN_USER_IDS = "Il ne faut rien ajouter "
 SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "
 SENDFLOW_DATABASE_TARGET = "shared-neon"
 TRUST_PROXY_HOPS = "1"
-ESMS_VERIFY_APP_ID = "vera_875b20b495e843459ee6"
+ESMS_VERIFY_APP_ID = "Je t'avais déjà envoyé tout"
+DIDIT_WORKFLOW_ID = "Je t'ai envoyé "
 # Android SDK and JDK paths are resolved by android-sdk.nix and the Android build wrapper.
