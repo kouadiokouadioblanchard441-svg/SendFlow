@@ -532,6 +532,83 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/profile:
+    get:
+      operationId: getCustomerProfile
+      tags: [account]
+      summary: Get the authenticated customer's profile
+      description: Returns the authenticated account's persisted name and birth date. The server requires a recently verified PIN.
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Current customer's profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerProfile"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Profile storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateCustomerProfile
+      tags: [account]
+      summary: Update the authenticated customer's profile
+      description: Validates and encrypts the authenticated account's name and date of birth. The server requires a recently verified PIN.
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerProfileUpdate"
+      responses:
+        "200":
+          description: Updated customer's profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerProfile"
+        "400":
+          description: Profile data is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Profile storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /me/account-limit:
     get:
       operationId: getCurrentAccountLimit
@@ -2711,6 +2788,34 @@ components:
       required:
         - userId
         - wallet
+    CustomerProfile:
+      type: object
+      properties:
+        firstName:
+          type: string
+          maxLength: 80
+        lastName:
+          type: string
+          maxLength: 80
+        birthDate:
+          type: ["string", "null"]
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      required: [firstName, lastName, birthDate]
+    CustomerProfileUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 80
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 80
+        birthDate:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      required: [firstName, lastName, birthDate]
     TransferQuoteInput:
       type: object
       properties:

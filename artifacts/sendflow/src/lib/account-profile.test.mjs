@@ -2,20 +2,9 @@ import assert from 'node:assert/strict';
 import { beforeEach, test } from 'node:test';
 import {
   ACCOUNT_PROFILE_KEY,
-  readAccountProfile,
-  saveAccountProfile,
+  clearLegacyAccountProfile,
+  splitFullName,
 } from './account-profile.ts';
-
-const profileA = {
-  lastName: 'Koné',
-  firstName: 'Aïcha',
-  birthDate: '1996-04-12',
-};
-const profileB = {
-  lastName: 'Traoré',
-  firstName: 'Moussa',
-  birthDate: '1992-08-23',
-};
 
 let stored;
 
@@ -23,38 +12,33 @@ beforeEach(() => {
   stored = new Map();
   globalThis.window = {
     localStorage: {
-      getItem: (key) => stored.get(key) ?? null,
-      setItem: (key, value) => stored.set(key, value),
+      get length() {
+        return stored.size;
+      },
+      key: (index) => [...stored.keys()][index] ?? null,
       removeItem: (key) => stored.delete(key),
     },
   };
 });
 
-test('profiles are stored and read only under the matching customer ID', () => {
-  saveAccountProfile(profileA, 'customer-a');
-  saveAccountProfile(profileB, 'customer-b');
-
-  assert.deepEqual(readAccountProfile('customer-a'), profileA);
-  assert.deepEqual(readAccountProfile('customer-b'), profileB);
-  assert.deepEqual(readAccountProfile('customer-c'), {
-    lastName: 'A.',
-    firstName: 'Mariam',
-    birthDate: '2000-01-01',
+test('splits only the server-provided name and never invents missing profile fields', () => {
+  assert.deepEqual(splitFullName('Aïcha Marie Koné'), {
+    firstName: 'Aïcha',
+    lastName: 'Marie Koné',
   });
+  assert.deepEqual(splitFullName(''), { firstName: '', lastName: '' });
 });
 
-test('an unscoped legacy profile is discarded instead of assigned to a customer', () => {
-  stored.set(ACCOUNT_PROFILE_KEY, JSON.stringify(profileA));
+test('removes both old unscoped and account-scoped profile copies from browser storage', () => {
+  stored.set(ACCOUNT_PROFILE_KEY, '{"firstName":"Fiction","birthDate":"2000-01-01"}');
+  stored.set(`${ACCOUNT_PROFILE_KEY}:customer-1`, '{"firstName":"Old","birthDate":"1990-01-01"}');
+  stored.set('sendflow.account.country', 'CI');
+  stored.set('unrelated', 'keep');
 
-  assert.deepEqual(readAccountProfile('customer-b'), {
-    lastName: 'A.',
-    firstName: 'Mariam',
-    birthDate: '2000-01-01',
-  });
+  clearLegacyAccountProfile();
+
   assert.equal(stored.has(ACCOUNT_PROFILE_KEY), false);
-});
-
-test('saving requires a non-empty authenticated customer ID', () => {
-  assert.throws(() => saveAccountProfile(profileA, ''), /customer account is required/i);
-  assert.equal(stored.size, 0);
+  assert.equal(stored.has(`${ACCOUNT_PROFILE_KEY}:customer-1`), false);
+  assert.equal(stored.get('sendflow.account.country'), 'CI');
+  assert.equal(stored.get('unrelated'), 'keep');
 });

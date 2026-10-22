@@ -6,7 +6,7 @@ import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpField } from '@/lib/auth-validation';
 import { DEFAULT_ACCOUNT_COUNTRY, saveAccountCountry, type AccountCountry } from '@/lib/account-country';
-import { saveAccountProfile, splitFullName } from '@/lib/account-profile';
+import { clearLegacyAccountProfile } from '@/lib/account-profile';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -208,12 +208,9 @@ export default function SignupPage() {
     setVerificationError('');
   };
 
-  const savePendingSignup = (userId: string) => {
+  const savePendingSignup = () => {
     saveAccountCountry(signupCountry);
-    saveAccountProfile({
-      ...splitFullName(form.fullName),
-      birthDate: form.birthDate,
-    }, userId);
+    clearLegacyAccountProfile();
     window.sessionStorage.setItem('sendflow.pending-signup', 'true');
   };
 
@@ -255,7 +252,7 @@ export default function SignupPage() {
             acceptedPrivacy: true,
           },
         });
-        savePendingSignup(account.userId);
+        savePendingSignup();
         setVerifiedOnSignup(false);
         setSubmitted(true);
         setStep('success');
@@ -294,7 +291,7 @@ export default function SignupPage() {
           acceptedPrivacy: true,
         },
       });
-      savePendingSignup(account.userId);
+      savePendingSignup();
       setVerifiedOnSignup(true);
       setSubmitted(true);
       setStep('success');

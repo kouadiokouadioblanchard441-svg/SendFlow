@@ -34,7 +34,7 @@ import { clearPinUnlock } from '@/lib/pin-unlock';
 import { formatCurrencyMinor, toTransactionView } from '@/lib/transactions';
 import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
-import { clearLegacyAccountProfile, readAccountProfile } from '@/lib/account-profile';
+import { clearLegacyAccountProfile, splitFullName } from '@/lib/account-profile';
 import { getAvatarForUser, getCurrentAvatarUserKey } from '@/lib/avatar-bank';
 import notificationBell from '@assets/633486_1789677628502.png';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -82,7 +82,8 @@ export default function AccountPage() {
   const accountQuery = useGetCurrentAccount({
     query: { queryKey: getGetCurrentAccountQueryKey(), enabled: isUnlocked },
   });
-  const accountProfile = readAccountProfile(accountQuery.data?.userId);
+  const accountProfile = splitFullName(accountQuery.data?.displayName ?? '');
+  const accountProfileLabel = [accountProfile.firstName, accountProfile.lastName].filter(Boolean).join(' ') || 'Profil';
   const profileAvatar = getAvatarForUser(getCurrentAvatarUserKey(accountProfile));
   const transactionsQuery = useCustomerTransactions(accountQuery.data?.userId, '', 5);
   const recentTransactions = transactionsQuery.data?.pages.flatMap((page) => page.items).slice(0, 5) ?? [];
@@ -99,6 +100,10 @@ export default function AccountPage() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const signOutCustomer = useSignOutCustomer();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    clearLegacyAccountProfile();
+  }, []);
 
   useEffect(() => {
     setActiveBannerIndex((current) => publishedBanners.length ? Math.min(current, publishedBanners.length - 1) : 0);
@@ -412,7 +417,7 @@ export default function AccountPage() {
               <div className="sendflow-side-brand"><img src={sendflowMark} alt="" /><img className="sendflow-side-wordmark" src={sendflowWordmark} alt="SendFlow" /></div>
               <button type="button" className="sendflow-close-button" onClick={closePanels} aria-label="Fermer le menu" data-testid="button-close-menu"><X size={20} /></button>
             </div>
-             <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileAvatar.src} alt="" /><span><strong>{accountProfile.firstName} {accountProfile.lastName}</strong><small>Compte personnel</small></span></div>
+             <div className="sendflow-menu-profile"><img className="sendflow-profile-avatar" src={profileAvatar.src} alt="" /><span><strong>{accountProfileLabel}</strong><small>Compte personnel</small></span></div>
             <div className="sendflow-menu-links">
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-info'); }} data-testid="button-menu-account-info"><UserRound size={19} />Informations du compte<ChevronRight size={17} /></button>
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/change-pin'); }} data-testid="button-menu-change-secret"><LockKeyhole size={19} />Modifier le code PIN<ChevronRight size={17} /></button>

@@ -58,6 +58,8 @@ import type {
   CustomerPinSetInput,
   CustomerPinStateResult,
   CustomerPinUnlockInput,
+  CustomerProfile,
+  CustomerProfileUpdate,
   CustomerRegistrationInput,
   CustomerSessionResult,
   CustomerSignInInput,
@@ -1372,6 +1374,173 @@ export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurren
 
 
 
+
+export const getGetCustomerProfileUrl = () => {
+
+
+
+
+  return `/api/me/profile`
+}
+
+/**
+ * Returns the authenticated account's persisted name and birth date. The server requires a recently verified PIN.
+ * @summary Get the authenticated customer's profile
+ */
+export const getCustomerProfile = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerProfile> => {
+
+  return customFetch<CustomerProfile>(getGetCustomerProfileUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerProfileQueryKey = () => {
+    return [
+    `/api/me/profile`
+    ] as const;
+    }
+
+
+export const getGetCustomerProfileQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerProfile>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerProfileQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerProfile>>> = ({ signal }) => getCustomerProfile({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerProfile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerProfile>>>
+export type GetCustomerProfileQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Get the authenticated customer's profile
+ */
+
+export function useGetCustomerProfile<TData = Awaited<ReturnType<typeof getCustomerProfile>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateCustomerProfileUrl = () => {
+
+
+
+
+  return `/api/me/profile`
+}
+
+/**
+ * Validates and encrypts the authenticated account's name and date of birth. The server requires a recently verified PIN.
+ * @summary Update the authenticated customer's profile
+ */
+export const updateCustomerProfile = async (customerProfileUpdate: CustomerProfileUpdate, options?: Parameters<typeof customFetch>[1]): Promise<CustomerProfile> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerProfile>(getUpdateCustomerProfileUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerProfileUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateCustomerProfileMutationKey = () => ['updateCustomerProfile'] as const;
+
+export const getUpdateCustomerProfileMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomerProfile>>, TError,UpdateCustomerProfileMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCustomerProfile>>, TError,UpdateCustomerProfileMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCustomerProfileMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCustomerProfile>>, UpdateCustomerProfileMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCustomerProfile(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCustomerProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateCustomerProfile>>>
+    export type UpdateCustomerProfileMutationBody = BodyType<CustomerProfileUpdate>
+    export type UpdateCustomerProfileMutationError = ErrorType<ErrorEnvelope>
+    export type UpdateCustomerProfileMutationVariables = {data: BodyType<CustomerProfileUpdate>}
+
+    /**
+ * @summary Update the authenticated customer's profile
+ */
+export const useUpdateCustomerProfile = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomerProfile>>, TError,UpdateCustomerProfileMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCustomerProfile>>,
+        TError,
+        UpdateCustomerProfileMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCustomerProfileMutationOptions(options));
+    }
 
 export const getGetCurrentAccountLimitUrl = () => {
 

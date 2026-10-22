@@ -62,6 +62,7 @@ import { createCustomerPinRotationSessionPolicy } from "../lib/customer-pin-sess
 import { activePreviewAccountCondition } from "../lib/preview-account-condition";
 import { isSharedNeonPreview } from "../lib/shared-neon-preview-guard";
 import { previewPasswordForVerification } from "../lib/preview-credential-policy";
+import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
 
 const router: IRouter = Router();
 const PRIVACY_POLICY_VERSION = "sendflow-privacy-v1";
@@ -259,7 +260,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         account: {
           userId: user.id,
           phone: decryptSensitiveDataIfEncrypted(user.phone, "user-phone"),
-          displayName: decryptSensitiveDataIfEncrypted(user.displayName, "user-name"),
+          displayName: formatCustomerDisplayName(
+            decryptSensitiveDataIfEncrypted(user.displayName, "user-name"),
+          ),
           countryCode: user.countryCode,
           pinConfigured: false,
         },
@@ -397,7 +400,9 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         account: {
           userId: record.userId,
           phone: decryptSensitiveDataIfEncrypted(record.phone, "user-phone") ?? "",
-          displayName: decryptSensitiveDataIfEncrypted(record.displayName, "user-name"),
+          displayName: formatCustomerDisplayName(
+            decryptSensitiveDataIfEncrypted(record.displayName, "user-name"),
+          ),
           countryCode: record.countryCode,
           pinConfigured: record.pinHash !== null,
         },

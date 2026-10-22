@@ -1,8 +1,11 @@
 import { Router, type IRouter } from "express";
 import {
+  GetCustomerProfileResponse,
   GetCurrentAccountResponse,
   GetCustomerTransactionResponse,
   GetCustomerTransactionsResponse,
+  UpdateCustomerProfileBody,
+  UpdateCustomerProfileResponse,
 } from "@workspace/api-zod";
 import {
   and,
@@ -15,6 +18,7 @@ import {
   or,
   sql,
   transactionsTable,
+  usersTable,
   walletsTable,
 } from "@workspace/db";
 import {
@@ -26,7 +30,14 @@ import { requireCustomerSession } from "../lib/customer-session";
 import {
   createSensitiveDataLookupIndex,
   decryptSensitiveDataIfEncrypted,
+  encryptSensitiveData,
+  normalizeSensitiveNameForLookup,
 } from "../lib/sensitive-data-crypto";
+import {
+  normalizeCustomerProfile,
+  serializeCustomerProfileName,
+  splitCustomerDisplayName,
+} from "../lib/customer-profile-policy";
 
 const router: IRouter = Router();
 const DEFAULT_CUSTOMER_TRANSACTION_PAGE_SIZE = 50;
@@ -109,6 +120,86 @@ router.get("/me", async (req, res): Promise<void> => {
   } catch (error) {
     req.log.error({ err: error, userId: session.userId }, "Account lookup failed");
     res.status(503).json({ error: "Account storage unavailable" });
+  }
+});
+
+router.get("/me/profile", async (req, res): Promise<void> => {
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+  res.setHeader("Cache-Control", "no-store, private");
+
+  try {
+    const [user] = await db
+      .select({
+        displayName: usersTable.displayName,
+        birthDate: usersTable.birthDate,
+        birthDateEncrypted: usersTable.birthDateEncrypted,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.id, session.userId))
+      .limit(1);
+    if (!user) {
+      res.status(503).json({ error: "Profile storage unavailable" });
+      return;
+    }
+
+    const displayName = decryptSensitiveDataIfEncrypted(user.displayName, "user-name");
+    const birthDate = user.birthDateEncrypted
+      ? decryptSensitiveDataIfEncrypted(user.birthDateEncrypted, "user-birth-date")
+      : user.birthDate;
+    const profile = GetCustomerProfileResponse.parse({
+      ...splitCustomerDisplayName(displayName),
+      birthDate,
+    });
+    res.json(profile);
+  } catch {
+    // Never attach request or decrypted profile values to this log entry.
+    req.log.error("Customer profile lookup failed");
+    res.status(503).json({ error: "Profile storage unavailable" });
+  }
+});
+
+router.patch("/me/profile", async (req, res): Promise<void> => {
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+
+  const parsed = UpdateCustomerProfileBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid profile data" });
+    return;
+  }
+  const profile = normalizeCustomerProfile(parsed.data);
+  if (!profile) {
+    res.status(400).json({ error: "Invalid profile data" });
+    return;
+  }
+
+  try {
+    const fullName = `${profile.firstName} ${profile.lastName}`;
+    const [updatedUser] = await db
+      .update(usersTable)
+      .set({
+        displayName: encryptSensitiveData(serializeCustomerProfileName(profile), "user-name"),
+        displayNameLookupHash: createSensitiveDataLookupIndex(
+          normalizeSensitiveNameForLookup(fullName),
+          "user-name",
+        ),
+        birthDate: null,
+        birthDateEncrypted: encryptSensitiveData(profile.birthDate, "user-birth-date"),
+      })
+      .where(eq(usersTable.id, session.userId))
+      .returning({ id: usersTable.id });
+    if (!updatedUser) {
+      res.status(503).json({ error: "Profile storage unavailable" });
+      return;
+    }
+
+    res.setHeader("Cache-Control", "no-store, private");
+    res.json(UpdateCustomerProfileResponse.parse(profile));
+  } catch {
+    // Never attach request or decrypted profile values to this log entry.
+    req.log.error("Customer profile update failed");
+    res.status(503).json({ error: "Profile storage unavailable" });
   }
 });
 

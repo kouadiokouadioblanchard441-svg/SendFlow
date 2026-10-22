@@ -5,6 +5,7 @@ import { decryptSensitiveDataIfEncrypted } from "./sensitive-data-crypto";
 import { activePreviewAccountCondition } from "./preview-account-condition";
 import { isSharedNeonPreview } from "./shared-neon-preview-guard";
 import { previewPasswordForVerification } from "./preview-credential-policy";
+import { formatCustomerDisplayName } from "./customer-profile-policy";
 
 export const CUSTOMER_SESSION_COOKIE = "__Host-sendflow_session";
 export const CUSTOMER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -125,7 +126,9 @@ export async function getCustomerSession(
     sessionId: row.sessionId,
     userId: row.userId,
     phone: decryptSensitiveDataIfEncrypted(row.phone, "user-phone") ?? "",
-    displayName: decryptSensitiveDataIfEncrypted(row.displayName, "user-name"),
+    displayName: formatCustomerDisplayName(
+      decryptSensitiveDataIfEncrypted(row.displayName, "user-name"),
+    ),
     countryCode: row.countryCode,
     pinConfigured: row.credentialPinHash !== null,
     pinUnlocked: row.credentialPinHash !== null

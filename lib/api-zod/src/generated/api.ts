@@ -301,6 +301,57 @@ export const GetCurrentAccountResponse = zod.object({
 
 
 /**
+ * Returns the authenticated account's persisted name and birth date. The server requires a recently verified PIN.
+ * @summary Get the authenticated customer's profile
+ */
+export const getCustomerProfileResponseFirstNameMax = 80;
+
+export const getCustomerProfileResponseLastNameMax = 80;
+
+export const getCustomerProfileResponseBirthDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
+export const GetCustomerProfileResponse = zod.object({
+  "firstName": zod.string().max(getCustomerProfileResponseFirstNameMax),
+  "lastName": zod.string().max(getCustomerProfileResponseLastNameMax),
+  "birthDate": zod.string().regex(getCustomerProfileResponseBirthDateRegExp).nullable()
+})
+
+
+/**
+ * Validates and encrypts the authenticated account's name and date of birth. The server requires a recently verified PIN.
+ * @summary Update the authenticated customer's profile
+ */
+export const updateCustomerProfileBodyFirstNameMin = 2;
+export const updateCustomerProfileBodyFirstNameMax = 80;
+
+export const updateCustomerProfileBodyLastNameMin = 2;
+export const updateCustomerProfileBodyLastNameMax = 80;
+
+export const updateCustomerProfileBodyBirthDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
+export const UpdateCustomerProfileBody = zod.object({
+  "firstName": zod.string().min(updateCustomerProfileBodyFirstNameMin).max(updateCustomerProfileBodyFirstNameMax),
+  "lastName": zod.string().min(updateCustomerProfileBodyLastNameMin).max(updateCustomerProfileBodyLastNameMax),
+  "birthDate": zod.string().regex(updateCustomerProfileBodyBirthDateRegExp)
+})
+
+export const updateCustomerProfileResponseFirstNameMax = 80;
+
+export const updateCustomerProfileResponseLastNameMax = 80;
+
+export const updateCustomerProfileResponseBirthDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
+export const UpdateCustomerProfileResponse = zod.object({
+  "firstName": zod.string().max(updateCustomerProfileResponseFirstNameMax),
+  "lastName": zod.string().max(updateCustomerProfileResponseLastNameMax),
+  "birthDate": zod.string().regex(updateCustomerProfileResponseBirthDateRegExp).nullable()
+})
+
+
+/**
  * Returns the server-calculated monthly limit and the user's successful outgoing transfer usage for the current calendar month.
  * @summary Get the authenticated account's monthly transfer limit
  */

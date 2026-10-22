@@ -21,6 +21,7 @@ import {
   decryptSensitiveDataIfEncrypted,
   normalizeSensitiveNameForLookup,
 } from "../lib/sensitive-data-crypto";
+import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
 import { respondAdminAuthError } from "./admin";
 
 const router: IRouter = Router();
@@ -127,7 +128,9 @@ router.get("/login-activity", async (req, res): Promise<void> => {
       ListAdminLoginActivityResponse.parse({
         items: items.map((item) => ({
           ...item,
-          displayName: decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          displayName: formatCustomerDisplayName(
+            decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          ),
           phone: decryptSensitiveDataIfEncrypted(item.phone, "user-phone"),
         })),
         page,

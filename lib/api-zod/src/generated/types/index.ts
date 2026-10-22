@@ -97,6 +97,8 @@ export * from './customerPinResetInput';
 export * from './customerPinSetInput';
 export * from './customerPinStateResult';
 export * from './customerPinUnlockInput';
+export * from './customerProfile';
+export * from './customerProfileUpdate';
 export * from './customerRegistrationInput';
 export * from './customerSessionResult';
 export * from './customerSignInInput';

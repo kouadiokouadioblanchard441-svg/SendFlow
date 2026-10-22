@@ -19,6 +19,8 @@ test("blocks account, recovery, OTP, private data, identity, and admin paths in 
     ["POST", "/api/auth/reset-password"],
     ["POST", "/api/auth/reset-pin"],
     ["GET", "/api/me"],
+    ["GET", "/api/me/profile"],
+    ["PATCH", "/api/me/profile"],
     ["GET", "/api/me/transactions?limit=50"],
     ["GET", "/api/identity-verification/status"],
     ["GET", `/api${ADMIN_ROUTE_PREFIX}/access`],

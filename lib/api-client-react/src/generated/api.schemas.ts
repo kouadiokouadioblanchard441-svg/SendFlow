@@ -254,6 +254,33 @@ export interface CurrentAccount {
   wallet: WalletSummary;
 }
 
+export interface CustomerProfile {
+  /** @maxLength 80 */
+  firstName: string;
+  /** @maxLength 80 */
+  lastName: string;
+  /**
+     * @nullable
+     * @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+     */
+  birthDate: string | null;
+}
+
+export interface CustomerProfileUpdate {
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  firstName: string;
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  lastName: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
+  birthDate: string;
+}
+
 export type TransferQuoteInputKind = typeof TransferQuoteInputKind[keyof typeof TransferQuoteInputKind];
 
 

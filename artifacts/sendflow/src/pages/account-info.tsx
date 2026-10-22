@@ -3,15 +3,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetAdminAccessStatusQueryKey,
   getGetCurrentAccountQueryKey,
+  getGetCustomerProfileQueryKey,
   useGetAdminAccessStatus,
   useGetCurrentAccount,
+  useGetCustomerProfile,
+  useUpdateCustomerProfile,
 } from '@workspace/api-client-react';
 import { ArrowLeft, CalendarDays, Check, ShieldCheck } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { AdminPinDialog } from '@/components/admin-pin-dialog';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
 import { readAccountCountry } from '@/lib/account-country';
-import { readAccountProfile, saveAccountProfile, type AccountProfile } from '@/lib/account-profile';
+import { clearLegacyAccountProfile, type AccountProfile } from '@/lib/account-profile';
 import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 import { useSeo } from '@/lib/seo';
 import accountInfoIllustration from '@assets/generated_images/sendflow-account-info-profile-3d-transparent.png';
@@ -26,14 +29,17 @@ function validateProfile(profile: AccountProfile): AccountProfileErrors {
 
   if (!lastName) {
     errors.lastName = 'Le nom est requis.';
-  } else if (lastName.length < 2 || !/[A-Za-zÀ-ÿ]/.test(lastName)) {
+  } else if (lastName.length < 2 || !/\p{L}/u.test(lastName)) {
     errors.lastName = 'Saisissez un nom valide.';
   }
 
   if (!firstName) {
     errors.firstName = 'Le prénom est requis.';
-  } else if (firstName.length < 2 || !/[A-Za-zÀ-ÿ]/.test(firstName)) {
+  } else if (firstName.length < 2 || !/\p{L}/u.test(firstName)) {
     errors.firstName = 'Saisissez un prénom valide.';
+  }
+  if (`${firstName} ${lastName}`.length > 120) {
+    errors.lastName = 'Le nom complet ne peut pas dépasser 120 caractères.';
   }
 
   if (!profile.birthDate) {
@@ -122,19 +128,40 @@ export default function AccountInfoPage() {
       retry: false,
     },
   });
+  const profileQuery = useGetCustomerProfile({
+    query: {
+      queryKey: getGetCustomerProfileQueryKey(),
+      enabled: isUnlocked,
+      retry: false,
+      refetchOnMount: 'always',
+    },
+  });
+  const updateProfileMutation = useUpdateCustomerProfile();
   const [adminPinOpen, setAdminPinOpen] = useState(false);
   const accountCountry = readAccountCountry();
-  const [form, setForm] = useState<AccountProfile>(() => readAccountProfile());
+  const [form, setForm] = useState<AccountProfile>({
+    lastName: '',
+    firstName: '',
+    birthDate: '',
+  });
   const hasEditedProfile = useRef(false);
   const [touched, setTouched] = useState<Partial<Record<AccountProfileField, boolean>>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [requestError, setRequestError] = useState('');
 
   useEffect(() => {
-    const userId = accountQuery.data?.userId;
-    if (!userId || hasEditedProfile.current) return;
-    setForm(readAccountProfile(userId));
-  }, [accountQuery.data?.userId]);
+    clearLegacyAccountProfile();
+  }, []);
+
+  useEffect(() => {
+    if (!profileQuery.data || hasEditedProfile.current) return;
+    setForm({
+      firstName: profileQuery.data.firstName,
+      lastName: profileQuery.data.lastName,
+      birthDate: profileQuery.data.birthDate ?? '',
+    });
+  }, [profileQuery.data]);
 
   useSeo({
     path: '/account-info',
@@ -145,7 +172,10 @@ export default function AccountInfoPage() {
   });
 
   const errors = useMemo(() => validateProfile(form), [form]);
-  const canSubmit = Object.keys(errors).length === 0 && Boolean(accountQuery.data?.userId);
+  const canSubmit = Object.keys(errors).length === 0
+    && Boolean(accountQuery.data?.userId)
+    && profileQuery.isSuccess
+    && !updateProfileMutation.isPending;
   const visibleError = (field: AccountProfileField) =>
     (submitAttempted || touched[field]) ? errors[field] : undefined;
 
@@ -154,23 +184,40 @@ export default function AccountInfoPage() {
   const update = <K extends AccountProfileField>(key: K, value: AccountProfile[K]) => {
     hasEditedProfile.current = true;
     setSaved(false);
+    setRequestError('');
     setForm((current) => ({ ...current, [key]: value }));
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    const userId = accountQuery.data?.userId;
-    if (!canSubmit || !userId) return;
+    if (!canSubmit) return;
 
     const normalizedProfile: AccountProfile = {
       lastName: form.lastName.trim().replace(/\s+/g, ' '),
       firstName: form.firstName.trim().replace(/\s+/g, ' '),
       birthDate: form.birthDate,
     };
-    saveAccountProfile(normalizedProfile, userId);
-    setForm(normalizedProfile);
-    setSaved(true);
+    setRequestError('');
+    try {
+      const savedProfile = await updateProfileMutation.mutateAsync({
+        data: normalizedProfile,
+      });
+      const updatedForm = {
+        firstName: savedProfile.firstName,
+        lastName: savedProfile.lastName,
+        birthDate: savedProfile.birthDate ?? '',
+      };
+      queryClient.setQueryData(getGetCustomerProfileQueryKey(), savedProfile);
+      await queryClient.invalidateQueries({
+        queryKey: getGetCurrentAccountQueryKey(),
+      });
+      hasEditedProfile.current = false;
+      setForm(updatedForm);
+      setSaved(true);
+    } catch {
+      setRequestError('Impossible d’enregistrer vos informations. Réessayez.');
+    }
   };
 
   return (
@@ -196,6 +243,14 @@ export default function AccountInfoPage() {
           <h2>Modifier vos informations</h2>
 
           <form onSubmit={handleSubmit} noValidate>
+            {profileQuery.isLoading && (
+              <p className="sendflow-account-info-hint" role="status">Chargement de vos informations…</p>
+            )}
+            {profileQuery.isError && (
+              <p className="sendflow-account-info-error" role="alert">
+                Vos informations ne sont pas disponibles. Actualisez la page pour réessayer.
+              </p>
+            )}
             <ProfileField
               id="account-info-last-name"
               label="Nom"
@@ -252,14 +307,19 @@ export default function AccountInfoPage() {
               type="submit"
               className="sendflow-account-info-submit"
               disabled={!canSubmit}
-              aria-busy={false}
+              aria-busy={updateProfileMutation.isPending}
               data-testid="button-account-info-update"
             >
-              {saved ? <><Check size={19} strokeWidth={2.4} /> Informations mises à jour</> : 'Mettre à jour'}
+              {updateProfileMutation.isPending
+                ? 'Enregistrement…'
+                : saved
+                  ? <><Check size={19} strokeWidth={2.4} /> Informations mises à jour</>
+                  : 'Mettre à jour'}
             </button>
             <p className={`sendflow-account-info-status${saved ? ' is-visible' : ''}`} role="status" aria-live="polite">
-              {saved ? 'Vos informations sont enregistrées sur cet appareil.' : ''}
+              {saved ? 'Vos informations sont enregistrées sur votre compte.' : ''}
             </p>
+            {requestError && <p className="sendflow-account-info-error" role="alert">{requestError}</p>}
           </form>
           {adminAccessQuery.data?.isAdmin === true && (
             <section className="mt-6 space-y-2" aria-label="Accès administrateur">

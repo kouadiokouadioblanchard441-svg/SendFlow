@@ -21,6 +21,7 @@
 - [Engineering quality](engineering-quality.md) — Treat SendFlow as a large financial app; work robustly and leave customer pages untouched during financial backend work.
 - [SendFlow Capacitor direction](capacitor-direction.md) — Keep UI/backend boundaries, wait for phase approval, and use the Replit JDK 21 Android toolchain.
 - [SendFlow data encryption](signup-data-encryption.md) — Keep transfers server-routed; encrypt ledger storage and application-encrypt personal identifiers without breaking SQL invariants.
+- [Customer profile storage](customer-profile-storage.md) — Preserve exact name-part boundaries in the existing encrypted display-name field without a schema migration.
 - [Safe HTTP logging](log-safety-boundaries.md) — HTTP middleware can override parent error serializers; protect both levels against credential and personal-data leaks.
 - [Strix upload failures](strix-upload-failures.md) — If cloud upload completion is invalid, check scan status and confirm any staged upload before retrying.
 - [Didit event ordering](didit-event-ordering.md) — Retry dispatch times change; order signed record updates and allow AML withdrawals of approval.

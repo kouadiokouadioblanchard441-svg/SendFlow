@@ -5,6 +5,7 @@ import {
   decryptSensitiveDataIfEncrypted,
   normalizeSensitiveNameForLookup,
 } from "../lib/sensitive-data-crypto";
+import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
 import {
   GetAdminTransactionParams,
   GetAdminTransactionResponse,
@@ -287,7 +288,9 @@ router.get("/users", async (req, res): Promise<void> => {
     const response = ListAdminUsersResponse.parse({
         items: items.map((item) => ({
           ...item,
-          displayName: decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          displayName: formatCustomerDisplayName(
+            decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          ),
           phone: decryptSensitiveDataIfEncrypted(item.phone, "user-phone"),
           wallet: item.wallet?.currency
             ? item.wallet
@@ -375,7 +378,9 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
       GetAdminUserResponse.parse({
         user: {
           ...user,
-          displayName: decryptSensitiveDataIfEncrypted(user.displayName, "user-name"),
+        displayName: formatCustomerDisplayName(
+          decryptSensitiveDataIfEncrypted(user.displayName, "user-name"),
+        ),
           phone: decryptSensitiveDataIfEncrypted(user.phone, "user-phone"),
         },
         wallet: wallet ?? null,
@@ -480,7 +485,9 @@ router.get("/transactions", async (req, res): Promise<void> => {
     const response = ListAdminTransactionsResponse.parse({
         items: items.map((item) => ({
           ...item,
-          displayName: decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          displayName: formatCustomerDisplayName(
+            decryptSensitiveDataIfEncrypted(item.displayName, "user-name"),
+          ),
           senderPhone: decryptSensitiveDataIfEncrypted(item.senderPhone, "transaction-sender-phone"),
           recipientPhone: decryptSensitiveDataIfEncrypted(item.recipientPhone, "transaction-recipient-phone"),
           providerReference: decryptSensitiveDataIfEncrypted(item.providerReference, "provider-reference"),
@@ -554,7 +561,9 @@ router.get("/transactions/:transactionId", async (req, res): Promise<void> => {
 
     res.json(GetAdminTransactionResponse.parse({
       ...transaction,
-      displayName: decryptSensitiveDataIfEncrypted(transaction.displayName, "user-name"),
+      displayName: formatCustomerDisplayName(
+        decryptSensitiveDataIfEncrypted(transaction.displayName, "user-name"),
+      ),
       userPhone: decryptSensitiveDataIfEncrypted(transaction.userPhone, "user-phone"),
       senderPhone: decryptSensitiveDataIfEncrypted(transaction.senderPhone, "transaction-sender-phone"),
       recipientPhone: decryptSensitiveDataIfEncrypted(transaction.recipientPhone, "transaction-recipient-phone"),
