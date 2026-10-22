@@ -7,11 +7,12 @@
  */
 
 /**
- * Partner APIs remain inactive until a server-side adapter is implemented and verified.
+ * Prepared means a protocol client exists, not that financial execution is enabled.
  */
 export type AdminPaymentAggregatorAdapterStatus = typeof AdminPaymentAggregatorAdapterStatus[keyof typeof AdminPaymentAggregatorAdapterStatus];
 
 
 export const AdminPaymentAggregatorAdapterStatus = {
   not_implemented: 'not_implemented',
+  prepared: 'prepared',
 } as const;

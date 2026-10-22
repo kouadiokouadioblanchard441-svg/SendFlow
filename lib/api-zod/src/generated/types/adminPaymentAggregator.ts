@@ -6,13 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AdminPaymentAggregatorAdapterStatus } from './adminPaymentAggregatorAdapterStatus';
+import type { PaymentProviderCoverage } from './paymentProviderCoverage';
 
 export interface AdminPaymentAggregator {
   code: string;
   name: string;
   enabled: boolean;
-  /** Partner APIs remain inactive until a server-side adapter is implemented and verified. */
+  /** Prepared means a protocol client exists, not that financial execution is enabled. */
   adapterStatus: AdminPaymentAggregatorAdapterStatus;
+  coverage?: PaymentProviderCoverage[];
   /** @minimum 0 */
   version: number;
   /** @nullable */

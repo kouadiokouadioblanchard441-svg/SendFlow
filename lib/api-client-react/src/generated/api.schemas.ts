@@ -965,21 +965,41 @@ export interface AdminOtpPolicy {
 }
 
 /**
- * Partner APIs remain inactive until a server-side adapter is implemented and verified.
+ * Prepared means a protocol client exists, not that financial execution is enabled.
  */
 export type AdminPaymentAggregatorAdapterStatus = typeof AdminPaymentAggregatorAdapterStatus[keyof typeof AdminPaymentAggregatorAdapterStatus];
 
 
 export const AdminPaymentAggregatorAdapterStatus = {
   not_implemented: 'not_implemented',
+  prepared: 'prepared',
 } as const;
+
+export type PaymentProviderCoverageCurrency = typeof PaymentProviderCoverageCurrency[keyof typeof PaymentProviderCoverageCurrency];
+
+
+export const PaymentProviderCoverageCurrency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+} as const;
+
+export interface PaymentProviderCoverage {
+  countryCode: string;
+  countryName: string;
+  currency: PaymentProviderCoverageCurrency;
+  /** Currency compatibility only; never proof of account entitlement or activation. */
+  applicationSupported: boolean;
+  payinOperators: string[];
+  payoutOperators: string[];
+}
 
 export interface AdminPaymentAggregator {
   code: string;
   name: string;
   enabled: boolean;
-  /** Partner APIs remain inactive until a server-side adapter is implemented and verified. */
+  /** Prepared means a protocol client exists, not that financial execution is enabled. */
   adapterStatus: AdminPaymentAggregatorAdapterStatus;
+  coverage?: PaymentProviderCoverage[];
   /** @minimum 0 */
   version: number;
   /** @nullable */
@@ -1887,6 +1907,7 @@ export interface AdminSignInInput {
   phone: string;
   challengeId: string;
 }
+
 export interface AdminAccessStatus {
   isAdmin: boolean;
   pinUnlocked: boolean;
@@ -2108,3 +2129,4 @@ export const ListAdminTransactionsStatus = {
   succeeded: 'succeeded',
   failed: 'failed',
 } as const;
+

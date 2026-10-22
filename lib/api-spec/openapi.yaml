@@ -4143,8 +4143,12 @@ components:
           type: boolean
         adapterStatus:
           type: string
-          enum: [not_implemented]
-          description: Partner APIs remain inactive until a server-side adapter is implemented and verified.
+          enum: [not_implemented, prepared]
+          description: Prepared means a protocol client exists, not that financial execution is enabled.
+        coverage:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaymentProviderCoverage"
         version:
           type: integer
           minimum: 0
@@ -4152,6 +4156,28 @@ components:
           type: ["string", "null"]
           format: date-time
       required: [code, name, enabled, adapterStatus, version, updatedAt]
+    PaymentProviderCoverage:
+      type: object
+      properties:
+        countryCode:
+          type: string
+        countryName:
+          type: string
+        currency:
+          type: string
+          enum: [XOF, XAF]
+        applicationSupported:
+          type: boolean
+          description: Currency compatibility only; never proof of account entitlement or activation.
+        payinOperators:
+          type: array
+          items:
+            type: string
+        payoutOperators:
+          type: array
+          items:
+            type: string
+      required: [countryCode, countryName, currency, applicationSupported, payinOperators, payoutOperators]
     CountryOperationFlags:
       type: object
       properties:

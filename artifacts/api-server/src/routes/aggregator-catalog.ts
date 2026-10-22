@@ -1,4 +1,5 @@
 export const builtInAggregatorCatalog = [
+  { code: "feexpay", name: "FeexPay" },
   { code: "paydunya", name: "PayDunya" },
 ] as const;
 

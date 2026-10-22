@@ -50,6 +50,7 @@ export const createAdminNetworkExceptionBodyReasonMin = 3;
 export const createAdminNetworkExceptionBodyReasonMax = 500;
 
 
+
 export const CreateAdminNetworkExceptionBody = zod.object({
   "ipAddress": zod.string().min(createAdminNetworkExceptionBodyIpAddressMin).max(createAdminNetworkExceptionBodyIpAddressMax),
   "reason": zod.string().min(createAdminNetworkExceptionBodyReasonMin).max(createAdminNetworkExceptionBodyReasonMax)
@@ -74,6 +75,7 @@ export const authorizeAndReleaseNetworkIpBodyIpAddressMax = 45;
 
 export const authorizeAndReleaseNetworkIpBodyReasonMin = 3;
 export const authorizeAndReleaseNetworkIpBodyReasonMax = 500;
+
 
 
 export const AuthorizeAndReleaseNetworkIpBody = zod.object({
@@ -110,6 +112,7 @@ export const revokeAdminNetworkExceptionBodyReasonMin = 3;
 export const revokeAdminNetworkExceptionBodyReasonMax = 500;
 
 
+
 export const RevokeAdminNetworkExceptionBody = zod.object({
   "expectedVersion": zod.number().int().min(1).max(revokeAdminNetworkExceptionBodyExpectedVersionMax),
   "reason": zod.string().min(revokeAdminNetworkExceptionBodyReasonMin).max(revokeAdminNetworkExceptionBodyReasonMax)
@@ -139,6 +142,7 @@ export const releaseAdminAutomaticBlockBodyReasonMin = 3;
 export const releaseAdminAutomaticBlockBodyReasonMax = 500;
 
 
+
 export const ReleaseAdminAutomaticBlockBody = zod.object({
   "expectedVersion": zod.number().int().min(1).max(releaseAdminAutomaticBlockBodyExpectedVersionMax),
   "reason": zod.string().min(releaseAdminAutomaticBlockBodyReasonMin).max(releaseAdminAutomaticBlockBodyReasonMax)
@@ -161,6 +165,7 @@ export const ReleaseAdminAutomaticBlockResponse = zod.object({
  */
 export const listAdminIpBlocksQueryPageDefault = 1;
 export const listAdminIpBlocksQueryPageMax = 10000;
+
 
 
 export const ListAdminIpBlocksQueryParams = zod.object({
@@ -195,6 +200,7 @@ export const createAdminIpBlockBodyReasonMin = 3;
 export const createAdminIpBlockBodyReasonMax = 500;
 
 
+
 export const CreateAdminIpBlockBody = zod.object({
   "ipAddress": zod.string().min(createAdminIpBlockBodyIpAddressMin).max(createAdminIpBlockBodyIpAddressMax),
   "reason": zod.string().min(createAdminIpBlockBodyReasonMin).max(createAdminIpBlockBodyReasonMax)
@@ -223,6 +229,7 @@ export const revokeAdminIpBlockBodyExpectedVersionMax = 2147483646;
 
 export const revokeAdminIpBlockBodyReasonMin = 3;
 export const revokeAdminIpBlockBodyReasonMax = 500;
+
 
 
 export const RevokeAdminIpBlockBody = zod.object({
@@ -270,6 +277,7 @@ export const SendPhoneOtpBody = zod.object({
 export const sendPhoneOtpResponseResendAfterSecondsMin = 0;
 
 
+
 export const SendPhoneOtpResponse = zod.object({
   "challengeId": zod.string().uuid(),
   "expiresAt": zod.coerce.date(),
@@ -309,6 +317,7 @@ export const getAuthCountriesResponseCountriesItemMinPhoneDigitsMax = 15;
 
 export const getAuthCountriesResponseCountriesItemMaxPhoneDigitsMin = 4;
 export const getAuthCountriesResponseCountriesItemMaxPhoneDigitsMax = 15;
+
 
 
 export const GetAuthCountriesResponse = zod.object({
@@ -354,6 +363,7 @@ export const registerCustomerBodyPasswordMin = 8;
 export const registerCustomerBodyPasswordMax = 64;
 
 
+
 export const RegisterCustomerBody = zod.object({
   "challengeId": zod.string().uuid().optional(),
   "phone": zod.string().min(registerCustomerBodyPhoneMin).max(registerCustomerBodyPhoneMax).regex(registerCustomerBodyPhoneRegExp),
@@ -384,6 +394,7 @@ export const signInCustomerBodyPhoneMax = 16;
 export const signInCustomerBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
 export const signInCustomerBodyPasswordMin = 4;
 export const signInCustomerBodyPasswordMax = 64;
+
 
 
 export const SignInCustomerBody = zod.object({
@@ -432,6 +443,7 @@ export const resetCustomerPasswordBodyPhoneMax = 16;
 export const resetCustomerPasswordBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
 export const resetCustomerPasswordBodyNewPasswordMin = 8;
 export const resetCustomerPasswordBodyNewPasswordMax = 64;
+
 
 
 export const ResetCustomerPasswordBody = zod.object({
@@ -544,6 +556,7 @@ export const DatabaseHealthCheckResponse = zod.object({
 export const getCurrentAccountResponseWalletBalanceMinorMax = 9007199254740991;
 
 
+
 export const GetCurrentAccountResponse = zod.object({
   "userId": zod.string(),
   "phone": zod.string().nullish(),
@@ -619,6 +632,7 @@ export const getCurrentAccountLimitResponseSentAmountMin = 0;
 export const getCurrentAccountLimitResponseRemainingAmountMin = 0;
 
 
+
 export const GetCurrentAccountLimitResponse = zod.object({
   "status": zod.enum(['unverified', 'pending', 'review', 'verified', 'failed']),
   "currency": zod.enum(['XOF']),
@@ -658,6 +672,7 @@ export const createCustomerTransferQuoteBodyRecipientPhoneRegExp = new RegExp('^
 export const createCustomerTransferQuoteBodyAmountMinorMax = 9007199254740991;
 
 
+
 export const CreateCustomerTransferQuoteBody = zod.object({
   "kind": zod.enum(['deposit', 'inter-network', 'international']),
   "sourceOperatorId": zod.string().min(createCustomerTransferQuoteBodySourceOperatorIdMin).max(createCustomerTransferQuoteBodySourceOperatorIdMax).optional(),
@@ -683,6 +698,8 @@ export const createCustomerTransferQuoteResponseFeePercentMin = 0;
 export const createCustomerTransferQuoteResponseFeePercentMax = 100;
 
 
+
+
 export const CreateCustomerTransferQuoteResponse = zod.object({
   "kind": zod.enum(['deposit', 'inter-network', 'international']),
   "currency": zod.enum(['XOF']),
@@ -706,6 +723,7 @@ export const getCustomerTransactionsQuerySearchMax = 80;
 
 export const getCustomerTransactionsQueryLimitDefault = 50;
 export const getCustomerTransactionsQueryLimitMax = 50;
+
 
 
 export const GetCustomerTransactionsQueryParams = zod.object({
@@ -734,6 +752,7 @@ export const getCustomerTransactionsResponseItemsItemReferenceMax = 64;
 export const getCustomerTransactionsResponseItemsItemProviderReferenceMax = 128;
 
 export const getCustomerTransactionsResponseNextCursorMax = 64;
+
 
 
 export const GetCustomerTransactionsResponse = zod.object({
@@ -781,6 +800,7 @@ export const getCustomerTransactionResponseFeeMinorMax = 9007199254740991;
 export const getCustomerTransactionResponseReferenceMax = 64;
 
 export const getCustomerTransactionResponseProviderReferenceMax = 128;
+
 
 
 export const GetCustomerTransactionResponse = zod.object({
@@ -840,11 +860,13 @@ export const ReceiveDiditWebhookHeader = zod.object({
 })
 
 
+
 export const receiveDiditWebhookBodyEventIdMax = 255;
 
 export const receiveDiditWebhookBodySessionIdMax = 255;
 
 export const receiveDiditWebhookBodyWebhookTypeMax = 128;
+
 
 
 export const ReceiveDiditWebhookBody = zod.object({
@@ -861,10 +883,35 @@ export const ReceiveDiditWebhookResponse = zod.object({
   "duplicate": zod.boolean()
 })
 
+
 /**
  * @summary Create a separate administrator session using a verified admin OTP and a database grant
  */
 export const signInAdminBodyPhoneMin = 9;
+export const signInAdminBodyPhoneMax = 16;
+
+
+export const signInAdminBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+
+
+export const SignInAdminBody = zod.object({
+  "phone": zod.string().min(signInAdminBodyPhoneMin).max(signInAdminBodyPhoneMax).regex(signInAdminBodyPhoneRegExp),
+  "challengeId": zod.string().uuid()
+})
+
+export const SignInAdminResponse = zod.object({
+  "isAdmin": zod.boolean(),
+  "pinUnlocked": zod.boolean(),
+  "canMutate": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Revoke the current administrator session
+ */
+export const SignOutAdminResponse = zod.void()
+
+
 /**
  * Returns whether the current SendFlow session is authorized and whether the administrator PIN session is active.
  * @summary Check administrator access status
@@ -914,6 +961,7 @@ export const getAdminOverviewResponseTransactionsFeesMinorMax = 9007199254740991
 export const getAdminOverviewResponseDepositsVolumeMinorMax = 9007199254740991;
 
 export const getAdminOverviewResponseTransfersVolumeMinorMax = 9007199254740991;
+
 
 
 export const GetAdminOverviewResponse = zod.object({
@@ -975,6 +1023,7 @@ export const getPublicPricingResponseOperatorsItemFeesInterNetworkMax = 1;
 
 export const getPublicPricingResponseOperatorsItemFeesInternationalMin = 0;
 export const getPublicPricingResponseOperatorsItemFeesInternationalMax = 1;
+
 
 
 export const GetPublicPricingResponse = zod.object({
@@ -1094,6 +1143,7 @@ export const createAdminBannerBodyCtaLabelMax = 48;
 export const createAdminBannerBodySortOrderMin = 0;
 
 
+
 export const CreateAdminBannerBody = zod.object({
   "title": zod.string().min(1).max(createAdminBannerBodyTitleMax),
   "description": zod.string().nullish(),
@@ -1137,6 +1187,8 @@ export const getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMin = 4;
 export const getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMax = 15;
 
 
+
+
 export const GetAdminCountriesResponse = zod.object({
   "countries": zod.array(zod.object({
   "countryCode": zod.string().regex(getAdminCountriesResponseCountriesItemOneCountryCodeRegExp),
@@ -1176,6 +1228,7 @@ export const createAdminCountryBodyReasonMin = 3;
 export const createAdminCountryBodyReasonMax = 500;
 
 
+
 export const CreateAdminCountryBody = zod.object({
   "countryCode": zod.string().regex(createAdminCountryBodyCountryCodeRegExp),
   "countryName": zod.string().min(createAdminCountryBodyCountryNameMin).max(createAdminCountryBodyCountryNameMax),
@@ -1192,6 +1245,8 @@ export const createAdminCountryResponseOneMinPhoneDigitsMax = 15;
 
 export const createAdminCountryResponseOneMaxPhoneDigitsMin = 4;
 export const createAdminCountryResponseOneMaxPhoneDigitsMax = 15;
+
+
 
 
 export const CreateAdminCountryResponse = zod.object({
@@ -1238,6 +1293,7 @@ export const updateAdminCountryBodyReasonMin = 3;
 export const updateAdminCountryBodyReasonMax = 500;
 
 
+
 export const UpdateAdminCountryBody = zod.object({
   "countryName": zod.string().min(updateAdminCountryBodyCountryNameMin).max(updateAdminCountryBodyCountryNameMax),
   "phonePrefix": zod.string().regex(updateAdminCountryBodyPhonePrefixRegExp),
@@ -1259,6 +1315,8 @@ export const updateAdminCountryResponseOneMinPhoneDigitsMax = 15;
 
 export const updateAdminCountryResponseOneMaxPhoneDigitsMin = 4;
 export const updateAdminCountryResponseOneMaxPhoneDigitsMax = 15;
+
+
 
 
 export const UpdateAdminCountryResponse = zod.object({
@@ -1291,12 +1349,21 @@ export const getAdminPaymentRoutingResponseCountriesItemDefaultVersionMin = 0;
 export const getAdminPaymentRoutingResponseCountriesItemOperatorsItemVersionMin = 0;
 
 
+
 export const GetAdminPaymentRoutingResponse = zod.object({
   "aggregators": zod.array(zod.object({
   "code": zod.string(),
   "name": zod.string(),
   "enabled": zod.boolean(),
-  "adapterStatus": zod.enum(['not_implemented']).describe('Partner APIs remain inactive until a server-side adapter is implemented and verified.'),
+  "adapterStatus": zod.enum(['not_implemented', 'prepared']).describe('Prepared means a protocol client exists, not that financial execution is enabled.'),
+  "coverage": zod.array(zod.object({
+  "countryCode": zod.string(),
+  "countryName": zod.string(),
+  "currency": zod.enum(['XOF', 'XAF']),
+  "applicationSupported": zod.boolean().describe('Currency compatibility only; never proof of account entitlement or activation.'),
+  "payinOperators": zod.array(zod.string()),
+  "payoutOperators": zod.array(zod.string())
+})).optional(),
   "version": zod.number().int().min(getAdminPaymentRoutingResponseAggregatorsItemVersionMin),
   "updatedAt": zod.coerce.date().nullable()
 })),
@@ -1337,6 +1404,7 @@ export const createAdminAggregatorBodyReasonMin = 3;
 export const createAdminAggregatorBodyReasonMax = 500;
 
 
+
 export const CreateAdminAggregatorBody = zod.object({
   "code": zod.string().min(createAdminAggregatorBodyCodeMin).max(createAdminAggregatorBodyCodeMax).regex(createAdminAggregatorBodyCodeRegExp),
   "name": zod.string().min(createAdminAggregatorBodyNameMin).max(createAdminAggregatorBodyNameMax),
@@ -1346,11 +1414,20 @@ export const CreateAdminAggregatorBody = zod.object({
 export const createAdminAggregatorResponseVersionMin = 0;
 
 
+
 export const CreateAdminAggregatorResponse = zod.object({
   "code": zod.string(),
   "name": zod.string(),
   "enabled": zod.boolean(),
-  "adapterStatus": zod.enum(['not_implemented']).describe('Partner APIs remain inactive until a server-side adapter is implemented and verified.'),
+  "adapterStatus": zod.enum(['not_implemented', 'prepared']).describe('Prepared means a protocol client exists, not that financial execution is enabled.'),
+  "coverage": zod.array(zod.object({
+  "countryCode": zod.string(),
+  "countryName": zod.string(),
+  "currency": zod.enum(['XOF', 'XAF']),
+  "applicationSupported": zod.boolean().describe('Currency compatibility only; never proof of account entitlement or activation.'),
+  "payinOperators": zod.array(zod.string()),
+  "payoutOperators": zod.array(zod.string())
+})).optional(),
   "version": zod.number().int().min(createAdminAggregatorResponseVersionMin),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -1373,6 +1450,7 @@ export const updateAdminAggregatorBodyReasonMin = 3;
 export const updateAdminAggregatorBodyReasonMax = 500;
 
 
+
 export const UpdateAdminAggregatorBody = zod.object({
   "code": zod.string().min(updateAdminAggregatorBodyCodeMin).max(updateAdminAggregatorBodyCodeMax).regex(updateAdminAggregatorBodyCodeRegExp),
   "name": zod.string().min(updateAdminAggregatorBodyNameMin).max(updateAdminAggregatorBodyNameMax),
@@ -1384,11 +1462,20 @@ export const UpdateAdminAggregatorBody = zod.object({
 export const updateAdminAggregatorResponseVersionMin = 0;
 
 
+
 export const UpdateAdminAggregatorResponse = zod.object({
   "code": zod.string(),
   "name": zod.string(),
   "enabled": zod.boolean(),
-  "adapterStatus": zod.enum(['not_implemented']).describe('Partner APIs remain inactive until a server-side adapter is implemented and verified.'),
+  "adapterStatus": zod.enum(['not_implemented', 'prepared']).describe('Prepared means a protocol client exists, not that financial execution is enabled.'),
+  "coverage": zod.array(zod.object({
+  "countryCode": zod.string(),
+  "countryName": zod.string(),
+  "currency": zod.enum(['XOF', 'XAF']),
+  "applicationSupported": zod.boolean().describe('Currency compatibility only; never proof of account entitlement or activation.'),
+  "payinOperators": zod.array(zod.string()),
+  "payoutOperators": zod.array(zod.string())
+})).optional(),
   "version": zod.number().int().min(updateAdminAggregatorResponseVersionMin),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -1404,6 +1491,7 @@ export const updateAdminAggregatorRouteBodyReasonMin = 3;
 export const updateAdminAggregatorRouteBodyReasonMax = 500;
 
 
+
 export const UpdateAdminAggregatorRouteBody = zod.object({
   "scopeType": zod.enum(['country', 'operator']),
   "countryCode": zod.string().regex(updateAdminAggregatorRouteBodyCountryCodeRegExp),
@@ -1416,6 +1504,7 @@ export const UpdateAdminAggregatorRouteBody = zod.object({
 
 export const updateAdminAggregatorRouteResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const updateAdminAggregatorRouteResponseVersionMin = 0;
+
 
 
 export const UpdateAdminAggregatorRouteResponse = zod.object({
@@ -1442,6 +1531,8 @@ export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneLogoUrl
 
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMin = 0;
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMax = 100;
+
+
 
 
 export const GetAdminOperatorPricingResponse = zod.object({
@@ -1500,6 +1591,7 @@ export const createAdminOperatorBodyReasonMin = 3;
 export const createAdminOperatorBodyReasonMax = 500;
 
 
+
 export const CreateAdminOperatorBody = zod.object({
   "countryCode": zod.string().regex(createAdminOperatorBodyCountryCodeRegExp),
   "name": zod.string().min(createAdminOperatorBodyNameMin).max(createAdminOperatorBodyNameMax),
@@ -1512,6 +1604,8 @@ export const createAdminOperatorResponseOperatorIdMax = 60;
 
 export const createAdminOperatorResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const createAdminOperatorResponseLogoUrlMax = 200;
+
+
 
 
 export const CreateAdminOperatorResponse = zod.object({
@@ -1553,6 +1647,7 @@ export const updateAdminOperatorBodyReasonMin = 3;
 export const updateAdminOperatorBodyReasonMax = 500;
 
 
+
 export const UpdateAdminOperatorBody = zod.object({
   "name": zod.string().min(updateAdminOperatorBodyNameMin).max(updateAdminOperatorBodyNameMax),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
@@ -1569,6 +1664,8 @@ export const updateAdminOperatorResponseOperatorIdMax = 60;
 
 export const updateAdminOperatorResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const updateAdminOperatorResponseLogoUrlMax = 200;
+
+
 
 
 export const UpdateAdminOperatorResponse = zod.object({
@@ -1599,6 +1696,7 @@ export const uploadAdminOperatorLogoPathOperatorIdMax = 60;
 export const uploadAdminOperatorLogoPathOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
 
 
+
 export const UploadAdminOperatorLogoParams = zod.object({
   "operatorId": zod.coerce.string().min(uploadAdminOperatorLogoPathOperatorIdMin).max(uploadAdminOperatorLogoPathOperatorIdMax).regex(uploadAdminOperatorLogoPathOperatorIdRegExp),
   "expectedVersion": zod.coerce.number().int().min(1)
@@ -1609,6 +1707,8 @@ export const uploadAdminOperatorLogoResponseOperatorIdMax = 60;
 
 export const uploadAdminOperatorLogoResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const uploadAdminOperatorLogoResponseLogoUrlMax = 200;
+
+
 
 
 export const UploadAdminOperatorLogoResponse = zod.object({
@@ -1638,6 +1738,7 @@ export const deleteAdminOperatorLogoPathOperatorIdMax = 60;
 export const deleteAdminOperatorLogoPathOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
 
 
+
 export const DeleteAdminOperatorLogoParams = zod.object({
   "operatorId": zod.coerce.string().min(deleteAdminOperatorLogoPathOperatorIdMin).max(deleteAdminOperatorLogoPathOperatorIdMax).regex(deleteAdminOperatorLogoPathOperatorIdRegExp),
   "expectedVersion": zod.coerce.number().int().min(1)
@@ -1648,6 +1749,8 @@ export const deleteAdminOperatorLogoResponseOperatorIdMax = 60;
 
 export const deleteAdminOperatorLogoResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const deleteAdminOperatorLogoResponseLogoUrlMax = 200;
+
+
 
 
 export const DeleteAdminOperatorLogoResponse = zod.object({
@@ -1687,6 +1790,7 @@ export const updateAdminOperatorPricingBodyReasonMin = 3;
 export const updateAdminOperatorPricingBodyReasonMax = 500;
 
 
+
 export const UpdateAdminOperatorPricingBody = zod.object({
   "countryCode": zod.string().regex(updateAdminOperatorPricingBodyCountryCodeRegExp),
   "categoryId": zod.enum(['deposit', 'inter-network', 'international']),
@@ -1697,6 +1801,8 @@ export const UpdateAdminOperatorPricingBody = zod.object({
 })).min(1).max(updateAdminOperatorPricingBodyUpdatesMax),
   "reason": zod.string().min(updateAdminOperatorPricingBodyReasonMin).max(updateAdminOperatorPricingBodyReasonMax)
 })
+
+
 
 
 export const UpdateAdminOperatorPricingResponse = zod.object({
@@ -1728,6 +1834,7 @@ export const updateAdminRegistrationSettingsBodyReasonMin = 3;
 export const updateAdminRegistrationSettingsBodyReasonMax = 500;
 
 
+
 export const UpdateAdminRegistrationSettingsBody = zod.object({
   "smsVerificationEnabled": zod.boolean(),
   "expectedVersion": zod.number().int().min(1),
@@ -1747,6 +1854,7 @@ export const UpdateAdminRegistrationSettingsResponse = zod.object({
 export const listAdminOtpPoliciesResponseItemsItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const listAdminOtpPoliciesResponseItemsItemOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
 export const listAdminOtpPoliciesResponseItemsItemVersionMin = 0;
+
 
 
 export const ListAdminOtpPoliciesResponse = zod.object({
@@ -1790,6 +1898,7 @@ export const updateAdminOtpPolicyBodyReasonMin = 3;
 export const updateAdminOtpPolicyBodyReasonMax = 500;
 
 
+
 export const UpdateAdminOtpPolicyBody = zod.object({
   "requiresOtp": zod.boolean(),
   "expectedVersion": zod.number().int().min(updateAdminOtpPolicyBodyExpectedVersionMin),
@@ -1799,6 +1908,7 @@ export const UpdateAdminOtpPolicyBody = zod.object({
 export const updateAdminOtpPolicyResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const updateAdminOtpPolicyResponseOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
 export const updateAdminOtpPolicyResponseVersionMin = 0;
+
 
 
 export const UpdateAdminOtpPolicyResponse = zod.object({
@@ -1820,6 +1930,7 @@ export const UpdateAdminOtpPolicyResponse = zod.object({
 export const reorderAdminBannersBodyExpectedOrderMax = 500;
 
 export const reorderAdminBannersBodyOrderedIdsMax = 500;
+
 
 
 export const ReorderAdminBannersBody = zod.object({
@@ -1861,6 +1972,7 @@ export const updateAdminBannerBodyImageAltMax = 180;
 export const updateAdminBannerBodyCtaLabelMax = 48;
 
 export const updateAdminBannerBodySortOrderMin = 0;
+
 
 
 export const UpdateAdminBannerBody = zod.object({
@@ -1922,6 +2034,7 @@ export const listAdminLoginActivityQueryPageSizeDefault = 20;
 export const listAdminLoginActivityQueryPageSizeMax = 50;
 
 
+
 export const ListAdminLoginActivityQueryParams = zod.object({
   "search": zod.coerce.string().max(listAdminLoginActivityQuerySearchMax).optional(),
   "userId": zod.coerce.string().min(1).optional(),
@@ -1967,6 +2080,7 @@ export const listAdminOtpActivityQueryPageSizeDefault = 20;
 export const listAdminOtpActivityQueryPageSizeMax = 50;
 
 
+
 export const ListAdminOtpActivityQueryParams = zod.object({
   "eventType": zod.enum(['send', 'verify']).optional(),
   "outcome": zod.enum(['requested', 'rate_limited', 'configuration_error', 'reservation_error', 'provider_accepted', 'provider_rejected', 'provider_error', 'provider_rate_limited', 'challenge_inactive', 'challenge_expired', 'challenge_locked', 'already_verified', 'not_approved', 'verified', 'state_conflict', 'storage_error']).optional(),
@@ -2007,6 +2121,7 @@ export const listAdminUsersQueryPageSizeDefault = 20;
 export const listAdminUsersQueryPageSizeMax = 50;
 
 
+
 export const ListAdminUsersQueryParams = zod.object({
   "search": zod.coerce.string().max(listAdminUsersQuerySearchMax).optional(),
   "page": zod.coerce.number().int().min(1).max(listAdminUsersQueryPageMax).default(listAdminUsersQueryPageDefault),
@@ -2014,6 +2129,7 @@ export const ListAdminUsersQueryParams = zod.object({
 })
 
 export const listAdminUsersResponseItemsItemWalletBalanceMinorMax = 9007199254740991;
+
 
 
 export const ListAdminUsersResponse = zod.object({
@@ -2045,6 +2161,7 @@ export const ListAdminUsersResponse = zod.object({
  */
 
 
+
 export const GetAdminUserParams = zod.object({
   "userId": zod.coerce.string().min(1)
 })
@@ -2054,6 +2171,7 @@ export const getAdminUserResponseWalletOneBalanceMinorMax = 9007199254740991;
 export const getAdminUserResponseTransactionSummaryVolumeMinorMax = 9007199254740991;
 
 export const getAdminUserResponseTransactionSummaryFeesMinorMax = 9007199254740991;
+
 
 
 export const GetAdminUserResponse = zod.object({
@@ -2101,6 +2219,7 @@ export const listAdminTransactionsQueryPageSizeDefault = 20;
 export const listAdminTransactionsQueryPageSizeMax = 50;
 
 
+
 export const ListAdminTransactionsQueryParams = zod.object({
   "search": zod.coerce.string().max(listAdminTransactionsQuerySearchMax).optional(),
   "userId": zod.coerce.string().min(1).optional(),
@@ -2115,6 +2234,7 @@ export const ListAdminTransactionsQueryParams = zod.object({
 export const listAdminTransactionsResponseItemsItemAmountMinorMax = 9007199254740991;
 
 export const listAdminTransactionsResponseItemsItemFeeMinorMax = 9007199254740991;
+
 
 
 export const ListAdminTransactionsResponse = zod.object({
@@ -2155,6 +2275,7 @@ export const getAdminTransactionResponseAmountMinorMax = 9007199254740991;
 export const getAdminTransactionResponseFeeMinorMax = 9007199254740991;
 
 
+
 export const GetAdminTransactionResponse = zod.object({
   "id": zod.string().uuid(),
   "userId": zod.string(),
@@ -2183,6 +2304,7 @@ export const GetAdminTransactionResponse = zod.object({
  */
 
 
+
 export const CreateAdminWalletAdjustmentParams = zod.object({
   "userId": zod.coerce.string().min(1)
 })
@@ -2201,6 +2323,7 @@ export const createAdminWalletAdjustmentBodyExpectedBalanceMinorMin = 0;
 export const createAdminWalletAdjustmentBodyExpectedBalanceMinorMax = 9007199254740991;
 
 
+
 export const CreateAdminWalletAdjustmentBody = zod.object({
   "direction": zod.enum(['credit', 'debit']),
   "amountMinor": zod.number().int().min(1).max(createAdminWalletAdjustmentBodyAmountMinorMax),
@@ -2215,6 +2338,7 @@ export const createAdminWalletAdjustmentResponseAmountMinorMax = 900719925474099
 export const createAdminWalletAdjustmentResponseBalanceBeforeMinorMax = 9007199254740991;
 
 export const createAdminWalletAdjustmentResponseBalanceAfterMinorMax = 9007199254740991;
+
 
 
 export const CreateAdminWalletAdjustmentResponse = zod.object({
@@ -2233,6 +2357,7 @@ export const CreateAdminWalletAdjustmentResponse = zod.object({
 /**
  * @summary Suspend a SendFlow user with an audit trail
  */
+
 
 
 export const SuspendAdminUserParams = zod.object({
@@ -2263,6 +2388,7 @@ export const SuspendAdminUserResponse = zod.object({
  */
 
 
+
 export const RestoreAdminUserParams = zod.object({
   "userId": zod.coerce.string().min(1)
 })
@@ -2290,6 +2416,7 @@ export const RestoreAdminUserResponse = zod.object({
  * Retains financial records and anonymizes no data automatically. This is reversible only through a documented recovery process.
  * @summary Soft-delete a SendFlow user with an audit trail
  */
+
 
 
 export const DeleteAdminUserParams = zod.object({
@@ -2341,22 +2468,3 @@ export const ArchiveAdminTransactionResponse = zod.object({
 })
 
 
-/**
- * @summary Revoke the current administrator session
- */
-export const SignOutAdminResponse = zod.void()
-
-export const signInAdminBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
-
-export const SignInAdminResponse = zod.object({
-  "isAdmin": zod.boolean(),
-  "pinUnlocked": zod.boolean(),
-  "canMutate": zod.boolean().optional()
-})
-
-export const signInAdminBodyPhoneMax = 16;
-
-export const SignInAdminBody = zod.object({
-  "phone": zod.string().min(signInAdminBodyPhoneMin).max(signInAdminBodyPhoneMax).regex(signInAdminBodyPhoneRegExp),
-  "challengeId": zod.string().uuid()
-})

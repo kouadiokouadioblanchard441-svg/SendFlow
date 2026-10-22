@@ -1891,8 +1891,27 @@ function AggregatorsPage() {
                       {aggregator.enabled ? 'Partenaire activé' : 'Partenaire inactif'}
                     </Badge>
                     <Badge variant="outline">
-                      {aggregator.adapterStatus === 'not_implemented' ? 'API à intégrer' : aggregator.adapterStatus}
+                      {aggregator.adapterStatus === 'prepared'
+                        ? 'Client serveur préparé — paiements désactivés'
+                        : 'API à intégrer'}
                     </Badge>
+                    {!!aggregator.coverage?.length && (
+                      <div className="w-full space-y-2 pt-2 text-sm">
+                        <p className="text-muted-foreground">
+                          Couverture documentaire : ni activation du pays, ni garantie des droits du compte partenaire.
+                        </p>
+                        {aggregator.coverage.map((country) => (
+                          <div key={country.countryCode}>
+                            <p className="font-medium">
+                              {country.countryName} · {country.currency}
+                              {!country.applicationSupported && ' — devise non prise en charge par SendFlow'}
+                            </p>
+                            <p>Encaissement : {country.payinOperators.join(', ') || 'Non documenté'}</p>
+                            <p>Versement : {country.payoutOperators.join(', ') || 'Non documenté'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}

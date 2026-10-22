@@ -147,6 +147,8 @@ export * from './newOperatorInput';
 export * from './newOperatorInputBrand';
 export * from './operatorUpdate';
 export * from './operatorUpdateBrand';
+export * from './paymentProviderCoverage';
+export * from './paymentProviderCoverageCurrency';
 export * from './phoneOtpRateLimitError';
 export * from './phoneOtpSendInput';
 export * from './phoneOtpSendInputPurpose';

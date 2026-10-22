@@ -24,6 +24,7 @@ import {
   getAggregatorRouteScopeKey,
 } from "./aggregator-catalog";
 import { pricingCategories } from "../lib/operator-pricing-catalog";
+import { getFeexpayCoverage } from "../providers/feexpay/catalog";
 
 
 function toAdminAggregator(
@@ -35,7 +36,8 @@ function toAdminAggregator(
     code,
     name: stored?.name ?? defaultName,
     enabled: stored?.enabled ?? false,
-    adapterStatus: "not_implemented" as const,
+    adapterStatus: code === "feexpay" ? "prepared" as const : "not_implemented" as const,
+    coverage: code === "feexpay" ? getFeexpayCoverage() : [],
     version: stored?.version ?? 0,
     updatedAt: stored?.updatedAt?.toISOString() ?? null,
   };

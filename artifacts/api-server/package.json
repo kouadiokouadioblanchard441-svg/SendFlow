@@ -18,6 +18,7 @@
     "identity:reconcile": "node dist/reconcile-identities.mjs --run",
     "test:sensitive-data-crypto": "node --experimental-strip-types --test src/lib/sensitive-data-crypto.test.mjs",
     "test:transfer-quote": "node --experimental-strip-types --test src/lib/transfer-quote-policy.test.mjs",
+    "test:feexpay": "node --experimental-strip-types --test src/providers/feexpay/client.test.mjs",
     "pii:backfill": "node --experimental-strip-types scripts/backfill-sensitive-data.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

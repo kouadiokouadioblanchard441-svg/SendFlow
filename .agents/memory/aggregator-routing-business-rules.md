@@ -35,3 +35,13 @@ requirements still apply.
 **How to apply:** Connect the provider through the server-owned country/operator/
 operation routing. Installing an API client must not implicitly authorize real
 payments, enable countries, or change customer page appearance.
+
+For FeexPay, use the countries actually available in the official documentation,
+not a user-selected country shortlist. The user chose Plesk for payment execution
+and Replit for the current testing work.
+
+**Why:** The user explicitly specified this coverage and hosting split.
+
+**How to apply:** Separate documented coverage from account entitlements and
+SendFlow activation. Keep Replit tests isolated from real funds; do not interpret
+testing on Replit as permission to execute live Plesk payments.
