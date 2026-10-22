@@ -27,6 +27,9 @@ packages = ["jdk21"]
 [userenv]
 
 [userenv.shared]
+FEEXPAY_EXECUTION_HOST = "plesk"
+FEEXPAY_LIVE_ENABLED = "false"
+FEEXPAY_MODE = "live"
 
 [userenv.development]
 DIDIT_ENVIRONMENT = "live"
