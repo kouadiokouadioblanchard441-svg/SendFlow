@@ -1144,6 +1144,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMwh/sign-in:
+    post:
+      operationId: signInAdmin
+      tags: [admin]
+      summary: Create a separate administrator session using a verified admin OTP and a database grant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSignInInput"
+      responses:
+        "200":
+          description: Administrator session created; separate PIN verification is still required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAccessStatus"
+        "400":
+          description: Invalid input
+        "403":
+          description: Invalid challenge, origin or administrator grant
+        "429":
+          description: Too many attempts
+        "503":
+          description: Authentication unavailable or shared-database preview blocked
+  /DMgrgmt-1np5g23g12bGFtMwh/sign-out:
+    post:
+      operationId: signOutAdmin
+      tags: [admin]
+      summary: Revoke the current administrator session
+      responses:
+        "204":
+          description: Signed out
+        "403":
+          description: Invalid origin
+        "503":
+          description: Authentication storage unavailable
   /DMgrgmt-1np5g23g12bGFtMwh/access:
     get:
       operationId: getAdminAccessStatus
@@ -3122,7 +3160,7 @@ components:
           pattern: "^\\+[1-9][0-9]{7,14}$"
         purpose:
           type: string
-          enum: [signup, password_reset, pin_reset]
+          enum: [signup, password_reset, pin_reset, admin_login]
       required: [phone, purpose]
     PhoneOtpSendResult:
       type: object
@@ -3145,7 +3183,7 @@ components:
           format: uuid
         purpose:
           type: string
-          enum: [signup, password_reset, pin_reset]
+          enum: [signup, password_reset, pin_reset, admin_login]
         code:
           type: string
           minLength: 6
@@ -5059,12 +5097,26 @@ components:
           type: string
           enum: [active, suspended, deleted, archived]
       required: [resourceId, action, status]
+    AdminSignInInput:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 9
+          maxLength: 16
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+        challengeId:
+          type: string
+          format: uuid
+      required: [phone, challengeId]
     AdminAccessStatus:
       type: object
       properties:
         isAdmin:
           type: boolean
         pinUnlocked:
+          type: boolean
+        canMutate:
           type: boolean
       required: [isAdmin, pinUnlocked]
     AdminPinInput:
@@ -5085,4 +5137,3 @@ components:
           type: string
           format: date-time
       required: [pinUnlocked, expiresAt]
-

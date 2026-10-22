@@ -9,4 +9,5 @@
 export interface AdminAccessStatus {
   isAdmin: boolean;
   pinUnlocked: boolean;
+  canMutate?: boolean;
 }

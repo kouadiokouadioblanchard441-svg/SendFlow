@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useDeleteAdminOperatorLogo,
   getGetAdminOperatorPricingQueryKey,
+  getGetAdminAccessStatusQueryKey,
   getGetPublicPricingQueryKey,
   useCreateAdminOperator,
   useGetAdminOperatorPricing,
+  useGetAdminAccessStatus,
   useUploadAdminOperatorLogo,
   useUpdateAdminOperator,
   useUpdateAdminOperatorPricing,
@@ -79,6 +81,8 @@ function getMutationError(error: unknown): string {
 
 export default function AdminOperatorPricingPage() {
   const queryClient = useQueryClient();
+  const access = useGetAdminAccessStatus({ query: { queryKey: getGetAdminAccessStatusQueryKey(), staleTime: 15_000 } });
+  const canMutate = access.data?.canMutate === true;
   const query = useGetAdminOperatorPricing();
   const queryErrorStatus = getErrorStatus(query.error);
   const createMutation = useCreateAdminOperator();
@@ -428,7 +432,7 @@ export default function AdminOperatorPricingPage() {
                     {countryOperators.length} opérateur{countryOperators.length === 1 ? '' : 's'} · Les tarifs vides ne sont pas publiés.
                   </p>
                 </div>
-                <Button type="button" onClick={() => { setErrorMessage(''); setAddDialogOpen(true); }} data-testid="button-add-country-operator">
+                <Button type="button" disabled={!canMutate} onClick={() => { setErrorMessage(''); setAddDialogOpen(true); }} data-testid="button-add-country-operator">
                   <Plus className="mr-2 size-4" /> Ajouter un opérateur
                 </Button>
               </div>
@@ -518,6 +522,7 @@ export default function AdminOperatorPricingPage() {
                                   setLogoFile(null);
                                   setLogoTarget(operator);
                                 }}
+                                disabled={!canMutate}
                                 data-testid={`button-manage-operator-logo-${operator.operatorId}`}
                               >
                                 {operator.logoUrl ? 'Modifier le logo' : 'Ajouter un logo'}
@@ -527,11 +532,13 @@ export default function AdminOperatorPricingPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => { setOperationToToggle(null); setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator); }}
+                                disabled={!canMutate}
                                 data-testid={`button-toggle-operator-${operator.operatorId}`}
                               >
                                 {operator.enabled ? 'Désactiver' : 'Activer'}
                               </Button>
                               <Button type="button" size="sm" variant="outline"
+                                disabled={!canMutate}
                                 onClick={() => {
                                   setOperationToToggle(categoryId);
                                   setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator);
@@ -571,6 +578,7 @@ export default function AdminOperatorPricingPage() {
                       type="button"
                       onClick={saveRates}
                       disabled={
+                        !canMutate ||
                         changedRates.length === 0 ||
                         invalidRateDraft ||
                         rateReason.trim().length < 3 ||

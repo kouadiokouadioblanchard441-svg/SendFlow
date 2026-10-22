@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { recordAdminAudit } from "../lib/admin-audit";
+import { adminPinUnlocked, adminSessionContext } from "../lib/admin-session";
 import {
   createSensitiveDataLookupIndex,
   decryptSensitiveDataIfEncrypted,
@@ -47,9 +48,16 @@ type DateRange = {
 export type AdminPermission = "read" | "mutate";
 
 export function getAdminUserId(req: Request, permission: AdminPermission = "read") {
-  void req;
-  void permission;
-  return { userId: null, error: "Administrator access is not configured" as const };
+  const session = adminSessionContext(req);
+  if (!session) return { userId: null, status: 401, error: "Administrator authentication required" };
+  // These grants restore catalogue management only, not financial or customer administration.
+  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?)\/?$/.test(req.path)) {
+    return { userId: null, status: 403, error: "Administrator catalogue permission does not authorize this operation" };
+  }
+  if (permission === "mutate" && !session.canMutate) {
+    return { userId: null, status: 403, error: "Administrator mutation permission required" };
+  }
+  return { userId: session.userId, status: 200, error: null };
 }
 
 export function respondAdminIdentityError(
@@ -60,8 +68,7 @@ export function respondAdminIdentityError(
   const auth = getAdminUserId(req, permission);
   if (auth.userId) return auth.userId;
 
-  req.log.error("Administrator access is not configured");
-  res.status(503).json({ error: auth.error });
+  res.status(auth.status).json({ error: auth.error });
   return null;
 }
 
@@ -70,8 +77,14 @@ export function respondAdminAuthError(
   res: Response,
   permission: AdminPermission = "read",
 ) {
-  respondAdminIdentityError(req, res, permission);
-  return null;
+  const userId = respondAdminIdentityError(req, res, permission);
+  if (!userId) return null;
+  const session = adminSessionContext(req);
+  if (!session || !adminPinUnlocked(session)) {
+    res.status(403).json({ error: "Administrator PIN verification required" });
+    return null;
+  }
+  return userId;
 }
 
 function parseDateRange(query: Record<string, unknown>): DateRange {

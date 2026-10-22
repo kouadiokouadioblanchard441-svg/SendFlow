@@ -23,6 +23,7 @@ import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRou
 import countryManagementRouter, { adminRoutes as adminCountryRoutes } from "./country-management";
 import transferQuoteRouter from "./transfer-quote";
 import { ADMIN_ROUTE_PREFIX } from "../lib/admin-route-prefix";
+import { loadAdminSession } from "../lib/admin-session";
 
 const router: IRouter = Router();
 const adminHandlers: IRouter = Router();
@@ -53,6 +54,7 @@ adminHandlers.use(adminBannersRoutes);
 adminHandlers.use(adminRegistrationSettingsRoutes);
 adminHandlers.use(adminCountryRoutes);
 
+adminSurface.use(loadAdminSession);
 adminSurface.use(adminAccessRouter);
 adminSurface.use(adminHandlers);
 

@@ -75,9 +75,9 @@ The admin console must use real icon components or approved image assets for fin
 
 **How to apply:** Prefer Lucide icons for generic concepts, use only approved operator assets when available, and use a clearly generic icon for operators without an approved logo.
 
-Administrator access is currently disabled. Keep admin APIs deny-by-default until SendFlow phone OTP authentication and a database administrator role are implemented; the administrator PIN remains a separate step-up check. Do not redirect administrator routes through the customer `/pin` screen.
+Administrator catalogue access is not permission to enable financial or customer administration. Keep unrelated APIs deny-by-default; the administrator PIN remains a separate step-up check. Do not redirect administrator routes through the customer `/pin` screen.
 
-**Why:** Customer UI session flags and demo credentials are not an administrator authorization boundary, and the user chose to keep authentication and authorization inside SendFlow rather than use an external identity service.
+**Why:** The requested restoration concerns logos and tariffs only. Customer UI session flags and demo credentials are not an administrator authorization boundary, and the user chose to keep authentication and authorization inside SendFlow rather than use an external identity service.
 
 **How to apply:** Do not re-enable administrator routes until the server verifies an OTP-authenticated SendFlow session and its database role, then separately enforces PIN verification. Customer sign-in and PIN state alone must never grant panel access.
 

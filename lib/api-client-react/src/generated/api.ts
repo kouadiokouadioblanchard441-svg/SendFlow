@@ -43,6 +43,7 @@ import type {
   AdminPinUnlockResponse,
   AdminPricingRatesUpdateResult,
   AdminRegistrationSettings,
+  AdminSignInInput,
   AdminTransactionDetail,
   AdminTransactionPage,
   AdminUserActionRequest,
@@ -2907,6 +2908,168 @@ export const useReceiveDiditWebhook = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getReceiveDiditWebhookMutationOptions(options));
+    }
+
+export const getSignInAdminUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sign-in`
+}
+
+/**
+ * @summary Create a separate administrator session using a verified admin OTP and a database grant
+ */
+export const signInAdmin = async (adminSignInInput: AdminSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminAccessStatus> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminAccessStatus>(getSignInAdminUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminSignInInput)
+  }
+);}
+
+
+
+
+
+export const getSignInAdminMutationKey = () => ['signInAdmin'] as const;
+
+export const getSignInAdminMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInAdmin>>, TError,SignInAdminMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signInAdmin>>, TError,SignInAdminMutationVariables, TContext> => {
+
+const mutationKey = getSignInAdminMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signInAdmin>>, SignInAdminMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  signInAdmin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignInAdminMutationResult = NonNullable<Awaited<ReturnType<typeof signInAdmin>>>
+    export type SignInAdminMutationBody = BodyType<AdminSignInInput>
+    export type SignInAdminMutationError = ErrorType<void>
+    export type SignInAdminMutationVariables = {data: BodyType<AdminSignInInput>}
+
+    /**
+ * @summary Create a separate administrator session using a verified admin OTP and a database grant
+ */
+export const useSignInAdmin = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInAdmin>>, TError,SignInAdminMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof signInAdmin>>,
+        TError,
+        SignInAdminMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSignInAdminMutationOptions(options));
+    }
+
+export const getSignOutAdminUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sign-out`
+}
+
+/**
+ * @summary Revoke the current administrator session
+ */
+export const signOutAdmin = async ( options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getSignOutAdminUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSignOutAdminMutationKey = () => ['signOutAdmin'] as const;
+
+export const getSignOutAdminMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signOutAdmin>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signOutAdmin>>, TError,void, TContext> => {
+
+const mutationKey = getSignOutAdminMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signOutAdmin>>, void> = () => {
+
+
+          return  signOutAdmin(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignOutAdminMutationResult = NonNullable<Awaited<ReturnType<typeof signOutAdmin>>>
+
+    export type SignOutAdminMutationError = ErrorType<void>
+
+
+    /**
+ * @summary Revoke the current administrator session
+ */
+export const useSignOutAdmin = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signOutAdmin>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof signOutAdmin>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getSignOutAdminMutationOptions(options));
     }
 
 export const getGetAdminAccessStatusUrl = () => {

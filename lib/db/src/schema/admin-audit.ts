@@ -24,6 +24,12 @@ export const adminAuditLogsTable = pgTable(
 );
 
 export type AdminAuditAction =
+  | "admin_sign_in"
+  | "admin_sign_out"
+  | "admin_pin_unlock"
+  | "admin_pin_failure"
+  | "provision_admin"
+  | "revoke_admin"
   | "allow_network_ip"
   | "authorize_release_network_ip"
   | "revoke_network_allow"
@@ -64,6 +70,7 @@ export type AdminAuditAction =
   | "update_operator_pricing"
   | "update_registration_settings";
 export type AdminAuditResourceType =
+  | "admin_access"
   | "network_defense"
   | "ip_block"
   | "dashboard"

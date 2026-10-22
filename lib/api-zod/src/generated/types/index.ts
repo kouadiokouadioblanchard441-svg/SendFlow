@@ -59,6 +59,7 @@ export * from './adminPricingRatesUpdateResultItemsItem';
 export * from './adminPricingRatesUpdateResultItemsItemCategoryId';
 export * from './adminRegistrationSettings';
 export * from './adminSearchParameter';
+export * from './adminSignInInput';
 export * from './adminToParameter';
 export * from './adminTransactionDetail';
 export * from './adminTransactionDetailKind';

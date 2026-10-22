@@ -113,6 +113,7 @@ export const PhoneOtpSendInputPurpose = {
   signup: 'signup',
   password_reset: 'password_reset',
   pin_reset: 'pin_reset',
+  admin_login: 'admin_login',
 } as const;
 
 export interface PhoneOtpSendInput {
@@ -139,6 +140,7 @@ export const PhoneOtpVerifyInputPurpose = {
   signup: 'signup',
   password_reset: 'password_reset',
   pin_reset: 'pin_reset',
+  admin_login: 'admin_login',
 } as const;
 
 export interface PhoneOtpVerifyInput {
@@ -1876,9 +1878,19 @@ export interface AdminActionResult {
   status: AdminActionResultStatus;
 }
 
+export interface AdminSignInInput {
+  /**
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phone: string;
+  challengeId: string;
+}
 export interface AdminAccessStatus {
   isAdmin: boolean;
   pinUnlocked: boolean;
+  canMutate?: boolean;
 }
 
 export interface AdminPinInput {
@@ -2096,4 +2108,3 @@ export const ListAdminTransactionsStatus = {
   succeeded: 'succeeded',
   failed: 'failed',
 } as const;
-
