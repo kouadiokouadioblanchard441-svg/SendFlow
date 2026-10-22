@@ -8,3 +8,9 @@ Store mobile-money operator logos uploaded from the SendFlow admin panel in the 
 **Why:** The user explicitly requires admin-panel uploads to be stored in the database and declined App Storage.
 
 **How to apply:** Use server-side validation and storage, avoid base64 representation, and obtain explicit target confirmation before changing a Neon schema shared with production.
+
+L’utilisateur configurera lui-même les opérateurs, leurs tarifs et leurs logos dans le panel administrateur.
+
+**Why:** À la demande de données métier validées, l’utilisateur a répondu : « Je vais configurer tout dand le panel administrateur ».
+
+**How to apply:** Ne pas activer d’opérateurs ni renseigner de tarifs ou de logos à sa place sans nouvelle demande explicite. Conserver les protections de l’aperçu partagé.
