@@ -26,3 +26,4 @@
 - [Strix upload failures](strix-upload-failures.md) — If cloud upload completion is invalid, check scan status and confirm any staged upload before retrying.
 - [Didit event ordering](didit-event-ordering.md) — Retry dispatch times change; order signed record updates and allow AML withdrawals of approval.
 - [GitHub connection readiness](github-connection-readiness.md) — Attachment and healthy OAuth do not prove a task workspace can read the source repository.
+- [PostgreSQL operational scripts](postgresql-operational-scripts.md) — Make psql guard failures nonzero; revoking direct EXECUTE does not disable an existing trigger.

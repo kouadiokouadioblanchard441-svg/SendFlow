@@ -49,8 +49,12 @@ try {
   await owner.query(ipMigration);
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
-    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app;
-    REVOKE UPDATE, DELETE, TRUNCATE ON sf_wallet_ledger, sf_admin_audit_logs FROM sf_fixture_app`);
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app`);
+  // Exercise the real activation ACL script, not a hand-written approximation.
+  execFileSync("psql", ["-X", "-h", socket, "-p", "15432", "-U", "sf_fixture_owner",
+    "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-v", "app_role=sf_fixture_app",
+    "-v", "approve_permissions=yes", "-f", join(root, "scripts/financial-activation/permissions.sql")],
+  { env: baseEnv, stdio: "pipe" });
 
   const require = createRequire(join(apiDir, "package.json"));
   const runtime = join(temp, "runtime.cjs");

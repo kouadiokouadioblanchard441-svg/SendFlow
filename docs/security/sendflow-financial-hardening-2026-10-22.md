@@ -103,6 +103,11 @@ Le serveur mis à jour nécessite cette migration avant activation des routes co
 
 Procédure de mise en service à préparer séparément :
 
+La préparation ciblée est désormais décrite dans
+[la procédure d’activation](financial-activation-runbook.md), avec précontrôles en lecture
+seule, script de permissions distinct et preuves sur PostgreSQL jetable. Cela ne signifie
+pas qu’une base réelle a été inspectée ou modifiée.
+
 1. Confirmer la cible, le schéma réel, la sauvegarde/restauration et le rôle de migration.
 2. Prévoir une fenêtre de maintenance des fonctions concernées et l'ordre migration puis serveur.
 3. Appliquer uniquement la nouvelle migration après autorisation explicite ; ne pas lancer de synchronisation globale Drizzle contre les données réelles.
