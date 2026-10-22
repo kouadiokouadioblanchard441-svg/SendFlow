@@ -45,6 +45,7 @@ function canonical(value: unknown): unknown {
 
 export function planFeexpayConfiguration(snapshot: FeexpayConfigurationSnapshot) {
   const fingerprint = createHash("sha256").update(JSON.stringify(canonical({
+    policyVersion: 3, xafRegistrationOnly: true,
     snapshot, countries: feexpayCountries, operators: additionalOperators,
     channels: feexpayChannels.map((channel) => ({
       ...channel, sendflowOperatorId: sendflowOperatorId(channel), operations: feexpayOperations(channel),
@@ -53,16 +54,20 @@ export function planFeexpayConfiguration(snapshot: FeexpayConfigurationSnapshot)
   const newOperators: FeexpayOperatorSeed[] = [];
   const newRoutes: FeexpayRouteSeed[] = [];
   const conflicts: string[] = [];
-  const excludedCountries: { countryCode: string; reason: string }[] = [];
+  const pendingCurrencyCountries: { countryCode: string; currency: string; reason: string }[] = [];
   const countries = new Set(snapshot.countries.map((row) => row.country_code));
   const operators = new Map(snapshot.operators.map((row) => [row.operator_id, row]));
   const routes = new Map(snapshot.routes.map((row) => [`${row.scope_type}:${row.scope_key}:${row.operation}`, row]));
+  if (snapshot.providers.find((row) => row.code === "feexpay")?.enabled === true) {
+    conflicts.push("PROVIDER_ALREADY_ENABLED_MANUAL_REVIEW");
+  }
   for (const country of feexpayCountries) {
     const code = country.countryCode.toLowerCase();
-    if (country.currency !== "XOF") {
-      excludedCountries.push({ countryCode: code, reason: "XAF_NOT_SUPPORTED_BY_SENDFLOW" });
-      continue;
-    }
+    if (country.currency !== "XOF") pendingCurrencyCountries.push({
+      countryCode: code,
+      currency: country.currency,
+      reason: "PROVIDER_ROUTE_ONLY_DISABLED_UNTIL_SENDFLOW_SUPPORTS_THIS_CURRENCY",
+    });
     if (!countries.has(code)) {
       conflicts.push(`MISSING_COUNTRY:${code}`);
       continue;
@@ -83,6 +88,16 @@ export function planFeexpayConfiguration(snapshot: FeexpayConfigurationSnapshot)
         newOperators.push({ ...seed });
       }
       for (const operation of feexpayOperations(channel)) {
+        const operationFlag = operation === "deposit"
+          ? "deposit_enabled"
+          : operation === "inter-network"
+            ? "inter_network_enabled"
+            : "international_enabled";
+        const country = snapshot.countries.find((candidate) => candidate.country_code === code);
+        if (country?.enabled === true && country[operationFlag] === true &&
+            existing?.enabled === true && existing[operationFlag] === true) {
+          conflicts.push(`ACTIVE_OPERATOR_OPERATION_REQUIRES_MANUAL_REVIEW:${operatorId}:${operation}`);
+        }
         const own = routes.get(`operator:${code}:${operatorId}:${operation}`);
         if (own) {
           if (own.aggregator_code !== "feexpay") conflicts.push(`EXISTING_OPERATOR_CHOICE:${operatorId}:${operation}`);
@@ -100,6 +115,6 @@ export function planFeexpayConfiguration(snapshot: FeexpayConfigurationSnapshot)
   return {
     fingerprint,
     createProvider: !snapshot.providers.some((row) => row.code === "feexpay"),
-    newOperators, newRoutes, excludedCountries, conflicts,
+    newOperators, newRoutes, pendingCurrencyCountries, conflicts,
   };
 }

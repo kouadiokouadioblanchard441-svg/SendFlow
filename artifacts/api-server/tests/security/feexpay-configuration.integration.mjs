@@ -49,21 +49,33 @@ async function seed() {
 before(seed);
 after(async () => { await app.end(); await owner.end(); });
 
-test("exact country/operator coverage, explicit Togo aliases, Coris payin only and XAF exclusion", async () => {
+test("all six documented countries/operators are mapped; XAF is listed but remains unusable", async () => {
   assert.equal(feexpayChannelForOperator("tg", "tmoney-tg")?.id, "togocom-tg");
   assert.equal(feexpayChannelForOperator("tg", "flooz-tg")?.id, "moov-tg");
   assert.equal(feexpayChannelForOperator("ci", "mtn-bj"), undefined);
   assert.equal(feexpayChannelForOperator("bf", "telecel-bf"), undefined);
   assert.deepEqual(feexpayOperations(feexpayChannelForOperator("bj", "coris-bj")), ["deposit"]);
   const plan = planFeexpayConfiguration(await snapshot());
-  assert.equal(plan.newRoutes.length, 46);
+  assert.equal(plan.newRoutes.length, 49);
   assert.deepEqual(plan.conflicts, []);
   assert.deepEqual(plan.newOperators.map((row) => row.operator_id).sort(), [...missing].sort());
-  assert.deepEqual(plan.excludedCountries, [{ countryCode: "cg", reason: "XAF_NOT_SUPPORTED_BY_SENDFLOW" }]);
+  assert.deepEqual(plan.pendingCurrencyCountries, [{
+    countryCode: "cg", currency: "XAF",
+    reason: "PROVIDER_ROUTE_ONLY_DISABLED_UNTIL_SENDFLOW_SUPPORTS_THIS_CURRENCY",
+  }]);
   for (const id of ["mtn-ci", "moov-ci", "orange-ci", "wave-ci"]) {
     assert.equal(plan.newRoutes.filter((row) => row.operator_id === id).length, 3);
   }
-  assert.equal(plan.newRoutes.some((row) => row.operator_id === "telecel-bf" || row.country_code === "cg"), false);
+  assert.deepEqual(plan.newRoutes.filter((row) => row.country_code === "cg")
+    .map((row) => row.operator_id), ["mtn-cg", "mtn-cg", "mtn-cg"]);
+  assert.equal(plan.newRoutes.some((row) => row.operator_id === "telecel-bf" || row.operator_id === "airtel-cg"), false);
+  const documentedRoutes = new Set(feexpayChannels.flatMap((channel) =>
+    feexpayOperations(channel).map((operation) =>
+      `${channel.countryCode.toLowerCase()}:${sendflowOperatorId(channel)}:${operation}`)));
+  assert.deepEqual(
+    new Set(plan.newRoutes.map((row) => `${row.country_code}:${row.operator_id}:${row.operation}`)),
+    documentedRoutes,
+  );
 });
 
 test("atomic inserts: 46 routes, three disabled operators, disabled provider; prices and existing settings untouched", async () => {
@@ -71,7 +83,7 @@ test("atomic inserts: 46 routes, three disabled operators, disabled provider; pr
   const prices = (await app.query("SELECT * FROM sf_operator_pricing_rates")).rows;
   const audits = await auditCount();
   assert.deepEqual(await apply(planFeexpayConfiguration(initial).fingerprint),
-    { providers: 1, operators: 3, routes: 46, audits: 50 });
+    { providers: 1, operators: 3, routes: 49, audits: 53 });
   const current = await snapshot();
   assert.deepEqual(current.countries, initial.countries);
   assert.deepEqual(current.operators.filter((row) => !missing.includes(row.operator_id)), initial.operators);
@@ -80,7 +92,7 @@ test("atomic inserts: 46 routes, three disabled operators, disabled provider; pr
   }
   assert.equal(current.providers.find((row) => row.code === "feexpay").enabled, false);
   assert.deepEqual((await app.query("SELECT * FROM sf_operator_pricing_rates")).rows, prices);
-  assert.equal(await auditCount() - audits, 50);
+  assert.equal(await auditCount() - audits, 53);
   assert.equal(current.routes.every((row) => row.scope_type === "operator"), true);
 });
 
@@ -123,6 +135,17 @@ test("existing country defaults remain authoritative and conflicting imports are
   assert.deepEqual(await snapshot(), initial);
 });
 
+test("an already enabled country/operator operation cannot acquire a new live route implicitly", async () => {
+  await seed();
+  await owner.query(`UPDATE sf_countries SET deposit_enabled=true WHERE country_code='ci';
+    UPDATE sf_operator_catalog SET enabled=true,deposit_enabled=true WHERE operator_id='mtn-ci'`);
+  const initial = await snapshot();
+  const plan = planFeexpayConfiguration(initial);
+  assert.ok(plan.conflicts.includes("ACTIVE_OPERATOR_OPERATION_REQUIRES_MANUAL_REVIEW:mtn-ci:deposit"));
+  await assert.rejects(apply(plan.fingerprint), { code: "MANUAL_CONFIGURATION_CONFLICT" });
+  assert.deepEqual(await snapshot(), initial);
+});
+
 test("audit storage failure rolls back the entire configuration", async () => {
   await seed();
   await owner.query(`CREATE FUNCTION reject_feexpay_fixture_audit() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -148,8 +171,8 @@ test("concurrent imports cannot duplicate routes, operators, provider or audit e
   const rejected = results.find((result) => result.status === "rejected");
   assert.ok(["40001", "STALE_PLAN"].includes(rejected.reason.code));
   const current = await snapshot();
-  assert.equal(current.routes.length, 46);
+  assert.equal(current.routes.length, 49);
   assert.equal(current.providers.filter((row) => row.code === "feexpay").length, 1);
   assert.equal(current.operators.filter((row) => missing.includes(row.operator_id)).length, 3);
-  assert.equal(await auditCount() - audits, 50);
+  assert.equal(await auditCount() - audits, 53);
 });

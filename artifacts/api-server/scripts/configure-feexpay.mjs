@@ -37,7 +37,7 @@ try {
       createProvider: plan.createProvider,
       operatorsToCreate: plan.newOperators.map((operator) => operator.operator_id),
       routesToCreate: plan.newRoutes.length, routesByCountry,
-      excludedCountries: plan.excludedCountries, conflicts: plan.conflicts,
+      pendingCurrencyCountries: plan.pendingCurrencyCountries, conflicts: plan.conflicts,
       countryDefaultsChanged: false, activationsChanged: false, feesChanged: false,
     }, null, 2));
   }

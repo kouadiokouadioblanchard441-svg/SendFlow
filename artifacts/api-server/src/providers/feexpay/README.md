@@ -7,10 +7,11 @@ Neon only and reports a fingerprint binding the current catalog and proposed
 changes. It is never an automatic startup seed.
 
 The plan uses exact identities, including TMoney → Togocom and Flooz → Moov in
-Togo. It prepares 46 explicit operator/operation routes across five XOF countries
-and three missing operators, all disabled. Coris Bénin is deposit-only; Congo/XAF
-is excluded until SendFlow supports its currency. Undocumented operators such as
-Telecel Burkina Faso receive no routes.
+Togo. It prepares 49 explicit operator/operation routes across all six countries
+and three missing operators, all disabled. Coris Bénin is deposit-only. The MTN
+Congo/XAF route is provider metadata only; SendFlow remains XOF-only, so this
+country cannot be used until XAF is implemented and separately enabled.
+Undocumented operators such as Telecel Burkina Faso or Airtel Congo receive no routes.
 
 Country defaults are not changed: these operator routes are explicit exceptions
 and take precedence over a future country default. An administrator must
