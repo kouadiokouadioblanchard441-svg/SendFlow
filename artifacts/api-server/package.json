@@ -13,6 +13,8 @@
     "test:security": "node --experimental-strip-types --test src/lib/account-limit-policy.test.mjs src/lib/admin-pin-session.test.mjs src/lib/didit-webhook-policy.test.mjs src/lib/didit-verification-policy.test.mjs src/lib/didit-session-rate-limit.test.mjs src/lib/didit-session-reservation.test.mjs src/lib/origin-policy.test.mjs src/lib/trust-proxy-policy.test.mjs src/lib/shared-neon-preview-guard.test.mjs src/lib/operator-pricing-seed-policy.test.mjs src/lib/customer-pin-session-policy.test.mjs src/lib/sql-injection-boundary.test.mjs",
     "test:wallet-integrity": "node --test tests/security/test_concurrency_wallet_integrity.mjs",
     "test:finance:isolated": "node tests/security/run-isolated-finance.mjs",
+    "identity:monitor": "node dist/reconcile-identities.mjs",
+    "identity:reconcile": "node dist/reconcile-identities.mjs --run",
     "test:sensitive-data-crypto": "node --experimental-strip-types --test src/lib/sensitive-data-crypto.test.mjs",
     "test:transfer-quote": "node --experimental-strip-types --test src/lib/transfer-quote-policy.test.mjs",
     "pii:backfill": "node --experimental-strip-types scripts/backfill-sensitive-data.mjs",

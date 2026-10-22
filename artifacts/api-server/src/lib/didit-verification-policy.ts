@@ -33,8 +33,10 @@ export function canApplyDiditStatusTransition(
   current: string, incoming: string, incomingTime?: Date | null, previousTime?: Date | null,
 ): boolean {
   if (!Object.hasOwn(TRANSITIONS, current) || !Object.hasOwn(TRANSITIONS, incoming)) return false;
+  if (incomingTime && !Number.isFinite(incomingTime.getTime())) return false;
+  if (previousTime && !Number.isFinite(previousTime.getTime())) return false;
   if (previousTime && (!incomingTime || incomingTime < previousTime)) return false;
-  if (current !== incoming && incoming === "Approved" && previousTime
+  if (current !== incoming && previousTime
     && incomingTime!.getTime() <= previousTime.getTime()) return false;
   if (["Declined", "Kyc Expired"].includes(current) && incoming === "Approved") {
     return !!incomingTime && !!previousTime && incomingTime > previousTime;

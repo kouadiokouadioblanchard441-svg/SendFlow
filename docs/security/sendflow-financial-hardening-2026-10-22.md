@@ -165,9 +165,9 @@ pnpm run check:secrets
 
 - **Bloquant avant activité financière réelle** : exécution Mobile Money, rapprochement, remboursements/annulations, réservation des plafonds et registre financier complet ne sont pas implémentés ou validés par ce lot. Un devis n'est pas une réservation de fonds ni un paiement.
 - **Déploiement** : migration et permissions réelles restent à vérifier/appliquer avec accord ; le code testé localement n'équivaut pas à une base de production migrée.
-- **KYC ambigu** : une approbation contradictoire à la même seconde n'est pas appliquée automatiquement. Le reçu conserve `status_applied=false` ; le rapprochement opérationnel/alerte doit être organisé. Aucun appel Didit réel n'a confirmé la configuration live.
-- **KYC historique** : les anciens reçus sans empreinte restent reconnaissables comme doublons sans nouvel effet, mais leur contenu original ne peut pas être reconstitué.
-- **Confidentialité** : la durée de conservation et les habilitations de consultation des reçus chiffrés doivent être définies. Le chiffrement ne dispense pas de minimiser les données et de protéger/faire tourner les clés.
+- **KYC ambigu** : le blocage persistant, le rapprochement serveur idempotent et les signaux opérationnels sont préparés (voir ci-dessous). La migration et la planification en production ne sont pas activées. Aucun appel Didit réel n'a confirmé la configuration live.
+- **KYC historique** : un ancien reçu sans empreinte ne prouve jamais l'égalité du contenu. Toute répétition ouvre donc un rapprochement avec blocage, même si le statut enregistré semble identique ; le contenu original ne peut pas être reconstitué.
+- **Confidentialité** : les habilitations et durées des reçus sont définies ci-dessous ; leur mise en œuvre organisationnelle, la purge planifiée et les droits réels restent à activer séparément. Le chiffrement ne dispense pas de minimiser les données et de protéger/faire tourner les clés.
 - **Interface conservée** : les anciens calculs d'affichage et valeurs de profil côté navigateur n'ont pas été supprimés. Ils ne doivent pas devenir des autorités serveur. Afficher strictement le devis reçu du serveur et retirer les valeurs de profil fictives reste un chantier frontend distinct déjà identifié.
 - **Secrets** : 0 détection par les scanners n'est pas une preuve d'absence absolue. Historique Git complet, secrets révoqués/rotation, bundles de production et fichiers ignorés ne sont pas certifiés par ce contrôle de sources.
 - **Tests** : données synthétiques, charge limitée et base locale ; pas de pentest Strix, de test live, de contrôle des sauvegardes réelles ou de qualification complète des permissions de production.
@@ -179,3 +179,178 @@ pnpm run check:secrets
 - https://docs.didit.me/integration/webhooks
 
 La documentation API présente un cycle principal plus restrictif que le centre d'aide sur les réouvertures et retraits AML. La politique serveur tient compte des retraits, de l'horodatage signé des changements et refuse de restaurer un privilège à partir d'un ancien événement.
+
+## Complément — rapprochement des événements d'identité ambigus
+
+### Autorité, ordre et retrait du privilège
+
+Documentation officielle relue le 22 octobre 2026 :
+
+- [Webhooks : enveloppe, signatures et retries](https://docs.didit.me/integration/webhooks) :
+  `created_at` numérique = modification du dossier ; `timestamp`/`X-Timestamp` =
+  envoi, renouvelé à chaque tentative. Même `event_id` sur les retries. Deux retries
+  seulement (environ 1 minute, puis 4 minutes plus tard), puis abandon. Les 409
+  ne sont pas rejoués : le conflit doit être conservé et signalé localement.
+- [Statuts, réouvertures et retraits AML](https://help.didit.me/verification-sessions/session-statuses) :
+  `Approved` peut devenir `In Review`, `Declined` ou `Kyc Expired`.
+- [Lecture serveur d'une décision](https://docs.didit.me/sessions-api/retrieve-session) :
+  `GET https://verification.didit.me/v3/session/{sessionId}/decision/` authentifié
+  par clé serveur. Son `created_at` ISO est la création de session, **pas**
+  l'horodatage numérique de mise à jour porté par le webhook.
+
+Un changement de statut à date égale, un événement antérieur, une transition
+inattendue ou un identifiant réutilisé avec un autre contenu ouvre un dossier
+persistant (`reconciliation_required`). Une approbation locale devient alors
+`In Review` dans la même transaction : le plafond non vérifié s'applique immédiatement.
+Un retrait AML correctement ordonné continue de s'appliquer sans attendre un opérateur.
+Les événements reçus pendant le blocage restent chiffrés avec `status_applied=false`.
+Un doublon exact, y compris un retry réhorodaté, ne crée pas de nouvelle génération.
+
+La file est portée par les vérifications, sans stockage mémoire comme autorité.
+La migration additive
+`lib/db/migrations/2026-10-22-identity-reconciliation.sql` reprend aussi les anciens
+reçus retenus. Elle est réexécutable, ne réouvre pas les reçus antérieurs à un
+rapprochement résolu, et n'a été appliquée **que sur PostgreSQL jetable**.
+Comme pour le lot précédent : migration autorisée avant déploiement du serveur,
+pas de push Drizzle global ni d'activation depuis l'aperçu.
+
+### Rapprochement serveur préparé, non lancé en production
+
+Le service `artifacts/api-server/src/services/identity-reconciliation.ts` :
+
+1. Lit la génération du dossier bloqué, puis consulte le fournisseur **hors**
+   transaction SQL pour ne pas garder de verrou pendant l'appel réseau.
+2. Vérifie session, `vendor_data`, workflow, environnement et statut exacts ; refuse
+   une session métier KYB et une approbation dont `expires_at` est invalide ou passé.
+   Il ne reçoit jamais une décision depuis le navigateur ou une route administrateur.
+3. Prend le verrou SQL et refuse le résultat si un nouvel événement a changé la
+   génération. Une panne, un 429, un timeout, un JSON invalide ou un mauvais rattachement
+   laisse le blocage en place ; aucune approbation de secours.
+4. Enregistre la réponse fournisseur chiffrée dans un reçu distinct
+   `reconciliation.resolved`, puis applique le statut et ferme le dossier **dans la même
+   transaction**. Les anciens reçus restent inchangés, notamment `status_applied=false`.
+   Des exécutions concurrentes ne valident qu'une fois la même génération.
+5. Pose une borne conservatrice à l'heure serveur du début de lecture (seconde
+   supérieure, sans reculer la dernière borne). Un webhook antérieur à cette borne
+   provoque un nouveau rapprochement ; le `created_at` ISO de la décision ne sert
+   jamais à classer les événements. Le coût de cette prudence est un rapprochement
+   supplémentaire possible pour un webhook retardé, pas un privilège injustifié.
+
+Le client réseau est limité à l'origine HTTPS Didit fixe, GET, redirections
+interdites et timeout 10 secondes. Il refuse tout appel hors production **avant**
+la lecture des identifiants et avant `fetch`. L'injection du lecteur fournisseur
+est une dépendance interne destinée aux fixtures ; aucune route ne l'expose.
+
+Après `pnpm --filter @workspace/api-server run build`, les commandes préparées sont :
+
+```sh
+# Contrôle de file uniquement ; aucune requête Didit.
+pnpm --filter @workspace/api-server run identity:monitor
+# À exécuter exclusivement dans le serveur de production, après autorisation
+# explicite des lectures fournisseur et vérification de la cible/base/droits.
+pnpm --filter @workspace/api-server run identity:reconcile
+```
+
+Ces commandes ne migrent rien. Le rapprochement traite au plus 100 dossiers,
+séquentiellement ; relancer après traitement si une file subsiste. Codes de sortie :
+0 = rien en attente, 2 = file non vide ou lecture dépassée par un nouvel événement,
+1 = échec. Le serveur web ne démarre jamais ce worker tout seul. Aucun appel live
+n'a été effectué ici ; la configuration, les coûts et le workflow réels ne sont
+pas considérés comme validés par les fixtures.
+
+### Alerte et procédure d'exploitation
+
+- Le webhook émet `IDENTITY_RECONCILIATION_REQUIRED` au niveau erreur après
+  validation de la transaction. L'identifiant de corrélation est celui du dossier
+  interne ; aucune identité, clé, décision, URL de document ou charge utile en clair.
+  Les conflits d'identifiant émettent le même code et conservent le second corps
+  chiffré sous une référence locale déterministe, sans remplacer le premier.
+- Le contrôle de file réémet le signal avec un nombre borné (maximum 100, donc
+  « 100 » signifie au moins 100) et l'ancienneté du premier dossier. Il permet de
+  retrouver les alertes perdues après un crash ou une panne du collecteur de logs.
+- Lors de la mise en service autorisée, planifier `identity:monitor` toutes les
+  5 minutes et router ces codes vers l'astreinte conformité/exploitation. Alerter
+  dès le premier dossier, accuser réception sous 15 minutes et escalader à la
+  conformité si non résolu sous 1 heure. Regrouper par dossier/code pour limiter
+  les répétitions ; ne jamais acquitter en modifiant le statut SQL.
+- L'opérateur contrôle le dossier et la disponibilité du fournisseur puis autorise
+  la lecture serveur. Un échec conserve la file et le plafond réduit. Un retrait
+  fournisseur (`Declined`, `In Review`, expiration) clôt le rapprochement sans
+  octroyer de privilège. En cas d'incident de signature, ne jamais journaliser
+  le corps brut malgré la recommandation de débogage générique de Didit.
+
+Aucun collecteur externe, ordonnanceur, canal de notification ou rôle réel n'a
+été configuré par cette intervention.
+
+### Habilitations et conservation des reçus
+
+Politique opérationnelle à faire approuver par le responsable conformité/DPO
+avant activation réelle ; ce n'est pas une affirmation de durée légale universelle.
+
+| Habilitation | Accès autorisé |
+|---|---|
+| Client, viewer, support courant, administrateur web | Aucun accès aux reçus ni au rapprochement ; aucune nouvelle page/route |
+| Astreinte exploitation | Métadonnées de file et codes d'erreur uniquement ; peut lancer le worker après autorisation, jamais fixer un statut |
+| Service API/worker | Chiffrement des preuves, rattachement serveur, transactions de statut ; clé fournisseur côté serveur exclusivement |
+| Conformité habilitée | Déchiffrement ponctuel sur dossier justifié, accès nominatif temporaire et consultation auditée hors logs HTTP |
+| DBA/migration | Migration ciblée autorisée ; pas d'usage courant de superutilisateur, pas d'accès ordinaire à la clé de déchiffrement |
+| Service de rétention séparé | Effacement des corps arrivés à échéance uniquement, jamais modification du statut KYC |
+
+Les droits SQL minimum à préparer sont SELECT/INSERT et UPDATE des seules colonnes
+de traitement des reçus pour l'API ; aucun DELETE/TRUNCATE pour l'API ou le worker.
+Sur les vérifications, UPDATE des colonnes de statut, génération et dates est
+nécessaire. Le moniteur doit utiliser un rôle limité aux métadonnées de file,
+sans SELECT sur les corps chiffrés. Le rôle de rétention peut mettre à NULL les
+corps arrivés à échéance, sans changer empreinte, résultat ou statut de vérification.
+Ces droits de production ne sont pas inspectés/appliqués ici ; des grants globaux
+existants ou l'accès aux secrets par un propriétaire ne constituent pas une
+séparation effective. Faire contrôler aussi les appartenances et privilèges hérités.
+
+Durées retenues pour les **reçus techniques**, distincts du dossier KYC réglementaire :
+
+- Corps de webhook et snapshots de décision chiffrés : **30 jours** après réception,
+  ou 30 jours après la dernière résolution pour un dossier rapproché, selon la date
+  la plus tardive.
+- Dossier non résolu : revue conformité obligatoire à J+30, corps conservé au plus
+  **90 jours** depuis réception. À J+90, purge du corps, maintien du blocage et de
+  l'alerte ; ne jamais supprimer la file ni restaurer l'approbation pour purger.
+- Gel juridique : prolongation uniquement par décision conformité documentée,
+  motif, habilité et échéance de réexamen explicites ; revue tous les 30 jours.
+- Métadonnées minimales d'idempotence (référence, empreinte, rattachement, résultat,
+  dates) : pendant la vie de la session puis **90 jours** après sa clôture effective.
+  Elles ne doivent jamais être supprimées tant que cette session peut conférer
+  un privilège. La borne d'ordre et l'état bloqué survivent à la purge des corps.
+- Journaux d'alerte sans corps ni identité : **90 jours**. Les sauvegardes doivent
+  expirer sous **90 jours** et toute restauration doit réappliquer les échéances
+  avant remise en service. Ne pas copier les corps vers des exports ou tickets.
+
+La purge planifiée et le registre de gels juridiques ne sont **pas implémentés
+ni exécutés** ici : la demande définit leur politique, elle n'autorise aucune
+suppression réelle. Le chiffrement AES-GCM existant et les empreintes HMAC sont
+conservés ; pas de corps, clé ou donnée personnelle en clair dans les alertes.
+
+### Vérification de ce complément
+
+- Tests HTTP avec fixtures HMAC-V2 et PostgreSQL jetable : conflits à la même
+  seconde, ancien événement, refus d'une approbation pendant le blocage, retries
+  concurrents sans nouvelle génération, conservation chiffrée des deux conflits.
+- Décisions serveur synthétiques : mauvais compte/session/workflow/environnement,
+  statut inconnu, expiration invalide/passée et timeout refusés ; le vrai lecteur
+  bloque avant réseau en développement.
+- Concurrence : un événement pendant la lecture invalide le snapshot ; six
+  rapprochements simultanés ne produisent qu'une résolution ; l'échec d'insertion
+  de la preuve annule aussi le changement de privilège.
+- Migration testée deux fois au démarrage du cluster jetable et réexécutée après
+  résolution, sans réouverture indue d'un ancien reçu.
+- Le contrôle TypeScript API et bibliothèques passe. Le contrôle monorepo est
+  bloqué hors périmètre dans `artifacts/sendflow/vite.config.ts` (TS7016/TS2769) ;
+  aucun fichier frontend n'a été modifié pour contourner ce défaut.
+- Reçus historiques : une approbation sans empreinte suivie d'un retrait signé
+  sous le même identifiant provoque HTTP 409, conserve le retrait chiffré et
+  réduit le plafond jusqu'à rapprochement serveur ; statut historique NULL
+  également testé, retry sans nouvelle génération et décision finale défavorable.
+- Résultats du complément : **22/22** intégrations isolées et **19/19** tests
+  Didit/politique fournisseur ; contrôle de secrets : **646 fichiers texte,
+  aucune détection**. Build et redémarrage API réussis ; `/api/healthz` répond
+  `{"status":"ok"}` par requête et dans la capture. Les services frontend étant
+  arrêtés, cette capture JSON ne constitue pas une validation des pages.

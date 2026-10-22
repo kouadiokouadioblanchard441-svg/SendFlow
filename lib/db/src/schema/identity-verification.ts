@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 export const identityVerificationsTable = pgTable("sf_identity_verifications", {
@@ -15,6 +15,10 @@ export const identityVerificationsTable = pgTable("sf_identity_verifications", {
   lastWebhookEventId: text("last_webhook_event_id"),
   lastWebhookType: text("last_webhook_type"),
   lastProviderEventAt: timestamp("last_provider_event_at", { withTimezone: true }),
+  reconciliationRequired: boolean("reconciliation_required").notNull().default(false),
+  reconciliationVersion: integer("reconciliation_version").notNull().default(0),
+  reconciliationRequestedAt: timestamp("reconciliation_requested_at", { withTimezone: true }),
+  reconciledAt: timestamp("reconciled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

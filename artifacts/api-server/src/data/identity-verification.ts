@@ -9,5 +9,9 @@ export async function loadLatestIdentityVerification(
     .where(eq(identityVerificationsTable.userId, userId))
     .orderBy(desc(identityVerificationsTable.createdAt), desc(identityVerificationsTable.id))
     .limit(1);
-  return verification;
+  // Defence in depth: a pending case can never expose an approved limit even
+  // if an older server process writes Approved without knowing about the hold.
+  return verification?.reconciliationRequired && verification.status === "Approved"
+    ? { ...verification, status: "In Review" }
+    : verification;
 }

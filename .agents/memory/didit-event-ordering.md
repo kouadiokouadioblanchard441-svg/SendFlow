@@ -20,3 +20,9 @@ Do not treat Approved as immutable: AML monitoring may later send In Review or D
 **Why:** Didit's help center explicitly documents AML withdrawals and manual reopenings beyond the narrower API lifecycle table.
 
 **How to apply:** Handle withdrawals immediately when signed and correctly ordered; accept a reopened decision only with a strictly newer signed record time. Consult both official status references before changing this policy.
+
+The decision API's ISO `created_at` is the session creation date, not the webhook's numeric record-update date. Do not use it as an ordering watermark when reconciling.
+
+**Why:** The two official response schemas use the same name for different timestamps; mixing them can revive a stale approval.
+
+**How to apply:** Resolve ambiguity from a bound server-to-provider decision read, reject a snapshot overtaken by a new webhook, and keep a conservative server-read freshness fence.

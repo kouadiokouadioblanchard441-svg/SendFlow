@@ -40,6 +40,10 @@ try {
   const migration = readFileSync(join(root, "lib/db/migrations/2026-10-22-financial-audit-hardening.sql"), "utf8");
   await owner.query(migration);
   await owner.query(migration);
+  const reconciliationMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-10-22-identity-reconciliation.sql"), "utf8");
+  await owner.query(reconciliationMigration);
+  await owner.query(reconciliationMigration);
   const previewMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-preview-access.sql"), "utf8");
   await owner.query(previewMigration);
   await owner.query(previewMigration);
@@ -65,6 +69,8 @@ try {
       export { executeAdminWalletAdjustment } from "./src/services/wallet-adjustment";
       export { consumeTransferQuoteQuota } from "./src/data/transfer-quote-quota";
       export { getAccountLimitSnapshot } from "./src/lib/account-limit";
+      export { reconcileIdentityVerification } from "./src/services/identity-reconciliation";
+      export { retrieveDiditDecision } from "./src/lib/didit";
       export { hashCustomerSessionToken } from "./src/lib/customer-auth-crypto";
       export { hashCustomerSecret } from "./src/lib/customer-auth-crypto";
       export { provisionPreviewAccount } from "./src/services/provision-preview-account";
@@ -97,6 +103,7 @@ try {
       CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
       DIDIT_WEBHOOK_SECRET: randomBytes(32).toString("hex"),
       DIDIT_ENVIRONMENT: "sandbox", CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid",
+      DIDIT_WORKFLOW_ID: "fixture-workflow",
       TRUST_PROXY_HOPS: "1", LOG_LEVEL: "silent",
     },
   });

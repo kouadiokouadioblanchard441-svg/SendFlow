@@ -28,5 +28,6 @@ export function prepareIdentityWebhookReceipt(payload: unknown) {
 export function getDiditRecordUpdateTime(payload: unknown, now = Date.now()): Date | null {
   const seconds = (payload as Record<string, unknown> | null)?.created_at;
   return typeof seconds === "number" && Number.isSafeInteger(seconds) && seconds > 0
+    && seconds * 1000 <= 8_640_000_000_000_000
     && seconds <= Math.floor(now / 1000) + 300 ? new Date(seconds * 1000) : null;
 }

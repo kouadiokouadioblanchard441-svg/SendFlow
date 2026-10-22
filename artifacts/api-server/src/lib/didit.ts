@@ -59,6 +59,7 @@ async function diditRequest<T>(
   const { apiKey } = getRequiredConfig();
   const response = await fetch(diditUrl(path), {
     ...init,
+    redirect: "error",
     signal: AbortSignal.timeout(10_000),
     headers: {
       Accept: "application/json",
@@ -170,6 +171,12 @@ export async function createDiditSession(
   }
 
   return session;
+}
+
+/** Only the server's authenticated, fixed-origin API read is authoritative. */
+export async function retrieveDiditDecision(sessionId: string): Promise<unknown> {
+  assertExternalProviderCallsAllowed("Didit");
+  return diditRequest(`/session/${encodeURIComponent(sessionId)}/decision/`, { method: "GET" });
 }
 
 function sortForSignature(value: unknown): unknown {

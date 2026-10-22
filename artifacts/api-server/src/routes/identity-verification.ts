@@ -11,6 +11,7 @@ import {
   identityVerificationAttemptsTable,
   identityWebhookEventsTable,
   lte,
+  sql,
   usersTable,
 } from "@workspace/db";
 import {
@@ -43,6 +44,7 @@ import {
 } from "../lib/didit-verification-policy";
 import { loadLatestIdentityVerification } from "../data/identity-verification";
 import { prepareIdentityWebhookReceipt, getDiditRecordUpdateTime } from "../lib/identity-webhook-receipt";
+import { requireIdentityReconciliation } from "../services/identity-reconciliation";
 import {
   DIDIT_SESSION_ATTEMPT_LIMIT,
   DIDIT_SESSION_ATTEMPT_WINDOW_MS,
@@ -506,21 +508,42 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
   try {
     const receipt = prepareIdentityWebhookReceipt(req.body);
     const outcome = await db.transaction(async (tx) => {
+      // Serialize one event ID even before its receipt exists.
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${eventId}))`);
       const [existingEvent] = await tx
         .select({
           providerSessionId: identityWebhookEventsTable.providerSessionId,
           eventType: identityWebhookEventsTable.eventType,
           payloadDigest: identityWebhookEventsTable.payloadDigest,
+          status: identityWebhookEventsTable.status,
         })
         .from(identityWebhookEventsTable)
-        .where(eq(identityWebhookEventsTable.eventId, eventId))
-        .for("update");
+        .where(eq(identityWebhookEventsTable.eventId, eventId));
 
       if (existingEvent) {
         const matches =
           existingEvent.providerSessionId === providerSessionId &&
           existingEvent.eventType === eventType &&
-          (existingEvent.payloadDigest === null || existingEvent.payloadDigest === receipt.payloadDigest);
+          existingEvent.status === status &&
+          // Metadata-only historical receipts cannot prove semantic equality,
+          // even when the saved status happens to match. Fail closed.
+          existingEvent.payloadDigest !== null &&
+          existingEvent.payloadDigest === receipt.payloadDigest;
+        if (!matches) {
+          const affected = await tx.select({ id: identityVerificationsTable.id })
+            .from(identityVerificationsTable)
+            .where(inArray(identityVerificationsTable.providerSessionId,
+              [existingEvent.providerSessionId, providerSessionId]))
+            .orderBy(asc(identityVerificationsTable.id)).for("update");
+          // Retain both conflicting authenticated payloads, without overwriting
+          // the original provider event ID or leaking either payload in logs.
+          const [newConflict] = await tx.insert(identityWebhookEventsTable).values({
+            eventId: `conflict:${eventId}:${receipt.payloadDigest}`,
+            providerSessionId, eventType, status, ...receipt,
+            matchedVerification: affected.length > 0, statusApplied: false,
+          }).onConflictDoNothing().returning({ id: identityWebhookEventsTable.eventId });
+          if (newConflict) for (const item of affected) await requireIdentityReconciliation(tx, item.id);
+        }
         return { duplicate: matches, conflict: !matches };
       }
 
@@ -540,23 +563,12 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
         .onConflictDoNothing()
         .returning();
 
-      if (!event) {
-        const [concurrentEvent] = await tx
-          .select({
-            providerSessionId: identityWebhookEventsTable.providerSessionId,
-            eventType: identityWebhookEventsTable.eventType,
-            payloadDigest: identityWebhookEventsTable.payloadDigest,
-          })
-          .from(identityWebhookEventsTable)
-          .where(eq(identityWebhookEventsTable.eventId, eventId));
-        const matches =
-          concurrentEvent?.providerSessionId === providerSessionId &&
-          concurrentEvent.eventType === eventType &&
-          (concurrentEvent.payloadDigest === null || concurrentEvent.payloadDigest === receipt.payloadDigest);
-        return { duplicate: matches, conflict: !matches };
-      }
+      // Current handlers serialize on eventId. A legacy/out-of-band writer may
+      // still win this insert: fail with a retryable error, never guess whether
+      // an uninspected receipt is a duplicate. The retry uses the conflict path.
+      if (!event) throw new Error("Didit receipt insertion raced; retry required");
 
-      const statusApplied = canApplyDiditStatusTransition(
+      const statusApplied = !verification.reconciliationRequired && canApplyDiditStatusTransition(
         verification.status, status, providerEventAt, verification.lastProviderEventAt,
       );
       if (statusApplied) {
@@ -570,6 +582,8 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
             updatedAt: new Date(),
           })
           .where(eq(identityVerificationsTable.id, verification.id));
+      } else {
+        await requireIdentityReconciliation(tx, verification.id);
       }
 
       await tx
@@ -577,15 +591,21 @@ router.post("/webhooks/didit", async (req, res): Promise<void> => {
         .set({ matchedVerification: true, statusApplied })
         .where(eq(identityWebhookEventsTable.eventId, eventId));
 
-      return { duplicate: false, conflict: false };
+      return { duplicate: false, conflict: false, reconciliationRequired: !statusApplied,
+        alertId: verification.id };
     });
 
     if (outcome.conflict) {
-      req.log.warn({ eventId, providerSessionId }, "Didit webhook event identifier conflicts with a stored event");
+      req.log.error({ code: "IDENTITY_RECONCILIATION_REQUIRED", reason: "event_id_conflict" },
+        "Identity provider conflict requires server reconciliation");
       res.status(409).json({ error: "Didit event identifier conflicts with a previously received event" });
       return;
     }
 
+    if ("reconciliationRequired" in outcome && outcome.reconciliationRequired) {
+      req.log.error({ code: "IDENTITY_RECONCILIATION_REQUIRED", alertId: outcome.alertId },
+        "Identity status held pending server reconciliation");
+    }
     res.json(ReceiveDiditWebhookResponse.parse({ received: true, duplicate: outcome.duplicate }));
   } catch (error) {
     req.log.error({ err: error, eventId }, "Didit webhook processing failed");

@@ -26,6 +26,10 @@ test("KYC expiration revokes approval and stale messages cannot revive it", () =
   assert.equal(canApplyDiditStatusTransition("In Review", "Approved", old, newer), false);
   assert.equal(canApplyDiditStatusTransition("In Review", "Approved", old, old), false);
   assert.equal(canApplyDiditStatusTransition("Kyc Expired", "Approved", newer, old), true);
+  assert.equal(canApplyDiditStatusTransition("Approved", "Declined", old, old), false);
+  assert.equal(canApplyDiditStatusTransition("Approved", "In Review", old, old), false);
+  assert.equal(canApplyDiditStatusTransition("In Review", "Declined", old, old), false);
+  assert.equal(canApplyDiditStatusTransition("In Review", "Approved", new Date("invalid"), old), false);
 });
 
 test("unfinished and in-review Didit sessions are reusable", () => {
