@@ -5,14 +5,17 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { AdminCountryOperatorPricingCountryCode } from './adminCountryOperatorPricingCountryCode';
 import type { AdminOperatorWithPricing } from './adminOperatorWithPricing';
+import type { CountryOperationFlags } from './countryOperationFlags';
 
 export interface AdminCountryOperatorPricing {
-  countryCode: AdminCountryOperatorPricingCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   countryName: string;
   phonePrefix: string;
   initials: string;
   flag: string;
+  enabled: boolean;
+  operations: CountryOperationFlags;
   operators: AdminOperatorWithPricing[];
 }

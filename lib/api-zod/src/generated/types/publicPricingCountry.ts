@@ -5,12 +5,25 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { PublicPricingCountryId } from './publicPricingCountryId';
+import type { CountryOperationFlags } from './countryOperationFlags';
 
 export interface PublicPricingCountry {
-  id: PublicPricingCountryId;
+  /** @pattern ^[a-z]{2}$ */
+  id: string;
   name: string;
   dialCode: string;
   initials: string;
   flag: string;
+  enabled: boolean;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  minPhoneDigits: number;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  maxPhoneDigits: number;
+  operations: CountryOperationFlags;
 }

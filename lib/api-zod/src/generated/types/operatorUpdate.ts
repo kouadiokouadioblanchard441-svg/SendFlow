@@ -15,6 +15,9 @@ export interface OperatorUpdate {
   name: string;
   brand: OperatorUpdateBrand;
   enabled: boolean;
+  depositEnabled: boolean;
+  interNetworkEnabled: boolean;
+  internationalEnabled: boolean;
   /** @minimum 1 */
   expectedVersion: number;
   /**

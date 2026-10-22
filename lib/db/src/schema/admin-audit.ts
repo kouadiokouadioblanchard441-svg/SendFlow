@@ -58,6 +58,9 @@ export type AdminAuditAction =
   | "create_operator"
   | "update_operator"
   | "update_operator_logo"
+  | "create_country"
+  | "update_country"
+  | "view_countries"
   | "update_operator_pricing"
   | "update_registration_settings";
 export type AdminAuditResourceType =
@@ -74,5 +77,6 @@ export type AdminAuditResourceType =
   | "payment_aggregator"
   | "payment_route"
   | "operator"
+  | "country"
   | "operator_pricing"
   | "registration_settings";

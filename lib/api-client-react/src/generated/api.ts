@@ -26,6 +26,8 @@ import type {
   AdminBanner,
   AdminBannerList,
   AdminBannerReorderRequest,
+  AdminCountry,
+  AdminCountryCatalog,
   AdminIpAuthorizationResult,
   AdminLoginActivityPage,
   AdminOperatorPricingCatalog,
@@ -51,6 +53,8 @@ import type {
   AutomaticIpBlock,
   BannerInput,
   BannerUpdate,
+  CountryCatalog,
+  CreateAdminCountryRequest,
   CreatePaymentAggregatorRequest,
   CurrentAccount,
   CustomerAuthResult,
@@ -103,6 +107,7 @@ import type {
   RegistrationSettingsUpdate,
   TransferQuoteInput,
   TransferQuoteResult,
+  UpdateAdminCountryRequest,
   UpdatePaymentAggregatorRequest,
   UpdatePaymentAggregatorRouteRequest,
   WebhookReceipt
@@ -1082,6 +1087,83 @@ export const useVerifyPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRat
       > => {
       return useMutation(getVerifyPhoneOtpMutationOptions(options));
     }
+
+export const getGetAuthCountriesUrl = () => {
+
+
+
+
+  return `/api/auth/countries`
+}
+
+/**
+ * @summary List configured countries and server-defined phone rules
+ */
+export const getAuthCountries = async ( options?: Parameters<typeof customFetch>[1]): Promise<CountryCatalog> => {
+
+  return customFetch<CountryCatalog>(getGetAuthCountriesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAuthCountriesQueryKey = () => {
+    return [
+    `/api/auth/countries`
+    ] as const;
+    }
+
+
+export const getGetAuthCountriesQueryOptions = <TData = Awaited<ReturnType<typeof getAuthCountries>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuthCountries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAuthCountriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuthCountries>>> = ({ signal }) => getAuthCountries({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAuthCountries>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAuthCountriesQueryResult = NonNullable<Awaited<ReturnType<typeof getAuthCountries>>>
+export type GetAuthCountriesQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List configured countries and server-defined phone rules
+ */
+
+export function useGetAuthCountries<TData = Awaited<ReturnType<typeof getAuthCountries>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuthCountries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAuthCountriesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetRegistrationSettingsUrl = () => {
 
@@ -3474,6 +3556,260 @@ export const useCreateAdminBanner = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getCreateAdminBannerMutationOptions(options));
+    }
+
+export const getGetAdminCountriesUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/countries`
+}
+
+/**
+ * @summary List configured countries and operation switches
+ */
+export const getAdminCountries = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminCountryCatalog> => {
+
+  return customFetch<AdminCountryCatalog>(getGetAdminCountriesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminCountriesQueryKey = () => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/countries`
+    ] as const;
+    }
+
+
+export const getGetAdminCountriesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminCountries>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminCountries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminCountriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminCountries>>> = ({ signal }) => getAdminCountries({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminCountries>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminCountriesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminCountries>>>
+export type GetAdminCountriesQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List configured countries and operation switches
+ */
+
+export function useGetAdminCountries<TData = Awaited<ReturnType<typeof getAdminCountries>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminCountries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminCountriesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAdminCountryUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/countries`
+}
+
+/**
+ * @summary Add a country to the server-managed catalog
+ */
+export const createAdminCountry = async (createAdminCountryRequest: CreateAdminCountryRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminCountry> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminCountry>(getCreateAdminCountryUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createAdminCountryRequest)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminCountryMutationKey = () => ['createAdminCountry'] as const;
+
+export const getCreateAdminCountryMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminCountry>>, TError,CreateAdminCountryMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminCountry>>, TError,CreateAdminCountryMutationVariables, TContext> => {
+
+const mutationKey = getCreateAdminCountryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminCountry>>, CreateAdminCountryMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminCountry(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminCountryMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminCountry>>>
+    export type CreateAdminCountryMutationBody = BodyType<CreateAdminCountryRequest>
+    export type CreateAdminCountryMutationError = ErrorType<ErrorEnvelope>
+    export type CreateAdminCountryMutationVariables = {data: BodyType<CreateAdminCountryRequest>}
+
+    /**
+ * @summary Add a country to the server-managed catalog
+ */
+export const useCreateAdminCountry = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminCountry>>, TError,CreateAdminCountryMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminCountry>>,
+        TError,
+        CreateAdminCountryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateAdminCountryMutationOptions(options));
+    }
+
+export const getUpdateAdminCountryUrl = (countryCode: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/countries/${countryCode}`
+}
+
+/**
+ * @summary Update country availability and phone rules
+ */
+export const updateAdminCountry = async (countryCode: string,
+    updateAdminCountryRequest: UpdateAdminCountryRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminCountry> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminCountry>(getUpdateAdminCountryUrl(countryCode),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateAdminCountryRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminCountryMutationKey = () => ['updateAdminCountry'] as const;
+
+export const getUpdateAdminCountryMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminCountry>>, TError,UpdateAdminCountryMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminCountry>>, TError,UpdateAdminCountryMutationVariables, TContext> => {
+
+const mutationKey = getUpdateAdminCountryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminCountry>>, UpdateAdminCountryMutationVariables> = (props) => {
+          const {countryCode,data} = props ?? {};
+
+          return  updateAdminCountry(countryCode,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminCountryMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminCountry>>>
+    export type UpdateAdminCountryMutationBody = BodyType<UpdateAdminCountryRequest>
+    export type UpdateAdminCountryMutationError = ErrorType<ErrorEnvelope>
+    export type UpdateAdminCountryMutationVariables = {countryCode: string;data: BodyType<UpdateAdminCountryRequest>}
+
+    /**
+ * @summary Update country availability and phone rules
+ */
+export const useUpdateAdminCountry = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminCountry>>, TError,UpdateAdminCountryMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminCountry>>,
+        TError,
+        UpdateAdminCountryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateAdminCountryMutationOptions(options));
     }
 
 export const getGetAdminPaymentRoutingUrl = () => {

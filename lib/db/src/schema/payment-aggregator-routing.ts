@@ -1,4 +1,5 @@
-import { boolean, index, integer, pgTable, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, check, index, integer, pgTable, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
 export const paymentAggregatorsTable = pgTable(
@@ -26,6 +27,7 @@ export const paymentAggregatorRoutesTable = pgTable(
     scopeKey: varchar("scope_key", { length: 100 }).notNull(),
     countryCode: varchar("country_code", { length: 2 }).notNull(),
     operatorId: varchar("operator_id", { length: 60 }),
+    operation: varchar("operation", { length: 24 }).notNull(),
     aggregatorCode: varchar("aggregator_code", { length: 60 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
@@ -34,8 +36,16 @@ export const paymentAggregatorRoutesTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    scopeUnique: uniqueIndex("sf_payment_aggregator_routes_scope_uq").on(table.scopeType, table.scopeKey),
+    scopeUnique: uniqueIndex("sf_payment_aggregator_routes_scope_operation_uq").on(
+      table.scopeType,
+      table.scopeKey,
+      table.operation,
+    ),
     countryIndex: index("sf_payment_aggregator_routes_country_idx").on(table.countryCode),
+    operationCheck: check(
+      "sf_payment_aggregator_routes_operation_check",
+      sql`${table.operation} IN ('deposit', 'inter-network', 'international')`,
+    ),
   }),
 );
 

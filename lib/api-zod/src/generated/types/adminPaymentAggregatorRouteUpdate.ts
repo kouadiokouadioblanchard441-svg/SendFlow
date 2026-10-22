@@ -5,12 +5,14 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { AdminPaymentAggregatorRouteUpdateCountryCode } from './adminPaymentAggregatorRouteUpdateCountryCode';
+import type { AdminPaymentAggregatorRouteUpdateOperation } from './adminPaymentAggregatorRouteUpdateOperation';
 import type { AdminPaymentAggregatorRouteUpdateScopeType } from './adminPaymentAggregatorRouteUpdateScopeType';
 
 export interface AdminPaymentAggregatorRouteUpdate {
   scopeType: AdminPaymentAggregatorRouteUpdateScopeType;
-  countryCode: AdminPaymentAggregatorRouteUpdateCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  operation: AdminPaymentAggregatorRouteUpdateOperation;
   /** @nullable */
   operatorId: string | null;
   /** @nullable */

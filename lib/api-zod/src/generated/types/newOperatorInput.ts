@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { NewOperatorInputBrand } from './newOperatorInputBrand';
-import type { NewOperatorInputCountryCode } from './newOperatorInputCountryCode';
 
 export interface NewOperatorInput {
-  countryCode: NewOperatorInputCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   /**
      * @minLength 2
      * @maxLength 120

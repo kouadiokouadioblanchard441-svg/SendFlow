@@ -12,11 +12,27 @@ export type TransferQuoteInput = {
 };
 
 export type QuoteDependencies = {
-  operators: ReadonlyArray<{ operatorId: string; countryCode: string }>;
+  operators: ReadonlyArray<{
+    operatorId: string;
+    countryCode: string;
+    enabled: boolean;
+    depositEnabled: boolean;
+    interNetworkEnabled: boolean;
+    internationalEnabled: boolean;
+  }>;
   rates: ReadonlyArray<{
     operatorId: string; categoryId: string; feePercent: number | null; version: number;
   }>;
-  countries: ReadonlyArray<{ countryCode: string; phonePrefix: string }>;
+  countries: ReadonlyArray<{
+    countryCode: string;
+    phonePrefix: string;
+    enabled: boolean;
+    depositEnabled: boolean;
+    interNetworkEnabled: boolean;
+    internationalEnabled: boolean;
+    minPhoneDigits: number;
+    maxPhoneDigits: number;
+  }>;
   remainingMonthlyAmount(userId: string): Promise<number>;
 };
 
@@ -59,13 +75,34 @@ export async function calculateCustomerTransferQuote(
     const country = dependencies.countries.find(
       (c) => c.countryCode.toLowerCase() === countryCode.toLowerCase(),
     );
-    return !!country && phone.startsWith(country.phonePrefix);
+    if (!country || !phone.startsWith(country.phonePrefix)) return false;
+    const digitsAfterPrefix = phone.slice(country.phonePrefix.length).replace(/\D/g, "").length;
+    return digitsAfterPrefix >= country.minPhoneDigits && digitsAfterPrefix <= country.maxPhoneDigits;
   };
-  if ((isDeposit && (!source || source.countryCode.toLowerCase() !== "ci"))
+  const supportsOperation = (
+    countryCode: string,
+    operator: NonNullable<typeof source>,
+    operation: TransferQuoteInput["kind"],
+  ) => {
+    const country = dependencies.countries.find(
+      (item) => item.countryCode.toLowerCase() === countryCode.toLowerCase(),
+    );
+    if (!country?.enabled || !operator.enabled) return false;
+    if (operation === "deposit") return country.depositEnabled && operator.depositEnabled;
+    if (operation === "inter-network") return country.interNetworkEnabled && operator.interNetworkEnabled;
+    return country.internationalEnabled && operator.internationalEnabled;
+  };
+  if ((isDeposit && !source)
     || (isInterNetwork && (!source || !destination
-      || source.countryCode.toLowerCase() !== "ci" || destination.countryCode.toLowerCase() !== "ci"))
+      || source.countryCode.toLowerCase() !== destination.countryCode.toLowerCase()))
     || (isInternational && (!destination
       || destination.countryCode.toLowerCase() !== input.destinationCountryCode?.toLowerCase()))
+    || (isDeposit && source && !supportsOperation(source.countryCode, source, "deposit"))
+    || (isInterNetwork && source && destination
+      && (!supportsOperation(source.countryCode, source, "inter-network")
+        || !supportsOperation(destination.countryCode, destination, "inter-network")))
+    || (isInternational && destination
+      && !supportsOperation(destination.countryCode, destination, "international"))
     || (input.senderPhone && source && !phoneMatches(input.senderPhone, source.countryCode))
     || (input.recipientPhone && destination && !phoneMatches(input.recipientPhone, destination.countryCode))) {
     invalid("Opérateur ou numéro non compatible avec ce transfert.");

@@ -20,6 +20,7 @@ import phoneOtpRouter from "./phone-otp";
 import customerAuthRouter from "./customer-auth";
 import customerRecoveryRouter from "./customer-recovery";
 import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRoutes } from "./registration-settings";
+import countryManagementRouter, { adminRoutes as adminCountryRoutes } from "./country-management";
 import transferQuoteRouter from "./transfer-quote";
 import { ADMIN_ROUTE_PREFIX } from "../lib/admin-route-prefix";
 
@@ -36,6 +37,7 @@ router.use(identityVerificationRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);
 router.use(registrationSettingsRouter);
+router.use(countryManagementRouter);
 
 adminHandlers.use(adminRouter);
 adminHandlers.use(adminIpBlocklistRouter);
@@ -49,6 +51,7 @@ adminHandlers.use(adminOperatorPricingRoutes);
 adminHandlers.use(adminOperatorLogoRoutes);
 adminHandlers.use(adminBannersRoutes);
 adminHandlers.use(adminRegistrationSettingsRoutes);
+adminHandlers.use(adminCountryRoutes);
 
 adminSurface.use(adminAccessRouter);
 adminSurface.use(adminHandlers);

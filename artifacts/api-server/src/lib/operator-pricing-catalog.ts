@@ -1,10 +1,8 @@
 import {
+  asc,
   db,
-  operatorCatalogTable,
-  operatorPricingRatesTable,
+  countriesTable,
 } from "@workspace/db";
-import { aggregatorCountryCatalog } from "../routes/aggregator-catalog";
-import { shouldSeedOperatorPricingCatalog } from "./operator-pricing-seed-policy";
 
 export const pricingCategories = [
   {
@@ -30,28 +28,34 @@ export const pricingCategories = [
 export type PricingCategoryId = (typeof pricingCategories)[number]["id"];
 export type OperatorBrand = "orange" | "wave" | "mtn" | "moov" | "generic";
 
-const countryFlags: Record<string, string> = {
-  ci: "🇨🇮",
-  sn: "🇸🇳",
-  bf: "🇧🇫",
-  bj: "🇧🇯",
-  ml: "🇲🇱",
-  ne: "🇳🇪",
-  tg: "🇹🇬",
-  cm: "🇨🇲",
-  cg: "🇨🇬",
-};
+export function flagFromCountryCode(countryCode: string): string {
+  if (!/^[a-z]{2}$/.test(countryCode)) return "";
+  return String.fromCodePoint(
+    ...[...countryCode.toUpperCase()].map((letter) => 127397 + letter.charCodeAt(0)),
+  );
+}
 
-export const pricingCountryCatalog = aggregatorCountryCatalog.map((country) => ({
-  id: country.countryCode,
-  countryCode: country.countryCode,
-  name: country.countryName,
-  countryName: country.countryName,
-  dialCode: country.phonePrefix,
-  phonePrefix: country.phonePrefix,
-  initials: country.countryCode.toUpperCase(),
-  flag: countryFlags[country.countryCode] ?? "",
-}));
+export async function getPricingCountryCatalog() {
+  const countries = await db.select().from(countriesTable).orderBy(asc(countriesTable.countryName));
+  return countries.map((country) => ({
+    id: country.countryCode,
+    countryCode: country.countryCode,
+    name: country.countryName,
+    countryName: country.countryName,
+    dialCode: country.phonePrefix,
+    phonePrefix: country.phonePrefix,
+    minPhoneDigits: country.minPhoneDigits,
+    maxPhoneDigits: country.maxPhoneDigits,
+    enabled: country.enabled,
+    operations: {
+      deposit: country.depositEnabled,
+      interNetwork: country.interNetworkEnabled,
+      international: country.internationalEnabled,
+    },
+    initials: country.countryCode.toUpperCase(),
+    flag: flagFromCountryCode(country.countryCode),
+  }));
+}
 
 function brandForOperator(operatorId: string): OperatorBrand {
   if (operatorId.startsWith("orange-")) return "orange";
@@ -72,72 +76,6 @@ function initialsForOperator(brand: OperatorBrand, shortName: string): string {
   if (brand === "mtn") return "MTN";
   if (brand === "moov") return "M";
   return shortName.slice(0, 3).toUpperCase();
-}
-
-const initialOperators = aggregatorCountryCatalog.flatMap((country) =>
-  country.operators.map((operator) => {
-    const brand = brandForOperator(operator.operatorId);
-    const shortName = shortNameForOperator(operator.operatorName);
-    return {
-      operatorId: operator.operatorId,
-      countryCode: country.countryCode,
-      name: operator.operatorName,
-      shortName,
-      initials: initialsForOperator(brand, shortName),
-      brand,
-      enabled: false,
-      version: 1,
-      createdBy: "system:operator-catalog",
-      updatedBy: "system:operator-catalog",
-    };
-  }),
-);
-
-const initialRates = initialOperators.flatMap((operator) =>
-  pricingCategories.map((category) => ({
-    operatorId: operator.operatorId,
-    countryCode: operator.countryCode,
-    categoryId: category.id,
-    feePercent: null,
-    version: 1,
-    createdBy: "system:operator-catalog",
-    updatedBy: "system:operator-catalog",
-  })),
-);
-
-let seedPromise: Promise<void> | undefined;
-
-export async function ensureOperatorPricingSeeded(): Promise<void> {
-  if (!shouldSeedOperatorPricingCatalog(process.env)) return;
-
-  if (!seedPromise) {
-    seedPromise = (async () => {
-      const [existingOperator] = await db
-        .select({ operatorId: operatorCatalogTable.operatorId })
-        .from(operatorCatalogTable)
-        .limit(1);
-      if (existingOperator) return;
-
-      // This is a one-time bootstrap only; future catalog additions must be entered by an administrator.
-      await db.transaction(async (tx) => {
-        await tx
-          .insert(operatorCatalogTable)
-          .values(initialOperators)
-          .onConflictDoNothing();
-        await tx
-          .insert(operatorPricingRatesTable)
-          .values(initialRates)
-          .onConflictDoNothing();
-      });
-    })();
-  }
-
-  try {
-    await seedPromise;
-  } catch (error) {
-    seedPromise = undefined;
-    throw error;
-  }
 }
 
 export function createOperatorDisplayFields(name: string, brand: OperatorBrand) {

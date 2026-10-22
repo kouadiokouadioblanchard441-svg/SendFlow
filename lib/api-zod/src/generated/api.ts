@@ -309,6 +309,36 @@ export const VerifyPhoneOtpResponse = zod.object({
 
 
 /**
+ * @summary List configured countries and server-defined phone rules
+ */
+export const getAuthCountriesResponseCountriesItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const getAuthCountriesResponseCountriesItemMinPhoneDigitsMin = 4;
+export const getAuthCountriesResponseCountriesItemMinPhoneDigitsMax = 15;
+
+export const getAuthCountriesResponseCountriesItemMaxPhoneDigitsMin = 4;
+export const getAuthCountriesResponseCountriesItemMaxPhoneDigitsMax = 15;
+
+
+
+export const GetAuthCountriesResponse = zod.object({
+  "countries": zod.array(zod.object({
+  "countryCode": zod.string().regex(getAuthCountriesResponseCountriesItemCountryCodeRegExp),
+  "countryName": zod.string(),
+  "phonePrefix": zod.string(),
+  "minPhoneDigits": zod.number().int().min(getAuthCountriesResponseCountriesItemMinPhoneDigitsMin).max(getAuthCountriesResponseCountriesItemMinPhoneDigitsMax),
+  "maxPhoneDigits": zod.number().int().min(getAuthCountriesResponseCountriesItemMaxPhoneDigitsMin).max(getAuthCountriesResponseCountriesItemMaxPhoneDigitsMax),
+  "enabled": zod.boolean(),
+  "flag": zod.string(),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean()
+})
+}))
+})
+
+
+/**
  * @summary Check whether phone SMS verification is required for signup
  */
 export const GetRegistrationSettingsResponse = zod.object({
@@ -943,9 +973,17 @@ export const GetAdminOverviewResponse = zod.object({
  * Returns enabled operators and configured rates for each pricing section. Unconfigured rates are omitted.
  * @summary Get active operators and public pricing
  */
+export const getPublicPricingResponseCountriesItemIdRegExp = new RegExp('^[a-z]{2}$');
+export const getPublicPricingResponseCountriesItemMinPhoneDigitsMin = 4;
+export const getPublicPricingResponseCountriesItemMinPhoneDigitsMax = 15;
+
+export const getPublicPricingResponseCountriesItemMaxPhoneDigitsMin = 4;
+export const getPublicPricingResponseCountriesItemMaxPhoneDigitsMax = 15;
+
 export const getPublicPricingResponseOperatorsItemIdMin = 2;
 export const getPublicPricingResponseOperatorsItemIdMax = 60;
 
+export const getPublicPricingResponseOperatorsItemCountryIdRegExp = new RegExp('^[a-z]{2}$');
 export const getPublicPricingResponseOperatorsItemLogoUrlMax = 200;
 
 export const getPublicPricingResponseOperatorsItemFeesDepositMin = 0;
@@ -967,15 +1005,23 @@ export const GetPublicPricingResponse = zod.object({
   "description": zod.string()
 })),
   "countries": zod.array(zod.object({
-  "id": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "id": zod.string().regex(getPublicPricingResponseCountriesItemIdRegExp),
   "name": zod.string(),
   "dialCode": zod.string(),
   "initials": zod.string(),
-  "flag": zod.string()
+  "flag": zod.string(),
+  "enabled": zod.boolean(),
+  "minPhoneDigits": zod.number().int().min(getPublicPricingResponseCountriesItemMinPhoneDigitsMin).max(getPublicPricingResponseCountriesItemMinPhoneDigitsMax),
+  "maxPhoneDigits": zod.number().int().min(getPublicPricingResponseCountriesItemMaxPhoneDigitsMin).max(getPublicPricingResponseCountriesItemMaxPhoneDigitsMax),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean()
+})
 })),
   "operators": zod.array(zod.object({
   "id": zod.string().min(getPublicPricingResponseOperatorsItemIdMin).max(getPublicPricingResponseOperatorsItemIdMax),
-  "countryId": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryId": zod.string().regex(getPublicPricingResponseOperatorsItemCountryIdRegExp),
   "name": zod.string(),
   "shortName": zod.string(),
   "initials": zod.string(),
@@ -983,6 +1029,11 @@ export const GetPublicPricingResponse = zod.object({
   "logoUrl": zod.string().max(getPublicPricingResponseOperatorsItemLogoUrlMax).nullable(),
   "requiresOtp": zod.boolean(),
   "otpCommand": zod.string().nullable(),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean()
+}),
   "fees": zod.object({
   "deposit": zod.number().min(getPublicPricingResponseOperatorsItemFeesDepositMin).max(getPublicPricingResponseOperatorsItemFeesDepositMax).optional(),
   "inter-network": zod.number().min(getPublicPricingResponseOperatorsItemFeesInterNetworkMin).max(getPublicPricingResponseOperatorsItemFeesInterNetworkMax).optional(),
@@ -1097,10 +1148,173 @@ export const CreateAdminBannerResponse = zod.object({
 
 
 /**
+ * @summary List configured countries and operation switches
+ */
+export const getAdminCountriesResponseCountriesItemOneCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const getAdminCountriesResponseCountriesItemOneMinPhoneDigitsMin = 4;
+export const getAdminCountriesResponseCountriesItemOneMinPhoneDigitsMax = 15;
+
+export const getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMin = 4;
+export const getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMax = 15;
+
+
+
+
+export const GetAdminCountriesResponse = zod.object({
+  "countries": zod.array(zod.object({
+  "countryCode": zod.string().regex(getAdminCountriesResponseCountriesItemOneCountryCodeRegExp),
+  "countryName": zod.string(),
+  "phonePrefix": zod.string(),
+  "minPhoneDigits": zod.number().int().min(getAdminCountriesResponseCountriesItemOneMinPhoneDigitsMin).max(getAdminCountriesResponseCountriesItemOneMinPhoneDigitsMax),
+  "maxPhoneDigits": zod.number().int().min(getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMin).max(getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMax),
+  "enabled": zod.boolean(),
+  "flag": zod.string(),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean()
+})
+}).and(zod.object({
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+})))
+})
+
+
+/**
+ * @summary Add a country to the server-managed catalog
+ */
+export const createAdminCountryBodyCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const createAdminCountryBodyCountryNameMin = 2;
+export const createAdminCountryBodyCountryNameMax = 120;
+
+export const createAdminCountryBodyPhonePrefixRegExp = new RegExp('^\\+[1-9][0-9]{0,3}$');
+export const createAdminCountryBodyMinPhoneDigitsMin = 4;
+export const createAdminCountryBodyMinPhoneDigitsMax = 15;
+
+export const createAdminCountryBodyMaxPhoneDigitsMin = 4;
+export const createAdminCountryBodyMaxPhoneDigitsMax = 15;
+
+export const createAdminCountryBodyReasonMin = 3;
+export const createAdminCountryBodyReasonMax = 500;
+
+
+
+export const CreateAdminCountryBody = zod.object({
+  "countryCode": zod.string().regex(createAdminCountryBodyCountryCodeRegExp),
+  "countryName": zod.string().min(createAdminCountryBodyCountryNameMin).max(createAdminCountryBodyCountryNameMax),
+  "phonePrefix": zod.string().regex(createAdminCountryBodyPhonePrefixRegExp),
+  "minPhoneDigits": zod.number().int().min(createAdminCountryBodyMinPhoneDigitsMin).max(createAdminCountryBodyMinPhoneDigitsMax),
+  "maxPhoneDigits": zod.number().int().min(createAdminCountryBodyMaxPhoneDigitsMin).max(createAdminCountryBodyMaxPhoneDigitsMax),
+  "enabled": zod.boolean(),
+  "reason": zod.string().min(createAdminCountryBodyReasonMin).max(createAdminCountryBodyReasonMax)
+})
+
+export const createAdminCountryResponseOneCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const createAdminCountryResponseOneMinPhoneDigitsMin = 4;
+export const createAdminCountryResponseOneMinPhoneDigitsMax = 15;
+
+export const createAdminCountryResponseOneMaxPhoneDigitsMin = 4;
+export const createAdminCountryResponseOneMaxPhoneDigitsMax = 15;
+
+
+
+
+export const CreateAdminCountryResponse = zod.object({
+  "countryCode": zod.string().regex(createAdminCountryResponseOneCountryCodeRegExp),
+  "countryName": zod.string(),
+  "phonePrefix": zod.string(),
+  "minPhoneDigits": zod.number().int().min(createAdminCountryResponseOneMinPhoneDigitsMin).max(createAdminCountryResponseOneMinPhoneDigitsMax),
+  "maxPhoneDigits": zod.number().int().min(createAdminCountryResponseOneMaxPhoneDigitsMin).max(createAdminCountryResponseOneMaxPhoneDigitsMax),
+  "enabled": zod.boolean(),
+  "flag": zod.string(),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean()
+})
+}).and(zod.object({
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+}))
+
+
+/**
+ * @summary Update country availability and phone rules
+ */
+export const updateAdminCountryPathCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+
+
+export const UpdateAdminCountryParams = zod.object({
+  "countryCode": zod.coerce.string().regex(updateAdminCountryPathCountryCodeRegExp)
+})
+
+export const updateAdminCountryBodyCountryNameMin = 2;
+export const updateAdminCountryBodyCountryNameMax = 120;
+
+export const updateAdminCountryBodyPhonePrefixRegExp = new RegExp('^\\+[1-9][0-9]{0,3}$');
+export const updateAdminCountryBodyMinPhoneDigitsMin = 4;
+export const updateAdminCountryBodyMinPhoneDigitsMax = 15;
+
+export const updateAdminCountryBodyMaxPhoneDigitsMin = 4;
+export const updateAdminCountryBodyMaxPhoneDigitsMax = 15;
+
+
+export const updateAdminCountryBodyReasonMin = 3;
+export const updateAdminCountryBodyReasonMax = 500;
+
+
+
+export const UpdateAdminCountryBody = zod.object({
+  "countryName": zod.string().min(updateAdminCountryBodyCountryNameMin).max(updateAdminCountryBodyCountryNameMax),
+  "phonePrefix": zod.string().regex(updateAdminCountryBodyPhonePrefixRegExp),
+  "minPhoneDigits": zod.number().int().min(updateAdminCountryBodyMinPhoneDigitsMin).max(updateAdminCountryBodyMinPhoneDigitsMax),
+  "maxPhoneDigits": zod.number().int().min(updateAdminCountryBodyMaxPhoneDigitsMin).max(updateAdminCountryBodyMaxPhoneDigitsMax),
+  "enabled": zod.boolean(),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean()
+}),
+  "expectedVersion": zod.number().int().min(1),
+  "reason": zod.string().min(updateAdminCountryBodyReasonMin).max(updateAdminCountryBodyReasonMax)
+})
+
+export const updateAdminCountryResponseOneCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const updateAdminCountryResponseOneMinPhoneDigitsMin = 4;
+export const updateAdminCountryResponseOneMinPhoneDigitsMax = 15;
+
+export const updateAdminCountryResponseOneMaxPhoneDigitsMin = 4;
+export const updateAdminCountryResponseOneMaxPhoneDigitsMax = 15;
+
+
+
+
+export const UpdateAdminCountryResponse = zod.object({
+  "countryCode": zod.string().regex(updateAdminCountryResponseOneCountryCodeRegExp),
+  "countryName": zod.string(),
+  "phonePrefix": zod.string(),
+  "minPhoneDigits": zod.number().int().min(updateAdminCountryResponseOneMinPhoneDigitsMin).max(updateAdminCountryResponseOneMinPhoneDigitsMax),
+  "maxPhoneDigits": zod.number().int().min(updateAdminCountryResponseOneMaxPhoneDigitsMin).max(updateAdminCountryResponseOneMaxPhoneDigitsMax),
+  "enabled": zod.boolean(),
+  "flag": zod.string(),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean()
+})
+}).and(zod.object({
+  "version": zod.number().int().min(1),
+  "updatedAt": zod.coerce.date().nullable()
+}))
+
+
+/**
  * @summary List aggregator partners and country/operator routing
  */
 export const getAdminPaymentRoutingResponseAggregatorsItemVersionMin = 0;
 
+export const getAdminPaymentRoutingResponseCountriesItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const getAdminPaymentRoutingResponseCountriesItemDefaultVersionMin = 0;
 
 export const getAdminPaymentRoutingResponseCountriesItemOperatorsItemVersionMin = 0;
@@ -1117,7 +1331,8 @@ export const GetAdminPaymentRoutingResponse = zod.object({
   "updatedAt": zod.coerce.date().nullable()
 })),
   "countries": zod.array(zod.object({
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(getAdminPaymentRoutingResponseCountriesItemCountryCodeRegExp),
+  "operation": zod.enum(['deposit', 'inter-network', 'international']),
   "countryName": zod.string(),
   "phonePrefix": zod.string(),
   "defaultAggregatorCode": zod.string().nullable(),
@@ -1216,6 +1431,7 @@ export const UpdateAdminAggregatorResponse = zod.object({
 /**
  * @summary Assign a partner to a country or operator
  */
+export const updateAdminAggregatorRouteBodyCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const updateAdminAggregatorRouteBodyExpectedVersionMin = 0;
 
 export const updateAdminAggregatorRouteBodyReasonMin = 3;
@@ -1225,20 +1441,23 @@ export const updateAdminAggregatorRouteBodyReasonMax = 500;
 
 export const UpdateAdminAggregatorRouteBody = zod.object({
   "scopeType": zod.enum(['country', 'operator']),
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(updateAdminAggregatorRouteBodyCountryCodeRegExp),
+  "operation": zod.enum(['deposit', 'inter-network', 'international']),
   "operatorId": zod.string().nullable(),
   "aggregatorCode": zod.string().nullable(),
   "expectedVersion": zod.number().int().min(updateAdminAggregatorRouteBodyExpectedVersionMin),
   "reason": zod.string().min(updateAdminAggregatorRouteBodyReasonMin).max(updateAdminAggregatorRouteBodyReasonMax)
 })
 
+export const updateAdminAggregatorRouteResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const updateAdminAggregatorRouteResponseVersionMin = 0;
 
 
 
 export const UpdateAdminAggregatorRouteResponse = zod.object({
   "scopeType": zod.enum(['country', 'operator']),
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(updateAdminAggregatorRouteResponseCountryCodeRegExp),
+  "operation": zod.enum(['deposit', 'inter-network', 'international']),
   "operatorId": zod.string().nullable(),
   "aggregatorCode": zod.string().nullable(),
   "version": zod.number().int().min(updateAdminAggregatorRouteResponseVersionMin),
@@ -1249,9 +1468,11 @@ export const UpdateAdminAggregatorRouteResponse = zod.object({
 /**
  * @summary List operator availability and fee rates by country and section
  */
+export const getAdminOperatorPricingResponseCountriesItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMin = 2;
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMax = 60;
 
+export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const getAdminOperatorPricingResponseCountriesItemOperatorsItemOneLogoUrlMax = 200;
 
 
@@ -1269,20 +1490,29 @@ export const GetAdminOperatorPricingResponse = zod.object({
   "description": zod.string()
 })),
   "countries": zod.array(zod.object({
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(getAdminOperatorPricingResponseCountriesItemCountryCodeRegExp),
   "countryName": zod.string(),
   "phonePrefix": zod.string(),
   "initials": zod.string(),
   "flag": zod.string(),
+  "enabled": zod.boolean(),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean()
+}),
   "operators": zod.array(zod.object({
   "operatorId": zod.string().min(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMin).max(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMax),
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneCountryCodeRegExp),
   "name": zod.string(),
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
   "logoUrl": zod.string().max(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneLogoUrlMax).nullable(),
   "enabled": zod.boolean(),
+  "depositEnabled": zod.boolean(),
+  "interNetworkEnabled": zod.boolean(),
+  "internationalEnabled": zod.boolean(),
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 }).and(zod.object({
@@ -1300,6 +1530,7 @@ export const GetAdminOperatorPricingResponse = zod.object({
 /**
  * @summary Add an operator to a country
  */
+export const createAdminOperatorBodyCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const createAdminOperatorBodyNameMin = 2;
 export const createAdminOperatorBodyNameMax = 120;
 
@@ -1309,7 +1540,7 @@ export const createAdminOperatorBodyReasonMax = 500;
 
 
 export const CreateAdminOperatorBody = zod.object({
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(createAdminOperatorBodyCountryCodeRegExp),
   "name": zod.string().min(createAdminOperatorBodyNameMin).max(createAdminOperatorBodyNameMax),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
   "reason": zod.string().min(createAdminOperatorBodyReasonMin).max(createAdminOperatorBodyReasonMax)
@@ -1318,6 +1549,7 @@ export const CreateAdminOperatorBody = zod.object({
 export const createAdminOperatorResponseOperatorIdMin = 2;
 export const createAdminOperatorResponseOperatorIdMax = 60;
 
+export const createAdminOperatorResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const createAdminOperatorResponseLogoUrlMax = 200;
 
 
@@ -1325,13 +1557,16 @@ export const createAdminOperatorResponseLogoUrlMax = 200;
 
 export const CreateAdminOperatorResponse = zod.object({
   "operatorId": zod.string().min(createAdminOperatorResponseOperatorIdMin).max(createAdminOperatorResponseOperatorIdMax),
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(createAdminOperatorResponseCountryCodeRegExp),
   "name": zod.string(),
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
   "logoUrl": zod.string().max(createAdminOperatorResponseLogoUrlMax).nullable(),
   "enabled": zod.boolean(),
+  "depositEnabled": zod.boolean(),
+  "interNetworkEnabled": zod.boolean(),
+  "internationalEnabled": zod.boolean(),
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -1364,6 +1599,9 @@ export const UpdateAdminOperatorBody = zod.object({
   "name": zod.string().min(updateAdminOperatorBodyNameMin).max(updateAdminOperatorBodyNameMax),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
   "enabled": zod.boolean(),
+  "depositEnabled": zod.boolean(),
+  "interNetworkEnabled": zod.boolean(),
+  "internationalEnabled": zod.boolean(),
   "expectedVersion": zod.number().int().min(1),
   "reason": zod.string().min(updateAdminOperatorBodyReasonMin).max(updateAdminOperatorBodyReasonMax)
 })
@@ -1371,6 +1609,7 @@ export const UpdateAdminOperatorBody = zod.object({
 export const updateAdminOperatorResponseOperatorIdMin = 2;
 export const updateAdminOperatorResponseOperatorIdMax = 60;
 
+export const updateAdminOperatorResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const updateAdminOperatorResponseLogoUrlMax = 200;
 
 
@@ -1378,13 +1617,16 @@ export const updateAdminOperatorResponseLogoUrlMax = 200;
 
 export const UpdateAdminOperatorResponse = zod.object({
   "operatorId": zod.string().min(updateAdminOperatorResponseOperatorIdMin).max(updateAdminOperatorResponseOperatorIdMax),
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(updateAdminOperatorResponseCountryCodeRegExp),
   "name": zod.string(),
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
   "logoUrl": zod.string().max(updateAdminOperatorResponseLogoUrlMax).nullable(),
   "enabled": zod.boolean(),
+  "depositEnabled": zod.boolean(),
+  "interNetworkEnabled": zod.boolean(),
+  "internationalEnabled": zod.boolean(),
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -1410,6 +1652,7 @@ export const UploadAdminOperatorLogoParams = zod.object({
 export const uploadAdminOperatorLogoResponseOperatorIdMin = 2;
 export const uploadAdminOperatorLogoResponseOperatorIdMax = 60;
 
+export const uploadAdminOperatorLogoResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const uploadAdminOperatorLogoResponseLogoUrlMax = 200;
 
 
@@ -1417,13 +1660,16 @@ export const uploadAdminOperatorLogoResponseLogoUrlMax = 200;
 
 export const UploadAdminOperatorLogoResponse = zod.object({
   "operatorId": zod.string().min(uploadAdminOperatorLogoResponseOperatorIdMin).max(uploadAdminOperatorLogoResponseOperatorIdMax),
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(uploadAdminOperatorLogoResponseCountryCodeRegExp),
   "name": zod.string(),
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
   "logoUrl": zod.string().max(uploadAdminOperatorLogoResponseLogoUrlMax).nullable(),
   "enabled": zod.boolean(),
+  "depositEnabled": zod.boolean(),
+  "interNetworkEnabled": zod.boolean(),
+  "internationalEnabled": zod.boolean(),
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -1448,6 +1694,7 @@ export const DeleteAdminOperatorLogoParams = zod.object({
 export const deleteAdminOperatorLogoResponseOperatorIdMin = 2;
 export const deleteAdminOperatorLogoResponseOperatorIdMax = 60;
 
+export const deleteAdminOperatorLogoResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const deleteAdminOperatorLogoResponseLogoUrlMax = 200;
 
 
@@ -1455,13 +1702,16 @@ export const deleteAdminOperatorLogoResponseLogoUrlMax = 200;
 
 export const DeleteAdminOperatorLogoResponse = zod.object({
   "operatorId": zod.string().min(deleteAdminOperatorLogoResponseOperatorIdMin).max(deleteAdminOperatorLogoResponseOperatorIdMax),
-  "countryCode": zod.enum(['ci', 'sn', 'bf', 'bj', 'ml', 'ne', 'tg', 'cm', 'cg']),
+  "countryCode": zod.string().regex(deleteAdminOperatorLogoResponseCountryCodeRegExp),
   "name": zod.string(),
   "shortName": zod.string(),
   "initials": zod.string(),
   "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic']),
   "logoUrl": zod.string().max(deleteAdminOperatorLogoResponseLogoUrlMax).nullable(),
   "enabled": zod.boolean(),
+  "depositEnabled": zod.boolean(),
+  "interNetworkEnabled": zod.boolean(),
+  "internationalEnabled": zod.boolean(),
   "version": zod.number().int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })

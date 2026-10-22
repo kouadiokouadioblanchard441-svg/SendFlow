@@ -1,6 +1,5 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { ensureOperatorPricingSeeded } from "./lib/operator-pricing-catalog";
 
 const rawPort = process.env["PORT"];
 
@@ -17,7 +16,6 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 async function startServer(): Promise<void> {
-  await ensureOperatorPricingSeeded();
 
   app.listen(port, (err) => {
     if (err) {

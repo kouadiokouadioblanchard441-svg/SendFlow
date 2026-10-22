@@ -5,11 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { AdminCountryPaymentRoutesCountryCode } from './adminCountryPaymentRoutesCountryCode';
+import type { AdminCountryPaymentRoutesOperation } from './adminCountryPaymentRoutesOperation';
 import type { AdminOperatorPaymentRoute } from './adminOperatorPaymentRoute';
 
 export interface AdminCountryPaymentRoutes {
-  countryCode: AdminCountryPaymentRoutesCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  operation: AdminCountryPaymentRoutesOperation;
   countryName: string;
   phonePrefix: string;
   /** @nullable */

@@ -6,7 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ManagedOperatorBrand } from './managedOperatorBrand';
-import type { ManagedOperatorCountryCode } from './managedOperatorCountryCode';
 
 export interface ManagedOperator {
   /**
@@ -14,7 +13,8 @@ export interface ManagedOperator {
      * @maxLength 60
      */
   operatorId: string;
-  countryCode: ManagedOperatorCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   name: string;
   shortName: string;
   initials: string;
@@ -25,6 +25,9 @@ export interface ManagedOperator {
      */
   logoUrl: string | null;
   enabled: boolean;
+  depositEnabled: boolean;
+  interNetworkEnabled: boolean;
+  internationalEnabled: boolean;
   /** @minimum 1 */
   version: number;
   /** @nullable */

@@ -5,8 +5,8 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { CountryOperationFlags } from './countryOperationFlags';
 import type { PublicPricingOperatorBrand } from './publicPricingOperatorBrand';
-import type { PublicPricingOperatorCountryId } from './publicPricingOperatorCountryId';
 import type { PublicPricingOperatorFees } from './publicPricingOperatorFees';
 
 export interface PublicPricingOperator {
@@ -15,7 +15,8 @@ export interface PublicPricingOperator {
      * @maxLength 60
      */
   id: string;
-  countryId: PublicPricingOperatorCountryId;
+  /** @pattern ^[a-z]{2}$ */
+  countryId: string;
   name: string;
   shortName: string;
   initials: string;
@@ -28,5 +29,6 @@ export interface PublicPricingOperator {
   requiresOtp: boolean;
   /** @nullable */
   otpCommand: string | null;
+  operations: CountryOperationFlags;
   fees: PublicPricingOperatorFees;
 }

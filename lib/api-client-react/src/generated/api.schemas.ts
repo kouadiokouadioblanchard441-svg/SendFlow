@@ -1002,6 +1002,104 @@ export interface AdminPaymentAggregator {
   updatedAt: string | null;
 }
 
+export interface CountryOperationFlags {
+  deposit: boolean;
+  interNetwork: boolean;
+  international: boolean;
+}
+
+export interface CountryCatalogItem {
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  countryName: string;
+  phonePrefix: string;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  minPhoneDigits: number;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  maxPhoneDigits: number;
+  enabled: boolean;
+  flag: string;
+  operations: CountryOperationFlags;
+}
+
+export interface CountryCatalog {
+  countries: CountryCatalogItem[];
+}
+
+export type AdminCountry = CountryCatalogItem & ({
+  /** @minimum 1 */
+  version: number;
+  /** @nullable */
+  updatedAt: string | null;
+});
+
+export interface AdminCountryCatalog {
+  countries: AdminCountry[];
+}
+
+export interface CreateAdminCountryRequest {
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  countryName: string;
+  /** @pattern ^\+[1-9][0-9]{0,3}$ */
+  phonePrefix: string;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  minPhoneDigits: number;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  maxPhoneDigits: number;
+  enabled: boolean;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface UpdateAdminCountryRequest {
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  countryName: string;
+  /** @pattern ^\+[1-9][0-9]{0,3}$ */
+  phonePrefix: string;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  minPhoneDigits: number;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  maxPhoneDigits: number;
+  enabled: boolean;
+  operations: CountryOperationFlags;
+  /** @minimum 1 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
 export interface AdminOperatorPaymentRoute {
   operatorId: string;
   operatorName: string;
@@ -1017,23 +1115,19 @@ export interface AdminOperatorPaymentRoute {
   updatedAt: string | null;
 }
 
-export type AdminCountryPaymentRoutesCountryCode = typeof AdminCountryPaymentRoutesCountryCode[keyof typeof AdminCountryPaymentRoutesCountryCode];
+export type AdminCountryPaymentRoutesOperation = typeof AdminCountryPaymentRoutesOperation[keyof typeof AdminCountryPaymentRoutesOperation];
 
 
-export const AdminCountryPaymentRoutesCountryCode = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
+export const AdminCountryPaymentRoutesOperation = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
 } as const;
 
 export interface AdminCountryPaymentRoutes {
-  countryCode: AdminCountryPaymentRoutesCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  operation: AdminCountryPaymentRoutesOperation;
   countryName: string;
   phonePrefix: string;
   /** @nullable */
@@ -1066,43 +1160,26 @@ export interface PublicPricingCategory {
   description: string;
 }
 
-export type PublicPricingCountryId = typeof PublicPricingCountryId[keyof typeof PublicPricingCountryId];
-
-
-export const PublicPricingCountryId = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
-} as const;
-
 export interface PublicPricingCountry {
-  id: PublicPricingCountryId;
+  /** @pattern ^[a-z]{2}$ */
+  id: string;
   name: string;
   dialCode: string;
   initials: string;
   flag: string;
+  enabled: boolean;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  minPhoneDigits: number;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  maxPhoneDigits: number;
+  operations: CountryOperationFlags;
 }
-
-export type PublicPricingOperatorCountryId = typeof PublicPricingOperatorCountryId[keyof typeof PublicPricingOperatorCountryId];
-
-
-export const PublicPricingOperatorCountryId = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
-} as const;
 
 export type PublicPricingOperatorBrand = typeof PublicPricingOperatorBrand[keyof typeof PublicPricingOperatorBrand];
 
@@ -1139,7 +1216,8 @@ export interface PublicPricingOperator {
      * @maxLength 60
      */
   id: string;
-  countryId: PublicPricingOperatorCountryId;
+  /** @pattern ^[a-z]{2}$ */
+  countryId: string;
   name: string;
   shortName: string;
   initials: string;
@@ -1152,6 +1230,7 @@ export interface PublicPricingOperator {
   requiresOtp: boolean;
   /** @nullable */
   otpCommand: string | null;
+  operations: CountryOperationFlags;
   fees: PublicPricingOperatorFees;
 }
 
@@ -1184,21 +1263,6 @@ export interface AdminOperatorPricingRate {
   updatedAt: string | null;
 }
 
-export type ManagedOperatorCountryCode = typeof ManagedOperatorCountryCode[keyof typeof ManagedOperatorCountryCode];
-
-
-export const ManagedOperatorCountryCode = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
-} as const;
-
 export type ManagedOperatorBrand = typeof ManagedOperatorBrand[keyof typeof ManagedOperatorBrand];
 
 
@@ -1216,7 +1280,8 @@ export interface ManagedOperator {
      * @maxLength 60
      */
   operatorId: string;
-  countryCode: ManagedOperatorCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   name: string;
   shortName: string;
   initials: string;
@@ -1227,6 +1292,9 @@ export interface ManagedOperator {
      */
   logoUrl: string | null;
   enabled: boolean;
+  depositEnabled: boolean;
+  interNetworkEnabled: boolean;
+  internationalEnabled: boolean;
   /** @minimum 1 */
   version: number;
   /** @nullable */
@@ -1237,27 +1305,15 @@ export type AdminOperatorWithPricing = ManagedOperator & {
   rates: AdminOperatorPricingRate[];
 };
 
-export type AdminCountryOperatorPricingCountryCode = typeof AdminCountryOperatorPricingCountryCode[keyof typeof AdminCountryOperatorPricingCountryCode];
-
-
-export const AdminCountryOperatorPricingCountryCode = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
-} as const;
-
 export interface AdminCountryOperatorPricing {
-  countryCode: AdminCountryOperatorPricingCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   countryName: string;
   phonePrefix: string;
   initials: string;
   flag: string;
+  enabled: boolean;
+  operations: CountryOperationFlags;
   operators: AdminOperatorWithPricing[];
 }
 
@@ -1265,21 +1321,6 @@ export interface AdminOperatorPricingCatalog {
   categories: PublicPricingCategory[];
   countries: AdminCountryOperatorPricing[];
 }
-
-export type NewOperatorInputCountryCode = typeof NewOperatorInputCountryCode[keyof typeof NewOperatorInputCountryCode];
-
-
-export const NewOperatorInputCountryCode = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
-} as const;
 
 export type NewOperatorInputBrand = typeof NewOperatorInputBrand[keyof typeof NewOperatorInputBrand];
 
@@ -1293,7 +1334,8 @@ export const NewOperatorInputBrand = {
 } as const;
 
 export interface NewOperatorInput {
-  countryCode: NewOperatorInputCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
   /**
      * @minLength 2
      * @maxLength 120
@@ -1326,6 +1368,9 @@ export interface OperatorUpdate {
   name: string;
   brand: OperatorUpdateBrand;
   enabled: boolean;
+  depositEnabled: boolean;
+  interNetworkEnabled: boolean;
+  internationalEnabled: boolean;
   /** @minimum 1 */
   expectedVersion: number;
   /**
@@ -1463,24 +1508,20 @@ export const UpdatePaymentAggregatorRouteRequestScopeType = {
   operator: 'operator',
 } as const;
 
-export type UpdatePaymentAggregatorRouteRequestCountryCode = typeof UpdatePaymentAggregatorRouteRequestCountryCode[keyof typeof UpdatePaymentAggregatorRouteRequestCountryCode];
+export type UpdatePaymentAggregatorRouteRequestOperation = typeof UpdatePaymentAggregatorRouteRequestOperation[keyof typeof UpdatePaymentAggregatorRouteRequestOperation];
 
 
-export const UpdatePaymentAggregatorRouteRequestCountryCode = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
+export const UpdatePaymentAggregatorRouteRequestOperation = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
 } as const;
 
 export interface UpdatePaymentAggregatorRouteRequest {
   scopeType: UpdatePaymentAggregatorRouteRequestScopeType;
-  countryCode: UpdatePaymentAggregatorRouteRequestCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  operation: UpdatePaymentAggregatorRouteRequestOperation;
   /** @nullable */
   operatorId: string | null;
   /** @nullable */
@@ -1502,24 +1543,20 @@ export const AdminPaymentAggregatorRouteUpdateScopeType = {
   operator: 'operator',
 } as const;
 
-export type AdminPaymentAggregatorRouteUpdateCountryCode = typeof AdminPaymentAggregatorRouteUpdateCountryCode[keyof typeof AdminPaymentAggregatorRouteUpdateCountryCode];
+export type AdminPaymentAggregatorRouteUpdateOperation = typeof AdminPaymentAggregatorRouteUpdateOperation[keyof typeof AdminPaymentAggregatorRouteUpdateOperation];
 
 
-export const AdminPaymentAggregatorRouteUpdateCountryCode = {
-  ci: 'ci',
-  sn: 'sn',
-  bf: 'bf',
-  bj: 'bj',
-  ml: 'ml',
-  ne: 'ne',
-  tg: 'tg',
-  cm: 'cm',
-  cg: 'cg',
+export const AdminPaymentAggregatorRouteUpdateOperation = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
 } as const;
 
 export interface AdminPaymentAggregatorRouteUpdate {
   scopeType: AdminPaymentAggregatorRouteUpdateScopeType;
-  countryCode: AdminPaymentAggregatorRouteUpdateCountryCode;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  operation: AdminPaymentAggregatorRouteUpdateOperation;
   /** @nullable */
   operatorId: string | null;
   /** @nullable */

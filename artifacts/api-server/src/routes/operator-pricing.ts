@@ -4,6 +4,7 @@ import {
   db,
   eq,
   inArray,
+  countriesTable,
   operatorCatalogTable,
   operatorOtpPoliciesTable,
   operatorPricingRatesTable,
@@ -25,14 +26,13 @@ import {
   createOperatorDisplayFields,
   isPricingCategoryId,
   pricingCategories,
-  pricingCountryCatalog,
+  getPricingCountryCatalog,
   type PricingCategoryId,
 } from "../lib/operator-pricing-catalog";
 import { respondAdminAuthError } from "./admin";
 
 const router: IRouter = Router();
 const adminRoutes: IRouter = Router();
-const defaultOtpOperatorIds = new Set(["orange-ci", "orange-sn", "orange-bf", "orange-ml"]);
 const otpCommands: Record<string, string> = {
   "orange-ci": "#144*82# option 2",
 };
@@ -45,6 +45,9 @@ const operatorMetadataColumns = {
   initials: operatorCatalogTable.initials,
   brand: operatorCatalogTable.brand,
   enabled: operatorCatalogTable.enabled,
+  depositEnabled: operatorCatalogTable.depositEnabled,
+  interNetworkEnabled: operatorCatalogTable.interNetworkEnabled,
+  internationalEnabled: operatorCatalogTable.internationalEnabled,
   version: operatorCatalogTable.version,
   updatedAt: operatorCatalogTable.updatedAt,
   hasLogo: sql<boolean>`${operatorCatalogTable.logoData} IS NOT NULL`,
@@ -52,7 +55,8 @@ const operatorMetadataColumns = {
 
 type OperatorMetadataRecord = Pick<
   typeof operatorCatalogTable.$inferSelect,
-  "operatorId" | "countryCode" | "name" | "shortName" | "initials" | "brand" | "enabled" | "version" | "updatedAt"
+  "operatorId" | "countryCode" | "name" | "shortName" | "initials" | "brand" | "enabled" |
+  "depositEnabled" | "interNetworkEnabled" | "internationalEnabled" | "version" | "updatedAt"
 > & {
   hasLogo?: boolean;
   logoData?: typeof operatorCatalogTable.$inferSelect.logoData;
@@ -72,6 +76,9 @@ function toManagedOperator(
     brand: operator.brand,
     logoUrl: operatorLogoUrl(operator.operatorId, operator.version, hasLogo),
     enabled: operator.enabled,
+    depositEnabled: operator.depositEnabled,
+    interNetworkEnabled: operator.interNetworkEnabled,
+    internationalEnabled: operator.internationalEnabled,
     version: operator.version,
     updatedAt: operator.updatedAt?.toISOString() ?? null,
     ...(rates.length > 0
@@ -118,10 +125,11 @@ router.get("/operators/:operatorId/logo", async (req, res): Promise<void> => {
 
 router.get("/pricing", async (req, res): Promise<void> => {
   try {
-    const [operators, rates, otpPolicies] = await Promise.all([
+    const [operators, rates, otpPolicies, countries] = await Promise.all([
       db.select(operatorMetadataColumns).from(operatorCatalogTable),
       db.select().from(operatorPricingRatesTable),
       db.select().from(operatorOtpPoliciesTable),
+      getPricingCountryCatalog(),
     ]);
     const rateRowsByOperator = new Map<string, typeof rates>();
     for (const rate of rates) {
@@ -156,8 +164,7 @@ router.get("/pricing", async (req, res): Promise<void> => {
           brand: operator.brand,
           logoUrl: operatorLogoUrl(operator.operatorId, operator.version, operator.hasLogo),
           requiresOtp:
-            otpByOperator.get(`${operator.countryCode}:${operator.operatorId}`) ??
-            defaultOtpOperatorIds.has(operator.operatorId),
+            otpByOperator.get(`${operator.countryCode}:${operator.operatorId}`) ?? true,
           otpCommand: otpCommands[operator.operatorId] ?? null,
           fees,
         };
@@ -167,12 +174,16 @@ router.get("/pricing", async (req, res): Promise<void> => {
     res.json(
       GetPublicPricingResponse.parse({
         categories: pricingCategories,
-        countries: pricingCountryCatalog.map(({ id, name, dialCode, initials, flag }) => ({
+        countries: countries.map(({ id, name, dialCode, initials, flag, enabled, minPhoneDigits, maxPhoneDigits, operations }) => ({
           id,
           name,
           dialCode,
           initials,
           flag,
+          enabled,
+          minPhoneDigits,
+          maxPhoneDigits,
+          operations,
         })),
         operators: publicOperators,
       }),
@@ -188,9 +199,10 @@ adminRoutes.get("/operator-pricing", async (req, res): Promise<void> => {
   if (!adminUserId) return;
 
   try {
-    const [operators, rates] = await Promise.all([
+    const [operators, rates, countryCatalog] = await Promise.all([
       db.select(operatorMetadataColumns).from(operatorCatalogTable),
       db.select().from(operatorPricingRatesTable),
+      getPricingCountryCatalog(),
     ]);
     const rateRowsByOperator = new Map<string, typeof rates>();
     for (const rate of rates) {
@@ -198,12 +210,14 @@ adminRoutes.get("/operator-pricing", async (req, res): Promise<void> => {
       operatorRates.push(rate);
       rateRowsByOperator.set(rate.operatorId, operatorRates);
     }
-    const countries = pricingCountryCatalog.map((country) => ({
+    const countries = countryCatalog.map((country) => ({
       countryCode: country.countryCode,
       countryName: country.countryName,
       phonePrefix: country.phonePrefix,
       initials: country.initials,
       flag: country.flag,
+      enabled: country.enabled,
+      operations: country.operations,
       operators: operators
         .filter((operator) => operator.countryCode === country.countryCode)
         .sort((left, right) => left.name.localeCompare(right.name, "fr"))
@@ -254,6 +268,16 @@ adminRoutes.post("/operators", async (req, res): Promise<void> => {
   const display = createOperatorDisplayFields(body.data.name.trim(), body.data.brand);
 
   try {
+    const [knownCountry] = await db
+      .select({ countryCode: countriesTable.countryCode })
+      .from(countriesTable)
+      .where(eq(countriesTable.countryCode, body.data.countryCode))
+      .limit(1);
+    if (!knownCountry) {
+      res.status(404).json({ error: "Country not found" });
+      return;
+    }
+
     const created = await db.transaction(async (tx) => {
       const [operator] = await tx
         .insert(operatorCatalogTable)
@@ -264,6 +288,9 @@ adminRoutes.post("/operators", async (req, res): Promise<void> => {
           ...display,
           brand: body.data.brand,
           enabled: false,
+          depositEnabled: false,
+          interNetworkEnabled: false,
+          internationalEnabled: false,
           version: 1,
           createdBy: adminUserId,
           updatedBy: adminUserId,
@@ -342,6 +369,9 @@ adminRoutes.patch("/operators/:operatorId", async (req, res): Promise<void> => {
           ...display,
           brand: body.data.brand,
           enabled: body.data.enabled,
+          depositEnabled: body.data.depositEnabled,
+          interNetworkEnabled: body.data.interNetworkEnabled,
+          internationalEnabled: body.data.internationalEnabled,
           version: body.data.expectedVersion + 1,
           updatedBy: adminUserId,
           updatedAt: new Date(),

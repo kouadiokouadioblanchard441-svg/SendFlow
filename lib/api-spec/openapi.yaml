@@ -316,6 +316,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/countries:
+    get:
+      operationId: getAuthCountries
+      tags: [auth]
+      summary: List configured countries and server-defined phone rules
+      responses:
+        "200":
+          description: Public country catalog. Registration availability is informational only; the server validates it again when creating an account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountryCatalog"
+        "503":
+          description: Country catalog is temporarily unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /auth/registration-settings:
     get:
       operationId: getRegistrationSettings
@@ -1365,6 +1383,150 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "403":
           description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMwh/countries:
+    get:
+      operationId: getAdminCountries
+      tags: [admin]
+      summary: List configured countries and operation switches
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Countries including disabled entries and current versions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCountryCatalog"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user is not an administrator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createAdminCountry
+      tags: [admin]
+      summary: Add a country to the server-managed catalog
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAdminCountryRequest"
+      responses:
+        "201":
+          description: Country created. Transfer operations remain disabled until explicitly configured.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCountry"
+        "400":
+          description: Invalid country data or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The country code already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMwh/countries/{countryCode}:
+    patch:
+      operationId: updateAdminCountry
+      tags: [admin]
+      summary: Update country availability and phone rules
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: countryCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z]{2}$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAdminCountryRequest"
+      responses:
+        "200":
+          description: Country updated with an optimistic version check.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCountry"
+        "400":
+          description: Invalid country data or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Country not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Country changed since it was loaded.
           content:
             application/json:
               schema:
@@ -3952,6 +4114,127 @@ components:
           type: ["string", "null"]
           format: date-time
       required: [code, name, enabled, adapterStatus, version, updatedAt]
+    CountryOperationFlags:
+      type: object
+      properties:
+        deposit:
+          type: boolean
+        interNetwork:
+          type: boolean
+        international:
+          type: boolean
+      required: [deposit, interNetwork, international]
+    CountryCatalogItem:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          pattern: "^[a-z]{2}$"
+        countryName:
+          type: string
+        phonePrefix:
+          type: string
+        minPhoneDigits:
+          type: integer
+          minimum: 4
+          maximum: 15
+        maxPhoneDigits:
+          type: integer
+          minimum: 4
+          maximum: 15
+        enabled:
+          type: boolean
+        flag:
+          type: string
+        operations:
+          $ref: "#/components/schemas/CountryOperationFlags"
+      required: [countryCode, countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, flag, operations]
+    CountryCatalog:
+      type: object
+      properties:
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountryCatalogItem"
+      required: [countries]
+    AdminCountry:
+      allOf:
+        - $ref: "#/components/schemas/CountryCatalogItem"
+        - type: object
+          properties:
+            version:
+              type: integer
+              minimum: 1
+            updatedAt:
+              type: ["string", "null"]
+              format: date-time
+          required: [version, updatedAt]
+    AdminCountryCatalog:
+      type: object
+      properties:
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminCountry"
+      required: [countries]
+    CreateAdminCountryRequest:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          pattern: "^[a-z]{2}$"
+        countryName:
+          type: string
+          minLength: 2
+          maxLength: 120
+        phonePrefix:
+          type: string
+          pattern: "^\\+[1-9][0-9]{0,3}$"
+        minPhoneDigits:
+          type: integer
+          minimum: 4
+          maximum: 15
+        maxPhoneDigits:
+          type: integer
+          minimum: 4
+          maximum: 15
+        enabled:
+          type: boolean
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [countryCode, countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, reason]
+    UpdateAdminCountryRequest:
+      type: object
+      properties:
+        countryName:
+          type: string
+          minLength: 2
+          maxLength: 120
+        phonePrefix:
+          type: string
+          pattern: "^\\+[1-9][0-9]{0,3}$"
+        minPhoneDigits:
+          type: integer
+          minimum: 4
+          maximum: 15
+        maxPhoneDigits:
+          type: integer
+          minimum: 4
+          maximum: 15
+        enabled:
+          type: boolean
+        operations:
+          $ref: "#/components/schemas/CountryOperationFlags"
+        expectedVersion:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, operations, expectedVersion, reason]
     AdminOperatorPaymentRoute:
       type: object
       properties:
@@ -3979,7 +4262,10 @@ components:
       properties:
         countryCode:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
+        operation:
+          type: string
+          enum: [deposit, inter-network, international]
         countryName:
           type: string
         phonePrefix:
@@ -3996,7 +4282,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminOperatorPaymentRoute"
-      required: [countryCode, countryName, phonePrefix, defaultAggregatorCode, defaultVersion, defaultUpdatedAt, operators]
+      required: [countryCode, operation, countryName, phonePrefix, defaultAggregatorCode, defaultVersion, defaultUpdatedAt, operators]
     AdminPaymentRouting:
       type: object
       properties:
@@ -4027,7 +4313,7 @@ components:
       properties:
         id:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
         name:
           type: string
         dialCode:
@@ -4036,7 +4322,19 @@ components:
           type: string
         flag:
           type: string
-      required: [id, name, dialCode, initials, flag]
+        enabled:
+          type: boolean
+        minPhoneDigits:
+          type: integer
+          minimum: 4
+          maximum: 15
+        maxPhoneDigits:
+          type: integer
+          minimum: 4
+          maximum: 15
+        operations:
+          $ref: "#/components/schemas/CountryOperationFlags"
+      required: [id, name, dialCode, initials, flag, enabled, minPhoneDigits, maxPhoneDigits, operations]
     PublicPricingOperator:
       type: object
       properties:
@@ -4046,7 +4344,7 @@ components:
           maxLength: 60
         countryId:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
         name:
           type: string
         shortName:
@@ -4063,6 +4361,8 @@ components:
           type: boolean
         otpCommand:
           type: ["string", "null"]
+        operations:
+          $ref: "#/components/schemas/CountryOperationFlags"
         fees:
           type: object
           properties:
@@ -4079,7 +4379,7 @@ components:
               minimum: 0
               maximum: 1
           additionalProperties: false
-      required: [id, countryId, name, shortName, initials, brand, logoUrl, requiresOtp, otpCommand, fees]
+      required: [id, countryId, name, shortName, initials, brand, logoUrl, requiresOtp, otpCommand, operations, fees]
     PublicPricingCatalog:
       type: object
       properties:
@@ -4122,7 +4422,7 @@ components:
           maxLength: 60
         countryCode:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
         name:
           type: string
         shortName:
@@ -4137,13 +4437,19 @@ components:
           maxLength: 200
         enabled:
           type: boolean
+        depositEnabled:
+          type: boolean
+        interNetworkEnabled:
+          type: boolean
+        internationalEnabled:
+          type: boolean
         version:
           type: integer
           minimum: 1
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [operatorId, countryCode, name, shortName, initials, brand, logoUrl, enabled, version, updatedAt]
+      required: [operatorId, countryCode, name, shortName, initials, brand, logoUrl, enabled, depositEnabled, interNetworkEnabled, internationalEnabled, version, updatedAt]
     AdminOperatorWithPricing:
       allOf:
         - $ref: "#/components/schemas/ManagedOperator"
@@ -4159,7 +4465,7 @@ components:
       properties:
         countryCode:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
         countryName:
           type: string
         phonePrefix:
@@ -4168,11 +4474,15 @@ components:
           type: string
         flag:
           type: string
+        enabled:
+          type: boolean
+        operations:
+          $ref: "#/components/schemas/CountryOperationFlags"
         operators:
           type: array
           items:
             $ref: "#/components/schemas/AdminOperatorWithPricing"
-      required: [countryCode, countryName, phonePrefix, initials, flag, operators]
+      required: [countryCode, countryName, phonePrefix, initials, flag, enabled, operations, operators]
     AdminOperatorPricingCatalog:
       type: object
       properties:
@@ -4190,7 +4500,7 @@ components:
       properties:
         countryCode:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
         name:
           type: string
           minLength: 2
@@ -4215,6 +4525,12 @@ components:
           enum: [orange, wave, mtn, moov, generic]
         enabled:
           type: boolean
+        depositEnabled:
+          type: boolean
+        interNetworkEnabled:
+          type: boolean
+        internationalEnabled:
+          type: boolean
         expectedVersion:
           type: integer
           minimum: 1
@@ -4222,7 +4538,7 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [name, brand, enabled, expectedVersion, reason]
+      required: [name, brand, enabled, depositEnabled, interNetworkEnabled, internationalEnabled, expectedVersion, reason]
     PricingRateChangeInput:
       type: object
       properties:
@@ -4329,7 +4645,10 @@ components:
           enum: [country, operator]
         countryCode:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
+        operation:
+          type: string
+          enum: [deposit, inter-network, international]
         operatorId:
           type: ["string", "null"]
         aggregatorCode:
@@ -4341,7 +4660,7 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [scopeType, countryCode, operatorId, aggregatorCode, expectedVersion, reason]
+      required: [scopeType, countryCode, operation, operatorId, aggregatorCode, expectedVersion, reason]
     AdminPaymentAggregatorRouteUpdate:
       type: object
       properties:
@@ -4350,7 +4669,10 @@ components:
           enum: [country, operator]
         countryCode:
           type: string
-          enum: [ci, sn, bf, bj, ml, ne, tg, cm, cg]
+          pattern: "^[a-z]{2}$"
+        operation:
+          type: string
+          enum: [deposit, inter-network, international]
         operatorId:
           type: ["string", "null"]
         aggregatorCode:
@@ -4361,7 +4683,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [scopeType, countryCode, operatorId, aggregatorCode, version, updatedAt]
+      required: [scopeType, countryCode, operation, operatorId, aggregatorCode, version, updatedAt]
     AdminOtpPolicyList:
       type: object
       properties:
