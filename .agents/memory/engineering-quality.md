@@ -5,11 +5,11 @@ description: SendFlow is a large financial application; this records the user's 
 
 SendFlow is a large financial application under active development. Do not take shortcuts merely to move faster; its code must be solid and robust.
 
-For the current transfer and financial-security work, do not modify any application pages. Keep changes in the server, API contracts, shared non-page logic, schema/migrations, and tests unless the user explicitly changes this constraint.
+For transfer and financial-security work, preserve application pages' appearance, structure, text, fields, buttons and fee locations. The user explicitly permits changing only their API wiring to remove local financial calculations and display the server's real fees and totals.
 
-**Why:** The user emphasized that SendFlow is a large financial application and expects solid, robust code.
+**Why:** The user emphasized that SendFlow is a large financial application and expects solid, robust code. They explicitly require real server-provided fees without changing anything about the pages' appearance.
 
-**How to apply:** Prefer robust solutions over shortcuts taken only to save time, and keep customer UI pages untouched during the current server-side financial work.
+**How to apply:** Prefer robust solutions over shortcuts taken only to save time. API binding expressions and hooks may change; do not redesign or otherwise change the pages. Display unavailable server amounts as unavailable rather than calculating a fallback in the browser.
 
 Do not move to dependent feature work until the relevant financial logic is checked beyond compilation and the happy path: validate business invariants, invalid and failure paths, concurrency, idempotency, persistence, and recovery with isolated tests. If a guarantee depends on live infrastructure or data that cannot be tested safely, report it as unverified instead of claiming completion.
 

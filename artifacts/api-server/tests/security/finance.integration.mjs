@@ -41,7 +41,9 @@ before(async () => {
   }
   await owner.query(`INSERT INTO sf_operator_pricing_rates
     (operator_id,country_code,category_id,fee_percent,version,created_by,updated_by)
-    VALUES('fixture-source','ci','inter-network',2,1,'fixture','fixture')`);
+    VALUES('fixture-source','ci','inter-network',2,1,'fixture','fixture'),
+      ('fixture-source','ci','deposit',1.25,2,'fixture','fixture'),
+      ('fixture-destination','ci','international',1.8,3,'fixture','fixture')`);
   server = runtime.app.listen(0, "127.0.0.1");
   await new Promise((resolve, reject) => { server.once("listening", resolve); server.once("error", reject); });
 });
@@ -51,8 +53,8 @@ after(async () => {
   await owner.end();
 });
 
-function request(path, { method = "GET", user, body, headers = {} } = {}) {
-  const data = body === undefined ? undefined : JSON.stringify(body);
+function request(path, { method = "GET", user, body, rawBody, headers = {} } = {}) {
+  const data = rawBody ?? (body === undefined ? undefined : JSON.stringify(body));
   return new Promise((resolve, reject) => {
     const req = http.request({
       host: "127.0.0.1", port: server.address().port, path, method,
@@ -74,9 +76,9 @@ function canonical(value) {
       .map(([key, item]) => [key, canonical(item)]));
   return value;
 }
-function webhook(body, signature) {
+function webhook(body, signature, timestamp = String(body.timestamp ?? Math.floor(Date.now() / 1000))) {
   return request("/api/webhooks/didit", { method: "POST", body, headers: {
-    "X-Timestamp": String(Math.floor(Date.now() / 1000)),
+    "X-Timestamp": timestamp,
     "X-Signature-V2": signature ?? createHmac("sha256", process.env.DIDIT_WEBHOOK_SECRET)
       .update(JSON.stringify(canonical(body))).digest("hex"),
   } });
@@ -212,4 +214,60 @@ test("API errors do not expose database internals or secret configuration names"
   const res = await request("/api/me/transfer-quote", { method: "POST", user: "fixture-a", body: { amountMinor: -1 } });
   assert.equal(res.status, 400);
   assert.doesNotMatch(res.text, /DATABASE_URL|DIDIT_WEBHOOK_SECRET|CUSTOMER_PII_ENCRYPTION_KEY|postgresql|stack|sf_fixture/i);
+});
+test("malformed and oversized HTTP bodies return safe JSON even in development", async () => {
+  const marker = randomUUID();
+  const malformed = await request("/api/me/transfer-quote", {
+    method: "POST", user: "fixture-a", rawBody: `{"password":"${marker}"`,
+  });
+  assert.equal(malformed.status, 400);
+  assert.deepEqual(JSON.parse(malformed.text), { error: "Malformed request body" });
+  assert.equal(malformed.text.includes(marker), false);
+  assert.match(malformed.headers["content-type"], /application\/json/);
+  assert.match(malformed.headers["cache-control"], /no-store/);
+  const oversized = await request("/api/me/transfer-quote", {
+    method: "POST", user: "fixture-a", body: { fixture: "x".repeat(103_000) },
+  });
+  assert.equal(oversized.status, 413);
+  assert.deepEqual(JSON.parse(oversized.text), { error: "Request body too large" });
+  const missing = await request("/api/fixture-not-a-real-route");
+  assert.equal(missing.status, 404);
+  assert.deepEqual(JSON.parse(missing.text), { error: "API route not found" });
+  const invalidPath = await request("/api/me/transactions/%E0%A4%A", { user: "fixture-a" });
+  assert.equal(invalidPath.status, 400);
+  assert.deepEqual(JSON.parse(invalidPath.text), { error: "Malformed request path" });
+});
+test("a captured signed webhook remains expired when only its unsigned header is refreshed", async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const stale = { event_id: randomUUID(), session_id: "fixture-old-session", webhook_type: "status.updated",
+    status: "Approved", environment: "sandbox", created_at: now - 601, timestamp: now - 601 };
+  assert.equal((await webhook(stale, undefined, String(now))).status, 401);
+  assert.equal((await webhook({ ...stale, timestamp: now }, "é".repeat(64), String(now))).status, 401);
+  assert.equal((await owner.query("SELECT count(*) FROM sf_identity_webhook_events WHERE event_id=$1",
+    [stale.event_id])).rows[0].count, "0");
+  assert.equal((await webhook({ ...stale, timestamp: undefined }, undefined, String(now))).status, 401);
+});
+test("deposit and international page payloads receive the real server totals for both fee choices", async () => {
+  for (const senderPaysFees of [true, false]) {
+    const deposit = await request("/api/me/transfer-quote", { method: "POST", user: "fixture-a", body: {
+      kind: "deposit", sourceOperatorId: "fixture-source", senderPhone: "+2250000000000",
+      amountMinor: 10_000, senderPaysFees,
+    } });
+    assert.equal(deposit.status, 200);
+    const d = JSON.parse(deposit.text);
+    assert.equal(d.feeMinor, 125);
+    assert.equal(d.feePercent, 1.25);
+    assert.equal(d.recipientAmountMinor, senderPaysFees ? 10_000 : 9_875);
+    assert.equal(d.totalDebitMinor, senderPaysFees ? 10_125 : 10_000);
+    const international = await request("/api/me/transfer-quote", { method: "POST", user: "fixture-a", body: {
+      kind: "international", destinationOperatorId: "fixture-destination", destinationCountryCode: "CI",
+      recipientPhone: "+2250000000001", amountMinor: 10_000, senderPaysFees,
+    } });
+    assert.equal(international.status, 200);
+    const i = JSON.parse(international.text);
+    assert.equal(i.feeMinor, 180);
+    assert.equal(i.feePercent, 1.8);
+    assert.equal(i.recipientAmountMinor, senderPaysFees ? 10_000 : 9_820);
+    assert.equal(i.totalDebitMinor, senderPaysFees ? 10_180 : 10_000);
+  }
 });

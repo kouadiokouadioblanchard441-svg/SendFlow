@@ -33,4 +33,12 @@ DIDIT_ENVIRONMENT = "live"
 SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "
 SENDFLOW_DATABASE_TARGET = "shared-neon"
 TRUST_PROXY_HOPS = "1"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 26095
+externalPort = 3000
 # Android SDK and JDK paths are resolved by android-sdk.nix and the Android build wrapper.

@@ -191,13 +191,15 @@ export function isValidDiditSignature(
   const secret = process.env.DIDIT_WEBHOOK_SECRET?.trim();
   if (!secret || !signature) return false;
 
+  const actual = signature.trim().toLowerCase();
+  // Validate before converting: a 64-character non-ASCII string can occupy
+  // more than 64 bytes and otherwise make timingSafeEqual throw.
+  if (!/^[a-f0-9]{64}$/.test(actual)) return false;
   const expected = createHmac("sha256", secret)
     .update(JSON.stringify(sortForSignature(payload)))
-    .digest("hex");
-  const actual = signature.trim().toLowerCase();
+    .digest();
 
-  if (actual.length !== expected.length) return false;
-  return timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+  return timingSafeEqual(Buffer.from(actual, "hex"), expected);
 }
 
 export function isFreshDiditTimestamp(
@@ -208,6 +210,25 @@ export function isFreshDiditTimestamp(
   const timestampSeconds = Number(timestamp);
   if (!Number.isSafeInteger(timestampSeconds)) return false;
   return Math.abs(Math.floor(now / 1000) - timestampSeconds) <= 300;
+}
+
+export function isFreshSignedDiditTimestamp(
+  payload: unknown,
+  timestamp: string | undefined,
+  now = Date.now(),
+): boolean {
+  if (!isFreshDiditTimestamp(timestamp, now)) return false;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return false;
+  // V2 authenticates the body, not HTTP headers. A captured signature must not
+  // become fresh again merely by replacing an unsigned X-Timestamp header.
+  try {
+    const signedTimestamp = Object.getOwnPropertyDescriptor(payload, "timestamp")?.value;
+    return Number.isSafeInteger(signedTimestamp)
+      && signedTimestamp > 0
+      && signedTimestamp === Number(timestamp);
+  } catch {
+    return false;
+  }
 }
 
 export function isDiditStatus(value: string): value is DiditStatus {

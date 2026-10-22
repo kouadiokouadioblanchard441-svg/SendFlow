@@ -26,7 +26,7 @@ import {
   assertDiditConfiguration,
   DiditConfigurationError,
   getSafeCallbackUrl,
-  isFreshDiditTimestamp,
+  isFreshSignedDiditTimestamp,
   isDiditStatus,
   isSandboxEnvironment,
   isValidDiditSignature,
@@ -449,7 +449,7 @@ router.post("/me/identity-verification", async (req, res): Promise<void> => {
 
 router.post("/webhooks/didit", async (req, res): Promise<void> => {
   if (
-    !isFreshDiditTimestamp(req.header("X-Timestamp") ?? undefined) ||
+    !isFreshSignedDiditTimestamp(req.body, req.header("X-Timestamp") ?? undefined) ||
     !isValidDiditSignature(req.body, req.header("X-Signature-V2") ?? undefined)
   ) {
     res.status(401).json({ error: "Invalid webhook signature" });

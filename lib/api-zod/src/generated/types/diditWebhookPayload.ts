@@ -16,7 +16,7 @@ export interface DiditWebhookPayload {
      * Dispatch time, which Didit refreshes on retry.
      * @minimum 1
      */
-  timestamp?: number;
+  timestamp: number;
   /**
      * @minLength 1
      * @maxLength 255

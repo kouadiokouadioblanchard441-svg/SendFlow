@@ -12,8 +12,8 @@ import { TransferRequestDialog, type TransferRequestState } from '@/components/t
 import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { readAccountCountry } from '@/lib/account-country';
-import { formatPricingFeeRate } from '@/lib/pricing';
-import { calculateTransferAmountBreakdown } from '@/lib/transfer-amounts';
+import { useServerTransferQuote } from '@/hooks/use-server-transfer-quote';
+import { formatServerFeePercent as formatPricingFeeRate, formatQuoteAmount, serverQuoteAmounts } from '@/lib/server-transfer-quote';
 import { useSeo } from '@/lib/seo';
 import {
   isValidIvoryCoastPhone,
@@ -34,7 +34,6 @@ type DepositOperator = {
   brand: OperatorBrand;
   requiresOtp: boolean;
   otpCommand: string | null;
-  feeRate?: number;
 };
 
 function OperatorMark({ operator }: { operator: DepositOperator }) {
@@ -71,7 +70,6 @@ export default function DepositPage() {
         brand: item.brand,
         requiresOtp: item.requiresOtp,
         otpCommand: item.otpCommand,
-        feeRate: item.fees.deposit,
       }));
   }, [accountCountry.dialCode, pricingCountry?.id, pricingQuery.data?.operators]);
   const [amount, setAmount] = useState('');
@@ -87,6 +85,19 @@ export default function DepositPage() {
   const [copied, setCopied] = useState(false);
   const [requestState, setRequestState] = useState<TransferRequestState>('idle');
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const enteredAmount = parseWholeAmount(amount);
+  const hasValidSourceNumber = isValidIvoryCoastPhone(sourceNumber);
+  const quoteInput = operator && isValidTransactionAmount(enteredAmount) && hasValidSourceNumber
+    ? {
+      kind: 'deposit' as const, sourceOperatorId: operator.id,
+      senderPhone: `${accountCountry.dialCode}${sourceNumber}`,
+      amountMinor: enteredAmount, senderPaysFees: payFees,
+    } : null;
+  const transferQuote = useServerTransferQuote(quoteInput, isUnlocked);
+  const feeRate = transferQuote.data?.feePercent;
+  const amountBreakdown = serverQuoteAmounts(transferQuote.data);
+  const feeAmount = amountBreakdown.feeAmount;
+  const walletAmount = amountBreakdown.recipientAmount;
 
   useSeo({
     path: '/deposit',
@@ -119,17 +130,11 @@ export default function DepositPage() {
     }
   };
 
-  const enteredAmount = parseWholeAmount(amount);
-  const feeRate = operator?.feeRate;
-  const amountBreakdown = calculateTransferAmountBreakdown(enteredAmount, feeRate, payFees);
-  const feeAmount = amountBreakdown.feeAmount ?? 0;
-  const walletAmount = amountBreakdown.recipientAmount ?? enteredAmount;
-  const hasValidSourceNumber = isValidIvoryCoastPhone(sourceNumber);
   const canSubmit = Boolean(
     operator &&
-    feeRate !== undefined &&
+    transferQuote.data &&
     isValidTransactionAmount(enteredAmount) &&
-    walletAmount > 0 &&
+    walletAmount !== null &&
     hasValidSourceNumber &&
     (!operator.requiresOtp || otp.trim().length > 0),
   );
@@ -295,19 +300,19 @@ export default function DepositPage() {
                 <strong className="sendflow-deposit-fee-amount">
                   {amountBreakdown.feeAmount === null
                     ? 'À confirmer'
-                    : `${feeAmount === 0 ? '' : '- '}${feeAmount.toLocaleString('fr-FR')} Fcfa`}
+                    : `${feeAmount === 0 ? '' : '- '}${formatQuoteAmount(feeAmount)} Fcfa`}
                 </strong>
               </div>
               <div>
                 <span>Le wallet reçoit</span>
-                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${walletAmount.toLocaleString('fr-FR')} Fcfa`}</strong>
+                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${formatQuoteAmount(walletAmount)} Fcfa`}</strong>
               </div>
               <div>
                 <span>Total débité</span>
                 <strong>{amountBreakdown.totalDebit === null ? 'À confirmer' : `${amountBreakdown.totalDebit.toLocaleString('fr-FR')} Fcfa`}</strong>
               </div>
             </div>
-            {submitAttempted && feeRate === undefined && (
+            {submitAttempted && !transferQuote.isPending && feeRate === undefined && (
               <p className="sendflow-international-field-error" role="alert">Les frais de cet opérateur ne sont pas disponibles. Le dépôt ne peut pas être préparé.</p>
             )}
 
@@ -315,7 +320,7 @@ export default function DepositPage() {
               {transactionUnavailableReason}
             </p>
             <button type="submit" className="sendflow-transfer-submit" disabled={!transactionSubmissionAvailable || requestState !== 'idle'}>
-              {transactionSubmissionAvailable ? `Déposer ${walletAmount.toLocaleString('fr-FR')} FCFA` : 'Opérations indisponibles'}
+              {transactionSubmissionAvailable ? `Déposer ${formatQuoteAmount(walletAmount)} FCFA` : 'Opérations indisponibles'}
             </button>
           </section>
         </form>
@@ -325,12 +330,12 @@ export default function DepositPage() {
           operation="Dépôt"
           pendingLabel="Demande de dépôt"
           amountLabel="Montant à créditer"
-          amount={walletAmount.toLocaleString('fr-FR')}
+          amount={formatQuoteAmount(walletAmount)}
           metaLabel={operator?.name ?? 'Opérateur'}
           metaValue={operator ? `${accountCountry.dialCode} ${sourceNumber}` : '—'}
           pendingCopy="Composez le code USSD sur votre téléphone pour confirmer le dépôt."
           successTitle="Votre dépôt a été crédité avec succès"
-          successCopy={`${walletAmount.toLocaleString('fr-FR')} FCFA sont maintenant disponibles dans votre wallet.`}
+          successCopy={`${formatQuoteAmount(walletAmount)} FCFA sont maintenant disponibles dans votre wallet.`}
           failureTitle="Votre dépôt n’a pas pu être confirmé"
           failureCopy="Aucun montant n’a été crédité. Vérifiez votre opération USSD puis réessayez."
           cancelLabel="Annuler le dépôt"

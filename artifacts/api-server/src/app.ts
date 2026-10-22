@@ -8,6 +8,7 @@ import { parseTrustProxyHops } from "./lib/trust-proxy-policy";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { errorLogSerializers } from "./lib/log-safety";
+import { httpErrorHandler } from "./lib/http-error-handler";
 
 const app: Express = express();
 
@@ -122,5 +123,10 @@ app.use(`/api${ADMIN_ROUTE_PREFIX}`, (req, res, next) => {
 });
 
 app.use("/api", router);
+app.use("/api", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  res.status(404).json({ error: "API route not found" });
+});
+app.use(httpErrorHandler);
 
 export default app;

@@ -13,13 +13,12 @@ import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
 import {
   getGetPublicPricingQueryKey,
-  useCreateCustomerTransferQuote,
   useGetPublicPricing,
 } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { useSeo } from '@/lib/seo';
-import { formatPricingFeeRate } from '@/lib/pricing';
-import { calculateTransferAmountBreakdown } from '@/lib/transfer-amounts';
+import { useServerTransferQuote } from '@/hooks/use-server-transfer-quote';
+import { formatServerFeePercent as formatPricingFeeRate, formatQuoteAmount, serverQuoteAmounts } from '@/lib/server-transfer-quote';
 import {
   isValidIvoryCoastPhone,
   isValidTransactionAmount,
@@ -44,7 +43,6 @@ type TransferOperator = {
   flag: string;
   requiresOtp: boolean;
   otpCommand: string | null;
-  feeRate?: number;
 };
 
 type SavedContact = {
@@ -93,7 +91,6 @@ export default function InterNetworkTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
-  const transferQuote = useCreateCustomerTransferQuote();
   const pricingCountry = pricingQuery.data?.countries.find((item) => item.id === 'ci');
   const availableOperators = useMemo<TransferOperator[]>(
     () => (pricingQuery.data?.operators ?? [])
@@ -108,7 +105,6 @@ export default function InterNetworkTransferPage() {
         flag: pricingCountry?.flag ?? '🇨🇮',
         requiresOtp: item.requiresOtp,
         otpCommand: item.otpCommand,
-        feeRate: item.fees['inter-network'],
       })),
     [pricingCountry?.dialCode, pricingCountry?.flag, pricingQuery.data?.operators],
   );
@@ -133,6 +129,22 @@ export default function InterNetworkTransferPage() {
   const [contactsOpen, setContactsOpen] = useState(false);
   const [contactsNotice, setContactsNotice] = useState('');
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const enteredAmount = parseWholeAmount(amount);
+  const quoteInput = sourceOperator && destinationOperator
+    && isValidTransactionAmount(enteredAmount)
+    && isValidIvoryCoastPhone(sourceNumber) && isValidIvoryCoastPhone(recipientNumber)
+    ? {
+      kind: 'inter-network' as const,
+      sourceOperatorId: sourceOperator.id, destinationOperatorId: destinationOperator.id,
+      senderPhone: `${sourceOperator.prefix}${sourceNumber}`,
+      recipientPhone: `${destinationOperator.prefix}${recipientNumber}`,
+      amountMinor: enteredAmount, senderPaysFees: supportFees,
+    } : null;
+  const transferQuote = useServerTransferQuote(quoteInput, isUnlocked);
+  const feeRate = transferQuote.data?.feePercent;
+  const amountBreakdown = serverQuoteAmounts(transferQuote.data);
+  const feeAmount = amountBreakdown.feeAmount;
+  const recipientAmount = amountBreakdown.recipientAmount;
 
   useSeo({
     path: '/inter-transfer',
@@ -259,15 +271,8 @@ export default function InterNetworkTransferPage() {
     }
   };
 
-  const enteredAmount = parseWholeAmount(amount);
-  const feeRate = sourceOperator.feeRate;
-  const amountBreakdown = calculateTransferAmountBreakdown(enteredAmount, feeRate, supportFees);
-  const feeAmount = amountBreakdown.feeAmount ?? 0;
-  const recipientAmount = amountBreakdown.recipientAmount ?? enteredAmount;
   const canSubmit =
-    feeRate !== undefined &&
-    isValidTransactionAmount(enteredAmount) &&
-    (supportFees || recipientAmount > 0) &&
+    quoteInput !== null &&
     (!sourceOperator.requiresOtp || otp.trim().length > 0) &&
     isValidIvoryCoastPhone(sourceNumber) &&
     isValidIvoryCoastPhone(recipientNumber);
@@ -336,6 +341,7 @@ export default function InterNetworkTransferPage() {
               setDialogFailureCopy('Ce montant respecte votre plafond mensuel. Les opérations des opérateurs ne sont pas encore disponibles : aucun transfert n’a été initié et aucun montant n’a été débité.');
               setRequestState('failure');
             }).catch((error: unknown) => {
+              if (error instanceof Error && error.name === 'AbortError') return;
               const status = typeof error === 'object' && error !== null && 'status' in error
                 ? (error as { status?: number }).status
                 : undefined;
@@ -507,19 +513,19 @@ export default function InterNetworkTransferPage() {
               <div>
                 <span>{feeRate === undefined ? 'Frais à confirmer' : `Frais (${formatPricingFeeRate(feeRate)})`}</span>
                 <strong className="sendflow-deposit-fee-amount">
-                  {amountBreakdown.feeAmount === null ? 'À confirmer' : `${feeAmount.toLocaleString('fr-FR')} Fcfa`}
+                  {amountBreakdown.feeAmount === null ? 'À confirmer' : `${formatQuoteAmount(feeAmount)} Fcfa`}
                 </strong>
               </div>
               <div>
                 <span>Le bénéficiaire reçoit</span>
-                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${recipientAmount.toLocaleString('fr-FR')} Fcfa`}</strong>
+                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${formatQuoteAmount(recipientAmount)} Fcfa`}</strong>
               </div>
               <div>
                 <span>Total prélevé sur le numéro source</span>
                 <strong>{amountBreakdown.totalDebit === null ? 'À confirmer' : `${amountBreakdown.totalDebit.toLocaleString('fr-FR')} Fcfa`}</strong>
               </div>
             </div>
-            {submitAttempted && feeRate === undefined && (
+            {submitAttempted && !transferQuote.isPending && feeRate === undefined && (
               <p className="sendflow-international-field-error" role="alert">Les frais de cet opérateur ne sont pas disponibles. Le transfert ne peut pas être préparé.</p>
             )}
 
@@ -537,7 +543,7 @@ export default function InterNetworkTransferPage() {
                   ? 'Transfert confirmé'
                   : requestState === 'failure'
                     ? 'Réessayer le transfert'
-                    : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
+                    : `Envoyer ${formatQuoteAmount(recipientAmount)} FCFA`}
             </button>
           </section>
         </form>
@@ -547,12 +553,12 @@ export default function InterNetworkTransferPage() {
           operation="Transfert inter réseau"
           pendingLabel="Préparation du transfert inter-réseau"
           amountLabel="Montant à envoyer"
-          amount={recipientAmount.toLocaleString('fr-FR')}
+          amount={formatQuoteAmount(recipientAmount)}
           metaLabel={`${sourceOperator.shortName} → ${destinationOperator.shortName}`}
           metaValue={recipientNumber || 'Bénéficiaire'}
           pendingCopy="Votre transfert inter-réseau est en attente. Veuillez patienter."
           successTitle="Votre transfert inter réseau est confirmé"
-          successCopy={`Le transfert de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${recipientNumber} a été confirmé avec succès.`}
+          successCopy={`Le transfert de ${formatQuoteAmount(recipientAmount)} FCFA vers ${recipientNumber} a été confirmé avec succès.`}
           failureTitle={dialogFailureTitle}
           failureCopy={dialogFailureCopy}
           cancelLabel="Annuler le transfert inter-réseau"

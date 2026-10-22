@@ -322,3 +322,31 @@ mtime_ms = 1792660190809
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/cee7577b-ea34-479a-a522-cbad4d685a33/2cf2e538-3b83-4fe4-9461-8e75bf5233b2"
 storage_version_token = "1792660231548235"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "ql1FunzUTambdP9ylxouy"
+uri = "file://docs/security/sendflow-architecture-etat-et-corrections.md"
+type = "text"
+title = "SendFlow — architecture, état réel et corrections"
+description = "Bilan détaillé : séparation frontend/backend, 55 routes inventoriées, corrections supplémentaires, 100 tests réussis et fonctions restant à terminer."
+logical_id = "cd430cb7-6884-4254-a840-4a92bed40a4c"
+content_hash = "sha256:ea339b7f73534343845c8134d7bf892e86a46dfa73be17e15071c0a77a534172"
+size = 14846
+mtime_ms = 1792661231979
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/cd430cb7-6884-4254-a840-4a92bed40a4c/8d612731-e234-45aa-be74-c1079ceeda60"
+storage_version_token = "1792661245066696"
+content_type = "text/markdown"
+
+[[outputs]]
+id = "FlHj8mm0SJ_LhMUNb9_vN"
+uri = "file://docs/security/server-quote-display.md"
+type = "text"
+title = "Frais affichés depuis le serveur — vérifications"
+description = "Raccordement des trois pages sans changement de présentation, suppression des calculs locaux et résultats des tests."
+logical_id = "01e4a412-0b14-45a9-8996-bed8df8baf70"
+content_hash = "sha256:369daaaf72fdb5e672869c4d76e6a26f11e8551ec486d38e5ee001dd8eaeed4f"
+size = 4221
+mtime_ms = 1792662212842
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/01e4a412-0b14-45a9-8996-bed8df8baf70/00f77eac-fb39-4ad1-b251-631e462a241b"
+storage_version_token = "1792662219785278"
+content_type = "text/markdown"

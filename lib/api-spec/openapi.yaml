@@ -4094,7 +4094,7 @@ components:
           maxLength: 128
         status:
           type: string
-      required: [event_id, session_id, webhook_type, status, created_at]
+      required: [event_id, session_id, webhook_type, status, created_at, timestamp]
     WebhookReceipt:
       type: object
       properties:

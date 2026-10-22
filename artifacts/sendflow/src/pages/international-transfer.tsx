@@ -11,7 +11,6 @@ import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
 import {
   getGetPublicPricingQueryKey,
-  useCreateCustomerTransferQuote,
   useGetPublicPricing,
 } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
@@ -24,8 +23,8 @@ import {
   parseWholeAmount,
   getPhoneDigitsForCountry,
 } from '@/lib/transfer-validation';
-import { formatPricingFeeRate } from '@/lib/pricing';
-import { calculateTransferAmountBreakdown } from '@/lib/transfer-amounts';
+import { useServerTransferQuote } from '@/hooks/use-server-transfer-quote';
+import { formatServerFeePercent as formatPricingFeeRate, formatQuoteAmount, serverQuoteAmounts } from '@/lib/server-transfer-quote';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import waveLogo from '@assets/generated_images/sendflow-wave-logo.png';
@@ -42,7 +41,6 @@ type InternationalOperator = {
   name: string;
   shortName: string;
   brand: 'orange' | 'wave' | 'mtn' | 'moov' | 'generic';
-  feeRate?: number;
 };
 
 function OperatorMark({ operator }: { operator: InternationalOperator }) {
@@ -64,7 +62,6 @@ export default function InternationalTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey() } });
-  const transferQuote = useCreateCustomerTransferQuote();
   const pricingOperators = pricingQuery.data?.operators ?? [];
   const [countryId, setCountryId] = useState('ci');
   const [operatorId, setOperatorId] = useState<string | null>('orange-ci');
@@ -83,7 +80,6 @@ export default function InternationalTransferPage() {
         name: item.name,
         shortName: item.shortName,
         brand: item.brand,
-        feeRate: item.fees.international,
       })),
     [country?.id, pricingOperators],
   );
@@ -97,6 +93,20 @@ export default function InternationalTransferPage() {
   const [dialogFailureTitle, setDialogFailureTitle] = useState('Votre transfert international n’a pas pu être confirmé');
   const [dialogFailureCopy, setDialogFailureCopy] = useState('Aucun montant n’a été débité. Vérifiez les informations du bénéficiaire puis réessayez.');
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const enteredAmount = parseWholeAmount(amount);
+  const hasValidRecipient = !!country && isValidInternationalPhone(recipientNumber, country.dialCode);
+  const quoteInput = country && operator && isValidTransactionAmount(enteredAmount) && hasValidRecipient
+    ? {
+      kind: 'international' as const, destinationOperatorId: operator.id,
+      destinationCountryCode: country.id.toUpperCase(),
+      recipientPhone: `${country.dialCode}${recipientNumber}`,
+      amountMinor: enteredAmount, senderPaysFees: payFees,
+    } : null;
+  const transferQuote = useServerTransferQuote(quoteInput, isUnlocked);
+  const feeRate = transferQuote.data?.feePercent;
+  const amountBreakdown = serverQuoteAmounts(transferQuote.data);
+  const feeAmount = amountBreakdown.feeAmount;
+  const recipientAmount = amountBreakdown.recipientAmount;
 
   useSeo({
     path: '/international-transfer',
@@ -164,18 +174,9 @@ export default function InternationalTransferPage() {
     );
   }
 
-  const enteredAmount = parseWholeAmount(amount);
-  const feeRate = operator.feeRate;
-  const amountBreakdown = calculateTransferAmountBreakdown(enteredAmount, feeRate, payFees);
-  const feeAmount = amountBreakdown.feeAmount ?? 0;
-  const recipientAmount = amountBreakdown.recipientAmount ?? enteredAmount;
-  const hasValidRecipient = isValidInternationalPhone(recipientNumber, country.dialCode);
   const recipientPhoneDigits = getPhoneDigitsForCountry(country.dialCode);
   const recipientPhoneMaxDigits = recipientPhoneDigits ?? 15;
-  const canSubmit = feeRate !== undefined
-    && isValidTransactionAmount(enteredAmount)
-    && recipientAmount > 0
-    && hasValidRecipient;
+  const canSubmit = quoteInput !== null;
 
   const selectCountry = (nextCountry: TransferCountry) => {
     setCountryId(nextCountry.id);
@@ -244,6 +245,7 @@ export default function InternationalTransferPage() {
               setDialogFailureCopy('Ce montant respecte votre plafond mensuel. Les opérations des opérateurs ne sont pas encore disponibles : aucun transfert n’a été initié et aucun montant n’a été débité.');
               setRequestState('failure');
             }).catch((error: unknown) => {
+              if (error instanceof Error && error.name === 'AbortError') return;
               const status = typeof error === 'object' && error !== null && 'status' in error
                 ? (error as { status?: number }).status
                 : undefined;
@@ -371,22 +373,22 @@ export default function InternationalTransferPage() {
                 <strong className="sendflow-deposit-fee-amount">
                   {amountBreakdown.feeAmount === null
                     ? 'À confirmer'
-                    : `${feeAmount === 0 ? '' : '- '}${feeAmount.toLocaleString('fr-FR')} Fcfa`}
+                    : `${feeAmount === 0 ? '' : '- '}${formatQuoteAmount(feeAmount)} Fcfa`}
                 </strong>
               </div>
               <div>
                 <span>Le bénéficiaire reçoit</span>
-                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${recipientAmount.toLocaleString('fr-FR')} Fcfa`}</strong>
+                <strong>{amountBreakdown.recipientAmount === null ? 'À confirmer' : `${formatQuoteAmount(recipientAmount)} Fcfa`}</strong>
               </div>
               <div>
                 <span>Wallet débité</span>
                 <strong>{amountBreakdown.totalDebit === null ? 'À confirmer' : `${amountBreakdown.totalDebit.toLocaleString('fr-FR')} Fcfa`}</strong>
               </div>
             </div>
-            {submitAttempted && feeRate === undefined && (
+            {submitAttempted && !transferQuote.isPending && feeRate === undefined && (
               <p className="sendflow-international-field-error" role="alert">Les frais de cet opérateur ne sont pas disponibles. Le transfert ne peut pas être préparé.</p>
             )}
-            {submitAttempted && feeRate !== undefined && !payFees && recipientAmount <= 0 && (
+            {submitAttempted && feeRate !== undefined && !payFees && recipientAmount !== null && recipientAmount <= 0 && (
               <p className="sendflow-international-field-error" role="alert">Le montant reçu doit rester supérieur à zéro. Augmentez le montant ou choisissez de payer les frais.</p>
             )}
 
@@ -404,7 +406,7 @@ export default function InternationalTransferPage() {
                   ? 'Transfert confirmé'
                   : requestState === 'failure'
                     ? 'Réessayer le transfert'
-                    : `Envoyer ${recipientAmount.toLocaleString('fr-FR')} FCFA`}
+                    : `Envoyer ${formatQuoteAmount(recipientAmount)} FCFA`}
             </button>
           </section>
         </form>
@@ -414,12 +416,12 @@ export default function InternationalTransferPage() {
           operation="Transfert international"
           pendingLabel="Traitement en attente"
           amountLabel="Montant à envoyer"
-          amount={recipientAmount.toLocaleString('fr-FR')}
+          amount={formatQuoteAmount(recipientAmount)}
           metaLabel={operator?.name ?? 'Opérateur'}
           metaValue={`${country.dialCode} ${recipientNumber}`}
           pendingCopy="Votre traitement est en attente du montant. Veuillez patienter."
           successTitle="Votre transfert international est confirmé"
-          successCopy={`Le transfert de ${recipientAmount.toLocaleString('fr-FR')} FCFA vers ${country.name} a été confirmé avec succès.`}
+          successCopy={`Le transfert de ${formatQuoteAmount(recipientAmount)} FCFA vers ${country.name} a été confirmé avec succès.`}
           failureTitle={dialogFailureTitle}
           failureCopy={dialogFailureCopy}
           cancelLabel="Annuler l’envoi international"
