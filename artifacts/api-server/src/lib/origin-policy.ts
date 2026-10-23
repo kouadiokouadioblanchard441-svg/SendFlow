@@ -29,7 +29,9 @@ function normalizeConfiguredOrigin(value: string): string | null {
 }
 
 export function normalizeHttpOrigin(value: string | undefined): string | null {
-  if (!value) return null;
+  // Browser Origin headers contain a scheme; unlike configuration, a bare
+  // hostname or a protocol-relative value is not an HTTP origin.
+  if (!value || !/^https?:\/\//i.test(value)) return null;
   return normalizeConfiguredOrigin(value);
 }
 

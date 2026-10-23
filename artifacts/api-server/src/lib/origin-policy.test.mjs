@@ -18,6 +18,10 @@ test("origin configuration is canonicalized without accepting URL paths", () => 
   assert.equal(normalizeHttpOrigin("https://sendflow.example/path"), null);
   assert.equal(normalizeHttpOrigin("javascript:alert(1)"), null);
   assert.equal(normalizeHttpOrigin("https://user@sendflow.example"), null);
+  assert.equal(normalizeHttpOrigin("sendflow.example"), null);
+  assert.equal(normalizeHttpOrigin("//sendflow.example"), null);
+  assert.equal(normalizeHttpOrigin("null"), null);
+  assert.equal(normalizeHttpOrigin("https://sendflow.example https://attacker.example"), null);
 });
 
 test("production origin policy trusts only explicit HTTPS origins", () => {

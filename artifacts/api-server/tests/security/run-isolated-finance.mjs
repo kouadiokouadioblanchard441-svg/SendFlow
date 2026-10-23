@@ -160,6 +160,7 @@ try {
       export { retrieveDiditDecision } from "./src/lib/didit";
       export { hashCustomerSessionToken } from "./src/lib/customer-auth-crypto";
       export { hashCustomerSecret } from "./src/lib/customer-auth-crypto";
+      export { hashAdminSessionToken, ADMIN_SESSION_COOKIE } from "./src/lib/admin-session";
       export { provisionPreviewAccount } from "./src/services/provision-preview-account";
       export { createSensitiveDataLookupIndex } from "./src/lib/sensitive-data-crypto";
       export { decryptSensitiveData } from "./src/lib/sensitive-data-crypto";
@@ -184,7 +185,9 @@ try {
   databaseUrl.searchParams.set("host", socket);
   databaseUrl.searchParams.set("port", "15432");
   databaseUrl.searchParams.set("user", "sf_fixture_app");
-  const testFiles = process.argv.includes("--payment-structures-only")
+  const testFiles = process.argv.includes("--routes-security-only")
+    ? [join(apiDir, "tests/security/routes-security.integration.mjs")]
+    : process.argv.includes("--payment-structures-only")
     ? [join(apiDir, "tests/security/payment-structures.integration.mjs")]
     : process.argv.includes("--feexpay-configuration-only")
     ? [join(apiDir, "tests/security/feexpay-configuration.integration.mjs")]

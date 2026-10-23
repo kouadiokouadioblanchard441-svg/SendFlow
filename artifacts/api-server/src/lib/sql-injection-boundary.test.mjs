@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const sourceDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -29,7 +30,7 @@ async function collectRuntimeFiles(directory) {
   return nestedFiles.flat();
 }
 
-test("API runtime keeps SQL behind parameterized Drizzle statements", async () => {
+test("API runtime uses parameterized Drizzle or audited literal PostgreSQL statements", async () => {
   const runtimeFiles = await Promise.all(
     ["routes", "lib", "services", "data"].map((directory) =>
       collectRuntimeFiles(path.join(sourceDirectory, directory)),
@@ -48,9 +49,29 @@ test("API runtime keeps SQL behind parameterized Drizzle statements", async () =
     if (/from\s+["'](?:pg|node-postgres)["']/.test(executableSource)) {
       violations.push(`${relativePath}: direct PostgreSQL driver import`);
     }
-    if (/\b(?:pool|client)\.query\s*\(/.test(executableSource)) {
-      violations.push(`${relativePath}: direct PostgreSQL query call`);
+    const syntax = ts.createSourceFile(relativePath, source, ts.ScriptTarget.Latest, true);
+    function visit(node) {
+      if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)
+        && node.expression.name.text === "query"
+        && ["pool", "client"].includes(node.expression.expression.getText(syntax))) {
+        // Network defense needs explicit connection-level transaction/timeout
+        // control. Permit that one boundary, never dynamic query text.
+        const [query, values] = node.arguments;
+        if (relativePath !== "services/network-defense.ts"
+          || !query || !ts.isStringLiteralLike(query)) {
+          violations.push(`${relativePath}: unapproved or dynamic PostgreSQL query`);
+        } else {
+          const placeholders = [...query.text.matchAll(/\$(\d+)/g)].map((match) => Number(match[1]));
+          const required = Math.max(0, ...placeholders);
+          if ((required && (!values || !ts.isArrayLiteralExpression(values) || values.elements.length !== required))
+            || (!required && values)) {
+            violations.push(`${relativePath}: PostgreSQL parameter bindings do not match literal query`);
+          }
+        }
+      }
+      ts.forEachChild(node, visit);
     }
+    visit(syntax);
     if (/\bsql\.raw\s*\(/.test(executableSource)) {
       violations.push(`${relativePath}: raw Drizzle SQL fragment`);
     }

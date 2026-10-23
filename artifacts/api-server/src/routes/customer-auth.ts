@@ -587,15 +587,14 @@ router.put("/me/pin", async (req, res): Promise<void> => {
     return;
   }
 
-  const parsed = SetCustomerPinBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Le code PIN doit contenir quatre chiffres." });
-    return;
-  }
-
   try {
     const session = await requireCustomerSession(req, res);
     if (!session) return;
+    const parsed = SetCustomerPinBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Le code PIN doit contenir quatre chiffres." });
+      return;
+    }
     const buckets = getPinAttemptBuckets(session.userId, req);
     const result = await withPinAttemptLock(buckets, async (tx) => {
       const retry = await getAuthRateLimit(buckets, new Date(), tx);

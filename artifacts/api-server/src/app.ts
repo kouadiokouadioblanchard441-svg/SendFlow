@@ -1,7 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { ADMIN_ROUTE_PREFIX } from "./lib/admin-route-prefix";
 import { shouldBlockSharedNeonApiRequest, isViewerRouteCandidate } from "./lib/shared-neon-preview-guard";
 import { enforcePreviewAccountAccess } from "./lib/preview-access-middleware";
 import { getAllowedOrigins, normalizeHttpOrigin } from "./lib/origin-policy";
@@ -11,6 +10,7 @@ import { logger } from "./lib/logger";
 import { errorLogSerializers } from "./lib/log-safety";
 import { httpErrorHandler } from "./lib/http-error-handler";
 import { enforceIpAccess } from "@workspace/db/ip-blocklist";
+import { apiRequestSecurity } from "./lib/api-request-security";
 
 const app: Express = express();
 
@@ -67,6 +67,7 @@ app.use(
     },
   }),
 );
+app.use("/api", apiRequestSecurity(allowedOrigins));
 app.use("/api", (req, res, next) => {
   if (
     !shouldBlockSharedNeonApiRequest(
@@ -98,34 +99,6 @@ app.use("/api/me", (_req, res, next) => {
 
 app.use("/api/auth", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store, private");
-  next();
-});
-
-app.use(`/api${ADMIN_ROUTE_PREFIX}`, (req, res, next) => {
-  res.setHeader("Cache-Control", "no-store, private");
-
-  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
-    next();
-    return;
-  }
-
-  const origin = req.get("origin");
-  if (!origin) {
-    res.status(403).json({ error: "Origin header is required for administrator actions" });
-    return;
-  }
-
-  const providedOrigin = normalizeHttpOrigin(origin);
-  if (!providedOrigin) {
-    res.status(403).json({ error: "Invalid administrator request origin" });
-    return;
-  }
-
-  if (!allowedOrigins.has(providedOrigin)) {
-    res.status(403).json({ error: "Cross-origin administrator action denied" });
-    return;
-  }
-
   next();
 });
 

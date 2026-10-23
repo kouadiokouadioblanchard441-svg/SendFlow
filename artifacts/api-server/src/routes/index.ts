@@ -7,7 +7,7 @@ import databaseRouter from "./database";
 import accountRouter from "./account";
 import identityVerificationRouter from "./identity-verification";
 import adminAccessRouter from "./admin-access";
-import adminRouter from "./admin";
+import adminRouter, { respondAdminAuthError } from "./admin";
 import adminActionsRouter from "./admin-actions";
 import adminLoginActivityRouter from "./admin-login-activity";
 import adminOtpActivityRouter from "./admin-otp-activity";
@@ -28,6 +28,14 @@ import { loadAdminSession } from "../lib/admin-session";
 const router: IRouter = Router();
 const adminHandlers: IRouter = Router();
 const adminSurface: IRouter = Router();
+
+// Defense in depth: new administrative routes cannot accidentally omit the
+// server session, current grant, scope, mutation right and PIN checks.
+// The access/sign-in/PIN/sign-out router remains outside this protected group.
+adminHandlers.use((req, res, next) => {
+  const permission = ["GET", "HEAD", "OPTIONS"].includes(req.method) ? "read" : "mutate";
+  if (respondAdminAuthError(req, res, permission)) next();
+});
 
 router.use(healthRouter);
 router.use(storageRouter);

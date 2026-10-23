@@ -87,7 +87,8 @@ function request(path, { method = "GET", user, body, rawBody, headers = {} } = {
   return new Promise((resolve, reject) => {
     const req = http.request({
       host: "127.0.0.1", port: server.address().port, path, method,
-      headers: { ...(user ? { Cookie: `__Host-sendflow_session=${tokens[user]}` } : {}),
+      headers: { Origin: "https://sendflow-test.invalid",
+        ...(user ? { Cookie: `__Host-sendflow_session=${tokens[user]}` } : {}),
         ...(data ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) } : {}),
         ...headers },
     }, (res) => {
