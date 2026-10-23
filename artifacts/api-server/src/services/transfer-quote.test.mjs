@@ -3,9 +3,35 @@ import test from "node:test";
 import { calculateCustomerTransferQuote } from "./transfer-quote.ts";
 
 const dependencies = () => ({
-  operators: [{ operatorId: "source", countryCode: "ci" }, { operatorId: "destination", countryCode: "ci" }],
+  operators: [
+    {
+      operatorId: "source",
+      countryCode: "ci",
+      enabled: true,
+      depositEnabled: true,
+      interNetworkEnabled: true,
+      internationalEnabled: true,
+    },
+    {
+      operatorId: "destination",
+      countryCode: "ci",
+      enabled: true,
+      depositEnabled: true,
+      interNetworkEnabled: true,
+      internationalEnabled: true,
+    },
+  ],
   rates: [{ operatorId: "source", categoryId: "inter-network", feePercent: 2, version: 4 }],
-  countries: [{ countryCode: "CI", phonePrefix: "+225" }],
+  countries: [{
+    countryCode: "CI",
+    phonePrefix: "+225",
+    enabled: true,
+    depositEnabled: true,
+    interNetworkEnabled: true,
+    internationalEnabled: true,
+    minPhoneDigits: 10,
+    maxPhoneDigits: 10,
+  }],
   remainingMonthlyAmount: async (id) => { assert.equal(id, "server-customer"); return 100_000; },
 });
 const input = (extra = {}) => ({
