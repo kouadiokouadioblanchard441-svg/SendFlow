@@ -9,6 +9,17 @@ Use the user's nine installed cybersecurity skills for cybersecurity work on Sen
 
 **How to apply:** Consult the relevant installed skills for the requested work. Distinguish guidance applied from tests actually executed, and disclose when a test requires the unavailable Strix engine.
 
+Do not treat a missing Strix executable as proof that Strix cannot be used. Check
+its official open-source installation path and the Docker/model prerequisites.
+
+**Why:** The user explicitly pointed out that the public Strix CLI can be
+installed and expects the installed security skills to be actively used.
+
+**How to apply:** Prefer the local OSS CLI when feasible. Verify downloaded
+release integrity, use a disposable copy of the uncommitted repository because
+the scan target is writable, do not use Strix Cloud credits unless the user
+authorizes them, and clearly identify any missing model provider credentials.
+
 The server is the only authority for SendFlow. The frontend is untrusted and must never be the security authority. Never hardcode or store secret keys, tokens, credentials, or sensitive personal or financial values in frontend or backend source or client bundles. Load required secrets only into the server runtime from Replit Secrets. Verify identities, ownership, state, and business rules on the server before accessing or changing data.
 
 **Why:** The user explicitly requires no keys or sensitive information in frontend or backend code, and requires sensitive checks to be performed on their server.
