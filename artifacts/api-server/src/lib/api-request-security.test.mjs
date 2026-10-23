@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import {
   ANONYMOUS_CSRF_COOKIE,
+  ANONYMOUS_CSRF_COOKIE_TTL_MS,
   CSRF_HEADER_NAME,
   CSRF_TOKEN_TTL_MS,
+  createAnonymousCsrfCookie,
   createCsrfToken,
   verifyCsrfToken,
 } from "./csrf-protection.ts";
@@ -84,13 +86,68 @@ test("safe reads issue a short-lived HttpOnly binding cookie and expose a token"
   assert.equal(response.cookies[0].options.secure, true);
   assert.equal(response.cookies[0].options.sameSite, "none");
   assert.equal(response.cookies[0].options.path, "/");
-  assert.equal(response.cookies[0].options.maxAge, CSRF_TOKEN_TTL_MS);
-  const refreshed = invoke("GET", "/auth/session", { cookie: `${response.cookies[0].name}=${response.cookies[0].value}` });
-  assert.equal(refreshed.cookies[0].value, response.cookies[0].value);
-  assert.notEqual(refreshed.headers[CSRF_HEADER_NAME], response.headers[CSRF_HEADER_NAME]);
+  assert.equal(response.cookies[0].options.domain, undefined);
+  assert.equal(response.cookies[0].options.maxAge, ANONYMOUS_CSRF_COOKIE_TTL_MS);
+  assert.equal(response.cookies[0].value.split(".").length, 4);
+  const renewedToken = invoke("GET", "/auth/session", {
+    cookie: `${response.cookies[0].name}=${response.cookies[0].value}`,
+  });
+  assert.equal(renewedToken.cookies.length, 0);
+  assert.notEqual(renewedToken.headers[CSRF_HEADER_NAME], response.headers[CSRF_HEADER_NAME]);
+  assert.equal(verifyCsrfToken(
+    response.headers[CSRF_HEADER_NAME],
+    `anonymous:v1:${response.cookies[0].value.split(".")[1]}:${response.cookies[0].value.split(".")[2]}`,
+  ), true);
   for (const method of ["HEAD", "OPTIONS"]) {
     assert.equal(invoke(method, "/me", {}).next, true);
   }
+});
+
+test("untrusted anonymous cookies are replaced, never reflected or accepted", () => {
+  const chosenCookieValue = "a".repeat(43);
+  const response = invoke("GET", "/auth/session", {
+    cookie: `${ANONYMOUS_CSRF_COOKIE}=${chosenCookieValue}`,
+  });
+  assert.equal(response.cookies.length, 1);
+  assert.notEqual(response.cookies[0].value, chosenCookieValue);
+  assert.equal(response.cookies[0].value.split(".").length, 4);
+
+  const forgedCookie = `${ANONYMOUS_CSRF_COOKIE}=${chosenCookieValue}`;
+  const forged = invoke("POST", "/me/profile", {
+    origin: trustedOrigin,
+    cookie: forgedCookie,
+    csrfToken: response.headers[CSRF_HEADER_NAME],
+  });
+  assert.equal(forged.status, 403);
+
+  const accepted = invoke("POST", "/me/profile", {
+    origin: trustedOrigin,
+    cookie: `${ANONYMOUS_CSRF_COOKIE}=${response.cookies[0].value}`,
+    csrfToken: response.headers[CSRF_HEADER_NAME],
+  });
+  assert.equal(accepted.next, true);
+});
+
+test("expired or tampered anonymous binding cookies cannot authorize mutations", () => {
+  const expiredCookie = createAnonymousCsrfCookie(Date.now() - ANONYMOUS_CSRF_COOKIE_TTL_MS);
+  const expired = invoke("GET", "/auth/session", {
+    cookie: `${ANONYMOUS_CSRF_COOKIE}=${expiredCookie.value}`,
+  });
+  assert.equal(expired.cookies.length, 1);
+  assert.notEqual(expired.cookies[0].value, expiredCookie.value);
+
+  const bootstrap = anonymousBootstrap();
+  const value = bootstrap.cookie.slice(`${ANONYMOUS_CSRF_COOKIE}=`.length);
+  const parts = value.split(".");
+  parts[3] = `${parts[3].slice(0, -1)}${parts[3].endsWith("A") ? "B" : "A"}`;
+  const tamperedCookie = `${ANONYMOUS_CSRF_COOKIE}=${parts.join(".")}`;
+  const rejected = invoke("POST", "/me/profile", {
+    origin: trustedOrigin,
+    cookie: tamperedCookie,
+    csrfToken: bootstrap.token,
+  });
+  assert.equal(rejected.status, 403);
+  assert.equal(rejected.body.code, "csrf_token_invalid");
 });
 
 test("all unsafe methods require a valid token and accept a fresh token for the current cookie binding", () => {
@@ -119,8 +176,11 @@ test("invalid, expired and session-mismatched tokens are rejected", () => {
   assert.equal(invalid.status, 403);
   assert.equal(invalid.body.code, "csrf_token_invalid");
 
-  const anonymousToken = bootstrap.cookie.split("=").at(-1);
-  const binding = `anonymous:v1:${anonymousToken}`;
+  const [version, expiresAt, nonce] = bootstrap.cookie
+    .slice(`${ANONYMOUS_CSRF_COOKIE}=`.length)
+    .split(".");
+  assert.equal(version, "v1");
+  const binding = `anonymous:v1:${expiresAt}:${nonce}`;
   const now = Date.now();
   const expiredToken = createCsrfToken(binding, now - CSRF_TOKEN_TTL_MS);
   const expired = invoke("POST", "/me/transfer-quote", {
