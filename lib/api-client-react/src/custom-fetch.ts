@@ -10,6 +10,8 @@ export type AuthTokenGetter = () => Promise<string | null> | string | null;
 
 const NO_BODY_STATUS = new Set([204, 205, 304]);
 const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const CSRF_HEADER = "X-CSRF-Token";
 
 // ---------------------------------------------------------------------------
 // Module-level configuration
@@ -56,6 +58,42 @@ function resolveMethod(input: RequestInfo | URL, explicitMethod?: string): strin
   if (explicitMethod) return explicitMethod.toUpperCase();
   if (isRequest(input)) return input.method.toUpperCase();
   return "GET";
+}
+
+async function getCsrfToken(): Promise<string> {
+  const response = await fetch(resolveApiUrl("/api/auth/session"), {
+    method: "GET",
+    credentials: "include",
+    headers: { accept: DEFAULT_JSON_ACCEPT },
+  });
+  const token = response.headers.get(CSRF_HEADER);
+  if (!token) {
+    throw new Error("SendFlow could not obtain a CSRF security token.");
+  }
+  return token;
+}
+
+/**
+ * Sends unsafe requests with a fresh server-issued token bound to the current
+ * cookie session. Fetching immediately before each mutation avoids reusing a
+ * token across sign-in, sign-out, or session rotation.
+ */
+export async function fetchWithCsrf(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+): Promise<Response> {
+  const method = resolveMethod(input, init.method);
+  const headers = mergeHeaders(isRequest(input) ? input.headers : undefined, init.headers);
+  if (UNSAFE_METHODS.has(method)) {
+    headers.set(CSRF_HEADER, await getCsrfToken());
+  }
+
+  return fetch(input, {
+    ...init,
+    method,
+    headers,
+    credentials: init.credentials ?? "include",
+  });
 }
 
 // Use loose check for URL — some runtimes (e.g. React Native) polyfill URL
@@ -364,7 +402,7 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, {
+  const response = await fetchWithCsrf(input, {
     ...init,
     method,
     headers,

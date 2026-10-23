@@ -103,13 +103,22 @@ for (const route of routes.filter((r) => ["admin", "customer"].includes(r.catego
         assert.equal(body.canMutate, false);
       }
     } else {
-      assert.equal(response.status, 401, response.text);
+      assert.equal(response.status, route.method === "GET" ? 401 : 403, response.text);
+      if (route.method !== "GET") {
+        assert.equal(JSON.parse(response.text).code, "csrf_token_invalid");
+      }
     }
     assert.match(response.headers["cache-control"], /no-store/);
     assert.equal(response.headers["x-content-type-options"], "nosniff");
     assert.equal(response.headers["referrer-policy"], "no-referrer");
     for (const cookie of response.headers["set-cookie"] ?? []) {
-      assert.match(cookie, /Expires=Thu, 01 Jan 1970|Max-Age=0/i);
+      if (cookie.startsWith("__Host-sendflow_csrf=")) {
+        assert.match(cookie, /HttpOnly/i);
+        assert.match(cookie, /Secure/i);
+        assert.match(cookie, /SameSite=None/i);
+      } else {
+        assert.match(cookie, /Expires=Thu, 01 Jan 1970|Max-Age=0/i);
+      }
     }
   });
 }
@@ -125,18 +134,11 @@ for (const route of routes.filter((r) => r.method !== "GET" && r.category !== "w
 }
 
 for (const route of routes.filter((r) => r.category === "authentication")) {
-  test(`${route.method} ${route.path} rejects empty trusted-origin input`, async () => {
+  test(`${route.method} ${route.path} rejects mutations without a CSRF token`, async () => {
     const response = await request(route.path, { method: route.method });
-    if (route.path === "/api/auth/sign-out") {
-      assert.equal(response.status, 200);
-      assert.deepEqual(JSON.parse(response.text), { success: true });
-      for (const cookie of response.headers["set-cookie"] ?? []) {
-        assert.match(cookie, /Expires=Thu, 01 Jan 1970|Max-Age=0/i);
-      }
-    } else {
-      assert.ok([400, 401].includes(response.status), response.text);
-      assert.equal(response.headers["set-cookie"], undefined);
-    }
+    assert.equal(response.status, 403, response.text);
+    assert.equal(JSON.parse(response.text).code, "csrf_token_invalid");
+    assert.equal(response.headers["set-cookie"], undefined);
   });
 }
 
@@ -149,7 +151,8 @@ for (const route of routes.filter((r) => r.category === "public-read")) {
       : 200;
     assert.equal(response.status, expected, response.text);
     assert.doesNotMatch(response.text, /postgres(?:ql)?:\/\/|scrypt\$v1|BEGIN (?:RSA )?PRIVATE KEY|stackTrace/i);
-    assert.equal(response.headers["set-cookie"], undefined);
+    assert.ok((response.headers["set-cookie"] ?? [])
+      .some((cookie) => cookie.startsWith("__Host-sendflow_csrf=")));
   });
 }
 
@@ -161,6 +164,45 @@ test("unsigned webhook is rejected without browser Origin and without a database
   }
   const { rows } = await pool.query("SELECT count(*)::int AS n FROM sf_identity_webhook_events");
   assert.equal(rows[0].n, before.rows[0].n);
+});
+
+test("valid CSRF tokens pass the global guard while customer and admin routes still require authorization", async () => {
+  const bootstrap = await request("/api/auth/session");
+  assert.ok(bootstrap.headers["x-csrf-token"]);
+  assert.match(bootstrap.headers["access-control-expose-headers"], /x-csrf-token/i);
+  const csrfCookie = bootstrap.headers["set-cookie"]
+    ?.find((cookie) => cookie.startsWith("__Host-sendflow_csrf="))
+    ?.split(";")[0];
+  assert.ok(csrfCookie);
+  const headers = {
+    Cookie: csrfCookie,
+    "X-CSRF-Token": bootstrap.headers["x-csrf-token"],
+  };
+  const before = await pool.query("SELECT count(*)::int AS n FROM sf_transactions");
+  const customer = await request("/api/me/transfer-quote", { method: "POST", headers });
+  assert.equal(customer.status, 401, customer.text);
+  const admin = await request(`/api${adminPrefix}/operator-pricing-rates`, {
+    method: "PUT",
+    headers,
+  });
+  assert.equal(admin.status, 401, admin.text);
+  const after = await pool.query("SELECT count(*)::int AS n FROM sf_transactions");
+  assert.equal(after.rows[0].n, before.rows[0].n);
+});
+
+test("CORS preflight permits the CSRF header only for an allowed origin", async () => {
+  const preflight = await request("/api/me/transfer-quote", {
+    method: "OPTIONS",
+    rawBody: "",
+    headers: {
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "content-type,x-csrf-token",
+    },
+  });
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers["access-control-allow-origin"], "https://sendflow-test.invalid");
+  assert.equal(preflight.headers["access-control-allow-credentials"], "true");
+  assert.match(preflight.headers["access-control-allow-headers"], /x-csrf-token/i);
 });
 
 test("public object proxy preserves safe headers and bounds the mocked object request", async () => {
@@ -187,7 +229,8 @@ test("public object proxy preserves safe headers and bounds the mocked object re
     assert.equal(response.status, 200);
     assert.ok(signed && fetched);
     assert.equal(response.headers["content-disposition"], "attachment");
-    assert.equal(response.headers["set-cookie"], undefined);
+    assert.ok(response.headers["set-cookie"]
+      .some((cookie) => cookie.startsWith("__Host-sendflow_csrf=")));
     assert.equal(response.headers["x-content-type-options"], "nosniff");
     assert.match(response.headers["content-security-policy"], /^sandbox;/);
   } finally {
@@ -246,6 +289,24 @@ test("full mounted admin router preserves allowed catalogue reads and rejects sc
     headers: { Cookie: `__Host-sendflow_session=${adminToken}`, "x-admin-role": "owner" },
   });
   assert.equal(forged.status, 401);
+});
+
+test("an authorized admin mutation with a valid CSRF token reaches validation without changing data", async () => {
+  const cookie = `${ADMIN_SESSION_COOKIE}=${adminToken}`;
+  const bootstrap = await request("/api/auth/session", { headers: { Cookie: cookie } });
+  assert.ok(bootstrap.headers["x-csrf-token"]);
+  const before = await pool.query("SELECT count(*)::int AS n FROM sf_admin_audit_logs");
+  const response = await request(`/api${adminPrefix}/operator-pricing-rates`, {
+    method: "PUT",
+    headers: {
+      Cookie: cookie,
+      "X-CSRF-Token": bootstrap.headers["x-csrf-token"],
+    },
+  });
+  assert.equal(response.status, 400, response.text);
+  assert.notEqual(JSON.parse(response.text).code, "csrf_token_invalid");
+  const after = await pool.query("SELECT count(*)::int AS n FROM sf_admin_audit_logs");
+  assert.equal(after.rows[0].n, before.rows[0].n);
 });
 
 test("full mounted admin router enforces current mutation rights and PIN before catalogue handlers", async () => {

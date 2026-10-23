@@ -56,6 +56,7 @@ const allowedOrigins = getAllowedOrigins(process.env);
 app.use(
   cors({
     credentials: true,
+    exposedHeaders: ["X-CSRF-Token"],
     origin(origin, callback) {
       const normalizedOrigin = normalizeHttpOrigin(origin);
       if (!origin || (normalizedOrigin && allowedOrigins.has(normalizedOrigin))) {

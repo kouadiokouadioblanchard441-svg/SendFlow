@@ -82,7 +82,7 @@ after(async () => {
   await owner.end();
 });
 
-function request(path, { method = "GET", user, body, rawBody, headers = {} } = {}) {
+function rawRequest(path, { method = "GET", user, body, rawBody, headers = {} } = {}) {
   const data = rawBody ?? (body === undefined ? undefined : JSON.stringify(body));
   return new Promise((resolve, reject) => {
     const req = http.request({
@@ -98,6 +98,46 @@ function request(path, { method = "GET", user, body, rawBody, headers = {} } = {
     });
     req.on("error", reject); req.end(data);
   });
+}
+
+function headerValue(headers, name) {
+  const entry = Object.entries(headers).find(([key]) => key.toLowerCase() === name.toLowerCase());
+  return entry?.[1];
+}
+
+async function request(path, options = {}) {
+  const { method = "GET", user, headers = {} } = options;
+  if (["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase())
+    || path === "/api/webhooks/didit") {
+    return rawRequest(path, options);
+  }
+
+  const suppliedCookie = headerValue(headers, "cookie")
+    ?? (user ? `__Host-sendflow_session=${tokens[user]}` : undefined);
+  const suppliedOrigin = headerValue(headers, "origin") ?? "https://sendflow-test.invalid";
+  const bootstrap = await rawRequest("/api/auth/session", {
+    method: "GET",
+    headers: {
+      Origin: suppliedOrigin,
+      ...(suppliedCookie ? { Cookie: suppliedCookie } : {}),
+    },
+  });
+  const csrfToken = bootstrap.headers["x-csrf-token"];
+  if (typeof csrfToken !== "string") {
+    throw new Error("The isolated API did not issue a CSRF token");
+  }
+
+  const csrfCookie = (bootstrap.headers["set-cookie"] ?? [])
+    .find((cookie) => cookie.startsWith("__Host-sendflow_csrf="))
+    ?.split(";")[0];
+  const cookieParts = [suppliedCookie, csrfCookie].filter(Boolean);
+  const requestHeaders = { ...headers };
+  for (const key of Object.keys(requestHeaders)) {
+    if (["cookie", "x-csrf-token"].includes(key.toLowerCase())) delete requestHeaders[key];
+  }
+  requestHeaders.Cookie = cookieParts.join("; ");
+  requestHeaders["X-CSRF-Token"] = csrfToken;
+  return rawRequest(path, { ...options, headers: requestHeaders });
 }
 
 function logoRequest(path, { method = "GET", body, headers = {} } = {}) {
