@@ -129,6 +129,97 @@ test("shared Togo payout endpoint carries the correct operator network", async (
   }
 });
 
+// Pin expectations independently of catalog construction: a catalog mutation
+// must not make a protocol regression test silently accept the same mutation.
+const directChannelContracts = [
+  ["mtn-bj", "229", 10, "mtn", "transfer/global", "MTN"],
+  ["moov-bj", "229", 10, "moov", "transfer/global", "MOOV"],
+  ["celtiis-bj", "229", 10, "celtiis_bj", "celtiis_bj", "CELTIIS BJ"],
+  ["coris-bj", "229", 10, "coris", null],
+  ["moov-bf", "226", 8, "moov_bf", "moov_bf"],
+  ["orange-bf", "226", 8, "orange_bf", "orange_bf"],
+  ["wave-bf", "226", 8, "wave_bf", "wave_bf"],
+  ["mtn-ci", "225", 10, "mtn_ci", "mtn_ci"],
+  ["moov-ci", "225", 10, "moov_ci", "moov_ci"],
+  ["orange-ci", "225", 10, "orange_ci", "orange_ci"],
+  ["wave-ci", "225", 10, "wave_ci", "wave_ci"],
+  ["orange-sn", "221", 9, "orange_sn", "orange_sn"],
+  ["free-sn", "221", 9, "free_sn", "free_sn"],
+  ["wave-sn", "221", 9, "wave_sn", "wave_sn"],
+  ["togocom-tg", "228", 8, "togocom_tg", "togo", "TOGOCOM TG"],
+  ["moov-tg", "228", 8, "moov_tg", "togo", "MOOV TG"],
+];
+
+for (const [channelId, prefix, digits, payinPath, payoutPath, network] of directChannelContracts) {
+  for (const operation of ["payin", "payout"]) {
+    if (operation === "payout" && payoutPath === null) continue;
+    test(`${channelId} ${operation}: direct live protocol, with synthetic credentials and mocked transport`, async () => {
+      const environment = live();
+      const input = payment({ channelId, phoneNumber: prefix + "0".repeat(digits), otp: "0".repeat(6) });
+      let calls = 0;
+      const client = new FeexpayClient(environment, async (url, init) => {
+        calls++;
+        const suffix = operation === "payin"
+          ? `/api/transactions/public/requesttopay/${payinPath}`
+          : `/api/payouts/public/${payoutPath}`;
+        assert.equal(url, `https://api-v2.feexpay.me${suffix}`);
+        assert.equal(init.method, "POST");
+        assert.equal(init.headers.Authorization, `Bearer ${environment.FEEXPAY_API_KEY}`);
+        assert.equal(init.redirect, "error");
+        assert.deepEqual(JSON.parse(init.body), {
+          shop: environment.FEEXPAY_SHOP_ID,
+          amount: input.amountMinor,
+          phoneNumber: input.phoneNumber,
+          callback_info: operationReference,
+          ...(operation === "payin" ? {
+            description: operationReference, otp: input.otp,
+          } : {
+            motif: operationReference, ...(network ? { network } : {}),
+          }),
+        });
+        return response();
+      });
+      assert.equal((await client.initiate(operation, input)).status, "PENDING");
+      assert.equal(calls, 1);
+    });
+  }
+}
+
+test("Congo Payin and Payout remain blocked for both XAF and XOF before network", async () => {
+  const client = new FeexpayClient(live(), async () => assert.fail("No transport for unsupported currency"));
+  for (const operation of ["payin", "payout"]) {
+    for (const currency of ["XOF", "XAF"]) {
+      await assert.rejects(client.initiate(operation, payment({
+        channelId: "mtn-cg", phoneNumber: "242" + "0".repeat(9), currency,
+      })), hasCode("CURRENCY_UNAVAILABLE"));
+    }
+  }
+});
+
+test("legacy redirect fields are refused even when their HTTPS origin was configured", async () => {
+  const client = new FeexpayClient({ ...live(), FEEXPAY_RETURN_ORIGIN: "https://merchant.invalid" },
+    async () => assert.fail("Direct REST must not accept redirect options"));
+  for (const field of ["returnUrl", "cancelUrl"]) {
+    for (const value of [undefined, "https://merchant.invalid/complete"]) {
+      await assert.rejects(client.initiate("payin", payment({ [field]: value })), hasCode("INVALID_INPUT"));
+    }
+  }
+});
+
+test("documented v2 status response may omit currency; missing currency is never fabricated", async () => {
+  for (const operation of ["payin", "payout"]) {
+    const client = new FeexpayClient(live(), async (_url, init) => {
+      assert.equal(init.method, "GET");
+      return response({ status: "SUCCESSFUL" });
+    });
+    const receipt = await client.getStatus(operation, receiptReference);
+    assert.equal(receipt.status, "SUCCESSFUL");
+    assert.equal(receipt.amountMinor, 1000);
+    assert.equal(receipt.currency, undefined);
+    assert.deepEqual(Object.keys(receipt).sort(), ["amountMinor", "reference", "status"]);
+  }
+});
+
 test("Plesk configuration fails closed on Replit, preview, development or missing explicit gates", async () => {
   const variants = [
     { NODE_ENV: "development" }, { FEEXPAY_LIVE_ENABLED: "false" },

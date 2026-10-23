@@ -92,13 +92,19 @@ the client also normalizes `IN PENDING STATE` to `PENDING`. FeexPay requires
 Payout status verification before treating a payout as final. A `PENDING`
 response is never a successful financial settlement.
 
-The Payin client currently accepts optional `returnUrl` and `cancelUrl` inputs
-and serializes them as `return_url` and `cancel_url`. Those fields were not
-listed in the direct REST Payin request fields reviewed below. They are not a
-checkout flow, but their support by the direct API is **unverified**; do not
-configure or rely on them until FeexPay confirms them. The client also currently
+The direct Payin client rejects legacy `returnUrl` and `cancelUrl` inputs.
+They are not part of the reviewed REST request contract, and no checkout
+or return URL is generated. `FEEXPAY_RETURN_ORIGIN` is not used by this client.
+The client currently
 sends `callback_info` for Payout; confirm that field is accepted on each Payout
 route before depending on it for reconciliation.
+
+The public v2 Payin and Payout status examples include the reference, amount
+and status, but omit `currency`. The protocol parser preserves that absence
+rather than inventing a value. Before settlement, the execution service must
+verify the currency/channel and merchant binding through a documented,
+authenticated source; an optional field in this protocol result is not proof
+that the required financial evidence is present.
 
 The code currently applies the same conservative amount envelope
 (`100–2,000,000`) to both operations. FeexPay's Payin documentation specifies
@@ -119,12 +125,13 @@ Official documentation checked on 2026-10-23:
 
 The source catalog contains 17 collection channels and 16 disbursement channels
 in BJ, BF, CI, SN, TG and CG; it does not invent a Coris BJ payout. The official
-Payin page and status pages were readable. The official Payout page is
-JavaScript-rendered and returned only a loading screen to the documentation
-fetcher; search-indexed excerpts confirmed the status URL and some channel
-details, but did not independently verify every catalog path or network value.
-Treat the remaining Payout channel mapping as unverified until checked against
-the complete official table or FeexPay merchant support.
+Payin page was readable. Some Payout documentation URLs returned only a loading
+screen to the documentation fetcher. Reading the public JavaScript asset served
+by the official documentation confirmed the Payout endpoint paths and the
+Payout status response example. This is documentation evidence, not a request
+to the payment API. Shared-route network enum values, per-channel limits and
+merchant entitlements still require independent confirmation; a passing mock
+test does not prove that the provider accepts a request.
 
 XAF (Congo) remains blocked by SendFlow's current XOF-only execution envelope.
 Payment cards and PI-SPI are outside this Mobile Money integration.
@@ -163,9 +170,8 @@ No environment variable is provisioned automatically by this implementation.
   The existing shared-Neon access middleware remains in force.
   Keep `FEEXPAY_LIVE_ENABLED=false` until the complete server payment lifecycle,
   account entitlements and environment readiness have been verified.
-- Do not configure or send return/cancel URLs until FeexPay confirms they are
-  supported by the direct REST Payin endpoint. A browser return never confirms
-  a payment.
+- Do not pass return/cancel URLs: the direct REST client rejects these options.
+  A browser return never confirms a payment.
 
 Live calls remain blocked on unapproved shared-Neon previews, managed development
 databases, unapproved runtimes and whenever the live switch is off. Environment authorization
@@ -202,3 +208,8 @@ not proof they are enabled for the merchant.
 `node --experimental-strip-types --test src/providers/feexpay/client.test.mjs`
 
 These tests use an injected in-memory transport and make no provider requests.
+The suite pins the expected direct request bodies and paths for the 16 XOF
+channels (16 Payin and 15 Payout cases), checks both directions remain blocked
+for Congo/XAF, and verifies configuration gates, uncertain outcomes, bounded
+responses and status parsing. These are protocol tests, not end-to-end
+customer payment or merchant-entitlement tests.

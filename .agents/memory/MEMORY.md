@@ -34,3 +34,4 @@
 - [PostgreSQL operational scripts](postgresql-operational-scripts.md) — Make psql guard failures nonzero; revoking direct EXECUTE does not disable an existing trigger.
 - [Network defense boundaries](network-defense-boundaries.md) — Target hostile behavior, not all cloud IPs; origin checks do not prove hosting-wide protection.
 - [Workflow process ownership](workflow-process-ownership.md) — Environment updates can leave old children serving ports despite a failed managed workflow; verify ownership before cleanup.
+- [FeexPay documentation](feexpay-documentation.md) — Payout pages may return only a loading shell; inspect the official public asset rather than infer the contract.

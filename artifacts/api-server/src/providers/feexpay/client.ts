@@ -25,8 +25,6 @@ export interface FeexpayPaymentRequest {
   /** Persist a unique server-generated operation reference BEFORE dispatch. */
   operationReference: string;
   otp?: string;
-  returnUrl?: string;
-  cancelUrl?: string;
 }
 
 export interface FeexpayReceipt {
@@ -133,6 +131,8 @@ export class FeexpayClient {
   async initiate(operation: Operation, input: FeexpayPaymentRequest): Promise<FeexpayReceipt> {
     const config = this.configuration();
     if (operation !== "payin" && operation !== "payout") return fail("INVALID_INPUT");
+    // Direct REST only. Never silently revive legacy checkout/redirect options.
+    if ("returnUrl" in input || "cancelUrl" in input) return fail("INVALID_INPUT");
     const channel = feexpayChannels.find((candidate) => candidate.id === input.channelId);
     if (!channel || (config.mode === "sandbox" && !channel.sandbox) ||
       (operation === "payout" && !channel.payoutPath)) return fail("CHANNEL_UNAVAILABLE");
@@ -145,23 +145,12 @@ export class FeexpayClient {
       typeof input.operationReference !== "string" || !/^[A-Z0-9]{12,30}$/.test(input.operationReference)) return fail("INVALID_INPUT");
     if (operation === "payin" && channel.requiresOtp && !input.otp) return fail("INVALID_INPUT");
     if (input.otp !== undefined && !/^[0-9]{4,12}$/.test(input.otp)) return fail("INVALID_INPUT");
-    for (const url of [input.returnUrl, input.cancelUrl]) {
-      if (url !== undefined) {
-        let parsed: URL;
-        try { parsed = new URL(url); } catch { return fail("INVALID_INPUT"); }
-        const approvedOrigin = this.#environment.FEEXPAY_RETURN_ORIGIN;
-        if (parsed.protocol !== "https:" || !approvedOrigin || parsed.origin !== approvedOrigin ||
-          parsed.username || parsed.password || parsed.hash) return fail("INVALID_INPUT");
-      }
-    }
     const body: Record<string, unknown> = {
       shop: config.shop, amount: input.amountMinor, phoneNumber: input.phoneNumber,
       callback_info: input.operationReference,
       ...(operation === "payin" ? {
         description: input.operationReference,
         ...(input.otp ? { otp: input.otp } : {}),
-        ...(input.returnUrl ? { return_url: input.returnUrl } : {}),
-        ...(input.cancelUrl ? { cancel_url: input.cancelUrl } : {}),
       } : {
         motif: input.operationReference,
         ...(channel.payoutNetwork ? { network: channel.payoutNetwork } : {}),
