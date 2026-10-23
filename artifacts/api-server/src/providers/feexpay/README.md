@@ -48,11 +48,31 @@ rollback against disposable local PostgreSQL, without using Neon or FeexPay.
 `FeexpayClient` is a protocol client, **not yet an end-to-end payment
 integration**. A source search found no production route or worker invoking
 `initiate()` or `getStatus()`; the client is invoked only by its mocked tests.
-There is no FeexPay webhook settlement, payment dispatch journal, ledger
-reservation/write, or status-polling worker. The administrator's
+The payment-intent, attempt, confirmation and wallet-reservation schemas and
+their SQL guards exist; see `lib/db/migrations/payment-execution-structures.md`.
+They are not yet connected to an application execution service. There is no
+FeexPay webhook settlement handler or status-polling worker invoking this client,
+and no customer payment route orchestrating dispatch and ledger settlement.
+The administrator's
 `adapterStatus: "prepared"` means configuration/protocol preparation only. It
 does not mean that customer Payin or Payout works or that the provider is
 activated.
+
+### Customer-page boundary
+
+The existing deposit, inter-network and international forms are SendFlow pages,
+not provider checkout pages. Customer submission is currently disabled by
+`artifacts/sendflow/src/lib/transaction-readiness.ts`; the transfer-quote route
+only validates and calculates a quote, and does not initiate payment.
+
+Keep the existing page appearance when connecting payment execution. The
+browser must submit user inputs to an authenticated SendFlow endpoint, not call
+the provider directly or receive provider credentials/raw errors. The server
+must select the configured provider, compute authoritative amounts, persist
+idempotent dispatch state, verify provider status, and settle the ledger before
+reporting success. Customer responses, receipts and history must use SendFlow
+wording, without exposing internal provider routing. A mobile-money
+authorization step required by a channel is not evidence of completed payment.
 
 ## Direct API protocol represented in source
 
