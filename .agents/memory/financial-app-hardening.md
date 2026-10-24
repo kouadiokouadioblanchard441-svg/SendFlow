@@ -26,6 +26,12 @@ The server is the only authority for SendFlow. The frontend is untrusted and mus
 
 **How to apply:** Treat client claims, browser state, and persisted values as untrusted inputs. Keep credentials in Replit Secrets and access them only from server code; do not expose their values to the frontend. The server must check SendFlow sessions, database roles, PIN sessions, resource ownership, schemas, and financial invariants before returning or changing data. Fail closed on validation or storage errors, prevent duplicate or partial operations, and test without modifying real accounts or the shared Neon database.
 
+Do not hardcode SendFlow's public application URL or deployment domain in application source or client bundles; keep deployment origins in the appropriate environment or hosting configuration.
+
+**Why:** The user explicitly said the known application URL must not be put in code.
+
+**How to apply:** For Plesk, use the server's environment settings for origins and callbacks. Do not copy a domain into source code or expose server-only origins through frontend variables.
+
 Financial amount and balance invariants must also be enforced by database `CHECK` constraints; route validation alone does not protect alternate or future write paths. When historical rows cannot be reviewed, prepare additive `NOT VALID` constraints to protect new writes, then validate existing data separately after an authorized review.
 
 **Why:** Direct SQL and future code paths can bypass application validation, while the shared Neon database must not be inspected or changed without authorization.
