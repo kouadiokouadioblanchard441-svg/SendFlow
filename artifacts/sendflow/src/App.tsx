@@ -1,33 +1,45 @@
-import { lazy, Suspense, useEffect, useState, type ReactElement, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { getGetCustomerSessionQueryKey, useGetCustomerSession } from '@workspace/api-client-react';
-import { LegalMentionsPage, PrivacyPage, type LegalPageProps } from '@/pages/legal';
-import NotFound from '@/pages/not-found';
-import AccountPage from '@/pages/account';
-import AccountInfoPage from '@/pages/account-info';
-import AccountLimitPage from '@/pages/account-limit';
-import CustomerServicePage from '@/pages/customer-service';
-import DepositPage from '@/pages/deposit';
-import HistoryPage from '@/pages/history';
-import TransactionDetailPage from '@/pages/transaction-detail';
-import InternationalTransferPage from '@/pages/international-transfer';
-import InterNetworkTransferPage from '@/pages/inter-transfer';
-import NotificationsPage, { NotificationDetailPage } from '@/pages/notifications';
-import PinPage, { ChangePinPage } from '@/pages/pin';
-import PinChangeSuccessPage from '@/pages/pin-success';
-import PricingPage from '@/pages/pricing';
-import ResetPage from '@/pages/reset';
-import SigninPage from '@/pages/sign-in';
-import SignupPage from '@/pages/sign-up';
-import OnboardingPage from '@/pages/onboarding';
+import type { LegalPageProps } from '@/pages/legal';
 import { useSeo } from '@/lib/seo';
 import { clearPinUnlock, getPinUnlockExpiry } from '@/lib/pin-unlock';
 import { requiresCustomerPinUnlock, shouldRelockCustomerPinUnlock } from '@/lib/customer-route-guard';
 import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 
+const LegalMentionsPage = lazy(() =>
+  import('@/pages/legal').then((module) => ({ default: module.LegalMentionsPage })),
+);
+const PrivacyPage = lazy(() =>
+  import('@/pages/legal').then((module) => ({ default: module.PrivacyPage })),
+);
+const NotFound = lazy(() => import('@/pages/not-found'));
+const AccountPage = lazy(() => import('@/pages/account'));
+const AccountInfoPage = lazy(() => import('@/pages/account-info'));
+const AccountLimitPage = lazy(() => import('@/pages/account-limit'));
+const CustomerServicePage = lazy(() => import('@/pages/customer-service'));
+const DepositPage = lazy(() => import('@/pages/deposit'));
+const HistoryPage = lazy(() => import('@/pages/history'));
+const TransactionDetailPage = lazy(() => import('@/pages/transaction-detail'));
+const InternationalTransferPage = lazy(() => import('@/pages/international-transfer'));
+const InterNetworkTransferPage = lazy(() => import('@/pages/inter-transfer'));
+const NotificationsPage = lazy(() => import('@/pages/notifications'));
+const NotificationDetailPage = lazy(() =>
+  import('@/pages/notifications').then((module) => ({ default: module.NotificationDetailPage })),
+);
+const PinPage = lazy(() => import('@/pages/pin'));
+const ChangePinPage = lazy(() =>
+  import('@/pages/pin').then((module) => ({ default: module.ChangePinPage })),
+);
+const PinChangeSuccessPage = lazy(() => import('@/pages/pin-success'));
+const PricingPage = lazy(() => import('@/pages/pricing'));
+const ResetPage = lazy(() => import('@/pages/reset'));
+const SigninPage = lazy(() => import('@/pages/sign-in'));
+const SignupPage = lazy(() => import('@/pages/sign-up'));
+const OnboardingPage = lazy(() => import('@/pages/onboarding'));
 const AdminAccessPage = lazy(() => import('@/pages/admin-access'));
 const AdminSignInPage = lazy(() => import('@/pages/admin-access').then((module) => ({
   default: module.AdminSignInPage,
@@ -115,7 +127,7 @@ function PublicLegalRoute({
   title,
   description,
 }: {
-  page: (props: LegalPageProps) => ReactElement;
+  page: ComponentType<LegalPageProps>;
   path: string;
   title: string;
   description: string;
@@ -140,6 +152,19 @@ function NotFoundRoute() {
     robots: 'noindex,nofollow',
   });
   return <NotFound />;
+}
+
+function RouteLoadingFallback() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      data-testid="route-loading"
+      className="flex min-h-[60vh] items-center justify-center text-muted-foreground"
+    >
+      Chargement de la page…
+    </div>
+  );
 }
 
 function useProtectImages() {
@@ -191,68 +216,70 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <CustomerPinGuard>
-            <Switch>
-              <Route
-                path={`${ADMIN_ROUTE_PATH}/sign-in/*?`}
-                component={() => (
-                  <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de la connexion administrateur…</div>}>
-                    <AdminSignInPage />
-                  </Suspense>
-                )}
-              />
-              <Route
-                path={`${ADMIN_ROUTE_PATH}/*?`}
-                component={() => (
-                  <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de l’espace administrateur…</div>}>
-                    <AdminAccessPage />
-                  </Suspense>
-                )}
-              />
-              <Route path="/" component={OnboardingPage} />
-              <Route path="/sign-in/*?" component={SigninPage} />
-              <Route path="/sign-up/*?" component={SignupPage} />
-              <Route path="/create-pin" component={() => <PinPage mode="create" />} />
-              <Route path="/pin" component={() => <PinPage mode="enter" />} />
-              <Route path="/change-pin" component={ChangePinPage} />
-              <Route path="/change-pin-success" component={PinChangeSuccessPage} />
-              <Route path="/pricing" component={PricingPage} />
-              <Route path="/forgot-password" component={() => <ResetPage mode="password" />} />
-              <Route path="/forgot-pin" component={() => <ResetPage mode="pin" />} />
-              <Route path="/account" component={AccountPage} />
-              <Route path="/account-info" component={AccountInfoPage} />
-              <Route path="/account-limit" component={AccountLimitPage} />
-              <Route path="/customer-service" component={CustomerServicePage} />
-              <Route path="/deposit" component={DepositPage} />
-              <Route path="/international-transfer" component={InternationalTransferPage} />
-              <Route path="/inter-transfer" component={InterNetworkTransferPage} />
-              <Route path="/history" component={HistoryPage} />
-              <Route path="/transaction/:id" component={TransactionDetailPage} />
-              <Route path="/notifications/:id" component={NotificationDetailPage} />
-              <Route path="/notifications" component={NotificationsPage} />
-              <Route
-                path="/confidentialite"
-                component={() => (
-                  <PublicLegalRoute
-                    page={PrivacyPage}
-                    path="/confidentialite"
-                    title="Confidentialité · SendFlow"
-                    description="Politique de confidentialité de SendFlow."
-                  />
-                )}
-              />
-              <Route
-                path="/mentions-legales"
-                component={() => (
-                  <PublicLegalRoute
-                    page={LegalMentionsPage}
-                    path="/mentions-legales"
-                    title="Mentions légales · SendFlow"
-                    description="Mentions légales de SendFlow."
-                  />
-                )}
-              />
-              <Route component={NotFoundRoute} />
-            </Switch>
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <Switch>
+                <Route
+                  path={`${ADMIN_ROUTE_PATH}/sign-in/*?`}
+                  component={() => (
+                    <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de la connexion administrateur…</div>}>
+                      <AdminSignInPage />
+                    </Suspense>
+                  )}
+                />
+                <Route
+                  path={`${ADMIN_ROUTE_PATH}/*?`}
+                  component={() => (
+                    <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de l’espace administrateur…</div>}>
+                      <AdminAccessPage />
+                    </Suspense>
+                  )}
+                />
+                <Route path="/" component={OnboardingPage} />
+                <Route path="/sign-in/*?" component={SigninPage} />
+                <Route path="/sign-up/*?" component={SignupPage} />
+                <Route path="/create-pin" component={() => <PinPage mode="create" />} />
+                <Route path="/pin" component={() => <PinPage mode="enter" />} />
+                <Route path="/change-pin" component={ChangePinPage} />
+                <Route path="/change-pin-success" component={PinChangeSuccessPage} />
+                <Route path="/pricing" component={PricingPage} />
+                <Route path="/forgot-password" component={() => <ResetPage mode="password" />} />
+                <Route path="/forgot-pin" component={() => <ResetPage mode="pin" />} />
+                <Route path="/account" component={AccountPage} />
+                <Route path="/account-info" component={AccountInfoPage} />
+                <Route path="/account-limit" component={AccountLimitPage} />
+                <Route path="/customer-service" component={CustomerServicePage} />
+                <Route path="/deposit" component={DepositPage} />
+                <Route path="/international-transfer" component={InternationalTransferPage} />
+                <Route path="/inter-transfer" component={InterNetworkTransferPage} />
+                <Route path="/history" component={HistoryPage} />
+                <Route path="/transaction/:id" component={TransactionDetailPage} />
+                <Route path="/notifications/:id" component={NotificationDetailPage} />
+                <Route path="/notifications" component={NotificationsPage} />
+                <Route
+                  path="/confidentialite"
+                  component={() => (
+                    <PublicLegalRoute
+                      page={PrivacyPage}
+                      path="/confidentialite"
+                      title="Confidentialité · SendFlow"
+                      description="Politique de confidentialité de SendFlow."
+                    />
+                  )}
+                />
+                <Route
+                  path="/mentions-legales"
+                  component={() => (
+                    <PublicLegalRoute
+                      page={LegalMentionsPage}
+                      path="/mentions-legales"
+                      title="Mentions légales · SendFlow"
+                      description="Mentions légales de SendFlow."
+                    />
+                  )}
+                />
+                <Route component={NotFoundRoute} />
+              </Switch>
+            </Suspense>
           </CustomerPinGuard>
           <Toaster />
         </TooltipProvider>
