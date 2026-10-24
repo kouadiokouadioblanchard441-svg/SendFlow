@@ -4,6 +4,8 @@ import { realpath, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { enforceIpAccess, trustedProxyHops } from "@workspace/db/ip-blocklist";
+import { checkPortalRouteAccess, type PortalRouteDecision } from "./portal-route-access";
+import { isPortalRouteRequest } from "./portal-route-path";
 
 const mime: Record<string, string> = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
@@ -18,6 +20,7 @@ const mime: Record<string, string> = {
 export function createSiteServer(
   rootDirectory: string,
   gate: (req: IncomingMessage, res: ServerResponse) => Promise<boolean> = enforceIpAccess,
+  portalAccess: typeof checkPortalRouteAccess = checkPortalRouteAccess,
 ) {
   const root = resolve(rootDirectory);
   const server = createServer(async (req, res) => {
@@ -26,12 +29,20 @@ export function createSiteServer(
       res.setHeader("Cache-Control", "no-store, private");
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Referrer-Policy", "no-referrer");
-      if (req.method !== "GET" && req.method !== "HEAD") {
-        res.setHeader("Allow", "GET, HEAD"); res.writeHead(405).end(); return;
-      }
       const pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);
       if (pathname.includes("\0") || pathname.includes("\\") || pathname.split("/").some((p) => p.startsWith("."))) {
         res.writeHead(404).end(); return;
+      }
+      if (isPortalRouteRequest(req.url, process.env.BASE_PATH ?? "/")) {
+        const access: PortalRouteDecision = await portalAccess(req);
+        if (access !== "allowed") {
+          res.setHeader("Cache-Control", "no-store, private");
+          res.writeHead(access === "not-found" ? 404 : 503).end();
+          return;
+        }
+      }
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        res.setHeader("Allow", "GET, HEAD"); res.writeHead(405).end(); return;
       }
       let file = resolve(root, `.${pathname}`);
       if (!file.startsWith(root + sep) && file !== root) { res.writeHead(404).end(); return; }

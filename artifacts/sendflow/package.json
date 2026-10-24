@@ -15,7 +15,7 @@
     "android:debug": "pnpm run build:android",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:auth-routing": "node --experimental-strip-types --test src/lib/customer-route-guard.test.mjs src/lib/customer-password-validation.test.mjs src/lib/account-profile.test.mjs"
+    "test:auth-routing": "node --experimental-strip-types --test src/lib/customer-route-guard.test.mjs src/lib/customer-password-validation.test.mjs src/lib/account-profile.test.mjs server/portal-route-access.test.mjs"
   },
   "devDependencies": {
     "@capacitor/android": "8.5.3",

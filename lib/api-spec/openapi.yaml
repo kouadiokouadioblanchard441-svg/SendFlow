@@ -733,11 +733,13 @@ paths:
         - sendFlowSession: []
       responses:
         "200":
-          description: Whether the authenticated account is eligible to enter the administrator sign-in flow.
+          description: The authenticated account has an active grant and may enter the protected sign-in flow.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CustomerPortalEligibilityResult"
+        "404":
+          description: The authenticated account has no active grant; the protected route is not available.
         "401":
           description: Authentication is required.
           content:

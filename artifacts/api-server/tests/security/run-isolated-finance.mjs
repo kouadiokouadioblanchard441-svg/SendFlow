@@ -168,6 +168,7 @@ try {
       export { isIpBlocked, enforceIpAccess } from "@workspace/db/ip-blocklist";
       export { createAdminIpBlocklistRouter } from "./src/routes/admin-ip-blocklist";
       export { createSiteServer } from "../sendflow/server/site-server";
+       export { PORTAL_ROUTE_PATH } from "../sendflow/server/portal-route-path";
       export { default as express } from "express";
       export { authorizeAndReleaseNetworkIp, createNetworkException, revokeNetworkException, releaseAutomaticBlock, readNetworkDefense } from "./src/services/network-defense";
       export { createAdminNetworkDefenseRouter } from "./src/routes/admin-network-defense";

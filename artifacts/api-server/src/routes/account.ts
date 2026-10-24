@@ -142,7 +142,11 @@ router.get("/me/portal-eligibility", async (req, res): Promise<void> => {
       .limit(1);
 
     res.setHeader("Cache-Control", "no-store, private");
-    res.json(GetCustomerPortalEligibilityResponse.parse({ isAuthorized: !!grant }));
+    if (!grant) {
+      res.status(404).end();
+      return;
+    }
+    res.json(GetCustomerPortalEligibilityResponse.parse({ isAuthorized: true }));
   } catch {
     req.log.error({ userId: session.userId }, "Administrator eligibility lookup failed");
     res.status(503).json({ error: "Authorization state unavailable" });

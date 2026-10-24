@@ -3,7 +3,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { getGetCustomerSessionQueryKey, useGetCustomerSession } from '@workspace/api-client-react';
+import {
+  getGetCurrentAccountQueryKey,
+  getGetCustomerPortalEligibilityQueryKey,
+  getGetCustomerSessionQueryKey,
+  useGetCurrentAccount,
+  useGetCustomerPortalEligibility,
+  useGetCustomerSession,
+} from '@workspace/api-client-react';
 import type { LegalPageProps } from '@/pages/legal';
 import { useSeo } from '@/lib/seo';
 import { clearPinUnlock, getPinUnlockExpiry } from '@/lib/pin-unlock';
@@ -155,6 +162,43 @@ function NotFoundRoute() {
   return <NotFound />;
 }
 
+function PortalRouteGate({ children }: { children: ReactNode }) {
+  const accountQuery = useGetCurrentAccount({
+    query: {
+      queryKey: getGetCurrentAccountQueryKey(),
+      enabled: true,
+      retry: false,
+      staleTime: 0,
+      refetchOnMount: 'always',
+    },
+  });
+  const userId = accountQuery.data?.userId;
+  const eligibilityQuery = useGetCustomerPortalEligibility({
+    query: {
+      queryKey: [...getGetCustomerPortalEligibilityQueryKey(), userId ?? 'no-account'],
+      enabled: Boolean(userId),
+      retry: false,
+      staleTime: 0,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: true,
+      refetchInterval: 15_000,
+    },
+  });
+
+  if (
+    accountQuery.isFetching
+    || accountQuery.isLoading
+    || eligibilityQuery.isFetching
+    || eligibilityQuery.isLoading
+  ) return null;
+
+  if (!userId || eligibilityQuery.data?.isAuthorized !== true) {
+    return <NotFoundRoute />;
+  }
+
+  return children;
+}
+
 function RouteLoadingFallback() {
   return (
     <div
@@ -222,25 +266,31 @@ function App() {
                 <Route
                   path={`${ADMIN_ROUTE_PATH}/sign-in/*?`}
                   component={() => (
-                    <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de la connexion administrateur…</div>}>
-                      <AdminSignInPage />
-                    </Suspense>
+                    <PortalRouteGate>
+                      <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de la connexion administrateur…</div>}>
+                        <AdminSignInPage />
+                      </Suspense>
+                    </PortalRouteGate>
                   )}
                 />
                 <Route
                   path={`${ADMIN_ROUTE_PATH}/pin`}
                   component={() => (
-                    <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement du PIN administrateur…</div>}>
-                      <AdminPinPage />
-                    </Suspense>
+                    <PortalRouteGate>
+                      <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement du PIN administrateur…</div>}>
+                        <AdminPinPage />
+                      </Suspense>
+                    </PortalRouteGate>
                   )}
                 />
                 <Route
                   path={`${ADMIN_ROUTE_PATH}/*?`}
                   component={() => (
-                    <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de l’espace administrateur…</div>}>
-                      <AdminAccessPage />
-                    </Suspense>
+                    <PortalRouteGate>
+                      <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de l’espace administrateur…</div>}>
+                        <AdminAccessPage />
+                      </Suspense>
+                    </PortalRouteGate>
                   )}
                 />
                 <Route path="/" component={OnboardingPage} />

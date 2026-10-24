@@ -139,6 +139,32 @@ test("Site HTML, SPA routes, assets and HEAD are blocked; DB failure fails close
     await revokeIpBlock("fixture-security-admin",row.id,row.version,"Fixture cleanup");
     assert.equal((await request(server,"/",{ip:"198.51.100.55"})).status,200);
   }finally{await close(server);await rm(root,{recursive:true,force:true});}
+  const portalRoot=await mkdtemp(join(tmpdir(),"sf-portal-site-"));
+  await writeFile(join(portalRoot,"index.html"),"<html>Isolated portal fixture</html>");
+  const portalServer=runtime.createSiteServer(
+    portalRoot,
+    async()=>true,
+    async req=>req.headers.cookie==="session=authorized" ? "allowed" : "not-found",
+  );
+  await listen(portalServer);
+  try {
+    assert.equal((await request(portalServer,runtime.PORTAL_ROUTE_PATH)).status,404);
+    const denied=await request(portalServer,`${runtime.PORTAL_ROUTE_PATH}/pin`);
+    assert.equal(denied.status,404);
+    assert.equal(denied.text,"");
+    const allowed=await request(portalServer,runtime.PORTAL_ROUTE_PATH,{
+      extra:{cookie:"session=authorized"},
+    });
+    assert.equal(allowed.status,200);
+    assert.match(allowed.text,/Isolated portal fixture/);
+  }finally{await close(portalServer);await rm(portalRoot,{recursive:true,force:true});}
+  const unavailableRoot=await mkdtemp(join(tmpdir(),"sf-portal-unavailable-"));
+  await writeFile(join(unavailableRoot,"index.html"),"<html>Must not be served</html>");
+  const unavailable=runtime.createSiteServer(unavailableRoot,async()=>true,async()=>"unavailable");
+  await listen(unavailable);
+  try {
+    assert.equal((await request(unavailable,runtime.PORTAL_ROUTE_PATH)).status,503);
+  }finally{await close(unavailable);await rm(unavailableRoot,{recursive:true,force:true});}
   const broken=runtime.createSiteServer("/unused",(req,res)=>runtime.enforceIpAccess(req,res,async()=>{throw new Error("fixture DB outage")}));
   await listen(broken);
   try{ assert.equal((await request(broken,"/")).status,503); }finally{await close(broken);}

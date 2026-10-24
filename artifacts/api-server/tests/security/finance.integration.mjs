@@ -695,8 +695,8 @@ test("shared-Neon access is confined to one provisioned viewer, with real passwo
     assert.equal((await request("/api/auth/unlock", { method: "POST", headers: freshHeaders, body: { pin } })).status, 200);
     assert.equal((await request("/api/me", { headers: freshHeaders })).status, 200);
     const viewerPortalEligibility = await request("/api/me/portal-eligibility", { headers: freshHeaders });
-    assert.equal(viewerPortalEligibility.status, 200);
-    assert.deepEqual(JSON.parse(viewerPortalEligibility.text), { isAuthorized: false });
+    assert.equal(viewerPortalEligibility.status, 404);
+    assert.equal(viewerPortalEligibility.text, "");
     assert.equal((await request("/api/auth/sign-out", { method: "POST", headers: freshHeaders })).status, 200);
     assert.equal((await request("/api/auth/session", { headers: freshHeaders })).status, 401);
     const profile = await request("/api/me", { headers });

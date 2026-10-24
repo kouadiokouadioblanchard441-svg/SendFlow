@@ -64,6 +64,11 @@ Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un ch
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
 - Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
   le reste doit atteindre le serveur Node du site. Chaque service écoute son propre `PORT`.
+- Définir `SENDFLOW_INTERNAL_API_ORIGIN` dans l'environnement privé du service site,
+  vers l'origine HTTP(S) interne de l'API, par exemple `http://127.0.0.1:<API_PORT>`.
+  Le serveur du site l'utilise pour vérifier la session avant de servir la route protégée.
+  Ne pas l'exposer en `VITE_*` ni le déduire de l'en-tête Host. Si l'origine manque ou
+  si l'API est indisponible, cette route échoue fermée avec HTTP 503.
 - Les API inconnues doivent rester des erreurs API, pas du HTML de la SPA. Un fichier
   JS/CSS absent doit rester un 404 ; les routes SPA valides doivent accepter un refresh.
 - Définir `NODE_ENV=production`, `SENDFLOW_DATABASE_TARGET=production`,
