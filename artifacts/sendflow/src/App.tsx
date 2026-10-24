@@ -27,6 +27,7 @@ const NotFound = lazy(() => import('@/pages/not-found'));
 const AccountPage = lazy(() => import('@/pages/account'));
 const AccountInfoPage = lazy(() => import('@/pages/account-info'));
 const AccountLimitPage = lazy(() => import('@/pages/account-limit'));
+const LinkFlowPage = lazy(() => import('@/pages/linkflow'));
 const CustomerServicePage = lazy(() => import('@/pages/customer-service'));
 const DepositPage = lazy(() => import('@/pages/deposit'));
 const HistoryPage = lazy(() => import('@/pages/history'));
@@ -298,6 +299,7 @@ function App() {
                 <Route path="/account" component={AccountPage} />
                 <Route path="/account-info" component={AccountInfoPage} />
                 <Route path="/account-limit" component={AccountLimitPage} />
+                <Route path="/linkflow" component={LinkFlowPage} />
                 <Route path="/customer-service" component={CustomerServicePage} />
                 <Route path="/deposit" component={DepositPage} />
                 <Route path="/international-transfer" component={InternationalTransferPage} />
