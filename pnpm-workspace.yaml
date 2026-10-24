@@ -75,6 +75,7 @@ onlyBuiltDependencies:
 
 overrides:
   "express>proxy-addr": "2.0.8"
+  "express>body-parser": "2.4.0"
   "xcode>uuid": "11.1.1"
   "fast-copy@4.0.4": "4.1.2"
   postcss-selector-parser: "7.1.6"

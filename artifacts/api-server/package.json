@@ -11,6 +11,7 @@
     "test:log-safety": "node --experimental-strip-types --test src/lib/log-safety.test.mjs",
     "test:auth": "node --experimental-strip-types --test src/lib/customer-auth-crypto.test.mjs src/lib/admin-pin-session.test.mjs src/lib/customer-auth-rate-limit-policy.test.mjs src/lib/customer-auth-rate-limit-buckets.test.mjs src/lib/customer-pin-session-policy.test.mjs src/lib/customer-password-policy.test.mjs src/lib/customer-recovery-policy.test.mjs",
     "test:security": "node --experimental-strip-types --test src/lib/account-limit-policy.test.mjs src/lib/admin-pin-session.test.mjs src/lib/didit-webhook-policy.test.mjs src/lib/didit-verification-policy.test.mjs src/lib/didit-session-rate-limit.test.mjs src/lib/didit-session-reservation.test.mjs src/lib/origin-policy.test.mjs src/lib/trust-proxy-policy.test.mjs src/lib/shared-neon-preview-guard.test.mjs src/lib/operator-pricing-seed-policy.test.mjs src/lib/customer-pin-session-policy.test.mjs src/lib/sql-injection-boundary.test.mjs",
+    "test:body-parser-security": "node --experimental-strip-types --test src/lib/body-parser-security.test.mjs",
     "test:routes:isolated": "node --experimental-strip-types --test src/lib/api-request-security.test.mjs src/lib/public-object-response-policy.test.mjs && node tests/security/run-isolated-finance.mjs --routes-security-only",
     "test:wallet-integrity": "node --test tests/security/test_concurrency_wallet_integrity.mjs",
     "test:finance:isolated": "node tests/security/run-isolated-finance.mjs",
