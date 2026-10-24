@@ -350,3 +350,17 @@ mtime_ms = 1792662212842
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/01e4a412-0b14-45a9-8996-bed8df8baf70/00f77eac-fb39-4ad1-b251-631e462a241b"
 storage_version_token = "1792662219785278"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "okw6-foCVYzgNBd6eEqIL"
+uri = "file://artifacts/sendflow/android/app/build/outputs/apk/debug/app-debug.apk"
+type = "unspecified"
+title = "SendFlow — APK Android (debug)"
+description = "APK de débogage généré par Capacitor. Version à installer pour vérification; ce n’est pas une version release signée."
+logical_id = "302cc670-ddd8-4137-b91a-d1bc1957e7de"
+content_hash = "sha256:1a52db8db1ff88c6e87177c1541c4c218a730b097e751d8462be896c137a3465"
+size = 40498376
+mtime_ms = 1792760774738
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/302cc670-ddd8-4137-b91a-d1bc1957e7de/958aa195-4d13-4a06-a024-25b3bd82a036"
+storage_version_token = "1792854396641702"
+content_type = "application/octet-stream"
