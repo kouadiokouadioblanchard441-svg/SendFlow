@@ -9,7 +9,6 @@ import {
   useSignInAdmin,
   useSignOutAdmin,
 } from "@workspace/api-client-react";
-import { AdminPinDialog } from "@/components/admin-pin-dialog";
 import { Button } from "@/components/ui/button";
 import { ADMIN_ROUTE_PATH, adminRoute } from "@/lib/admin-route";
 import { useSeo } from "@/lib/seo";
@@ -74,7 +73,7 @@ export function AdminSignInPage() {
       await verifyOtp.mutateAsync({ data: { challengeId, code, purpose: "admin_login" } });
       await signIn.mutateAsync({ data: { phone, challengeId } });
       queryClient.clear();
-      setLocation(adminRoute("/operator-pricing"));
+      setLocation(adminRoute("/pin"));
     } catch (error) { setMessage(authErrorMessage(error)); }
   }
   useSeo({
@@ -175,18 +174,7 @@ export default function AdminAccessPage() {
   }
 
   if (!accessQuery.data.pinUnlocked) {
-    return (
-      <AdminPinDialog
-        open
-        cancelLabel="Retour au profil"
-        onOpenChange={(open) => {
-          if (!open) setLocation("/account-info");
-        }}
-        onUnlocked={async () => {
-          await accessQuery.refetch();
-        }}
-      />
-    );
+    return <Redirect to={adminRoute("/pin")} />;
   }
 
   return (

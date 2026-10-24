@@ -44,6 +44,7 @@ const AdminAccessPage = lazy(() => import('@/pages/admin-access'));
 const AdminSignInPage = lazy(() => import('@/pages/admin-access').then((module) => ({
   default: module.AdminSignInPage,
 })));
+const AdminPinPage = lazy(() => import('@/pages/admin-pin'));
 
 function getHttpStatus(error: unknown) {
   if (!error || typeof error !== 'object') return undefined;
@@ -223,6 +224,14 @@ function App() {
                   component={() => (
                     <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de la connexion administrateur…</div>}>
                       <AdminSignInPage />
+                    </Suspense>
+                  )}
+                />
+                <Route
+                  path={`${ADMIN_ROUTE_PATH}/pin`}
+                  component={() => (
+                    <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement du PIN administrateur…</div>}>
+                      <AdminPinPage />
                     </Suspense>
                   )}
                 />

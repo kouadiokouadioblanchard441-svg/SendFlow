@@ -5555,6 +5555,39 @@
   letter-spacing: -.02em;
 }
 
+.sendflow-account-info-admin {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-left: auto;
+  border: 1px solid #dfc5ff;
+  border-radius: 11px;
+  background: #f3e8ff;
+  color: #7d22ff;
+  cursor: pointer;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background-color .18s ease, transform .18s ease;
+}
+
+.sendflow-account-info-admin:hover,
+.sendflow-account-info-admin:focus-visible {
+  border-color: #c99cff;
+  background: #ead8ff;
+  color: #6d16ec;
+  outline: 0;
+}
+
+.sendflow-account-info-admin:active {
+  background: #dfc5ff;
+  transform: scale(.96);
+}
+
 .sendflow-account-info-back {
   display: grid;
   width: 40px;
