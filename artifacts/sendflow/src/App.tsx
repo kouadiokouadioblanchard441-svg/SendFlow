@@ -204,19 +204,6 @@ function PortalRouteGate({ children }: { children: ReactNode }) {
   return children;
 }
 
-function RouteLoadingFallback() {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      data-testid="route-loading"
-      className="flex min-h-[60vh] items-center justify-center text-muted-foreground"
-    >
-      Chargement de la page…
-    </div>
-  );
-}
-
 function useProtectImages() {
   useEffect(() => {
     const isImageTarget = (target: EventTarget | null) =>
@@ -266,7 +253,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <CustomerPinGuard>
-            <Suspense fallback={<RouteLoadingFallback />}>
+            <Suspense fallback={null}>
               <Switch>
                 <Route
                   path={`${ADMIN_ROUTE_PATH}/sign-in/*?`}
