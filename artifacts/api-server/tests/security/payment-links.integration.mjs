@@ -1,0 +1,501 @@
+import assert from "node:assert/strict";
+import { before, after, test } from "node:test";
+import { createRequire } from "node:module";
+import { randomBytes, randomUUID } from "node:crypto";
+import http from "node:http";
+import pg from "pg";
+import sharp from "sharp";
+import {
+  isPaymentLinkCreationAllowed,
+  normalizePaymentLinkImage,
+  normalizePaymentLinkInput,
+  PAYMENT_LINK_IMAGE_MAX_BYTES,
+} from "../../src/services/payment-links.ts";
+import { isViewerRouteCandidate } from "../../src/lib/shared-neon-preview-guard.ts";
+
+if (!process.env.SENDFLOW_ISOLATED_RUNTIME?.includes("/sendflow-isolated-finance-")
+  || !process.env.SENDFLOW_FIXTURE_SOCKET?.includes("/sendflow-isolated-finance-")) {
+  throw new Error("Run only through the isolated PostgreSQL runner");
+}
+
+globalThis.fetch = async () => { throw new Error("External network forbidden in payment-link tests"); };
+const runtime = createRequire(import.meta.url)(process.env.SENDFLOW_ISOLATED_RUNTIME);
+const owner = new pg.Pool({
+  host: process.env.SENDFLOW_FIXTURE_SOCKET,
+  port: 15432,
+  database: "postgres",
+  user: "sf_fixture_owner",
+});
+const tokens = new Map();
+let server;
+
+before(async () => {
+  for (const [userId, unlocked] of [
+    ["payment-link-owner-a", true],
+    ["payment-link-owner-b", true],
+    ["payment-link-image-owner", true],
+    ["payment-link-locked", false],
+    ["payment-link-concurrent", true],
+    ["payment-link-rate", true],
+  ]) {
+    await owner.query("INSERT INTO sf_users(id,status,display_name) VALUES($1,'active',$2)", [userId, userId]);
+    await owner.query(`INSERT INTO sf_customer_credentials
+      (user_id,password_hash,pin_hash,privacy_accepted_at,privacy_policy_version)
+      VALUES($1,'fixture-unused-hash','fixture-unused-pin',now(),'fixture')`, [userId]);
+    const token = randomBytes(32).toString("base64url");
+    tokens.set(userId, token);
+    await owner.query(`INSERT INTO sf_customer_sessions(user_id,token_hash,expires_at,pin_verified_until)
+      VALUES($1,$2,now()+interval '1 hour',$3)`,
+    [userId, runtime.hashCustomerSessionToken(token), unlocked ? new Date(Date.now() + 15 * 60_000) : null]);
+  }
+  server = runtime.app.listen(0, "127.0.0.1");
+  await new Promise((resolve, reject) => {
+    server.once("listening", resolve);
+    server.once("error", reject);
+  });
+});
+
+after(async () => {
+  if (server) await new Promise((resolve) => server.close(resolve));
+  await runtime.pool.end();
+  await owner.end();
+});
+
+function rawRequest(path, { method = "GET", userId, body, headers = {} } = {}) {
+  const data = body === undefined
+    ? undefined
+    : Buffer.isBuffer(body) ? body : JSON.stringify(body);
+  const cookie = userId ? `__Host-sendflow_session=${tokens.get(userId)}` : undefined;
+  return new Promise((resolve, reject) => {
+    const req = http.request({
+      host: "127.0.0.1",
+      port: server.address().port,
+      path,
+      method,
+      headers: {
+        Origin: "https://sendflow-test.invalid",
+        ...(cookie ? { Cookie: cookie } : {}),
+        ...(data === undefined ? {} : {
+          "Content-Type": Buffer.isBuffer(body) ? "application/octet-stream" : "application/json",
+          "Content-Length": Buffer.byteLength(data),
+        }),
+        ...headers,
+      },
+    }, (res) => {
+      let text = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => { text += chunk; });
+      res.on("end", () => resolve({ status: res.statusCode, text, headers: res.headers }));
+    });
+    req.on("error", reject);
+    req.end(data);
+  });
+}
+
+async function request(path, { method = "GET", userId, body, origin, csrf = true, headers = {} } = {}) {
+  if (["GET", "HEAD", "OPTIONS"].includes(method)) {
+    return rawRequest(path, {
+      method,
+      userId,
+      headers: origin === undefined ? {} : { Origin: origin },
+    });
+  }
+  if (!csrf) {
+    return rawRequest(path, {
+      method,
+      userId,
+      body,
+      headers: { ...headers, ...(origin === undefined ? {} : { Origin: origin }) },
+    });
+  }
+  const bootstrap = await rawRequest("/api/auth/session", {
+    method: "GET",
+    userId,
+    headers: origin === undefined ? {} : { Origin: origin },
+  });
+  const token = bootstrap.headers["x-csrf-token"];
+  assert.equal(typeof token, "string", "isolated session bootstrap should issue a CSRF token");
+  const csrfCookie = bootstrap.headers["set-cookie"]
+    ?.find((value) => value.startsWith("__Host-sendflow_csrf="))
+    ?.split(";")[0];
+  const cookie = [
+    userId ? `__Host-sendflow_session=${tokens.get(userId)}` : null,
+    csrfCookie,
+  ].filter(Boolean).join("; ");
+  return rawRequest(path, {
+    method,
+    body,
+    headers: {
+      ...(origin === undefined ? {} : { Origin: origin }),
+      Cookie: cookie,
+      "X-CSRF-Token": token,
+      ...headers,
+    },
+  });
+}
+
+function validInput(overrides = {}) {
+  return {
+    requestId: randomUUID(),
+    currency: "XOF",
+    amount: "1250",
+    description: "Facture SendFlow",
+    paymentMethod: "all",
+    validity: "day",
+    maximumUses: null,
+    returnUrl: null,
+    suffix: null,
+    ...overrides,
+  };
+}
+
+function json(response) {
+  return JSON.parse(response.text);
+}
+
+test("payment-link amount rules and shared-Neon preview scope fail closed", () => {
+  assert.equal(normalizePaymentLinkInput(validInput({
+    currency: "EUR",
+    amount: "10.25",
+  })).amountMinor, 1025);
+  assert.equal(isPaymentLinkCreationAllowed(
+    { paymentTestAccount: false },
+    { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+  ), true);
+  assert.equal(isPaymentLinkCreationAllowed(
+    { paymentTestAccount: true },
+    { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+  ), false);
+  assert.equal(isPaymentLinkCreationAllowed(
+    { paymentTestAccount: true },
+    { SENDFLOW_DATABASE_TARGET: "development" },
+  ), true);
+  assert.equal(isViewerRouteCandidate("GET", "/api/me/payment-links"), true);
+  assert.equal(isViewerRouteCandidate("POST", "/api/me/payment-links"), true);
+  assert.equal(isViewerRouteCandidate("DELETE", "/api/me/payment-links"), false);
+  assert.equal(isViewerRouteCandidate("GET", "/api/me/payment-links/foreign"), false);
+  assert.equal(isViewerRouteCandidate(
+    "POST",
+    "/api/me/payment-links/123e4567-e89b-42d3-a456-426614174000/image",
+  ), true);
+  assert.equal(isViewerRouteCandidate(
+    "POST",
+    "/api/me/payment-links/123e4567-e89b-42d3-a456-426614174000/image/extra",
+  ), false);
+});
+
+test("payment-link schema migration is present and operates only in the isolated fixture", async () => {
+  const result = await owner.query(`SELECT count(*)::int AS count
+    FROM information_schema.tables
+    WHERE table_schema='public' AND table_name='sf_customer_payment_links'`);
+  assert.equal(result.rows[0].count, 1);
+  const columns = await owner.query(`SELECT column_name, data_type, character_maximum_length, is_nullable
+    FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='sf_customer_payment_links'
+    ORDER BY ordinal_position`);
+  assert.deepEqual(columns.rows, [
+    { column_name: "id", data_type: "uuid", character_maximum_length: null, is_nullable: "NO" },
+    { column_name: "user_id", data_type: "text", character_maximum_length: null, is_nullable: "NO" },
+    { column_name: "public_token", data_type: "character varying", character_maximum_length: 43, is_nullable: "NO" },
+    { column_name: "idempotency_key", data_type: "uuid", character_maximum_length: null, is_nullable: "NO" },
+    { column_name: "request_hash", data_type: "character varying", character_maximum_length: 64, is_nullable: "NO" },
+    { column_name: "currency", data_type: "character varying", character_maximum_length: 3, is_nullable: "NO" },
+    { column_name: "amount_minor", data_type: "bigint", character_maximum_length: null, is_nullable: "NO" },
+    { column_name: "description", data_type: "character varying", character_maximum_length: 240, is_nullable: "NO" },
+    { column_name: "payment_method", data_type: "character varying", character_maximum_length: 20, is_nullable: "NO" },
+    { column_name: "expires_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "YES" },
+    { column_name: "maximum_uses", data_type: "integer", character_maximum_length: null, is_nullable: "YES" },
+    { column_name: "usage_count", data_type: "integer", character_maximum_length: null, is_nullable: "NO" },
+    { column_name: "return_url", data_type: "character varying", character_maximum_length: 2048, is_nullable: "YES" },
+    { column_name: "custom_suffix", data_type: "character varying", character_maximum_length: 32, is_nullable: "YES" },
+    { column_name: "status", data_type: "character varying", character_maximum_length: 24, is_nullable: "NO" },
+    { column_name: "image_data", data_type: "bytea", character_maximum_length: null, is_nullable: "YES" },
+    { column_name: "image_size_bytes", data_type: "integer", character_maximum_length: null, is_nullable: "YES" },
+    { column_name: "created_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "NO" },
+    { column_name: "updated_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "NO" },
+  ]);
+  const constraints = await owner.query(`SELECT conname FROM pg_constraint
+    WHERE conrelid='public.sf_customer_payment_links'::regclass
+      AND contype <> 'n' ORDER BY conname`);
+  assert.deepEqual(constraints.rows.map((row) => row.conname).sort(), [
+    "sf_customer_payment_links_amount_check",
+    "sf_customer_payment_links_currency_check",
+    "sf_customer_payment_links_description_check",
+    "sf_customer_payment_links_image_data_check",
+    "sf_customer_payment_links_maximum_uses_check",
+    "sf_customer_payment_links_payment_method_check",
+    "sf_customer_payment_links_pkey",
+    "sf_customer_payment_links_request_hash_check",
+    "sf_customer_payment_links_return_url_check",
+    "sf_customer_payment_links_status_check",
+    "sf_customer_payment_links_suffix_check",
+    "sf_customer_payment_links_token_check",
+    "sf_customer_payment_links_usage_count_check",
+    "sf_customer_payment_links_user_id_fkey",
+  ]);
+  const indexes = await owner.query(`SELECT indexname FROM pg_indexes
+    WHERE schemaname='public' AND tablename='sf_customer_payment_links' ORDER BY indexname`);
+  assert.deepEqual(indexes.rows.map((row) => row.indexname).sort(), [
+    "sf_customer_payment_links_owner_created_idx",
+    "sf_customer_payment_links_owner_idempotency_uq",
+    "sf_customer_payment_links_pkey",
+    "sf_customer_payment_links_public_token_uq",
+  ]);
+});
+
+test("image upload validates bytes, strips source format and stays owner-scoped", async () => {
+  const createdResponse = await request("/api/me/payment-links", {
+    method: "POST",
+    userId: "payment-link-image-owner",
+    body: validInput(),
+  });
+  assert.equal(createdResponse.status, 201);
+  const linkId = json(createdResponse).id;
+  const source = await sharp({
+    create: { width: 4, height: 3, channels: 4, background: { r: 84, g: 43, b: 150, alpha: 1 } },
+  }).png().toBuffer();
+
+  const savedResponse = await request(`/api/me/payment-links/${linkId}/image`, {
+    method: "POST",
+    userId: "payment-link-image-owner",
+    body: source,
+    headers: { "Content-Type": "image/png" },
+  });
+  assert.equal(savedResponse.status, 204);
+
+  const saved = await owner.query(
+    "SELECT image_data, image_size_bytes FROM sf_customer_payment_links WHERE id=$1",
+    [linkId],
+  );
+  assert.equal(saved.rows[0].image_size_bytes, saved.rows[0].image_data.length);
+  assert.ok(saved.rows[0].image_size_bytes <= PAYMENT_LINK_IMAGE_MAX_BYTES);
+  const metadata = await sharp(saved.rows[0].image_data).metadata();
+  assert.equal(metadata.format, "webp");
+  assert.ok(!metadata.pages || metadata.pages === 1);
+  assert.equal(metadata.exif, undefined);
+  assert.equal(metadata.xmp, undefined);
+  await assert.rejects(
+    owner.query(
+      "UPDATE sf_customer_payment_links SET image_size_bytes=image_size_bytes+1 WHERE id=$1",
+      [linkId],
+    ),
+    (error) => error.code === "23514",
+  );
+
+  const foreignOwnerResponse = await request(`/api/me/payment-links/${linkId}/image`, {
+    method: "POST",
+    userId: "payment-link-owner-b",
+    body: source,
+    headers: { "Content-Type": "image/png" },
+  });
+  assert.equal(foreignOwnerResponse.status, 404);
+
+  const invalidImage = await request(`/api/me/payment-links/${linkId}/image`, {
+    method: "POST",
+    userId: "payment-link-image-owner",
+    body: Buffer.from("<script>not-an-image</script>"),
+    headers: { "Content-Type": "image/png" },
+  });
+  assert.equal(invalidImage.status, 400);
+
+  const withoutCsrf = await request(`/api/me/payment-links/${linkId}/image`, {
+    method: "POST",
+    userId: "payment-link-image-owner",
+    body: source,
+    csrf: false,
+    headers: { "Content-Type": "image/png" },
+  });
+  assert.equal(withoutCsrf.status, 403);
+  const oversizedUpload = await request(`/api/me/payment-links/${linkId}/image`, {
+    method: "POST",
+    userId: "payment-link-image-owner",
+    body: Buffer.alloc(PAYMENT_LINK_IMAGE_MAX_BYTES + 1),
+    headers: { "Content-Type": "image/png" },
+  });
+  assert.equal(oversizedUpload.status, 413);
+  const list = await request("/api/me/payment-links", { userId: "payment-link-image-owner" });
+  assert.equal(list.status, 200);
+  assert.equal(Object.hasOwn(json(list).items[0], "imageData"), false);
+  const rowAfterRejectedUploads = await owner.query(
+    "SELECT image_data FROM sf_customer_payment_links WHERE id=$1",
+    [linkId],
+  );
+  assert.deepEqual(rowAfterRejectedUploads.rows[0].image_data, saved.rows[0].image_data);
+});
+
+test("payment-link image rejects MIME spoofing, malformed and oversized files", async () => {
+  const unsupported = await normalizePaymentLinkImage(
+    Buffer.from("<svg xmlns='http://www.w3.org/2000/svg'></svg>"),
+    "image/svg+xml",
+  ).catch((error) => error);
+  assert.equal(unsupported.status, 415);
+  const mismatched = await normalizePaymentLinkImage(
+    Buffer.from("<html>active content</html>"),
+    "image/png",
+  ).catch((error) => error);
+  assert.equal(mismatched.status, 400);
+  const oversized = await normalizePaymentLinkImage(
+    Buffer.alloc(PAYMENT_LINK_IMAGE_MAX_BYTES + 1),
+    "image/png",
+  ).catch((error) => error);
+  assert.equal(oversized.status, 413);
+});
+
+test("payment links require a verified PIN, CSRF and an authorized origin", async () => {
+  const beforeCount = Number((await owner.query(
+    "SELECT count(*)::int AS count FROM sf_customer_payment_links",
+  )).rows[0].count);
+  const locked = await request("/api/me/payment-links", { userId: "payment-link-locked" });
+  assert.equal(locked.status, 403);
+  const noSession = await request("/api/me/payment-links", {
+    method: "POST",
+    body: validInput(),
+  });
+  assert.equal(noSession.status, 401);
+  const missingCsrf = await request("/api/me/payment-links", {
+    method: "POST",
+    userId: "payment-link-owner-a",
+    body: validInput(),
+    csrf: false,
+  });
+  assert.equal(missingCsrf.status, 403);
+  const foreignOrigin = await request("/api/me/payment-links", {
+    method: "POST",
+    userId: "payment-link-owner-a",
+    body: validInput(),
+    origin: "https://attacker.invalid",
+    csrf: false,
+  });
+  assert.equal(foreignOrigin.status, 403);
+  const afterCount = Number((await owner.query(
+    "SELECT count(*)::int AS count FROM sf_customer_payment_links",
+  )).rows[0].count);
+  assert.equal(afterCount, beforeCount);
+});
+
+test("create validates currency precision and minimum amount before persisting", async () => {
+  for (const body of [
+    validInput({ amount: "9" }),
+    validInput({ currency: "XOF", amount: "10.01" }),
+    validInput({ currency: "EUR", amount: "10.001" }),
+    validInput({ returnUrl: "http://example.invalid/return" }),
+    validInput({ suffix: "Not A Safe Suffix" }),
+  ]) {
+    const response = await request("/api/me/payment-links", {
+      method: "POST",
+      userId: "payment-link-owner-a",
+      body,
+    });
+    assert.equal(response.status, 400, response.text);
+  }
+  assert.equal(Number((await owner.query(
+    "SELECT count(*)::int AS count FROM sf_customer_payment_links WHERE user_id='payment-link-owner-a'",
+  )).rows[0].count), 0);
+});
+
+test("create uses server-owned values, is idempotent and rejects changed replays", async () => {
+  const body = validInput({ amount: "1250", description: "  Facture client  " });
+  const first = await request("/api/me/payment-links", {
+    method: "POST", userId: "payment-link-owner-a", body,
+  });
+  assert.equal(first.status, 201, first.text);
+  const firstLink = json(first);
+  assert.equal(firstLink.currency, "XOF");
+  assert.equal(firstLink.amountMinor, 1250);
+  assert.equal(firstLink.description, "Facture client");
+  assert.equal(firstLink.status, "draft");
+  assert.equal(firstLink.usageCount, 0);
+  assert.equal(firstLink.maximumUses, null);
+  assert.equal(typeof firstLink.expiresAt, "string");
+  assert.match(firstLink.code, /^[A-Za-z0-9_-]{8}$/);
+
+  const replay = await request("/api/me/payment-links", {
+    method: "POST", userId: "payment-link-owner-a", body,
+  });
+  assert.equal(replay.status, 201, replay.text);
+  assert.equal(json(replay).id, firstLink.id);
+
+  const conflict = await request("/api/me/payment-links", {
+    method: "POST",
+    userId: "payment-link-owner-a",
+    body: { ...body, description: "Autres paramètres" },
+  });
+  assert.equal(conflict.status, 409);
+  assert.equal(Number((await owner.query(
+    "SELECT count(*)::int AS count FROM sf_customer_payment_links WHERE user_id='payment-link-owner-a'",
+  )).rows[0].count), 1);
+});
+
+test("lists and pagination cursors are scoped to the authenticated owner", async () => {
+  const created = await request("/api/me/payment-links", {
+    method: "POST",
+    userId: "payment-link-owner-a",
+    body: validInput({ currency: "EUR", amount: "10.25" }),
+  });
+  assert.equal(created.status, 201, created.text);
+  const ownerPage = await request("/api/me/payment-links", { userId: "payment-link-owner-a" });
+  const ownerItems = json(ownerPage);
+  assert.equal(ownerPage.status, 200);
+  assert.equal(ownerItems.items.length, 2);
+  assert.deepEqual(ownerItems.currencyOptions.map((item) => item.code), [
+    "XOF", "XAF", "CHF", "NGN", "EUR", "USD", "CAD",
+  ]);
+  const otherPage = await request("/api/me/payment-links", { userId: "payment-link-owner-b" });
+  assert.equal(otherPage.status, 200);
+  assert.deepEqual(json(otherPage).items, []);
+
+  const firstPage = await request("/api/me/payment-links?limit=1", {
+    userId: "payment-link-owner-a",
+  });
+  assert.equal(firstPage.status, 200);
+  assert.equal(json(firstPage).items.length, 1);
+  assert.ok(json(firstPage).nextCursor);
+  const secondPage = await request(
+    `/api/me/payment-links?limit=1&cursor=${json(firstPage).nextCursor}`,
+    { userId: "payment-link-owner-a" },
+  );
+  assert.equal(secondPage.status, 200);
+  assert.equal(json(secondPage).items.length, 1);
+  assert.notEqual(json(secondPage).items[0].id, json(firstPage).items[0].id);
+
+  const foreignCursor = await request(
+    `/api/me/payment-links?cursor=${ownerItems.items[0].id}`,
+    { userId: "payment-link-owner-b" },
+  );
+  assert.equal(foreignCursor.status, 400);
+});
+
+test("concurrent identical creates produce one row and the same idempotent result", async () => {
+  const body = validInput({ currency: "USD", amount: "25.50" });
+  const [first, second] = await Promise.all([
+    request("/api/me/payment-links", {
+      method: "POST", userId: "payment-link-concurrent", body,
+    }),
+    request("/api/me/payment-links", {
+      method: "POST", userId: "payment-link-concurrent", body,
+    }),
+  ]);
+  assert.equal(first.status, 201, first.text);
+  assert.equal(second.status, 201, second.text);
+  assert.equal(json(first).id, json(second).id);
+  assert.equal(Number((await owner.query(
+    "SELECT count(*)::int AS count FROM sf_customer_payment_links WHERE user_id='payment-link-concurrent'",
+  )).rows[0].count), 1);
+});
+
+test("link creation is rate-limited per customer", async () => {
+  const responses = [];
+  for (let index = 0; index < 11; index += 1) {
+    responses.push(await request("/api/me/payment-links", {
+      method: "POST",
+      userId: "payment-link-rate",
+      body: validInput({ description: `Facture ${index}` }),
+    }));
+  }
+  assert.deepEqual(responses.slice(0, 10).map((response) => response.status),
+    Array(10).fill(201));
+  assert.equal(responses[10].status, 429);
+  assert.equal(Number((await owner.query(
+    "SELECT count(*)::int AS count FROM sf_customer_payment_links WHERE user_id='payment-link-rate'",
+  )).rows[0].count), 10);
+});

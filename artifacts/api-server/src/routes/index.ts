@@ -22,6 +22,7 @@ import customerRecoveryRouter from "./customer-recovery";
 import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRoutes } from "./registration-settings";
 import countryManagementRouter, { adminRoutes as adminCountryRoutes } from "./country-management";
 import transferQuoteRouter from "./transfer-quote";
+import paymentLinksRouter from "./payment-links";
 import { ADMIN_ROUTE_PREFIX } from "../lib/admin-route-prefix";
 import { loadAdminSession } from "../lib/admin-session";
 
@@ -42,6 +43,7 @@ router.use(storageRouter);
 router.use(databaseRouter);
 router.use(accountRouter);
 router.use(transferQuoteRouter);
+router.use(paymentLinksRouter);
 router.use(identityVerificationRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);

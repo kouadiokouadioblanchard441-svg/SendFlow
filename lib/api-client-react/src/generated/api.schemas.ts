@@ -380,6 +380,179 @@ export interface CustomerProfileUpdate {
   birthDate: string;
 }
 
+export type CustomerPaymentLinkInputCurrency = typeof CustomerPaymentLinkInputCurrency[keyof typeof CustomerPaymentLinkInputCurrency];
+
+
+export const CustomerPaymentLinkInputCurrency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+  CHF: 'CHF',
+  NGN: 'NGN',
+  EUR: 'EUR',
+  USD: 'USD',
+  CAD: 'CAD',
+} as const;
+
+export type CustomerPaymentLinkInputPaymentMethod = typeof CustomerPaymentLinkInputPaymentMethod[keyof typeof CustomerPaymentLinkInputPaymentMethod];
+
+
+export const CustomerPaymentLinkInputPaymentMethod = {
+  mobile_money: 'mobile_money',
+  card: 'card',
+  all: 'all',
+} as const;
+
+export type CustomerPaymentLinkInputValidity = typeof CustomerPaymentLinkInputValidity[keyof typeof CustomerPaymentLinkInputValidity];
+
+
+export const CustomerPaymentLinkInputValidity = {
+  hour: 'hour',
+  day: 'day',
+  week: 'week',
+  unlimited: 'unlimited',
+} as const;
+
+export interface CustomerPaymentLinkInput {
+  requestId: string;
+  currency: CustomerPaymentLinkInputCurrency;
+  /**
+     * @minLength 1
+     * @maxLength 24
+     * @pattern ^[0-9]+(\.[0-9]+)?$
+     */
+  amount: string;
+  /**
+     * @minLength 2
+     * @maxLength 240
+     */
+  description: string;
+  paymentMethod: CustomerPaymentLinkInputPaymentMethod;
+  validity: CustomerPaymentLinkInputValidity;
+  /**
+     * @minimum 1
+     * @maximum 999999
+     * @nullable
+     */
+  maximumUses: number | null;
+  /**
+     * @maxLength 2048
+     * @nullable
+     */
+  returnUrl: string | null;
+  /**
+     * @maxLength 32
+     * @nullable
+     * @pattern ^[a-z0-9]+(-[a-z0-9]+)*$
+     */
+  suffix: string | null;
+}
+
+export type CustomerPaymentLinkCurrencyOptionCode = typeof CustomerPaymentLinkCurrencyOptionCode[keyof typeof CustomerPaymentLinkCurrencyOptionCode];
+
+
+export const CustomerPaymentLinkCurrencyOptionCode = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+  CHF: 'CHF',
+  NGN: 'NGN',
+  EUR: 'EUR',
+  USD: 'USD',
+  CAD: 'CAD',
+} as const;
+
+export type CustomerPaymentLinkCurrencyOptionDecimals = typeof CustomerPaymentLinkCurrencyOptionDecimals[keyof typeof CustomerPaymentLinkCurrencyOptionDecimals];
+
+
+export const CustomerPaymentLinkCurrencyOptionDecimals = {
+  NUMBER_0: 0,
+  NUMBER_2: 2,
+} as const;
+
+export interface CustomerPaymentLinkCurrencyOption {
+  code: CustomerPaymentLinkCurrencyOptionCode;
+  decimals: CustomerPaymentLinkCurrencyOptionDecimals;
+}
+
+export interface CustomerPaymentLinkChoice {
+  value: string;
+  label: string;
+}
+
+export type CustomerPaymentLinkCurrency = typeof CustomerPaymentLinkCurrency[keyof typeof CustomerPaymentLinkCurrency];
+
+
+export const CustomerPaymentLinkCurrency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+  CHF: 'CHF',
+  NGN: 'NGN',
+  EUR: 'EUR',
+  USD: 'USD',
+  CAD: 'CAD',
+} as const;
+
+export type CustomerPaymentLinkPaymentMethod = typeof CustomerPaymentLinkPaymentMethod[keyof typeof CustomerPaymentLinkPaymentMethod];
+
+
+export const CustomerPaymentLinkPaymentMethod = {
+  mobile_money: 'mobile_money',
+  card: 'card',
+  all: 'all',
+} as const;
+
+export type CustomerPaymentLinkStatus = typeof CustomerPaymentLinkStatus[keyof typeof CustomerPaymentLinkStatus];
+
+
+export const CustomerPaymentLinkStatus = {
+  draft: 'draft',
+  active: 'active',
+  paused: 'paused',
+  expired: 'expired',
+  exhausted: 'exhausted',
+} as const;
+
+export interface CustomerPaymentLink {
+  id: string;
+  /**
+     * @minLength 8
+     * @maxLength 12
+     */
+  code: string;
+  currency: CustomerPaymentLinkCurrency;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /** @maxLength 240 */
+  description: string;
+  paymentMethod: CustomerPaymentLinkPaymentMethod;
+  /** @nullable */
+  expiresAt: string | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  maximumUses: number | null;
+  /** @minimum 0 */
+  usageCount: number;
+  /** @nullable */
+  returnUrl: string | null;
+  /** @nullable */
+  suffix: string | null;
+  status: CustomerPaymentLinkStatus;
+  createdAt: string;
+}
+
+export interface CustomerPaymentLinksPage {
+  items: CustomerPaymentLink[];
+  /** @nullable */
+  nextCursor: string | null;
+  currencyOptions: CustomerPaymentLinkCurrencyOption[];
+  paymentMethods: CustomerPaymentLinkChoice[];
+  validityOptions: CustomerPaymentLinkChoice[];
+}
+
 export type TransferQuoteInputKind = typeof TransferQuoteInputKind[keyof typeof TransferQuoteInputKind];
 
 
@@ -1956,6 +2129,15 @@ export type ListAdminIpBlocksParams = {
  * @maximum 10000
  */
 page?: number;
+};
+
+export type GetCustomerPaymentLinksParams = {
+cursor?: string;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
 };
 
 export type GetCustomerTransactionsParams = {

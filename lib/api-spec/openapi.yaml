@@ -829,6 +829,201 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/payment-links:
+    get:
+      operationId: getCustomerPaymentLinks
+      tags: [account]
+      summary: List the authenticated customer's payment-link records
+      description: Requires a verified customer PIN. The current release creates server-owned draft records; it does not initiate a payment or expose a public checkout page.
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 50
+      responses:
+        "200":
+          description: The customer's links and server-supported creation options.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPaymentLinksPage"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Link storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createCustomerPaymentLink
+      tags: [account]
+      summary: Create a draft payment-link record for the authenticated customer
+      description: Requires a verified customer PIN and server-side CSRF validation. It stores link parameters only; no provider call or payment is initiated.
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerPaymentLinkInput"
+      responses:
+        "201":
+          description: Draft link record created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPaymentLink"
+        "400":
+          description: Link parameters are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required or this preview account cannot create links.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The idempotency key was already used with different parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: The account has exceeded the link creation rate limit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Link storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /me/payment-links/{linkId}/image:
+    post:
+      operationId: uploadCustomerPaymentLinkImage
+      tags: [account]
+      summary: Store an image on an owned draft payment link
+      description: Requires a verified customer PIN, server-side CSRF validation, an owned draft, and a PNG, JPEG, GIF, or WebP upload no larger than 5 MiB. The server validates and re-encodes the file as WebP; it is stored as inert image data and is not executed.
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/gif:
+            schema:
+              type: string
+              format: binary
+          image/webp:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "204":
+          description: The normalized WebP image was stored on the draft.
+        "400":
+          description: The image bytes are malformed or do not match their declared image type.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification or preview account permission is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: The link does not belong to the authenticated customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Only a draft link can receive an image.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "413":
+          description: The upload exceeds the 5 MiB limit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "415":
+          description: The declared content type is not an accepted image type or the request is compressed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: The upload rate limit was exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Image storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /me/account-limit:
     get:
       operationId: getCurrentAccountLimit
@@ -3490,6 +3685,151 @@ components:
           type: string
           pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
       required: [firstName, lastName, birthDate]
+    CustomerPaymentLinkInput:
+      type: object
+      additionalProperties: false
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        currency:
+          type: string
+          enum: [XOF, XAF, CHF, NGN, EUR, USD, CAD]
+        amount:
+          type: string
+          minLength: 1
+          maxLength: 24
+          pattern: "^[0-9]+(\\.[0-9]+)?$"
+        description:
+          type: string
+          minLength: 2
+          maxLength: 240
+        paymentMethod:
+          type: string
+          enum: [mobile_money, card, all]
+        validity:
+          type: string
+          enum: [hour, day, week, unlimited]
+        maximumUses:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 999999
+        returnUrl:
+          type: ["string", "null"]
+          format: uri
+          maxLength: 2048
+        suffix:
+          type: ["string", "null"]
+          maxLength: 32
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+      required:
+        - requestId
+        - currency
+        - amount
+        - description
+        - paymentMethod
+        - validity
+        - maximumUses
+        - returnUrl
+        - suffix
+    CustomerPaymentLinkCurrencyOption:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [XOF, XAF, CHF, NGN, EUR, USD, CAD]
+        decimals:
+          type: integer
+          enum: [0, 2]
+      required: [code, decimals]
+    CustomerPaymentLinkChoice:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required: [value, label]
+    CustomerPaymentLink:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 8
+          maxLength: 12
+        currency:
+          type: string
+          enum: [XOF, XAF, CHF, NGN, EUR, USD, CAD]
+        amountMinor:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        description:
+          type: string
+          maxLength: 240
+        paymentMethod:
+          type: string
+          enum: [mobile_money, card, all]
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        maximumUses:
+          type: ["integer", "null"]
+          minimum: 1
+        usageCount:
+          type: integer
+          minimum: 0
+        returnUrl:
+          type: ["string", "null"]
+          format: uri
+        suffix:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [draft, active, paused, expired, exhausted]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - code
+        - currency
+        - amountMinor
+        - description
+        - paymentMethod
+        - expiresAt
+        - maximumUses
+        - usageCount
+        - returnUrl
+        - suffix
+        - status
+        - createdAt
+    CustomerPaymentLinksPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerPaymentLink"
+        nextCursor:
+          type: ["string", "null"]
+          format: uuid
+        currencyOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerPaymentLinkCurrencyOption"
+        paymentMethods:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerPaymentLinkChoice"
+        validityOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerPaymentLinkChoice"
+      required: [items, nextCursor, currencyOptions, paymentMethods, validityOptions]
     TransferQuoteInput:
       type: object
       properties:

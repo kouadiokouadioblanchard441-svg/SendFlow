@@ -17,6 +17,7 @@ const protectedCustomerPaths = new Set([
 export function requiresCustomerPinUnlock(path: string) {
   return protectedCustomerPaths.has(path)
     || path.startsWith('/transaction/')
+  || path.startsWith('/linkflow/')
     || path.startsWith('/notifications/');
 }
 

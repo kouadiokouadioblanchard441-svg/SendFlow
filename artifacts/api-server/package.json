@@ -23,7 +23,9 @@
     "test:feexpay": "node --experimental-strip-types --test src/providers/feexpay/client.test.mjs",
     "test:feexpay-configuration": "node tests/security/run-isolated-finance.mjs --feexpay-configuration-only",
     "test:payment-structures": "node tests/security/run-isolated-finance.mjs --payment-structures-only",
+    "test:payment-links:isolated": "node tests/security/run-isolated-finance.mjs --payment-links-only",
     "payments:schema-plan": "node --experimental-strip-types scripts/migrate-payment-structures.mjs",
+    "payment-links:schema-plan": "node --experimental-strip-types scripts/migrate-customer-payment-links.mjs",
     "payments:test-access-plan": "node --experimental-strip-types scripts/migrate-payment-test-access.mjs",
     "payments:test-account-plan": "node --experimental-strip-types scripts/authorize-replit-payment-test-account.mjs",
     "feexpay:configuration-plan": "node --experimental-strip-types scripts/configure-feexpay.mjs",
@@ -39,7 +41,8 @@
     "http-proxy": "^1.18.1",
     "pg": "8.16.3",
     "pino": "^9.14.0",
-    "pino-http": "^10.5.0"
+    "pino-http": "^10.5.0",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

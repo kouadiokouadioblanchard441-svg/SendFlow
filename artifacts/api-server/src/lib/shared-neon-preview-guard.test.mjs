@@ -126,7 +126,7 @@ test("does not restrict the production or isolated development database targets"
   }
 });
 
-test("admits only exact payment-test route shapes to the server session gate", () => {
+test("admits only exact viewer and payment-test route shapes to the server session gate", () => {
   const id = "123e4567-e89b-42d3-a456-426614174000";
   for (const [method, path] of [
     ["POST", "/api/me/payments"],
@@ -135,6 +135,9 @@ test("admits only exact payment-test route shapes to the server session gate", (
     ["GET", `/api/me/payments/${id}`],
     ["GET", "/api/me/portal-eligibility"],
     ["POST", `/api/me/payments/${id}/reconcile`],
+    ["GET", "/api/me/payment-links"],
+    ["POST", "/api/me/payment-links"],
+    ["POST", `/api/me/payment-links/${id}/image`],
   ]) {
     assert.equal(isViewerRouteCandidate(method, path), true, `${method} ${path}`);
   }
@@ -143,6 +146,10 @@ test("admits only exact payment-test route shapes to the server session gate", (
     ["POST", `/api/me/payments/${id}/refund`],
     ["GET", `/api/me/payments/${id}/provider`],
     ["POST", "/api/me/payments/../restricted"],
+    ["PATCH", "/api/me/payment-links"],
+    ["GET", "/api/me/payment-links/another-user"],
+    ["GET", `/api/me/payment-links/${id}/image`],
+    ["POST", `/api/me/payment-links/${id}/image/extra`],
   ]) {
     assert.equal(isViewerRouteCandidate(method, path), false, `${method} ${path}`);
   }

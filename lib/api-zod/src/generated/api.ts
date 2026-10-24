@@ -631,6 +631,137 @@ export const UpdateCustomerProfileResponse = zod.object({
 
 
 /**
+ * Requires a verified customer PIN. The current release creates server-owned draft records; it does not initiate a payment or expose a public checkout page.
+ * @summary List the authenticated customer's payment-link records
+ */
+export const getCustomerPaymentLinksQueryLimitDefault = 50;
+export const getCustomerPaymentLinksQueryLimitMax = 50;
+
+
+
+export const GetCustomerPaymentLinksQueryParams = zod.object({
+  "cursor": zod.uuid().optional(),
+  "limit": zod.coerce.number().int().min(1).max(getCustomerPaymentLinksQueryLimitMax).default(getCustomerPaymentLinksQueryLimitDefault)
+})
+
+export const getCustomerPaymentLinksResponseItemsItemCodeMin = 8;
+export const getCustomerPaymentLinksResponseItemsItemCodeMax = 12;
+
+export const getCustomerPaymentLinksResponseItemsItemAmountMinorMax = 9007199254740991;
+
+export const getCustomerPaymentLinksResponseItemsItemDescriptionMax = 240;
+
+
+export const getCustomerPaymentLinksResponseItemsItemUsageCountMin = 0;
+
+
+
+export const GetCustomerPaymentLinksResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.uuid(),
+  "code": zod.string().min(getCustomerPaymentLinksResponseItemsItemCodeMin).max(getCustomerPaymentLinksResponseItemsItemCodeMax),
+  "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "amountMinor": zod.int().min(1).max(getCustomerPaymentLinksResponseItemsItemAmountMinorMax),
+  "description": zod.string().max(getCustomerPaymentLinksResponseItemsItemDescriptionMax),
+  "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
+  "expiresAt": zod.coerce.date().nullable(),
+  "maximumUses": zod.int().min(1).nullable(),
+  "usageCount": zod.int().min(getCustomerPaymentLinksResponseItemsItemUsageCountMin),
+  "returnUrl": zod.url().nullable(),
+  "suffix": zod.string().nullable(),
+  "status": zod.enum(['draft', 'active', 'paused', 'expired', 'exhausted']),
+  "createdAt": zod.coerce.date()
+})),
+  "nextCursor": zod.uuid().nullable(),
+  "currencyOptions": zod.array(zod.object({
+  "code": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "decimals": zod.union([zod.literal(0),zod.literal(2)])
+})),
+  "paymentMethods": zod.array(zod.object({
+  "value": zod.string(),
+  "label": zod.string()
+})),
+  "validityOptions": zod.array(zod.object({
+  "value": zod.string(),
+  "label": zod.string()
+}))
+})
+
+
+/**
+ * Requires a verified customer PIN and server-side CSRF validation. It stores link parameters only; no provider call or payment is initiated.
+ * @summary Create a draft payment-link record for the authenticated customer
+ */
+export const createCustomerPaymentLinkBodyAmountMax = 24;
+
+
+export const createCustomerPaymentLinkBodyAmountRegExp = new RegExp('^[0-9]+(\\.[0-9]+)?$');
+export const createCustomerPaymentLinkBodyDescriptionMin = 2;
+export const createCustomerPaymentLinkBodyDescriptionMax = 240;
+
+export const createCustomerPaymentLinkBodyMaximumUsesMax = 999999;
+
+export const createCustomerPaymentLinkBodyReturnUrlMax = 2048;
+
+export const createCustomerPaymentLinkBodySuffixMax = 32;
+
+
+export const createCustomerPaymentLinkBodySuffixRegExp = new RegExp('^[a-z0-9]+(-[a-z0-9]+)*$');
+
+
+export const CreateCustomerPaymentLinkBody = zod.object({
+  "requestId": zod.uuid(),
+  "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "amount": zod.string().min(1).max(createCustomerPaymentLinkBodyAmountMax).regex(createCustomerPaymentLinkBodyAmountRegExp),
+  "description": zod.string().min(createCustomerPaymentLinkBodyDescriptionMin).max(createCustomerPaymentLinkBodyDescriptionMax),
+  "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
+  "validity": zod.enum(['hour', 'day', 'week', 'unlimited']),
+  "maximumUses": zod.int().min(1).max(createCustomerPaymentLinkBodyMaximumUsesMax).nullable(),
+  "returnUrl": zod.url().max(createCustomerPaymentLinkBodyReturnUrlMax).nullable(),
+  "suffix": zod.string().max(createCustomerPaymentLinkBodySuffixMax).regex(createCustomerPaymentLinkBodySuffixRegExp).nullable()
+})
+
+export const createCustomerPaymentLinkResponseCodeMin = 8;
+export const createCustomerPaymentLinkResponseCodeMax = 12;
+
+export const createCustomerPaymentLinkResponseAmountMinorMax = 9007199254740991;
+
+export const createCustomerPaymentLinkResponseDescriptionMax = 240;
+
+
+export const createCustomerPaymentLinkResponseUsageCountMin = 0;
+
+
+
+export const CreateCustomerPaymentLinkResponse = zod.object({
+  "id": zod.uuid(),
+  "code": zod.string().min(createCustomerPaymentLinkResponseCodeMin).max(createCustomerPaymentLinkResponseCodeMax),
+  "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "amountMinor": zod.int().min(1).max(createCustomerPaymentLinkResponseAmountMinorMax),
+  "description": zod.string().max(createCustomerPaymentLinkResponseDescriptionMax),
+  "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
+  "expiresAt": zod.coerce.date().nullable(),
+  "maximumUses": zod.int().min(1).nullable(),
+  "usageCount": zod.int().min(createCustomerPaymentLinkResponseUsageCountMin),
+  "returnUrl": zod.url().nullable(),
+  "suffix": zod.string().nullable(),
+  "status": zod.enum(['draft', 'active', 'paused', 'expired', 'exhausted']),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * Requires a verified customer PIN, server-side CSRF validation, an owned draft, and a PNG, JPEG, GIF, or WebP upload no larger than 5 MiB. The server validates and re-encodes the file as WebP; it is stored as inert image data and is not executed.
+ * @summary Store an image on an owned draft payment link
+ */
+export const UploadCustomerPaymentLinkImageParams = zod.object({
+  "linkId": zod.uuid()
+})
+
+export const UploadCustomerPaymentLinkImageResponse = zod.void()
+
+
+/**
  * Returns the server-calculated monthly limit and the user's successful outgoing transfer usage for the current calendar month.
  * @summary Get the authenticated account's monthly transfer limit
  */

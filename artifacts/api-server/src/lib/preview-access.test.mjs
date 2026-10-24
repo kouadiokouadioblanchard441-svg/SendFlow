@@ -5,12 +5,14 @@ import { hashCustomerSecret, hashCustomerSessionToken, verifyCustomerSecret } fr
 import { toPreviewPasswordHash, previewPasswordForVerification } from "./preview-credential-policy.ts";
 import { randomBytes } from "node:crypto";
 
-test("viewer candidate list does not admit new routes, payments, providers, registration or admin", () => {
+test("viewer candidate list admits LinkFlow only through its exact owner-scoped list/create routes", () => {
   for (const [method, path] of [
     ["GET", "/api/auth/session"], ["POST", "/api/auth/sign-in"], ["POST", "/api/auth/unlock"],
     ["POST", "/api/auth/sign-out"], ["PUT", "/api/me/pin"], ["GET", "/api/me"],
     ["GET", "/api/me/transactions"], ["POST", "/api/me/transfer-quote"],
     ["GET", "/api/me/account-limit"], ["GET", "/api/me/identity-verification"],
+    ["GET", "/api/me/payment-links"], ["POST", "/api/me/payment-links"],
+    ["POST", "/api/me/payment-links/123e4567-e89b-42d3-a456-426614174000/image"],
   ]) assert.equal(isViewerRouteCandidate(method, path), true);
   for (const [method, path] of [
     ["POST", "/api/me/identity-verification"], ["POST", "/api/auth/send-otp"],
@@ -21,6 +23,10 @@ test("viewer candidate list does not admit new routes, payments, providers, regi
     ["GET", "/api/me/account-limit/unknown"], ["POST", "/api/me/transfer-quote/unknown"],
     ["GET", "/api/me/../private"], ["GET", "/api/me%00"], ["GET", "/api/%zz"],
     ["POST", "/api/payments"], ["GET", "/api/me/future-route"],
+    ["PATCH", "/api/me/payment-links"], ["DELETE", "/api/me/payment-links"],
+    ["GET", "/api/me/payment-links/other"], ["POST", "/api/me/payment-links/other"],
+    ["GET", "/api/me/payment-links/123e4567-e89b-42d3-a456-426614174000/image"],
+    ["POST", "/api/me/payment-links/123e4567-e89b-42d3-a456-426614174000/image/extra"],
   ]) assert.equal(isViewerRouteCandidate(method, path), false);
 });
 test("viewer passwords cannot be verified by the production verifier", async () => {

@@ -61,6 +61,9 @@ import type {
   CustomerAuthResult,
   CustomerMutationResult,
   CustomerPasswordResetInput,
+  CustomerPaymentLink,
+  CustomerPaymentLinkInput,
+  CustomerPaymentLinksPage,
   CustomerPinResetInput,
   CustomerPinSetInput,
   CustomerPinStateResult,
@@ -78,6 +81,7 @@ import type {
   DiditWebhookPayload,
   ErrorEnvelope,
   GetAdminOverviewParams,
+  GetCustomerPaymentLinksParams,
   GetCustomerTransactionsParams,
   HealthStatus,
   IdentityVerificationSessionRequest,
@@ -2402,6 +2406,270 @@ export const useUpdateCustomerProfile = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getUpdateCustomerProfileMutationOptions(options));
+    }
+
+export const getGetCustomerPaymentLinksUrl = (params?: GetCustomerPaymentLinksParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/me/payment-links?${stringifiedParams}` : `/api/me/payment-links`
+}
+
+/**
+ * Requires a verified customer PIN. The current release creates server-owned draft records; it does not initiate a payment or expose a public checkout page.
+ * @summary List the authenticated customer's payment-link records
+ */
+export const getCustomerPaymentLinks = async (params?: GetCustomerPaymentLinksParams, options?: Parameters<typeof customFetch>[1]): Promise<CustomerPaymentLinksPage> => {
+
+  return customFetch<CustomerPaymentLinksPage>(getGetCustomerPaymentLinksUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerPaymentLinksQueryKey = (params?: GetCustomerPaymentLinksParams,) => {
+    return [
+    `/api/me/payment-links`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCustomerPaymentLinksQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerPaymentLinks>>, TError = ErrorType<ErrorEnvelope>>(params?: GetCustomerPaymentLinksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPaymentLinks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerPaymentLinksQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerPaymentLinks>>> = ({ signal }) => getCustomerPaymentLinks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerPaymentLinks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerPaymentLinksQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerPaymentLinks>>>
+export type GetCustomerPaymentLinksQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List the authenticated customer's payment-link records
+ */
+
+export function useGetCustomerPaymentLinks<TData = Awaited<ReturnType<typeof getCustomerPaymentLinks>>, TError = ErrorType<ErrorEnvelope>>(
+ params?: GetCustomerPaymentLinksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPaymentLinks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerPaymentLinksQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateCustomerPaymentLinkUrl = () => {
+
+
+
+
+  return `/api/me/payment-links`
+}
+
+/**
+ * Requires a verified customer PIN and server-side CSRF validation. It stores link parameters only; no provider call or payment is initiated.
+ * @summary Create a draft payment-link record for the authenticated customer
+ */
+export const createCustomerPaymentLink = async (customerPaymentLinkInput: CustomerPaymentLinkInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerPaymentLink> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerPaymentLink>(getCreateCustomerPaymentLinkUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerPaymentLinkInput)
+  }
+);}
+
+
+
+
+
+export const getCreateCustomerPaymentLinkMutationKey = () => ['createCustomerPaymentLink'] as const;
+
+export const getCreateCustomerPaymentLinkMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomerPaymentLink>>, TError,CreateCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCustomerPaymentLink>>, TError,CreateCustomerPaymentLinkMutationVariables, TContext> => {
+
+const mutationKey = getCreateCustomerPaymentLinkMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCustomerPaymentLink>>, CreateCustomerPaymentLinkMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCustomerPaymentLink(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCustomerPaymentLinkMutationResult = NonNullable<Awaited<ReturnType<typeof createCustomerPaymentLink>>>
+    export type CreateCustomerPaymentLinkMutationBody = BodyType<CustomerPaymentLinkInput>
+    export type CreateCustomerPaymentLinkMutationError = ErrorType<ErrorEnvelope>
+    export type CreateCustomerPaymentLinkMutationVariables = {data: BodyType<CustomerPaymentLinkInput>}
+
+    /**
+ * @summary Create a draft payment-link record for the authenticated customer
+ */
+export const useCreateCustomerPaymentLink = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomerPaymentLink>>, TError,CreateCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCustomerPaymentLink>>,
+        TError,
+        CreateCustomerPaymentLinkMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateCustomerPaymentLinkMutationOptions(options));
+    }
+
+export const getUploadCustomerPaymentLinkImageUrl = (linkId: string,) => {
+
+
+
+
+  return `/api/me/payment-links/${linkId}/image`
+}
+
+/**
+ * Requires a verified customer PIN, server-side CSRF validation, an owned draft, and a PNG, JPEG, GIF, or WebP upload no larger than 5 MiB. The server validates and re-encodes the file as WebP; it is stored as inert image data and is not executed.
+ * @summary Store an image on an owned draft payment link
+ */
+export const uploadCustomerPaymentLinkImage = async (linkId: string,
+    uploadCustomerPaymentLinkImageBody: Blob, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getUploadCustomerPaymentLinkImageUrl(linkId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'image/png', ...getHeaders(options?.headers) },
+    body: uploadCustomerPaymentLinkImageBody
+  }
+);}
+
+
+
+
+
+export const getUploadCustomerPaymentLinkImageMutationKey = () => ['uploadCustomerPaymentLinkImage'] as const;
+
+export const getUploadCustomerPaymentLinkImageMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCustomerPaymentLinkImage>>, TError,UploadCustomerPaymentLinkImageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadCustomerPaymentLinkImage>>, TError,UploadCustomerPaymentLinkImageMutationVariables, TContext> => {
+
+const mutationKey = getUploadCustomerPaymentLinkImageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadCustomerPaymentLinkImage>>, UploadCustomerPaymentLinkImageMutationVariables> = (props) => {
+          const {linkId,data} = props ?? {};
+
+          return  uploadCustomerPaymentLinkImage(linkId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadCustomerPaymentLinkImageMutationResult = NonNullable<Awaited<ReturnType<typeof uploadCustomerPaymentLinkImage>>>
+    export type UploadCustomerPaymentLinkImageMutationBody = BodyType<Blob>
+    export type UploadCustomerPaymentLinkImageMutationError = ErrorType<ErrorEnvelope>
+    export type UploadCustomerPaymentLinkImageMutationVariables = {linkId: string;data: BodyType<Blob>}
+
+    /**
+ * @summary Store an image on an owned draft payment link
+ */
+export const useUploadCustomerPaymentLinkImage = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCustomerPaymentLinkImage>>, TError,UploadCustomerPaymentLinkImageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadCustomerPaymentLinkImage>>,
+        TError,
+        UploadCustomerPaymentLinkImageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUploadCustomerPaymentLinkImageMutationOptions(options));
     }
 
 export const getGetCurrentAccountLimitUrl = () => {

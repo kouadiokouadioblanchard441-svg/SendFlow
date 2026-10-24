@@ -33,6 +33,11 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  await owner.query("DROP TABLE sf_customer_payment_links");
+  const paymentLinksMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-10-24-customer-payment-links.sql"), "utf8");
+  await owner.query(paymentLinksMigration);
+  await owner.query(paymentLinksMigration);
   // Exercise the scoped migration rather than accepting Drizzle's approximation
   // of its triggers, cross-table guards and operational registry.
   await owner.query("DROP TABLE sf_replit_payment_test_access CASCADE");
@@ -192,6 +197,8 @@ try {
     ? [join(apiDir, "tests/security/payment-structures.integration.mjs")]
     : process.argv.includes("--feexpay-configuration-only")
     ? [join(apiDir, "tests/security/feexpay-configuration.integration.mjs")]
+    : process.argv.includes("--payment-links-only")
+    ? [join(apiDir, "tests/security/payment-links.integration.mjs")]
     : [join(apiDir, "tests/security/finance.integration.mjs"),
        join(apiDir, "tests/security/catalog.integration.mjs")];
   const result = spawnSync(process.execPath, ["--experimental-strip-types", "--test", ...testFiles], {
