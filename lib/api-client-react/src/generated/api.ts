@@ -2193,7 +2193,7 @@ export const getGetCustomerPortalEligibilityQueryKey = () => {
     }
 
 
-export const getGetCustomerPortalEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetCustomerPortalEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError = ErrorType<ErrorEnvelope | void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -2212,14 +2212,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetCustomerPortalEligibilityQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerPortalEligibility>>>
-export type GetCustomerPortalEligibilityQueryError = ErrorType<ErrorEnvelope>
+export type GetCustomerPortalEligibilityQueryError = ErrorType<ErrorEnvelope | void>
 
 
 /**
  * @summary Check whether the authenticated account has an active administrator grant
  */
 
-export function useGetCustomerPortalEligibility<TData = Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError = ErrorType<ErrorEnvelope>>(
+export function useGetCustomerPortalEligibility<TData = Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError = ErrorType<ErrorEnvelope | void>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {

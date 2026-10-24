@@ -192,7 +192,12 @@ function PortalRouteGate({ children }: { children: ReactNode }) {
     || eligibilityQuery.isLoading
   ) return null;
 
-  if (!userId || eligibilityQuery.data?.isAuthorized !== true) {
+  if (
+    !accountQuery.isSuccess
+    || !eligibilityQuery.isSuccess
+    || !userId
+    || eligibilityQuery.data?.isAuthorized !== true
+  ) {
     return <NotFoundRoute />;
   }
 

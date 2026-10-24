@@ -152,6 +152,8 @@ test("Site HTML, SPA routes, assets and HEAD are blocked; DB failure fails close
     const denied=await request(portalServer,`${runtime.PORTAL_ROUTE_PATH}/pin`);
     assert.equal(denied.status,404);
     assert.equal(denied.text,"");
+    assert.equal((await request(portalServer,runtime.PORTAL_ROUTE_PATH,{method:"HEAD"})).status,404);
+    assert.equal((await request(portalServer,runtime.PORTAL_ROUTE_PATH,{method:"POST"})).status,404);
     const allowed=await request(portalServer,runtime.PORTAL_ROUTE_PATH,{
       extra:{cookie:"session=authorized"},
     });

@@ -21,6 +21,12 @@ Keep administrative route paths and generated JavaScript chunk URLs free of the 
 
 **How to apply:** Check API contracts, route constants, generated clients, Vite output names, and synced mobile assets whenever routes or chunks change; preserve all server-side access checks.
 
+An account without a verified active grant must receive HTTP 404 before the protected portal's SPA shell is served; client-side navigation must independently fail closed before mounting any protected page.
+
+**Why:** The user clarified that an unauthorized account must not merely have a hidden button; the route itself must appear unavailable.
+
+**How to apply:** Gate direct Web and Vite requests with the server-owned session/grant check, and gate SPA transitions with the same API decision. Never trust a browser-supplied role or let a hidden link stand in for authorization.
+
 The user detail view uses server data, while transaction history is retrieved through a server-side user filter with bounded pagination. Wallet changes must be signed as immutable ledger entries with before/after balances, idempotency keys, expected-balance checks, a reason, and an audit record.
 
 **Why:** Financial histories can grow without limit, and a client-only filter would risk exposing another user’s operations if the server did not constrain the query.

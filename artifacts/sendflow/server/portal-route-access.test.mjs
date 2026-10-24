@@ -52,21 +52,24 @@ test("only a server-confirmed active grant opens the route and only the cookie i
   assert.equal(options.cache, "no-store");
 });
 
-test("unauthorized or malformed API responses fail closed as not found", async () => {
+test("unauthorized responses map to not found and malformed responses fail closed", async () => {
   for (const fetcher of [
     async () => jsonResponse(200, { isAuthorized: false }),
     async () => jsonResponse(404, {}),
     async () => jsonResponse(401, {}),
-    async () => new Response("<html>unexpected</html>", {
-      status: 200,
-      headers: { "content-type": "text/html" },
-    }),
   ]) {
     assert.equal(await checkPortalRouteAccess(request("session=value"), {
       environment: { SENDFLOW_INTERNAL_API_ORIGIN: "http://127.0.0.1:8080" },
       fetcher,
     }), "not-found");
   }
+  assert.equal(await checkPortalRouteAccess(request("session=value"), {
+    environment: { SENDFLOW_INTERNAL_API_ORIGIN: "http://127.0.0.1:8080" },
+    fetcher: async () => new Response("<html>unexpected</html>", {
+      status: 200,
+      headers: { "content-type": "text/html" },
+    }),
+  }), "unavailable");
 });
 
 test("missing production origin and API failures fail closed", async () => {

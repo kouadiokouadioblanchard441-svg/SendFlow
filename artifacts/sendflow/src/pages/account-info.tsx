@@ -116,6 +116,8 @@ export default function AccountInfoPage() {
       queryKey: getGetCurrentAccountQueryKey(),
       enabled: isUnlocked,
       retry: false,
+      staleTime: 0,
+      refetchOnMount: 'always',
     },
   });
   const portalEligibilityQuery = useGetCustomerPortalEligibility({
@@ -126,6 +128,7 @@ export default function AccountInfoPage() {
       ],
       enabled: Boolean(accountQuery.data?.userId),
       retry: false,
+      refetchOnMount: 'always',
       refetchOnWindowFocus: true,
       refetchInterval: 15_000,
       staleTime: 0,
@@ -239,7 +242,11 @@ export default function AccountInfoPage() {
             <ArrowLeft size={23} strokeWidth={2} aria-hidden="true" />
           </button>
           <h1 id="account-info-title">Information de compte</h1>
-          {portalEligibilityQuery.data?.isAuthorized === true && (
+          {accountQuery.isSuccess
+            && portalEligibilityQuery.isSuccess
+            && !accountQuery.isFetching
+            && !portalEligibilityQuery.isFetching
+            && portalEligibilityQuery.data?.isAuthorized === true && (
             <button
               type="button"
               className="sendflow-account-info-admin"
