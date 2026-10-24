@@ -28,7 +28,7 @@ packages = ["jdk21"]
 
 [userenv.shared]
 FEEXPAY_EXECUTION_HOST = "replit"
-FEEXPAY_LIVE_ENABLED = "false"
+FEEXPAY_LIVE_ENABLED = "true"
 FEEXPAY_MODE = "live"
 
 [userenv.development]
