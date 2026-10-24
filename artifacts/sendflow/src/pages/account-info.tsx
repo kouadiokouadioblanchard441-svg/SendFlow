@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetCurrentAccountQueryKey,
+  getGetCustomerPortalEligibilityQueryKey,
   getGetCustomerProfileQueryKey,
   useGetCurrentAccount,
+  useGetCustomerPortalEligibility,
   useGetCustomerProfile,
   useUpdateCustomerProfile,
 } from '@workspace/api-client-react';
@@ -116,6 +118,19 @@ export default function AccountInfoPage() {
       retry: false,
     },
   });
+  const portalEligibilityQuery = useGetCustomerPortalEligibility({
+    query: {
+      queryKey: [
+        ...getGetCustomerPortalEligibilityQueryKey(),
+        accountQuery.data?.userId ?? 'no-account',
+      ],
+      enabled: Boolean(accountQuery.data?.userId),
+      retry: false,
+      refetchOnWindowFocus: true,
+      refetchInterval: 15_000,
+      staleTime: 0,
+    },
+  });
   const profileQuery = useGetCustomerProfile({
     query: {
       queryKey: getGetCustomerProfileQueryKey(),
@@ -224,16 +239,18 @@ export default function AccountInfoPage() {
             <ArrowLeft size={23} strokeWidth={2} aria-hidden="true" />
           </button>
           <h1 id="account-info-title">Information de compte</h1>
-          <button
-            type="button"
-            className="sendflow-account-info-admin"
-            onClick={() => setLocation(adminRoute('/pin'))}
-            aria-label="Ouvrir la connexion administrateur"
-            data-testid="button-open-admin"
-          >
-            <ShieldCheck size={16} aria-hidden="true" />
-            <span>Admin</span>
-          </button>
+          {portalEligibilityQuery.data?.isAuthorized === true && (
+            <button
+              type="button"
+              className="sendflow-account-info-admin"
+              onClick={() => setLocation(adminRoute('/pin'))}
+              aria-label="Ouvrir la connexion administrateur"
+              data-testid="button-open-admin"
+            >
+              <ShieldCheck size={16} aria-hidden="true" />
+              <span>Admin</span>
+            </button>
+          )}
         </header>
 
         <div className="sendflow-account-info-content">

@@ -9,6 +9,18 @@ The SendFlow back office is deny-by-default: reads use the read-admin allowlist,
 
 **How to apply:** Keep admin API routes deny-by-default and enforce authorization on the server. Use a separate mutation administrator allowlist for financial/account actions. Add new metrics only when their source exists in the database and label unsupported operations explicitly instead of inventing them.
 
+The customer-profile Admin shortcut must appear only after the server confirms an active administrator grant for the authenticated account. Hide it for non-admin accounts and whenever eligibility cannot be verified; the shortcut itself is never an authorization control.
+
+**Why:** The user explicitly requires non-administrator accounts to see no Admin label or button.
+
+**How to apply:** Derive visibility from a no-store server check bound to the current session and active grant, while independently enforcing OTP, PIN, and route authorization on the server.
+
+Keep administrative route paths and generated JavaScript chunk URLs free of the literal word `admin`; use opaque route values and hash-based chunk names. This is only discoverability hygiene and never replaces server authorization.
+
+**Why:** The user explicitly requires that no application URL reveal the administrator designation.
+
+**How to apply:** Check API contracts, route constants, generated clients, Vite output names, and synced mobile assets whenever routes or chunks change; preserve all server-side access checks.
+
 The user detail view uses server data, while transaction history is retrieved through a server-side user filter with bounded pagination. Wallet changes must be signed as immutable ledger entries with before/after balances, idempotency keys, expected-balance checks, a reason, and an audit record.
 
 **Why:** Financial histories can grow without limit, and a client-only filter would risk exposing another user’s operations if the server did not constrain the query.

@@ -106,6 +106,10 @@ export interface ErrorEnvelope {
   error: string;
 }
 
+export interface CustomerPortalEligibilityResult {
+  isAuthorized: boolean;
+}
+
 export type PhoneOtpSendInputPurpose = typeof PhoneOtpSendInputPurpose[keyof typeof PhoneOtpSendInputPurpose];
 
 

@@ -103,6 +103,7 @@ export * from './customerPinResetInput';
 export * from './customerPinSetInput';
 export * from './customerPinStateResult';
 export * from './customerPinUnlockInput';
+export * from './customerPortalEligibilityResult';
 export * from './customerProfile';
 export * from './customerProfileUpdate';
 export * from './customerRegistrationInput';

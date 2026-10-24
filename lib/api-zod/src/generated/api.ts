@@ -572,6 +572,14 @@ export const GetCurrentAccountResponse = zod.object({
 
 
 /**
+ * @summary Check whether the authenticated account has an active administrator grant
+ */
+export const GetCustomerPortalEligibilityResponse = zod.object({
+  "isAuthorized": zod.boolean()
+})
+
+
+/**
  * Returns the authenticated account's persisted name and birth date. The server requires a recently verified PIN.
  * @summary Get the authenticated customer's profile
  */

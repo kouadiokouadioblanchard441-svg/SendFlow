@@ -131,7 +131,9 @@ test("admits only exact payment-test route shapes to the server session gate", (
   for (const [method, path] of [
     ["POST", "/api/me/payments"],
     ["GET", "/api/me/payment-readiness"],
+    ["GET", "/api/me/portal-eligibility"],
     ["GET", `/api/me/payments/${id}`],
+    ["GET", "/api/me/portal-eligibility"],
     ["POST", `/api/me/payments/${id}/reconcile`],
   ]) {
     assert.equal(isViewerRouteCandidate(method, path), true, `${method} ${path}`);
@@ -140,7 +142,7 @@ test("admits only exact payment-test route shapes to the server session gate", (
     ["DELETE", `/api/me/payments/${id}`],
     ["POST", `/api/me/payments/${id}/refund`],
     ["GET", `/api/me/payments/${id}/provider`],
-    ["POST", "/api/me/payments/../admin"],
+    ["POST", "/api/me/payments/../restricted"],
   ]) {
     assert.equal(isViewerRouteCandidate(method, path), false, `${method} ${path}`);
   }

@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import {
   GetCustomerProfileResponse,
   GetCurrentAccountResponse,
+  GetCustomerPortalEligibilityResponse,
   GetCustomerTransactionResponse,
   GetCustomerTransactionsResponse,
   UpdateCustomerProfileBody,
@@ -9,6 +10,7 @@ import {
 } from "@workspace/api-zod";
 import {
   and,
+  adminGrantsTable,
   db,
   desc,
   eq,
@@ -120,6 +122,30 @@ router.get("/me", async (req, res): Promise<void> => {
   } catch (error) {
     req.log.error({ err: error, userId: session.userId }, "Account lookup failed");
     res.status(503).json({ error: "Account storage unavailable" });
+  }
+});
+
+router.get("/me/portal-eligibility", async (req, res): Promise<void> => {
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+
+  try {
+    const [grant] = await db
+      .select({ userId: adminGrantsTable.userId })
+      .from(adminGrantsTable)
+      .innerJoin(usersTable, eq(usersTable.id, adminGrantsTable.userId))
+      .where(and(
+        eq(adminGrantsTable.userId, session.userId),
+        isNull(adminGrantsTable.revokedAt),
+        eq(usersTable.status, "active"),
+      ))
+      .limit(1);
+
+    res.setHeader("Cache-Control", "no-store, private");
+    res.json(GetCustomerPortalEligibilityResponse.parse({ isAuthorized: !!grant }));
+  } catch {
+    req.log.error({ userId: session.userId }, "Administrator eligibility lookup failed");
+    res.status(503).json({ error: "Authorization state unavailable" });
   }
 });
 

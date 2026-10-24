@@ -61,6 +61,11 @@ export default defineConfig(async ({ mode }) => ({
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        chunkFileNames: 'assets/chunk-[hash].js',
+      },
+    },
   },
   server: {
     port,

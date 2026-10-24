@@ -16,8 +16,8 @@ before(async () => {
   app.use((req, _res, next) => { req.log = { error() {} }; next(); });
   app.use("/public", runtime.countryManagementRouter);
   app.use("/public", runtime.operatorPricingRouter);
-  app.use("/admin", runtime.createAdminCountryRoutes(() => "fixture-catalog-admin"));
-  app.use("/admin", runtime.createAdminAggregatorRoutes(() => "fixture-catalog-admin"));
+  app.use("/secure-catalog", runtime.createAdminCountryRoutes(() => "fixture-catalog-admin"));
+  app.use("/secure-catalog", runtime.createAdminAggregatorRoutes(() => "fixture-catalog-admin"));
   // Default factories retain the real, deny-by-default authorization.
   app.use("/denied", runtime.createAdminCountryRoutes());
   app.use("/denied", runtime.createAdminAggregatorRoutes());
@@ -52,20 +52,20 @@ test("catalog administration stays closed without real authorization", async () 
 });
 
 test("countries: validated creation, public visibility, version conflict and atomic audit", async () => {
-  assert.equal((await call("/admin/countries", "POST", { ...countryInput("zz"), minPhoneDigits: 10 })).status, 400);
-  assert.equal((await call("/admin/countries", "POST", { ...countryInput("zz"), maxPhoneDigits: 15 })).status, 400);
-  const created = await call("/admin/countries", "POST", countryInput("zz"));
+  assert.equal((await call("/secure-catalog/countries", "POST", { ...countryInput("zz"), minPhoneDigits: 10 })).status, 400);
+  assert.equal((await call("/secure-catalog/countries", "POST", { ...countryInput("zz"), maxPhoneDigits: 15 })).status, 400);
+  const created = await call("/secure-catalog/countries", "POST", countryInput("zz"));
   assert.equal(created.status, 201);
   assert.deepEqual(created.data.operations, { deposit: false, interNetwork: false, international: false });
-  assert.equal((await call("/admin/countries", "POST", countryInput("zz"))).status, 409);
-  assert.equal((await call("/admin/countries", "POST", countryInput("yy"))).status, 201);
+  assert.equal((await call("/secure-catalog/countries", "POST", countryInput("zz"))).status, 409);
+  assert.equal((await call("/secure-catalog/countries", "POST", countryInput("yy"))).status, 201);
   const changes = {
     countryName: "Fixture ZZ updated", phonePrefix: "+991", minPhoneDigits: 8, maxPhoneDigits: 8,
     enabled: true, operations: { deposit: true, interNetwork: false, international: true },
     expectedVersion: created.data.version, reason: "Enable selected isolated operations",
   };
-  assert.equal((await call("/admin/countries/zz", "PATCH", changes)).status, 200);
-  assert.equal((await call("/admin/countries/zz", "PATCH", changes)).status, 409);
+  assert.equal((await call("/secure-catalog/countries/zz", "PATCH", changes)).status, 200);
+  assert.equal((await call("/secure-catalog/countries/zz", "PATCH", changes)).status, 409);
   const countries = (await call("/public/auth/countries")).data.countries;
   assert.equal(countries.find((country) => country.countryCode === "zz").countryName, changes.countryName);
   assert.deepEqual(countries.find((country) => country.countryCode === "yy").operations,
@@ -85,10 +85,10 @@ test("routing: operation/country isolation, override, switching, stale writes an
     [`catalog-operator-${code}`, code, `Fixture operator ${code}`]);
   }
   for (const code of ["catalog-a", "catalog-b"]) {
-    const created = await call("/admin/payment-aggregators", "POST",
+    const created = await call("/secure-catalog/payment-aggregators", "POST",
       { code, name: code, reason: "Isolated provider metadata" });
     assert.equal(created.status, 201);
-    const enabled = await call("/admin/payment-aggregators", "PATCH",
+    const enabled = await call("/secure-catalog/payment-aggregators", "PATCH",
       { code, name: code, enabled: true, expectedVersion: created.data.version, reason: "Isolated activation" });
     assert.equal(enabled.status, 200);
     assert.equal(enabled.data.adapterStatus, "not_implemented");
@@ -97,17 +97,17 @@ test("routing: operation/country isolation, override, switching, stale writes an
     scopeType: "country", countryCode: "zz", operation, operatorId: null,
     aggregatorCode: "catalog-a", expectedVersion: 0, reason: "Isolated routing update", ...extra,
   });
-  assert.equal((await call("/admin/payment-aggregator-routes", "PUT", route("invalid"))).status, 400);
-  assert.equal((await call("/admin/payment-aggregator-routes", "PUT", route("deposit"))).status, 200);
-  assert.equal((await call("/admin/payment-aggregator-routes", "PUT",
+  assert.equal((await call("/secure-catalog/payment-aggregator-routes", "PUT", route("invalid"))).status, 400);
+  assert.equal((await call("/secure-catalog/payment-aggregator-routes", "PUT", route("deposit"))).status, 200);
+  assert.equal((await call("/secure-catalog/payment-aggregator-routes", "PUT",
     route("international", { aggregatorCode: "catalog-b" }))).status, 200);
-  assert.equal((await call("/admin/payment-aggregator-routes", "PUT",
+  assert.equal((await call("/secure-catalog/payment-aggregator-routes", "PUT",
     route("deposit", { scopeType: "operator", operatorId: "catalog-operator-yy" }))).status, 404);
   const override = route("deposit", {
     scopeType: "operator", operatorId: "catalog-operator-zz", aggregatorCode: "catalog-b",
   });
-  assert.equal((await call("/admin/payment-aggregator-routes", "PUT", override)).status, 200);
-  const routes = (await call("/admin/payment-routing")).data.countries;
+  assert.equal((await call("/secure-catalog/payment-aggregator-routes", "PUT", override)).status, 200);
+  const routes = (await call("/secure-catalog/payment-routing")).data.countries;
   const deposit = routes.find((row) => row.countryCode === "zz" && row.operation === "deposit");
   assert.equal(deposit.defaultAggregatorCode, "catalog-a");
   assert.equal(deposit.operators[0].effectiveAggregatorCode, "catalog-b");
@@ -117,11 +117,11 @@ test("routing: operation/country isolation, override, switching, stale writes an
   assert.equal(international.operators[0].inheritsCountryDefault, true);
   assert.ok(routes.filter((row) => row.countryCode === "yy").every((row) => row.defaultAggregatorCode === null));
   const switchInput = { ...override, aggregatorCode: "catalog-a", expectedVersion: 1 };
-  assert.equal((await call("/admin/payment-aggregator-routes", "PUT", switchInput)).status, 200);
-  assert.equal((await call("/admin/payment-aggregator-routes", "PUT", switchInput)).status, 409);
+  assert.equal((await call("/secure-catalog/payment-aggregator-routes", "PUT", switchInput)).status, 200);
+  assert.equal((await call("/secure-catalog/payment-aggregator-routes", "PUT", switchInput)).status, 409);
   const simultaneous = await Promise.all([
-    call("/admin/payment-aggregator-routes", "PUT", route("inter-network")),
-    call("/admin/payment-aggregator-routes", "PUT", route("inter-network", { aggregatorCode: "catalog-b" })),
+    call("/secure-catalog/payment-aggregator-routes", "PUT", route("inter-network")),
+    call("/secure-catalog/payment-aggregator-routes", "PUT", route("inter-network", { aggregatorCode: "catalog-b" })),
   ]);
   assert.deepEqual(simultaneous.map((result) => result.status).sort(), [200, 409]);
   const stored = await pool.query(`SELECT count(*)::int AS n FROM sf_operation_aggregator_routes

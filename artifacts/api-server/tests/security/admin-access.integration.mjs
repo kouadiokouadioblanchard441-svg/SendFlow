@@ -17,7 +17,7 @@ const phones = { writer: "+2250700000011", reader: "+2250700000012", customer: "
 function request(path, { method = "GET", cookie, body, binary, origin = "https://sendflow-test.invalid" } = {}) {
   return new Promise((resolve, reject) => {
     const data = binary ?? (body === undefined ? undefined : JSON.stringify(body));
-    const req = http.request({ hostname: "127.0.0.1", port, path: `/admin${path}`, method,
+    const req = http.request({ hostname: "127.0.0.1", port, path: `/secure-access${path}`, method,
       headers: { origin, ...(cookie ? { cookie } : {}),
         ...(data ? { "content-type": binary ? "image/png" : "application/json", "content-length": Buffer.byteLength(data) } : {}) },
     }, (res) => {
@@ -72,7 +72,7 @@ before(async () => {
   surface.get("/overview", (req, res) => {
     if (runtime.respondAdminAuthError(req, res)) res.json({ allowed: true });
   });
-  app.use("/admin", surface);
+  app.use("/secure-access", surface);
   app.use((_error, _req, res, _next) => res.status(500).json({ error: "Fixture request failed" }));
   server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));

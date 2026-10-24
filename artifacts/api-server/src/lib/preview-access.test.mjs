@@ -15,11 +15,11 @@ test("viewer candidate list does not admit new routes, payments, providers, regi
   for (const [method, path] of [
     ["POST", "/api/me/identity-verification"], ["POST", "/api/auth/send-otp"],
     ["POST", "/api/auth/register"], ["POST", "/api/auth/reset-pin"],
-    ["POST", "/api/auth/reset-password"], ["GET", "/api/admin"],
+    ["POST", "/api/auth/reset-password"], ["GET", "/api/private"],
     ["GET", "/api/me/transactions/other-user"], ["PUT", "/api/me"],
     ["GET", "/api/me/profile"], ["PATCH", "/api/me/profile"],
     ["GET", "/api/me/account-limit/unknown"], ["POST", "/api/me/transfer-quote/unknown"],
-    ["GET", "/api/me/../admin"], ["GET", "/api/me%00"], ["GET", "/api/%zz"],
+    ["GET", "/api/me/../private"], ["GET", "/api/me%00"], ["GET", "/api/%zz"],
     ["POST", "/api/payments"], ["GET", "/api/me/future-route"],
   ]) assert.equal(isViewerRouteCandidate(method, path), false);
 });

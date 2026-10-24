@@ -673,6 +673,7 @@ test("shared-Neon access is confined to one provisioned viewer, with real passwo
     assert.equal((await signin(otherPhone, normalPassword)).status, 401);
     assert.equal((await signin(fixturePhone, "wrong-fixture-value")).status, 401);
     assert.equal((await request("/api/me", { user: "fixture-a" })).status, 401);
+    assert.equal((await request("/api/me/portal-eligibility")).status, 401);
     // Even a correctly scoped cookie belonging to another real customer is denied.
     await owner.query("UPDATE sf_customer_sessions SET token_hash=$1 WHERE user_id='fixture-b'",
       [runtime.hashCustomerSessionToken(tokens["fixture-b"])]);
@@ -693,6 +694,9 @@ test("shared-Neon access is confined to one provisioned viewer, with real passwo
     assert.equal((await request("/api/me", { headers: freshHeaders })).status, 403);
     assert.equal((await request("/api/auth/unlock", { method: "POST", headers: freshHeaders, body: { pin } })).status, 200);
     assert.equal((await request("/api/me", { headers: freshHeaders })).status, 200);
+    const viewerPortalEligibility = await request("/api/me/portal-eligibility", { headers: freshHeaders });
+    assert.equal(viewerPortalEligibility.status, 200);
+    assert.deepEqual(JSON.parse(viewerPortalEligibility.text), { isAuthorized: false });
     assert.equal((await request("/api/auth/sign-out", { method: "POST", headers: freshHeaders })).status, 200);
     assert.equal((await request("/api/auth/session", { headers: freshHeaders })).status, 401);
     const profile = await request("/api/me", { headers });

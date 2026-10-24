@@ -724,6 +724,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/portal-eligibility:
+    get:
+      operationId: getCustomerPortalEligibility
+      tags: [account]
+      summary: Check whether the authenticated account has an active administrator grant
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Whether the authenticated account is eligible to enter the administrator sign-in flow.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPortalEligibilityResult"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Authorization state is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /me/profile:
     get:
       operationId: getCustomerProfile
@@ -3149,6 +3175,13 @@ components:
           type: string
       required:
         - error
+    CustomerPortalEligibilityResult:
+      type: object
+      properties:
+        isAuthorized:
+          type: boolean
+      required:
+        - isAuthorized
     PhoneOtpSendInput:
       type: object
       properties:

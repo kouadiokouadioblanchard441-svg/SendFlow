@@ -193,7 +193,7 @@ test("invalid, expired and session-mismatched tokens are rejected", () => {
 
   const sessionCookie = `__Host-sendflow_session=${"a".repeat(43)}`;
   const sessionBootstrap = invoke("GET", "/auth/session", { cookie: sessionCookie });
-  const changedSession = invoke("POST", "/admin/settings", {
+  const changedSession = invoke("POST", "/private/settings", {
     origin: trustedOrigin,
     cookie: `__Host-sendflow_session=${"b".repeat(43)}`,
     csrfToken: sessionBootstrap.headers[CSRF_HEADER_NAME],
@@ -204,14 +204,14 @@ test("invalid, expired and session-mismatched tokens are rejected", () => {
 
 test("a trusted origin with a valid token proceeds; an untrusted origin still fails", () => {
   const bootstrap = anonymousBootstrap();
-  const accepted = invoke("POST", "/admin/settings", {
+  const accepted = invoke("POST", "/private/settings", {
     origin: trustedOrigin,
     cookie: bootstrap.cookie,
     csrfToken: bootstrap.token,
   });
   assert.equal(accepted.next, true);
 
-  const rejected = invoke("POST", "/admin/settings", {
+  const rejected = invoke("POST", "/private/settings", {
     origin: "https://evil.invalid",
     cookie: bootstrap.cookie,
     csrfToken: bootstrap.token,

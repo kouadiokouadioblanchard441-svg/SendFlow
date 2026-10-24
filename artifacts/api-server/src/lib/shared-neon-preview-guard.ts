@@ -50,7 +50,8 @@ export function isViewerRouteCandidate(method: string, requestPath: string): boo
   if (!path) return false;
   if (method.toUpperCase() === "GET") {
     return ["/api/auth/session", "/api/me", "/api/me/transactions",
-      "/api/me/account-limit", "/api/me/identity-verification", "/api/me/payment-readiness"].includes(path)
+      "/api/me/account-limit", "/api/me/identity-verification", "/api/me/payment-readiness",
+      "/api/me/portal-eligibility"].includes(path)
       || /^\/api\/me\/transactions\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path)
       || /^\/api\/me\/payments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path);
   }

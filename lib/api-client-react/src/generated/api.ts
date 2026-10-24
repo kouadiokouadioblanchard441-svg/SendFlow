@@ -65,6 +65,7 @@ import type {
   CustomerPinSetInput,
   CustomerPinStateResult,
   CustomerPinUnlockInput,
+  CustomerPortalEligibilityResult,
   CustomerProfile,
   CustomerProfileUpdate,
   CustomerRegistrationInput,
@@ -2147,6 +2148,83 @@ export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurren
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetCurrentAccountQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCustomerPortalEligibilityUrl = () => {
+
+
+
+
+  return `/api/me/portal-eligibility`
+}
+
+/**
+ * @summary Check whether the authenticated account has an active administrator grant
+ */
+export const getCustomerPortalEligibility = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerPortalEligibilityResult> => {
+
+  return customFetch<CustomerPortalEligibilityResult>(getGetCustomerPortalEligibilityUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerPortalEligibilityQueryKey = () => {
+    return [
+    `/api/me/portal-eligibility`
+    ] as const;
+    }
+
+
+export const getGetCustomerPortalEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerPortalEligibilityQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerPortalEligibility>>> = ({ signal }) => getCustomerPortalEligibility({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerPortalEligibilityQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerPortalEligibility>>>
+export type GetCustomerPortalEligibilityQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Check whether the authenticated account has an active administrator grant
+ */
+
+export function useGetCustomerPortalEligibility<TData = Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerPortalEligibilityQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
