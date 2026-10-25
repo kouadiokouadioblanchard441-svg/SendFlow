@@ -36,5 +36,5 @@
 - [Workflow process ownership](workflow-process-ownership.md) — Environment updates can leave old children serving ports despite a failed managed workflow; verify ownership before cleanup.
 - [FeexPay documentation](feexpay-documentation.md) — Payout pages may return only a loading shell; inspect the official public asset rather than infer the contract.
 - [LinkFlow image storage](linkflow-image-storage.md) — LinkFlow images stay in Neon by explicit choice; do not move them to external storage without approval.
-- [LinkFlow pending-state integrity](linkflow-pending-state-integrity.md) — Real pending/success states require server proof; viewer simulations must stay visibly fake and create no financial records.
+- [LinkFlow payment integrity](linkflow-pending-state-integrity.md) — The link amount is the payer’s fixed total; withhold fees from merchant proceeds and never add or show them at checkout.
 - [SendFlow visual contrast](sendflow-visual-contrast.md) — Use white-first surfaces and violet accents; public LinkFlow checkout follows a clean merchant-first mobile payment layout.

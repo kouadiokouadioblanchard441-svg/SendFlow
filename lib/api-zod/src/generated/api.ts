@@ -873,9 +873,6 @@ export const QuotePublicPaymentLinkParams = zod.object({
 
 export const quotePublicPaymentLinkResponseAmountMinorMax = 9007199254740991;
 
-export const quotePublicPaymentLinkResponseFeeMinorMin = 0;
-export const quotePublicPaymentLinkResponseFeeMinorMax = 9007199254740991;
-
 export const quotePublicPaymentLinkResponseTotalMinorMax = 9007199254740991;
 
 export const quotePublicPaymentLinkResponseOperatorIdMin = 2;
@@ -886,7 +883,6 @@ export const quotePublicPaymentLinkResponseOperatorIdMax = 60;
 export const QuotePublicPaymentLinkResponse = zod.object({
   "currency": zod.enum(['XOF']),
   "amountMinor": zod.int().min(1).max(quotePublicPaymentLinkResponseAmountMinorMax),
-  "feeMinor": zod.int().min(quotePublicPaymentLinkResponseFeeMinorMin).max(quotePublicPaymentLinkResponseFeeMinorMax),
   "totalMinor": zod.int().min(1).max(quotePublicPaymentLinkResponseTotalMinorMax),
   "operatorId": zod.string().min(quotePublicPaymentLinkResponseOperatorIdMin).max(quotePublicPaymentLinkResponseOperatorIdMax)
 })

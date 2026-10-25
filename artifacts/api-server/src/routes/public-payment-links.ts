@@ -113,7 +113,7 @@ async function loadAvailableChoices(link: PublicLinkRow) {
       );
       if (rate?.feePercent === null || rate?.feePercent === undefined ||
         !Number.isFinite(rate.feePercent) || rate.feePercent < 0 || rate.feePercent > 100) return [];
-      if (!calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, true)) return [];
+       if (!calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false)) return [];
       return [{ id: operator.operatorId, name: operator.name }];
     }).sort((left, right) => left.name.localeCompare(right.name, "fr"));
 
@@ -227,7 +227,7 @@ router.get("/public/payment-links/:token/quote/:countryCode/:operatorId", async 
       res.status(400).json({ error: "Le tarif de ce réseau n’est pas disponible." });
       return;
     }
-    const amounts = calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, true);
+    const amounts = calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false);
     if (!amounts) {
       res.status(400).json({ error: "Le tarif de ce réseau n’est pas disponible." });
       return;
@@ -235,7 +235,6 @@ router.get("/public/payment-links/:token/quote/:countryCode/:operatorId", async 
     res.json(QuotePublicPaymentLinkResponse.parse({
       currency: "XOF",
       amountMinor: link.amountMinor,
-      feeMinor: amounts.feeMinor,
       totalMinor: amounts.totalDebitMinor,
       operatorId: parsed.data.operatorId,
     }));

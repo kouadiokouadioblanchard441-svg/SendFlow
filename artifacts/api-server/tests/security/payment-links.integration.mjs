@@ -542,8 +542,7 @@ test("public payment page is token-scoped and quotes the fee from server pricing
   assert.deepEqual(json(quote), {
     currency: "XOF",
     amountMinor: 1250,
-    feeMinor: 25,
-    totalMinor: 1275,
+    totalMinor: 1250,
     operatorId: "mtn-ci",
   });
   const forgedNetwork = await request(`/api/public/payment-links/${token}/quote/ci/unknown`);

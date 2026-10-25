@@ -11,10 +11,10 @@ test("sender-paid fees add the fee to the debit and preserve the received amount
 });
 
 test("recipient-paid fees reduce the received amount without changing debit", () => {
-  assert.deepEqual(calculateTransferQuoteAmounts(10_000, 1.5, false), {
-    feeMinor: 150,
-    recipientAmountMinor: 9_850,
-    totalDebitMinor: 10_000,
+  assert.deepEqual(calculateTransferQuoteAmounts(2_000, 1.5, false), {
+    feeMinor: 30,
+    recipientAmountMinor: 1_970,
+    totalDebitMinor: 2_000,
   });
 });
 

@@ -4,9 +4,7 @@ import { useParams } from 'wouter';
 import { Clock3, ShieldCheck } from 'lucide-react';
 import {
   getGetPublicPaymentLinkQueryKey,
-  getQuotePublicPaymentLinkQueryKey,
   useGetPublicPaymentLink,
-  useQuotePublicPaymentLink,
   useSimulateCustomerPaymentLink,
 } from '@workspace/api-client-react';
 import type { SimulatedPaymentLinkSuccess } from '@workspace/api-client-react';
@@ -44,13 +42,6 @@ export default function PublicPaymentLinkPage() {
 
   const link = linkQuery.data;
   const country = link?.countries.find((item) => item.code === countryCode);
-  const quoteQuery = useQuotePublicPaymentLink(token, countryCode, operatorId, {
-    query: {
-      enabled: Boolean(token && countryCode && operatorId),
-      queryKey: getQuotePublicPaymentLinkQueryKey(token, countryCode, operatorId),
-      retry: false,
-    },
-  });
   const expiry = formatDate(link?.expiresAt ?? null);
   const backgroundArt = typeof document !== 'undefined' ? createPortal(
     <img className="sendflow-public-pay-art" src={linkflowIllustration} alt="" aria-hidden="true" draggable={false} />,
@@ -139,17 +130,6 @@ export default function PublicPaymentLinkPage() {
           </div>
 
           <div className="sendflow-pay-amount-panel" data-testid="public-pay-amount">
-            {quoteQuery.data ? (
-              <p className="sendflow-pay-fee-intro">
-                {quoteQuery.data.feeMinor > 0
-                  ? `${formatMoney(quoteQuery.data.feeMinor, quoteQuery.data.currency, link.currencyDecimals)} de frais supplémentaires seront inclus. Montant total : ${formatMoney(quoteQuery.data.totalMinor, quoteQuery.data.currency, link.currencyDecimals)}.`
-                  : `Aucun frais supplémentaire. Montant total : ${formatMoney(quoteQuery.data.totalMinor, quoteQuery.data.currency, link.currencyDecimals)}.`}
-              </p>
-            ) : (
-              <p className="sendflow-pay-fee-intro" role={quoteQuery.isFetching ? 'status' : undefined}>
-                {quoteQuery.isFetching ? 'Calcul des frais…' : 'Les frais exacts seront affichés après le choix du réseau.'}
-              </p>
-            )}
             <strong>{amountLabel}</strong>
             {expiry && <small><Clock3 size={13} /> Valable jusqu’au {expiry}</small>}
             {link.remainingUses !== null && (
@@ -232,17 +212,10 @@ export default function PublicPaymentLinkPage() {
 
           </div>
 
-          {quoteQuery.isError && (
-            <div className="sendflow-pay-quote-error" role="alert">
-              <span>Les frais ne peuvent pas être calculés pour ce choix.</span>
-              <button type="button" onClick={() => quoteQuery.refetch()} data-testid="button-pay-quote-retry">Réessayer</button>
-            </div>
-          )}
-
           {link.simulationAvailable ? (
             <>
               {simulateMutation.isError && (
-                <div className="sendflow-pay-quote-error" role="alert">
+                <div className="sendflow-pay-inline-error" role="alert">
                   <span>La simulation n’a pas pu être préparée.</span>
                   <button type="button" onClick={() => simulateMutation.mutate({ token }, {
                     onSuccess: setSimulationConfirmation,
@@ -267,7 +240,6 @@ export default function PublicPaymentLinkPage() {
                 <span><ShieldCheck size={18} /></span>
                 <p>
                   <strong>{link.paymentAvailable ? 'La confirmation de paiement n’est pas encore activée.' : 'Le paiement en ligne est momentanément indisponible.'}</strong>
-                  Vos informations restent sur cet appareil et ne sont pas envoyées.
                 </p>
               </div>
               <button type="button" className="sendflow-pay-submit" disabled aria-disabled="true" data-testid="button-pay-unavailable">

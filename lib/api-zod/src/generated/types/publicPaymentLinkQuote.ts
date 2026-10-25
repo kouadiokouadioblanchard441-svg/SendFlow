@@ -15,11 +15,6 @@ export interface PublicPaymentLinkQuote {
      */
   amountMinor: number;
   /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  feeMinor: number;
-  /**
      * @minimum 1
      * @maximum 9007199254740991
      */
