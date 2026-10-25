@@ -148,6 +148,7 @@ function validInput(overrides = {}) {
     requestId: randomUUID(),
     currency: "XOF",
     amount: "1250",
+    linkName: "Flow digital SARL",
     description: "Facture SendFlow",
     paymentMethod: "all",
     validity: "day",
@@ -163,6 +164,11 @@ function json(response) {
 }
 
 test("payment-link amount rules and shared-Neon preview scope fail closed", () => {
+  assert.equal(normalizePaymentLinkInput(validInput({
+    linkName: "  Flow digital SARL  ",
+  })).linkName, "Flow digital SARL");
+  assert.throws(() => normalizePaymentLinkInput(validInput({ linkName: " " })));
+  assert.throws(() => normalizePaymentLinkInput(validInput({ linkName: "x".repeat(121) })));
   assert.equal(normalizePaymentLinkInput(validInput({
     currency: "USD",
     amount: "10.25",
@@ -227,6 +233,7 @@ test("payment-link schema migration is present and operates only in the isolated
     { column_name: "image_size_bytes", data_type: "integer", character_maximum_length: null, is_nullable: "YES" },
     { column_name: "created_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "NO" },
     { column_name: "updated_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "NO" },
+    { column_name: "link_name", data_type: "character varying", character_maximum_length: 120, is_nullable: "YES" },
   ]);
   const constraints = await owner.query(`SELECT conname FROM pg_constraint
     WHERE conrelid='public.sf_customer_payment_links'::regclass
@@ -236,6 +243,7 @@ test("payment-link schema migration is present and operates only in the isolated
     "sf_customer_payment_links_currency_check",
     "sf_customer_payment_links_description_check",
     "sf_customer_payment_links_image_data_check",
+    "sf_customer_payment_links_link_name_check",
     "sf_customer_payment_links_maximum_uses_check",
     "sf_customer_payment_links_payment_method_check",
     "sf_customer_payment_links_pkey",
@@ -441,7 +449,7 @@ test("create uses server-owned values, is idempotent and rejects changed replays
   const conflict = await request("/api/me/payment-links", {
     method: "POST",
     userId: "payment-link-owner-a",
-    body: { ...body, description: "Autres paramètres" },
+    body: { ...body, linkName: "Autre marchand" },
   });
   assert.equal(conflict.status, 409);
   assert.equal(Number((await owner.query(
@@ -485,7 +493,7 @@ test("public payment page is token-scoped and quotes the fee from server pricing
   const page = await request(`/api/public/payment-links/${token}`);
   assert.equal(page.status, 200, page.text);
   const details = json(page);
-  assert.equal(details.merchantName, "SendFlow");
+  assert.equal(details.merchantName, "Flow digital SARL");
   assert.equal(details.amountMinor, 1250);
   assert.equal(details.paymentAvailable, false);
   assert.equal(Object.hasOwn(details, "userId"), false);

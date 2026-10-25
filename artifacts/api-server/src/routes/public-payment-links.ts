@@ -28,6 +28,7 @@ const errorUnavailable = { error: "Ce lien de paiement est indisponible." };
 type PublicLinkRow = {
   id: string;
   publicToken: string;
+  linkName: string | null;
   currency: string;
   amountMinor: number;
   description: string;
@@ -44,6 +45,7 @@ async function findUsablePublicLink(token: string): Promise<PublicLinkRow | unde
   const [link] = await db.select({
     id: customerPaymentLinksTable.id,
     publicToken: customerPaymentLinksTable.publicToken,
+    linkName: customerPaymentLinksTable.linkName,
     currency: customerPaymentLinksTable.currency,
     amountMinor: customerPaymentLinksTable.amountMinor,
     description: customerPaymentLinksTable.description,
@@ -147,7 +149,7 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
     }
     const countries = await loadAvailableChoices(link);
     const response = {
-      merchantName: "SendFlow",
+      merchantName: link.linkName?.trim() || "SendFlow",
       description: link.description,
       currency: link.currency,
       currencyDecimals: ["XOF", "XAF"].includes(link.currency) ? 0 : 2,

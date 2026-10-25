@@ -38,6 +38,10 @@ try {
     "lib/db/migrations/2026-10-24-customer-payment-links.sql"), "utf8");
   await owner.query(paymentLinksMigration);
   await owner.query(paymentLinksMigration);
+  const paymentLinkNameMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-10-25-customer-payment-link-name.sql"), "utf8");
+  await owner.query(paymentLinkNameMigration);
+  await owner.query(paymentLinkNameMigration);
   // Exercise the scoped migration rather than accepting Drizzle's approximation
   // of its triggers, cross-table guards and operational registry.
   await owner.query("DROP TABLE sf_replit_payment_test_access CASCADE");
@@ -211,7 +215,7 @@ try {
       DIDIT_WEBHOOK_SECRET: randomBytes(32).toString("hex"),
       DIDIT_ENVIRONMENT: "sandbox", CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", TRUST_PROXY_HOPS: "1",
       DIDIT_WORKFLOW_ID: "fixture-workflow",
-      TRUST_PROXY_HOPS: "1", LOG_LEVEL: "silent",
+      TRUST_PROXY_HOPS: "1", LOG_LEVEL: process.env.SENDFLOW_TEST_LOG_LEVEL ?? "silent",
     },
   });
   if (result.error) throw result.error;

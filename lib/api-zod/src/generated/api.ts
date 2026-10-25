@@ -701,6 +701,9 @@ export const createCustomerPaymentLinkBodyAmountMax = 24;
 
 
 export const createCustomerPaymentLinkBodyAmountRegExp = new RegExp('^[0-9]+(\\.[0-9]+)?$');
+export const createCustomerPaymentLinkBodyLinkNameMin = 2;
+export const createCustomerPaymentLinkBodyLinkNameMax = 120;
+
 export const createCustomerPaymentLinkBodyDescriptionMin = 2;
 export const createCustomerPaymentLinkBodyDescriptionMax = 240;
 
@@ -718,6 +721,7 @@ export const CreateCustomerPaymentLinkBody = zod.object({
   "requestId": zod.uuid(),
   "currency": zod.enum(['XOF', 'XAF', 'USD']),
   "amount": zod.string().min(1).max(createCustomerPaymentLinkBodyAmountMax).regex(createCustomerPaymentLinkBodyAmountRegExp),
+  "linkName": zod.string().min(createCustomerPaymentLinkBodyLinkNameMin).max(createCustomerPaymentLinkBodyLinkNameMax),
   "description": zod.string().min(createCustomerPaymentLinkBodyDescriptionMin).max(createCustomerPaymentLinkBodyDescriptionMax),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
   "validity": zod.enum(['hour', 'day', 'week', 'unlimited']),

@@ -419,6 +419,11 @@ export interface CustomerPaymentLinkInput {
   amount: string;
   /**
      * @minLength 2
+     * @maxLength 120
+     */
+  linkName: string;
+  /**
+     * @minLength 2
      * @maxLength 240
      */
   description: string;

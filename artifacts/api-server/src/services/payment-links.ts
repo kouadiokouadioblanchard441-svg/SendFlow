@@ -128,6 +128,7 @@ export type NormalizedPaymentLinkInput = {
   requestId: string;
   currency: typeof PAYMENT_LINK_CURRENCIES[number]["code"];
   amountMinor: number;
+  linkName: string;
   description: string;
   paymentMethod: typeof PAYMENT_LINK_METHODS[number]["value"];
   validity: keyof typeof validityInMs;
@@ -182,6 +183,7 @@ export function normalizePaymentLinkInput(
     requestId: string;
     currency: typeof PAYMENT_LINK_CURRENCIES[number]["code"];
     amount: string;
+    linkName: string;
     description: string;
     paymentMethod: typeof PAYMENT_LINK_METHODS[number]["value"];
     validity: keyof typeof validityInMs;
@@ -191,6 +193,10 @@ export function normalizePaymentLinkInput(
   },
   now = new Date(),
 ): NormalizedPaymentLinkInput {
+  const linkName = input.linkName.trim();
+  if (linkName.length < 2 || linkName.length > 120) {
+    throw new PaymentLinkInputError("Le nom du lien doit contenir entre 2 et 120 caractères.");
+  }
   const description = input.description.trim();
   if (description.length < 2 || description.length > 240) {
     throw new PaymentLinkInputError("La description doit contenir entre 2 et 240 caractères.");
@@ -210,6 +216,7 @@ export function normalizePaymentLinkInput(
   const canonical = {
     currency: input.currency,
     amountMinor,
+    linkName,
     description,
     paymentMethod: input.paymentMethod,
     validity: input.validity,

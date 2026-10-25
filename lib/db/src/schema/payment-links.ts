@@ -27,6 +27,7 @@ export const customerPaymentLinksTable = pgTable("sf_customer_payment_links", {
   requestHash: varchar("request_hash", { length: 64 }).notNull(),
   currency: varchar("currency", { length: 3 }).notNull(),
   amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+  linkName: varchar("link_name", { length: 120 }),
   description: varchar("description", { length: 240 }).notNull(),
   paymentMethod: varchar("payment_method", { length: 20 }).notNull(),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
@@ -66,6 +67,10 @@ export const customerPaymentLinksTable = pgTable("sf_customer_payment_links", {
   descriptionCheck: check(
     "sf_customer_payment_links_description_check",
     sql`length(btrim(${table.description})) between 2 and 240`,
+  ),
+  linkNameCheck: check(
+    "sf_customer_payment_links_link_name_check",
+    sql`${table.linkName} is null or length(btrim(${table.linkName})) between 2 and 120`,
   ),
   paymentMethodCheck: check(
     "sf_customer_payment_links_payment_method_check",

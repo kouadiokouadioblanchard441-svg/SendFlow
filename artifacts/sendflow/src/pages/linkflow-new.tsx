@@ -52,6 +52,7 @@ export default function LinkFlowNewPage() {
   const paymentLinksQuery = useGetCustomerPaymentLinks({ limit: 20 });
   const requestIdRef = useRef<{ fingerprint: string; id: string } | null>(null);
   const [currency, setCurrency] = useState<CustomerPaymentLinkInputCurrency>('XOF');
+  const [linkName, setLinkName] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [method, setMethod] = useState<CustomerPaymentLinkInputPaymentMethod>('all');
@@ -144,7 +145,10 @@ export default function LinkFlowNewPage() {
       return;
     }
     const nextErrors: Record<string, string> = {};
+    const trimmedLinkName = linkName.trim();
     const trimmedAmount = amount.trim();
+    if (trimmedLinkName.length < 2) nextErrors.linkName = 'Le nom du lien doit comporter au moins 2 caractères.';
+    if (trimmedLinkName.length > 120) nextErrors.linkName = 'Le nom du lien ne peut pas dépasser 120 caractères.';
     const amountMatch = /^([0-9]+)(?:\.([0-9]+))?$/.exec(trimmedAmount);
     const decimalPlaces = selectedCurrencyOption.decimals;
     if (!amountMatch || !Number.isFinite(Number(trimmedAmount)) || Number(trimmedAmount) < 10) {
@@ -176,6 +180,7 @@ export default function LinkFlowNewPage() {
     const payload = {
       currency,
       amount: trimmedAmount,
+      linkName: trimmedLinkName,
       description: description.trim(),
       paymentMethod: method,
       validity,
@@ -247,6 +252,24 @@ export default function LinkFlowNewPage() {
         </header>
 
         <form className="sendflow-linkflow-form" onSubmit={submit} noValidate>
+          <label className={`sendflow-linkflow-field${errors.linkName ? ' has-error' : ''}`}>
+            <span>Nom du lien</span>
+            <input
+              type="text"
+              value={linkName}
+              onChange={(event) => setLinkName(event.target.value)}
+              maxLength={120}
+              autoComplete="organization"
+              placeholder="Ex. Flow digital SARL"
+              aria-invalid={Boolean(errors.linkName)}
+              aria-describedby={errors.linkName ? 'linkflow-name-error' : 'linkflow-name-help'}
+              data-testid="input-linkflow-name"
+            />
+            {errors.linkName
+              ? <small className="sendflow-linkflow-error" id="linkflow-name-error">{errors.linkName}</small>
+              : <small id="linkflow-name-help">Ce nom sera affiché en haut de la page de paiement.</small>}
+          </label>
+
           <fieldset className="sendflow-linkflow-choice-group">
             <legend>Devise</legend>
             <div className="sendflow-linkflow-pills sendflow-linkflow-currency-pills" role="radiogroup" aria-label="Devise">

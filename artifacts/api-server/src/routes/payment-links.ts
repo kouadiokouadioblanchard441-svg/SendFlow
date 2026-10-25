@@ -59,6 +59,12 @@ const parsePaymentLinkImageBody = express.raw({
   inflate: false,
 });
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const safeErrorTypes = new Set(["TypeError", "RangeError", "ReferenceError", "SyntaxError", "ZodError"]);
+
+function getSafeErrorType(error: unknown) {
+  if (!(error instanceof Error)) return "UnknownError";
+  return safeErrorTypes.has(error.name) ? error.name : "Error";
+}
 
 function toResponse(row: Pick<
   typeof customerPaymentLinksTable.$inferSelect,
@@ -192,6 +198,7 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
       requestHash: normalized.requestHash,
       currency: normalized.currency,
       amountMinor: normalized.amountMinor,
+      linkName: normalized.linkName,
       description: normalized.description,
       paymentMethod: normalized.paymentMethod,
       expiresAt: normalized.expiresAt,
@@ -231,10 +238,18 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
           }
         }
       } catch (retryError) {
-        req.log.error({ err: retryError, userId: session.userId }, "Payment link idempotency lookup failed");
+        req.log.error({
+          errorType: getSafeErrorType(retryError),
+          err: retryError,
+          userId: session.userId,
+        }, "Payment link idempotency lookup failed");
       }
     }
-    req.log.error({ err: error, userId: session.userId }, "Customer payment link could not be created");
+    req.log.error({
+      errorType: getSafeErrorType(error),
+      err: error,
+      userId: session.userId,
+    }, "Customer payment link could not be created");
     res.status(503).json({ error: "La création du lien est momentanément indisponible." });
   }
 });

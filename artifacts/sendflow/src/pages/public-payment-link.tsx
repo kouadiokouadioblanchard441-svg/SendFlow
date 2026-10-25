@@ -106,12 +106,22 @@ export default function PublicPaymentLinkPage() {
           <span className="sendflow-pay-secure"><LockKeyhole size={13} /> Lien SendFlow</span>
         </header>
 
-        <section className="sendflow-public-pay-card" aria-labelledby="public-pay-title">
+        <h1 className="sendflow-pay-merchant-title" id="public-pay-title">{link.merchantName}</h1>
+
+        <section className="sendflow-public-pay-card" aria-label={`Demande de paiement de ${link.merchantName}`}>
+          {link.imagePath && (
+            <div className="sendflow-pay-hero-image-wrap">
+              <img
+                className="sendflow-pay-hero-image"
+                src={link.imagePath}
+                alt={`Image de paiement pour ${link.merchantName}`}
+              />
+            </div>
+          )}
+
           <div className="sendflow-pay-merchant">
-            {link.imagePath && <img className="sendflow-pay-merchant-image" src={link.imagePath} alt="" />}
             <div>
               <p className="sendflow-pay-overline">DEMANDE DE PAIEMENT</p>
-              <h1 id="public-pay-title">{link.merchantName}</h1>
               {link.description && <p className="sendflow-pay-description">{link.description}</p>}
             </div>
           </div>
