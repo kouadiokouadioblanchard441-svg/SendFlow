@@ -1037,6 +1037,233 @@
   padding: 15px 18px 20px;
 }
 
+/* LinkFlow settlement confirmation — a focused, server-fed success surface. */
+.sendflow-linkflow-success-shell {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(224, 217, 248, .65), transparent 55%),
+    #f5f3f8;
+  padding: 28px 18px;
+}
+
+.sendflow-linkflow-success-card {
+  width: min(100%, 440px);
+  overflow: hidden;
+  border: 1px solid rgba(65, 47, 104, .08);
+  border-radius: 22px;
+  background: #fffefa;
+  box-shadow: 0 24px 70px rgba(54, 39, 82, .12), 0 3px 10px rgba(54, 39, 82, .04);
+  animation: sendflow-linkflow-success-in .48s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.sendflow-linkflow-success-brand {
+  display: flex;
+  height: 68px;
+  align-items: center;
+  justify-content: center;
+  background: #fffefa;
+}
+
+.sendflow-linkflow-success-brand img {
+  display: block;
+  width: 112px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sendflow-linkflow-success-banner {
+  position: relative;
+  display: flex;
+  min-height: 290px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.13), transparent 58%),
+    #5445a5;
+  color: #fff;
+  padding: 28px 22px 32px;
+  text-align: center;
+}
+
+.sendflow-linkflow-success-banner::before,
+.sendflow-linkflow-success-banner::after {
+  position: absolute;
+  right: -12%;
+  left: -12%;
+  height: 110px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.sendflow-linkflow-success-banner::before {
+  top: -80px;
+  transform: rotate(-7deg);
+}
+
+.sendflow-linkflow-success-banner::after {
+  top: -52px;
+  transform: rotate(5deg);
+}
+
+.sendflow-linkflow-success-mark {
+  z-index: 1;
+  display: grid;
+  width: 104px;
+  height: 104px;
+  flex: 0 0 104px;
+  place-items: center;
+  border-radius: 50%;
+  background: #12df79;
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(7, 44, 32, .19), inset 0 1px 0 rgba(255,255,255,.32);
+}
+
+.sendflow-linkflow-success-kicker {
+  z-index: 1;
+  margin: 19px 0 5px;
+  color: rgba(255,255,255,.76);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+}
+
+.sendflow-linkflow-success-banner h1 {
+  z-index: 1;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(24px, 6vw, 29px);
+  font-weight: 750;
+  letter-spacing: -.045em;
+  line-height: 1.15;
+}
+
+.sendflow-linkflow-success-merchant {
+  z-index: 1;
+  max-width: 100%;
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  color: rgba(255,255,255,.84);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.sendflow-linkflow-success-content {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 34px clamp(22px, 7vw, 40px) 30px;
+  text-align: center;
+}
+
+.sendflow-linkflow-success-copy {
+  max-width: 340px;
+  margin: 0 auto;
+  color: #3b3941;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.sendflow-linkflow-success-copy strong {
+  color: #282436;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.sendflow-linkflow-success-verified {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 19px 0 24px;
+  color: #347864;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sendflow-linkflow-success-verified svg {
+  flex: 0 0 auto;
+}
+
+.sendflow-linkflow-success-finish {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 10px;
+  background: #5945b0;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 7px 16px rgba(74, 54, 151, .18);
+  transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.sendflow-linkflow-success-finish:hover {
+  background: #49369c;
+  box-shadow: 0 10px 20px rgba(74, 54, 151, .23);
+  transform: translateY(-1px);
+}
+
+.sendflow-linkflow-success-finish:active {
+  transform: scale(.99);
+}
+
+.sendflow-linkflow-success-finish:focus-visible {
+  outline: 3px solid rgba(89, 69, 176, .28);
+  outline-offset: 3px;
+}
+
+.sendflow-linkflow-success-footer {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-top: 1px solid #eeecf0;
+  background: #f8f7f8;
+  color: #77727e;
+  padding: 12px 22px;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.sendflow-linkflow-success-footer-icon {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ede9f7;
+  color: #6250a5;
+}
+
+@keyframes sendflow-linkflow-success-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 420px) {
+  .sendflow-linkflow-success-shell { padding: 0; background: #fffefa; }
+  .sendflow-linkflow-success-card { min-height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+  .sendflow-linkflow-success-banner { min-height: 290px; }
+  .sendflow-linkflow-success-footer { min-height: 70px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sendflow-linkflow-success-card { animation: none; }
+  .sendflow-linkflow-success-finish { transition: none; }
+}
+
 .sendflow-admin-main { min-width: 0; background: var(--admin-bg); }
 .sendflow-admin-topbar {
   display: flex;
