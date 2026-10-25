@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'wouter';
-import { Check, Clock3, LockKeyhole, ShieldCheck, Smartphone } from 'lucide-react';
+import { Check, Clock3, LockKeyhole, ShieldCheck } from 'lucide-react';
 import {
   getGetPublicPaymentLinkQueryKey,
   getQuotePublicPaymentLinkQueryKey,
@@ -44,7 +44,6 @@ export default function PublicPaymentLinkPage() {
 
   const link = linkQuery.data;
   const country = link?.countries.find((item) => item.code === countryCode);
-  const operator = country?.operators.find((item) => item.id === operatorId);
   const quoteQuery = useQuotePublicPaymentLink(token, countryCode, operatorId, {
     query: {
       enabled: Boolean(token && countryCode && operatorId),
@@ -135,13 +134,23 @@ export default function PublicPaymentLinkPage() {
 
           <div className="sendflow-pay-merchant">
             <div>
-              <p className="sendflow-pay-overline">DEMANDE DE PAIEMENT</p>
+              <p className="sendflow-pay-payment-title">Paiement</p>
               {link.description && <p className="sendflow-pay-description">{link.description}</p>}
             </div>
           </div>
 
           <div className="sendflow-pay-amount-panel" data-testid="public-pay-amount">
-            <span>Montant demandé</span>
+            {quoteQuery.data ? (
+              <p className="sendflow-pay-fee-intro">
+                {quoteQuery.data.feeMinor > 0
+                  ? `${formatMoney(quoteQuery.data.feeMinor, quoteQuery.data.currency, link.currencyDecimals)} de frais supplémentaires seront inclus. Montant total : ${formatMoney(quoteQuery.data.totalMinor, quoteQuery.data.currency, link.currencyDecimals)}.`
+                  : `Aucun frais supplémentaire. Montant total : ${formatMoney(quoteQuery.data.totalMinor, quoteQuery.data.currency, link.currencyDecimals)}.`}
+              </p>
+            ) : (
+              <p className="sendflow-pay-fee-intro" role={quoteQuery.isFetching ? 'status' : undefined}>
+                {quoteQuery.isFetching ? 'Calcul des frais…' : 'Les frais exacts seront affichés après le choix du réseau.'}
+              </p>
+            )}
             <strong>{amountLabel}</strong>
             {expiry && <small><Clock3 size={13} /> Valable jusqu’au {expiry}</small>}
             {link.remainingUses !== null && (
@@ -149,34 +158,34 @@ export default function PublicPaymentLinkPage() {
             )}
           </div>
 
-          <div className="sendflow-pay-method">
-            <span className="sendflow-pay-method-icon"><Smartphone size={16} /></span>
-            <span><small>Moyen de paiement</small><strong>{link.countries.length ? 'Mobile Money' : 'Aucun moyen disponible'}</strong></span>
-            <span className="sendflow-pay-method-state">{link.countries.length ? 'Configuré' : 'Indisponible'}</span>
-          </div>
-
-          <div className="sendflow-pay-form-heading">
-            <div>
-              <p className="sendflow-pay-overline">VOS INFORMATIONS</p>
-              <h2>Coordonnées du payeur</h2>
-            </div>
-            <span className="sendflow-pay-step">01 <i /> 02</span>
-          </div>
-
           <div className="sendflow-pay-form">
+            <label className="sendflow-pay-field">
+              <span>Moyens de paiement</span>
+              <select
+                defaultValue={link.simulationAvailable ? 'simulation' : link.countries.length ? 'mobile-money' : 'unavailable'}
+                disabled={!link.simulationAvailable && link.countries.length === 0}
+                className="sendflow-pay-method-select"
+                data-testid="select-pay-method"
+              >
+                {link.simulationAvailable && <option value="simulation">Simulation de test (aucun paiement réel)</option>}
+                {link.countries.length > 0 && <option value="mobile-money">Mobile Money</option>}
+                {!link.simulationAvailable && link.countries.length === 0 && <option value="unavailable">Aucun moyen disponible</option>}
+              </select>
+            </label>
+
             <div className="sendflow-pay-field-pair">
               <label className="sendflow-pay-field">
-                <span>Prénom</span>
-                <input type="text" autoComplete="given-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Votre prénom" data-testid="input-pay-first-name" />
+                <span>Nom<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
+                <input type="text" autoComplete="family-name" value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Votre nom" data-testid="input-pay-last-name" />
               </label>
               <label className="sendflow-pay-field">
-                <span>Nom</span>
-                <input type="text" autoComplete="family-name" value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Votre nom" data-testid="input-pay-last-name" />
+                <span>Prénom(s)<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
+                <input type="text" autoComplete="given-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Votre prénom" data-testid="input-pay-first-name" />
               </label>
             </div>
 
             <label className="sendflow-pay-field">
-              <span>Pays</span>
+              <span>Pays<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
               <select
                 value={countryCode}
                 onChange={(event) => {
@@ -187,25 +196,25 @@ export default function PublicPaymentLinkPage() {
                 data-testid="select-pay-country"
               >
                 <option value="">Sélectionnez votre pays</option>
-                {link.countries.map((item) => <option key={item.code} value={item.code}>{item.name} ({item.phonePrefix})</option>)}
+                {link.countries.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
               </select>
             </label>
 
             <label className="sendflow-pay-field">
-              <span>Réseau mobile</span>
+              <span>Réseau<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
               <select
                 value={operatorId}
                 onChange={(event) => setOperatorId(event.target.value)}
                 disabled={!country || country.operators.length === 0}
                 data-testid="select-pay-operator"
               >
-                <option value="">{country ? 'Sélectionnez votre réseau' : 'Choisissez d’abord un pays'}</option>
+                <option value="">{country ? 'Choisissez un réseau mobile' : 'Choisissez d’abord un pays'}</option>
                 {country?.operators.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
               </select>
             </label>
 
             <label className="sendflow-pay-field">
-              <span>Téléphone mobile</span>
+              <span>Numéro de téléphone<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
               <div className="sendflow-pay-phone-input">
                 <span aria-hidden="true">{country?.phonePrefix ?? '+—'}</span>
                 <input
@@ -224,31 +233,18 @@ export default function PublicPaymentLinkPage() {
 
           </div>
 
-          <section className="sendflow-pay-costs" aria-labelledby="pay-cost-title">
-            <div className="sendflow-pay-costs-title">
-              <h2 id="pay-cost-title">Récapitulatif</h2>
-              {quoteQuery.isFetching && <span className="sendflow-pay-quote-loading" role="status">Calcul des frais…</span>}
+          {quoteQuery.isError && (
+            <div className="sendflow-pay-quote-error" role="alert">
+              <span>Les frais ne peuvent pas être calculés pour ce choix.</span>
+              <button type="button" onClick={() => quoteQuery.refetch()} data-testid="button-pay-quote-retry">Réessayer</button>
             </div>
-            <div className="sendflow-pay-cost-row"><span>Montant</span><strong>{quoteQuery.data ? formatMoney(quoteQuery.data.amountMinor, quoteQuery.data.currency, link.currencyDecimals) : amountLabel}</strong></div>
-            <div className="sendflow-pay-cost-row"><span>Frais de paiement{operator ? ` · ${operator.name}` : ''}</span><strong>{quoteQuery.data ? formatMoney(quoteQuery.data.feeMinor, quoteQuery.data.currency, link.currencyDecimals) : '—'}</strong></div>
-            <div className="sendflow-pay-cost-row is-total"><span>Total à régler</span><strong>{quoteQuery.data ? formatMoney(quoteQuery.data.totalMinor, quoteQuery.data.currency, link.currencyDecimals) : '—'}</strong></div>
-            {quoteQuery.isError && (
-              <div className="sendflow-pay-quote-error" role="alert">
-                <span>Les frais ne peuvent pas être calculés pour ce choix.</span>
-                <button type="button" onClick={() => quoteQuery.refetch()} data-testid="button-pay-quote-retry">Réessayer</button>
-              </div>
-            )}
-            {!countryCode || !operatorId ? <p className="sendflow-pay-quote-hint">Choisissez un pays et un réseau pour afficher les frais exacts.</p> : null}
-          </section>
+          )}
 
           {link.simulationAvailable ? (
             <>
-              <div className="sendflow-pay-unavailable-note is-simulation" role="status" data-testid="status-payment-simulation">
-                <span><ShieldCheck size={18} /></span>
-                <p>
-                  <strong>Mode simulation du compte de visualisation</strong>
-                  Aucun débit, appel USSD, paiement prestataire ou mouvement de solde ne sera effectué. Les champs saisis restent sur cet appareil.
-                </p>
+              <div className="sendflow-pay-simulation-note" role="status" data-testid="status-payment-simulation">
+                <ShieldCheck size={15} />
+                <span>Compte de visualisation · simulation sans paiement réel</span>
               </div>
               {simulateMutation.isError && (
                 <div className="sendflow-pay-quote-error" role="alert">
@@ -260,14 +256,14 @@ export default function PublicPaymentLinkPage() {
               )}
               <button
                 type="button"
-                className="sendflow-pay-submit"
+                className="sendflow-pay-submit is-simulation"
                 disabled={simulateMutation.isPending}
                 onClick={() => simulateMutation.mutate({ token }, {
                   onSuccess: setSimulationConfirmation,
                 })}
                 data-testid="button-pay-simulate"
               >
-                {simulateMutation.isPending ? 'Simulation…' : 'Simuler le résultat'}
+                {simulateMutation.isPending ? 'Préparation…' : 'Voir le résultat de test'}
               </button>
             </>
           ) : (
