@@ -1724,7 +1724,12 @@ function AggregatorsPage() {
   const updateUssdInstruction = useUpdateAdminUssdInstruction();
   const [routingOperation, setRoutingOperation] = useState<PaymentOperation>('deposit');
   const [editing, setEditing] = useState<AggregatorEdit | null>(null);
-  const [ussdPreview, setUssdPreview] = useState<{ countryName: string; operatorName: string | null; code: string | null } | null>(null);
+  const [ussdPreview, setUssdPreview] = useState<{
+    countryName: string;
+    operatorName: string | null;
+    code: string | null;
+    screen: 'waiting' | 'failure';
+  } | null>(null);
   const [reason, setReason] = useState('');
   const [feedback, setFeedback] = useState('');
   const [mutationError, setMutationError] = useState('');
@@ -2008,7 +2013,7 @@ function AggregatorsPage() {
                       </div>
                       <div className="flex gap-2">
                         <Button type="button" variant="outline" disabled={!country.ussdCode}
-                          onClick={() => setUssdPreview({ countryName: country.countryName, operatorName: null, code: country.ussdCode })}
+                          onClick={() => setUssdPreview({ countryName: country.countryName, operatorName: null, code: country.ussdCode, screen: 'waiting' })}
                           data-testid={`button-preview-ussd-country-${country.countryCode}`}>Aperçu</Button>
                         <Button type="button" variant="outline"
                           onClick={() => openUssdEdit({
@@ -2034,7 +2039,7 @@ function AggregatorsPage() {
                           </div>
                           <div className="flex gap-2">
                             <Button type="button" variant="outline" size="sm" disabled={!effectiveCode}
-                              onClick={() => setUssdPreview({ countryName: country.countryName, operatorName: operator.operatorName, code: effectiveCode })}
+                              onClick={() => setUssdPreview({ countryName: country.countryName, operatorName: operator.operatorName, code: effectiveCode, screen: 'waiting' })}
                               data-testid={`button-preview-ussd-operator-${operator.operatorId}`}>Aperçu</Button>
                             <Button type="button" variant="outline" size="sm"
                               onClick={() => openUssdEdit({
@@ -2335,28 +2340,71 @@ function AggregatorsPage() {
       <Dialog open={Boolean(ussdPreview)} onOpenChange={(open) => { if (!open) setUssdPreview(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Aperçu de l’écran de confirmation</DialogTitle>
+            <DialogTitle>Aperçu de l’attente USSD et de l’échec</DialogTitle>
             <DialogDescription>
               {ussdPreview && `${ussdPreview.operatorName ? `${ussdPreview.operatorName} · ` : ''}${ussdPreview.countryName}`}
             </DialogDescription>
           </DialogHeader>
-          <div className="mx-auto w-full max-w-sm space-y-5 rounded-3xl border border-violet-100 bg-white p-5 shadow-lg">
-            <div className="flex justify-center">
-              <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800">APERÇU · SENDFLOW</span>
+          <div className="mx-auto w-full max-w-sm space-y-4 rounded-3xl border-2 border-[#17151b] bg-white p-4 shadow-[0_5px_0_rgba(0,0,0,.14),0_14px_28px_rgba(0,0,0,.12)]">
+            <div className="flex rounded-xl border-2 border-[#17151b] bg-white p-1" aria-label="Écrans de prévisualisation">
+              <button
+                type="button"
+                aria-pressed={ussdPreview?.screen === 'waiting'}
+                onClick={() => setUssdPreview((current) => current ? { ...current, screen: 'waiting' } : current)}
+                className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition-colors ${ussdPreview?.screen === 'waiting' ? 'bg-[#17151b] text-white' : 'text-slate-700 hover:bg-violet-50'}`}
+                data-testid="button-preview-ussd-waiting"
+              >
+                Attente USSD
+              </button>
+              <button
+                type="button"
+                aria-pressed={ussdPreview?.screen === 'failure'}
+                onClick={() => setUssdPreview((current) => current ? { ...current, screen: 'failure' } : current)}
+                className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition-colors ${ussdPreview?.screen === 'failure' ? 'bg-[#17151b] text-white' : 'text-slate-700 hover:bg-violet-50'}`}
+                data-testid="button-preview-ussd-failure"
+              >
+                Paiement non confirmé
+              </button>
             </div>
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-              <Smartphone className="size-7" aria-hidden="true" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Aperçu de l’étape opérateur</p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-950">Confirmez sur votre téléphone</h3>
-              <p className="mt-2 text-sm text-slate-600">Le parcours réel attendra une demande de paiement confirmée par le serveur.</p>
-            </div>
-            <div className="rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-5 text-center">
-              <p className="text-xs font-medium uppercase tracking-wide text-violet-800">Code USSD configuré</p>
-              <p className="mt-2 text-2xl font-bold tracking-wide text-slate-950">{ussdPreview?.code ?? 'Aucun code'}</p>
-            </div>
-            <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-xs text-amber-900">
+            {ussdPreview?.screen === 'waiting' ? (
+              <section className="space-y-4" aria-label="Aperçu de l’attente USSD" data-testid="preview-ussd-waiting">
+                <div className="mx-auto grid size-14 place-items-center rounded-2xl border-2 border-[#17151b] bg-white text-violet-700 shadow-[0_3px_0_rgba(0,0,0,.12)]">
+                  <Smartphone className="size-7" aria-hidden="true" />
+                </div>
+                <div className="text-center">
+                  <span className="inline-flex items-center gap-2 rounded-full border-2 border-[#17151b] bg-white px-3 py-1 text-xs font-semibold text-violet-800">
+                    <Clock3 className="size-4" aria-hidden="true" />
+                    En attente de confirmation
+                  </span>
+                  <h3 className="mt-3 text-xl font-bold text-slate-950">Confirmez sur votre téléphone</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">Composez le code ci-dessous, puis suivez les consignes de votre opérateur.</p>
+                </div>
+                <div className="rounded-2xl border-2 border-[#17151b] bg-[#f4f4f6] px-4 py-5 text-center shadow-[0_3px_0_rgba(0,0,0,.1)]">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-violet-800">Code USSD configuré</p>
+                  <p className="mt-2 break-all text-3xl font-extrabold tracking-wide text-slate-950" data-testid="text-preview-ussd-code">{ussdPreview?.code ?? 'Aucun code'}</p>
+                </div>
+              </section>
+            ) : (
+              <section className="space-y-4 py-2 text-center" role="status" aria-live="polite" data-testid="preview-ussd-failure">
+                <div className="mx-auto grid size-16 place-items-center rounded-2xl border-2 border-[#17151b] bg-white text-rose-600 shadow-[0_3px_0_rgba(0,0,0,.12)]">
+                  <CircleX className="size-8" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[.14em] text-violet-800">Résultat du paiement</p>
+                  <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Paiement non confirmé</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">Le parcours réel affichera cet écran uniquement après un échec confirmé par le serveur.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUssdPreview(null)}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#17151b] bg-violet-700 px-4 py-3 text-sm font-bold text-white shadow-[0_4px_0_rgba(0,0,0,.16)] transition-colors hover:bg-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+                  data-testid="button-close-ussd-failure-preview"
+                >
+                  Fermer l’aperçu <ArrowRight className="size-4" aria-hidden="true" />
+                </button>
+              </section>
+            )}
+            <p className="rounded-xl border-2 border-[#17151b] bg-violet-50 px-3 py-2 text-center text-xs font-medium text-slate-700">
               Aperçu seulement : aucun paiement, appel USSD ou débit n’a été envoyé.
             </p>
           </div>

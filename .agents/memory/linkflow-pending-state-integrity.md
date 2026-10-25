@@ -26,3 +26,9 @@ For LinkFlow, deletion is a soft revocation: invalidate and hide the public link
 **Why:** The user explicitly chose history-preserving deletion and deferred complete statistics until real payments are available.
 
 **How to apply:** Filter deleted links from owner lists and all public endpoints, but retain their database rows. Never count viewer simulations as payments or derive financial analytics from browser state.
+
+For public LinkFlow, show a failed payment as “Paiement non confirmé” only after the server confirms failure. Keep this separate from an expired-link screen.
+
+**Why:** The user chose “Paiement non confirmé” for payment failure after sharing a separate “Lien expiré” reference screen.
+
+**How to apply:** Preserve distinct server-owned outcomes for pending, failed, succeeded, and expired links; do not treat an expired link as a failed payment or a browser preview as a real result.
