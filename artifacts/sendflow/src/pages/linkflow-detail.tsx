@@ -1,11 +1,14 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import {
-  ArrowLeft, ArrowUpRight, BarChart3, Check, CircleHelp, Clock3, Copy, CreditCard,
-  Link2, LockKeyhole, Pencil, RefreshCw, ShieldCheck, Trash2,
+  ArrowLeft, ArrowUpRight, BarChart3, Check, CircleHelp, Copy, Link2,
+  LockKeyhole, RefreshCw, SlidersHorizontal, Trash2,
 } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   getGetCustomerPaymentLinkQueryKey,
   getGetCustomerPaymentLinksQueryKey,
@@ -17,13 +20,12 @@ import { buildLinkFlowShareTargets } from '@/lib/linkflow-share';
 import { useSeo } from '@/lib/seo';
 import linkflowListIllustration from '@assets/generated_images/sendflow-linkflow-history-3d.webp';
 
-const formatMoney = (minor: number, currency: string, decimals: number) =>
-  new Intl.NumberFormat('fr-FR', {
-    style: 'currency', currency, minimumFractionDigits: decimals, maximumFractionDigits: decimals,
-  }).format(minor / (10 ** decimals));
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(value));
+const formatMinorInput = (minor: number, decimals: number) => {
+  const digits = String(minor);
+  if (decimals === 0) return digits;
+  const padded = digits.padStart(decimals + 1, '0');
+  return `${padded.slice(0, -decimals)}.${padded.slice(-decimals)}`;
+};
 
 const amountToMinor = (value: string, decimals: number): bigint | null => {
   if (!/^[0-9]+(?:\.[0-9]+)?$/.test(value)) return null;
@@ -36,12 +38,6 @@ const amountToMinor = (value: string, decimals: number): bigint | null => {
   }
 };
 
-const paymentLabel = (method: string) => ({
-  all: 'Tous les moyens de paiement',
-  card: 'Carte bancaire',
-  mobile_money: 'Mobile Money',
-}[method] ?? method);
-
 const statusLabel = (status: string) => ({
   draft: 'Brouillon',
   active: 'Actif',
@@ -49,6 +45,8 @@ const statusLabel = (status: string) => ({
   expired: 'Expiré',
   exhausted: 'Utilisations atteintes',
 }[status] ?? status);
+
+type LimitFormValues = { maximumUses: string };
 
 function LinkFlowDetailBackdrop() {
   if (typeof document === 'undefined') return null;
@@ -71,11 +69,13 @@ export default function LinkFlowDetailPage() {
   const [view, setView] = useState<'information' | 'statistics'>('information');
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [maximumUses, setMaximumUses] = useState('');
+  const [amountDraft, setAmountDraft] = useState<string | null>(null);
+  const [descriptionDraft, setDescriptionDraft] = useState<string | null>(null);
   const [formError, setFormError] = useState('');
+  const [amountError, setAmountError] = useState('');
+  const [descriptionError, setDescriptionError] = useState('');
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+  const limitForm = useForm<LimitFormValues>({ defaultValues: { maximumUses: '' } });
   const linkQuery = useGetCustomerPaymentLink(linkId, {
     query: { queryKey: getGetCustomerPaymentLinkQueryKey(linkId) },
   });
@@ -110,29 +110,16 @@ export default function LinkFlowDetailPage() {
   const startEditing = () => {
     const link = linkQuery.data;
     if (!link) return;
-    setAmount((link.amountMinor / (10 ** link.currencyDecimals)).toFixed(link.currencyDecimals));
-    setDescription(link.description);
-    setMaximumUses(link.maximumUses === null ? '' : String(link.maximumUses));
+    limitForm.reset({ maximumUses: link.maximumUses === null ? '' : String(link.maximumUses) });
     setFormError('');
     setEditing(true);
   };
 
-  const saveChanges = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const saveChanges = limitForm.handleSubmit((values) => {
     const link = linkQuery.data;
     if (!link) return;
-    const used = link.usageCount > 0;
-    const nextAmount = amount.trim();
-    const nextDescription = description.trim();
-    const maxText = maximumUses.trim();
+    const maxText = values.maximumUses.trim();
     const maxValue = maxText === '' ? null : Number(maxText);
-    const nextAmountMinor = amountToMinor(nextAmount, link.currencyDecimals);
-
-    if (used && (nextAmountMinor !== BigInt(link.amountMinor)
-      || nextDescription !== link.description)) {
-      setFormError('Le montant et la description ne peuvent plus être modifiés après une utilisation.');
-      return;
-    }
     if (maxValue !== null && (!Number.isInteger(maxValue) || maxValue < 1 || maxValue > 999999)) {
       setFormError('Indiquez une limite entière comprise entre 1 et 999 999, ou laissez-la vide.');
       return;
@@ -141,27 +128,55 @@ export default function LinkFlowDetailPage() {
       setFormError(`La limite ne peut pas être inférieure aux ${link.usageCount} utilisations déjà enregistrées.`);
       return;
     }
-    if (!nextDescription || nextDescription.length < 2 || nextDescription.length > 240) {
-      setFormError('La description doit contenir entre 2 et 240 caractères.');
-      return;
-    }
-    if (nextAmountMinor === null || nextAmountMinor <= 0n || nextAmount.length > 24) {
-      setFormError(`Saisissez un montant valide avec au maximum ${link.currencyDecimals} décimales.`);
-      return;
-    }
-
-    const data: { amount?: string; description?: string; maximumUses?: number | null } = {};
-    if (nextAmountMinor !== BigInt(link.amountMinor)) data.amount = nextAmount;
-    if (nextDescription !== link.description) data.description = nextDescription;
-    if (maxValue !== link.maximumUses) data.maximumUses = maxValue;
-    if (Object.keys(data).length === 0) {
+    if (maxValue === link.maximumUses) {
       setEditing(false);
       return;
     }
     setFormError('');
-    updateMutation.mutate({ linkId, data }, {
+    updateMutation.mutate({ linkId, data: { maximumUses: maxValue } }, {
       onSuccess: () => setEditing(false),
       onError: () => setFormError('Les modifications n’ont pas été enregistrées. Vérifiez votre connexion puis réessayez.'),
+    });
+  });
+
+  const saveAmount = () => {
+    const link = linkQuery.data;
+    if (!link || link.usageCount > 0 || amountDraft === null) return;
+    const nextAmount = amountDraft.trim();
+    const nextAmountMinor = amountToMinor(nextAmount, link.currencyDecimals);
+    if (nextAmountMinor === null || nextAmountMinor <= 0n || nextAmount.length > 24) {
+      setAmountError(`Saisissez un montant valide avec au maximum ${link.currencyDecimals} décimales.`);
+      return;
+    }
+    if (nextAmountMinor === BigInt(link.amountMinor)) {
+      setAmountDraft(null);
+      setAmountError('');
+      return;
+    }
+    setAmountError('');
+    updateMutation.mutate({ linkId, data: { amount: nextAmount } }, {
+      onSuccess: () => setAmountDraft(null),
+      onError: () => setAmountError('Le montant n’a pas été enregistré. Réessayez.'),
+    });
+  };
+
+  const saveDescription = () => {
+    const link = linkQuery.data;
+    if (!link || link.usageCount > 0 || descriptionDraft === null) return;
+    const nextDescription = descriptionDraft.trim();
+    if (nextDescription.length < 2 || nextDescription.length > 240) {
+      setDescriptionError('La description doit contenir entre 2 et 240 caractères.');
+      return;
+    }
+    if (nextDescription === link.description) {
+      setDescriptionDraft(null);
+      setDescriptionError('');
+      return;
+    }
+    setDescriptionError('');
+    updateMutation.mutate({ linkId, data: { description: nextDescription } }, {
+      onSuccess: () => setDescriptionDraft(null),
+      onError: () => setDescriptionError('La description n’a pas été enregistrée. Réessayez.'),
     });
   };
 
@@ -198,7 +213,13 @@ export default function LinkFlowDetailPage() {
   }
 
   const link = linkQuery.data;
-  const amountLabel = formatMoney(link.amountMinor, link.currency, link.currencyDecimals);
+  const savedAmount = formatMinorInput(link.amountMinor, link.currencyDecimals);
+  const shownAmount = amountDraft ?? savedAmount;
+  const shownDescription = descriptionDraft ?? link.description;
+  const amountDirty = amountDraft !== null
+    && amountToMinor(amountDraft.trim(), link.currencyDecimals) !== BigInt(link.amountMinor);
+  const descriptionDirty = descriptionDraft !== null
+    && descriptionDraft.trim() !== link.description;
   let publicUrl = link.sharePath;
   try {
     if (typeof window !== 'undefined') {
@@ -206,7 +227,7 @@ export default function LinkFlowDetailPage() {
         origin: window.location.origin,
         basePath: import.meta.env.BASE_URL,
         sharePath: link.sharePath,
-        title: link.description,
+        title: link.linkName?.trim() || link.description,
       }).url;
     }
   } catch {
@@ -230,67 +251,84 @@ export default function LinkFlowDetailPage() {
         <header className="sendflow-detail-header">
           <button type="button" className="sendflow-linkflow-back" onClick={() => setLocation('/linkflow')} aria-label="Retour aux liens" data-testid="button-linkflow-detail-back"><ArrowLeft size={21} /></button>
           <h1 id="sendflow-detail-title">Détail du lien</h1>
-          <button type="button" className="sendflow-detail-icon-button" onClick={startEditing} aria-label="Modifier le lien" data-testid="button-linkflow-edit"><Pencil size={18} /></button>
+          <span className="sendflow-detail-header-spacer" aria-hidden="true" />
         </header>
 
         <div className="sendflow-detail-body">
-          <div className="sendflow-detail-eyebrow"><span className={`sendflow-detail-status is-${link.status}`}><i />{statusLabel(link.status)}</span><span>#{link.code}</span></div>
-          <section className="sendflow-detail-hero">
-            <span className="sendflow-detail-hero-mark"><Link2 size={22} /></span>
-            <p>Montant demandé</p>
-            <strong>{amountLabel}</strong>
-            <span className="sendflow-detail-hero-caption">{link.description}</span>
-          </section>
+          <div className="sendflow-detail-eyebrow">
+            <strong className="sendflow-detail-link-name" data-testid="text-linkflow-detail-name">{link.linkName?.trim() || link.code}</strong>
+            <span className={`sendflow-detail-status is-${link.status}`} data-testid="status-linkflow-detail"><i />{statusLabel(link.status)}</span>
+          </div>
 
           <div className="sendflow-detail-switch" role="tablist" aria-label="Informations du lien">
-            <button type="button" role="tab" aria-selected={view === 'information'} className={view === 'information' ? 'is-selected' : ''} onClick={() => setView('information')}><Link2 size={16} /> Informations</button>
-            <button type="button" role="tab" aria-selected={view === 'statistics'} className={view === 'statistics' ? 'is-selected' : ''} onClick={() => setView('statistics')}><BarChart3 size={16} /> Statistiques</button>
+            <button type="button" role="tab" data-testid="tab-linkflow-information" aria-selected={view === 'information'} className={view === 'information' ? 'is-selected' : ''} onClick={() => setView('information')}>Informations</button>
+            <button type="button" role="tab" data-testid="tab-linkflow-statistics" aria-selected={view === 'statistics'} className={view === 'statistics' ? 'is-selected' : ''} onClick={() => setView('statistics')}>Statistiques</button>
           </div>
 
           {view === 'information' ? (
             <div className="sendflow-detail-panel" role="tabpanel">
-              <div className="sendflow-detail-section-heading"><div><span className="sendflow-detail-kicker">VOTRE LIEN</span><h2>Informations</h2></div><button type="button" className="sendflow-detail-edit-link" onClick={startEditing}><Pencil size={14} /> Modifier</button></div>
               <section className="sendflow-detail-public-link" aria-label="Lien public de paiement">
-                <div className="sendflow-detail-public-heading"><span><Link2 size={15} /> Adresse publique</span><span className="sendflow-detail-public-safe"><LockKeyhole size={12} /> Accès sécurisé</span></div>
                 <div className="sendflow-detail-public-control">
-                  <input type="text" readOnly value={publicUrl} aria-label="Adresse publique du lien de paiement" onFocus={(event) => event.currentTarget.select()} />
+                  <input type="text" readOnly value={publicUrl} aria-label="Adresse publique du lien de paiement" data-testid="input-linkflow-detail-url" onFocus={(event) => event.currentTarget.select()} />
                   <button type="button" onClick={() => void copyPublicUrl()} aria-label="Copier l’adresse publique" data-testid="button-linkflow-detail-copy">
                     {copyState === 'copied' ? <Check size={16} /> : <Copy size={16} />}
-                    <span>{copyState === 'copied' ? 'Copié' : 'Copier'}</span>
                   </button>
                 </div>
                 {copyState === 'error' && <p className="sendflow-detail-copy-error" role="status">Copie indisponible. Touchez l’adresse pour la sélectionner.</p>}
               </section>
-              <dl className="sendflow-detail-facts">
-                <div><dt>Description</dt><dd>{link.description}</dd></div>
-                <div><dt>Moyens de paiement</dt><dd><span className="sendflow-detail-fact-icon"><CreditCard size={15} /></span>{paymentLabel(link.paymentMethod)}</dd></div>
-                <div><dt>Échéance</dt><dd><span className="sendflow-detail-fact-icon"><Clock3 size={15} /></span>{link.expiresAt ? formatDate(link.expiresAt) : 'Sans échéance'}</dd></div>
-                <div><dt>Créé le</dt><dd>{formatDate(link.createdAt)}</dd></div>
-              </dl>
               <section className="sendflow-detail-usage" aria-label="Utilisations et limite">
                 <div className="sendflow-detail-usage-copy">
-                  <span className="sendflow-detail-usage-icon"><BarChart3 size={16} /></span>
-                  <p><strong>Utilisations</strong><span>{link.usageCount} {link.usageCount === 1 ? 'utilisation enregistrée' : 'utilisations enregistrées'}</span></p>
+                  <p><span>Utilisations</span><strong data-testid="text-linkflow-detail-usage">{link.usageCount} / {link.maximumUses === null ? 'Illimité' : link.maximumUses}</strong></p>
                 </div>
-                <div className="sendflow-detail-usage-limit">
-                  <span><small>Limite d’utilisations</small><strong>{link.maximumUses === null ? 'Illimitée' : `Maximum ${link.maximumUses}`}</strong></span>
-                  <button type="button" onClick={startEditing} aria-label="Modifier la limite d’utilisations"><Pencil size={13} /> Modifier</button>
-                </div>
+                <button type="button" className="sendflow-detail-usage-limit" onClick={startEditing} aria-label="Modifier la limite d’utilisations" data-testid="button-linkflow-detail-limit"><SlidersHorizontal size={15} /> Limite d’utilisations</button>
               </section>
-              <div className="sendflow-detail-security"><ShieldCheck size={18} /><p><strong>Géré en toute sécurité</strong><span>Ce lien est rattaché à votre compte SendFlow.</span></p><LockKeyhole size={15} /></div>
+              <label className="sendflow-detail-inline-field">
+                <span>Montant ({link.currency})</span>
+                <div className="sendflow-detail-inline-control">
+                  <input
+                    value={shownAmount}
+                    onChange={(event) => { setAmountDraft(event.target.value); setAmountError(''); }}
+                    aria-label={`Montant en ${link.currency}`}
+                    inputMode="decimal"
+                    data-testid="input-linkflow-detail-amount"
+                    disabled={link.usageCount > 0 || updateMutation.isPending}
+                  />
+                  <button type="button" onClick={saveAmount} disabled={!amountDirty || updateMutation.isPending || link.usageCount > 0} aria-label="Enregistrer le montant" data-testid="button-linkflow-detail-save-amount">
+                    {updateMutation.isPending && amountDirty ? <RefreshCw size={17} className="sendflow-detail-saving-icon" /> : <Check size={19} />}
+                  </button>
+                </div>
+                {amountError && <small className="sendflow-detail-inline-error" role="alert">{amountError}</small>}
+              </label>
+              <label className="sendflow-detail-inline-field">
+                <span>Description</span>
+                <div className="sendflow-detail-inline-control">
+                  <input
+                    value={shownDescription}
+                    onChange={(event) => { setDescriptionDraft(event.target.value); setDescriptionError(''); }}
+                    aria-label="Description du lien"
+                    maxLength={240}
+                    data-testid="input-linkflow-detail-description"
+                    disabled={link.usageCount > 0 || updateMutation.isPending}
+                  />
+                  <button type="button" onClick={saveDescription} disabled={!descriptionDirty || updateMutation.isPending || link.usageCount > 0} aria-label="Enregistrer la description" data-testid="button-linkflow-detail-save-description">
+                    {updateMutation.isPending && descriptionDirty ? <RefreshCw size={17} className="sendflow-detail-saving-icon" /> : <Check size={19} />}
+                  </button>
+                </div>
+                {descriptionError && <small className="sendflow-detail-inline-error" role="alert">{descriptionError}</small>}
+                {link.usageCount > 0 && <small className="sendflow-detail-inline-hint"><LockKeyhole size={12} /> Montant et description verrouillés après une utilisation.</small>}
+              </label>
             </div>
           ) : (
             <div className="sendflow-detail-panel sendflow-detail-stats" role="tabpanel">
               <span className="sendflow-detail-stats-icon"><BarChart3 size={22} /></span>
               <span className="sendflow-detail-kicker">ANALYSE DU LIEN</span>
-              <h2>Statistiques indisponibles</h2>
-              <p>Les statistiques seront accessibles lorsque les paiements réels seront activés. Aucun chiffre de paiement n’est disponible pour le moment.</p>
-              <div className="sendflow-detail-stats-note"><CircleHelp size={16} />Seules les utilisations enregistrées par le serveur sont affichées dans les informations.</div>
+              <h2>Statistiques</h2>
+              <p>Les indicateurs apparaîtront ici après l’activation des paiements réels et la réception de données confirmées par le serveur.</p>
+              <div className="sendflow-detail-stats-note"><CircleHelp size={16} />Aucune vue, tentative ou transaction de simulation n’est présentée comme une donnée réelle.</div>
             </div>
           )}
 
-          <div className="sendflow-detail-created-note"><span><Check size={14} /></span>Les informations affichées proviennent de votre espace sécurisé.</div>
-          <button type="button" className="sendflow-detail-delete" onClick={() => setConfirmDelete(true)}><Trash2 size={16} /> Supprimer ce lien</button>
+          <button type="button" className="sendflow-detail-delete" onClick={() => setConfirmDelete(true)} data-testid="button-linkflow-detail-delete"><Trash2 size={16} /> Supprimer le lien</button>
         </div>
       </section>
 
@@ -298,16 +336,27 @@ export default function LinkFlowDetailPage() {
         <div className="sendflow-detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !updateMutation.isPending) setEditing(false); }}>
           <section className="sendflow-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="sendflow-edit-title">
             <div className="sendflow-detail-sheet-grip" />
-            <header className="sendflow-detail-sheet-heading"><div><span className="sendflow-detail-kicker">GESTION DU LIEN</span><h2 id="sendflow-edit-title">Modifier les informations</h2></div><button type="button" className="sendflow-detail-sheet-close" onClick={() => setEditing(false)} aria-label="Fermer" disabled={updateMutation.isPending}>×</button></header>
-            {link.usageCount > 0 && <p className="sendflow-detail-edit-lock"><LockKeyhole size={16} />Ce lien a déjà été utilisé. Son montant et sa description sont verrouillés.</p>}
+            <header className="sendflow-detail-sheet-heading"><div><span className="sendflow-detail-kicker">GESTION DU LIEN</span><h2 id="sendflow-edit-title">Limite d’utilisations</h2></div><button type="button" className="sendflow-detail-sheet-close" onClick={() => setEditing(false)} aria-label="Fermer" disabled={updateMutation.isPending}>×</button></header>
+            <Form {...limitForm}>
             <form className="sendflow-detail-form" onSubmit={saveChanges}>
-              <label>Description<input value={description} onChange={(event) => setDescription(event.target.value)} maxLength={240} minLength={2} disabled={link.usageCount > 0} required /></label>
-              <label>Montant <span>({link.currency})</span><input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" disabled={link.usageCount > 0} required /></label>
-              <label>Nombre maximum d’utilisations <span>(facultatif)</span><input value={maximumUses} onChange={(event) => setMaximumUses(event.target.value)} inputMode="numeric" type="number" min={link.usageCount || 1} max={999999} placeholder="Illimité" /></label>
+              <FormField
+                control={limitForm.control}
+                name="maximumUses"
+                render={({ field }) => (
+                  <FormItem className="sendflow-detail-form-item">
+                    <FormLabel>Nombre maximum d’utilisations <span>(facultatif)</span></FormLabel>
+                    <FormControl>
+                      <Input {...field} inputMode="numeric" type="number" min={link.usageCount || 1} max={999999} placeholder="Illimité" data-testid="input-linkflow-detail-maximum-uses" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <p className="sendflow-detail-form-hint">La limite ne peut pas être inférieure aux utilisations déjà enregistrées ({link.usageCount}).</p>
               {formError && <p className="sendflow-detail-form-error" role="alert">{formError}</p>}
-              <button type="submit" className="sendflow-detail-primary sendflow-detail-save" disabled={updateMutation.isPending}>{updateMutation.isPending ? 'Enregistrement…' : 'Enregistrer les modifications'} <ArrowUpRight size={17} /></button>
+              <button type="submit" className="sendflow-detail-primary sendflow-detail-save" disabled={updateMutation.isPending} data-testid="button-linkflow-detail-save-limit">{updateMutation.isPending ? 'Enregistrement…' : 'Enregistrer la limite'} <ArrowUpRight size={17} /></button>
             </form>
+            </Form>
           </section>
         </div>
       )}
