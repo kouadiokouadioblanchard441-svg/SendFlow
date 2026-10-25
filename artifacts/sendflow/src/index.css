@@ -2870,23 +2870,28 @@
 
 .sendflow-linkflow-back {
   display: grid;
-  width: 41px;
-  height: 41px;
-  flex: 0 0 41px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   place-items: center;
-  border: 0;
-  border-radius: 14px;
-  background: #f2eafd;
-  color: #7137ce;
+  border: 1px solid #dfc5ff;
+  border-radius: 13px;
+  background: #f3e8ff;
+  color: #7d22ff;
   cursor: pointer;
   padding: 0;
   transition: background-color .18s ease, transform .18s ease;
 }
 
 .sendflow-linkflow-back:hover,
-.sendflow-linkflow-back:focus-visible { background: #e9dcfb; outline: 0; }
-.sendflow-linkflow-back:focus-visible { box-shadow: 0 0 0 3px rgba(118, 32, 219, .18); }
-.sendflow-linkflow-back:active { transform: scale(.94); }
+.sendflow-linkflow-back:focus-visible {
+  border-color: #c99cff;
+  background: #ead8ff;
+  color: #6d16ec;
+  outline: 0;
+}
+.sendflow-linkflow-back:focus-visible { outline: 3px solid rgba(125, 34, 255, .25); outline-offset: 3px; }
+.sendflow-linkflow-back:active { background: #dfc5ff; transform: scale(.94); }
 
 .sendflow-linkflow-intro {
   position: relative;
@@ -2996,7 +3001,6 @@
 .sendflow-linkflow-pill.is-selected { border-color: hsl(var(--primary)); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 .sendflow-linkflow-pill.is-outlined { border-color: hsl(var(--primary)); background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
 .sendflow-linkflow-pill:focus-visible,
-.sendflow-linkflow-back:focus-visible,
 .sendflow-linkflow-no-image:focus-within { outline: 3px solid rgba(116, 64, 189, .25); outline-offset: 2px; }
 .sendflow-linkflow-helper { margin: -4px 0 0; color: #99949e; font-size: 11px; line-height: 1.45; }
 .sendflow-linkflow-maximum { margin-top: 3px; }
@@ -4601,15 +4605,6 @@
   font-weight: 800;
   letter-spacing: .13em;
 }
-.sendflow-linkflow-back {
-  width: 42px;
-  height: 42px;
-  border: 1px solid hsl(var(--border));
-  border-radius: 13px;
-  background: hsl(var(--card));
-  color: hsl(var(--primary));
-}
-.sendflow-linkflow-back:hover { background: hsl(var(--accent)); }
 .sendflow-linkflow-create-link {
   display: inline-flex;
   min-height: 43px;
@@ -4912,7 +4907,6 @@
 .sendflow-linkflow-header .sendflow-linkflow-head-copy { gap: 4px; }
 .sendflow-linkflow-header h1 { font-size: 22px; letter-spacing: -.04em; text-align: left; }
 .sendflow-linkflow-subtitle { margin: 0; color: #7f7887; font-size: 13px; line-height: 1.35; }
-.sendflow-linkflow-back { width: 42px; height: 42px; border: 0; border-radius: 50%; background: #f4f1f7; }
 .sendflow-linkflow-create-link {
   width: 46px;
   height: 46px;

@@ -237,7 +237,7 @@ export default function LinkFlowNewPage() {
       <section className="sendflow-linkflow-page sendflow-linkflow-create-page" aria-labelledby="linkflow-title">
         <header className="sendflow-linkflow-header">
           <button type="button" className="sendflow-linkflow-back" onClick={() => setLocation('/linkflow')} aria-label="Revenir à mes liens" data-testid="button-linkflow-back">
-            <ArrowLeft size={21} />
+            <ArrowLeft size={23} strokeWidth={2} aria-hidden="true" />
           </button>
           <div className="sendflow-linkflow-head-copy">
             <p className="sendflow-linkflow-eyebrow">NOUVELLE DEMANDE</p>

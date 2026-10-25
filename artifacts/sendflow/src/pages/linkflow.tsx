@@ -62,7 +62,7 @@ export default function LinkFlowPage() {
       <section className="sendflow-linkflow-page sendflow-linkflow-list" aria-labelledby="linkflow-title">
         <header className="sendflow-linkflow-header">
           <button type="button" className="sendflow-linkflow-back" onClick={() => setLocation('/account')} aria-label="Revenir à mon compte" data-testid="button-linkflow-back">
-            <ArrowLeft size={21} />
+            <ArrowLeft size={23} strokeWidth={2} aria-hidden="true" />
           </button>
           <div className="sendflow-linkflow-head-copy">
             <h1 id="linkflow-title">Liens de paiement</h1>
