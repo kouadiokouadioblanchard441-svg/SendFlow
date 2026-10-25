@@ -9,6 +9,12 @@ Never present a LinkFlow payment as pending or ask a payer to authorize USSD unl
 
 **How to apply:** Keep previews visibly non-operational. Connect public waiting and success screens only to authoritative server payment state and verified provider evidence; browser redirects, local state, and unverified webhooks cannot establish success.
 
+Do not configure a generic operator menu code as a LinkFlow payment-authorization code. Only show instructions explicitly confirmed for the selected provider flow; OTP or USSD instructions that depend on the transaction must be generated from that transaction, not stored as a static country/operator code.
+
+**Why:** The user chose to add only codes confirmed to authorize a LinkFlow payment, not general Mobile Money menu codes.
+
+**How to apply:** Derive the waiting screen from a real server-owned provider attempt and its documented authorization model. Keep static USSD settings empty unless their role in authorizing that exact payment flow is verified.
+
 The authorized Replit viewer may create and inspect LinkFlow links without a PIN because that provisioned account has no PIN, but only while its active preview grant is valid and only in the Replit shared-Neon environment. Its simulator must return an unmistakable simulation outcome, make no provider request, and create no payment attempt, transaction, ledger entry, or balance change.
 
 **Why:** The owner needs to review the complete LinkFlow screen flow in Replit, while the same Neon database is shared with Plesk and must never mistake a preview for a real settlement.
