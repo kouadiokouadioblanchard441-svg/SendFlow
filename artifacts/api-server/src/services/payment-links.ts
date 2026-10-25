@@ -242,3 +242,13 @@ export function isPaymentLinkCreationAllowed(
 ) {
   return environment.SENDFLOW_DATABASE_TARGET !== "shared-neon" || !session.paymentTestAccount;
 }
+
+export function isPaymentLinkSimulationAllowed(
+  session: { previewAccount: boolean; paymentTestAccount: boolean },
+  environment: Readonly<Record<string, string | undefined>> = process.env,
+) {
+  return environment.SENDFLOW_DATABASE_TARGET === "shared-neon"
+    && environment.FEEXPAY_EXECUTION_HOST === "replit"
+    && session.previewAccount
+    && !session.paymentTestAccount;
+}

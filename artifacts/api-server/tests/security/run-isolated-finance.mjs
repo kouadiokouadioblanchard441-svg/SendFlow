@@ -209,7 +209,12 @@ try {
     ? [join(apiDir, "tests/security/payment-links.integration.mjs")]
     : [join(apiDir, "tests/security/finance.integration.mjs"),
        join(apiDir, "tests/security/catalog.integration.mjs")];
-  const result = spawnSync(process.execPath, ["--experimental-strip-types", "--test", ...testFiles], {
+  const testArgs = ["--experimental-strip-types", "--test"];
+  // Link-flow tests temporarily switch the isolated app to its Replit preview
+  // policy; keep those process-environment changes from racing sibling tests.
+  if (process.argv.includes("--payment-links-only")) testArgs.push("--test-concurrency=1");
+  testArgs.push(...testFiles);
+  const result = spawnSync(process.execPath, testArgs, {
     cwd: root, stdio: "inherit", env: {
       ...baseEnv, NODE_PATH: join(apiDir, "node_modules"),
       NODE_ENV: "development", SENDFLOW_DATABASE_TARGET: "development",

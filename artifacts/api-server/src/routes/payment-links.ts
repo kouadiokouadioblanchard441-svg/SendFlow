@@ -12,9 +12,11 @@ import {
   CreateCustomerPaymentLinkResponse,
   GetCustomerPaymentLinksQueryParams,
   GetCustomerPaymentLinksResponse,
+  SimulateCustomerPaymentLinkParams,
+  SimulateCustomerPaymentLinkResponse,
 } from "@workspace/api-zod";
 import express, { Router, type IRouter, type RequestHandler } from "express";
-import { consumePaymentLinkCreationQuota } from "../data/payment-link-quota";
+import { consumePaymentLinkCreationQuota, consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
 import { requireCustomerSession } from "../lib/customer-session";
 import {
   createPaymentLinkPublicToken,
@@ -30,9 +32,22 @@ import {
   PAYMENT_LINK_CURRENCIES,
   PAYMENT_LINK_METHODS,
   PAYMENT_LINK_VALIDITIES,
+  isPaymentLinkSimulationAllowed,
 } from "../services/payment-links";
 
 const router: IRouter = Router();
+
+async function requirePaymentLinkSession(req: Parameters<typeof requireCustomerSession>[0], res: Parameters<typeof requireCustomerSession>[1]) {
+  const session = await requireCustomerSession(req, res, false);
+  if (!session) return null;
+  const viewerWithoutPin = isPaymentLinkSimulationAllowed(session);
+  if (!viewerWithoutPin && (!session.pinConfigured || !session.pinUnlocked)) {
+    res.status(403).json({ error: "PIN verification required" });
+    return null;
+  }
+  return session;
+}
+
 const paymentLinkResponseColumns = {
   id: customerPaymentLinksTable.id,
   publicToken: customerPaymentLinksTable.publicToken,
@@ -102,7 +117,7 @@ function toResponse(row: Pick<
 }
 
 router.get("/me/payment-links", async (req, res): Promise<void> => {
-  const session = await requireCustomerSession(req, res, true);
+  const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
 
@@ -157,7 +172,7 @@ router.get("/me/payment-links", async (req, res): Promise<void> => {
 });
 
 router.post("/me/payment-links", async (req, res): Promise<void> => {
-  const session = await requireCustomerSession(req, res, true);
+  const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
 
@@ -254,8 +269,69 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
   }
 });
 
+router.post("/me/payment-links/simulate/:token", async (req, res): Promise<void> => {
+  const session = await requirePaymentLinkSession(req, res);
+  if (!session) return;
+  res.setHeader("Cache-Control", "no-store, private");
+
+  if (!isPaymentLinkSimulationAllowed(session)) {
+    res.status(404).json({ error: "Ce lien de paiement est indisponible." });
+    return;
+  }
+
+  const parsed = SimulateCustomerPaymentLinkParams.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(404).json({ error: "Ce lien de paiement est indisponible." });
+    return;
+  }
+
+  try {
+    if (!await consumePublicPaymentLinkQuota(
+      req.ip || req.socket.remoteAddress || "unknown",
+      "quote",
+    )) {
+      res.setHeader("Retry-After", "60");
+      res.status(429).json({ error: "Trop de simulations. Réessayez dans une minute." });
+      return;
+    }
+
+    const [link] = await db.select({
+      linkName: customerPaymentLinksTable.linkName,
+      currency: customerPaymentLinksTable.currency,
+      amountMinor: customerPaymentLinksTable.amountMinor,
+      expiresAt: customerPaymentLinksTable.expiresAt,
+      maximumUses: customerPaymentLinksTable.maximumUses,
+      usageCount: customerPaymentLinksTable.usageCount,
+      status: customerPaymentLinksTable.status,
+    }).from(customerPaymentLinksTable).where(and(
+      eq(customerPaymentLinksTable.publicToken, parsed.data.token),
+      eq(customerPaymentLinksTable.userId, session.userId),
+    )).limit(1);
+
+    if (!link || link.status !== "active"
+      || (link.expiresAt !== null && link.expiresAt.getTime() <= Date.now())
+      || (link.maximumUses !== null && link.usageCount >= link.maximumUses)) {
+      res.status(404).json({ error: "Ce lien de paiement est indisponible." });
+      return;
+    }
+
+    res.json(SimulateCustomerPaymentLinkResponse.parse({
+      mode: "simulation",
+      status: "simulated_success",
+      chargeOccurred: false,
+      merchantName: link.linkName?.trim() || "SendFlow",
+      amountMinor: link.amountMinor,
+      currency: link.currency,
+      currencyDecimals: getPaymentLinkCurrencyDecimals(link.currency),
+    }));
+  } catch (error) {
+    req.log.error({ err: error, userId: session.userId }, "Payment-link simulation could not be prepared");
+    res.status(503).json({ error: "La simulation est momentanément indisponible." });
+  }
+});
+
 const authorizePaymentLinkImageUpload: RequestHandler = async (req, res, next): Promise<void> => {
-  const session = await requireCustomerSession(req, res, true);
+  const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
 

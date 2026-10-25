@@ -2,7 +2,9 @@ import { Check, ShieldCheck } from 'lucide-react';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
 export interface LinkFlowPaymentConfirmation {
-  status: 'succeeded';
+  mode: 'simulation';
+  status: 'simulated_success';
+  chargeOccurred: false;
   merchantName: string;
   amountMinor: number;
   currency: string;
@@ -44,18 +46,18 @@ export default function LinkFlowPaymentSuccess({
           <div className="sendflow-linkflow-success-mark" aria-hidden="true">
             <Check size={54} strokeWidth={3.5} />
           </div>
-          <p className="sendflow-linkflow-success-kicker">PAIEMENT CONFIRMÉ</p>
-          <h1 id="linkflow-success-title">Paiement réussi</h1>
+          <p className="sendflow-linkflow-success-kicker">MODE SIMULATION</p>
+          <h1 id="linkflow-success-title">Simulation réussie</h1>
           <p className="sendflow-linkflow-success-merchant">{confirmation.merchantName}</p>
         </div>
 
         <div className="sendflow-linkflow-success-content">
           <p className="sendflow-linkflow-success-copy">
-            Votre paiement de <strong>{amountLabel}</strong> a été effectué avec succès.
+            Le parcours de paiement pour <strong>{amountLabel}</strong> s’est terminé en simulation.
           </p>
           <div className="sendflow-linkflow-success-verified" role="status">
             <ShieldCheck size={19} strokeWidth={2.2} aria-hidden="true" />
-            <span>Confirmation vérifiée par SendFlow</span>
+            <span>Aucun paiement réel n’a été effectué</span>
           </div>
           <button
             className="sendflow-linkflow-success-finish"
@@ -70,7 +72,7 @@ export default function LinkFlowPaymentSuccess({
           <span className="sendflow-linkflow-success-footer-icon" aria-hidden="true">
             <ShieldCheck size={17} />
           </span>
-          <span>Paiement sécurisé, confirmé après vérification du règlement.</span>
+          <span>Résultat de test uniquement — aucun débit ni règlement n’a été effectué.</span>
         </footer>
       </section>
     </main>

@@ -114,6 +114,7 @@ import type {
   PublicPricingCatalog,
   PublicRegistrationSettings,
   RegistrationSettingsUpdate,
+  SimulatedPaymentLinkSuccess,
   TransferQuoteInput,
   TransferQuoteResult,
   UpdateAdminCountryRequest,
@@ -2584,6 +2585,81 @@ export const useCreateCustomerPaymentLink = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getCreateCustomerPaymentLinkMutationOptions(options));
+    }
+
+export const getSimulateCustomerPaymentLinkUrl = (token: string,) => {
+
+
+
+
+  return `/api/me/payment-links/simulate/${token}`
+}
+
+/**
+ * Available only to the authorized preview viewer in the Replit shared-Neon environment. This operation does not contact a provider, persist a payment attempt, or change a balance or transaction.
+ * @summary Simulate a payment-link success for the Replit viewer without charging or creating a financial record
+ */
+export const simulateCustomerPaymentLink = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<SimulatedPaymentLinkSuccess> => {
+
+  return customFetch<SimulatedPaymentLinkSuccess>(getSimulateCustomerPaymentLinkUrl(token),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSimulateCustomerPaymentLinkMutationKey = () => ['simulateCustomerPaymentLink'] as const;
+
+export const getSimulateCustomerPaymentLinkMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof simulateCustomerPaymentLink>>, TError,SimulateCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof simulateCustomerPaymentLink>>, TError,SimulateCustomerPaymentLinkMutationVariables, TContext> => {
+
+const mutationKey = getSimulateCustomerPaymentLinkMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof simulateCustomerPaymentLink>>, SimulateCustomerPaymentLinkMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  simulateCustomerPaymentLink(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SimulateCustomerPaymentLinkMutationResult = NonNullable<Awaited<ReturnType<typeof simulateCustomerPaymentLink>>>
+
+    export type SimulateCustomerPaymentLinkMutationError = ErrorType<void>
+    export type SimulateCustomerPaymentLinkMutationVariables = {token: string}
+
+    /**
+ * @summary Simulate a payment-link success for the Replit viewer without charging or creating a financial record
+ */
+export const useSimulateCustomerPaymentLink = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof simulateCustomerPaymentLink>>, TError,SimulateCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof simulateCustomerPaymentLink>>,
+        TError,
+        SimulateCustomerPaymentLinkMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSimulateCustomerPaymentLinkMutationOptions(options));
     }
 
 export const getGetPublicPaymentLinkUrl = (token: string,) => {

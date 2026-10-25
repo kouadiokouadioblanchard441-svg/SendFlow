@@ -7,10 +7,13 @@ import {
   getQuotePublicPaymentLinkQueryKey,
   useGetPublicPaymentLink,
   useQuotePublicPaymentLink,
+  useSimulateCustomerPaymentLink,
 } from '@workspace/api-client-react';
+import type { SimulatedPaymentLinkSuccess } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import LinkFlowPaymentSuccess from '@/components/linkflow-payment-success';
 
 function formatMoney(minor: number, currency: string, decimals: number) {
   return new Intl.NumberFormat('fr-FR', {
@@ -36,6 +39,8 @@ export default function PublicPaymentLinkPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+  const [simulationConfirmation, setSimulationConfirmation] = useState<SimulatedPaymentLinkSuccess | null>(null);
+  const simulateMutation = useSimulateCustomerPaymentLink();
 
   const link = linkQuery.data;
   const country = link?.countries.find((item) => item.code === countryCode);
@@ -60,6 +65,15 @@ export default function PublicPaymentLinkPage() {
     description: 'Consultez les détails de cette demande de paiement SendFlow.',
     robots: 'noindex,nofollow',
   });
+
+  if (simulationConfirmation) {
+    return (
+      <LinkFlowPaymentSuccess
+        confirmation={simulationConfirmation}
+        onFinish={() => setSimulationConfirmation(null)}
+      />
+    );
+  }
 
   if (linkQuery.isLoading) {
     return (
@@ -227,16 +241,49 @@ export default function PublicPaymentLinkPage() {
             {!countryCode || !operatorId ? <p className="sendflow-pay-quote-hint">Choisissez un pays et un réseau pour afficher les frais exacts.</p> : null}
           </section>
 
-          <div className="sendflow-pay-unavailable-note" role="status" data-testid="status-payment-unavailable">
-            <span><ShieldCheck size={18} /></span>
-            <p>
-              <strong>{link.paymentAvailable ? 'La confirmation de paiement n’est pas encore activée.' : 'Le paiement en ligne est momentanément indisponible.'}</strong>
-              Vos informations restent sur cet appareil et ne sont pas envoyées.
-            </p>
-          </div>
-          <button type="button" className="sendflow-pay-submit" disabled aria-disabled="true" data-testid="button-pay-unavailable">
-            Paiement indisponible
-          </button>
+          {link.simulationAvailable ? (
+            <>
+              <div className="sendflow-pay-unavailable-note is-simulation" role="status" data-testid="status-payment-simulation">
+                <span><ShieldCheck size={18} /></span>
+                <p>
+                  <strong>Mode simulation du compte de visualisation</strong>
+                  Aucun débit, appel USSD, paiement prestataire ou mouvement de solde ne sera effectué. Les champs saisis restent sur cet appareil.
+                </p>
+              </div>
+              {simulateMutation.isError && (
+                <div className="sendflow-pay-quote-error" role="alert">
+                  <span>La simulation n’a pas pu être préparée.</span>
+                  <button type="button" onClick={() => simulateMutation.mutate({ token }, {
+                    onSuccess: setSimulationConfirmation,
+                  })}>Réessayer</button>
+                </div>
+              )}
+              <button
+                type="button"
+                className="sendflow-pay-submit"
+                disabled={simulateMutation.isPending}
+                onClick={() => simulateMutation.mutate({ token }, {
+                  onSuccess: setSimulationConfirmation,
+                })}
+                data-testid="button-pay-simulate"
+              >
+                {simulateMutation.isPending ? 'Simulation…' : 'Simuler le résultat'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="sendflow-pay-unavailable-note" role="status" data-testid="status-payment-unavailable">
+                <span><ShieldCheck size={18} /></span>
+                <p>
+                  <strong>{link.paymentAvailable ? 'La confirmation de paiement n’est pas encore activée.' : 'Le paiement en ligne est momentanément indisponible.'}</strong>
+                  Vos informations restent sur cet appareil et ne sont pas envoyées.
+                </p>
+              </div>
+              <button type="button" className="sendflow-pay-submit" disabled aria-disabled="true" data-testid="button-pay-unavailable">
+                Paiement indisponible
+              </button>
+            </>
+          )}
           <footer className="sendflow-pay-footer"><Check size={14} /> Les tarifs affichés sont calculés par SendFlow selon le réseau sélectionné.</footer>
         </section>
         <p className="sendflow-pay-legal">Les informations saisies restent sur cet appareil et ne sont pas transmises.</p>

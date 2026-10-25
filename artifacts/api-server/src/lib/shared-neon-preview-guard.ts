@@ -59,6 +59,7 @@ export function isViewerRouteCandidate(method: string, requestPath: string): boo
   if (method.toUpperCase() === "POST") {
     return ["/api/auth/sign-in", "/api/auth/sign-out", "/api/auth/unlock",
       "/api/me/transfer-quote", "/api/me/payments", "/api/me/payment-links"].includes(path)
+      || /^\/api\/me\/payment-links\/simulate\/[a-z0-9_-]{43}$/.test(path)
       || /^\/api\/me\/payments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/reconcile$/.test(path)
       || /^\/api\/me\/payment-links\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/image$/.test(path);
   }

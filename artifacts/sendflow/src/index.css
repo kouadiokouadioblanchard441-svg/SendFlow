@@ -8046,6 +8046,14 @@ body:has(.sendflow-linkflow-shell) {
   display: grid; width: 26px; height: 26px; flex: 0 0 26px; place-items: center;
   border-radius: 8px; background: #eee5f8; color: #673aa0;
 }
+.sendflow-pay-unavailable-note.is-simulation {
+  border-color: rgba(21, 154, 112, .2);
+  background: linear-gradient(135deg, #effaf5, #f8fcfa);
+}
+.sendflow-pay-unavailable-note.is-simulation > span {
+  background: #dff5ec;
+  color: #168a68;
+}
 .sendflow-pay-unavailable-note p { margin: 1px 0 0; color: #716779; font-size: 10px; line-height: 1.5; }
 .sendflow-pay-unavailable-note strong { display: block; margin-bottom: 2px; color: #47325f; font-size: 11px; }
 .sendflow-pay-submit {

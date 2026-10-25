@@ -7,10 +7,12 @@ import pg from "pg";
 import sharp from "sharp";
 import {
   isPaymentLinkCreationAllowed,
+  isPaymentLinkSimulationAllowed,
   normalizePaymentLinkImage,
   normalizePaymentLinkInput,
   PAYMENT_LINK_IMAGE_MAX_BYTES,
 } from "../../src/services/payment-links.ts";
+import { toPreviewPasswordHash } from "../../src/lib/preview-credential-policy.ts";
 import {
   isViewerRouteCandidate,
   shouldBlockSharedNeonApiRequest,
@@ -51,6 +53,20 @@ before(async () => {
       VALUES($1,$2,now()+interval '1 hour',$3)`,
     [userId, runtime.hashCustomerSessionToken(token), unlocked ? new Date(Date.now() + 15 * 60_000) : null]);
   }
+  const viewerId = "payment-link-viewer";
+  const viewerToken = randomBytes(32).toString("base64url");
+  tokens.set(viewerId, viewerToken);
+  await owner.query("INSERT INTO sf_users(id,status,display_name) VALUES($1,'active',$2)", [viewerId, viewerId]);
+  await owner.query(`INSERT INTO sf_customer_credentials
+    (user_id,password_hash,pin_hash,privacy_accepted_at,privacy_policy_version)
+    VALUES($1,$2,NULL,now(),'internal-preview-authorization-v1')`,
+  [viewerId, toPreviewPasswordHash("scrypt$v1$isolated-preview-fixture")]);
+  await owner.query("INSERT INTO sf_wallets(user_id,balance_minor) VALUES($1,0)", [viewerId]);
+  await owner.query(`INSERT INTO sf_preview_access(slot,user_id,expires_at,created_at)
+    VALUES(1,$1,now()+interval '1 hour',now())`, [viewerId]);
+  await owner.query(`INSERT INTO sf_customer_sessions(user_id,token_hash,expires_at,pin_verified_until)
+    VALUES($1,$2,now()+interval '1 hour',NULL)`,
+  [viewerId, runtime.hashCustomerSessionToken(viewerToken, { SENDFLOW_DATABASE_TARGET: "shared-neon" })]);
   server = runtime.app.listen(0, "127.0.0.1");
   await new Promise((resolve, reject) => {
     server.once("listening", resolve);
@@ -181,12 +197,32 @@ test("payment-link amount rules and shared-Neon preview scope fail closed", () =
     { paymentTestAccount: true },
     { SENDFLOW_DATABASE_TARGET: "shared-neon" },
   ), false);
+  assert.equal(isPaymentLinkSimulationAllowed(
+    { previewAccount: true, paymentTestAccount: false },
+    { SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "replit" },
+  ), true);
+  assert.equal(isPaymentLinkSimulationAllowed(
+    { previewAccount: true, paymentTestAccount: false },
+    { SENDFLOW_DATABASE_TARGET: "production", FEEXPAY_EXECUTION_HOST: "plesk" },
+  ), false);
+  assert.equal(isPaymentLinkSimulationAllowed(
+    { previewAccount: false, paymentTestAccount: false },
+    { SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "replit" },
+  ), false);
+  assert.equal(isPaymentLinkSimulationAllowed(
+    { previewAccount: true, paymentTestAccount: true },
+    { SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "replit" },
+  ), false);
   assert.equal(isPaymentLinkCreationAllowed(
     { paymentTestAccount: true },
     { SENDFLOW_DATABASE_TARGET: "development" },
   ), true);
   assert.equal(isViewerRouteCandidate("GET", "/api/me/payment-links"), true);
   assert.equal(isViewerRouteCandidate("POST", "/api/me/payment-links"), true);
+  assert.equal(isViewerRouteCandidate(
+    "POST",
+    "/api/me/payment-links/simulate/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  ), true);
   assert.equal(isViewerRouteCandidate("DELETE", "/api/me/payment-links"), false);
   assert.equal(isViewerRouteCandidate("GET", "/api/me/payment-links/foreign"), false);
   assert.equal(isViewerRouteCandidate(
@@ -496,6 +532,7 @@ test("public payment page is token-scoped and quotes the fee from server pricing
   assert.equal(details.merchantName, "Flow digital SARL");
   assert.equal(details.amountMinor, 1250);
   assert.equal(details.paymentAvailable, false);
+  assert.equal(details.simulationAvailable, false);
   assert.equal(Object.hasOwn(details, "userId"), false);
   assert.deepEqual(details.countries.map((country) => country.code), ["ci"]);
   assert.deepEqual(details.countries[0].operators.map((operator) => operator.id), ["mtn-ci"]);
@@ -525,6 +562,70 @@ test("public payment page is token-scoped and quotes the fee from server pricing
   );
   assert.equal(unknownToken.status, 404);
   await owner.query("DELETE FROM sf_customer_payment_links WHERE id=$1", [link.id]);
+});
+
+test("authorized Replit viewer can create, view and simulate a link without PIN or financial effects", async () => {
+  const originalTarget = process.env.SENDFLOW_DATABASE_TARGET;
+  const originalExecutionHost = process.env.FEEXPAY_EXECUTION_HOST;
+  process.env.SENDFLOW_DATABASE_TARGET = "shared-neon";
+  process.env.FEEXPAY_EXECUTION_HOST = "replit";
+  const viewerId = "payment-link-viewer";
+  let linkId;
+
+  try {
+    const attemptsBefore = await owner.query("SELECT count(*)::int AS count FROM sf_payment_attempts");
+    const viewerList = await request("/api/me/payment-links", { userId: viewerId });
+    assert.equal(viewerList.status, 200, viewerList.text);
+
+    const created = await request("/api/me/payment-links", {
+      method: "POST",
+      userId: viewerId,
+      body: validInput({ linkName: "Simulation SendFlow", amount: "2000" }),
+    });
+    assert.equal(created.status, 201, created.text);
+    const link = json(created);
+    linkId = link.id;
+    const token = link.sharePath.split("/").at(-1);
+
+    const page = await request(`/api/public/payment-links/${token}`, { userId: viewerId });
+    assert.equal(page.status, 200, page.text);
+    const details = json(page);
+    assert.equal(details.paymentAvailable, false);
+    assert.equal(details.simulationAvailable, true);
+
+    const result = await request(`/api/me/payment-links/simulate/${token}`, {
+      method: "POST",
+      userId: viewerId,
+    });
+    assert.equal(result.status, 200, result.text);
+    assert.deepEqual(json(result), {
+      mode: "simulation",
+      status: "simulated_success",
+      chargeOccurred: false,
+      merchantName: "Simulation SendFlow",
+      amountMinor: 2000,
+      currency: "XOF",
+      currencyDecimals: 0,
+    });
+
+    const wallet = await owner.query(
+      "SELECT balance_minor FROM sf_wallets WHERE user_id=$1",
+      [viewerId],
+    );
+    assert.equal(Number(wallet.rows[0]?.balance_minor), 0);
+    const noProviderRecords = await owner.query(
+      "SELECT count(*)::int AS count FROM sf_payment_attempts",
+    );
+    assert.equal(noProviderRecords.rows[0]?.count, attemptsBefore.rows[0]?.count);
+  } finally {
+    if (linkId) {
+      await owner.query("DELETE FROM sf_customer_payment_links WHERE id=$1", [linkId]);
+    }
+    if (originalTarget === undefined) delete process.env.SENDFLOW_DATABASE_TARGET;
+    else process.env.SENDFLOW_DATABASE_TARGET = originalTarget;
+    if (originalExecutionHost === undefined) delete process.env.FEEXPAY_EXECUTION_HOST;
+    else process.env.FEEXPAY_EXECUTION_HOST = originalExecutionHost;
+  }
 });
 
 test("lists and pagination cursors are scoped to the authenticated owner", async () => {

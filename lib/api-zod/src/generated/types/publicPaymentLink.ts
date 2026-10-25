@@ -38,4 +38,5 @@ export interface PublicPaymentLink {
   imagePath: string | null;
   countries: PublicPaymentLinkCountry[];
   paymentAvailable: boolean;
+  simulationAvailable: boolean;
 }

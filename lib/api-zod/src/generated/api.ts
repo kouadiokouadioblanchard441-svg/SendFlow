@@ -765,6 +765,34 @@ export const CreateCustomerPaymentLinkResponse = zod.object({
 
 
 /**
+ * Available only to the authorized preview viewer in the Replit shared-Neon environment. This operation does not contact a provider, persist a payment attempt, or change a balance or transaction.
+ * @summary Simulate a payment-link success for the Replit viewer without charging or creating a financial record
+ */
+export const simulateCustomerPaymentLinkPathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
+
+
+export const SimulateCustomerPaymentLinkParams = zod.object({
+  "token": zod.coerce.string().regex(simulateCustomerPaymentLinkPathTokenRegExp)
+})
+
+export const simulateCustomerPaymentLinkResponseMerchantNameMax = 120;
+
+export const simulateCustomerPaymentLinkResponseAmountMinorMax = 9007199254740991;
+
+
+
+export const SimulateCustomerPaymentLinkResponse = zod.object({
+  "mode": zod.literal("simulation"),
+  "status": zod.literal("simulated_success"),
+  "chargeOccurred": zod.literal(false),
+  "merchantName": zod.string().min(1).max(simulateCustomerPaymentLinkResponseMerchantNameMax),
+  "amountMinor": zod.int().min(1).max(simulateCustomerPaymentLinkResponseAmountMinorMax),
+  "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)])
+})
+
+
+/**
  * @summary Read the public details and currently configured payment choices for a payment link
  */
 export const getPublicPaymentLinkPathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
@@ -822,7 +850,8 @@ export const GetPublicPaymentLinkResponse = zod.object({
   "name": zod.string().min(1).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemNameMax)
 }))
 })),
-  "paymentAvailable": zod.boolean()
+  "paymentAvailable": zod.boolean(),
+  "simulationAvailable": zod.boolean()
 })
 
 

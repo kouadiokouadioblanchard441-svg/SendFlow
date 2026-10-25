@@ -642,6 +642,46 @@ export interface PublicPaymentLink {
   imagePath: string | null;
   countries: PublicPaymentLinkCountry[];
   paymentAvailable: boolean;
+  simulationAvailable: boolean;
+}
+
+export type SimulatedPaymentLinkSuccessCurrency = typeof SimulatedPaymentLinkSuccessCurrency[keyof typeof SimulatedPaymentLinkSuccessCurrency];
+
+
+export const SimulatedPaymentLinkSuccessCurrency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+  CHF: 'CHF',
+  NGN: 'NGN',
+  EUR: 'EUR',
+  USD: 'USD',
+  CAD: 'CAD',
+} as const;
+
+export type SimulatedPaymentLinkSuccessCurrencyDecimals = typeof SimulatedPaymentLinkSuccessCurrencyDecimals[keyof typeof SimulatedPaymentLinkSuccessCurrencyDecimals];
+
+
+export const SimulatedPaymentLinkSuccessCurrencyDecimals = {
+  NUMBER_0: 0,
+  NUMBER_2: 2,
+} as const;
+
+export interface SimulatedPaymentLinkSuccess {
+  mode: 'simulation';
+  status: 'simulated_success';
+  chargeOccurred: false;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  merchantName: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  currency: SimulatedPaymentLinkSuccessCurrency;
+  currencyDecimals: SimulatedPaymentLinkSuccessCurrencyDecimals;
 }
 
 export type PublicPaymentLinkQuoteCurrency = typeof PublicPaymentLinkQuoteCurrency[keyof typeof PublicPaymentLinkQuoteCurrency];

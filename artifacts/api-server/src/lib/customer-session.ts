@@ -6,6 +6,7 @@ import { isSharedNeonPreview } from "./shared-neon-preview-guard";
 import { sharedNeonCustomerCondition } from "./replit-payment-test-access";
 import { previewPasswordForVerification } from "./preview-credential-policy";
 import { formatCustomerDisplayName } from "./customer-profile-policy";
+import { activePreviewAccountCondition } from "./preview-account-condition";
 
 export const CUSTOMER_SESSION_COOKIE = "__Host-sendflow_session";
 export const CUSTOMER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -23,6 +24,7 @@ export type CustomerSessionContext = {
   pinUnlocked: boolean;
   phoneVerified: boolean;
   paymentTestAccount: boolean;
+  previewAccount: boolean;
 };
 
 function readSessionCookie(req: Request) {
@@ -98,6 +100,9 @@ export async function getCustomerSession(
         select 1 from public.sf_replit_payment_test_access a
         where a.user_id=${usersTable.id} and a.state='active'
       )`,
+      previewAccount: isSharedNeonPreview()
+        ? activePreviewAccountCondition()
+        : sql<boolean>`false`,
     })
     .from(customerSessionsTable)
     .innerJoin(usersTable, eq(usersTable.id, customerSessionsTable.userId))
@@ -149,6 +154,7 @@ export async function getCustomerSession(
       && row.pinVerifiedUntil >= now,
     phoneVerified: row.phoneVerifiedAt !== null,
     paymentTestAccount,
+    previewAccount: isSharedNeonPreview() && Boolean(row.previewAccount),
   };
 }
 

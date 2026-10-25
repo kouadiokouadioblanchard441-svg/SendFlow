@@ -935,6 +935,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/payment-links/simulate/{token}:
+    post:
+      operationId: simulateCustomerPaymentLink
+      tags: [account]
+      summary: Simulate a payment-link success for the Replit viewer without charging or creating a financial record
+      description: Available only to the authorized preview viewer in the Replit shared-Neon environment. This operation does not contact a provider, persist a payment attempt, or change a balance or transaction.
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-Za-z0-9_-]{43}$"
+      responses:
+        "200":
+          description: Server-derived simulation result; no real payment occurred.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulatedPaymentLinkSuccess"
+        "401":
+          description: Authentication is required.
+        "403":
+          description: Only the authorized Replit viewer can use simulation.
+        "404":
+          description: The link does not exist or does not belong to the viewer.
+        "429":
+          description: The simulation request limit was exceeded.
+        "503":
+          description: Link storage or simulation access is unavailable.
   /public/payment-links/{token}:
     get:
       operationId: getPublicPaymentLink
@@ -4040,7 +4072,36 @@ components:
             $ref: "#/components/schemas/PublicPaymentLinkCountry"
         paymentAvailable:
           type: boolean
-      required: [merchantName, description, currency, currencyDecimals, amountMinor, expiresAt, remainingUses, imagePath, countries, paymentAvailable]
+        simulationAvailable:
+          type: boolean
+      required: [merchantName, description, currency, currencyDecimals, amountMinor, expiresAt, remainingUses, imagePath, countries, paymentAvailable, simulationAvailable]
+    SimulatedPaymentLinkSuccess:
+      type: object
+      properties:
+        mode:
+          type: string
+          const: simulation
+        status:
+          type: string
+          const: simulated_success
+        chargeOccurred:
+          type: boolean
+          const: false
+        merchantName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        amountMinor:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        currency:
+          type: string
+          enum: [XOF, XAF, CHF, NGN, EUR, USD, CAD]
+        currencyDecimals:
+          type: integer
+          enum: [0, 2]
+      required: [mode, status, chargeOccurred, merchantName, amountMinor, currency, currencyDecimals]
     PublicPaymentLinkQuote:
       type: object
       properties:

@@ -17,6 +17,9 @@ import {
 } from "@workspace/api-zod";
 import { Router, type IRouter, type Request } from "express";
 import { consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
+import { getCustomerSession } from "../lib/customer-session";
+import { isReplitPaymentTestHost } from "../lib/replit-payment-test-access-policy";
+import { isPaymentLinkSimulationAllowed } from "../services/payment-links";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { getAggregatorRouteScopeKey } from "./aggregator-catalog";
 import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
@@ -27,6 +30,7 @@ const errorUnavailable = { error: "Ce lien de paiement est indisponible." };
 
 type PublicLinkRow = {
   id: string;
+  userId: string;
   publicToken: string;
   linkName: string | null;
   currency: string;
@@ -44,6 +48,7 @@ async function findUsablePublicLink(token: string): Promise<PublicLinkRow | unde
   if (!tokenPattern.test(token)) return undefined;
   const [link] = await db.select({
     id: customerPaymentLinksTable.id,
+    userId: customerPaymentLinksTable.userId,
     publicToken: customerPaymentLinksTable.publicToken,
     linkName: customerPaymentLinksTable.linkName,
     currency: customerPaymentLinksTable.currency,
@@ -148,6 +153,15 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
       return;
     }
     const countries = await loadAvailableChoices(link);
+    let simulationAvailable = false;
+    if (isReplitPaymentTestHost()) {
+      const session = await getCustomerSession(req, { touchLastSeen: false });
+      simulationAvailable = Boolean(
+        session
+        && session.userId === link.userId
+        && isPaymentLinkSimulationAllowed(session),
+      );
+    }
     const response = {
       merchantName: link.linkName?.trim() || "SendFlow",
       description: link.description,
@@ -163,6 +177,7 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
       // Deliberately fail closed: the server-side settlement lifecycle is not
       // complete yet, so no public page may trigger a real provider charge.
       paymentAvailable: false,
+      simulationAvailable,
     };
     res.json(GetPublicPaymentLinkResponse.parse(response));
   } catch (error) {
