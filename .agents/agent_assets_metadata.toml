@@ -364,3 +364,45 @@ mtime_ms = 1792854880637
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/302cc670-ddd8-4137-b91a-d1bc1957e7de/f7f0c656-0d02-4365-bb8e-8d34982cdd6a"
 storage_version_token = "1792854972798721"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4lpY1kazFSvkSHrVpV84M"
+uri = "file://attached_assets/generated_images/sendflow-linkflow-list-background-3d.webp"
+type = "image"
+title = "Fond 3D LinkFlow — Liste"
+description = "Visuel 3D SendFlow en violet et blanc, détourné et intégré en arrière-plan fixe de la liste des liens."
+logical_id = "55c6d044-d63e-4dd3-b176-c0462b4a86cb"
+content_hash = "sha256:32567e5e81163fbd82eace8d665cdb1c78cb4361b45629c6f26714089ed29262"
+size = 36214
+mtime_ms = 1792942435271
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/55c6d044-d63e-4dd3-b176-c0462b4a86cb/c13be657-025b-4857-9cea-04e3d64f4fef"
+storage_version_token = "1792942593431981"
+content_type = "image/webp"
+
+[[outputs]]
+id = "q8QX4atExfj7u2YYXMGH1"
+uri = "file://attached_assets/generated_images/sendflow-linkflow-create-background-3d.webp"
+type = "image"
+title = "Fond 3D LinkFlow — Création"
+description = "Visuel 3D SendFlow en violet et blanc, intégré en arrière-plan fixe du formulaire de création."
+logical_id = "8d9571ff-0fb2-43ce-9840-bfec46e1e84d"
+content_hash = "sha256:d7922b1bc4342f1a13ca84667e1ccab80a40befb98c4e3217aa3d7a14357f4e4"
+size = 30172
+mtime_ms = 1792942436135
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/8d9571ff-0fb2-43ce-9840-bfec46e1e84d/9999ddc9-7801-4907-9972-c78c6239676d"
+storage_version_token = "1792942593972968"
+content_type = "image/webp"
+
+[[outputs]]
+id = "sfbg0K9RvurZWMzYCfe8B"
+uri = "file://attached_assets/generated_images/sendflow-linkflow-detail-background-3d.webp"
+type = "image"
+title = "Fond 3D LinkFlow — Détail"
+description = "Visuel 3D SendFlow en violet et blanc, intégré en arrière-plan fixe de la page de détail du lien."
+logical_id = "dcc521f2-9a9f-49e8-b1cd-b8a722c4a784"
+content_hash = "sha256:57a5d746046fed75c2043a8fde5bd6361c68e7ceca867bd4a6c9527a486328b0"
+size = 32938
+mtime_ms = 1792942436983
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/dcc521f2-9a9f-49e8-b1cd-b8a722c4a784/2cf53ec0-8791-4598-ba54-5894a4d51cb8"
+storage_version_token = "1792942594484054"
+content_type = "image/webp"

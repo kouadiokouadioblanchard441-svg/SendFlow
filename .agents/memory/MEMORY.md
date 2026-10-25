@@ -37,4 +37,4 @@
 - [FeexPay documentation](feexpay-documentation.md) — Payout pages may return only a loading shell; inspect the official public asset rather than infer the contract.
 - [LinkFlow image storage](linkflow-image-storage.md) — LinkFlow images stay in Neon by explicit choice; do not move them to external storage without approval.
 - [LinkFlow payment integrity](linkflow-pending-state-integrity.md) — Keep the payer total fixed; soft-delete links while retaining history, and show payment stats only after real payments.
-- [SendFlow visual contrast](sendflow-visual-contrast.md) — Use white-first surfaces and violet accents; public LinkFlow checkout follows a clean merchant-first mobile payment layout.
+- [SendFlow visual contrast](sendflow-visual-contrast.md) — Match provided LinkFlow mockups; keep artwork fixed, white surfaces, violet accents, and solid red deletes.

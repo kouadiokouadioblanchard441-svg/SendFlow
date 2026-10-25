@@ -8454,14 +8454,21 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
   .sendflow-public-pay-card, .sendflow-pay-skeleton-brand, .sendflow-pay-skeleton-line, .sendflow-pay-skeleton-panel { animation: none; }
 }
 
-/* Link detail keeps the LinkFlow illustration fixed behind its scrollable content. */
-.sendflow-linkflow-art.is-detail {
-  top: 24vh;
-  right: -96px;
-  width: min(108vw, 520px);
-  opacity: .24;
-  transform: none;
+/* Keep destructive actions strong and unmistakable in LinkFlow. */
+.sendflow-detail-delete,
+.sendflow-detail-danger {
+  border: 1px solid #b80000;
+  background: #e60000;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(184, 0, 0, .2);
 }
-.sendflow-detail-page {
-  background: rgba(255, 255, 255, .9);
+.sendflow-detail-delete:hover,
+.sendflow-detail-danger:hover {
+  border-color: #990000;
+  background: #c40000;
+}
+.sendflow-detail-delete:focus-visible,
+.sendflow-detail-danger:focus-visible {
+  outline: 3px solid rgba(230, 0, 0, .28);
+  outline-offset: 3px;
 }
