@@ -23,11 +23,6 @@ function formatMoney(minor: number, currency: string, decimals: number) {
   }).format(minor / (10 ** decimals));
 }
 
-function formatDate(value: string | null) {
-  if (!value) return null;
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-}
-
 export default function PublicPaymentLinkPage() {
   const { token = '' } = useParams<{ token: string }>();
   const linkQuery = useGetPublicPaymentLink(token, {
@@ -44,7 +39,6 @@ export default function PublicPaymentLinkPage() {
   const link = linkQuery.data;
   const country = link?.countries.find((item) => item.code === countryCode);
   const operator = country?.operators.find((item) => item.id === operatorId);
-  const expiry = formatDate(link?.expiresAt ?? null);
   const backgroundArt = typeof document !== 'undefined' ? createPortal(
     <img className="sendflow-public-pay-art" src={linkflowIllustration} alt="" aria-hidden="true" draggable={false} />,
     document.body,
@@ -133,7 +127,6 @@ export default function PublicPaymentLinkPage() {
 
           <div className="sendflow-pay-amount-panel" data-testid="public-pay-amount">
             <strong>{amountLabel}</strong>
-            {expiry && <small><Clock3 size={13} /> Valable jusqu’au {expiry}</small>}
             {link.remainingUses !== null && (
               <small>{link.remainingUses > 0 ? `${link.remainingUses} utilisation${link.remainingUses > 1 ? 's' : ''} restante${link.remainingUses > 1 ? 's' : ''}` : 'Ce lien a atteint sa limite d’utilisations'}</small>
             )}
