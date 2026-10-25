@@ -2996,8 +2996,8 @@
 .sendflow-linkflow-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .sendflow-linkflow-pill { display: inline-flex; min-height: 39px; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 999px; background: #f3f3f5; color: #39353f; padding: 0 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
 .sendflow-linkflow-pill:hover { transform: translateY(-1px); background: #ece8f2; }
-.sendflow-linkflow-pill.is-selected { border-color: #7440bd; background: #7340bb; color: #fff; }
-.sendflow-linkflow-pill.is-outlined { border-color: #8150c3; background: #f8f4fd; color: #6e3eaa; }
+.sendflow-linkflow-pill.is-selected { border-color: hsl(var(--primary)); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.sendflow-linkflow-pill.is-outlined { border-color: hsl(var(--primary)); background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
 .sendflow-linkflow-pill:focus-visible,
 .sendflow-linkflow-back:focus-visible,
 .sendflow-linkflow-no-image:focus-within { outline: 3px solid rgba(116, 64, 189, .25); outline-offset: 2px; }
@@ -4632,12 +4632,12 @@
 .sendflow-linkflow-back {
   width: 42px;
   height: 42px;
-  border: 1px solid #e8e1ef;
+  border: 1px solid hsl(var(--border));
   border-radius: 13px;
-  background: #fff;
-  color: #5f398e;
+  background: hsl(var(--card));
+  color: hsl(var(--primary));
 }
-.sendflow-linkflow-back:hover { background: #f5f0fb; }
+.sendflow-linkflow-back:hover { background: hsl(var(--accent)); }
 .sendflow-linkflow-create-link {
   display: inline-flex;
   min-height: 43px;
@@ -4761,8 +4761,8 @@
   gap: 9px;
   border: 0;
   border-radius: 14px;
-  background: #7139bd;
-  color: #fff;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
   padding: 0 18px;
   font: inherit;
   font-size: 13px;
@@ -4770,7 +4770,7 @@
   cursor: pointer;
   transition: transform .18s ease, background-color .18s ease;
 }
-.sendflow-linkflow-primary:hover:not(:disabled) { transform: translateY(-1px); background: #5e2da4; }
+.sendflow-linkflow-primary:hover:not(:disabled) { transform: translateY(-1px); background: color-mix(in srgb, hsl(var(--primary)) 86%, #000); }
 .sendflow-linkflow-primary:disabled { cursor: wait; opacity: .72; }
 .sendflow-linkflow-secondary, .sendflow-linkflow-load-more {
   display: inline-flex;
@@ -4818,7 +4818,7 @@
 .sendflow-linkflow-create-page .sendflow-linkflow-choice-group { gap: 10px; }
 .sendflow-linkflow-create-page .sendflow-linkflow-choice-group legend { color: #665d70; font-size: 12px; }
 .sendflow-linkflow-create-page .sendflow-linkflow-pill { min-height: 38px; border-color: #eee9f2; background: #f5f2f7; color: #50495a; }
-.sendflow-linkflow-create-page .sendflow-linkflow-pill.is-selected { border-color: #7139bd; background: #7139bd; color: #fff; }
+.sendflow-linkflow-create-page .sendflow-linkflow-pill.is-selected { border-color: hsl(var(--primary)); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 .sendflow-linkflow-create-page .sendflow-linkflow-helper { margin: -2px 0 0; color: #918999; }
 .sendflow-linkflow-currency-pills { gap: 7px; }
 .sendflow-linkflow-amount-input { position: relative; }
@@ -4888,21 +4888,35 @@
   min-height: 100dvh;
   overflow-x: hidden;
   overflow-y: auto;
-  background: #fff;
+  background: hsl(var(--background));
   padding: 22px 18px max(28px, env(safe-area-inset-bottom));
 }
 .sendflow-linkflow-art {
   position: fixed;
-  top: 90px;
-  right: max(-150px, calc((100vw - 540px) / 2 - 230px));
-  width: min(470px, 105vw);
-  height: 620px;
-  opacity: .055;
+  z-index: 0;
+  top: clamp(100px, 16vh, 150px);
+  right: max(-120px, calc((100vw - 540px) / 2 - 90px));
+  width: min(510px, 116vw);
+  height: min(68dvh, 660px);
+  opacity: .22;
+  background-repeat: no-repeat;
+  background-size: contain;
   background-position: center right;
   mix-blend-mode: multiply;
-  mask-image: linear-gradient(90deg, transparent 3%, #000 57%);
+  mask-image: linear-gradient(90deg, transparent 4%, #000 42%);
+  pointer-events: none;
+}
+.sendflow-linkflow-art.is-list {
+  opacity: .22;
+  mask-image: linear-gradient(90deg, transparent 2%, #000 38%, #000);
+}
+.sendflow-linkflow-art.is-create {
+  opacity: .26;
+  mask-image: linear-gradient(90deg, transparent 8%, #000 48%, #000);
 }
 .sendflow-linkflow-page {
+  position: relative;
+  z-index: 1;
   width: min(100%, 540px);
   min-height: calc(100dvh - 50px);
   margin: 0 auto;
@@ -4929,11 +4943,11 @@
   height: 46px;
   min-height: 46px;
   border-radius: 50%;
-  background: #7139bd;
+  background: hsl(var(--primary));
   padding: 0;
-  box-shadow: 0 6px 16px rgba(113,57,189,.18);
+  box-shadow: 0 6px 16px hsl(var(--primary) / .2);
 }
-.sendflow-linkflow-create-link:hover { background: #5e2da4; }
+.sendflow-linkflow-create-link:hover { background: color-mix(in srgb, hsl(var(--primary)) 86%, #000); }
 .sendflow-linkflow-records, .sendflow-linkflow-skeletons { display: grid; grid-template-columns: 1fr; gap: 0; }
 .sendflow-linkflow-record {
   display: grid;
@@ -4950,7 +4964,7 @@
 }
 .sendflow-linkflow-record:last-child { border-bottom: 1px solid #efedf1; }
 .sendflow-linkflow-record:hover { transform: none; box-shadow: none; }
-.sendflow-linkflow-record-icon { width: 42px; height: 42px; flex-basis: 42px; border: 0; border-radius: 13px; background: #f0e9f8; color: #7140af; }
+.sendflow-linkflow-record-icon { width: 42px; height: 42px; flex-basis: 42px; border: 0; border-radius: 13px; background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
 .sendflow-linkflow-row-copy { min-width: 0; }
 .sendflow-linkflow-row-copy h3 { margin: 0; overflow: hidden; color: #28232d; font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .sendflow-linkflow-row-copy p { overflow: hidden; margin: 4px 0 0; color: #8a8490; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -4958,7 +4972,7 @@
 .sendflow-linkflow-row-right { display: grid; justify-items: end; gap: 4px; min-width: 100px; }
 .sendflow-linkflow-row-right .sendflow-linkflow-amount { color: #27232b; font-size: 14px; letter-spacing: -.02em; }
 .sendflow-linkflow-row-right > span:not(.sendflow-linkflow-status) { color: #96909b; font-size: 10px; }
-.sendflow-linkflow-row-right .sendflow-linkflow-status { border: 0; background: #f1ebf6; color: #69458e; padding: 3px 7px; font-size: 9px; }
+.sendflow-linkflow-row-right .sendflow-linkflow-status { border: 0; background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); padding: 3px 7px; font-size: 9px; }
 .sendflow-linkflow-row-right small { display: inline-flex; align-items: center; gap: 4px; color: #9b95a0; font-size: 9px; white-space: nowrap; }
 .sendflow-linkflow-empty { margin-top: 4px; border: 1px dashed #e5deea; border-radius: 15px; background: rgba(250,248,252,.74); padding: 32px 18px; }
 .sendflow-linkflow-empty .sendflow-linkflow-empty-icon { margin-bottom: 12px; }
@@ -4990,6 +5004,9 @@
 
 @media (max-width: 420px) {
   .sendflow-linkflow-shell { padding: 13px 16px max(24px, env(safe-area-inset-bottom)); }
+  .sendflow-linkflow-art { top: 115px; right: -105px; width: 112vw; height: min(64dvh, 570px); }
+  .sendflow-linkflow-art.is-list { opacity: .2; }
+  .sendflow-linkflow-art.is-create { opacity: .24; }
   .sendflow-linkflow-page { min-height: calc(100dvh - 37px); padding-top: 26px; }
   .sendflow-linkflow-header { margin-bottom: 30px; }
   .sendflow-linkflow-record { grid-template-columns: 40px minmax(0,1fr) auto; gap: 9px; min-height: 88px; }

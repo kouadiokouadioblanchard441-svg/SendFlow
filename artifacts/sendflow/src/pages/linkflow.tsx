@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Clock3, Link2, Plus, RefreshCw } from 'lucide-re
 import { useGetCustomerPaymentLinks } from '@workspace/api-client-react';
 import type { CustomerPaymentLink } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
-import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d-clean.png';
+import linkflowListIllustration from '@assets/generated_images/sendflow-linkflow-history-3d.webp';
 
 const money = (minor: number, currency: string, decimals: number) => new Intl.NumberFormat('fr-FR', {
   style: 'currency', currency, minimumFractionDigits: decimals, maximumFractionDigits: decimals,
@@ -52,7 +52,7 @@ export default function LinkFlowPage() {
 
   return (
     <main className="sendflow-linkflow-shell">
-      <div className="sendflow-linkflow-art" style={{ backgroundImage: `url(${linkflowIllustration})` }} aria-hidden="true" />
+      <div className="sendflow-linkflow-art is-list" style={{ backgroundImage: `url(${linkflowListIllustration})` }} aria-hidden="true" />
       <section className="sendflow-linkflow-page sendflow-linkflow-list" aria-labelledby="linkflow-title">
         <header className="sendflow-linkflow-header">
           <button type="button" className="sendflow-linkflow-back" onClick={() => setLocation('/account')} aria-label="Revenir à mon compte" data-testid="button-linkflow-back">

@@ -14,7 +14,7 @@ import type {
   CustomerPaymentLinkInputValidity,
 } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
-import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d-clean.png';
+import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 
 const methods: { value: CustomerPaymentLinkInputPaymentMethod; label: string }[] = [
   { value: 'mobile_money', label: 'Mobile Money' },
@@ -228,7 +228,7 @@ export default function LinkFlowNewPage() {
 
   return (
     <main className="sendflow-linkflow-shell">
-      <div className="sendflow-linkflow-art" style={{ backgroundImage: `url(${linkflowIllustration})` }} aria-hidden="true" />
+      <div className="sendflow-linkflow-art is-create" style={{ backgroundImage: `url(${linkflowIllustration})` }} aria-hidden="true" />
       <section className="sendflow-linkflow-page sendflow-linkflow-create-page" aria-labelledby="linkflow-title">
         <header className="sendflow-linkflow-header">
           <button type="button" className="sendflow-linkflow-back" onClick={() => setLocation('/linkflow')} aria-label="Revenir à mes liens" data-testid="button-linkflow-back">
