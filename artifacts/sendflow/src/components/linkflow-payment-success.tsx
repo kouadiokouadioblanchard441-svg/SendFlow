@@ -68,12 +68,6 @@ export default function LinkFlowPaymentSuccess({
             Terminer
           </button>
         </div>
-        <footer className="sendflow-linkflow-success-footer">
-          <span className="sendflow-linkflow-success-footer-icon" aria-hidden="true">
-            <ShieldCheck size={17} />
-          </span>
-          <span>Résultat de test uniquement — aucun débit ni règlement n’a été effectué.</span>
-        </footer>
       </section>
     </main>
   );

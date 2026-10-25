@@ -1221,32 +1221,6 @@
   outline-offset: 3px;
 }
 
-.sendflow-linkflow-success-footer {
-  display: flex;
-  min-height: 64px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-top: 1px solid #eeecf0;
-  background: #f8f7f8;
-  color: #77727e;
-  padding: 12px 22px;
-  font-size: 11px;
-  line-height: 1.45;
-  text-align: left;
-}
-
-.sendflow-linkflow-success-footer-icon {
-  display: grid;
-  width: 25px;
-  height: 25px;
-  flex: 0 0 25px;
-  place-items: center;
-  border-radius: 50%;
-  background: #ede9f7;
-  color: #6250a5;
-}
-
 @keyframes sendflow-linkflow-success-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1256,7 +1230,6 @@
   .sendflow-linkflow-success-shell { padding: 0; background: #fffefa; }
   .sendflow-linkflow-success-card { min-height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
   .sendflow-linkflow-success-banner { min-height: 290px; }
-  .sendflow-linkflow-success-footer { min-height: 70px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
