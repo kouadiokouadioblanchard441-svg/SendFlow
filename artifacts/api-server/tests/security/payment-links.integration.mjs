@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { before, after, test } from "node:test";
+import { before, beforeEach, after, test } from "node:test";
 import { createRequire } from "node:module";
 import { randomBytes, randomUUID } from "node:crypto";
 import http from "node:http";
@@ -53,6 +53,12 @@ before(async () => {
     server.once("listening", resolve);
     server.once("error", reject);
   });
+});
+
+// The isolated database is shared by tests in this file. Reset its customer
+// quota buckets between tests while keeping rate limiting active within each test.
+beforeEach(async () => {
+  await owner.query("TRUNCATE sf_api_request_limits");
 });
 
 after(async () => {
@@ -155,7 +161,7 @@ function json(response) {
 
 test("payment-link amount rules and shared-Neon preview scope fail closed", () => {
   assert.equal(normalizePaymentLinkInput(validInput({
-    currency: "EUR",
+    currency: "USD",
     amount: "10.25",
   })).amountMinor, 1025);
   assert.equal(isPaymentLinkCreationAllowed(
@@ -377,7 +383,8 @@ test("create validates currency precision and minimum amount before persisting",
   for (const body of [
     validInput({ amount: "9" }),
     validInput({ currency: "XOF", amount: "10.01" }),
-    validInput({ currency: "EUR", amount: "10.001" }),
+    validInput({ currency: "USD", amount: "10.001" }),
+    ...["CHF", "NGN", "EUR", "CAD"].map((currency) => validInput({ currency, amount: "10" })),
     validInput({ returnUrl: "http://example.invalid/return" }),
     validInput({ suffix: "Not A Safe Suffix" }),
   ]) {
@@ -401,6 +408,7 @@ test("create uses server-owned values, is idempotent and rejects changed replays
   assert.equal(first.status, 201, first.text);
   const firstLink = json(first);
   assert.equal(firstLink.currency, "XOF");
+  assert.equal(firstLink.currencyDecimals, 0);
   assert.equal(firstLink.amountMinor, 1250);
   assert.equal(firstLink.description, "Facture client");
   assert.equal(firstLink.status, "draft");
@@ -430,7 +438,7 @@ test("lists and pagination cursors are scoped to the authenticated owner", async
   const created = await request("/api/me/payment-links", {
     method: "POST",
     userId: "payment-link-owner-a",
-    body: validInput({ currency: "EUR", amount: "10.25" }),
+    body: validInput({ currency: "USD", amount: "10.25" }),
   });
   assert.equal(created.status, 201, created.text);
   const ownerPage = await request("/api/me/payment-links", { userId: "payment-link-owner-a" });
@@ -438,7 +446,20 @@ test("lists and pagination cursors are scoped to the authenticated owner", async
   assert.equal(ownerPage.status, 200);
   assert.equal(ownerItems.items.length, 2);
   assert.deepEqual(ownerItems.currencyOptions.map((item) => item.code), [
-    "XOF", "XAF", "CHF", "NGN", "EUR", "USD", "CAD",
+    "XOF", "XAF", "USD",
+  ]);
+  await owner.query(
+    "UPDATE sf_customer_payment_links SET currency='EUR' WHERE id=$1",
+    [json(created).id],
+  );
+  const legacyPage = json(await request("/api/me/payment-links", {
+    userId: "payment-link-owner-a",
+  }));
+  const legacyLink = legacyPage.items.find((item) => item.id === json(created).id);
+  assert.equal(legacyLink.currency, "EUR");
+  assert.equal(legacyLink.currencyDecimals, 2);
+  assert.deepEqual(legacyPage.currencyOptions.map((item) => item.code), [
+    "XOF", "XAF", "USD",
   ]);
   const otherPage = await request("/api/me/payment-links", { userId: "payment-link-owner-b" });
   assert.equal(otherPage.status, 200);

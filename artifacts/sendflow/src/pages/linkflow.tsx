@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
 import { ArrowLeft, ArrowRight, Clock3, Link2, Plus, RefreshCw } from 'lucide-react';
 import { useGetCustomerPaymentLinks } from '@workspace/api-client-react';
@@ -10,13 +11,8 @@ const money = (minor: number, currency: string, decimals: number) => new Intl.Nu
   style: 'currency', currency, minimumFractionDigits: decimals, maximumFractionDigits: decimals,
 }).format(minor / (10 ** decimals));
 
-const linkAmount = (
-  link: CustomerPaymentLink,
-  currencyOptions: readonly { code: string; decimals: number }[] | undefined,
-) => {
-  const decimals = currencyOptions?.find((option) => option.code === link.currency)?.decimals;
-  return decimals === undefined ? '—' : money(link.amountMinor, link.currency, decimals);
-};
+const linkAmount = (link: CustomerPaymentLink) =>
+  money(link.amountMinor, link.currency, link.currencyDecimals);
 
 const paymentLabel = (method: CustomerPaymentLink['paymentMethod']) => ({
   all: 'Tous les moyens',
@@ -51,8 +47,14 @@ export default function LinkFlowPage() {
   });
 
   return (
-    <main className="sendflow-linkflow-shell">
-      <div className="sendflow-linkflow-art is-list" style={{ backgroundImage: `url(${linkflowListIllustration})` }} aria-hidden="true" />
+    <>
+      {typeof document !== 'undefined' && createPortal(
+        <div className="sendflow-linkflow-art-layer" aria-hidden="true">
+          <div className="sendflow-linkflow-art is-list" style={{ backgroundImage: `url(${linkflowListIllustration})` }} />
+        </div>,
+        document.body,
+      )}
+      <main className="sendflow-linkflow-shell">
       <section className="sendflow-linkflow-page sendflow-linkflow-list" aria-labelledby="linkflow-title">
         <header className="sendflow-linkflow-header">
           <button type="button" className="sendflow-linkflow-back" onClick={() => setLocation('/account')} aria-label="Revenir à mon compte" data-testid="button-linkflow-back">
@@ -95,7 +97,7 @@ export default function LinkFlowPage() {
                   <span className="sendflow-linkflow-row-date">Créé le {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(link.createdAt))}</span>
                 </div>
                 <div className="sendflow-linkflow-row-right">
-                  <strong className="sendflow-linkflow-amount">{linkAmount(link, linksQuery.data?.currencyOptions)}</strong>
+                  <strong className="sendflow-linkflow-amount">{linkAmount(link)}</strong>
                   <span>{link.usageCount}{link.maximumUses === null ? ' / illimité' : ` / ${link.maximumUses}`}</span>
                   <span className="sendflow-linkflow-status">{statusLabel(link.status)}</span>
                   <small><Clock3 size={12} /> {dateLabel(link.expiresAt)}</small>
@@ -111,6 +113,7 @@ export default function LinkFlowPage() {
           </button>
         )}
       </section>
-    </main>
+      </main>
+    </>
   );
 }

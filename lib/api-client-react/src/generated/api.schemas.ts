@@ -386,11 +386,7 @@ export type CustomerPaymentLinkInputCurrency = typeof CustomerPaymentLinkInputCu
 export const CustomerPaymentLinkInputCurrency = {
   XOF: 'XOF',
   XAF: 'XAF',
-  CHF: 'CHF',
-  NGN: 'NGN',
-  EUR: 'EUR',
   USD: 'USD',
-  CAD: 'CAD',
 } as const;
 
 export type CustomerPaymentLinkInputPaymentMethod = typeof CustomerPaymentLinkInputPaymentMethod[keyof typeof CustomerPaymentLinkInputPaymentMethod];
@@ -453,11 +449,7 @@ export type CustomerPaymentLinkCurrencyOptionCode = typeof CustomerPaymentLinkCu
 export const CustomerPaymentLinkCurrencyOptionCode = {
   XOF: 'XOF',
   XAF: 'XAF',
-  CHF: 'CHF',
-  NGN: 'NGN',
-  EUR: 'EUR',
   USD: 'USD',
-  CAD: 'CAD',
 } as const;
 
 export type CustomerPaymentLinkCurrencyOptionDecimals = typeof CustomerPaymentLinkCurrencyOptionDecimals[keyof typeof CustomerPaymentLinkCurrencyOptionDecimals];
@@ -491,6 +483,14 @@ export const CustomerPaymentLinkCurrency = {
   CAD: 'CAD',
 } as const;
 
+export type CustomerPaymentLinkCurrencyDecimals = typeof CustomerPaymentLinkCurrencyDecimals[keyof typeof CustomerPaymentLinkCurrencyDecimals];
+
+
+export const CustomerPaymentLinkCurrencyDecimals = {
+  NUMBER_0: 0,
+  NUMBER_2: 2,
+} as const;
+
 export type CustomerPaymentLinkPaymentMethod = typeof CustomerPaymentLinkPaymentMethod[keyof typeof CustomerPaymentLinkPaymentMethod];
 
 
@@ -519,6 +519,7 @@ export interface CustomerPaymentLink {
      */
   code: string;
   currency: CustomerPaymentLinkCurrency;
+  currencyDecimals: CustomerPaymentLinkCurrencyDecimals;
   /**
      * @minimum 1
      * @maximum 9007199254740991

@@ -18,6 +18,7 @@ import { consumePaymentLinkCreationQuota } from "../data/payment-link-quota";
 import { requireCustomerSession } from "../lib/customer-session";
 import {
   createPaymentLinkPublicToken,
+  getPaymentLinkCurrencyDecimals,
   isPaymentLinkCreationAllowed,
   normalizePaymentLinkImage,
   normalizePaymentLinkInput,
@@ -79,6 +80,7 @@ function toResponse(row: Pick<
     id: row.id,
     code: row.publicToken.slice(0, 8),
     currency: row.currency,
+    currencyDecimals: getPaymentLinkCurrencyDecimals(row.currency),
     amountMinor: row.amountMinor,
     description: row.description,
     paymentMethod: row.paymentMethod,

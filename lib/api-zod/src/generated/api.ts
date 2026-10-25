@@ -661,6 +661,7 @@ export const GetCustomerPaymentLinksResponse = zod.object({
   "id": zod.uuid(),
   "code": zod.string().min(getCustomerPaymentLinksResponseItemsItemCodeMin).max(getCustomerPaymentLinksResponseItemsItemCodeMax),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
   "amountMinor": zod.int().min(1).max(getCustomerPaymentLinksResponseItemsItemAmountMinorMax),
   "description": zod.string().max(getCustomerPaymentLinksResponseItemsItemDescriptionMax),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
@@ -674,7 +675,7 @@ export const GetCustomerPaymentLinksResponse = zod.object({
 })),
   "nextCursor": zod.uuid().nullable(),
   "currencyOptions": zod.array(zod.object({
-  "code": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "code": zod.enum(['XOF', 'XAF', 'USD']),
   "decimals": zod.union([zod.literal(0),zod.literal(2)])
 })),
   "paymentMethods": zod.array(zod.object({
@@ -711,7 +712,7 @@ export const createCustomerPaymentLinkBodySuffixRegExp = new RegExp('^[a-z0-9]+(
 
 export const CreateCustomerPaymentLinkBody = zod.object({
   "requestId": zod.uuid(),
-  "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "currency": zod.enum(['XOF', 'XAF', 'USD']),
   "amount": zod.string().min(1).max(createCustomerPaymentLinkBodyAmountMax).regex(createCustomerPaymentLinkBodyAmountRegExp),
   "description": zod.string().min(createCustomerPaymentLinkBodyDescriptionMin).max(createCustomerPaymentLinkBodyDescriptionMax),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
@@ -737,6 +738,7 @@ export const CreateCustomerPaymentLinkResponse = zod.object({
   "id": zod.uuid(),
   "code": zod.string().min(createCustomerPaymentLinkResponseCodeMin).max(createCustomerPaymentLinkResponseCodeMax),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
   "amountMinor": zod.int().min(1).max(createCustomerPaymentLinkResponseAmountMinorMax),
   "description": zod.string().max(createCustomerPaymentLinkResponseDescriptionMax),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),

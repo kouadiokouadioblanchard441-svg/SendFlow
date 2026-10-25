@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, ImagePlus, RefreshCw, X } from 'lucide-react';
@@ -28,8 +29,7 @@ const validities: { value: CustomerPaymentLinkInputValidity; label: string }[] =
   { value: 'unlimited', label: 'Illimité' },
 ];
 const currencyNames: Record<CustomerPaymentLinkInputCurrency, string> = {
-  XOF: 'Franc CFA (BCEAO)', XAF: 'Franc CFA (BEAC)', CHF: 'Franc suisse', NGN: 'Naira nigérian',
-  EUR: 'Euro', USD: 'Dollar américain', CAD: 'Dollar canadien',
+  XOF: 'Franc CFA (BCEAO)', XAF: 'Franc CFA (BEAC)', USD: 'Dollar américain',
 };
 const imageMaxBytes = 5 * 1024 * 1024;
 const imageMimeTypes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
@@ -227,8 +227,14 @@ export default function LinkFlowNewPage() {
   };
 
   return (
-    <main className="sendflow-linkflow-shell">
-      <div className="sendflow-linkflow-art is-create" style={{ backgroundImage: `url(${linkflowIllustration})` }} aria-hidden="true" />
+    <>
+      {typeof document !== 'undefined' && createPortal(
+        <div className="sendflow-linkflow-art-layer" aria-hidden="true">
+          <div className="sendflow-linkflow-art is-create" style={{ backgroundImage: `url(${linkflowIllustration})` }} />
+        </div>,
+        document.body,
+      )}
+      <main className="sendflow-linkflow-shell">
       <section className="sendflow-linkflow-page sendflow-linkflow-create-page" aria-labelledby="linkflow-title">
         <header className="sendflow-linkflow-header">
           <button type="button" className="sendflow-linkflow-back" onClick={() => setLocation('/linkflow')} aria-label="Revenir à mes liens" data-testid="button-linkflow-back">
@@ -382,6 +388,7 @@ export default function LinkFlowNewPage() {
           </div>
         </form>
       </section>
-    </main>
+      </main>
+    </>
   );
 }

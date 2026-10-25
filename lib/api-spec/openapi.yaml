@@ -3694,7 +3694,7 @@ components:
           format: uuid
         currency:
           type: string
-          enum: [XOF, XAF, CHF, NGN, EUR, USD, CAD]
+          enum: [XOF, XAF, USD]
         amount:
           type: string
           minLength: 1
@@ -3737,7 +3737,7 @@ components:
       properties:
         code:
           type: string
-          enum: [XOF, XAF, CHF, NGN, EUR, USD, CAD]
+          enum: [XOF, XAF, USD]
         decimals:
           type: integer
           enum: [0, 2]
@@ -3763,6 +3763,9 @@ components:
         currency:
           type: string
           enum: [XOF, XAF, CHF, NGN, EUR, USD, CAD]
+        currencyDecimals:
+          type: integer
+          enum: [0, 2]
         amountMinor:
           type: integer
           minimum: 1
@@ -3797,6 +3800,7 @@ components:
         - id
         - code
         - currency
+        - currencyDecimals
         - amountMinor
         - description
         - paymentMethod

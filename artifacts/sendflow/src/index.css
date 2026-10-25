@@ -4885,19 +4885,26 @@
 
 /* Screenshot-aligned LinkFlow: compact rows and a single vertical creation flow. */
 .sendflow-linkflow-shell {
+  position: relative;
+  z-index: 1;
   min-height: 100dvh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  background: hsl(var(--background));
+  background: transparent;
   padding: 22px 18px max(28px, env(safe-area-inset-bottom));
 }
-.sendflow-linkflow-art {
+.sendflow-linkflow-art-layer {
   position: fixed;
   z-index: 0;
-  top: clamp(100px, 16vh, 150px);
+  inset: 0;
+  overflow: hidden;
+  background: hsl(var(--background));
+  pointer-events: none;
+}
+.sendflow-linkflow-art {
+  position: absolute;
+  top: 110px;
   right: max(-120px, calc((100vw - 540px) / 2 - 90px));
   width: min(510px, 116vw);
-  height: min(68dvh, 660px);
+  height: 620px;
   opacity: .22;
   background-repeat: no-repeat;
   background-size: contain;
@@ -4905,6 +4912,9 @@
   mix-blend-mode: multiply;
   mask-image: linear-gradient(90deg, transparent 4%, #000 42%);
   pointer-events: none;
+  animation: none;
+  transition: none;
+  transform: none;
 }
 .sendflow-linkflow-art.is-list {
   opacity: .22;
@@ -5004,7 +5014,7 @@
 
 @media (max-width: 420px) {
   .sendflow-linkflow-shell { padding: 13px 16px max(24px, env(safe-area-inset-bottom)); }
-  .sendflow-linkflow-art { top: 115px; right: -105px; width: 112vw; height: min(64dvh, 570px); }
+  .sendflow-linkflow-art { top: 115px; right: -105px; width: 112vw; height: 570px; }
   .sendflow-linkflow-art.is-list { opacity: .2; }
   .sendflow-linkflow-art.is-create { opacity: .24; }
   .sendflow-linkflow-page { min-height: calc(100dvh - 37px); padding-top: 26px; }

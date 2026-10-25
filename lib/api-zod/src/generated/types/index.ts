@@ -102,6 +102,7 @@ export * from './customerPasswordResetInput';
 export * from './customerPaymentLink';
 export * from './customerPaymentLinkChoice';
 export * from './customerPaymentLinkCurrency';
+export * from './customerPaymentLinkCurrencyDecimals';
 export * from './customerPaymentLinkCurrencyOption';
 export * from './customerPaymentLinkCurrencyOptionCode';
 export * from './customerPaymentLinkCurrencyOptionDecimals';

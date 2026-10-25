@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { CustomerPaymentLinkCurrency } from './customerPaymentLinkCurrency';
+import type { CustomerPaymentLinkCurrencyDecimals } from './customerPaymentLinkCurrencyDecimals';
 import type { CustomerPaymentLinkPaymentMethod } from './customerPaymentLinkPaymentMethod';
 import type { CustomerPaymentLinkStatus } from './customerPaymentLinkStatus';
 
@@ -17,6 +18,7 @@ export interface CustomerPaymentLink {
      */
   code: string;
   currency: CustomerPaymentLinkCurrency;
+  currencyDecimals: CustomerPaymentLinkCurrencyDecimals;
   /**
      * @minimum 1
      * @maximum 9007199254740991

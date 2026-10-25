@@ -12,9 +12,5 @@ export type CustomerPaymentLinkCurrencyOptionCode = typeof CustomerPaymentLinkCu
 export const CustomerPaymentLinkCurrencyOptionCode = {
   XOF: 'XOF',
   XAF: 'XAF',
-  CHF: 'CHF',
-  NGN: 'NGN',
-  EUR: 'EUR',
   USD: 'USD',
-  CAD: 'CAD',
 } as const;

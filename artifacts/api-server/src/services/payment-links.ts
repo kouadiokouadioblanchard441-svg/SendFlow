@@ -19,12 +19,26 @@ const paymentLinkImageMimeFormats = {
 export const PAYMENT_LINK_CURRENCIES = [
   { code: "XOF", decimals: 0 },
   { code: "XAF", decimals: 0 },
-  { code: "CHF", decimals: 2 },
-  { code: "NGN", decimals: 2 },
-  { code: "EUR", decimals: 2 },
   { code: "USD", decimals: 2 },
-  { code: "CAD", decimals: 2 },
 ] as const;
+
+const storedPaymentLinkCurrencyDecimals = {
+  XOF: 0,
+  XAF: 0,
+  CHF: 2,
+  NGN: 2,
+  EUR: 2,
+  USD: 2,
+  CAD: 2,
+} as const;
+
+export function getPaymentLinkCurrencyDecimals(currency: string): number {
+  const decimals = storedPaymentLinkCurrencyDecimals[
+    currency as keyof typeof storedPaymentLinkCurrencyDecimals
+  ];
+  if (decimals === undefined) throw new Error("Devise enregistrée inconnue pour un lien de paiement.");
+  return decimals;
+}
 
 export const PAYMENT_LINK_METHODS = [
   { value: "mobile_money", label: "Mobile Money" },
