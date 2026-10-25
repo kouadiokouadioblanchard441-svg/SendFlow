@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
-import { ArrowLeft, ArrowRight, Clock3, Copy, Globe, Link2, MessageCircle, Plus, RefreshCw, Send, Share2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock3, Copy, Link2, Plus, RefreshCw, Share2 } from 'lucide-react';
+import { SiFacebook, SiTelegram, SiWhatsapp } from 'react-icons/si';
 import { getGetCustomerPaymentLinksQueryKey, useGetCustomerPaymentLinks } from '@workspace/api-client-react';
 import type { CustomerPaymentLink } from '@workspace/api-client-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -227,7 +228,7 @@ export default function LinkFlowPage() {
                   className="sendflow-linkflow-share-option is-whatsapp"
                   data-testid="link-share-whatsapp"
                 >
-                  <MessageCircle size={19} />
+                  <SiWhatsapp size={20} aria-hidden="true" />
                   WhatsApp
                 </a>
                 <a
@@ -237,7 +238,7 @@ export default function LinkFlowPage() {
                   className="sendflow-linkflow-share-option is-telegram"
                   data-testid="link-share-telegram"
                 >
-                  <Send size={18} />
+                  <SiTelegram size={20} aria-hidden="true" />
                   Telegram
                 </a>
                 <a
@@ -247,7 +248,7 @@ export default function LinkFlowPage() {
                   className="sendflow-linkflow-share-option is-facebook"
                   data-testid="link-share-facebook"
                 >
-                  <Globe size={18} />
+                  <SiFacebook size={20} aria-hidden="true" />
                   Facebook
                 </a>
                 {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
