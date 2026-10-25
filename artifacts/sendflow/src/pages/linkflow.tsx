@@ -49,9 +49,13 @@ export default function LinkFlowPage() {
   return (
     <>
       {typeof document !== 'undefined' && createPortal(
-        <div className="sendflow-linkflow-art-layer" aria-hidden="true">
-          <div className="sendflow-linkflow-art is-list" style={{ backgroundImage: `url(${linkflowListIllustration})` }} />
-        </div>,
+        <img
+          className="sendflow-linkflow-art is-list"
+          src={linkflowListIllustration}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />,
         document.body,
       )}
       <main className="sendflow-linkflow-shell">

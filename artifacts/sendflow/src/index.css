@@ -2845,8 +2845,6 @@
 
 /* LinkFlow — visual draft, no payment action is enabled */
 .sendflow-linkflow-shell {
-  min-height: 100dvh;
-  background: #fbfbfb;
   color: #171717;
 }
 
@@ -2969,7 +2967,6 @@
 }
 
 /* LinkFlow creation flow — localized, mobile-first and visually native to SendFlow */
-.sendflow-linkflow-shell { position: relative; overflow: hidden; background: #fff; }
 .sendflow-linkflow-page { position: relative; isolation: isolate; gap: 0; overflow: hidden; background: #fff; }
 .sendflow-linkflow-illustration { position: absolute; z-index: 0; top: 124px; right: -100px; width: min(125vw, 520px); height: 600px; pointer-events: none; }
 .sendflow-linkflow-illustration img { display: block; width: 100%; height: 100%; object-fit: contain; opacity: .2; mix-blend-mode: multiply; }
@@ -4566,30 +4563,7 @@
   .sendflow-receipt-card { box-shadow: none; }
 }
 
-/* LinkFlow customer screens — quiet SendFlow violet with the illustration kept atmospheric. */
-.sendflow-linkflow-shell {
-  position: relative;
-  min-height: 100dvh;
-  overflow: hidden;
-  isolation: isolate;
-  background: #f8f6fb;
-  padding: clamp(22px, 5vh, 54px) 16px 32px;
-}
-.sendflow-linkflow-art {
-  position: fixed;
-  z-index: -1;
-  top: 0;
-  right: max(-30px, calc((100vw - 1200px) / 2));
-  width: min(62vw, 650px);
-  height: 100dvh;
-  pointer-events: none;
-  background-position: center right;
-  background-repeat: no-repeat;
-  background-size: contain;
-  opacity: .095;
-  mix-blend-mode: multiply;
-  mask-image: linear-gradient(90deg, transparent, #000 40%, #000);
-}
+/* LinkFlow customer screens — quiet SendFlow violet with a stationary illustration. */
 .sendflow-linkflow-page {
   width: min(100%, 920px);
   min-height: calc(100dvh - 84px);
@@ -4862,7 +4836,6 @@
 @media (max-width: 640px) {
   .sendflow-linkflow-shell { padding: 12px 10px max(18px, env(safe-area-inset-bottom)); }
   .sendflow-linkflow-page { min-height: calc(100dvh - 30px); border-radius: 20px; padding: 22px 19px; }
-  .sendflow-linkflow-art { right: -100px; width: 95vw; opacity: .075; }
   .sendflow-linkflow-header { grid-template-columns: 39px minmax(0,1fr) auto; gap: 10px; }
   .sendflow-linkflow-header h1 { font-size: 20px; }
   .sendflow-linkflow-create-link { width: 42px; padding: 0; }
@@ -4885,30 +4858,25 @@
   position: relative;
   z-index: 1;
   min-height: 100dvh;
+  overflow: visible;
+  isolation: auto;
   background: transparent;
   padding: 22px 18px max(28px, env(safe-area-inset-bottom));
 }
-.sendflow-linkflow-art-layer {
+.sendflow-linkflow-art {
   position: fixed;
   z-index: 0;
-  inset: 0;
-  overflow: hidden;
-  background: hsl(var(--background));
-  pointer-events: none;
-}
-.sendflow-linkflow-art {
-  position: absolute;
   top: 110px;
   right: max(-120px, calc((100vw - 540px) / 2 - 90px));
   width: min(510px, 116vw);
   height: 620px;
   opacity: .22;
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center right;
+  object-fit: contain;
+  object-position: center right;
   mix-blend-mode: multiply;
   mask-image: linear-gradient(90deg, transparent 4%, #000 42%);
   pointer-events: none;
+  user-select: none;
   animation: none;
   transition: none;
   transform: none;
