@@ -4859,30 +4859,19 @@
   padding: 22px 18px max(28px, env(safe-area-inset-bottom));
 }
 .sendflow-linkflow-art {
-  position: fixed;
+  position: fixed !important;
   z-index: 0;
-  top: 110px;
-  right: max(-120px, calc((100vw - 540px) / 2 - 90px));
-  width: min(510px, 116vw);
-  height: 620px;
-  opacity: .22;
-  object-fit: contain;
-  object-position: center right;
+  top: 180px;
+  right: -45px;
+  width: min(118vw, 600px);
+  height: auto;
+  opacity: .2;
   mix-blend-mode: multiply;
-  mask-image: linear-gradient(90deg, transparent 4%, #000 42%);
   pointer-events: none;
   user-select: none;
   animation: none;
   transition: none;
-  transform: none;
-}
-.sendflow-linkflow-art.is-list {
-  opacity: .22;
-  mask-image: linear-gradient(90deg, transparent 2%, #000 38%, #000);
-}
-.sendflow-linkflow-art.is-create {
-  opacity: .26;
-  mask-image: linear-gradient(90deg, transparent 8%, #000 48%, #000);
+  transform: rotate(-2deg);
 }
 .sendflow-linkflow-page {
   position: relative;
@@ -4973,9 +4962,6 @@
 
 @media (max-width: 420px) {
   .sendflow-linkflow-shell { padding: 13px 16px max(24px, env(safe-area-inset-bottom)); }
-  .sendflow-linkflow-art { top: 115px; right: -105px; width: 112vw; height: 570px; }
-  .sendflow-linkflow-art.is-list { opacity: .2; }
-  .sendflow-linkflow-art.is-create { opacity: .24; }
   .sendflow-linkflow-page { min-height: calc(100dvh - 37px); padding-top: 26px; }
   .sendflow-linkflow-header { margin-bottom: 30px; }
   .sendflow-linkflow-record { grid-template-columns: 40px minmax(0,1fr) auto; gap: 9px; min-height: 88px; }
