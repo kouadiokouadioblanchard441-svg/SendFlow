@@ -15,6 +15,13 @@ export interface AdminOperatorPaymentRoute {
   /** @nullable */
   effectiveAggregatorCode: string | null;
   inheritsCountryDefault: boolean;
+  /**
+     * @maxLength 32
+     * @nullable
+     */
+  ussdCodeOverride: string | null;
+  /** @minimum 1 */
+  ussdVersion: number;
   /** @minimum 0 */
   version: number;
   /** @nullable */

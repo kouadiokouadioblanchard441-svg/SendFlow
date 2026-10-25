@@ -60,6 +60,10 @@ try {
   const catalogMigration = readFileSync(join(root,
     "lib/db/migrations/2026-10-22-country-operations-and-routing.sql"), "utf8");
   await owner.query(catalogMigration);
+  const ussdMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-10-25-linkflow-ussd-settings.sql"), "utf8");
+  await owner.query(ussdMigration);
+  await owner.query(ussdMigration);
   assert.equal((await owner.query(`SELECT count(*)::int AS n
     FROM sf_operation_aggregator_routes WHERE scope_key='legacy-fixture' AND version=7`)).rows[0].n, 3);
   // A rerun must not propagate a newly configured deposit to other operations.

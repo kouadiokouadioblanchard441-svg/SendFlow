@@ -21,6 +21,7 @@ export const countriesTable = pgTable(
     depositEnabled: boolean("deposit_enabled").notNull().default(false),
     interNetworkEnabled: boolean("inter_network_enabled").notNull().default(false),
     internationalEnabled: boolean("international_enabled").notNull().default(false),
+    ussdCode: varchar("ussd_code", { length: 32 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
     updatedBy: varchar("updated_by", { length: 255 }).notNull(),
@@ -39,6 +40,10 @@ export const countriesTable = pgTable(
     phoneDigitsRange: check(
       "sf_countries_phone_digits_range_check",
       sql`${table.minPhoneDigits} BETWEEN 4 AND 15 AND ${table.maxPhoneDigits} BETWEEN ${table.minPhoneDigits} AND 15 AND ${table.maxPhoneDigits} + length(${table.phonePrefix}) - 1 <= 15`,
+    ),
+    ussdCodeFormat: check(
+      "sf_countries_ussd_code_format_check",
+      sql`${table.ussdCode} IS NULL OR (${table.ussdCode} ~ '^[*][0-9]+([*][0-9]+)*#$' AND length(${table.ussdCode}) <= 32)`,
     ),
   }),
 );

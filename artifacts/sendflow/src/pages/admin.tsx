@@ -71,6 +71,9 @@ import {
   useCreateAdminAggregator,
   useUpdateAdminAggregator,
   useUpdateAdminAggregatorRoute,
+  useUpdateAdminUssdInstruction,
+  getGetAdminCountriesQueryKey,
+  getGetAdminOperatorPricingQueryKey,
   getGetAdminPaymentRoutingQueryKey,
   getListAdminBannersQueryKey,
   getListPublishedBannersQueryKey,
@@ -1681,6 +1684,16 @@ type PaymentRouteEdit = {
   expectedVersion: number;
 };
 
+type UssdInstructionEdit = {
+  kind: 'ussd';
+  countryCode: string;
+  countryName: string;
+  operatorId: string | null;
+  operatorName: string | null;
+  ussdCode: string;
+  expectedVersion: number;
+};
+
 type AggregatorEdit =
   | {
       kind: 'provider';
@@ -1689,7 +1702,8 @@ type AggregatorEdit =
       enabled: boolean;
       expectedVersion: number;
     }
-  | PaymentRouteEdit;
+  | PaymentRouteEdit
+  | UssdInstructionEdit;
 
 function makeAggregatorCode(name: string) {
   return name
@@ -1707,8 +1721,10 @@ function AggregatorsPage() {
   const createAggregator = useCreateAdminAggregator();
   const updateAggregator = useUpdateAdminAggregator();
   const updateRoute = useUpdateAdminAggregatorRoute();
+  const updateUssdInstruction = useUpdateAdminUssdInstruction();
   const [routingOperation, setRoutingOperation] = useState<PaymentOperation>('deposit');
   const [editing, setEditing] = useState<AggregatorEdit | null>(null);
+  const [ussdPreview, setUssdPreview] = useState<{ countryName: string; operatorName: string | null; code: string | null } | null>(null);
   const [reason, setReason] = useState('');
   const [feedback, setFeedback] = useState('');
   const [mutationError, setMutationError] = useState('');
@@ -1721,14 +1737,24 @@ function AggregatorsPage() {
 
   const data = query.data;
   const aggregators = data?.aggregators ?? [];
+  const ussdCountries = data
+    ? Array.from(new Map(data.countries.map((country) => [country.countryCode, country])).values())
+    : [];
   const aggregatorByCode = new Map(aggregators.map((aggregator) => [aggregator.code, aggregator]));
-  const isSaving = updateAggregator.isPending || updateRoute.isPending;
+  const isSaving = updateAggregator.isPending || updateRoute.isPending || updateUssdInstruction.isPending;
 
   const invalidateRouting = () =>
     queryClient.invalidateQueries({ queryKey: getGetAdminPaymentRoutingQueryKey() });
 
   const openRouteEdit = (route: PaymentRouteEdit) => {
     setEditing(route);
+    setReason('');
+    setMutationError('');
+    setFeedback('');
+  };
+
+  const openUssdEdit = (instruction: Omit<UssdInstructionEdit, 'kind'>) => {
+    setEditing({ kind: 'ussd', ...instruction });
     setReason('');
     setMutationError('');
     setFeedback('');
@@ -1758,6 +1784,40 @@ function AggregatorsPage() {
             });
           },
           onError: () => setMutationError('La modification a échoué. Actualisez les données puis réessayez.'),
+        },
+      );
+      return;
+    }
+
+    if (editing.kind === 'ussd') {
+      const code = editing.ussdCode.trim();
+      if (code && !/^\*[0-9]+(?:\*[0-9]+)*#$/.test(code)) {
+        setMutationError('Utilisez un code USSD composé de blocs numériques, par exemple *123# ou *123*1#.');
+        return;
+      }
+      updateUssdInstruction.mutate(
+        {
+          data: {
+            countryCode: editing.countryCode,
+            operatorId: editing.operatorId,
+            ussdCode: code || null,
+            expectedVersion: editing.expectedVersion,
+            reason: reason.trim(),
+          },
+        },
+        {
+          onSuccess: () => {
+          void Promise.all([
+            invalidateRouting(),
+            ...(editing.operatorId === null ? [queryClient.invalidateQueries({ queryKey: getGetAdminCountriesQueryKey() })] : []),
+            ...(editing.operatorId !== null ? [queryClient.invalidateQueries({ queryKey: getGetAdminOperatorPricingQueryKey() })] : []),
+          ]).then(() => {
+              setFeedback(`Le code USSD de ${editing.operatorName ? `${editing.operatorName} — ` : ''}${editing.countryName} a été mis à jour.`);
+              setEditing(null);
+              setReason('');
+            });
+          },
+          onError: () => setMutationError('La configuration a changé ou la sauvegarde a échoué. Actualisez puis réessayez.'),
         },
       );
       return;
@@ -1919,6 +1979,81 @@ function AggregatorsPage() {
           </section>
 
           <AdminCountriesSection />
+          <section className="space-y-3" aria-labelledby="admin-ussd-settings-title" data-testid="section-ussd-instructions">
+            <div>
+              <h3 id="admin-ussd-settings-title" className="text-lg font-semibold">Codes USSD de confirmation</h3>
+              <p className="text-sm text-muted-foreground">
+                Un code par défaut pour chaque pays et, si nécessaire, une surcharge propre à un réseau.
+              </p>
+            </div>
+            <Alert data-testid="notice-ussd-preview-only">
+              <CircleAlert className="size-4" />
+              <AlertTitle>Configuration et aperçu uniquement</AlertTitle>
+              <AlertDescription>
+                Enregistrer un code ne lance ni demande USSD ni paiement. L’écran réel d’attente ne sera affiché au payeur qu’après création d’une demande confirmée par le serveur.
+              </AlertDescription>
+            </Alert>
+            <div className="grid gap-4 xl:grid-cols-2" data-testid="list-ussd-country-settings">
+              {ussdCountries.map((country) => (
+                <Card key={country.countryCode} data-testid={`card-ussd-country-${country.countryCode}`}>
+                  <CardHeader>
+                    <CardTitle>{country.countryName}</CardTitle>
+                    <CardDescription>{country.countryCode.toUpperCase()} · code par défaut du pays</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{country.ussdCode ?? 'Aucun code configuré'}</p>
+                        <p className="text-xs text-muted-foreground">Version {country.ussdVersion}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" disabled={!country.ussdCode}
+                          onClick={() => setUssdPreview({ countryName: country.countryName, operatorName: null, code: country.ussdCode })}
+                          data-testid={`button-preview-ussd-country-${country.countryCode}`}>Aperçu</Button>
+                        <Button type="button" variant="outline"
+                          onClick={() => openUssdEdit({
+                            countryCode: country.countryCode, countryName: country.countryName,
+                            operatorId: null, operatorName: null, ussdCode: country.ussdCode ?? '',
+                            expectedVersion: country.ussdVersion,
+                          })}
+                          data-testid={`button-edit-ussd-country-${country.countryCode}`}>Configurer</Button>
+                      </div>
+                    </div>
+                    {country.operators.map((operator) => {
+                      const effectiveCode = operator.ussdCodeOverride ?? country.ussdCode;
+                      return (
+                        <div key={operator.operatorId} className="grid gap-3 border-t pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                          data-testid={`row-ussd-operator-${operator.operatorId}`}>
+                          <div className="min-w-0">
+                            <p className="font-medium">{operator.operatorName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {operator.ussdCodeOverride
+                                ? `Surcharge : ${operator.ussdCodeOverride}`
+                                : effectiveCode ? `Hérite du pays : ${effectiveCode}` : 'Aucun code effectif'}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" disabled={!effectiveCode}
+                              onClick={() => setUssdPreview({ countryName: country.countryName, operatorName: operator.operatorName, code: effectiveCode })}
+                              data-testid={`button-preview-ussd-operator-${operator.operatorId}`}>Aperçu</Button>
+                            <Button type="button" variant="outline" size="sm"
+                              onClick={() => openUssdEdit({
+                                countryCode: country.countryCode, countryName: country.countryName,
+                                operatorId: operator.operatorId, operatorName: operator.operatorName,
+                                ussdCode: operator.ussdCodeOverride ?? '', expectedVersion: operator.ussdVersion,
+                              })}
+                              data-testid={`button-edit-ussd-operator-${operator.operatorId}`}>
+                              {operator.ussdCodeOverride ? 'Modifier' : 'Ajouter une surcharge'}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
           <section className="space-y-3" aria-labelledby="admin-aggregator-routing-title">
             <div>
               <h3 id="admin-aggregator-routing-title" className="text-lg font-semibold">Affectations par pays et opérateur</h3>
@@ -2119,6 +2254,8 @@ function AggregatorsPage() {
             <DialogTitle>
               {editing?.kind === 'provider'
                 ? `Modifier ${editing.name}`
+                : editing?.kind === 'ussd'
+                  ? `Code USSD — ${editing.operatorName ? `${editing.operatorName} · ` : ''}${editing.countryName}`
                 : editing?.operatorName
                   ? `Changer le service — ${editing.operatorName}`
                   : `Changer le service — ${editing?.countryName ?? ''}`}
@@ -2126,6 +2263,10 @@ function AggregatorsPage() {
             <DialogDescription>
               {editing?.kind === 'provider'
                 ? 'L’activation administrative ne connecte pas son API de paiement.'
+                : editing?.kind === 'ussd'
+                  ? editing.operatorId
+                    ? 'Un code propre à ce réseau remplace celui du pays. Laisser vide rétablit l’héritage.'
+                    : 'Ce code est le défaut de ce pays et ne modifie aucun autre pays.'
                 : `Le nouveau routage sera enregistré pour ${editing?.operatorName ? `${editing.operatorName} — ` : ''}${editing?.countryName ?? ''}.`}
             </DialogDescription>
           </DialogHeader>
@@ -2155,6 +2296,22 @@ function AggregatorsPage() {
               </div>
             </div>
           )}
+          {editing?.kind === 'ussd' && (
+            <div className="space-y-2">
+              <Label htmlFor="edit-ussd-code">Code de composition</Label>
+              <Input
+                id="edit-ussd-code"
+                value={editing.ussdCode}
+                onChange={(event) => setEditing((current) => current?.kind === 'ussd' ? { ...current, ussdCode: event.target.value.replace(/\s/g, '') } : current)}
+                maxLength={32}
+                placeholder="Ex. *123#"
+                inputMode="tel"
+                autoComplete="off"
+                data-testid="input-edit-ussd-code"
+              />
+              <p className="text-xs text-muted-foreground">Format accepté : *123# ou *123*1#. Laisser vide pour effacer le défaut ou l’exception.</p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="aggregator-change-reason">Motif de modification</Label>
             <Input
@@ -2173,6 +2330,36 @@ function AggregatorsPage() {
               {isSaving ? 'Enregistrement…' : 'Confirmer'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={Boolean(ussdPreview)} onOpenChange={(open) => { if (!open) setUssdPreview(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Aperçu de l’écran de confirmation</DialogTitle>
+            <DialogDescription>
+              {ussdPreview && `${ussdPreview.operatorName ? `${ussdPreview.operatorName} · ` : ''}${ussdPreview.countryName}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mx-auto w-full max-w-sm space-y-5 rounded-3xl border border-violet-100 bg-white p-5 shadow-lg">
+            <div className="flex justify-center">
+              <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800">APERÇU · SENDFLOW</span>
+            </div>
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+              <Smartphone className="size-7" aria-hidden="true" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Aperçu de l’étape opérateur</p>
+              <h3 className="mt-2 text-xl font-semibold text-slate-950">Confirmez sur votre téléphone</h3>
+              <p className="mt-2 text-sm text-slate-600">Le parcours réel attendra une demande de paiement confirmée par le serveur.</p>
+            </div>
+            <div className="rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-5 text-center">
+              <p className="text-xs font-medium uppercase tracking-wide text-violet-800">Code USSD configuré</p>
+              <p className="mt-2 text-2xl font-bold tracking-wide text-slate-950">{ussdPreview?.code ?? 'Aucun code'}</p>
+            </div>
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-xs text-amber-900">
+              Aperçu seulement : aucun paiement, appel USSD ou débit n’a été envoyé.
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     </AdminShell>

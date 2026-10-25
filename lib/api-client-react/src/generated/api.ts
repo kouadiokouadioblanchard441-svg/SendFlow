@@ -49,6 +49,7 @@ import type {
   AdminUserActionRequest,
   AdminUserDetail,
   AdminUserPage,
+  AdminUssdInstructionUpdate,
   AdminWalletAdjustmentRequest,
   AdminWalletAdjustmentResult,
   AutomaticIpBlock,
@@ -116,6 +117,7 @@ import type {
   TransferQuoteInput,
   TransferQuoteResult,
   UpdateAdminCountryRequest,
+  UpdateAdminUssdInstructionRequest,
   UpdatePaymentAggregatorRequest,
   UpdatePaymentAggregatorRouteRequest,
   WebhookReceipt
@@ -4485,6 +4487,94 @@ export const useUpdateAdminCountry = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getUpdateAdminCountryMutationOptions(options));
+    }
+
+export const getUpdateAdminUssdInstructionUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/ussd-instructions`
+}
+
+/**
+ * @summary Update a country USSD default or an operator-specific override
+ */
+export const updateAdminUssdInstruction = async (updateAdminUssdInstructionRequest: UpdateAdminUssdInstructionRequest, options?: Parameters<typeof customFetch>[1]): Promise<AdminUssdInstructionUpdate> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminUssdInstructionUpdate>(getUpdateAdminUssdInstructionUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateAdminUssdInstructionRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminUssdInstructionMutationKey = () => ['updateAdminUssdInstruction'] as const;
+
+export const getUpdateAdminUssdInstructionMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminUssdInstruction>>, TError,UpdateAdminUssdInstructionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminUssdInstruction>>, TError,UpdateAdminUssdInstructionMutationVariables, TContext> => {
+
+const mutationKey = getUpdateAdminUssdInstructionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminUssdInstruction>>, UpdateAdminUssdInstructionMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateAdminUssdInstruction(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminUssdInstructionMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminUssdInstruction>>>
+    export type UpdateAdminUssdInstructionMutationBody = BodyType<UpdateAdminUssdInstructionRequest>
+    export type UpdateAdminUssdInstructionMutationError = ErrorType<ErrorEnvelope>
+    export type UpdateAdminUssdInstructionMutationVariables = {data: BodyType<UpdateAdminUssdInstructionRequest>}
+
+    /**
+ * @summary Update a country USSD default or an operator-specific override
+ */
+export const useUpdateAdminUssdInstruction = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminUssdInstruction>>, TError,UpdateAdminUssdInstructionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminUssdInstruction>>,
+        TError,
+        UpdateAdminUssdInstructionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateAdminUssdInstructionMutationOptions(options));
     }
 
 export const getGetAdminPaymentRoutingUrl = () => {

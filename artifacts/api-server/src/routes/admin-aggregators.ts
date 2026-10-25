@@ -16,6 +16,8 @@ import {
   UpdateAdminAggregatorResponse,
   UpdateAdminAggregatorRouteBody,
   UpdateAdminAggregatorRouteResponse,
+  UpdateAdminUssdInstructionBody,
+  UpdateAdminUssdInstructionResponse,
 } from "@workspace/api-zod";
 import { recordAdminAudit } from "../lib/admin-audit";
 import { respondAdminAuthError } from "./admin";
@@ -97,6 +99,8 @@ router.get("/payment-routing", async (req, res): Promise<void> => {
         operation,
         countryName: country.countryName,
         phonePrefix: country.phonePrefix,
+        ussdCode: country.ussdCode,
+        ussdVersion: country.version,
         defaultAggregatorCode,
         defaultVersion: countryRoute?.version ?? 0,
         defaultUpdatedAt: countryRoute?.updatedAt?.toISOString() ?? null,
@@ -116,6 +120,8 @@ router.get("/payment-routing", async (req, res): Promise<void> => {
             operatorId: operator.operatorId,
             operatorName: operator.name,
             operatorEnabled: operator.enabled,
+            ussdCodeOverride: operator.ussdCodeOverride,
+            ussdVersion: operator.version,
             aggregatorCode,
             effectiveAggregatorCode: aggregatorCode ?? defaultAggregatorCode,
             inheritsCountryDefault: aggregatorCode === null,
@@ -137,6 +143,122 @@ router.get("/payment-routing", async (req, res): Promise<void> => {
     res.json(GetAdminPaymentRoutingResponse.parse({ aggregators, countries }));
   } catch (error) {
     req.log.error({ err: error }, "Admin payment routing lookup failed");
+    res.status(503).json({ error: "Administrator storage unavailable" });
+  }
+});
+
+router.put("/ussd-instructions", async (req, res): Promise<void> => {
+  const adminUserId = authorize(req, res, "mutate");
+  if (!adminUserId) return;
+
+  const body = UpdateAdminUssdInstructionBody.safeParse(req.body);
+  if (!body.success || body.data.reason.trim().length < 3) {
+    res.status(400).json({ error: "Invalid USSD instruction or audit reason" });
+    return;
+  }
+
+  const { countryCode, operatorId, ussdCode, expectedVersion } = body.data;
+
+  try {
+    const updated = await db.transaction(async (tx) => {
+      if (operatorId === null) {
+        const [country] = await tx
+          .update(countriesTable)
+          .set({
+            ussdCode,
+            version: expectedVersion + 1,
+            updatedBy: adminUserId,
+            updatedAt: new Date(),
+          })
+          .where(and(
+            eq(countriesTable.countryCode, countryCode),
+            eq(countriesTable.version, expectedVersion),
+          ))
+          .returning({
+            countryCode: countriesTable.countryCode,
+            ussdCode: countriesTable.ussdCode,
+            version: countriesTable.version,
+            updatedAt: countriesTable.updatedAt,
+          });
+        if (!country) return undefined;
+
+        await recordAdminAudit({
+          adminUserId,
+          action: "update_ussd_instruction",
+          resourceType: "country",
+          resourceId: country.countryCode,
+          reason: body.data.reason.trim(),
+        }, tx);
+
+        return { ...country, operatorId: null };
+      }
+
+      const [operator] = await tx
+        .update(operatorCatalogTable)
+        .set({
+          ussdCodeOverride: ussdCode,
+          version: expectedVersion + 1,
+          updatedBy: adminUserId,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(operatorCatalogTable.countryCode, countryCode),
+          eq(operatorCatalogTable.operatorId, operatorId),
+          eq(operatorCatalogTable.version, expectedVersion),
+        ))
+        .returning({
+          countryCode: operatorCatalogTable.countryCode,
+          operatorId: operatorCatalogTable.operatorId,
+          ussdCode: operatorCatalogTable.ussdCodeOverride,
+          version: operatorCatalogTable.version,
+          updatedAt: operatorCatalogTable.updatedAt,
+        });
+      if (!operator) return undefined;
+
+      await recordAdminAudit({
+        adminUserId,
+        action: "update_ussd_instruction",
+        resourceType: "operator",
+        resourceId: `${operator.countryCode}:${operator.operatorId}`,
+        reason: body.data.reason.trim(),
+      }, tx);
+
+      return operator;
+    });
+
+    if (!updated) {
+      const [country] = await db.select({ countryCode: countriesTable.countryCode })
+        .from(countriesTable).where(eq(countriesTable.countryCode, countryCode)).limit(1);
+      if (!country) {
+        res.status(404).json({ error: "Country not found" });
+        return;
+      }
+      if (operatorId !== null) {
+        const [operator] = await db.select({ operatorId: operatorCatalogTable.operatorId })
+          .from(operatorCatalogTable)
+          .where(and(
+            eq(operatorCatalogTable.countryCode, countryCode),
+            eq(operatorCatalogTable.operatorId, operatorId),
+          ))
+          .limit(1);
+        if (!operator) {
+          res.status(404).json({ error: "Operator not found for this country" });
+          return;
+        }
+      }
+      res.status(409).json({ error: "USSD instruction changed since it was loaded" });
+      return;
+    }
+
+    res.json(UpdateAdminUssdInstructionResponse.parse({
+      countryCode: updated.countryCode,
+      operatorId: updated.operatorId,
+      ussdCode: updated.ussdCode,
+      version: updated.version,
+      updatedAt: updated.updatedAt.toISOString(),
+    }));
+  } catch (error) {
+    req.log.error({ err: error }, "Admin USSD instruction update failed");
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });

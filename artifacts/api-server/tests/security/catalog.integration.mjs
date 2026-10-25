@@ -49,6 +49,9 @@ test("catalog administration stays closed without real authorization", async () 
     assert.ok([401, 403, 503].includes((await call(path)).status));
   }
   assert.ok([401, 403, 503].includes((await call("/denied/countries", "POST", countryInput("xx"))).status));
+  assert.ok([401, 403, 503].includes((await call("/denied/ussd-instructions", "PUT", {
+    countryCode: "zz", operatorId: null, ussdCode: "*123#", expectedVersion: 1, reason: "Denied fixture",
+  })).status));
 });
 
 test("countries: validated creation, public visibility, version conflict and atomic audit", async () => {
@@ -127,6 +130,66 @@ test("routing: operation/country isolation, override, switching, stale writes an
   const stored = await pool.query(`SELECT count(*)::int AS n FROM sf_operation_aggregator_routes
     WHERE scope_type='country' AND scope_key='zz' AND operation='inter-network'`);
   assert.equal(stored.rows[0].n, 1);
+});
+
+test("USSD settings: country default, operator override, version conflicts, validation and audit", async () => {
+  const routing = (await call("/secure-catalog/payment-routing")).data.countries;
+  const country = routing.find((row) => row.countryCode === "zz");
+  const operator = country.operators.find((row) => row.operatorId === "catalog-operator-zz");
+  assert.equal(country.ussdCode, null);
+  assert.equal(operator.ussdCodeOverride, null);
+
+  const countryInput = {
+    countryCode: "zz", operatorId: null, ussdCode: "*123#", expectedVersion: country.ussdVersion,
+    reason: "Configure country default USSD",
+  };
+  assert.equal((await call("/secure-catalog/ussd-instructions", "PUT", {
+    ...countryInput, ussdCode: "javascript:alert(1)",
+  })).status, 400);
+  const countryUpdate = await call("/secure-catalog/ussd-instructions", "PUT", countryInput);
+  assert.equal(countryUpdate.status, 200);
+  assert.equal(countryUpdate.data.ussdCode, "*123#");
+  assert.equal(countryUpdate.data.operatorId, null);
+
+  const afterDefault = (await call("/secure-catalog/payment-routing")).data.countries
+    .find((row) => row.countryCode === "zz");
+  assert.equal(afterDefault.ussdCode, "*123#");
+  assert.equal(afterDefault.operators[0].ussdCodeOverride, null);
+
+  const stale = await call("/secure-catalog/ussd-instructions", "PUT", countryInput);
+  assert.equal(stale.status, 409);
+
+  const operatorUpdate = await call("/secure-catalog/ussd-instructions", "PUT", {
+    countryCode: "zz", operatorId: "catalog-operator-zz", ussdCode: "*456*1#",
+    expectedVersion: operator.ussdVersion, reason: "Configure isolated operator override",
+  });
+  assert.equal(operatorUpdate.status, 200);
+  assert.equal(operatorUpdate.data.ussdCode, "*456*1#");
+
+  const refreshed = (await call("/secure-catalog/payment-routing")).data.countries
+    .find((row) => row.countryCode === "zz");
+  const refreshedOperator = refreshed.operators.find((row) => row.operatorId === "catalog-operator-zz");
+  assert.equal(refreshed.ussdCode, "*123#");
+  assert.equal(refreshedOperator.ussdCodeOverride, "*456*1#");
+  assert.equal(refreshedOperator.ussdVersion, operatorUpdate.data.version);
+
+  assert.equal((await call("/secure-catalog/ussd-instructions", "PUT", {
+    countryCode: "yy", operatorId: "catalog-operator-zz", ussdCode: "*999#",
+    expectedVersion: 1, reason: "Reject cross-country operator",
+  })).status, 404);
+
+  const cleared = await call("/secure-catalog/ussd-instructions", "PUT", {
+    countryCode: "zz", operatorId: "catalog-operator-zz", ussdCode: null,
+    expectedVersion: operatorUpdate.data.version, reason: "Restore country inheritance",
+  });
+  assert.equal(cleared.status, 200);
+  assert.equal(cleared.data.ussdCode, null);
+
+  const publicCountries = (await call("/public/auth/countries")).data.countries;
+  assert.equal(Object.hasOwn(publicCountries.find((row) => row.countryCode === "zz"), "ussdCode"), false);
+  const audits = await pool.query(`SELECT action FROM sf_admin_audit_logs
+    WHERE action='update_ussd_instruction' AND resource_id IN ('zz','zz:catalog-operator-zz')`);
+  assert.equal(audits.rows.length, 3);
 });
 
 test("public availability is server-computed per country and per operation", async () => {

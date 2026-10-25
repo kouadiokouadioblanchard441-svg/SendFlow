@@ -1591,12 +1591,59 @@ export const UpdateAdminCountryResponse = zod.object({
 
 
 /**
+ * @summary Update a country USSD default or an operator-specific override
+ */
+export const updateAdminUssdInstructionBodyCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const updateAdminUssdInstructionBodyOperatorIdMin = 2;
+export const updateAdminUssdInstructionBodyOperatorIdMax = 60;
+
+export const updateAdminUssdInstructionBodyUssdCodeMax = 32;
+
+
+export const updateAdminUssdInstructionBodyUssdCodeRegExp = new RegExp('^\\*[0-9]+(\\*[0-9]+)*#$');
+
+export const updateAdminUssdInstructionBodyReasonMin = 3;
+export const updateAdminUssdInstructionBodyReasonMax = 500;
+
+
+
+export const UpdateAdminUssdInstructionBody = zod.object({
+  "countryCode": zod.string().regex(updateAdminUssdInstructionBodyCountryCodeRegExp),
+  "operatorId": zod.string().min(updateAdminUssdInstructionBodyOperatorIdMin).max(updateAdminUssdInstructionBodyOperatorIdMax).nullable(),
+  "ussdCode": zod.string().max(updateAdminUssdInstructionBodyUssdCodeMax).regex(updateAdminUssdInstructionBodyUssdCodeRegExp).nullable(),
+  "expectedVersion": zod.int().min(1),
+  "reason": zod.string().min(updateAdminUssdInstructionBodyReasonMin).max(updateAdminUssdInstructionBodyReasonMax)
+})
+
+export const updateAdminUssdInstructionResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const updateAdminUssdInstructionResponseUssdCodeMax = 32;
+
+export const updateAdminUssdInstructionResponseVersionMin = 2;
+
+
+
+export const UpdateAdminUssdInstructionResponse = zod.object({
+  "countryCode": zod.string().regex(updateAdminUssdInstructionResponseCountryCodeRegExp),
+  "operatorId": zod.string().nullable(),
+  "ussdCode": zod.string().max(updateAdminUssdInstructionResponseUssdCodeMax).nullable(),
+  "version": zod.int().min(updateAdminUssdInstructionResponseVersionMin),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
  * @summary List aggregator partners and country/operator routing
  */
 export const getAdminPaymentRoutingResponseAggregatorsItemVersionMin = 0;
 
 export const getAdminPaymentRoutingResponseCountriesItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const getAdminPaymentRoutingResponseCountriesItemUssdCodeMax = 32;
+
+
 export const getAdminPaymentRoutingResponseCountriesItemDefaultVersionMin = 0;
+
+export const getAdminPaymentRoutingResponseCountriesItemOperatorsItemUssdCodeOverrideMax = 32;
+
 
 export const getAdminPaymentRoutingResponseCountriesItemOperatorsItemVersionMin = 0;
 
@@ -1624,6 +1671,8 @@ export const GetAdminPaymentRoutingResponse = zod.object({
   "operation": zod.enum(['deposit', 'inter-network', 'international']),
   "countryName": zod.string(),
   "phonePrefix": zod.string(),
+  "ussdCode": zod.string().max(getAdminPaymentRoutingResponseCountriesItemUssdCodeMax).nullable(),
+  "ussdVersion": zod.int().min(1),
   "defaultAggregatorCode": zod.string().nullable(),
   "defaultVersion": zod.int().min(getAdminPaymentRoutingResponseCountriesItemDefaultVersionMin),
   "defaultUpdatedAt": zod.coerce.date().nullable(),
@@ -1634,6 +1683,8 @@ export const GetAdminPaymentRoutingResponse = zod.object({
   "aggregatorCode": zod.string().nullable(),
   "effectiveAggregatorCode": zod.string().nullable(),
   "inheritsCountryDefault": zod.boolean(),
+  "ussdCodeOverride": zod.string().max(getAdminPaymentRoutingResponseCountriesItemOperatorsItemUssdCodeOverrideMax).nullable(),
+  "ussdVersion": zod.int().min(1),
   "version": zod.int().min(getAdminPaymentRoutingResponseCountriesItemOperatorsItemVersionMin),
   "updatedAt": zod.coerce.date().nullable()
 }))

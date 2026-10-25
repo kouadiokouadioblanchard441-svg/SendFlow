@@ -33,6 +33,7 @@ export const operatorCatalogTable = pgTable(
     depositEnabled: boolean("deposit_enabled").notNull().default(false),
     interNetworkEnabled: boolean("inter_network_enabled").notNull().default(false),
     internationalEnabled: boolean("international_enabled").notNull().default(false),
+    ussdCodeOverride: varchar("ussd_code_override", { length: 32 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
     updatedBy: varchar("updated_by", { length: 255 }).notNull(),
@@ -53,6 +54,10 @@ export const operatorCatalogTable = pgTable(
     logoTypeCheck: check(
       "sf_operator_catalog_logo_type_check",
       sql`${table.logoContentType} IS NULL OR ${table.logoContentType} IN ('image/png', 'image/jpeg', 'image/webp')`,
+    ),
+    ussdCodeOverrideFormat: check(
+      "sf_operator_catalog_ussd_code_override_format_check",
+      sql`${table.ussdCodeOverride} IS NULL OR (${table.ussdCodeOverride} ~ '^[*][0-9]+([*][0-9]+)*#$' AND length(${table.ussdCodeOverride}) <= 32)`,
     ),
   }),
 );

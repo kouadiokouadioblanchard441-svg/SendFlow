@@ -53,6 +53,7 @@ export type AdminAuditAction =
   | "view_otp_activity"
   | "view_otp_policies"
   | "view_payment_routing"
+  | "update_ussd_instruction"
   | "create_banner"
   | "create_payment_aggregator"
   | "update_banner"

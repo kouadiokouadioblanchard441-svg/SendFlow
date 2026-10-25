@@ -1887,6 +1887,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMwh/ussd-instructions:
+    put:
+      operationId: updateAdminUssdInstruction
+      tags: [admin]
+      summary: Update a country USSD default or an operator-specific override
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAdminUssdInstructionRequest"
+      responses:
+        "200":
+          description: Versioned USSD configuration updated and audited.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUssdInstructionUpdate"
+        "400":
+          description: Invalid USSD data or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: The authenticated user cannot mutate this configuration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Country or operator does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Configuration changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /DMgrgmt-1np5g23g12bGFtMwh/payment-routing:
     get:
       operationId: getAdminPaymentRouting
@@ -4890,13 +4946,19 @@ components:
           type: ["string", "null"]
         inheritsCountryDefault:
           type: boolean
+        ussdCodeOverride:
+          type: ["string", "null"]
+          maxLength: 32
+        ussdVersion:
+          type: integer
+          minimum: 1
         version:
           type: integer
           minimum: 0
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [operatorId, operatorName, operatorEnabled, aggregatorCode, effectiveAggregatorCode, inheritsCountryDefault, version, updatedAt]
+      required: [operatorId, operatorName, operatorEnabled, aggregatorCode, effectiveAggregatorCode, inheritsCountryDefault, ussdCodeOverride, ussdVersion, version, updatedAt]
     AdminCountryPaymentRoutes:
       type: object
       properties:
@@ -4910,6 +4972,12 @@ components:
           type: string
         phonePrefix:
           type: string
+        ussdCode:
+          type: ["string", "null"]
+          maxLength: 32
+        ussdVersion:
+          type: integer
+          minimum: 1
         defaultAggregatorCode:
           type: ["string", "null"]
         defaultVersion:
@@ -4922,7 +4990,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminOperatorPaymentRoute"
-      required: [countryCode, operation, countryName, phonePrefix, defaultAggregatorCode, defaultVersion, defaultUpdatedAt, operators]
+      required: [countryCode, operation, countryName, phonePrefix, ussdCode, ussdVersion, defaultAggregatorCode, defaultVersion, defaultUpdatedAt, operators]
     AdminPaymentRouting:
       type: object
       properties:
@@ -5301,6 +5369,46 @@ components:
           minLength: 3
           maxLength: 500
       required: [scopeType, countryCode, operation, operatorId, aggregatorCode, expectedVersion, reason]
+    UpdateAdminUssdInstructionRequest:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          pattern: "^[a-z]{2}$"
+        operatorId:
+          type: ["string", "null"]
+          minLength: 2
+          maxLength: 60
+        ussdCode:
+          type: ["string", "null"]
+          maxLength: 32
+          pattern: "^\\*[0-9]+(\\*[0-9]+)*#$"
+        expectedVersion:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [countryCode, operatorId, ussdCode, expectedVersion, reason]
+    AdminUssdInstructionUpdate:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          pattern: "^[a-z]{2}$"
+        operatorId:
+          type: ["string", "null"]
+        ussdCode:
+          type: ["string", "null"]
+          maxLength: 32
+        version:
+          type: integer
+          minimum: 2
+        updatedAt:
+          type: string
+          format: date-time
+      required: [countryCode, operatorId, ussdCode, version, updatedAt]
     AdminPaymentAggregatorRouteUpdate:
       type: object
       properties:

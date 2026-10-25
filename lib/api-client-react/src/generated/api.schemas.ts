@@ -1421,6 +1421,13 @@ export interface AdminOperatorPaymentRoute {
   /** @nullable */
   effectiveAggregatorCode: string | null;
   inheritsCountryDefault: boolean;
+  /**
+     * @maxLength 32
+     * @nullable
+     */
+  ussdCodeOverride: string | null;
+  /** @minimum 1 */
+  ussdVersion: number;
   /** @minimum 0 */
   version: number;
   /** @nullable */
@@ -1442,6 +1449,13 @@ export interface AdminCountryPaymentRoutes {
   operation: AdminCountryPaymentRoutesOperation;
   countryName: string;
   phonePrefix: string;
+  /**
+     * @maxLength 32
+     * @nullable
+     */
+  ussdCode: string | null;
+  /** @minimum 1 */
+  ussdVersion: number;
   /** @nullable */
   defaultAggregatorCode: string | null;
   /** @minimum 0 */
@@ -1831,6 +1845,45 @@ export interface UpdatePaymentAggregatorRouteRequest {
      * @maxLength 500
      */
   reason: string;
+}
+
+export interface UpdateAdminUssdInstructionRequest {
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  /**
+     * @minLength 2
+     * @maxLength 60
+     * @nullable
+     */
+  operatorId: string | null;
+  /**
+     * @maxLength 32
+     * @nullable
+     * @pattern ^\*[0-9]+(\*[0-9]+)*#$
+     */
+  ussdCode: string | null;
+  /** @minimum 1 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface AdminUssdInstructionUpdate {
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  /** @nullable */
+  operatorId: string | null;
+  /**
+     * @maxLength 32
+     * @nullable
+     */
+  ussdCode: string | null;
+  /** @minimum 2 */
+  version: number;
+  updatedAt: string;
 }
 
 export type AdminPaymentAggregatorRouteUpdateScopeType = typeof AdminPaymentAggregatorRouteUpdateScopeType[keyof typeof AdminPaymentAggregatorRouteUpdateScopeType];

@@ -14,6 +14,13 @@ export interface AdminCountryPaymentRoutes {
   operation: AdminCountryPaymentRoutesOperation;
   countryName: string;
   phonePrefix: string;
+  /**
+     * @maxLength 32
+     * @nullable
+     */
+  ussdCode: string | null;
+  /** @minimum 1 */
+  ussdVersion: number;
   /** @nullable */
   defaultAggregatorCode: string | null;
   /** @minimum 0 */
