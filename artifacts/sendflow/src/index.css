@@ -5221,49 +5221,65 @@ body:has(.sendflow-linkflow-shell) {
 
 .sendflow-linkflow-create-page .sendflow-linkflow-form {
   gap: 19px;
-  border: 1px solid #e0e1e6;
+  border: 1px solid #cdd1d9;
   border-radius: 14px;
   background: #fff;
-  box-shadow: 0 5px 16px rgba(37, 43, 57, .08), inset 0 1px 0 #fff;
+  box-shadow: 0 6px 18px rgba(37, 43, 57, .105), 0 1px 2px rgba(37, 43, 57, .05), inset 0 1px 0 #fff;
   padding: 22px 20px 20px;
 }
 
 .sendflow-linkflow-create-page .sendflow-linkflow-field {
   gap: 8px;
-  color: #30233f;
+  color: #242331;
   font-size: 13px;
   font-weight: 750;
 }
 
+.sendflow-linkflow-create-page .sendflow-linkflow-field > span {
+  color: #242331;
+  font-weight: 750;
+}
+
 .sendflow-linkflow-create-page .sendflow-linkflow-field > span small {
-  color: #645774;
+  color: #535b69;
 }
 
 .sendflow-linkflow-create-page .sendflow-linkflow-field input,
 .sendflow-linkflow-create-page .sendflow-linkflow-field textarea {
-  border: 1px solid #d6d9e0;
+  border: 1px solid #aeb4bf;
   border-radius: 12px;
-  background: #f8f9fc;
+  background: #fff;
   color: #242331;
-  box-shadow: inset 0 1px 2px rgba(38, 25, 54, .035);
+  box-shadow: inset 0 1px 2px rgba(37, 43, 57, .045);
+}
+
+.sendflow-linkflow-create-page .sendflow-linkflow-field input {
+  height: 54px;
+  min-height: 54px;
 }
 
 .sendflow-linkflow-create-page .sendflow-linkflow-field input:focus,
 .sendflow-linkflow-create-page .sendflow-linkflow-field textarea:focus {
-  border-color: #7040b4;
+  border-color: #6036a1;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(104, 58, 165, .16), inset 0 1px 2px rgba(38, 25, 54, .025);
+  box-shadow: 0 0 0 4px rgba(96, 54, 161, .22), 0 2px 6px rgba(43, 31, 61, .08);
+}
+
+.sendflow-linkflow-create-page .sendflow-linkflow-field textarea {
+  height: 110px;
+  min-height: 110px;
+  resize: none;
 }
 
 .sendflow-linkflow-create-page .sendflow-linkflow-field input::placeholder,
 .sendflow-linkflow-create-page .sendflow-linkflow-field textarea::placeholder {
-  color: #736b7b;
+  color: #646d7a;
   opacity: 1;
 }
 
 .sendflow-linkflow-create-page .sendflow-linkflow-field > small:not(.sendflow-linkflow-error),
 .sendflow-linkflow-create-page .sendflow-linkflow-helper {
-  color: #5e536d;
+  color: #535b69;
 }
 
 .sendflow-linkflow-create-page .sendflow-linkflow-choice-group legend,
