@@ -4010,7 +4010,14 @@ components:
           type: string
           minLength: 1
           maxLength: 120
-      required: [id, name]
+        initials:
+          type: string
+          minLength: 1
+          maxLength: 12
+        logoUrl:
+          type: [string, "null"]
+          maxLength: 256
+      required: [id, name, initials, logoUrl]
     PublicPaymentLinkCountry:
       type: object
       properties:
@@ -4021,6 +4028,10 @@ components:
           type: string
           minLength: 2
           maxLength: 120
+        flag:
+          type: string
+          minLength: 1
+          maxLength: 8
         phonePrefix:
           type: string
           pattern: "^\\+[1-9][0-9]{0,3}$"
@@ -4036,7 +4047,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PublicPaymentLinkOperator"
-      required: [code, name, phonePrefix, minPhoneDigits, maxPhoneDigits, operators]
+      required: [code, name, flag, phonePrefix, minPhoneDigits, maxPhoneDigits, operators]
     PublicPaymentLink:
       type: object
       properties:

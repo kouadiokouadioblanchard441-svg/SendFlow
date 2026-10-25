@@ -816,6 +816,8 @@ export const getPublicPaymentLinkResponseCountriesItemCodeRegExp = new RegExp('^
 export const getPublicPaymentLinkResponseCountriesItemNameMin = 2;
 export const getPublicPaymentLinkResponseCountriesItemNameMax = 120;
 
+export const getPublicPaymentLinkResponseCountriesItemFlagMax = 8;
+
 export const getPublicPaymentLinkResponseCountriesItemPhonePrefixRegExp = new RegExp('^\\+[1-9][0-9]{0,3}$');
 export const getPublicPaymentLinkResponseCountriesItemMinPhoneDigitsMin = 4;
 export const getPublicPaymentLinkResponseCountriesItemMinPhoneDigitsMax = 15;
@@ -827,6 +829,10 @@ export const getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMin = 2;
 export const getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMax = 60;
 
 export const getPublicPaymentLinkResponseCountriesItemOperatorsItemNameMax = 120;
+
+export const getPublicPaymentLinkResponseCountriesItemOperatorsItemInitialsMax = 12;
+
+export const getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax = 256;
 
 
 
@@ -842,12 +848,15 @@ export const GetPublicPaymentLinkResponse = zod.object({
   "countries": zod.array(zod.object({
   "code": zod.string().regex(getPublicPaymentLinkResponseCountriesItemCodeRegExp),
   "name": zod.string().min(getPublicPaymentLinkResponseCountriesItemNameMin).max(getPublicPaymentLinkResponseCountriesItemNameMax),
+  "flag": zod.string().min(1).max(getPublicPaymentLinkResponseCountriesItemFlagMax),
   "phonePrefix": zod.string().regex(getPublicPaymentLinkResponseCountriesItemPhonePrefixRegExp),
   "minPhoneDigits": zod.int().min(getPublicPaymentLinkResponseCountriesItemMinPhoneDigitsMin).max(getPublicPaymentLinkResponseCountriesItemMinPhoneDigitsMax),
   "maxPhoneDigits": zod.int().min(getPublicPaymentLinkResponseCountriesItemMaxPhoneDigitsMin).max(getPublicPaymentLinkResponseCountriesItemMaxPhoneDigitsMax),
   "operators": zod.array(zod.object({
   "id": zod.string().min(getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMin).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMax),
-  "name": zod.string().min(1).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemNameMax)
+  "name": zod.string().min(1).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemNameMax),
+  "initials": zod.string().min(1).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemInitialsMax),
+  "logoUrl": zod.string().max(getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax).nullable()
 }))
 })),
   "paymentAvailable": zod.boolean(),

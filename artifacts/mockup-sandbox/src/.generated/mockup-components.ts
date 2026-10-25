@@ -2,5 +2,9 @@
 type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/linkflow/Current.tsx": () => import("../components/mockups/linkflow/Current.tsx"),
-  "./components/mockups/linkflow/SendFlowDraft.tsx": () => import("../components/mockups/linkflow/SendFlowDraft.tsx")
+  "./components/mockups/linkflow/SendFlowDraft.tsx": () => import("../components/mockups/linkflow/SendFlowDraft.tsx"),
+  "./components/mockups/linkflow-checkout/CheckoutPreview.tsx": () => import("../components/mockups/linkflow-checkout/CheckoutPreview.tsx"),
+  "./components/mockups/linkflow-checkout/Current.tsx": () => import("../components/mockups/linkflow-checkout/Current.tsx"),
+  "./components/mockups/linkflow-checkout/HighContrast.tsx": () => import("../components/mockups/linkflow-checkout/HighContrast.tsx"),
+  "./components/mockups/linkflow-sharing/ShareOptions.tsx": () => import("../components/mockups/linkflow-sharing/ShareOptions.tsx")
 };

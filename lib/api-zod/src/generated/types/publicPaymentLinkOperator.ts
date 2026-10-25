@@ -17,4 +17,14 @@ export interface PublicPaymentLinkOperator {
      * @maxLength 120
      */
   name: string;
+  /**
+     * @minLength 1
+     * @maxLength 12
+     */
+  initials: string;
+  /**
+     * @maxLength 256
+     * @nullable
+     */
+  logoUrl: string | null;
 }

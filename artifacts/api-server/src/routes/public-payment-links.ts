@@ -18,8 +18,10 @@ import {
 import { Router, type IRouter, type Request } from "express";
 import { consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
 import { getCustomerSession } from "../lib/customer-session";
+import { flagFromCountryCode } from "../lib/operator-pricing-catalog";
 import { isReplitPaymentTestHost } from "../lib/replit-payment-test-access-policy";
 import { isPaymentLinkSimulationAllowed } from "../services/payment-links";
+import { operatorLogoUrl } from "../services/operator-logo";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { getAggregatorRouteScopeKey } from "./aggregator-catalog";
 import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
@@ -114,12 +116,18 @@ async function loadAvailableChoices(link: PublicLinkRow) {
       if (rate?.feePercent === null || rate?.feePercent === undefined ||
         !Number.isFinite(rate.feePercent) || rate.feePercent < 0 || rate.feePercent > 100) return [];
        if (!calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false)) return [];
-      return [{ id: operator.operatorId, name: operator.name }];
+      return [{
+        id: operator.operatorId,
+        name: operator.name,
+        initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
+        logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+      }];
     }).sort((left, right) => left.name.localeCompare(right.name, "fr"));
 
     return availableOperators.length ? [{
       code: countryCode,
       name: country.countryName,
+      flag: flagFromCountryCode(countryCode),
       phonePrefix: country.phonePrefix,
       minPhoneDigits: country.minPhoneDigits,
       maxPhoneDigits: country.maxPhoneDigits,

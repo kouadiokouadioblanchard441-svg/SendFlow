@@ -11,6 +11,7 @@ import type { SimulatedPaymentLinkSuccess } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import { OperatorMark } from '@/components/operator-mark';
 import LinkFlowPaymentSuccess from '@/components/linkflow-payment-success';
 
 function formatMoney(minor: number, currency: string, decimals: number) {
@@ -42,6 +43,7 @@ export default function PublicPaymentLinkPage() {
 
   const link = linkQuery.data;
   const country = link?.countries.find((item) => item.code === countryCode);
+  const operator = country?.operators.find((item) => item.id === operatorId);
   const expiry = formatDate(link?.expiresAt ?? null);
   const backgroundArt = typeof document !== 'undefined' ? createPortal(
     <img className="sendflow-public-pay-art" src={linkflowIllustration} alt="" aria-hidden="true" draggable={false} />,
@@ -195,7 +197,12 @@ export default function PublicPaymentLinkPage() {
             <label className="sendflow-pay-field">
               <span>Numéro de téléphone<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
               <div className="sendflow-pay-phone-input">
-                <span aria-hidden="true">{country?.phonePrefix ?? '+—'}</span>
+                {country && (
+                  <span className="sendflow-pay-phone-flag" role="img" aria-label={country.name} data-testid="pay-country-flag">
+                    {country.flag}
+                  </span>
+                )}
+                <span className="sendflow-pay-phone-prefix" aria-hidden="true">{country?.phonePrefix ?? '+—'}</span>
                 <input
                   type="tel"
                   autoComplete="tel-national"
@@ -206,6 +213,15 @@ export default function PublicPaymentLinkPage() {
                   disabled={!country}
                   data-testid="input-pay-phone"
                 />
+                {operator && (
+                  <span className="sendflow-pay-phone-operator" role="img" aria-label={`Logo ${operator.name}`} data-testid="pay-operator-logo">
+                    <OperatorMark
+                      operator={operator}
+                      imageClassName="sendflow-pay-operator-logo"
+                      fallbackClassName="sendflow-pay-operator-fallback"
+                    />
+                  </span>
+                )}
               </div>
               {country && <small>{country.minPhoneDigits} à {country.maxPhoneDigits} chiffres, sans indicatif</small>}
             </label>

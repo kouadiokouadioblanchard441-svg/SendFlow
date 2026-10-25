@@ -535,7 +535,10 @@ test("public payment page is token-scoped and quotes the fee from server pricing
   assert.equal(details.simulationAvailable, false);
   assert.equal(Object.hasOwn(details, "userId"), false);
   assert.deepEqual(details.countries.map((country) => country.code), ["ci"]);
+  assert.equal(details.countries[0].flag, "🇨🇮");
   assert.deepEqual(details.countries[0].operators.map((operator) => operator.id), ["mtn-ci"]);
+  assert.equal(details.countries[0].operators[0].initials, "MTN");
+  assert.equal(details.countries[0].operators[0].logoUrl, null);
 
   const quote = await request(`/api/public/payment-links/${token}/quote/ci/mtn-ci`);
   assert.equal(quote.status, 200, quote.text);

@@ -567,6 +567,16 @@ export interface PublicPaymentLinkOperator {
      * @maxLength 120
      */
   name: string;
+  /**
+     * @minLength 1
+     * @maxLength 12
+     */
+  initials: string;
+  /**
+     * @maxLength 256
+     * @nullable
+     */
+  logoUrl: string | null;
 }
 
 export interface PublicPaymentLinkCountry {
@@ -577,6 +587,11 @@ export interface PublicPaymentLinkCountry {
      * @maxLength 120
      */
   name: string;
+  /**
+     * @minLength 1
+     * @maxLength 8
+     */
+  flag: string;
   /** @pattern ^\+[1-9][0-9]{0,3}$ */
   phonePrefix: string;
   /**

@@ -1,0 +1,245 @@
+/*
+ * SendFlow checkout — high-clarity preview treatment.
+ * Scoped to the contrast variant so the extracted Current remains untouched.
+ */
+.checkout-preview--contrast {
+  --checkout-ink: #211b31;
+  --checkout-muted: #625b70;
+  --checkout-violet: #6134c5;
+  --checkout-violet-dark: #48239b;
+  --checkout-line: #cfc9da;
+  --checkout-soft: #f4f1fa;
+  isolation: isolate;
+  overflow: clip;
+  background:
+    radial-gradient(ellipse at 88% 8%, rgba(111, 73, 199, .055), transparent 33rem),
+    #fff;
+  color: var(--checkout-ink);
+  padding-top: 27px;
+}
+
+.checkout-preview--contrast .sendflow-public-pay-art {
+  position: fixed !important;
+  z-index: -1;
+  right: max(-48px, calc((100vw - 1180px) / 2 - 80px));
+  bottom: 5vh;
+  width: min(62vw, 510px);
+  opacity: .105;
+  mix-blend-mode: multiply;
+  transform: rotate(-2deg);
+  pointer-events: none;
+  user-select: none;
+  animation: none;
+  transition: none;
+}
+
+.checkout-preview--contrast .sendflow-public-pay-layout {
+  width: min(100%, 496px);
+}
+
+.checkout-preview--contrast .sendflow-pay-brand {
+  margin: 0 0 32px 1px;
+}
+
+.checkout-preview--contrast .sendflow-pay-wordmark {
+  width: 148px;
+}
+
+.checkout-preview--contrast .sendflow-pay-merchant-title {
+  margin-bottom: 16px;
+  color: #29213b;
+  font-size: clamp(22px, 5vw, 26px);
+  font-weight: 700;
+  letter-spacing: -.03em;
+}
+
+.checkout-preview--contrast .sendflow-public-pay-card {
+  border: 1px solid #ded9e8;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .97);
+  padding: clamp(22px, 5vw, 32px);
+  box-shadow: 0 14px 38px rgba(43, 31, 68, .095), 0 2px 6px rgba(43, 31, 68, .04);
+}
+
+.checkout-preview--contrast .sendflow-pay-payment-title {
+  color: #51476a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.checkout-preview--contrast .sendflow-pay-amount-panel {
+  gap: 9px;
+  margin: 13px 0 25px;
+}
+
+.checkout-preview--contrast .sendflow-pay-amount-panel > strong {
+  color: #211b31;
+  font-size: clamp(32px, 7vw, 38px);
+  font-weight: 720;
+  letter-spacing: -.04em;
+}
+
+.checkout-preview--contrast .sendflow-pay-amount-panel small {
+  color: #5d566b;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.checkout-preview--contrast .sendflow-pay-amount-panel small svg {
+  color: var(--checkout-violet);
+}
+
+.checkout-preview--contrast .sendflow-pay-form {
+  gap: 17px;
+}
+
+.checkout-preview--contrast .sendflow-pay-field-pair {
+  gap: 14px;
+}
+
+.checkout-preview--contrast .sendflow-pay-field {
+  gap: 8px;
+  color: #332c40;
+  font-size: 13px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.checkout-preview--contrast .sendflow-pay-required {
+  color: var(--checkout-violet);
+}
+
+.checkout-preview--contrast .sendflow-pay-field input,
+.checkout-preview--contrast .sendflow-pay-field select {
+  height: 46px;
+  border: 1px solid var(--checkout-line);
+  border-radius: 8px;
+  background-color: #fff;
+  color: #29233a;
+  padding: 0 13px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.checkout-preview--contrast .sendflow-pay-field input::placeholder {
+  color: #716b7c;
+  opacity: 1;
+}
+
+.checkout-preview--contrast .sendflow-pay-field input:focus,
+.checkout-preview--contrast .sendflow-pay-field select:focus,
+.checkout-preview--contrast .sendflow-pay-phone-input:focus-within {
+  border-color: var(--checkout-violet);
+  box-shadow: 0 0 0 3px rgba(97, 52, 197, .16);
+}
+
+.checkout-preview--contrast .sendflow-pay-field select:disabled,
+.checkout-preview--contrast .sendflow-pay-field input:disabled {
+  background-color: #f1eff5;
+  color: #514b5d;
+  opacity: 1;
+  -webkit-text-fill-color: #514b5d;
+}
+
+.checkout-preview--contrast .sendflow-pay-method-select {
+  border-radius: 8px !important;
+  background-color: #f5f3f8 !important;
+  font-size: 14px !important;
+}
+
+.checkout-preview--contrast .sendflow-pay-phone-input {
+  height: 46px;
+  border-color: var(--checkout-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.checkout-preview--contrast .sendflow-pay-phone-input > span {
+  border-right-color: #d7d2df;
+  background: #f4f1f8;
+  color: #443b57;
+  padding-inline: 14px;
+  font-size: 13px;
+}
+
+.checkout-preview--contrast .sendflow-pay-phone-input input {
+  height: 100%;
+  border: 0;
+}
+
+.checkout-preview--contrast .sendflow-pay-unavailable-note {
+  gap: 11px;
+  margin-top: 20px;
+  border: 1px solid #d7c9ef;
+  border-radius: 10px;
+  background: #f5f1fb;
+  padding: 14px;
+}
+
+.checkout-preview--contrast .sendflow-pay-unavailable-note > span {
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+  border-radius: 9px;
+  background: #e7def6;
+  color: var(--checkout-violet-dark);
+}
+
+.checkout-preview--contrast .sendflow-pay-unavailable-note p {
+  margin-top: 2px;
+  color: #4e465d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.checkout-preview--contrast .sendflow-pay-unavailable-note strong {
+  margin: 0;
+  color: #382b50;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.checkout-preview--contrast .sendflow-pay-submit {
+  min-height: 50px;
+  margin-top: 14px;
+  border-radius: 9px;
+  background: var(--checkout-violet);
+  color: #fff;
+  opacity: .88;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .checkout-preview--contrast {
+    padding: 20px 7vw max(30px, env(safe-area-inset-bottom));
+  }
+
+  .checkout-preview--contrast .sendflow-pay-brand {
+    margin-bottom: 30px;
+  }
+
+  .checkout-preview--contrast .sendflow-public-pay-card {
+    border-radius: 14px;
+    padding: 21px 18px;
+  }
+
+  .checkout-preview--contrast .sendflow-pay-field-pair {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .checkout-preview--contrast .sendflow-public-pay-art {
+    right: -94px;
+    bottom: 6vh;
+    width: min(105vw, 470px);
+    opacity: .075;
+  }
+}
+
+@media (max-width: 360px) {
+  .checkout-preview--contrast .sendflow-public-pay-card {
+    padding-inline: 15px;
+  }
+}

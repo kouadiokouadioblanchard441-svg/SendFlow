@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --sendflow-violet: #6d35d8;
+  --sendflow-violet-dark: #5d28c4;
+  --sendflow-ink: #242331;
+  --sendflow-green: #078a45;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; margin: 0; }
+body { background: #f1f4fa; color: var(--sendflow-ink); font-family: 'DM Sans', ui-sans-serif, sans-serif; }
+button, input { font: inherit; }
