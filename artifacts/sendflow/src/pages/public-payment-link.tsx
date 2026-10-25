@@ -10,6 +10,7 @@ import {
 } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
+import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 
 function formatMoney(minor: number, currency: string, decimals: number) {
   return new Intl.NumberFormat('fr-FR', {
@@ -84,7 +85,7 @@ export default function PublicPaymentLinkPage() {
         {backgroundArt}
         <main className="sendflow-public-pay-shell">
           <section className="sendflow-public-pay-card sendflow-public-pay-unavailable" role="alert">
-            <div className="sendflow-pay-brand"><span className="sendflow-pay-brand-mark">S</span><span>SendFlow</span></div>
+            <div className="sendflow-pay-brand"><img className="sendflow-pay-wordmark" src={sendflowWordmark} alt="SendFlow" /></div>
             <span className="sendflow-pay-state-mark"><Clock3 size={22} /></span>
             <p className="sendflow-pay-overline">LIEN DE PAIEMENT</p>
             <h1>Ce lien n’est pas disponible</h1>
@@ -101,9 +102,8 @@ export default function PublicPaymentLinkPage() {
   return (
     <main className="sendflow-public-pay-shell">
       <div className="sendflow-public-pay-layout">
-        <header className="sendflow-pay-brand" aria-label="SendFlow">
-          <span className="sendflow-pay-brand-mark">S</span>
-          <span>SendFlow</span>
+        <header className="sendflow-pay-brand">
+          <img className="sendflow-pay-wordmark" src={sendflowWordmark} alt="SendFlow" />
           <span className="sendflow-pay-secure"><LockKeyhole size={13} /> Lien SendFlow</span>
         </header>
 

@@ -7699,12 +7699,13 @@ body:has(.sendflow-linkflow-shell) {
 .sendflow-public-pay-layout { width: min(100%, 540px); margin: 0 auto; }
 .sendflow-pay-brand {
   display: flex; align-items: center; gap: 9px; margin: 0 0 18px 4px;
-  color: #352451; font-size: 15px; font-weight: 800; letter-spacing: -.04em;
 }
-.sendflow-pay-brand-mark {
-  display: grid; width: 29px; height: 29px; place-items: center; border-radius: 9px;
-  background: #6d35d8; color: #fff; font-size: 15px; font-weight: 800;
-  box-shadow: 0 5px 12px rgba(109,53,216,.18);
+.sendflow-pay-wordmark {
+  display: block;
+  width: 136px;
+  max-width: 48vw;
+  height: auto;
+  object-fit: contain;
 }
 .sendflow-pay-secure {
   display: inline-flex; align-items: center; gap: 5px; margin-left: auto;
