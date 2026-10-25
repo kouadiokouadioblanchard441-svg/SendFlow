@@ -7934,10 +7934,6 @@ body:has(.sendflow-linkflow-shell) {
   height: auto;
   object-fit: contain;
 }
-.sendflow-pay-secure {
-  display: inline-flex; align-items: center; gap: 5px; margin-left: auto;
-  color: #797184; font-size: 11px; font-weight: 600; letter-spacing: 0;
-}
 .sendflow-pay-merchant-title {
   margin: 0 0 13px;
   color: #34204f;
@@ -8075,7 +8071,6 @@ body:has(.sendflow-linkflow-shell) {
 @media (max-width: 520px) {
   .sendflow-public-pay-shell { padding: 18px 7vw max(26px, env(safe-area-inset-bottom)); }
   .sendflow-public-pay-card { border-radius: 12px; padding: 20px 17px; }
-  .sendflow-pay-secure { font-size: 10px; }
   .sendflow-pay-field-pair { grid-template-columns: 1fr; }
   .sendflow-public-pay-art { right: -105px; bottom: 8vh; width: min(112vw, 500px); opacity: .08; }
 }

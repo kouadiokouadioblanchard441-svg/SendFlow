@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'wouter';
-import { Check, Clock3, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { Check, Clock3, ShieldCheck } from 'lucide-react';
 import {
   getGetPublicPaymentLinkQueryKey,
   getQuotePublicPaymentLinkQueryKey,
@@ -116,7 +116,6 @@ export default function PublicPaymentLinkPage() {
       <div className="sendflow-public-pay-layout">
         <header className="sendflow-pay-brand">
           <img className="sendflow-pay-wordmark" src={sendflowWordmark} alt="SendFlow" />
-          <span className="sendflow-pay-secure"><LockKeyhole size={13} /> Lien SendFlow</span>
         </header>
 
         <h1 className="sendflow-pay-merchant-title" id="public-pay-title">{link.merchantName}</h1>
