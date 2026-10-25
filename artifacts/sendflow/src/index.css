@@ -3003,8 +3003,6 @@
 .sendflow-linkflow-no-image:focus-within { outline: 3px solid rgba(116, 64, 189, .25); outline-offset: 2px; }
 .sendflow-linkflow-helper { margin: -4px 0 0; color: #99949e; font-size: 11px; line-height: 1.45; }
 .sendflow-linkflow-maximum { margin-top: 3px; }
-.sendflow-linkflow-url-preview { display: flex; align-items: baseline; gap: 5px; margin: 0; color: #97919c; font-size: 11px; font-weight: 500; overflow-wrap: anywhere; }
-.sendflow-linkflow-url-preview strong { color: #7550a5; font-weight: 650; }
 .sendflow-linkflow-no-image { display: inline-flex; width: fit-content; align-items: center; gap: 9px; color: #45404b; font-size: 13px; font-weight: 500; cursor: pointer; }
 .sendflow-linkflow-no-image input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .sendflow-linkflow-checkbox-mark { display: grid; width: 21px; height: 21px; place-items: center; border: 1px solid #c9c4ce; border-radius: 5px; background: #fff; color: #fff; }
@@ -4828,7 +4826,6 @@
 .sendflow-linkflow-create-page .sendflow-linkflow-field.has-error textarea { border-color: #c45c62; }
 .sendflow-linkflow-error { color: #ae434b !important; font-size: 11px !important; line-height: 1.4; }
 .sendflow-linkflow-field.has-error { color: #8e373e; }
-.sendflow-linkflow-url-preview { display: block; }
 .sendflow-linkflow-maximum { max-width: 320px; margin-top: 3px; }
 .sendflow-linkflow-server-error, .sendflow-linkflow-inline-alert {
   display: grid;

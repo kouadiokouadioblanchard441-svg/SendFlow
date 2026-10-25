@@ -59,7 +59,6 @@ export default function LinkFlowNewPage() {
   const [limited, setLimited] = useState(false);
   const [maximumUses, setMaximumUses] = useState('1');
   const [returnUrl, setReturnUrl] = useState('');
-  const [suffix, setSuffix] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [requestIdError, setRequestIdError] = useState('');
   const [noImage, setNoImage] = useState(true);
@@ -95,8 +94,6 @@ export default function LinkFlowNewPage() {
     description: 'Préparez un brouillon de demande de paiement SendFlow.',
     robots: 'noindex,nofollow',
   });
-
-  const safeSuffix = suffix.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
 
   const finishCreation = async () => {
     requestIdRef.current = null;
@@ -173,8 +170,6 @@ export default function LinkFlowNewPage() {
       }
       if (returnUrl.trim().length > 2048) nextErrors.returnUrl = 'L’URL ne peut pas dépasser 2 048 caractères.';
     }
-    if (safeSuffix.length > 32) nextErrors.suffix = 'Le suffixe ne peut pas dépasser 32 caractères.';
-    if (suffix.trim() && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(safeSuffix)) nextErrors.suffix = 'Utilisez des lettres minuscules, chiffres et tirets.';
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
@@ -186,7 +181,7 @@ export default function LinkFlowNewPage() {
       validity,
       maximumUses: limited ? Number(maximumUses) : null,
       returnUrl: returnUrl.trim() || null,
-      suffix: safeSuffix || null,
+      suffix: null,
     };
     const fingerprint = JSON.stringify(payload);
     let requestId: string;
@@ -311,13 +306,6 @@ export default function LinkFlowNewPage() {
             <span>Lien de retour <small>optionnel</small></span>
             <input type="url" value={returnUrl} onChange={(event) => setReturnUrl(event.target.value)} autoComplete="url" placeholder="https://votre-site.com/merci" aria-invalid={Boolean(errors.returnUrl)} aria-describedby={errors.returnUrl ? 'linkflow-return-error' : undefined} data-testid="input-linkflow-return-url" />
             {errors.returnUrl && <small className="sendflow-linkflow-error" id="linkflow-return-error">{errors.returnUrl}</small>}
-          </label>
-
-          <label className={`sendflow-linkflow-field${errors.suffix ? ' has-error' : ''}`}>
-            <span>Suffixe du lien <small>optionnel</small></span>
-            <input type="text" value={suffix} onChange={(event) => setSuffix(event.target.value.toLowerCase())} maxLength={32} autoCapitalize="none" placeholder="Ex. facture-avril" aria-invalid={Boolean(errors.suffix)} aria-describedby={errors.suffix ? 'linkflow-suffix-error' : 'linkflow-suffix-preview'} data-testid="input-linkflow-suffix" />
-            {errors.suffix && <small className="sendflow-linkflow-error" id="linkflow-suffix-error">{errors.suffix}</small>}
-            <small className="sendflow-linkflow-url-preview" id="linkflow-suffix-preview">Aperçu du suffixe : <strong>/{safeSuffix || 'votre-suffixe'}</strong></small>
           </label>
 
           <fieldset className="sendflow-linkflow-image-section">
