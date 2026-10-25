@@ -36,7 +36,6 @@ export default function PublicPaymentLinkPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
 
   const link = linkQuery.data;
   const country = link?.countries.find((item) => item.code === countryCode);
@@ -199,10 +198,6 @@ export default function PublicPaymentLinkPage() {
               {country && <small>{country.minPhoneDigits} à {country.maxPhoneDigits} chiffres, sans indicatif</small>}
             </label>
 
-            <label className="sendflow-pay-field">
-              <span>E-mail</span>
-              <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nom@exemple.com" data-testid="input-pay-email" />
-            </label>
           </div>
 
           <section className="sendflow-pay-costs" aria-labelledby="pay-cost-title">
