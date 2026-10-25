@@ -108,6 +108,8 @@ import type {
   PhoneOtpVerifyResult,
   PricingRatesUpdate,
   PublicBannerList,
+  PublicPaymentLink,
+  PublicPaymentLinkQuote,
   PublicPricingCatalog,
   PublicRegistrationSettings,
   RegistrationSettingsUpdate,
@@ -2502,8 +2504,8 @@ export const getCreateCustomerPaymentLinkUrl = () => {
 }
 
 /**
- * Requires a verified customer PIN and server-side CSRF validation. It stores link parameters only; no provider call or payment is initiated.
- * @summary Create a draft payment-link record for the authenticated customer
+ * Requires a verified customer PIN and server-side CSRF validation. It creates a public SendFlow link; payment initiation remains server-gated until the provider settlement lifecycle is complete.
+ * @summary Create an active, shareable payment-link record for the authenticated customer
  */
 export const createCustomerPaymentLink = async (customerPaymentLinkInput: CustomerPaymentLinkInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerPaymentLink> => {
 
@@ -2569,7 +2571,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateCustomerPaymentLinkMutationVariables = {data: BodyType<CustomerPaymentLinkInput>}
 
     /**
- * @summary Create a draft payment-link record for the authenticated customer
+ * @summary Create an active, shareable payment-link record for the authenticated customer
  */
 export const useCreateCustomerPaymentLink = <TError = ErrorType<ErrorEnvelope>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomerPaymentLink>>, TError,CreateCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -2581,6 +2583,170 @@ export const useCreateCustomerPaymentLink = <TError = ErrorType<ErrorEnvelope>,
       > => {
       return useMutation(getCreateCustomerPaymentLinkMutationOptions(options));
     }
+
+export const getGetPublicPaymentLinkUrl = (token: string,) => {
+
+
+
+
+  return `/api/public/payment-links/${token}`
+}
+
+/**
+ * @summary Read the public details and currently configured payment choices for a payment link
+ */
+export const getPublicPaymentLink = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<PublicPaymentLink> => {
+
+  return customFetch<PublicPaymentLink>(getGetPublicPaymentLinkUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicPaymentLinkQueryKey = (token: string,) => {
+    return [
+    `/api/public/payment-links/${token}`
+    ] as const;
+    }
+
+
+export const getGetPublicPaymentLinkQueryOptions = <TData = Awaited<ReturnType<typeof getPublicPaymentLink>>, TError = ErrorType<ErrorEnvelope>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicPaymentLink>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicPaymentLinkQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicPaymentLink>>> = ({ signal }) => getPublicPaymentLink(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicPaymentLink>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicPaymentLinkQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicPaymentLink>>>
+export type GetPublicPaymentLinkQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Read the public details and currently configured payment choices for a payment link
+ */
+
+export function useGetPublicPaymentLink<TData = Awaited<ReturnType<typeof getPublicPaymentLink>>, TError = ErrorType<ErrorEnvelope>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicPaymentLink>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicPaymentLinkQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getQuotePublicPaymentLinkUrl = (token: string,
+    countryCode: string,
+    operatorId: string,) => {
+
+
+
+
+  return `/api/public/payment-links/${token}/quote/${countryCode}/${operatorId}`
+}
+
+/**
+ * @summary Calculate the payer's total using server-owned payment-link and operator rates
+ */
+export const quotePublicPaymentLink = async (token: string,
+    countryCode: string,
+    operatorId: string, options?: Parameters<typeof customFetch>[1]): Promise<PublicPaymentLinkQuote> => {
+
+  return customFetch<PublicPaymentLinkQuote>(getQuotePublicPaymentLinkUrl(token,countryCode,operatorId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getQuotePublicPaymentLinkQueryKey = (token: string,
+    countryCode: string,
+    operatorId: string,) => {
+    return [
+    `/api/public/payment-links/${token}/quote/${countryCode}/${operatorId}`
+    ] as const;
+    }
+
+
+export const getQuotePublicPaymentLinkQueryOptions = <TData = Awaited<ReturnType<typeof quotePublicPaymentLink>>, TError = ErrorType<ErrorEnvelope>>(token: string,
+    countryCode: string,
+    operatorId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof quotePublicPaymentLink>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getQuotePublicPaymentLinkQueryKey(token,countryCode,operatorId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof quotePublicPaymentLink>>> = ({ signal }) => quotePublicPaymentLink(token,countryCode,operatorId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined && countryCode !== null && countryCode !== undefined && operatorId !== null && operatorId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof quotePublicPaymentLink>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type QuotePublicPaymentLinkQueryResult = NonNullable<Awaited<ReturnType<typeof quotePublicPaymentLink>>>
+export type QuotePublicPaymentLinkQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Calculate the payer's total using server-owned payment-link and operator rates
+ */
+
+export function useQuotePublicPaymentLink<TData = Awaited<ReturnType<typeof quotePublicPaymentLink>>, TError = ErrorType<ErrorEnvelope>>(
+ token: string,
+    countryCode: string,
+    operatorId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof quotePublicPaymentLink>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getQuotePublicPaymentLinkQueryOptions(token,countryCode,operatorId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getUploadCustomerPaymentLinkImageUrl = (linkId: string,) => {
 

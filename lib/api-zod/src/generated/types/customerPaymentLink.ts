@@ -17,6 +17,12 @@ export interface CustomerPaymentLink {
      * @maxLength 12
      */
   code: string;
+  /**
+     * Relative public URL path. Treat as a shareable bearer link.
+     * @minLength 48
+     * @maxLength 64
+     */
+  sharePath: string;
   currency: CustomerPaymentLinkCurrency;
   currencyDecimals: CustomerPaymentLinkCurrencyDecimals;
   /**

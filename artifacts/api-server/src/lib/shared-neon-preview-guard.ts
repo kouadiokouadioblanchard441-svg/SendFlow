@@ -6,6 +6,7 @@ const publicReadPathPrefixes = [
   "/api/db-status",
   "/api/healthz",
   "/api/pricing",
+  "/api/public/payment-links",
   "/api/storage/public-objects",
 ];
 

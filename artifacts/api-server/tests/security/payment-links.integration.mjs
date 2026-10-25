@@ -11,7 +11,10 @@ import {
   normalizePaymentLinkInput,
   PAYMENT_LINK_IMAGE_MAX_BYTES,
 } from "../../src/services/payment-links.ts";
-import { isViewerRouteCandidate } from "../../src/lib/shared-neon-preview-guard.ts";
+import {
+  isViewerRouteCandidate,
+  shouldBlockSharedNeonApiRequest,
+} from "../../src/lib/shared-neon-preview-guard.ts";
 
 if (!process.env.SENDFLOW_ISOLATED_RUNTIME?.includes("/sendflow-isolated-finance-")
   || !process.env.SENDFLOW_FIXTURE_SOCKET?.includes("/sendflow-isolated-finance-")) {
@@ -188,6 +191,11 @@ test("payment-link amount rules and shared-Neon preview scope fail closed", () =
     "POST",
     "/api/me/payment-links/123e4567-e89b-42d3-a456-426614174000/image/extra",
   ), false);
+  assert.equal(shouldBlockSharedNeonApiRequest(
+    "GET",
+    "/api/public/payment-links/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+  ), false);
 });
 
 test("payment-link schema migration is present and operates only in the isolated fixture", async () => {
@@ -280,6 +288,11 @@ test("image upload validates bytes, strips source format and stays owner-scoped"
   assert.ok(!metadata.pages || metadata.pages === 1);
   assert.equal(metadata.exif, undefined);
   assert.equal(metadata.xmp, undefined);
+  const publicImage = await request(
+    `/api/public/payment-links/${json(createdResponse).sharePath.split("/").at(-1)}/image`,
+  );
+  assert.equal(publicImage.status, 200, publicImage.text);
+  assert.match(publicImage.headers["content-type"], /^image\/webp/);
   await assert.rejects(
     owner.query(
       "UPDATE sf_customer_payment_links SET image_size_bytes=image_size_bytes+1 WHERE id=$1",
@@ -411,7 +424,8 @@ test("create uses server-owned values, is idempotent and rejects changed replays
   assert.equal(firstLink.currencyDecimals, 0);
   assert.equal(firstLink.amountMinor, 1250);
   assert.equal(firstLink.description, "Facture client");
-  assert.equal(firstLink.status, "draft");
+  assert.equal(firstLink.status, "active");
+  assert.match(firstLink.sharePath, /^\/pay\/[A-Za-z0-9_-]{43}$/);
   assert.equal(firstLink.usageCount, 0);
   assert.equal(firstLink.maximumUses, null);
   assert.equal(typeof firstLink.expiresAt, "string");
@@ -422,6 +436,7 @@ test("create uses server-owned values, is idempotent and rejects changed replays
   });
   assert.equal(replay.status, 201, replay.text);
   assert.equal(json(replay).id, firstLink.id);
+  assert.equal(json(replay).sharePath, firstLink.sharePath);
 
   const conflict = await request("/api/me/payment-links", {
     method: "POST",
@@ -432,6 +447,76 @@ test("create uses server-owned values, is idempotent and rejects changed replays
   assert.equal(Number((await owner.query(
     "SELECT count(*)::int AS count FROM sf_customer_payment_links WHERE user_id='payment-link-owner-a'",
   )).rows[0].count), 1);
+});
+
+test("public payment page is token-scoped and quotes the fee from server pricing", async () => {
+  await owner.query(`INSERT INTO sf_countries
+    (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,
+      enabled,deposit_enabled,inter_network_enabled,international_enabled,created_by,updated_by)
+    VALUES ('ci','Côte d’Ivoire','+225',8,10,true,true,false,false,'fixture','fixture')
+    ON CONFLICT (country_code) DO UPDATE SET enabled=true,deposit_enabled=true`);
+  await owner.query(`INSERT INTO sf_operator_catalog
+    (operator_id,country_code,name,short_name,initials,brand,enabled,deposit_enabled,
+      inter_network_enabled,international_enabled,created_by,updated_by)
+    VALUES ('mtn-ci','ci','MTN','MTN','MTN','mtn',true,true,false,false,'fixture','fixture')
+    ON CONFLICT (operator_id) DO UPDATE SET enabled=true,deposit_enabled=true`);
+  await owner.query("DELETE FROM sf_operator_pricing_rates WHERE operator_id='mtn-ci' AND category_id='deposit'");
+  await owner.query(`INSERT INTO sf_operator_pricing_rates
+    (operator_id,country_code,category_id,fee_percent,version,created_by,updated_by)
+    VALUES ('mtn-ci','ci','deposit',2,1,'fixture','fixture')`);
+  await owner.query(`INSERT INTO sf_payment_aggregators(code,name,enabled,created_by,updated_by)
+    VALUES ('feexpay','FeexPay',true,'fixture','fixture')
+    ON CONFLICT (code) DO UPDATE SET enabled=true`);
+  await owner.query(`DELETE FROM sf_operation_aggregator_routes
+    WHERE scope_type IN ('country','operator') AND scope_key IN ('ci','ci:mtn-ci')
+      AND operation='deposit'`);
+  await owner.query(`INSERT INTO sf_operation_aggregator_routes
+    (scope_type,scope_key,country_code,operation,aggregator_code,version,created_by,updated_by)
+    VALUES ('country','ci','ci','deposit','feexpay',1,'fixture','fixture')`);
+
+  const created = await request("/api/me/payment-links", {
+      method: "POST",
+      userId: "payment-link-owner-a",
+      body: validInput({ amount: "1250", description: "Facture test public" }),
+  });
+  assert.equal(created.status, 201, created.text);
+  const link = json(created);
+  const token = link.sharePath.split("/").at(-1);
+  const page = await request(`/api/public/payment-links/${token}`);
+  assert.equal(page.status, 200, page.text);
+  const details = json(page);
+  assert.equal(details.merchantName, "SendFlow");
+  assert.equal(details.amountMinor, 1250);
+  assert.equal(details.paymentAvailable, false);
+  assert.equal(Object.hasOwn(details, "userId"), false);
+  assert.deepEqual(details.countries.map((country) => country.code), ["ci"]);
+  assert.deepEqual(details.countries[0].operators.map((operator) => operator.id), ["mtn-ci"]);
+
+  const quote = await request(`/api/public/payment-links/${token}/quote/ci/mtn-ci`);
+  assert.equal(quote.status, 200, quote.text);
+  assert.deepEqual(json(quote), {
+    currency: "XOF",
+    amountMinor: 1250,
+    feeMinor: 25,
+    totalMinor: 1275,
+    operatorId: "mtn-ci",
+  });
+  const forgedNetwork = await request(`/api/public/payment-links/${token}/quote/ci/unknown`);
+  assert.equal(forgedNetwork.status, 400);
+  for (let index = 0; index < 28; index += 1) {
+    const repeatedQuote = await request(`/api/public/payment-links/${token}/quote/ci/mtn-ci`);
+    assert.equal(repeatedQuote.status, 200);
+  }
+  const rateLimitedQuote = await request(`/api/public/payment-links/${token}/quote/ci/mtn-ci`);
+  assert.equal(rateLimitedQuote.status, 429);
+  await owner.query("UPDATE sf_customer_payment_links SET expires_at=now() WHERE id=$1", [link.id]);
+  const expiredPage = await request(`/api/public/payment-links/${token}`);
+  assert.equal(expiredPage.status, 404);
+  const unknownToken = await request(
+    "/api/public/payment-links/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  );
+  assert.equal(unknownToken.status, 404);
+  await owner.query("DELETE FROM sf_customer_payment_links WHERE id=$1", [link.id]);
 });
 
 test("lists and pagination cursors are scoped to the authenticated owner", async () => {

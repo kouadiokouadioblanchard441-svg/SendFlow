@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
-import { ArrowLeft, ArrowRight, Clock3, Link2, Plus, RefreshCw } from 'lucide-react';
-import { useGetCustomerPaymentLinks } from '@workspace/api-client-react';
+import { ArrowLeft, ArrowRight, Check, Clock3, Link2, Plus, RefreshCw, Share2 } from 'lucide-react';
+import { getGetCustomerPaymentLinksQueryKey, useGetCustomerPaymentLinks } from '@workspace/api-client-react';
 import type { CustomerPaymentLink } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import linkflowListIllustration from '@assets/generated_images/sendflow-linkflow-history-3d.webp';
@@ -35,8 +35,31 @@ const statusLabel = (status: CustomerPaymentLink['status']) => ({
 export default function LinkFlowPage() {
   const [, setLocation] = useLocation();
   const [cursor, setCursor] = useState<string | undefined>();
-  const linksQuery = useGetCustomerPaymentLinks(cursor ? { cursor, limit: 20 } : { limit: 20 });
+  const [shareFeedback, setShareFeedback] = useState<{ id: string; message: string; error?: boolean } | null>(null);
+  const params = cursor ? { cursor, limit: 20 } : { limit: 20 };
+  const linksQuery = useGetCustomerPaymentLinks(params, {
+    query: { queryKey: getGetCustomerPaymentLinksQueryKey(params) },
+  });
   const items = linksQuery.data?.items ?? [];
+
+  const shareLink = async (link: CustomerPaymentLink) => {
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+    const url = `${window.location.origin}${base}${link.sharePath}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setShareFeedback({ id: link.id, message: 'Lien copié.' });
+      } else if (navigator.share) {
+        await navigator.share({ title: link.description, url });
+        setShareFeedback({ id: link.id, message: 'Lien partagé.' });
+      } else {
+        throw new Error('Partage indisponible');
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setShareFeedback({ id: link.id, message: 'Impossible de partager ce lien. Réessayez.', error: true });
+    }
+  };
 
   useSeo({
     path: '/linkflow',
@@ -66,7 +89,7 @@ export default function LinkFlowPage() {
           </button>
           <div className="sendflow-linkflow-head-copy">
             <h1 id="linkflow-title">Liens de paiement</h1>
-            <p className="sendflow-linkflow-subtitle">Brouillons de demande</p>
+            <p className="sendflow-linkflow-subtitle">Liens de paiement partageables</p>
           </div>
           <button type="button" className="sendflow-linkflow-create-link" onClick={() => setLocation('/linkflow/new')} aria-label="Créer un nouveau lien" data-testid="button-linkflow-new">
             <Plus size={21} />
@@ -86,9 +109,9 @@ export default function LinkFlowPage() {
         ) : items.length === 0 ? (
           <div className="sendflow-linkflow-empty">
             <span className="sendflow-linkflow-empty-icon"><Link2 size={24} /></span>
-            <h3>Aucun brouillon pour le moment</h3>
-            <p>Les demandes que vous préparez apparaîtront ici.</p>
-            <button type="button" className="sendflow-linkflow-primary" onClick={() => setLocation('/linkflow/new')} data-testid="button-linkflow-empty-create">Créer un brouillon <ArrowRight size={17} /></button>
+            <h3>Aucun lien pour le moment</h3>
+            <p>Vos demandes de paiement partageables apparaîtront ici.</p>
+            <button type="button" className="sendflow-linkflow-primary" onClick={() => setLocation('/linkflow/new')} data-testid="button-linkflow-empty-create">Créer un lien <ArrowRight size={17} /></button>
           </div>
         ) : (
           <div className="sendflow-linkflow-records" aria-label="Liens de paiement enregistrés">
@@ -105,6 +128,16 @@ export default function LinkFlowPage() {
                   <span>{link.usageCount}{link.maximumUses === null ? ' / illimité' : ` / ${link.maximumUses}`}</span>
                   <span className="sendflow-linkflow-status">{statusLabel(link.status)}</span>
                   <small><Clock3 size={12} /> {dateLabel(link.expiresAt)}</small>
+                  <button
+                    type="button"
+                    className="sendflow-linkflow-share"
+                    onClick={() => void shareLink(link)}
+                    aria-label={`Partager le lien de paiement ${link.description}`}
+                    data-testid={`button-linkflow-share-${link.id}`}
+                  >
+                    {shareFeedback?.id === link.id && !shareFeedback.error ? <Check size={14} /> : <Share2 size={14} />}
+                    {shareFeedback?.id === link.id ? shareFeedback.message : 'Partager'}
+                  </button>
                 </div>
               </article>
             ))}

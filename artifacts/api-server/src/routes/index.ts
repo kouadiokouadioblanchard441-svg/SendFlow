@@ -23,6 +23,7 @@ import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRou
 import countryManagementRouter, { adminRoutes as adminCountryRoutes } from "./country-management";
 import transferQuoteRouter from "./transfer-quote";
 import paymentLinksRouter from "./payment-links";
+import publicPaymentLinksRouter from "./public-payment-links";
 import { ADMIN_ROUTE_PREFIX } from "../lib/admin-route-prefix";
 import { loadAdminSession } from "../lib/admin-session";
 
@@ -44,6 +45,7 @@ router.use(databaseRouter);
 router.use(accountRouter);
 router.use(transferQuoteRouter);
 router.use(paymentLinksRouter);
+router.use(publicPaymentLinksRouter);
 router.use(identityVerificationRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);

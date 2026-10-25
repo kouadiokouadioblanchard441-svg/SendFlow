@@ -518,6 +518,12 @@ export interface CustomerPaymentLink {
      * @maxLength 12
      */
   code: string;
+  /**
+     * Relative public URL path. Treat as a shareable bearer link.
+     * @minLength 48
+     * @maxLength 64
+     */
+  sharePath: string;
   currency: CustomerPaymentLinkCurrency;
   currencyDecimals: CustomerPaymentLinkCurrencyDecimals;
   /**
@@ -543,6 +549,125 @@ export interface CustomerPaymentLink {
   suffix: string | null;
   status: CustomerPaymentLinkStatus;
   createdAt: string;
+}
+
+export interface PublicPaymentLinkOperator {
+  /**
+     * @minLength 2
+     * @maxLength 60
+     */
+  id: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+}
+
+export interface PublicPaymentLinkCountry {
+  /** @pattern ^[a-z]{2}$ */
+  code: string;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  name: string;
+  /** @pattern ^\+[1-9][0-9]{0,3}$ */
+  phonePrefix: string;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  minPhoneDigits: number;
+  /**
+     * @minimum 4
+     * @maximum 15
+     */
+  maxPhoneDigits: number;
+  operators: PublicPaymentLinkOperator[];
+}
+
+export type PublicPaymentLinkCurrency = typeof PublicPaymentLinkCurrency[keyof typeof PublicPaymentLinkCurrency];
+
+
+export const PublicPaymentLinkCurrency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+  CHF: 'CHF',
+  NGN: 'NGN',
+  EUR: 'EUR',
+  USD: 'USD',
+  CAD: 'CAD',
+} as const;
+
+export type PublicPaymentLinkCurrencyDecimals = typeof PublicPaymentLinkCurrencyDecimals[keyof typeof PublicPaymentLinkCurrencyDecimals];
+
+
+export const PublicPaymentLinkCurrencyDecimals = {
+  NUMBER_0: 0,
+  NUMBER_2: 2,
+} as const;
+
+export interface PublicPaymentLink {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  merchantName: string;
+  /** @maxLength 240 */
+  description: string;
+  currency: PublicPaymentLinkCurrency;
+  currencyDecimals: PublicPaymentLinkCurrencyDecimals;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /** @nullable */
+  expiresAt: string | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  remainingUses: number | null;
+  /**
+     * @maxLength 128
+     * @nullable
+     */
+  imagePath: string | null;
+  countries: PublicPaymentLinkCountry[];
+  paymentAvailable: boolean;
+}
+
+export type PublicPaymentLinkQuoteCurrency = typeof PublicPaymentLinkQuoteCurrency[keyof typeof PublicPaymentLinkQuoteCurrency];
+
+
+export const PublicPaymentLinkQuoteCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface PublicPaymentLinkQuote {
+  currency: PublicPaymentLinkQuoteCurrency;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  feeMinor: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  totalMinor: number;
+  /**
+     * @minLength 2
+     * @maxLength 60
+     */
+  operatorId: string;
 }
 
 export interface CustomerPaymentLinksPage {

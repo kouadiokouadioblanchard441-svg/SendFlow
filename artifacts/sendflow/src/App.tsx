@@ -29,6 +29,7 @@ const AccountInfoPage = lazy(() => import('@/pages/account-info'));
 const AccountLimitPage = lazy(() => import('@/pages/account-limit'));
 const LinkFlowPage = lazy(() => import('@/pages/linkflow'));
 const LinkFlowNewPage = lazy(() => import('@/pages/linkflow-new'));
+const PublicPaymentLinkPage = lazy(() => import('@/pages/public-payment-link'));
 const CustomerServicePage = lazy(() => import('@/pages/customer-service'));
 const DepositPage = lazy(() => import('@/pages/deposit'));
 const HistoryPage = lazy(() => import('@/pages/history'));
@@ -77,10 +78,11 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
   const [path, setLocation] = useLocation();
   const [, forceRefresh] = useState(0);
   const expiry = getPinUnlockExpiry();
+  const isPublicPaymentRoute = path.startsWith('/pay/');
   const sessionQuery = useGetCustomerSession({
     query: {
       queryKey: getGetCustomerSessionQueryKey(),
-      enabled: expiry !== null,
+      enabled: expiry !== null && !isPublicPaymentRoute,
       retry: false,
       refetchInterval: expiry !== null ? 30_000 : false,
       refetchOnWindowFocus: true,
@@ -89,6 +91,7 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
+    if (isPublicPaymentRoute) return;
     const sessionStatus = getHttpStatus(sessionQuery.error);
     if (!shouldRelockCustomerPinUnlock(sessionQuery.data?.pinUnlocked, sessionStatus)) return;
 
@@ -105,11 +108,12 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
     sessionQuery.data?.pinConfigured,
     sessionQuery.data?.pinUnlocked,
     sessionQuery.error,
+    isPublicPaymentRoute,
     setLocation,
   ]);
 
   useEffect(() => {
-    if (expiry === null) return;
+    if (expiry === null || isPublicPaymentRoute) return;
     const lockIfExpired = () => {
       if (getPinUnlockExpiry() !== null) return;
       queryClient.clear();
@@ -123,7 +127,7 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
       window.removeEventListener('focus', lockIfExpired);
       document.removeEventListener('visibilitychange', lockIfExpired);
     };
-  }, [expiry]);
+  }, [expiry, isPublicPaymentRoute]);
 
   const isProtected = requiresCustomerPinUnlock(path);
   if (isProtected && expiry === null) return <Redirect to="/pin" />;
@@ -302,6 +306,7 @@ function App() {
                 <Route path="/account-limit" component={AccountLimitPage} />
                 <Route path="/linkflow" component={LinkFlowPage} />
                 <Route path="/linkflow/new" component={LinkFlowNewPage} />
+                <Route path="/pay/:token" component={PublicPaymentLinkPage} />
                 <Route path="/customer-service" component={CustomerServicePage} />
                 <Route path="/deposit" component={DepositPage} />
                 <Route path="/international-transfer" component={InternationalTransferPage} />

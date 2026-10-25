@@ -79,6 +79,7 @@ function toResponse(row: Pick<
   return {
     id: row.id,
     code: row.publicToken.slice(0, 8),
+    sharePath: `/pay/${row.publicToken}`,
     currency: row.currency,
     currencyDecimals: getPaymentLinkCurrencyDecimals(row.currency),
     amountMinor: row.amountMinor,
@@ -197,7 +198,7 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
       maximumUses: normalized.maximumUses,
       returnUrl: normalized.returnUrl,
       customSuffix: normalized.suffix,
-      status: "draft",
+      status: "active",
     }).returning();
 
     if (!created) throw new Error("Payment link insert returned no row");
@@ -278,6 +279,7 @@ const authorizePaymentLinkImageUpload: RequestHandler = async (req, res, next): 
     const [link] = await db.select({
       id: customerPaymentLinksTable.id,
       status: customerPaymentLinksTable.status,
+      usageCount: customerPaymentLinksTable.usageCount,
     }).from(customerPaymentLinksTable).where(and(
       eq(customerPaymentLinksTable.id, linkId),
       eq(customerPaymentLinksTable.userId, session.userId),
@@ -287,8 +289,8 @@ const authorizePaymentLinkImageUpload: RequestHandler = async (req, res, next): 
       res.status(404).json({ error: "Lien introuvable." });
       return;
     }
-    if (link.status !== "draft") {
-      res.status(409).json({ error: "L’image ne peut être modifiée que sur un brouillon." });
+    if (!["draft", "active"].includes(link.status) || link.usageCount > 0) {
+      res.status(409).json({ error: "L’image ne peut plus être modifiée après l’utilisation du lien." });
       return;
     }
     if (!await consumePaymentLinkCreationQuota(session.userId)) {
@@ -352,7 +354,13 @@ router.post(
       }).where(and(
         eq(customerPaymentLinksTable.id, linkId),
         eq(customerPaymentLinksTable.userId, userId),
-        eq(customerPaymentLinksTable.status, "draft"),
+        or(
+          eq(customerPaymentLinksTable.status, "draft"),
+          and(
+            eq(customerPaymentLinksTable.status, "active"),
+            eq(customerPaymentLinksTable.usageCount, 0),
+          ),
+        ),
       )).returning({ id: customerPaymentLinksTable.id });
       if (!updated) {
         res.status(409).json({ error: "Le brouillon a changé. Actualisez la page puis réessayez." });
