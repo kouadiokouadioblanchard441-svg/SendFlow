@@ -114,6 +114,7 @@ export default function PublicPaymentLinkPage() {
                 className="sendflow-pay-hero-image"
                 src={link.imagePath}
                 alt={`Image de paiement pour ${link.merchantName}`}
+                loading="eager"
               />
             </div>
           )}

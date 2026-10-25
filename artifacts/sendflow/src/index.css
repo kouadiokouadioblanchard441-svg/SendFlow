@@ -8682,10 +8682,27 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
   box-shadow: 0 6px 0 rgba(48, 34, 67, .09), 0 16px 34px rgba(43, 31, 68, .11);
 }
 .sendflow-pay-hero-image-wrap {
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 180px;
+  max-height: 290px;
+  aspect-ratio: 16 / 10;
   border: 1.5px solid #6b5489;
   border-radius: 14px;
   background: #fff;
+  padding: 5px;
   box-shadow: 0 4px 0 rgba(48, 34, 67, .08), 0 9px 20px rgba(43, 31, 68, .08);
+}
+.sendflow-pay-hero-image {
+  position: absolute;
+  inset: 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  border-radius: 8px;
+  background: #fff;
+  object-fit: contain;
+  object-position: center;
 }
 .sendflow-pay-merchant {
   margin: 0 0 15px;
