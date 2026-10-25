@@ -54,6 +54,7 @@ export function isViewerRouteCandidate(method: string, requestPath: string): boo
       "/api/me/account-limit", "/api/me/identity-verification", "/api/me/payment-readiness",
       "/api/me/portal-eligibility", "/api/me/payment-links"].includes(path)
       || /^\/api\/me\/transactions\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path)
+      || /^\/api\/me\/payment-links\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path)
       || /^\/api\/me\/payments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path);
   }
   if (method.toUpperCase() === "POST") {
@@ -62,6 +63,9 @@ export function isViewerRouteCandidate(method: string, requestPath: string): boo
       || /^\/api\/me\/payment-links\/simulate\/[a-z0-9_-]{43}$/.test(path)
       || /^\/api\/me\/payments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/reconcile$/.test(path)
       || /^\/api\/me\/payment-links\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/image$/.test(path);
+  }
+  if (method.toUpperCase() === "PATCH" || method.toUpperCase() === "DELETE") {
+    return /^\/api\/me\/payment-links\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path);
   }
   return method.toUpperCase() === "PUT" && path === "/api/me/pin";
 }

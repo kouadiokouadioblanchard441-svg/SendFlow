@@ -4,16 +4,23 @@ import {
   db,
   desc,
   eq,
+  isNull,
   lt,
   or,
 } from "@workspace/db";
 import {
   CreateCustomerPaymentLinkBody,
   CreateCustomerPaymentLinkResponse,
+  DeleteCustomerPaymentLinkParams,
   GetCustomerPaymentLinksQueryParams,
   GetCustomerPaymentLinksResponse,
+  GetCustomerPaymentLinkParams,
+  GetCustomerPaymentLinkResponse,
   SimulateCustomerPaymentLinkParams,
   SimulateCustomerPaymentLinkResponse,
+  UpdateCustomerPaymentLinkBody,
+  UpdateCustomerPaymentLinkParams,
+  UpdateCustomerPaymentLinkResponse,
 } from "@workspace/api-zod";
 import express, { Router, type IRouter, type RequestHandler } from "express";
 import { consumePaymentLinkCreationQuota, consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
@@ -24,6 +31,7 @@ import {
   isPaymentLinkCreationAllowed,
   normalizePaymentLinkImage,
   normalizePaymentLinkInput,
+  parseAmountMinor,
   PaymentLinkIdempotencyConflict,
   PaymentLinkImageError,
   PaymentLinkInputError,
@@ -51,6 +59,7 @@ async function requirePaymentLinkSession(req: Parameters<typeof requireCustomerS
 const paymentLinkResponseColumns = {
   id: customerPaymentLinksTable.id,
   publicToken: customerPaymentLinksTable.publicToken,
+  linkName: customerPaymentLinksTable.linkName,
   currency: customerPaymentLinksTable.currency,
   amountMinor: customerPaymentLinksTable.amountMinor,
   description: customerPaymentLinksTable.description,
@@ -66,6 +75,7 @@ const paymentLinkResponseColumns = {
 const paymentLinkIdempotencyColumns = {
   ...paymentLinkResponseColumns,
   requestHash: customerPaymentLinksTable.requestHash,
+  deletedAt: customerPaymentLinksTable.deletedAt,
 } as const;
 const supportedImageMimeTypes = [...PAYMENT_LINK_IMAGE_MIME_TYPES];
 const parsePaymentLinkImageBody = express.raw({
@@ -85,6 +95,7 @@ function toResponse(row: Pick<
   typeof customerPaymentLinksTable.$inferSelect,
   | "id"
   | "publicToken"
+   | "linkName"
   | "currency"
   | "amountMinor"
   | "description"
@@ -100,6 +111,7 @@ function toResponse(row: Pick<
   return {
     id: row.id,
     code: row.publicToken.slice(0, 8),
+    linkName: row.linkName,
     sharePath: `/pay/${row.publicToken}`,
     currency: row.currency,
     currencyDecimals: getPaymentLinkCurrencyDecimals(row.currency),
@@ -129,7 +141,10 @@ router.get("/me/payment-links", async (req, res): Promise<void> => {
 
   try {
     const { cursor, limit } = parsed.data;
-    const conditions = [eq(customerPaymentLinksTable.userId, session.userId)];
+    const conditions = [
+      eq(customerPaymentLinksTable.userId, session.userId),
+      isNull(customerPaymentLinksTable.deletedAt),
+    ];
     if (cursor) {
       const [cursorRow] = await db.select({
         id: customerPaymentLinksTable.id,
@@ -137,6 +152,7 @@ router.get("/me/payment-links", async (req, res): Promise<void> => {
       }).from(customerPaymentLinksTable).where(and(
         eq(customerPaymentLinksTable.id, cursor),
         eq(customerPaymentLinksTable.userId, session.userId),
+        isNull(customerPaymentLinksTable.deletedAt),
       )).limit(1);
       if (!cursorRow) {
         res.status(400).json({ error: "Le curseur de pagination est invalide." });
@@ -171,6 +187,169 @@ router.get("/me/payment-links", async (req, res): Promise<void> => {
   }
 });
 
+router.get("/me/payment-links/:linkId", async (req, res): Promise<void> => {
+  const session = await requirePaymentLinkSession(req, res);
+  if (!session) return;
+  res.setHeader("Cache-Control", "no-store, private");
+
+  const params = GetCustomerPaymentLinkParams.safeParse(req.params);
+  if (!params.success || !uuidPattern.test(params.data.linkId)) {
+    res.status(404).json({ error: "Lien introuvable." });
+    return;
+  }
+
+  try {
+    const [link] = await db.select(paymentLinkResponseColumns).from(customerPaymentLinksTable).where(and(
+      eq(customerPaymentLinksTable.id, params.data.linkId),
+      eq(customerPaymentLinksTable.userId, session.userId),
+      isNull(customerPaymentLinksTable.deletedAt),
+    )).limit(1);
+    if (!link) {
+      res.status(404).json({ error: "Lien introuvable." });
+      return;
+    }
+    res.json(GetCustomerPaymentLinkResponse.parse(toResponse(link)));
+  } catch (error) {
+    req.log.error({ err: error, userId: session.userId }, "Customer payment link could not be read");
+    res.status(503).json({ error: "Les informations du lien sont momentanément indisponibles." });
+  }
+});
+
+router.patch("/me/payment-links/:linkId", async (req, res): Promise<void> => {
+  const session = await requirePaymentLinkSession(req, res);
+  if (!session) return;
+  res.setHeader("Cache-Control", "no-store, private");
+
+  const params = UpdateCustomerPaymentLinkParams.safeParse(req.params);
+  if (!params.success || !uuidPattern.test(params.data.linkId)) {
+    res.status(404).json({ error: "Lien introuvable." });
+    return;
+  }
+  const parsed = UpdateCustomerPaymentLinkBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Vérifiez les modifications du lien." });
+    return;
+  }
+  if (
+    parsed.data.amount === undefined
+    && parsed.data.description === undefined
+    && parsed.data.maximumUses === undefined
+  ) {
+    res.status(400).json({ error: "Aucune modification n’a été fournie." });
+    return;
+  }
+
+  try {
+    const outcome = await db.transaction(async (tx) => {
+      const [link] = await tx.select().from(customerPaymentLinksTable).where(and(
+        eq(customerPaymentLinksTable.id, params.data.linkId),
+        eq(customerPaymentLinksTable.userId, session.userId),
+        isNull(customerPaymentLinksTable.deletedAt),
+      )).for("update").limit(1);
+
+      if (!link) return { kind: "not_found" as const };
+      if (
+        !["draft", "active"].includes(link.status)
+        || (link.expiresAt !== null && link.expiresAt.getTime() <= Date.now())
+      ) {
+        return { kind: "conflict" as const, message: "Ce lien n’est plus modifiable." };
+      }
+
+      const amountMinor = parsed.data.amount === undefined
+        ? link.amountMinor
+        : parseAmountMinor(parsed.data.amount, link.currency);
+      const description = parsed.data.description === undefined
+        ? link.description
+        : parsed.data.description.trim();
+      if (description.length < 2 || description.length > 240) {
+        throw new PaymentLinkInputError("La description doit contenir entre 2 et 240 caractères.");
+      }
+      const maximumUses = parsed.data.maximumUses === undefined
+        ? link.maximumUses
+        : parsed.data.maximumUses;
+      if (
+        maximumUses !== null
+        && (!Number.isSafeInteger(maximumUses) || maximumUses < 1 || maximumUses > 999_999)
+      ) {
+        throw new PaymentLinkInputError("La limite d’utilisations est invalide.");
+      }
+      if (maximumUses !== null && maximumUses < link.usageCount) {
+        throw new PaymentLinkInputError("La limite ne peut pas être inférieure aux utilisations déjà enregistrées.");
+      }
+
+      const amountChanged = amountMinor !== link.amountMinor;
+      const descriptionChanged = description !== link.description;
+      if (link.usageCount > 0 && (amountChanged || descriptionChanged)) {
+        return {
+          kind: "conflict" as const,
+          message: "Le montant et la description ne peuvent plus changer après une utilisation.",
+        };
+      }
+
+      const [updated] = await tx.update(customerPaymentLinksTable).set({
+        amountMinor,
+        description,
+        maximumUses,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(customerPaymentLinksTable.id, link.id),
+        eq(customerPaymentLinksTable.userId, session.userId),
+        isNull(customerPaymentLinksTable.deletedAt),
+      )).returning(paymentLinkResponseColumns);
+      return updated ? { kind: "updated" as const, link: updated } : { kind: "not_found" as const };
+    });
+
+    if (outcome.kind === "not_found") {
+      res.status(404).json({ error: "Lien introuvable." });
+      return;
+    }
+    if (outcome.kind === "conflict") {
+      res.status(409).json({ error: outcome.message });
+      return;
+    }
+    res.json(UpdateCustomerPaymentLinkResponse.parse(toResponse(outcome.link)));
+  } catch (error) {
+    if (error instanceof PaymentLinkInputError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    req.log.error({ err: error, userId: session.userId }, "Customer payment link could not be updated");
+    res.status(503).json({ error: "La modification du lien est momentanément indisponible." });
+  }
+});
+
+router.delete("/me/payment-links/:linkId", async (req, res): Promise<void> => {
+  const session = await requirePaymentLinkSession(req, res);
+  if (!session) return;
+  res.setHeader("Cache-Control", "no-store, private");
+
+  const params = DeleteCustomerPaymentLinkParams.safeParse(req.params);
+  if (!params.success || !uuidPattern.test(params.data.linkId)) {
+    res.status(404).json({ error: "Lien introuvable." });
+    return;
+  }
+
+  try {
+    const now = new Date();
+    const [deleted] = await db.update(customerPaymentLinksTable).set({
+      deletedAt: now,
+      updatedAt: now,
+    }).where(and(
+      eq(customerPaymentLinksTable.id, params.data.linkId),
+      eq(customerPaymentLinksTable.userId, session.userId),
+      isNull(customerPaymentLinksTable.deletedAt),
+    )).returning({ id: customerPaymentLinksTable.id });
+    if (!deleted) {
+      res.status(404).json({ error: "Lien introuvable." });
+      return;
+    }
+    res.status(204).end();
+  } catch (error) {
+    req.log.error({ err: error, userId: session.userId }, "Customer payment link could not be removed");
+    res.status(503).json({ error: "La suppression du lien est momentanément indisponible." });
+  }
+});
+
 router.post("/me/payment-links", async (req, res): Promise<void> => {
   const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
@@ -199,6 +378,10 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
       eq(customerPaymentLinksTable.idempotencyKey, normalized.requestId),
     )).limit(1);
     if (existing) {
+      if (existing.deletedAt) {
+        res.status(409).json({ error: "Cette demande de création a déjà été utilisée pour un lien supprimé." });
+        return;
+      }
       if (existing.requestHash !== normalized.requestHash) {
         throw new PaymentLinkIdempotencyConflict();
       }
@@ -242,6 +425,10 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
           eq(customerPaymentLinksTable.userId, session.userId),
           eq(customerPaymentLinksTable.idempotencyKey, normalized.requestId),
         )).limit(1);
+        if (existing?.deletedAt) {
+          res.status(409).json({ error: "Cette demande de création a déjà été utilisée pour un lien supprimé." });
+          return;
+        }
         if (existing && existing.requestHash === normalized.requestHash) {
           res.status(201).json(CreateCustomerPaymentLinkResponse.parse(toResponse(existing)));
           return;
@@ -304,6 +491,7 @@ router.post("/me/payment-links/simulate/:token", async (req, res): Promise<void>
     }).from(customerPaymentLinksTable).where(and(
       eq(customerPaymentLinksTable.publicToken, parsed.data.token),
       eq(customerPaymentLinksTable.userId, session.userId),
+      isNull(customerPaymentLinksTable.deletedAt),
     )).limit(1);
 
     if (!link || link.status !== "active"
@@ -372,6 +560,7 @@ const authorizePaymentLinkImageUpload: RequestHandler = async (req, res, next): 
     }).from(customerPaymentLinksTable).where(and(
       eq(customerPaymentLinksTable.id, linkId),
       eq(customerPaymentLinksTable.userId, session.userId),
+      isNull(customerPaymentLinksTable.deletedAt),
     )).limit(1);
 
     if (!link) {
@@ -443,6 +632,7 @@ router.post(
       }).where(and(
         eq(customerPaymentLinksTable.id, linkId),
         eq(customerPaymentLinksTable.userId, userId),
+        isNull(customerPaymentLinksTable.deletedAt),
         or(
           eq(customerPaymentLinksTable.status, "draft"),
           and(

@@ -114,6 +114,7 @@ export * from './customerPaymentLinkInputValidity';
 export * from './customerPaymentLinkPaymentMethod';
 export * from './customerPaymentLinksPage';
 export * from './customerPaymentLinkStatus';
+export * from './customerPaymentLinkUpdate';
 export * from './customerPinResetInput';
 export * from './customerPinSetInput';
 export * from './customerPinStateResult';

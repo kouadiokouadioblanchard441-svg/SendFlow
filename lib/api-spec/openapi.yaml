@@ -935,6 +935,142 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/payment-links/{linkId}:
+    parameters:
+      - name: linkId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getCustomerPaymentLink
+      tags: [account]
+      summary: Read one payment link owned by the authenticated customer
+      description: Requires a verified customer PIN. Removed links are hidden from this endpoint.
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: The requested payment link.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPaymentLink"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: The link does not exist or does not belong to the customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Link storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateCustomerPaymentLink
+      tags: [account]
+      summary: Update the amount, description, or usage limit of an owned payment link
+      description: Requires a verified customer PIN. Updates are blocked after the link has been used or removed.
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerPaymentLinkUpdate"
+      responses:
+        "200":
+          description: The updated payment link.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPaymentLink"
+        "400":
+          description: Link changes are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: The link does not exist or does not belong to the customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The link can no longer be edited.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Link storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteCustomerPaymentLink
+      tags: [account]
+      summary: Revoke and hide an owned payment link while retaining its history
+      description: Requires a verified customer PIN. This is a soft deletion; the public URL is invalidated and the record is retained.
+      security:
+        - sendFlowSession: []
+      responses:
+        "204":
+          description: The link was revoked and hidden.
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: The link does not exist or does not belong to the customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Link storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /me/payment-links/simulate/{token}:
     post:
       operationId: simulateCustomerPaymentLink
@@ -3924,6 +4060,23 @@ components:
           type: integer
           enum: [0, 2]
       required: [code, decimals]
+    CustomerPaymentLinkUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        amount:
+          type: string
+          minLength: 1
+          maxLength: 24
+          pattern: "^[0-9]+(\\.[0-9]+)?$"
+        description:
+          type: string
+          minLength: 2
+          maxLength: 240
+        maximumUses:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 999999
     CustomerPaymentLinkChoice:
       type: object
       properties:
@@ -3942,6 +4095,10 @@ components:
           type: string
           minLength: 8
           maxLength: 12
+        linkName:
+          type: ["string", "null"]
+          minLength: 2
+          maxLength: 120
         sharePath:
           type: string
           minLength: 48
@@ -3986,6 +4143,7 @@ components:
       required:
         - id
         - code
+        - linkName
         - sharePath
         - currency
         - currencyDecimals

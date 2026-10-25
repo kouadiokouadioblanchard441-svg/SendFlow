@@ -139,7 +139,7 @@ export type NormalizedPaymentLinkInput = {
   requestHash: string;
 };
 
-function parseAmountMinor(amount: string, currency: string) {
+export function parseAmountMinor(amount: string, currency: string) {
   const currencyOption = PAYMENT_LINK_CURRENCIES.find((option) => option.code === currency);
   if (!currencyOption) throw new PaymentLinkInputError("Devise non prise en charge.");
 

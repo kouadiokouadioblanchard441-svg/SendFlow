@@ -146,7 +146,22 @@ export default function LinkFlowPage() {
         ) : (
           <div className="sendflow-linkflow-records" aria-label="Liens de paiement enregistrés">
             {items.map((link) => (
-              <article className="sendflow-linkflow-record" key={link.id} data-testid={`card-linkflow-${link.id}`}>
+              <article
+                className="sendflow-linkflow-record"
+                key={link.id}
+                data-testid={`card-linkflow-${link.id}`}
+                role="group"
+                tabIndex={0}
+                onClick={() => setLocation(`/linkflow/${encodeURIComponent(link.id)}`)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setLocation(`/linkflow/${encodeURIComponent(link.id)}`);
+                  }
+                }}
+                aria-label={`Consulter le lien ${link.description}`}
+              >
                 <span className="sendflow-linkflow-record-icon"><Link2 size={18} /></span>
                 <div className="sendflow-linkflow-row-copy">
                   <h3>{link.description}</h3>
@@ -158,10 +173,14 @@ export default function LinkFlowPage() {
                   <span>{link.usageCount}{link.maximumUses === null ? ' / illimité' : ` / ${link.maximumUses}`}</span>
                   <span className={`sendflow-linkflow-status is-${link.status}`}>{statusLabel(link.status)}</span>
                   <small><Clock3 size={12} /> {dateLabel(link.expiresAt)}</small>
+                  <span className="sendflow-linkflow-detail-hint">Voir le détail <ArrowRight size={14} /></span>
                   <button
                     type="button"
                     className="sendflow-linkflow-share"
-                    onClick={() => openShareDialog(link)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openShareDialog(link);
+                    }}
                     aria-label={`Partager le lien de paiement ${link.description}`}
                     aria-haspopup="dialog"
                     data-testid={`button-linkflow-share-${link.id}`}

@@ -18,6 +18,12 @@ export interface CustomerPaymentLink {
      */
   code: string;
   /**
+     * @minLength 2
+     * @maxLength 120
+     * @nullable
+     */
+  linkName: string | null;
+  /**
      * Relative public URL path. Treat as a shareable bearer link.
      * @minLength 48
      * @maxLength 64

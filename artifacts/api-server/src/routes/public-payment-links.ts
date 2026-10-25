@@ -1,5 +1,6 @@
 import {
   and,
+  isNull,
   countriesTable,
   customerPaymentLinksTable,
   db,
@@ -63,7 +64,10 @@ async function findUsablePublicLink(token: string): Promise<PublicLinkRow | unde
     status: customerPaymentLinksTable.status,
     imageData: customerPaymentLinksTable.imageData,
   }).from(customerPaymentLinksTable)
-    .where(eq(customerPaymentLinksTable.publicToken, token))
+    .where(and(
+      eq(customerPaymentLinksTable.publicToken, token),
+      isNull(customerPaymentLinksTable.deletedAt),
+    ))
     .limit(1);
 
   if (!link || link.status !== "active" ||

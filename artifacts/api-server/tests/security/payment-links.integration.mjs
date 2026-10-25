@@ -42,6 +42,7 @@ before(async () => {
     ["payment-link-locked", false],
     ["payment-link-concurrent", true],
     ["payment-link-rate", true],
+    ["payment-link-detail", true],
   ]) {
     await owner.query("INSERT INTO sf_users(id,status,display_name) VALUES($1,'active',$2)", [userId, userId]);
     await owner.query(`INSERT INTO sf_customer_credentials
@@ -219,6 +220,10 @@ test("payment-link amount rules and shared-Neon preview scope fail closed", () =
   ), true);
   assert.equal(isViewerRouteCandidate("GET", "/api/me/payment-links"), true);
   assert.equal(isViewerRouteCandidate("POST", "/api/me/payment-links"), true);
+  const linkId = "123e4567-e89b-42d3-a456-426614174000";
+  assert.equal(isViewerRouteCandidate("GET", `/api/me/payment-links/${linkId}`), true);
+  assert.equal(isViewerRouteCandidate("PATCH", `/api/me/payment-links/${linkId}`), true);
+  assert.equal(isViewerRouteCandidate("DELETE", `/api/me/payment-links/${linkId}`), true);
   assert.equal(isViewerRouteCandidate(
     "POST",
     "/api/me/payment-links/simulate/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -270,6 +275,7 @@ test("payment-link schema migration is present and operates only in the isolated
     { column_name: "created_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "NO" },
     { column_name: "updated_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "NO" },
     { column_name: "link_name", data_type: "character varying", character_maximum_length: 120, is_nullable: "YES" },
+    { column_name: "deleted_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "YES" },
   ]);
   const constraints = await owner.query(`SELECT conname FROM pg_constraint
     WHERE conrelid='public.sf_customer_payment_links'::regclass
@@ -715,4 +721,111 @@ test("link creation is rate-limited per customer", async () => {
   assert.equal(Number((await owner.query(
     "SELECT count(*)::int AS count FROM sf_customer_payment_links WHERE user_id='payment-link-rate'",
   )).rows[0].count), 10);
+});
+
+test("link detail is owner-scoped, updates are guarded, and deletion preserves the record while revoking checkout", async () => {
+  const body = validInput({ maximumUses: 3 });
+  const created = await request("/api/me/payment-links", {
+    method: "POST",
+    userId: "payment-link-detail",
+    body,
+  });
+  assert.equal(created.status, 201, created.text);
+  const original = json(created);
+  const linkId = original.id;
+  const token = original.sharePath.split("/").at(-1);
+
+  const details = await request(`/api/me/payment-links/${linkId}`, {
+    userId: "payment-link-detail",
+  });
+  assert.equal(details.status, 200, details.text);
+  assert.equal(json(details).linkName, body.linkName);
+  assert.equal(json(details).amountMinor, 1250);
+
+  const foreignDetails = await request(`/api/me/payment-links/${linkId}`, {
+    userId: "payment-link-owner-b",
+  });
+  assert.equal(foreignDetails.status, 404);
+
+  const missingCsrf = await request(`/api/me/payment-links/${linkId}`, {
+    method: "PATCH",
+    userId: "payment-link-detail",
+    body: { amount: "1500" },
+    csrf: false,
+  });
+  assert.equal(missingCsrf.status, 403);
+
+  const updated = await request(`/api/me/payment-links/${linkId}`, {
+    method: "PATCH",
+    userId: "payment-link-detail",
+    body: { amount: "1500", description: "Facture modifiée", maximumUses: 5 },
+  });
+  assert.equal(updated.status, 200, updated.text);
+  assert.equal(json(updated).amountMinor, 1500);
+  assert.equal(json(updated).description, "Facture modifiée");
+  assert.equal(json(updated).maximumUses, 5);
+
+  await owner.query("UPDATE sf_customer_payment_links SET usage_count=1 WHERE id=$1", [linkId]);
+  const amountAfterUse = await request(`/api/me/payment-links/${linkId}`, {
+    method: "PATCH",
+    userId: "payment-link-detail",
+    body: { amount: "2000" },
+  });
+  assert.equal(amountAfterUse.status, 409);
+  const limitAfterUse = await request(`/api/me/payment-links/${linkId}`, {
+    method: "PATCH",
+    userId: "payment-link-detail",
+    body: { maximumUses: 2 },
+  });
+  assert.equal(limitAfterUse.status, 200, limitAfterUse.text);
+
+  const foreignDelete = await request(`/api/me/payment-links/${linkId}`, {
+    method: "DELETE",
+    userId: "payment-link-owner-b",
+  });
+  assert.equal(foreignDelete.status, 404);
+  const missingDeleteCsrf = await request(`/api/me/payment-links/${linkId}`, {
+    method: "DELETE",
+    userId: "payment-link-detail",
+    csrf: false,
+  });
+  assert.equal(missingDeleteCsrf.status, 403);
+
+  const deleted = await request(`/api/me/payment-links/${linkId}`, {
+    method: "DELETE",
+    userId: "payment-link-detail",
+  });
+  assert.equal(deleted.status, 204, deleted.text);
+  const repeatedDelete = await request(`/api/me/payment-links/${linkId}`, {
+    method: "DELETE",
+    userId: "payment-link-detail",
+  });
+  assert.equal(repeatedDelete.status, 404);
+
+  const hiddenDetails = await request(`/api/me/payment-links/${linkId}`, {
+    userId: "payment-link-detail",
+  });
+  assert.equal(hiddenDetails.status, 404);
+  const hiddenFromList = await request("/api/me/payment-links", {
+    userId: "payment-link-detail",
+  });
+  assert.equal(json(hiddenFromList).items.some((item) => item.id === linkId), false);
+  const publicCheckout = await request(`/api/public/payment-links/${token}`);
+  assert.equal(publicCheckout.status, 404);
+
+  const preserved = await owner.query(
+    "SELECT deleted_at, amount_minor, usage_count FROM sf_customer_payment_links WHERE id=$1",
+    [linkId],
+  );
+  assert.equal(preserved.rows.length, 1);
+  assert.ok(preserved.rows[0].deleted_at);
+  assert.equal(Number(preserved.rows[0].amount_minor), 1500);
+  assert.equal(preserved.rows[0].usage_count, 1);
+
+  const deletedReplay = await request("/api/me/payment-links", {
+    method: "POST",
+    userId: "payment-link-detail",
+    body,
+  });
+  assert.equal(deletedReplay.status, 409);
 });

@@ -38,6 +38,7 @@ export const customerPaymentLinksTable = pgTable("sf_customer_payment_links", {
   status: varchar("status", { length: 24 }).notNull().default("draft"),
   imageData: bytea("image_data"),
   imageSizeBytes: integer("image_size_bytes"),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({

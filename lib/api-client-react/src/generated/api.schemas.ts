@@ -470,6 +470,26 @@ export interface CustomerPaymentLinkCurrencyOption {
   decimals: CustomerPaymentLinkCurrencyOptionDecimals;
 }
 
+export interface CustomerPaymentLinkUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 24
+     * @pattern ^[0-9]+(\.[0-9]+)?$
+     */
+  amount?: string;
+  /**
+     * @minLength 2
+     * @maxLength 240
+     */
+  description?: string;
+  /**
+     * @minimum 1
+     * @maximum 999999
+     * @nullable
+     */
+  maximumUses?: number | null;
+}
+
 export interface CustomerPaymentLinkChoice {
   value: string;
   label: string;
@@ -523,6 +543,12 @@ export interface CustomerPaymentLink {
      * @maxLength 12
      */
   code: string;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     * @nullable
+     */
+  linkName: string | null;
   /**
      * Relative public URL path. Treat as a shareable bearer link.
      * @minLength 48

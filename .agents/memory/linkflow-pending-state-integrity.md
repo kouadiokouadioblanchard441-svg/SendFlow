@@ -1,6 +1,6 @@
 ---
 name: LinkFlow payment integrity and fee rules
-description: Rules for payment states, viewer simulations, and merchant fee treatment on public payment links.
+description: Rules for payment states, viewer simulations, merchant fees, link deletion, and LinkFlow analytics.
 ---
 
 Never present a LinkFlow payment as pending or ask a payer to authorize USSD unless a persisted, server-owned payment attempt has actually been initiated and is still pending. Show a success screen only after the server reports a final succeeded state backed by verified settlement evidence.
@@ -20,3 +20,9 @@ For LinkFlow, the amount chosen by the merchant is the payer’s total debit. De
 **Why:** The user explicitly defined the public-link amount as the exact amount debited from the payer, with SendFlow fees included in it.
 
 **How to apply:** Keep fee calculations server-side, use the recipient-pays-fees calculation for LinkFlow only, and expose only the fixed payer total in the public checkout.
+
+For LinkFlow, deletion is a soft revocation: invalidate and hide the public link while retaining its record and history. Do not show invented views, visitors, attempts, successes, or collected amounts; payment statistics remain unavailable until real payments are activated and metrics come from authoritative server/provider records.
+
+**Why:** The user explicitly chose history-preserving deletion and deferred complete statistics until real payments are available.
+
+**How to apply:** Filter deleted links from owner lists and all public endpoints, but retain their database rows. Never count viewer simulations as payments or derive financial analytics from browser state.

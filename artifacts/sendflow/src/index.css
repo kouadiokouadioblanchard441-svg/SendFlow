@@ -3263,6 +3263,186 @@
   .sendflow-linkflow-illustration { top: 158px; right: -100px; width: min(125vw, 500px); height: 600px; opacity: .2; }
 }
 
+/* LinkFlow detail — owner-first controls, clear data provenance, and a stable mobile sheet. */
+.sendflow-detail-page {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 520px);
+  min-height: 100dvh;
+  gap: 0;
+  overflow: visible;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(241, 234, 255, .62), transparent 390px),
+    #fff;
+}
+.sendflow-detail-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  min-height: 46px;
+  align-items: center;
+  justify-items: center;
+  gap: 10px;
+}
+.sendflow-detail-header h1 { margin: 0; color: #211b2a; font-size: 16px; font-weight: 700; letter-spacing: -.025em; }
+.sendflow-detail-icon-button,
+.sendflow-detail-sheet-close {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #eee8f4;
+  border-radius: 13px;
+  background: #fff;
+  color: #6943a2;
+  cursor: pointer;
+}
+.sendflow-detail-body { position: relative; z-index: 1; padding-bottom: max(26px, env(safe-area-inset-bottom)); }
+.sendflow-detail-eyebrow { display: flex; align-items: center; justify-content: space-between; margin: 29px 1px 12px; color: #898291; font-size: 11px; font-weight: 650; letter-spacing: .04em; }
+.sendflow-detail-status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #e5f0e8; border-radius: 99px; background: #f4fbf6; color: #347254; padding: 6px 10px; letter-spacing: 0; }
+.sendflow-detail-status i { width: 7px; height: 7px; border-radius: 50%; background: #4eaa75; }
+.sendflow-detail-status.is-draft { border-color: #ede7f4; background: #f8f5fb; color: #776b89; }
+.sendflow-detail-status.is-draft i { background: #a095ae; }
+.sendflow-detail-status.is-paused,
+.sendflow-detail-status.is-expired,
+.sendflow-detail-status.is-exhausted { border-color: #f0e7d8; background: #fffaf1; color: #936a2e; }
+.sendflow-detail-status.is-paused i,
+.sendflow-detail-status.is-expired i,
+.sendflow-detail-status.is-exhausted i { background: #d7a149; }
+.sendflow-detail-hero {
+  display: flex;
+  min-height: 226px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #e9e0f5;
+  border-radius: 25px;
+  background:
+    radial-gradient(ellipse at 50% 120%, rgba(219, 197, 250, .42), transparent 56%),
+    linear-gradient(145deg, #fbf9ff, #f5f0fc);
+  padding: 22px;
+  text-align: center;
+}
+.sendflow-detail-hero-mark { display: grid; width: 43px; height: 43px; place-items: center; border: 1px solid #e7dcf7; border-radius: 15px; background: #fff; color: #7544b9; box-shadow: 0 5px 15px rgba(75, 42, 117, .07); }
+.sendflow-detail-hero p { margin: 15px 0 3px; color: #807989; font-size: 12px; font-weight: 600; }
+.sendflow-detail-hero strong { color: #281c39; font-size: clamp(32px, 9vw, 42px); font-weight: 750; letter-spacing: -.06em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sendflow-detail-hero-caption { max-width: 100%; margin-top: 9px; overflow-wrap: anywhere; color: #746c7e; font-size: 13px; line-height: 1.4; }
+.sendflow-detail-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 24px 0 14px; border-radius: 14px; background: #f4f1f7; padding: 5px; }
+.sendflow-detail-switch button { display: flex; min-height: 43px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 10px; background: transparent; color: #81798a; cursor: pointer; font: inherit; font-size: 12px; font-weight: 650; transition: background-color .18s ease, color .18s ease, box-shadow .18s ease; }
+.sendflow-detail-switch button.is-selected { background: #fff; color: #54318c; box-shadow: 0 2px 7px rgba(48, 33, 69, .09); }
+.sendflow-detail-panel { min-height: 285px; border: 1px solid #eeeaf2; border-radius: 21px; background: rgba(255,255,255,.92); padding: 21px 18px 18px; box-shadow: 0 8px 22px rgba(48, 34, 68, .035); animation: sendflow-detail-in .22s ease both; }
+.sendflow-detail-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sendflow-detail-kicker { color: #9473bb; font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.sendflow-detail-section-heading h2 { margin: 4px 0 0; color: #251d2f; font-size: 19px; font-weight: 730; letter-spacing: -.04em; }
+.sendflow-detail-edit-link { display: inline-flex; min-height: 36px; align-items: center; gap: 6px; border: 1px solid #eee6f6; border-radius: 10px; background: #faf7fe; color: #674097; padding: 0 10px; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; }
+.sendflow-detail-public-link { margin-top: 17px; border: 1px solid #e9e2f0; border-radius: 14px; background: linear-gradient(135deg, #fbf9fe, #f8f5fb); padding: 12px; }
+.sendflow-detail-public-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+.sendflow-detail-public-heading > span { display: inline-flex; align-items: center; gap: 6px; color: #685d75; font-size: 10px; font-weight: 700; }
+.sendflow-detail-public-heading > span:first-child svg { color: #7750a5; }
+.sendflow-detail-public-safe { color: #788a7e !important; font-size: 9px !important; font-weight: 600 !important; }
+.sendflow-detail-public-control { display: flex; min-width: 0; align-items: center; gap: 7px; }
+.sendflow-detail-public-control input { width: 100%; min-width: 0; height: 39px; border: 1px solid #eee9f2; border-radius: 9px; outline: none; background: #fff; color: #62596d; padding: 0 9px; font: inherit; font-size: 10px; }
+.sendflow-detail-public-control input:focus { border-color: #b59bd1; box-shadow: 0 0 0 2px rgba(116,64,189,.08); }
+.sendflow-detail-public-control button { display: inline-flex; height: 39px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 6px; border: 1px solid #e6dcef; border-radius: 9px; background: #fff; color: #674294; padding: 0 10px; cursor: pointer; font: inherit; font-size: 10px; font-weight: 700; }
+.sendflow-detail-public-control button:hover { background: #f5effb; }
+.sendflow-detail-copy-error { margin: 7px 1px 0; color: #9d4c4e; font-size: 10px; line-height: 1.4; }
+.sendflow-detail-facts { display: grid; gap: 0; margin: 16px 0 0; }
+.sendflow-detail-facts > div { display: grid; grid-template-columns: minmax(112px, .78fr) minmax(0, 1.22fr); gap: 12px; align-items: center; min-height: 53px; border-top: 1px solid #f0edf3; }
+.sendflow-detail-facts dt { color: #86808d; font-size: 11px; font-weight: 550; }
+.sendflow-detail-facts dd { display: flex; min-width: 0; align-items: center; gap: 7px; margin: 0; overflow-wrap: anywhere; color: #332c3b; font-size: 11px; font-weight: 650; line-height: 1.4; text-align: right; justify-content: flex-end; }
+.sendflow-detail-fact-icon { display: inline-grid; flex: 0 0 auto; place-items: center; color: #8260aa; }
+.sendflow-detail-inline-muted { color: #8b8492; font-weight: 500; }
+.sendflow-detail-usage { display: grid; gap: 12px; margin-top: 12px; border: 1px solid #eee8f3; border-radius: 14px; background: #fcfbfd; padding: 12px; }
+.sendflow-detail-usage-copy { display: flex; align-items: center; gap: 9px; }
+.sendflow-detail-usage-icon { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 10px; background: #f2edf8; color: #75519f; }
+.sendflow-detail-usage-copy p { display: grid; gap: 3px; margin: 0; }
+.sendflow-detail-usage-copy strong { color: #383040; font-size: 11px; }
+.sendflow-detail-usage-copy p span { color: #87808d; font-size: 10px; }
+.sendflow-detail-usage-limit { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid #f0edf3; padding-top: 10px; }
+.sendflow-detail-usage-limit > span { display: grid; gap: 3px; }
+.sendflow-detail-usage-limit small { color: #8a8490; font-size: 9px; }
+.sendflow-detail-usage-limit strong { color: #493762; font-size: 11px; font-weight: 700; }
+.sendflow-detail-usage-limit button { display: inline-flex; min-height: 32px; flex: 0 0 auto; align-items: center; gap: 5px; border: 1px solid #e8def1; border-radius: 9px; background: #fff; color: #6d4698; padding: 0 9px; cursor: pointer; font: inherit; font-size: 10px; font-weight: 700; }
+.sendflow-detail-security { display: flex; align-items: center; gap: 10px; margin-top: 13px; border: 1px solid #e8f0e9; border-radius: 12px; background: #f7fbf8; color: #53836a; padding: 11px; }
+.sendflow-detail-security > svg:first-child { flex: 0 0 auto; }
+.sendflow-detail-security p { display: grid; flex: 1; gap: 3px; margin: 0; }
+.sendflow-detail-security strong { color: #39684f; font-size: 10px; }
+.sendflow-detail-security span { color: #78887d; font-size: 9px; line-height: 1.35; }
+.sendflow-detail-stats { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 25px; text-align: center; }
+.sendflow-detail-stats-icon { display: grid; width: 53px; height: 53px; place-items: center; margin-bottom: 17px; border: 1px solid #e8dff2; border-radius: 18px; background: #f7f2fc; color: #7851aa; }
+.sendflow-detail-stats h2 { margin: 8px 0 0; color: #292132; font-size: 20px; font-weight: 740; letter-spacing: -.04em; }
+.sendflow-detail-stats > p { max-width: 320px; margin: 10px 0 20px; color: #77717e; font-size: 12px; line-height: 1.55; }
+.sendflow-detail-stats-note { display: flex; align-items: flex-start; gap: 8px; border-radius: 11px; background: #f6f3f9; color: #70677b; padding: 11px 12px; font-size: 10px; line-height: 1.45; text-align: left; }
+.sendflow-detail-stats-note svg { flex: 0 0 auto; color: #8968b1; }
+.sendflow-detail-created-note { display: flex; align-items: center; gap: 8px; margin: 16px 4px 18px; color: #85808a; font-size: 10px; line-height: 1.4; }
+.sendflow-detail-created-note > span { display: grid; width: 20px; height: 20px; flex: 0 0 20px; place-items: center; border-radius: 50%; background: #eff7f1; color: #538269; }
+.sendflow-detail-delete { display: inline-flex; min-height: 43px; align-items: center; gap: 8px; border: 1px solid #f0e5e5; border-radius: 12px; background: #fffafa; color: #a45455; padding: 0 13px; cursor: pointer; font: inherit; font-size: 11px; font-weight: 650; }
+.sendflow-detail-state { display: flex; min-height: 62vh; flex-direction: column; align-items: center; justify-content: center; padding: 22px; text-align: center; }
+.sendflow-detail-state-icon { display: grid; width: 58px; height: 58px; place-items: center; border-radius: 19px; background: #f2edf8; color: #7650a7; }
+.sendflow-detail-state h2 { margin: 20px 0 6px; color: #2a2332; font-size: 20px; letter-spacing: -.04em; }
+.sendflow-detail-state p { max-width: 330px; margin: 0 0 19px; color: #77717e; font-size: 13px; line-height: 1.55; }
+.sendflow-detail-primary { display: inline-flex; min-height: 50px; align-items: center; justify-content: center; gap: 9px; border: 0; border-radius: 13px; background: #7040b7; color: #fff; padding: 0 17px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; box-shadow: 0 7px 16px rgba(88, 51, 143, .16); }
+.sendflow-detail-primary:disabled { opacity: .65; cursor: not-allowed; }
+.sendflow-detail-text-button { min-height: 42px; margin-top: 8px; border: 0; background: transparent; color: #69439b; cursor: pointer; font: inherit; font-size: 12px; font-weight: 650; }
+.sendflow-detail-skeleton-bar,
+.sendflow-detail-skeleton-hero,
+.sendflow-detail-skeleton-card { overflow: hidden; position: relative; border-radius: 15px; background: #f1edf5; }
+.sendflow-detail-skeleton-bar { height: 44px; margin-bottom: 38px; }
+.sendflow-detail-skeleton-hero { height: 225px; border-radius: 24px; margin-bottom: 24px; }
+.sendflow-detail-skeleton-card { height: 285px; margin-bottom: 14px; }
+.sendflow-detail-skeleton-bar::after,
+.sendflow-detail-skeleton-hero::after,
+.sendflow-detail-skeleton-card::after { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 15%, rgba(255,255,255,.62) 48%, transparent 80%); content: ""; animation: sendflow-detail-shimmer 1.35s ease-in-out infinite; }
+.sendflow-detail-overlay { position: fixed; z-index: 120; inset: 0; display: flex; align-items: flex-end; justify-content: center; overflow-y: auto; background: rgba(31, 25, 41, .36); padding: 22px 12px max(12px, env(safe-area-inset-bottom)); backdrop-filter: blur(3px); }
+.sendflow-detail-sheet { width: min(100%, 520px); max-height: min(88dvh, 820px); overflow: auto; border: 1px solid rgba(255,255,255,.8); border-radius: 24px 24px 18px 18px; background: #fff; padding: 9px 22px 22px; box-shadow: 0 20px 65px rgba(30, 22, 42, .2); animation: sendflow-detail-sheet-in .28s cubic-bezier(.22,1,.36,1) both; }
+.sendflow-detail-sheet-grip { width: 38px; height: 4px; margin: 0 auto 20px; border-radius: 9px; background: #e3dce9; }
+.sendflow-detail-sheet-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 18px; }
+.sendflow-detail-sheet-heading h2 { margin: 5px 0 0; color: #251e2e; font-size: 21px; font-weight: 740; letter-spacing: -.045em; }
+.sendflow-detail-sheet-close { width: 34px; height: 34px; border-radius: 11px; color: #817887; font-size: 22px; }
+.sendflow-detail-edit-lock { display: flex; align-items: flex-start; gap: 9px; margin: 0 0 17px; border: 1px solid #eee5d8; border-radius: 12px; background: #fffbf4; color: #836b48; padding: 11px; font-size: 11px; line-height: 1.45; }
+.sendflow-detail-edit-lock svg { flex: 0 0 auto; margin-top: 1px; }
+.sendflow-detail-form { display: grid; gap: 15px; }
+.sendflow-detail-form label { display: grid; gap: 7px; color: #706a76; font-size: 12px; font-weight: 650; }
+.sendflow-detail-form label > span { color: #9a939f; font-size: 10px; font-weight: 500; }
+.sendflow-detail-form input { width: 100%; min-height: 51px; border: 1px solid #e8e4eb; border-radius: 12px; outline: none; background: #fbfafc; color: #28222f; padding: 0 13px; font: inherit; font-size: 14px; font-weight: 550; transition: border-color .18s, box-shadow .18s, background .18s; }
+.sendflow-detail-form input:focus { border-color: #a988d3; background: #fff; box-shadow: 0 0 0 3px rgba(116,64,189,.1); }
+.sendflow-detail-form input:disabled { background: #f5f2f7; color: #85808b; cursor: not-allowed; }
+.sendflow-detail-form-hint { margin: -7px 1px 0; color: #8c8592; font-size: 10px; line-height: 1.4; }
+.sendflow-detail-form-error { margin: 0; border: 1px solid #f1d8d5; border-radius: 10px; background: #fff7f6; color: #a13d42; padding: 10px 11px; font-size: 11px; line-height: 1.45; }
+.sendflow-detail-save { width: 100%; margin-top: 3px; }
+.sendflow-detail-confirm { width: min(100%, 430px); margin: auto; border-radius: 23px; background: #fff; padding: 25px 22px 20px; box-shadow: 0 18px 60px rgba(30, 22, 42, .2); animation: sendflow-detail-in .22s ease both; }
+.sendflow-detail-confirm-icon { display: grid; width: 45px; height: 45px; place-items: center; border-radius: 15px; background: #fff2f1; color: #a24c50; }
+.sendflow-detail-confirm h2 { margin: 17px 0 7px; color: #292330; font-size: 21px; letter-spacing: -.04em; }
+.sendflow-detail-confirm > p:not(.sendflow-detail-form-error) { margin: 0 0 19px; color: #78717f; font-size: 12px; line-height: 1.55; }
+.sendflow-detail-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 17px; }
+.sendflow-detail-confirm-actions button { min-height: 46px; border-radius: 12px; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; }
+.sendflow-detail-cancel { border: 1px solid #e9e5ec; background: #fff; color: #625b68; }
+.sendflow-detail-danger { border: 1px solid #a74e54; background: #a74e54; color: #fff; }
+.sendflow-detail-confirm-actions button:disabled { opacity: .6; cursor: wait; }
+.sendflow-linkflow-record { cursor: pointer; transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+.sendflow-linkflow-record:hover,
+.sendflow-linkflow-record:focus-visible { border-color: #d8c6ed; box-shadow: 0 7px 19px rgba(70, 42, 104, .08); outline: 0; }
+.sendflow-linkflow-record:focus-visible { box-shadow: 0 0 0 3px rgba(109,53,216,.13); }
+.sendflow-linkflow-detail-hint { display: inline-flex; align-items: center; gap: 4px; color: #7550a3; font-size: 10px; font-weight: 700; }
+@keyframes sendflow-detail-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sendflow-detail-sheet-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sendflow-detail-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@media (min-width: 700px) {
+  .sendflow-detail-page { margin: 28px auto; min-height: calc(100dvh - 56px); border: 1px solid #f0edf3; border-radius: 27px; padding: 23px 38px max(30px, env(safe-area-inset-bottom)); box-shadow: 0 15px 50px rgba(55, 40, 76, .06); }
+  .sendflow-detail-overlay { align-items: center; padding: 24px; }
+  .sendflow-detail-sheet { border-radius: 24px; }
+}
+@media (max-width: 380px) {
+  .sendflow-detail-page { padding-right: 18px; padding-left: 18px; }
+  .sendflow-detail-panel { padding-right: 14px; padding-left: 14px; }
+  .sendflow-detail-facts > div { grid-template-columns: minmax(96px, .75fr) minmax(0, 1.25fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sendflow-detail-panel, .sendflow-detail-confirm, .sendflow-detail-sheet { animation: none; }
+  .sendflow-detail-skeleton-bar::after, .sendflow-detail-skeleton-hero::after, .sendflow-detail-skeleton-card::after { animation: none; }
+  .sendflow-detail-switch button, .sendflow-linkflow-record { transition: none; }
+}
+
 .sendflow-account-limit-content {
   flex: 1 1 auto;
 }
@@ -8272,4 +8452,16 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sendflow-public-pay-card, .sendflow-pay-skeleton-brand, .sendflow-pay-skeleton-line, .sendflow-pay-skeleton-panel { animation: none; }
+}
+
+/* Link detail keeps the LinkFlow illustration fixed behind its scrollable content. */
+.sendflow-linkflow-art.is-detail {
+  top: 24vh;
+  right: -96px;
+  width: min(108vw, 520px);
+  opacity: .24;
+  transform: none;
+}
+.sendflow-detail-page {
+  background: rgba(255, 255, 255, .9);
 }

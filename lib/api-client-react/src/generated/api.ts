@@ -64,6 +64,7 @@ import type {
   CustomerPasswordResetInput,
   CustomerPaymentLink,
   CustomerPaymentLinkInput,
+  CustomerPaymentLinkUpdate,
   CustomerPaymentLinksPage,
   CustomerPinResetInput,
   CustomerPinSetInput,
@@ -2585,6 +2586,249 @@ export const useCreateCustomerPaymentLink = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getCreateCustomerPaymentLinkMutationOptions(options));
+    }
+
+export const getGetCustomerPaymentLinkUrl = (linkId: string,) => {
+
+
+
+
+  return `/api/me/payment-links/${linkId}`
+}
+
+/**
+ * Requires a verified customer PIN. Removed links are hidden from this endpoint.
+ * @summary Read one payment link owned by the authenticated customer
+ */
+export const getCustomerPaymentLink = async (linkId: string, options?: Parameters<typeof customFetch>[1]): Promise<CustomerPaymentLink> => {
+
+  return customFetch<CustomerPaymentLink>(getGetCustomerPaymentLinkUrl(linkId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerPaymentLinkQueryKey = (linkId: string,) => {
+    return [
+    `/api/me/payment-links/${linkId}`
+    ] as const;
+    }
+
+
+export const getGetCustomerPaymentLinkQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerPaymentLink>>, TError = ErrorType<ErrorEnvelope>>(linkId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPaymentLink>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerPaymentLinkQueryKey(linkId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerPaymentLink>>> = ({ signal }) => getCustomerPaymentLink(linkId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: linkId !== null && linkId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerPaymentLink>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerPaymentLinkQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerPaymentLink>>>
+export type GetCustomerPaymentLinkQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Read one payment link owned by the authenticated customer
+ */
+
+export function useGetCustomerPaymentLink<TData = Awaited<ReturnType<typeof getCustomerPaymentLink>>, TError = ErrorType<ErrorEnvelope>>(
+ linkId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPaymentLink>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerPaymentLinkQueryOptions(linkId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateCustomerPaymentLinkUrl = (linkId: string,) => {
+
+
+
+
+  return `/api/me/payment-links/${linkId}`
+}
+
+/**
+ * Requires a verified customer PIN. Updates are blocked after the link has been used or removed.
+ * @summary Update the amount, description, or usage limit of an owned payment link
+ */
+export const updateCustomerPaymentLink = async (linkId: string,
+    customerPaymentLinkUpdate: CustomerPaymentLinkUpdate, options?: Parameters<typeof customFetch>[1]): Promise<CustomerPaymentLink> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerPaymentLink>(getUpdateCustomerPaymentLinkUrl(linkId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerPaymentLinkUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateCustomerPaymentLinkMutationKey = () => ['updateCustomerPaymentLink'] as const;
+
+export const getUpdateCustomerPaymentLinkMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomerPaymentLink>>, TError,UpdateCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCustomerPaymentLink>>, TError,UpdateCustomerPaymentLinkMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCustomerPaymentLinkMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCustomerPaymentLink>>, UpdateCustomerPaymentLinkMutationVariables> = (props) => {
+          const {linkId,data} = props ?? {};
+
+          return  updateCustomerPaymentLink(linkId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCustomerPaymentLinkMutationResult = NonNullable<Awaited<ReturnType<typeof updateCustomerPaymentLink>>>
+    export type UpdateCustomerPaymentLinkMutationBody = BodyType<CustomerPaymentLinkUpdate>
+    export type UpdateCustomerPaymentLinkMutationError = ErrorType<ErrorEnvelope>
+    export type UpdateCustomerPaymentLinkMutationVariables = {linkId: string;data: BodyType<CustomerPaymentLinkUpdate>}
+
+    /**
+ * @summary Update the amount, description, or usage limit of an owned payment link
+ */
+export const useUpdateCustomerPaymentLink = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomerPaymentLink>>, TError,UpdateCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCustomerPaymentLink>>,
+        TError,
+        UpdateCustomerPaymentLinkMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCustomerPaymentLinkMutationOptions(options));
+    }
+
+export const getDeleteCustomerPaymentLinkUrl = (linkId: string,) => {
+
+
+
+
+  return `/api/me/payment-links/${linkId}`
+}
+
+/**
+ * Requires a verified customer PIN. This is a soft deletion; the public URL is invalidated and the record is retained.
+ * @summary Revoke and hide an owned payment link while retaining its history
+ */
+export const deleteCustomerPaymentLink = async (linkId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteCustomerPaymentLinkUrl(linkId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteCustomerPaymentLinkMutationKey = () => ['deleteCustomerPaymentLink'] as const;
+
+export const getDeleteCustomerPaymentLinkMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCustomerPaymentLink>>, TError,DeleteCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCustomerPaymentLink>>, TError,DeleteCustomerPaymentLinkMutationVariables, TContext> => {
+
+const mutationKey = getDeleteCustomerPaymentLinkMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCustomerPaymentLink>>, DeleteCustomerPaymentLinkMutationVariables> = (props) => {
+          const {linkId} = props ?? {};
+
+          return  deleteCustomerPaymentLink(linkId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCustomerPaymentLinkMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCustomerPaymentLink>>>
+
+    export type DeleteCustomerPaymentLinkMutationError = ErrorType<ErrorEnvelope>
+    export type DeleteCustomerPaymentLinkMutationVariables = {linkId: string}
+
+    /**
+ * @summary Revoke and hide an owned payment link while retaining its history
+ */
+export const useDeleteCustomerPaymentLink = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCustomerPaymentLink>>, TError,DeleteCustomerPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCustomerPaymentLink>>,
+        TError,
+        DeleteCustomerPaymentLinkMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteCustomerPaymentLinkMutationOptions(options));
     }
 
 export const getSimulateCustomerPaymentLinkUrl = (token: string,) => {

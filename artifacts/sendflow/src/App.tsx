@@ -28,6 +28,7 @@ const AccountPage = lazy(() => import('@/pages/account'));
 const AccountInfoPage = lazy(() => import('@/pages/account-info'));
 const AccountLimitPage = lazy(() => import('@/pages/account-limit'));
 const LinkFlowPage = lazy(() => import('@/pages/linkflow'));
+const LinkFlowDetailPage = lazy(() => import('@/pages/linkflow-detail'));
 const LinkFlowNewPage = lazy(() => import('@/pages/linkflow-new'));
 const PublicPaymentLinkPage = lazy(() => import('@/pages/public-payment-link'));
 const CustomerServicePage = lazy(() => import('@/pages/customer-service'));
@@ -306,6 +307,7 @@ function App() {
                 <Route path="/account-limit" component={AccountLimitPage} />
                 <Route path="/linkflow" component={LinkFlowPage} />
                 <Route path="/linkflow/new" component={LinkFlowNewPage} />
+                <Route path="/linkflow/:linkId" component={LinkFlowDetailPage} />
                 <Route path="/pay/:token" component={PublicPaymentLinkPage} />
                 <Route path="/customer-service" component={CustomerServicePage} />
                 <Route path="/deposit" component={DepositPage} />

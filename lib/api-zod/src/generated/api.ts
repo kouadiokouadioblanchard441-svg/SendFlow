@@ -647,6 +647,9 @@ export const GetCustomerPaymentLinksQueryParams = zod.object({
 export const getCustomerPaymentLinksResponseItemsItemCodeMin = 8;
 export const getCustomerPaymentLinksResponseItemsItemCodeMax = 12;
 
+export const getCustomerPaymentLinksResponseItemsItemLinkNameMin = 2;
+export const getCustomerPaymentLinksResponseItemsItemLinkNameMax = 120;
+
 export const getCustomerPaymentLinksResponseItemsItemSharePathMin = 48;
 export const getCustomerPaymentLinksResponseItemsItemSharePathMax = 64;
 
@@ -663,6 +666,7 @@ export const GetCustomerPaymentLinksResponse = zod.object({
   "items": zod.array(zod.object({
   "id": zod.uuid(),
   "code": zod.string().min(getCustomerPaymentLinksResponseItemsItemCodeMin).max(getCustomerPaymentLinksResponseItemsItemCodeMax),
+  "linkName": zod.string().min(getCustomerPaymentLinksResponseItemsItemLinkNameMin).max(getCustomerPaymentLinksResponseItemsItemLinkNameMax).nullable(),
   "sharePath": zod.string().min(getCustomerPaymentLinksResponseItemsItemSharePathMin).max(getCustomerPaymentLinksResponseItemsItemSharePathMax).describe('Relative public URL path. Treat as a shareable bearer link.'),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
   "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
@@ -733,6 +737,9 @@ export const CreateCustomerPaymentLinkBody = zod.object({
 export const createCustomerPaymentLinkResponseCodeMin = 8;
 export const createCustomerPaymentLinkResponseCodeMax = 12;
 
+export const createCustomerPaymentLinkResponseLinkNameMin = 2;
+export const createCustomerPaymentLinkResponseLinkNameMax = 120;
+
 export const createCustomerPaymentLinkResponseSharePathMin = 48;
 export const createCustomerPaymentLinkResponseSharePathMax = 64;
 
@@ -748,6 +755,7 @@ export const createCustomerPaymentLinkResponseUsageCountMin = 0;
 export const CreateCustomerPaymentLinkResponse = zod.object({
   "id": zod.uuid(),
   "code": zod.string().min(createCustomerPaymentLinkResponseCodeMin).max(createCustomerPaymentLinkResponseCodeMax),
+  "linkName": zod.string().min(createCustomerPaymentLinkResponseLinkNameMin).max(createCustomerPaymentLinkResponseLinkNameMax).nullable(),
   "sharePath": zod.string().min(createCustomerPaymentLinkResponseSharePathMin).max(createCustomerPaymentLinkResponseSharePathMax).describe('Relative public URL path. Treat as a shareable bearer link.'),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
   "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
@@ -762,6 +770,126 @@ export const CreateCustomerPaymentLinkResponse = zod.object({
   "status": zod.enum(['draft', 'active', 'paused', 'expired', 'exhausted']),
   "createdAt": zod.coerce.date()
 })
+
+
+/**
+ * Requires a verified customer PIN. Removed links are hidden from this endpoint.
+ * @summary Read one payment link owned by the authenticated customer
+ */
+export const GetCustomerPaymentLinkParams = zod.object({
+  "linkId": zod.uuid()
+})
+
+export const getCustomerPaymentLinkResponseCodeMin = 8;
+export const getCustomerPaymentLinkResponseCodeMax = 12;
+
+export const getCustomerPaymentLinkResponseLinkNameMin = 2;
+export const getCustomerPaymentLinkResponseLinkNameMax = 120;
+
+export const getCustomerPaymentLinkResponseSharePathMin = 48;
+export const getCustomerPaymentLinkResponseSharePathMax = 64;
+
+export const getCustomerPaymentLinkResponseAmountMinorMax = 9007199254740991;
+
+export const getCustomerPaymentLinkResponseDescriptionMax = 240;
+
+
+export const getCustomerPaymentLinkResponseUsageCountMin = 0;
+
+
+
+export const GetCustomerPaymentLinkResponse = zod.object({
+  "id": zod.uuid(),
+  "code": zod.string().min(getCustomerPaymentLinkResponseCodeMin).max(getCustomerPaymentLinkResponseCodeMax),
+  "linkName": zod.string().min(getCustomerPaymentLinkResponseLinkNameMin).max(getCustomerPaymentLinkResponseLinkNameMax).nullable(),
+  "sharePath": zod.string().min(getCustomerPaymentLinkResponseSharePathMin).max(getCustomerPaymentLinkResponseSharePathMax).describe('Relative public URL path. Treat as a shareable bearer link.'),
+  "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
+  "amountMinor": zod.int().min(1).max(getCustomerPaymentLinkResponseAmountMinorMax),
+  "description": zod.string().max(getCustomerPaymentLinkResponseDescriptionMax),
+  "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
+  "expiresAt": zod.coerce.date().nullable(),
+  "maximumUses": zod.int().min(1).nullable(),
+  "usageCount": zod.int().min(getCustomerPaymentLinkResponseUsageCountMin),
+  "returnUrl": zod.url().nullable(),
+  "suffix": zod.string().nullable(),
+  "status": zod.enum(['draft', 'active', 'paused', 'expired', 'exhausted']),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * Requires a verified customer PIN. Updates are blocked after the link has been used or removed.
+ * @summary Update the amount, description, or usage limit of an owned payment link
+ */
+export const UpdateCustomerPaymentLinkParams = zod.object({
+  "linkId": zod.uuid()
+})
+
+export const updateCustomerPaymentLinkBodyAmountMax = 24;
+
+
+export const updateCustomerPaymentLinkBodyAmountRegExp = new RegExp('^[0-9]+(\\.[0-9]+)?$');
+export const updateCustomerPaymentLinkBodyDescriptionMin = 2;
+export const updateCustomerPaymentLinkBodyDescriptionMax = 240;
+
+export const updateCustomerPaymentLinkBodyMaximumUsesMax = 999999;
+
+
+
+export const UpdateCustomerPaymentLinkBody = zod.object({
+  "amount": zod.string().min(1).max(updateCustomerPaymentLinkBodyAmountMax).regex(updateCustomerPaymentLinkBodyAmountRegExp).optional(),
+  "description": zod.string().min(updateCustomerPaymentLinkBodyDescriptionMin).max(updateCustomerPaymentLinkBodyDescriptionMax).optional(),
+  "maximumUses": zod.int().min(1).max(updateCustomerPaymentLinkBodyMaximumUsesMax).nullish()
+})
+
+export const updateCustomerPaymentLinkResponseCodeMin = 8;
+export const updateCustomerPaymentLinkResponseCodeMax = 12;
+
+export const updateCustomerPaymentLinkResponseLinkNameMin = 2;
+export const updateCustomerPaymentLinkResponseLinkNameMax = 120;
+
+export const updateCustomerPaymentLinkResponseSharePathMin = 48;
+export const updateCustomerPaymentLinkResponseSharePathMax = 64;
+
+export const updateCustomerPaymentLinkResponseAmountMinorMax = 9007199254740991;
+
+export const updateCustomerPaymentLinkResponseDescriptionMax = 240;
+
+
+export const updateCustomerPaymentLinkResponseUsageCountMin = 0;
+
+
+
+export const UpdateCustomerPaymentLinkResponse = zod.object({
+  "id": zod.uuid(),
+  "code": zod.string().min(updateCustomerPaymentLinkResponseCodeMin).max(updateCustomerPaymentLinkResponseCodeMax),
+  "linkName": zod.string().min(updateCustomerPaymentLinkResponseLinkNameMin).max(updateCustomerPaymentLinkResponseLinkNameMax).nullable(),
+  "sharePath": zod.string().min(updateCustomerPaymentLinkResponseSharePathMin).max(updateCustomerPaymentLinkResponseSharePathMax).describe('Relative public URL path. Treat as a shareable bearer link.'),
+  "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
+  "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
+  "amountMinor": zod.int().min(1).max(updateCustomerPaymentLinkResponseAmountMinorMax),
+  "description": zod.string().max(updateCustomerPaymentLinkResponseDescriptionMax),
+  "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
+  "expiresAt": zod.coerce.date().nullable(),
+  "maximumUses": zod.int().min(1).nullable(),
+  "usageCount": zod.int().min(updateCustomerPaymentLinkResponseUsageCountMin),
+  "returnUrl": zod.url().nullable(),
+  "suffix": zod.string().nullable(),
+  "status": zod.enum(['draft', 'active', 'paused', 'expired', 'exhausted']),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * Requires a verified customer PIN. This is a soft deletion; the public URL is invalidated and the record is retained.
+ * @summary Revoke and hide an owned payment link while retaining its history
+ */
+export const DeleteCustomerPaymentLinkParams = zod.object({
+  "linkId": zod.uuid()
+})
+
+export const DeleteCustomerPaymentLinkResponse = zod.void()
 
 
 /**
