@@ -241,10 +241,6 @@ export default function PublicPaymentLinkPage() {
 
           {link.simulationAvailable ? (
             <>
-              <div className="sendflow-pay-simulation-note" role="status" data-testid="status-payment-simulation">
-                <ShieldCheck size={15} />
-                <span>Compte de visualisation · simulation sans paiement réel</span>
-              </div>
               {simulateMutation.isError && (
                 <div className="sendflow-pay-quote-error" role="alert">
                   <span>La simulation n’a pas pu être préparée.</span>
