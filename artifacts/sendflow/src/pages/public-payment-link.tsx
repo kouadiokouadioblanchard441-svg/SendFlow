@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'wouter';
-import { Check, Clock3, ShieldCheck } from 'lucide-react';
+import { Clock3, ShieldCheck } from 'lucide-react';
 import {
   getGetPublicPaymentLinkQueryKey,
   getQuotePublicPaymentLinkQueryKey,
@@ -279,9 +279,7 @@ export default function PublicPaymentLinkPage() {
               </button>
             </>
           )}
-          <footer className="sendflow-pay-footer"><Check size={14} /> Les tarifs affichés sont calculés par SendFlow selon le réseau sélectionné.</footer>
         </section>
-        <p className="sendflow-pay-legal">Les informations saisies restent sur cet appareil et ne sont pas transmises.</p>
       </div>
     </main>
   );
