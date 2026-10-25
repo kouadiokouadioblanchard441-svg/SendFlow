@@ -234,31 +234,29 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
       res.status(409).json({ error: "Cette demande a déjà été utilisée avec d’autres informations." });
       return;
     }
-    if ((error as { code?: string })?.code === "23505") {
-      try {
-        const parsed = CreateCustomerPaymentLinkBody.safeParse(req.body);
-        if (parsed.success) {
-          const normalized = normalizePaymentLinkInput(parsed.data);
+    try {
+      const parsed = CreateCustomerPaymentLinkBody.safeParse(req.body);
+      if (parsed.success) {
+        const normalized = normalizePaymentLinkInput(parsed.data);
         const [existing] = await db.select(paymentLinkIdempotencyColumns).from(customerPaymentLinksTable).where(and(
-            eq(customerPaymentLinksTable.userId, session.userId),
-            eq(customerPaymentLinksTable.idempotencyKey, normalized.requestId),
-          )).limit(1);
-          if (existing && existing.requestHash === normalized.requestHash) {
-            res.status(201).json(CreateCustomerPaymentLinkResponse.parse(toResponse(existing)));
-            return;
-          }
-          if (existing) {
-            res.status(409).json({ error: "Cette demande a déjà été utilisée avec d’autres informations." });
-            return;
-          }
+          eq(customerPaymentLinksTable.userId, session.userId),
+          eq(customerPaymentLinksTable.idempotencyKey, normalized.requestId),
+        )).limit(1);
+        if (existing && existing.requestHash === normalized.requestHash) {
+          res.status(201).json(CreateCustomerPaymentLinkResponse.parse(toResponse(existing)));
+          return;
         }
-      } catch (retryError) {
-        req.log.error({
-          errorType: getSafeErrorType(retryError),
-          err: retryError,
-          userId: session.userId,
-        }, "Payment link idempotency lookup failed");
+        if (existing) {
+          res.status(409).json({ error: "Cette demande a déjà été utilisée avec d’autres informations." });
+          return;
+        }
       }
+    } catch (retryError) {
+      req.log.error({
+        errorType: getSafeErrorType(retryError),
+        err: retryError,
+        userId: session.userId,
+      }, "Payment link idempotency lookup failed");
     }
     req.log.error({
       errorType: getSafeErrorType(error),
