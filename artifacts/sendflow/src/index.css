@@ -5458,6 +5458,62 @@ body:has(.sendflow-linkflow-shell) {
   }
 }
 
+/* Keep the LinkFlow frame still; interaction feedback changes tone, not position. */
+.sendflow-linkflow-shell {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  overflow-y: visible;
+  overscroll-behavior-x: none;
+}
+
+.sendflow-linkflow-page,
+.sendflow-linkflow-create-page .sendflow-linkflow-form,
+.sendflow-linkflow-records,
+.sendflow-linkflow-skeletons {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sendflow-linkflow-back,
+.sendflow-linkflow-create-link,
+.sendflow-linkflow-pill,
+.sendflow-linkflow-record,
+.sendflow-linkflow-primary,
+.sendflow-linkflow-submit,
+.sendflow-linkflow-secondary,
+.sendflow-linkflow-load-more,
+.sendflow-linkflow-remove-image {
+  transition-property: color, background-color, border-color, box-shadow;
+}
+
+.sendflow-linkflow-back:hover,
+.sendflow-linkflow-back:active,
+.sendflow-linkflow-create-link:hover,
+.sendflow-linkflow-create-link:active,
+.sendflow-linkflow-pill:hover,
+.sendflow-linkflow-pill:active,
+.sendflow-linkflow-record:hover,
+.sendflow-linkflow-primary:hover:not(:disabled),
+.sendflow-linkflow-primary:active,
+.sendflow-linkflow-submit:hover:not(:disabled),
+.sendflow-linkflow-submit:active,
+.sendflow-linkflow-secondary:hover,
+.sendflow-linkflow-secondary:active,
+.sendflow-linkflow-load-more:hover,
+.sendflow-linkflow-load-more:active,
+.sendflow-linkflow-remove-image:hover,
+.sendflow-linkflow-remove-image:active {
+  transform: none !important;
+}
+
+.sendflow-linkflow-skeleton {
+  animation: none;
+  background: #e9edf3;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sendflow-linkflow-record,
   .sendflow-linkflow-create-link,
