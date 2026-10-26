@@ -31,7 +31,7 @@ A LinkFlow link with no fixed amount is stored with amount zero and lets the pay
 
 **Why:** The user requires amount and description to be optional when creating a link, with the payer setting the amount only when the merchant left it blank.
 
-**How to apply:** Treat zero as the variable-amount sentinel only for XOF. Require the payer value for quotes, simulations, and attempts, validate it on the server, include it in idempotency fingerprints and fee calculations, and never let a payer replace a fixed amount.
+**How to apply:** Treat zero as the variable-amount sentinel only for XOF. Put the payer input inside the top bold amount panel, not in a separate field below. Require the value for quotes, simulations, and attempts, validate it on the server, include it in idempotency fingerprints and fee calculations, and never let a payer replace a fixed amount.
 
 For shared-Neon migration plans, normalize PostgreSQL-rendered constraint definitions before testing them; `pg_get_constraintdef` may quote numeric constants and include casts.
 

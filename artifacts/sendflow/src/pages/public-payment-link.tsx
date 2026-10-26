@@ -496,18 +496,16 @@ export default function PublicPaymentLinkPage() {
             </div>
           </div>
 
-          <div className="sendflow-pay-amount-panel" data-testid="public-pay-amount">
-            <strong>{amountLabel}</strong>
-          </div>
-
-          <div className="sendflow-pay-form">
-            {variableAmount && (
-              <label className="sendflow-pay-field">
-                <span>Montant à payer<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-                <div className="sendflow-pay-payer-amount">
+          <div
+            className={`sendflow-pay-amount-panel${variableAmount ? ' sendflow-pay-amount-panel--editable' : ''}${variableAmount && payerAmount && !requestedAmountValid ? ' is-invalid' : ''}`}
+            data-testid="public-pay-amount"
+          >
+            {variableAmount ? (
+              <>
+                <label className="sendflow-pay-inline-amount">
                   <input
                     type="text"
-                    inputMode={link.currencyDecimals === 0 ? 'numeric' : 'decimal'}
+                    inputMode="numeric"
                     autoComplete="off"
                     value={payerAmount}
                     onChange={(event) => {
@@ -515,19 +513,25 @@ export default function PublicPaymentLinkPage() {
                       resetPaymentRequestKey();
                     }}
                     placeholder="Saisissez votre montant"
+                    aria-label="Montant à payer"
                     aria-invalid={Boolean(payerAmount && !requestedAmountValid)}
                     aria-describedby="public-pay-amount-help"
                     data-testid="input-public-pay-amount"
                   />
                   <b>{link.currency}</b>
-                </div>
+                </label>
                 <small id="public-pay-amount-help">
                   {payerAmount && !requestedAmountValid
                     ? 'Pour ce paiement, saisissez un montant compris entre 100 et 2 000 000 XOF.'
                     : 'Montant libre : entrez le montant que vous souhaitez payer.'}
                 </small>
-              </label>
+              </>
+            ) : (
+              <strong>{amountLabel}</strong>
             )}
+          </div>
+
+          <div className="sendflow-pay-form">
             <label className="sendflow-pay-field">
               <span>Moyens de paiement</span>
               <select

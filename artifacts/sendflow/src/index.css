@@ -8135,6 +8135,68 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
 }
 .sendflow-pay-amount-panel small { display: inline-flex; align-items: center; justify-content: center; gap: 5px; color: #5d566b; font-size: 11px; font-weight: 500; }
 .sendflow-pay-amount-panel small svg { color: #6134c5; }
+.sendflow-pay-amount-panel--editable {
+  justify-items: stretch;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid #d8cee7;
+  border-radius: 14px;
+  background: #f5f1fa;
+}
+.sendflow-pay-inline-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+}
+.sendflow-pay-inline-amount input {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #211b31;
+  font-size: clamp(30px, 7vw, 38px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 720;
+  letter-spacing: -.04em;
+  line-height: 1.15;
+  text-align: center;
+}
+.sendflow-pay-inline-amount input::placeholder {
+  color: #716b7c;
+  font-size: clamp(17px, 4.8vw, 21px);
+  font-weight: 500;
+  letter-spacing: -.01em;
+  opacity: 1;
+}
+.sendflow-pay-inline-amount input:focus {
+  box-shadow: none;
+}
+.sendflow-pay-inline-amount b {
+  flex: 0 0 auto;
+  color: #211b31;
+  font-size: 15px;
+  font-weight: 750;
+}
+.sendflow-pay-amount-panel--editable > small {
+  display: block;
+  margin: 0;
+  color: #5d566b;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+}
+.sendflow-pay-amount-panel--editable.is-invalid {
+  border-color: #bd3030;
+}
+.sendflow-pay-amount-panel--editable.is-invalid > small {
+  color: #a52626;
+}
 .sendflow-pay-method-select {
   appearance: auto;
   border-color: #cfc9da !important;
