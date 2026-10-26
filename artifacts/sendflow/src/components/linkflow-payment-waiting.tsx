@@ -1,5 +1,9 @@
-import { LoaderCircle, PhoneCall, ShieldCheck, Smartphone } from 'lucide-react';
+import { Clock3, LoaderCircle, PhoneCall, ShieldCheck, Smartphone } from 'lucide-react';
 import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
+import {
+  formatLinkFlowCountdown,
+  LINKFLOW_PAYMENT_TIMEOUT_SECONDS,
+} from '@/lib/linkflow-attempt-storage';
 
 export interface LinkFlowPaymentWaitingProps {
   merchantName: string;
@@ -9,6 +13,7 @@ export interface LinkFlowPaymentWaitingProps {
   onRefresh?: () => void;
   refreshing?: boolean;
   simulation?: boolean;
+  countdownSeconds?: number;
 }
 
 export default function LinkFlowPaymentWaiting({
@@ -19,8 +24,15 @@ export default function LinkFlowPaymentWaiting({
   onRefresh,
   refreshing = false,
   simulation = false,
+  countdownSeconds,
 }: LinkFlowPaymentWaitingProps) {
   const uncertain = state === 'uncertain';
+  const countdownProgress = countdownSeconds === undefined
+    ? 0
+    : Math.min(100, Math.max(0, (countdownSeconds / LINKFLOW_PAYMENT_TIMEOUT_SECONDS) * 100));
+  const countdownLabel = countdownSeconds === undefined
+    ? ''
+    : formatLinkFlowCountdown(countdownSeconds);
 
   return (
     <main className="sendflow-linkflow-waiting-shell">
@@ -84,6 +96,31 @@ export default function LinkFlowPaymentWaiting({
             <li><span>3</span><p>Vérifiez le montant, puis confirmez sur votre téléphone.</p></li>
             <li><span>4</span><p>Gardez cette page ouverte pendant la vérification.</p></li>
           </ol>
+        )}
+
+        {!simulation && countdownSeconds !== undefined && (
+          <div
+            className="sendflow-linkflow-expiry-countdown"
+            role="timer"
+            aria-label={`Expiration du paiement dans ${countdownLabel}`}
+          >
+            <div className="sendflow-linkflow-expiry-ring" aria-hidden="true">
+              <svg viewBox="0 0 72 72">
+                <circle className="sendflow-linkflow-expiry-ring-track" cx="36" cy="36" r="30" />
+                <circle
+                  className="sendflow-linkflow-expiry-ring-progress"
+                  cx="36"
+                  cy="36"
+                  r="30"
+                  pathLength="100"
+                  strokeDasharray="100"
+                  strokeDashoffset={100 - countdownProgress}
+                />
+              </svg>
+              <span><Clock3 size={22} strokeWidth={1.8} /></span>
+            </div>
+            <p>Le délai de confirmation expire dans <strong>{countdownLabel}</strong></p>
+          </div>
         )}
 
         {onRefresh && (

@@ -9682,6 +9682,56 @@ body:has(.sendflow-linkflow-failure-shell) { background: #fff; }
   font-size: 14px;
   line-height: 1.5;
 }
+.sendflow-linkflow-expiry-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 28px 0 0;
+  color: #626771;
+}
+.sendflow-linkflow-expiry-ring {
+  position: relative;
+  width: 72px;
+  height: 72px;
+}
+.sendflow-linkflow-expiry-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.sendflow-linkflow-expiry-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+.sendflow-linkflow-expiry-ring-track {
+  stroke: #e5e7eb;
+}
+.sendflow-linkflow-expiry-ring-progress {
+  stroke: #6740d8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .35s linear;
+}
+.sendflow-linkflow-expiry-ring > span {
+  position: absolute;
+  inset: 13px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #6740d8;
+}
+.sendflow-linkflow-expiry-countdown p {
+  margin: 0;
+  color: #626771;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.sendflow-linkflow-expiry-countdown strong {
+  color: #343943;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
 .sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-refresh {
   min-height: 50px;
   margin-top: 22px;

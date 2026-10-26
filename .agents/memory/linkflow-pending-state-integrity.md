@@ -63,6 +63,12 @@ For public LinkFlow, show a failed payment as “Paiement non confirmé” only 
 
 **How to apply:** Preserve distinct server-owned outcomes for pending, failed, succeeded, and expired links; do not treat an expired link as a failed payment or a browser preview as a real result.
 
+The 10-minute LinkFlow waiting countdown may show a payer-facing “Paiement non confirmé” timeout when no terminal result has arrived, but it must not mark the payment failed in financial records; continue server polling and let verified success or failure take precedence.
+
+**Why:** The user wants the waiting flow to show failure at the 10-minute deadline while also choosing continued verification until FeexPay returns a final result.
+
+**How to apply:** Keep the deadline as local presentation state, persist it across reloads, retain the active payment attempt, and never finalize or settle a transaction from the browser timer.
+
 After server-confirmed LinkFlow success, keep the success screen visible until the payer clicks “Terminer”. Then navigate to the merchant return URL if configured; otherwise go to `https://sendflow.africa`. Never redirect automatically after a delay.
 
 **Why:** The user explicitly chose to let the payer see the success result before continuing, with SendFlow as the fallback when the merchant has no return URL.

@@ -21,7 +21,13 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import securePaymentMark from '@assets/generated_images/sendflow-secure-payment-mark-3d-clean.png';
 import waveOperatorLogo from '@/assets/wave-logo-reference.png';
 import { OperatorMark } from '@/components/operator-mark';
-import { parseStoredLinkFlowAttempt, parseStoredLinkFlowIdempotencyKey } from '@/lib/linkflow-attempt-storage';
+import {
+  getLinkFlowCountdownSeconds,
+  LINKFLOW_PAYMENT_TIMEOUT_MS,
+  parseStoredLinkFlowAttempt,
+  parseStoredLinkFlowIdempotencyKey,
+  shouldShowLinkFlowTimeoutFailure,
+} from '@/lib/linkflow-attempt-storage';
 import LinkFlowPaymentOutcome from '@/components/linkflow-payment-outcome';
 import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
 import LinkFlowPaymentWaiting from '@/components/linkflow-payment-waiting';
@@ -75,7 +81,7 @@ const MIN_LINK_LOADING_MS = 1000;
 
 type ActivePaymentAttempt = Pick<PublicPaymentLinkAttemptCreated, 'attemptId' | 'pollToken'>
   & Partial<Pick<PublicPaymentLinkAttemptCreated, 'merchantName' | 'amountMinor' | 'currency' | 'currencyDecimals' | 'ussdCode'>>
-  & { token: string };
+  & { token: string; expiresAt: number };
 
 export default function PublicPaymentLinkPage() {
   const { token = '' } = useParams<{ token: string }>();
@@ -114,6 +120,7 @@ export default function PublicPaymentLinkPage() {
   const [simulationOutcome, setSimulationOutcome] = useState<'succeeded' | 'failed' | null>(null);
   const [simulationPhase, setSimulationPhase] = useState<'waiting' | 'result' | null>(null);
   const [realAttempt, setRealAttempt] = useState<ActivePaymentAttempt | null>(null);
+  const [countdownNow, setCountdownNow] = useState(() => Date.now());
   const [paymentRequestKey, setPaymentRequestKey] = useState('');
   const [storageHydratedToken, setStorageHydratedToken] = useState('');
   const [paymentRecoveryAvailable, setPaymentRecoveryAvailable] = useState(true);
@@ -174,6 +181,9 @@ export default function PublicPaymentLinkPage() {
   const activeRealAttempt = storageHydratedToken === token && realAttempt?.token === token
     ? realAttempt
     : null;
+  const countdownSeconds = activeRealAttempt
+    ? getLinkFlowCountdownSeconds(activeRealAttempt.expiresAt, countdownNow)
+    : null;
   const paymentStatusQuery = useQuery({
     queryKey: ['public-linkflow-attempt-status', activeRealAttempt?.attemptId],
     queryFn: ({ signal }) => getPublicPaymentLinkAttemptStatus(activeRealAttempt!.attemptId, {
@@ -189,6 +199,15 @@ export default function PublicPaymentLinkPage() {
       return state === 'succeeded' || state === 'failed' ? false : 4_000;
     },
   });
+
+  useEffect(() => {
+    if (!activeRealAttempt) return;
+    const updateTime = () => setCountdownNow(Date.now());
+    updateTime();
+    const interval = window.setInterval(updateTime, 1000);
+    return () => window.clearInterval(interval);
+  }, [activeRealAttempt?.attemptId, activeRealAttempt?.expiresAt]);
+
   useEffect(() => {
     startPaymentMutation.reset();
     simulateMutation.reset();
@@ -215,7 +234,18 @@ export default function PublicPaymentLinkPage() {
       const attemptStorageKey = paymentStorageKey(token, 'attempt');
       const savedAttempt = window.sessionStorage.getItem(attemptStorageKey);
       const parsedAttempt = parseStoredLinkFlowAttempt(savedAttempt);
-      if (parsedAttempt) setRealAttempt({ ...parsedAttempt, token });
+      if (parsedAttempt) {
+        const expiresAt = parsedAttempt.expiresAt ?? Date.now() + LINKFLOW_PAYMENT_TIMEOUT_MS;
+        const recoveredAttempt = { ...parsedAttempt, expiresAt, token };
+        setRealAttempt(recoveredAttempt);
+        if (parsedAttempt.expiresAt === null) {
+          window.sessionStorage.setItem(attemptStorageKey, JSON.stringify({
+            attemptId: parsedAttempt.attemptId,
+            pollToken: parsedAttempt.pollToken,
+            expiresAt,
+          }));
+        }
+      }
       else if (savedAttempt) window.sessionStorage.removeItem(attemptStorageKey);
 
       const requestStorageKey = paymentStorageKey(token, 'idempotency');
@@ -305,9 +335,11 @@ export default function PublicPaymentLinkPage() {
       },
     }, {
       onSuccess: (attempt) => {
+        const expiresAt = Date.now() + LINKFLOW_PAYMENT_TIMEOUT_MS;
         const activeAttempt = {
           attemptId: attempt.attemptId,
           pollToken: attempt.pollToken,
+          expiresAt,
           token,
           merchantName: attempt.merchantName,
           amountMinor: attempt.amountMinor,
@@ -320,6 +352,7 @@ export default function PublicPaymentLinkPage() {
           const serializedAttempt = JSON.stringify({
             attemptId: attempt.attemptId,
             pollToken: attempt.pollToken,
+            expiresAt,
           });
           window.sessionStorage.setItem(attemptStorageKey, serializedAttempt);
           if (window.sessionStorage.getItem(attemptStorageKey) !== serializedAttempt) {
@@ -405,6 +438,31 @@ export default function PublicPaymentLinkPage() {
       );
     }
     const waitingDisplay = confirmedStatus ?? activeRealAttempt;
+    if (shouldShowLinkFlowTimeoutFailure(countdownSeconds, confirmedStatus?.state)) {
+      // This is a payer-facing timeout only; the active status query keeps running,
+      // and any terminal state returned by the server takes precedence above.
+      return (
+        <>
+          {backgroundArt}
+          <LinkFlowPaymentOutcome
+            outcome="failed"
+            merchantName={waitingDisplay.merchantName ?? link?.merchantName ?? 'SendFlow'}
+            amountLabel={waitingDisplay.amountMinor && waitingDisplay.currency && waitingDisplay.currencyDecimals !== undefined
+              ? formatMoney(waitingDisplay.amountMinor, waitingDisplay.currency, waitingDisplay.currencyDecimals)
+              : link ? formatMoney(link.amountMinor, link.currency, link.currencyDecimals) : '—'}
+            onFinish={() => {
+              setRealAttempt(null);
+              setPaymentRequestKey('');
+              try {
+                window.sessionStorage.removeItem(paymentStorageKey(token, 'attempt'));
+                window.sessionStorage.removeItem(paymentStorageKey(token, 'idempotency'));
+              } catch { /* session storage is optional */ }
+              refreshPublicLink();
+            }}
+          />
+        </>
+      );
+    }
     return (
       <>
         {backgroundArt}
@@ -415,6 +473,7 @@ export default function PublicPaymentLinkPage() {
             : link ? formatMoney(link.amountMinor, link.currency, link.currencyDecimals) : '—'}
           ussdCode={waitingDisplay.ussdCode ?? null}
           state={paymentStatusQuery.isError || !paymentRecoveryAvailable || confirmedStatus?.state === 'uncertain' ? 'uncertain' : 'waiting'}
+          countdownSeconds={countdownSeconds ?? undefined}
           onRefresh={() => void paymentStatusQuery.refetch()}
           refreshing={paymentStatusQuery.isFetching}
         />
