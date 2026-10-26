@@ -3981,10 +3981,11 @@
 
 .sendflow-biometric-page {
   width: min(100%, 560px);
-  min-height: 100vh;
+  min-height: 100svh;
   margin-inline: auto;
   padding: max(24px, env(safe-area-inset-top)) 20px max(32px, env(safe-area-inset-bottom));
   color: #171717;
+  background: radial-gradient(ellipse at 50% 0%, #eee6ff 0, #f8f6fc 340px, transparent 720px);
 }
 
 .sendflow-biometric-back {
@@ -4010,15 +4011,68 @@
   text-align: center;
 }
 
-.sendflow-biometric-icon {
+.sendflow-biometric-hero {
+  position: relative;
   display: grid;
-  width: 72px;
-  height: 72px;
+  min-height: 230px;
   place-items: center;
-  margin: 0 auto 18px;
-  border-radius: 22px;
-  background: #f2edff;
+  isolation: isolate;
+  overflow: hidden;
+  margin: -8px -8px 22px;
+  border: 1px solid #eee8fb;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 96%) 0, rgb(250 247 255 / 92%) 48%, rgb(243 236 255 / 92%) 100%);
+}
+
+.sendflow-biometric-hero-glow {
+  position: absolute;
+  z-index: -1;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgb(124 58 237 / 20%);
+  filter: blur(42px);
+}
+
+.sendflow-biometric-illustration {
+  display: block;
+  width: min(100%, 230px);
+  height: 198px;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 18px rgb(62 35 123 / 18%));
+}
+
+.sendflow-biometric-hero-fallback {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  border: 1px solid #e7ddfc;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #fff, #eee6ff);
+  box-shadow: 0 14px 30px rgb(62 35 123 / 14%);
   color: #5630bd;
+}
+
+.sendflow-biometric-hero-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 7px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(232 224 248 / 90%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 5px 16px rgb(49 32 88 / 7%);
+  color: #4828a5;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .sendflow-biometric-card h1 {
@@ -4096,6 +4150,11 @@
 }
 
 @media (max-width: 600px) {
+  .sendflow-biometric-page { padding-right: 16px; padding-left: 16px; }
+  .sendflow-biometric-card { padding: 22px 18px; }
+  .sendflow-biometric-hero { min-height: 204px; margin-right: -4px; margin-left: -4px; }
+  .sendflow-biometric-illustration { width: min(100%, 205px); height: 178px; }
+  .sendflow-biometric-hero-badge { bottom: 10px; }
   .sendflow-pin-brand { margin-top: clamp(28px, 4vh, 50px); }
   .sendflow-pin-heading { margin-top: clamp(22px, 3vh, 36px); }
   .sendflow-pin-heading.is-change-pin { min-height: 84px; }
