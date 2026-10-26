@@ -11,6 +11,7 @@ const protectedCustomerPaths = new Set([
   '/notifications',
   '/change-pin',
   '/change-pin-success',
+  '/biometric',
   '/pricing',
 ]);
 

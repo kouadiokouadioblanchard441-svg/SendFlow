@@ -60,6 +60,9 @@ import type {
   CreatePaymentAggregatorRequest,
   CurrentAccount,
   CustomerAuthResult,
+  CustomerBiometricOptions,
+  CustomerBiometricStatus,
+  CustomerBiometricVerificationInput,
   CustomerMutationResult,
   CustomerPasswordResetInput,
   CustomerPaymentLink,
@@ -1852,6 +1855,481 @@ export const useUnlockCustomerSession = <TError = ErrorType<ErrorEnvelope | Phon
         TContext
       > => {
       return useMutation(getUnlockCustomerSessionMutationOptions(options));
+    }
+
+export const getGetCustomerBiometricStatusUrl = () => {
+
+
+
+
+  return `/api/auth/biometric`
+}
+
+/**
+ * @summary Check biometric unlock availability for the current customer
+ */
+export const getCustomerBiometricStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerBiometricStatus> => {
+
+  return customFetch<CustomerBiometricStatus>(getGetCustomerBiometricStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerBiometricStatusQueryKey = () => {
+    return [
+    `/api/auth/biometric`
+    ] as const;
+    }
+
+
+export const getGetCustomerBiometricStatusQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerBiometricStatus>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerBiometricStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerBiometricStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerBiometricStatus>>> = ({ signal }) => getCustomerBiometricStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerBiometricStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerBiometricStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerBiometricStatus>>>
+export type GetCustomerBiometricStatusQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Check biometric unlock availability for the current customer
+ */
+
+export function useGetCustomerBiometricStatus<TData = Awaited<ReturnType<typeof getCustomerBiometricStatus>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerBiometricStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerBiometricStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRemoveCustomerBiometricCredentialsUrl = () => {
+
+
+
+
+  return `/api/auth/biometric`
+}
+
+/**
+ * @summary Remove biometric credentials from the current customer account
+ */
+export const removeCustomerBiometricCredentials = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerBiometricStatus> => {
+
+  return customFetch<CustomerBiometricStatus>(getRemoveCustomerBiometricCredentialsUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRemoveCustomerBiometricCredentialsMutationKey = () => ['removeCustomerBiometricCredentials'] as const;
+
+export const getRemoveCustomerBiometricCredentialsMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCustomerBiometricCredentials>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeCustomerBiometricCredentials>>, TError,void, TContext> => {
+
+const mutationKey = getRemoveCustomerBiometricCredentialsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeCustomerBiometricCredentials>>, void> = () => {
+
+
+          return  removeCustomerBiometricCredentials(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveCustomerBiometricCredentialsMutationResult = NonNullable<Awaited<ReturnType<typeof removeCustomerBiometricCredentials>>>
+
+    export type RemoveCustomerBiometricCredentialsMutationError = ErrorType<ErrorEnvelope>
+
+
+    /**
+ * @summary Remove biometric credentials from the current customer account
+ */
+export const useRemoveCustomerBiometricCredentials = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCustomerBiometricCredentials>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeCustomerBiometricCredentials>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRemoveCustomerBiometricCredentialsMutationOptions(options));
+    }
+
+export const getStartCustomerBiometricRegistrationUrl = () => {
+
+
+
+
+  return `/api/auth/biometric/registration/options`
+}
+
+/**
+ * @summary Start secure biometric credential registration
+ */
+export const startCustomerBiometricRegistration = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerBiometricOptions> => {
+
+  return customFetch<CustomerBiometricOptions>(getStartCustomerBiometricRegistrationUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStartCustomerBiometricRegistrationMutationKey = () => ['startCustomerBiometricRegistration'] as const;
+
+export const getStartCustomerBiometricRegistrationMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startCustomerBiometricRegistration>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startCustomerBiometricRegistration>>, TError,void, TContext> => {
+
+const mutationKey = getStartCustomerBiometricRegistrationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startCustomerBiometricRegistration>>, void> = () => {
+
+
+          return  startCustomerBiometricRegistration(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartCustomerBiometricRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof startCustomerBiometricRegistration>>>
+
+    export type StartCustomerBiometricRegistrationMutationError = ErrorType<ErrorEnvelope>
+
+
+    /**
+ * @summary Start secure biometric credential registration
+ */
+export const useStartCustomerBiometricRegistration = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startCustomerBiometricRegistration>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startCustomerBiometricRegistration>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getStartCustomerBiometricRegistrationMutationOptions(options));
+    }
+
+export const getVerifyCustomerBiometricRegistrationUrl = () => {
+
+
+
+
+  return `/api/auth/biometric/registration/verify`
+}
+
+/**
+ * @summary Verify and save a biometric credential
+ */
+export const verifyCustomerBiometricRegistration = async (customerBiometricVerificationInput: CustomerBiometricVerificationInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerBiometricStatus> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerBiometricStatus>(getVerifyCustomerBiometricRegistrationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerBiometricVerificationInput)
+  }
+);}
+
+
+
+
+
+export const getVerifyCustomerBiometricRegistrationMutationKey = () => ['verifyCustomerBiometricRegistration'] as const;
+
+export const getVerifyCustomerBiometricRegistrationMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricRegistration>>, TError,VerifyCustomerBiometricRegistrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricRegistration>>, TError,VerifyCustomerBiometricRegistrationMutationVariables, TContext> => {
+
+const mutationKey = getVerifyCustomerBiometricRegistrationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyCustomerBiometricRegistration>>, VerifyCustomerBiometricRegistrationMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyCustomerBiometricRegistration(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyCustomerBiometricRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof verifyCustomerBiometricRegistration>>>
+    export type VerifyCustomerBiometricRegistrationMutationBody = BodyType<CustomerBiometricVerificationInput>
+    export type VerifyCustomerBiometricRegistrationMutationError = ErrorType<ErrorEnvelope>
+    export type VerifyCustomerBiometricRegistrationMutationVariables = {data: BodyType<CustomerBiometricVerificationInput>}
+
+    /**
+ * @summary Verify and save a biometric credential
+ */
+export const useVerifyCustomerBiometricRegistration = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricRegistration>>, TError,VerifyCustomerBiometricRegistrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyCustomerBiometricRegistration>>,
+        TError,
+        VerifyCustomerBiometricRegistrationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getVerifyCustomerBiometricRegistrationMutationOptions(options));
+    }
+
+export const getStartCustomerBiometricAuthenticationUrl = () => {
+
+
+
+
+  return `/api/auth/biometric/authentication/options`
+}
+
+/**
+ * @summary Start biometric authentication for the current session
+ */
+export const startCustomerBiometricAuthentication = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerBiometricOptions> => {
+
+  return customFetch<CustomerBiometricOptions>(getStartCustomerBiometricAuthenticationUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStartCustomerBiometricAuthenticationMutationKey = () => ['startCustomerBiometricAuthentication'] as const;
+
+export const getStartCustomerBiometricAuthenticationMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startCustomerBiometricAuthentication>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startCustomerBiometricAuthentication>>, TError,void, TContext> => {
+
+const mutationKey = getStartCustomerBiometricAuthenticationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startCustomerBiometricAuthentication>>, void> = () => {
+
+
+          return  startCustomerBiometricAuthentication(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartCustomerBiometricAuthenticationMutationResult = NonNullable<Awaited<ReturnType<typeof startCustomerBiometricAuthentication>>>
+
+    export type StartCustomerBiometricAuthenticationMutationError = ErrorType<ErrorEnvelope>
+
+
+    /**
+ * @summary Start biometric authentication for the current session
+ */
+export const useStartCustomerBiometricAuthentication = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startCustomerBiometricAuthentication>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startCustomerBiometricAuthentication>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getStartCustomerBiometricAuthenticationMutationOptions(options));
+    }
+
+export const getVerifyCustomerBiometricAuthenticationUrl = () => {
+
+
+
+
+  return `/api/auth/biometric/authentication/verify`
+}
+
+/**
+ * @summary Verify biometric authentication and unlock the current PIN session
+ */
+export const verifyCustomerBiometricAuthentication = async (customerBiometricVerificationInput: CustomerBiometricVerificationInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerPinStateResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerPinStateResult>(getVerifyCustomerBiometricAuthenticationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerBiometricVerificationInput)
+  }
+);}
+
+
+
+
+
+export const getVerifyCustomerBiometricAuthenticationMutationKey = () => ['verifyCustomerBiometricAuthentication'] as const;
+
+export const getVerifyCustomerBiometricAuthenticationMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>, TError,VerifyCustomerBiometricAuthenticationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>, TError,VerifyCustomerBiometricAuthenticationMutationVariables, TContext> => {
+
+const mutationKey = getVerifyCustomerBiometricAuthenticationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>, VerifyCustomerBiometricAuthenticationMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyCustomerBiometricAuthentication(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyCustomerBiometricAuthenticationMutationResult = NonNullable<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>>
+    export type VerifyCustomerBiometricAuthenticationMutationBody = BodyType<CustomerBiometricVerificationInput>
+    export type VerifyCustomerBiometricAuthenticationMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+    export type VerifyCustomerBiometricAuthenticationMutationVariables = {data: BodyType<CustomerBiometricVerificationInput>}
+
+    /**
+ * @summary Verify biometric authentication and unlock the current PIN session
+ */
+export const useVerifyCustomerBiometricAuthentication = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>, TError,VerifyCustomerBiometricAuthenticationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>,
+        TError,
+        VerifyCustomerBiometricAuthenticationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getVerifyCustomerBiometricAuthenticationMutationOptions(options));
     }
 
 export const getSetCustomerPinUrl = () => {

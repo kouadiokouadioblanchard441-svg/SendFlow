@@ -1,14 +1,27 @@
 import { randomUUID } from "node:crypto";
 import { Router, type IRouter, type Response } from "express";
 import {
+  generateAuthenticationOptions,
+  generateRegistrationOptions,
+  verifyAuthenticationResponse,
+  verifyRegistrationResponse,
+} from "@simplewebauthn/server";
+import type {
+  AuthenticationResponseJSON,
+  RegistrationResponseJSON,
+} from "@simplewebauthn/server";
+import {
   and,
   countriesTable,
+  customerBiometricChallengesTable,
+  customerBiometricCredentialsTable,
   customerCredentialsTable,
   customerSessionsTable,
   db,
   eq,
   gte,
   isNull,
+  lt,
   or,
   sql,
   phoneOtpChallengesTable,
@@ -25,6 +38,14 @@ import {
   SignInCustomerBody,
   SignInCustomerResponse,
   SignOutCustomerResponse,
+  GetCustomerBiometricStatusResponse,
+  StartCustomerBiometricRegistrationResponse,
+  StartCustomerBiometricAuthenticationResponse,
+  VerifyCustomerBiometricRegistrationBody,
+  VerifyCustomerBiometricAuthenticationBody,
+  VerifyCustomerBiometricRegistrationResponse,
+  VerifyCustomerBiometricAuthenticationResponse,
+  RemoveCustomerBiometricCredentialsResponse,
   UnlockCustomerSessionBody,
   UnlockCustomerSessionResponse,
 } from "@workspace/api-zod";
@@ -68,10 +89,56 @@ import {
 import { isSharedNeonPreview } from "../lib/shared-neon-preview-guard";
 import { previewPasswordForVerification } from "../lib/preview-credential-policy";
 import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
+import { getCustomerBiometricOrigin } from "../lib/customer-biometric-origin";
 
 const router: IRouter = Router();
 const PRIVACY_POLICY_VERSION = "sendflow-privacy-v1";
 const DUMMY_PASSWORD_HASH = hashCustomerSecret("sendflow-invalid-account-password");
+const BIOMETRIC_CHALLENGE_TTL_MS = 5 * 60 * 1000;
+
+function getWebAuthnOrigin(req: Parameters<typeof requesterAddress>[0]) {
+  return getCustomerBiometricOrigin(req.method, req.get("origin"), req.get("host"));
+}
+
+async function saveBiometricChallenge(
+  userId: string,
+  sessionId: string,
+  purpose: "registration" | "authentication",
+  origin: string,
+  rpId: string,
+  challenge: string,
+) {
+  const now = new Date();
+  await db.delete(customerBiometricChallengesTable)
+    .where(lt(customerBiometricChallengesTable.expiresAt, now));
+  await db.delete(customerBiometricChallengesTable)
+    .where(and(
+      eq(customerBiometricChallengesTable.sessionId, sessionId),
+      eq(customerBiometricChallengesTable.purpose, purpose),
+      isNull(customerBiometricChallengesTable.usedAt),
+    ));
+  const [row] = await db.insert(customerBiometricChallengesTable).values({
+    userId,
+    sessionId,
+    purpose,
+    expectedOrigin: origin,
+    rpId,
+    challenge,
+    expiresAt: new Date(now.getTime() + BIOMETRIC_CHALLENGE_TTL_MS),
+  }).returning({ id: customerBiometricChallengesTable.id });
+  if (!row) throw new Error("Biometric challenge could not be stored");
+  return row.id;
+}
+
+async function getBiometricCredentialCount(userId: string, rpId: string) {
+  const rows = await db.select({ id: customerBiometricCredentialsTable.id })
+    .from(customerBiometricCredentialsTable)
+    .where(and(
+      eq(customerBiometricCredentialsTable.userId, userId),
+      eq(customerBiometricCredentialsTable.rpId, rpId),
+    ));
+  return rows.length;
+}
 
 function safeErrorCode(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error
@@ -578,6 +645,387 @@ router.post("/auth/unlock", async (req, res): Promise<void> => {
   } catch (error) {
     req.log.error({ errorCode: safeErrorCode(error) }, "Customer PIN unlock failed");
     res.status(503).json({ error: "La vérification du PIN est momentanément indisponible." });
+  }
+});
+
+router.get("/auth/biometric", async (req, res): Promise<void> => {
+  try {
+    const session = await requireCustomerSession(req, res);
+    if (!session) return;
+    const origin = getWebAuthnOrigin(req);
+    if (!origin) {
+      res.status(403).json({ error: "Cette origine ne peut pas vérifier une clé biométrique." });
+      return;
+    }
+    const credentialCount = session.pinConfigured
+      ? await getBiometricCredentialCount(session.userId, origin.rpId)
+      : 0;
+    res.json(GetCustomerBiometricStatusResponse.parse({
+      enabled: credentialCount > 0,
+      credentialCount,
+    }));
+  } catch (error) {
+    req.log.error({ errorCode: safeErrorCode(error) }, "Customer biometric status could not be loaded");
+    res.status(503).json({ error: "La biométrie est momentanément indisponible." });
+  }
+});
+
+router.post("/auth/biometric/registration/options", async (req, res): Promise<void> => {
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine de requête non autorisée." });
+    return;
+  }
+  try {
+    const session = await requireCustomerSession(req, res);
+    if (!session) return;
+    if (!session.pinConfigured || !session.pinUnlocked) {
+      res.status(403).json({ error: "Déverrouillez votre code PIN avant d’activer la biométrie." });
+      return;
+    }
+    const origin = getWebAuthnOrigin(req);
+    if (!origin) {
+      res.status(403).json({ error: "Cette origine ne peut pas enregistrer une clé biométrique." });
+      return;
+    }
+    const existing = await db.select({
+      credentialId: customerBiometricCredentialsTable.credentialId,
+      transports: customerBiometricCredentialsTable.transports,
+    }).from(customerBiometricCredentialsTable)
+      .where(and(
+        eq(customerBiometricCredentialsTable.userId, session.userId),
+        eq(customerBiometricCredentialsTable.rpId, origin.rpId),
+      ));
+    const options = await generateRegistrationOptions({
+      rpName: "SendFlow",
+      rpID: origin.rpId,
+      userID: new TextEncoder().encode(session.userId),
+      userName: session.userId,
+      userDisplayName: session.displayName || "Compte SendFlow",
+      attestationType: "none",
+      timeout: 60_000,
+      excludeCredentials: existing.map((credential) => ({
+        id: credential.credentialId,
+        transports: credential.transports,
+      })),
+      authenticatorSelection: {
+        authenticatorAttachment: "platform",
+        residentKey: "required",
+        userVerification: "required",
+      },
+    });
+    const challengeId = await saveBiometricChallenge(
+      session.userId,
+      session.sessionId,
+      "registration",
+      origin.origin,
+      origin.rpId,
+      options.challenge,
+    );
+    res.json(StartCustomerBiometricRegistrationResponse.parse({ challengeId, options }));
+  } catch (error) {
+    req.log.error({ errorCode: safeErrorCode(error) }, "Customer biometric registration options failed");
+    res.status(503).json({ error: "L’activation biométrique est momentanément indisponible." });
+  }
+});
+
+router.post("/auth/biometric/registration/verify", async (req, res): Promise<void> => {
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine de requête non autorisée." });
+    return;
+  }
+  const parsed = VerifyCustomerBiometricRegistrationBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "La réponse biométrique est invalide." });
+    return;
+  }
+  try {
+    const session = await requireCustomerSession(req, res);
+    if (!session) return;
+    if (!session.pinConfigured || !session.pinUnlocked) {
+      res.status(403).json({ error: "Déverrouillez votre code PIN avant d’activer la biométrie." });
+      return;
+    }
+    const origin = getWebAuthnOrigin(req);
+    if (!origin) {
+      res.status(403).json({ error: "Cette origine ne peut pas enregistrer une clé biométrique." });
+      return;
+    }
+    const now = new Date();
+    const [challenge] = await db.select().from(customerBiometricChallengesTable)
+      .where(and(
+        eq(customerBiometricChallengesTable.id, parsed.data.challengeId),
+        eq(customerBiometricChallengesTable.userId, session.userId),
+        eq(customerBiometricChallengesTable.sessionId, session.sessionId),
+        eq(customerBiometricChallengesTable.purpose, "registration"),
+        eq(customerBiometricChallengesTable.expectedOrigin, origin.origin),
+        gte(customerBiometricChallengesTable.expiresAt, now),
+        isNull(customerBiometricChallengesTable.usedAt),
+      )).limit(1);
+    if (!challenge) {
+      res.status(400).json({ error: "La demande biométrique a expiré. Réessayez." });
+      return;
+    }
+    let verification;
+    try {
+      verification = await verifyRegistrationResponse({
+        response: parsed.data.credential as unknown as RegistrationResponseJSON,
+        expectedChallenge: challenge.challenge,
+        expectedOrigin: challenge.expectedOrigin,
+        expectedRPID: challenge.rpId,
+        requireUserVerification: true,
+      });
+    } catch {
+      verification = null;
+    }
+    if (!verification?.verified || !verification.registrationInfo.userVerified) {
+      res.status(400).json({ error: "L’authentification biométrique n’a pas été confirmée." });
+      return;
+    }
+    const info = verification.registrationInfo.credential;
+    const transports = info.transports ?? [];
+    const result = await db.transaction(async (tx) => {
+      const [consumed] = await tx.update(customerBiometricChallengesTable)
+        .set({ usedAt: now })
+        .where(and(
+          eq(customerBiometricChallengesTable.id, challenge.id),
+          eq(customerBiometricChallengesTable.userId, session.userId),
+          eq(customerBiometricChallengesTable.sessionId, session.sessionId),
+          isNull(customerBiometricChallengesTable.usedAt),
+          gte(customerBiometricChallengesTable.expiresAt, now),
+        )).returning({ id: customerBiometricChallengesTable.id });
+      if (!consumed) return false;
+      await tx.insert(customerBiometricCredentialsTable).values({
+        userId: session.userId,
+        rpId: challenge.rpId,
+        credentialId: info.id,
+        publicKey: Buffer.from(info.publicKey).toString("base64url"),
+        counter: info.counter,
+        transports,
+      });
+      return true;
+    });
+    if (!result) {
+      res.status(400).json({ error: "La demande biométrique a déjà été utilisée. Réessayez." });
+      return;
+    }
+    const credentialCount = await getBiometricCredentialCount(session.userId, origin.rpId);
+    res.json(VerifyCustomerBiometricRegistrationResponse.parse({
+      enabled: credentialCount > 0,
+      credentialCount,
+    }));
+  } catch (error) {
+    if (safeErrorCode(error) === "23505") {
+      res.status(409).json({ error: "Cette empreinte est déjà associée à votre compte." });
+      return;
+    }
+    req.log.error({ errorCode: safeErrorCode(error) }, "Customer biometric registration failed");
+    res.status(503).json({ error: "L’activation biométrique est momentanément indisponible." });
+  }
+});
+
+router.post("/auth/biometric/authentication/options", async (req, res): Promise<void> => {
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine de requête non autorisée." });
+    return;
+  }
+  try {
+    const session = await requireCustomerSession(req, res);
+    if (!session) return;
+    if (!session.pinConfigured) {
+      res.status(401).json({ error: "Aucun code PIN n’est configuré." });
+      return;
+    }
+    const origin = getWebAuthnOrigin(req);
+    if (!origin) {
+      res.status(403).json({ error: "Cette origine ne peut pas vérifier une clé biométrique." });
+      return;
+    }
+    const credentials = await db.select({
+      credentialId: customerBiometricCredentialsTable.credentialId,
+      transports: customerBiometricCredentialsTable.transports,
+    }).from(customerBiometricCredentialsTable)
+      .where(and(
+        eq(customerBiometricCredentialsTable.userId, session.userId),
+        eq(customerBiometricCredentialsTable.rpId, origin.rpId),
+      ));
+    if (credentials.length === 0) {
+      res.status(404).json({ error: "Aucune empreinte n’est activée sur ce compte." });
+      return;
+    }
+    const options = await generateAuthenticationOptions({
+      rpID: origin.rpId,
+      allowCredentials: credentials.map((credential) => ({
+        id: credential.credentialId,
+        transports: credential.transports,
+      })),
+      userVerification: "required",
+      timeout: 60_000,
+    });
+    const challengeId = await saveBiometricChallenge(
+      session.userId,
+      session.sessionId,
+      "authentication",
+      origin.origin,
+      origin.rpId,
+      options.challenge,
+    );
+    res.json(StartCustomerBiometricAuthenticationResponse.parse({ challengeId, options }));
+  } catch (error) {
+    req.log.error({ errorCode: safeErrorCode(error) }, "Customer biometric authentication options failed");
+    res.status(503).json({ error: "Le déverrouillage biométrique est momentanément indisponible." });
+  }
+});
+
+router.post("/auth/biometric/authentication/verify", async (req, res): Promise<void> => {
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine de requête non autorisée." });
+    return;
+  }
+  const parsed = VerifyCustomerBiometricAuthenticationBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "La réponse biométrique est invalide." });
+    return;
+  }
+  try {
+    const session = await requireCustomerSession(req, res);
+    if (!session) return;
+    if (!session.pinConfigured) {
+      res.status(401).json({ error: "Aucun code PIN n’est configuré." });
+      return;
+    }
+    const origin = getWebAuthnOrigin(req);
+    if (!origin) {
+      res.status(403).json({ error: "Cette origine ne peut pas vérifier une clé biométrique." });
+      return;
+    }
+    const buckets = getPinAttemptBuckets(session.userId, req);
+    const result = await withPinAttemptLock(buckets, async (tx) => {
+      const now = new Date();
+      const retry = await getAuthRateLimit(buckets, now, tx);
+      if (retry !== null) return { kind: "rate", retry } as const;
+      const [challenge] = await tx.select().from(customerBiometricChallengesTable)
+        .where(and(
+          eq(customerBiometricChallengesTable.id, parsed.data.challengeId),
+          eq(customerBiometricChallengesTable.userId, session.userId),
+          eq(customerBiometricChallengesTable.sessionId, session.sessionId),
+          eq(customerBiometricChallengesTable.purpose, "authentication"),
+          eq(customerBiometricChallengesTable.expectedOrigin, origin.origin),
+          gte(customerBiometricChallengesTable.expiresAt, now),
+          isNull(customerBiometricChallengesTable.usedAt),
+        )).for("update").limit(1);
+      if (!challenge) return { kind: "invalid" } as const;
+      const response = parsed.data.credential as unknown as AuthenticationResponseJSON;
+      const responseId = typeof response.id === "string" ? response.id : "";
+      const [credential] = await tx.select().from(customerBiometricCredentialsTable)
+        .where(and(
+          eq(customerBiometricCredentialsTable.userId, session.userId),
+          eq(customerBiometricCredentialsTable.credentialId, responseId),
+        )).for("update").limit(1);
+      let verified = false;
+      let newCounter = credential?.counter ?? 0;
+      if (credential) {
+        try {
+          const verification = await verifyAuthenticationResponse({
+            response,
+            expectedChallenge: challenge.challenge,
+            expectedOrigin: challenge.expectedOrigin,
+            expectedRPID: challenge.rpId,
+            credential: {
+              id: credential.credentialId,
+              publicKey: new Uint8Array(Buffer.from(credential.publicKey, "base64url")),
+              counter: credential.counter,
+              transports: credential.transports as never,
+            },
+            requireUserVerification: true,
+          });
+          verified = verification.verified && verification.authenticationInfo.userVerified;
+          newCounter = verification.authenticationInfo.newCounter;
+        } catch {
+          verified = false;
+        }
+      }
+      await tx.update(customerBiometricChallengesTable)
+        .set({ usedAt: now })
+        .where(and(
+          eq(customerBiometricChallengesTable.id, challenge.id),
+          isNull(customerBiometricChallengesTable.usedAt),
+        ));
+      if (!verified || !credential) {
+        await recordAuthFailure(buckets, now, tx);
+        const retryAfterFailure = await getAuthRateLimit(buckets, now, tx);
+        return retryAfterFailure !== null
+          ? { kind: "rate", retry: retryAfterFailure } as const
+          : { kind: "invalid" } as const;
+      }
+      const [updatedCredential] = await tx.update(customerBiometricCredentialsTable)
+        .set({ counter: newCounter, lastUsedAt: now })
+        .where(and(
+          eq(customerBiometricCredentialsTable.id, credential.id),
+          eq(customerBiometricCredentialsTable.userId, session.userId),
+          eq(customerBiometricCredentialsTable.counter, credential.counter),
+        )).returning({ id: customerBiometricCredentialsTable.id });
+      const [updatedSession] = await tx.update(customerSessionsTable)
+        .set({
+          pinVerifiedUntil: new Date(now.getTime() + CUSTOMER_PIN_UNLOCK_TTL_MS),
+          lastSeenAt: now,
+        })
+        .where(and(
+          eq(customerSessionsTable.id, session.sessionId),
+          eq(customerSessionsTable.userId, session.userId),
+          isNull(customerSessionsTable.revokedAt),
+          gte(customerSessionsTable.expiresAt, now),
+        )).returning({ id: customerSessionsTable.id });
+      if (!updatedCredential || !updatedSession) return { kind: "expired" } as const;
+      await clearAuthFailures(buckets, tx);
+      return { kind: "success" } as const;
+    });
+    if (result.kind === "rate") {
+      sendRateLimit(res, result.retry);
+      return;
+    }
+    if (result.kind === "invalid") {
+      res.status(401).json({ error: "L’empreinte n’a pas pu être vérifiée. Utilisez votre code PIN." });
+      return;
+    }
+    if (result.kind === "expired") {
+      res.status(401).json({ error: "Session expirée. Connectez-vous à nouveau." });
+      return;
+    }
+    res.json(VerifyCustomerBiometricAuthenticationResponse.parse({
+      pinConfigured: true,
+      pinUnlocked: true,
+    }));
+  } catch (error) {
+    req.log.error({ errorCode: safeErrorCode(error) }, "Customer biometric authentication failed");
+    res.status(503).json({ error: "Le déverrouillage biométrique est momentanément indisponible." });
+  }
+});
+
+router.delete("/auth/biometric", async (req, res): Promise<void> => {
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine de requête non autorisée." });
+    return;
+  }
+  try {
+    const session = await requireCustomerSession(req, res);
+    if (!session) return;
+    if (!session.pinConfigured || !session.pinUnlocked) {
+      res.status(403).json({ error: "Déverrouillez votre code PIN avant de désactiver la biométrie." });
+      return;
+    }
+    await db.transaction(async (tx) => {
+      await tx.delete(customerBiometricCredentialsTable)
+        .where(eq(customerBiometricCredentialsTable.userId, session.userId));
+      await tx.delete(customerBiometricChallengesTable)
+        .where(and(
+          eq(customerBiometricChallengesTable.userId, session.userId),
+          isNull(customerBiometricChallengesTable.usedAt),
+        ));
+    });
+    res.json(RemoveCustomerBiometricCredentialsResponse.parse({ enabled: false, credentialCount: 0 }));
+  } catch (error) {
+    req.log.error({ errorCode: safeErrorCode(error) }, "Customer biometric credentials could not be removed");
+    res.status(503).json({ error: "La désactivation biométrique est momentanément indisponible." });
   }
 });
 

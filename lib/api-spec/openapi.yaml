@@ -604,6 +604,143 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/biometric:
+    get:
+      operationId: getCustomerBiometricStatus
+      tags: [account]
+      summary: Check biometric unlock availability for the current customer
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Biometric credential status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerBiometricStatus"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: removeCustomerBiometricCredentials
+      tags: [account]
+      summary: Remove biometric credentials from the current customer account
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Biometric credentials removed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerBiometricStatus"
+        "403":
+          description: The customer PIN must be unlocked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/biometric/registration/options:
+    post:
+      operationId: startCustomerBiometricRegistration
+      tags: [account]
+      summary: Start secure biometric credential registration
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Registration options for the current device.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerBiometricOptions"
+        "403":
+          description: The customer PIN must be unlocked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/biometric/registration/verify:
+    post:
+      operationId: verifyCustomerBiometricRegistration
+      tags: [account]
+      summary: Verify and save a biometric credential
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerBiometricVerificationInput"
+      responses:
+        "200":
+          description: Biometric credential registered.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerBiometricStatus"
+        "400":
+          description: Invalid or expired registration challenge.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/biometric/authentication/options:
+    post:
+      operationId: startCustomerBiometricAuthentication
+      tags: [account]
+      summary: Start biometric authentication for the current session
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Authentication options for registered credentials.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerBiometricOptions"
+        "404":
+          description: No biometric credential is registered.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/biometric/authentication/verify:
+    post:
+      operationId: verifyCustomerBiometricAuthentication
+      tags: [account]
+      summary: Verify biometric authentication and unlock the current PIN session
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerBiometricVerificationInput"
+      responses:
+        "200":
+          description: Biometric proof accepted; the current session is temporarily unlocked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPinStateResult"
+        "401":
+          description: Biometric proof is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Too many authentication attempts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneOtpRateLimitError"
   /me/pin:
     put:
       operationId: setCustomerPin
@@ -4058,6 +4195,35 @@ components:
         pinUnlocked:
           type: boolean
       required: [pinConfigured, pinUnlocked]
+    CustomerBiometricStatus:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        credentialCount:
+          type: integer
+          minimum: 0
+      required: [enabled, credentialCount]
+    CustomerBiometricOptions:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        options:
+          type: object
+          additionalProperties: true
+      required: [challengeId, options]
+    CustomerBiometricVerificationInput:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        credential:
+          type: object
+          additionalProperties: true
+      required: [challengeId, credential]
     CustomerMutationResult:
       type: object
       properties:

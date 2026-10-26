@@ -42,6 +42,7 @@ const NotificationDetailPage = lazy(() =>
   import('@/pages/notifications').then((module) => ({ default: module.NotificationDetailPage })),
 );
 const PinPage = lazy(() => import('@/pages/pin'));
+const BiometricSettingsPage = lazy(() => import('@/pages/biometric-settings'));
 const ChangePinPage = lazy(() =>
   import('@/pages/pin').then((module) => ({ default: module.ChangePinPage })),
 );
@@ -297,6 +298,7 @@ function App() {
                 <Route path="/sign-up/*?" component={SignupPage} />
                 <Route path="/create-pin" component={() => <PinPage mode="create" />} />
                 <Route path="/pin" component={() => <PinPage mode="enter" />} />
+                <Route path="/biometric" component={BiometricSettingsPage} />
                 <Route path="/change-pin" component={ChangePinPage} />
                 <Route path="/change-pin-success" component={PinChangeSuccessPage} />
                 <Route path="/pricing" component={PricingPage} />

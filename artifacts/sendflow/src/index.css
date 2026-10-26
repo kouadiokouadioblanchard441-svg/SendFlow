@@ -3941,6 +3941,18 @@
   color: #050505;
 }
 
+.sendflow-pin-biometric {
+  color: #050505;
+}
+
+.sendflow-pin-biometric:hover {
+  color: #6d35d8;
+}
+
+.sendflow-pin-biometric svg {
+  display: block;
+}
+
 .sendflow-pin-error {
   display: flex;
   min-height: 36px;
@@ -3965,6 +3977,122 @@
   font-size: 15px;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.sendflow-biometric-page {
+  width: min(100%, 560px);
+  min-height: 100vh;
+  margin-inline: auto;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(32px, env(safe-area-inset-bottom));
+  color: #171717;
+}
+
+.sendflow-biometric-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  color: #37218b;
+  cursor: pointer;
+  padding: 8px 0;
+  font: inherit;
+  font-weight: 600;
+}
+
+.sendflow-biometric-card {
+  margin-top: 34px;
+  padding: 28px 24px;
+  border: 1px solid #e7e3ef;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgb(31 22 70 / 7%);
+  text-align: center;
+}
+
+.sendflow-biometric-icon {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  margin: 0 auto 18px;
+  border-radius: 22px;
+  background: #f2edff;
+  color: #5630bd;
+}
+
+.sendflow-biometric-card h1 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.sendflow-biometric-description,
+.sendflow-biometric-note {
+  color: #64616d;
+  line-height: 1.55;
+}
+
+.sendflow-biometric-status {
+  margin: 22px 0 8px;
+  color: #5f596e;
+  font-weight: 700;
+}
+
+.sendflow-biometric-status.is-enabled {
+  color: #16834a;
+}
+
+.sendflow-biometric-action {
+  display: inline-flex;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 14px;
+  background: #6d35d8;
+  color: #fff;
+  cursor: pointer;
+  padding: 0 20px;
+  font: inherit;
+  font-weight: 750;
+}
+
+.sendflow-biometric-action.is-secondary {
+  border: 1px solid #d8d2e4;
+  background: #fff;
+  color: #342174;
+}
+
+.sendflow-biometric-action:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.sendflow-biometric-message {
+  color: #625d6c;
+  line-height: 1.5;
+}
+
+.sendflow-biometric-message button {
+  display: block;
+  margin: 8px auto 0;
+  border: 0;
+  background: transparent;
+  color: #5630bd;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.sendflow-biometric-back:focus-visible,
+.sendflow-biometric-action:focus-visible,
+.sendflow-biometric-message button:focus-visible,
+.sendflow-pin-biometric:focus-visible {
+  outline: 3px solid #8d6dec;
+  outline-offset: 3px;
 }
 
 @media (max-width: 600px) {

@@ -5,9 +5,13 @@ import { hashCustomerSecret, hashCustomerSessionToken, verifyCustomerSecret } fr
 import { toPreviewPasswordHash, previewPasswordForVerification } from "./preview-credential-policy.ts";
 import { randomBytes } from "node:crypto";
 
-test("viewer candidate list admits LinkFlow only through its exact owner-scoped list/create routes", () => {
+test("viewer candidate list admits exact owner-scoped account, LinkFlow, and biometric routes", () => {
   for (const [method, path] of [
     ["GET", "/api/auth/session"], ["POST", "/api/auth/sign-in"], ["POST", "/api/auth/unlock"],
+    ["GET", "/api/auth/biometric"], ["POST", "/api/auth/biometric/registration/options"],
+    ["POST", "/api/auth/biometric/registration/verify"],
+    ["POST", "/api/auth/biometric/authentication/options"],
+    ["POST", "/api/auth/biometric/authentication/verify"], ["DELETE", "/api/auth/biometric"],
     ["POST", "/api/auth/sign-out"], ["PUT", "/api/me/pin"], ["GET", "/api/me"],
     ["GET", "/api/me/transactions"], ["POST", "/api/me/transfer-quote"],
     ["GET", "/api/me/account-limit"], ["GET", "/api/me/identity-verification"],
@@ -21,6 +25,8 @@ test("viewer candidate list admits LinkFlow only through its exact owner-scoped 
     ["GET", "/api/me/transactions/other-user"], ["PUT", "/api/me"],
     ["GET", "/api/me/profile"], ["PATCH", "/api/me/profile"],
     ["GET", "/api/me/account-limit/unknown"], ["POST", "/api/me/transfer-quote/unknown"],
+    ["GET", "/api/auth/biometric/unknown"], ["POST", "/api/auth/biometric"],
+    ["DELETE", "/api/auth/biometric/unknown"],
     ["GET", "/api/me/../private"], ["GET", "/api/me%00"], ["GET", "/api/%zz"],
     ["POST", "/api/payments"], ["GET", "/api/me/future-route"],
     ["PATCH", "/api/me/payment-links"], ["DELETE", "/api/me/payment-links"],

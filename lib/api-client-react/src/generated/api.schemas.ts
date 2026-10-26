@@ -310,6 +310,26 @@ export interface CustomerPinStateResult {
   pinUnlocked: boolean;
 }
 
+export interface CustomerBiometricStatus {
+  enabled: boolean;
+  /** @minimum 0 */
+  credentialCount: number;
+}
+
+export type CustomerBiometricOptionsOptions = { [key: string]: unknown };
+
+export interface CustomerBiometricOptions {
+  challengeId: string;
+  options: CustomerBiometricOptionsOptions;
+}
+
+export type CustomerBiometricVerificationInputCredential = { [key: string]: unknown };
+
+export interface CustomerBiometricVerificationInput {
+  challengeId: string;
+  credential: CustomerBiometricVerificationInputCredential;
+}
+
 export interface CustomerMutationResult {
   success: boolean;
 }

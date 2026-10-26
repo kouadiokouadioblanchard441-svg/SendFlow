@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Delete } from 'lucide-react';
+import { ArrowLeft, Delete, Fingerprint } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { markPinUnlocked } from '@/lib/pin-unlock';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSetCustomerPin, useUnlockCustomerSession } from '@workspace/api-client-react';
+import {
+  getGetCustomerBiometricStatusQueryKey,
+  useGetCustomerBiometricStatus,
+  useSetCustomerPin,
+  useStartCustomerBiometricAuthentication,
+  useUnlockCustomerSession,
+  useVerifyCustomerBiometricAuthentication,
+} from '@workspace/api-client-react';
+import {
+  getPlatformBiometricAssertion,
+  hasPlatformBiometricAuthenticator,
+} from '@/lib/customer-biometric';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import pinCharacterPrimary from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
@@ -78,19 +89,37 @@ function PinDots({ entry }: { entry: string }) {
 function PinKeypad({
   keys,
   processing,
+  biometricVisible = false,
   onDigit,
   onDelete,
+  onBiometric,
 }: {
   keys: PinKey[];
   processing: boolean;
+  biometricVisible?: boolean;
   onDigit: (digit: string) => void;
   onDelete: () => void;
+  onBiometric?: () => void;
 }) {
   return (
     <div className="sendflow-pin-keypad" aria-label="Pavé numérique">
       {keys.map((key, index) => {
         const keyId = key === '' ? `empty-${index}` : key;
         if (key === '') {
+          if (biometricVisible && index === 9) {
+            return (
+              <button
+                key={keyId}
+                type="button"
+                className="sendflow-pin-key sendflow-pin-biometric"
+                onClick={onBiometric}
+                aria-label="Déverrouiller avec la biométrie"
+                disabled={processing}
+              >
+                <Fingerprint size={34} strokeWidth={2.2} />
+              </button>
+            );
+          }
           return (
             <span
               key={keyId}
@@ -180,6 +209,26 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   const [processing, setProcessing] = useState(false);
   const setCustomerPin = useSetCustomerPin();
   const unlockCustomerSession = useUnlockCustomerSession();
+  const biometricStatus = useGetCustomerBiometricStatus({
+    query: {
+      queryKey: getGetCustomerBiometricStatusQueryKey(),
+      enabled: mode === 'enter',
+      retry: false,
+      staleTime: 0,
+    },
+  });
+  const startBiometricAuthentication = useStartCustomerBiometricAuthentication();
+  const verifyBiometricAuthentication = useVerifyCustomerBiometricAuthentication();
+  const [platformBiometricAvailable, setPlatformBiometricAvailable] = useState(false);
+
+  useEffect(() => {
+    if (mode !== 'enter') return;
+    let active = true;
+    void hasPlatformBiometricAuthenticator().then((available) => {
+      if (active) setPlatformBiometricAvailable(available);
+    });
+    return () => { active = false; };
+  }, [mode]);
 
   useSeo({
     path: mode === 'create' ? '/create-pin' : '/pin',
@@ -248,6 +297,46 @@ export default function PinPage({ mode }: { mode: PinMode }) {
     }
   }, [clearEntry, confirming, createdPin, mode, queryClient, setCustomerPin, unlockCustomerSession, setLocation]);
 
+  const unlockWithBiometric = useCallback(async () => {
+    if (
+      mode !== 'enter'
+      || !platformBiometricAvailable
+      || !biometricStatus.data?.enabled
+      || processing
+      || processingRef.current
+    ) return;
+    processingRef.current = true;
+    setProcessing(true);
+    setError('');
+    try {
+      const challenge = await startBiometricAuthentication.mutateAsync();
+      const credential = await getPlatformBiometricAssertion(challenge.options);
+      if (!credential) throw new Error("Aucune preuve biométrique n’a été reçue.");
+      await verifyBiometricAuthentication.mutateAsync({
+        data: { challengeId: challenge.challengeId, credential },
+      });
+      queryClient.clear();
+      markPinUnlocked();
+      setLocation('/account');
+    } catch (error) {
+      const candidate = error as { name?: string; data?: { error?: string } };
+      setError(candidate.name === 'NotAllowedError'
+        ? 'Authentification annulée. Vous pouvez saisir votre code PIN.'
+        : candidate.data?.error ?? 'La biométrie n’a pas pu être vérifiée. Saisissez votre code PIN.');
+      setProcessing(false);
+      processingRef.current = false;
+    }
+  }, [
+    biometricStatus.data?.enabled,
+    mode,
+    platformBiometricAvailable,
+    processing,
+    queryClient,
+    setLocation,
+    startBiometricAuthentication,
+    verifyBiometricAuthentication,
+  ]);
+
   const appendDigit = useCallback((digit: string) => {
     if (processing || processingRef.current || entryRef.current.length >= PIN_LENGTH || !/^\d$/.test(digit)) return;
     setError('');
@@ -305,7 +394,14 @@ export default function PinPage({ mode }: { mode: PinMode }) {
         </header>
 
         <PinDots entry={entry} />
-        <PinKeypad keys={keypad} processing={processing} onDigit={appendDigit} onDelete={removeDigit} />
+        <PinKeypad
+          keys={keypad}
+          processing={processing}
+          biometricVisible={mode === 'enter' && platformBiometricAvailable && Boolean(biometricStatus.data?.enabled)}
+          onDigit={appendDigit}
+          onDelete={removeDigit}
+          onBiometric={() => void unlockWithBiometric()}
+        />
 
         {error && <p className="sendflow-pin-error" role="alert">{error}</p>}
 

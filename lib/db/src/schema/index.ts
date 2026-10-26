@@ -7,6 +7,7 @@ export * from "./banners";
 export * from "./contacts";
 export * from "./countries";
 export * from "./customer-auth-attempts";
+export * from "./customer-biometric";
 export * from "./customer-credentials";
 export * from "./customer-sessions";
 export * from "./identity-verification";

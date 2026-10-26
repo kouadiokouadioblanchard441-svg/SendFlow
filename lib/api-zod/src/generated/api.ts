@@ -505,6 +505,82 @@ export const UnlockCustomerSessionResponse = zod.object({
 
 
 /**
+ * @summary Check biometric unlock availability for the current customer
+ */
+export const getCustomerBiometricStatusResponseCredentialCountMin = 0;
+
+
+
+export const GetCustomerBiometricStatusResponse = zod.object({
+  "enabled": zod.boolean(),
+  "credentialCount": zod.int().min(getCustomerBiometricStatusResponseCredentialCountMin)
+})
+
+
+/**
+ * @summary Remove biometric credentials from the current customer account
+ */
+export const removeCustomerBiometricCredentialsResponseCredentialCountMin = 0;
+
+
+
+export const RemoveCustomerBiometricCredentialsResponse = zod.object({
+  "enabled": zod.boolean(),
+  "credentialCount": zod.int().min(removeCustomerBiometricCredentialsResponseCredentialCountMin)
+})
+
+
+/**
+ * @summary Start secure biometric credential registration
+ */
+export const StartCustomerBiometricRegistrationResponse = zod.object({
+  "challengeId": zod.uuid(),
+  "options": zod.record(zod.string(), zod.unknown())
+})
+
+
+/**
+ * @summary Verify and save a biometric credential
+ */
+export const VerifyCustomerBiometricRegistrationBody = zod.object({
+  "challengeId": zod.uuid(),
+  "credential": zod.record(zod.string(), zod.unknown())
+})
+
+export const verifyCustomerBiometricRegistrationResponseCredentialCountMin = 0;
+
+
+
+export const VerifyCustomerBiometricRegistrationResponse = zod.object({
+  "enabled": zod.boolean(),
+  "credentialCount": zod.int().min(verifyCustomerBiometricRegistrationResponseCredentialCountMin)
+})
+
+
+/**
+ * @summary Start biometric authentication for the current session
+ */
+export const StartCustomerBiometricAuthenticationResponse = zod.object({
+  "challengeId": zod.uuid(),
+  "options": zod.record(zod.string(), zod.unknown())
+})
+
+
+/**
+ * @summary Verify biometric authentication and unlock the current PIN session
+ */
+export const VerifyCustomerBiometricAuthenticationBody = zod.object({
+  "challengeId": zod.uuid(),
+  "credential": zod.record(zod.string(), zod.unknown())
+})
+
+export const VerifyCustomerBiometricAuthenticationResponse = zod.object({
+  "pinConfigured": zod.boolean(),
+  "pinUnlocked": zod.boolean()
+})
+
+
+/**
  * First-time setup needs an authenticated session; changing an existing PIN also requires the current PIN.
  * @summary Set or change the customer PIN
  */
