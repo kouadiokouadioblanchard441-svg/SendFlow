@@ -8615,22 +8615,110 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
   object-fit: contain;
   filter: drop-shadow(0 2px 2px rgba(42, 24, 80, .2));
 }
-.sendflow-linkflow-outcome-card { padding: 0; }
-.sendflow-linkflow-outcome-card .sendflow-linkflow-flow-brand { padding: 21px 20px 0; }
-.sendflow-linkflow-outcome-banner { display: grid; justify-items: center; background: #5e32bb; color: #fff; padding: 28px 20px 25px; text-align: center; }
-.sendflow-linkflow-outcome-mark { display: grid; width: 94px; height: 94px; place-items: center; margin: 0 0 17px; border: 3px solid #241d2d; border-radius: 50%; background: #10d878; color: #fff; box-shadow: 0 4px 0 #241d2d; }
-.is-failure .sendflow-linkflow-outcome-banner { background: #f5f1f8; color: #241d2d; }
-.is-failure .sendflow-linkflow-outcome-mark { background: #fff0f0; color: #d71920; border-color: #241d2d; }
-.sendflow-linkflow-outcome-kicker { margin: 0 0 6px; color: inherit; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
-.sendflow-linkflow-outcome-banner h1 { color: inherit; font-size: clamp(23px, 6vw, 30px); }
-.sendflow-linkflow-outcome-merchant { margin: 9px 0 0; color: inherit; font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
-.sendflow-linkflow-outcome-content { padding: 24px 22px 22px; }
-.sendflow-linkflow-outcome-content > p:first-child { margin: 0; color: #342d3d; font-size: 15px; line-height: 1.55; text-align: center; }
-.sendflow-linkflow-outcome-content > p:first-child strong { color: #201b29; }
-.sendflow-linkflow-outcome-note { display: flex; align-items: flex-start; gap: 9px; margin-top: 17px; border: 2px solid #241d2d; border-radius: 10px; background: #fff6df; padding: 12px; color: #57451b; font-size: 12px; line-height: 1.45; }
-.sendflow-linkflow-outcome-note svg { flex: 0 0 auto; color: #8a5d00; }
-.sendflow-linkflow-outcome-redirect { margin: 14px 0 0; color: #514a59; font-size: 12px; text-align: center; }
-.sendflow-linkflow-outcome-button { margin-top: 20px; }
+.sendflow-linkflow-failure-shell {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 100dvh;
+  justify-content: center;
+  background: #fff;
+  color: #17191e;
+  padding: 22px 22px max(20px, env(safe-area-inset-bottom));
+}
+body:has(.sendflow-linkflow-failure-shell) { background: #fff; }
+.sendflow-linkflow-failure-card {
+  box-sizing: border-box;
+  display: flex;
+  width: min(100%, 440px);
+  flex: 1 1 auto;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  padding: 0;
+  color: #17191e;
+  box-shadow: none;
+}
+.sendflow-linkflow-failure-merchant {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  border: 0;
+  border-radius: 16px;
+  background: #f2f3f5;
+  padding: 10px 15px;
+  color: #17191e;
+  font-size: 15px;
+  font-weight: 650;
+}
+.sendflow-linkflow-failure-merchant strong { overflow-wrap: anywhere; }
+.sendflow-linkflow-failure-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  color: #17191e;
+  padding: clamp(66px, 12vh, 96px) 8px 0;
+  text-align: center;
+}
+.sendflow-linkflow-failure-mark {
+  display: grid;
+  width: 70px;
+  height: 70px;
+  place-items: center;
+  margin: 0 0 22px;
+  border: 2px dashed #7b818a;
+  border-radius: 50%;
+  background: #fff;
+  color: #a73540;
+}
+.sendflow-linkflow-failure-banner h1 {
+  margin: 0;
+  color: #17191e;
+  font-size: clamp(27px, 7vw, 32px);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+}
+.sendflow-linkflow-outcome-content { padding: 13px 0 0; }
+.sendflow-linkflow-outcome-content > p:first-child {
+  max-width: 360px;
+  margin: 10px auto 0;
+  color: #646973;
+  font-size: 15px;
+  line-height: 1.55;
+  text-align: center;
+}
+.sendflow-linkflow-outcome-content > p:first-child strong { color: #17191e; }
+.sendflow-linkflow-outcome-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 19px;
+  border: 0;
+  border-radius: 13px;
+  background: #f4f5f6;
+  padding: 13px 14px;
+  color: #555c65;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.sendflow-linkflow-outcome-note svg { flex: 0 0 auto; color: #a73540; }
+.sendflow-linkflow-outcome-button {
+  min-height: 52px;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 12px;
+  background: #6536c5;
+  box-shadow: 0 7px 16px rgba(74, 54, 151, .18);
+  font-size: 16px;
+}
+.sendflow-linkflow-outcome-button:hover { background: #5630aa; }
+.sendflow-linkflow-outcome-button:focus-visible {
+  outline: 3px solid rgba(101, 54, 197, .24);
+  outline-offset: 3px;
+}
+.sendflow-linkflow-outcome-redirect { margin: 14px 0 0; color: #646973; font-size: 12px; text-align: center; }
+.sendflow-linkflow-failure-card .sendflow-linkflow-secure-footer { margin-top: auto; }
 @keyframes sendflow-flow-spin { to { transform: rotate(360deg); } }
 
 .sendflow-linkflow-share {

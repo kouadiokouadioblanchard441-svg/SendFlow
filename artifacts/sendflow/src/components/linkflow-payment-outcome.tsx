@@ -20,29 +20,27 @@ export default function LinkFlowPaymentOutcome({
   const succeeded = outcome === 'succeeded';
   const shellClassName = succeeded
     ? 'sendflow-linkflow-success-shell'
-    : 'sendflow-public-pay-shell sendflow-linkflow-flow-shell is-failure';
+    : 'sendflow-linkflow-failure-shell';
   const cardClassName = succeeded
     ? 'sendflow-linkflow-success-card'
-    : 'sendflow-linkflow-flow-card sendflow-linkflow-outcome-card';
+    : 'sendflow-linkflow-failure-card';
 
   return (
     <main className={shellClassName}>
       <section className={cardClassName} aria-labelledby="linkflow-outcome-title">
-        <header className={succeeded ? 'sendflow-linkflow-success-brand' : 'sendflow-linkflow-flow-brand'}>
-          <img src={sendflowWordmark} alt="SendFlow" />
+        <header className={succeeded ? 'sendflow-linkflow-success-brand' : 'sendflow-linkflow-failure-merchant'}>
+          {succeeded ? <img src={sendflowWordmark} alt="SendFlow" /> : <strong>{merchantName}</strong>}
         </header>
 
-        <div className={succeeded ? 'sendflow-linkflow-success-banner' : 'sendflow-linkflow-outcome-banner'}>
-          <div className={succeeded ? 'sendflow-linkflow-success-mark' : 'sendflow-linkflow-outcome-mark'} aria-hidden="true">
+        <div className={succeeded ? 'sendflow-linkflow-success-banner' : 'sendflow-linkflow-failure-banner'}>
+          <div className={succeeded ? 'sendflow-linkflow-success-mark' : 'sendflow-linkflow-failure-mark'} aria-hidden="true">
             {succeeded ? <Check size={48} strokeWidth={3} /> : <X size={44} strokeWidth={2.8} />}
           </div>
-          <p className={succeeded ? 'sendflow-linkflow-success-kicker' : 'sendflow-linkflow-outcome-kicker'}>
-            {simulation ? 'SIMULATION' : succeeded ? 'PAIEMENT CONFIRMÉ' : 'RÉSULTAT DU PAIEMENT'}
-          </p>
+          {succeeded && <p className="sendflow-linkflow-success-kicker">{simulation ? 'SIMULATION' : 'PAIEMENT CONFIRMÉ'}</p>}
           <h1 id="linkflow-outcome-title">
             {simulation && succeeded ? 'Simulation réussie' : succeeded ? 'Paiement réussi !' : 'Paiement non confirmé'}
           </h1>
-          <p className={succeeded ? 'sendflow-linkflow-success-merchant' : 'sendflow-linkflow-outcome-merchant'}>{merchantName}</p>
+          {succeeded && <p className="sendflow-linkflow-success-merchant">{merchantName}</p>}
         </div>
 
         <div className={succeeded ? 'sendflow-linkflow-success-content' : 'sendflow-linkflow-outcome-content'}>

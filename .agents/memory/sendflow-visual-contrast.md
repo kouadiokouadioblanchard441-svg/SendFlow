@@ -63,6 +63,12 @@ Keep the LinkFlow payment-success screen visually distinct from checkout. Preser
 
 **How to apply:** use success-specific shell, card, banner, and button styles for successful outcomes; keep checkout and failure styling independent.
 
+For a failed LinkFlow payment, use the clean, white, merchant-first layout from the supplied reference instead of the checkout-style framed card; keep the “Paiement non confirmé” message and retry action.
+
+**Why:** the user asked for the failure screen to return to its original, reference-based appearance.
+
+**How to apply:** keep the server-confirmed failure, amount, no-credit explanation, retry behavior, and secure footer intact while styling the failure state independently.
+
 On the LinkFlow success screen, keep the existing abstract banner background visible but restrained so it adds depth without competing with the confirmation text.
 
 **Why:** the user asked for the success-page background artwork to be slightly more visible, but not overpowering.
