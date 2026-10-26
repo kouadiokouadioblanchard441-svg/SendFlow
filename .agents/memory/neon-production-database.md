@@ -32,3 +32,9 @@ Do not infer Plesk's runtime PostgreSQL role from the shared secret available in
 **Why:** The shared connection can authenticate as the database owner without providing any evidence of which credentials the external Plesk process actually uses.
 
 **How to apply:** Report the observed connection role separately. Confirm the effective/login roles through the actual Plesk runtime connection before judging its permissions or proposing grants.
+
+For read-only Neon catalog checks, begin a transaction with `BEGIN READ ONLY` after connecting instead of sending a PostgreSQL startup `options` parameter through the Neon pooler.
+
+**Why:** The pooler rejected the startup option with SQLSTATE `08P01`; a transaction-level read-only mode worked without weakening the inspection.
+
+**How to apply:** Query only catalog metadata, set a short statement timeout, and roll back the read-only transaction when finished.
