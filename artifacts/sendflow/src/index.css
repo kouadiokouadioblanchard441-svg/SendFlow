@@ -8170,23 +8170,24 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
 }
 .sendflow-pay-phone-flag {
   display: grid !important;
-  width: 44px;
-  height: 34px;
-  flex: 0 0 44px;
+  width: 48px;
+  height: 42px;
+  flex: 0 0 48px;
   place-items: center;
   border-right: 1px solid #d7d2df;
   background: #fff !important;
   padding: 0 !important;
-  font-size: 23px !important;
+  font-family: system-ui, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 29px !important;
   line-height: 1;
 }
 .sendflow-pay-phone-prefix {
-  flex: 0 0 58px;
+  flex: 0 0 64px;
   align-self: stretch;
   justify-content: center;
   background: #fff !important;
-  padding: 0 5px !important;
-  font-size: 12px !important;
+  padding: 0 6px !important;
+  font-size: 14px !important;
   font-weight: 500 !important;
   white-space: nowrap;
 }
@@ -8202,19 +8203,19 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
 }
 .sendflow-pay-phone-operator {
   display: grid !important;
-  width: 46px;
-  height: 34px;
-  flex: 0 0 46px;
+  width: 58px;
+  height: 42px;
+  flex: 0 0 58px;
   place-items: center;
   border-right: 0 !important;
   border-left: 1px solid #d7d2df;
   background: #fff !important;
-  padding: 3px !important;
+  padding: 4px !important;
 }
 .sendflow-pay-operator-logo {
   display: block;
-  width: 38px;
-  height: 28px;
+  width: 48px;
+  height: 32px;
   object-fit: contain;
   object-position: center;
 }
@@ -8223,7 +8224,7 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
   max-width: 100%;
   overflow: hidden;
   color: #4b3c61;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -9050,7 +9051,7 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
   box-shadow: 0 0 0 3px rgba(109, 53, 216, .17);
 }
 .sendflow-pay-phone-input > span { border-color: #d3c7e0; }
-.sendflow-pay-phone-flag { background: #f7f4fb !important; }
+.sendflow-pay-phone-flag { background: #fff !important; }
 .sendflow-pay-phone-prefix { background: #fff !important; }
 .sendflow-pay-phone-operator { background: #fff !important; }
 .sendflow-pay-submit {

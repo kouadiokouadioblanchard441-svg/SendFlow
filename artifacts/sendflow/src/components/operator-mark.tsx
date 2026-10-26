@@ -13,10 +13,12 @@ export function OperatorMark({
   operator,
   imageClassName,
   fallbackClassName,
+  fallbackLabel,
 }: {
   operator: OperatorMarkData;
   imageClassName?: string;
   fallbackClassName?: string;
+  fallbackLabel?: string;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const id = operator.id ?? operator.operatorId ?? 'operator';
@@ -41,7 +43,7 @@ export function OperatorMark({
 
   return (
     <strong className={fallbackClassName} data-testid={`text-operator-initials-${id}`}>
-      {operator.initials || operator.shortName?.slice(0, 4) || operator.name?.slice(0, 4) || 'OP'}
+      {fallbackLabel?.trim() || operator.initials || operator.shortName?.slice(0, 4) || operator.name?.slice(0, 4) || 'OP'}
     </strong>
   );
 }

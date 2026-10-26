@@ -506,6 +506,7 @@ export default function PublicPaymentLinkPage() {
                           operator={operator}
                           imageClassName="sendflow-pay-operator-logo"
                           fallbackClassName="sendflow-pay-operator-fallback"
+                          fallbackLabel={operator.name}
                         />
                       </span>
                     )}
