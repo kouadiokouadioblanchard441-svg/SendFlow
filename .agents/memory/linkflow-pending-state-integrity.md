@@ -44,3 +44,9 @@ For public LinkFlow, show a failed payment as “Paiement non confirmé” only 
 **Why:** The user chose “Paiement non confirmé” for payment failure after sharing a separate “Lien expiré” reference screen.
 
 **How to apply:** Preserve distinct server-owned outcomes for pending, failed, succeeded, and expired links; do not treat an expired link as a failed payment or a browser preview as a real result.
+
+After server-confirmed LinkFlow success, keep the success screen visible until the payer clicks “Terminer”. Then navigate to the merchant return URL if configured; otherwise go to `https://sendflow.africa`. Never redirect automatically after a delay.
+
+**Why:** The user explicitly chose to let the payer see the success result before continuing, with SendFlow as the fallback when the merchant has no return URL.
+
+**How to apply:** Put all post-success navigation behind the success button, and ensure the merchant URL wins over the fixed SendFlow fallback.

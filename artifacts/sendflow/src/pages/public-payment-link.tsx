@@ -205,7 +205,6 @@ export default function PublicPaymentLinkPage() {
             simulationConfirmation.currency,
             simulationConfirmation.currencyDecimals,
           )}
-          returnUrl={null}
           simulation
           onFinish={() => {
             setSimulationConfirmation(null);
@@ -229,11 +228,9 @@ export default function PublicPaymentLinkPage() {
               confirmedStatus.currency,
               confirmedStatus.currencyDecimals,
             )}
-            returnUrl={confirmedStatus.returnUrl}
             onFinish={() => {
               if (confirmedStatus.state === 'succeeded') {
-                if (confirmedStatus.returnUrl) window.location.assign(confirmedStatus.returnUrl);
-                else window.history.back();
+                window.location.assign(confirmedStatus.returnUrl ?? 'https://sendflow.africa');
                 return;
               }
               setRealAttempt(null);

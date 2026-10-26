@@ -5,7 +5,6 @@ export interface LinkFlowPaymentOutcomeProps {
   outcome: 'succeeded' | 'failed';
   merchantName: string;
   amountLabel: string;
-  returnUrl: string | null;
   onFinish: () => void;
   simulation?: boolean;
 }
@@ -14,7 +13,6 @@ export default function LinkFlowPaymentOutcome({
   outcome,
   merchantName,
   amountLabel,
-  returnUrl,
   onFinish,
   simulation = false,
 }: LinkFlowPaymentOutcomeProps) {
@@ -60,7 +58,7 @@ export default function LinkFlowPaymentOutcome({
             </div>
           ) : null}
           <button className="sendflow-linkflow-outcome-button" type="button" onClick={onFinish}>
-            {succeeded && returnUrl ? 'Terminer' : succeeded ? 'Terminer' : 'Réessayer'}
+            {succeeded ? 'Terminer' : 'Réessayer'}
             <ArrowRight size={18} aria-hidden="true" />
           </button>
         </div>
