@@ -1,5 +1,4 @@
 import { LoaderCircle, PhoneCall, ShieldCheck, Smartphone } from 'lucide-react';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
 
 export interface LinkFlowPaymentWaitingProps {
@@ -24,12 +23,8 @@ export default function LinkFlowPaymentWaiting({
   const uncertain = state === 'uncertain';
 
   return (
-    <main className="sendflow-public-pay-shell sendflow-linkflow-flow-shell">
-      <section className="sendflow-linkflow-flow-card" aria-labelledby="linkflow-waiting-title">
-        <header className="sendflow-linkflow-flow-brand">
-          <img src={sendflowWordmark} alt="SendFlow" />
-        </header>
-
+    <main className="sendflow-linkflow-waiting-shell">
+      <section className="sendflow-linkflow-flow-card sendflow-linkflow-waiting-card" aria-labelledby="linkflow-waiting-title">
         <div className="sendflow-linkflow-flow-merchant">
           <span className="sendflow-linkflow-flow-merchant-mark" aria-hidden="true">
             <ShieldCheck size={20} />

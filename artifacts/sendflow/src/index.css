@@ -9430,3 +9430,177 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
     max-width: 48vw;
   }
 }
+
+.sendflow-linkflow-waiting-shell {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 100dvh;
+  justify-content: center;
+  overflow-x: hidden;
+  background: #fff;
+  color: #17191e;
+  padding: clamp(20px, 3vh, 30px) 18px max(22px, env(safe-area-inset-bottom));
+}
+.sendflow-linkflow-waiting-card {
+  box-sizing: border-box;
+  display: flex;
+  width: min(100%, 440px);
+  flex: 1 0 auto;
+  flex-direction: column;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  padding: 0;
+  color: #17191e;
+  box-shadow: none;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-merchant {
+  min-height: 64px;
+  gap: 12px;
+  border: 0;
+  border-radius: 17px;
+  background: #f2f3f5;
+  padding: 10px 15px;
+  color: #111318;
+  font-size: 16px;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-merchant strong {
+  font-weight: 650;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-merchant-mark {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+  color: #332553;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-simulation-badge {
+  border: 0;
+  background: #f2eef8;
+  color: #51328a;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-icon {
+  width: 72px;
+  height: 72px;
+  margin: 25px auto 12px;
+  border: 0;
+  border-radius: 22px;
+  background: #f2f3f5;
+  color: #20232a;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-status {
+  border: 0;
+  border-radius: 999px;
+  background: #f1f2f4;
+  color: #5e626a;
+  padding: 7px 13px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-status.is-uncertain {
+  background: #fff5d6;
+  color: #725400;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-card h1 {
+  margin: 0;
+  color: #111318;
+  font-size: clamp(25px, 6.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+  text-align: center;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-copy {
+  max-width: 390px;
+  margin: 12px auto 0;
+  color: #646973;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-amount {
+  justify-content: center;
+  gap: 8px;
+  margin: 19px 0 14px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #646973;
+  font-size: 14px;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-amount strong {
+  color: #111318;
+  font-size: 16px;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-code {
+  min-height: 92px;
+  border: 0;
+  border-radius: 20px;
+  background: #f1f2f4;
+  color: #111318;
+  padding: 14px 17px;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-code strong {
+  font-size: clamp(30px, 8vw, 36px);
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-call {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  border: 0;
+  background: #fff;
+  color: #17191e;
+  box-shadow: 0 1px 4px rgba(28, 31, 37, .1);
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-arrow {
+  color: #989ca4;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-hint {
+  margin: 10px 0 0;
+  color: #515660;
+  font-size: 14px;
+  font-weight: 600;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-unconfigured {
+  border: 0;
+  border-radius: 14px;
+  background: #fff7dc;
+  padding: 14px 15px;
+  color: #66521f;
+  font-size: 14px;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-simulation-note {
+  border: 0;
+  border-radius: 14px;
+  background: #f3f0f8;
+  padding: 14px 15px;
+  color: #443a54;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-steps {
+  gap: 14px;
+  margin: 24px 0 0;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-steps li > span {
+  border: 0;
+  background: #f5d500;
+  color: #17191e;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-steps p {
+  color: #4c515a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-refresh {
+  min-height: 50px;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 12px;
+  background: #6536c5;
+  box-shadow: 0 6px 14px rgba(83, 42, 155, .16);
+}
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-secure-footer {
+  margin-top: auto;
+  padding-top: 15px;
+}
