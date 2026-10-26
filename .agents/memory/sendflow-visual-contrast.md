@@ -49,7 +49,7 @@ The LinkFlow checkout’s phone area should follow the approved FeexPay referenc
 
 **Why:** the user explicitly requested an icon-by-icon, proportion-matched reproduction of the supplied mobile checkout capture for a financial app.
 
-**How to apply:** keep the country and dial-code selectors synchronized, preserve the existing server-backed country/operator and payment validation rules, and use only a verified brand asset or a readable operator name fallback. Match the reference row proportions (flag ~15%, dial code ~22%, number input ~47%, operator logo ~15%); avoid minimum widths that compress the number field on mobile.
+**How to apply:** keep the country and dial-code selectors synchronized, preserve the existing server-backed country/operator and payment validation rules, and use only a verified brand asset or a readable operator name fallback. Match the reference row proportions (flag ~15%, dial code ~22%, number input ~47%, operator logo ~15%); avoid minimum widths that compress the number field on mobile. Use the same violet border and focus treatment as other checkout fields, not a blue outline.
 
 While the user is working on the payment-by-link page, keep changes scoped to that checkout route and its dedicated assets. Shared components such as operator logos may be reused when appropriate.
 

@@ -9146,7 +9146,7 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
 }
 .sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select.sendflow-pay-operator-select {
   height: 58px;
-  border: 1px solid #b8b8b8;
+  border: 1.5px solid #725d8d;
   border-radius: 11px;
   background: #fff;
   color: #38363b;
@@ -9159,8 +9159,8 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
 }
 .sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select.sendflow-pay-operator-select:focus,
 .sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select.sendflow-pay-operator-select.is-selected {
-  border-color: #9dcaf0;
-  box-shadow: 0 0 0 4px rgba(88, 169, 231, .38);
+  border-color: #6d35d8;
+  box-shadow: 0 0 0 3px rgba(109, 53, 216, .17);
 }
 .sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-select-indicator {
   position: absolute;
@@ -9174,13 +9174,13 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
 }
 .sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-input {
   height: 56px;
-  border: 1px solid #c8c8c8;
+  border: 1.5px solid #725d8d;
   border-radius: 2px;
   box-shadow: none;
 }
 .sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-input:focus-within {
-  border-color: #a9cfea;
-  box-shadow: 0 0 0 2px rgba(88, 169, 231, .22);
+  border-color: #6d35d8;
+  box-shadow: 0 0 0 3px rgba(109, 53, 216, .17);
 }
 .sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-flag {
   width: clamp(42px, 15.4%, 78px);
