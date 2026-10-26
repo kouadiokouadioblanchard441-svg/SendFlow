@@ -9397,3 +9397,11 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
   font-size: 15px;
   font-weight: 700;
 }
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) {
+  font-family: 'Montserrat', var(--app-font-sans), sans-serif;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) input,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) select,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) button {
+  font-family: inherit;
+}
