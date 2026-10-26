@@ -511,7 +511,6 @@ export default function PublicPaymentLinkPage() {
                       </span>
                     )}
                   </div>
-                  {country && <small>{country.minPhoneDigits} à {country.maxPhoneDigits} chiffres, sans indicatif</small>}
                 </label>
               </>
             )}
