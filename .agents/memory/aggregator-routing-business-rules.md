@@ -36,6 +36,18 @@ requirements still apply.
 operation routing. Installing an API client must not implicitly authorize real
 payments, enable countries, or change customer page appearance.
 
+LinkFlow must support multiple payment aggregators without hard-coding one
+provider into the checkout or execution flow. The administrator's selected
+country/operator/operation route must choose the provider adapter at runtime.
+
+**Why:** The user explicitly says multiple aggregators will be integrated and
+must be switchable at any time from the administrator panel.
+
+**How to apply:** Keep routing configuration data-driven and dispatch through
+provider adapters. Only offer a route when its provider adapter is implemented
+and ready; an aggregator listed or selected in the panel is not proof that its
+LinkFlow payment, status verification, and settlement paths work.
+
 For FeexPay, use the countries actually available in the official documentation,
 not a user-selected country shortlist. The user chose Plesk for payment execution,
 but explicitly requires the complete setup and user journeys to work and be
