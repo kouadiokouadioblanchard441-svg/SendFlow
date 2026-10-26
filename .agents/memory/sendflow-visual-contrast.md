@@ -63,6 +63,12 @@ Keep the LinkFlow payment-success screen visually distinct from checkout. Preser
 
 **How to apply:** use success-specific shell, card, banner, and button styles for successful outcomes; keep checkout and failure styling independent.
 
+On the LinkFlow success screen, keep the existing abstract banner background visible but restrained so it adds depth without competing with the confirmation text.
+
+**Why:** the user asked for the success-page background artwork to be slightly more visible, but not overpowering.
+
+**How to apply:** adjust only success-banner background layers and decorative arcs; preserve the success layout, contrast, and other payment states.
+
 Keep LinkFlow's payment-waiting screen visually distinct from checkout: use a white full-height surface, soft-gray rounded blocks, a prominent USSD code, and clear yellow numbered steps instead of heavy dark outlines.
 
 **Why:** the user asked to restore the waiting screen's original appearance and had supplied a clean FeexPay waiting-page reference.

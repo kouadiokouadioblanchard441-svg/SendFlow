@@ -1083,7 +1083,9 @@
   justify-content: center;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.13), transparent 58%),
+    radial-gradient(circle at 12% 84%, rgba(255,255,255,.09), transparent 26%),
+    radial-gradient(ellipse at 88% 62%, rgba(177,164,255,.18), transparent 36%),
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.19), transparent 58%),
     #5445a5;
   color: #fff;
   padding: 28px 22px 32px;
@@ -1096,7 +1098,7 @@
   right: -12%;
   left: -12%;
   height: 110px;
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
   border-radius: 50%;
   content: "";
   pointer-events: none;
