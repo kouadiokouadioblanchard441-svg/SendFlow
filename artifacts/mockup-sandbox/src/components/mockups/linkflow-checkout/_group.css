@@ -154,7 +154,7 @@
   width: 100%;
 }
 :where(.checkout-preview--phone-reference) .sendflow-pay-field select.sendflow-pay-operator-select {
-  height: 56px;
+  height: 58px;
   border: 1px solid #b8b8b8;
   border-radius: 11px;
   background: #fff;
