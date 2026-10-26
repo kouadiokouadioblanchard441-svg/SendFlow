@@ -14,17 +14,21 @@ export function OperatorMark({
   imageClassName,
   fallbackClassName,
   fallbackLabel,
+  fallbackImageUrl,
 }: {
   operator: OperatorMarkData;
   imageClassName?: string;
   fallbackClassName?: string;
   fallbackLabel?: string;
+  fallbackImageUrl?: string;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
+  const [fallbackLogoFailed, setFallbackLogoFailed] = useState(false);
   const id = operator.id ?? operator.operatorId ?? 'operator';
 
   useEffect(() => {
     setLogoFailed(false);
+    setFallbackLogoFailed(false);
   }, [operator.logoUrl]);
 
   if (operator.logoUrl && !logoFailed) {
@@ -37,6 +41,18 @@ export function OperatorMark({
         referrerPolicy="no-referrer"
         data-testid={`img-operator-logo-${id}`}
         onError={() => setLogoFailed(true)}
+      />
+    );
+  }
+
+  if (fallbackImageUrl && !fallbackLogoFailed) {
+    return (
+      <img
+        src={fallbackImageUrl}
+        alt=""
+        className={imageClassName}
+        data-testid={`img-operator-fallback-logo-${id}`}
+        onError={() => setFallbackLogoFailed(true)}
       />
     );
   }

@@ -9054,6 +9054,122 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
 .sendflow-pay-phone-flag { background: #fff !important; }
 .sendflow-pay-phone-prefix { background: #fff !important; }
 .sendflow-pay-phone-operator { background: #fff !important; }
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field--reference-centered {
+  gap: 9px;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field--reference-centered > span {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-select-wrap {
+  position: relative;
+  width: 100%;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select.sendflow-pay-operator-select {
+  height: 56px;
+  border: 1px solid #b8b8b8;
+  border-radius: 11px;
+  background: #fff;
+  color: #38363b;
+  padding: 0 42px 0 18px;
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  appearance: none;
+  box-shadow: none;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select.sendflow-pay-operator-select:focus,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select.sendflow-pay-operator-select.is-selected {
+  border-color: #9dcaf0;
+  box-shadow: 0 0 0 4px rgba(88, 169, 231, .38);
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-select-indicator {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 17px;
+  height: 17px;
+  transform: translateY(-50%);
+  fill: #4d4b4d;
+  pointer-events: none;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-input {
+  height: 56px;
+  border: 1px solid #c8c8c8;
+  border-radius: 2px;
+  box-shadow: none;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-input:focus-within {
+  border-color: #a9cfea;
+  box-shadow: 0 0 0 2px rgba(88, 169, 231, .22);
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-flag {
+  width: clamp(48px, 15.4%, 78px);
+  height: 100%;
+  flex: 0 0 clamp(48px, 15.4%, 78px);
+  border-right: 1px solid #c8c8c8;
+  font-size: 34px !important;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-prefix-wrap {
+  position: relative;
+  height: 100%;
+  min-width: 82px;
+  flex: 0 0 clamp(82px, 22.2%, 112px);
+  border-right: 1px solid #c8c8c8;
+  background: #fff;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select.sendflow-pay-phone-prefix {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: #39363b;
+  padding: 0 30px 0 8px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  appearance: none;
+  box-shadow: none;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select.sendflow-pay-phone-prefix:focus {
+  border: 0;
+  box-shadow: inset 0 0 0 2px rgba(88, 169, 231, .34);
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-prefix-wrap .sendflow-pay-select-indicator {
+  right: 8px;
+  width: 15px;
+  height: 15px;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-input input {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #39363b;
+  padding: 0 12px;
+  font-size: 16px;
+  box-shadow: none;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-operator {
+  width: clamp(48px, 15.4%, 78px);
+  height: 100%;
+  flex: 0 0 clamp(48px, 15.4%, 78px);
+  border-left: 1px solid #c8c8c8;
+  padding: 4px !important;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-operator-logo {
+  width: 100%;
+  height: 42px;
+  object-fit: contain;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-operator-fallback {
+  font-size: 10px;
+  font-weight: 700;
+}
 .sendflow-pay-submit {
   min-height: 54px;
   border: 1px solid #4d278c;

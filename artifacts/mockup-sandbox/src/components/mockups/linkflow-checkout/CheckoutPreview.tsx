@@ -2,16 +2,21 @@ import { useState } from 'react';
 import { Clock3, ShieldCheck } from 'lucide-react';
 import logo from './assets/sendflow-wordmark-original.png';
 import illustration from './assets/sendflow-linkflow-payment-3d.webp';
+import waveOperatorLogo from './assets/wave-logo-reference.png';
 import './_group.css';
 
-function CheckoutPreview({ highContrast = false }: { highContrast?: boolean }) {
-  const [countryCode, setCountryCode] = useState('');
+function CheckoutPreview({ highContrast = false, phoneReference = false }: { highContrast?: boolean; phoneReference?: boolean }) {
+  const [countryCode, setCountryCode] = useState(phoneReference ? 'ci' : '');
+  const [operatorId, setOperatorId] = useState(phoneReference ? 'wave' : '');
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
+  const country = countryCode === 'ci'
+    ? { name: 'Côte d’Ivoire', code: 'ci', phonePrefix: '+225', flag: '🇨🇮' }
+    : null;
 
   return (
-    <main className={`sendflow-public-pay-shell${highContrast ? ' checkout-preview--contrast' : ''}`}>
+    <main className={`sendflow-public-pay-shell${highContrast ? ' checkout-preview--contrast' : ''}${phoneReference ? ' checkout-preview--phone-reference' : ''}`}>
       <img className="sendflow-public-pay-art" src={illustration} alt="" aria-hidden="true" draggable={false} />
       <div className="sendflow-public-pay-layout">
         <header className="sendflow-pay-brand">
@@ -24,7 +29,7 @@ function CheckoutPreview({ highContrast = false }: { highContrast?: boolean }) {
           </div>
           <div className="sendflow-pay-amount-panel">
             <strong>20 000 XOF</strong>
-            <small><Clock3 size={13} /> Valable jusqu’au 26 oct. 2026, 13:22</small>
+            {!phoneReference && <small><Clock3 size={13} /> Valable jusqu’au 26 oct. 2026, 13:22</small>}
           </div>
           <div className="sendflow-pay-form">
             <label className="sendflow-pay-field">
@@ -47,26 +52,66 @@ function CheckoutPreview({ highContrast = false }: { highContrast?: boolean }) {
               <span>Pays<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
               <select value={countryCode} onChange={(event) => setCountryCode(event.target.value)}>
                 <option value="">Sélectionnez votre pays</option>
+                <option value="ci">Côte d’Ivoire</option>
               </select>
             </label>
-            <label className="sendflow-pay-field">
+            <label className={`sendflow-pay-field${phoneReference ? ' sendflow-pay-field--reference-centered' : ''}`}>
               <span>Réseau<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-              <select disabled defaultValue="">
-                <option value="">Choisissez d’abord un pays</option>
-              </select>
+              {phoneReference ? (
+                <div className="sendflow-pay-select-wrap">
+                  <select
+                    className={`sendflow-pay-operator-select${operatorId ? ' is-selected' : ''}`}
+                    value={operatorId}
+                    onChange={(event) => setOperatorId(event.target.value)}
+                    disabled={!country}
+                  >
+                    <option value="">Choisissez d’abord un pays</option>
+                    <option value="wave">WAVE</option>
+                  </select>
+                  <PaymentSelectIndicator />
+                </div>
+              ) : (
+                <select disabled defaultValue="">
+                  <option value="">Choisissez d’abord un pays</option>
+                </select>
+              )}
             </label>
-            <label className="sendflow-pay-field">
+            <label className={`sendflow-pay-field${phoneReference ? ' sendflow-pay-field--reference-centered' : ''}`}>
               <span>Numéro de téléphone<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
               <div className="sendflow-pay-phone-input">
-                <span aria-hidden="true">+—</span>
+                {phoneReference ? (
+                  <>
+                    {country && <span className="sendflow-pay-phone-flag" role="img" aria-label={country.name}>{country.flag}</span>}
+                    <div className="sendflow-pay-phone-prefix-wrap">
+                      <select
+                        className="sendflow-pay-phone-prefix"
+                        value={countryCode}
+                        onChange={(event) => setCountryCode(event.target.value)}
+                        disabled={!country}
+                        aria-label={country ? `Indicatif téléphonique, ${country.name}` : 'Indicatif téléphonique'}
+                      >
+                        {!country && <option value="">+—</option>}
+                        <option value="ci">+225</option>
+                      </select>
+                      <PaymentSelectIndicator />
+                    </div>
+                  </>
+                ) : (
+                  <span aria-hidden="true">+—</span>
+                )}
                 <input
                   value={phone}
                   onChange={(event) => setPhone(event.target.value.replace(/[^\d\s-]/g, ''))}
-                  placeholder="Choisissez votre pays"
+                  placeholder={phoneReference && country ? '0166000000' : 'Choisissez votre pays'}
                   autoComplete="tel-national"
                   inputMode="tel"
-                  disabled
+                  disabled={!country}
                 />
+                {phoneReference && operatorId === 'wave' && (
+                  <span className="sendflow-pay-phone-operator" role="img" aria-label="Logo Wave">
+                    <img className="sendflow-pay-operator-logo" src={waveOperatorLogo} alt="" />
+                  </span>
+                )}
               </div>
             </label>
           </div>
@@ -80,6 +125,15 @@ function CheckoutPreview({ highContrast = false }: { highContrast?: boolean }) {
         </section>
       </div>
     </main>
+  );
+}
+
+function PaymentSelectIndicator() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 16 16" className="sendflow-pay-select-indicator">
+      <path d="M3.5 6.5 8 2l4.5 4.5h-9Z" />
+      <path d="M3.5 9.5 8 14l4.5-4.5h-9Z" />
+    </svg>
   );
 }
 

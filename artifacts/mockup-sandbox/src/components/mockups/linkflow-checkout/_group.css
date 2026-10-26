@@ -139,3 +139,128 @@
   .sendflow-public-pay-art { right: -105px; bottom: 8vh; width: min(112vw, 500px); opacity: .08; }
 }
 @media (max-width: 360px) { .sendflow-pay-field-pair { grid-template-columns: 1fr; } }
+
+/* FeexPay-referenced mobile network and phone controls. */
+:where(.checkout-preview--phone-reference) .sendflow-pay-field--reference-centered {
+  gap: 9px;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-field--reference-centered > span {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-select-wrap {
+  position: relative;
+  width: 100%;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-field select.sendflow-pay-operator-select {
+  height: 56px;
+  border: 1px solid #b8b8b8;
+  border-radius: 11px;
+  background: #fff;
+  color: #38363b;
+  padding: 0 42px 0 18px;
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  appearance: none;
+  box-shadow: none;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-field select.sendflow-pay-operator-select:focus,
+:where(.checkout-preview--phone-reference) .sendflow-pay-field select.sendflow-pay-operator-select.is-selected {
+  border-color: #9dcaf0;
+  box-shadow: 0 0 0 4px rgba(88, 169, 231, .38);
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-select-indicator {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 17px;
+  height: 17px;
+  transform: translateY(-50%);
+  fill: #4d4b4d;
+  pointer-events: none;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-phone-input {
+  height: 56px;
+  border: 1px solid #c8c8c8;
+  border-radius: 2px;
+  box-shadow: none;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-phone-input:focus-within {
+  border-color: #a9cfea;
+  box-shadow: 0 0 0 2px rgba(88, 169, 231, .22);
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-phone-flag {
+  display: grid !important;
+  width: clamp(48px, 15.4%, 78px);
+  height: 100%;
+  flex: 0 0 clamp(48px, 15.4%, 78px);
+  border-right: 1px solid #c8c8c8 !important;
+  background: #fff !important;
+  padding: 0 !important;
+  place-items: center;
+  font-size: 34px !important;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-phone-prefix-wrap {
+  position: relative;
+  height: 100%;
+  min-width: 82px;
+  flex: 0 0 clamp(82px, 22.2%, 112px);
+  border-right: 1px solid #c8c8c8;
+  background: #fff;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-field select.sendflow-pay-phone-prefix {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: #39363b;
+  padding: 0 30px 0 8px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  appearance: none;
+  box-shadow: none;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-field select.sendflow-pay-phone-prefix:focus {
+  border: 0;
+  box-shadow: inset 0 0 0 2px rgba(88, 169, 231, .34);
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-phone-prefix-wrap .sendflow-pay-select-indicator {
+  right: 8px;
+  width: 15px;
+  height: 15px;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-phone-input input {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #39363b;
+  padding: 0 12px;
+  font-size: 16px;
+  box-shadow: none;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-phone-operator {
+  display: grid !important;
+  width: clamp(48px, 15.4%, 78px);
+  height: 100%;
+  flex: 0 0 clamp(48px, 15.4%, 78px);
+  border-left: 1px solid #c8c8c8 !important;
+  background: #fff !important;
+  padding: 4px !important;
+  place-items: center;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-operator-logo {
+  width: 100%;
+  height: 42px;
+  object-fit: contain;
+}
+:where(.checkout-preview--phone-reference) .sendflow-pay-operator-fallback {
+  font-size: 10px;
+  font-weight: 700;
+}

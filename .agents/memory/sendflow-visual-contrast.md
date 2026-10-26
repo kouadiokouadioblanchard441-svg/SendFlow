@@ -44,3 +44,15 @@ When opening or refreshing a public LinkFlow payment link, show a full-screen wh
 **Why:** the user supplied mobile screenshots as the desired refresh/loading behavior for payment-link navigation.
 
 **How to apply:** use the same minimum duration for initial loads, refetches and retries; do not add a delay after the request has finished and do not change payment or settlement logic.
+
+The LinkFlow checkout’s phone area should follow the approved FeexPay reference: centered network and phone labels, an uppercase operator selector with the paired up/down indicator, and a clearly segmented phone row for flag, synchronized country dial code, number entry, and the selected operator’s verified logo.
+
+**Why:** the user explicitly requested an icon-by-icon, proportion-matched reproduction of the supplied mobile checkout capture for a financial app.
+
+**How to apply:** keep the country and dial-code selectors synchronized, preserve the existing server-backed country/operator and payment validation rules, and use only a verified brand asset or a readable operator name fallback.
+
+While the user is working on the payment-by-link page, keep changes scoped to that checkout route and its dedicated assets. Shared components such as operator logos may be reused when appropriate.
+
+**Why:** the user explicitly limited the current work to the payment-by-link page, while clarifying that shared operator logos are expected.
+
+**How to apply:** scope checkout styles to the public payment form. When extending a shared component, make the added behavior opt-in so its existing consumers keep their current rendering.
