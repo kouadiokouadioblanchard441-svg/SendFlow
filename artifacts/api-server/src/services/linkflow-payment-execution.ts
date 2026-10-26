@@ -207,7 +207,7 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   }
   const [rate] = await tx.select().from(operatorPricingRatesTable).where(and(
     eq(operatorPricingRatesTable.operatorId, operator.operatorId),
-    eq(operatorPricingRatesTable.categoryId, "deposit"),
+    eq(operatorPricingRatesTable.categoryId, "linkflow"),
   )).limit(1);
   if (rate?.feePercent == null) {
     throw new LinkFlowPaymentError(400, "Le tarif de ce réseau n’est pas disponible.");

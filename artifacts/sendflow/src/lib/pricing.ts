@@ -1,4 +1,4 @@
-export type PricingCategoryId = 'deposit' | 'inter-network' | 'international';
+export type PricingCategoryId = 'deposit' | 'inter-network' | 'international' | 'linkflow';
 
 export type PricingCategory = {
   id: PricingCategoryId;
@@ -46,6 +46,14 @@ export type PricingCatalog = {
   countries: PricingCountry[];
   operators: PricingOperator[];
 };
+
+export function getVisiblePricingCountries(
+  countries: PricingCountry[],
+  categoryId: PricingCategoryId,
+): PricingCountry[] {
+  if (categoryId !== 'linkflow') return countries;
+  return countries.filter((country) => country.enabled && country.operations.deposit);
+}
 
 export function formatPricingFeeRate(rate: number): string {
   return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(rate * 100)} %`;

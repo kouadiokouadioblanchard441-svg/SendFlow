@@ -1646,6 +1646,7 @@ export const PublicPricingCategoryId = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  linkflow: 'linkflow',
 } as const;
 
 export interface PublicPricingCategory {
@@ -1703,6 +1704,11 @@ export type PublicPricingOperatorFees = {
      * @maximum 1
      */
   international?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  linkflow?: number;
 };
 
 export interface PublicPricingOperator {
@@ -1742,6 +1748,7 @@ export const AdminOperatorPricingRateCategoryId = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  linkflow: 'linkflow',
 } as const;
 
 export interface AdminOperatorPricingRate {
@@ -1899,6 +1906,7 @@ export const PricingRatesUpdateCategoryId = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  linkflow: 'linkflow',
 } as const;
 
 export interface PricingRatesUpdate {
@@ -1924,6 +1932,7 @@ export const AdminPricingRatesUpdateResultItemsItemCategoryId = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  linkflow: 'linkflow',
 } as const;
 
 export type AdminPricingRatesUpdateResultItemsItem = {

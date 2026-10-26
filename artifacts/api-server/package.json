@@ -29,6 +29,7 @@
     "linkflow-payment:schema-plan": "node --experimental-strip-types scripts/migrate-linkflow-payment-attempts.mjs",
     "linkflow-variable-amount:schema-plan": "node --experimental-strip-types scripts/migrate-linkflow-variable-amount.mjs",
     "payment-links:soft-delete-migration": "node --experimental-strip-types scripts/migrate-customer-payment-link-soft-delete.mjs",
+    "linkflow-pricing-migration": "node --experimental-strip-types scripts/migrate-linkflow-pricing-rates.mjs",
     "payments:test-access-plan": "node --experimental-strip-types scripts/migrate-payment-test-access.mjs",
     "payments:test-account-plan": "node --experimental-strip-types scripts/authorize-replit-payment-test-account.mjs",
     "feexpay:configuration-plan": "node --experimental-strip-types scripts/configure-feexpay.mjs",

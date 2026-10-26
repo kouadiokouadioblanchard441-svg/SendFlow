@@ -1596,11 +1596,14 @@ export const getPublicPricingResponseOperatorsItemFeesInterNetworkMax = 1;
 export const getPublicPricingResponseOperatorsItemFeesInternationalMin = 0;
 export const getPublicPricingResponseOperatorsItemFeesInternationalMax = 1;
 
+export const getPublicPricingResponseOperatorsItemFeesLinkflowMin = 0;
+export const getPublicPricingResponseOperatorsItemFeesLinkflowMax = 1;
+
 
 
 export const GetPublicPricingResponse = zod.object({
   "categories": zod.array(zod.object({
-  "id": zod.enum(['deposit', 'inter-network', 'international']),
+  "id": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
   "label": zod.string(),
   "shortLabel": zod.string(),
   "description": zod.string()
@@ -1638,7 +1641,8 @@ export const GetPublicPricingResponse = zod.object({
   "fees": zod.object({
   "deposit": zod.number().min(getPublicPricingResponseOperatorsItemFeesDepositMin).max(getPublicPricingResponseOperatorsItemFeesDepositMax).optional(),
   "inter-network": zod.number().min(getPublicPricingResponseOperatorsItemFeesInterNetworkMin).max(getPublicPricingResponseOperatorsItemFeesInterNetworkMax).optional(),
-  "international": zod.number().min(getPublicPricingResponseOperatorsItemFeesInternationalMin).max(getPublicPricingResponseOperatorsItemFeesInternationalMax).optional()
+  "international": zod.number().min(getPublicPricingResponseOperatorsItemFeesInternationalMin).max(getPublicPricingResponseOperatorsItemFeesInternationalMax).optional(),
+  "linkflow": zod.number().min(getPublicPricingResponseOperatorsItemFeesLinkflowMin).max(getPublicPricingResponseOperatorsItemFeesLinkflowMax).optional()
 })
 }))
 })
@@ -2160,7 +2164,7 @@ export const getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesIt
 
 export const GetAdminOperatorPricingResponse = zod.object({
   "categories": zod.array(zod.object({
-  "id": zod.enum(['deposit', 'inter-network', 'international']),
+  "id": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
   "label": zod.string(),
   "shortLabel": zod.string(),
   "description": zod.string()
@@ -2193,7 +2197,7 @@ export const GetAdminOperatorPricingResponse = zod.object({
   "updatedAt": zod.coerce.date().nullable()
 }).and(zod.object({
   "rates": zod.array(zod.object({
-  "categoryId": zod.enum(['deposit', 'inter-network', 'international']),
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
   "feePercent": zod.number().min(getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMin).max(getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMax).nullable(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
@@ -2416,7 +2420,7 @@ export const updateAdminOperatorPricingBodyReasonMax = 500;
 
 export const UpdateAdminOperatorPricingBody = zod.object({
   "countryCode": zod.string().regex(updateAdminOperatorPricingBodyCountryCodeRegExp),
-  "categoryId": zod.enum(['deposit', 'inter-network', 'international']),
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
   "updates": zod.array(zod.object({
   "operatorId": zod.string().min(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMin).max(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMax).regex(updateAdminOperatorPricingBodyUpdatesItemOperatorIdRegExp),
   "feePercent": zod.number().min(updateAdminOperatorPricingBodyUpdatesItemFeePercentMin).max(updateAdminOperatorPricingBodyUpdatesItemFeePercentMax).nullable(),
@@ -2431,7 +2435,7 @@ export const UpdateAdminOperatorPricingBody = zod.object({
 export const UpdateAdminOperatorPricingResponse = zod.object({
   "items": zod.array(zod.object({
   "operatorId": zod.string(),
-  "categoryId": zod.enum(['deposit', 'inter-network', 'international']),
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
   "feePercent": zod.number().nullable(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date()

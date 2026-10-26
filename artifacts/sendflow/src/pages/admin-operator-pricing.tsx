@@ -399,7 +399,7 @@ export default function AdminOperatorPricingPage() {
                     <SelectContent>
                       {countries.map((item) => (
                         <SelectItem key={item.countryCode} value={item.countryCode}>
-                          {item.flag} {item.countryName}
+                          {item.flag} {item.countryName}{item.enabled ? '' : ' · Désactivé'}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -537,16 +537,18 @@ export default function AdminOperatorPricingPage() {
                               >
                                 {operator.enabled ? 'Désactiver' : 'Activer'}
                               </Button>
-                              <Button type="button" size="sm" variant="outline"
-                                disabled={!canMutate}
-                                onClick={() => {
-                                  setOperationToToggle(categoryId);
-                                  setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator);
-                                }}>
-                                {(categoryId === 'deposit' ? operator.depositEnabled
-                                  : categoryId === 'inter-network' ? operator.interNetworkEnabled
-                                    : operator.internationalEnabled) ? 'Désactiver' : 'Activer'} {category?.shortLabel}
-                              </Button>
+                              {categoryId !== 'linkflow' && (
+                                <Button type="button" size="sm" variant="outline"
+                                  disabled={!canMutate}
+                                  onClick={() => {
+                                    setOperationToToggle(categoryId);
+                                    setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator);
+                                  }}>
+                                  {(categoryId === 'deposit' ? operator.depositEnabled
+                                    : categoryId === 'inter-network' ? operator.interNetworkEnabled
+                                      : operator.internationalEnabled) ? 'Désactiver' : 'Activer'} {category?.shortLabel}
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>

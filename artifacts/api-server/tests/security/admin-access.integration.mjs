@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { before, after, test } from "node:test";
 import { createRequire } from "node:module";
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import http from "node:http";
 import pg from "pg";
 
@@ -64,6 +65,25 @@ before(async () => {
     await owner.query(`INSERT INTO sf_operator_pricing_rates(operator_id,country_code,category_id,fee_percent,created_by,updated_by)
       VALUES('fixture-operator','ci',$1,1,'fixture','fixture')`, [category]);
   }
+  const linkFlowPricingMigration = readFileSync(
+    new URL("../../../../lib/db/migrations/2026-10-26-linkflow-pricing-rates.sql", import.meta.url),
+    "utf8",
+  );
+  await owner.query(`INSERT INTO sf_operator_catalog
+    (operator_id,country_code,name,short_name,initials,brand,enabled,created_by,updated_by)
+    VALUES('fixture-empty-operator','ci','Sans tarif dépôt','Sans tarif','ST','generic',false,'fixture','fixture')`);
+  await owner.query(linkFlowPricingMigration);
+  await owner.query(linkFlowPricingMigration);
+  const seededLinkFlowRate = await owner.query(
+    "SELECT fee_percent,version FROM sf_operator_pricing_rates WHERE operator_id='fixture-operator' AND category_id='linkflow'",
+  );
+  assert.equal(seededLinkFlowRate.rows[0].fee_percent, null);
+  assert.equal(seededLinkFlowRate.rows[0].version, 1);
+  const emptyLinkFlowRate = await owner.query(
+    "SELECT fee_percent,version FROM sf_operator_pricing_rates WHERE operator_id='fixture-empty-operator' AND category_id='linkflow'",
+  );
+  assert.equal(emptyLinkFlowRate.rows[0].fee_percent, null);
+  assert.equal(emptyLinkFlowRate.rows[0].version, 1);
   const app = runtime.express();
   app.use((req, _res, next) => { req.log = { error() {}, warn() {}, info() {} }; next(); });
   app.use(runtime.express.json());
@@ -140,14 +160,19 @@ test("writer logo update is versioned and audited; stale writes fail without aud
 });
 test("writer rates persist with versions; conflicting writes and failed audits roll back", async () => {
   const { cookie } = await login(); await unlock(cookie);
+  const catalog = await request("/operator-pricing", { cookie });
+  assert.equal(catalog.status, 200);
+  assert.ok(catalog.body.categories.some((category) => category.id === "linkflow"));
   const body = {
-    countryCode: "ci", categoryId: "deposit", reason: "Fixture rate change",
+    countryCode: "ci", categoryId: "linkflow", reason: "Fixture LinkFlow rate change",
     updates: [{ operatorId: "fixture-operator", feePercent: 2.5, expectedVersion: 1 }],
   };
   assert.equal((await request("/operator-pricing-rates", { method: "PUT", cookie, body })).status, 200);
   assert.equal((await request("/operator-pricing-rates", { method: "PUT", cookie, body })).status, 409);
-  let stored = await owner.query("SELECT fee_percent,version FROM sf_operator_pricing_rates WHERE category_id='deposit'");
+  let stored = await owner.query("SELECT fee_percent,version FROM sf_operator_pricing_rates WHERE operator_id='fixture-operator' AND category_id='linkflow'");
   assert.equal(Number(stored.rows[0].fee_percent), 2.5); assert.equal(stored.rows[0].version, 2);
+  const deposit = await owner.query("SELECT fee_percent,version FROM sf_operator_pricing_rates WHERE category_id='deposit'");
+  assert.equal(Number(deposit.rows[0].fee_percent), 1); assert.equal(deposit.rows[0].version, 1);
   const audit = await owner.query("SELECT admin_user_id FROM sf_admin_audit_logs WHERE action='update_operator_pricing'");
   assert.equal(audit.rows.length, 1); assert.equal(audit.rows[0].admin_user_id, "writer");
   await owner.query(`CREATE FUNCTION fixture_reject_audit() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -156,7 +181,7 @@ test("writer rates persist with versions; conflicting writes and failed audits r
   try {
     body.updates[0] = { operatorId: "fixture-operator", feePercent: 9, expectedVersion: 2 };
     assert.equal((await request("/operator-pricing-rates", { method: "PUT", cookie, body })).status, 503);
-    stored = await owner.query("SELECT fee_percent,version FROM sf_operator_pricing_rates WHERE category_id='deposit'");
+    stored = await owner.query("SELECT fee_percent,version FROM sf_operator_pricing_rates WHERE operator_id='fixture-operator' AND category_id='linkflow'");
     assert.equal(Number(stored.rows[0].fee_percent), 2.5); assert.equal(stored.rows[0].version, 2);
     const count = (await owner.query("SELECT count(*) FROM sf_admin_sessions")).rows[0].count;
     assert.equal((await login()).status, 503);
@@ -164,6 +189,33 @@ test("writer rates persist with versions; conflicting writes and failed audits r
   } finally {
     await owner.query("DROP TRIGGER fixture_reject_audit ON sf_admin_audit_logs; DROP FUNCTION fixture_reject_audit()");
   }
+});
+test("a newly added operator receives an independent empty rate for every pricing category", async () => {
+  const { cookie } = await login();
+  await unlock(cookie);
+  const response = await request("/operators", {
+    method: "POST",
+    cookie,
+    body: {
+      countryCode: "ci",
+      name: "Nouveau réseau",
+      brand: "generic",
+      reason: "Ajouter un opérateur LinkFlow",
+    },
+  });
+  assert.equal(response.status, 201);
+  const rates = await owner.query(
+    "SELECT category_id,fee_percent FROM sf_operator_pricing_rates WHERE operator_id=$1 ORDER BY category_id",
+    [response.body.operatorId],
+  );
+  assert.deepEqual(rates.rows.map((row) => row.category_id), [
+    "deposit", "inter-network", "international", "linkflow",
+  ]);
+  assert.ok(rates.rows.every((row) => row.fee_percent === null));
+  const catalog = await request("/operator-pricing", { cookie });
+  const country = catalog.body.countries.find((item) => item.countryCode === "ci");
+  assert.ok(country?.operators.some((operator) => operator.operatorId === response.body.operatorId));
+  assert.equal(country.enabled, true);
 });
 test("PIN lockout is shared across sessions and serialized", async () => {
   await clearAttempts();

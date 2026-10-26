@@ -22,4 +22,9 @@ export type PublicPricingOperatorFees = {
      * @maximum 1
      */
   international?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  linkflow?: number;
 };

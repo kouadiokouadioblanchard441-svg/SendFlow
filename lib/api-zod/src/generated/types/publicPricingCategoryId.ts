@@ -13,4 +13,5 @@ export const PublicPricingCategoryId = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  linkflow: 'linkflow',
 } as const;

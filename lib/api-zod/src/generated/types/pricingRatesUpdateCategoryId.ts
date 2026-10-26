@@ -13,4 +13,5 @@ export const PricingRatesUpdateCategoryId = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  linkflow: 'linkflow',
 } as const;

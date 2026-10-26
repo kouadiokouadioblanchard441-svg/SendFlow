@@ -168,7 +168,7 @@ async function loadAvailableChoices(link: PublicLinkRow) {
       if (effectiveAggregator !== "feexpay") return [];
 
       const rate = rates.find((item) =>
-        item.operatorId === operator.operatorId && item.categoryId === "deposit",
+        item.operatorId === operator.operatorId && item.categoryId === "linkflow",
       );
       if (rate?.feePercent === null || rate?.feePercent === undefined ||
         !Number.isFinite(rate.feePercent) || rate.feePercent < 0 || rate.feePercent > 100) return [];
@@ -399,7 +399,7 @@ const handlePublicPaymentLinkQuote: RequestHandler = async (req, res): Promise<v
       .from(operatorPricingRatesTable)
       .where(and(
         eq(operatorPricingRatesTable.operatorId, parsed.data.operatorId),
-        eq(operatorPricingRatesTable.categoryId, "deposit"),
+        eq(operatorPricingRatesTable.categoryId, "linkflow"),
       ))
       .limit(1);
     if (rate?.feePercent === null || rate?.feePercent === undefined) {

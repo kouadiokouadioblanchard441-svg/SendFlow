@@ -5460,7 +5460,7 @@ components:
       properties:
         id:
           type: string
-          enum: [deposit, inter-network, international]
+          enum: [deposit, inter-network, international, linkflow]
         label:
           type: string
         shortLabel:
@@ -5538,6 +5538,10 @@ components:
               type: number
               minimum: 0
               maximum: 1
+            linkflow:
+              type: number
+              minimum: 0
+              maximum: 1
           additionalProperties: false
       required: [id, countryId, name, shortName, initials, brand, logoUrl, requiresOtp, otpCommand, operations, fees]
     PublicPricingCatalog:
@@ -5561,7 +5565,7 @@ components:
       properties:
         categoryId:
           type: string
-          enum: [deposit, inter-network, international]
+          enum: [deposit, inter-network, international, linkflow]
         feePercent:
           type: ["number", "null"]
           minimum: 0
@@ -5723,7 +5727,7 @@ components:
           pattern: "^[a-z]{2}$"
         categoryId:
           type: string
-          enum: [deposit, inter-network, international]
+          enum: [deposit, inter-network, international, linkflow]
         updates:
           type: array
           minItems: 1
@@ -5747,7 +5751,7 @@ components:
                 type: string
               categoryId:
                 type: string
-                enum: [deposit, inter-network, international]
+                enum: [deposit, inter-network, international, linkflow]
               feePercent:
                 type: ["number", "null"]
               version:

@@ -530,10 +530,10 @@ test("payer-priced LinkFlow can be created without amount or description and quo
     VALUES ('mtn-ci','ci','MTN','MTN','MTN','mtn',true,true,false,false,'fixture','fixture')
     ON CONFLICT (operator_id) DO UPDATE SET enabled=true,deposit_enabled=true`);
   await owner.query(`DELETE FROM sf_operator_pricing_rates
-    WHERE operator_id='mtn-ci' AND category_id='deposit'`);
+    WHERE operator_id='mtn-ci' AND category_id IN ('deposit','linkflow')`);
   await owner.query(`INSERT INTO sf_operator_pricing_rates
     (operator_id,country_code,category_id,fee_percent,version,created_by,updated_by)
-    VALUES ('mtn-ci','ci','deposit',2,1,'fixture','fixture')`);
+    VALUES ('mtn-ci','ci','linkflow',2,1,'fixture','fixture')`);
   await owner.query(`INSERT INTO sf_payment_aggregators(code,name,enabled,created_by,updated_by)
     VALUES ('feexpay','FeexPay',true,'fixture','fixture')
     ON CONFLICT (code) DO UPDATE SET enabled=true`);
@@ -616,10 +616,10 @@ test("public payment page is token-scoped and quotes the fee from server pricing
       inter_network_enabled,international_enabled,created_by,updated_by)
     VALUES ('mtn-ci','ci','MTN','MTN','MTN','mtn',true,true,false,false,'fixture','fixture')
     ON CONFLICT (operator_id) DO UPDATE SET enabled=true,deposit_enabled=true`);
-  await owner.query("DELETE FROM sf_operator_pricing_rates WHERE operator_id='mtn-ci' AND category_id='deposit'");
+  await owner.query("DELETE FROM sf_operator_pricing_rates WHERE operator_id='mtn-ci' AND category_id IN ('deposit','linkflow')");
   await owner.query(`INSERT INTO sf_operator_pricing_rates
     (operator_id,country_code,category_id,fee_percent,version,created_by,updated_by)
-    VALUES ('mtn-ci','ci','deposit',2,1,'fixture','fixture')`);
+    VALUES ('mtn-ci','ci','linkflow',2,1,'fixture','fixture')`);
   await owner.query(`INSERT INTO sf_payment_aggregators(code,name,enabled,created_by,updated_by)
     VALUES ('feexpay','FeexPay',true,'fixture','fixture')
     ON CONFLICT (code) DO UPDATE SET enabled=true`);

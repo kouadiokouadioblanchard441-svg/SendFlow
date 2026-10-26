@@ -105,7 +105,7 @@ export const insertOperatorCatalogSchema = z.object({
 export const insertOperatorPricingRateSchema = z.object({
   operatorId: z.string().min(2).max(60),
   countryCode: z.string().length(2),
-  categoryId: z.enum(["deposit", "inter-network", "international"]),
+  categoryId: z.enum(["deposit", "inter-network", "international", "linkflow"]),
   feePercent: z.number().min(0).max(100).nullable(),
   createdBy: z.string().min(1).max(255),
   updatedBy: z.string().min(1).max(255),

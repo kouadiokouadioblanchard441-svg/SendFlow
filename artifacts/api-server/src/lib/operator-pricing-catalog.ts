@@ -23,7 +23,15 @@ export const pricingCategories = [
     shortLabel: "International",
     description: "Envoyer vers un autre pays",
   },
+  {
+    id: "linkflow",
+    label: "Paiement par lien LinkFlow",
+    shortLabel: "LinkFlow",
+    description: "Paiement via un lien LinkFlow",
+  },
 ] as const;
+
+export const paymentOperationIds = ["deposit", "inter-network", "international"] as const;
 
 export type PricingCategoryId = (typeof pricingCategories)[number]["id"];
 export type OperatorBrand = "orange" | "wave" | "mtn" | "moov" | "generic";

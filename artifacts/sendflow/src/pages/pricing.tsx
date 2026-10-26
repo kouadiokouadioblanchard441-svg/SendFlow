@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   Globe2,
+  Link2,
   Store,
   X,
 } from 'lucide-react';
@@ -15,6 +16,7 @@ import { OperatorMark } from '@/components/operator-mark';
 import { useSeo } from '@/lib/seo';
 import {
   formatPricingFeeRate,
+  getVisiblePricingCountries,
   type PricingCategoryId,
   type PricingCountry,
   type PricingOperator,
@@ -24,6 +26,7 @@ import pricingIllustration from '@assets/generated_images/sendflow-pricing-fees-
 function CategoryIcon({ categoryId }: { categoryId: PricingCategoryId }) {
   if (categoryId === 'deposit') return <Store size={19} strokeWidth={2.1} />;
   if (categoryId === 'inter-network') return <ArrowLeftRight size={19} strokeWidth={2.1} />;
+  if (categoryId === 'linkflow') return <Link2 size={19} strokeWidth={2.1} />;
   return <Globe2 size={19} strokeWidth={2.1} />;
 }
 
@@ -32,17 +35,23 @@ export default function PricingPage() {
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
   const categories = pricingQuery.data?.categories ?? [];
-  const countries = pricingQuery.data?.countries ?? [];
+  const allCountries = pricingQuery.data?.countries ?? [];
   const [categoryId, setCategoryId] = useState<PricingCategoryId>('deposit');
   const [countryId, setCountryId] = useState('ci');
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
 
+  const countries = getVisiblePricingCountries(allCountries, categoryId);
   const country = countries.find((item) => item.id === countryId) ?? countries[0];
   const category = categories.find((item) => item.id === categoryId) ?? categories[0];
+  const operation = categoryId === 'inter-network'
+    ? 'interNetwork'
+    : categoryId === 'international'
+      ? 'international'
+      : 'deposit';
   const listedOperators = useMemo(
     () => pricingQuery.data?.operators.filter((operator) => operator.countryId === country?.id
-      && operator.operations[categoryId === 'inter-network' ? 'interNetwork' : categoryId]) ?? [],
-    [pricingQuery.data?.operators, country?.id, categoryId],
+      && operator.operations[operation]) ?? [],
+    [pricingQuery.data?.operators, country?.id, operation],
   );
 
   useSeo({
@@ -81,7 +90,7 @@ export default function PricingPage() {
   if (pricingQuery.isLoading) {
     return <main className="sendflow-pricing-shell"><div className="sendflow-pricing-content"><p role="status">Chargement des tarifs…</p></div></main>;
   }
-  if (pricingQuery.isError || !pricingQuery.data || !country || !category) {
+  if (pricingQuery.isError || !pricingQuery.data || !category) {
     return (
       <main className="sendflow-pricing-shell">
         <header className="sendflow-pricing-header">
@@ -143,26 +152,32 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section className="sendflow-pricing-country-section" aria-labelledby="pricing-country-label">
-          <span id="pricing-country-label" className="sendflow-pricing-eyebrow">Pays</span>
-          <button
-            type="button"
-            className="sendflow-pricing-country-button"
-            onClick={() => setCountryPickerOpen(true)}
-            aria-haspopup="dialog"
-            aria-expanded={countryPickerOpen}
-            data-testid="button-pricing-country"
-          >
-            <span className="sendflow-pricing-country-badge" aria-hidden="true">
-              <span className="sendflow-pricing-country-flag">{country.flag}</span>
-            </span>
-            <span className="sendflow-pricing-country-copy">
-              <strong data-testid="text-pricing-country">{country.name}</strong>
-              <small>{category.description}</small>
-            </span>
-            <ChevronDown size={20} aria-hidden="true" />
-          </button>
-        </section>
+        {country ? (
+          <section className="sendflow-pricing-country-section" aria-labelledby="pricing-country-label">
+            <span id="pricing-country-label" className="sendflow-pricing-eyebrow">Pays</span>
+            <button
+              type="button"
+              className="sendflow-pricing-country-button"
+              onClick={() => setCountryPickerOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={countryPickerOpen}
+              data-testid="button-pricing-country"
+            >
+              <span className="sendflow-pricing-country-badge" aria-hidden="true">
+                <span className="sendflow-pricing-country-flag">{country.flag}</span>
+              </span>
+              <span className="sendflow-pricing-country-copy">
+                <strong data-testid="text-pricing-country">{country.name}</strong>
+                <small>{category.description}</small>
+              </span>
+              <ChevronDown size={20} aria-hidden="true" />
+            </button>
+          </section>
+        ) : (
+          <div className="sendflow-pricing-empty" role="status" data-testid="status-pricing-no-countries">
+            Aucun pays LinkFlow n’est actuellement activé.
+          </div>
+        )}
 
         <section className="sendflow-pricing-list-section" aria-labelledby="pricing-operators-title">
           <div className="sendflow-pricing-section-heading">
@@ -202,7 +217,7 @@ export default function PricingPage() {
         </figure>
       </div>
 
-      {countryPickerOpen && (
+      {countryPickerOpen && country && (
         <div className="sendflow-pricing-picker" role="presentation" onClick={() => setCountryPickerOpen(false)}>
           <section
             className="sendflow-pricing-country-sheet"

@@ -25,7 +25,7 @@ import {
   builtInAggregatorCatalog,
   getAggregatorRouteScopeKey,
 } from "./aggregator-catalog";
-import { pricingCategories } from "../lib/operator-pricing-catalog";
+import { paymentOperationIds } from "../lib/operator-pricing-catalog";
 import { getFeexpayCoverage } from "../providers/feexpay/catalog";
 
 
@@ -90,7 +90,7 @@ router.get("/payment-routing", async (req, res): Promise<void> => {
     const routesByScope = new Map(
       storedRoutes.map((route) => [`${route.scopeType}:${route.scopeKey}:${route.operation}`, route]),
     );
-    const countries = countryRows.flatMap((country) => pricingCategories.map(({ id: operation }) => {
+    const countries = countryRows.flatMap((country) => paymentOperationIds.map((operation) => {
       const countryRoute = routesByScope.get(`country:${country.countryCode}:${operation}`);
       const defaultAggregatorCode = countryRoute?.aggregatorCode ?? null;
 
