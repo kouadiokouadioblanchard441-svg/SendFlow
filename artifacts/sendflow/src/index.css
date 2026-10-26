@@ -9407,16 +9407,26 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
 }
 .sendflow-public-pay-layout > header.sendflow-pay-brand {
   box-sizing: border-box;
-  justify-content: center;
-  width: 100%;
-  min-height: 64px;
-  margin: 0 auto 24px;
-  padding: 4px 0;
+  justify-content: flex-start;
+  width: auto;
+  min-height: 0;
+  margin: 0 0 22px 4px;
+  padding: 0;
 }
 .sendflow-public-pay-layout > header.sendflow-pay-brand > .sendflow-pay-wordmark {
   flex: 0 0 auto;
-  width: clamp(176px, 50vw, 210px);
-  max-width: 70vw;
+  width: clamp(160px, 42vw, 172px);
+  max-width: 60vw;
   height: auto;
   object-position: center;
+}
+@media (min-width: 768px) {
+  .sendflow-public-pay-layout > header.sendflow-pay-brand {
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .sendflow-public-pay-layout > header.sendflow-pay-brand > .sendflow-pay-wordmark {
+    width: 176px;
+    max-width: 48vw;
+  }
 }
