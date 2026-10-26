@@ -33,6 +33,12 @@ A LinkFlow link with no fixed amount is stored with amount zero and lets the pay
 
 **How to apply:** Treat zero as the variable-amount sentinel only for XOF. Require the payer value for quotes, simulations, and attempts, validate it on the server, include it in idempotency fingerprints and fee calculations, and never let a payer replace a fixed amount.
 
+For shared-Neon migration plans, normalize PostgreSQL-rendered constraint definitions before testing them; `pg_get_constraintdef` may quote numeric constants and include casts.
+
+**Why:** A valid existing LinkFlow schema was initially rejected because the planner expected an unquoted numeric literal.
+
+**How to apply:** Compare normalized constraint semantics and fingerprint the reviewed schema state before applying a narrowly scoped migration.
+
 For LinkFlow, expose only payment methods with a functioning end-to-end flow. Mobile Money is the method being added now; keep USDT and bank-card choices hidden until their payment flows are implemented.
 
 **Why:** The user stated that Mobile Money is the only method to add at the current stage, while USDT and card are future methods.
