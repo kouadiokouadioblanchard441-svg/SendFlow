@@ -153,6 +153,45 @@ async function loadAvailableChoices(link: PublicLinkRow) {
   return choices.sort((left, right) => left.name.localeCompare(right.name, "fr"));
 }
 
+async function loadPreviewCatalogChoices(link: PublicLinkRow) {
+  // The authorized Replit viewer may inspect the full country/operator catalog.
+  // Quotes and payment attempts still use loadAvailableChoices and its live gates.
+  if (link.currency !== "XOF" || link.paymentMethod === "card") return [];
+
+  const [countries, operators] = await Promise.all([
+    db.select().from(countriesTable),
+    db.select().from(operatorCatalogTable),
+  ]);
+  const operatorsByCountry = new Map<string, typeof operators>();
+  for (const operator of operators) {
+    const countryCode = operator.countryCode.toLowerCase();
+    const countryOperators = operatorsByCountry.get(countryCode) ?? [];
+    countryOperators.push(operator);
+    operatorsByCountry.set(countryCode, countryOperators);
+  }
+
+  return countries.map((country) => {
+    const countryCode = country.countryCode.toLowerCase();
+    const catalogOperators = operatorsByCountry.get(countryCode) ?? [];
+    return {
+      code: countryCode,
+      name: country.countryName,
+      flag: flagFromCountryCode(countryCode),
+      phonePrefix: country.phonePrefix,
+      minPhoneDigits: country.minPhoneDigits,
+      maxPhoneDigits: country.maxPhoneDigits,
+      operators: catalogOperators
+        .map((operator) => ({
+          id: operator.operatorId,
+          name: operator.name,
+          initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
+          logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name, "fr")),
+    };
+  }).sort((left, right) => left.name.localeCompare(right.name, "fr"));
+}
+
 function clientAddress(req: Request) {
   return req.ip || req.socket.remoteAddress || "unknown";
 }
@@ -176,7 +215,6 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
       res.status(404).json(errorUnavailable);
       return;
     }
-    const countries = await loadAvailableChoices(link);
     let simulationAvailable = false;
     if (isReplitPaymentTestHost()) {
       const session = await getCustomerSession(req, { touchLastSeen: false });
@@ -186,6 +224,9 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
         && isPaymentLinkSimulationAllowed(session),
       );
     }
+    const countries = simulationAvailable
+      ? await loadPreviewCatalogChoices(link)
+      : await loadAvailableChoices(link);
     const response = {
       merchantName: link.linkName?.trim() || "SendFlow",
       description: link.description,

@@ -48,6 +48,7 @@ export default function PublicPaymentLinkPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('mobile-money');
   const [simulationConfirmation, setSimulationConfirmation] = useState<SimulatedPaymentLinkSuccess | null>(null);
   const [simulationOutcome, setSimulationOutcome] = useState<'succeeded' | 'failed' | null>(null);
   const [simulationPhase, setSimulationPhase] = useState<'waiting' | 'result' | null>(null);
@@ -341,115 +342,119 @@ export default function PublicPaymentLinkPage() {
             <label className="sendflow-pay-field">
               <span>Moyens de paiement</span>
               <select
-                defaultValue={previewSimulationAvailable ? 'simulation' : link.countries.length ? 'mobile-money' : 'unavailable'}
-                disabled={!previewSimulationAvailable && link.countries.length === 0}
+                value={link.countries.length > 0 ? selectedPaymentMethod : 'unavailable'}
+                onChange={(event) => setSelectedPaymentMethod(event.target.value)}
+                disabled={link.countries.length === 0}
                 className="sendflow-pay-method-select"
                 data-testid="select-pay-method"
               >
-                {previewSimulationAvailable && <option value="simulation">Simulation de test</option>}
                 {link.countries.length > 0 && <option value="mobile-money">Mobile Money</option>}
-                {!link.simulationAvailable && link.countries.length === 0 && <option value="unavailable">Aucun moyen disponible</option>}
+                {link.countries.length === 0 && <option value="unavailable">Aucun moyen disponible</option>}
               </select>
             </label>
 
-            <div className="sendflow-pay-field-pair">
-              <label className="sendflow-pay-field">
-                <span>Nom<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-                <input
-                  type="text"
-                  autoComplete="family-name"
-                  value={lastName}
-                  onChange={(event) => {
-                    setLastName(event.target.value);
-                    resetPaymentRequestKey();
-                  }}
-                  placeholder="Votre nom"
-                  data-testid="input-pay-last-name"
-                />
-              </label>
-              <label className="sendflow-pay-field">
-                <span>Prénom(s)<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-                <input
-                  type="text"
-                  autoComplete="given-name"
-                  value={firstName}
-                  onChange={(event) => {
-                    setFirstName(event.target.value);
-                    resetPaymentRequestKey();
-                  }}
-                  placeholder="Votre prénom"
-                  data-testid="input-pay-first-name"
-                />
-              </label>
-            </div>
-
-            <label className="sendflow-pay-field">
-              <span>Pays<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-              <select
-                value={countryCode}
-                onChange={(event) => {
-                  setCountryCode(event.target.value);
-                  setOperatorId('');
-                  setPhone('');
-                  resetPaymentRequestKey();
-                }}
-                data-testid="select-pay-country"
-              >
-                <option value="">Sélectionnez votre pays</option>
-                {link.countries.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-              </select>
-            </label>
-
-            <label className="sendflow-pay-field">
-              <span>Réseau<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-              <select
-                value={operatorId}
-                onChange={(event) => {
-                  setOperatorId(event.target.value);
-                  resetPaymentRequestKey();
-                }}
-                disabled={!country || country.operators.length === 0}
-                data-testid="select-pay-operator"
-              >
-                <option value="">{country ? 'Choisissez un réseau mobile' : 'Choisissez d’abord un pays'}</option>
-                {country?.operators.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-              </select>
-            </label>
-
-            <label className="sendflow-pay-field">
-              <span>Numéro de téléphone<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-              <div className="sendflow-pay-phone-input">
-                {country && (
-                  <span className="sendflow-pay-phone-flag" role="img" aria-label={country.name} data-testid="pay-country-flag">
-                    {country.flag}
-                  </span>
-                )}
-                <span className="sendflow-pay-phone-prefix" aria-hidden="true">{country?.phonePrefix ?? '+—'}</span>
-                <input
-                  type="tel"
-                  autoComplete="tel-national"
-                  inputMode="tel"
-                  value={phone}
-                  onChange={(event) => {
-                    setPhone(event.target.value.replace(/[^\d\s-]/g, ''));
-                    resetPaymentRequestKey();
-                  }}
-                  placeholder={country ? 'Votre numéro' : 'Choisissez votre pays'}
-                  disabled={!country}
-                  data-testid="input-pay-phone"
-                />
-                {operator && (
-                  <span className="sendflow-pay-phone-operator" role="img" aria-label={`Logo ${operator.name}`} data-testid="pay-operator-logo">
-                    <OperatorMark
-                      operator={operator}
-                      imageClassName="sendflow-pay-operator-logo"
-                      fallbackClassName="sendflow-pay-operator-fallback"
+            {selectedPaymentMethod === 'mobile-money' && link.countries.length > 0 && (
+              <>
+                <div className="sendflow-pay-field-pair">
+                  <label className="sendflow-pay-field">
+                    <span>Nom<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
+                    <input
+                      type="text"
+                      autoComplete="family-name"
+                      value={lastName}
+                      onChange={(event) => {
+                        setLastName(event.target.value);
+                        resetPaymentRequestKey();
+                      }}
+                      placeholder="Votre nom"
+                      data-testid="input-pay-last-name"
                     />
-                  </span>
-                )}
-              </div>
-              {country && <small>{country.minPhoneDigits} à {country.maxPhoneDigits} chiffres, sans indicatif</small>}
-            </label>
+                  </label>
+                  <label className="sendflow-pay-field">
+                    <span>Prénom(s)<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
+                    <input
+                      type="text"
+                      autoComplete="given-name"
+                      value={firstName}
+                      onChange={(event) => {
+                        setFirstName(event.target.value);
+                        resetPaymentRequestKey();
+                      }}
+                      placeholder="Votre prénom"
+                      data-testid="input-pay-first-name"
+                    />
+                  </label>
+                </div>
+
+                <label className="sendflow-pay-field">
+                  <span>Pays<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
+                  <select
+                    value={countryCode}
+                    onChange={(event) => {
+                      setCountryCode(event.target.value);
+                      setOperatorId('');
+                      setPhone('');
+                      resetPaymentRequestKey();
+                    }}
+                    data-testid="select-pay-country"
+                  >
+                    <option value="">Sélectionnez votre pays</option>
+                    {link.countries.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
+                  </select>
+                </label>
+
+                <label className="sendflow-pay-field">
+                  <span>Réseau<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
+                  <select
+                    value={operatorId}
+                    onChange={(event) => {
+                      setOperatorId(event.target.value);
+                      resetPaymentRequestKey();
+                    }}
+                    disabled={!country || country.operators.length === 0}
+                    data-testid="select-pay-operator"
+                  >
+                    <option value="">{country ? 'Choisissez un réseau mobile' : 'Choisissez d’abord un pays'}</option>
+                    {country?.operators.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  </select>
+                </label>
+
+                <label className="sendflow-pay-field">
+                  <span>Numéro de téléphone<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
+                  <div className="sendflow-pay-phone-input">
+                    {country && (
+                      <span className="sendflow-pay-phone-flag" role="img" aria-label={country.name} data-testid="pay-country-flag">
+                        {country.flag}
+                      </span>
+                    )}
+                    <span className="sendflow-pay-phone-prefix" aria-hidden="true">{country?.phonePrefix ?? '+—'}</span>
+                    <input
+                      type="tel"
+                      autoComplete="tel-national"
+                      inputMode="tel"
+                      value={phone}
+                      onChange={(event) => {
+                        setPhone(event.target.value.replace(/[^\d\s-]/g, ''));
+                        resetPaymentRequestKey();
+                      }}
+                      placeholder={country ? 'Votre numéro' : 'Choisissez votre pays'}
+                      disabled={!country}
+                      data-testid="input-pay-phone"
+                    />
+                    {operator && (
+                      <span className="sendflow-pay-phone-operator" role="img" aria-label={`Logo ${operator.name}`} data-testid="pay-operator-logo">
+                        <OperatorMark
+                          operator={operator}
+                          imageClassName="sendflow-pay-operator-logo"
+                          fallbackClassName="sendflow-pay-operator-fallback"
+                        />
+                      </span>
+                    )}
+                  </div>
+                  {country && <small>{country.minPhoneDigits} à {country.maxPhoneDigits} chiffres, sans indicatif</small>}
+                </label>
+              </>
+            )}
 
           </div>
 

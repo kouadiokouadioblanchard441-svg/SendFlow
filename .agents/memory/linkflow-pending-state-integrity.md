@@ -27,6 +27,12 @@ For LinkFlow, the amount chosen by the merchant is the payer’s total debit. De
 
 **How to apply:** Keep fee calculations server-side, use the recipient-pays-fees calculation for LinkFlow only, and expose only the fixed payer total in the public checkout.
 
+For LinkFlow, expose only payment methods with a functioning end-to-end flow. Mobile Money is the method being added now; keep USDT and bank-card choices hidden until their payment flows are implemented.
+
+**Why:** The user stated that Mobile Money is the only method to add at the current stage, while USDT and card are future methods.
+
+**How to apply:** Show the Mobile Money payer fields only when Mobile Money is selected. Do not list unsupported methods as selectable options.
+
 After a LinkFlow payment is conclusively confirmed, credit the merchant’s SendFlow wallet with the net amount after SendFlow fees, exactly once.
 
 **Why:** The user explicitly chose wallet credit after FeexPay confirmation and confirmed that SendFlow fees are deducted from the payer’s fixed total.
