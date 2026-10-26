@@ -8538,21 +8538,6 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
 .sendflow-linkflow-outcome-note svg { flex: 0 0 auto; color: #8a5d00; }
 .sendflow-linkflow-outcome-redirect { margin: 14px 0 0; color: #514a59; font-size: 12px; text-align: center; }
 .sendflow-linkflow-outcome-button { margin-top: 20px; }
-.sendflow-pay-simulate-failure {
-  display: block;
-  min-height: 42px;
-  margin: 9px auto 0;
-  border: 0;
-  background: transparent;
-  color: #514a59;
-  padding: 7px 10px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.sendflow-pay-simulate-failure:disabled { color: #746c7d; cursor: not-allowed; }
 @keyframes sendflow-flow-spin { to { transform: rotate(360deg); } }
 
 .sendflow-linkflow-share {

@@ -564,14 +564,6 @@ export default function PublicPaymentLinkPage() {
               >
                 {simulateMutation.isPending ? 'Préparation…' : 'Tester le parcours de paiement'}
               </button>
-              <button
-                type="button"
-                className="sendflow-pay-simulate-failure"
-                disabled={simulateMutation.isPending || !payerFormValid}
-                onClick={() => beginSimulation('failed')}
-              >
-                Tester l’écran « Paiement non confirmé »
-              </button>
             </>
           ) : link.paymentAvailable ? (
             <>
