@@ -423,7 +423,6 @@ export default function AccountPage() {
             <div className="sendflow-menu-links">
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-info'); }} data-testid="button-menu-account-info"><UserRound size={19} />Informations du compte<ChevronRight size={17} /></button>
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/change-pin'); }} data-testid="button-menu-change-secret"><LockKeyhole size={19} />Modifier le code PIN<ChevronRight size={17} /></button>
-                  <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/biometric'); }} data-testid="button-menu-biometric"><Fingerprint size={19} />Sécurité biométrique<ChevronRight size={17} /></button>
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/pricing'); }} data-testid="button-menu-pricing"><BadgePercent size={19} />Tarification<ChevronRight size={17} /></button>
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-limit'); }} data-testid="button-menu-limit"><WalletCards size={19} />Plafond du compte<ChevronRight size={17} /></button>
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/linkflow'); }} data-testid="button-menu-linkflow"><Link2 size={19} />LinkFlow<ChevronRight size={17} /></button>
