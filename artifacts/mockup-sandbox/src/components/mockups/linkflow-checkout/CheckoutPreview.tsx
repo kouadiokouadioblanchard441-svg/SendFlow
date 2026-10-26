@@ -6,14 +6,16 @@ import waveOperatorLogo from './assets/wave-logo-reference.png';
 import './_group.css';
 
 function CheckoutPreview({ highContrast = false, phoneReference = false }: { highContrast?: boolean; phoneReference?: boolean }) {
-  const [countryCode, setCountryCode] = useState(phoneReference ? 'ci' : '');
+  const [countryCode, setCountryCode] = useState(phoneReference ? 'bf' : '');
   const [operatorId, setOperatorId] = useState(phoneReference ? 'wave' : '');
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
   const country = countryCode === 'ci'
     ? { name: 'Côte d’Ivoire', code: 'ci', phonePrefix: '+225', flag: '🇨🇮' }
-    : null;
+    : countryCode === 'bf'
+      ? { name: 'Burkina Faso', code: 'bf', phonePrefix: '+226', flag: '🇧🇫' }
+      : null;
 
   return (
     <main className={`sendflow-public-pay-shell${highContrast ? ' checkout-preview--contrast' : ''}${phoneReference ? ' checkout-preview--phone-reference' : ''}`}>
@@ -53,6 +55,7 @@ function CheckoutPreview({ highContrast = false, phoneReference = false }: { hig
               <select value={countryCode} onChange={(event) => setCountryCode(event.target.value)}>
                 <option value="">Sélectionnez votre pays</option>
                 <option value="ci">Côte d’Ivoire</option>
+                <option value="bf">Burkina Faso</option>
               </select>
             </label>
             <label className={`sendflow-pay-field${phoneReference ? ' sendflow-pay-field--reference-centered' : ''}`}>
@@ -91,6 +94,7 @@ function CheckoutPreview({ highContrast = false, phoneReference = false }: { hig
                         aria-label={country ? `Indicatif téléphonique, ${country.name}` : 'Indicatif téléphonique'}
                       >
                         {!country && <option value="">+—</option>}
+                        <option value="bf">+226</option>
                         <option value="ci">+225</option>
                       </select>
                       <PaymentSelectIndicator />

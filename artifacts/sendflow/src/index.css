@@ -9114,8 +9114,8 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
 .sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-prefix-wrap {
   position: relative;
   height: 100%;
-  min-width: 82px;
-  flex: 0 0 clamp(82px, 22.2%, 112px);
+  min-width: 72px;
+  flex: 0 0 clamp(72px, 22.4%, 112px);
   border-right: 1px solid #c8c8c8;
   background: #fff;
 }
@@ -9128,10 +9128,10 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
   outline: 0;
   background: transparent;
   color: #39363b;
-  padding: 0 30px 0 8px;
-  font-size: 15px;
+  padding: 0 22px 0 8px;
+  font-size: 14px;
   font-weight: 500;
-  text-align: center;
+  text-align: left;
   appearance: none;
   box-shadow: none;
 }
