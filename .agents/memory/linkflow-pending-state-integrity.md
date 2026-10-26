@@ -51,11 +51,11 @@ After a LinkFlow payment is conclusively confirmed, credit the merchant’s Send
 
 **How to apply:** Use the server-calculated recipient amount in the existing guarded payment-intent and ledger transaction; never credit on a pending, failed, or uncertain result.
 
-For LinkFlow, deletion is a soft revocation: invalidate and hide the public link while retaining its record and history. Do not show invented views, visitors, attempts, successes, or collected amounts; payment statistics remain unavailable until real payments are activated and metrics come from authoritative server/provider records.
+For LinkFlow, deletion is a soft revocation: hide the link from owner lists and retain its record and history, but show the same minimal expired-link landing page to someone holding its token. Deleted links remain unusable for quotes, images, or payment attempts. Unknown tokens stay generic; the removed-link page may show only the merchant name and amount, not description, operator choices, or image. Do not show invented analytics.
 
-**Why:** The user explicitly chose history-preserving deletion and deferred complete statistics until real payments are available.
+**Why:** The user explicitly chose history-preserving deletion, then asked for deleted links to use the same public page as expired links while keeping checkout revoked.
 
-**How to apply:** Filter deleted links from owner lists and all public endpoints, but retain their database rows. Never count viewer simulations as payments or derive financial analytics from browser state.
+**How to apply:** Keep deleted links out of owner lists and all payment-operation endpoints, but allow the public landing-page lookup to return its restricted expired-style response for a known soft-deleted token. Keep unknown tokens indistinguishable and analytics server-authoritative.
 
 For public LinkFlow, show a failed payment as “Paiement non confirmé” only after the server confirms failure. Keep this separate from an expired-link screen.
 

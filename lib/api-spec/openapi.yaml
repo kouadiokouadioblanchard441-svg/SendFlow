@@ -1123,13 +1123,13 @@ paths:
             pattern: "^[A-Za-z0-9_-]{43}$"
       responses:
         "200":
-          description: Active link details or a safe preview for an expired link.
+          description: Active link details or the safe expired-link page for a link that expired or was deleted.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PublicPaymentLink"
         "404":
-          description: The link is unknown, inactive, deleted, or exhausted.
+          description: The link is unknown, inactive, or exhausted.
           content:
             application/json:
               schema:

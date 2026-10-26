@@ -62,9 +62,13 @@ type PublicLinkRow = {
   usageCount: number;
   status: string;
   imageData: Buffer | null;
+  deletedAt: Date | null;
 };
 
-async function findPublicLink(token: string): Promise<PublicLinkRow | undefined> {
+async function findPublicLink(
+  token: string,
+  options: { includeDeleted?: boolean } = {},
+): Promise<PublicLinkRow | undefined> {
   if (!tokenPattern.test(token)) return undefined;
   const [link] = await db.select({
     id: customerPaymentLinksTable.id,
@@ -80,11 +84,14 @@ async function findPublicLink(token: string): Promise<PublicLinkRow | undefined>
     usageCount: customerPaymentLinksTable.usageCount,
     status: customerPaymentLinksTable.status,
     imageData: customerPaymentLinksTable.imageData,
+    deletedAt: customerPaymentLinksTable.deletedAt,
   }).from(customerPaymentLinksTable)
-    .where(and(
-      eq(customerPaymentLinksTable.publicToken, token),
-      isNull(customerPaymentLinksTable.deletedAt),
-    ))
+    .where(options.includeDeleted
+      ? eq(customerPaymentLinksTable.publicToken, token)
+      : and(
+          eq(customerPaymentLinksTable.publicToken, token),
+          isNull(customerPaymentLinksTable.deletedAt),
+        ))
     .limit(1);
 
   return link;
@@ -92,6 +99,23 @@ async function findPublicLink(token: string): Promise<PublicLinkRow | undefined>
 
 function isPublicLinkExpired(link: PublicLinkRow) {
   return link.expiresAt !== null && link.expiresAt.getTime() <= Date.now();
+}
+
+function expiredPublicPaymentLinkResponse(link: PublicLinkRow) {
+  return GetPublicPaymentLinkResponse.parse({
+    state: "expired",
+    merchantName: link.linkName?.trim() || "SendFlow",
+    description: "",
+    currency: link.currency,
+    currencyDecimals: ["XOF", "XAF"].includes(link.currency) ? 0 : 2,
+    amountMinor: link.amountMinor,
+    expiresAt: link.expiresAt?.toISOString() ?? null,
+    remainingUses: null,
+    imagePath: null,
+    countries: [],
+    paymentAvailable: false,
+    simulationAvailable: false,
+  });
 }
 
 function hasPublicLinkReachedUseLimit(link: PublicLinkRow) {
@@ -227,26 +251,21 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
       res.status(429).json({ error: "Trop de consultations de ce lien. Réessayez dans une minute." });
       return;
     }
-    const link = await findPublicLink(parsed.data.token);
-    if (!link || link.status !== "active" || hasPublicLinkReachedUseLimit(link)) {
+    const link = await findPublicLink(parsed.data.token, { includeDeleted: true });
+    if (!link) {
+      res.status(404).json(errorUnavailable);
+      return;
+    }
+    if (link.deletedAt) {
+      res.json(expiredPublicPaymentLinkResponse(link));
+      return;
+    }
+    if (link.status !== "active" || hasPublicLinkReachedUseLimit(link)) {
       res.status(404).json(errorUnavailable);
       return;
     }
     if (isPublicLinkExpired(link)) {
-      res.json(GetPublicPaymentLinkResponse.parse({
-        state: "expired",
-        merchantName: link.linkName?.trim() || "SendFlow",
-        description: "",
-        currency: link.currency,
-        currencyDecimals: ["XOF", "XAF"].includes(link.currency) ? 0 : 2,
-        amountMinor: link.amountMinor,
-        expiresAt: link.expiresAt?.toISOString() ?? null,
-        remainingUses: null,
-        imagePath: null,
-        countries: [],
-        paymentAvailable: false,
-        simulationAvailable: false,
-      }));
+      res.json(expiredPublicPaymentLinkResponse(link));
       return;
     }
     let simulationAvailable = false;

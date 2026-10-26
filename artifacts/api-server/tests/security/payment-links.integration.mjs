@@ -680,11 +680,18 @@ test("public payment page is token-scoped and quotes the fee from server pricing
   assert.equal(expiredDetails.simulationAvailable, false);
   assert.deepEqual(expiredDetails.countries, []);
   await owner.query(
-    "UPDATE sf_customer_payment_links SET deleted_at=now() WHERE id=$1",
+    "UPDATE sf_customer_payment_links SET expires_at=NULL, deleted_at=now() WHERE id=$1",
     [link.id],
   );
   const deletedPage = await request(`/api/public/payment-links/${token}`);
-  assert.equal(deletedPage.status, 404);
+  assert.equal(deletedPage.status, 200, deletedPage.text);
+  const deletedDetails = json(deletedPage);
+  assert.equal(deletedDetails.state, "expired");
+  assert.equal(deletedDetails.merchantName, "Flow digital SARL");
+  assert.equal(deletedDetails.amountMinor, 1250);
+  assert.equal(deletedDetails.paymentAvailable, false);
+  assert.equal(deletedDetails.simulationAvailable, false);
+  assert.deepEqual(deletedDetails.countries, []);
   const unknownToken = await request(
     "/api/public/payment-links/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
   );
@@ -848,7 +855,7 @@ test("link creation is rate-limited per customer", async () => {
   )).rows[0].count), 10);
 });
 
-test("link detail is owner-scoped, updates are guarded, and deletion preserves the record while revoking checkout", async () => {
+test("link deletion preserves history, shows the expired landing page, and revokes checkout", async () => {
   const body = validInput({ maximumUses: 3 });
   const created = await request("/api/me/payment-links", {
     method: "POST",
@@ -936,7 +943,12 @@ test("link detail is owner-scoped, updates are guarded, and deletion preserves t
   });
   assert.equal(json(hiddenFromList).items.some((item) => item.id === linkId), false);
   const publicCheckout = await request(`/api/public/payment-links/${token}`);
-  assert.equal(publicCheckout.status, 404);
+  assert.equal(publicCheckout.status, 200, publicCheckout.text);
+  assert.equal(json(publicCheckout).state, "expired");
+  assert.equal(json(publicCheckout).paymentAvailable, false);
+  assert.deepEqual(json(publicCheckout).countries, []);
+  const deletedQuote = await request(`/api/public/payment-links/${token}/quote/ci/mtn-ci`);
+  assert.equal(deletedQuote.status, 404);
 
   const preserved = await owner.query(
     "SELECT deleted_at, amount_minor, usage_count FROM sf_customer_payment_links WHERE id=$1",
