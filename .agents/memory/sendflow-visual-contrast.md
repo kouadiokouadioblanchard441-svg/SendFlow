@@ -56,3 +56,9 @@ While the user is working on the payment-by-link page, keep changes scoped to th
 **Why:** the user explicitly limited the current work to the payment-by-link page, while clarifying that shared operator logos are expected.
 
 **How to apply:** scope checkout styles to the public payment form. When extending a shared component, make the added behavior opt-in so its existing consumers keep their current rendering.
+
+Keep the LinkFlow payment-success screen visually distinct from checkout. Preserve its spacious, full-screen confirmation layout instead of reusing the payment form's compact card styles.
+
+**Why:** the user explicitly asked to restore the original large success page and rejected making it look like the checkout page.
+
+**How to apply:** use success-specific shell, card, banner, and button styles for successful outcomes; keep checkout and failure styling independent.
