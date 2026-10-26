@@ -751,16 +751,19 @@ router.post("/auth/biometric/registration/verify", async (req, res): Promise<voi
       return;
     }
     const now = new Date();
-    const [challenge] = await db.select().from(customerBiometricChallengesTable)
+    const [challenge] = await db.update(customerBiometricChallengesTable)
+      .set({ usedAt: now })
       .where(and(
         eq(customerBiometricChallengesTable.id, parsed.data.challengeId),
         eq(customerBiometricChallengesTable.userId, session.userId),
         eq(customerBiometricChallengesTable.sessionId, session.sessionId),
         eq(customerBiometricChallengesTable.purpose, "registration"),
         eq(customerBiometricChallengesTable.expectedOrigin, origin.origin),
+        eq(customerBiometricChallengesTable.rpId, origin.rpId),
         gte(customerBiometricChallengesTable.expiresAt, now),
         isNull(customerBiometricChallengesTable.usedAt),
-      )).limit(1);
+      ))
+      .returning();
     if (!challenge) {
       res.status(400).json({ error: "La demande biométrique a expiré. Réessayez." });
       return;
@@ -784,16 +787,18 @@ router.post("/auth/biometric/registration/verify", async (req, res): Promise<voi
     const info = verification.registrationInfo.credential;
     const transports = info.transports ?? [];
     const result = await db.transaction(async (tx) => {
-      const [consumed] = await tx.update(customerBiometricChallengesTable)
-        .set({ usedAt: now })
+      const [currentSession] = await tx.select({ id: customerSessionsTable.id })
+        .from(customerSessionsTable)
         .where(and(
-          eq(customerBiometricChallengesTable.id, challenge.id),
-          eq(customerBiometricChallengesTable.userId, session.userId),
-          eq(customerBiometricChallengesTable.sessionId, session.sessionId),
-          isNull(customerBiometricChallengesTable.usedAt),
-          gte(customerBiometricChallengesTable.expiresAt, now),
-        )).returning({ id: customerBiometricChallengesTable.id });
-      if (!consumed) return false;
+          eq(customerSessionsTable.id, session.sessionId),
+          eq(customerSessionsTable.userId, session.userId),
+          isNull(customerSessionsTable.revokedAt),
+          gte(customerSessionsTable.expiresAt, now),
+          gte(customerSessionsTable.pinVerifiedUntil, now),
+        ))
+        .for("update")
+        .limit(1);
+      if (!currentSession) return false;
       await tx.insert(customerBiometricCredentialsTable).values({
         userId: session.userId,
         rpId: challenge.rpId,
@@ -910,6 +915,7 @@ router.post("/auth/biometric/authentication/verify", async (req, res): Promise<v
           eq(customerBiometricChallengesTable.sessionId, session.sessionId),
           eq(customerBiometricChallengesTable.purpose, "authentication"),
           eq(customerBiometricChallengesTable.expectedOrigin, origin.origin),
+          eq(customerBiometricChallengesTable.rpId, origin.rpId),
           gte(customerBiometricChallengesTable.expiresAt, now),
           isNull(customerBiometricChallengesTable.usedAt),
         )).for("update").limit(1);
@@ -920,6 +926,7 @@ router.post("/auth/biometric/authentication/verify", async (req, res): Promise<v
         .where(and(
           eq(customerBiometricCredentialsTable.userId, session.userId),
           eq(customerBiometricCredentialsTable.credentialId, responseId),
+          eq(customerBiometricCredentialsTable.rpId, challenge.rpId),
         )).for("update").limit(1);
       let verified = false;
       let newCounter = credential?.counter ?? 0;
