@@ -524,7 +524,7 @@ export default function PublicPaymentLinkPage() {
                         setPhone(event.target.value.replace(/[^\d\s-]/g, ''));
                         resetPaymentRequestKey();
                       }}
-                      placeholder={country ? '0166000000' : 'Choisissez votre pays'}
+                      placeholder={country ? '0500000092' : 'Choisissez votre pays'}
                       disabled={!country}
                       data-testid="input-pay-phone"
                     />

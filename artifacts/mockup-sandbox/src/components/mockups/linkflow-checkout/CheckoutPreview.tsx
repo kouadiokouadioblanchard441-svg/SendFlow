@@ -106,7 +106,7 @@ function CheckoutPreview({ highContrast = false, phoneReference = false }: { hig
                 <input
                   value={phone}
                   onChange={(event) => setPhone(event.target.value.replace(/[^\d\s-]/g, ''))}
-                  placeholder={phoneReference && country ? '0166000000' : 'Choisissez votre pays'}
+                  placeholder={phoneReference && country ? '0500000092' : 'Choisissez votre pays'}
                   autoComplete="tel-national"
                   inputMode="tel"
                   disabled={!country}
