@@ -9321,3 +9321,79 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
     padding: 30px;
   }
 }
+
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-merchant-title,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-payment-title,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-amount-panel > strong {
+  color: #000;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-payment-title {
+  font-size: 16px;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-description {
+  color: #000;
+  font-size: 15px;
+  font-weight: 600;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-amount-panel--editable:not(.is-invalid) > small {
+  color: #000;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-amount-panel--editable.is-invalid > small {
+  color: #a52626;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field {
+  color: #000;
+  font-size: 15px;
+  font-weight: 700;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field input,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field select {
+  color: #000;
+  font-size: 16px;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-method-select {
+  color: #000 !important;
+  font-size: 16px !important;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-field > small {
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-input > span,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-prefix,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-input input {
+  color: #000;
+  font-size: 15px;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-phone-prefix {
+  font-size: 15px !important;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-inline-error {
+  font-size: 13px;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-unavailable-note p,
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-unavailable-note strong {
+  color: #000;
+  font-size: 14px;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-unavailable-note p {
+  font-weight: 600;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-unavailable-note strong {
+  font-weight: 750;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-pay-submit {
+  font-size: 16px;
+}
+.sendflow-public-pay-shell:not(.sendflow-linkflow-flow-shell) .sendflow-linkflow-secure-footer {
+  color: #000;
+  font-size: 15px;
+  font-weight: 700;
+}
