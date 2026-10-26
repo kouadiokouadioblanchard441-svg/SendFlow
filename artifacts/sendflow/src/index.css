@@ -8467,8 +8467,28 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
   cursor: pointer;
 }
 .sendflow-linkflow-flow-refresh:disabled { opacity: .7; cursor: wait; }
-.sendflow-linkflow-flow-secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 17px 0 0; color: #514a59; font-size: 11px; }
-.sendflow-linkflow-flow-secure svg { color: #138e52; }
+.sendflow-linkflow-secure-footer {
+  display: flex;
+  min-height: 47px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px 0 0;
+  border-top: 1px solid #e8e4ed;
+  padding: 11px 8px 0;
+  color: #65616c;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.sendflow-linkflow-secure-wordmark { display: block; width: 83px; height: auto; object-fit: contain; }
+.sendflow-linkflow-secure-mark {
+  display: block;
+  width: 29px;
+  height: 29px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(42, 24, 80, .2));
+}
 .sendflow-linkflow-outcome-card { padding: 0; }
 .sendflow-linkflow-outcome-card .sendflow-linkflow-flow-brand { padding: 21px 20px 0; }
 .sendflow-linkflow-outcome-banner { display: grid; justify-items: center; background: #5e32bb; color: #fff; padding: 28px 20px 25px; text-align: center; }

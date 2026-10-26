@@ -1,5 +1,6 @@
 import { ArrowRight, Check, CircleAlert, X } from 'lucide-react';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
 
 export interface LinkFlowPaymentOutcomeProps {
   outcome: 'succeeded' | 'failed';
@@ -62,6 +63,7 @@ export default function LinkFlowPaymentOutcome({
             <ArrowRight size={18} aria-hidden="true" />
           </button>
         </div>
+        <LinkFlowSecureFooter />
       </section>
     </main>
   );

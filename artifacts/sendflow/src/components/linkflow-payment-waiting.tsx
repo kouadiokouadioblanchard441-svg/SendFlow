@@ -1,5 +1,6 @@
 import { LoaderCircle, PhoneCall, ShieldCheck, Smartphone } from 'lucide-react';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
 
 export interface LinkFlowPaymentWaitingProps {
   merchantName: string;
@@ -100,7 +101,7 @@ export default function LinkFlowPaymentWaiting({
             {refreshing ? 'Vérification…' : 'Vérifier à nouveau'}
           </button>
         )}
-        <p className="sendflow-linkflow-flow-secure"><ShieldCheck size={15} /> Paiement sécurisé par SendFlow</p>
+        <LinkFlowSecureFooter />
       </section>
     </main>
   );

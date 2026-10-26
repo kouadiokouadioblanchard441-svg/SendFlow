@@ -26,3 +26,9 @@ LinkFlow deletion actions should use a strong, solid red treatment rather than a
 **Why:** the user explicitly requested a pure red Delete button for the link detail page.
 
 **How to apply:** use a high-contrast red fill for both the delete action and its confirmation action, with accessible white text and a visible focus state.
+
+Every public LinkFlow payment state should end with a “Paiement sécurisé par SendFlow” footer using the official wordmark and the approved 3D brand mark. Keep this treatment scoped to the payment-link flow.
+
+**Why:** the user requested the same visible trust signature at the bottom of every LinkFlow payment page.
+
+**How to apply:** render the shared footer on checkout, loading/unavailable, waiting, success, and failure states; do not add it globally to unrelated SendFlow pages.

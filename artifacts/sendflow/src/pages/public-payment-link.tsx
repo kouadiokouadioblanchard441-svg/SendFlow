@@ -19,6 +19,7 @@ import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-pay
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import { OperatorMark } from '@/components/operator-mark';
 import LinkFlowPaymentOutcome from '@/components/linkflow-payment-outcome';
+import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
 import LinkFlowPaymentWaiting from '@/components/linkflow-payment-waiting';
 
 function formatMoney(minor: number, currency: string, decimals: number) {
@@ -274,6 +275,7 @@ export default function PublicPaymentLinkPage() {
             <div className="sendflow-pay-skeleton-line is-short" />
             <div className="sendflow-pay-skeleton-panel" />
             <div className="sendflow-pay-skeleton-panel" />
+            <LinkFlowSecureFooter />
           </section>
         </main>
       </>
@@ -292,6 +294,7 @@ export default function PublicPaymentLinkPage() {
             <h1>Ce lien n’est pas disponible</h1>
             <p>Il a peut-être expiré ou n’existe plus. Demandez au commerçant de vérifier son lien.</p>
             <button type="button" className="sendflow-pay-retry" onClick={() => linkQuery.refetch()}>Réessayer</button>
+            <LinkFlowSecureFooter />
           </section>
         </main>
       </>
@@ -508,6 +511,7 @@ export default function PublicPaymentLinkPage() {
               </button>
             </>
           )}
+          <LinkFlowSecureFooter />
         </section>
       </div>
     </main>
