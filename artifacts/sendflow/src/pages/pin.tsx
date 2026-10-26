@@ -90,6 +90,7 @@ function PinKeypad({
   keys,
   processing,
   biometricVisible = false,
+  biometricEnabled = false,
   onDigit,
   onDelete,
   onBiometric,
@@ -97,6 +98,7 @@ function PinKeypad({
   keys: PinKey[];
   processing: boolean;
   biometricVisible?: boolean;
+  biometricEnabled?: boolean;
   onDigit: (digit: string) => void;
   onDelete: () => void;
   onBiometric?: () => void;
@@ -113,7 +115,7 @@ function PinKeypad({
                 type="button"
                 className="sendflow-pin-key sendflow-pin-biometric"
                 onClick={onBiometric}
-                aria-label="Déverrouiller avec la biométrie"
+                aria-label={biometricEnabled ? "Déverrouiller avec l’empreinte digitale" : "Informations sur le déverrouillage biométrique"}
                 disabled={processing}
               >
                 <Fingerprint size={34} strokeWidth={2.2} />
@@ -298,13 +300,19 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   }, [clearEntry, confirming, createdPin, mode, queryClient, setCustomerPin, unlockCustomerSession, setLocation]);
 
   const unlockWithBiometric = useCallback(async () => {
-    if (
-      mode !== 'enter'
-      || !platformBiometricAvailable
-      || !biometricStatus.data?.enabled
-      || processing
-      || processingRef.current
-    ) return;
+    if (mode !== 'enter' || processing || processingRef.current) return;
+    if (!platformBiometricAvailable) {
+      setError("La biométrie n’est pas prise en charge sur cet appareil. Saisissez votre code PIN.");
+      return;
+    }
+    if (biometricStatus.isError) {
+      setError("La disponibilité biométrique n’a pas pu être vérifiée. Saisissez votre code PIN.");
+      return;
+    }
+    if (!biometricStatus.data?.enabled) {
+      setError("Activez d’abord la biométrie dans le menu de votre compte après avoir saisi votre PIN.");
+      return;
+    }
     processingRef.current = true;
     setProcessing(true);
     setError('');
@@ -397,7 +405,8 @@ export default function PinPage({ mode }: { mode: PinMode }) {
         <PinKeypad
           keys={keypad}
           processing={processing}
-          biometricVisible={mode === 'enter' && platformBiometricAvailable && Boolean(biometricStatus.data?.enabled)}
+          biometricVisible={mode === 'enter'}
+          biometricEnabled={platformBiometricAvailable && Boolean(biometricStatus.data?.enabled)}
           onDigit={appendDigit}
           onDelete={removeDigit}
           onBiometric={() => void unlockWithBiometric()}
