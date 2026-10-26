@@ -27,8 +27,8 @@ Biometric PIN unlock must use a server-verified WebAuthn assertion, a one-use se
 
 **How to apply:** Keep origin/RP checks on the server, retain the existing PIN attempt controls, and require a PIN-unlocked session to register or revoke credentials. Do not add native biometric plugins or platform configuration without the separate mobile phase approval.
 
-Keep biometric sign-in and first-time enrollment on the PIN screen. The fingerprint button performs server-verified biometric sign-in when a credential exists; otherwise, tapping it arms enrollment and a correct PIN unlock authorizes the device registration prompt without navigating to a separate page. Entering PIN without tapping remains the normal login path. Never block PIN access if biometric setup fails.
+Keep biometric sign-in and first-time enrollment on the PIN screen. When a server-registered credential exists, automatically launch one biometric sign-in prompt as the PIN screen opens; if it is cancelled or fails, leave the PIN keypad available and do not loop. The fingerprint button remains available for manual retry. When no credential exists, tapping it arms enrollment and a correct PIN unlock authorizes the device registration prompt without navigating to a separate page. Entering PIN without tapping remains the normal login path. Never block PIN access if biometric setup fails.
 
-**Why:** The user explicitly rejected a post-PIN activation dialog and wants the fingerprint action directly on the PIN keypad.
+**Why:** The user wants previously enabled biometrics to appear automatically on arrival at the PIN screen, without asking for the PIN first.
 
-**How to apply:** Keep registration endpoints protected by server-confirmed PIN unlock; launch the native WebAuthn prompt only after that check, on the same PIN flow. If the user cancels or registration fails, retain PIN access and offer a clear way to continue.
+**How to apply:** Bind automatic sign-in to server-reported enrollment and platform capability; attempt it once per screen visit, suppress it after any PIN interaction, and retain a manual retry. Keep registration endpoints protected by server-confirmed PIN unlock; if setup fails, retain PIN access and offer a clear way to continue.

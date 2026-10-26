@@ -221,6 +221,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   const [entry, setEntry] = useState('');
   const entryRef = useRef('');
   const processingRef = useRef(false);
+  const biometricAutoPromptAttemptedRef = useRef(false);
   const [keypad, setKeypad] = useState<PinKey[]>(createShuffledKeypad);
   const [createdPin, setCreatedPin] = useState('');
   const [confirming, setConfirming] = useState(false);
@@ -357,6 +358,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
 
   const unlockWithBiometric = useCallback(async () => {
     if (mode !== 'enter' || processing || processingRef.current) return;
+    biometricAutoPromptAttemptedRef.current = true;
     if (!platformBiometricAvailable) {
       setError("La biométrie n’est pas prise en charge sur cet appareil. Saisissez votre code PIN.");
       return;
@@ -409,8 +411,36 @@ export default function PinPage({ mode }: { mode: PinMode }) {
     verifyBiometricAuthentication,
   ]);
 
+  useEffect(() => {
+    if (
+      mode !== 'enter'
+      || !platformBiometricAvailable
+      || biometricStatus.isPending
+      || biometricStatus.isError
+      || biometricStatus.data?.enabled !== true
+      || entry.length > 0
+      || biometricActivationRequested
+      || processing
+      || biometricAutoPromptAttemptedRef.current
+    ) return;
+
+    biometricAutoPromptAttemptedRef.current = true;
+    void unlockWithBiometric();
+  }, [
+    biometricActivationRequested,
+    biometricStatus.data?.enabled,
+    biometricStatus.isError,
+    biometricStatus.isPending,
+    entry.length,
+    mode,
+    platformBiometricAvailable,
+    processing,
+    unlockWithBiometric,
+  ]);
+
   const appendDigit = useCallback((digit: string) => {
     if (processing || processingRef.current || entryRef.current.length >= PIN_LENGTH || !/^\d$/.test(digit)) return;
+    if (mode === 'enter') biometricAutoPromptAttemptedRef.current = true;
     setError('');
     const nextEntry = `${entryRef.current}${digit}`;
     entryRef.current = nextEntry;
@@ -421,7 +451,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
       processingRef.current = true;
       void completeEntry(nextEntry);
     }
-  }, [completeEntry, processing]);
+  }, [completeEntry, mode, processing]);
 
   const removeDigit = useCallback(() => {
     if (processing || processingRef.current) return;
