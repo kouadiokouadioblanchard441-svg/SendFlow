@@ -120,11 +120,6 @@ export default function PublicPaymentLinkPage() {
   }, [simulationPhase, simulationOutcome]);
 
   const confirmedStatus = paymentStatusQuery.data;
-  useEffect(() => {
-    if (confirmedStatus?.state !== 'succeeded' || !confirmedStatus.returnUrl) return;
-    const timer = window.setTimeout(() => window.location.assign(confirmedStatus.returnUrl!), 3_000);
-    return () => window.clearTimeout(timer);
-  }, [confirmedStatus?.state, confirmedStatus?.returnUrl]);
 
   const resetPaymentRequestKey = () => {
     setPaymentRequestKey('');

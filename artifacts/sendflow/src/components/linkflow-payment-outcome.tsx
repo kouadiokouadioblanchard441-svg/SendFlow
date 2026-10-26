@@ -7,7 +7,6 @@ export interface LinkFlowPaymentOutcomeProps {
   amountLabel: string;
   returnUrl: string | null;
   onFinish: () => void;
-  redirectSeconds?: number | null;
   simulation?: boolean;
 }
 
@@ -17,7 +16,6 @@ export default function LinkFlowPaymentOutcome({
   amountLabel,
   returnUrl,
   onFinish,
-  redirectSeconds,
   simulation = false,
 }: LinkFlowPaymentOutcomeProps) {
   const succeeded = outcome === 'succeeded';
@@ -61,11 +59,6 @@ export default function LinkFlowPaymentOutcome({
               <span>Aucun crédit n’a été ajouté au portefeuille du marchand. Vous pouvez réessayer.</span>
             </div>
           ) : null}
-          {succeeded && returnUrl && redirectSeconds !== null && (
-            <p className="sendflow-linkflow-outcome-redirect" role="status">
-              Redirection vers le site du marchand dans {redirectSeconds ?? 3} s.
-            </p>
-          )}
           <button className="sendflow-linkflow-outcome-button" type="button" onClick={onFinish}>
             {succeeded && returnUrl ? 'Terminer' : succeeded ? 'Terminer' : 'Réessayer'}
             <ArrowRight size={18} aria-hidden="true" />
