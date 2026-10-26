@@ -3953,6 +3953,15 @@
   display: block;
 }
 
+.sendflow-pin-biometric-hint {
+  width: min(100%, 290px);
+  margin: 8px 0 -4px;
+  color: #54408a;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .sendflow-pin-error {
   display: flex;
   min-height: 36px;

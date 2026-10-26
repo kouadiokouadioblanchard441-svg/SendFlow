@@ -27,8 +27,8 @@ Biometric PIN unlock must use a server-verified WebAuthn assertion, a one-use se
 
 **How to apply:** Keep origin/RP checks on the server, retain the existing PIN attempt controls, and require a PIN-unlocked session to register or revoke credentials. Do not add native biometric plugins or platform configuration without the separate mobile phase approval.
 
-Offer biometric enrollment as a question only after a successful PIN unlock; do not require a separate activation page. If the user chooses “Plus tard,” offer again after the next successful PIN unlock until the server confirms enrollment. Unsupported devices and status-check failures must never block PIN access. Keep account controls for status and revocation.
+Keep biometric sign-in and first-time enrollment on the PIN screen. The fingerprint button performs server-verified biometric sign-in when a credential exists; otherwise, tapping it arms enrollment and a correct PIN unlock authorizes the device registration prompt without navigating to a separate page. Entering PIN without tapping remains the normal login path. Never block PIN access if biometric setup fails.
 
-**Why:** The user chose a repeatable post-PIN offer until activation, with the PIN remaining available.
+**Why:** The user explicitly rejected a post-PIN activation dialog and wants the fingerprint action directly on the PIN keypad.
 
-**How to apply:** Check server enrollment status after PIN success, ask before starting WebAuthn registration, and continue into the account when the user defers, cancels, or an error occurs.
+**How to apply:** Keep registration endpoints protected by server-confirmed PIN unlock; launch the native WebAuthn prompt only after that check, on the same PIN flow. If the user cancels or registration fails, retain PIN access and offer a clear way to continue.
