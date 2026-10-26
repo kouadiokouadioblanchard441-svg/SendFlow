@@ -42,7 +42,12 @@ type ActivePaymentAttempt = Pick<PublicPaymentLinkAttemptCreated, 'attemptId' | 
 export default function PublicPaymentLinkPage() {
   const { token = '' } = useParams<{ token: string }>();
   const linkQuery = useGetPublicPaymentLink(token, {
-    query: { queryKey: getGetPublicPaymentLinkQueryKey(token), retry: false },
+    query: {
+      queryKey: getGetPublicPaymentLinkQueryKey(token),
+      retry: false,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: false,
+    },
   });
   const [countryCode, setCountryCode] = useState('');
   const [operatorId, setOperatorId] = useState('');
@@ -268,21 +273,21 @@ export default function PublicPaymentLinkPage() {
     );
   }
 
-  if (linkQuery.isLoading) {
+  if (linkQuery.isLoading || linkQuery.isFetching) {
     return (
-      <>
-        {backgroundArt}
-        <main className="sendflow-public-pay-shell">
-          <section className="sendflow-public-pay-card" aria-label="Chargement du lien de paiement">
-            <div className="sendflow-pay-skeleton-brand" />
-            <div className="sendflow-pay-skeleton-line" />
-            <div className="sendflow-pay-skeleton-line is-short" />
-            <div className="sendflow-pay-skeleton-panel" />
-            <div className="sendflow-pay-skeleton-panel" />
-            <LinkFlowSecureFooter />
-          </section>
-        </main>
-      </>
+      <main
+        className="sendflow-public-link-loading"
+        role="status"
+        aria-live="polite"
+        aria-label="Chargement du lien de paiement"
+      >
+        <span className="sendflow-public-link-loader" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <span />
+        </span>
+      </main>
     );
   }
 
