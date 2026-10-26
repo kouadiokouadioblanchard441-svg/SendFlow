@@ -5,14 +5,25 @@ import { useSeo } from '@/lib/seo';
 import { markPinUnlocked } from '@/lib/pin-unlock';
 import { useQueryClient } from '@tanstack/react-query';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   getGetCustomerBiometricStatusQueryKey,
   useGetCustomerBiometricStatus,
   useSetCustomerPin,
+  useStartCustomerBiometricRegistration,
   useStartCustomerBiometricAuthentication,
   useUnlockCustomerSession,
+  useVerifyCustomerBiometricRegistration,
   useVerifyCustomerBiometricAuthentication,
 } from '@workspace/api-client-react';
 import {
+  createPlatformBiometricCredential,
   getPlatformBiometricAssertion,
   hasPlatformBiometricAuthenticator,
 } from '@/lib/customer-biometric';
@@ -20,6 +31,7 @@ import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import pinCharacterPrimary from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
 import pinCharacterSecondary from '@assets/generated_images/sendflow-network-person-3d-transparent.png';
+import biometricIllustration from '@/assets/sendflow-biometric-3d.webp';
 
 type PinMode = 'create' | 'enter';
 
@@ -27,6 +39,14 @@ const PIN_DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
 type PinKey = (typeof PIN_DIGITS)[number] | '' | 'backspace';
 const PIN_LENGTH = 4;
 const PIN_CHANGE_SUCCESS_KEY = 'sendflow.pin.change-success';
+
+function biometricErrorMessage(error: unknown, fallback: string) {
+  if (typeof error === 'object' && error !== null && 'data' in error) {
+    const data = (error as { data?: { error?: unknown } }).data;
+    if (typeof data?.error === 'string') return data.error;
+  }
+  return fallback;
+}
 
 function createShuffledKeypad(previous?: readonly PinKey[]): PinKey[] {
   const digits = [...PIN_DIGITS];
@@ -209,8 +229,14 @@ export default function PinPage({ mode }: { mode: PinMode }) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [biometricPromptOpen, setBiometricPromptOpen] = useState(false);
+  const [biometricSetupWorking, setBiometricSetupWorking] = useState(false);
+  const [biometricPromptError, setBiometricPromptError] = useState('');
+  const [biometricPromptSuccess, setBiometricPromptSuccess] = useState(false);
   const setCustomerPin = useSetCustomerPin();
   const unlockCustomerSession = useUnlockCustomerSession();
+  const startBiometricRegistration = useStartCustomerBiometricRegistration();
+  const verifyBiometricRegistration = useVerifyCustomerBiometricRegistration();
   const biometricStatus = useGetCustomerBiometricStatus({
     query: {
       queryKey: getGetCustomerBiometricStatusQueryKey(),
@@ -275,8 +301,29 @@ export default function PinPage({ mode }: { mode: PinMode }) {
       }
 
       await unlockCustomerSession.mutateAsync({ data: { pin: nextEntry } });
+      let shouldOfferBiometric = false;
+      if (mode === 'enter') {
+        try {
+          const [available, statusResult] = await Promise.all([
+            hasPlatformBiometricAuthenticator(),
+            biometricStatus.refetch(),
+          ]);
+          shouldOfferBiometric = available && !statusResult.isError && statusResult.data?.enabled === false;
+        } catch {
+          // Biometric availability must never block a successful PIN unlock.
+        }
+      }
       queryClient.clear();
       markPinUnlocked();
+      if (shouldOfferBiometric) {
+        clearEntry();
+        setProcessing(false);
+        processingRef.current = false;
+        setBiometricPromptError('');
+        setBiometricPromptSuccess(false);
+        setBiometricPromptOpen(true);
+        return;
+      }
       setLocation('/account');
     } catch (error) {
       clearEntry();
@@ -297,7 +344,51 @@ export default function PinPage({ mode }: { mode: PinMode }) {
       setProcessing(false);
       processingRef.current = false;
     }
-  }, [clearEntry, confirming, createdPin, mode, queryClient, setCustomerPin, unlockCustomerSession, setLocation]);
+  }, [
+    biometricStatus.refetch,
+    clearEntry,
+    confirming,
+    createdPin,
+    mode,
+    queryClient,
+    setCustomerPin,
+    unlockCustomerSession,
+    setLocation,
+  ]);
+
+  const continueAfterBiometricPrompt = useCallback(() => {
+    if (biometricSetupWorking) return;
+    setBiometricPromptOpen(false);
+    setLocation('/account');
+  }, [biometricSetupWorking, setLocation]);
+
+  const enableBiometricAfterPin = useCallback(async () => {
+    if (biometricSetupWorking) return;
+    setBiometricSetupWorking(true);
+    setBiometricPromptError('');
+    try {
+      const registration = await startBiometricRegistration.mutateAsync();
+      const credential = await createPlatformBiometricCredential(registration.options);
+      if (!credential) throw new Error('Aucune preuve biométrique reçue de l’appareil.');
+      const status = await verifyBiometricRegistration.mutateAsync({
+        data: { challengeId: registration.challengeId, credential },
+      });
+      queryClient.setQueryData(getGetCustomerBiometricStatusQueryKey(), status);
+      setBiometricPromptSuccess(true);
+    } catch (error) {
+      const candidate = error as { name?: string };
+      setBiometricPromptError(candidate.name === 'NotAllowedError'
+        ? 'Activation annulée. Votre code PIN reste disponible.'
+        : biometricErrorMessage(error, 'Impossible d’activer la biométrie. Votre code PIN reste disponible.'));
+    } finally {
+      setBiometricSetupWorking(false);
+    }
+  }, [
+    biometricSetupWorking,
+    queryClient,
+    startBiometricRegistration,
+    verifyBiometricRegistration,
+  ]);
 
   const unlockWithBiometric = useCallback(async () => {
     if (mode !== 'enter' || processing || processingRef.current) return;
@@ -310,7 +401,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
       return;
     }
     if (!biometricStatus.data?.enabled) {
-      setError("Activez d’abord la biométrie dans le menu de votre compte après avoir saisi votre PIN.");
+      setError("La biométrie vous sera proposée après un PIN correct. Saisissez votre code PIN.");
       return;
     }
     processingRef.current = true;
@@ -418,6 +509,60 @@ export default function PinPage({ mode }: { mode: PinMode }) {
           J’ai oublié mon code PIN
         </button>
       </section>
+
+      <Dialog
+        open={biometricPromptOpen}
+        onOpenChange={(open) => {
+          if (open) setBiometricPromptOpen(true);
+          else continueAfterBiometricPrompt();
+        }}
+      >
+        <DialogContent className="sendflow-biometric-prompt" data-testid="dialog-biometric-setup">
+          <div className="sendflow-biometric-prompt-art" aria-hidden="true">
+            <img src={biometricIllustration} alt="" decoding="async" />
+          </div>
+          <DialogHeader>
+            <DialogTitle>
+              {biometricPromptSuccess ? 'Biométrie activée' : 'Activer la biométrie ?'}
+            </DialogTitle>
+            <DialogDescription>
+              {biometricPromptSuccess
+                ? 'Vous pourrez utiliser la biométrie sur cet appareil aux prochaines connexions. Votre code PIN reste disponible.'
+                : 'Utilisez l’empreinte ou le déverrouillage sécurisé de votre téléphone aux prochaines connexions. La validation reste protégée par votre appareil et votre code PIN reste disponible.'}
+            </DialogDescription>
+          </DialogHeader>
+          {biometricPromptError && (
+            <p className="sendflow-biometric-prompt-error" role="alert">{biometricPromptError}</p>
+          )}
+          <DialogFooter className="sendflow-biometric-prompt-actions">
+            {biometricPromptSuccess ? (
+              <button type="button" className="sendflow-biometric-prompt-primary" onClick={continueAfterBiometricPrompt}>
+                Continuer
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="sendflow-biometric-prompt-secondary"
+                  onClick={continueAfterBiometricPrompt}
+                  disabled={biometricSetupWorking}
+                >
+                  Plus tard
+                </button>
+                <button
+                  type="button"
+                  className="sendflow-biometric-prompt-primary"
+                  onClick={() => void enableBiometricAfterPin()}
+                  disabled={biometricSetupWorking}
+                >
+                  <Fingerprint size={19} aria-hidden="true" />
+                  {biometricSetupWorking ? 'Validation…' : 'Activer'}
+                </button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

@@ -4,16 +4,11 @@ import {
   getGetCustomerBiometricStatusQueryKey,
   useGetCustomerBiometricStatus,
   useRemoveCustomerBiometricCredentials,
-  useStartCustomerBiometricRegistration,
-  useVerifyCustomerBiometricRegistration,
 } from "@workspace/api-client-react";
 import { ArrowLeft, Fingerprint, ShieldCheck } from "lucide-react";
 import { useLocation } from "wouter";
 import { useSeo } from "@/lib/seo";
-import {
-  createPlatformBiometricCredential,
-  hasPlatformBiometricAuthenticator,
-} from "@/lib/customer-biometric";
+import { hasPlatformBiometricAuthenticator } from "@/lib/customer-biometric";
 import biometricIllustration from "@/assets/sendflow-biometric-3d.webp";
 
 function errorMessage(error: unknown, fallback: string) {
@@ -28,8 +23,6 @@ export default function BiometricSettingsPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const statusQuery = useGetCustomerBiometricStatus();
-  const startRegistration = useStartCustomerBiometricRegistration();
-  const verifyRegistration = useVerifyCustomerBiometricRegistration();
   const removeCredentials = useRemoveCustomerBiometricCredentials();
   const [platformAvailable, setPlatformAvailable] = useState(false);
   const [platformDetectionComplete, setPlatformDetectionComplete] = useState(false);
@@ -40,8 +33,8 @@ export default function BiometricSettingsPage() {
   useSeo({
     path: "/biometric",
     locale: "fr",
-    title: "Déverrouillage biométrique · SendFlow",
-    description: "Activez ou désactivez le déverrouillage biométrique SendFlow sur cet appareil.",
+    title: "Sécurité biométrique · SendFlow",
+    description: "Consultez et désactivez le déverrouillage biométrique SendFlow.",
     robots: "noindex,nofollow",
   });
 
@@ -61,25 +54,6 @@ export default function BiometricSettingsPage() {
     return () => { active = false; };
   }, []);
 
-  const enableBiometric = async () => {
-    setWorking(true);
-    setMessage("");
-    try {
-      const registration = await startRegistration.mutateAsync();
-      const credential = await createPlatformBiometricCredential(registration.options);
-      if (!credential) throw new Error("L’appareil n’a pas renvoyé de preuve biométrique.");
-      const status = await verifyRegistration.mutateAsync({
-        data: { challengeId: registration.challengeId, credential },
-      });
-      queryClient.setQueryData(getGetCustomerBiometricStatusQueryKey(), status);
-      setMessage("Le déverrouillage biométrique est activé sur cet appareil.");
-    } catch (error) {
-      setMessage(errorMessage(error, "Impossible d’activer la biométrie. Vérifiez le verrouillage de votre appareil et réessayez."));
-    } finally {
-      setWorking(false);
-    }
-  };
-
   const disableBiometric = async () => {
     if (!window.confirm("Désactiver le déverrouillage biométrique sur tous vos appareils ?")) return;
     setWorking(true);
@@ -97,7 +71,10 @@ export default function BiometricSettingsPage() {
 
   const enabled = Boolean(statusQuery.data?.enabled);
   const checkingStatus = statusQuery.isLoading || statusQuery.isFetching;
-  const canRenderDeviceState = !checkingStatus && !statusQuery.isError && platformDetectionComplete;
+  const canRenderDeviceState = !checkingStatus
+    && !statusQuery.isError
+    && platformDetectionComplete
+    && statusQuery.data !== undefined;
 
   return (
     <main className="sendflow-biometric-page">
@@ -127,9 +104,9 @@ export default function BiometricSettingsPage() {
             Protection biométrique
           </span>
         </div>
-        <h1 id="biometric-title">Déverrouillage biométrique</h1>
+        <h1 id="biometric-title">Sécurité biométrique</h1>
         <p className="sendflow-biometric-description">
-          Utilisez l’empreinte ou la biométrie de votre téléphone pour ouvrir votre session SendFlow sans saisir votre PIN.
+          Consultez l’état du déverrouillage biométrique associé à votre compte. Votre code PIN reste toujours disponible.
         </p>
 
         {(checkingStatus || (!statusQuery.isError && !platformDetectionComplete)) && (
@@ -141,31 +118,30 @@ export default function BiometricSettingsPage() {
             <button type="button" onClick={() => void statusQuery.refetch()}>Réessayer</button>
           </p>
         )}
-        {canRenderDeviceState && !platformAvailable && (
+        {canRenderDeviceState && enabled && (
+          <>
+            <p className="sendflow-biometric-status is-enabled">
+              Activé · {statusQuery.data?.credentialCount ?? 0} appareil(s) associé(s)
+            </p>
+            <p className="sendflow-biometric-note">
+              Votre appareil vérifie la biométrie. SendFlow reçoit uniquement une preuve cryptographique, jamais votre empreinte.
+            </p>
+            <button type="button" className="sendflow-biometric-action is-secondary" onClick={() => void disableBiometric()} disabled={working}>
+              {working ? "Traitement…" : "Désactiver sur tous les appareils"}
+            </button>
+          </>
+        )}
+        {canRenderDeviceState && !enabled && !platformAvailable && (
           <p className="sendflow-biometric-message">
             Cet appareil, ce navigateur ou cette application ne prend pas en charge l’authentification biométrique sécurisée. Vous pouvez toujours utiliser votre code PIN.
           </p>
         )}
-        {canRenderDeviceState && platformAvailable && (
+        {canRenderDeviceState && !enabled && platformAvailable && (
           <>
-            <p className={`sendflow-biometric-status${enabled ? " is-enabled" : ""}`}>
-              {enabled
-                ? `Activé · ${statusQuery.data?.credentialCount ?? 0} appareil(s) associé(s)`
-                : "Désactivé"}
-            </p>
+            <p className="sendflow-biometric-status">Désactivé</p>
             <p className="sendflow-biometric-note">
-              L’activation nécessite votre session PIN déjà déverrouillée et une validation biométrique sur cet appareil. Votre PIN restera disponible en secours.
+              L’activation vous sera proposée après chaque déverrouillage PIN réussi sur un appareil compatible. Vous pourrez choisir « Plus tard » sans bloquer la connexion.
             </p>
-            {enabled ? (
-              <button type="button" className="sendflow-biometric-action is-secondary" onClick={() => void disableBiometric()} disabled={working}>
-                {working ? "Traitement…" : "Désactiver la biométrie"}
-              </button>
-            ) : (
-              <button type="button" className="sendflow-biometric-action" onClick={() => void enableBiometric()} disabled={working}>
-                <Fingerprint size={20} aria-hidden="true" />
-                {working ? "Activation…" : "Activer la biométrie"}
-              </button>
-            )}
           </>
         )}
         {message && <p className="sendflow-biometric-message" role="status">{message}</p>}
