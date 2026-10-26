@@ -1,0 +1,580 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --background: 264 42% 97%;
+  --foreground: 258 28% 16%;
+  --border: 260 22% 87%;
+  --input: 260 22% 87%;
+  --ring: 267 74% 50%;
+  --card: 0 0% 100%;
+  --card-foreground: 258 28% 16%;
+  --primary: 267 74% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 45 94% 63%;
+  --secondary-foreground: 258 28% 16%;
+  --muted: 264 24% 92%;
+  --muted-foreground: 258 12% 44%;
+  --accent: 271 83% 95%;
+  --accent-foreground: 267 58% 34%;
+  --destructive: 5 70% 49%;
+  --destructive-foreground: 0 0% 100%;
+  --app-font-sans: 'DM Sans', ui-sans-serif, sans-serif;
+  --radius: 1rem;
+}
+
+.dark {
+  --background: 258 28% 12%;
+  --foreground: 264 24% 96%;
+  --border: 258 18% 28%;
+  --input: 258 18% 28%;
+  --ring: 267 74% 68%;
+  --card: 258 24% 16%;
+  --card-foreground: 264 24% 96%;
+  --primary: 267 74% 68%;
+  --primary-foreground: 258 28% 12%;
+  --secondary: 45 94% 63%;
+  --secondary-foreground: 258 28% 12%;
+  --muted: 258 20% 23%;
+  --muted-foreground: 264 12% 72%;
+  --accent: 267 28% 26%;
+  --accent-foreground: 267 74% 84%;
+  --destructive: 5 70% 62%;
+  --destructive-foreground: 258 28% 12%;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow-x: hidden;
+  background: #fff;
+  color: #17191e;
+  font-family: 'DM Sans', ui-sans-serif, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sendflow-linkflow-waiting-shell {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 100dvh;
+  justify-content: center;
+  overflow-x: hidden;
+  background: #fff;
+  color: #17191e;
+  padding: clamp(20px, 3vh, 30px) 18px max(22px, env(safe-area-inset-bottom));
+}
+
+.sendflow-linkflow-flow-card {
+  width: min(100%, 480px);
+  overflow: hidden;
+  border: 2px solid #241d2d;
+  border-radius: 16px;
+  background: #fff;
+  padding: 22px;
+  color: #282132;
+  box-shadow: 0 6px 0 #241d2d, 0 16px 34px rgba(35, 25, 47, .12);
+}
+
+.sendflow-linkflow-waiting-card {
+  box-sizing: border-box;
+  display: flex;
+  width: min(100%, 440px);
+  flex: 1 0 auto;
+  flex-direction: column;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  padding: 0;
+  color: #17191e;
+  box-shadow: none;
+}
+
+.sendflow-linkflow-flow-merchant {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid #241d2d;
+  border-radius: 12px;
+  background: #f6f3fa;
+  padding: 10px 13px;
+  color: #29213b;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-merchant {
+  min-height: 64px;
+  gap: 12px;
+  border: 0;
+  border-radius: 17px;
+  background: #f2f3f5;
+  padding: 10px 15px;
+  color: #111318;
+  font-size: 16px;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-merchant strong {
+  font-weight: 650;
+}
+
+.sendflow-linkflow-flow-merchant-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 1px solid #d7c8ef;
+  border-radius: 10px;
+  background: #eee7f8;
+  color: #5f31bd;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-merchant-mark {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+  color: #332553;
+}
+
+.sendflow-linkflow-flow-icon {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  place-items: center;
+  margin: 26px auto 12px;
+  border: 2px solid #241d2d;
+  border-radius: 18px;
+  background: #f5f2f8;
+  color: #2f2541;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-icon {
+  width: 72px;
+  height: 72px;
+  margin: 25px auto 12px;
+  border: 0;
+  border-radius: 22px;
+  background: #f2f3f5;
+  color: #20232a;
+}
+
+.sendflow-linkflow-flow-status {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 7px;
+  margin: 0 auto 12px;
+  border: 1px solid #cfc6de;
+  border-radius: 999px;
+  background: #f5f3f8;
+  color: #574c66;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-status {
+  border: 0;
+  border-radius: 999px;
+  background: #f1f2f4;
+  color: #5e626a;
+  padding: 7px 13px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sendflow-linkflow-flow-status.is-uncertain {
+  border-color: #ddc98a;
+  background: #fff8dc;
+  color: #6e5200;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-status.is-uncertain {
+  background: #fff5d6;
+  color: #725400;
+}
+
+.sendflow-linkflow-flow-spinner {
+  animation: sendflow-flow-spin 1s linear infinite;
+}
+
+.sendflow-linkflow-flow-card h1 {
+  margin: 0;
+  color: #201b29;
+  font-size: clamp(22px, 6vw, 28px);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  line-height: 1.18;
+  text-align: center;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-card h1 {
+  margin: 0;
+  color: #111318;
+  font-size: clamp(25px, 6.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.sendflow-linkflow-flow-copy {
+  max-width: 370px;
+  margin: 11px auto 0;
+  color: #514a59;
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-copy {
+  max-width: 390px;
+  margin: 12px auto 0;
+  color: #646973;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.sendflow-linkflow-flow-amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 21px 0 14px;
+  border: 2px solid #241d2d;
+  border-radius: 11px;
+  background: #fff;
+  padding: 13px 14px;
+  color: #514a59;
+  font-size: 12px;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-amount {
+  justify-content: center;
+  gap: 8px;
+  margin: 19px 0 14px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #646973;
+  font-size: 14px;
+}
+
+.sendflow-linkflow-flow-amount strong {
+  color: #211b31;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-amount strong {
+  color: #111318;
+  font-size: 16px;
+}
+
+.sendflow-linkflow-ussd-code {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 2px solid #241d2d;
+  border-radius: 14px;
+  background: #f2eff6;
+  color: #201b29;
+  padding: 12px 15px;
+  text-decoration: none;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-code {
+  min-height: 92px;
+  border: 0;
+  border-radius: 20px;
+  background: #f1f2f4;
+  color: #111318;
+  padding: 14px 17px;
+}
+
+.sendflow-linkflow-ussd-code strong {
+  font-size: clamp(26px, 8vw, 34px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-code strong {
+  font-size: clamp(30px, 8vw, 36px);
+}
+
+.sendflow-linkflow-ussd-call {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border: 1px solid #dcd6e3;
+  border-radius: 50%;
+  background: #fff;
+  color: #342543;
+  box-shadow: 0 2px 4px rgba(35, 25, 47, .1);
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-call {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  border: 0;
+  background: #fff;
+  color: #17191e;
+  box-shadow: 0 1px 4px rgba(28, 31, 37, .1);
+}
+
+.sendflow-linkflow-ussd-arrow {
+  color: #6d35d8;
+  font-size: 24px;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-arrow {
+  color: #989ca4;
+}
+
+.sendflow-linkflow-ussd-hint {
+  margin: 8px 0 0;
+  color: #514a59;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-hint {
+  margin: 10px 0 0;
+  color: #515660;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sendflow-linkflow-ussd-unconfigured {
+  border: 2px solid #241d2d;
+  border-radius: 12px;
+  background: #fff8dc;
+  padding: 14px;
+  color: #594819;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-ussd-unconfigured {
+  border: 0;
+  border-radius: 14px;
+  background: #fff7dc;
+  padding: 14px 15px;
+  color: #66521f;
+  font-size: 14px;
+}
+
+.sendflow-linkflow-steps {
+  display: grid;
+  gap: 13px;
+  margin: 21px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sendflow-linkflow-steps li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.sendflow-linkflow-steps li > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 2px solid #241d2d;
+  border-radius: 50%;
+  background: #f5d500;
+  color: #201b29;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-steps {
+  gap: 14px;
+  margin: 24px 0 0;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-steps li > span {
+  border: 0;
+  background: #f5d500;
+  color: #17191e;
+}
+
+.sendflow-linkflow-steps p {
+  margin: 3px 0 0;
+  color: #494250;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-steps p {
+  color: #4c515a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.sendflow-linkflow-flow-refresh {
+  display: flex;
+  width: 100%;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 21px;
+  border: 2px solid #5024a9;
+  border-radius: 10px;
+  background: #6536c5;
+  color: #fff;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-flow-refresh {
+  min-height: 50px;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 12px;
+  background: #6536c5;
+  box-shadow: 0 6px 14px rgba(83, 42, 155, .16);
+}
+
+.sendflow-linkflow-flow-refresh:disabled {
+  opacity: .7;
+  cursor: wait;
+}
+
+.sendflow-linkflow-secure-footer {
+  display: flex;
+  min-height: 47px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px 0 0;
+  border-top: 1px solid #e8e4ed;
+  padding: 11px 8px 0;
+  color: #000;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.sendflow-linkflow-secure-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 5px;
+  text-decoration: none;
+}
+
+.sendflow-linkflow-secure-brand-link:hover {
+  opacity: .84;
+}
+
+.sendflow-linkflow-secure-brand-link:focus-visible {
+  outline: 2px solid #6d35d8;
+  outline-offset: 3px;
+}
+
+.sendflow-linkflow-secure-wordmark {
+  display: block;
+  width: 83px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sendflow-linkflow-secure-mark {
+  display: block;
+  width: 29px;
+  height: 29px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(42, 24, 80, .2));
+}
+
+.sendflow-linkflow-expiry-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 28px 0 0;
+  color: #626771;
+}
+
+.sendflow-linkflow-expiry-ring {
+  position: relative;
+  width: 72px;
+  height: 72px;
+}
+
+.sendflow-linkflow-expiry-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.sendflow-linkflow-expiry-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.sendflow-linkflow-expiry-ring-track {
+  stroke: #e5e7eb;
+}
+
+.sendflow-linkflow-expiry-ring-progress {
+  stroke: #6740d8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .35s linear;
+}
+
+.sendflow-linkflow-expiry-ring > span {
+  position: absolute;
+  inset: 13px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #6740d8;
+}
+
+.sendflow-linkflow-expiry-countdown p {
+  margin: 0;
+  color: #626771;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.sendflow-linkflow-expiry-countdown strong {
+  color: #343943;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.sendflow-linkflow-waiting-shell .sendflow-linkflow-secure-footer {
+  margin-top: auto;
+  padding-top: 15px;
+}
+
+@keyframes sendflow-flow-spin {
+  to { transform: rotate(360deg); }
+}
