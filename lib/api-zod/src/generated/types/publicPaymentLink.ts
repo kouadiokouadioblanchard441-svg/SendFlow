@@ -20,7 +20,7 @@ export interface PublicPaymentLink {
   currency: PublicPaymentLinkCurrency;
   currencyDecimals: PublicPaymentLinkCurrencyDecimals;
   /**
-     * @minimum 1
+     * @minimum 0
      * @maximum 9007199254740991
      */
   amountMinor: number;

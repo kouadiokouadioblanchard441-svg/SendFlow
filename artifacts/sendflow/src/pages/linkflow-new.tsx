@@ -149,18 +149,21 @@ export default function LinkFlowNewPage() {
     const trimmedAmount = amount.trim();
     if (trimmedLinkName.length < 2) nextErrors.linkName = 'Le nom du lien doit comporter au moins 2 caractères.';
     if (trimmedLinkName.length > 120) nextErrors.linkName = 'Le nom du lien ne peut pas dépasser 120 caractères.';
-    const amountMatch = /^([0-9]+)(?:\.([0-9]+))?$/.exec(trimmedAmount);
     const decimalPlaces = selectedCurrencyOption.decimals;
-    if (!amountMatch || !Number.isFinite(Number(trimmedAmount)) || Number(trimmedAmount) < 10) {
-      nextErrors.amount = 'Le montant minimum est de 10.';
-    } else if ((amountMatch[2]?.length ?? 0) > decimalPlaces) {
-      nextErrors.amount = decimalPlaces === 0
-        ? `${currency} ne prend pas de décimales.`
-        : `Utilisez au maximum ${decimalPlaces} décimales pour ${currency}.`;
-    } else if (trimmedAmount.length > 24) {
-      nextErrors.amount = 'Le montant ne peut pas dépasser 24 caractères.';
+    if (trimmedAmount === '' || trimmedAmount === '0') {
+      if (currency !== 'XOF') nextErrors.amount = 'Le montant libre est disponible uniquement en XOF pour le moment.';
+    } else {
+      const amountMatch = /^([0-9]+)(?:\.([0-9]+))?$/.exec(trimmedAmount);
+      if (!amountMatch || !Number.isFinite(Number(trimmedAmount)) || Number(trimmedAmount) < 10) {
+        nextErrors.amount = 'Le montant minimum est de 10.';
+      } else if ((amountMatch[2]?.length ?? 0) > decimalPlaces) {
+        nextErrors.amount = decimalPlaces === 0
+          ? `${currency} ne prend pas de décimales.`
+          : `Utilisez au maximum ${decimalPlaces} décimales pour ${currency}.`;
+      } else if (trimmedAmount.length > 24) {
+        nextErrors.amount = 'Le montant ne peut pas dépasser 24 caractères.';
+      }
     }
-    if (description.trim().length < 2) nextErrors.description = 'La description doit comporter au moins 2 caractères.';
     if (description.trim().length > 240) nextErrors.description = 'La description ne peut pas dépasser 240 caractères.';
     if (limited && (!/^\d+$/.test(maximumUses) || Number(maximumUses) < 1 || Number(maximumUses) > 999999)) {
       nextErrors.maximumUses = 'Indiquez un nombre entre 1 et 999 999.';
@@ -179,9 +182,9 @@ export default function LinkFlowNewPage() {
 
     const payload = {
       currency,
-      amount: trimmedAmount,
+      ...(trimmedAmount ? { amount: trimmedAmount } : {}),
       linkName: trimmedLinkName,
-      description: description.trim(),
+      ...(description.trim() ? { description: description.trim() } : {}),
       paymentMethod: method,
       validity,
       maximumUses: limited ? Number(maximumUses) : null,
@@ -295,13 +298,13 @@ export default function LinkFlowNewPage() {
           <label className={`sendflow-linkflow-field${errors.amount ? ' has-error' : ''}`}>
             <span>Montant <small>en {currency}</small></span>
             <div className="sendflow-linkflow-amount-input"><input aria-label={`Montant en ${currency}`} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'linkflow-amount-error' : 'linkflow-amount-help'} value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" placeholder="0" data-testid="input-linkflow-amount" /><b>{currency}</b></div>
-            {errors.amount ? <small className="sendflow-linkflow-error" id="linkflow-amount-error">{errors.amount}</small> : <small id="linkflow-amount-help">Saisissez le montant demandé.</small>}
+            {errors.amount ? <small className="sendflow-linkflow-error" id="linkflow-amount-error">{errors.amount}</small> : <small id="linkflow-amount-help">{currency === 'XOF' ? 'Montant fixe, ou laissez vide pour que le payeur le saisisse.' : 'Saisissez le montant demandé.'}</small>}
           </label>
 
           <label className={`sendflow-linkflow-field${errors.description ? ' has-error' : ''}`}>
             <span>Description</span>
             <textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={240} rows={3} placeholder="Ex. Règlement de la facture n°..." aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'linkflow-description-error' : undefined} data-testid="input-linkflow-description" />
-            {errors.description && <small className="sendflow-linkflow-error" id="linkflow-description-error">{errors.description}</small>}
+            {errors.description ? <small className="sendflow-linkflow-error" id="linkflow-description-error">{errors.description}</small> : <small>Description facultative.</small>}
           </label>
 
           <fieldset className="sendflow-linkflow-choice-group">

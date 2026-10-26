@@ -653,6 +653,7 @@ export const getCustomerPaymentLinksResponseItemsItemLinkNameMax = 120;
 export const getCustomerPaymentLinksResponseItemsItemSharePathMin = 48;
 export const getCustomerPaymentLinksResponseItemsItemSharePathMax = 64;
 
+export const getCustomerPaymentLinksResponseItemsItemAmountMinorMin = 0;
 export const getCustomerPaymentLinksResponseItemsItemAmountMinorMax = 9007199254740991;
 
 export const getCustomerPaymentLinksResponseItemsItemDescriptionMax = 240;
@@ -670,7 +671,7 @@ export const GetCustomerPaymentLinksResponse = zod.object({
   "sharePath": zod.string().min(getCustomerPaymentLinksResponseItemsItemSharePathMin).max(getCustomerPaymentLinksResponseItemsItemSharePathMax).describe('Relative public URL path. Treat as a shareable bearer link.'),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
   "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
-  "amountMinor": zod.int().min(1).max(getCustomerPaymentLinksResponseItemsItemAmountMinorMax),
+  "amountMinor": zod.int().min(getCustomerPaymentLinksResponseItemsItemAmountMinorMin).max(getCustomerPaymentLinksResponseItemsItemAmountMinorMax),
   "description": zod.string().max(getCustomerPaymentLinksResponseItemsItemDescriptionMax),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
   "expiresAt": zod.coerce.date().nullable(),
@@ -708,7 +709,6 @@ export const createCustomerPaymentLinkBodyAmountRegExp = new RegExp('^[0-9]+(\\.
 export const createCustomerPaymentLinkBodyLinkNameMin = 2;
 export const createCustomerPaymentLinkBodyLinkNameMax = 120;
 
-export const createCustomerPaymentLinkBodyDescriptionMin = 2;
 export const createCustomerPaymentLinkBodyDescriptionMax = 240;
 
 export const createCustomerPaymentLinkBodyMaximumUsesMax = 999999;
@@ -724,9 +724,9 @@ export const createCustomerPaymentLinkBodySuffixRegExp = new RegExp('^[a-z0-9]+(
 export const CreateCustomerPaymentLinkBody = zod.object({
   "requestId": zod.uuid(),
   "currency": zod.enum(['XOF', 'XAF', 'USD']),
-  "amount": zod.string().min(1).max(createCustomerPaymentLinkBodyAmountMax).regex(createCustomerPaymentLinkBodyAmountRegExp),
+  "amount": zod.string().min(1).max(createCustomerPaymentLinkBodyAmountMax).regex(createCustomerPaymentLinkBodyAmountRegExp).optional(),
   "linkName": zod.string().min(createCustomerPaymentLinkBodyLinkNameMin).max(createCustomerPaymentLinkBodyLinkNameMax),
-  "description": zod.string().min(createCustomerPaymentLinkBodyDescriptionMin).max(createCustomerPaymentLinkBodyDescriptionMax),
+  "description": zod.string().max(createCustomerPaymentLinkBodyDescriptionMax).optional(),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
   "validity": zod.enum(['hour', 'day', 'week', 'unlimited']),
   "maximumUses": zod.int().min(1).max(createCustomerPaymentLinkBodyMaximumUsesMax).nullable(),
@@ -743,6 +743,7 @@ export const createCustomerPaymentLinkResponseLinkNameMax = 120;
 export const createCustomerPaymentLinkResponseSharePathMin = 48;
 export const createCustomerPaymentLinkResponseSharePathMax = 64;
 
+export const createCustomerPaymentLinkResponseAmountMinorMin = 0;
 export const createCustomerPaymentLinkResponseAmountMinorMax = 9007199254740991;
 
 export const createCustomerPaymentLinkResponseDescriptionMax = 240;
@@ -759,7 +760,7 @@ export const CreateCustomerPaymentLinkResponse = zod.object({
   "sharePath": zod.string().min(createCustomerPaymentLinkResponseSharePathMin).max(createCustomerPaymentLinkResponseSharePathMax).describe('Relative public URL path. Treat as a shareable bearer link.'),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
   "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
-  "amountMinor": zod.int().min(1).max(createCustomerPaymentLinkResponseAmountMinorMax),
+  "amountMinor": zod.int().min(createCustomerPaymentLinkResponseAmountMinorMin).max(createCustomerPaymentLinkResponseAmountMinorMax),
   "description": zod.string().max(createCustomerPaymentLinkResponseDescriptionMax),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
   "expiresAt": zod.coerce.date().nullable(),
@@ -789,6 +790,7 @@ export const getCustomerPaymentLinkResponseLinkNameMax = 120;
 export const getCustomerPaymentLinkResponseSharePathMin = 48;
 export const getCustomerPaymentLinkResponseSharePathMax = 64;
 
+export const getCustomerPaymentLinkResponseAmountMinorMin = 0;
 export const getCustomerPaymentLinkResponseAmountMinorMax = 9007199254740991;
 
 export const getCustomerPaymentLinkResponseDescriptionMax = 240;
@@ -805,7 +807,7 @@ export const GetCustomerPaymentLinkResponse = zod.object({
   "sharePath": zod.string().min(getCustomerPaymentLinkResponseSharePathMin).max(getCustomerPaymentLinkResponseSharePathMax).describe('Relative public URL path. Treat as a shareable bearer link.'),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
   "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
-  "amountMinor": zod.int().min(1).max(getCustomerPaymentLinkResponseAmountMinorMax),
+  "amountMinor": zod.int().min(getCustomerPaymentLinkResponseAmountMinorMin).max(getCustomerPaymentLinkResponseAmountMinorMax),
   "description": zod.string().max(getCustomerPaymentLinkResponseDescriptionMax),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
   "expiresAt": zod.coerce.date().nullable(),
@@ -830,7 +832,6 @@ export const updateCustomerPaymentLinkBodyAmountMax = 24;
 
 
 export const updateCustomerPaymentLinkBodyAmountRegExp = new RegExp('^[0-9]+(\\.[0-9]+)?$');
-export const updateCustomerPaymentLinkBodyDescriptionMin = 2;
 export const updateCustomerPaymentLinkBodyDescriptionMax = 240;
 
 export const updateCustomerPaymentLinkBodyMaximumUsesMax = 999999;
@@ -839,7 +840,7 @@ export const updateCustomerPaymentLinkBodyMaximumUsesMax = 999999;
 
 export const UpdateCustomerPaymentLinkBody = zod.object({
   "amount": zod.string().min(1).max(updateCustomerPaymentLinkBodyAmountMax).regex(updateCustomerPaymentLinkBodyAmountRegExp).optional(),
-  "description": zod.string().min(updateCustomerPaymentLinkBodyDescriptionMin).max(updateCustomerPaymentLinkBodyDescriptionMax).optional(),
+  "description": zod.string().max(updateCustomerPaymentLinkBodyDescriptionMax).optional(),
   "maximumUses": zod.int().min(1).max(updateCustomerPaymentLinkBodyMaximumUsesMax).nullish()
 })
 
@@ -852,6 +853,7 @@ export const updateCustomerPaymentLinkResponseLinkNameMax = 120;
 export const updateCustomerPaymentLinkResponseSharePathMin = 48;
 export const updateCustomerPaymentLinkResponseSharePathMax = 64;
 
+export const updateCustomerPaymentLinkResponseAmountMinorMin = 0;
 export const updateCustomerPaymentLinkResponseAmountMinorMax = 9007199254740991;
 
 export const updateCustomerPaymentLinkResponseDescriptionMax = 240;
@@ -868,7 +870,7 @@ export const UpdateCustomerPaymentLinkResponse = zod.object({
   "sharePath": zod.string().min(updateCustomerPaymentLinkResponseSharePathMin).max(updateCustomerPaymentLinkResponseSharePathMax).describe('Relative public URL path. Treat as a shareable bearer link.'),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
   "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
-  "amountMinor": zod.int().min(1).max(updateCustomerPaymentLinkResponseAmountMinorMax),
+  "amountMinor": zod.int().min(updateCustomerPaymentLinkResponseAmountMinorMin).max(updateCustomerPaymentLinkResponseAmountMinorMax),
   "description": zod.string().max(updateCustomerPaymentLinkResponseDescriptionMax),
   "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
   "expiresAt": zod.coerce.date().nullable(),
@@ -903,6 +905,16 @@ export const SimulateCustomerPaymentLinkParams = zod.object({
   "token": zod.coerce.string().regex(simulateCustomerPaymentLinkPathTokenRegExp)
 })
 
+export const simulateCustomerPaymentLinkBodyAmountMax = 24;
+
+
+export const simulateCustomerPaymentLinkBodyAmountRegExp = new RegExp('^[0-9]+(\\.[0-9]+)?$');
+
+
+export const SimulateCustomerPaymentLinkBody = zod.object({
+  "amount": zod.string().min(1).max(simulateCustomerPaymentLinkBodyAmountMax).regex(simulateCustomerPaymentLinkBodyAmountRegExp).optional()
+})
+
 export const simulateCustomerPaymentLinkResponseMerchantNameMax = 120;
 
 export const simulateCustomerPaymentLinkResponseAmountMinorMax = 9007199254740991;
@@ -934,6 +946,7 @@ export const getPublicPaymentLinkResponseMerchantNameMax = 120;
 
 export const getPublicPaymentLinkResponseDescriptionMax = 240;
 
+export const getPublicPaymentLinkResponseAmountMinorMin = 0;
 export const getPublicPaymentLinkResponseAmountMinorMax = 9007199254740991;
 
 export const getPublicPaymentLinkResponseRemainingUsesMin = 0;
@@ -969,7 +982,7 @@ export const GetPublicPaymentLinkResponse = zod.object({
   "description": zod.string().max(getPublicPaymentLinkResponseDescriptionMax),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),
   "currencyDecimals": zod.union([zod.literal(0),zod.literal(2)]),
-  "amountMinor": zod.int().min(1).max(getPublicPaymentLinkResponseAmountMinorMax),
+  "amountMinor": zod.int().min(getPublicPaymentLinkResponseAmountMinorMin).max(getPublicPaymentLinkResponseAmountMinorMax),
   "expiresAt": zod.coerce.date().nullable(),
   "remainingUses": zod.int().min(getPublicPaymentLinkResponseRemainingUsesMin).nullable(),
   "imagePath": zod.string().max(getPublicPaymentLinkResponseImagePathMax).nullable(),
@@ -1012,6 +1025,10 @@ export const startPublicPaymentLinkAttemptBodyFirstNameMax = 80;
 
 export const startPublicPaymentLinkAttemptBodyLastNameMax = 80;
 
+export const startPublicPaymentLinkAttemptBodyAmountMax = 24;
+
+
+export const startPublicPaymentLinkAttemptBodyAmountRegExp = new RegExp('^[0-9]+(\\.[0-9]+)?$');
 
 
 export const StartPublicPaymentLinkAttemptBody = zod.object({
@@ -1020,7 +1037,8 @@ export const StartPublicPaymentLinkAttemptBody = zod.object({
   "phoneNumber": zod.string().regex(startPublicPaymentLinkAttemptBodyPhoneNumberRegExp),
   "firstName": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyFirstNameMax),
   "lastName": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyLastNameMax),
-  "idempotencyKey": zod.uuid()
+  "idempotencyKey": zod.uuid(),
+  "amount": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyAmountMax).regex(startPublicPaymentLinkAttemptBodyAmountRegExp).optional()
 })
 
 export const startPublicPaymentLinkAttemptResponseOneMerchantNameMax = 120;
@@ -1089,6 +1107,39 @@ export const GetPublicPaymentLinkAttemptStatusResponse = zod.object({
 
 
 /**
+ * @summary Calculate a fixed-link payer total using server-owned operator rates
+ */
+export const getPublicPaymentLinkQuotePathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
+export const getPublicPaymentLinkQuotePathCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const getPublicPaymentLinkQuotePathOperatorIdMin = 2;
+export const getPublicPaymentLinkQuotePathOperatorIdMax = 60;
+
+
+
+export const GetPublicPaymentLinkQuoteParams = zod.object({
+  "token": zod.coerce.string().regex(getPublicPaymentLinkQuotePathTokenRegExp),
+  "countryCode": zod.coerce.string().regex(getPublicPaymentLinkQuotePathCountryCodeRegExp),
+  "operatorId": zod.coerce.string().min(getPublicPaymentLinkQuotePathOperatorIdMin).max(getPublicPaymentLinkQuotePathOperatorIdMax)
+})
+
+export const getPublicPaymentLinkQuoteResponseAmountMinorMax = 9007199254740991;
+
+export const getPublicPaymentLinkQuoteResponseTotalMinorMax = 9007199254740991;
+
+export const getPublicPaymentLinkQuoteResponseOperatorIdMin = 2;
+export const getPublicPaymentLinkQuoteResponseOperatorIdMax = 60;
+
+
+
+export const GetPublicPaymentLinkQuoteResponse = zod.object({
+  "currency": zod.enum(['XOF']),
+  "amountMinor": zod.int().min(1).max(getPublicPaymentLinkQuoteResponseAmountMinorMax),
+  "totalMinor": zod.int().min(1).max(getPublicPaymentLinkQuoteResponseTotalMinorMax),
+  "operatorId": zod.string().min(getPublicPaymentLinkQuoteResponseOperatorIdMin).max(getPublicPaymentLinkQuoteResponseOperatorIdMax)
+})
+
+
+/**
  * @summary Calculate the payer's total using server-owned payment-link and operator rates
  */
 export const quotePublicPaymentLinkPathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
@@ -1102,6 +1153,16 @@ export const QuotePublicPaymentLinkParams = zod.object({
   "token": zod.coerce.string().regex(quotePublicPaymentLinkPathTokenRegExp),
   "countryCode": zod.coerce.string().regex(quotePublicPaymentLinkPathCountryCodeRegExp),
   "operatorId": zod.coerce.string().min(quotePublicPaymentLinkPathOperatorIdMin).max(quotePublicPaymentLinkPathOperatorIdMax)
+})
+
+export const quotePublicPaymentLinkBodyAmountMax = 24;
+
+
+export const quotePublicPaymentLinkBodyAmountRegExp = new RegExp('^[0-9]+(\\.[0-9]+)?$');
+
+
+export const QuotePublicPaymentLinkBody = zod.object({
+  "amount": zod.string().min(1).max(quotePublicPaymentLinkBodyAmountMax).regex(quotePublicPaymentLinkBodyAmountRegExp).optional()
 })
 
 export const quotePublicPaymentLinkResponseAmountMinorMax = 9007199254740991;

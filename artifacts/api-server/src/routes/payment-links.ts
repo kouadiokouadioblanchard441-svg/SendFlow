@@ -20,6 +20,7 @@ import {
   GetCustomerPaymentLinksResponse,
   GetCustomerPaymentLinkParams,
   GetCustomerPaymentLinkResponse,
+  SimulateCustomerPaymentLinkBody,
   SimulateCustomerPaymentLinkParams,
   SimulateCustomerPaymentLinkResponse,
   UpdateCustomerPaymentLinkBody,
@@ -35,7 +36,8 @@ import {
   isPaymentLinkCreationAllowed,
   normalizePaymentLinkImage,
   normalizePaymentLinkInput,
-  parseAmountMinor,
+  parseLinkFlowPayerAmount,
+  parsePaymentLinkAmountInput,
   PaymentLinkIdempotencyConflict,
   PaymentLinkImageError,
   PaymentLinkInputError,
@@ -263,12 +265,12 @@ router.patch("/me/payment-links/:linkId", async (req, res): Promise<void> => {
 
       const amountMinor = parsed.data.amount === undefined
         ? link.amountMinor
-        : parseAmountMinor(parsed.data.amount, link.currency);
+        : parsePaymentLinkAmountInput(parsed.data.amount, link.currency);
       const description = parsed.data.description === undefined
         ? link.description
         : parsed.data.description.trim();
-      if (description.length < 2 || description.length > 240) {
-        throw new PaymentLinkInputError("La description doit contenir entre 2 et 240 caractères.");
+      if (description.length > 240) {
+        throw new PaymentLinkInputError("La description ne peut pas dépasser 240 caractères.");
       }
       const maximumUses = parsed.data.maximumUses === undefined
         ? link.maximumUses
@@ -491,8 +493,13 @@ router.post("/me/payment-links/simulate/:token", async (req, res): Promise<void>
   }
 
   const parsed = SimulateCustomerPaymentLinkParams.safeParse(req.params);
+  const parsedBody = SimulateCustomerPaymentLinkBody.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(404).json({ error: "Ce lien de paiement est indisponible." });
+    return;
+  }
+  if (!parsedBody.success) {
+    res.status(400).json({ error: "Le montant du paiement est invalide." });
     return;
   }
 
@@ -527,16 +534,25 @@ router.post("/me/payment-links/simulate/:token", async (req, res): Promise<void>
       return;
     }
 
+    const amountMinor = parseLinkFlowPayerAmount(
+      parsedBody.data.amount,
+      link.amountMinor,
+      link.currency,
+    );
     res.json(SimulateCustomerPaymentLinkResponse.parse({
       mode: "simulation",
       status: "simulated_success",
       chargeOccurred: false,
       merchantName: link.linkName?.trim() || "SendFlow",
-      amountMinor: link.amountMinor,
+      amountMinor,
       currency: link.currency,
       currencyDecimals: getPaymentLinkCurrencyDecimals(link.currency),
     }));
   } catch (error) {
+    if (error instanceof PaymentLinkInputError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     req.log.error({ err: error, userId: session.userId }, "Payment-link simulation could not be prepared");
     res.status(503).json({ error: "La simulation est momentanément indisponible." });
   }

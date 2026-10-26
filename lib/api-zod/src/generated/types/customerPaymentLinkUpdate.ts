@@ -13,10 +13,7 @@ export interface CustomerPaymentLinkUpdate {
      * @pattern ^[0-9]+(\.[0-9]+)?$
      */
   amount?: string;
-  /**
-     * @minLength 2
-     * @maxLength 240
-     */
+  /** @maxLength 240 */
   description?: string;
   /**
      * @minimum 1

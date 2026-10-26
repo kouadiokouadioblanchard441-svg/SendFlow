@@ -1086,6 +1086,12 @@ paths:
           schema:
             type: string
             pattern: "^[A-Za-z0-9_-]{43}$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerPaymentLinkSimulationInput"
       responses:
         "200":
           description: Server-derived simulation result; no real payment occurred.
@@ -1223,6 +1229,45 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
   /public/payment-links/{token}/quote/{countryCode}/{operatorId}:
     get:
+      operationId: getPublicPaymentLinkQuote
+      tags: [payment-links]
+      summary: Calculate a fixed-link payer total using server-owned operator rates
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-Za-z0-9_-]{43}$"
+        - name: countryCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z]{2}$"
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 60
+      responses:
+        "200":
+          description: Server-calculated fixed amount, fee, and payer total.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicPaymentLinkQuote"
+        "400":
+          description: The selected country, operator, or link amount is invalid.
+        "404":
+          description: The link is unavailable, inactive, expired, or exhausted.
+        "429":
+          description: Public quote rate limit exceeded.
+        "503":
+          description: Quote data is unavailable.
+    post:
       operationId: quotePublicPaymentLink
       tags: [payment-links]
       summary: Calculate the payer's total using server-owned payment-link and operator rates
@@ -1246,6 +1291,12 @@ paths:
             type: string
             minLength: 2
             maxLength: 60
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicPaymentLinkQuoteInput"
       responses:
         "200":
           description: Server-calculated amount, fee, and payer total.
@@ -4106,7 +4157,6 @@ components:
           maxLength: 120
         description:
           type: string
-          minLength: 2
           maxLength: 240
         paymentMethod:
           type: string
@@ -4129,9 +4179,7 @@ components:
       required:
         - requestId
         - currency
-        - amount
         - linkName
-        - description
         - paymentMethod
         - validity
         - maximumUses
@@ -4158,7 +4206,6 @@ components:
           pattern: "^[0-9]+(\\.[0-9]+)?$"
         description:
           type: string
-          minLength: 2
           maxLength: 240
         maximumUses:
           type: ["integer", "null"]
@@ -4199,7 +4246,7 @@ components:
           enum: [0, 2]
         amountMinor:
           type: integer
-          minimum: 1
+          minimum: 0
           maximum: 9007199254740991
         description:
           type: string
@@ -4311,7 +4358,7 @@ components:
           enum: [0, 2]
         amountMinor:
           type: integer
-          minimum: 1
+          minimum: 0
           maximum: 9007199254740991
         expiresAt:
           type: ["string", "null"]
@@ -4355,7 +4402,21 @@ components:
         idempotencyKey:
           type: string
           format: uuid
+        amount:
+          type: string
+          minLength: 1
+          maxLength: 24
+          pattern: "^[0-9]+(\\.[0-9]+)?$"
       required: [countryCode, operatorId, phoneNumber, firstName, lastName, idempotencyKey]
+    CustomerPaymentLinkSimulationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        amount:
+          type: string
+          minLength: 1
+          maxLength: 24
+          pattern: "^[0-9]+(\\.[0-9]+)?$"
     PublicPaymentLinkAttemptStatus:
       type: object
       properties:
@@ -4424,6 +4485,15 @@ components:
           type: integer
           enum: [0, 2]
       required: [mode, status, chargeOccurred, merchantName, amountMinor, currency, currencyDecimals]
+    PublicPaymentLinkQuoteInput:
+      type: object
+      additionalProperties: false
+      properties:
+        amount:
+          type: string
+          minLength: 1
+          maxLength: 24
+          pattern: "^[0-9]+(\\.[0-9]+)?$"
     PublicPaymentLinkQuote:
       type: object
       properties:

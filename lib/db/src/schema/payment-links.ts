@@ -62,12 +62,13 @@ export const customerPaymentLinksTable = pgTable("sf_customer_payment_links", {
   ),
   amountCheck: check(
     "sf_customer_payment_links_amount_check",
-    sql`(${table.currency} in ('XOF','XAF') and ${table.amountMinor} between 10 and 9007199254740991)
+    sql`(${table.currency} = 'XOF' and ${table.amountMinor} between 0 and 9007199254740991)
+      or (${table.currency} = 'XAF' and ${table.amountMinor} between 10 and 9007199254740991)
       or (${table.currency} in ('CHF','NGN','EUR','USD','CAD') and ${table.amountMinor} between 1000 and 9007199254740991)`,
   ),
   descriptionCheck: check(
     "sf_customer_payment_links_description_check",
-    sql`length(btrim(${table.description})) between 2 and 240`,
+    sql`length(btrim(${table.description})) between 0 and 240`,
   ),
   linkNameCheck: check(
     "sf_customer_payment_links_link_name_check",

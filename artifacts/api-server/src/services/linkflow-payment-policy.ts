@@ -33,6 +33,7 @@ export function buildLinkFlowRequestHash(input: {
   phoneNumber: string;
   firstName: string;
   lastName: string;
+  amountMinor: number;
   idempotencyKey: string;
 }) {
   const phoneHash = createSensitiveDataLookupIndex(input.phoneNumber, "transaction-sender-phone");
@@ -43,6 +44,7 @@ export function buildLinkFlowRequestHash(input: {
     phoneHash,
     firstName: input.firstName.trim().normalize("NFKC"),
     lastName: input.lastName.trim().normalize("NFKC"),
+    amountMinor: input.amountMinor,
     idempotencyKey: input.idempotencyKey,
   }), "linkflow-request-fingerprint");
 }

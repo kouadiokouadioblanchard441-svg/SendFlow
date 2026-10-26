@@ -416,17 +416,14 @@ export interface CustomerPaymentLinkInput {
      * @maxLength 24
      * @pattern ^[0-9]+(\.[0-9]+)?$
      */
-  amount: string;
+  amount?: string;
   /**
      * @minLength 2
      * @maxLength 120
      */
   linkName: string;
-  /**
-     * @minLength 2
-     * @maxLength 240
-     */
-  description: string;
+  /** @maxLength 240 */
+  description?: string;
   paymentMethod: CustomerPaymentLinkInputPaymentMethod;
   validity: CustomerPaymentLinkInputValidity;
   /**
@@ -477,10 +474,7 @@ export interface CustomerPaymentLinkUpdate {
      * @pattern ^[0-9]+(\.[0-9]+)?$
      */
   amount?: string;
-  /**
-     * @minLength 2
-     * @maxLength 240
-     */
+  /** @maxLength 240 */
   description?: string;
   /**
      * @minimum 1
@@ -558,7 +552,7 @@ export interface CustomerPaymentLink {
   currency: CustomerPaymentLinkCurrency;
   currencyDecimals: CustomerPaymentLinkCurrencyDecimals;
   /**
-     * @minimum 1
+     * @minimum 0
      * @maximum 9007199254740991
      */
   amountMinor: number;
@@ -665,7 +659,7 @@ export interface PublicPaymentLink {
   currency: PublicPaymentLinkCurrency;
   currencyDecimals: PublicPaymentLinkCurrencyDecimals;
   /**
-     * @minimum 1
+     * @minimum 0
      * @maximum 9007199254740991
      */
   amountMinor: number;
@@ -707,6 +701,21 @@ export interface PublicPaymentLinkAttemptInput {
      */
   lastName: string;
   idempotencyKey: string;
+  /**
+     * @minLength 1
+     * @maxLength 24
+     * @pattern ^[0-9]+(\.[0-9]+)?$
+     */
+  amount?: string;
+}
+
+export interface CustomerPaymentLinkSimulationInput {
+  /**
+     * @minLength 1
+     * @maxLength 24
+     * @pattern ^[0-9]+(\.[0-9]+)?$
+     */
+  amount?: string;
 }
 
 export type PublicPaymentLinkAttemptStatusState = typeof PublicPaymentLinkAttemptStatusState[keyof typeof PublicPaymentLinkAttemptStatusState];
@@ -789,6 +798,15 @@ export interface SimulatedPaymentLinkSuccess {
   amountMinor: number;
   currency: SimulatedPaymentLinkSuccessCurrency;
   currencyDecimals: SimulatedPaymentLinkSuccessCurrencyDecimals;
+}
+
+export interface PublicPaymentLinkQuoteInput {
+  /**
+     * @minLength 1
+     * @maxLength 24
+     * @pattern ^[0-9]+(\.[0-9]+)?$
+     */
+  amount?: string;
 }
 
 export type PublicPaymentLinkQuoteCurrency = typeof PublicPaymentLinkQuoteCurrency[keyof typeof PublicPaymentLinkQuoteCurrency];

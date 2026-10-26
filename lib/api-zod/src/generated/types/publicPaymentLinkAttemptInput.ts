@@ -27,4 +27,10 @@ export interface PublicPaymentLinkAttemptInput {
      */
   lastName: string;
   idempotencyKey: string;
+  /**
+     * @minLength 1
+     * @maxLength 24
+     * @pattern ^[0-9]+(\.[0-9]+)?$
+     */
+  amount?: string;
 }

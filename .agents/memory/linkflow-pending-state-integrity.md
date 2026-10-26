@@ -27,6 +27,12 @@ For LinkFlow, the amount chosen by the merchant is the payer’s total debit. De
 
 **How to apply:** Keep fee calculations server-side, use the recipient-pays-fees calculation for LinkFlow only, and expose only the fixed payer total in the public checkout.
 
+A LinkFlow link with no fixed amount is stored with amount zero and lets the payer choose the amount at checkout; currently this is supported only in XOF, with server-side validation from 100 to 2,000,000 XOF. An empty description is valid and should not create empty visible copy. Fixed links must continue using the stored amount.
+
+**Why:** The user requires amount and description to be optional when creating a link, with the payer setting the amount only when the merchant left it blank.
+
+**How to apply:** Treat zero as the variable-amount sentinel only for XOF. Require the payer value for quotes, simulations, and attempts, validate it on the server, include it in idempotency fingerprints and fee calculations, and never let a payer replace a fixed amount.
+
 For LinkFlow, expose only payment methods with a functioning end-to-end flow. Mobile Money is the method being added now; keep USDT and bank-card choices hidden until their payment flows are implemented.
 
 **Why:** The user stated that Mobile Money is the only method to add at the current stage, while USDT and card are future methods.

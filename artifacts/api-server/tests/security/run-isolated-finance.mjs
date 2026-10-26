@@ -51,6 +51,10 @@ try {
     "lib/db/migrations/2026-10-25-customer-payment-link-soft-delete.sql"), "utf8");
   await owner.query(paymentLinkSoftDeleteMigration);
   await owner.query(paymentLinkSoftDeleteMigration);
+  const variableAmountMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-10-26-linkflow-variable-amount.sql"), "utf8");
+  await owner.query(variableAmountMigration);
+  await owner.query(variableAmountMigration);
   // Exercise the scoped migration rather than accepting Drizzle's approximation
   // of its triggers, cross-table guards and operational registry.
   await owner.query("DROP TABLE sf_replit_payment_test_access CASCADE");

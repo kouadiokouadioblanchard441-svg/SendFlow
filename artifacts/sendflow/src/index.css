@@ -8162,6 +8162,35 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
   -webkit-text-fill-color: #514b5d;
 }
 .sendflow-pay-field > small { margin-top: -2px; color: #595262; font-size: 11px; font-weight: 500; }
+.sendflow-pay-payer-amount {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  border: 1.5px solid #725d8d;
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+.sendflow-pay-payer-amount:focus-within {
+  border-color: #6d35d8;
+  box-shadow: 0 0 0 3px rgba(109, 53, 216, .17);
+}
+.sendflow-pay-payer-amount input {
+  min-width: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.sendflow-pay-payer-amount b {
+  display: grid;
+  flex: 0 0 auto;
+  min-width: 64px;
+  place-items: center;
+  border-left: 1px solid #ded5e8;
+  background: #f7f3fb;
+  color: #51465e;
+  font-size: 13px;
+}
 .sendflow-pay-phone-input { display: flex; align-items: center; height: 46px; overflow: hidden; border: 1px solid #cfc9da; border-radius: 8px; background: #fff; transition: border-color .16s ease, box-shadow .16s ease; }
 .sendflow-pay-phone-input:focus-within { border-color: #6134c5; box-shadow: 0 0 0 3px rgba(97,52,197,.16); }
 .sendflow-pay-phone-input > span {

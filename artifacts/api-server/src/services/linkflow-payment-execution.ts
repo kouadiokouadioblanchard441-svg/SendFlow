@@ -32,6 +32,7 @@ import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { FeexpayClient, type FeexpayReceipt } from "../providers/feexpay/client";
 import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
 import { getAggregatorRouteScopeKey } from "../routes/aggregator-catalog";
+import { parseLinkFlowPayerAmount } from "./payment-links";
 import {
   buildLinkFlowRequestHash,
   deriveLinkFlowPollToken,
@@ -53,6 +54,7 @@ export class LinkFlowPaymentError extends Error {
 }
 
 export type StartLinkFlowPaymentInput = {
+  amount?: string;
   countryCode: string;
   operatorId: string;
   phoneNumber: string;
@@ -165,6 +167,12 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   if (link.currency !== "XOF" || link.paymentMethod === "card") {
     throw new LinkFlowPaymentError(400, "Ce moyen de paiement n’est pas disponible pour ce lien.");
   }
+  let amountMinor: number;
+  try {
+    amountMinor = parseLinkFlowPayerAmount(input.amount, link.amountMinor, link.currency);
+  } catch (error) {
+    throw new LinkFlowPaymentError(400, error instanceof Error ? error.message : "Le montant saisi est invalide.");
+  }
   const countryCode = input.countryCode.toLowerCase();
   const [country] = await tx.select().from(countriesTable)
     .where(eq(countriesTable.countryCode, countryCode)).limit(1);
@@ -204,7 +212,7 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   if (rate?.feePercent == null) {
     throw new LinkFlowPaymentError(400, "Le tarif de ce réseau n’est pas disponible.");
   }
-  const amounts = calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false);
+  const amounts = calculateTransferQuoteAmounts(amountMinor, rate.feePercent, false);
   if (!amounts) throw new LinkFlowPaymentError(400, "Le tarif de ce réseau n’est pas disponible.");
 
   const prefixDigits = country.phonePrefix.replace(/\D/g, "");
@@ -221,6 +229,7 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
     country,
     operator,
     channel,
+    amountMinor,
     amounts,
     normalizedPhone,
     ussdCode: operator.ussdCodeOverride ?? country.ussdCode ?? null,
@@ -422,6 +431,7 @@ export async function startLinkFlowPaymentAttempt(
       ...input,
       linkId: lockedLink.id,
       phoneNumber: channelContext.normalizedPhone,
+      amountMinor: channelContext.amountMinor,
     });
     const [existing] = await tx.select().from(customerPaymentLinkAttemptsTable).where(and(
       eq(customerPaymentLinkAttemptsTable.paymentLinkId, lockedLink.id),
@@ -510,7 +520,7 @@ export async function startLinkFlowPaymentAttempt(
       recipientPhone: encryptSensitiveData(merchantPhone, "transaction-recipient-phone"),
       recipientPhoneLookupHash: createSensitiveDataLookupIndex(merchantPhone, "transaction-recipient-phone"),
       currency: "XOF",
-      amountMinor: lockedLink.amountMinor,
+      amountMinor: channelContext.amountMinor,
       feeMinor: channelContext.amounts.feeMinor,
       reference: operationReference,
       providerReference: null,
@@ -525,10 +535,10 @@ export async function startLinkFlowPaymentAttempt(
       requestHash,
       kind: "deposit",
       currency: "XOF",
-      amountMinor: lockedLink.amountMinor,
+      amountMinor: channelContext.amountMinor,
       feeMinor: channelContext.amounts.feeMinor,
       feePayer: "recipient",
-      senderTotalMinor: lockedLink.amountMinor,
+      senderTotalMinor: channelContext.amountMinor,
       recipientTotalMinor: channelContext.amounts.recipientAmountMinor,
       state: "created",
       ledgerEntryId: null,
@@ -554,7 +564,7 @@ export async function startLinkFlowPaymentAttempt(
       countryCode: input.countryCode.toLowerCase(),
       channelId: channelContext.channel.id,
       operationReference,
-      amountMinor: lockedLink.amountMinor,
+      amountMinor: channelContext.amountMinor,
       currency: "XOF",
       status: "prepared",
       providerReference: null,

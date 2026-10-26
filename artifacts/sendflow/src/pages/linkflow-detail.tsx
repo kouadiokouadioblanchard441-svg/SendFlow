@@ -144,7 +144,8 @@ export default function LinkFlowDetailPage() {
     if (!link || link.usageCount > 0 || amountDraft === null) return;
     const nextAmount = amountDraft.trim();
     const nextAmountMinor = amountToMinor(nextAmount, link.currencyDecimals);
-    if (nextAmountMinor === null || nextAmountMinor <= 0n || nextAmount.length > 24) {
+    const isVariableXofAmount = nextAmountMinor === 0n && link.currency === 'XOF';
+    if (nextAmountMinor === null || (nextAmountMinor <= 0n && !isVariableXofAmount) || nextAmount.length > 24) {
       setAmountError(`Saisissez un montant valide avec au maximum ${link.currencyDecimals} décimales.`);
       return;
     }
@@ -164,8 +165,8 @@ export default function LinkFlowDetailPage() {
     const link = linkQuery.data;
     if (!link || link.usageCount > 0 || descriptionDraft === null) return;
     const nextDescription = descriptionDraft.trim();
-    if (nextDescription.length < 2 || nextDescription.length > 240) {
-      setDescriptionError('La description doit contenir entre 2 et 240 caractères.');
+    if (nextDescription.length > 240) {
+      setDescriptionError('La description ne peut pas dépasser 240 caractères.');
       return;
     }
     if (nextDescription === link.description) {
@@ -298,6 +299,9 @@ export default function LinkFlowDetailPage() {
                   </button>
                 </div>
                 {amountError && <small className="sendflow-detail-inline-error" role="alert">{amountError}</small>}
+                {link.amountMinor === 0 && link.currency === 'XOF' && link.usageCount === 0 && (
+                  <small className="sendflow-detail-inline-hint">Montant libre : le payeur indiquera le montant à régler.</small>
+                )}
               </label>
               <label className="sendflow-detail-inline-field">
                 <span>Description</span>
@@ -315,6 +319,7 @@ export default function LinkFlowDetailPage() {
                   </button>
                 </div>
                 {descriptionError && <small className="sendflow-detail-inline-error" role="alert">{descriptionError}</small>}
+                {link.usageCount === 0 && <small className="sendflow-detail-inline-hint">Description facultative.</small>}
                 {link.usageCount > 0 && <small className="sendflow-detail-inline-hint"><LockKeyhole size={12} /> Montant et description verrouillés après une utilisation.</small>}
               </label>
             </div>

@@ -16,18 +16,23 @@ import {
   GetPublicPaymentLinkAttemptStatusHeader,
   GetPublicPaymentLinkAttemptStatusParams,
   GetPublicPaymentLinkAttemptStatusResponse,
+  QuotePublicPaymentLinkBody,
   QuotePublicPaymentLinkParams,
   QuotePublicPaymentLinkResponse,
   StartPublicPaymentLinkAttemptBody,
   StartPublicPaymentLinkAttemptParams,
   StartPublicPaymentLinkAttemptResponse,
 } from "@workspace/api-zod";
-import { Router, type IRouter, type Request } from "express";
+import { Router, type IRouter, type Request, type RequestHandler } from "express";
 import { consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
 import { getCustomerSession } from "../lib/customer-session";
 import { flagFromCountryCode } from "../lib/operator-pricing-catalog";
 import { isReplitPaymentTestHost } from "../lib/replit-payment-test-access-policy";
-import { isPaymentLinkSimulationAllowed } from "../services/payment-links";
+import {
+  isPaymentLinkSimulationAllowed,
+  parseLinkFlowPayerAmount,
+  PaymentLinkInputError,
+} from "../services/payment-links";
 import { operatorLogoUrl } from "../services/operator-logo";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { getAggregatorRouteScopeKey } from "./aggregator-catalog";
@@ -131,7 +136,7 @@ async function loadAvailableChoices(link: PublicLinkRow) {
       );
       if (rate?.feePercent === null || rate?.feePercent === undefined ||
         !Number.isFinite(rate.feePercent) || rate.feePercent < 0 || rate.feePercent > 100) return [];
-       if (!calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false)) return [];
+       if (link.amountMinor > 0 && !calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false)) return [];
       return [{
         id: operator.operatorId,
         name: operator.name,
@@ -308,10 +313,13 @@ router.get("/public/payment-link-attempts/:attemptId", async (req, res): Promise
   }
 });
 
-router.get("/public/payment-links/:token/quote/:countryCode/:operatorId", async (req, res): Promise<void> => {
+const handlePublicPaymentLinkQuote: RequestHandler = async (req, res): Promise<void> => {
   res.setHeader("Cache-Control", "no-store, private");
   const parsed = QuotePublicPaymentLinkParams.safeParse(req.params);
-  if (!parsed.success) {
+  const parsedBody = req.method === "POST"
+    ? QuotePublicPaymentLinkBody.safeParse(req.body)
+    : { success: true as const, data: {} };
+  if (!parsed.success || !parsedBody.success) {
     res.status(400).json({ error: "Le pays ou le réseau sélectionné est invalide." });
     return;
   }
@@ -349,14 +357,28 @@ router.get("/public/payment-links/:token/quote/:countryCode/:operatorId", async 
       res.status(400).json({ error: "Le tarif de ce réseau n’est pas disponible." });
       return;
     }
-    const amounts = calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false);
+    let amountMinor: number;
+    try {
+      amountMinor = parseLinkFlowPayerAmount(
+        "amount" in parsedBody.data ? parsedBody.data.amount : undefined,
+        link.amountMinor,
+        link.currency,
+      );
+    } catch (error) {
+      if (error instanceof PaymentLinkInputError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
+      throw error;
+    }
+    const amounts = calculateTransferQuoteAmounts(amountMinor, rate.feePercent, false);
     if (!amounts) {
       res.status(400).json({ error: "Le tarif de ce réseau n’est pas disponible." });
       return;
     }
     res.json(QuotePublicPaymentLinkResponse.parse({
       currency: "XOF",
-      amountMinor: link.amountMinor,
+      amountMinor,
       totalMinor: amounts.totalDebitMinor,
       operatorId: parsed.data.operatorId,
     }));
@@ -364,7 +386,10 @@ router.get("/public/payment-links/:token/quote/:countryCode/:operatorId", async 
     req.log.error({ err: error }, "Public payment-link quote could not be calculated");
     res.status(503).json({ error: "Le tarif est momentanément indisponible." });
   }
-});
+};
+
+router.get("/public/payment-links/:token/quote/:countryCode/:operatorId", handlePublicPaymentLinkQuote);
+router.post("/public/payment-links/:token/quote/:countryCode/:operatorId", handlePublicPaymentLinkQuote);
 
 router.get("/public/payment-links/:token/image", async (req, res): Promise<void> => {
   res.setHeader("Cache-Control", "no-store, private");

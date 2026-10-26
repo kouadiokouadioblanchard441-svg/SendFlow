@@ -17,17 +17,14 @@ export interface CustomerPaymentLinkInput {
      * @maxLength 24
      * @pattern ^[0-9]+(\.[0-9]+)?$
      */
-  amount: string;
+  amount?: string;
   /**
      * @minLength 2
      * @maxLength 120
      */
   linkName: string;
-  /**
-     * @minLength 2
-     * @maxLength 240
-     */
-  description: string;
+  /** @maxLength 240 */
+  description?: string;
   paymentMethod: CustomerPaymentLinkInputPaymentMethod;
   validity: CustomerPaymentLinkInputValidity;
   /**

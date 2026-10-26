@@ -46,6 +46,9 @@ export const PAYMENT_LINK_METHODS = [
   { value: "all", label: "Tous" },
 ] as const;
 
+export const LINKFLOW_PAYER_AMOUNT_MIN_MINOR = 100;
+export const LINKFLOW_PAYER_AMOUNT_MAX_MINOR = 2_000_000;
+
 export const PAYMENT_LINK_VALIDITIES = [
   { value: "hour", label: "1 heure" },
   { value: "day", label: "1 jour" },
@@ -163,6 +166,46 @@ export function parseAmountMinor(amount: string, currency: string) {
   return Number(minor);
 }
 
+export function parsePaymentLinkAmountInput(amount: string, currency: string) {
+  const normalized = amount.trim();
+  if (normalized === "0") {
+    if (currency !== "XOF") {
+      throw new PaymentLinkInputError("Le montant libre est disponible uniquement en XOF pour le moment.");
+    }
+    return 0;
+  }
+  return parseAmountMinor(normalized, currency);
+}
+
+export function parseLinkFlowPayerAmount(
+  amount: string | undefined,
+  linkAmountMinor: number,
+  currency: string,
+): number {
+  if (linkAmountMinor === 0) {
+    if (currency !== "XOF") {
+      throw new PaymentLinkInputError("Le montant libre est disponible uniquement en XOF pour le moment.");
+    }
+    if (!amount?.trim()) {
+      throw new PaymentLinkInputError("Saisissez le montant que vous souhaitez payer.");
+    }
+    const amountMinor = parseAmountMinor(amount.trim(), "XOF");
+    if (amountMinor < LINKFLOW_PAYER_AMOUNT_MIN_MINOR || amountMinor > LINKFLOW_PAYER_AMOUNT_MAX_MINOR) {
+      throw new PaymentLinkInputError("Le montant doit être compris entre 100 et 2 000 000 XOF.");
+    }
+    return amountMinor;
+  }
+
+  if (!Number.isSafeInteger(linkAmountMinor) || linkAmountMinor < 1) {
+    throw new PaymentLinkInputError("Le montant de ce lien est invalide.");
+  }
+  if (amount === undefined) return linkAmountMinor;
+  if (parseAmountMinor(amount, currency) !== linkAmountMinor) {
+    throw new PaymentLinkInputError("Le montant ne correspond pas à ce lien.");
+  }
+  return linkAmountMinor;
+}
+
 function normalizeReturnUrl(value: string | null) {
   if (value === null) return null;
   if (value.length > 2048) throw new PaymentLinkInputError("L’adresse de retour est trop longue.");
@@ -182,9 +225,9 @@ export function normalizePaymentLinkInput(
   input: {
     requestId: string;
     currency: typeof PAYMENT_LINK_CURRENCIES[number]["code"];
-    amount: string;
+    amount?: string;
     linkName: string;
-    description: string;
+    description?: string;
     paymentMethod: typeof PAYMENT_LINK_METHODS[number]["value"];
     validity: keyof typeof validityInMs;
     maximumUses: number | null;
@@ -197,11 +240,17 @@ export function normalizePaymentLinkInput(
   if (linkName.length < 2 || linkName.length > 120) {
     throw new PaymentLinkInputError("Le nom du lien doit contenir entre 2 et 120 caractères.");
   }
-  const description = input.description.trim();
-  if (description.length < 2 || description.length > 240) {
-    throw new PaymentLinkInputError("La description doit contenir entre 2 et 240 caractères.");
+  const description = input.description?.trim() ?? "";
+  if (description.length > 240) {
+    throw new PaymentLinkInputError("La description ne peut pas dépasser 240 caractères.");
   }
-  const amountMinor = parseAmountMinor(input.amount, input.currency);
+  const amountText = input.amount?.trim() ?? "";
+  const amountMinor = amountText === "" || amountText === "0"
+    ? 0
+    : parsePaymentLinkAmountInput(amountText, input.currency);
+  if (amountMinor === 0 && input.currency !== "XOF") {
+    throw new PaymentLinkInputError("Le montant libre est disponible uniquement en XOF pour le moment.");
+  }
   const returnUrl = normalizeReturnUrl(input.returnUrl);
   if (input.suffix !== null && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.suffix)) {
     throw new PaymentLinkInputError("Le suffixe du lien est invalide.");

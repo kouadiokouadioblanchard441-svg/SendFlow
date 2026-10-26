@@ -78,11 +78,15 @@ test("request fingerprints and poll tokens are stable without storing raw payer 
     phoneNumber: "+2250102030405",
     firstName: "Awa",
     lastName: "Kouassi",
+    amountMinor: 2500,
     idempotencyKey: "11111111-1111-4111-8111-111111111111",
   };
   assert.equal(buildLinkFlowRequestHash(input), buildLinkFlowRequestHash(input));
   assert.notEqual(buildLinkFlowRequestHash(input), buildLinkFlowRequestHash({
     ...input, phoneNumber: "+2250102030406",
+  }));
+  assert.notEqual(buildLinkFlowRequestHash(input), buildLinkFlowRequestHash({
+    ...input, amountMinor: 2600,
   }));
   const token = deriveLinkFlowPollToken(input.linkId, input.idempotencyKey);
   assert.equal(token, deriveLinkFlowPollToken(input.linkId, input.idempotencyKey));

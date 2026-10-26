@@ -190,6 +190,16 @@ test("payment-link amount rules and shared-Neon preview scope fail closed", () =
     currency: "USD",
     amount: "10.25",
   })).amountMinor, 1025);
+  const payerPriced = normalizePaymentLinkInput(validInput({
+    amount: "",
+    description: "",
+  }));
+  assert.equal(payerPriced.amountMinor, 0);
+  assert.equal(payerPriced.description, "");
+  assert.throws(() => normalizePaymentLinkInput(validInput({
+    currency: "XAF",
+    amount: "0",
+  })));
   assert.equal(isPaymentLinkCreationAllowed(
     { paymentTestAccount: false },
     { SENDFLOW_DATABASE_TARGET: "shared-neon" },
@@ -296,6 +306,15 @@ test("payment-link schema migration is present and operates only in the isolated
     "sf_customer_payment_links_token_check",
     "sf_customer_payment_links_usage_count_check",
     "sf_customer_payment_links_user_id_fkey",
+  ]);
+  const validatedAmountRules = await owner.query(`SELECT conname, convalidated
+    FROM pg_constraint
+    WHERE conrelid='public.sf_customer_payment_links'::regclass
+      AND conname IN ('sf_customer_payment_links_amount_check','sf_customer_payment_links_description_check')
+    ORDER BY conname`);
+  assert.deepEqual(validatedAmountRules.rows, [
+    { conname: "sf_customer_payment_links_amount_check", convalidated: true },
+    { conname: "sf_customer_payment_links_description_check", convalidated: true },
   ]);
   const indexes = await owner.query(`SELECT indexname FROM pg_indexes
     WHERE schemaname='public' AND tablename='sf_customer_payment_links' ORDER BY indexname`);
@@ -499,6 +518,93 @@ test("create uses server-owned values, is idempotent and rejects changed replays
   )).rows[0].count), 1);
 });
 
+test("payer-priced LinkFlow can be created without amount or description and quotes the entered amount", async () => {
+  await owner.query(`INSERT INTO sf_countries
+    (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,
+      enabled,deposit_enabled,inter_network_enabled,international_enabled,created_by,updated_by)
+    VALUES ('ci','Côte d’Ivoire','+225',8,10,true,true,false,false,'fixture','fixture')
+    ON CONFLICT (country_code) DO UPDATE SET enabled=true,deposit_enabled=true`);
+  await owner.query(`INSERT INTO sf_operator_catalog
+    (operator_id,country_code,name,short_name,initials,brand,enabled,deposit_enabled,
+      inter_network_enabled,international_enabled,created_by,updated_by)
+    VALUES ('mtn-ci','ci','MTN','MTN','MTN','mtn',true,true,false,false,'fixture','fixture')
+    ON CONFLICT (operator_id) DO UPDATE SET enabled=true,deposit_enabled=true`);
+  await owner.query(`DELETE FROM sf_operator_pricing_rates
+    WHERE operator_id='mtn-ci' AND category_id='deposit'`);
+  await owner.query(`INSERT INTO sf_operator_pricing_rates
+    (operator_id,country_code,category_id,fee_percent,version,created_by,updated_by)
+    VALUES ('mtn-ci','ci','deposit',2,1,'fixture','fixture')`);
+  await owner.query(`INSERT INTO sf_payment_aggregators(code,name,enabled,created_by,updated_by)
+    VALUES ('feexpay','FeexPay',true,'fixture','fixture')
+    ON CONFLICT (code) DO UPDATE SET enabled=true`);
+  await owner.query(`DELETE FROM sf_operation_aggregator_routes
+    WHERE scope_type IN ('country','operator') AND scope_key IN ('ci','ci:mtn-ci')
+      AND operation='deposit'`);
+  await owner.query(`INSERT INTO sf_operation_aggregator_routes
+    (scope_type,scope_key,country_code,operation,aggregator_code,version,created_by,updated_by)
+    VALUES ('country','ci','ci','deposit','feexpay',1,'fixture','fixture')`);
+  const body = validInput();
+  delete body.amount;
+  delete body.description;
+  const created = await request("/api/me/payment-links", {
+    method: "POST",
+    userId: "payment-link-owner-a",
+    body,
+  });
+  assert.equal(created.status, 201, created.text);
+  const link = json(created);
+  assert.equal(link.amountMinor, 0);
+  assert.equal(link.description, "");
+
+  const token = link.sharePath.split("/").at(-1);
+  const page = await request(`/api/public/payment-links/${token}`);
+  assert.equal(page.status, 200, page.text);
+  assert.equal(json(page).amountMinor, 0);
+  assert.equal(json(page).description, "");
+
+  const missingAmount = await request(`/api/public/payment-links/${token}/quote/ci/mtn-ci`);
+  assert.equal(missingAmount.status, 400);
+  const quote = await request(`/api/public/payment-links/${token}/quote/ci/mtn-ci`, {
+    method: "POST",
+    body: { amount: "500" },
+  });
+  assert.equal(quote.status, 200, quote.text);
+  assert.deepEqual(json(quote), {
+    currency: "XOF",
+    amountMinor: 500,
+    totalMinor: 500,
+    operatorId: "mtn-ci",
+  });
+  const belowProviderMinimum = await request(`/api/public/payment-links/${token}/quote/ci/mtn-ci`, {
+    method: "POST",
+    body: { amount: "99" },
+  });
+  assert.equal(belowProviderMinimum.status, 400);
+
+  const saved = await owner.query(
+    "SELECT amount_minor, description FROM sf_customer_payment_links WHERE id=$1",
+    [link.id],
+  );
+  assert.deepEqual(saved.rows[0], { amount_minor: "0", description: "" });
+
+  const setFixedAmount = await request(`/api/me/payment-links/${link.id}`, {
+    method: "PATCH",
+    userId: "payment-link-owner-a",
+    body: { amount: "1500" },
+  });
+  assert.equal(setFixedAmount.status, 200, setFixedAmount.text);
+  assert.equal(json(setFixedAmount).amountMinor, 1500);
+  assert.equal(json(setFixedAmount).description, "");
+  const restoreVariableAmount = await request(`/api/me/payment-links/${link.id}`, {
+    method: "PATCH",
+    userId: "payment-link-owner-a",
+    body: { amount: "0" },
+  });
+  assert.equal(restoreVariableAmount.status, 200, restoreVariableAmount.text);
+  assert.equal(json(restoreVariableAmount).amountMinor, 0);
+  await owner.query("DELETE FROM sf_customer_payment_links WHERE id=$1", [link.id]);
+});
+
 test("public payment page is token-scoped and quotes the fee from server pricing", async () => {
   await owner.query(`INSERT INTO sf_countries
     (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,
@@ -588,7 +694,11 @@ test("authorized Replit viewer can create, view and simulate a link without PIN 
     const created = await request("/api/me/payment-links", {
       method: "POST",
       userId: viewerId,
-      body: validInput({ linkName: "Simulation SendFlow", amount: "2000" }),
+      body: validInput({
+        linkName: "Simulation SendFlow",
+        amount: "0",
+        description: "",
+      }),
     });
     assert.equal(created.status, 201, created.text);
     const link = json(created);
@@ -604,6 +714,7 @@ test("authorized Replit viewer can create, view and simulate a link without PIN 
     const result = await request(`/api/me/payment-links/simulate/${token}`, {
       method: "POST",
       userId: viewerId,
+      body: { amount: "2000" },
     });
     assert.equal(result.status, 200, result.text);
     assert.deepEqual(json(result), {

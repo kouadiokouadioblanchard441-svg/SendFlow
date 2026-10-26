@@ -15,7 +15,10 @@ const money = (minor: number, currency: string, decimals: number) => new Intl.Nu
 }).format(minor / (10 ** decimals));
 
 const linkAmount = (link: CustomerPaymentLink) =>
-  money(link.amountMinor, link.currency, link.currencyDecimals);
+  link.amountMinor === 0 ? 'Montant libre' : money(link.amountMinor, link.currency, link.currencyDecimals);
+
+const linkTitle = (link: CustomerPaymentLink) =>
+  link.description.trim() || link.linkName?.trim() || 'Lien de paiement';
 
 const paymentLabel = (method: CustomerPaymentLink['paymentMethod']) => ({
   all: 'Tous les moyens',
@@ -52,14 +55,15 @@ export default function LinkFlowPage() {
 
   const openShareDialog = (link: CustomerPaymentLink) => {
     try {
+      const title = linkTitle(link);
       const targets = buildLinkFlowShareTargets({
         origin: window.location.origin,
         basePath: import.meta.env.BASE_URL,
         sharePath: link.sharePath,
-        title: link.description,
+        title,
       });
       setShareNotice(null);
-      setShareDialog({ id: link.id, title: link.description, targets });
+      setShareDialog({ id: link.id, title, targets });
     } catch {
       setShareDialog(null);
       setShareNotice({ message: 'Ce lien ne peut pas être partagé pour le moment.', error: true });
@@ -160,11 +164,11 @@ export default function LinkFlowPage() {
                     setLocation(`/linkflow/${encodeURIComponent(link.id)}`);
                   }
                 }}
-                aria-label={`Consulter le lien ${link.description}`}
+                aria-label={`Consulter le lien ${linkTitle(link)}`}
               >
                 <span className="sendflow-linkflow-record-icon"><Link2 size={18} /></span>
                 <div className="sendflow-linkflow-row-copy">
-                  <h3>{link.description}</h3>
+                  <h3>{linkTitle(link)}</h3>
                   <p>#{link.code} · {paymentLabel(link.paymentMethod)}</p>
                   <span className="sendflow-linkflow-row-date">Créé le {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(link.createdAt))}</span>
                 </div>
@@ -181,7 +185,7 @@ export default function LinkFlowPage() {
                       event.stopPropagation();
                       openShareDialog(link);
                     }}
-                    aria-label={`Partager le lien de paiement ${link.description}`}
+                    aria-label={`Partager le lien de paiement ${linkTitle(link)}`}
                     aria-haspopup="dialog"
                     data-testid={`button-linkflow-share-${link.id}`}
                   >

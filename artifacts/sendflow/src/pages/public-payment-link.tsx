@@ -35,6 +35,29 @@ function formatMoney(minor: number, currency: string, decimals: number) {
   }).format(minor / (10 ** decimals));
 }
 
+function parseAmountInputMinor(value: string, decimals: number): number | null {
+  const match = /^([0-9]+)(?:\.([0-9]+))?$/.exec(value.trim());
+  if (!match || (match[2]?.length ?? 0) > decimals) return null;
+  try {
+    const scale = 10n ** BigInt(decimals);
+    const whole = BigInt(match[1]);
+    const fraction = decimals === 0
+      ? 0n
+      : BigInt(((match[2] ?? '') + '0'.repeat(decimals)).slice(0, decimals));
+    const amountMinor = whole * scale + fraction;
+    if (amountMinor > BigInt(Number.MAX_SAFE_INTEGER)) return null;
+    return Number(amountMinor);
+  } catch {
+    return null;
+  }
+}
+
+function formatAmountInput(minor: number, decimals: number) {
+  if (decimals === 0) return String(minor);
+  const digits = String(minor).padStart(decimals + 1, '0');
+  return `${digits.slice(0, -decimals)}.${digits.slice(-decimals)}`;
+}
+
 function paymentStorageKey(token: string, suffix: string) {
   return `sendflow:linkflow:${token}:${suffix}`;
 }
@@ -85,6 +108,7 @@ export default function PublicPaymentLinkPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+  const [payerAmount, setPayerAmount] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('mobile-money');
   const [simulationConfirmation, setSimulationConfirmation] = useState<SimulatedPaymentLinkSuccess | null>(null);
   const [simulationOutcome, setSimulationOutcome] = useState<'succeeded' | 'failed' | null>(null);
@@ -131,7 +155,15 @@ export default function PublicPaymentLinkPage() {
   const country = link?.countries.find((item) => item.code === countryCode);
   const operator = country?.operators.find((item) => item.id === operatorId);
   const nationalPhone = phone.replace(/\D/g, '');
+  const variableAmount = link?.amountMinor === 0;
+  const requestedAmountMinor = variableAmount
+    ? parseAmountInputMinor(payerAmount, link?.currencyDecimals ?? 0)
+    : link?.amountMinor ?? null;
+  const requestedAmountValid = variableAmount
+    ? Boolean(link?.currency === 'XOF' && requestedAmountMinor !== null && requestedAmountMinor >= 100 && requestedAmountMinor <= 2_000_000)
+    : requestedAmountMinor !== null && requestedAmountMinor > 0;
   const payerFormValid = Boolean(
+    requestedAmountValid &&
     country &&
     operator &&
     firstName.trim() &&
@@ -167,6 +199,7 @@ export default function PublicPaymentLinkPage() {
     setFirstName('');
     setLastName('');
     setPhone('');
+    setPayerAmount('');
     setSelectedPaymentMethod('mobile-money');
     setSimulationConfirmation(null);
     setSimulationOutcome(null);
@@ -231,8 +264,11 @@ export default function PublicPaymentLinkPage() {
     resetPaymentRequestKey();
   };
   const beginSimulation = (outcome: 'succeeded' | 'failed') => {
-    if (!import.meta.env.DEV || !link?.simulationAvailable) return;
-    simulateMutation.mutate({ token }, {
+    if (!import.meta.env.DEV || !link?.simulationAvailable || !requestedAmountValid) return;
+    simulateMutation.mutate({
+      token,
+      data: variableAmount ? { amount: payerAmount.trim() } : {},
+    }, {
       onSuccess: (confirmation) => {
         if (activeTokenRef.current !== token) return;
         setSimulationConfirmation(confirmation);
@@ -242,7 +278,7 @@ export default function PublicPaymentLinkPage() {
     });
   };
   const startRealPayment = () => {
-    if (!link || !country || !operator || !payerFormValid || !link.paymentAvailable || !paymentRecoveryAvailable) return;
+    if (!link || !country || !operator || !payerFormValid || !link.paymentAvailable || !paymentRecoveryAvailable || !requestedAmountValid) return;
     const idempotencyKey = paymentRequestKey || window.crypto.randomUUID();
     try {
       const requestStorageKey = paymentStorageKey(token, 'idempotency');
@@ -259,6 +295,7 @@ export default function PublicPaymentLinkPage() {
     startPaymentMutation.mutate({
       token,
       data: {
+        ...(variableAmount ? { amount: payerAmount.trim() } : {}),
         countryCode: country.code.toLowerCase(),
         operatorId: operator.id,
         phoneNumber: `${country.phonePrefix}${nationalPhone}`,
@@ -429,7 +466,7 @@ export default function PublicPaymentLinkPage() {
     );
   }
 
-  const amountLabel = formatMoney(link.amountMinor, link.currency, link.currencyDecimals);
+  const amountLabel = formatMoney(requestedAmountMinor ?? 0, link.currency, link.currencyDecimals);
 
   return (
     <main className="sendflow-public-pay-shell">
@@ -464,6 +501,33 @@ export default function PublicPaymentLinkPage() {
           </div>
 
           <div className="sendflow-pay-form">
+            {variableAmount && (
+              <label className="sendflow-pay-field">
+                <span>Montant à payer<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
+                <div className="sendflow-pay-payer-amount">
+                  <input
+                    type="text"
+                    inputMode={link.currencyDecimals === 0 ? 'numeric' : 'decimal'}
+                    autoComplete="off"
+                    value={payerAmount}
+                    onChange={(event) => {
+                      setPayerAmount(event.target.value);
+                      resetPaymentRequestKey();
+                    }}
+                    placeholder="Saisissez votre montant"
+                    aria-invalid={Boolean(payerAmount && !requestedAmountValid)}
+                    aria-describedby="public-pay-amount-help"
+                    data-testid="input-public-pay-amount"
+                  />
+                  <b>{link.currency}</b>
+                </div>
+                <small id="public-pay-amount-help">
+                  {payerAmount && !requestedAmountValid
+                    ? 'Pour ce paiement, saisissez un montant compris entre 100 et 2 000 000 XOF.'
+                    : 'Montant libre : entrez le montant que vous souhaitez payer.'}
+                </small>
+              </label>
+            )}
             <label className="sendflow-pay-field">
               <span>Moyens de paiement</span>
               <select
