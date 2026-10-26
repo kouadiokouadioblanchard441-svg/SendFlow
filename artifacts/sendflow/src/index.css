@@ -8482,6 +8482,15 @@ body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
   line-height: 1;
   white-space: nowrap;
 }
+.sendflow-linkflow-secure-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 5px;
+  text-decoration: none;
+}
+.sendflow-linkflow-secure-brand-link:hover { opacity: .84; }
+.sendflow-linkflow-secure-brand-link:focus-visible { outline: 2px solid #6d35d8; outline-offset: 3px; }
 .sendflow-linkflow-secure-wordmark { display: block; width: 83px; height: auto; object-fit: contain; }
 .sendflow-linkflow-secure-mark {
   display: block;
