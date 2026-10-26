@@ -1,4 +1,4 @@
-import { getAllowedOrigins, getTrustedHost, normalizeHttpOrigin } from "./origin-policy";
+import { getAllowedOrigins, getTrustedHost, normalizeHttpOrigin } from "./origin-policy.ts";
 
 export function getCustomerBiometricOrigin(
   method: string,
