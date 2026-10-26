@@ -192,6 +192,7 @@ export * from './publicPaymentLinkOperator';
 export * from './publicPaymentLinkQuote';
 export * from './publicPaymentLinkQuoteCurrency';
 export * from './publicPaymentLinkQuoteInput';
+export * from './publicPaymentLinkState';
 export * from './publicPricingCatalog';
 export * from './publicPricingCategory';
 export * from './publicPricingCategoryId';

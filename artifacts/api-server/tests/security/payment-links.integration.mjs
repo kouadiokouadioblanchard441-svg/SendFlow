@@ -642,6 +642,7 @@ test("public payment page is token-scoped and quotes the fee from server pricing
   assert.equal(page.status, 200, page.text);
   const details = json(page);
   assert.equal(details.merchantName, "Flow digital SARL");
+  assert.equal(details.state, "active");
   assert.equal(details.amountMinor, 1250);
   assert.equal(details.paymentAvailable, false);
   assert.equal(details.simulationAvailable, false);
@@ -670,7 +671,20 @@ test("public payment page is token-scoped and quotes the fee from server pricing
   assert.equal(rateLimitedQuote.status, 429);
   await owner.query("UPDATE sf_customer_payment_links SET expires_at=now() WHERE id=$1", [link.id]);
   const expiredPage = await request(`/api/public/payment-links/${token}`);
-  assert.equal(expiredPage.status, 404);
+  assert.equal(expiredPage.status, 200, expiredPage.text);
+  const expiredDetails = json(expiredPage);
+  assert.equal(expiredDetails.state, "expired");
+  assert.equal(expiredDetails.merchantName, "Flow digital SARL");
+  assert.equal(expiredDetails.amountMinor, 1250);
+  assert.equal(expiredDetails.paymentAvailable, false);
+  assert.equal(expiredDetails.simulationAvailable, false);
+  assert.deepEqual(expiredDetails.countries, []);
+  await owner.query(
+    "UPDATE sf_customer_payment_links SET deleted_at=now() WHERE id=$1",
+    [link.id],
+  );
+  const deletedPage = await request(`/api/public/payment-links/${token}`);
+  assert.equal(deletedPage.status, 404);
   const unknownToken = await request(
     "/api/public/payment-links/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
   );

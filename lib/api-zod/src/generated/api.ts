@@ -978,6 +978,7 @@ export const getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax = 
 
 
 export const GetPublicPaymentLinkResponse = zod.object({
+  "state": zod.enum(['active', 'expired']),
   "merchantName": zod.string().min(1).max(getPublicPaymentLinkResponseMerchantNameMax),
   "description": zod.string().max(getPublicPaymentLinkResponseDescriptionMax),
   "currency": zod.enum(['XOF', 'XAF', 'CHF', 'NGN', 'EUR', 'USD', 'CAD']),

@@ -627,6 +627,14 @@ export interface PublicPaymentLinkCountry {
   operators: PublicPaymentLinkOperator[];
 }
 
+export type PublicPaymentLinkState = typeof PublicPaymentLinkState[keyof typeof PublicPaymentLinkState];
+
+
+export const PublicPaymentLinkState = {
+  active: 'active',
+  expired: 'expired',
+} as const;
+
 export type PublicPaymentLinkCurrency = typeof PublicPaymentLinkCurrency[keyof typeof PublicPaymentLinkCurrency];
 
 
@@ -649,6 +657,7 @@ export const PublicPaymentLinkCurrencyDecimals = {
 } as const;
 
 export interface PublicPaymentLink {
+  state: PublicPaymentLinkState;
   /**
      * @minLength 1
      * @maxLength 120

@@ -8,8 +8,10 @@
 import type { PublicPaymentLinkCountry } from './publicPaymentLinkCountry';
 import type { PublicPaymentLinkCurrency } from './publicPaymentLinkCurrency';
 import type { PublicPaymentLinkCurrencyDecimals } from './publicPaymentLinkCurrencyDecimals';
+import type { PublicPaymentLinkState } from './publicPaymentLinkState';
 
 export interface PublicPaymentLink {
+  state: PublicPaymentLinkState;
   /**
      * @minLength 1
      * @maxLength 120

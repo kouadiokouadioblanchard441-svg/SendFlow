@@ -64,7 +64,7 @@ type PublicLinkRow = {
   imageData: Buffer | null;
 };
 
-async function findUsablePublicLink(token: string): Promise<PublicLinkRow | undefined> {
+async function findPublicLink(token: string): Promise<PublicLinkRow | undefined> {
   if (!tokenPattern.test(token)) return undefined;
   const [link] = await db.select({
     id: customerPaymentLinksTable.id,
@@ -87,9 +87,21 @@ async function findUsablePublicLink(token: string): Promise<PublicLinkRow | unde
     ))
     .limit(1);
 
-  if (!link || link.status !== "active" ||
-    (link.expiresAt !== null && link.expiresAt.getTime() <= Date.now()) ||
-    (link.maximumUses !== null && link.usageCount >= link.maximumUses)) return undefined;
+  return link;
+}
+
+function isPublicLinkExpired(link: PublicLinkRow) {
+  return link.expiresAt !== null && link.expiresAt.getTime() <= Date.now();
+}
+
+function hasPublicLinkReachedUseLimit(link: PublicLinkRow) {
+  return link.maximumUses !== null && link.usageCount >= link.maximumUses;
+}
+
+async function findUsablePublicLink(token: string): Promise<PublicLinkRow | undefined> {
+  const link = await findPublicLink(token);
+  if (!link || link.status !== "active" || isPublicLinkExpired(link) ||
+    hasPublicLinkReachedUseLimit(link)) return undefined;
   return link;
 }
 
@@ -215,9 +227,26 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
       res.status(429).json({ error: "Trop de consultations de ce lien. Réessayez dans une minute." });
       return;
     }
-    const link = await findUsablePublicLink(parsed.data.token);
-    if (!link) {
+    const link = await findPublicLink(parsed.data.token);
+    if (!link || link.status !== "active" || hasPublicLinkReachedUseLimit(link)) {
       res.status(404).json(errorUnavailable);
+      return;
+    }
+    if (isPublicLinkExpired(link)) {
+      res.json(GetPublicPaymentLinkResponse.parse({
+        state: "expired",
+        merchantName: link.linkName?.trim() || "SendFlow",
+        description: "",
+        currency: link.currency,
+        currencyDecimals: ["XOF", "XAF"].includes(link.currency) ? 0 : 2,
+        amountMinor: link.amountMinor,
+        expiresAt: link.expiresAt?.toISOString() ?? null,
+        remainingUses: null,
+        imagePath: null,
+        countries: [],
+        paymentAvailable: false,
+        simulationAvailable: false,
+      }));
       return;
     }
     let simulationAvailable = false;
@@ -233,6 +262,7 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
       ? await loadPreviewCatalogChoices(link)
       : await loadAvailableChoices(link);
     const response = {
+      state: "active" as const,
       merchantName: link.linkName?.trim() || "SendFlow",
       description: link.description,
       currency: link.currency,
