@@ -17,6 +17,7 @@ import type {
 import { useSeo } from '@/lib/seo';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 import linkUnavailableIllustration from '@assets/generated_images/sendflow-link-unavailable-3d-final.png';
+import linkExpiredIllustration from '@assets/generated_images/sendflow-link-expired-mascot-final.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import securePaymentMark from '@assets/generated_images/sendflow-secure-payment-mark-3d-clean.png';
 import waveOperatorLogo from '@/assets/wave-logo-reference.png';
@@ -130,7 +131,13 @@ export default function PublicPaymentLinkPage() {
   activeTokenRef.current = token;
 
   const link = linkQuery.data;
-  const pageAssetsKey = JSON.stringify([token, linkLoadCycle, link?.imagePath ?? null, linkQuery.isError]);
+  const pageAssetsKey = JSON.stringify([
+    token,
+    linkLoadCycle,
+    link?.state ?? null,
+    link?.imagePath ?? null,
+    linkQuery.isError,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,6 +147,7 @@ export default function PublicPaymentLinkPage() {
       securePaymentMark,
       ...(link?.imagePath ? [link.imagePath] : []),
       ...(linkQuery.isError ? [linkUnavailableIllustration] : []),
+      ...(link?.state === 'expired' ? [linkExpiredIllustration] : []),
     ];
 
     void Promise.all(Array.from(new Set(sources)).map((src) => {
@@ -156,7 +164,7 @@ export default function PublicPaymentLinkPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, linkLoadCycle, link?.imagePath, linkQuery.isError, pageAssetsKey]);
+  }, [token, linkLoadCycle, link?.state, link?.imagePath, linkQuery.isError, pageAssetsKey]);
 
   const previewSimulationAvailable = import.meta.env.DEV && Boolean(link?.simulationAvailable);
   const country = link?.countries.find((item) => item.code === countryCode);
@@ -268,7 +276,9 @@ export default function PublicPaymentLinkPage() {
   useSeo({
     path: `/pay/${token}`,
     locale: 'fr',
-    title: link ? `Paiement à ${link.merchantName} · SendFlow` : 'Lien de paiement · SendFlow',
+    title: link?.state === 'expired'
+      ? 'Lien de paiement expiré · SendFlow'
+      : link ? `Paiement à ${link.merchantName} · SendFlow` : 'Lien de paiement · SendFlow',
     description: 'Consultez les détails de cette demande de paiement SendFlow.',
     robots: 'noindex,nofollow',
   });
@@ -496,6 +506,53 @@ export default function PublicPaymentLinkPage() {
           <span />
           <span />
         </span>
+      </main>
+    );
+  }
+
+  if (link?.state === 'expired') {
+    const expiredAmount = link.amountMinor > 0
+      ? formatMoney(link.amountMinor, link.currency, link.currencyDecimals)
+      : 'Montant libre';
+
+    return (
+      <main className="sendflow-public-pay-shell sendflow-link-expired-shell">
+        <section
+          className="sendflow-link-expired-content"
+          aria-labelledby="expired-payment-link-title"
+          data-testid="expired-payment-link-page"
+        >
+          <img
+            className="sendflow-link-expired-mascot"
+            src={linkExpiredIllustration}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            data-testid="img-expired-link-mascot"
+          />
+          <h1 id="expired-payment-link-title">Ce lien de paiement a expiré</h1>
+          <p className="sendflow-link-expired-message">
+            Ce lien de paiement n’est plus valide. Demandez un nouveau lien à{' '}
+            <strong>{link.merchantName}</strong> pour effectuer votre paiement.
+          </p>
+          <section
+            className="sendflow-link-expired-details"
+            aria-labelledby="expired-payment-details-title"
+          >
+            <h2 id="expired-payment-details-title">Détails du paiement</h2>
+            <dl>
+              <div>
+                <dt>Destinataire</dt>
+                <dd>{link.merchantName}</dd>
+              </div>
+              <div>
+                <dt>Montant</dt>
+                <dd>{expiredAmount}</dd>
+              </div>
+            </dl>
+          </section>
+        </section>
+        <LinkFlowSecureFooter />
       </main>
     );
   }
