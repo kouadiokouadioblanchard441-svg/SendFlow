@@ -406,3 +406,17 @@ mtime_ms = 1792942436983
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/dcc521f2-9a9f-49e8-b1cd-b8a722c4a784/2cf53ec0-8791-4598-ba54-5894a4d51cb8"
 storage_version_token = "1792942594484054"
 content_type = "image/webp"
+
+[[outputs]]
+id = "5NVpLqU0T3QXwf5pKiQ6m"
+uri = "file://attached_assets/generated_images/sendflow-link-unavailable-3d-final.png"
+type = "image"
+title = "Illustration 3D — lien indisponible"
+description = "Illustration originale violette de lien rompu et sablier, utilisée sur l’état lien indisponible de SendFlow."
+logical_id = "32e68772-1773-4c75-b4f3-dd1a70d823eb"
+content_hash = "sha256:b5450585e15ece26370fa38049f1986543f2c9372cb39e3d5c5ebfcdbb82e97b"
+size = 416518
+mtime_ms = 1792985746415
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/32e68772-1773-4c75-b4f3-dd1a70d823eb/bcd7ad1f-b7d5-4fe0-ae24-97cc6b16613e"
+storage_version_token = "1792986260559062"
+content_type = "image/png"

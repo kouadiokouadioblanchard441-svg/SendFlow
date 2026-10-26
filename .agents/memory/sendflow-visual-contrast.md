@@ -32,3 +32,9 @@ Every public LinkFlow payment state should end with a “Paiement sécurisé par
 **Why:** the user requested the same visible trust signature at the bottom of every LinkFlow payment page.
 
 **How to apply:** render the shared footer on checkout, loading/unavailable, waiting, success, and failure states; do not add it globally to unrelated SendFlow pages.
+
+For the unavailable-link state, use the approved original 3D expiry illustration in place of the CSS-drawn status icon; do not copy another provider's mascot.
+
+**Why:** the user asked for a 3D visual similar in purpose to Jeko's expired-link illustration, specifically to replace the CSS icon on SendFlow's unavailable page.
+
+**How to apply:** keep the illustration scoped to the unavailable-link state and preserve the existing payment journey and copy unless the user requests broader changes.

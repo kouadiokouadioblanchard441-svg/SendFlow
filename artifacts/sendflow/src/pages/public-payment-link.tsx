@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'wouter';
-import { Clock3, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getPublicPaymentLinkAttemptStatus,
@@ -16,6 +16,7 @@ import type {
 } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
+import linkUnavailableIllustration from '@assets/generated_images/sendflow-link-unavailable-3d-final.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import { OperatorMark } from '@/components/operator-mark';
 import LinkFlowPaymentOutcome from '@/components/linkflow-payment-outcome';
@@ -292,7 +293,13 @@ export default function PublicPaymentLinkPage() {
         <main className="sendflow-public-pay-shell">
           <section className="sendflow-public-pay-card sendflow-public-pay-unavailable" role="alert">
             <div className="sendflow-pay-brand"><img className="sendflow-pay-wordmark" src={sendflowWordmark} alt="SendFlow" /></div>
-            <span className="sendflow-pay-state-mark"><Clock3 size={22} /></span>
+            <img
+              className="sendflow-pay-expired-illustration"
+              src={linkUnavailableIllustration}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+            />
             <p className="sendflow-pay-overline">LIEN DE PAIEMENT</p>
             <h1>Ce lien n’est pas disponible</h1>
             <p>Il a peut-être expiré ou n’existe plus. Demandez au commerçant de vérifier son lien.</p>
