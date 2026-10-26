@@ -86,8 +86,13 @@ type ActivePaymentAttempt = Pick<PublicPaymentLinkAttemptCreated, 'attemptId' | 
 
 export default function PublicPaymentLinkPage() {
   const { token = '' } = useParams<{ token: string }>();
+  const isExpiredLinkPreview =
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('linkflowPreview') === 'expired';
   const linkQuery = useGetPublicPaymentLink(token, {
     query: {
+      enabled: !isExpiredLinkPreview,
       queryKey: getGetPublicPaymentLinkQueryKey(token),
       retry: false,
       refetchOnMount: 'always',
@@ -131,10 +136,21 @@ export default function PublicPaymentLinkPage() {
   activeTokenRef.current = token;
 
   const link = linkQuery.data;
+  const expiredLinkForDisplay = link?.state === 'expired'
+    ? link
+    : isExpiredLinkPreview
+      ? {
+          merchantName: 'Flow Digital SARL U',
+          amountMinor: 4460,
+          currency: 'XOF' as const,
+          currencyDecimals: 0 as const,
+        }
+      : null;
   const pageAssetsKey = JSON.stringify([
     token,
     linkLoadCycle,
     link?.state ?? null,
+    isExpiredLinkPreview,
     link?.imagePath ?? null,
     linkQuery.isError,
   ]);
@@ -147,7 +163,7 @@ export default function PublicPaymentLinkPage() {
       securePaymentMark,
       ...(link?.imagePath ? [link.imagePath] : []),
       ...(linkQuery.isError ? [linkUnavailableIllustration] : []),
-      ...(link?.state === 'expired' ? [linkExpiredIllustration] : []),
+      ...(expiredLinkForDisplay ? [linkExpiredIllustration] : []),
     ];
 
     void Promise.all(Array.from(new Set(sources)).map((src) => {
@@ -164,7 +180,15 @@ export default function PublicPaymentLinkPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, linkLoadCycle, link?.state, link?.imagePath, linkQuery.isError, pageAssetsKey]);
+  }, [
+    token,
+    linkLoadCycle,
+    link?.state,
+    isExpiredLinkPreview,
+    link?.imagePath,
+    linkQuery.isError,
+    pageAssetsKey,
+  ]);
 
   const previewSimulationAvailable = import.meta.env.DEV && Boolean(link?.simulationAvailable);
   const country = link?.countries.find((item) => item.code === countryCode);
@@ -276,7 +300,7 @@ export default function PublicPaymentLinkPage() {
   useSeo({
     path: `/pay/${token}`,
     locale: 'fr',
-    title: link?.state === 'expired'
+    title: expiredLinkForDisplay
       ? 'Lien de paiement expiré · SendFlow'
       : link ? `Paiement à ${link.merchantName} · SendFlow` : 'Lien de paiement · SendFlow',
     description: 'Consultez les détails de cette demande de paiement SendFlow.',
@@ -510,9 +534,17 @@ export default function PublicPaymentLinkPage() {
     );
   }
 
-  if (link?.state === 'expired') {
-    const expiredAmount = link.amountMinor > 0
-      ? formatMoney(link.amountMinor, link.currency, link.currencyDecimals)
+  if (expiredLinkForDisplay) {
+    const expiredAmount = expiredLinkForDisplay.amountMinor > 0
+      ? expiredLinkForDisplay.currency === 'XOF'
+        ? `${new Intl.NumberFormat('fr-FR').format(
+            expiredLinkForDisplay.amountMinor / (10 ** expiredLinkForDisplay.currencyDecimals),
+          )} XOF`
+        : formatMoney(
+            expiredLinkForDisplay.amountMinor,
+            expiredLinkForDisplay.currency,
+            expiredLinkForDisplay.currencyDecimals,
+          )
       : 'Montant libre';
 
     return (
@@ -533,7 +565,7 @@ export default function PublicPaymentLinkPage() {
           <h1 id="expired-payment-link-title">Ce lien de paiement a expiré</h1>
           <p className="sendflow-link-expired-message">
             Ce lien de paiement n’est plus valide. Demandez un nouveau lien à{' '}
-            <strong>{link.merchantName}</strong> pour effectuer votre paiement.
+            <strong>{expiredLinkForDisplay.merchantName}</strong> pour effectuer votre paiement.
           </p>
           <section
             className="sendflow-link-expired-details"
@@ -543,7 +575,7 @@ export default function PublicPaymentLinkPage() {
             <dl>
               <div>
                 <dt>Destinataire</dt>
-                <dd>{link.merchantName}</dd>
+                <dd>{expiredLinkForDisplay.merchantName}</dd>
               </div>
               <div>
                 <dt>Montant</dt>
