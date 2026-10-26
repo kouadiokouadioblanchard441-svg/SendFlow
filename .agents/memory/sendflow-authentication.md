@@ -32,3 +32,9 @@ Keep biometric sign-in and first-time enrollment on the PIN screen. When a serve
 **Why:** The user wants previously enabled biometrics to appear automatically on arrival at the PIN screen, without asking for the PIN first.
 
 **How to apply:** Bind automatic sign-in to server-reported enrollment and platform capability; attempt it once per screen visit, suppress it after any PIN interaction, and retain a manual retry. Keep registration endpoints protected by server-confirmed PIN unlock; if setup fails, retain PIN access and offer a clear way to continue.
+
+The user requires that two different fingerprints must not unlock the same account. Standard WebAuthn platform authenticators do not expose which finger or person passed local user verification, and the server currently accepts any registered credential for that account and relying-party ID. Never claim single-fingerprint exclusivity from this design.
+
+**Why:** The user explicitly set this as a security requirement, but the current platform biometric API cannot identify individual fingerprints.
+
+**How to apply:** Explain this limitation before promising the requirement. A single-credential-per-account rule can limit separate device credentials, but cannot distinguish multiple biometrics enrolled in the same device OS.
