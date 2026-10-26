@@ -1988,7 +1988,7 @@ function AggregatorsPage() {
             <div>
               <h3 id="admin-ussd-settings-title" className="text-lg font-semibold">Codes USSD de confirmation</h3>
               <p className="text-sm text-muted-foreground">
-                Un code par défaut pour chaque pays et, si nécessaire, une surcharge propre à un réseau.
+                FeexPay ne fournit pas ces codes : l’administrateur les configure ici pour chaque pays, avec un code distinct possible pour chaque opérateur.
               </p>
             </div>
             <Alert data-testid="notice-ussd-preview-only">

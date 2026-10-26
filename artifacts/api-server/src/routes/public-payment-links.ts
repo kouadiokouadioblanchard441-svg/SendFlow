@@ -13,8 +13,14 @@ import {
 import {
   GetPublicPaymentLinkParams,
   GetPublicPaymentLinkResponse,
+  GetPublicPaymentLinkAttemptStatusHeader,
+  GetPublicPaymentLinkAttemptStatusParams,
+  GetPublicPaymentLinkAttemptStatusResponse,
   QuotePublicPaymentLinkParams,
   QuotePublicPaymentLinkResponse,
+  StartPublicPaymentLinkAttemptBody,
+  StartPublicPaymentLinkAttemptParams,
+  StartPublicPaymentLinkAttemptResponse,
 } from "@workspace/api-zod";
 import { Router, type IRouter, type Request } from "express";
 import { consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
@@ -26,6 +32,12 @@ import { operatorLogoUrl } from "../services/operator-logo";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { getAggregatorRouteScopeKey } from "./aggregator-catalog";
 import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
+import { isLinkFlowPaymentExecutionEnabled } from "../services/linkflow-payment-policy";
+import {
+  getLinkFlowPaymentAttemptStatus,
+  LinkFlowPaymentError,
+  startLinkFlowPaymentAttempt,
+} from "../services/linkflow-payment-execution";
 
 const router: IRouter = Router();
 const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
@@ -186,15 +198,72 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
         ? `/api/public/payment-links/${link.publicToken}/image`
         : null,
       countries,
-      // Deliberately fail closed: the server-side settlement lifecycle is not
-      // complete yet, so no public page may trigger a real provider charge.
-      paymentAvailable: false,
+      // Explicitly disabled by default and restricted to the production Plesk
+      // runtime. Replit's shared-Neon viewer stays simulation-only.
+      paymentAvailable: isLinkFlowPaymentExecutionEnabled(),
       simulationAvailable,
     };
     res.json(GetPublicPaymentLinkResponse.parse(response));
   } catch (error) {
     req.log.error({ err: error }, "Public payment-link details could not be loaded");
     res.status(503).json({ error: "Les informations du lien sont momentanément indisponibles." });
+  }
+});
+
+router.post("/public/payment-links/:token/attempts", async (req, res): Promise<void> => {
+  res.setHeader("Cache-Control", "no-store, private");
+  const parsedParams = StartPublicPaymentLinkAttemptParams.safeParse(req.params);
+  const parsedBody = StartPublicPaymentLinkAttemptBody.safeParse(req.body);
+  if (!parsedParams.success || !parsedBody.success) {
+    res.status(400).json({ error: "Les informations de paiement sont invalides." });
+    return;
+  }
+  try {
+    if (!await consumePublicPaymentLinkQuota(clientAddress(req), "attempt")) {
+      res.setHeader("Retry-After", "60");
+      res.status(429).json({ error: "Trop de demandes de paiement. Réessayez dans une minute." });
+      return;
+    }
+    const result = await startLinkFlowPaymentAttempt(parsedParams.data.token, parsedBody.data);
+    res.json(StartPublicPaymentLinkAttemptResponse.parse(result));
+  } catch (error) {
+    if (error instanceof LinkFlowPaymentError) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
+    req.log.error({ err: error }, "Public LinkFlow payment attempt could not be started");
+    res.status(503).json({ error: "Le paiement est momentanément indisponible. Aucun résultat définitif n’a été confirmé." });
+  }
+});
+
+router.get("/public/payment-link-attempts/:attemptId", async (req, res): Promise<void> => {
+  res.setHeader("Cache-Control", "no-store, private");
+  const parsedParams = GetPublicPaymentLinkAttemptStatusParams.safeParse(req.params);
+  const parsedHeader = GetPublicPaymentLinkAttemptStatusHeader.safeParse({
+    "X-LinkFlow-Attempt-Token": req.get("X-LinkFlow-Attempt-Token"),
+  });
+  if (!parsedParams.success || !parsedHeader.success) {
+    res.status(404).json({ error: "Cette demande de paiement n’est pas disponible." });
+    return;
+  }
+  try {
+    if (!await consumePublicPaymentLinkQuota(clientAddress(req), "poll")) {
+      res.setHeader("Retry-After", "60");
+      res.status(429).json({ error: "Trop de vérifications du paiement. Réessayez dans une minute." });
+      return;
+    }
+    const result = await getLinkFlowPaymentAttemptStatus(
+      parsedParams.data.attemptId,
+      parsedHeader.data["X-LinkFlow-Attempt-Token"],
+    );
+    res.json(GetPublicPaymentLinkAttemptStatusResponse.parse(result));
+  } catch (error) {
+    if (error instanceof LinkFlowPaymentError) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
+    req.log.error({ err: error }, "Public LinkFlow payment status could not be refreshed");
+    res.status(503).json({ error: "La vérification est momentanément indisponible. Réessayez sans relancer le paiement." });
   }
 });
 

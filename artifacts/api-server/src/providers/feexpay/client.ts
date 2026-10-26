@@ -32,6 +32,11 @@ export interface FeexpayReceipt {
   status: FeexpayStatus;
   amountMinor?: number;
   currency?: "XOF" | "XAF";
+  /** Must only be populated by a verified, documented settlement source. */
+  merchantShopId?: string;
+  channelId?: string;
+  operation?: Operation;
+  signatureVerified?: boolean;
 }
 
 const referencePattern = /^[a-zA-Z0-9_-]{8,120}$/;

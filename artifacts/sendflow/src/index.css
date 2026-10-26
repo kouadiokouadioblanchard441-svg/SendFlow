@@ -8264,6 +8264,244 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
 .sendflow-pay-skeleton-line { width: 72%; height: 17px; margin: 13px 0; }
 .sendflow-pay-skeleton-line.is-short { width: 45%; margin-bottom: 28px; }
 .sendflow-pay-skeleton-panel { height: 74px; margin-top: 14px; }
+
+/* LinkFlow server-confirmation screens: strong outlined cards, same mobile scale as checkout. */
+.sendflow-linkflow-flow-shell {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  padding: clamp(20px, 6vh, 48px) 18px max(30px, env(safe-area-inset-bottom));
+}
+body:has(.sendflow-linkflow-flow-shell) { background: #fff; }
+.sendflow-linkflow-flow-card {
+  width: min(100%, 480px);
+  overflow: hidden;
+  border: 2px solid #241d2d;
+  border-radius: 16px;
+  background: #fff;
+  padding: 22px;
+  color: #282132;
+  box-shadow: 0 6px 0 #241d2d, 0 16px 34px rgba(35, 25, 47, .12);
+}
+.sendflow-linkflow-flow-brand {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 21px;
+}
+.sendflow-linkflow-flow-brand img { display: block; width: 148px; max-width: 48vw; height: auto; object-fit: contain; }
+.sendflow-linkflow-flow-merchant {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid #241d2d;
+  border-radius: 12px;
+  background: #f6f3fa;
+  padding: 10px 13px;
+  color: #29213b;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.sendflow-linkflow-flow-merchant-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 1px solid #d7c8ef;
+  border-radius: 10px;
+  background: #eee7f8;
+  color: #5f31bd;
+}
+.sendflow-linkflow-simulation-badge {
+  display: block;
+  width: fit-content;
+  margin: 12px auto 0;
+  border: 1px solid #7043c5;
+  border-radius: 999px;
+  background: #f3edfc;
+  color: #4e269e;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+.sendflow-linkflow-flow-icon {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  place-items: center;
+  margin: 26px auto 12px;
+  border: 2px solid #241d2d;
+  border-radius: 18px;
+  background: #f5f2f8;
+  color: #2f2541;
+}
+.sendflow-linkflow-flow-status {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 7px;
+  margin: 0 auto 12px;
+  border: 1px solid #cfc6de;
+  border-radius: 999px;
+  background: #f5f3f8;
+  color: #574c66;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.sendflow-linkflow-flow-status.is-uncertain { border-color: #ddc98a; background: #fff8dc; color: #6e5200; }
+.sendflow-linkflow-flow-spinner { animation: sendflow-flow-spin 1s linear infinite; }
+.sendflow-linkflow-flow-card h1 {
+  margin: 0;
+  color: #201b29;
+  font-size: clamp(22px, 6vw, 28px);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  line-height: 1.18;
+  text-align: center;
+}
+.sendflow-linkflow-flow-copy {
+  max-width: 370px;
+  margin: 11px auto 0;
+  color: #514a59;
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+}
+.sendflow-linkflow-flow-amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 21px 0 14px;
+  border: 2px solid #241d2d;
+  border-radius: 11px;
+  background: #fff;
+  padding: 13px 14px;
+  color: #514a59;
+  font-size: 12px;
+}
+.sendflow-linkflow-flow-amount strong { color: #211b31; font-size: 18px; font-variant-numeric: tabular-nums; }
+.sendflow-linkflow-ussd-code {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 2px solid #241d2d;
+  border-radius: 14px;
+  background: #f2eff6;
+  color: #201b29;
+  padding: 12px 15px;
+  text-decoration: none;
+}
+.sendflow-linkflow-ussd-code strong { font-size: clamp(26px, 8vw, 34px); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.sendflow-linkflow-ussd-call {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border: 1px solid #dcd6e3;
+  border-radius: 50%;
+  background: #fff;
+  color: #342543;
+  box-shadow: 0 2px 4px rgba(35, 25, 47, .1);
+}
+.sendflow-linkflow-ussd-arrow { color: #6d35d8; font-size: 24px; }
+.sendflow-linkflow-ussd-hint { margin: 8px 0 0; color: #514a59; font-size: 12px; font-weight: 650; text-align: center; }
+.sendflow-linkflow-ussd-unconfigured {
+  border: 2px solid #241d2d;
+  border-radius: 12px;
+  background: #fff8dc;
+  padding: 14px;
+  color: #594819;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.sendflow-linkflow-simulation-note {
+  border: 2px solid #241d2d;
+  border-radius: 12px;
+  background: #f5f2f8;
+  padding: 14px;
+  color: #332b3d;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+  text-align: center;
+}
+.sendflow-linkflow-steps { display: grid; gap: 13px; margin: 21px 0 0; padding: 0; list-style: none; }
+.sendflow-linkflow-steps li { display: grid; grid-template-columns: 30px minmax(0,1fr); align-items: start; gap: 10px; }
+.sendflow-linkflow-steps li > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 2px solid #241d2d;
+  border-radius: 50%;
+  background: #f5d500;
+  color: #201b29;
+  font-size: 12px;
+  font-weight: 800;
+}
+.sendflow-linkflow-steps p { margin: 3px 0 0; color: #494250; font-size: 13px; line-height: 1.45; }
+.sendflow-linkflow-flow-refresh,
+.sendflow-linkflow-outcome-button {
+  display: flex;
+  width: 100%;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 21px;
+  border: 2px solid #5024a9;
+  border-radius: 10px;
+  background: #6536c5;
+  color: #fff;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.sendflow-linkflow-flow-refresh:disabled { opacity: .7; cursor: wait; }
+.sendflow-linkflow-flow-secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 17px 0 0; color: #514a59; font-size: 11px; }
+.sendflow-linkflow-flow-secure svg { color: #138e52; }
+.sendflow-linkflow-outcome-card { padding: 0; }
+.sendflow-linkflow-outcome-card .sendflow-linkflow-flow-brand { padding: 21px 20px 0; }
+.sendflow-linkflow-outcome-banner { display: grid; justify-items: center; background: #5e32bb; color: #fff; padding: 28px 20px 25px; text-align: center; }
+.sendflow-linkflow-outcome-mark { display: grid; width: 94px; height: 94px; place-items: center; margin: 0 0 17px; border: 3px solid #241d2d; border-radius: 50%; background: #10d878; color: #fff; box-shadow: 0 4px 0 #241d2d; }
+.is-failure .sendflow-linkflow-outcome-banner { background: #f5f1f8; color: #241d2d; }
+.is-failure .sendflow-linkflow-outcome-mark { background: #fff0f0; color: #d71920; border-color: #241d2d; }
+.sendflow-linkflow-outcome-kicker { margin: 0 0 6px; color: inherit; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.sendflow-linkflow-outcome-banner h1 { color: inherit; font-size: clamp(23px, 6vw, 30px); }
+.sendflow-linkflow-outcome-merchant { margin: 9px 0 0; color: inherit; font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
+.sendflow-linkflow-outcome-content { padding: 24px 22px 22px; }
+.sendflow-linkflow-outcome-content > p:first-child { margin: 0; color: #342d3d; font-size: 15px; line-height: 1.55; text-align: center; }
+.sendflow-linkflow-outcome-content > p:first-child strong { color: #201b29; }
+.sendflow-linkflow-outcome-note { display: flex; align-items: flex-start; gap: 9px; margin-top: 17px; border: 2px solid #241d2d; border-radius: 10px; background: #fff6df; padding: 12px; color: #57451b; font-size: 12px; line-height: 1.45; }
+.sendflow-linkflow-outcome-note svg { flex: 0 0 auto; color: #8a5d00; }
+.sendflow-linkflow-outcome-redirect { margin: 14px 0 0; color: #514a59; font-size: 12px; text-align: center; }
+.sendflow-linkflow-outcome-button { margin-top: 20px; }
+.sendflow-pay-simulate-failure {
+  display: block;
+  min-height: 42px;
+  margin: 9px auto 0;
+  border: 0;
+  background: transparent;
+  color: #514a59;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.sendflow-pay-simulate-failure:disabled { color: #746c7d; cursor: not-allowed; }
+@keyframes sendflow-flow-spin { to { transform: rotate(360deg); } }
+
 .sendflow-linkflow-share {
   display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 8px;
   border: 1px solid #6036a1; border-radius: 11px; background: #6d35d8; color: #fff;

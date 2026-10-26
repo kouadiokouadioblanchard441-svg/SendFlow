@@ -1,18 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'wouter';
 import { Clock3, ShieldCheck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import {
+  getPublicPaymentLinkAttemptStatus,
   getGetPublicPaymentLinkQueryKey,
   useGetPublicPaymentLink,
+  useStartPublicPaymentLinkAttempt,
   useSimulateCustomerPaymentLink,
 } from '@workspace/api-client-react';
-import type { SimulatedPaymentLinkSuccess } from '@workspace/api-client-react';
+import type {
+  PublicPaymentLinkAttemptCreated,
+  SimulatedPaymentLinkSuccess,
+} from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import { OperatorMark } from '@/components/operator-mark';
-import LinkFlowPaymentSuccess from '@/components/linkflow-payment-success';
+import LinkFlowPaymentOutcome from '@/components/linkflow-payment-outcome';
+import LinkFlowPaymentWaiting from '@/components/linkflow-payment-waiting';
 
 function formatMoney(minor: number, currency: string, decimals: number) {
   return new Intl.NumberFormat('fr-FR', {
@@ -22,6 +29,13 @@ function formatMoney(minor: number, currency: string, decimals: number) {
     maximumFractionDigits: decimals,
   }).format(minor / (10 ** decimals));
 }
+
+function paymentStorageKey(token: string, suffix: string) {
+  return `sendflow:linkflow:${token}:${suffix}`;
+}
+
+type ActivePaymentAttempt = Pick<PublicPaymentLinkAttemptCreated, 'attemptId' | 'pollToken'>
+  & Partial<Pick<PublicPaymentLinkAttemptCreated, 'merchantName' | 'amountMinor' | 'currency' | 'currencyDecimals' | 'ussdCode'>>;
 
 export default function PublicPaymentLinkPage() {
   const { token = '' } = useParams<{ token: string }>();
@@ -34,11 +48,58 @@ export default function PublicPaymentLinkPage() {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [simulationConfirmation, setSimulationConfirmation] = useState<SimulatedPaymentLinkSuccess | null>(null);
+  const [simulationOutcome, setSimulationOutcome] = useState<'succeeded' | 'failed' | null>(null);
+  const [simulationPhase, setSimulationPhase] = useState<'waiting' | 'result' | null>(null);
+  const [realAttempt, setRealAttempt] = useState<ActivePaymentAttempt | null>(null);
+  const [paymentRequestKey, setPaymentRequestKey] = useState('');
   const simulateMutation = useSimulateCustomerPaymentLink();
+  const startPaymentMutation = useStartPublicPaymentLinkAttempt();
 
   const link = linkQuery.data;
   const country = link?.countries.find((item) => item.code === countryCode);
   const operator = country?.operators.find((item) => item.id === operatorId);
+  const nationalPhone = phone.replace(/\D/g, '');
+  const payerFormValid = Boolean(
+    country &&
+    operator &&
+    firstName.trim() &&
+    lastName.trim() &&
+    nationalPhone.length >= (country?.minPhoneDigits ?? 99) &&
+    nationalPhone.length <= (country?.maxPhoneDigits ?? 0),
+  );
+  const paymentStatusQuery = useQuery({
+    queryKey: ['public-linkflow-attempt-status', realAttempt?.attemptId],
+    queryFn: ({ signal }) => getPublicPaymentLinkAttemptStatus(realAttempt!.attemptId, {
+      signal,
+      headers: { 'X-LinkFlow-Attempt-Token': realAttempt!.pollToken },
+    }),
+    enabled: Boolean(realAttempt),
+    retry: false,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchInterval: (query) => {
+      const state = query.state.data?.state;
+      return state === 'succeeded' || state === 'failed' ? false : 4_000;
+    },
+  });
+  useEffect(() => {
+    setRealAttempt(null);
+    try {
+      const saved = window.sessionStorage.getItem(paymentStorageKey(token, 'attempt'));
+      if (saved) {
+        const parsed = JSON.parse(saved) as PublicPaymentLinkAttemptCreated;
+        if (/^[0-9a-f-]{36}$/i.test(parsed.attemptId) && /^[a-f0-9]{64}$/.test(parsed.pollToken)) {
+          setRealAttempt({ attemptId: parsed.attemptId, pollToken: parsed.pollToken });
+        } else {
+          window.sessionStorage.removeItem(paymentStorageKey(token, 'attempt'));
+        }
+      }
+      const savedRequestKey = window.sessionStorage.getItem(paymentStorageKey(token, 'idempotency'));
+      if (savedRequestKey && /^[0-9a-f-]{36}$/i.test(savedRequestKey)) setPaymentRequestKey(savedRequestKey);
+    } catch {
+      // Storage can be unavailable in private browsing; server idempotency still protects retries.
+    }
+  }, [token]);
   const backgroundArt = typeof document !== 'undefined' ? createPortal(
     <img className="sendflow-public-pay-art" src={linkflowIllustration} alt="" aria-hidden="true" draggable={false} />,
     document.body,
@@ -52,12 +113,161 @@ export default function PublicPaymentLinkPage() {
     robots: 'noindex,nofollow',
   });
 
-  if (simulationConfirmation) {
+  useEffect(() => {
+    if (simulationPhase !== 'waiting' || !simulationOutcome) return;
+    const timer = window.setTimeout(() => setSimulationPhase('result'), 1_100);
+    return () => window.clearTimeout(timer);
+  }, [simulationPhase, simulationOutcome]);
+
+  const confirmedStatus = paymentStatusQuery.data;
+  useEffect(() => {
+    if (confirmedStatus?.state !== 'succeeded' || !confirmedStatus.returnUrl) return;
+    const timer = window.setTimeout(() => window.location.assign(confirmedStatus.returnUrl!), 3_000);
+    return () => window.clearTimeout(timer);
+  }, [confirmedStatus?.state, confirmedStatus?.returnUrl]);
+
+  const resetPaymentRequestKey = () => {
+    setPaymentRequestKey('');
+    try {
+      window.sessionStorage.removeItem(paymentStorageKey(token, 'idempotency'));
+    } catch { /* session storage is optional; idempotency remains enforced by the server */ }
+  };
+  const beginSimulation = (outcome: 'succeeded' | 'failed') => {
+    simulateMutation.mutate({ token }, {
+      onSuccess: (confirmation) => {
+        setSimulationConfirmation(confirmation);
+        setSimulationOutcome(outcome);
+        setSimulationPhase('waiting');
+      },
+    });
+  };
+  const startRealPayment = () => {
+    if (!link || !country || !operator || !payerFormValid || !link.paymentAvailable) return;
+    const idempotencyKey = paymentRequestKey || window.crypto.randomUUID();
+    setPaymentRequestKey(idempotencyKey);
+    try {
+      window.sessionStorage.setItem(paymentStorageKey(token, 'idempotency'), idempotencyKey);
+    } catch { /* session storage is optional; the request key remains active in memory */ }
+    startPaymentMutation.mutate({
+      token,
+      data: {
+        countryCode: country.code.toLowerCase(),
+        operatorId: operator.id,
+        phoneNumber: `${country.phonePrefix}${nationalPhone}`,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        idempotencyKey,
+      },
+    }, {
+      onSuccess: (attempt) => {
+        const activeAttempt = {
+          attemptId: attempt.attemptId,
+          pollToken: attempt.pollToken,
+          merchantName: attempt.merchantName,
+          amountMinor: attempt.amountMinor,
+          currency: attempt.currency,
+          currencyDecimals: attempt.currencyDecimals,
+          ussdCode: attempt.ussdCode,
+        };
+        setRealAttempt(activeAttempt);
+        try {
+          window.sessionStorage.setItem(paymentStorageKey(token, 'attempt'), JSON.stringify({
+            attemptId: attempt.attemptId,
+            pollToken: attempt.pollToken,
+          }));
+        } catch { /* the attempt remains active for the current page session */ }
+      },
+    });
+  };
+
+  if (simulationPhase === 'waiting' && link) {
     return (
-      <LinkFlowPaymentSuccess
-        confirmation={simulationConfirmation}
-        onFinish={() => setSimulationConfirmation(null)}
-      />
+      <>
+        {backgroundArt}
+        <LinkFlowPaymentWaiting
+          merchantName={simulationConfirmation?.merchantName ?? link.merchantName}
+          amountLabel={formatMoney(
+            simulationConfirmation?.amountMinor ?? link.amountMinor,
+            simulationConfirmation?.currency ?? link.currency,
+            simulationConfirmation?.currencyDecimals ?? link.currencyDecimals,
+          )}
+          ussdCode={null}
+          state="waiting"
+          simulation
+        />
+      </>
+    );
+  }
+  if (simulationPhase === 'result' && simulationConfirmation && simulationOutcome) {
+    return (
+      <>
+        {backgroundArt}
+        <LinkFlowPaymentOutcome
+          outcome={simulationOutcome}
+          merchantName={simulationConfirmation.merchantName}
+          amountLabel={formatMoney(
+            simulationConfirmation.amountMinor,
+            simulationConfirmation.currency,
+            simulationConfirmation.currencyDecimals,
+          )}
+          returnUrl={null}
+          simulation
+          onFinish={() => {
+            setSimulationConfirmation(null);
+            setSimulationOutcome(null);
+            setSimulationPhase(null);
+          }}
+        />
+      </>
+    );
+  }
+  if (realAttempt) {
+    if (confirmedStatus?.state === 'succeeded' || confirmedStatus?.state === 'failed') {
+      return (
+        <>
+          {backgroundArt}
+          <LinkFlowPaymentOutcome
+            outcome={confirmedStatus.state}
+            merchantName={confirmedStatus.merchantName}
+            amountLabel={formatMoney(
+              confirmedStatus.amountMinor,
+              confirmedStatus.currency,
+              confirmedStatus.currencyDecimals,
+            )}
+            returnUrl={confirmedStatus.returnUrl}
+            onFinish={() => {
+              if (confirmedStatus.state === 'succeeded') {
+                if (confirmedStatus.returnUrl) window.location.assign(confirmedStatus.returnUrl);
+                else window.history.back();
+                return;
+              }
+              setRealAttempt(null);
+              setPaymentRequestKey('');
+              try {
+                window.sessionStorage.removeItem(paymentStorageKey(token, 'attempt'));
+                window.sessionStorage.removeItem(paymentStorageKey(token, 'idempotency'));
+              } catch { /* session storage is optional */ }
+              void linkQuery.refetch();
+            }}
+          />
+        </>
+      );
+    }
+    const waitingDisplay = confirmedStatus ?? realAttempt;
+    return (
+      <>
+        {backgroundArt}
+        <LinkFlowPaymentWaiting
+          merchantName={waitingDisplay.merchantName ?? link?.merchantName ?? 'SendFlow'}
+          amountLabel={waitingDisplay.amountMinor && waitingDisplay.currency && waitingDisplay.currencyDecimals !== undefined
+            ? formatMoney(waitingDisplay.amountMinor, waitingDisplay.currency, waitingDisplay.currencyDecimals)
+            : link ? formatMoney(link.amountMinor, link.currency, link.currencyDecimals) : '—'}
+          ussdCode={waitingDisplay.ussdCode ?? null}
+          state={paymentStatusQuery.isError || confirmedStatus?.state === 'uncertain' ? 'uncertain' : 'waiting'}
+          onRefresh={() => void paymentStatusQuery.refetch()}
+          refreshing={paymentStatusQuery.isFetching}
+        />
+      </>
     );
   }
 
@@ -128,9 +338,6 @@ export default function PublicPaymentLinkPage() {
 
           <div className="sendflow-pay-amount-panel" data-testid="public-pay-amount">
             <strong>{amountLabel}</strong>
-            {link.remainingUses !== null && (
-              <small>{link.remainingUses > 0 ? `${link.remainingUses} utilisation${link.remainingUses > 1 ? 's' : ''} restante${link.remainingUses > 1 ? 's' : ''}` : 'Ce lien a atteint sa limite d’utilisations'}</small>
-            )}
           </div>
 
           <div className="sendflow-pay-form">
@@ -142,7 +349,7 @@ export default function PublicPaymentLinkPage() {
                 className="sendflow-pay-method-select"
                 data-testid="select-pay-method"
               >
-                {link.simulationAvailable && <option value="simulation">Simulation de test (aucun paiement réel)</option>}
+                {link.simulationAvailable && <option value="simulation">Simulation de test</option>}
                 {link.countries.length > 0 && <option value="mobile-money">Mobile Money</option>}
                 {!link.simulationAvailable && link.countries.length === 0 && <option value="unavailable">Aucun moyen disponible</option>}
               </select>
@@ -151,11 +358,31 @@ export default function PublicPaymentLinkPage() {
             <div className="sendflow-pay-field-pair">
               <label className="sendflow-pay-field">
                 <span>Nom<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-                <input type="text" autoComplete="family-name" value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Votre nom" data-testid="input-pay-last-name" />
+                <input
+                  type="text"
+                  autoComplete="family-name"
+                  value={lastName}
+                  onChange={(event) => {
+                    setLastName(event.target.value);
+                    resetPaymentRequestKey();
+                  }}
+                  placeholder="Votre nom"
+                  data-testid="input-pay-last-name"
+                />
               </label>
               <label className="sendflow-pay-field">
                 <span>Prénom(s)<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
-                <input type="text" autoComplete="given-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Votre prénom" data-testid="input-pay-first-name" />
+                <input
+                  type="text"
+                  autoComplete="given-name"
+                  value={firstName}
+                  onChange={(event) => {
+                    setFirstName(event.target.value);
+                    resetPaymentRequestKey();
+                  }}
+                  placeholder="Votre prénom"
+                  data-testid="input-pay-first-name"
+                />
               </label>
             </div>
 
@@ -167,6 +394,7 @@ export default function PublicPaymentLinkPage() {
                   setCountryCode(event.target.value);
                   setOperatorId('');
                   setPhone('');
+                  resetPaymentRequestKey();
                 }}
                 data-testid="select-pay-country"
               >
@@ -179,7 +407,10 @@ export default function PublicPaymentLinkPage() {
               <span>Réseau<span className="sendflow-pay-required" aria-hidden="true">*</span></span>
               <select
                 value={operatorId}
-                onChange={(event) => setOperatorId(event.target.value)}
+                onChange={(event) => {
+                  setOperatorId(event.target.value);
+                  resetPaymentRequestKey();
+                }}
                 disabled={!country || country.operators.length === 0}
                 data-testid="select-pay-operator"
               >
@@ -202,7 +433,10 @@ export default function PublicPaymentLinkPage() {
                   autoComplete="tel-national"
                   inputMode="tel"
                   value={phone}
-                  onChange={(event) => setPhone(event.target.value.replace(/[^\d\s-]/g, ''))}
+                  onChange={(event) => {
+                    setPhone(event.target.value.replace(/[^\d\s-]/g, ''));
+                    resetPaymentRequestKey();
+                  }}
                   placeholder={country ? 'Votre numéro' : 'Choisissez votre pays'}
                   disabled={!country}
                   data-testid="input-pay-phone"
@@ -227,21 +461,46 @@ export default function PublicPaymentLinkPage() {
               {simulateMutation.isError && (
                 <div className="sendflow-pay-inline-error" role="alert">
                   <span>La simulation n’a pas pu être préparée.</span>
-                  <button type="button" onClick={() => simulateMutation.mutate({ token }, {
-                    onSuccess: setSimulationConfirmation,
-                  })}>Réessayer</button>
+                  <button type="button" onClick={() => beginSimulation('succeeded')}>Réessayer</button>
                 </div>
               )}
               <button
                 type="button"
                 className="sendflow-pay-submit is-simulation"
-                disabled={simulateMutation.isPending}
-                onClick={() => simulateMutation.mutate({ token }, {
-                  onSuccess: setSimulationConfirmation,
-                })}
+                disabled={simulateMutation.isPending || !payerFormValid}
+                onClick={() => beginSimulation('succeeded')}
                 data-testid="button-pay-simulate"
               >
-                {simulateMutation.isPending ? 'Préparation…' : 'Voir le résultat de test'}
+                {simulateMutation.isPending ? 'Préparation…' : 'Tester le parcours de paiement'}
+              </button>
+              <button
+                type="button"
+                className="sendflow-pay-simulate-failure"
+                disabled={simulateMutation.isPending || !payerFormValid}
+                onClick={() => beginSimulation('failed')}
+              >
+                Tester l’écran « Paiement non confirmé »
+              </button>
+            </>
+          ) : link.paymentAvailable ? (
+            <>
+              {startPaymentMutation.isError && (
+                <div className="sendflow-pay-inline-error" role="alert">
+                  <span>
+                    {startPaymentMutation.error instanceof Error
+                      ? startPaymentMutation.error.message
+                      : 'Le paiement n’a pas pu démarrer. Ne recommencez pas si une demande est déjà affichée.'}
+                  </span>
+                </div>
+              )}
+              <button
+                type="button"
+                className="sendflow-pay-submit is-live"
+                disabled={startPaymentMutation.isPending || !payerFormValid}
+                onClick={startRealPayment}
+                data-testid="button-pay-live"
+              >
+                {startPaymentMutation.isPending ? 'Connexion au réseau…' : 'Continuer vers mon téléphone'}
               </button>
             </>
           ) : (

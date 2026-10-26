@@ -16,6 +16,10 @@ export type SensitiveDataPurpose =
   | "transaction-recipient-phone"
   | "provider-reference"
   | "payment-confirmation-payload"
+  | "linkflow-poll-token-seed"
+  | "linkflow-poll-token-hash"
+  | "linkflow-payer-name"
+  | "linkflow-request-fingerprint"
   | "identity-webhook-payload";
 
 function deriveKey(purpose: "encryption" | "lookup"): Buffer {

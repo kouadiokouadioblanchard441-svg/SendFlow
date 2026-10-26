@@ -1134,6 +1134,93 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /public/payment-links/{token}/attempts:
+    post:
+      operationId: startPublicPaymentLinkAttempt
+      tags: [payment-links]
+      summary: Start a server-owned FeexPay payment attempt for an active public link
+      description: Starts only when LinkFlow payment execution is explicitly enabled by the server. The provider dispatch is persisted before the external request; browser data cannot set a final state.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-Za-z0-9_-]{43}$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicPaymentLinkAttemptInput"
+      responses:
+        "200":
+          description: Existing idempotent attempt or newly started attempt.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicPaymentLinkAttemptCreated"
+        "400":
+          description: Invalid payer details or unsupported country/operator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: The payment link is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The idempotency key conflicts or another payment is unresolved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Public payment rate limit exceeded.
+        "503":
+          description: Payment execution is disabled or its dependencies are unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /public/payment-link-attempts/{attemptId}:
+    get:
+      operationId: getPublicPaymentLinkAttemptStatus
+      tags: [payment-links]
+      summary: Refresh a payer's server-owned payment-attempt status
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-LinkFlow-Attempt-Token
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-f0-9]{64}$"
+      responses:
+        "200":
+          description: Server-confirmed waiting, uncertain, success, or failure state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicPaymentLinkAttemptStatus"
+        "404":
+          description: The attempt or its bearer token is invalid.
+        "429":
+          description: Public payment-status rate limit exceeded.
+        "503":
+          description: The status could not be verified; no final result is inferred.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /public/payment-links/{token}/quote/{countryCode}/{operatorId}:
     get:
       operationId: quotePublicPaymentLink
@@ -4244,6 +4331,72 @@ components:
         simulationAvailable:
           type: boolean
       required: [merchantName, description, currency, currencyDecimals, amountMinor, expiresAt, remainingUses, imagePath, countries, paymentAvailable, simulationAvailable]
+    PublicPaymentLinkAttemptInput:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          pattern: "^[a-z]{2}$"
+        operatorId:
+          type: string
+          minLength: 2
+          maxLength: 60
+        phoneNumber:
+          type: string
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        idempotencyKey:
+          type: string
+          format: uuid
+      required: [countryCode, operatorId, phoneNumber, firstName, lastName, idempotencyKey]
+    PublicPaymentLinkAttemptStatus:
+      type: object
+      properties:
+        attemptId:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum: [waiting, uncertain, succeeded, failed]
+        merchantName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        amountMinor:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        currency:
+          type: string
+          const: XOF
+        currencyDecimals:
+          type: integer
+          const: 0
+        ussdCode:
+          type: ["string", "null"]
+          pattern: "^[*][0-9]+([*][0-9]+)*#$"
+          maxLength: 32
+        returnUrl:
+          type: ["string", "null"]
+          format: uri
+          maxLength: 2048
+      required: [attemptId, state, merchantName, amountMinor, currency, currencyDecimals, ussdCode, returnUrl]
+    PublicPaymentLinkAttemptCreated:
+      allOf:
+        - $ref: "#/components/schemas/PublicPaymentLinkAttemptStatus"
+        - type: object
+          properties:
+            pollToken:
+              type: string
+              pattern: "^[a-f0-9]{64}$"
+          required: [pollToken]
     SimulatedPaymentLinkSuccess:
       type: object
       properties:

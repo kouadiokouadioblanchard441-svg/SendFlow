@@ -3,6 +3,8 @@ import { fingerprint } from "../lib/request-security";
 
 const PAYMENT_LINK_CREATION_LIMIT_PER_MINUTE = 10;
 const PUBLIC_PAYMENT_LINK_QUOTE_LIMIT_PER_MINUTE = 30;
+const PUBLIC_PAYMENT_LINK_ATTEMPT_LIMIT_PER_MINUTE = 5;
+const PUBLIC_PAYMENT_LINK_POLL_LIMIT_PER_MINUTE = 60;
 
 /** One atomic customer bucket per server-clock minute; database errors fail closed. */
 export async function consumePaymentLinkCreationQuota(userId: string) {
@@ -28,7 +30,7 @@ export async function consumePaymentLinkCreationQuota(userId: string) {
 /** Rate-limit public link reads/quotes without retaining raw IPs or link tokens. */
 export async function consumePublicPaymentLinkQuota(
   clientAddress: string,
-  operation: "read" | "quote" | "image",
+  operation: "read" | "quote" | "image" | "attempt" | "poll",
 ) {
   if (!clientAddress) throw new Error("Public payment-link quota identity is required");
   // Keep one bucket per client and operation. Including random bearer tokens
@@ -36,7 +38,11 @@ export async function consumePublicPaymentLinkQuota(
   const bucket = fingerprint(`public-payment-link:${operation}:${clientAddress}`);
   const limit = operation === "quote"
     ? PUBLIC_PAYMENT_LINK_QUOTE_LIMIT_PER_MINUTE
-    : 120;
+    : operation === "attempt"
+      ? PUBLIC_PAYMENT_LINK_ATTEMPT_LIMIT_PER_MINUTE
+      : operation === "poll"
+        ? PUBLIC_PAYMENT_LINK_POLL_LIMIT_PER_MINUTE
+        : 120;
   const result = await db.execute(sql`
     INSERT INTO public.sf_api_request_limits (bucket_hash, window_started_at, request_count)
     VALUES (${bucket}, statement_timestamp(), 1)

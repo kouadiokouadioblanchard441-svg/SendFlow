@@ -1,11 +1,15 @@
 import {
   and,
   customerPaymentLinksTable,
+  customerPaymentLinkAttemptsTable,
   db,
   desc,
   eq,
+  inArray,
   isNull,
   lt,
+  paymentAttemptsTable,
+  paymentIntentsTable,
   or,
 } from "@workspace/db";
 import {
@@ -85,6 +89,8 @@ const parsePaymentLinkImageBody = express.raw({
 });
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const safeErrorTypes = new Set(["TypeError", "RangeError", "ReferenceError", "SyntaxError", "ZodError"]);
+const activeLinkPaymentAttemptStates = ["prepared", "dispatching", "pending", "uncertain", "succeeded"] as const;
+const activeLinkPaymentIntentStates = ["created", "collecting", "uncertain"] as const;
 
 function getSafeErrorType(error: unknown) {
   if (!(error instanceof Error)) return "UnknownError";
@@ -275,6 +281,26 @@ router.patch("/me/payment-links/:linkId", async (req, res): Promise<void> => {
       }
       if (maximumUses !== null && maximumUses < link.usageCount) {
         throw new PaymentLinkInputError("La limite ne peut pas être inférieure aux utilisations déjà enregistrées.");
+      }
+      if (maximumUses !== null) {
+        const activeReservations = await tx.select({ id: customerPaymentLinkAttemptsTable.id })
+          .from(customerPaymentLinkAttemptsTable)
+          .innerJoin(paymentIntentsTable, eq(paymentIntentsTable.id, customerPaymentLinkAttemptsTable.intentId))
+          .innerJoin(paymentAttemptsTable, and(
+            eq(paymentAttemptsTable.intentId, paymentIntentsTable.id),
+            eq(paymentAttemptsTable.direction, "payin"),
+          ))
+          .where(and(
+            eq(customerPaymentLinkAttemptsTable.paymentLinkId, link.id),
+            inArray(paymentAttemptsTable.status, activeLinkPaymentAttemptStates),
+            inArray(paymentIntentsTable.state, activeLinkPaymentIntentStates),
+          ));
+        if (maximumUses < link.usageCount + activeReservations.length) {
+          return {
+            kind: "conflict" as const,
+            message: "La limite ne peut pas être inférieure aux paiements déjà en cours.",
+          };
+        }
       }
 
       const amountChanged = amountMinor !== link.amountMinor;

@@ -7,6 +7,7 @@ const publicReadPathPrefixes = [
   "/api/healthz",
   "/api/pricing",
   "/api/public/payment-links",
+  "/api/public/payment-link-attempts",
   "/api/storage/public-objects",
 ];
 

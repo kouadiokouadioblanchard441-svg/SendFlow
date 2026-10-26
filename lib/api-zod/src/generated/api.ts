@@ -993,6 +993,102 @@ export const GetPublicPaymentLinkResponse = zod.object({
 
 
 /**
+ * Starts only when LinkFlow payment execution is explicitly enabled by the server. The provider dispatch is persisted before the external request; browser data cannot set a final state.
+ * @summary Start a server-owned FeexPay payment attempt for an active public link
+ */
+export const startPublicPaymentLinkAttemptPathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
+
+
+export const StartPublicPaymentLinkAttemptParams = zod.object({
+  "token": zod.coerce.string().regex(startPublicPaymentLinkAttemptPathTokenRegExp)
+})
+
+export const startPublicPaymentLinkAttemptBodyCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const startPublicPaymentLinkAttemptBodyOperatorIdMin = 2;
+export const startPublicPaymentLinkAttemptBodyOperatorIdMax = 60;
+
+export const startPublicPaymentLinkAttemptBodyPhoneNumberRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const startPublicPaymentLinkAttemptBodyFirstNameMax = 80;
+
+export const startPublicPaymentLinkAttemptBodyLastNameMax = 80;
+
+
+
+export const StartPublicPaymentLinkAttemptBody = zod.object({
+  "countryCode": zod.string().regex(startPublicPaymentLinkAttemptBodyCountryCodeRegExp),
+  "operatorId": zod.string().min(startPublicPaymentLinkAttemptBodyOperatorIdMin).max(startPublicPaymentLinkAttemptBodyOperatorIdMax),
+  "phoneNumber": zod.string().regex(startPublicPaymentLinkAttemptBodyPhoneNumberRegExp),
+  "firstName": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyFirstNameMax),
+  "lastName": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyLastNameMax),
+  "idempotencyKey": zod.uuid()
+})
+
+export const startPublicPaymentLinkAttemptResponseOneMerchantNameMax = 120;
+
+export const startPublicPaymentLinkAttemptResponseOneAmountMinorMax = 9007199254740991;
+
+export const startPublicPaymentLinkAttemptResponseOneUssdCodeMax = 32;
+
+
+export const startPublicPaymentLinkAttemptResponseOneUssdCodeRegExp = new RegExp('^[*][0-9]+([*][0-9]+)*#$');
+export const startPublicPaymentLinkAttemptResponseOneReturnUrlMax = 2048;
+
+export const startPublicPaymentLinkAttemptResponseTwoPollTokenRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const StartPublicPaymentLinkAttemptResponse = zod.object({
+  "attemptId": zod.uuid(),
+  "state": zod.enum(['waiting', 'uncertain', 'succeeded', 'failed']),
+  "merchantName": zod.string().min(1).max(startPublicPaymentLinkAttemptResponseOneMerchantNameMax),
+  "amountMinor": zod.int().min(1).max(startPublicPaymentLinkAttemptResponseOneAmountMinorMax),
+  "currency": zod.literal("XOF"),
+  "currencyDecimals": zod.literal(0),
+  "ussdCode": zod.string().max(startPublicPaymentLinkAttemptResponseOneUssdCodeMax).regex(startPublicPaymentLinkAttemptResponseOneUssdCodeRegExp).nullable(),
+  "returnUrl": zod.url().max(startPublicPaymentLinkAttemptResponseOneReturnUrlMax).nullable()
+}).and(zod.object({
+  "pollToken": zod.string().regex(startPublicPaymentLinkAttemptResponseTwoPollTokenRegExp)
+}))
+
+
+/**
+ * @summary Refresh a payer's server-owned payment-attempt status
+ */
+export const GetPublicPaymentLinkAttemptStatusParams = zod.object({
+  "attemptId": zod.uuid()
+})
+
+export const getPublicPaymentLinkAttemptStatusHeaderXLinkFlowAttemptTokenRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const GetPublicPaymentLinkAttemptStatusHeader = zod.object({
+  "X-LinkFlow-Attempt-Token": zod.string().regex(getPublicPaymentLinkAttemptStatusHeaderXLinkFlowAttemptTokenRegExp)
+})
+
+export const getPublicPaymentLinkAttemptStatusResponseMerchantNameMax = 120;
+
+export const getPublicPaymentLinkAttemptStatusResponseAmountMinorMax = 9007199254740991;
+
+export const getPublicPaymentLinkAttemptStatusResponseUssdCodeMax = 32;
+
+
+export const getPublicPaymentLinkAttemptStatusResponseUssdCodeRegExp = new RegExp('^[*][0-9]+([*][0-9]+)*#$');
+export const getPublicPaymentLinkAttemptStatusResponseReturnUrlMax = 2048;
+
+
+
+export const GetPublicPaymentLinkAttemptStatusResponse = zod.object({
+  "attemptId": zod.uuid(),
+  "state": zod.enum(['waiting', 'uncertain', 'succeeded', 'failed']),
+  "merchantName": zod.string().min(1).max(getPublicPaymentLinkAttemptStatusResponseMerchantNameMax),
+  "amountMinor": zod.int().min(1).max(getPublicPaymentLinkAttemptStatusResponseAmountMinorMax),
+  "currency": zod.literal("XOF"),
+  "currencyDecimals": zod.literal(0),
+  "ussdCode": zod.string().max(getPublicPaymentLinkAttemptStatusResponseUssdCodeMax).regex(getPublicPaymentLinkAttemptStatusResponseUssdCodeRegExp).nullable(),
+  "returnUrl": zod.url().max(getPublicPaymentLinkAttemptStatusResponseReturnUrlMax).nullable()
+})
+
+
+/**
  * @summary Calculate the payer's total using server-owned payment-link and operator rates
  */
 export const quotePublicPaymentLinkPathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');

@@ -12,6 +12,10 @@ import pg from "pg";
 import assert from "node:assert/strict";
 import { applyPaymentStructures, planPaymentStructures } from "../../scripts/payment-structures-migration.mjs";
 import { applyPaymentTestAccess, planPaymentTestAccess } from "../../scripts/payment-test-access-migration.mjs";
+import {
+  applyLinkFlowPaymentAssociation,
+  planLinkFlowPaymentAssociation,
+} from "../../scripts/linkflow-payment-attempts-migration.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const apiDir = join(root, "artifacts/api-server");
@@ -33,6 +37,7 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  await owner.query("DROP TABLE sf_customer_payment_link_payments");
   await owner.query("DROP TABLE sf_customer_payment_links");
   const paymentLinksMigration = readFileSync(join(root,
     "lib/db/migrations/2026-10-24-customer-payment-links.sql"), "utf8");
@@ -147,6 +152,16 @@ try {
     assert.equal(accessRepeat.alreadyApplied, true);
     assert.deepEqual(
       await applyPaymentTestAccess(migrationClient, accessRepeat.fingerprint),
+      { applied: false, alreadyApplied: true },
+    );
+    const linkFlowPlan = await planLinkFlowPaymentAssociation(migrationClient);
+    assert.deepEqual(linkFlowPlan.conflicts, []);
+    assert.equal(linkFlowPlan.missingPrerequisites.length, 0);
+    await applyLinkFlowPaymentAssociation(migrationClient, linkFlowPlan.fingerprint);
+    const linkFlowRepeat = await planLinkFlowPaymentAssociation(migrationClient);
+    assert.equal(linkFlowRepeat.alreadyApplied, true);
+    assert.deepEqual(
+      await applyLinkFlowPaymentAssociation(migrationClient, linkFlowRepeat.fingerprint),
       { applied: false, alreadyApplied: true },
     );
   } finally { migrationClient.release(); }

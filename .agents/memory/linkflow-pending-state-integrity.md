@@ -27,6 +27,12 @@ For LinkFlow, the amount chosen by the merchant is the payer’s total debit. De
 
 **How to apply:** Keep fee calculations server-side, use the recipient-pays-fees calculation for LinkFlow only, and expose only the fixed payer total in the public checkout.
 
+After a LinkFlow payment is conclusively confirmed, credit the merchant’s SendFlow wallet with the net amount after SendFlow fees, exactly once.
+
+**Why:** The user explicitly chose wallet credit after FeexPay confirmation and confirmed that SendFlow fees are deducted from the payer’s fixed total.
+
+**How to apply:** Use the server-calculated recipient amount in the existing guarded payment-intent and ledger transaction; never credit on a pending, failed, or uncertain result.
+
 For LinkFlow, deletion is a soft revocation: invalidate and hide the public link while retaining its record and history. Do not show invented views, visitors, attempts, successes, or collected amounts; payment statistics remain unavailable until real payments are activated and metrics come from authoritative server/provider records.
 
 **Why:** The user explicitly chose history-preserving deletion and deferred complete statistics until real payments are available.

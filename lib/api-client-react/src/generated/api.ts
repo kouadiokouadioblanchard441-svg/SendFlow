@@ -111,6 +111,9 @@ import type {
   PricingRatesUpdate,
   PublicBannerList,
   PublicPaymentLink,
+  PublicPaymentLinkAttemptCreated,
+  PublicPaymentLinkAttemptInput,
+  PublicPaymentLinkAttemptStatus,
   PublicPaymentLinkQuote,
   PublicPricingCatalog,
   PublicRegistrationSettings,
@@ -2971,6 +2974,173 @@ export function useGetPublicPaymentLink<TData = Awaited<ReturnType<typeof getPub
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPublicPaymentLinkQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartPublicPaymentLinkAttemptUrl = (token: string,) => {
+
+
+
+
+  return `/api/public/payment-links/${token}/attempts`
+}
+
+/**
+ * Starts only when LinkFlow payment execution is explicitly enabled by the server. The provider dispatch is persisted before the external request; browser data cannot set a final state.
+ * @summary Start a server-owned FeexPay payment attempt for an active public link
+ */
+export const startPublicPaymentLinkAttempt = async (token: string,
+    publicPaymentLinkAttemptInput: PublicPaymentLinkAttemptInput, options?: Parameters<typeof customFetch>[1]): Promise<PublicPaymentLinkAttemptCreated> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PublicPaymentLinkAttemptCreated>(getStartPublicPaymentLinkAttemptUrl(token),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(publicPaymentLinkAttemptInput)
+  }
+);}
+
+
+
+
+
+export const getStartPublicPaymentLinkAttemptMutationKey = () => ['startPublicPaymentLinkAttempt'] as const;
+
+export const getStartPublicPaymentLinkAttemptMutationOptions = <TError = ErrorType<ErrorEnvelope | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>, TError,StartPublicPaymentLinkAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>, TError,StartPublicPaymentLinkAttemptMutationVariables, TContext> => {
+
+const mutationKey = getStartPublicPaymentLinkAttemptMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>, StartPublicPaymentLinkAttemptMutationVariables> = (props) => {
+          const {token,data} = props ?? {};
+
+          return  startPublicPaymentLinkAttempt(token,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartPublicPaymentLinkAttemptMutationResult = NonNullable<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>>
+    export type StartPublicPaymentLinkAttemptMutationBody = BodyType<PublicPaymentLinkAttemptInput>
+    export type StartPublicPaymentLinkAttemptMutationError = ErrorType<ErrorEnvelope | void>
+    export type StartPublicPaymentLinkAttemptMutationVariables = {token: string;data: BodyType<PublicPaymentLinkAttemptInput>}
+
+    /**
+ * @summary Start a server-owned FeexPay payment attempt for an active public link
+ */
+export const useStartPublicPaymentLinkAttempt = <TError = ErrorType<ErrorEnvelope | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>, TError,StartPublicPaymentLinkAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>,
+        TError,
+        StartPublicPaymentLinkAttemptMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartPublicPaymentLinkAttemptMutationOptions(options));
+    }
+
+export const getGetPublicPaymentLinkAttemptStatusUrl = (attemptId: string,) => {
+
+
+
+
+  return `/api/public/payment-link-attempts/${attemptId}`
+}
+
+/**
+ * @summary Refresh a payer's server-owned payment-attempt status
+ */
+export const getPublicPaymentLinkAttemptStatus = async (attemptId: string, options?: Parameters<typeof customFetch>[1]): Promise<PublicPaymentLinkAttemptStatus> => {
+
+  return customFetch<PublicPaymentLinkAttemptStatus>(getGetPublicPaymentLinkAttemptStatusUrl(attemptId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicPaymentLinkAttemptStatusQueryKey = (attemptId: string,) => {
+    return [
+    `/api/public/payment-link-attempts/${attemptId}`
+    ] as const;
+    }
+
+
+export const getGetPublicPaymentLinkAttemptStatusQueryOptions = <TData = Awaited<ReturnType<typeof getPublicPaymentLinkAttemptStatus>>, TError = ErrorType<void | ErrorEnvelope>>(attemptId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicPaymentLinkAttemptStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicPaymentLinkAttemptStatusQueryKey(attemptId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicPaymentLinkAttemptStatus>>> = ({ signal }) => getPublicPaymentLinkAttemptStatus(attemptId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: attemptId !== null && attemptId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicPaymentLinkAttemptStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicPaymentLinkAttemptStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicPaymentLinkAttemptStatus>>>
+export type GetPublicPaymentLinkAttemptStatusQueryError = ErrorType<void | ErrorEnvelope>
+
+
+/**
+ * @summary Refresh a payer's server-owned payment-attempt status
+ */
+
+export function useGetPublicPaymentLinkAttemptStatus<TData = Awaited<ReturnType<typeof getPublicPaymentLinkAttemptStatus>>, TError = ErrorType<void | ErrorEnvelope>>(
+ attemptId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicPaymentLinkAttemptStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicPaymentLinkAttemptStatusQueryOptions(attemptId,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

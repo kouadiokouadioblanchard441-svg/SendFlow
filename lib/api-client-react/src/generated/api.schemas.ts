@@ -686,6 +686,72 @@ export interface PublicPaymentLink {
   simulationAvailable: boolean;
 }
 
+export interface PublicPaymentLinkAttemptInput {
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  /**
+     * @minLength 2
+     * @maxLength 60
+     */
+  operatorId: string;
+  /** @pattern ^\+[1-9][0-9]{7,14}$ */
+  phoneNumber: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  firstName: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  lastName: string;
+  idempotencyKey: string;
+}
+
+export type PublicPaymentLinkAttemptStatusState = typeof PublicPaymentLinkAttemptStatusState[keyof typeof PublicPaymentLinkAttemptStatusState];
+
+
+export const PublicPaymentLinkAttemptStatusState = {
+  waiting: 'waiting',
+  uncertain: 'uncertain',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export interface PublicPaymentLinkAttemptStatus {
+  attemptId: string;
+  state: PublicPaymentLinkAttemptStatusState;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  merchantName: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  currency: 'XOF';
+  currencyDecimals: 0;
+  /**
+     * @maxLength 32
+     * @nullable
+     * @pattern ^[*][0-9]+([*][0-9]+)*#$
+     */
+  ussdCode: string | null;
+  /**
+     * @maxLength 2048
+     * @nullable
+     */
+  returnUrl: string | null;
+}
+
+export type PublicPaymentLinkAttemptCreated = PublicPaymentLinkAttemptStatus & {
+  /** @pattern ^[a-f0-9]{64}$ */
+  pollToken: string;
+};
+
 export type SimulatedPaymentLinkSuccessCurrency = typeof SimulatedPaymentLinkSuccessCurrency[keyof typeof SimulatedPaymentLinkSuccessCurrency];
 
 

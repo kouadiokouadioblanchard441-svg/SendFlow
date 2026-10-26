@@ -1,0 +1,95 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  buildLinkFlowRequestHash,
+  deriveLinkFlowPollToken,
+  hashLinkFlowPollToken,
+  isLinkFlowPaymentExecutionEnabled,
+  resolveInitialProviderState,
+  resolveVerifiedProviderState,
+} from "./linkflow-payment-policy.ts";
+
+const originalKey = process.env.CUSTOMER_PII_ENCRYPTION_KEY;
+process.env.CUSTOMER_PII_ENCRYPTION_KEY = "a".repeat(64);
+
+test("live LinkFlow is disabled unless the explicitly approved production Plesk configuration is complete", () => {
+  assert.equal(isLinkFlowPaymentExecutionEnabled({}), false);
+  assert.equal(isLinkFlowPaymentExecutionEnabled({
+    FEEXPAY_LINKFLOW_ENABLED: "true",
+    FEEXPAY_MODE: "live",
+    FEEXPAY_EXECUTION_HOST: "plesk",
+    SENDFLOW_DATABASE_TARGET: "production",
+    FEEXPAY_LIVE_ENABLED: "true",
+    NODE_ENV: "production",
+    FEEXPAY_API_KEY: "synthetic",
+    FEEXPAY_SHOP_ID: "synthetic_shop",
+    FEEXPAY_LIVE_APPROVED: "true",
+  }), false);
+});
+
+test("the provider's initial POST response never becomes a final payer state", () => {
+  assert.equal(resolveInitialProviderState({
+    reference: "PAYREF123456",
+    status: "SUCCESSFUL",
+    amountMinor: 2000,
+    currency: "XOF",
+  }), "waiting");
+  assert.equal(resolveInitialProviderState(null), "uncertain");
+});
+
+test("final status requires exact reference, amount, currency, merchant, channel and verified signature", () => {
+  const expected = {
+    reference: "PAYREF123456", amountMinor: 2000, currency: "XOF",
+    shopId: "test_shop", channelId: "mtn_ci",
+  };
+  assert.equal(resolveVerifiedProviderState({
+    reference: expected.reference, status: "PENDING", amountMinor: 2000, currency: "XOF",
+  }, expected), "waiting");
+  assert.equal(resolveVerifiedProviderState({
+    reference: expected.reference, status: "SUCCESSFUL", amountMinor: 2000, currency: "XOF",
+  }, expected), "uncertain");
+  const verified = {
+    merchantShopId: expected.shopId,
+    channelId: expected.channelId,
+    operation: "payin",
+    signatureVerified: true,
+  };
+  assert.equal(resolveVerifiedProviderState({
+    reference: expected.reference, status: "SUCCESSFUL", amountMinor: 2000, currency: "XOF",
+    ...verified,
+  }, expected), "succeeded");
+  assert.equal(resolveVerifiedProviderState({
+    reference: expected.reference, status: "FAILED", amountMinor: 2000, currency: "XOF",
+    ...verified,
+  }, expected), "failed");
+  assert.equal(resolveVerifiedProviderState({
+    reference: expected.reference, status: "SUCCESSFUL", currency: "XOF", ...verified,
+  }, expected), "uncertain");
+  assert.equal(resolveVerifiedProviderState({
+    reference: expected.reference, status: "FAILED", amountMinor: 1999, currency: "XOF", ...verified,
+  }, expected), "uncertain");
+});
+
+test("request fingerprints and poll tokens are stable without storing raw payer phone", () => {
+  const input = {
+    linkId: "link-1",
+    countryCode: "ci",
+    operatorId: "mtn_ci",
+    phoneNumber: "+2250102030405",
+    firstName: "Awa",
+    lastName: "Kouassi",
+    idempotencyKey: "11111111-1111-4111-8111-111111111111",
+  };
+  assert.equal(buildLinkFlowRequestHash(input), buildLinkFlowRequestHash(input));
+  assert.notEqual(buildLinkFlowRequestHash(input), buildLinkFlowRequestHash({
+    ...input, phoneNumber: "+2250102030406",
+  }));
+  const token = deriveLinkFlowPollToken(input.linkId, input.idempotencyKey);
+  assert.equal(token, deriveLinkFlowPollToken(input.linkId, input.idempotencyKey));
+  assert.notEqual(hashLinkFlowPollToken(token), token);
+});
+
+test.after(() => {
+  if (originalKey === undefined) delete process.env.CUSTOMER_PII_ENCRYPTION_KEY;
+  else process.env.CUSTOMER_PII_ENCRYPTION_KEY = originalKey;
+});
