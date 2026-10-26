@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'wouter';
 import { ShieldCheck } from 'lucide-react';
@@ -21,6 +21,7 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import securePaymentMark from '@assets/generated_images/sendflow-secure-payment-mark-3d-clean.png';
 import waveOperatorLogo from '@/assets/wave-logo-reference.png';
 import { OperatorMark } from '@/components/operator-mark';
+import { parseStoredLinkFlowAttempt, parseStoredLinkFlowIdempotencyKey } from '@/lib/linkflow-attempt-storage';
 import LinkFlowPaymentOutcome from '@/components/linkflow-payment-outcome';
 import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
 import LinkFlowPaymentWaiting from '@/components/linkflow-payment-waiting';
@@ -50,7 +51,8 @@ function PaymentSelectIndicator() {
 const MIN_LINK_LOADING_MS = 1000;
 
 type ActivePaymentAttempt = Pick<PublicPaymentLinkAttemptCreated, 'attemptId' | 'pollToken'>
-  & Partial<Pick<PublicPaymentLinkAttemptCreated, 'merchantName' | 'amountMinor' | 'currency' | 'currencyDecimals' | 'ussdCode'>>;
+  & Partial<Pick<PublicPaymentLinkAttemptCreated, 'merchantName' | 'amountMinor' | 'currency' | 'currencyDecimals' | 'ussdCode'>>
+  & { token: string };
 
 export default function PublicPaymentLinkPage() {
   const { token = '' } = useParams<{ token: string }>();
@@ -89,8 +91,12 @@ export default function PublicPaymentLinkPage() {
   const [simulationPhase, setSimulationPhase] = useState<'waiting' | 'result' | null>(null);
   const [realAttempt, setRealAttempt] = useState<ActivePaymentAttempt | null>(null);
   const [paymentRequestKey, setPaymentRequestKey] = useState('');
+  const [storageHydratedToken, setStorageHydratedToken] = useState('');
+  const [paymentRecoveryAvailable, setPaymentRecoveryAvailable] = useState(true);
   const simulateMutation = useSimulateCustomerPaymentLink();
   const startPaymentMutation = useStartPublicPaymentLinkAttempt();
+  const activeTokenRef = useRef(token);
+  activeTokenRef.current = token;
 
   const link = linkQuery.data;
   const pageAssetsKey = JSON.stringify([token, linkLoadCycle, link?.imagePath ?? null, linkQuery.isError]);
@@ -133,13 +139,16 @@ export default function PublicPaymentLinkPage() {
     nationalPhone.length >= (country?.minPhoneDigits ?? 99) &&
     nationalPhone.length <= (country?.maxPhoneDigits ?? 0),
   );
+  const activeRealAttempt = storageHydratedToken === token && realAttempt?.token === token
+    ? realAttempt
+    : null;
   const paymentStatusQuery = useQuery({
-    queryKey: ['public-linkflow-attempt-status', realAttempt?.attemptId],
-    queryFn: ({ signal }) => getPublicPaymentLinkAttemptStatus(realAttempt!.attemptId, {
+    queryKey: ['public-linkflow-attempt-status', activeRealAttempt?.attemptId],
+    queryFn: ({ signal }) => getPublicPaymentLinkAttemptStatus(activeRealAttempt!.attemptId, {
       signal,
-      headers: { 'X-LinkFlow-Attempt-Token': realAttempt!.pollToken },
+      headers: { 'X-LinkFlow-Attempt-Token': activeRealAttempt!.pollToken },
     }),
-    enabled: Boolean(realAttempt),
+    enabled: Boolean(activeRealAttempt),
     retry: false,
     staleTime: 0,
     refetchOnMount: 'always',
@@ -149,21 +158,43 @@ export default function PublicPaymentLinkPage() {
     },
   });
   useEffect(() => {
+    startPaymentMutation.reset();
+    simulateMutation.reset();
     setRealAttempt(null);
+    setPaymentRequestKey('');
+    setCountryCode('');
+    setOperatorId('');
+    setFirstName('');
+    setLastName('');
+    setPhone('');
+    setSelectedPaymentMethod('mobile-money');
+    setSimulationConfirmation(null);
+    setSimulationOutcome(null);
+    setSimulationPhase(null);
+    setStorageHydratedToken('');
     try {
-      const saved = window.sessionStorage.getItem(paymentStorageKey(token, 'attempt'));
-      if (saved) {
-        const parsed = JSON.parse(saved) as PublicPaymentLinkAttemptCreated;
-        if (/^[0-9a-f-]{36}$/i.test(parsed.attemptId) && /^[a-f0-9]{64}$/.test(parsed.pollToken)) {
-          setRealAttempt({ attemptId: parsed.attemptId, pollToken: parsed.pollToken });
-        } else {
-          window.sessionStorage.removeItem(paymentStorageKey(token, 'attempt'));
-        }
-      }
-      const savedRequestKey = window.sessionStorage.getItem(paymentStorageKey(token, 'idempotency'));
-      if (savedRequestKey && /^[0-9a-f-]{36}$/i.test(savedRequestKey)) setPaymentRequestKey(savedRequestKey);
+      const storageProbeKey = paymentStorageKey(token, 'storage-check');
+      window.sessionStorage.setItem(storageProbeKey, 'ready');
+      const storageProbeWorked = window.sessionStorage.getItem(storageProbeKey) === 'ready';
+      window.sessionStorage.removeItem(storageProbeKey);
+      if (!storageProbeWorked) throw new Error('Session storage is unavailable');
+
+      const attemptStorageKey = paymentStorageKey(token, 'attempt');
+      const savedAttempt = window.sessionStorage.getItem(attemptStorageKey);
+      const parsedAttempt = parseStoredLinkFlowAttempt(savedAttempt);
+      if (parsedAttempt) setRealAttempt({ ...parsedAttempt, token });
+      else if (savedAttempt) window.sessionStorage.removeItem(attemptStorageKey);
+
+      const requestStorageKey = paymentStorageKey(token, 'idempotency');
+      const savedRequestKey = window.sessionStorage.getItem(requestStorageKey);
+      const parsedRequestKey = parseStoredLinkFlowIdempotencyKey(savedRequestKey);
+      if (parsedRequestKey) setPaymentRequestKey(parsedRequestKey);
+      else if (savedRequestKey) window.sessionStorage.removeItem(requestStorageKey);
+      setPaymentRecoveryAvailable(true);
     } catch {
-      // Storage can be unavailable in private browsing; server idempotency still protects retries.
+      setPaymentRecoveryAvailable(false);
+    } finally {
+      setStorageHydratedToken(token);
     }
   }, [token]);
   const backgroundArt = typeof document !== 'undefined' ? createPortal(
@@ -203,6 +234,7 @@ export default function PublicPaymentLinkPage() {
     if (!import.meta.env.DEV || !link?.simulationAvailable) return;
     simulateMutation.mutate({ token }, {
       onSuccess: (confirmation) => {
+        if (activeTokenRef.current !== token) return;
         setSimulationConfirmation(confirmation);
         setSimulationOutcome(outcome);
         setSimulationPhase('waiting');
@@ -210,12 +242,20 @@ export default function PublicPaymentLinkPage() {
     });
   };
   const startRealPayment = () => {
-    if (!link || !country || !operator || !payerFormValid || !link.paymentAvailable) return;
+    if (!link || !country || !operator || !payerFormValid || !link.paymentAvailable || !paymentRecoveryAvailable) return;
     const idempotencyKey = paymentRequestKey || window.crypto.randomUUID();
-    setPaymentRequestKey(idempotencyKey);
     try {
-      window.sessionStorage.setItem(paymentStorageKey(token, 'idempotency'), idempotencyKey);
-    } catch { /* session storage is optional; the request key remains active in memory */ }
+      const requestStorageKey = paymentStorageKey(token, 'idempotency');
+      window.sessionStorage.setItem(requestStorageKey, idempotencyKey);
+      if (window.sessionStorage.getItem(requestStorageKey) !== idempotencyKey) {
+        throw new Error('Could not persist the payment request key');
+      }
+      setPaymentRecoveryAvailable(true);
+    } catch {
+      setPaymentRecoveryAvailable(false);
+      return;
+    }
+    setPaymentRequestKey(idempotencyKey);
     startPaymentMutation.mutate({
       token,
       data: {
@@ -231,19 +271,28 @@ export default function PublicPaymentLinkPage() {
         const activeAttempt = {
           attemptId: attempt.attemptId,
           pollToken: attempt.pollToken,
+          token,
           merchantName: attempt.merchantName,
           amountMinor: attempt.amountMinor,
           currency: attempt.currency,
           currencyDecimals: attempt.currencyDecimals,
           ussdCode: attempt.ussdCode,
         };
-        setRealAttempt(activeAttempt);
         try {
-          window.sessionStorage.setItem(paymentStorageKey(token, 'attempt'), JSON.stringify({
+          const attemptStorageKey = paymentStorageKey(token, 'attempt');
+          const serializedAttempt = JSON.stringify({
             attemptId: attempt.attemptId,
             pollToken: attempt.pollToken,
-          }));
-        } catch { /* the attempt remains active for the current page session */ }
+          });
+          window.sessionStorage.setItem(attemptStorageKey, serializedAttempt);
+          if (window.sessionStorage.getItem(attemptStorageKey) !== serializedAttempt) {
+            throw new Error('Could not persist the payment attempt');
+          }
+        } catch {
+          if (activeTokenRef.current === token) setPaymentRecoveryAvailable(false);
+        }
+        if (activeTokenRef.current !== token) return;
+        setRealAttempt(activeAttempt);
       },
     });
   };
@@ -288,7 +337,7 @@ export default function PublicPaymentLinkPage() {
       </>
     );
   }
-  if (realAttempt) {
+  if (activeRealAttempt) {
     if (confirmedStatus?.state === 'succeeded' || confirmedStatus?.state === 'failed') {
       return (
         <>
@@ -318,7 +367,7 @@ export default function PublicPaymentLinkPage() {
         </>
       );
     }
-    const waitingDisplay = confirmedStatus ?? realAttempt;
+    const waitingDisplay = confirmedStatus ?? activeRealAttempt;
     return (
       <>
         {backgroundArt}
@@ -328,7 +377,7 @@ export default function PublicPaymentLinkPage() {
             ? formatMoney(waitingDisplay.amountMinor, waitingDisplay.currency, waitingDisplay.currencyDecimals)
             : link ? formatMoney(link.amountMinor, link.currency, link.currencyDecimals) : '—'}
           ussdCode={waitingDisplay.ussdCode ?? null}
-          state={paymentStatusQuery.isError || confirmedStatus?.state === 'uncertain' ? 'uncertain' : 'waiting'}
+          state={paymentStatusQuery.isError || !paymentRecoveryAvailable || confirmedStatus?.state === 'uncertain' ? 'uncertain' : 'waiting'}
           onRefresh={() => void paymentStatusQuery.refetch()}
           refreshing={paymentStatusQuery.isFetching}
         />
@@ -336,7 +385,8 @@ export default function PublicPaymentLinkPage() {
     );
   }
 
-  if (linkQuery.isLoading || linkQuery.isFetching || !minimumLoadTimeElapsed || loadedPageAssetsKey !== pageAssetsKey) {
+  if (storageHydratedToken !== token || linkQuery.isLoading || linkQuery.isFetching ||
+    !minimumLoadTimeElapsed || loadedPageAssetsKey !== pageAssetsKey) {
     return (
       <main
         className="sendflow-public-link-loading"
@@ -576,10 +626,15 @@ export default function PublicPaymentLinkPage() {
                   </span>
                 </div>
               )}
+              {!paymentRecoveryAvailable && (
+                <div className="sendflow-pay-inline-error" role="alert">
+                  <span>Le navigateur ne permet pas de sécuriser la reprise. Autorisez le stockage de session puis rechargez cette page.</span>
+                </div>
+              )}
               <button
                 type="button"
                 className="sendflow-pay-submit is-live"
-                disabled={startPaymentMutation.isPending || !payerFormValid}
+                disabled={startPaymentMutation.isPending || !payerFormValid || !paymentRecoveryAvailable}
                 onClick={startRealPayment}
                 data-testid="button-pay-live"
               >
