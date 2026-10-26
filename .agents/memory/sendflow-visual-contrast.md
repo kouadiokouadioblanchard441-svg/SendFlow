@@ -39,8 +39,8 @@ For the unavailable-link state, use the approved original 3D expiry illustration
 
 **How to apply:** keep the illustration scoped to the unavailable-link state and preserve the existing payment journey and copy unless the user requests broader changes.
 
-When opening or refreshing a public LinkFlow payment link, show a full-screen white loading state with a centered, pulsing four-dot SendFlow-purple mark until the link request settles.
+When opening or refreshing a public LinkFlow payment link, show a full-screen white loading state with a centered, pulsing four-dot SendFlow-purple mark for at least one second and until the link request settles; display the page immediately once both conditions are met.
 
 **Why:** the user supplied mobile screenshots as the desired refresh/loading behavior for payment-link navigation.
 
-**How to apply:** show the loader for initial loads, link refetches and retries; keep it scoped to the public payment-link request and do not change payment or settlement logic.
+**How to apply:** use the same minimum duration for initial loads, refetches and retries; do not add a delay after the request has finished and do not change payment or settlement logic.

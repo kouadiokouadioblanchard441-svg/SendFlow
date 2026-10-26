@@ -18,6 +18,7 @@ import { useSeo } from '@/lib/seo';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 import linkUnavailableIllustration from '@assets/generated_images/sendflow-link-unavailable-3d-final.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import securePaymentMark from '@assets/generated_images/sendflow-secure-payment-mark-3d-clean.png';
 import { OperatorMark } from '@/components/operator-mark';
 import LinkFlowPaymentOutcome from '@/components/linkflow-payment-outcome';
 import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
@@ -36,6 +37,8 @@ function paymentStorageKey(token: string, suffix: string) {
   return `sendflow:linkflow:${token}:${suffix}`;
 }
 
+const MIN_LINK_LOADING_MS = 1000;
+
 type ActivePaymentAttempt = Pick<PublicPaymentLinkAttemptCreated, 'attemptId' | 'pollToken'>
   & Partial<Pick<PublicPaymentLinkAttemptCreated, 'merchantName' | 'amountMinor' | 'currency' | 'currencyDecimals' | 'ussdCode'>>;
 
@@ -49,6 +52,22 @@ export default function PublicPaymentLinkPage() {
       refetchOnWindowFocus: false,
     },
   });
+  const [linkLoadCycle, setLinkLoadCycle] = useState(0);
+  const [minimumLoadTimeElapsed, setMinimumLoadTimeElapsed] = useState(false);
+  const [loadedPageAssetsKey, setLoadedPageAssetsKey] = useState('');
+
+  useEffect(() => {
+    setMinimumLoadTimeElapsed(false);
+    const timer = window.setTimeout(() => setMinimumLoadTimeElapsed(true), MIN_LINK_LOADING_MS);
+    return () => window.clearTimeout(timer);
+  }, [token, linkLoadCycle]);
+
+  const refreshPublicLink = () => {
+    setMinimumLoadTimeElapsed(false);
+    setLinkLoadCycle((cycle) => cycle + 1);
+    void linkQuery.refetch();
+  };
+
   const [countryCode, setCountryCode] = useState('');
   const [operatorId, setOperatorId] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -64,6 +83,34 @@ export default function PublicPaymentLinkPage() {
   const startPaymentMutation = useStartPublicPaymentLinkAttempt();
 
   const link = linkQuery.data;
+  const pageAssetsKey = JSON.stringify([token, linkLoadCycle, link?.imagePath ?? null, linkQuery.isError]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const sources = [
+      sendflowWordmark,
+      linkflowIllustration,
+      securePaymentMark,
+      ...(link?.imagePath ? [link.imagePath] : []),
+      ...(linkQuery.isError ? [linkUnavailableIllustration] : []),
+    ];
+
+    void Promise.all(Array.from(new Set(sources)).map((src) => {
+      const image = new Image();
+      image.src = src;
+      return Promise.race([
+        image.decode().catch(() => undefined),
+        new Promise<void>((resolve) => window.setTimeout(resolve, 1000)),
+      ]);
+    })).then(() => {
+      if (!cancelled) setLoadedPageAssetsKey(pageAssetsKey);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, linkLoadCycle, link?.imagePath, linkQuery.isError, pageAssetsKey]);
+
   const previewSimulationAvailable = import.meta.env.DEV && Boolean(link?.simulationAvailable);
   const country = link?.countries.find((item) => item.code === countryCode);
   const operator = country?.operators.find((item) => item.id === operatorId);
@@ -249,7 +296,7 @@ export default function PublicPaymentLinkPage() {
                 window.sessionStorage.removeItem(paymentStorageKey(token, 'attempt'));
                 window.sessionStorage.removeItem(paymentStorageKey(token, 'idempotency'));
               } catch { /* session storage is optional */ }
-              void linkQuery.refetch();
+              refreshPublicLink();
             }}
           />
         </>
@@ -273,7 +320,7 @@ export default function PublicPaymentLinkPage() {
     );
   }
 
-  if (linkQuery.isLoading || linkQuery.isFetching) {
+  if (linkQuery.isLoading || linkQuery.isFetching || !minimumLoadTimeElapsed || loadedPageAssetsKey !== pageAssetsKey) {
     return (
       <main
         className="sendflow-public-link-loading"
@@ -308,7 +355,7 @@ export default function PublicPaymentLinkPage() {
             <p className="sendflow-pay-overline">LIEN DE PAIEMENT</p>
             <h1>Ce lien n’est pas disponible</h1>
             <p>Il a peut-être expiré ou n’existe plus. Demandez au commerçant de vérifier son lien.</p>
-            <button type="button" className="sendflow-pay-retry" onClick={() => linkQuery.refetch()}>Réessayer</button>
+            <button type="button" className="sendflow-pay-retry" onClick={refreshPublicLink}>Réessayer</button>
             <LinkFlowSecureFooter />
           </section>
         </main>
