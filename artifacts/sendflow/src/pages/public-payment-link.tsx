@@ -57,6 +57,7 @@ export default function PublicPaymentLinkPage() {
   const startPaymentMutation = useStartPublicPaymentLinkAttempt();
 
   const link = linkQuery.data;
+  const previewSimulationAvailable = import.meta.env.DEV && Boolean(link?.simulationAvailable);
   const country = link?.countries.find((item) => item.code === countryCode);
   const operator = country?.operators.find((item) => item.id === operatorId);
   const nationalPhone = phone.replace(/\D/g, '');
@@ -129,6 +130,7 @@ export default function PublicPaymentLinkPage() {
     } catch { /* session storage is optional; idempotency remains enforced by the server */ }
   };
   const beginSimulation = (outcome: 'succeeded' | 'failed') => {
+    if (!import.meta.env.DEV || !link?.simulationAvailable) return;
     simulateMutation.mutate({ token }, {
       onSuccess: (confirmation) => {
         setSimulationConfirmation(confirmation);
@@ -339,12 +341,12 @@ export default function PublicPaymentLinkPage() {
             <label className="sendflow-pay-field">
               <span>Moyens de paiement</span>
               <select
-                defaultValue={link.simulationAvailable ? 'simulation' : link.countries.length ? 'mobile-money' : 'unavailable'}
-                disabled={!link.simulationAvailable && link.countries.length === 0}
+                defaultValue={previewSimulationAvailable ? 'simulation' : link.countries.length ? 'mobile-money' : 'unavailable'}
+                disabled={!previewSimulationAvailable && link.countries.length === 0}
                 className="sendflow-pay-method-select"
                 data-testid="select-pay-method"
               >
-                {link.simulationAvailable && <option value="simulation">Simulation de test</option>}
+                {previewSimulationAvailable && <option value="simulation">Simulation de test</option>}
                 {link.countries.length > 0 && <option value="mobile-money">Mobile Money</option>}
                 {!link.simulationAvailable && link.countries.length === 0 && <option value="unavailable">Aucun moyen disponible</option>}
               </select>
@@ -451,7 +453,7 @@ export default function PublicPaymentLinkPage() {
 
           </div>
 
-          {link.simulationAvailable ? (
+          {previewSimulationAvailable ? (
             <>
               {simulateMutation.isError && (
                 <div className="sendflow-pay-inline-error" role="alert">
@@ -495,7 +497,7 @@ export default function PublicPaymentLinkPage() {
                 onClick={startRealPayment}
                 data-testid="button-pay-live"
               >
-                {startPaymentMutation.isPending ? 'Connexion au réseau…' : 'Continuer vers mon téléphone'}
+                {startPaymentMutation.isPending ? 'Connexion au réseau…' : 'Payer'}
               </button>
             </>
           ) : (
