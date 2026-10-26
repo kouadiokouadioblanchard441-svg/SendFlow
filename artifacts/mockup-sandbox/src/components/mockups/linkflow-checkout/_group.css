@@ -241,8 +241,9 @@
   border-radius: 0;
   background: #fff;
   color: #39363b;
-  padding: 0 12px;
-  font-size: 16px;
+  padding: 0 8px;
+  font-size: clamp(14px, 3.5vw, 16px);
+  letter-spacing: normal;
   box-shadow: none;
 }
 :where(.checkout-preview--phone-reference) .sendflow-pay-phone-operator {
