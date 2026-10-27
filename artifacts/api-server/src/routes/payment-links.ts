@@ -151,6 +151,7 @@ router.get("/me/payment-links", async (req, res): Promise<void> => {
     const { cursor, limit } = parsed.data;
     const conditions = [
       eq(customerPaymentLinksTable.userId, session.userId),
+      eq(customerPaymentLinksTable.source, "linkflow"),
       isNull(customerPaymentLinksTable.deletedAt),
     ];
     if (cursor) {
@@ -160,6 +161,7 @@ router.get("/me/payment-links", async (req, res): Promise<void> => {
       }).from(customerPaymentLinksTable).where(and(
         eq(customerPaymentLinksTable.id, cursor),
         eq(customerPaymentLinksTable.userId, session.userId),
+        eq(customerPaymentLinksTable.source, "linkflow"),
         isNull(customerPaymentLinksTable.deletedAt),
       )).limit(1);
       if (!cursorRow) {
@@ -210,6 +212,7 @@ router.get("/me/payment-links/:linkId", async (req, res): Promise<void> => {
     const [link] = await db.select(paymentLinkResponseColumns).from(customerPaymentLinksTable).where(and(
       eq(customerPaymentLinksTable.id, params.data.linkId),
       eq(customerPaymentLinksTable.userId, session.userId),
+      eq(customerPaymentLinksTable.source, "linkflow"),
       isNull(customerPaymentLinksTable.deletedAt),
     )).limit(1);
     if (!link) {
@@ -252,6 +255,7 @@ router.patch("/me/payment-links/:linkId", async (req, res): Promise<void> => {
       const [link] = await tx.select().from(customerPaymentLinksTable).where(and(
         eq(customerPaymentLinksTable.id, params.data.linkId),
         eq(customerPaymentLinksTable.userId, session.userId),
+        eq(customerPaymentLinksTable.source, "linkflow"),
         isNull(customerPaymentLinksTable.deletedAt),
       )).for("update").limit(1);
 
@@ -322,6 +326,7 @@ router.patch("/me/payment-links/:linkId", async (req, res): Promise<void> => {
       }).where(and(
         eq(customerPaymentLinksTable.id, link.id),
         eq(customerPaymentLinksTable.userId, session.userId),
+        eq(customerPaymentLinksTable.source, "linkflow"),
         isNull(customerPaymentLinksTable.deletedAt),
       )).returning(paymentLinkResponseColumns);
       return updated ? { kind: "updated" as const, link: updated } : { kind: "not_found" as const };
@@ -365,6 +370,7 @@ router.delete("/me/payment-links/:linkId", async (req, res): Promise<void> => {
     }).where(and(
       eq(customerPaymentLinksTable.id, params.data.linkId),
       eq(customerPaymentLinksTable.userId, session.userId),
+      eq(customerPaymentLinksTable.source, "linkflow"),
       isNull(customerPaymentLinksTable.deletedAt),
     )).returning({ id: customerPaymentLinksTable.id });
     if (!deleted) {
@@ -403,6 +409,7 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
     const normalized = normalizePaymentLinkInput(parsed.data);
     const [existing] = await db.select(paymentLinkIdempotencyColumns).from(customerPaymentLinksTable).where(and(
       eq(customerPaymentLinksTable.userId, session.userId),
+      eq(customerPaymentLinksTable.source, "linkflow"),
       eq(customerPaymentLinksTable.idempotencyKey, normalized.requestId),
     )).limit(1);
     if (existing) {
@@ -451,6 +458,7 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
         const normalized = normalizePaymentLinkInput(parsed.data);
         const [existing] = await db.select(paymentLinkIdempotencyColumns).from(customerPaymentLinksTable).where(and(
           eq(customerPaymentLinksTable.userId, session.userId),
+          eq(customerPaymentLinksTable.source, "linkflow"),
           eq(customerPaymentLinksTable.idempotencyKey, normalized.requestId),
         )).limit(1);
         if (existing?.deletedAt) {
@@ -524,6 +532,7 @@ router.post("/me/payment-links/simulate/:token", async (req, res): Promise<void>
     }).from(customerPaymentLinksTable).where(and(
       eq(customerPaymentLinksTable.publicToken, parsed.data.token),
       eq(customerPaymentLinksTable.userId, session.userId),
+      eq(customerPaymentLinksTable.source, "linkflow"),
       isNull(customerPaymentLinksTable.deletedAt),
     )).limit(1);
 
@@ -602,6 +611,7 @@ const authorizePaymentLinkImageUpload: RequestHandler = async (req, res, next): 
     }).from(customerPaymentLinksTable).where(and(
       eq(customerPaymentLinksTable.id, linkId),
       eq(customerPaymentLinksTable.userId, session.userId),
+      eq(customerPaymentLinksTable.source, "linkflow"),
       isNull(customerPaymentLinksTable.deletedAt),
     )).limit(1);
 
@@ -674,6 +684,7 @@ router.post(
       }).where(and(
         eq(customerPaymentLinksTable.id, linkId),
         eq(customerPaymentLinksTable.userId, userId),
+        eq(customerPaymentLinksTable.source, "linkflow"),
         isNull(customerPaymentLinksTable.deletedAt),
         or(
           eq(customerPaymentLinksTable.status, "draft"),

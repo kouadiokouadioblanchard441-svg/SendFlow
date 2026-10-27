@@ -230,7 +230,7 @@ export default function DevelopersPage() {
           <div className="dev-mode-copy">
             <span className="dev-section-index">01 / INTÉGRATION</span>
             <h2 id="dev-mode-heading">Deux façons d’encaisser</h2>
-            <p>Vous avez choisi l’API directe et le paiement hébergé SendFlow. Une session créée par API peut lancer le paiement directement dans votre interface ou renvoyer une URL de checkout SendFlow.</p>
+              <p>Vous avez choisi l’API directe et le paiement hébergé SendFlow. Les clés et webhooks se configurent ici ; la création de paiements restera fermée tant que la confirmation serveur du prestataire n’est pas activée.</p>
           </div>
           <div className="dev-mode-options">
             <article className="dev-mode-option">

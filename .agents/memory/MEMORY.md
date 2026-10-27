@@ -41,3 +41,4 @@
 - [LinkFlow USSD configuration](linkflow-ussd-configuration.md) — Administrators configure USSD codes by country and operator; the provider does not supply them.
 - [SendFlow visual contrast](sendflow-visual-contrast.md) — Match provided LinkFlow mockups; keep artwork fixed, white surfaces, violet accents, and solid red deletes.
 - [SendFlow page loader](sendflow-page-loader.md) — Keep the shared LinkFlow-style four-dot violet animation for full-page waits and route transitions.
+- [Merchant developer API](developer-integrations.md) — Keep direct and SendFlow-hosted API checkout on the same LinkFlow routing and settlement path.

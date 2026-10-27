@@ -67,6 +67,7 @@ import {
 import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
 import {
   createPaymentLinkPublicToken,
+  isPaymentLinkCreationAllowed,
   normalizePaymentLinkInput,
   PaymentLinkInputError,
 } from "../services/payment-links";
@@ -76,6 +77,7 @@ import {
   LinkFlowPaymentError,
   startLinkFlowPaymentAttempt,
 } from "../services/linkflow-payment-execution";
+import { isLinkFlowPaymentExecutionEnabled } from "../services/linkflow-payment-policy";
 import { getPublicPaymentLinkChoices } from "./public-payment-links";
 
 const router: IRouter = Router();
@@ -153,6 +155,18 @@ function parseAuthorization(req: Request) {
   return match?.[1] ?? null;
 }
 
+async function hasPaymentTestAccess(userId: string) {
+  const [row] = await db.select({ userId: usersTable.id }).from(usersTable)
+    .where(and(
+      eq(usersTable.id, userId),
+      sql`exists (
+        select 1 from public.sf_replit_payment_test_access a
+        where a.user_id=${usersTable.id} and a.state='active'
+      )`,
+    )).limit(1);
+  return Boolean(row);
+}
+
 async function requireSecretApiKey(req: Request, res: Response) {
   const rawKey = parseAuthorization(req);
   if (!rawKey || !secretKeyPattern.test(rawKey)) {
@@ -166,6 +180,10 @@ async function requireSecretApiKey(req: Request, res: Response) {
     status: developerApiKeysTable.status,
     accountStatus: usersTable.status,
     phoneVerifiedAt: usersTable.phoneVerifiedAt,
+    paymentTestAccount: sql<boolean>`exists (
+      select 1 from public.sf_replit_payment_test_access a
+      where a.user_id=${usersTable.id} and a.state='active'
+    )`,
   }).from(developerApiKeysTable)
     .innerJoin(usersTable, eq(usersTable.id, developerApiKeysTable.userId))
     .where(and(
@@ -179,6 +197,11 @@ async function requireSecretApiKey(req: Request, res: Response) {
     res.status(401).json({ error: "La clé API secrète est invalide ou désactivée." });
     return null;
   }
+  if (row.paymentTestAccount ||
+    !isPaymentLinkCreationAllowed({ paymentTestAccount: row.paymentTestAccount })) {
+    res.status(403).json({ error: "La création de paiements API n’est pas disponible pour ce compte d’essai." });
+    return null;
+  }
   if (!await consumeDeveloperApiQuota(row.id, "session_read")) {
     res.setHeader("Retry-After", "60");
     res.status(429).json({ error: "Trop de requêtes API. Réessayez dans une minute." });
@@ -190,7 +213,12 @@ async function requireSecretApiKey(req: Request, res: Response) {
   return row;
 }
 
-async function readPublicSessionCredentials(req: Request, res: Response, sessionId: string) {
+async function readPublicSessionCredentials(
+  req: Request,
+  res: Response,
+  sessionId: string,
+  options: { allowExpired?: boolean } = {},
+) {
   const parsedHeader = GetDeveloperPublicPaymentSessionHeader.safeParse({
     "X-SendFlow-Public-Key": req.get("X-SendFlow-Public-Key"),
     "X-SendFlow-Client-Token": req.get("X-SendFlow-Client-Token"),
@@ -222,21 +250,31 @@ async function readPublicSessionCredentials(req: Request, res: Response, session
     linkStatus: customerPaymentLinksTable.status,
     deletedAt: customerPaymentLinksTable.deletedAt,
     keyId: developerApiKeysTable.id,
+    paymentTestAccount: sql<boolean>`exists (
+      select 1 from public.sf_replit_payment_test_access a
+      where a.user_id=${developerPaymentSessionsTable.userId} and a.state='active'
+    )`,
   }).from(developerPaymentSessionsTable)
     .innerJoin(customerPaymentLinksTable, eq(customerPaymentLinksTable.id, developerPaymentSessionsTable.paymentLinkId))
     .innerJoin(developerApiKeysTable, eq(developerApiKeysTable.id, developerPaymentSessionsTable.apiKeyId))
+    .innerJoin(usersTable, eq(usersTable.id, developerPaymentSessionsTable.userId))
     .where(and(
       eq(developerPaymentSessionsTable.id, sessionId),
+      eq(customerPaymentLinksTable.userId, developerPaymentSessionsTable.userId),
+      eq(developerApiKeysTable.userId, developerPaymentSessionsTable.userId),
       eq(developerApiKeysTable.publicKeyHash, hashDeveloperPublicKey(publicKey)),
       eq(developerApiKeysTable.publicKey, publicKey),
       eq(developerApiKeysTable.status, "active"),
+      eq(usersTable.status, "active"),
+      sql`${usersTable.phoneVerifiedAt} is not null`,
       eq(developerPaymentSessionsTable.clientTokenHash, hashDeveloperClientToken(clientToken)),
       eq(developerPaymentSessionsTable.mode, "direct"),
       eq(customerPaymentLinksTable.source, "api"),
       isNull(customerPaymentLinksTable.deletedAt),
     ))
     .limit(1);
-  if (!session || session.expiresAt.getTime() <= Date.now() ||
+  if (!session || session.paymentTestAccount ||
+    (!options.allowExpired && session.expiresAt.getTime() <= Date.now()) ||
     session.linkStatus !== "active" || session.clientTokenHash !== hashDeveloperClientToken(clientToken)) {
     res.status(404).json({ error: "Cette session de paiement n’est pas disponible." });
     return null;
@@ -248,6 +286,14 @@ async function readPublicSessionCredentials(req: Request, res: Response, session
   if (!await consumeDeveloperApiQuota(session.apiKeyId, "session_read")) {
     res.setHeader("Retry-After", "60");
     res.status(429).json({ error: "Trop de requêtes API. Réessayez dans une minute." });
+    return null;
+  }
+  if (!await consumePublicPaymentLinkQuota(
+    req.ip || req.socket.remoteAddress || "unknown",
+    "quote",
+  )) {
+    res.setHeader("Retry-After", "60");
+    res.status(429).json({ error: "Trop de vérifications de session. Réessayez dans une minute." });
     return null;
   }
   return { ...session, publicKey, clientToken };
@@ -299,6 +345,10 @@ router.get("/me/developer/api-keys", async (req, res): Promise<void> => {
 router.post("/me/developer/api-keys", async (req, res): Promise<void> => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
+  if (await hasPaymentTestAccess(session.userId) || !isPaymentLinkCreationAllowed(session)) {
+    res.status(403).json({ error: "Les clés de paiement live ne sont pas disponibles pour ce compte d’essai." });
+    return;
+  }
   const parsed = CreateDeveloperApiKeyBody.safeParse(req.body);
   const label = parsed.success ? parsed.data.label.trim() : "";
   if (!parsed.success || !label || label.length > 80) {
@@ -505,6 +555,12 @@ router.get("/me/developer/webhooks/:endpointId/deliveries", async (req, res): Pr
 router.post("/v1/payment-sessions", async (req, res): Promise<void> => {
   const key = await requireSecretApiKey(req, res);
   if (!key) return;
+  if (!isLinkFlowPaymentExecutionEnabled()) {
+    res.status(503).json({
+      error: "La création des paiements API reste désactivée jusqu’à l’activation de la confirmation serveur du prestataire.",
+    });
+    return;
+  }
   const parsedHeader = CreateDeveloperPaymentSessionHeader.safeParse({
     "Idempotency-Key": req.get("Idempotency-Key"),
   });
@@ -577,11 +633,12 @@ router.post("/v1/payment-sessions", async (req, res): Promise<void> => {
         .limit(1);
       if (!existingLink) throw new Error("Existing session link missing");
       const clientToken = decryptSensitiveData(existing.clientTokenEncrypted, "developer-client-token");
+      const latest = await latestLinkFlowAttempt(existing.paymentLinkId);
       res.status(201).json(CreateDeveloperPaymentSessionResponse.parse({
         id: existing.id,
         merchantReference: existing.merchantReference,
         mode: existing.mode,
-        state: "created",
+        state: sessionStateFromAttempt(latest),
         amountMinor: existing.amountMinor,
         currency: existing.currency,
         checkoutPath: existing.mode === "hosted" ? `/pay/${existingLink.publicToken}` : null,
@@ -661,6 +718,52 @@ router.post("/v1/payment-sessions", async (req, res): Promise<void> => {
       expiresAt: outcome.session.expiresAt,
     }));
   } catch {
+    try {
+      const [existing] = await db.select().from(developerPaymentSessionsTable)
+        .where(and(
+          eq(developerPaymentSessionsTable.userId, key.userId),
+          eq(developerPaymentSessionsTable.idempotencyKey, idempotencyKey),
+        )).limit(1);
+      if (existing) {
+        if (existing.requestHash !== requestHash || existing.apiKeyId !== key.id) {
+          res.status(409).json({ error: "Cette clé Idempotency-Key a déjà été utilisée avec une autre demande." });
+          return;
+        }
+        const [existingLink] = await db.select({
+          publicToken: customerPaymentLinksTable.publicToken,
+        }).from(customerPaymentLinksTable)
+          .where(eq(customerPaymentLinksTable.id, existing.paymentLinkId))
+          .limit(1);
+        if (!existingLink) throw new Error("Existing session link missing");
+        const clientToken = decryptSensitiveData(existing.clientTokenEncrypted, "developer-client-token");
+        const latest = await latestLinkFlowAttempt(existing.paymentLinkId);
+        res.status(201).json(CreateDeveloperPaymentSessionResponse.parse({
+          id: existing.id,
+          merchantReference: existing.merchantReference,
+          mode: existing.mode,
+          state: sessionStateFromAttempt(latest),
+          amountMinor: existing.amountMinor,
+          currency: existing.currency,
+          checkoutPath: existing.mode === "hosted" ? `/pay/${existingLink.publicToken}` : null,
+          clientToken,
+          publicKey: key.publicKey,
+          expiresAt: existing.expiresAt,
+        }));
+        return;
+      }
+      const [referenceCollision] = await db.select({ id: developerPaymentSessionsTable.id })
+        .from(developerPaymentSessionsTable)
+        .where(and(
+          eq(developerPaymentSessionsTable.userId, key.userId),
+          eq(developerPaymentSessionsTable.merchantReference, parsedBody.data.merchantReference.trim()),
+        )).limit(1);
+      if (referenceCollision) {
+        res.status(409).json({ error: "Cette référence marchand a déjà été utilisée." });
+        return;
+      }
+    } catch {
+      // Keep the generic response if the recovery lookup itself is unavailable.
+    }
     req.log.error({ userId: key.userId, keyId: key.id }, "Developer payment session could not be created");
     res.status(503).json({ error: "La session de paiement est momentanément indisponible." });
   }
@@ -730,7 +833,8 @@ router.get("/v1/public/payment-sessions/:sessionId", async (req, res): Promise<v
       return;
     }
     const latest = await latestLinkFlowAttempt(session.paymentLinkId);
-    const countries = await getPublicPaymentLinkChoices(session.publicToken);
+    const state = sessionStateFromAttempt(latest);
+    const countries = state === "succeeded" ? [] : await getPublicPaymentLinkChoices(session.publicToken);
     if (!countries) {
       res.status(404).json({ error: "Cette session de paiement n’est pas disponible." });
       return;
@@ -740,7 +844,7 @@ router.get("/v1/public/payment-sessions/:sessionId", async (req, res): Promise<v
       merchantName: link.name?.trim() || "SendFlow",
       description: link.description,
       mode: session.mode,
-      state: sessionStateFromAttempt(latest),
+      state,
       amountMinor: session.amountMinor,
       currency: session.currency,
       expiresAt: session.expiresAt,
@@ -822,7 +926,7 @@ router.get("/v1/public/payment-sessions/:sessionId/attempts/:attemptId", async (
     return;
   }
   try {
-    const session = await readPublicSessionCredentials(req, res, params.data.sessionId);
+    const session = await readPublicSessionCredentials(req, res, params.data.sessionId, { allowExpired: true });
     if (!session) return;
     if (!await consumeDeveloperApiQuota(session.apiKeyId, "direct_poll") ||
       !await consumePublicPaymentLinkQuota(req.ip || req.socket.remoteAddress || "unknown", "poll")) {

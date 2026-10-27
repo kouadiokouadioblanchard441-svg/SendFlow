@@ -16,6 +16,10 @@ import {
   applyLinkFlowPaymentAssociation,
   planLinkFlowPaymentAssociation,
 } from "../../scripts/linkflow-payment-attempts-migration.mjs";
+import {
+  applyDeveloperIntegrations,
+  planDeveloperIntegrations,
+} from "../../scripts/developer-integrations-migration.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const apiDir = join(root, "artifacts/api-server");
@@ -37,6 +41,10 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  await owner.query(`DROP TABLE sf_developer_webhook_deliveries;
+    DROP TABLE sf_developer_payment_sessions;
+    DROP TABLE sf_developer_webhook_endpoints;
+    DROP TABLE sf_developer_api_keys`);
   await owner.query("DROP TABLE sf_customer_payment_link_payments");
   await owner.query("DROP TABLE sf_customer_payment_links");
   const paymentLinksMigration = readFileSync(join(root,
@@ -55,6 +63,19 @@ try {
     "lib/db/migrations/2026-10-26-linkflow-variable-amount.sql"), "utf8");
   await owner.query(variableAmountMigration);
   await owner.query(variableAmountMigration);
+  const developerMigrationClient = await owner.connect();
+  try {
+    const developerPlan = await planDeveloperIntegrations(developerMigrationClient);
+    assert.deepEqual(developerPlan.conflicts, []);
+    assert.equal(developerPlan.alreadyApplied, false);
+    await applyDeveloperIntegrations(developerMigrationClient, developerPlan.fingerprint);
+    const developerRepeat = await planDeveloperIntegrations(developerMigrationClient);
+    assert.equal(developerRepeat.alreadyApplied, true);
+    assert.deepEqual(
+      await applyDeveloperIntegrations(developerMigrationClient, developerRepeat.fingerprint),
+      { applied: false, alreadyApplied: true, paymentExecutionEnabled: false },
+    );
+  } finally { developerMigrationClient.release(); }
   // Exercise the scoped migration rather than accepting Drizzle's approximation
   // of its triggers, cross-table guards and operational registry.
   await owner.query("DROP TABLE sf_replit_payment_test_access CASCADE");

@@ -286,6 +286,7 @@ test("payment-link schema migration is present and operates only in the isolated
     { column_name: "updated_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "NO" },
     { column_name: "link_name", data_type: "character varying", character_maximum_length: 120, is_nullable: "YES" },
     { column_name: "deleted_at", data_type: "timestamp with time zone", character_maximum_length: null, is_nullable: "YES" },
+    { column_name: "source", data_type: "character varying", character_maximum_length: 12, is_nullable: "NO" },
   ]);
   const constraints = await owner.query(`SELECT conname FROM pg_constraint
     WHERE conrelid='public.sf_customer_payment_links'::regclass
@@ -301,6 +302,7 @@ test("payment-link schema migration is present and operates only in the isolated
     "sf_customer_payment_links_pkey",
     "sf_customer_payment_links_request_hash_check",
     "sf_customer_payment_links_return_url_check",
+    "sf_customer_payment_links_source_check",
     "sf_customer_payment_links_status_check",
     "sf_customer_payment_links_suffix_check",
     "sf_customer_payment_links_token_check",

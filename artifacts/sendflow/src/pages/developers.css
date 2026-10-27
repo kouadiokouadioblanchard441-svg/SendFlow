@@ -245,3 +245,197 @@
 @media (prefers-reduced-motion: reduce) {
   .sendflow-developers *, .sendflow-developers *::before, .sendflow-developers *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Merchant developer workspace — precise outlined panels with SendFlow violet. */
+.sendflow-developers {
+  --dev-ink: #292435;
+  --dev-muted: #716b7d;
+  --dev-faint: #918b9b;
+  --dev-line: #e4dfea;
+  --dev-paper: #fff;
+  --dev-ground: #f7f5f9;
+  --dev-violet: #7043c2;
+  --dev-violet-dark: #54309d;
+  --dev-violet-wash: #f3effa;
+  --dev-green: #28765e;
+  --dev-green-wash: #eaf5ef;
+  --dev-red: #a44744;
+  box-sizing: border-box;
+  padding: clamp(20px, 3.6vw, 42px) clamp(14px, 4vw, 44px) 34px;
+  background:
+    radial-gradient(ellipse at 92% 0%, rgba(227, 218, 241, .38), transparent 32rem),
+    #f7f5f9;
+}
+
+.sendflow-developers *,
+.sendflow-developers *::before,
+.sendflow-developers *::after { box-sizing: border-box; }
+
+.dev-page { width: min(100%, 1040px); }
+.dev-page-header { margin-bottom: 22px; }
+.dev-breadcrumb { font-size: 11px; letter-spacing: .015em; }
+.dev-title-row { margin-top: 17px; align-items: center; }
+.dev-kicker, .dev-section-index, .dev-eyebrow { letter-spacing: .12em; }
+.dev-title-row h1 { font-size: clamp(28px, 4vw, 36px); letter-spacing: -.045em; }
+.dev-intro { margin-top: 8px; font-size: 13px; }
+.dev-secure-note { border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(51, 37, 69, .035); }
+
+.dev-mode-panel {
+  grid-template-columns: minmax(220px, .8fr) 1.2fr;
+  gap: 17px 25px;
+  border-color: #e2dce9;
+  border-radius: 13px;
+  background: #fff;
+  padding: 20px 22px 15px 25px;
+  box-shadow: 0 3px 12px rgba(51, 37, 69, .025);
+}
+.dev-mode-panel::before { width: 3px; }
+.dev-mode-copy h2 { margin: 8px 0 6px; font-size: 18px; }
+.dev-mode-copy p { font-size: 11px; line-height: 1.55; }
+.dev-mode-option { border-radius: 8px; padding: 8px 10px; }
+.dev-docs-note { padding-top: 11px; font-size: 10px; }
+
+.dev-stats {
+  margin: 13px 0 24px;
+  border-color: var(--dev-line);
+  border-radius: 10px;
+  background: #fff;
+}
+.dev-stat { padding: 13px 17px; }
+.dev-stat > strong { font-size: 21px; }
+.dev-stat > small { font-size: 9px; }
+
+.dev-section {
+  margin-top: 19px;
+  border: 1px solid var(--dev-line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 17px 18px 18px;
+  box-shadow: 0 3px 12px rgba(51, 37, 69, .025);
+}
+.dev-webhooks-section { margin-top: 16px; }
+.dev-section-heading { align-items: center; margin-bottom: 13px; }
+.dev-section-title h2 { margin: 6px 0 3px; font-size: 19px; }
+.dev-section-title p { font-size: 11px; }
+.dev-primary-button, .dev-secondary-button, .dev-danger-button {
+  min-height: 37px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+.dev-primary-button { background: var(--dev-violet-dark); box-shadow: none; }
+.dev-primary-button:hover:not(:disabled) { background: #452584; }
+.dev-secondary-button { border-color: #dcd5e5; }
+.dev-loading-block span { height: 60px; }
+.dev-state, .dev-empty-state { border-radius: 9px; }
+
+.dev-key-list { gap: 8px; }
+.dev-key-card {
+  border-color: #e6e1ea;
+  border-radius: 9px;
+  background: #fff;
+  padding: 13px 15px 11px;
+}
+.dev-key-card-main { grid-template-columns: minmax(150px, .75fr) minmax(0, 1.25fr); gap: 16px; }
+.dev-key-mark { border-radius: 8px; }
+.dev-key-values > div {
+  min-width: 0;
+  border: 1px solid #e8e3ec;
+  border-radius: 6px;
+  background: #fbfafc;
+  padding: 7px 8px;
+}
+.dev-key-values span { font-size: 7px; }
+.dev-key-values code {
+  display: block;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: -.025em;
+}
+.dev-key-meta { margin-top: 10px; padding-top: 8px; }
+.dev-key-card > .dev-text-danger {
+  top: auto;
+  right: 15px;
+  bottom: 11px;
+  padding: 5px 0 5px 8px;
+}
+
+.dev-webhook-layout { grid-template-columns: minmax(205px, .72fr) minmax(0, 1.55fr); gap: 11px; }
+.dev-endpoint-list { gap: 7px; }
+.dev-endpoint-card { border-radius: 8px; padding: 11px; }
+.dev-endpoint-card.is-selected { border-color: #a78ecf; box-shadow: inset 3px 0 0 var(--dev-violet); }
+.dev-deliveries { border-radius: 9px; }
+.dev-deliveries-header { padding: 12px 14px 10px; }
+.dev-delivery-table th { padding: 9px 8px; }
+.dev-delivery-table td { padding: 10px 8px; }
+.dev-footer { margin-top: 21px; font-size: 9px; }
+
+.dev-dialog {
+  border-color: #e5dfea;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(35, 27, 47, .18);
+}
+.dev-dialog-header { padding: 17px 20px 13px; }
+.dev-form, .dev-secret-content, .dev-revoke-confirm { padding: 17px 20px 20px; }
+.dev-form input:not([type="checkbox"]) { border-radius: 7px; }
+.dev-form input:focus-visible,
+.dev-icon-button:focus-visible,
+.dev-primary-button:focus-visible,
+.dev-secondary-button:focus-visible,
+.dev-danger-button:focus-visible,
+.dev-copy-button:focus-visible,
+.dev-text-danger:focus-visible,
+.dev-state button:focus-visible,
+.dev-inline-state button:focus-visible,
+.dev-endpoint-card:focus-visible {
+  outline: 3px solid rgba(112, 67, 194, .28);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .dev-title-row { align-items: flex-start; }
+  .dev-mode-panel { grid-template-columns: 1fr; }
+  .dev-key-card-main { grid-template-columns: 1fr; gap: 10px; }
+}
+
+@media (max-width: 520px) {
+  .sendflow-developers { padding: 18px 12px 25px; }
+  .dev-page-header { margin-bottom: 17px; }
+  .dev-title-row { margin-top: 13px; }
+  .dev-title-row h1 { font-size: 30px; }
+  .dev-intro { font-size: 12px; }
+  .dev-mode-panel { gap: 13px; padding: 16px 13px 13px 17px; }
+  .dev-mode-option { grid-template-columns: 30px minmax(0, 1fr); }
+  .dev-stats { margin: 11px 0 17px; }
+  .dev-stat { padding: 11px 9px; }
+  .dev-section { margin-top: 14px; padding: 14px 12px 13px; }
+  .dev-webhooks-section { margin-top: 12px; }
+  .dev-section-heading { align-items: stretch; }
+  .dev-section-heading > .dev-primary-button { width: 100%; }
+  .dev-key-card { padding: 12px 11px; }
+  .dev-key-card > .dev-text-danger { top: 10px; right: 11px; bottom: auto; }
+  .dev-key-name-line { padding-right: 56px; }
+  .dev-key-values { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .dev-key-values > div { grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 6px; }
+  .dev-key-values code { font-size: 9px; }
+  .dev-key-meta { padding-right: 58px; }
+  .dev-endpoint-list { grid-template-columns: 1fr; }
+  .dev-delivery-table-wrap { max-width: 100%; }
+  .dev-delivery-table { min-width: 0; }
+  .dev-delivery-table th, .dev-delivery-table td { padding: 8px 5px; }
+  .dev-delivery-table th { font-size: 6px; letter-spacing: .035em; }
+  .dev-delivery-table td { font-size: 8px; }
+  .dev-delivery-table td strong { font-size: 8px; }
+  .dev-delivery-table td small { font-size: 8px; }
+  .dev-status-pill { gap: 3px; font-size: 8px; }
+  .dev-dialog-actions { flex-direction: column-reverse; }
+  .dev-dialog-actions > button { width: 100%; }
+}
+
+@media (max-width: 360px) {
+  .sendflow-developers { padding-inline: 9px; }
+  .dev-section { padding-inline: 9px; }
+  .dev-key-values > div { grid-template-columns: 64px minmax(0, 1fr); }
+  .dev-key-card > .dev-text-danger { font-size: 9px; }
+  .dev-delivery-table th, .dev-delivery-table td { padding-inline: 3px; }
+}

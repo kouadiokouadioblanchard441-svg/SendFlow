@@ -129,7 +129,8 @@ CREATE TABLE IF NOT EXISTS public.sf_developer_webhook_deliveries (
   delivered_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT sf_developer_webhook_deliveries_event_uq UNIQUE(endpoint_id,payment_session_id,event_type),
+  CONSTRAINT sf_developer_webhook_deliveries_event_uq
+    UNIQUE(endpoint_id,payment_session_id,event_type),
   CONSTRAINT sf_developer_webhook_deliveries_payload_check CHECK (octet_length(payload::text) <= 16384),
   CONSTRAINT sf_developer_webhook_deliveries_event_check CHECK (event_type IN ('payment.succeeded','payment.failed')),
   CONSTRAINT sf_developer_webhook_deliveries_status_check CHECK (status IN ('pending','delivering','delivered','failed')),

@@ -25,6 +25,8 @@ export function routeInventory() {
           const admin = name.startsWith("admin") || receiver === "adminRoutes";
           const path = `/api${admin ? adminPrefix : ""}${arg.text}`;
           const category = admin ? "admin"
+            : arg.text.startsWith("/v1/") ? "versioned-api"
+            : arg.text.startsWith("/auth/biometric") ? "customer"
             : arg.text.startsWith("/me") || arg.text === "/auth/session" ? "customer"
             : arg.text.startsWith("/webhooks/") ? "webhook"
             : method === "GET" ? "public-read" : "authentication";

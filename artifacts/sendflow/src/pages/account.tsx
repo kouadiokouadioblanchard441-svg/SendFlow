@@ -4,6 +4,7 @@ import {
   ArrowDownToLine,
   BadgePercent,
   ChevronRight,
+  Code2,
   Eye,
   EyeOff,
   FileText,
@@ -426,6 +427,7 @@ export default function AccountPage() {
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/pricing'); }} data-testid="button-menu-pricing"><BadgePercent size={19} />Tarification<ChevronRight size={17} /></button>
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/account-limit'); }} data-testid="button-menu-limit"><WalletCards size={19} />Plafond du compte<ChevronRight size={17} /></button>
                 <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/linkflow'); }} data-testid="button-menu-linkflow"><Link2 size={19} />LinkFlow<ChevronRight size={17} /></button>
+                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/developers'); }} data-testid="button-menu-developers"><Code2 size={19} />Développeurs<ChevronRight size={17} /></button>
                <button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/confidentialite'); }} data-testid="button-menu-privacy"><FileText size={19} />Politique de confidentialité<ChevronRight size={17} /></button>
             </div>
                 <div className="sendflow-menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/customer-service'); }} data-testid="button-menu-help"><Headphones size={19} />Service client<ChevronRight size={17} /></button><button type="button" disabled={signOutCustomer.isPending} onClick={async () => { try { await signOutCustomer.mutateAsync(); clearLegacyAccountProfile(); queryClient.clear(); clearPinUnlock(); window.sessionStorage.removeItem('sendflow.avatar.user-key'); setLocation('/sign-in'); } catch { /* Keep the session presentation intact until the server confirms logout. */ } }} data-testid="button-menu-logout"><LogOut size={19} />{signOutCustomer.isPending ? 'Déconnexion…' : 'Déconnecter'}</button></div>

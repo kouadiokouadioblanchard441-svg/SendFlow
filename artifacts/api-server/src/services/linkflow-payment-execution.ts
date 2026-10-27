@@ -33,6 +33,7 @@ import { FeexpayClient, type FeexpayReceipt } from "../providers/feexpay/client"
 import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
 import { getAggregatorRouteScopeKey } from "../routes/aggregator-catalog";
 import { parseLinkFlowPayerAmount } from "./payment-links";
+import { enqueueDeveloperPaymentEvent } from "./developer-webhook-outbox";
 import {
   buildLinkFlowRequestHash,
   deriveLinkFlowPollToken,
@@ -718,6 +719,17 @@ async function retryWalletSettlement(bundle: AttemptBundle) {
       sql`${customerPaymentLinksTable.maximumUses} is null OR ${customerPaymentLinksTable.usageCount} < ${customerPaymentLinksTable.maximumUses}`,
     )).returning({ id: customerPaymentLinksTable.id });
     if (!incremented) throw new Error("LinkFlow use reservation could not be consumed");
+    if (link.source === "api") {
+      await enqueueDeveloperPaymentEvent(tx, {
+        paymentLinkId: link.id,
+        eventType: "payment.succeeded",
+        attemptId: attempt.id,
+        transactionId: transaction.id,
+        amountMinor: attempt.amountMinor,
+        currency: attempt.currency,
+        occurredAt: new Date(),
+      });
+    }
     return true;
   });
 }
@@ -804,6 +816,22 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
         .where(eq(paymentIntentsTable.id, intent.id));
       await tx.update(transactionsTable).set({ status: "failed", updatedAt: now })
         .where(eq(transactionsTable.id, transaction.id));
+      const [link] = await tx.select({
+        source: customerPaymentLinksTable.source,
+      }).from(customerPaymentLinksTable)
+        .where(eq(customerPaymentLinksTable.id, mapping.paymentLinkId))
+        .limit(1);
+      if (link?.source === "api") {
+        await enqueueDeveloperPaymentEvent(tx, {
+          paymentLinkId: mapping.paymentLinkId,
+          eventType: "payment.failed",
+          attemptId: attempt.id,
+          transactionId: transaction.id,
+          amountMinor: attempt.amountMinor,
+          currency: attempt.currency,
+          occurredAt: now,
+        });
+      }
       return;
     }
 

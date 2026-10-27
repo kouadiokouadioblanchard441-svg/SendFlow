@@ -38,7 +38,7 @@ before(async () => {
   server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
   writeFileSync(join(siteRoot, "index.html"), "<!doctype html><html><body>SPA fixture</body></html>");
-  site = createSiteServer(siteRoot);
+  site = createSiteServer(siteRoot, async () => true, async () => "allowed");
   site.listen(0, "127.0.0.1");
   await once(site, "listening");
 });
@@ -81,7 +81,7 @@ function request(path, { method = "GET", origin = "https://sendflow-test.invalid
 
 test("inventory covers mounted customer, administrative, auth, webhook and public declarations", () => {
   assert.ok(routes.length > 0, "No route declarations were discovered");
-  for (const category of ["admin", "customer", "authentication", "webhook", "public-read"]) {
+  for (const category of ["admin", "customer", "authentication", "webhook", "public-read", "versioned-api"]) {
     assert.ok(routes.some((route) => route.category === category), category);
   }
   console.info(JSON.stringify({ routeInventory: routes.length,
@@ -123,13 +123,23 @@ for (const route of routes.filter((r) => ["admin", "customer"].includes(r.catego
   });
 }
 
-for (const route of routes.filter((r) => r.method !== "GET" && r.category !== "webhook")) {
+for (const route of routes.filter((r) => r.method !== "GET"
+  && !["webhook", "versioned-api"].includes(r.category))) {
   test(`${route.method} ${route.path} blocks missing and foreign origins`, async () => {
     for (const origin of [null, "https://untrusted.invalid"]) {
       const response = await request(route.path, { method: route.method, origin });
       assert.equal(response.status, 403, response.text);
       assert.match(response.headers["cache-control"], /no-store/);
     }
+  });
+}
+
+for (const route of routes.filter((r) => r.category === "versioned-api")) {
+  test(`${route.method} ${route.path} uses API credentials instead of browser CSRF`, async () => {
+    const response = await request(route.path, { method: route.method, origin: null });
+    assert.ok([400, 401, 404, 503].includes(response.status), response.text);
+    assert.notEqual(JSON.parse(response.text).code, "csrf_token_invalid");
+    assert.doesNotMatch(response.text, /postgres(?:ql)?:\/\/|scrypt\$v1|BEGIN (?:RSA )?PRIVATE KEY|stackTrace/i);
   });
 }
 
@@ -148,6 +158,8 @@ for (const route of routes.filter((r) => r.category === "public-read")) {
     // No object-storage sidecar exists in this fixture. Other public reads must load.
     const expected = route.path.includes("/storage/") ? 503
       : route.path.includes("/operators/") ? 404
+      : route.path.includes("/public/payment-links/") && route.path.includes("/quote/") ? 400
+      : route.path.includes("/public/payment-links/") || route.path.includes("/public/payment-link-attempts/") ? 404
       : 200;
     assert.equal(response.status, expected, response.text);
     assert.doesNotMatch(response.text, /postgres(?:ql)?:\/\/|scrypt\$v1|BEGIN (?:RSA )?PRIVATE KEY|stackTrace/i);

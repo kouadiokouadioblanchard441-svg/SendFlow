@@ -76,6 +76,18 @@ test("all unsafe methods reject absent, malformed and foreign origins before CSR
   }
 });
 
+test("versioned API routes defer authentication to their API-key handlers", () => {
+  for (const [method, path] of [
+    ["GET", "/v1/payment-sessions/11111111-1111-4111-8111-111111111111"],
+    ["POST", "/v1/payment-sessions"],
+    ["POST", "/v1/public/payment-sessions/11111111-1111-4111-8111-111111111111/attempts"],
+  ]) {
+    const result = invoke(method, path);
+    assert.equal(result.next, true, `${method} ${path}`);
+    assert.notEqual(result.body?.code, "csrf_token_invalid");
+  }
+});
+
 test("safe reads issue a short-lived HttpOnly binding cookie and expose a token", () => {
   const response = invoke("GET", "/auth/session");
   assert.equal(response.next, true);
