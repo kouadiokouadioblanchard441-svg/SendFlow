@@ -315,6 +315,12 @@
   white-space: nowrap;
   cursor: pointer;
 }
+.dev-integration-tabs [role="tab"] > .dev-tab-name {
+  min-width: 0;
+  max-width: 26vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .dev-integration-tabs [role="tab"][aria-selected="true"] {
   border-bottom-color: var(--dev-violet);
   color: var(--dev-violet-dark);

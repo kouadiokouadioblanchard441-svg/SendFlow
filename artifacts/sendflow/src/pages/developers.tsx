@@ -123,6 +123,7 @@ export default function DevelopersPage() {
   const apiKeysQuery = useListDeveloperApiKeys({ query: { queryKey: getListDeveloperApiKeysQueryKey() } });
   const webhooksQuery = useListDeveloperWebhooks({ query: { queryKey: getListDeveloperWebhooksQueryKey() } });
   const apiKeys = apiKeysQuery.data?.items ?? [];
+  const apiKeyTabLabel = apiKeys.find((key) => key.status === 'active')?.label ?? apiKeys[0]?.label ?? 'Clé publique';
   const endpoints = webhooksQuery.data?.items ?? [];
   const selectedEndpoint = endpoints.find((endpoint) => endpoint.id === selectedEndpointId);
   const deliveriesQuery = useListDeveloperWebhookDeliveries(selectedEndpointId, {
@@ -272,7 +273,7 @@ export default function DevelopersPage() {
             }}
           >
             <button type="button" role="tab" id="developer-tab-private" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'private'} tabIndex={developerTab === 'private' ? 0 : -1} onClick={() => setDeveloperTab('private')} data-testid="tab-private-key"><LockKeyhole size={15} /> Clé privée</button>
-            <button type="button" role="tab" id="developer-tab-identifier" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'identifier'} tabIndex={developerTab === 'identifier' ? 0 : -1} onClick={() => setDeveloperTab('identifier')} data-testid="tab-public-key"><KeyRound size={15} /> Identifiant</button>
+            <button type="button" role="tab" id="developer-tab-identifier" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'identifier'} tabIndex={developerTab === 'identifier' ? 0 : -1} onClick={() => setDeveloperTab('identifier')} title={apiKeyTabLabel} data-testid="tab-public-key"><KeyRound size={15} /><span className="dev-tab-name">{apiKeyTabLabel}</span></button>
             <button type="button" role="tab" id="developer-tab-webhook" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'webhook'} tabIndex={developerTab === 'webhook' ? 0 : -1} onClick={() => setDeveloperTab('webhook')} data-testid="tab-webhook"><Webhook size={15} /> Webhook</button>
           </div>
           <div className="dev-tab-panel" id="developer-integrations-panel" role="tabpanel" aria-labelledby={`developer-tab-${developerTab}`}>
