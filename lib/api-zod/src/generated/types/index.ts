@@ -142,6 +142,8 @@ export * from './deleteAdminBannerResult';
 export * from './developerApiKey';
 export * from './developerApiKeyCreatedResponse';
 export * from './developerApiKeyCreatedResponseEnvironment';
+export * from './developerApiKeyInitializationResponse';
+export * from './developerApiKeyInitializationResponseEnvironment';
 export * from './developerApiKeyInput';
 export * from './developerApiKeysResponse';
 export * from './developerApiKeysResponseEnvironment';

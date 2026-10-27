@@ -11,5 +11,5 @@ export type DeveloperApiKeyCreatedResponseEnvironment = typeof DeveloperApiKeyCr
 
 export const DeveloperApiKeyCreatedResponseEnvironment = {
   live: 'live',
-  sandbox: 'sandbox',
+  preview: 'preview',
 } as const;

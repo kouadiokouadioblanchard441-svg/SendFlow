@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
@@ -20,6 +20,7 @@ import {
   getListDeveloperWebhookDeliveriesQueryKey,
   useCreateDeveloperApiKey,
   useCreateDeveloperWebhook,
+  useInitializePreviewDeveloperApiKey,
   useListDeveloperApiKeys,
   useListDeveloperWebhooks,
   useListDeveloperWebhookDeliveries,
@@ -33,7 +34,6 @@ import type {
 import './developers.css';
 
 type DialogState =
-  | { kind: 'api-create' }
   | { kind: 'api-regenerate'; label: string }
   | { kind: 'webhook-create' }
   | { kind: 'api-secret'; response: DeveloperApiKeyCreatedResponse }
@@ -115,11 +115,12 @@ export default function DevelopersPage() {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [developerTab, setDeveloperTab] = useState<DeveloperTab>('private');
   const [selectedEndpointId, setSelectedEndpointId] = useState('');
-  const [apiLabel, setApiLabel] = useState('');
   const [webhookLabel, setWebhookLabel] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<string[]>(['payment.succeeded']);
   const [formError, setFormError] = useState('');
+  const [previewInitializationFailed, setPreviewInitializationFailed] = useState(false);
+  const previewKeyInitializationStarted = useRef(false);
 
   const apiKeysQuery = useListDeveloperApiKeys({ query: { queryKey: getListDeveloperApiKeysQueryKey() } });
   const webhooksQuery = useListDeveloperWebhooks({ query: { queryKey: getListDeveloperWebhooksQueryKey() } });
@@ -137,6 +138,7 @@ export default function DevelopersPage() {
   const deliveries = deliveriesQuery.data?.items ?? [];
 
   const createApiKey = useCreateDeveloperApiKey();
+  const initializePreviewApiKey = useInitializePreviewDeveloperApiKey();
   const revokeApiKey = useRevokeDeveloperApiKey();
   const createWebhook = useCreateDeveloperWebhook();
   const revokeWebhook = useRevokeDeveloperWebhook();
@@ -148,22 +150,44 @@ export default function DevelopersPage() {
     if (!endpoints.length) setSelectedEndpointId('');
   }, [endpoints, selectedEndpointId]);
 
+  useEffect(() => {
+    if (
+      apiKeysQuery.data?.environment !== 'preview'
+      || apiKeysQuery.isLoading
+      || apiKeysQuery.isError
+      || apiKeys.some((key) => key.status === 'active')
+      || previewKeyInitializationStarted.current
+    ) return;
+
+    previewKeyInitializationStarted.current = true;
+    void initializePreviewApiKey.mutateAsync().then(async (response) => {
+      await queryClient.invalidateQueries({ queryKey: getListDeveloperApiKeysQueryKey() });
+      if (response.created && response.publicKey && response.secretKey) {
+        setDialog({
+          kind: 'api-secret',
+          response: {
+            key: response.key,
+            publicKey: response.publicKey,
+            secretKey: response.secretKey,
+            environment: 'preview',
+          },
+        });
+      }
+    }).catch(() => {
+      setPreviewInitializationFailed(true);
+    });
+  }, [
+    apiKeys,
+    apiKeysQuery.data?.environment,
+    apiKeysQuery.isError,
+    apiKeysQuery.isLoading,
+    initializePreviewApiKey,
+    queryClient,
+  ]);
+
   const closeDialog = () => {
     setDialog(null);
     setFormError('');
-  };
-
-  const submitApiKey = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setFormError('');
-    try {
-      const response = await createApiKey.mutateAsync({ data: { label: apiLabel.trim() } });
-      await queryClient.invalidateQueries({ queryKey: getListDeveloperApiKeysQueryKey() });
-      setApiLabel('');
-      setDialog({ kind: 'api-secret', response });
-    } catch {
-      setFormError('La création a échoué. Vérifiez votre connexion puis réessayez.');
-    }
   };
 
   const submitWebhook = async (event: FormEvent<HTMLFormElement>) => {
@@ -234,16 +258,6 @@ export default function DevelopersPage() {
           </div>
         </header>
 
-        {apiKeysQuery.data?.environment === 'sandbox' && (
-          <div className="dev-sandbox-banner" role="status" data-testid="developer-sandbox-banner">
-            <AlertCircle size={19} />
-            <div>
-              <strong>Compte de visualisation · clés sandbox</strong>
-              <span>Vous pouvez créer, copier, régénérer et révoquer ces clés de test. Elles ne déclenchent aucun paiement et ne fonctionnent pas sur l’API live.</span>
-            </div>
-          </div>
-        )}
-
         <section className="dev-section dev-keys-section" aria-labelledby="dev-keys-heading">
           <div className="dev-section-heading">
             <div className="dev-section-title">
@@ -266,18 +280,15 @@ export default function DevelopersPage() {
                   setWebhookUrl('');
                   setSelectedEvents(['payment.succeeded']);
                   setDialog({ kind: 'webhook-create' });
-                } else if (activeApiKey) {
-                  setFormError('');
-                  setDialog({ kind: 'api-regenerate', label: activeApiKey.label });
                 } else {
-                  setApiLabel('');
-                  setDialog({ kind: 'api-create' });
+                  setFormError('');
+                  setDialog({ kind: 'api-regenerate', label: activeApiKey?.label ?? 'Clé principale' });
                 }
               }}
-              data-testid={developerTab === 'webhook' ? 'button-create-webhook' : 'button-create-api-key'}
+              data-testid={developerTab === 'webhook' ? 'button-create-webhook' : 'button-regenerate-api-key'}
             >
-              {developerTab === 'webhook' ? <Plus size={17} /> : activeApiKey ? <RefreshCw size={16} /> : <Plus size={17} />}
-              {developerTab === 'webhook' ? 'Configurer une URL' : activeApiKey ? 'Régénérer' : 'Créer une clé'}
+              {developerTab === 'webhook' ? <Plus size={17} /> : <RefreshCw size={16} />}
+              {developerTab === 'webhook' ? 'Configurer une URL' : 'Régénérer'}
             </button>
           </div>
           <div
@@ -310,7 +321,7 @@ export default function DevelopersPage() {
                 {apiKeysQuery.isLoading && <div className="dev-loading-block" aria-label="Chargement des clés API"><span /><span /><span /></div>}
                 {apiKeysQuery.isError && <div className="dev-state dev-state-error" role="alert"><AlertCircle size={20} /><span><strong>Clés indisponibles</strong><small>Les données n’ont pas pu être chargées.</small></span><button type="button" onClick={() => void apiKeysQuery.refetch()}><RefreshCw size={15} /> Réessayer</button></div>}
                 {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length === 0 && (
-                  <div className="dev-empty-state"><span className="dev-empty-icon"><KeyRound size={22} /></span><div><strong>Aucune clé API</strong><p>Créez une paire de clés pour commencer à connecter votre application.</p></div><button className="dev-secondary-button" type="button" onClick={() => setDialog({ kind: 'api-create' })}>Créer une clé</button></div>
+                  <div className="dev-empty-state"><span className="dev-empty-icon"><KeyRound size={22} /></span><div><strong>La paire principale est indisponible</strong><p>Les clés sont générées automatiquement à la création du compte. Utilisez « Régénérer » si la paire doit être renouvelée.</p>{previewInitializationFailed && <small role="alert">L’initialisation automatique a échoué. Réessayez avec « Régénérer ».</small>}</div></div>
                 )}
                 {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length > 0 && (
                   <div className="dev-key-list">
@@ -392,22 +403,10 @@ export default function DevelopersPage() {
         <footer className="dev-footer"><LockKeyhole size={15} /><span>Ne partagez jamais vos secrets. SendFlow ne les conserve pas sous une forme consultable.</span></footer>
       </div>
 
-      {dialog?.kind === 'api-create' && (
-        <Dialog title="Créer une paire de clés" onClose={closeDialog}>
-          <form className="dev-form" onSubmit={(event) => void submitApiKey(event)}>
-            <p>{apiKeysQuery.data?.environment === 'sandbox' ? 'Cette paire sandbox permet de vérifier la gestion des clés dans le compte de visualisation. Elle ne peut pas lancer de paiement.' : 'Donnez un nom qui vous aidera à identifier l’application ou l’environnement concerné.'}</p>
-            <label htmlFor="api-key-label">Nom de la clé</label>
-            <input id="api-key-label" value={apiLabel} onChange={(event) => setApiLabel(event.target.value)} maxLength={80} required autoFocus placeholder="Ex. Boutique web — production" data-testid="input-api-key-label" />
-            {formError && <p className="dev-form-error" role="alert">{formError}</p>}
-            <div className="dev-dialog-actions"><button type="button" className="dev-secondary-button" onClick={closeDialog}>Annuler</button><button className="dev-primary-button" type="submit" disabled={createApiKey.isPending || !apiLabel.trim()}>{createApiKey.isPending && <LoaderCircle className="dev-spin" size={16} />}{createApiKey.isPending ? 'Création…' : 'Créer la clé'}</button></div>
-          </form>
-        </Dialog>
-      )}
-
       {dialog?.kind === 'api-regenerate' && (
         <Dialog title="Régénérer la paire de clés" onClose={closeDialog}>
           <div className="dev-revoke-confirm">
-            <p>Toutes les paires API actuellement actives seront immédiatement désactivées. Les intégrations qui les utilisent devront être mises à jour avec la nouvelle clé API et le nouveau secret.</p>
+            <p>{activeApiKey ? 'Toutes les paires API actuellement actives seront immédiatement désactivées. Les intégrations qui les utilisent devront être mises à jour avec la nouvelle clé API et le nouveau secret.' : 'La paire principale sera générée pour ce compte. Le secret ne sera affiché qu’une seule fois.'}</p>
             {formError && <p className="dev-form-error" role="alert">{formError}</p>}
             <div className="dev-dialog-actions">
               <button type="button" className="dev-secondary-button" onClick={closeDialog}>Conserver la paire actuelle</button>
@@ -436,9 +435,9 @@ export default function DevelopersPage() {
       )}
 
       {dialog?.kind === 'api-secret' && (
-        <Dialog title="Clés créées" onClose={closeDialog}>
+        <Dialog title="Nouvelle paire de clés" onClose={closeDialog}>
           <div className="dev-secret-content">
-            <div className="dev-one-time-warning"><AlertCircle size={19} /><div><strong>{dialog.response.environment === 'sandbox' ? 'Clés sandbox de visualisation.' : 'Copiez et conservez ces clés maintenant.'}</strong><p>{dialog.response.environment === 'sandbox' ? 'Elles servent uniquement à tester la gestion des clés. Aucun paiement réel ne peut être déclenché.' : 'La clé secrète ne sera plus affichée après la fermeture de cette fenêtre. Ne la partagez jamais.'}</p></div></div>
+            <div className="dev-one-time-warning"><AlertCircle size={19} /><div><strong>Copiez et conservez ces clés maintenant.</strong><p>La clé privée ne sera plus affichée après la fermeture de cette fenêtre. Ne la partagez jamais.</p></div></div>
             <SecretValue label="Clé publique" value={dialog.response.publicKey} />
             <SecretValue label="Clé secrète" value={dialog.response.secretKey} secret />
             <button className="dev-primary-button dev-full-button" type="button" onClick={closeDialog}><CheckCircle2 size={17} /> J’ai enregistré mes clés</button>

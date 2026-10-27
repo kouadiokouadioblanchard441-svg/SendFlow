@@ -64,7 +64,7 @@ export function isViewerRouteCandidate(method: string, requestPath: string): boo
       "/api/auth/biometric/registration/options", "/api/auth/biometric/registration/verify",
       "/api/auth/biometric/authentication/options", "/api/auth/biometric/authentication/verify",
       "/api/me/transfer-quote", "/api/me/payments", "/api/me/payment-links",
-      "/api/me/developer/api-keys"].includes(path)
+      "/api/me/developer/api-keys", "/api/me/developer/api-keys/initialize"].includes(path)
       || /^\/api\/me\/payment-links\/simulate\/[a-z0-9_-]{43}$/.test(path)
       || /^\/api\/me\/payments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/reconcile$/.test(path)
       || /^\/api\/me\/payment-links\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/image$/.test(path);

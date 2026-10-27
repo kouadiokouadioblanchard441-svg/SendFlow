@@ -85,6 +85,7 @@ import type {
   DatabaseStatus,
   DeleteAdminBannerResult,
   DeveloperApiKeyCreatedResponse,
+  DeveloperApiKeyInitializationResponse,
   DeveloperApiKeyInput,
   DeveloperApiKeysResponse,
   DeveloperDirectPaymentInput,
@@ -4017,8 +4018,8 @@ export const getCreateDeveloperApiKeyUrl = () => {
 }
 
 /**
- * Preview accounts receive sandbox-prefixed keys that cannot create payment sessions. Production accounts receive live-prefixed keys. Rotation revokes previously active pairs.
- * @summary Create or rotate a public and secret API key pair
+ * API key pairs are generated automatically when an account is created. Regeneration revokes active pairs. The viewing account receives non-live credentials that cannot create payment sessions.
+ * @summary Regenerate a public and secret API key pair
  */
 export const createDeveloperApiKey = async (developerApiKeyInput: DeveloperApiKeyInput, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperApiKeyCreatedResponse> => {
 
@@ -4084,7 +4085,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateDeveloperApiKeyMutationVariables = {data: BodyType<DeveloperApiKeyInput>}
 
     /**
- * @summary Create or rotate a public and secret API key pair
+ * @summary Regenerate a public and secret API key pair
  */
 export const useCreateDeveloperApiKey = <TError = ErrorType<ErrorEnvelope>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperApiKey>>, TError,CreateDeveloperApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -4169,6 +4170,81 @@ export const useRevokeDeveloperApiKey = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getRevokeDeveloperApiKeyMutationOptions(options));
+    }
+
+export const getInitializePreviewDeveloperApiKeyUrl = () => {
+
+
+
+
+  return `/api/me/developer/api-keys/initialize`
+}
+
+/**
+ * Creates a non-live key pair only for the authorized viewing account when it has no active pair. This is a one-time compatibility step for accounts provisioned before automatic key generation.
+ * @summary Initialize the viewing account's API key if missing
+ */
+export const initializePreviewDeveloperApiKey = async ( options?: Parameters<typeof customFetch>[1]): Promise<DeveloperApiKeyInitializationResponse> => {
+
+  return customFetch<DeveloperApiKeyInitializationResponse>(getInitializePreviewDeveloperApiKeyUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getInitializePreviewDeveloperApiKeyMutationKey = () => ['initializePreviewDeveloperApiKey'] as const;
+
+export const getInitializePreviewDeveloperApiKeyMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof initializePreviewDeveloperApiKey>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof initializePreviewDeveloperApiKey>>, TError,void, TContext> => {
+
+const mutationKey = getInitializePreviewDeveloperApiKeyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof initializePreviewDeveloperApiKey>>, void> = () => {
+
+
+          return  initializePreviewDeveloperApiKey(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InitializePreviewDeveloperApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof initializePreviewDeveloperApiKey>>>
+
+    export type InitializePreviewDeveloperApiKeyMutationError = ErrorType<ErrorEnvelope>
+
+
+    /**
+ * @summary Initialize the viewing account's API key if missing
+ */
+export const useInitializePreviewDeveloperApiKey = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof initializePreviewDeveloperApiKey>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof initializePreviewDeveloperApiKey>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getInitializePreviewDeveloperApiKeyMutationOptions(options));
     }
 
 export const getListDeveloperWebhooksUrl = () => {

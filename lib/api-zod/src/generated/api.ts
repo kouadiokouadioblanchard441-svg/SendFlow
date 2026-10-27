@@ -1299,7 +1299,7 @@ export const listDeveloperApiKeysResponseItemsItemPublicKeyRegExp = new RegExp('
 
 
 export const ListDeveloperApiKeysResponse = zod.object({
-  "environment": zod.enum(['live', 'sandbox']),
+  "environment": zod.enum(['live', 'preview']),
   "items": zod.array(zod.object({
   "id": zod.uuid(),
   "label": zod.string(),
@@ -1315,8 +1315,8 @@ export const ListDeveloperApiKeysResponse = zod.object({
 
 
 /**
- * Preview accounts receive sandbox-prefixed keys that cannot create payment sessions. Production accounts receive live-prefixed keys. Rotation revokes previously active pairs.
- * @summary Create or rotate a public and secret API key pair
+ * API key pairs are generated automatically when an account is created. Regeneration revokes active pairs. The viewing account receives non-live credentials that cannot create payment sessions.
+ * @summary Regenerate a public and secret API key pair
  */
 export const createDeveloperApiKeyBodyLabelMax = 80;
 
@@ -1345,7 +1345,7 @@ export const CreateDeveloperApiKeyResponse = zod.object({
 }),
   "publicKey": zod.string().regex(createDeveloperApiKeyResponsePublicKeyRegExp),
   "secretKey": zod.string().regex(createDeveloperApiKeyResponseSecretKeyRegExp),
-  "environment": zod.enum(['live', 'sandbox'])
+  "environment": zod.enum(['live', 'preview'])
 })
 
 
@@ -1357,6 +1357,34 @@ export const RevokeDeveloperApiKeyParams = zod.object({
 })
 
 export const RevokeDeveloperApiKeyResponse = zod.void()
+
+
+/**
+ * Creates a non-live key pair only for the authorized viewing account when it has no active pair. This is a one-time compatibility step for accounts provisioned before automatic key generation.
+ * @summary Initialize the viewing account's API key if missing
+ */
+export const initializePreviewDeveloperApiKeyResponseKeyPublicKeyRegExp = new RegExp('^sfpk_(live|test)_[A-Za-z0-9_-]{43}$');
+export const initializePreviewDeveloperApiKeyResponsePublicKeyRegExp = new RegExp('^sfpk_test_[A-Za-z0-9_-]{43}$');
+export const initializePreviewDeveloperApiKeyResponseSecretKeyRegExp = new RegExp('^sfsk_test_[A-Za-z0-9_-]{43}$');
+
+
+export const InitializePreviewDeveloperApiKeyResponse = zod.object({
+  "created": zod.boolean(),
+  "key": zod.object({
+  "id": zod.uuid(),
+  "label": zod.string(),
+  "publicKey": zod.string().regex(initializePreviewDeveloperApiKeyResponseKeyPublicKeyRegExp),
+  "publicKeyPrefix": zod.string(),
+  "secretKeyPrefix": zod.string(),
+  "status": zod.enum(['active', 'revoked']),
+  "lastUsedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable()
+}),
+  "publicKey": zod.string().regex(initializePreviewDeveloperApiKeyResponsePublicKeyRegExp).optional(),
+  "secretKey": zod.string().regex(initializePreviewDeveloperApiKeyResponseSecretKeyRegExp).optional(),
+  "environment": zod.enum(['preview'])
+})
 
 
 /**

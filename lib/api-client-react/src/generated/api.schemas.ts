@@ -2540,7 +2540,7 @@ export type DeveloperApiKeysResponseEnvironment = typeof DeveloperApiKeysRespons
 
 export const DeveloperApiKeysResponseEnvironment = {
   live: 'live',
-  sandbox: 'sandbox',
+  preview: 'preview',
 } as const;
 
 export interface DeveloperApiKeysResponse {
@@ -2553,7 +2553,7 @@ export type DeveloperApiKeyCreatedResponseEnvironment = typeof DeveloperApiKeyCr
 
 export const DeveloperApiKeyCreatedResponseEnvironment = {
   live: 'live',
-  sandbox: 'sandbox',
+  preview: 'preview',
 } as const;
 
 export interface DeveloperApiKeyCreatedResponse {
@@ -2563,6 +2563,23 @@ export interface DeveloperApiKeyCreatedResponse {
   /** @pattern ^sfsk_(live|test)_[A-Za-z0-9_-]{43}$ */
   secretKey: string;
   environment: DeveloperApiKeyCreatedResponseEnvironment;
+}
+
+export type DeveloperApiKeyInitializationResponseEnvironment = typeof DeveloperApiKeyInitializationResponseEnvironment[keyof typeof DeveloperApiKeyInitializationResponseEnvironment];
+
+
+export const DeveloperApiKeyInitializationResponseEnvironment = {
+  preview: 'preview',
+} as const;
+
+export interface DeveloperApiKeyInitializationResponse {
+  created: boolean;
+  key: DeveloperApiKey;
+  /** @pattern ^sfpk_test_[A-Za-z0-9_-]{43}$ */
+  publicKey?: string;
+  /** @pattern ^sfsk_test_[A-Za-z0-9_-]{43}$ */
+  secretKey?: string;
+  environment: DeveloperApiKeyInitializationResponseEnvironment;
 }
 
 export type DeveloperWebhookInputEventsItem = typeof DeveloperWebhookInputEventsItem[keyof typeof DeveloperWebhookInputEventsItem];

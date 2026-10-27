@@ -25,12 +25,6 @@
 .dev-section-index, .dev-eyebrow { color: var(--dev-violet); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
 .dev-title-row h1 { margin: 9px 0 0; font-size: clamp(30px, 5vw, 42px); line-height: 1.05; letter-spacing: -.055em; font-weight: 750; }
 .dev-intro { max-width: 610px; margin: 10px 0 0; color: var(--dev-muted); font-size: 14px; line-height: 1.55; }
-.dev-sandbox-banner { display: flex; align-items: flex-start; gap: 11px; margin-top: 18px; border: 1px solid #d9c9f4; border-radius: 11px; background: #f7f2ff; padding: 13px 15px; color: #59379a; }
-.dev-sandbox-banner > svg { flex: 0 0 auto; margin-top: 1px; }
-.dev-sandbox-banner > div { display: grid; gap: 4px; }
-.dev-sandbox-banner strong { color: #302044; font-size: 12px; }
-.dev-sandbox-banner span { color: #62596f; font-size: 11px; line-height: 1.5; }
-
 .dev-section { margin-top: 31px; }
 .dev-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 15px; }
 .dev-section-title h2 { display: flex; align-items: center; gap: 9px; margin: 8px 0 4px; font-size: 21px; letter-spacing: -.04em; }

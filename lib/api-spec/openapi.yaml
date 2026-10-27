@@ -1590,8 +1590,8 @@ paths:
     post:
       operationId: createDeveloperApiKey
       tags: [developer]
-      summary: Create or rotate a public and secret API key pair
-      description: Preview accounts receive sandbox-prefixed keys that cannot create payment sessions. Production accounts receive live-prefixed keys. Rotation revokes previously active pairs.
+      summary: Regenerate a public and secret API key pair
+      description: API key pairs are generated automatically when an account is created. Regeneration revokes active pairs. The viewing account receives non-live credentials that cannot create payment sessions.
       security:
         - sendFlowSession: []
       requestBody:
@@ -1651,6 +1651,40 @@ paths:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "404":
           description: API key not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Key storage is unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /me/developer/api-keys/initialize:
+    post:
+      operationId: initializePreviewDeveloperApiKey
+      tags: [developer]
+      summary: Initialize the viewing account's API key if missing
+      description: Creates a non-live key pair only for the authorized viewing account when it has no active pair. This is a one-time compatibility step for accounts provisioned before automatic key generation.
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: An active pair already exists; no secret is returned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperApiKeyInitializationResponse" }
+        "201":
+          description: A pair was initialized; its secret is returned once.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperApiKeyInitializationResponse" }
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: This operation is restricted to the viewing account.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
@@ -6970,7 +7004,7 @@ components:
       properties:
         environment:
           type: string
-          enum: [live, sandbox]
+          enum: [live, preview]
         items:
           type: array
           items: { $ref: "#/components/schemas/DeveloperApiKey" }
@@ -6987,8 +7021,23 @@ components:
           pattern: "^sfsk_(live|test)_[A-Za-z0-9_-]{43}$"
         environment:
           type: string
-          enum: [live, sandbox]
+          enum: [live, preview]
       required: [key, publicKey, secretKey, environment]
+    DeveloperApiKeyInitializationResponse:
+      type: object
+      properties:
+        created: { type: boolean }
+        key: { $ref: "#/components/schemas/DeveloperApiKey" }
+        publicKey:
+          type: string
+          pattern: "^sfpk_test_[A-Za-z0-9_-]{43}$"
+        secretKey:
+          type: string
+          pattern: "^sfsk_test_[A-Za-z0-9_-]{43}$"
+        environment:
+          type: string
+          enum: [preview]
+      required: [created, key, environment]
     DeveloperWebhookInput:
       type: object
       properties:

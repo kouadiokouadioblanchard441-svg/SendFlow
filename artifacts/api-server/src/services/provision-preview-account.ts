@@ -1,12 +1,13 @@
 import { randomUUID } from "node:crypto";
 import {
   db, eq, or, sql, usersTable, walletsTable, customerCredentialsTable,
-  previewAccessTable, adminAuditLogsTable,
+  previewAccessTable, adminAuditLogsTable, developerApiKeysTable,
 } from "@workspace/db";
 import { SignInCustomerBody } from "@workspace/api-zod";
 import { hashCustomerSecret } from "../lib/customer-auth-crypto";
 import { toPreviewPasswordHash } from "../lib/preview-credential-policy";
 import { createSensitiveDataLookupIndex, encryptSensitiveData } from "../lib/sensitive-data-crypto";
+import { createDeveloperApiKeyMaterial } from "./developer-api-security";
 
 // CLI-only service. Not imported by any public route, and never runs at startup.
 export async function provisionPreviewAccount(phone: string, password: string) {
@@ -40,6 +41,14 @@ export async function provisionPreviewAccount(phone: string, password: string) {
       privacyAcceptedAt: now, privacyPolicyVersion: "internal-preview-authorization-v1",
     });
     await tx.insert(walletsTable).values({ userId, balanceMinor: 0 });
+    const apiKeyPair = createDeveloperApiKeyMaterial("test");
+    const { secretKey: discardedSecret, ...storedApiKeyPair } = apiKeyPair;
+    void discardedSecret;
+    await tx.insert(developerApiKeysTable).values({
+      userId,
+      label: "Clé principale",
+      ...storedApiKeyPair,
+    });
     await tx.insert(previewAccessTable).values({ slot: 1, userId, expiresAt, createdAt: now });
     await tx.insert(adminAuditLogsTable).values({
       adminUserId: "system:preview-provisioning", action: "provision_preview_account",

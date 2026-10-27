@@ -25,6 +25,7 @@ import {
   CreateDeveloperPaymentSessionBody,
   CreateDeveloperPaymentSessionHeader,
   CreateDeveloperPaymentSessionResponse,
+  InitializePreviewDeveloperApiKeyResponse,
   CreateDeveloperWebhookBody,
   CreateDeveloperWebhookResponse,
   GetDeveloperDirectPaymentStatusHeader,
@@ -337,7 +338,7 @@ router.get("/me/developer/api-keys", async (req, res): Promise<void> => {
       .orderBy(desc(developerApiKeysTable.createdAt), desc(developerApiKeysTable.id));
      res.json(ListDeveloperApiKeysResponse.parse({
        items: items.map(safeKeyResponse),
-       environment: session.previewAccount ? "sandbox" : "live",
+       environment: session.previewAccount ? "preview" : "live",
      }));
   } catch {
     req.log.error({ userId: session.userId }, "Developer API keys could not be listed");
@@ -348,8 +349,8 @@ router.get("/me/developer/api-keys", async (req, res): Promise<void> => {
 router.post("/me/developer/api-keys", async (req, res): Promise<void> => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
-  const sandboxPreview = session.previewAccount;
-  if (!sandboxPreview && (await hasPaymentTestAccess(session.userId) || !isPaymentLinkCreationAllowed(session))) {
+  const previewAccount = session.previewAccount;
+  if (!previewAccount && (await hasPaymentTestAccess(session.userId) || !isPaymentLinkCreationAllowed(session))) {
     res.status(403).json({ error: "Les clés de paiement live ne sont pas disponibles pour ce compte d’essai." });
     return;
   }
@@ -360,7 +361,7 @@ router.post("/me/developer/api-keys", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const keys = createDeveloperApiKeyMaterial(sandboxPreview ? "test" : "live");
+    const keys = createDeveloperApiKeyMaterial(previewAccount ? "test" : "live");
     const { secretKey, ...storedKeys } = keys;
     const [created] = await db.transaction(async (tx) => {
       const [owner] = await tx.select({ id: usersTable.id })
@@ -391,11 +392,75 @@ router.post("/me/developer/api-keys", async (req, res): Promise<void> => {
       key: safeKeyResponse(created),
       publicKey: keys.publicKey,
       secretKey,
-      environment: sandboxPreview ? "sandbox" : "live",
+      environment: previewAccount ? "preview" : "live",
     }));
   } catch {
     req.log.error({ userId: session.userId }, "Developer API key could not be created");
     res.status(503).json({ error: "La création de la clé API est momentanément indisponible." });
+  }
+});
+
+router.post("/me/developer/api-keys/initialize", async (req, res): Promise<void> => {
+  const session = await requireDeveloperPanelSession(req, res);
+  if (!session) return;
+  if (!session.previewAccount) {
+    res.status(403).json({ error: "Cette initialisation est réservée au compte de visualisation." });
+    return;
+  }
+
+  try {
+    const result = await db.transaction(async (tx) => {
+      const [owner] = await tx.select({ id: usersTable.id })
+        .from(usersTable)
+        .where(eq(usersTable.id, session.userId))
+        .for("update");
+      if (!owner) throw new Error("API key owner is unavailable");
+
+      const [activeKey] = await tx.select().from(developerApiKeysTable).where(and(
+        eq(developerApiKeysTable.userId, session.userId),
+        eq(developerApiKeysTable.status, "active"),
+      )).orderBy(desc(developerApiKeysTable.createdAt), desc(developerApiKeysTable.id)).limit(1);
+      if (activeKey) {
+        if (!activeKey.publicKey.startsWith("sfpk_test_")) {
+          throw new Error("Viewing account contains an unexpected live key");
+        }
+        return { key: activeKey, created: false as const };
+      }
+
+      const keys = createDeveloperApiKeyMaterial("test");
+      const { secretKey, ...storedKeys } = keys;
+      const [createdKey] = await tx.insert(developerApiKeysTable).values({
+        userId: session.userId,
+        label: "Clé principale",
+        ...storedKeys,
+      }).returning();
+      if (!createdKey) throw new Error("Preview API key insert returned no row");
+      return {
+        key: createdKey,
+        created: true as const,
+        publicKey: keys.publicKey,
+        secretKey,
+      };
+    });
+
+    if (result.created) {
+      res.status(201).json(InitializePreviewDeveloperApiKeyResponse.parse({
+        created: true,
+        key: safeKeyResponse(result.key),
+        publicKey: result.publicKey,
+        secretKey: result.secretKey,
+        environment: "preview",
+      }));
+      return;
+    }
+    res.json(InitializePreviewDeveloperApiKeyResponse.parse({
+      created: false,
+      key: safeKeyResponse(result.key),
+      environment: "preview",
+    }));
+  } catch {
+    req.log.error({ userId: session.userId }, "Viewing account API key initialization failed");
+    res.status(503).json({ error: "La paire principale est momentanément indisponible." });
   }
 });
 
