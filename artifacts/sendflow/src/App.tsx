@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import PageLoadingScreen from '@/components/page-loading-screen';
 import {
   getGetCurrentAccountQueryKey,
   getGetCustomerPortalEligibilityQueryKey,
@@ -198,7 +199,7 @@ function PortalRouteGate({ children }: { children: ReactNode }) {
     || accountQuery.isLoading
     || eligibilityQuery.isFetching
     || eligibilityQuery.isLoading
-  ) return null;
+  ) return <PageLoadingScreen label="Vérification de l’accès administrateur" />;
 
   if (
     !accountQuery.isSuccess
@@ -261,13 +262,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <CustomerPinGuard>
-            <Suspense fallback={null}>
+            <Suspense fallback={<PageLoadingScreen />}>
               <Switch>
                 <Route
                   path={`${ADMIN_ROUTE_PATH}/sign-in/*?`}
                   component={() => (
                     <PortalRouteGate>
-                      <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de la connexion administrateur…</div>}>
+                      <Suspense fallback={<PageLoadingScreen label="Chargement de la connexion administrateur" />}>
                         <AdminSignInPage />
                       </Suspense>
                     </PortalRouteGate>
@@ -277,7 +278,7 @@ function App() {
                   path={`${ADMIN_ROUTE_PATH}/pin`}
                   component={() => (
                     <PortalRouteGate>
-                      <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement du PIN administrateur…</div>}>
+                      <Suspense fallback={<PageLoadingScreen label="Chargement du PIN administrateur" />}>
                         <AdminPinPage />
                       </Suspense>
                     </PortalRouteGate>
@@ -287,7 +288,7 @@ function App() {
                   path={`${ADMIN_ROUTE_PATH}/*?`}
                   component={() => (
                     <PortalRouteGate>
-                      <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center text-muted-foreground">Chargement de l’espace administrateur…</div>}>
+                      <Suspense fallback={<PageLoadingScreen label="Chargement de l’espace administrateur" />}>
                         <AdminAccessPage />
                       </Suspense>
                     </PortalRouteGate>

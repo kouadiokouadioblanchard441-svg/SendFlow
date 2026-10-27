@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import PageLoadingScreen from "@/components/page-loading-screen";
 import { adminRoute } from "@/lib/admin-route";
 import { useSeo } from "@/lib/seo";
 
@@ -56,9 +57,7 @@ export default function AdminPinPage() {
   });
 
   if (accessQuery.isLoading) {
-    return <main role="status" className="flex min-h-screen items-center justify-center bg-background p-6 text-muted-foreground">
-      Vérification de l’accès administrateur…
-    </main>;
+    return <PageLoadingScreen label="Vérification de l’accès administrateur" />;
   }
 
   if (accessQuery.isError) {

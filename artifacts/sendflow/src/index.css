@@ -8726,7 +8726,7 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
   font-weight: 750;
   text-align: right;
 }
-.sendflow-public-link-loading {
+.sendflow-page-loading {
   position: fixed;
   z-index: 10000;
   inset: 0;
@@ -8737,7 +8737,7 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   background: #fff;
 }
-.sendflow-public-link-loader {
+.sendflow-page-loader {
   display: grid;
   width: 46px;
   height: 46px;
@@ -8746,16 +8746,16 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
   place-content: center;
   gap: 10px;
 }
-.sendflow-public-link-loader > span {
+.sendflow-page-loader > span {
   width: 18px;
   height: 18px;
   border-radius: 50%;
   background: #49339f;
-  animation: sendflow-link-load-pulse 1.05s ease-in-out infinite;
+  animation: sendflow-page-load-pulse 1.05s ease-in-out infinite;
 }
-.sendflow-public-link-loader > span:nth-child(2) { animation-delay: .14s; }
-.sendflow-public-link-loader > span:nth-child(3) { animation-delay: .28s; }
-.sendflow-public-link-loader > span:nth-child(4) { animation-delay: .42s; }
+.sendflow-page-loader > span:nth-child(2) { animation-delay: .14s; }
+.sendflow-page-loader > span:nth-child(3) { animation-delay: .28s; }
+.sendflow-page-loader > span:nth-child(4) { animation-delay: .42s; }
 
 /* LinkFlow server-confirmation screens: strong outlined cards, same mobile scale as checkout. */
 .sendflow-linkflow-flow-shell {
@@ -9240,7 +9240,7 @@ body:has(.sendflow-linkflow-failure-shell) { background: #fff; }
 }
 .sendflow-linkflow-share-notice.is-error { color: #b42318; }
 @keyframes sendflow-pay-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes sendflow-link-load-pulse {
+@keyframes sendflow-page-load-pulse {
   0%, 100% { opacity: .42; transform: scale(.35); }
   42%, 68% { opacity: 1; transform: scale(1); }
 }
@@ -9270,7 +9270,7 @@ body:has(.sendflow-linkflow-failure-shell) { background: #fff; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sendflow-public-pay-card { animation: none; }
-  .sendflow-public-link-loader > span { animation: none; opacity: 1; transform: none; }
+  .sendflow-page-loader > span { animation: none; opacity: 1; transform: none; }
 }
 
 /* Keep destructive actions strong and unmistakable in LinkFlow. */

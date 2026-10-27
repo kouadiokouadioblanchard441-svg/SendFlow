@@ -22,6 +22,7 @@ import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import securePaymentMark from '@assets/generated_images/sendflow-secure-payment-mark-3d-clean.png';
 import waveOperatorLogo from '@/assets/wave-logo-reference.png';
 import { OperatorMark } from '@/components/operator-mark';
+import PageLoadingScreen from '@/components/page-loading-screen';
 import {
   getLinkFlowCountdownSeconds,
   LINKFLOW_PAYMENT_TIMEOUT_MS,
@@ -517,21 +518,7 @@ export default function PublicPaymentLinkPage() {
 
   if (storageHydratedToken !== token || linkQuery.isLoading || linkQuery.isFetching ||
     !minimumLoadTimeElapsed || loadedPageAssetsKey !== pageAssetsKey) {
-    return (
-      <main
-        className="sendflow-public-link-loading"
-        role="status"
-        aria-live="polite"
-        aria-label="Chargement du lien de paiement"
-      >
-        <span className="sendflow-public-link-loader" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-          <span />
-        </span>
-      </main>
-    );
+    return <PageLoadingScreen label="Chargement du lien de paiement" />;
   }
 
   if (expiredLinkForDisplay) {

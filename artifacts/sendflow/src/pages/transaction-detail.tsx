@@ -2,6 +2,7 @@ import { ArrowLeft, CircleHelp, Download, Star } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { getGetCurrentAccountQueryKey, useGetCurrentAccount } from '@workspace/api-client-react';
 import { OperatorLogo } from '@/components/transaction-card';
+import PageLoadingScreen from '@/components/page-loading-screen';
 import { customerServiceProvider } from '@/lib/customer-service';
 import { useCustomerTransaction } from '@/lib/customer-transactions';
 import {
@@ -61,7 +62,7 @@ export default function TransactionDetailPage() {
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
   if (accountQuery.isLoading || detailQuery.isLoading) {
-    return <main className="sendflow-receipt-shell" role="status">Chargement des détails de transaction…</main>;
+    return <PageLoadingScreen label="Chargement des détails de transaction" />;
   }
   if (accountQuery.isError || detailQuery.isError || !transaction) {
     const retryFailedRequest = accountQuery.isError

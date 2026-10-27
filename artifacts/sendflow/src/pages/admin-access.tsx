@@ -10,6 +10,7 @@ import {
   useSignOutAdmin,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
+import PageLoadingScreen from "@/components/page-loading-screen";
 import { ADMIN_ROUTE_PATH, adminRoute } from "@/lib/admin-route";
 import { useSeo } from "@/lib/seo";
 import { Input } from "@/components/ui/input";
@@ -27,15 +28,7 @@ const AdminRouter = lazy(() => import("@/pages/admin").then((module) => ({
 })));
 
 function AdminPageLoading() {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="flex min-h-[60vh] items-center justify-center text-muted-foreground"
-    >
-      Chargement de l’espace administrateur…
-    </div>
-  );
+  return <PageLoadingScreen label="Chargement de l’espace administrateur" />;
 }
 
 export function AdminSignInPage() {

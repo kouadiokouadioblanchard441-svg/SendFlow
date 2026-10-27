@@ -10,6 +10,7 @@ import {
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
 import { OperatorMark } from '@/components/operator-mark';
+import PageLoadingScreen from '@/components/page-loading-screen';
 import {
   getGetPublicPricingQueryKey,
   useGetPublicPricing,
@@ -161,7 +162,7 @@ export default function InternationalTransferPage() {
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
   if (pricingQuery.isLoading) {
-    return <main className="sendflow-transfer-shell"><p role="status">Chargement des opérateurs…</p></main>;
+    return <PageLoadingScreen label="Chargement des opérateurs" />;
   }
   if (pricingQuery.isError || !pricingQuery.data) {
     return (

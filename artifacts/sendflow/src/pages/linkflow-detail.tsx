@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import PageLoadingScreen from '@/components/page-loading-screen';
 import {
   getGetCustomerPaymentLinkQueryKey,
   getGetCustomerPaymentLinksQueryKey,
@@ -182,16 +183,7 @@ export default function LinkFlowDetailPage() {
   };
 
   if (linkQuery.isLoading) {
-    return (
-      <main className="sendflow-linkflow-shell">
-        <section className="sendflow-linkflow-page sendflow-detail-page" aria-label="Chargement du lien">
-          <div className="sendflow-detail-skeleton-bar" />
-          <div className="sendflow-detail-skeleton-hero" />
-          <div className="sendflow-detail-skeleton-card" />
-          <div className="sendflow-detail-skeleton-card" />
-        </section>
-      </main>
-    );
+    return <PageLoadingScreen label="Chargement du lien de paiement" />;
   }
   if (linkQuery.isError || !linkQuery.data) {
     return (

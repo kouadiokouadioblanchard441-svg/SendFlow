@@ -13,6 +13,7 @@ import {
 import { Redirect, useLocation } from 'wouter';
 import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { OperatorMark } from '@/components/operator-mark';
+import PageLoadingScreen from '@/components/page-loading-screen';
 import { useSeo } from '@/lib/seo';
 import {
   formatPricingFeeRate,
@@ -88,7 +89,7 @@ export default function PricingPage() {
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
   if (pricingQuery.isLoading) {
-    return <main className="sendflow-pricing-shell"><div className="sendflow-pricing-content"><p role="status">Chargement des tarifs…</p></div></main>;
+    return <PageLoadingScreen label="Chargement des tarifs" />;
   }
   if (pricingQuery.isError || !pricingQuery.data || !category) {
     return (
