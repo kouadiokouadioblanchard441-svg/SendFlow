@@ -3,18 +3,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   AlertCircle,
-  ArrowUpRight,
   Check,
   CheckCircle2,
-  CircleHelp,
-  Code2,
   Copy,
   KeyRound,
   LoaderCircle,
   LockKeyhole,
   Plus,
   RefreshCw,
-  ShieldCheck,
   Webhook,
   X,
 } from 'lucide-react';
@@ -211,56 +207,22 @@ export default function DevelopersPage() {
     }
   };
 
-  const activeKeyCount = apiKeys.filter((key) => key.status === 'active').length;
-  const activeWebhookCount = endpoints.filter((endpoint) => endpoint.status === 'active').length;
-
   return (
     <main className="sendflow-developers">
       <div className="dev-page">
         <header className="dev-page-header">
-          <div className="dev-breadcrumb"><span>SendFlow</span><span className="dev-breadcrumb-sep">/</span><span>Développeurs</span></div>
           <div className="dev-title-row">
             <div>
-              <div className="dev-kicker"><Code2 size={15} /> INTÉGRATIONS MARCHAND</div>
               <h1>Développeurs</h1>
-              <p className="dev-intro">Connectez votre application à SendFlow. Gérez ici vos accès et les notifications de paiement.</p>
+              <p className="dev-intro">Contrôlez votre business en temps réel.</p>
             </div>
-            <div className="dev-secure-note"><ShieldCheck size={17} /><span>Accès sécurisé<br /><strong>Clés privées non réaffichées</strong></span></div>
           </div>
         </header>
-
-        <section className="dev-mode-panel" aria-labelledby="dev-mode-heading">
-          <div className="dev-mode-copy">
-            <span className="dev-section-index">01 / INTÉGRATION</span>
-            <h2 id="dev-mode-heading">Deux façons d’encaisser</h2>
-              <p>Vous avez choisi l’API directe et le paiement hébergé SendFlow. Les clés et webhooks se configurent ici ; la création de paiements restera fermée tant que la confirmation serveur du prestataire n’est pas activée.</p>
-          </div>
-          <div className="dev-mode-options">
-            <article className="dev-mode-option">
-              <span className="dev-mode-symbol"><Code2 size={20} /></span>
-              <div><strong>API directe</strong><p>Gardez le parcours dans votre site ou votre application.</p></div>
-              <span className="dev-selected">Sélectionné</span>
-            </article>
-            <article className="dev-mode-option">
-              <span className="dev-mode-symbol is-hosted"><ArrowUpRight size={20} /></span>
-              <div><strong>Checkout hébergé</strong><p>Redirigez le client vers une page de paiement SendFlow.</p></div>
-              <span className="dev-selected">Sélectionné</span>
-            </article>
-          </div>
-          <div className="dev-docs-note"><CircleHelp size={16} /><span>La documentation API publique sera publiée prochainement. Les identifiants sont prêts à être configurés.</span></div>
-        </section>
-
-        <div className="dev-stats" aria-label="Résumé des intégrations">
-          <div className="dev-stat"><span>CLÉS ACTIVES</span><strong>{apiKeysQuery.isLoading ? <i className="dev-skeleton dev-skeleton-number" /> : apiKeysQuery.isError ? '—' : activeKeyCount.toString().padStart(2, '0')}</strong><small>Accès à l’API</small></div>
-          <div className="dev-stat"><span>WEBHOOKS ACTIFS</span><strong>{webhooksQuery.isLoading ? <i className="dev-skeleton dev-skeleton-number" /> : webhooksQuery.isError ? '—' : activeWebhookCount.toString().padStart(2, '0')}</strong><small>Points de terminaison</small></div>
-          <div className="dev-stat dev-stat-status"><span>ÉTAT DES LIVRAISONS</span><strong><Activity size={17} /> {selectedEndpoint ? 'Suivi disponible' : 'À configurer'}</strong><small>{selectedEndpoint ? 'Sélectionnez un endpoint pour consulter les événements.' : 'Créez un webhook pour recevoir les événements.'}</small></div>
-        </div>
 
         <section className="dev-section dev-keys-section" aria-labelledby="dev-keys-heading">
           <div className="dev-section-heading">
             <div className="dev-section-title">
-              <span className="dev-section-index">{developerTab === 'webhook' ? '03 / NOTIFICATIONS' : '02 / IDENTIFIANTS'}</span>
-              <h2 id="dev-keys-heading">{developerTab === 'webhook' ? <><Webhook size={21} /> Webhook</> : <><KeyRound size={21} /> API</>}</h2>
+              <h2 id="dev-keys-heading"><KeyRound size={21} /> API</h2>
               <p>
                 {developerTab === 'private'
                   ? 'La clé privée complète est affichée une seule fois lors de sa création.'
