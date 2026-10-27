@@ -29,4 +29,5 @@ export * from "./payment-confirmations";
 export * from "./wallet-payment-reservations";
 export * from "./payment-links";
 export * from "./customer-payment-link-attempts";
+export * from "./developer-integrations";
 export * from "./replit-payment-test-access";

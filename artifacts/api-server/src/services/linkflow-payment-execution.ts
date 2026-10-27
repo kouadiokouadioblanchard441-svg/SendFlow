@@ -819,17 +819,16 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
   }
 }
 
-export async function getLinkFlowPaymentAttemptStatus(
+async function refreshLinkFlowPaymentAttemptStatus(
   attemptId: string,
-  pollToken: string,
+  tokenHash: string,
 ): Promise<PublicLinkFlowPaymentStatus> {
   if (isSharedNeonPreview()) {
     throw new LinkFlowPaymentError(503, "La vérification du paiement n’est pas disponible dans cet environnement.");
   }
-  if (!uuidPattern.test(attemptId) || !/^[a-f0-9]{64}$/.test(pollToken)) {
+  if (!uuidPattern.test(attemptId) || !/^[a-f0-9]{64}$/.test(tokenHash)) {
     throw new LinkFlowPaymentError(404, "Cette demande de paiement n’est pas disponible.");
   }
-  const tokenHash = hashLinkFlowPollToken(pollToken);
   const bundle = await loadAttemptBundle(attemptId, tokenHash);
   if (!bundle) throw new LinkFlowPaymentError(404, "Cette demande de paiement n’est pas disponible.");
   const currentState = publicState(bundle.intent.state, bundle.attempt.status);
@@ -858,4 +857,31 @@ export async function getLinkFlowPaymentAttemptStatus(
   const refreshed = await loadAttemptBundle(attemptId, tokenHash);
   if (!refreshed) throw new LinkFlowPaymentError(404, "Cette demande de paiement n’est pas disponible.");
   return asPublicStatus(refreshed);
+}
+
+export async function getLinkFlowPaymentAttemptStatus(
+  attemptId: string,
+  pollToken: string,
+): Promise<PublicLinkFlowPaymentStatus> {
+  if (!/^[a-f0-9]{64}$/.test(pollToken)) {
+    throw new LinkFlowPaymentError(404, "Cette demande de paiement n’est pas disponible.");
+  }
+  return refreshLinkFlowPaymentAttemptStatus(attemptId, hashLinkFlowPollToken(pollToken));
+}
+
+/** Server-to-server polling after the developer session owner was authorized. */
+export async function getLinkFlowPaymentAttemptStatusByMappingId(
+  attemptId: string,
+): Promise<PublicLinkFlowPaymentStatus> {
+  if (!uuidPattern.test(attemptId)) {
+    throw new LinkFlowPaymentError(404, "Cette demande de paiement n’est pas disponible.");
+  }
+  const [mapping] = await db.select({
+    id: customerPaymentLinkAttemptsTable.id,
+    pollTokenHash: customerPaymentLinkAttemptsTable.pollTokenHash,
+  }).from(customerPaymentLinkAttemptsTable)
+    .where(eq(customerPaymentLinkAttemptsTable.id, attemptId))
+    .limit(1);
+  if (!mapping) throw new LinkFlowPaymentError(404, "Cette demande de paiement n’est pas disponible.");
+  return refreshLinkFlowPaymentAttemptStatus(mapping.id, mapping.pollTokenHash);
 }

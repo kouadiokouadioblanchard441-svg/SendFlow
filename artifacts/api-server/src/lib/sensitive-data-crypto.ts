@@ -20,7 +20,11 @@ export type SensitiveDataPurpose =
   | "linkflow-poll-token-hash"
   | "linkflow-payer-name"
   | "linkflow-request-fingerprint"
-  | "identity-webhook-payload";
+  | "identity-webhook-payload"
+  | "developer-webhook-secret"
+  | "developer-client-token"
+  | "developer-webhook-url"
+  | "developer-payment-metadata";
 
 function deriveKey(purpose: "encryption" | "lookup"): Buffer {
   const masterKey = process.env.CUSTOMER_PII_ENCRYPTION_KEY;

@@ -13,6 +13,12 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 export function apiRequestSecurity(allowedOrigins: ReadonlySet<string>): RequestHandler {
   return (req, res, next) => {
     res.setHeader("Cache-Control", "no-store, private");
+    if (req.path === "/v1" || req.path.startsWith("/v1/")) {
+      // Versioned merchant API requests authenticate with scoped API/session
+      // tokens in their route handlers, not browser cookies or CSRF tokens.
+      next();
+      return;
+    }
     if (SAFE_METHODS.has(req.method)) {
       if (req.method === "GET") {
         try {

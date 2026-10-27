@@ -26,6 +26,8 @@ tags:
     description: Public operator availability and customer pricing.
   - name: payment-links
     description: Owner-managed payment links and their public payment pages.
+  - name: developer
+    description: Merchant API credentials, payment sessions and webhook endpoints.
 paths:
   /DMgrgmt-1np5g23g12bGFtMwh/network-defense:
     get:
@@ -1556,6 +1558,460 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/developer/api-keys:
+    get:
+      operationId: listDeveloperApiKeys
+      tags: [developer]
+      summary: List the current merchant's API keys without revealing secrets
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: API key metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeveloperApiKeysResponse"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Customer PIN verification is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Key storage is unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    post:
+      operationId: createDeveloperApiKey
+      tags: [developer]
+      summary: Create a public and secret API key pair
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeveloperApiKeyInput" }
+      responses:
+        "201":
+          description: Raw keys shown once; store them securely.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperApiKeyCreatedResponse" }
+        "400":
+          description: Invalid label or key limit reached.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Customer PIN verification is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Key storage is unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /me/developer/api-keys/{apiKeyId}:
+    delete:
+      operationId: revokeDeveloperApiKey
+      tags: [developer]
+      summary: Revoke an API key pair
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: apiKeyId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Key pair revoked. }
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Customer PIN verification is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "404":
+          description: API key not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Key storage is unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /me/developer/webhooks:
+    get:
+      operationId: listDeveloperWebhooks
+      tags: [developer]
+      summary: List webhook endpoints
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Webhook endpoint metadata; signing secrets are never returned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperWebhooksResponse" }
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Customer PIN verification is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Webhook storage is unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    post:
+      operationId: createDeveloperWebhook
+      tags: [developer]
+      summary: Register a webhook endpoint
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeveloperWebhookInput" }
+      responses:
+        "201":
+          description: Endpoint created; signing secret shown once.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperWebhookCreatedResponse" }
+        "400":
+          description: URL, event selection or label is invalid.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Customer PIN verification is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Webhook storage is unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /me/developer/webhooks/{endpointId}:
+    delete:
+      operationId: revokeDeveloperWebhook
+      tags: [developer]
+      summary: Disable a webhook endpoint
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: endpointId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Endpoint disabled. }
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Customer PIN verification is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "404":
+          description: Webhook endpoint not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Webhook storage is unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /me/developer/webhooks/{endpointId}/deliveries:
+    get:
+      operationId: listDeveloperWebhookDeliveries
+      tags: [developer]
+      summary: List recent delivery attempts for an endpoint
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: endpointId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Recent event delivery results.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperWebhookDeliveriesResponse" }
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Customer PIN verification is required.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "404":
+          description: Webhook endpoint not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Delivery records are unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /v1/payment-sessions:
+    post:
+      operationId: createDeveloperPaymentSession
+      tags: [developer]
+      summary: Create a hosted or direct payment session
+      description: Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and one-time client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
+      security:
+        - sendFlowApiSecret: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 8, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeveloperPaymentSessionInput" }
+      responses:
+        "201":
+          description: Payment session created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperPaymentSessionCreatedResponse" }
+        "400":
+          description: Invalid amount, currency or reference.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Secret API key is invalid or revoked.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "409":
+          description: Idempotency key was reused for a different request.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "429":
+          description: Merchant API rate limit reached.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Payment session service is unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /v1/payment-sessions/{sessionId}:
+    get:
+      operationId: getDeveloperPaymentSession
+      tags: [developer]
+      summary: Read a payment session and its verified status
+      security:
+        - sendFlowApiSecret: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Current server-owned payment state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperPaymentSessionStatus" }
+        "401":
+          description: Secret API key is invalid or revoked.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "404":
+          description: Payment session not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Payment status is temporarily unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /v1/public/payment-sessions/{sessionId}:
+    get:
+      operationId: getDeveloperPublicPaymentSession
+      tags: [developer]
+      summary: Read public checkout details and available Mobile Money choices
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: X-SendFlow-Public-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 20, maxLength: 80 }
+        - name: X-SendFlow-Client-Token
+          in: header
+          required: true
+          schema: { type: string, minLength: 32, maxLength: 64 }
+      responses:
+        "200":
+          description: Public payment details and currently available countries/operators.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperPublicPaymentSession" }
+        "404":
+          description: Public key, session or client token not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Public payment session is temporarily unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /v1/public/payment-sessions/{sessionId}/attempts:
+    post:
+      operationId: startDeveloperDirectPayment
+      tags: [developer]
+      summary: Start a direct Mobile Money payment attempt
+      description: Requires the publishable key and one-time client token returned by session creation. Only the fixed session amount can be charged.
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: X-SendFlow-Public-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 20, maxLength: 80 }
+        - name: X-SendFlow-Client-Token
+          in: header
+          required: true
+          schema: { type: string, minLength: 32, maxLength: 64 }
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 8, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeveloperDirectPaymentInput" }
+      responses:
+        "201":
+          description: Payment attempt started or existing attempt returned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperDirectPaymentResponse" }
+        "400":
+          description: Payer or operator data is invalid.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "404":
+          description: Public key, session or client token not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "409":
+          description: Request conflicts with an existing attempt.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "429":
+          description: Payment request rate limit reached.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Payment execution is not available.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  /v1/public/payment-sessions/{sessionId}/attempts/{attemptId}:
+    get:
+      operationId: getDeveloperDirectPaymentStatus
+      tags: [developer]
+      summary: Read and refresh a direct payment attempt status
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: attemptId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: X-SendFlow-Public-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 20, maxLength: 80 }
+        - name: X-SendFlow-Client-Token
+          in: header
+          required: true
+          schema: { type: string, minLength: 32, maxLength: 64 }
+        - name: X-LinkFlow-Attempt-Token
+          in: header
+          required: true
+          schema: { type: string, minLength: 32, maxLength: 64 }
+      responses:
+        "200":
+          description: Verified status from the payment provider and settlement service.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeveloperDirectPaymentResponse" }
+        "404":
+          description: Session, attempt or token not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "503":
+          description: Payment status is temporarily unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
   /me/account-limit:
     get:
       operationId: getCurrentAccountLimit
@@ -3855,6 +4311,10 @@ components:
       type: apiKey
       in: cookie
       name: __Host-sendflow_session
+    sendFlowApiSecret:
+      type: http
+      scheme: bearer
+      bearerFormat: SendFlow secret API key
   schemas:
     AutomaticIpBlock:
       type: object
@@ -6469,3 +6929,187 @@ components:
           type: string
           format: date-time
       required: [pinUnlocked, expiresAt]
+    DeveloperApiKeyInput:
+      type: object
+      properties:
+        label: { type: string, minLength: 1, maxLength: 80 }
+      required: [label]
+    DeveloperApiKey:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        label: { type: string }
+        publicKey: { type: string }
+        publicKeyPrefix: { type: string }
+        secretKeyPrefix: { type: string }
+        status: { type: string, enum: [active, revoked] }
+        lastUsedAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        revokedAt: { type: ["string", "null"], format: date-time }
+      required: [id, label, publicKey, publicKeyPrefix, secretKeyPrefix, status, lastUsedAt, createdAt, revokedAt]
+    DeveloperApiKeysResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DeveloperApiKey" }
+      required: [items]
+    DeveloperApiKeyCreatedResponse:
+      type: object
+      properties:
+        key: { $ref: "#/components/schemas/DeveloperApiKey" }
+        publicKey: { type: string }
+        secretKey: { type: string }
+      required: [key, publicKey, secretKey]
+    DeveloperWebhookInput:
+      type: object
+      properties:
+        label: { type: string, minLength: 1, maxLength: 80 }
+        url: { type: string, format: uri, maxLength: 2048 }
+        events:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { type: string, enum: [payment.succeeded, payment.failed] }
+      required: [label, url, events]
+    DeveloperWebhookEndpoint:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        label: { type: string }
+        url: { type: string, format: uri }
+        events:
+          type: array
+          items: { type: string, enum: [payment.succeeded, payment.failed] }
+        status: { type: string, enum: [active, revoked] }
+        createdAt: { type: string, format: date-time }
+        revokedAt: { type: ["string", "null"], format: date-time }
+      required: [id, label, url, events, status, createdAt, revokedAt]
+    DeveloperWebhooksResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DeveloperWebhookEndpoint" }
+      required: [items]
+    DeveloperWebhookCreatedResponse:
+      type: object
+      properties:
+        endpoint: { $ref: "#/components/schemas/DeveloperWebhookEndpoint" }
+        signingSecret: { type: string }
+      required: [endpoint, signingSecret]
+    DeveloperWebhookDelivery:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        eventType: { type: string, enum: [payment.succeeded, payment.failed] }
+        status: { type: string, enum: [pending, delivering, delivered, failed] }
+        attempts: { type: integer }
+        lastHttpStatus: { type: ["integer", "null"] }
+        lastErrorClass: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        lastAttemptAt: { type: ["string", "null"], format: date-time }
+        deliveredAt: { type: ["string", "null"], format: date-time }
+      required: [id, eventType, status, attempts, lastHttpStatus, lastErrorClass, createdAt, lastAttemptAt, deliveredAt]
+    DeveloperWebhookDeliveriesResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DeveloperWebhookDelivery" }
+      required: [items]
+    DeveloperPaymentSessionInput:
+      type: object
+      properties:
+        merchantReference: { type: string, minLength: 1, maxLength: 128 }
+        amountMinor: { type: integer, minimum: 100, maximum: 2000000 }
+        currency: { type: string, enum: [XOF] }
+        mode: { type: string, enum: [hosted, direct] }
+        description: { type: string, maxLength: 240 }
+        returnUrl: { type: ["string", "null"], format: uri, maxLength: 2048 }
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [merchantReference, amountMinor, currency, mode]
+    DeveloperPaymentSessionCreatedResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        merchantReference: { type: string }
+        mode: { type: string, enum: [hosted, direct] }
+        state: { type: string, enum: [created] }
+        amountMinor: { type: integer }
+        currency: { type: string, enum: [XOF] }
+        checkoutPath: { type: ["string", "null"] }
+        clientToken: { type: string }
+        publicKey: { type: string }
+        expiresAt: { type: string, format: date-time }
+      required: [id, merchantReference, mode, state, amountMinor, currency, checkoutPath, clientToken, publicKey, expiresAt]
+    DeveloperPaymentSessionStatus:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        merchantReference: { type: string }
+        mode: { type: string, enum: [hosted, direct] }
+        state: { type: string, enum: [created, waiting, uncertain, succeeded, failed] }
+        amountMinor: { type: integer }
+        currency: { type: string, enum: [XOF] }
+        attemptId: { type: ["string", "null"], format: uuid }
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+      required: [id, merchantReference, mode, state, amountMinor, currency, attemptId, createdAt, expiresAt]
+    DeveloperPublicPaymentSession:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        merchantName: { type: string }
+        description: { type: string }
+        mode: { type: string, enum: [hosted, direct] }
+        state: { type: string, enum: [created, waiting, uncertain, succeeded, failed] }
+        amountMinor: { type: integer }
+        currency: { type: string, enum: [XOF] }
+        expiresAt: { type: string, format: date-time }
+        countries:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              name: { type: string }
+              flag: { type: string }
+              phonePrefix: { type: string }
+              minPhoneDigits: { type: integer }
+              maxPhoneDigits: { type: integer }
+              operators:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    name: { type: string }
+                    initials: { type: string }
+                    logoUrl: { type: ["string", "null"] }
+                  required: [id, name, initials, logoUrl]
+            required: [code, name, flag, phonePrefix, minPhoneDigits, maxPhoneDigits, operators]
+      required: [id, merchantName, description, mode, state, amountMinor, currency, expiresAt, countries]
+    DeveloperDirectPaymentInput:
+      type: object
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 80 }
+        lastName: { type: string, minLength: 1, maxLength: 80 }
+        countryCode: { type: string, pattern: "^[A-Z]{2}$" }
+        operatorId: { type: string, minLength: 1, maxLength: 80 }
+        phoneNumber: { type: string, minLength: 6, maxLength: 20 }
+      required: [firstName, lastName, countryCode, operatorId, phoneNumber]
+    DeveloperDirectPaymentResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        attemptId: { type: string, format: uuid }
+        state: { type: string, enum: [waiting, uncertain, succeeded, failed] }
+        amountMinor: { type: integer }
+        currency: { type: string, enum: [XOF] }
+        ussdCode: { type: ["string", "null"] }
+        pollToken: { type: string }
+        merchantReference: { type: string }
+      required: [id, attemptId, state, amountMinor, currency, ussdCode, pollToken, merchantReference]

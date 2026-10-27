@@ -2487,6 +2487,365 @@ export interface AdminPinUnlockResponse {
   expiresAt: string;
 }
 
+export interface DeveloperApiKeyInput {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  label: string;
+}
+
+export type DeveloperApiKeyStatus = typeof DeveloperApiKeyStatus[keyof typeof DeveloperApiKeyStatus];
+
+
+export const DeveloperApiKeyStatus = {
+  active: 'active',
+  revoked: 'revoked',
+} as const;
+
+export interface DeveloperApiKey {
+  id: string;
+  label: string;
+  publicKey: string;
+  publicKeyPrefix: string;
+  secretKeyPrefix: string;
+  status: DeveloperApiKeyStatus;
+  /** @nullable */
+  lastUsedAt: string | null;
+  createdAt: string;
+  /** @nullable */
+  revokedAt: string | null;
+}
+
+export interface DeveloperApiKeysResponse {
+  items: DeveloperApiKey[];
+}
+
+export interface DeveloperApiKeyCreatedResponse {
+  key: DeveloperApiKey;
+  publicKey: string;
+  secretKey: string;
+}
+
+export type DeveloperWebhookInputEventsItem = typeof DeveloperWebhookInputEventsItem[keyof typeof DeveloperWebhookInputEventsItem];
+
+
+export const DeveloperWebhookInputEventsItem = {
+  paymentsucceeded: 'payment.succeeded',
+  paymentfailed: 'payment.failed',
+} as const;
+
+export interface DeveloperWebhookInput {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  label: string;
+  /** @maxLength 2048 */
+  url: string;
+  /** @minItems 1 */
+  events: DeveloperWebhookInputEventsItem[];
+}
+
+export type DeveloperWebhookEndpointEventsItem = typeof DeveloperWebhookEndpointEventsItem[keyof typeof DeveloperWebhookEndpointEventsItem];
+
+
+export const DeveloperWebhookEndpointEventsItem = {
+  paymentsucceeded: 'payment.succeeded',
+  paymentfailed: 'payment.failed',
+} as const;
+
+export type DeveloperWebhookEndpointStatus = typeof DeveloperWebhookEndpointStatus[keyof typeof DeveloperWebhookEndpointStatus];
+
+
+export const DeveloperWebhookEndpointStatus = {
+  active: 'active',
+  revoked: 'revoked',
+} as const;
+
+export interface DeveloperWebhookEndpoint {
+  id: string;
+  label: string;
+  url: string;
+  events: DeveloperWebhookEndpointEventsItem[];
+  status: DeveloperWebhookEndpointStatus;
+  createdAt: string;
+  /** @nullable */
+  revokedAt: string | null;
+}
+
+export interface DeveloperWebhooksResponse {
+  items: DeveloperWebhookEndpoint[];
+}
+
+export interface DeveloperWebhookCreatedResponse {
+  endpoint: DeveloperWebhookEndpoint;
+  signingSecret: string;
+}
+
+export type DeveloperWebhookDeliveryEventType = typeof DeveloperWebhookDeliveryEventType[keyof typeof DeveloperWebhookDeliveryEventType];
+
+
+export const DeveloperWebhookDeliveryEventType = {
+  paymentsucceeded: 'payment.succeeded',
+  paymentfailed: 'payment.failed',
+} as const;
+
+export type DeveloperWebhookDeliveryStatus = typeof DeveloperWebhookDeliveryStatus[keyof typeof DeveloperWebhookDeliveryStatus];
+
+
+export const DeveloperWebhookDeliveryStatus = {
+  pending: 'pending',
+  delivering: 'delivering',
+  delivered: 'delivered',
+  failed: 'failed',
+} as const;
+
+export interface DeveloperWebhookDelivery {
+  id: string;
+  eventType: DeveloperWebhookDeliveryEventType;
+  status: DeveloperWebhookDeliveryStatus;
+  attempts: number;
+  /** @nullable */
+  lastHttpStatus: number | null;
+  /** @nullable */
+  lastErrorClass: string | null;
+  createdAt: string;
+  /** @nullable */
+  lastAttemptAt: string | null;
+  /** @nullable */
+  deliveredAt: string | null;
+}
+
+export interface DeveloperWebhookDeliveriesResponse {
+  items: DeveloperWebhookDelivery[];
+}
+
+export type DeveloperPaymentSessionInputCurrency = typeof DeveloperPaymentSessionInputCurrency[keyof typeof DeveloperPaymentSessionInputCurrency];
+
+
+export const DeveloperPaymentSessionInputCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export type DeveloperPaymentSessionInputMode = typeof DeveloperPaymentSessionInputMode[keyof typeof DeveloperPaymentSessionInputMode];
+
+
+export const DeveloperPaymentSessionInputMode = {
+  hosted: 'hosted',
+  direct: 'direct',
+} as const;
+
+export type DeveloperPaymentSessionInputMetadata = { [key: string]: unknown };
+
+export interface DeveloperPaymentSessionInput {
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  merchantReference: string;
+  /**
+     * @minimum 100
+     * @maximum 2000000
+     */
+  amountMinor: number;
+  currency: DeveloperPaymentSessionInputCurrency;
+  mode: DeveloperPaymentSessionInputMode;
+  /** @maxLength 240 */
+  description?: string;
+  /**
+     * @maxLength 2048
+     * @nullable
+     */
+  returnUrl?: string | null;
+  metadata?: DeveloperPaymentSessionInputMetadata;
+}
+
+export type DeveloperPaymentSessionCreatedResponseMode = typeof DeveloperPaymentSessionCreatedResponseMode[keyof typeof DeveloperPaymentSessionCreatedResponseMode];
+
+
+export const DeveloperPaymentSessionCreatedResponseMode = {
+  hosted: 'hosted',
+  direct: 'direct',
+} as const;
+
+export type DeveloperPaymentSessionCreatedResponseState = typeof DeveloperPaymentSessionCreatedResponseState[keyof typeof DeveloperPaymentSessionCreatedResponseState];
+
+
+export const DeveloperPaymentSessionCreatedResponseState = {
+  created: 'created',
+} as const;
+
+export type DeveloperPaymentSessionCreatedResponseCurrency = typeof DeveloperPaymentSessionCreatedResponseCurrency[keyof typeof DeveloperPaymentSessionCreatedResponseCurrency];
+
+
+export const DeveloperPaymentSessionCreatedResponseCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface DeveloperPaymentSessionCreatedResponse {
+  id: string;
+  merchantReference: string;
+  mode: DeveloperPaymentSessionCreatedResponseMode;
+  state: DeveloperPaymentSessionCreatedResponseState;
+  amountMinor: number;
+  currency: DeveloperPaymentSessionCreatedResponseCurrency;
+  /** @nullable */
+  checkoutPath: string | null;
+  clientToken: string;
+  publicKey: string;
+  expiresAt: string;
+}
+
+export type DeveloperPaymentSessionStatusMode = typeof DeveloperPaymentSessionStatusMode[keyof typeof DeveloperPaymentSessionStatusMode];
+
+
+export const DeveloperPaymentSessionStatusMode = {
+  hosted: 'hosted',
+  direct: 'direct',
+} as const;
+
+export type DeveloperPaymentSessionStatusState = typeof DeveloperPaymentSessionStatusState[keyof typeof DeveloperPaymentSessionStatusState];
+
+
+export const DeveloperPaymentSessionStatusState = {
+  created: 'created',
+  waiting: 'waiting',
+  uncertain: 'uncertain',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export type DeveloperPaymentSessionStatusCurrency = typeof DeveloperPaymentSessionStatusCurrency[keyof typeof DeveloperPaymentSessionStatusCurrency];
+
+
+export const DeveloperPaymentSessionStatusCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface DeveloperPaymentSessionStatus {
+  id: string;
+  merchantReference: string;
+  mode: DeveloperPaymentSessionStatusMode;
+  state: DeveloperPaymentSessionStatusState;
+  amountMinor: number;
+  currency: DeveloperPaymentSessionStatusCurrency;
+  /** @nullable */
+  attemptId: string | null;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export type DeveloperPublicPaymentSessionMode = typeof DeveloperPublicPaymentSessionMode[keyof typeof DeveloperPublicPaymentSessionMode];
+
+
+export const DeveloperPublicPaymentSessionMode = {
+  hosted: 'hosted',
+  direct: 'direct',
+} as const;
+
+export type DeveloperPublicPaymentSessionState = typeof DeveloperPublicPaymentSessionState[keyof typeof DeveloperPublicPaymentSessionState];
+
+
+export const DeveloperPublicPaymentSessionState = {
+  created: 'created',
+  waiting: 'waiting',
+  uncertain: 'uncertain',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export type DeveloperPublicPaymentSessionCurrency = typeof DeveloperPublicPaymentSessionCurrency[keyof typeof DeveloperPublicPaymentSessionCurrency];
+
+
+export const DeveloperPublicPaymentSessionCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export type DeveloperPublicPaymentSessionCountriesItemOperatorsItem = {
+  id: string;
+  name: string;
+  initials: string;
+  /** @nullable */
+  logoUrl: string | null;
+};
+
+export type DeveloperPublicPaymentSessionCountriesItem = {
+  code: string;
+  name: string;
+  flag: string;
+  phonePrefix: string;
+  minPhoneDigits: number;
+  maxPhoneDigits: number;
+  operators: DeveloperPublicPaymentSessionCountriesItemOperatorsItem[];
+};
+
+export interface DeveloperPublicPaymentSession {
+  id: string;
+  merchantName: string;
+  description: string;
+  mode: DeveloperPublicPaymentSessionMode;
+  state: DeveloperPublicPaymentSessionState;
+  amountMinor: number;
+  currency: DeveloperPublicPaymentSessionCurrency;
+  expiresAt: string;
+  countries: DeveloperPublicPaymentSessionCountriesItem[];
+}
+
+export interface DeveloperDirectPaymentInput {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  firstName: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  lastName: string;
+  /** @pattern ^[A-Z]{2}$ */
+  countryCode: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  operatorId: string;
+  /**
+     * @minLength 6
+     * @maxLength 20
+     */
+  phoneNumber: string;
+}
+
+export type DeveloperDirectPaymentResponseState = typeof DeveloperDirectPaymentResponseState[keyof typeof DeveloperDirectPaymentResponseState];
+
+
+export const DeveloperDirectPaymentResponseState = {
+  waiting: 'waiting',
+  uncertain: 'uncertain',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export type DeveloperDirectPaymentResponseCurrency = typeof DeveloperDirectPaymentResponseCurrency[keyof typeof DeveloperDirectPaymentResponseCurrency];
+
+
+export const DeveloperDirectPaymentResponseCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface DeveloperDirectPaymentResponse {
+  id: string;
+  attemptId: string;
+  state: DeveloperDirectPaymentResponseState;
+  amountMinor: number;
+  currency: DeveloperDirectPaymentResponseCurrency;
+  /** @nullable */
+  ussdCode: string | null;
+  pollToken: string;
+  merchantReference: string;
+}
+
 /**
  * Inclusive UTC calendar date.
  */

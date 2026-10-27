@@ -1271,6 +1271,348 @@ export const UploadCustomerPaymentLinkImageResponse = zod.void()
 
 
 /**
+ * @summary List the current merchant's API keys without revealing secrets
+ */
+export const ListDeveloperApiKeysResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.uuid(),
+  "label": zod.string(),
+  "publicKey": zod.string(),
+  "publicKeyPrefix": zod.string(),
+  "secretKeyPrefix": zod.string(),
+  "status": zod.enum(['active', 'revoked']),
+  "lastUsedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable()
+}))
+})
+
+
+/**
+ * @summary Create a public and secret API key pair
+ */
+export const createDeveloperApiKeyBodyLabelMax = 80;
+
+
+
+export const CreateDeveloperApiKeyBody = zod.object({
+  "label": zod.string().min(1).max(createDeveloperApiKeyBodyLabelMax)
+})
+
+export const CreateDeveloperApiKeyResponse = zod.object({
+  "key": zod.object({
+  "id": zod.uuid(),
+  "label": zod.string(),
+  "publicKey": zod.string(),
+  "publicKeyPrefix": zod.string(),
+  "secretKeyPrefix": zod.string(),
+  "status": zod.enum(['active', 'revoked']),
+  "lastUsedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable()
+}),
+  "publicKey": zod.string(),
+  "secretKey": zod.string()
+})
+
+
+/**
+ * @summary Revoke an API key pair
+ */
+export const RevokeDeveloperApiKeyParams = zod.object({
+  "apiKeyId": zod.uuid()
+})
+
+export const RevokeDeveloperApiKeyResponse = zod.void()
+
+
+/**
+ * @summary List webhook endpoints
+ */
+export const ListDeveloperWebhooksResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.uuid(),
+  "label": zod.string(),
+  "url": zod.url(),
+  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed'])),
+  "status": zod.enum(['active', 'revoked']),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable()
+}))
+})
+
+
+/**
+ * @summary Register a webhook endpoint
+ */
+export const createDeveloperWebhookBodyLabelMax = 80;
+
+export const createDeveloperWebhookBodyUrlMax = 2048;
+
+
+
+
+export const CreateDeveloperWebhookBody = zod.object({
+  "label": zod.string().min(1).max(createDeveloperWebhookBodyLabelMax),
+  "url": zod.url().max(createDeveloperWebhookBodyUrlMax),
+  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed'])).min(1)
+})
+
+export const CreateDeveloperWebhookResponse = zod.object({
+  "endpoint": zod.object({
+  "id": zod.uuid(),
+  "label": zod.string(),
+  "url": zod.url(),
+  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed'])),
+  "status": zod.enum(['active', 'revoked']),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable()
+}),
+  "signingSecret": zod.string()
+})
+
+
+/**
+ * @summary Disable a webhook endpoint
+ */
+export const RevokeDeveloperWebhookParams = zod.object({
+  "endpointId": zod.uuid()
+})
+
+export const RevokeDeveloperWebhookResponse = zod.void()
+
+
+/**
+ * @summary List recent delivery attempts for an endpoint
+ */
+export const ListDeveloperWebhookDeliveriesParams = zod.object({
+  "endpointId": zod.uuid()
+})
+
+export const ListDeveloperWebhookDeliveriesResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.uuid(),
+  "eventType": zod.enum(['payment.succeeded', 'payment.failed']),
+  "status": zod.enum(['pending', 'delivering', 'delivered', 'failed']),
+  "attempts": zod.int(),
+  "lastHttpStatus": zod.int().nullable(),
+  "lastErrorClass": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "lastAttemptAt": zod.coerce.date().nullable(),
+  "deliveredAt": zod.coerce.date().nullable()
+}))
+})
+
+
+/**
+ * Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and one-time client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
+ * @summary Create a hosted or direct payment session
+ */
+export const createDeveloperPaymentSessionHeaderIdempotencyKeyMin = 8;
+export const createDeveloperPaymentSessionHeaderIdempotencyKeyMax = 128;
+
+
+
+export const CreateDeveloperPaymentSessionHeader = zod.object({
+  "Idempotency-Key": zod.string().min(createDeveloperPaymentSessionHeaderIdempotencyKeyMin).max(createDeveloperPaymentSessionHeaderIdempotencyKeyMax)
+})
+
+export const createDeveloperPaymentSessionBodyMerchantReferenceMax = 128;
+
+export const createDeveloperPaymentSessionBodyAmountMinorMin = 100;
+export const createDeveloperPaymentSessionBodyAmountMinorMax = 2000000;
+
+export const createDeveloperPaymentSessionBodyDescriptionMax = 240;
+
+export const createDeveloperPaymentSessionBodyReturnUrlMax = 2048;
+
+
+
+export const CreateDeveloperPaymentSessionBody = zod.object({
+  "merchantReference": zod.string().min(1).max(createDeveloperPaymentSessionBodyMerchantReferenceMax),
+  "amountMinor": zod.int().min(createDeveloperPaymentSessionBodyAmountMinorMin).max(createDeveloperPaymentSessionBodyAmountMinorMax),
+  "currency": zod.enum(['XOF']),
+  "mode": zod.enum(['hosted', 'direct']),
+  "description": zod.string().max(createDeveloperPaymentSessionBodyDescriptionMax).optional(),
+  "returnUrl": zod.url().max(createDeveloperPaymentSessionBodyReturnUrlMax).nullish(),
+  "metadata": zod.record(zod.string(), zod.unknown()).optional()
+})
+
+export const CreateDeveloperPaymentSessionResponse = zod.object({
+  "id": zod.uuid(),
+  "merchantReference": zod.string(),
+  "mode": zod.enum(['hosted', 'direct']),
+  "state": zod.enum(['created']),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "checkoutPath": zod.string().nullable(),
+  "clientToken": zod.string(),
+  "publicKey": zod.string(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Read a payment session and its verified status
+ */
+export const GetDeveloperPaymentSessionParams = zod.object({
+  "sessionId": zod.uuid()
+})
+
+export const GetDeveloperPaymentSessionResponse = zod.object({
+  "id": zod.uuid(),
+  "merchantReference": zod.string(),
+  "mode": zod.enum(['hosted', 'direct']),
+  "state": zod.enum(['created', 'waiting', 'uncertain', 'succeeded', 'failed']),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "attemptId": zod.uuid().nullable(),
+  "createdAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Read public checkout details and available Mobile Money choices
+ */
+export const GetDeveloperPublicPaymentSessionParams = zod.object({
+  "sessionId": zod.uuid()
+})
+
+export const getDeveloperPublicPaymentSessionHeaderXSendFlowPublicKeyMin = 20;
+export const getDeveloperPublicPaymentSessionHeaderXSendFlowPublicKeyMax = 80;
+
+export const getDeveloperPublicPaymentSessionHeaderXSendFlowClientTokenMin = 32;
+export const getDeveloperPublicPaymentSessionHeaderXSendFlowClientTokenMax = 64;
+
+
+
+export const GetDeveloperPublicPaymentSessionHeader = zod.object({
+  "X-SendFlow-Public-Key": zod.string().min(getDeveloperPublicPaymentSessionHeaderXSendFlowPublicKeyMin).max(getDeveloperPublicPaymentSessionHeaderXSendFlowPublicKeyMax),
+  "X-SendFlow-Client-Token": zod.string().min(getDeveloperPublicPaymentSessionHeaderXSendFlowClientTokenMin).max(getDeveloperPublicPaymentSessionHeaderXSendFlowClientTokenMax)
+})
+
+export const GetDeveloperPublicPaymentSessionResponse = zod.object({
+  "id": zod.uuid(),
+  "merchantName": zod.string(),
+  "description": zod.string(),
+  "mode": zod.enum(['hosted', 'direct']),
+  "state": zod.enum(['created', 'waiting', 'uncertain', 'succeeded', 'failed']),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "expiresAt": zod.coerce.date(),
+  "countries": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "flag": zod.string(),
+  "phonePrefix": zod.string(),
+  "minPhoneDigits": zod.int(),
+  "maxPhoneDigits": zod.int(),
+  "operators": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "initials": zod.string(),
+  "logoUrl": zod.string().nullable()
+}))
+}))
+})
+
+
+/**
+ * Requires the publishable key and one-time client token returned by session creation. Only the fixed session amount can be charged.
+ * @summary Start a direct Mobile Money payment attempt
+ */
+export const StartDeveloperDirectPaymentParams = zod.object({
+  "sessionId": zod.uuid()
+})
+
+export const startDeveloperDirectPaymentHeaderXSendFlowPublicKeyMin = 20;
+export const startDeveloperDirectPaymentHeaderXSendFlowPublicKeyMax = 80;
+
+export const startDeveloperDirectPaymentHeaderXSendFlowClientTokenMin = 32;
+export const startDeveloperDirectPaymentHeaderXSendFlowClientTokenMax = 64;
+
+export const startDeveloperDirectPaymentHeaderIdempotencyKeyMin = 8;
+export const startDeveloperDirectPaymentHeaderIdempotencyKeyMax = 128;
+
+
+
+export const StartDeveloperDirectPaymentHeader = zod.object({
+  "X-SendFlow-Public-Key": zod.string().min(startDeveloperDirectPaymentHeaderXSendFlowPublicKeyMin).max(startDeveloperDirectPaymentHeaderXSendFlowPublicKeyMax),
+  "X-SendFlow-Client-Token": zod.string().min(startDeveloperDirectPaymentHeaderXSendFlowClientTokenMin).max(startDeveloperDirectPaymentHeaderXSendFlowClientTokenMax),
+  "Idempotency-Key": zod.string().min(startDeveloperDirectPaymentHeaderIdempotencyKeyMin).max(startDeveloperDirectPaymentHeaderIdempotencyKeyMax)
+})
+
+export const startDeveloperDirectPaymentBodyFirstNameMax = 80;
+
+export const startDeveloperDirectPaymentBodyLastNameMax = 80;
+
+export const startDeveloperDirectPaymentBodyCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const startDeveloperDirectPaymentBodyOperatorIdMax = 80;
+
+export const startDeveloperDirectPaymentBodyPhoneNumberMin = 6;
+export const startDeveloperDirectPaymentBodyPhoneNumberMax = 20;
+
+
+
+export const StartDeveloperDirectPaymentBody = zod.object({
+  "firstName": zod.string().min(1).max(startDeveloperDirectPaymentBodyFirstNameMax),
+  "lastName": zod.string().min(1).max(startDeveloperDirectPaymentBodyLastNameMax),
+  "countryCode": zod.string().regex(startDeveloperDirectPaymentBodyCountryCodeRegExp),
+  "operatorId": zod.string().min(1).max(startDeveloperDirectPaymentBodyOperatorIdMax),
+  "phoneNumber": zod.string().min(startDeveloperDirectPaymentBodyPhoneNumberMin).max(startDeveloperDirectPaymentBodyPhoneNumberMax)
+})
+
+export const StartDeveloperDirectPaymentResponse = zod.object({
+  "id": zod.uuid(),
+  "attemptId": zod.uuid(),
+  "state": zod.enum(['waiting', 'uncertain', 'succeeded', 'failed']),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "ussdCode": zod.string().nullable(),
+  "pollToken": zod.string(),
+  "merchantReference": zod.string()
+})
+
+
+/**
+ * @summary Read and refresh a direct payment attempt status
+ */
+export const GetDeveloperDirectPaymentStatusParams = zod.object({
+  "sessionId": zod.uuid(),
+  "attemptId": zod.uuid()
+})
+
+export const getDeveloperDirectPaymentStatusHeaderXSendFlowPublicKeyMin = 20;
+export const getDeveloperDirectPaymentStatusHeaderXSendFlowPublicKeyMax = 80;
+
+export const getDeveloperDirectPaymentStatusHeaderXSendFlowClientTokenMin = 32;
+export const getDeveloperDirectPaymentStatusHeaderXSendFlowClientTokenMax = 64;
+
+export const getDeveloperDirectPaymentStatusHeaderXLinkFlowAttemptTokenMin = 32;
+export const getDeveloperDirectPaymentStatusHeaderXLinkFlowAttemptTokenMax = 64;
+
+
+
+export const GetDeveloperDirectPaymentStatusHeader = zod.object({
+  "X-SendFlow-Public-Key": zod.string().min(getDeveloperDirectPaymentStatusHeaderXSendFlowPublicKeyMin).max(getDeveloperDirectPaymentStatusHeaderXSendFlowPublicKeyMax),
+  "X-SendFlow-Client-Token": zod.string().min(getDeveloperDirectPaymentStatusHeaderXSendFlowClientTokenMin).max(getDeveloperDirectPaymentStatusHeaderXSendFlowClientTokenMax),
+  "X-LinkFlow-Attempt-Token": zod.string().min(getDeveloperDirectPaymentStatusHeaderXLinkFlowAttemptTokenMin).max(getDeveloperDirectPaymentStatusHeaderXLinkFlowAttemptTokenMax)
+})
+
+export const GetDeveloperDirectPaymentStatusResponse = zod.object({
+  "id": zod.uuid(),
+  "attemptId": zod.uuid(),
+  "state": zod.enum(['waiting', 'uncertain', 'succeeded', 'failed']),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "ussdCode": zod.string().nullable(),
+  "pollToken": zod.string(),
+  "merchantReference": zod.string()
+})
+
+
+/**
  * Returns the server-calculated monthly limit and the user's successful outgoing transfer usage for the current calendar month.
  * @summary Get the authenticated account's monthly transfer limit
  */

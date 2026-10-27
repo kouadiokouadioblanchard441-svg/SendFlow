@@ -194,6 +194,12 @@ async function loadAvailableChoices(link: PublicLinkRow) {
   return choices.sort((left, right) => left.name.localeCompare(right.name, "fr"));
 }
 
+export async function getPublicPaymentLinkChoices(publicToken: string) {
+  const link = await findUsablePublicLink(publicToken);
+  if (!link) return null;
+  return loadAvailableChoices(link);
+}
+
 async function loadPreviewCatalogChoices(link: PublicLinkRow) {
   // The authorized Replit viewer may inspect the full country/operator catalog.
   // Quotes and payment attempts still use loadAvailableChoices and its live gates.

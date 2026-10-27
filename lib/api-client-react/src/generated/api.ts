@@ -84,6 +84,19 @@ import type {
   CustomerTransactionPage,
   DatabaseStatus,
   DeleteAdminBannerResult,
+  DeveloperApiKeyCreatedResponse,
+  DeveloperApiKeyInput,
+  DeveloperApiKeysResponse,
+  DeveloperDirectPaymentInput,
+  DeveloperDirectPaymentResponse,
+  DeveloperPaymentSessionCreatedResponse,
+  DeveloperPaymentSessionInput,
+  DeveloperPaymentSessionStatus,
+  DeveloperPublicPaymentSession,
+  DeveloperWebhookCreatedResponse,
+  DeveloperWebhookDeliveriesResponse,
+  DeveloperWebhookInput,
+  DeveloperWebhooksResponse,
   DiditWebhookPayload,
   ErrorEnvelope,
   GetAdminOverviewParams,
@@ -3917,6 +3930,976 @@ export const useUploadCustomerPaymentLinkImage = <TError = ErrorType<ErrorEnvelo
       > => {
       return useMutation(getUploadCustomerPaymentLinkImageMutationOptions(options));
     }
+
+export const getListDeveloperApiKeysUrl = () => {
+
+
+
+
+  return `/api/me/developer/api-keys`
+}
+
+/**
+ * @summary List the current merchant's API keys without revealing secrets
+ */
+export const listDeveloperApiKeys = async ( options?: Parameters<typeof customFetch>[1]): Promise<DeveloperApiKeysResponse> => {
+
+  return customFetch<DeveloperApiKeysResponse>(getListDeveloperApiKeysUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDeveloperApiKeysQueryKey = () => {
+    return [
+    `/api/me/developer/api-keys`
+    ] as const;
+    }
+
+
+export const getListDeveloperApiKeysQueryOptions = <TData = Awaited<ReturnType<typeof listDeveloperApiKeys>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDeveloperApiKeys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDeveloperApiKeysQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDeveloperApiKeys>>> = ({ signal }) => listDeveloperApiKeys({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDeveloperApiKeys>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDeveloperApiKeysQueryResult = NonNullable<Awaited<ReturnType<typeof listDeveloperApiKeys>>>
+export type ListDeveloperApiKeysQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List the current merchant's API keys without revealing secrets
+ */
+
+export function useListDeveloperApiKeys<TData = Awaited<ReturnType<typeof listDeveloperApiKeys>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDeveloperApiKeys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDeveloperApiKeysQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateDeveloperApiKeyUrl = () => {
+
+
+
+
+  return `/api/me/developer/api-keys`
+}
+
+/**
+ * @summary Create a public and secret API key pair
+ */
+export const createDeveloperApiKey = async (developerApiKeyInput: DeveloperApiKeyInput, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperApiKeyCreatedResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<DeveloperApiKeyCreatedResponse>(getCreateDeveloperApiKeyUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(developerApiKeyInput)
+  }
+);}
+
+
+
+
+
+export const getCreateDeveloperApiKeyMutationKey = () => ['createDeveloperApiKey'] as const;
+
+export const getCreateDeveloperApiKeyMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperApiKey>>, TError,CreateDeveloperApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDeveloperApiKey>>, TError,CreateDeveloperApiKeyMutationVariables, TContext> => {
+
+const mutationKey = getCreateDeveloperApiKeyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDeveloperApiKey>>, CreateDeveloperApiKeyMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDeveloperApiKey(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDeveloperApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof createDeveloperApiKey>>>
+    export type CreateDeveloperApiKeyMutationBody = BodyType<DeveloperApiKeyInput>
+    export type CreateDeveloperApiKeyMutationError = ErrorType<ErrorEnvelope>
+    export type CreateDeveloperApiKeyMutationVariables = {data: BodyType<DeveloperApiKeyInput>}
+
+    /**
+ * @summary Create a public and secret API key pair
+ */
+export const useCreateDeveloperApiKey = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperApiKey>>, TError,CreateDeveloperApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDeveloperApiKey>>,
+        TError,
+        CreateDeveloperApiKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateDeveloperApiKeyMutationOptions(options));
+    }
+
+export const getRevokeDeveloperApiKeyUrl = (apiKeyId: string,) => {
+
+
+
+
+  return `/api/me/developer/api-keys/${apiKeyId}`
+}
+
+/**
+ * @summary Revoke an API key pair
+ */
+export const revokeDeveloperApiKey = async (apiKeyId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRevokeDeveloperApiKeyUrl(apiKeyId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRevokeDeveloperApiKeyMutationKey = () => ['revokeDeveloperApiKey'] as const;
+
+export const getRevokeDeveloperApiKeyMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeDeveloperApiKey>>, TError,RevokeDeveloperApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeDeveloperApiKey>>, TError,RevokeDeveloperApiKeyMutationVariables, TContext> => {
+
+const mutationKey = getRevokeDeveloperApiKeyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeDeveloperApiKey>>, RevokeDeveloperApiKeyMutationVariables> = (props) => {
+          const {apiKeyId} = props ?? {};
+
+          return  revokeDeveloperApiKey(apiKeyId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeDeveloperApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof revokeDeveloperApiKey>>>
+
+    export type RevokeDeveloperApiKeyMutationError = ErrorType<ErrorEnvelope>
+    export type RevokeDeveloperApiKeyMutationVariables = {apiKeyId: string}
+
+    /**
+ * @summary Revoke an API key pair
+ */
+export const useRevokeDeveloperApiKey = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeDeveloperApiKey>>, TError,RevokeDeveloperApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof revokeDeveloperApiKey>>,
+        TError,
+        RevokeDeveloperApiKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeDeveloperApiKeyMutationOptions(options));
+    }
+
+export const getListDeveloperWebhooksUrl = () => {
+
+
+
+
+  return `/api/me/developer/webhooks`
+}
+
+/**
+ * @summary List webhook endpoints
+ */
+export const listDeveloperWebhooks = async ( options?: Parameters<typeof customFetch>[1]): Promise<DeveloperWebhooksResponse> => {
+
+  return customFetch<DeveloperWebhooksResponse>(getListDeveloperWebhooksUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDeveloperWebhooksQueryKey = () => {
+    return [
+    `/api/me/developer/webhooks`
+    ] as const;
+    }
+
+
+export const getListDeveloperWebhooksQueryOptions = <TData = Awaited<ReturnType<typeof listDeveloperWebhooks>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDeveloperWebhooks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDeveloperWebhooksQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDeveloperWebhooks>>> = ({ signal }) => listDeveloperWebhooks({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDeveloperWebhooks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDeveloperWebhooksQueryResult = NonNullable<Awaited<ReturnType<typeof listDeveloperWebhooks>>>
+export type ListDeveloperWebhooksQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List webhook endpoints
+ */
+
+export function useListDeveloperWebhooks<TData = Awaited<ReturnType<typeof listDeveloperWebhooks>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDeveloperWebhooks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDeveloperWebhooksQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateDeveloperWebhookUrl = () => {
+
+
+
+
+  return `/api/me/developer/webhooks`
+}
+
+/**
+ * @summary Register a webhook endpoint
+ */
+export const createDeveloperWebhook = async (developerWebhookInput: DeveloperWebhookInput, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperWebhookCreatedResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<DeveloperWebhookCreatedResponse>(getCreateDeveloperWebhookUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(developerWebhookInput)
+  }
+);}
+
+
+
+
+
+export const getCreateDeveloperWebhookMutationKey = () => ['createDeveloperWebhook'] as const;
+
+export const getCreateDeveloperWebhookMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperWebhook>>, TError,CreateDeveloperWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDeveloperWebhook>>, TError,CreateDeveloperWebhookMutationVariables, TContext> => {
+
+const mutationKey = getCreateDeveloperWebhookMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDeveloperWebhook>>, CreateDeveloperWebhookMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDeveloperWebhook(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDeveloperWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof createDeveloperWebhook>>>
+    export type CreateDeveloperWebhookMutationBody = BodyType<DeveloperWebhookInput>
+    export type CreateDeveloperWebhookMutationError = ErrorType<ErrorEnvelope>
+    export type CreateDeveloperWebhookMutationVariables = {data: BodyType<DeveloperWebhookInput>}
+
+    /**
+ * @summary Register a webhook endpoint
+ */
+export const useCreateDeveloperWebhook = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperWebhook>>, TError,CreateDeveloperWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDeveloperWebhook>>,
+        TError,
+        CreateDeveloperWebhookMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateDeveloperWebhookMutationOptions(options));
+    }
+
+export const getRevokeDeveloperWebhookUrl = (endpointId: string,) => {
+
+
+
+
+  return `/api/me/developer/webhooks/${endpointId}`
+}
+
+/**
+ * @summary Disable a webhook endpoint
+ */
+export const revokeDeveloperWebhook = async (endpointId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRevokeDeveloperWebhookUrl(endpointId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRevokeDeveloperWebhookMutationKey = () => ['revokeDeveloperWebhook'] as const;
+
+export const getRevokeDeveloperWebhookMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeDeveloperWebhook>>, TError,RevokeDeveloperWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeDeveloperWebhook>>, TError,RevokeDeveloperWebhookMutationVariables, TContext> => {
+
+const mutationKey = getRevokeDeveloperWebhookMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeDeveloperWebhook>>, RevokeDeveloperWebhookMutationVariables> = (props) => {
+          const {endpointId} = props ?? {};
+
+          return  revokeDeveloperWebhook(endpointId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeDeveloperWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof revokeDeveloperWebhook>>>
+
+    export type RevokeDeveloperWebhookMutationError = ErrorType<ErrorEnvelope>
+    export type RevokeDeveloperWebhookMutationVariables = {endpointId: string}
+
+    /**
+ * @summary Disable a webhook endpoint
+ */
+export const useRevokeDeveloperWebhook = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeDeveloperWebhook>>, TError,RevokeDeveloperWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof revokeDeveloperWebhook>>,
+        TError,
+        RevokeDeveloperWebhookMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeDeveloperWebhookMutationOptions(options));
+    }
+
+export const getListDeveloperWebhookDeliveriesUrl = (endpointId: string,) => {
+
+
+
+
+  return `/api/me/developer/webhooks/${endpointId}/deliveries`
+}
+
+/**
+ * @summary List recent delivery attempts for an endpoint
+ */
+export const listDeveloperWebhookDeliveries = async (endpointId: string, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperWebhookDeliveriesResponse> => {
+
+  return customFetch<DeveloperWebhookDeliveriesResponse>(getListDeveloperWebhookDeliveriesUrl(endpointId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDeveloperWebhookDeliveriesQueryKey = (endpointId: string,) => {
+    return [
+    `/api/me/developer/webhooks/${endpointId}/deliveries`
+    ] as const;
+    }
+
+
+export const getListDeveloperWebhookDeliveriesQueryOptions = <TData = Awaited<ReturnType<typeof listDeveloperWebhookDeliveries>>, TError = ErrorType<ErrorEnvelope>>(endpointId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDeveloperWebhookDeliveries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDeveloperWebhookDeliveriesQueryKey(endpointId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDeveloperWebhookDeliveries>>> = ({ signal }) => listDeveloperWebhookDeliveries(endpointId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: endpointId !== null && endpointId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDeveloperWebhookDeliveries>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDeveloperWebhookDeliveriesQueryResult = NonNullable<Awaited<ReturnType<typeof listDeveloperWebhookDeliveries>>>
+export type ListDeveloperWebhookDeliveriesQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List recent delivery attempts for an endpoint
+ */
+
+export function useListDeveloperWebhookDeliveries<TData = Awaited<ReturnType<typeof listDeveloperWebhookDeliveries>>, TError = ErrorType<ErrorEnvelope>>(
+ endpointId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDeveloperWebhookDeliveries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDeveloperWebhookDeliveriesQueryOptions(endpointId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateDeveloperPaymentSessionUrl = () => {
+
+
+
+
+  return `/api/v1/payment-sessions`
+}
+
+/**
+ * Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and one-time client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
+ * @summary Create a hosted or direct payment session
+ */
+export const createDeveloperPaymentSession = async (developerPaymentSessionInput: DeveloperPaymentSessionInput, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperPaymentSessionCreatedResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<DeveloperPaymentSessionCreatedResponse>(getCreateDeveloperPaymentSessionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(developerPaymentSessionInput)
+  }
+);}
+
+
+
+
+
+export const getCreateDeveloperPaymentSessionMutationKey = () => ['createDeveloperPaymentSession'] as const;
+
+export const getCreateDeveloperPaymentSessionMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPaymentSession>>, TError,CreateDeveloperPaymentSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPaymentSession>>, TError,CreateDeveloperPaymentSessionMutationVariables, TContext> => {
+
+const mutationKey = getCreateDeveloperPaymentSessionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDeveloperPaymentSession>>, CreateDeveloperPaymentSessionMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDeveloperPaymentSession(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDeveloperPaymentSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createDeveloperPaymentSession>>>
+    export type CreateDeveloperPaymentSessionMutationBody = BodyType<DeveloperPaymentSessionInput>
+    export type CreateDeveloperPaymentSessionMutationError = ErrorType<ErrorEnvelope>
+    export type CreateDeveloperPaymentSessionMutationVariables = {data: BodyType<DeveloperPaymentSessionInput>}
+
+    /**
+ * @summary Create a hosted or direct payment session
+ */
+export const useCreateDeveloperPaymentSession = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPaymentSession>>, TError,CreateDeveloperPaymentSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDeveloperPaymentSession>>,
+        TError,
+        CreateDeveloperPaymentSessionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateDeveloperPaymentSessionMutationOptions(options));
+    }
+
+export const getGetDeveloperPaymentSessionUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/payment-sessions/${sessionId}`
+}
+
+/**
+ * @summary Read a payment session and its verified status
+ */
+export const getDeveloperPaymentSession = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperPaymentSessionStatus> => {
+
+  return customFetch<DeveloperPaymentSessionStatus>(getGetDeveloperPaymentSessionUrl(sessionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDeveloperPaymentSessionQueryKey = (sessionId: string,) => {
+    return [
+    `/api/v1/payment-sessions/${sessionId}`
+    ] as const;
+    }
+
+
+export const getGetDeveloperPaymentSessionQueryOptions = <TData = Awaited<ReturnType<typeof getDeveloperPaymentSession>>, TError = ErrorType<ErrorEnvelope>>(sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPaymentSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDeveloperPaymentSessionQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDeveloperPaymentSession>>> = ({ signal }) => getDeveloperPaymentSession(sessionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sessionId !== null && sessionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPaymentSession>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDeveloperPaymentSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getDeveloperPaymentSession>>>
+export type GetDeveloperPaymentSessionQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Read a payment session and its verified status
+ */
+
+export function useGetDeveloperPaymentSession<TData = Awaited<ReturnType<typeof getDeveloperPaymentSession>>, TError = ErrorType<ErrorEnvelope>>(
+ sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPaymentSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDeveloperPaymentSessionQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetDeveloperPublicPaymentSessionUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/public/payment-sessions/${sessionId}`
+}
+
+/**
+ * @summary Read public checkout details and available Mobile Money choices
+ */
+export const getDeveloperPublicPaymentSession = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperPublicPaymentSession> => {
+
+  return customFetch<DeveloperPublicPaymentSession>(getGetDeveloperPublicPaymentSessionUrl(sessionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDeveloperPublicPaymentSessionQueryKey = (sessionId: string,) => {
+    return [
+    `/api/v1/public/payment-sessions/${sessionId}`
+    ] as const;
+    }
+
+
+export const getGetDeveloperPublicPaymentSessionQueryOptions = <TData = Awaited<ReturnType<typeof getDeveloperPublicPaymentSession>>, TError = ErrorType<ErrorEnvelope>>(sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPublicPaymentSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDeveloperPublicPaymentSessionQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDeveloperPublicPaymentSession>>> = ({ signal }) => getDeveloperPublicPaymentSession(sessionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sessionId !== null && sessionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPublicPaymentSession>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDeveloperPublicPaymentSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getDeveloperPublicPaymentSession>>>
+export type GetDeveloperPublicPaymentSessionQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Read public checkout details and available Mobile Money choices
+ */
+
+export function useGetDeveloperPublicPaymentSession<TData = Awaited<ReturnType<typeof getDeveloperPublicPaymentSession>>, TError = ErrorType<ErrorEnvelope>>(
+ sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPublicPaymentSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDeveloperPublicPaymentSessionQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartDeveloperDirectPaymentUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/public/payment-sessions/${sessionId}/attempts`
+}
+
+/**
+ * Requires the publishable key and one-time client token returned by session creation. Only the fixed session amount can be charged.
+ * @summary Start a direct Mobile Money payment attempt
+ */
+export const startDeveloperDirectPayment = async (sessionId: string,
+    developerDirectPaymentInput: DeveloperDirectPaymentInput, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperDirectPaymentResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<DeveloperDirectPaymentResponse>(getStartDeveloperDirectPaymentUrl(sessionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(developerDirectPaymentInput)
+  }
+);}
+
+
+
+
+
+export const getStartDeveloperDirectPaymentMutationKey = () => ['startDeveloperDirectPayment'] as const;
+
+export const getStartDeveloperDirectPaymentMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startDeveloperDirectPayment>>, TError,StartDeveloperDirectPaymentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startDeveloperDirectPayment>>, TError,StartDeveloperDirectPaymentMutationVariables, TContext> => {
+
+const mutationKey = getStartDeveloperDirectPaymentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startDeveloperDirectPayment>>, StartDeveloperDirectPaymentMutationVariables> = (props) => {
+          const {sessionId,data} = props ?? {};
+
+          return  startDeveloperDirectPayment(sessionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartDeveloperDirectPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof startDeveloperDirectPayment>>>
+    export type StartDeveloperDirectPaymentMutationBody = BodyType<DeveloperDirectPaymentInput>
+    export type StartDeveloperDirectPaymentMutationError = ErrorType<ErrorEnvelope>
+    export type StartDeveloperDirectPaymentMutationVariables = {sessionId: string;data: BodyType<DeveloperDirectPaymentInput>}
+
+    /**
+ * @summary Start a direct Mobile Money payment attempt
+ */
+export const useStartDeveloperDirectPayment = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startDeveloperDirectPayment>>, TError,StartDeveloperDirectPaymentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startDeveloperDirectPayment>>,
+        TError,
+        StartDeveloperDirectPaymentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartDeveloperDirectPaymentMutationOptions(options));
+    }
+
+export const getGetDeveloperDirectPaymentStatusUrl = (sessionId: string,
+    attemptId: string,) => {
+
+
+
+
+  return `/api/v1/public/payment-sessions/${sessionId}/attempts/${attemptId}`
+}
+
+/**
+ * @summary Read and refresh a direct payment attempt status
+ */
+export const getDeveloperDirectPaymentStatus = async (sessionId: string,
+    attemptId: string, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperDirectPaymentResponse> => {
+
+  return customFetch<DeveloperDirectPaymentResponse>(getGetDeveloperDirectPaymentStatusUrl(sessionId,attemptId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDeveloperDirectPaymentStatusQueryKey = (sessionId: string,
+    attemptId: string,) => {
+    return [
+    `/api/v1/public/payment-sessions/${sessionId}/attempts/${attemptId}`
+    ] as const;
+    }
+
+
+export const getGetDeveloperDirectPaymentStatusQueryOptions = <TData = Awaited<ReturnType<typeof getDeveloperDirectPaymentStatus>>, TError = ErrorType<ErrorEnvelope>>(sessionId: string,
+    attemptId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeveloperDirectPaymentStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDeveloperDirectPaymentStatusQueryKey(sessionId,attemptId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDeveloperDirectPaymentStatus>>> = ({ signal }) => getDeveloperDirectPaymentStatus(sessionId,attemptId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sessionId !== null && sessionId !== undefined && attemptId !== null && attemptId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDeveloperDirectPaymentStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDeveloperDirectPaymentStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getDeveloperDirectPaymentStatus>>>
+export type GetDeveloperDirectPaymentStatusQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Read and refresh a direct payment attempt status
+ */
+
+export function useGetDeveloperDirectPaymentStatus<TData = Awaited<ReturnType<typeof getDeveloperDirectPaymentStatus>>, TError = ErrorType<ErrorEnvelope>>(
+ sessionId: string,
+    attemptId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeveloperDirectPaymentStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDeveloperDirectPaymentStatusQueryOptions(sessionId,attemptId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetCurrentAccountLimitUrl = () => {
 

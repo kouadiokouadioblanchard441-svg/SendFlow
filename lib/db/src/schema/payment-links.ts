@@ -30,6 +30,7 @@ export const customerPaymentLinksTable = pgTable("sf_customer_payment_links", {
   linkName: varchar("link_name", { length: 120 }),
   description: varchar("description", { length: 240 }).notNull(),
   paymentMethod: varchar("payment_method", { length: 20 }).notNull(),
+  source: varchar("source", { length: 12 }).notNull().default("linkflow"),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   maximumUses: integer("maximum_uses"),
   usageCount: integer("usage_count").notNull().default(0),
@@ -77,6 +78,10 @@ export const customerPaymentLinksTable = pgTable("sf_customer_payment_links", {
   paymentMethodCheck: check(
     "sf_customer_payment_links_payment_method_check",
     sql`${table.paymentMethod} in ('mobile_money','card','all')`,
+  ),
+  sourceCheck: check(
+    "sf_customer_payment_links_source_check",
+    sql`${table.source} in ('linkflow','api')`,
   ),
   maximumUsesCheck: check(
     "sf_customer_payment_links_maximum_uses_check",
