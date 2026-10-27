@@ -45,6 +45,8 @@ type DialogState =
   | { kind: 'revoke-webhook'; id: string; label: string }
   | null;
 
+type DeveloperTab = 'private' | 'identifier' | 'webhook';
+
 const EVENT_OPTIONS = [
   { value: 'payment.succeeded', label: 'Paiement réussi' },
   { value: 'payment.failed', label: 'Paiement échoué' },
@@ -71,7 +73,7 @@ function statusLabel(status: string) {
   return labels[status] ?? status;
 }
 
-function CopyButton({ value, label }: { value: string; label: string }) {
+function CopyButton({ value, label, testId }: { value: string; label: string; testId?: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
@@ -83,7 +85,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     }
   };
   return (
-    <button className="dev-copy-button" type="button" onClick={() => void copy()} aria-label={`Copier ${label}`} data-testid={`button-copy-${label}`}>
+    <button className="dev-copy-button" type="button" onClick={() => void copy()} aria-label={`Copier ${label}`} data-testid={testId ?? `button-copy-${label}`}>
       {copied ? <Check size={15} /> : <Copy size={15} />}
       <span>{copied ? 'Copié' : 'Copier'}</span>
     </button>
@@ -114,6 +116,7 @@ function Dialog({ children, title, onClose }: { children: ReactNode; title: stri
 export default function DevelopersPage() {
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<DialogState>(null);
+  const [developerTab, setDeveloperTab] = useState<DeveloperTab>('private');
   const [selectedEndpointId, setSelectedEndpointId] = useState('');
   const [apiLabel, setApiLabel] = useState('');
   const [webhookLabel, setWebhookLabel] = useState('');
@@ -256,95 +259,144 @@ export default function DevelopersPage() {
         <section className="dev-section dev-keys-section" aria-labelledby="dev-keys-heading">
           <div className="dev-section-heading">
             <div className="dev-section-title">
-              <span className="dev-section-index">02 / IDENTIFIANTS</span>
-              <h2 id="dev-keys-heading"><KeyRound size={21} /> Clés API</h2>
-              <p>La clé publique identifie votre intégration. La clé secrète ne s’affiche qu’une seule fois, à sa création.</p>
+              <span className="dev-section-index">{developerTab === 'webhook' ? '03 / NOTIFICATIONS' : '02 / IDENTIFIANTS'}</span>
+              <h2 id="dev-keys-heading">{developerTab === 'webhook' ? <><Webhook size={21} /> Webhook</> : <><KeyRound size={21} /> API</>}</h2>
+              <p>
+                {developerTab === 'private'
+                  ? 'La clé privée complète est affichée une seule fois lors de sa création.'
+                  : developerTab === 'identifier'
+                    ? 'Utilisez la clé publique comme identifiant de votre intégration.'
+                    : 'Configurez l’URL qui recevra les notifications de paiement signées.'}
+              </p>
             </div>
-            <button type="button" className="dev-primary-button" onClick={() => { setApiLabel(''); setFormError(''); setDialog({ kind: 'api-create' }); }} data-testid="button-create-api-key"><Plus size={17} /> Créer une clé</button>
+            <button
+              type="button"
+              className="dev-primary-button"
+              onClick={() => {
+                setFormError('');
+                if (developerTab === 'webhook') {
+                  setWebhookLabel('');
+                  setWebhookUrl('');
+                  setSelectedEvents(['payment.succeeded']);
+                  setDialog({ kind: 'webhook-create' });
+                } else {
+                  setApiLabel('');
+                  setDialog({ kind: 'api-create' });
+                }
+              }}
+              data-testid={developerTab === 'webhook' ? 'button-create-webhook' : 'button-create-api-key'}
+            >
+              <Plus size={17} /> {developerTab === 'webhook' ? 'Configurer une URL' : 'Créer une clé'}
+            </button>
           </div>
-          {apiKeysQuery.isLoading && <div className="dev-loading-block" aria-label="Chargement des clés API"><span /><span /><span /></div>}
-          {apiKeysQuery.isError && <div className="dev-state dev-state-error" role="alert"><AlertCircle size={20} /><span><strong>Clés indisponibles</strong><small>Les données n’ont pas pu être chargées.</small></span><button type="button" onClick={() => void apiKeysQuery.refetch()}><RefreshCw size={15} /> Réessayer</button></div>}
-          {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length === 0 && (
-            <div className="dev-empty-state"><span className="dev-empty-icon"><KeyRound size={22} /></span><div><strong>Aucune clé API</strong><p>Créez une paire de clés pour commencer à connecter votre application.</p></div><button className="dev-secondary-button" type="button" onClick={() => setDialog({ kind: 'api-create' })}>Créer une clé</button></div>
-          )}
-          {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length > 0 && (
-            <div className="dev-key-list">
-              {apiKeys.map((key) => (
-                <article className={`dev-key-card${key.status === 'revoked' ? ' is-revoked' : ''}`} key={key.id} data-testid={`card-api-key-${key.id}`}>
-                  <div className="dev-key-card-main">
-                    <div className="dev-key-name-line"><span className="dev-key-mark"><KeyRound size={17} /></span><div><h3>{key.label}</h3><span className={`dev-status-pill ${key.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(key.status)}</span></div></div>
-                    <div className="dev-key-values">
-                      <div><span>CLÉ PUBLIQUE</span><code>{key.publicKeyPrefix}••••••••</code></div>
-                      <div><span>CLÉ SECRÈTE</span><code>{key.secretKeyPrefix}••••••••</code></div>
-                    </div>
-                  </div>
-                  <div className="dev-key-meta"><span>Créée le {formatDate(key.createdAt)}</span><span>Dernière utilisation&nbsp;: {formatDate(key.lastUsedAt)}</span>{key.revokedAt && <span>Révoquée le {formatDate(key.revokedAt)}</span>}</div>
-                  {key.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-api', id: key.id, label: key.label }); }} data-testid={`button-revoke-api-key-${key.id}`}>Révoquer</button>}
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="dev-section dev-webhooks-section" aria-labelledby="dev-webhooks-heading">
-          <div className="dev-section-heading">
-            <div className="dev-section-title">
-              <span className="dev-section-index">03 / ÉVÉNEMENTS</span>
-              <h2 id="dev-webhooks-heading"><Webhook size={21} /> Webhooks</h2>
-              <p>Recevez une notification signée lorsqu’un paiement réussit ou échoue.</p>
-            </div>
-            <button type="button" className="dev-primary-button" onClick={() => { setWebhookLabel(''); setWebhookUrl(''); setSelectedEvents(['payment.succeeded']); setFormError(''); setDialog({ kind: 'webhook-create' }); }} data-testid="button-create-webhook"><Plus size={17} /> Ajouter un endpoint</button>
+          <div
+            className="dev-integration-tabs"
+            role="tablist"
+            aria-label="Identifiants et webhook"
+            onKeyDown={(event) => {
+              const tabs: DeveloperTab[] = ['private', 'identifier', 'webhook'];
+              const currentIndex = tabs.indexOf(developerTab);
+              const nextIndex = event.key === 'ArrowRight'
+                ? (currentIndex + 1) % tabs.length
+                : event.key === 'ArrowLeft'
+                  ? (currentIndex + tabs.length - 1) % tabs.length
+                  : -1;
+              if (nextIndex >= 0) {
+                event.preventDefault();
+                const nextTab = tabs[nextIndex];
+                setDeveloperTab(nextTab);
+                window.requestAnimationFrame(() => document.getElementById(`developer-tab-${nextTab}`)?.focus());
+              }
+            }}
+          >
+            <button type="button" role="tab" id="developer-tab-private" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'private'} tabIndex={developerTab === 'private' ? 0 : -1} onClick={() => setDeveloperTab('private')} data-testid="tab-private-key"><LockKeyhole size={15} /> Clé privée</button>
+            <button type="button" role="tab" id="developer-tab-identifier" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'identifier'} tabIndex={developerTab === 'identifier' ? 0 : -1} onClick={() => setDeveloperTab('identifier')} data-testid="tab-public-key"><KeyRound size={15} /> Identifiant</button>
+            <button type="button" role="tab" id="developer-tab-webhook" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'webhook'} tabIndex={developerTab === 'webhook' ? 0 : -1} onClick={() => setDeveloperTab('webhook')} data-testid="tab-webhook"><Webhook size={15} /> Webhook</button>
           </div>
-          {webhooksQuery.isLoading && <div className="dev-loading-block" aria-label="Chargement des webhooks"><span /><span /><span /></div>}
-          {webhooksQuery.isError && <div className="dev-state dev-state-error" role="alert"><AlertCircle size={20} /><span><strong>Webhooks indisponibles</strong><small>Les données n’ont pas pu être chargées.</small></span><button type="button" onClick={() => void webhooksQuery.refetch()}><RefreshCw size={15} /> Réessayer</button></div>}
-          {!webhooksQuery.isLoading && !webhooksQuery.isError && endpoints.length === 0 && (
-            <div className="dev-empty-state"><span className="dev-empty-icon"><Webhook size={22} /></span><div><strong>Aucun webhook configuré</strong><p>Ajoutez une URL HTTPS pour suivre les événements de paiement de votre application.</p></div><button className="dev-secondary-button" type="button" onClick={() => setDialog({ kind: 'webhook-create' })}>Ajouter un endpoint</button></div>
-          )}
-          {!webhooksQuery.isLoading && !webhooksQuery.isError && endpoints.length > 0 && (
-            <div className="dev-webhook-layout">
-              <div className="dev-endpoint-list" aria-label="Points de terminaison webhook">
-                {endpoints.map((endpoint) => (
-                  <button
-                    type="button"
-                    key={endpoint.id}
-                    className={`dev-endpoint-card${selectedEndpointId === endpoint.id ? ' is-selected' : ''}${endpoint.status === 'revoked' ? ' is-revoked' : ''}`}
-                    onClick={() => setSelectedEndpointId(endpoint.id)}
-                    aria-pressed={selectedEndpointId === endpoint.id}
-                    data-testid={`button-select-endpoint-${endpoint.id}`}
-                  >
-                    <span className="dev-endpoint-top"><span className="dev-endpoint-icon"><Webhook size={17} /></span><span className={`dev-status-pill ${endpoint.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(endpoint.status)}</span></span>
-                    <strong>{endpoint.label}</strong><code>{endpoint.url}</code>
-                    <span className="dev-event-tags">{endpoint.events.map((event) => <small key={event}>{event}</small>)}</span>
-                    <span className="dev-endpoint-foot">Créé le {formatDate(endpoint.createdAt)}{endpoint.revokedAt ? ` · Révoqué le ${formatDate(endpoint.revokedAt)}` : ''}</span>
-                  </button>
-                ))}
-              </div>
-              <section className="dev-deliveries" aria-labelledby="dev-deliveries-heading">
-                <div className="dev-deliveries-header">
-                  <div><span className="dev-section-index">JOURNAL RÉCENT</span><h3 id="dev-deliveries-heading">Livraisons</h3><p>{selectedEndpoint?.label ?? 'Sélectionnez un endpoint'}</p></div>
-                  {selectedEndpoint?.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-webhook', id: selectedEndpoint.id, label: selectedEndpoint.label }); }} data-testid={`button-revoke-webhook-${selectedEndpoint.id}`}>Révoquer</button>}
-                </div>
-                {deliveriesQuery.isLoading && <div className="dev-delivery-skeleton"><span /><span /><span /></div>}
-                {deliveriesQuery.isError && <div className="dev-inline-state is-error" role="alert"><span>Impossible de charger les livraisons.</span><button type="button" onClick={() => void deliveriesQuery.refetch()}>Réessayer</button></div>}
-                {!deliveriesQuery.isLoading && !deliveriesQuery.isError && deliveries.length === 0 && <div className="dev-delivery-empty"><span><Activity size={20} /></span><strong>Aucune livraison récente</strong><p>Les événements reçus apparaîtront ici.</p></div>}
-                {!deliveriesQuery.isLoading && !deliveriesQuery.isError && deliveries.length > 0 && (
-                  <div className="dev-delivery-table-wrap">
-                    <table className="dev-delivery-table">
-                      <thead><tr><th>ÉVÉNEMENT</th><th>ÉTAT</th><th>TENTATIVES</th><th>DERNIÈRE TENTATIVE</th></tr></thead>
-                      <tbody>{deliveries.map((delivery) => (
-                        <tr key={delivery.id} data-testid={`row-webhook-delivery-${delivery.id}`}>
-                          <td><strong>{delivery.eventType}</strong><small>{formatDate(delivery.createdAt)}</small></td>
-                          <td><span className={`dev-status-pill is-${delivery.status}`}><i />{statusLabel(delivery.status)}</span>{delivery.lastHttpStatus !== null && <small className="dev-http-status">HTTP {delivery.lastHttpStatus}</small>}</td>
-                          <td>{delivery.attempts}</td>
-                          <td><span>{formatDate(delivery.lastAttemptAt)}</span>{delivery.lastErrorClass && <small className="dev-error-class">{delivery.lastErrorClass}</small>}</td>
-                        </tr>
-                      ))}</tbody>
-                    </table>
+          <div className="dev-tab-panel" id="developer-integrations-panel" role="tabpanel" aria-labelledby={`developer-tab-${developerTab}`}>
+            {developerTab !== 'webhook' ? (
+              <>
+                {apiKeysQuery.isLoading && <div className="dev-loading-block" aria-label="Chargement des clés API"><span /><span /><span /></div>}
+                {apiKeysQuery.isError && <div className="dev-state dev-state-error" role="alert"><AlertCircle size={20} /><span><strong>Clés indisponibles</strong><small>Les données n’ont pas pu être chargées.</small></span><button type="button" onClick={() => void apiKeysQuery.refetch()}><RefreshCw size={15} /> Réessayer</button></div>}
+                {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length === 0 && (
+                  <div className="dev-empty-state"><span className="dev-empty-icon"><KeyRound size={22} /></span><div><strong>Aucune clé API</strong><p>Créez une paire de clés pour commencer à connecter votre application.</p></div><button className="dev-secondary-button" type="button" onClick={() => setDialog({ kind: 'api-create' })}>Créer une clé</button></div>
+                )}
+                {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length > 0 && (
+                  <div className="dev-key-list">
+                    {apiKeys.map((key) => (
+                      <article className={`dev-key-card${key.status === 'revoked' ? ' is-revoked' : ''}`} key={key.id} data-testid={`card-api-key-${key.id}`}>
+                        <div className="dev-key-card-main">
+                          <div className="dev-key-name-line"><span className="dev-key-mark"><KeyRound size={17} /></span><div><h3>{key.label}</h3><span className={`dev-status-pill ${key.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(key.status)}</span></div></div>
+                          <div className="dev-key-values">
+                            {developerTab === 'private' ? (
+                              <div><span>CLÉ PRIVÉE · MASQUÉE</span><code>{key.secretKeyPrefix}••••••••</code></div>
+                            ) : (
+                              <div className="dev-public-key-field"><span>CLÉ PUBLIQUE</span><div className="dev-public-key-value"><code>{key.publicKey}</code><CopyButton value={key.publicKey} label="la clé publique" testId={`button-copy-public-key-${key.id}`} /></div></div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="dev-key-meta"><span>Créée le {formatDate(key.createdAt)}</span><span>Dernière utilisation&nbsp;: {formatDate(key.lastUsedAt)}</span>{key.revokedAt && <span>Révoquée le {formatDate(key.revokedAt)}</span>}</div>
+                        {key.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-api', id: key.id, label: key.label }); }} data-testid={`button-revoke-api-key-${key.id}`}>Révoquer</button>}
+                      </article>
+                    ))}
                   </div>
                 )}
-              </section>
-            </div>
-          )}
+              </>
+            ) : (
+              <>
+                {webhooksQuery.isLoading && <div className="dev-loading-block" aria-label="Chargement des webhooks"><span /><span /><span /></div>}
+                {webhooksQuery.isError && <div className="dev-state dev-state-error" role="alert"><AlertCircle size={20} /><span><strong>Webhooks indisponibles</strong><small>Les données n’ont pas pu être chargées.</small></span><button type="button" onClick={() => void webhooksQuery.refetch()}><RefreshCw size={15} /> Réessayer</button></div>}
+                {!webhooksQuery.isLoading && !webhooksQuery.isError && endpoints.length === 0 && (
+                  <div className="dev-empty-state"><span className="dev-empty-icon"><Webhook size={22} /></span><div><strong>Aucun webhook configuré</strong><p>Ajoutez une URL HTTPS pour recevoir les notifications de paiement sur votre serveur.</p></div><button className="dev-secondary-button" type="button" onClick={() => { setWebhookLabel(''); setWebhookUrl(''); setSelectedEvents(['payment.succeeded']); setFormError(''); setDialog({ kind: 'webhook-create' }); }}>Configurer une URL</button></div>
+                )}
+                {!webhooksQuery.isLoading && !webhooksQuery.isError && endpoints.length > 0 && (
+                  <div className="dev-webhook-layout">
+                    <div className="dev-endpoint-list" aria-label="Points de terminaison webhook">
+                      {endpoints.map((endpoint) => (
+                        <button
+                          type="button"
+                          key={endpoint.id}
+                          className={`dev-endpoint-card${selectedEndpointId === endpoint.id ? ' is-selected' : ''}${endpoint.status === 'revoked' ? ' is-revoked' : ''}`}
+                          onClick={() => setSelectedEndpointId(endpoint.id)}
+                          aria-pressed={selectedEndpointId === endpoint.id}
+                          data-testid={`button-select-endpoint-${endpoint.id}`}
+                        >
+                          <span className="dev-endpoint-top"><span className="dev-endpoint-icon"><Webhook size={17} /></span><span className={`dev-status-pill ${endpoint.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(endpoint.status)}</span></span>
+                          <strong>{endpoint.label}</strong><code>{endpoint.url}</code>
+                          <span className="dev-event-tags">{endpoint.events.map((event) => <small key={event}>{event}</small>)}</span>
+                          <span className="dev-endpoint-foot">Créé le {formatDate(endpoint.createdAt)}{endpoint.revokedAt ? ` · Révoqué le ${formatDate(endpoint.revokedAt)}` : ''}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <section className="dev-deliveries" aria-labelledby="dev-deliveries-heading">
+                      <div className="dev-deliveries-header">
+                        <div><span className="dev-section-index">JOURNAL RÉCENT</span><h3 id="dev-deliveries-heading">Livraisons</h3><p>{selectedEndpoint?.label ?? 'Sélectionnez un endpoint'}</p></div>
+                        {selectedEndpoint?.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-webhook', id: selectedEndpoint.id, label: selectedEndpoint.label }); }} data-testid={`button-revoke-webhook-${selectedEndpoint.id}`}>Révoquer</button>}
+                      </div>
+                      {deliveriesQuery.isLoading && <div className="dev-delivery-skeleton"><span /><span /><span /></div>}
+                      {deliveriesQuery.isError && <div className="dev-inline-state is-error" role="alert"><span>Impossible de charger les livraisons.</span><button type="button" onClick={() => void deliveriesQuery.refetch()}>Réessayer</button></div>}
+                      {!deliveriesQuery.isLoading && !deliveriesQuery.isError && deliveries.length === 0 && <div className="dev-delivery-empty"><span><Activity size={20} /></span><strong>Aucune livraison récente</strong><p>Les événements reçus apparaîtront ici.</p></div>}
+                      {!deliveriesQuery.isLoading && !deliveriesQuery.isError && deliveries.length > 0 && (
+                        <div className="dev-delivery-table-wrap">
+                          <table className="dev-delivery-table">
+                            <thead><tr><th>ÉVÉNEMENT</th><th>ÉTAT</th><th>TENTATIVES</th><th>DERNIÈRE TENTATIVE</th></tr></thead>
+                            <tbody>{deliveries.map((delivery) => (
+                              <tr key={delivery.id} data-testid={`row-webhook-delivery-${delivery.id}`}>
+                                <td><strong>{delivery.eventType}</strong><small>{formatDate(delivery.createdAt)}</small></td>
+                                <td><span className={`dev-status-pill is-${delivery.status}`}><i />{statusLabel(delivery.status)}</span>{delivery.lastHttpStatus !== null && <small className="dev-http-status">HTTP {delivery.lastHttpStatus}</small>}</td>
+                                <td>{delivery.attempts}</td>
+                                <td><span>{formatDate(delivery.lastAttemptAt)}</span>{delivery.lastErrorClass && <small className="dev-error-class">{delivery.lastErrorClass}</small>}</td>
+                              </tr>
+                            ))}</tbody>
+                          </table>
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </section>
         <footer className="dev-footer"><LockKeyhole size={15} /><span>Ne partagez jamais vos secrets. SendFlow ne les conserve pas sous une forme consultable.</span></footer>
       </div>

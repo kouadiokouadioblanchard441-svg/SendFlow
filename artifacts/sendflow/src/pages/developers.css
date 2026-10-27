@@ -352,6 +352,57 @@
   font-size: 10px;
   letter-spacing: -.025em;
 }
+.dev-key-values { grid-template-columns: minmax(0, 1fr); }
+.dev-public-key-field { min-width: 0; }
+.dev-public-key-value {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+.dev-public-key-value code {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dev-integration-tabs {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--dev-line);
+  margin: 0 0 15px;
+  scrollbar-width: thin;
+}
+.dev-integration-tabs [role="tab"] {
+  display: inline-flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 10px clamp(5px, 1.6vw, 14px) 9px;
+  color: var(--dev-muted);
+  font: inherit;
+  font-size: clamp(9px, 2.8vw, 11px);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dev-integration-tabs [role="tab"][aria-selected="true"] {
+  border-bottom-color: var(--dev-violet);
+  color: var(--dev-violet-dark);
+}
+.dev-integration-tabs [role="tab"]:focus-visible {
+  outline: 2px solid rgba(112, 67, 194, .38);
+  outline-offset: -3px;
+}
+.dev-tab-panel { min-width: 0; }
 .dev-key-meta { margin-top: 10px; padding-top: 8px; }
 .dev-key-card > .dev-text-danger {
   top: auto;
