@@ -11,6 +11,7 @@ import {
 import {
   and,
   adminGrantsTable,
+  customerPaymentLinkAttemptsTable,
   db,
   desc,
   eq,
@@ -18,6 +19,7 @@ import {
   isNull,
   lt,
   or,
+  paymentIntentsTable,
   sql,
   transactionsTable,
   usersTable,
@@ -40,6 +42,7 @@ import {
   serializeCustomerProfileName,
   splitCustomerDisplayName,
 } from "../lib/customer-profile-policy";
+import { projectCustomerTransactionHistoryValues } from "../lib/customer-transaction-history-policy";
 
 const router: IRouter = Router();
 const DEFAULT_CUSTOMER_TRANSACTION_PAGE_SIZE = 50;
@@ -321,8 +324,14 @@ router.get("/me/transactions", async (req, res): Promise<void> => {
         )
       : undefined;
     const transactions = await db
-      .select(customerTransactionColumns)
+      .select({
+        ...customerTransactionColumns,
+        linkFlowAttemptId: customerPaymentLinkAttemptsTable.id,
+        linkFlowRecipientTotalMinor: paymentIntentsTable.recipientTotalMinor,
+      })
       .from(transactionsTable)
+      .leftJoin(paymentIntentsTable, eq(paymentIntentsTable.transactionId, transactionsTable.id))
+      .leftJoin(customerPaymentLinkAttemptsTable, eq(customerPaymentLinkAttemptsTable.intentId, paymentIntentsTable.id))
       .where(
         and(
           eq(transactionsTable.userId, session.userId),
@@ -338,13 +347,26 @@ router.get("/me/transactions", async (req, res): Promise<void> => {
     const page = transactions.slice(0, pageSize);
     const lastTransaction = page.at(-1);
     const response = GetCustomerTransactionsResponse.parse({
-      items: page.map((transaction) => ({
-        ...transaction,
-        senderPhone: decryptSensitiveDataIfEncrypted(transaction.senderPhone, "transaction-sender-phone"),
-        recipientPhone: decryptSensitiveDataIfEncrypted(transaction.recipientPhone, "transaction-recipient-phone"),
-        providerReference: decryptSensitiveDataIfEncrypted(transaction.providerReference, "provider-reference"),
-        createdAt: transaction.createdAt.toISOString(),
-      })),
+      items: page.map((transaction) => {
+        const historyValues = projectCustomerTransactionHistoryValues(transaction, {
+          attemptId: transaction.linkFlowAttemptId,
+          recipientTotalMinor: transaction.linkFlowRecipientTotalMinor,
+        });
+        const {
+          linkFlowAttemptId: _linkFlowAttemptId,
+          linkFlowRecipientTotalMinor: _linkFlowRecipientTotalMinor,
+          ...record
+        } = transaction;
+        return {
+          ...record,
+          amountMinor: historyValues.amountMinor,
+          toOperator: historyValues.toOperator,
+          senderPhone: decryptSensitiveDataIfEncrypted(transaction.senderPhone, "transaction-sender-phone"),
+          recipientPhone: decryptSensitiveDataIfEncrypted(transaction.recipientPhone, "transaction-recipient-phone"),
+          providerReference: decryptSensitiveDataIfEncrypted(transaction.providerReference, "provider-reference"),
+          createdAt: transaction.createdAt.toISOString(),
+        };
+      }),
       nextCursor: hasMore && lastTransaction
         ? encodeCustomerTransactionCursor(lastTransaction.id)
         : null,
@@ -386,8 +408,26 @@ router.get("/me/transactions/:transactionId", async (req, res): Promise<void> =>
       return;
     }
 
+    const [linkFlowPayment] = await db
+      .select({
+        attemptId: customerPaymentLinkAttemptsTable.id,
+        recipientTotalMinor: paymentIntentsTable.recipientTotalMinor,
+      })
+      .from(paymentIntentsTable)
+      .innerJoin(customerPaymentLinkAttemptsTable, eq(customerPaymentLinkAttemptsTable.intentId, paymentIntentsTable.id))
+      .where(eq(paymentIntentsTable.transactionId, transaction.id))
+      .limit(1);
+    const historyValues = projectCustomerTransactionHistoryValues(transaction, {
+      attemptId: linkFlowPayment?.attemptId ?? null,
+      recipientTotalMinor: linkFlowPayment?.recipientTotalMinor ?? null,
+    });
+
     const response = GetCustomerTransactionResponse.parse(
-      serializeCustomerTransaction(transaction),
+      {
+        ...serializeCustomerTransaction(transaction),
+        amountMinor: historyValues.amountMinor,
+        toOperator: historyValues.toOperator,
+      },
     );
     if (!Number.isSafeInteger(response.amountMinor + response.feeMinor)) {
       throw new Error("Customer transaction total exceeds the supported safe integer range");

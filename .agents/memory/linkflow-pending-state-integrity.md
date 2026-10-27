@@ -74,3 +74,9 @@ After server-confirmed LinkFlow success, keep the success screen visible until t
 **Why:** The user explicitly chose to let the payer see the success result before continuing, with SendFlow as the fallback when the merchant has no return URL.
 
 **How to apply:** Put all post-success navigation behind the success button, and ensure the merchant URL wins over the fixed SendFlow fallback.
+
+In the merchant’s transaction history, represent a LinkFlow payment as the net amount credited to the SendFlow wallet, show its fee separately, and make net plus fee equal the fixed amount paid by the payer. Show SendFlow as the destination.
+
+**Why:** LinkFlow fees are deducted from the payer’s fixed total; showing that gross total as the merchant’s deposit and adding the fee again would misstate both the credit and receipt total.
+
+**How to apply:** Use the payment intent’s recipient total for customer-facing LinkFlow history and details. Keep pending, succeeded, and failed entries in the normal transaction-card style, without changing settlement or the public payment flow.
