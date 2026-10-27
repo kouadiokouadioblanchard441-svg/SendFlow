@@ -18,6 +18,7 @@ import {
   customerCredentialsTable,
   customerSessionsTable,
   db,
+  developerApiKeysTable,
   eq,
   gte,
   isNull,
@@ -82,6 +83,7 @@ import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
 import { recordLoginActivity } from "../lib/login-activity";
 import { createCustomerPinRotationSessionPolicy } from "../lib/customer-pin-session-policy";
+import { createDeveloperApiKeyMaterial } from "../services/developer-api-security";
 import {
   activeReplitPaymentTestAccountCondition,
   sharedNeonCustomerCondition,
@@ -334,6 +336,14 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         privacyPolicyVersion: PRIVACY_POLICY_VERSION,
       });
 
+      const apiKeyPair = createDeveloperApiKeyMaterial();
+      const { secretKey, ...storedApiKeyPair } = apiKeyPair;
+      await tx.insert(developerApiKeysTable).values({
+        userId,
+        label: "Clé principale",
+        ...storedApiKeyPair,
+      });
+
       const [wallet] = await tx
         .insert(walletsTable)
         .values({ userId })
@@ -355,6 +365,11 @@ router.post("/auth/register", async (req, res): Promise<void> => {
           ),
           countryCode: user.countryCode,
           pinConfigured: false,
+          developerApiKeyPair: {
+            label: "Clé principale",
+            publicKey: apiKeyPair.publicKey,
+            secretKey,
+          },
         },
       } as const;
     });

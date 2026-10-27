@@ -347,7 +347,7 @@ export const GetRegistrationSettingsResponse = zod.object({
 
 
 /**
- * Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account and wallet and starts a customer session.
+ * Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
  * @summary Create a customer account under the current verification policy
  */
 export const registerCustomerBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
@@ -374,12 +374,23 @@ export const RegisterCustomerBody = zod.object({
   "acceptedPrivacy": zod.boolean()
 })
 
+export const registerCustomerResponseDeveloperApiKeyPairLabelMax = 80;
+
+export const registerCustomerResponseDeveloperApiKeyPairPublicKeyRegExp = new RegExp('^sfpk_live_[A-Za-z0-9_-]{43}$');
+export const registerCustomerResponseDeveloperApiKeyPairSecretKeyRegExp = new RegExp('^sfsk_live_[A-Za-z0-9_-]{43}$');
+
+
 export const RegisterCustomerResponse = zod.object({
   "userId": zod.string(),
   "phone": zod.string(),
   "displayName": zod.string().nullable(),
   "countryCode": zod.string().nullable(),
-  "pinConfigured": zod.boolean()
+  "pinConfigured": zod.boolean(),
+  "developerApiKeyPair": zod.object({
+  "label": zod.string().min(1).max(registerCustomerResponseDeveloperApiKeyPairLabelMax),
+  "publicKey": zod.string().regex(registerCustomerResponseDeveloperApiKeyPairPublicKeyRegExp),
+  "secretKey": zod.string().regex(registerCustomerResponseDeveloperApiKeyPairSecretKeyRegExp)
+}).optional().describe('Present only in a successful account-creation response; the secret must be saved immediately.')
 })
 
 
@@ -402,12 +413,23 @@ export const SignInCustomerBody = zod.object({
   "password": zod.string().min(signInCustomerBodyPasswordMin).max(signInCustomerBodyPasswordMax)
 })
 
+export const signInCustomerResponseDeveloperApiKeyPairLabelMax = 80;
+
+export const signInCustomerResponseDeveloperApiKeyPairPublicKeyRegExp = new RegExp('^sfpk_live_[A-Za-z0-9_-]{43}$');
+export const signInCustomerResponseDeveloperApiKeyPairSecretKeyRegExp = new RegExp('^sfsk_live_[A-Za-z0-9_-]{43}$');
+
+
 export const SignInCustomerResponse = zod.object({
   "userId": zod.string(),
   "phone": zod.string(),
   "displayName": zod.string().nullable(),
   "countryCode": zod.string().nullable(),
-  "pinConfigured": zod.boolean()
+  "pinConfigured": zod.boolean(),
+  "developerApiKeyPair": zod.object({
+  "label": zod.string().min(1).max(signInCustomerResponseDeveloperApiKeyPairLabelMax),
+  "publicKey": zod.string().regex(signInCustomerResponseDeveloperApiKeyPairPublicKeyRegExp),
+  "secretKey": zod.string().regex(signInCustomerResponseDeveloperApiKeyPairSecretKeyRegExp)
+}).optional().describe('Present only in a successful account-creation response; the secret must be saved immediately.')
 })
 
 
@@ -1289,7 +1311,7 @@ export const ListDeveloperApiKeysResponse = zod.object({
 
 
 /**
- * @summary Create a public and secret API key pair
+ * @summary Create or rotate a public and secret API key pair
  */
 export const createDeveloperApiKeyBodyLabelMax = 80;
 

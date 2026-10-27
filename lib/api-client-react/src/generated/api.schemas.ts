@@ -284,6 +284,21 @@ export interface CustomerPinSetInput {
   newPin: string;
 }
 
+/**
+ * Present only in a successful account-creation response; the secret must be saved immediately.
+ */
+export type CustomerAuthResultDeveloperApiKeyPair = {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  label: string;
+  /** @pattern ^sfpk_live_[A-Za-z0-9_-]{43}$ */
+  publicKey: string;
+  /** @pattern ^sfsk_live_[A-Za-z0-9_-]{43}$ */
+  secretKey: string;
+};
+
 export interface CustomerAuthResult {
   userId: string;
   phone: string;
@@ -292,6 +307,8 @@ export interface CustomerAuthResult {
   /** @nullable */
   countryCode: string | null;
   pinConfigured: boolean;
+  /** Present only in a successful account-creation response; the secret must be saved immediately. */
+  developerApiKeyPair?: CustomerAuthResultDeveloperApiKeyPair;
 }
 
 export interface CustomerSessionResult {

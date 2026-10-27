@@ -1284,7 +1284,7 @@ export const getRegisterCustomerUrl = () => {
 }
 
 /**
- * Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account and wallet and starts a customer session.
+ * Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
  * @summary Create a customer account under the current verification policy
  */
 export const registerCustomer = async (customerRegistrationInput: CustomerRegistrationInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult> => {
@@ -4017,7 +4017,7 @@ export const getCreateDeveloperApiKeyUrl = () => {
 }
 
 /**
- * @summary Create a public and secret API key pair
+ * @summary Create or rotate a public and secret API key pair
  */
 export const createDeveloperApiKey = async (developerApiKeyInput: DeveloperApiKeyInput, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperApiKeyCreatedResponse> => {
 
@@ -4083,7 +4083,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateDeveloperApiKeyMutationVariables = {data: BodyType<DeveloperApiKeyInput>}
 
     /**
- * @summary Create a public and secret API key pair
+ * @summary Create or rotate a public and secret API key pair
  */
 export const useCreateDeveloperApiKey = <TError = ErrorType<ErrorEnvelope>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperApiKey>>, TError,CreateDeveloperApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}

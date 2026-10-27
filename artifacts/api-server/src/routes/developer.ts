@@ -356,23 +356,32 @@ router.post("/me/developer/api-keys", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const activeKeys = await db.select({ id: developerApiKeysTable.id })
-      .from(developerApiKeysTable)
-      .where(and(
+    const keys = createDeveloperApiKeyMaterial();
+    const { secretKey, ...storedKeys } = keys;
+    const [created] = await db.transaction(async (tx) => {
+      const [owner] = await tx.select({ id: usersTable.id })
+        .from(usersTable)
+        .where(eq(usersTable.id, session.userId))
+        .for("update");
+      if (!owner) throw new Error("API key owner is unavailable");
+
+      const now = new Date();
+      await tx.update(developerApiKeysTable).set({
+        status: "revoked",
+        revokedAt: now,
+        updatedAt: now,
+      }).where(and(
         eq(developerApiKeysTable.userId, session.userId),
         eq(developerApiKeysTable.status, "active"),
       ));
-    if (activeKeys.length >= 5) {
-      res.status(400).json({ error: "La limite de cinq paires de clés actives est atteinte." });
-      return;
-    }
-    const keys = createDeveloperApiKeyMaterial();
-    const { secretKey, ...storedKeys } = keys;
-    const [created] = await db.insert(developerApiKeysTable).values({
-      userId: session.userId,
-      label,
-      ...storedKeys,
-    }).returning();
+
+      const [newKey] = await tx.insert(developerApiKeysTable).values({
+        userId: session.userId,
+        label,
+        ...storedKeys,
+      }).returning();
+      return [newKey];
+    });
     if (!created) throw new Error("API key insert returned no row");
     res.status(201).json(CreateDeveloperApiKeyResponse.parse({
       key: safeKeyResponse(created),

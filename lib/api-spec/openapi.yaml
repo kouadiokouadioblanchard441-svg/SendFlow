@@ -361,7 +361,7 @@ paths:
       operationId: registerCustomer
       tags: [account]
       summary: Create a customer account under the current verification policy
-      description: Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account and wallet and starts a customer session.
+      description: Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
       requestBody:
         required: true
         content:
@@ -1590,7 +1590,7 @@ paths:
     post:
       operationId: createDeveloperApiKey
       tags: [developer]
-      summary: Create a public and secret API key pair
+      summary: Create or rotate a public and secret API key pair
       security:
         - sendFlowSession: []
       requestBody:
@@ -1600,12 +1600,12 @@ paths:
             schema: { $ref: "#/components/schemas/DeveloperApiKeyInput" }
       responses:
         "201":
-          description: Raw keys shown once; store them securely.
+          description: Raw key pair shown once; rotation revokes the previous active pair.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DeveloperApiKeyCreatedResponse" }
         "400":
-          description: Invalid label or key limit reached.
+          description: Invalid key label.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
@@ -4630,6 +4630,21 @@ components:
           type: ["string", "null"]
         pinConfigured:
           type: boolean
+        developerApiKeyPair:
+          type: object
+          description: Present only in a successful account-creation response; the secret must be saved immediately.
+          properties:
+            label:
+              type: string
+              minLength: 1
+              maxLength: 80
+            publicKey:
+              type: string
+              pattern: "^sfpk_live_[A-Za-z0-9_-]{43}$"
+            secretKey:
+              type: string
+              pattern: "^sfsk_live_[A-Za-z0-9_-]{43}$"
+          required: [label, publicKey, secretKey]
       required: [userId, phone, displayName, countryCode, pinConfigured]
     CustomerSessionResult:
       type: object

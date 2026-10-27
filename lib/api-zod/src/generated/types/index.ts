@@ -98,6 +98,7 @@ export * from './createAdminCountryRequest';
 export * from './createPaymentAggregatorRequest';
 export * from './currentAccount';
 export * from './customerAuthResult';
+export * from './customerAuthResultDeveloperApiKeyPair';
 export * from './customerBiometricOptions';
 export * from './customerBiometricOptionsOptions';
 export * from './customerBiometricStatus';

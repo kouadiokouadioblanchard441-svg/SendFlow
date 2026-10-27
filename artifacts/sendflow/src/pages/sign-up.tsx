@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Check, Eye, EyeOff } from 'lucide-react';
+import { Check, CheckCircle2, Copy, Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { getGetRegistrationSettingsQueryKey, useGetRegistrationSettings, useRegisterCustomer, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
@@ -32,7 +32,7 @@ const initialForm: SignUpForm = {
   acceptedPrivacy: false,
 };
 
-type SignupStep = 'form' | 'verification' | 'success';
+type SignupStep = 'form' | 'verification' | 'credentials' | 'success';
 
 function getRequestErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) return error.message;
@@ -134,6 +134,8 @@ export default function SignupPage() {
   const [otpCode, setOtpCode] = useState('');
   const [verificationError, setVerificationError] = useState('');
   const [verifiedOnSignup, setVerifiedOnSignup] = useState(false);
+  const [signupApiKeyPair, setSignupApiKeyPair] = useState<{ label: string; publicKey: string; secretKey: string } | null>(null);
+  const [copiedSignupKey, setCopiedSignupKey] = useState<'public' | 'secret' | null>(null);
   const sendPhoneOtp = useSendPhoneOtp();
   const verifyPhoneOtp = useVerifyPhoneOtp();
   const registerCustomer = useRegisterCustomer();
@@ -253,10 +255,13 @@ export default function SignupPage() {
             acceptedPrivacy: true,
           },
         });
+        const createdApiKeyPair = account.developerApiKeyPair ?? null;
+        registerCustomer.reset();
         savePendingSignup();
         setVerifiedOnSignup(false);
         setSubmitted(true);
-        setStep('success');
+        setSignupApiKeyPair(createdApiKeyPair);
+        setStep(createdApiKeyPair ? 'credentials' : 'success');
       }
     } catch (error) {
       setVerificationError(getRequestErrorMessage(error, 'La création du compte a échoué. Réessayez.'));
@@ -293,10 +298,13 @@ export default function SignupPage() {
           acceptedPrivacy: true,
         },
       });
+      const createdApiKeyPair = account.developerApiKeyPair ?? null;
+      registerCustomer.reset();
       savePendingSignup();
       setVerifiedOnSignup(true);
       setSubmitted(true);
-      setStep('success');
+      setSignupApiKeyPair(createdApiKeyPair);
+      setStep(createdApiKeyPair ? 'credentials' : 'success');
     } catch (error) {
       setOtpCode('');
       setVerificationError(getRequestErrorMessage(error, 'Code incorrect ou expiré. Vérifiez les chiffres puis réessayez.'));
@@ -323,10 +331,10 @@ export default function SignupPage() {
 
           <header className="sendflow-signup-heading">
             <h1 id="signup-title">
-              {step === 'form' ? 'Bienvenue sur SendFlow' : step === 'verification' ? 'Vérifions votre numéro' : verifiedOnSignup ? 'Numéro vérifié' : 'Compte créé'}
+              {step === 'form' ? 'Bienvenue sur SendFlow' : step === 'verification' ? 'Vérifions votre numéro' : step === 'credentials' ? 'Vos clés API sont prêtes' : verifiedOnSignup ? 'Numéro vérifié' : 'Compte créé'}
             </h1>
             <p>
-              {step === 'form' ? 'Créons votre compte' : step === 'verification' ? 'Une étape rapide avant de continuer' : 'Votre compte peut maintenant être sécurisé'}
+              {step === 'form' ? 'Créons votre compte' : step === 'verification' ? 'Une étape rapide avant de continuer' : step === 'credentials' ? 'Copiez et conservez ces clés avant de continuer.' : 'Votre compte peut maintenant être sécurisé'}
             </p>
           </header>
 
@@ -558,6 +566,53 @@ export default function SignupPage() {
               <strong>{verifiedOnSignup ? 'Votre numéro est vérifié' : 'Votre compte est créé sans vérification du numéro'}</strong>
               <p>Préparation de la suite de votre inscription…</p>
             </div>
+          )}
+
+          {step === 'credentials' && signupApiKeyPair && (
+            <section className="sendflow-signup-api-credentials" aria-labelledby="signup-api-credentials-title">
+              <div className="sendflow-signup-api-credentials-note">
+                <CheckCircle2 size={21} />
+                <div>
+                  <strong id="signup-api-credentials-title">Paire créée · {signupApiKeyPair.label}</strong>
+                  <p>La clé secrète ne sera plus affichée après cette étape. Ne la partagez jamais.</p>
+                </div>
+              </div>
+              {([
+                { kind: 'public' as const, label: 'Clé API publique', value: signupApiKeyPair.publicKey },
+                { kind: 'secret' as const, label: 'Clé secrète', value: signupApiKeyPair.secretKey },
+              ]).map((credential) => (
+                <div className="sendflow-signup-api-credential" key={credential.kind}>
+                  <span>{credential.label}</span>
+                  <code>{credential.value}</code>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(credential.value);
+                        setCopiedSignupKey(credential.kind);
+                        window.setTimeout(() => setCopiedSignupKey(null), 1800);
+                      } catch {
+                        setCopiedSignupKey(null);
+                      }
+                    }}
+                  >
+                    {copiedSignupKey === credential.kind ? <Check size={15} /> : <Copy size={15} />}
+                    {copiedSignupKey === credential.kind ? 'Copié' : 'Copier'}
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="sendflow-signup-submit"
+                onClick={() => {
+                  setSignupApiKeyPair(null);
+                  setCopiedSignupKey(null);
+                  setStep('success');
+                }}
+              >
+                J’ai sauvegardé mes clés
+              </button>
+            </section>
           )}
 
           <p className="sendflow-signup-login">

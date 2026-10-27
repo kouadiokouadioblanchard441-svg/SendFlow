@@ -34,6 +34,7 @@ import './developers.css';
 
 type DialogState =
   | { kind: 'api-create' }
+  | { kind: 'api-regenerate'; label: string }
   | { kind: 'webhook-create' }
   | { kind: 'api-secret'; response: DeveloperApiKeyCreatedResponse }
   | { kind: 'webhook-secret'; response: DeveloperWebhookCreatedResponse }
@@ -123,7 +124,8 @@ export default function DevelopersPage() {
   const apiKeysQuery = useListDeveloperApiKeys({ query: { queryKey: getListDeveloperApiKeysQueryKey() } });
   const webhooksQuery = useListDeveloperWebhooks({ query: { queryKey: getListDeveloperWebhooksQueryKey() } });
   const apiKeys = apiKeysQuery.data?.items ?? [];
-  const apiKeyTabLabel = apiKeys.find((key) => key.status === 'active')?.label ?? apiKeys[0]?.label ?? 'Clé publique';
+  const activeApiKey = apiKeys.find((key) => key.status === 'active');
+  const apiKeyTabLabel = activeApiKey?.label ?? apiKeys[0]?.label ?? 'Clé publique';
   const endpoints = webhooksQuery.data?.items ?? [];
   const selectedEndpoint = endpoints.find((endpoint) => endpoint.id === selectedEndpointId);
   const deliveriesQuery = useListDeveloperWebhookDeliveries(selectedEndpointId, {
@@ -186,6 +188,18 @@ export default function DevelopersPage() {
     }
   };
 
+  const confirmRegenerateApiKey = async () => {
+    if (dialog?.kind !== 'api-regenerate') return;
+    setFormError('');
+    try {
+      const response = await createApiKey.mutateAsync({ data: { label: dialog.label } });
+      await queryClient.invalidateQueries({ queryKey: getListDeveloperApiKeysQueryKey() });
+      setDialog({ kind: 'api-secret', response });
+    } catch {
+      setFormError('La régénération a échoué. Vérifiez votre connexion puis réessayez.');
+    }
+  };
+
   const confirmRevoke = async () => {
     if (dialog?.kind === 'revoke-api') {
       try {
@@ -215,7 +229,7 @@ export default function DevelopersPage() {
           <div className="dev-title-row">
             <div>
               <h1>Développeurs</h1>
-              <p className="dev-intro">Contrôlez votre business en temps réel.</p>
+              <p className="dev-intro">Recevez vos paiements en temps réel.</p>
             </div>
           </div>
         </header>
@@ -242,6 +256,9 @@ export default function DevelopersPage() {
                   setWebhookUrl('');
                   setSelectedEvents(['payment.succeeded']);
                   setDialog({ kind: 'webhook-create' });
+                } else if (activeApiKey) {
+                  setFormError('');
+                  setDialog({ kind: 'api-regenerate', label: activeApiKey.label });
                 } else {
                   setApiLabel('');
                   setDialog({ kind: 'api-create' });
@@ -249,7 +266,8 @@ export default function DevelopersPage() {
               }}
               data-testid={developerTab === 'webhook' ? 'button-create-webhook' : 'button-create-api-key'}
             >
-              <Plus size={17} /> {developerTab === 'webhook' ? 'Configurer une URL' : 'Créer une clé'}
+              {developerTab === 'webhook' ? <Plus size={17} /> : activeApiKey ? <RefreshCw size={16} /> : <Plus size={17} />}
+              {developerTab === 'webhook' ? 'Configurer une URL' : activeApiKey ? 'Régénérer' : 'Créer une clé'}
             </button>
           </div>
           <div
@@ -373,6 +391,22 @@ export default function DevelopersPage() {
             {formError && <p className="dev-form-error" role="alert">{formError}</p>}
             <div className="dev-dialog-actions"><button type="button" className="dev-secondary-button" onClick={closeDialog}>Annuler</button><button className="dev-primary-button" type="submit" disabled={createApiKey.isPending || !apiLabel.trim()}>{createApiKey.isPending && <LoaderCircle className="dev-spin" size={16} />}{createApiKey.isPending ? 'Création…' : 'Créer la clé'}</button></div>
           </form>
+        </Dialog>
+      )}
+
+      {dialog?.kind === 'api-regenerate' && (
+        <Dialog title="Régénérer la paire de clés" onClose={closeDialog}>
+          <div className="dev-revoke-confirm">
+            <p>Toutes les paires API actuellement actives seront immédiatement désactivées. Les intégrations qui les utilisent devront être mises à jour avec la nouvelle clé API et le nouveau secret.</p>
+            {formError && <p className="dev-form-error" role="alert">{formError}</p>}
+            <div className="dev-dialog-actions">
+              <button type="button" className="dev-secondary-button" onClick={closeDialog}>Conserver la paire actuelle</button>
+              <button type="button" className="dev-primary-button" onClick={() => void confirmRegenerateApiKey()} disabled={createApiKey.isPending}>
+                {createApiKey.isPending && <LoaderCircle className="dev-spin" size={16} />}
+                {createApiKey.isPending ? 'Régénération…' : 'Régénérer la paire'}
+              </button>
+            </div>
+          </div>
         </Dialog>
       )}
 

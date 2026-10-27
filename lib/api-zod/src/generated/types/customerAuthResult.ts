@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { CustomerAuthResultDeveloperApiKeyPair } from './customerAuthResultDeveloperApiKeyPair';
 
 export interface CustomerAuthResult {
   userId: string;
@@ -14,4 +15,6 @@ export interface CustomerAuthResult {
   /** @nullable */
   countryCode: string | null;
   pinConfigured: boolean;
+  /** Present only in a successful account-creation response; the secret must be saved immediately. */
+  developerApiKeyPair?: CustomerAuthResultDeveloperApiKeyPair;
 }
