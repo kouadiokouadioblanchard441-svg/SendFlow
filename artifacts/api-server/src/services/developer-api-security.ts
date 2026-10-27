@@ -18,9 +18,9 @@ function tokenHash(kind: "public" | "secret" | "client", token: string) {
     .digest("hex");
 }
 
-export function createDeveloperApiKeyMaterial(): DeveloperApiKeyMaterial {
-  const publicKey = `sfpk_live_${randomBytes(32).toString("base64url")}`;
-  const secretKey = `sfsk_live_${randomBytes(32).toString("base64url")}`;
+export function createDeveloperApiKeyMaterial(environment: "live" | "test" = "live"): DeveloperApiKeyMaterial {
+  const publicKey = `sfpk_${environment}_${randomBytes(32).toString("base64url")}`;
+  const secretKey = `sfsk_${environment}_${randomBytes(32).toString("base64url")}`;
   return {
     publicKey,
     publicKeyPrefix: publicKey.slice(0, 19),

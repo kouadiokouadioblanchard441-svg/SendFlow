@@ -10,6 +10,7 @@ import type { DeveloperApiKeyStatus } from './developerApiKeyStatus';
 export interface DeveloperApiKey {
   id: string;
   label: string;
+  /** @pattern ^sfpk_(live|test)_[A-Za-z0-9_-]{43}$ */
   publicKey: string;
   publicKeyPrefix: string;
   secretKeyPrefix: string;

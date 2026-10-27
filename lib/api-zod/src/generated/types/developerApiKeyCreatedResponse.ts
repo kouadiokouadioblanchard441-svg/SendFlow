@@ -6,9 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { DeveloperApiKey } from './developerApiKey';
+import type { DeveloperApiKeyCreatedResponseEnvironment } from './developerApiKeyCreatedResponseEnvironment';
 
 export interface DeveloperApiKeyCreatedResponse {
   key: DeveloperApiKey;
+  /** @pattern ^sfpk_(live|test)_[A-Za-z0-9_-]{43}$ */
   publicKey: string;
+  /** @pattern ^sfsk_(live|test)_[A-Za-z0-9_-]{43}$ */
   secretKey: string;
+  environment: DeveloperApiKeyCreatedResponseEnvironment;
 }

@@ -4017,6 +4017,7 @@ export const getCreateDeveloperApiKeyUrl = () => {
 }
 
 /**
+ * Preview accounts receive sandbox-prefixed keys that cannot create payment sessions. Production accounts receive live-prefixed keys. Rotation revokes previously active pairs.
  * @summary Create or rotate a public and secret API key pair
  */
 export const createDeveloperApiKey = async (developerApiKeyInput: DeveloperApiKeyInput, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperApiKeyCreatedResponse> => {

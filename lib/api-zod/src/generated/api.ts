@@ -1295,11 +1295,15 @@ export const UploadCustomerPaymentLinkImageResponse = zod.void()
 /**
  * @summary List the current merchant's API keys without revealing secrets
  */
+export const listDeveloperApiKeysResponseItemsItemPublicKeyRegExp = new RegExp('^sfpk_(live|test)_[A-Za-z0-9_-]{43}$');
+
+
 export const ListDeveloperApiKeysResponse = zod.object({
+  "environment": zod.enum(['live', 'sandbox']),
   "items": zod.array(zod.object({
   "id": zod.uuid(),
   "label": zod.string(),
-  "publicKey": zod.string(),
+  "publicKey": zod.string().regex(listDeveloperApiKeysResponseItemsItemPublicKeyRegExp),
   "publicKeyPrefix": zod.string(),
   "secretKeyPrefix": zod.string(),
   "status": zod.enum(['active', 'revoked']),
@@ -1311,6 +1315,7 @@ export const ListDeveloperApiKeysResponse = zod.object({
 
 
 /**
+ * Preview accounts receive sandbox-prefixed keys that cannot create payment sessions. Production accounts receive live-prefixed keys. Rotation revokes previously active pairs.
  * @summary Create or rotate a public and secret API key pair
  */
 export const createDeveloperApiKeyBodyLabelMax = 80;
@@ -1321,11 +1326,16 @@ export const CreateDeveloperApiKeyBody = zod.object({
   "label": zod.string().min(1).max(createDeveloperApiKeyBodyLabelMax)
 })
 
+export const createDeveloperApiKeyResponseKeyPublicKeyRegExp = new RegExp('^sfpk_(live|test)_[A-Za-z0-9_-]{43}$');
+export const createDeveloperApiKeyResponsePublicKeyRegExp = new RegExp('^sfpk_(live|test)_[A-Za-z0-9_-]{43}$');
+export const createDeveloperApiKeyResponseSecretKeyRegExp = new RegExp('^sfsk_(live|test)_[A-Za-z0-9_-]{43}$');
+
+
 export const CreateDeveloperApiKeyResponse = zod.object({
   "key": zod.object({
   "id": zod.uuid(),
   "label": zod.string(),
-  "publicKey": zod.string(),
+  "publicKey": zod.string().regex(createDeveloperApiKeyResponseKeyPublicKeyRegExp),
   "publicKeyPrefix": zod.string(),
   "secretKeyPrefix": zod.string(),
   "status": zod.enum(['active', 'revoked']),
@@ -1333,8 +1343,9 @@ export const CreateDeveloperApiKeyResponse = zod.object({
   "createdAt": zod.coerce.date(),
   "revokedAt": zod.coerce.date().nullable()
 }),
-  "publicKey": zod.string(),
-  "secretKey": zod.string()
+  "publicKey": zod.string().regex(createDeveloperApiKeyResponsePublicKeyRegExp),
+  "secretKey": zod.string().regex(createDeveloperApiKeyResponseSecretKeyRegExp),
+  "environment": zod.enum(['live', 'sandbox'])
 })
 
 

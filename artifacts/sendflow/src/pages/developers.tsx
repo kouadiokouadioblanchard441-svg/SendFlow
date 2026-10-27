@@ -234,6 +234,16 @@ export default function DevelopersPage() {
           </div>
         </header>
 
+        {apiKeysQuery.data?.environment === 'sandbox' && (
+          <div className="dev-sandbox-banner" role="status" data-testid="developer-sandbox-banner">
+            <AlertCircle size={19} />
+            <div>
+              <strong>Compte de visualisation · clés sandbox</strong>
+              <span>Vous pouvez créer, copier, régénérer et révoquer ces clés de test. Elles ne déclenchent aucun paiement et ne fonctionnent pas sur l’API live.</span>
+            </div>
+          </div>
+        )}
+
         <section className="dev-section dev-keys-section" aria-labelledby="dev-keys-heading">
           <div className="dev-section-heading">
             <div className="dev-section-title">
@@ -385,7 +395,7 @@ export default function DevelopersPage() {
       {dialog?.kind === 'api-create' && (
         <Dialog title="Créer une paire de clés" onClose={closeDialog}>
           <form className="dev-form" onSubmit={(event) => void submitApiKey(event)}>
-            <p>Donnez un nom qui vous aidera à identifier l’application ou l’environnement concerné.</p>
+            <p>{apiKeysQuery.data?.environment === 'sandbox' ? 'Cette paire sandbox permet de vérifier la gestion des clés dans le compte de visualisation. Elle ne peut pas lancer de paiement.' : 'Donnez un nom qui vous aidera à identifier l’application ou l’environnement concerné.'}</p>
             <label htmlFor="api-key-label">Nom de la clé</label>
             <input id="api-key-label" value={apiLabel} onChange={(event) => setApiLabel(event.target.value)} maxLength={80} required autoFocus placeholder="Ex. Boutique web — production" data-testid="input-api-key-label" />
             {formError && <p className="dev-form-error" role="alert">{formError}</p>}
@@ -428,7 +438,7 @@ export default function DevelopersPage() {
       {dialog?.kind === 'api-secret' && (
         <Dialog title="Clés créées" onClose={closeDialog}>
           <div className="dev-secret-content">
-            <div className="dev-one-time-warning"><AlertCircle size={19} /><div><strong>Copiez et conservez ces clés maintenant.</strong><p>La clé secrète ne sera plus affichée après la fermeture de cette fenêtre. Ne la partagez jamais.</p></div></div>
+            <div className="dev-one-time-warning"><AlertCircle size={19} /><div><strong>{dialog.response.environment === 'sandbox' ? 'Clés sandbox de visualisation.' : 'Copiez et conservez ces clés maintenant.'}</strong><p>{dialog.response.environment === 'sandbox' ? 'Elles servent uniquement à tester la gestion des clés. Aucun paiement réel ne peut être déclenché.' : 'La clé secrète ne sera plus affichée après la fermeture de cette fenêtre. Ne la partagez jamais.'}</p></div></div>
             <SecretValue label="Clé publique" value={dialog.response.publicKey} />
             <SecretValue label="Clé secrète" value={dialog.response.secretKey} secret />
             <button className="dev-primary-button dev-full-button" type="button" onClick={closeDialog}><CheckCircle2 size={17} /> J’ai enregistré mes clés</button>

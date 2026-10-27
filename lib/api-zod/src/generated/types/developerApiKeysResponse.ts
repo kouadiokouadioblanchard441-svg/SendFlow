@@ -6,7 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { DeveloperApiKey } from './developerApiKey';
+import type { DeveloperApiKeysResponseEnvironment } from './developerApiKeysResponseEnvironment';
 
 export interface DeveloperApiKeysResponse {
+  environment: DeveloperApiKeysResponseEnvironment;
   items: DeveloperApiKey[];
 }

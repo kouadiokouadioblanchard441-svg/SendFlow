@@ -138,6 +138,9 @@ test("admits only exact viewer and payment-test route shapes to the server sessi
     ["GET", "/api/me/payment-links"],
     ["POST", "/api/me/payment-links"],
     ["POST", `/api/me/payment-links/${id}/image`],
+    ["GET", "/api/me/developer/api-keys"],
+    ["POST", "/api/me/developer/api-keys"],
+    ["DELETE", `/api/me/developer/api-keys/${id}`],
   ]) {
     assert.equal(isViewerRouteCandidate(method, path), true, `${method} ${path}`);
   }
@@ -150,6 +153,9 @@ test("admits only exact viewer and payment-test route shapes to the server sessi
     ["GET", "/api/me/payment-links/another-user"],
     ["GET", `/api/me/payment-links/${id}/image`],
     ["POST", `/api/me/payment-links/${id}/image/extra`],
+    ["GET", "/api/me/developer/webhooks"],
+    ["POST", "/api/me/developer/payment-sessions"],
+    ["DELETE", "/api/me/developer/api-keys/not-a-uuid"],
   ]) {
     assert.equal(isViewerRouteCandidate(method, path), false, `${method} ${path}`);
   }

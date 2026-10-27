@@ -2523,6 +2523,7 @@ export const DeveloperApiKeyStatus = {
 export interface DeveloperApiKey {
   id: string;
   label: string;
+  /** @pattern ^sfpk_(live|test)_[A-Za-z0-9_-]{43}$ */
   publicKey: string;
   publicKeyPrefix: string;
   secretKeyPrefix: string;
@@ -2534,14 +2535,34 @@ export interface DeveloperApiKey {
   revokedAt: string | null;
 }
 
+export type DeveloperApiKeysResponseEnvironment = typeof DeveloperApiKeysResponseEnvironment[keyof typeof DeveloperApiKeysResponseEnvironment];
+
+
+export const DeveloperApiKeysResponseEnvironment = {
+  live: 'live',
+  sandbox: 'sandbox',
+} as const;
+
 export interface DeveloperApiKeysResponse {
+  environment: DeveloperApiKeysResponseEnvironment;
   items: DeveloperApiKey[];
 }
 
+export type DeveloperApiKeyCreatedResponseEnvironment = typeof DeveloperApiKeyCreatedResponseEnvironment[keyof typeof DeveloperApiKeyCreatedResponseEnvironment];
+
+
+export const DeveloperApiKeyCreatedResponseEnvironment = {
+  live: 'live',
+  sandbox: 'sandbox',
+} as const;
+
 export interface DeveloperApiKeyCreatedResponse {
   key: DeveloperApiKey;
+  /** @pattern ^sfpk_(live|test)_[A-Za-z0-9_-]{43}$ */
   publicKey: string;
+  /** @pattern ^sfsk_(live|test)_[A-Za-z0-9_-]{43}$ */
   secretKey: string;
+  environment: DeveloperApiKeyCreatedResponseEnvironment;
 }
 
 export type DeveloperWebhookInputEventsItem = typeof DeveloperWebhookInputEventsItem[keyof typeof DeveloperWebhookInputEventsItem];

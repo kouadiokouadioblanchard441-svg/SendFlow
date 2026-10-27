@@ -108,7 +108,7 @@ function isPinUnlocked(session: Awaited<ReturnType<typeof requireCustomerSession
 async function requireDeveloperPanelSession(req: Request, res: Response) {
   const session = await requireCustomerSession(req, res, false);
   if (!session) return null;
-  if (!isPinUnlocked(session)) {
+  if (!session.previewAccount && !isPinUnlocked(session)) {
     res.status(403).json({ error: "Vérifiez votre code PIN et votre numéro avant de gérer les intégrations." });
     return null;
   }
@@ -335,7 +335,10 @@ router.get("/me/developer/api-keys", async (req, res): Promise<void> => {
     const items = await db.select().from(developerApiKeysTable)
       .where(eq(developerApiKeysTable.userId, session.userId))
       .orderBy(desc(developerApiKeysTable.createdAt), desc(developerApiKeysTable.id));
-    res.json(ListDeveloperApiKeysResponse.parse({ items: items.map(safeKeyResponse) }));
+     res.json(ListDeveloperApiKeysResponse.parse({
+       items: items.map(safeKeyResponse),
+       environment: session.previewAccount ? "sandbox" : "live",
+     }));
   } catch {
     req.log.error({ userId: session.userId }, "Developer API keys could not be listed");
     res.status(503).json({ error: "Les clés API sont momentanément indisponibles." });
@@ -345,7 +348,8 @@ router.get("/me/developer/api-keys", async (req, res): Promise<void> => {
 router.post("/me/developer/api-keys", async (req, res): Promise<void> => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
-  if (await hasPaymentTestAccess(session.userId) || !isPaymentLinkCreationAllowed(session)) {
+  const sandboxPreview = session.previewAccount;
+  if (!sandboxPreview && (await hasPaymentTestAccess(session.userId) || !isPaymentLinkCreationAllowed(session))) {
     res.status(403).json({ error: "Les clés de paiement live ne sont pas disponibles pour ce compte d’essai." });
     return;
   }
@@ -356,7 +360,7 @@ router.post("/me/developer/api-keys", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const keys = createDeveloperApiKeyMaterial();
+    const keys = createDeveloperApiKeyMaterial(sandboxPreview ? "test" : "live");
     const { secretKey, ...storedKeys } = keys;
     const [created] = await db.transaction(async (tx) => {
       const [owner] = await tx.select({ id: usersTable.id })
@@ -387,6 +391,7 @@ router.post("/me/developer/api-keys", async (req, res): Promise<void> => {
       key: safeKeyResponse(created),
       publicKey: keys.publicKey,
       secretKey,
+      environment: sandboxPreview ? "sandbox" : "live",
     }));
   } catch {
     req.log.error({ userId: session.userId }, "Developer API key could not be created");

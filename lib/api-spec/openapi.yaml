@@ -1591,6 +1591,7 @@ paths:
       operationId: createDeveloperApiKey
       tags: [developer]
       summary: Create or rotate a public and secret API key pair
+      description: Preview accounts receive sandbox-prefixed keys that cannot create payment sessions. Production accounts receive live-prefixed keys. Rotation revokes previously active pairs.
       security:
         - sendFlowSession: []
       requestBody:
@@ -6954,7 +6955,9 @@ components:
       properties:
         id: { type: string, format: uuid }
         label: { type: string }
-        publicKey: { type: string }
+        publicKey:
+          type: string
+          pattern: "^sfpk_(live|test)_[A-Za-z0-9_-]{43}$"
         publicKeyPrefix: { type: string }
         secretKeyPrefix: { type: string }
         status: { type: string, enum: [active, revoked] }
@@ -6965,17 +6968,27 @@ components:
     DeveloperApiKeysResponse:
       type: object
       properties:
+        environment:
+          type: string
+          enum: [live, sandbox]
         items:
           type: array
           items: { $ref: "#/components/schemas/DeveloperApiKey" }
-      required: [items]
+      required: [items, environment]
     DeveloperApiKeyCreatedResponse:
       type: object
       properties:
         key: { $ref: "#/components/schemas/DeveloperApiKey" }
-        publicKey: { type: string }
-        secretKey: { type: string }
-      required: [key, publicKey, secretKey]
+        publicKey:
+          type: string
+          pattern: "^sfpk_(live|test)_[A-Za-z0-9_-]{43}$"
+        secretKey:
+          type: string
+          pattern: "^sfsk_(live|test)_[A-Za-z0-9_-]{43}$"
+        environment:
+          type: string
+          enum: [live, sandbox]
+      required: [key, publicKey, secretKey, environment]
     DeveloperWebhookInput:
       type: object
       properties:
