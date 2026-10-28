@@ -28,3 +28,15 @@ For the merchant API-key card, show one active pair only, with distinct “Clé 
 **Why:** the user reported duplicate key cards and explicitly requested SendFlow violet instead of the gold reference controls.
 
 **How to apply:** Keep this treatment scoped to Développeurs. Never persist the secret key in readable form or imply it can be recovered after its one-time display.
+
+Do not show a separate “Révoquer” action at the bottom of the active API-key card; keep the webhook revocation control separate.
+
+**Why:** the user asked to remove the bottom revocation mention from the API-key card.
+
+**How to apply:** Use the immediate “Régénérer” action to replace the active API-key pair; do not remove webhook management controls.
+
+Do not show a confirmation dialog before rotating API keys. Clicking “Régénérer” immediately revokes the active pair and creates a replacement; retain the one-time dialog that reveals the new credentials.
+
+**Why:** the user explicitly asked for one-click regeneration after seeing that the current pair would be deactivated.
+
+**How to apply:** Disable the button while the request is pending, show an error if rotation fails, and display the newly generated secret only once.

@@ -25,7 +25,6 @@ import {
   useListDeveloperApiKeys,
   useListDeveloperWebhooks,
   useListDeveloperWebhookDeliveries,
-  useRevokeDeveloperApiKey,
   useRevokeDeveloperWebhook,
 } from '@workspace/api-client-react';
 import { toast } from '@/hooks/use-toast';
@@ -36,11 +35,9 @@ import type {
 import './developers.css';
 
 type DialogState =
-  | { kind: 'api-regenerate'; label: string }
   | { kind: 'webhook-create' }
   | { kind: 'api-secret'; response: DeveloperApiKeyCreatedResponse }
   | { kind: 'webhook-secret'; response: DeveloperWebhookCreatedResponse }
-  | { kind: 'revoke-api'; id: string; label: string }
   | { kind: 'revoke-webhook'; id: string; label: string }
   | null;
 
@@ -140,6 +137,7 @@ export default function DevelopersPage() {
   const [previewInitializationFailed, setPreviewInitializationFailed] = useState(false);
   const [hiddenPublicKeys, setHiddenPublicKeys] = useState<Record<string, boolean>>({});
   const previewKeyInitializationStarted = useRef(false);
+  const apiKeyRotationStarted = useRef(false);
 
   const apiKeysQuery = useListDeveloperApiKeys({ query: { queryKey: getListDeveloperApiKeysQueryKey() } });
   const webhooksQuery = useListDeveloperWebhooks({ query: { queryKey: getListDeveloperWebhooksQueryKey() } });
@@ -157,7 +155,6 @@ export default function DevelopersPage() {
 
   const createApiKey = useCreateDeveloperApiKey();
   const initializePreviewApiKey = useInitializePreviewDeveloperApiKey();
-  const revokeApiKey = useRevokeDeveloperApiKey();
   const createWebhook = useCreateDeveloperWebhook();
   const revokeWebhook = useRevokeDeveloperWebhook();
 
@@ -230,28 +227,26 @@ export default function DevelopersPage() {
     }
   };
 
-  const confirmRegenerateApiKey = async () => {
-    if (dialog?.kind !== 'api-regenerate') return;
-    setFormError('');
+  const regenerateApiKey = async () => {
+    if (apiKeyRotationStarted.current || createApiKey.isPending) return;
+    apiKeyRotationStarted.current = true;
     try {
-      const response = await createApiKey.mutateAsync({ data: { label: dialog.label } });
+      const response = await createApiKey.mutateAsync({
+        data: { label: activeApiKey?.label ?? 'Clé principale' },
+      });
       await queryClient.invalidateQueries({ queryKey: getListDeveloperApiKeysQueryKey() });
       setDialog({ kind: 'api-secret', response });
     } catch {
-      setFormError('La régénération a échoué. Vérifiez votre connexion puis réessayez.');
+      toast({
+        title: 'Échec du renouvellement',
+        description: 'La régénération a échoué. Vérifiez votre connexion, puis réessayez.',
+      });
+    } finally {
+      apiKeyRotationStarted.current = false;
     }
   };
 
   const confirmRevoke = async () => {
-    if (dialog?.kind === 'revoke-api') {
-      try {
-        await revokeApiKey.mutateAsync({ apiKeyId: dialog.id });
-        await queryClient.invalidateQueries({ queryKey: getListDeveloperApiKeysQueryKey() });
-        closeDialog();
-      } catch {
-        setFormError('Impossible de révoquer cette clé pour le moment.');
-      }
-    }
     if (dialog?.kind === 'revoke-webhook') {
       try {
         await revokeWebhook.mutateAsync({ endpointId: dialog.id });
@@ -295,14 +290,18 @@ export default function DevelopersPage() {
                   setSelectedEvents(['payment.succeeded']);
                   setDialog({ kind: 'webhook-create' });
                 } else {
-                  setFormError('');
-                  setDialog({ kind: 'api-regenerate', label: activeApiKey?.label ?? 'Clé principale' });
+                  void regenerateApiKey();
                 }
               }}
+              disabled={developerTab !== 'webhook' && (createApiKey.isPending || apiKeysQuery.isLoading || initializePreviewApiKey.isPending)}
               data-testid={developerTab === 'webhook' ? 'button-create-webhook' : 'button-regenerate-api-key'}
             >
-              {developerTab === 'webhook' ? <Plus size={17} /> : <RefreshCw size={16} />}
-              {developerTab === 'webhook' ? 'Configurer une URL' : 'Régénérer'}
+              {developerTab === 'webhook'
+                ? <Plus size={17} />
+                : createApiKey.isPending
+                  ? <LoaderCircle className="dev-spin" size={16} />
+                  : <RefreshCw size={16} />}
+              {developerTab === 'webhook' ? 'Configurer une URL' : createApiKey.isPending ? 'Régénération…' : 'Régénérer'}
             </button>
           </div>
           <div
@@ -381,7 +380,6 @@ export default function DevelopersPage() {
                         <span>Dernière mise à jour : {formatKeyTimestamp(activeApiKey.createdAt)}</span>
                         <span>Dernière utilisation : {formatDate(activeApiKey.lastUsedAt)}</span>
                       </div>
-                      {activeApiKey.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-api', id: activeApiKey.id, label: activeApiKey.label }); }} data-testid={`button-revoke-api-key-${activeApiKey.id}`}>Révoquer</button>}
                     </article>
                   </div>
                 )}
@@ -444,22 +442,6 @@ export default function DevelopersPage() {
         </section>
       </div>
 
-      {dialog?.kind === 'api-regenerate' && (
-        <Dialog title="Régénérer la paire de clés" onClose={closeDialog}>
-          <div className="dev-revoke-confirm">
-            <p>{activeApiKey ? 'La paire de clés actuellement active sera immédiatement désactivée. Votre intégration devra être mise à jour avec la nouvelle clé publique et le nouveau secret.' : 'La paire principale sera générée pour ce compte. Le secret ne sera affiché qu’une seule fois.'}</p>
-            {formError && <p className="dev-form-error" role="alert">{formError}</p>}
-            <div className="dev-dialog-actions">
-              <button type="button" className="dev-secondary-button" onClick={closeDialog}>Conserver la paire actuelle</button>
-              <button type="button" className="dev-primary-button dev-regenerate-button" onClick={() => void confirmRegenerateApiKey()} disabled={createApiKey.isPending}>
-                {createApiKey.isPending && <LoaderCircle className="dev-spin" size={16} />}
-                {createApiKey.isPending ? 'Régénération…' : 'Régénérer la paire'}
-              </button>
-            </div>
-          </div>
-        </Dialog>
-      )}
-
       {dialog?.kind === 'webhook-create' && (
         <Dialog title="Ajouter un webhook" onClose={closeDialog}>
           <form className="dev-form" onSubmit={(event) => void submitWebhook(event)}>
@@ -497,12 +479,12 @@ export default function DevelopersPage() {
         </Dialog>
       )}
 
-      {(dialog?.kind === 'revoke-api' || dialog?.kind === 'revoke-webhook') && (
+      {dialog?.kind === 'revoke-webhook' && (
         <Dialog title="Confirmer la révocation" onClose={closeDialog}>
           <div className="dev-revoke-confirm">
             <p>Révoquer <strong>{dialog.label}</strong> ? Cette action est définitive et les requêtes ou livraisons utilisant cet accès ne pourront plus aboutir.</p>
             {formError && <p className="dev-form-error" role="alert">{formError}</p>}
-            <div className="dev-dialog-actions"><button type="button" className="dev-secondary-button" onClick={closeDialog}>Conserver</button><button type="button" className="dev-danger-button" onClick={() => void confirmRevoke()} disabled={revokeApiKey.isPending || revokeWebhook.isPending}>{(revokeApiKey.isPending || revokeWebhook.isPending) && <LoaderCircle className="dev-spin" size={16} />}{(revokeApiKey.isPending || revokeWebhook.isPending) ? 'Révocation…' : 'Révoquer définitivement'}</button></div>
+            <div className="dev-dialog-actions"><button type="button" className="dev-secondary-button" onClick={closeDialog}>Conserver</button><button type="button" className="dev-danger-button" onClick={() => void confirmRevoke()} disabled={revokeWebhook.isPending}>{revokeWebhook.isPending && <LoaderCircle className="dev-spin" size={16} />}{revokeWebhook.isPending ? 'Révocation…' : 'Révoquer définitivement'}</button></div>
           </div>
         </Dialog>
       )}
