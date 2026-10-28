@@ -30,7 +30,7 @@ import {
   useRevokeDeveloperWebhook,
 } from '@workspace/api-client-react';
 import { toast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import apiIntegrationIllustration from '@assets/generated_images/sendflow-api-integration-people-3d-transparent.png';
 import apiKeyWarningIllustration from '@assets/generated_images/sendflow-api-key-warning-3d-transparent.png';
 import type {
@@ -518,16 +518,16 @@ export default function DevelopersPage() {
 
         <section className="dev-docs-card" aria-labelledby="dev-docs-heading">
           <h2 id="dev-docs-heading">Documentation</h2>
-          <div className="dev-docs-card-content">
+          <Link href="/docs" className="dev-docs-card-content" data-testid="link-developers-docs">
             <span className="dev-docs-icon" aria-hidden="true"><FileText size={19} /></span>
             <div className="dev-docs-card-copy">
               <div className="dev-docs-card-title-row">
                 <strong>Accéder à la documentation</strong>
-                <span className="dev-docs-status">Bientôt disponible</span>
+                <span className="dev-docs-status">Aperçu disponible</span>
               </div>
-              <p>Les guides d’intégration de l’API directe et du paiement hébergé seront accessibles ici après leur publication.</p>
+              <p>Consultez les guides d’intégration et l’état de validation du contrat API.</p>
             </div>
-          </div>
+          </Link>
         </section>
         <figure className="dev-api-integration-illustration">
           <img
