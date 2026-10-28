@@ -410,3 +410,66 @@
   .dev-key-card > .dev-text-danger { font-size: 9px; }
   .dev-delivery-table th, .dev-delivery-table td { padding-inline: 3px; }
 }
+
+/* Stronger, consistently visible field framing in the Developers section. */
+.sendflow-developers { --dev-line: #d5cedd; }
+.sendflow-developers .dev-key-card { border-color: #d5cedd; }
+.sendflow-developers .dev-key-values > div {
+  border: 1px solid #cbc4d3;
+  border-radius: 7px;
+  background: #fff;
+  padding: 9px 10px;
+}
+.sendflow-developers .dev-key-values span {
+  color: #625a6b;
+  font-size: 9px;
+  letter-spacing: .06em;
+}
+.sendflow-developers .dev-key-values code { font-size: 11px; }
+.sendflow-developers .dev-public-key-value code {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+.sendflow-developers .dev-endpoint-card > code {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
+}
+.sendflow-developers .dev-empty-state {
+  border-style: solid;
+  border-color: var(--dev-line);
+}
+.sendflow-developers .dev-form > label {
+  color: #393344;
+  font-size: 12px;
+}
+.sendflow-developers .dev-form input:not([type="checkbox"]) {
+  min-height: 46px;
+  border-color: #c9c2d1;
+  padding-inline: 12px;
+  font-size: 14px;
+}
+.sendflow-developers .dev-event-fieldset { border-color: #c9c2d1; }
+.sendflow-developers .dev-checkbox-label {
+  min-height: 34px;
+  grid-template-columns: 18px 1fr auto;
+  font-size: 12px;
+}
+.sendflow-developers .dev-checkbox-label input { width: 16px; height: 16px; }
+.sendflow-developers .dev-secret-field {
+  border-color: #c9c2d1;
+  background: #fff;
+  padding: 12px;
+}
+.sendflow-developers .dev-secret-field > span { color: #625a6b; font-size: 9px; }
+.sendflow-developers .dev-secret-field code { font-size: 11px; }
+.sendflow-developers .dev-created-summary {
+  border: 1px solid var(--dev-line);
+  border-left: 3px solid #b5a3ca;
+  border-radius: 8px;
+}
