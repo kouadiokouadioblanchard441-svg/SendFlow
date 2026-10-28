@@ -31,6 +31,7 @@ import {
 } from '@workspace/api-client-react';
 import { toast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import apiIntegrationIllustration from '@assets/generated_images/sendflow-api-integration-people-3d-transparent.png';
 import apiKeyWarningIllustration from '@assets/generated_images/sendflow-api-key-warning-3d-transparent.png';
 import type {
   DeveloperApiKeyCreatedResponse,
@@ -528,6 +529,13 @@ export default function DevelopersPage() {
             </div>
           </div>
         </section>
+        <figure className="dev-api-integration-illustration">
+          <img
+            src={apiIntegrationIllustration}
+            alt="Deux personnes collaborent à une intégration API SendFlow."
+            loading="lazy"
+          />
+        </figure>
       </div>
 
       {dialog?.kind === 'regenerate-api' && (

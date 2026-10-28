@@ -1010,6 +1010,21 @@
   font-size: 11px;
   line-height: 1.5;
 }
+.sendflow-developers .dev-api-integration-illustration {
+  display: flex;
+  width: min(100%, 230px);
+  max-width: 100%;
+  justify-content: center;
+  margin: 22px auto 0;
+  overflow: hidden;
+}
+.sendflow-developers .dev-api-integration-illustration img {
+  display: block;
+  width: 100%;
+  max-width: 230px;
+  height: auto;
+  object-fit: contain;
+}
 .sendflow-developers .dev-page-header > .dev-title-row { margin-top: 24px; }
 
 @media (max-width: 520px) {
@@ -1020,4 +1035,8 @@
   .sendflow-developers .dev-docs-card h2 { margin-bottom: 9px; }
   .sendflow-developers .dev-docs-card-content { gap: 10px; }
   .sendflow-developers .dev-docs-icon { width: 35px; height: 35px; }
+  .sendflow-developers .dev-api-integration-illustration {
+    width: min(100%, 205px);
+    margin-top: 18px;
+  }
 }
