@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
-  ArrowLeft,
   AlertCircle,
   Check,
   CheckCircle2,
@@ -11,6 +10,7 @@ import {
   EyeOff,
   KeyRound,
   LoaderCircle,
+  Menu,
   Plus,
   RefreshCw,
   Webhook,
@@ -268,13 +268,16 @@ export default function DevelopersPage() {
         <header className="dev-page-header">
           <button
             type="button"
-            className="dev-back-button"
-            onClick={() => setLocation('/account')}
-            aria-label="Retour au compte"
-            data-testid="button-developers-back"
+            className="dev-menu-button"
+            onClick={() => {
+              window.sessionStorage.setItem('sendflow.account.open-menu-on-enter', 'true');
+              setLocation('/account');
+            }}
+            aria-label="Ouvrir le menu"
+            data-testid="button-developers-menu"
           >
-            <ArrowLeft size={19} strokeWidth={2} aria-hidden="true" />
-            <span>Retour au compte</span>
+            <Menu size={19} strokeWidth={2} aria-hidden="true" />
+            <span>Menu</span>
           </button>
           <div className="dev-title-row">
             <div>

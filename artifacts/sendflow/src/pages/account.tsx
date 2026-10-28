@@ -45,6 +45,7 @@ import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
 
 type SheetName = 'notifications' | null;
 const NOTIFICATIONS_READ_KEY = 'sendflow.notifications.read';
+const OPEN_MENU_ON_ACCOUNT_KEY = 'sendflow.account.open-menu-on-enter';
 
 function safeBannerDestination(targetUrl: string | null | undefined) {
   if (!targetUrl) return null;
@@ -90,7 +91,9 @@ export default function AccountPage() {
   const profileAvatar = getAvatarForUser(getCurrentAvatarUserKey(accountProfile));
   const transactionsQuery = useCustomerTransactions(accountQuery.data?.userId, '', 5);
   const recentTransactions = transactionsQuery.data?.pages.flatMap((page) => page.items).slice(0, 5) ?? [];
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(
+    () => window.sessionStorage.getItem(OPEN_MENU_ON_ACCOUNT_KEY) === 'true',
+  );
   const [sheet, setSheet] = useState<SheetName>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(() => (
     window.sessionStorage.getItem(NOTIFICATIONS_READ_KEY) === 'true' ? 0 : notifications.length
@@ -106,6 +109,10 @@ export default function AccountPage() {
 
   useEffect(() => {
     clearLegacyAccountProfile();
+  }, []);
+
+  useEffect(() => {
+    window.sessionStorage.removeItem(OPEN_MENU_ON_ACCOUNT_KEY);
   }, []);
 
   useEffect(() => {
