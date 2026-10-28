@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
+  ArrowLeft,
   AlertCircle,
   Check,
   CheckCircle2,
@@ -28,6 +29,7 @@ import {
   useRevokeDeveloperWebhook,
 } from '@workspace/api-client-react';
 import { toast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 import type {
   DeveloperApiKeyCreatedResponse,
   DeveloperWebhookCreatedResponse,
@@ -126,6 +128,7 @@ function Dialog({ children, title, onClose }: { children: ReactNode; title: stri
 }
 
 export default function DevelopersPage() {
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<DialogState>(null);
   const [developerTab, setDeveloperTab] = useState<DeveloperTab>('api');
@@ -263,6 +266,16 @@ export default function DevelopersPage() {
     <main className="sendflow-developers">
       <div className="dev-page">
         <header className="dev-page-header">
+          <button
+            type="button"
+            className="dev-back-button"
+            onClick={() => setLocation('/account')}
+            aria-label="Retour au compte"
+            data-testid="button-developers-back"
+          >
+            <ArrowLeft size={19} strokeWidth={2} aria-hidden="true" />
+            <span>Retour au compte</span>
+          </button>
           <div className="dev-title-row">
             <div>
               <h1>Développeurs</h1>

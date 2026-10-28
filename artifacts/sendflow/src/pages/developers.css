@@ -21,6 +21,32 @@
 
 .dev-page { width: min(100%, 1120px); margin: 0 auto; }
 .dev-page-header { margin-bottom: 26px; }
+.dev-back-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #d9d3e2;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .86);
+  padding: 0 13px;
+  color: var(--dev-violet-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .16s ease, background-color .16s ease, transform .16s ease;
+}
+.dev-back-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--dev-violet);
+  background: #fff;
+}
+.dev-back-button:focus-visible {
+  outline: 3px solid rgba(112, 67, 194, .24);
+  outline-offset: 2px;
+}
 .dev-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-top: 19px; }
 .dev-section-index, .dev-eyebrow { color: var(--dev-violet); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
 .dev-title-row h1 { margin: 9px 0 0; font-size: clamp(30px, 5vw, 42px); line-height: 1.05; letter-spacing: -.055em; font-weight: 750; }
