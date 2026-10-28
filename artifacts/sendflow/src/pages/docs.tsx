@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import apiIntegrationIllustration from '../assets/docs-api-integration-3d.webp';
+import hostedCheckoutIllustration from '../assets/docs-hosted-checkout-3d.webp';
 import { useSeo } from '@/lib/seo';
 import './docs.css';
 
@@ -280,6 +282,13 @@ export default function DocsPage() {
         <h2>{t.methods}</h2><p>{t.methodsSub}</p>
         <div className="sf-docs-cards">
           <Link href="/docs/integrations/direct" className="sf-docs-card sf-docs-card-link" data-testid="card-docs-direct">
+            <div className="sf-docs-card-art">
+              <img
+                src={apiIntegrationIllustration}
+                alt={language === 'fr' ? 'Illustration 3D d’un développeur intégrant SendFlow' : '3D illustration of a developer integrating SendFlow'}
+                loading="lazy"
+              />
+            </div>
             <div className="sf-docs-card-top"><span className="sf-docs-card-icon"><Code2 size={19} /></span><ArrowRight className="sf-docs-card-arrow" size={16} /></div>
             <h3>{t.directCard}</h3><p>{t.directCardSub}</p>
             <dl className="sf-docs-method-details">
@@ -291,6 +300,13 @@ export default function DocsPage() {
             <span className="sf-docs-card-cta">{t.directGuide}<ArrowRight size={13} /></span>
           </Link>
           <Link href="/docs/integrations/hosted" className="sf-docs-card sf-docs-card-link" data-testid="card-docs-hosted">
+            <div className="sf-docs-card-art">
+              <img
+                src={hostedCheckoutIllustration}
+                alt={language === 'fr' ? 'Illustration 3D d’un paiement sécurisé par téléphone' : '3D illustration of a secure mobile payment'}
+                loading="lazy"
+              />
+            </div>
             <div className="sf-docs-card-top"><span className="sf-docs-card-icon"><Globe2 size={19} /></span><ArrowRight className="sf-docs-card-arrow" size={16} /></div>
             <h3>{t.hostedCard}</h3><p>{t.hostedCardSub}</p>
             <dl className="sf-docs-method-details">

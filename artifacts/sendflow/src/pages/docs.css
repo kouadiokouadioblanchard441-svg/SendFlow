@@ -85,6 +85,8 @@
 .sf-docs-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; margin-top: 20px; }
 .sf-docs-card { min-width: 0; border: 1.5px solid #e8dcf9; border-radius: 16px; background: #fff; padding: 21px; box-shadow: 0 10px 30px rgba(92,45,146,.05); transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease; }
 .sf-docs-card:hover { transform: translateY(-2px); border-color: #8b4cc8; box-shadow: 0 10px 30px rgba(92,45,146,.1); }
+.sf-docs-card-art { display: grid; height: 148px; place-items: center; overflow: hidden; margin: -7px 0 10px; border-radius: 12px; background: #fff; }
+.sf-docs-card-art img { display: block; width: min(100%, 190px); height: 100%; object-fit: contain; }
 .sf-docs-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .sf-docs-card-icon { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid #e8dcf9; border-radius: 12px; background: #fbf8ff; color: #8b4cc8; }
 .sf-docs-card-arrow { color: #8b4cc8; }
@@ -183,6 +185,8 @@
   .sf-docs-lede { font-size: 13px; }
   .sf-docs-hero-actions { display: grid; grid-template-columns: 1fr; }
   .sf-docs-cards { grid-template-columns: 1fr; }
+  .sf-docs-card-art { height: 166px; }
+  .sf-docs-card-art img { width: min(100%, 205px); }
   .sf-docs-step { grid-template-columns: 29px minmax(0,1fr); padding: 14px 12px; }
   .sf-docs-step > a { grid-column: 2; justify-self: start; margin-top: 4px; }
   .sf-docs-support { align-items: flex-start; flex-direction: column; }
