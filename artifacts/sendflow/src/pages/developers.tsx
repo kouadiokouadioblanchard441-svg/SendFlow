@@ -516,7 +516,7 @@ export default function DevelopersPage() {
         </section>
 
         <section className="dev-docs-card" aria-labelledby="dev-docs-heading">
-          <h2 id="dev-docs-heading">Configuration</h2>
+          <h2 id="dev-docs-heading">Documentation</h2>
           <div className="dev-docs-card-content">
             <span className="dev-docs-icon" aria-hidden="true"><FileText size={19} /></span>
             <div className="dev-docs-card-copy">
