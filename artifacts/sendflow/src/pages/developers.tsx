@@ -44,7 +44,7 @@ type DialogState =
   | { kind: 'revoke-webhook'; id: string; label: string }
   | null;
 
-type DeveloperTab = 'private' | 'identifier' | 'webhook';
+type DeveloperTab = 'api' | 'public' | 'webhook';
 
 const EVENT_OPTIONS = [
   { value: 'payment.succeeded', label: 'Paiement réussi' },
@@ -102,8 +102,8 @@ function CopyButton({ value, label, testId, iconOnly = false }: { value: string;
 
 function explainSecretIsUnavailable() {
   toast({
-    title: 'Secret non consultable',
-    description: 'Pour votre sécurité, le secret complet est affiché une seule fois après sa génération. Régénérez la paire pour en obtenir un nouveau.',
+    title: 'Clé API secrète indisponible',
+    description: 'Pour votre sécurité, le secret complet n’est affiché qu’une fois, lors de sa génération. Régénérez la paire pour en obtenir un nouveau.',
   });
 }
 
@@ -131,7 +131,7 @@ function Dialog({ children, title, onClose }: { children: ReactNode; title: stri
 export default function DevelopersPage() {
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<DialogState>(null);
-  const [developerTab, setDeveloperTab] = useState<DeveloperTab>('private');
+  const [developerTab, setDeveloperTab] = useState<DeveloperTab>('api');
   const [selectedEndpointId, setSelectedEndpointId] = useState('');
   const [webhookLabel, setWebhookLabel] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -145,7 +145,6 @@ export default function DevelopersPage() {
   const webhooksQuery = useListDeveloperWebhooks({ query: { queryKey: getListDeveloperWebhooksQueryKey() } });
   const apiKeys = apiKeysQuery.data?.items ?? [];
   const activeApiKey = apiKeys.find((key) => key.status === 'active');
-  const apiKeyTabLabel = activeApiKey?.label ?? apiKeys[0]?.label ?? 'Clé publique';
   const endpoints = webhooksQuery.data?.items ?? [];
   const selectedEndpoint = endpoints.find((endpoint) => endpoint.id === selectedEndpointId);
   const deliveriesQuery = useListDeveloperWebhookDeliveries(selectedEndpointId, {
@@ -309,9 +308,9 @@ export default function DevelopersPage() {
           <div
             className="dev-integration-tabs"
             role="tablist"
-            aria-label="Identifiants et webhook"
+            aria-label="Identifiants et webhooks"
             onKeyDown={(event) => {
-              const tabs: DeveloperTab[] = ['private', 'identifier', 'webhook'];
+              const tabs: DeveloperTab[] = ['api', 'public', 'webhook'];
               const currentIndex = tabs.indexOf(developerTab);
               const nextIndex = event.key === 'ArrowRight'
                 ? (currentIndex + 1) % tabs.length
@@ -326,8 +325,8 @@ export default function DevelopersPage() {
               }
             }}
           >
-            <button type="button" role="tab" id="developer-tab-private" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'private'} tabIndex={developerTab === 'private' ? 0 : -1} onClick={() => setDeveloperTab('private')} data-testid="tab-private-key">Clé privée</button>
-            <button type="button" role="tab" id="developer-tab-identifier" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'identifier'} tabIndex={developerTab === 'identifier' ? 0 : -1} onClick={() => setDeveloperTab('identifier')} title={apiKeyTabLabel} data-testid="tab-public-key"><span className="dev-tab-name">{apiKeyTabLabel}</span></button>
+            <button type="button" role="tab" id="developer-tab-api" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'api'} tabIndex={developerTab === 'api' ? 0 : -1} onClick={() => setDeveloperTab('api')} data-testid="tab-api-key">Clé API</button>
+            <button type="button" role="tab" id="developer-tab-public" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'public'} tabIndex={developerTab === 'public' ? 0 : -1} onClick={() => setDeveloperTab('public')} data-testid="tab-public-key">Clé publique</button>
             <button type="button" role="tab" id="developer-tab-webhook" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'webhook'} tabIndex={developerTab === 'webhook' ? 0 : -1} onClick={() => setDeveloperTab('webhook')} data-testid="tab-webhook">Webhook</button>
           </div>
           <div className="dev-tab-panel" id="developer-integrations-panel" role="tabpanel" aria-labelledby={`developer-tab-${developerTab}`}>
@@ -335,62 +334,55 @@ export default function DevelopersPage() {
               <>
                 {apiKeysQuery.isLoading && <div className="dev-loading-block" aria-label="Chargement des clés API"><span /><span /><span /></div>}
                 {apiKeysQuery.isError && <div className="dev-state dev-state-error" role="alert"><AlertCircle size={20} /><span><strong>Clés indisponibles</strong><small>Les données n’ont pas pu être chargées.</small></span><button type="button" onClick={() => void apiKeysQuery.refetch()}><RefreshCw size={15} /> Réessayer</button></div>}
-                {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length === 0 && (
+                {!apiKeysQuery.isLoading && !apiKeysQuery.isError && !activeApiKey && (
                   <div className="dev-empty-state"><span className="dev-empty-icon"><KeyRound size={22} /></span><div><strong>La paire principale est indisponible</strong><p>Les clés sont générées automatiquement à la création du compte. Utilisez « Régénérer » si la paire doit être renouvelée.</p>{previewInitializationFailed && <small role="alert">L’initialisation automatique a échoué. Réessayez avec « Régénérer ».</small>}</div></div>
                 )}
-                {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length > 0 && (
+                {!apiKeysQuery.isLoading && !apiKeysQuery.isError && activeApiKey && (
                   <div className="dev-key-list">
-                    {apiKeys.map((key) => {
-                      const privateTab = developerTab === 'private';
-                      const publicKeyHidden = Boolean(hiddenPublicKeys[key.id]);
-                      return (
-                        <article className={`dev-key-card${key.status === 'revoked' ? ' is-revoked' : ''}`} key={key.id} data-testid={`card-api-key-${key.id}`}>
-                          <div className="dev-key-card-main">
-                            <div className="dev-key-name-line"><span className="dev-key-mark"><KeyRound size={17} /></span><div><h3>{key.label}</h3><span className={`dev-status-pill ${key.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(key.status)}</span></div></div>
-                            <div className="dev-key-field-row">
-                              <div className="dev-key-field-value"><code>{privateTab || publicKeyHidden ? '•'.repeat(40) : key.publicKey}</code></div>
-                              <div className="dev-key-field-actions">
-                                <button
-                                  className="dev-key-icon-button"
-                                  type="button"
-                                  onClick={() => {
-                                    if (privateTab) {
-                                      explainSecretIsUnavailable();
-                                    } else {
-                                      setHiddenPublicKeys((current) => ({ ...current, [key.id]: !current[key.id] }));
-                                    }
-                                  }}
-                                  aria-label={privateTab ? 'Le secret complet est affiché une seule fois' : publicKeyHidden ? 'Afficher la clé publique' : 'Masquer la clé publique'}
-                                  title={privateTab ? 'Le secret complet est affiché une seule fois après sa génération' : publicKeyHidden ? 'Afficher la clé publique' : 'Masquer la clé publique'}
-                                  data-testid={`button-toggle-key-${key.id}`}
-                                >
-                                  {privateTab || publicKeyHidden ? <Eye size={19} /> : <EyeOff size={19} />}
-                                </button>
-                                {privateTab ? (
-                                  <button
-                                    className="dev-key-icon-button"
-                                    type="button"
-                                    onClick={explainSecretIsUnavailable}
-                                    aria-label="Le secret ne peut pas être copié après sa génération"
-                                    title="Régénérez la paire pour obtenir un nouveau secret"
-                                  >
-                                    <Copy size={19} />
-                                  </button>
-                                ) : (
-                                  <CopyButton value={key.publicKey} label="la clé publique" testId={`button-copy-public-key-${key.id}`} iconOnly />
-                                )}
-                              </div>
-                            </div>
+                    <article className="dev-key-card" data-testid={`card-api-key-${activeApiKey.id}`}>
+                      <div className="dev-key-card-main">
+                        <div className="dev-key-name-line"><span className="dev-key-mark"><KeyRound size={17} /></span><div><h3>{activeApiKey.label}</h3><span className={`dev-status-pill ${activeApiKey.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(activeApiKey.status)}</span></div></div>
+                        <div className="dev-key-field-row">
+                          <div className="dev-key-field-value"><code>{developerTab === 'api' || hiddenPublicKeys[activeApiKey.id] ? '•'.repeat(40) : activeApiKey.publicKey}</code></div>
+                          <div className="dev-key-field-actions">
+                            <button
+                              className="dev-key-icon-button"
+                              type="button"
+                              onClick={() => {
+                                if (developerTab === 'api') {
+                                  explainSecretIsUnavailable();
+                                } else {
+                                  setHiddenPublicKeys((current) => ({ ...current, [activeApiKey.id]: !current[activeApiKey.id] }));
+                                }
+                              }}
+                              aria-label={developerTab === 'api' ? 'Le secret complet est affiché une seule fois' : hiddenPublicKeys[activeApiKey.id] ? 'Afficher la clé publique' : 'Masquer la clé publique'}
+                              title={developerTab === 'api' ? 'Le secret complet est affiché une seule fois après sa génération' : hiddenPublicKeys[activeApiKey.id] ? 'Afficher la clé publique' : 'Masquer la clé publique'}
+                              data-testid={`button-toggle-key-${activeApiKey.id}`}
+                            >
+                              {developerTab === 'api' || hiddenPublicKeys[activeApiKey.id] ? <Eye size={19} /> : <EyeOff size={19} />}
+                            </button>
+                            {developerTab === 'api' ? (
+                              <button
+                                className="dev-key-icon-button"
+                                type="button"
+                                onClick={explainSecretIsUnavailable}
+                                aria-label="La clé API secrète ne peut pas être copiée après sa génération"
+                                title="Régénérez la paire pour obtenir un nouveau secret"
+                              >
+                                <Copy size={19} />
+                              </button>
+                            ) : (
+                              <CopyButton value={activeApiKey.publicKey} label="la clé publique" testId={`button-copy-public-key-${activeApiKey.id}`} iconOnly />
+                            )}
                           </div>
-                          <div className="dev-key-meta">
-                            <span>Dernière mise à jour : {formatKeyTimestamp(key.createdAt)}</span>
-                            <span>Dernière utilisation : {formatDate(key.lastUsedAt)}</span>
-                            {key.revokedAt && <span>Révoquée le {formatDate(key.revokedAt)}</span>}
-                          </div>
-                          {key.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-api', id: key.id, label: key.label }); }} data-testid={`button-revoke-api-key-${key.id}`}>Révoquer</button>}
-                        </article>
-                      );
-                    })}
+                        </div>
+                      </div>
+                      <div className="dev-key-meta">
+                        <span>Dernière mise à jour : {formatKeyTimestamp(activeApiKey.createdAt)}</span>
+                        <span>Dernière utilisation : {formatDate(activeApiKey.lastUsedAt)}</span>
+                      </div>
+                      {activeApiKey.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-api', id: activeApiKey.id, label: activeApiKey.label }); }} data-testid={`button-revoke-api-key-${activeApiKey.id}`}>Révoquer</button>}
+                    </article>
                   </div>
                 )}
               </>
@@ -403,7 +395,7 @@ export default function DevelopersPage() {
                 )}
                 {!webhooksQuery.isLoading && !webhooksQuery.isError && endpoints.length > 0 && (
                   <div className="dev-webhook-layout">
-                    <div className="dev-endpoint-list" aria-label="Points de terminaison webhook">
+                      <div className="dev-endpoint-list" aria-label="Points de terminaison webhook">
                       {endpoints.map((endpoint) => (
                         <button
                           type="button"
@@ -422,7 +414,7 @@ export default function DevelopersPage() {
                     </div>
                     <section className="dev-deliveries" aria-labelledby="dev-deliveries-heading">
                       <div className="dev-deliveries-header">
-                        <div><span className="dev-section-index">JOURNAL RÉCENT</span><h3 id="dev-deliveries-heading">Livraisons</h3><p>{selectedEndpoint?.label ?? 'Sélectionnez un endpoint'}</p></div>
+                        <div><span className="dev-section-index">JOURNAL RÉCENT</span><h3 id="dev-deliveries-heading">Livraisons</h3><p>{selectedEndpoint?.label ?? 'Sélectionnez un point de terminaison'}</p></div>
                         {selectedEndpoint?.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-webhook', id: selectedEndpoint.id, label: selectedEndpoint.label }); }} data-testid={`button-revoke-webhook-${selectedEndpoint.id}`}>Révoquer</button>}
                       </div>
                       {deliveriesQuery.isLoading && <div className="dev-delivery-skeleton"><span /><span /><span /></div>}
@@ -455,7 +447,7 @@ export default function DevelopersPage() {
       {dialog?.kind === 'api-regenerate' && (
         <Dialog title="Régénérer la paire de clés" onClose={closeDialog}>
           <div className="dev-revoke-confirm">
-            <p>{activeApiKey ? 'Toutes les paires API actuellement actives seront immédiatement désactivées. Les intégrations qui les utilisent devront être mises à jour avec la nouvelle clé API et le nouveau secret.' : 'La paire principale sera générée pour ce compte. Le secret ne sera affiché qu’une seule fois.'}</p>
+            <p>{activeApiKey ? 'La paire de clés actuellement active sera immédiatement désactivée. Votre intégration devra être mise à jour avec la nouvelle clé publique et le nouveau secret.' : 'La paire principale sera générée pour ce compte. Le secret ne sera affiché qu’une seule fois.'}</p>
             {formError && <p className="dev-form-error" role="alert">{formError}</p>}
             <div className="dev-dialog-actions">
               <button type="button" className="dev-secondary-button" onClick={closeDialog}>Conserver la paire actuelle</button>
@@ -472,7 +464,7 @@ export default function DevelopersPage() {
         <Dialog title="Ajouter un webhook" onClose={closeDialog}>
           <form className="dev-form" onSubmit={(event) => void submitWebhook(event)}>
             <p>SendFlow enverra les événements sélectionnés à votre serveur. Utilisez une URL HTTPS accessible.</p>
-            <label htmlFor="webhook-label">Nom de l’endpoint</label>
+            <label htmlFor="webhook-label">Nom du point de terminaison</label>
             <input id="webhook-label" value={webhookLabel} onChange={(event) => setWebhookLabel(event.target.value)} maxLength={80} required autoFocus placeholder="Ex. Notifications de paiement" data-testid="input-webhook-label" />
             <label htmlFor="webhook-url">URL de destination</label>
             <input id="webhook-url" type="url" value={webhookUrl} onChange={(event) => setWebhookUrl(event.target.value)} maxLength={2048} required placeholder="https://exemple.com/webhooks/sendflow" data-testid="input-webhook-url" />
@@ -486,9 +478,9 @@ export default function DevelopersPage() {
       {dialog?.kind === 'api-secret' && (
         <Dialog title="Nouvelle paire de clés" onClose={closeDialog}>
           <div className="dev-secret-content">
-            <div className="dev-one-time-warning"><AlertCircle size={19} /><div><strong>Copiez et conservez ces clés maintenant.</strong><p>La clé privée ne sera plus affichée après la fermeture de cette fenêtre. Ne la partagez jamais.</p></div></div>
+            <div className="dev-one-time-warning"><AlertCircle size={19} /><div><strong>Copiez et conservez ces clés maintenant.</strong><p>La clé API secrète ne sera plus affichée après la fermeture de cette fenêtre. Ne la partagez jamais.</p></div></div>
             <SecretValue label="Clé publique" value={dialog.response.publicKey} />
-            <SecretValue label="Clé secrète" value={dialog.response.secretKey} secret />
+            <SecretValue label="Clé API secrète" value={dialog.response.secretKey} secret />
             <button className="dev-primary-button dev-full-button" type="button" onClick={closeDialog}><CheckCircle2 size={17} /> J’ai enregistré mes clés</button>
           </div>
         </Dialog>
@@ -498,7 +490,7 @@ export default function DevelopersPage() {
         <Dialog title="Webhook configuré" onClose={closeDialog}>
           <div className="dev-secret-content">
             <div className="dev-one-time-warning"><AlertCircle size={19} /><div><strong>Enregistrez le secret de signature maintenant.</strong><p>Il ne sera plus affiché après la fermeture. Utilisez-le pour vérifier la signature des événements reçus.</p></div></div>
-            <div className="dev-created-summary"><span>ENDPOINT</span><strong>{dialog.response.endpoint.label}</strong><code>{dialog.response.endpoint.url}</code></div>
+            <div className="dev-created-summary"><span>POINT DE TERMINAISON</span><strong>{dialog.response.endpoint.label}</strong><code>{dialog.response.endpoint.url}</code></div>
             <SecretValue label="Secret de signature" value={dialog.response.signingSecret} secret />
             <button className="dev-primary-button dev-full-button" type="button" onClick={closeDialog}><CheckCircle2 size={17} /> J’ai enregistré le secret</button>
           </div>

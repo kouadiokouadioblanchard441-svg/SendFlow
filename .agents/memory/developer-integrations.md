@@ -23,8 +23,8 @@ The API-key storage constraint must accept both live and preview key formats; en
 
 **How to apply:** When changing credential constraints, verify preview-key creation and separately verify that live payment authorization still rejects test credentials.
 
-For the merchant API-key card, follow the supplied reference: one clean, lightly outlined card; place “Régénérer” at the upper-right beside “API”; show the tabs, grey credential row, gold outlined eye/copy controls, and update date inside that frame. Avoid an extra nested border or a full-width mobile regeneration button.
+For the merchant API-key card, show one active pair only, with distinct “Clé API” (secret) and “Clé publique” tabs; keep revoked keys out of the current-key panel. Use SendFlow violet for regeneration, view, and copy controls.
 
-**Why:** the user corrected the prior layout because the card contour and regeneration-button position did not match the reference.
+**Why:** the user reported duplicate key cards and explicitly requested SendFlow violet instead of the gold reference controls.
 
-**How to apply:** Keep this visual treatment scoped to Développeurs and compare the mobile layout against the supplied screenshot before changing the card again.
+**How to apply:** Keep this treatment scoped to Développeurs. Never persist the secret key in readable form or imply it can be recovered after its one-time display.

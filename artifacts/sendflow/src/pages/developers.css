@@ -475,11 +475,11 @@
 }
 
 .sendflow-developers .dev-regenerate-button {
-  border-color: #c75b0a;
-  background: #c75b0a;
+  border-color: var(--dev-violet);
+  background: var(--dev-violet);
   color: #fff;
 }
-.sendflow-developers .dev-regenerate-button:hover:not(:disabled) { border-color: #a84800; background: #a84800; }
+.sendflow-developers .dev-regenerate-button:hover:not(:disabled) { border-color: var(--dev-violet-dark); background: var(--dev-violet-dark); }
 .sendflow-developers .dev-integration-tabs [role="tab"][aria-selected="true"] {
   border-bottom-color: #c75b0a;
   color: #9c4b0a;
@@ -598,13 +598,13 @@
   font-size: 13px;
 }
 .sendflow-developers .dev-keys-section .dev-regenerate-button {
-  border-color: #c75b0a;
-  background: #c75b0a;
-  box-shadow: 0 3px 8px rgba(173, 81, 5, .12);
+  border-color: var(--dev-violet);
+  background: var(--dev-violet);
+  box-shadow: 0 3px 8px rgba(112, 67, 194, .18);
 }
 .sendflow-developers .dev-keys-section .dev-regenerate-button:hover:not(:disabled) {
-  border-color: #a84800;
-  background: #a84800;
+  border-color: var(--dev-violet-dark);
+  background: var(--dev-violet-dark);
 }
 .sendflow-developers .dev-keys-section .dev-integration-tabs {
   justify-content: flex-start;
@@ -622,8 +622,8 @@
   font-size: 13px;
 }
 .sendflow-developers .dev-keys-section .dev-integration-tabs [role="tab"][aria-selected="true"] {
-  border-bottom-color: #c75b0a;
-  color: #a34d0a;
+  border-bottom-color: var(--dev-violet);
+  color: var(--dev-violet-dark);
 }
 .sendflow-developers .dev-key-card:not(.is-revoked) {
   border: 0;
@@ -663,9 +663,20 @@
   width: 52px;
   height: 54px;
   min-height: 54px;
-  border-color: #ae874f;
+  border-color: var(--dev-violet);
   border-radius: 11px;
-  color: #9a713d;
+  color: var(--dev-violet);
+}
+.sendflow-developers .dev-key-icon-button:hover,
+.sendflow-developers .dev-copy-button.is-icon-only:hover {
+  border-color: var(--dev-violet-dark);
+  background: var(--dev-violet-wash);
+  color: var(--dev-violet-dark);
+}
+.sendflow-developers .dev-key-icon-button:focus-visible,
+.sendflow-developers .dev-copy-button.is-icon-only:focus-visible {
+  outline: 3px solid rgba(112, 67, 194, .24);
+  outline-offset: 2px;
 }
 .sendflow-developers .dev-key-meta {
   margin: 11px 0 0;
