@@ -2,7 +2,7 @@
   --docs-ink: #17181d;
   --docs-muted: #292a30;
   --docs-faint: #55515f;
-  --docs-line: #e8dcf9;
+  --docs-line: #d9c4ed;
   --docs-paper: #ffffff;
   --docs-ground: #ffffff;
   --docs-accent: #8b4cc8;
@@ -200,4 +200,40 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .sf-docs *, .sf-docs *::before, .sf-docs *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Keep the legal-page white canvas and make documentation surfaces clearly framed. */
+.sf-docs,
+.sf-docs-header,
+.sf-docs-sidebar,
+.sf-docs-main {
+  background-color: #fff;
+}
+
+.sf-docs-header {
+  border-bottom-color: #d9c4ed;
+}
+
+.sf-docs-card,
+.sf-docs-steps,
+.sf-docs-support,
+.sf-docs-code,
+.sf-docs-endpoint,
+.sf-docs-reference-table tr {
+  border: 2px solid #d9c4ed;
+  box-shadow: 0 8px 24px rgba(92,45,146,.08);
+}
+
+.sf-docs-warning,
+.sf-docs-callout,
+.sf-docs-search,
+.sf-docs-mobile-nav,
+.sf-docs-sidebar-trigger,
+.sf-docs-mobile-menu {
+  border-width: 2px;
+  border-color: #d9c4ed;
+}
+
+.sf-docs-side-link.is-active {
+  border-color: #d9c4ed;
 }
