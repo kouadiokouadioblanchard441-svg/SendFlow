@@ -4,7 +4,7 @@
   --docs-faint: #8290a2;
   --docs-line: #dce4ed;
   --docs-paper: #ffffff;
-  --docs-ground: #f7f3e9;
+  --docs-ground: #ffffff;
   --docs-blue: #1769c2;
   --docs-blue-deep: #104b91;
   --docs-blue-wash: #eaf3fc;
@@ -24,7 +24,7 @@
 .sf-docs-header {
   position: sticky; top: 0; z-index: 40; display: flex; min-height: 70px; align-items: center;
   justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--docs-line);
-  background: rgba(247,243,233,.96); padding: 0 clamp(16px, 4vw, 56px); backdrop-filter: blur(12px);
+  background: rgba(255,255,255,.96); padding: 0 clamp(16px, 4vw, 56px); backdrop-filter: blur(12px);
 }
 .sf-docs-brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 9px; }
 .sf-docs-brand-mark { display: grid; width: 34px; height: 36px; place-items: center; overflow: hidden; }
@@ -41,7 +41,7 @@
 .sf-docs-mobile-menu { display: none; width: 38px; height: 38px; place-items: center; border: 1px solid var(--docs-line); border-radius: 7px; background: white; color: var(--docs-ink); cursor: pointer; }
 .sf-docs-mobile-nav { display: none; }
 .sf-docs-shell { display: grid; width: min(100%, 1440px); min-height: calc(100dvh - 70px); grid-template-columns: 260px minmax(0,1fr); margin: 0 auto; }
-.sf-docs-sidebar { position: sticky; top: 70px; height: calc(100dvh - 70px); overflow-y: auto; border-right: 1px solid var(--docs-line); background: #fbfcfd; padding: 28px 18px 24px 24px; }
+.sf-docs-sidebar { position: sticky; top: 70px; height: calc(100dvh - 70px); overflow-y: auto; border-right: 1px solid var(--docs-line); background: #ffffff; padding: 28px 18px 24px 24px; }
 .sf-docs-search { display: flex; min-height: 40px; align-items: center; gap: 8px; border: 1px solid #d8e1eb; border-radius: 7px; background: #fff; padding: 0 10px; color: #76879a; }
 .sf-docs-search:focus-within { border-color: #7ba9d8; box-shadow: 0 0 0 3px rgba(23,105,194,.1); }
 .sf-docs-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--docs-ink); font-size: 11px; }
