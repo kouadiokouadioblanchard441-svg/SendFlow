@@ -98,6 +98,8 @@
 .dev-key-values span, .dev-secret-field > span, .dev-created-summary > span { color: var(--dev-faint); font-size: 8px; font-weight: 800; letter-spacing: .1em; }
 .dev-key-values code { overflow: hidden; color: #4a4258; font-family: 'DM Sans', sans-serif; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .dev-key-meta { display: flex; flex-wrap: wrap; gap: 5px 18px; margin: 12px 0 0 45px; padding-top: 9px; border-top: 1px solid #f0edf2; color: var(--dev-faint); font-size: 9px; }
+.dev-key-inline-notice { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0 45px; border: 1px solid #ded5ef; border-radius: 9px; background: #f7f3fc; padding: 10px 12px; color: var(--dev-violet-dark); font-size: 11px; line-height: 1.45; }
+.dev-key-inline-notice > svg { flex: 0 0 auto; margin-top: 1px; }
 .dev-text-danger { border: 0; background: none; padding: 4px 0; color: var(--dev-red); font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; }
 .dev-key-card > .dev-text-danger { position: absolute; top: 13px; right: 18px; }
 
@@ -214,6 +216,7 @@
   .dev-dialog-actions { flex-direction: column-reverse; }
   .dev-dialog-actions > button { width: 100%; }
   .dev-footer { align-items: flex-start; line-height: 1.45; }
+  .dev-key-inline-notice { margin-left: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -682,6 +685,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow-wrap: normal;
+}
+.sendflow-developers .dev-key-field-value.is-secret-visible code {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .sendflow-developers .dev-key-field-actions { gap: 10px; }
 .sendflow-developers .dev-key-icon-button,
