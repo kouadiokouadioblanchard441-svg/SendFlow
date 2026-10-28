@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.sf_developer_api_keys (
   CONSTRAINT sf_developer_api_keys_status_check CHECK (status IN ('active','revoked')),
   CONSTRAINT sf_developer_api_keys_label_check CHECK (length(btrim(label)) BETWEEN 1 AND 80),
   CONSTRAINT sf_developer_api_keys_public_prefix_check CHECK (public_key_prefix ~ '^sfpk_[A-Za-z0-9_-]{8,24}$'),
-  CONSTRAINT sf_developer_api_keys_public_key_check CHECK (public_key ~ '^sfpk_live_[A-Za-z0-9_-]{43}$'),
+  CONSTRAINT sf_developer_api_keys_public_key_check CHECK (public_key ~ '^sfpk_(live|test)_[A-Za-z0-9_-]{43}$'),
   CONSTRAINT sf_developer_api_keys_public_hash_check CHECK (public_key_hash ~ '^[a-f0-9]{64}$'),
   CONSTRAINT sf_developer_api_keys_secret_prefix_check CHECK (secret_key_prefix ~ '^sfsk_[A-Za-z0-9_-]{8,24}$'),
   CONSTRAINT sf_developer_api_keys_secret_hash_check CHECK (secret_key_hash ~ '^[a-f0-9]{64}$'),

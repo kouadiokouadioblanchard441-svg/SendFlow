@@ -37,7 +37,7 @@ export const developerApiKeysTable = pgTable("sf_developer_api_keys", {
   labelCheck: check("sf_developer_api_keys_label_check", sql`length(btrim(${table.label})) between 1 and 80`),
   publicPrefixCheck: check("sf_developer_api_keys_public_prefix_check", sql`${table.publicKeyPrefix} ~ '^sfpk_[A-Za-z0-9_-]{8,24}$'`),
   publicHashCheck: check("sf_developer_api_keys_public_hash_check", sql`${table.publicKeyHash} ~ '^[a-f0-9]{64}$'`),
-  publicKeyCheck: check("sf_developer_api_keys_public_key_check", sql`${table.publicKey} ~ '^sfpk_live_[A-Za-z0-9_-]{43}$'`),
+  publicKeyCheck: check("sf_developer_api_keys_public_key_check", sql`${table.publicKey} ~ '^sfpk_(live|test)_[A-Za-z0-9_-]{43}$'`),
   secretPrefixCheck: check("sf_developer_api_keys_secret_prefix_check", sql`${table.secretKeyPrefix} ~ '^sfsk_[A-Za-z0-9_-]{8,24}$'`),
   secretHashCheck: check("sf_developer_api_keys_secret_hash_check", sql`${table.secretKeyHash} ~ '^[a-f0-9]{64}$'`),
   revokePairCheck: check("sf_developer_api_keys_revoke_pair_check", sql`(${table.status}='active' and ${table.revokedAt} is null) or (${table.status}='revoked' and ${table.revokedAt} is not null)`),

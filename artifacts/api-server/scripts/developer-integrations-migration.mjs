@@ -173,6 +173,14 @@ function schemaProblems(catalog) {
     if (relation.constraints.some((constraint) => !constraint.validated)) {
       problems.push(`${tableName.toUpperCase()}_UNVALIDATED_CONSTRAINT`);
     }
+    if (tableName === "sf_developer_api_keys") {
+      const publicKeyCheck = relation.constraints.find(
+        (constraint) => constraint.name === "sf_developer_api_keys_public_key_check",
+      );
+      if (!publicKeyCheck?.definition?.includes("^sfpk_(live|test)_")) {
+        problems.push("SF_DEVELOPER_API_KEYS_PUBLIC_KEY_PREFIX_CHECK_MISMATCH");
+      }
+    }
     const indexNames = new Set(relation.indexes);
     if (expected.indexes.some((indexName) => !indexNames.has(indexName))) {
       problems.push(`${tableName.toUpperCase()}_INDEX_MISSING`);

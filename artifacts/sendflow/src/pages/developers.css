@@ -567,3 +567,184 @@
   .sendflow-developers .dev-key-field-value,
   .sendflow-developers .dev-secret-value { min-height: 44px; padding-inline: 10px; }
 }
+
+/* Match the supplied API-key card: one light frame, with the action at top-right. */
+.sendflow-developers .dev-keys-section {
+  border: 1px solid #e9e6e8;
+  border-radius: 17px;
+  background: #fff;
+  padding: 19px 21px 18px;
+  box-shadow: 0 2px 9px rgba(35, 27, 47, .025);
+}
+.sendflow-developers .dev-keys-section .dev-section-heading {
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.sendflow-developers .dev-keys-section .dev-section-title h2 {
+  margin: 8px 0 0;
+  font-size: 19px;
+  line-height: 1.25;
+  letter-spacing: -.025em;
+}
+.sendflow-developers .dev-keys-section .dev-section-heading > .dev-primary-button {
+  width: auto;
+  min-height: 46px;
+  min-width: 140px;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  border-radius: 14px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+.sendflow-developers .dev-keys-section .dev-regenerate-button {
+  border-color: #c75b0a;
+  background: #c75b0a;
+  box-shadow: 0 3px 8px rgba(173, 81, 5, .12);
+}
+.sendflow-developers .dev-keys-section .dev-regenerate-button:hover:not(:disabled) {
+  border-color: #a84800;
+  background: #a84800;
+}
+.sendflow-developers .dev-keys-section .dev-integration-tabs {
+  justify-content: flex-start;
+  gap: 22px;
+  margin: 12px 0 18px;
+  border-bottom-color: #ece9e8;
+}
+.sendflow-developers .dev-keys-section .dev-integration-tabs [role="tab"] {
+  min-height: 42px;
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  border-bottom-width: 3px;
+  padding: 10px 0 8px;
+  color: #89838a;
+  font-size: 13px;
+}
+.sendflow-developers .dev-keys-section .dev-integration-tabs [role="tab"][aria-selected="true"] {
+  border-bottom-color: #c75b0a;
+  color: #a34d0a;
+}
+.sendflow-developers .dev-key-card:not(.is-revoked) {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+.sendflow-developers .dev-key-card:not(.is-revoked) .dev-key-card-main {
+  display: block;
+}
+.sendflow-developers .dev-key-card:not(.is-revoked) .dev-key-name-line {
+  display: none;
+}
+.sendflow-developers .dev-key-field-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.sendflow-developers .dev-key-field-value {
+  min-height: 58px;
+  border: 0;
+  border-radius: 13px;
+  background: #f3f3f4;
+  padding: 10px 15px;
+}
+.sendflow-developers .dev-key-field-value code {
+  overflow: hidden;
+  color: #1d1a1d;
+  font-size: 12px;
+  letter-spacing: .045em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.sendflow-developers .dev-key-field-actions { gap: 10px; }
+.sendflow-developers .dev-key-icon-button,
+.sendflow-developers .dev-copy-button.is-icon-only {
+  width: 52px;
+  height: 54px;
+  min-height: 54px;
+  border-color: #ae874f;
+  border-radius: 11px;
+  color: #9a713d;
+}
+.sendflow-developers .dev-key-meta {
+  margin: 11px 0 0;
+  padding: 0;
+  border: 0;
+  color: #a9a4a8;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.sendflow-developers .dev-key-card:not(.is-revoked) > .dev-text-danger {
+  position: static;
+  display: block;
+  width: max-content;
+  margin: 8px 0 0 auto;
+  padding: 2px 0;
+}
+.sendflow-developers .dev-key-card.is-revoked {
+  border-color: #e9e6e8;
+  border-radius: 11px;
+}
+
+@media (max-width: 520px) {
+  .sendflow-developers .dev-keys-section { padding: 16px 15px 15px; }
+  .sendflow-developers .dev-keys-section .dev-section-heading {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 9px;
+    margin-bottom: 8px;
+  }
+  .sendflow-developers .dev-keys-section .dev-section-title { min-width: 0; }
+  .sendflow-developers .dev-keys-section .dev-section-title h2 {
+    margin-top: 8px;
+    font-size: 18px;
+  }
+  .sendflow-developers .dev-keys-section .dev-section-title p { max-width: 190px; }
+  .sendflow-developers .dev-keys-section .dev-section-heading > .dev-primary-button {
+    min-height: 43px;
+    min-width: 140px;
+    padding-inline: 12px;
+    font-size: 11px;
+  }
+  .sendflow-developers .dev-keys-section .dev-integration-tabs {
+    gap: 17px;
+    margin: 9px 0 15px;
+  }
+  .sendflow-developers .dev-keys-section .dev-integration-tabs [role="tab"] {
+    min-height: 40px;
+    font-size: 12px;
+  }
+  .sendflow-developers .dev-key-field-row { gap: 8px; }
+  .sendflow-developers .dev-key-field-value {
+    min-height: 52px;
+    border-radius: 11px;
+    padding-inline: 12px;
+  }
+  .sendflow-developers .dev-key-icon-button,
+  .sendflow-developers .dev-copy-button.is-icon-only {
+    width: 46px;
+    height: 47px;
+    min-height: 47px;
+    border-radius: 10px;
+  }
+  .sendflow-developers .dev-key-meta { font-size: 11px; }
+}
+
+@media (max-width: 360px) {
+  .sendflow-developers .dev-keys-section { padding-inline: 12px; }
+  .sendflow-developers .dev-keys-section .dev-section-heading > .dev-primary-button {
+    min-height: 40px;
+    gap: 6px;
+    padding-inline: 9px;
+    font-size: 10px;
+  }
+  .sendflow-developers .dev-keys-section .dev-integration-tabs { gap: 12px; }
+  .sendflow-developers .dev-key-field-row { gap: 6px; }
+  .sendflow-developers .dev-key-icon-button,
+  .sendflow-developers .dev-copy-button.is-icon-only {
+    width: 42px;
+    height: 43px;
+    min-height: 43px;
+  }
+}

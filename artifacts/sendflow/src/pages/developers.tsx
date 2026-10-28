@@ -10,7 +10,6 @@ import {
   EyeOff,
   KeyRound,
   LoaderCircle,
-  LockKeyhole,
   Plus,
   RefreshCw,
   Webhook,
@@ -281,14 +280,10 @@ export default function DevelopersPage() {
         <section className="dev-section dev-keys-section" aria-labelledby="dev-keys-heading">
           <div className="dev-section-heading">
             <div className="dev-section-title">
-              <h2 id="dev-keys-heading"><KeyRound size={21} /> API</h2>
-              <p>
-                {developerTab === 'private'
-                  ? 'La clé privée complète est affichée une seule fois lors de sa création.'
-                  : developerTab === 'identifier'
-                    ? 'Utilisez la clé publique comme identifiant de votre intégration.'
-                    : 'Configurez l’URL qui recevra les notifications de paiement signées.'}
-              </p>
+              <h2 id="dev-keys-heading">API</h2>
+              {developerTab === 'webhook' && (
+                <p>Configurez l’URL qui recevra les notifications de paiement signées.</p>
+              )}
             </div>
             <button
               type="button"
@@ -331,9 +326,9 @@ export default function DevelopersPage() {
               }
             }}
           >
-            <button type="button" role="tab" id="developer-tab-private" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'private'} tabIndex={developerTab === 'private' ? 0 : -1} onClick={() => setDeveloperTab('private')} data-testid="tab-private-key"><LockKeyhole size={15} /> Clé privée</button>
-            <button type="button" role="tab" id="developer-tab-identifier" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'identifier'} tabIndex={developerTab === 'identifier' ? 0 : -1} onClick={() => setDeveloperTab('identifier')} title={apiKeyTabLabel} data-testid="tab-public-key"><KeyRound size={15} /><span className="dev-tab-name">{apiKeyTabLabel}</span></button>
-            <button type="button" role="tab" id="developer-tab-webhook" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'webhook'} tabIndex={developerTab === 'webhook' ? 0 : -1} onClick={() => setDeveloperTab('webhook')} data-testid="tab-webhook"><Webhook size={15} /> Webhook</button>
+            <button type="button" role="tab" id="developer-tab-private" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'private'} tabIndex={developerTab === 'private' ? 0 : -1} onClick={() => setDeveloperTab('private')} data-testid="tab-private-key">Clé privée</button>
+            <button type="button" role="tab" id="developer-tab-identifier" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'identifier'} tabIndex={developerTab === 'identifier' ? 0 : -1} onClick={() => setDeveloperTab('identifier')} title={apiKeyTabLabel} data-testid="tab-public-key"><span className="dev-tab-name">{apiKeyTabLabel}</span></button>
+            <button type="button" role="tab" id="developer-tab-webhook" aria-controls="developer-integrations-panel" aria-selected={developerTab === 'webhook'} tabIndex={developerTab === 'webhook' ? 0 : -1} onClick={() => setDeveloperTab('webhook')} data-testid="tab-webhook">Webhook</button>
           </div>
           <div className="dev-tab-panel" id="developer-integrations-panel" role="tabpanel" aria-labelledby={`developer-tab-${developerTab}`}>
             {developerTab !== 'webhook' ? (
@@ -353,7 +348,7 @@ export default function DevelopersPage() {
                           <div className="dev-key-card-main">
                             <div className="dev-key-name-line"><span className="dev-key-mark"><KeyRound size={17} /></span><div><h3>{key.label}</h3><span className={`dev-status-pill ${key.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(key.status)}</span></div></div>
                             <div className="dev-key-field-row">
-                              <div className="dev-key-field-value"><code>{privateTab || publicKeyHidden ? '•'.repeat(32) : key.publicKey}</code></div>
+                              <div className="dev-key-field-value"><code>{privateTab || publicKeyHidden ? '•'.repeat(40) : key.publicKey}</code></div>
                               <div className="dev-key-field-actions">
                                 <button
                                   className="dev-key-icon-button"
