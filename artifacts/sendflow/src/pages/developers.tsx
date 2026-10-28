@@ -6,6 +6,8 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Eye,
+  EyeOff,
   KeyRound,
   LoaderCircle,
   LockKeyhole,
@@ -27,6 +29,7 @@ import {
   useRevokeDeveloperApiKey,
   useRevokeDeveloperWebhook,
 } from '@workspace/api-client-react';
+import { toast } from '@/hooks/use-toast';
 import type {
   DeveloperApiKeyCreatedResponse,
   DeveloperWebhookCreatedResponse,
@@ -58,6 +61,15 @@ function formatDate(value: string | null | undefined) {
   }).format(date);
 }
 
+function formatKeyTimestamp(value: string | null | undefined) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  }).format(date);
+}
+
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
     active: 'Active',
@@ -70,7 +82,7 @@ function statusLabel(status: string) {
   return labels[status] ?? status;
 }
 
-function CopyButton({ value, label, testId }: { value: string; label: string; testId?: string }) {
+function CopyButton({ value, label, testId, iconOnly = false }: { value: string; label: string; testId?: string; iconOnly?: boolean }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
@@ -82,11 +94,18 @@ function CopyButton({ value, label, testId }: { value: string; label: string; te
     }
   };
   return (
-    <button className="dev-copy-button" type="button" onClick={() => void copy()} aria-label={`Copier ${label}`} data-testid={testId ?? `button-copy-${label}`}>
+    <button className={`dev-copy-button${iconOnly ? ' is-icon-only' : ''}`} type="button" onClick={() => void copy()} aria-label={`Copier ${label}`} data-testid={testId ?? `button-copy-${label}`}>
       {copied ? <Check size={15} /> : <Copy size={15} />}
-      <span>{copied ? 'Copié' : 'Copier'}</span>
+      {!iconOnly && <span>{copied ? 'Copié' : 'Copier'}</span>}
     </button>
   );
+}
+
+function explainSecretIsUnavailable() {
+  toast({
+    title: 'Secret non consultable',
+    description: 'Pour votre sécurité, le secret complet est affiché une seule fois après sa génération. Régénérez la paire pour en obtenir un nouveau.',
+  });
 }
 
 function Dialog({ children, title, onClose }: { children: ReactNode; title: string; onClose: () => void }) {
@@ -120,6 +139,7 @@ export default function DevelopersPage() {
   const [selectedEvents, setSelectedEvents] = useState<string[]>(['payment.succeeded']);
   const [formError, setFormError] = useState('');
   const [previewInitializationFailed, setPreviewInitializationFailed] = useState(false);
+  const [hiddenPublicKeys, setHiddenPublicKeys] = useState<Record<string, boolean>>({});
   const previewKeyInitializationStarted = useRef(false);
 
   const apiKeysQuery = useListDeveloperApiKeys({ query: { queryKey: getListDeveloperApiKeysQueryKey() } });
@@ -272,7 +292,7 @@ export default function DevelopersPage() {
             </div>
             <button
               type="button"
-              className="dev-primary-button"
+              className={developerTab === 'webhook' ? 'dev-primary-button' : 'dev-primary-button dev-regenerate-button'}
               onClick={() => {
                 setFormError('');
                 if (developerTab === 'webhook') {
@@ -325,22 +345,57 @@ export default function DevelopersPage() {
                 )}
                 {!apiKeysQuery.isLoading && !apiKeysQuery.isError && apiKeys.length > 0 && (
                   <div className="dev-key-list">
-                    {apiKeys.map((key) => (
-                      <article className={`dev-key-card${key.status === 'revoked' ? ' is-revoked' : ''}`} key={key.id} data-testid={`card-api-key-${key.id}`}>
-                        <div className="dev-key-card-main">
-                          <div className="dev-key-name-line"><span className="dev-key-mark"><KeyRound size={17} /></span><div><h3>{key.label}</h3><span className={`dev-status-pill ${key.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(key.status)}</span></div></div>
-                          <div className="dev-key-values">
-                            {developerTab === 'private' ? (
-                              <div><span>CLÉ PRIVÉE · MASQUÉE</span><code>{key.secretKeyPrefix}••••••••</code></div>
-                            ) : (
-                              <div className="dev-public-key-field"><span>CLÉ PUBLIQUE</span><div className="dev-public-key-value"><code>{key.publicKey}</code><CopyButton value={key.publicKey} label="la clé publique" testId={`button-copy-public-key-${key.id}`} /></div></div>
-                            )}
+                    {apiKeys.map((key) => {
+                      const privateTab = developerTab === 'private';
+                      const publicKeyHidden = Boolean(hiddenPublicKeys[key.id]);
+                      return (
+                        <article className={`dev-key-card${key.status === 'revoked' ? ' is-revoked' : ''}`} key={key.id} data-testid={`card-api-key-${key.id}`}>
+                          <div className="dev-key-card-main">
+                            <div className="dev-key-name-line"><span className="dev-key-mark"><KeyRound size={17} /></span><div><h3>{key.label}</h3><span className={`dev-status-pill ${key.status === 'active' ? 'is-active' : 'is-revoked'}`}><i />{statusLabel(key.status)}</span></div></div>
+                            <div className="dev-key-field-row">
+                              <div className="dev-key-field-value"><code>{privateTab || publicKeyHidden ? '•'.repeat(32) : key.publicKey}</code></div>
+                              <div className="dev-key-field-actions">
+                                <button
+                                  className="dev-key-icon-button"
+                                  type="button"
+                                  onClick={() => {
+                                    if (privateTab) {
+                                      explainSecretIsUnavailable();
+                                    } else {
+                                      setHiddenPublicKeys((current) => ({ ...current, [key.id]: !current[key.id] }));
+                                    }
+                                  }}
+                                  aria-label={privateTab ? 'Le secret complet est affiché une seule fois' : publicKeyHidden ? 'Afficher la clé publique' : 'Masquer la clé publique'}
+                                  title={privateTab ? 'Le secret complet est affiché une seule fois après sa génération' : publicKeyHidden ? 'Afficher la clé publique' : 'Masquer la clé publique'}
+                                  data-testid={`button-toggle-key-${key.id}`}
+                                >
+                                  {privateTab || publicKeyHidden ? <Eye size={19} /> : <EyeOff size={19} />}
+                                </button>
+                                {privateTab ? (
+                                  <button
+                                    className="dev-key-icon-button"
+                                    type="button"
+                                    onClick={explainSecretIsUnavailable}
+                                    aria-label="Le secret ne peut pas être copié après sa génération"
+                                    title="Régénérez la paire pour obtenir un nouveau secret"
+                                  >
+                                    <Copy size={19} />
+                                  </button>
+                                ) : (
+                                  <CopyButton value={key.publicKey} label="la clé publique" testId={`button-copy-public-key-${key.id}`} iconOnly />
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="dev-key-meta"><span>Créée le {formatDate(key.createdAt)}</span><span>Dernière utilisation&nbsp;: {formatDate(key.lastUsedAt)}</span>{key.revokedAt && <span>Révoquée le {formatDate(key.revokedAt)}</span>}</div>
-                        {key.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-api', id: key.id, label: key.label }); }} data-testid={`button-revoke-api-key-${key.id}`}>Révoquer</button>}
-                      </article>
-                    ))}
+                          <div className="dev-key-meta">
+                            <span>Dernière mise à jour : {formatKeyTimestamp(key.createdAt)}</span>
+                            <span>Dernière utilisation : {formatDate(key.lastUsedAt)}</span>
+                            {key.revokedAt && <span>Révoquée le {formatDate(key.revokedAt)}</span>}
+                          </div>
+                          {key.status === 'active' && <button className="dev-text-danger" type="button" onClick={() => { setFormError(''); setDialog({ kind: 'revoke-api', id: key.id, label: key.label }); }} data-testid={`button-revoke-api-key-${key.id}`}>Révoquer</button>}
+                        </article>
+                      );
+                    })}
                   </div>
                 )}
               </>
@@ -409,7 +464,7 @@ export default function DevelopersPage() {
             {formError && <p className="dev-form-error" role="alert">{formError}</p>}
             <div className="dev-dialog-actions">
               <button type="button" className="dev-secondary-button" onClick={closeDialog}>Conserver la paire actuelle</button>
-              <button type="button" className="dev-primary-button" onClick={() => void confirmRegenerateApiKey()} disabled={createApiKey.isPending}>
+              <button type="button" className="dev-primary-button dev-regenerate-button" onClick={() => void confirmRegenerateApiKey()} disabled={createApiKey.isPending}>
                 {createApiKey.isPending && <LoaderCircle className="dev-spin" size={16} />}
                 {createApiKey.isPending ? 'Régénération…' : 'Régénérer la paire'}
               </button>
@@ -469,10 +524,25 @@ export default function DevelopersPage() {
 }
 
 function SecretValue({ label, value, secret = false }: { label: string; value: string; secret?: boolean }) {
+  const [visible, setVisible] = useState(!secret);
   return (
     <div className="dev-secret-field">
       <span>{label}{secret && <em>SECRET</em>}</span>
-      <div><code>{value}</code><CopyButton value={value} label={label.toLowerCase().replaceAll(' ', '-')} /></div>
+      <div className="dev-secret-row">
+        <div className="dev-secret-value"><code>{visible ? value : '•'.repeat(32)}</code></div>
+        <div className="dev-secret-actions">
+          <button
+            className="dev-key-icon-button"
+            type="button"
+            onClick={() => setVisible((current) => !current)}
+            aria-label={visible ? `Masquer ${label.toLowerCase()}` : `Afficher ${label.toLowerCase()}`}
+            title={visible ? 'Masquer' : 'Afficher'}
+          >
+            {visible ? <EyeOff size={19} /> : <Eye size={19} />}
+          </button>
+          <CopyButton value={value} label={label.toLowerCase().replaceAll(' ', '-')} iconOnly />
+        </div>
+      </div>
     </div>
   );
 }
