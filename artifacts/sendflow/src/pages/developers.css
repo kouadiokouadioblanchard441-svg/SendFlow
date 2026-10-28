@@ -794,3 +794,90 @@
     min-height: 43px;
   }
 }
+
+.dev-dialog-backdrop.dev-api-confirm-backdrop {
+  align-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, .43);
+  backdrop-filter: blur(1.5px);
+}
+.dev-dialog.dev-api-confirm-dialog {
+  width: min(100%, 382px);
+  max-height: none;
+  overflow: visible;
+  border: 0;
+  border-radius: 27px;
+  background: #fff;
+  box-shadow: 0 18px 54px rgba(0, 0, 0, .19);
+}
+.dev-api-confirm-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 31px 25px 25px;
+  text-align: center;
+}
+.dev-api-confirm-icon {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-bottom: 17px;
+  border-radius: 50%;
+  background: #fff0f1;
+  color: #ef4f58;
+}
+.dev-api-confirm-content h2 {
+  margin: 0;
+  color: #17151a;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -.035em;
+}
+.dev-api-confirm-content p {
+  margin: 14px 0 22px;
+  color: #77737d;
+  font-size: 13px;
+  line-height: 1.52;
+}
+.dev-api-confirm-actions {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+}
+.dev-api-confirm-actions button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 49px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
+}
+.dev-api-confirm-cancel {
+  border: 1px solid #e2e0e4;
+  background: #fff;
+  color: #27242b;
+}
+.dev-api-confirm-cancel:hover { background: #f7f6f8; }
+.dev-api-confirm-submit {
+  border: 1px solid #ef4f58;
+  background: #ef4f58;
+  color: #fff;
+}
+.dev-api-confirm-submit:hover:not(:disabled) { background: #dd3f49; }
+.dev-api-confirm-submit:disabled { opacity: .65; cursor: wait; }
+.dev-api-confirm-actions button:focus-visible {
+  outline: 3px solid rgba(112, 67, 194, .28);
+  outline-offset: 3px;
+}
+.dev-api-confirm-actions button:active:not(:disabled) { transform: scale(.98); }
+

@@ -37,6 +37,7 @@ import type {
 import './developers.css';
 
 type DialogState =
+  | { kind: 'regenerate-api' }
   | { kind: 'webhook-create' }
   | { kind: 'webhook-secret'; response: DeveloperWebhookCreatedResponse }
   | { kind: 'revoke-webhook'; id: string; label: string }
@@ -105,7 +106,25 @@ function explainSecretIsUnavailable() {
   });
 }
 
-function Dialog({ children, title, onClose }: { children: ReactNode; title: string; onClose: () => void }) {
+function Dialog({
+  children,
+  title,
+  onClose,
+  headerless = false,
+  role = 'dialog',
+  descriptionId,
+  className = '',
+  backdropClassName = '',
+}: {
+  children: ReactNode;
+  title: string;
+  onClose: () => void;
+  headerless?: boolean;
+  role?: 'dialog' | 'alertdialog';
+  descriptionId?: string;
+  className?: string;
+  backdropClassName?: string;
+}) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -114,12 +133,14 @@ function Dialog({ children, title, onClose }: { children: ReactNode; title: stri
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
   return (
-    <div className="dev-dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="dev-dialog" role="dialog" aria-modal="true" aria-labelledby="dev-dialog-title">
-        <header className="dev-dialog-header">
-          <div><span className="dev-eyebrow">ESPACE DÉVELOPPEUR</span><h2 id="dev-dialog-title">{title}</h2></div>
-          <button className="dev-icon-button" type="button" onClick={onClose} aria-label="Fermer la fenêtre"><X size={19} /></button>
-        </header>
+      <div className={`dev-dialog-backdrop${backdropClassName ? ` ${backdropClassName}` : ''}`} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className={`dev-dialog${className ? ` ${className}` : ''}`} role={role} aria-modal="true" aria-labelledby="dev-dialog-title" aria-describedby={descriptionId}>
+        {!headerless && (
+          <header className="dev-dialog-header">
+            <div><span className="dev-eyebrow">ESPACE DÉVELOPPEUR</span><h2 id="dev-dialog-title">{title}</h2></div>
+            <button className="dev-icon-button" type="button" onClick={onClose} aria-label="Fermer la fenêtre"><X size={19} /></button>
+          </header>
+        )}
         {children}
       </section>
     </div>
@@ -254,6 +275,12 @@ export default function DevelopersPage() {
     }
   };
 
+  const confirmApiKeyRegeneration = () => {
+    if (dialog?.kind !== 'regenerate-api') return;
+    closeDialog();
+    void regenerateApiKey();
+  };
+
   const confirmRevoke = async () => {
     if (dialog?.kind === 'revoke-webhook') {
       try {
@@ -311,7 +338,7 @@ export default function DevelopersPage() {
                   setSelectedEvents(['payment.succeeded']);
                   setDialog({ kind: 'webhook-create' });
                 } else {
-                  void regenerateApiKey();
+                  setDialog({ kind: 'regenerate-api' });
                 }
               }}
               disabled={developerTab !== 'webhook' && (createApiKey.isPending || apiKeysQuery.isLoading || initializePreviewApiKey.isPending)}
@@ -486,6 +513,31 @@ export default function DevelopersPage() {
           </div>
         </section>
       </div>
+
+      {dialog?.kind === 'regenerate-api' && (
+        <Dialog
+          title="Régénérer les clés API"
+          onClose={closeDialog}
+          headerless
+          role="alertdialog"
+          descriptionId="dev-api-confirm-message"
+          className="dev-api-confirm-dialog"
+          backdropClassName="dev-api-confirm-backdrop"
+        >
+          <div className="dev-api-confirm-content">
+            <span className="dev-api-confirm-icon" aria-hidden="true"><AlertCircle size={29} strokeWidth={2.2} /></span>
+            <h2 id="dev-dialog-title">Régénérer les clés API</h2>
+            <p id="dev-api-confirm-message">Êtes-vous sûr de vouloir régénérer vos clés API ? Cette action invalidera immédiatement vos anciennes clés. Assurez-vous d’avoir mis à jour vos applications avant de continuer.</p>
+            <div className="dev-api-confirm-actions">
+              <button type="button" className="dev-api-confirm-cancel" onClick={closeDialog} autoFocus>Annuler</button>
+              <button type="button" className="dev-api-confirm-submit" onClick={confirmApiKeyRegeneration} disabled={createApiKey.isPending}>
+                {createApiKey.isPending && <LoaderCircle className="dev-spin" size={16} />}
+                {createApiKey.isPending ? 'Régénération…' : 'Régénérer'}
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      )}
 
       {dialog?.kind === 'webhook-create' && (
         <Dialog title="Ajouter un webhook" onClose={closeDialog}>

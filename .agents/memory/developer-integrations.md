@@ -35,8 +35,8 @@ Do not show a separate “Révoquer” action at the bottom of the active API-ke
 
 **How to apply:** Use the immediate “Régénérer” action to replace the active API-key pair; do not remove webhook management controls.
 
-Do not show a popup after API-key generation or rotation. Show the returned public and secret keys inline in the active key card, with reveal and copy controls; keep the secret in frontend memory only until the page is left or reloaded.
+Show a confirmation popup before API-key rotation, then show the returned public and secret keys inline in the active key card without a result popup. Keep the secret in frontend memory only until the page is left or reloaded.
 
-**Why:** the user explicitly asked to regenerate without a popup and confirmed that both keys are credentials provided to their users.
+**Why:** the user wants a clear warning before old keys are invalidated, while the new pair should remain directly available in the card.
 
 **How to apply:** Disable the button while the request is pending, show an error if rotation fails, and never persist or log the secret. Keep webhook signing-secret dialogs separate.
