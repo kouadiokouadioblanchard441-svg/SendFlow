@@ -40,5 +40,6 @@
 - [LinkFlow fee availability](linkflow-fee-availability.md) — Configure rates independently per operator; new operators start unconfigured, and disabled countries stay out of customer pricing.
 - [LinkFlow USSD configuration](linkflow-ussd-configuration.md) — Administrators configure USSD codes by country and operator; the provider does not supply them.
 - [SendFlow visual contrast](sendflow-visual-contrast.md) — Match provided LinkFlow mockups; keep artwork fixed, white surfaces, violet accents, and solid red deletes.
+- [Documentation portal visual identity](docs-portal-visual-identity.md) — Keep the docs portal white with dark legal-page text, saturated SendFlow violet, and clearly solid card borders.
 - [SendFlow page loader](sendflow-page-loader.md) — Keep the shared LinkFlow-style four-dot violet animation for full-page waits and route transitions.
 - [Merchant developer API](developer-integrations.md) — Keep direct and SendFlow-hosted API checkout on the same LinkFlow routing and settlement path.
