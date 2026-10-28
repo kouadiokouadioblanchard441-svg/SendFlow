@@ -400,7 +400,6 @@ export default function DevelopersPage() {
             )}
           </div>
         </section>
-        <footer className="dev-footer"><LockKeyhole size={15} /><span>Ne partagez jamais vos secrets. SendFlow ne les conserve pas sous une forme consultable.</span></footer>
       </div>
 
       {dialog?.kind === 'api-regenerate' && (
