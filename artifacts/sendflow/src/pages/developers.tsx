@@ -30,6 +30,7 @@ import {
 } from '@workspace/api-client-react';
 import { toast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import apiKeyWarningIllustration from '@assets/generated_images/sendflow-api-key-warning-3d-transparent.png';
 import type {
   DeveloperApiKeyCreatedResponse,
   DeveloperWebhookCreatedResponse,
@@ -525,7 +526,7 @@ export default function DevelopersPage() {
           backdropClassName="dev-api-confirm-backdrop"
         >
           <div className="dev-api-confirm-content">
-            <span className="dev-api-confirm-icon" aria-hidden="true"><AlertCircle size={29} strokeWidth={2.2} /></span>
+            <img className="dev-api-confirm-icon" src={apiKeyWarningIllustration} alt="" aria-hidden="true" />
             <h2 id="dev-dialog-title">Régénérer les clés API</h2>
             <p id="dev-api-confirm-message">Êtes-vous sûr de vouloir régénérer vos clés API ? Cette action invalidera immédiatement vos anciennes clés. Assurez-vous d’avoir mis à jour vos applications avant de continuer.</p>
             <div className="dev-api-confirm-actions">

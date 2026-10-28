@@ -818,15 +818,12 @@
   text-align: center;
 }
 .dev-api-confirm-icon {
-  display: grid;
-  width: 66px;
-  height: 66px;
+  display: block;
+  width: 82px;
+  height: 82px;
   flex: 0 0 auto;
-  place-items: center;
-  margin-bottom: 17px;
-  border-radius: 50%;
-  background: #fff0f1;
-  color: #ef4f58;
+  margin-bottom: 13px;
+  object-fit: contain;
 }
 .dev-api-confirm-content h2 {
   margin: 0;
