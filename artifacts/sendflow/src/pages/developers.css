@@ -1010,6 +1010,7 @@
   font-size: 11px;
   line-height: 1.5;
 }
+.sendflow-developers .dev-page-header > .dev-title-row { margin-top: 12px; }
 
 @media (max-width: 520px) {
   .sendflow-developers .dev-docs-card {
