@@ -8,6 +8,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  FileText,
   KeyRound,
   LoaderCircle,
   Menu,
@@ -511,6 +512,20 @@ export default function DevelopersPage() {
                 )}
               </>
             )}
+          </div>
+        </section>
+
+        <section className="dev-docs-card" aria-labelledby="dev-docs-heading">
+          <h2 id="dev-docs-heading">Configuration</h2>
+          <div className="dev-docs-card-content">
+            <span className="dev-docs-icon" aria-hidden="true"><FileText size={19} /></span>
+            <div className="dev-docs-card-copy">
+              <div className="dev-docs-card-title-row">
+                <strong>Accéder à la documentation</strong>
+                <span className="dev-docs-status">Bientôt disponible</span>
+              </div>
+              <p>Les guides d’intégration de l’API directe et du paiement hébergé seront accessibles ici après leur publication.</p>
+            </div>
           </div>
         </section>
       </div>
