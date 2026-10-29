@@ -44,7 +44,11 @@ const examples: Record<DocsExampleId, ExampleSet> = {
 );
 const session = await response.json();
 if (!response.ok) throw new Error(session.error ?? "SendFlow request failed");
-// Redirect the customer to your SendFlow checkout origin + session.checkoutPath.`,
+if (!session.checkoutPath) throw new Error("No hosted checkout path was returned");
+const checkoutOrigin = process.env.SENDFLOW_CHECKOUT_ORIGIN;
+if (!checkoutOrigin) throw new Error("Set the official SendFlow checkout origin first");
+const checkoutUrl = new URL(session.checkoutPath, checkoutOrigin).toString();
+// Return checkoutUrl to your client, then redirect the customer's browser.`,
     PHP: `$body = [
     "merchantReference" => "ORDER-2026-0042",
     "amountMinor" => 12500,
@@ -67,9 +71,19 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("SendFlow session could not be created");
 }
-$session = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
+$session = json_decode($response, true, flags: JSON_THROW_ON_ERROR);
+if (empty($session["checkoutPath"])) {
+    throw new RuntimeException("No hosted checkout path was returned");
+}
+$checkoutOrigin = getenv("SENDFLOW_CHECKOUT_ORIGIN");
+if (!$checkoutOrigin) {
+    throw new RuntimeException("Set the official SendFlow checkout origin first");
+}
+$checkoutUrl = rtrim($checkoutOrigin, "/") . $session["checkoutPath"];
+// Return $checkoutUrl to your client, then redirect the customer's browser.`,
     Python: `import os
 import requests
+from urllib.parse import urljoin
 
 response = requests.post(
     f"{os.environ['SENDFLOW_API_BASE_URL']}/v1/payment-sessions",
@@ -88,7 +102,13 @@ response = requests.post(
 )
 response.raise_for_status()
 session = response.json()
-# Redirect to your SendFlow checkout origin + session["checkoutPath"].`,
+if not session.get("checkoutPath"):
+    raise RuntimeError("No hosted checkout path was returned")
+checkout_origin = os.environ.get("SENDFLOW_CHECKOUT_ORIGIN")
+if not checkout_origin:
+    raise RuntimeError("Set the official SendFlow checkout origin first")
+checkout_url = urljoin(checkout_origin.rstrip("/") + "/", session["checkoutPath"].lstrip("/"))
+# Return checkout_url to your client, then redirect the customer's browser.`,
   },
   'create-direct': {
     cURL: `curl --request POST "$SENDFLOW_API_BASE_URL/v1/payment-sessions" \\
@@ -252,7 +272,7 @@ checkout = response.json()
     "lastName": "Kone",
     "countryCode": "CI",
     "operatorId": "<operator-id-from-session>",
-    "phoneNumber": "0700000000"
+    "phoneNumber": "+2250700000000"
   }'`,
     JavaScript: `const response = await fetch(
   \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}/attempts\`,
@@ -269,7 +289,7 @@ checkout = response.json()
       lastName: "Kone",
       countryCode: "CI",
       operatorId: "<operator-id-from-session>",
-      phoneNumber: "0700000000",
+      phoneNumber: "+2250700000000",
     }),
   },
 );
@@ -281,7 +301,7 @@ if (!response.ok) throw new Error(attempt.error ?? "Payment could not start");
     "lastName" => "Kone",
     "countryCode" => "CI",
     "operatorId" => "<operator-id-from-session>",
-    "phoneNumber" => "0700000000",
+    "phoneNumber" => "+2250700000000",
 ];
 $url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/public/payment-sessions/" . rawurlencode($sessionId) . "/attempts";
 $ch = curl_init($url);
@@ -315,7 +335,7 @@ response = requests.post(
         "lastName": "Kone",
         "countryCode": "CI",
         "operatorId": "<operator-id-from-session>",
-        "phoneNumber": "0700000000",
+        "phoneNumber": "+2250700000000",
     },
     timeout=15,
 )

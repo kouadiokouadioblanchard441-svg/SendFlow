@@ -86,12 +86,19 @@ const localized: Record<Language, Translation> = {
     disclaimerTitle: 'Confirmation du paiement', disclaimer: 'Ne marquez jamais une commande comme payée sur la seule base d’une redirection ou d’un état affiché dans le navigateur. Vérifiez le statut serveur ou traitez un webhook dont la signature est valide.',
     whatIs: 'Fonctionnement', whatIsText: 'SendFlow crée une session de paiement fixe en XOF, renvoie les informations nécessaires au parcours choisi, puis expose un statut de paiement vérifié côté serveur.',
     prerequisites: 'Prérequis', noCredentials: 'Ne placez jamais la clé secrète dans le navigateur, une application mobile distribuée, un dépôt public ou des journaux.',
-    notDocumented: 'Gestion des clés API', notDocumentedText: 'Une paire composée d’une clé publique et d’une clé secrète est créée pour le compte marchand. La clé secrète est réservée aux appels serveur ; la clé publique sert aux appels de caisse prévus par le parcours direct.',
+    notDocumented: 'Gestion des clés API', notDocumentedText: 'Une paire composée d’une clé publique et d’une clé secrète est créée automatiquement à la création du compte marchand. La clé secrète est réservée aux appels serveur ; la clé publique sert aux appels de caisse prévus par le parcours direct.',
     rotationText: 'La clé secrète complète est affichée lors de sa création. Enregistrez-la dans un gestionnaire de secrets. La régénération désactive immédiatement l’ancienne paire de clés.',
     serverOnly: 'Envoyez la clé secrète dans l’en-tête Authorization: Bearer depuis votre serveur. Ne la transmettez jamais au client.',
     codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Les valeurs entre chevrons ou dans les variables d’environnement sont à remplacer par les valeurs de votre compte.',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec l’origine de paiement SendFlow communiquée pour votre compte et redirigez le client.',
+    apiAvailabilityTitle: 'Disponibilité actuelle',
+    apiAvailabilityText: 'Dans le code actuellement inspecté, la création de nouvelles sessions et le démarrage de tentatives restent désactivés tant que la preuve de règlement n’est pas validée ; les requêtes admissibles renvoient HTTP 503. Les exemples décrivent le contrat, pas une disponibilité de production. L’exécution LinkFlow de ces sessions est aussi limitée au routage FeexPay dans le code actuel.',
+    hostedOriginText: 'checkoutPath est un chemin relatif, pas une URL complète. Aucun domaine de paiement officiel n’est défini dans le code inspecté : demandez l’origine exacte à SendFlow et stockez-la dans SENDFLOW_CHECKOUT_ORIGIN. N’utilisez pas l’URL de la documentation.',
+    mobileMoneyTitle: 'Mobile Money, USSD et OTP',
+    mobileMoneyText: 'La réponse de tentative peut fournir ussdCode ou null. Affichez la valeur retournée sans coder de commande opérateur en dur ; si elle est absente, la page hébergée invite le payeur à suivre la notification de son opérateur. Le catalogue /api/pricing expose requiresOtp et otpCommand comme métadonnées ; les choix de session restent la source de vérité pour ce parcours. Le connecteur actuel écarte les canaux qu’il signale comme nécessitant un OTP et n’accepte aucun OTP ou PIN dans le corps de paiement. La clé API marchande et le code de validation opérateur sont deux choses différentes : ne demandez ni ne transmettez le code secret du client à SendFlow.',
+    directInputText: 'Attention au format : la session peut renvoyer un code pays en minuscules (par exemple ci), mais la création de tentative exige deux lettres majuscules (CI). Convertissez-le en majuscules. phoneNumber doit inclure l’indicatif international renvoyé par la session (par exemple +225 suivi du numéro national). Utilisez operatorId directement depuis la réponse de session.',
+    hostedTimerText: 'La page hébergée affiche un compte à rebours d’attente de 10 minutes. Son expiration peut afficher une vue d’échec au payeur, mais ne prouve pas que le prestataire a confirmé un échec final : vérifiez l’état serveur ou le webhook et traitez uncertain comme non final.',
     responsibilities: 'Règles d’intégration',
     endpointStatus: 'API REST · JSON',
     endpointCreate: 'Créer une session de paiement', endpointRead: 'Consulter une session et son état',
@@ -105,14 +112,15 @@ const localized: Record<Language, Translation> = {
     endpointPricing: 'Consulter les pays, opérateurs et frais publics',
     accessPublic: 'Public · aucune clé requise',
     endpointAccess: 'Authentification',
-    availableChoicesNote: 'GET /api/pricing renvoie le catalogue public et les taux configurés. Les choix réellement proposés à un payeur sont également filtrés pour chaque session.',
+    availableChoicesNote: 'GET /api/pricing renvoie le catalogue public et les taux configurés, mais ne constitue pas un devis de frais ou de règlement par session et ne garantit pas qu’un opérateur puisse traiter un paiement API. Les réponses de session n’exposent pas le montant net marchand. Les choix de la session directe sont filtrés selon le routage et les règles actuellement pris en charge ; utilisez-les comme source de vérité.',
     referenceIntro: 'Les exemples ci-dessous correspondent aux routes et schémas présents dans l’API SendFlow.',
     requestExample: 'Exemple de requête',
     responseExample: 'Exemple de réponse',
-    webhookEvents: 'Événements de paiement', webhookEventsSub: 'Les webhooks sont communs aux parcours API directe et Hosted Checkout. Configurez une URL HTTPS et les types d’événements dans l’espace Développeurs. Les événements ne sont émis qu’après confirmation finale. Jusqu’à 5 webhooks actifs peuvent être configurés pour un compte.',
-    eventNames: 'Événements disponibles', delivery: 'Signature et livraisons', deliveryText: 'La signature HMAC-SHA256 est calculée sur la chaîne <horodatage>.<corps JSON brut>. Répondez en HTTP 2xx pour acquitter la livraison. SendFlow effectue 8 tentatives au total au maximum : l’envoi initial puis jusqu’à 7 reprises, espacées de 10 s, 30 s, 2 min, 10 min, 30 min, 2 h et 12 h. L’identifiant sendflow-delivery reste stable entre les reprises : utilisez-le pour dédupliquer.',
-    webhookHeadersTitle: 'En-têtes envoyés', webhookHeadersText: 'sendflow-event identifie le type d’événement, sendflow-delivery identifie la livraison et sendflow-signature suit le format t=<horodatage Unix>,v1=<signature hexadécimale>. La signature est calculée sur les octets exacts du corps reçu.',
-    apiScopeTitle: 'Périmètre de l’API publique', apiScopeText: 'Cette référence décrit les routes de session, de tentative directe, de statut et de tarification disponibles dans SendFlow. Elle ne documente pas de route publique pour annuler un paiement, lister toutes les transactions, consulter un solde ou effectuer un retrait. Aucun SDK marchand officiel n’est référencé ici ; utilisez les exemples REST ci-dessus.',
+    webhookEvents: 'Événements de paiement', webhookEventsSub: 'Les webhooks sont communs aux parcours API directe et Hosted Checkout pour les sessions créées par l’API. Configurez une URL HTTPS publique et les événements dans l’espace Développeurs ; aucun endpoint public de gestion de webhooks n’est documenté. Les événements ne sont émis qu’après confirmation finale. Jusqu’à 5 webhooks actifs peuvent être configurés pour un compte.',
+    webhookPayloadNote: 'Le payload fournit des identifiants de session, tentative et transaction, la référence marchande, le montant, la devise et le statut. La référence marchande vient de votre requête : n’y placez pas de données personnelles.',
+    eventNames: 'Événements disponibles', delivery: 'Signature et livraisons', deliveryText: 'La signature HMAC-SHA256 est calculée sur la chaîne <horodatage>.<corps JSON brut>. Répondez en HTTP 2xx pour acquitter la livraison ; toute réponse non-2xx, erreur réseau ou expiration du délai sera retentée. Le délai de requête est de 8 secondes et le corps de réponse est limité à 8 Ko. SendFlow effectue 8 tentatives au total au maximum : l’envoi initial puis jusqu’à 7 reprises, espacées de 10 s, 30 s, 2 min, 10 min, 30 min, 2 h et 12 h. L’identifiant sendflow-delivery reste stable entre les reprises : utilisez-le pour dédupliquer.',
+    webhookHeadersTitle: 'En-têtes envoyés', webhookHeadersText: 'sendflow-event identifie le type d’événement, sendflow-delivery identifie la livraison et sendflow-signature suit le format t=<horodatage Unix>,v1=<signature hexadécimale>. La signature est calculée sur les octets exacts du corps reçu. L’exemple de vérification choisit une fenêtre de fraîcheur de 300 secondes à titre de politique marchande ; SendFlow ne fixe pas cette valeur.',
+    apiScopeTitle: 'Périmètre de l’API publique', apiScopeText: 'Cette référence décrit les contrats de session, tentative directe, statut et tarification présents dans le code. Elle ne documente pas de route publique pour annuler un paiement, lister toutes les transactions, consulter un solde ou effectuer un retrait. Aucun SDK marchand officiel n’est présent dans le projet inspecté ; utilisez les exemples REST ci-dessus.',
     security: 'Sécurité et fiabilité', errors: 'Codes HTTP', idempotency: 'Idempotence', expiration: 'Expiration et montants', securityText: 'Utilisez HTTPS. Stockez la clé secrète et le secret webhook (affiché une seule fois à sa création) dans un coffre sécurisé. Comparez la signature en temps constant, vérifiez la fraîcheur de l’horodatage et ne traitez l’événement qu’après validation.',
     errorsText: 'Les réponses d’erreur utilisent le format JSON { "error": "…" }. Une redirection ou une réponse client ne confirme jamais le paiement : vérifiez toujours le statut côté serveur.',
     error400: '400 — paramètres, en-têtes ou données de paiement invalides.',
@@ -126,8 +134,8 @@ const localized: Record<Language, Translation> = {
     expirationText: 'Les sessions expirent une heure après leur création. Le montant est fixe en XOF : 100 à 2 000 000. Le payeur ne peut pas modifier le montant au lancement d’une tentative.',
     rateLimits: 'Limites de requêtes', rateLimitsText: 'Par clé API et par minute : 30 créations de session, 120 lectures de session, 5 tentatives directes et 60 vérifications de statut. Les routes de caisse appliquent également une limite par adresse IP. En cas de limitation, l’API renvoie 429 et Retry-After: 60.',
     statesTitle: 'États d’un paiement', statesText: 'created : session créée, sans tentative. waiting : paiement en attente. uncertain : résultat encore indéterminé ; continuez la vérification et ne le traitez ni comme réussi ni comme échoué. succeeded : paiement confirmé. failed : échec final confirmé.',
-    serviceAvailability: 'Disponibilité du service', serviceAvailabilityText: 'La création et l’exécution dépendent de l’activation du parcours côté SendFlow et de l’éligibilité du compte marchand. Une réponse 503 signifie que l’opération n’est pas disponible ; elle ne constitue jamais une preuve de paiement.',
-    hostedFlow: 'Parcours de redirection', directFlow: 'Parcours API directe', returnUrlText: 'returnUrl est facultative et doit être une URL HTTPS. SendFlow ne la renvoie qu’après confirmation succeeded. Cette redirection sert au parcours du client : votre serveur doit tout de même vérifier le statut.',
+    serviceAvailability: 'Disponibilité du service', serviceAvailabilityText: 'Dans le code inspecté, le garde-fou de preuve de règlement est désactivé : les requêtes admissibles de création de session et de démarrage de tentative renvoient 503. Les lectures de statut ne créent pas de paiement et ne remplacent jamais la confirmation finale.',
+    hostedFlow: 'Parcours de redirection', directFlow: 'Parcours API directe', returnUrlText: 'returnUrl est facultative, doit être une URL HTTPS et concerne le parcours hosted : la page de paiement ne redirige vers cette URL qu’après confirmation succeeded. En mode direct, la réponse de statut API ne fournit pas cette redirection ; votre application gère son propre écran après vérification serveur.',
     language: 'Langue', copyright: 'SendFlow · Documentation API', lastUpdated: 'Référence API v1',
     contents: 'Sommaire',
   },
@@ -169,12 +177,19 @@ const localized: Record<Language, Translation> = {
     disclaimerTitle: 'Payment confirmation', disclaimer: 'Never mark an order as paid based only on a redirect or a browser-side state. Verify the server status or process a webhook whose signature is valid.',
     whatIs: 'How it works', whatIsText: 'SendFlow creates a fixed XOF payment session, returns the information for the selected flow, and exposes a server-verified payment status.',
     prerequisites: 'Prerequisites', noCredentials: 'Never place the secret key in a browser, distributed mobile app, public repository, or client-side logs.',
-    notDocumented: 'API key management', notDocumentedText: 'A public and secret key pair is created for the merchant account. The secret key is for server requests; the public key is used for checkout requests in the direct flow.',
+    notDocumented: 'API key management', notDocumentedText: 'A public and secret key pair is created automatically when the merchant account is created. The secret key is for server requests; the public key is used for checkout requests in the direct flow.',
     rotationText: 'The full secret key is shown when it is created. Store it in a secret manager. Regenerating the pair immediately disables the previous keys.',
     serverOnly: 'Send the secret key in the Authorization: Bearer header from your server. Never pass it to the client.',
     codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Replace angle-bracket values and environment variables with values from your account.',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with the SendFlow payment origin provided for your account and redirect the customer.',
+    apiAvailabilityTitle: 'Current availability',
+    apiAvailabilityText: 'In the code currently inspected, creating new sessions and starting payment attempts remain disabled until settlement proof is approved; eligible requests return HTTP 503. The examples describe the contract, not production availability. The current LinkFlow execution for these sessions is also limited to FeexPay routing in the code.',
+    hostedOriginText: 'checkoutPath is a relative path, not a complete URL. No official payment domain is defined in the inspected code: ask SendFlow for the exact origin and store it in SENDFLOW_CHECKOUT_ORIGIN. Do not use the documentation URL.',
+    mobileMoneyTitle: 'Mobile Money, USSD, and OTP',
+    mobileMoneyText: 'An attempt response may contain ussdCode or null. Display the returned value without hardcoding operator commands; if it is absent, the hosted page asks the payer to follow their operator notification. /api/pricing exposes requiresOtp and otpCommand as metadata; session choices remain authoritative for this flow. The current connector excludes channels it reports as requiring OTP and accepts no OTP or PIN in the payment body. Merchant API keys and the customer’s operator verification code are different: never ask for or send the customer’s secret code to SendFlow.',
+    directInputText: 'Mind the format: the session may return a lowercase country code (for example ci), while creating an attempt requires two uppercase letters (CI). Convert it to uppercase. phoneNumber must include the international prefix returned by the session (for example +225 followed by the national number). Use operatorId directly from the session response.',
+    hostedTimerText: 'The hosted page displays a 10-minute waiting countdown. When it expires, the payer may see a failure screen, but that does not prove the provider confirmed a final failure: check the server status or webhook and treat uncertain as non-final.',
     responsibilities: 'Integration rules',
     endpointStatus: 'REST API · JSON',
     endpointCreate: 'Create a payment session', endpointRead: 'Read a session and its status',
@@ -188,14 +203,15 @@ const localized: Record<Language, Translation> = {
     endpointPricing: 'Read public countries, operators, and fees',
     accessPublic: 'Public · no key required',
     endpointAccess: 'Authentication',
-    availableChoicesNote: 'GET /api/pricing returns the public catalog and configured rates. Choices shown to a payer are also filtered for each session.',
+    availableChoicesNote: 'GET /api/pricing returns the public catalog and configured rates, but it is not a per-session fee or settlement quote and does not guarantee that an operator can process an API payment. Session responses do not expose the merchant net amount. Direct-session choices are filtered according to currently supported routing and rules; treat them as authoritative.',
     referenceIntro: 'The examples below match routes and schemas present in the SendFlow API.',
     requestExample: 'Request example',
     responseExample: 'Response example',
-    webhookEvents: 'Payment events', webhookEventsSub: 'Webhooks are shared by Direct API and Hosted Checkout. Configure an HTTPS URL and event types in the merchant account Developers area. Events are emitted only after a final confirmation. Up to 5 active webhook endpoints can be configured per account.',
-    eventNames: 'Available events', delivery: 'Signatures and delivery', deliveryText: 'The HMAC-SHA256 signature is computed over the string <timestamp>.<raw JSON body>. Return HTTP 2xx to acknowledge delivery. SendFlow makes at most 8 attempts total: the initial delivery plus up to 7 retries, spaced 10 s, 30 s, 2 min, 10 min, 30 min, 2 h, and 12 h apart. The sendflow-delivery ID stays stable across retries; use it for deduplication.',
-    webhookHeadersTitle: 'Request headers', webhookHeadersText: 'sendflow-event identifies the event type, sendflow-delivery identifies the delivery, and sendflow-signature follows t=<Unix timestamp>,v1=<hex signature>. The signature is computed over the exact received body bytes.',
-    apiScopeTitle: 'Public API scope', apiScopeText: 'This reference describes the session, direct-attempt, status, and pricing routes available in SendFlow. It does not document a public route to cancel a payment, list all transactions, read a balance, or create a payout. No official merchant SDK is referenced here; use the REST examples above.',
+    webhookEvents: 'Payment events', webhookEventsSub: 'Webhooks are shared by Direct API and Hosted Checkout for API-created sessions. Configure a public HTTPS URL and event types in the merchant account Developers area; no public webhook-management endpoint is documented. Events are emitted only after final confirmation. Up to 5 active webhook endpoints can be configured per account.',
+    webhookPayloadNote: 'The payload contains session, attempt, and transaction IDs, the merchant reference, amount, currency, and status. The merchant reference comes from your request: do not put personal data in it.',
+    eventNames: 'Available events', delivery: 'Signatures and delivery', deliveryText: 'The HMAC-SHA256 signature is computed over the string <timestamp>.<raw JSON body>. Return HTTP 2xx to acknowledge delivery; non-2xx responses, network errors, and timeouts are retried. The request timeout is 8 seconds and response bodies are limited to 8 KB. SendFlow makes at most 8 attempts total: the initial delivery plus up to 7 retries, spaced 10 s, 30 s, 2 min, 10 min, 30 min, 2 h, and 12 h apart. The sendflow-delivery ID stays stable across retries; use it for deduplication.',
+    webhookHeadersTitle: 'Request headers', webhookHeadersText: 'sendflow-event identifies the event type, sendflow-delivery identifies the delivery, and sendflow-signature follows t=<Unix timestamp>,v1=<hex signature>. The signature is computed over the exact received body bytes. The verification example chooses a 300-second freshness window as merchant policy; SendFlow does not set this value.',
+    apiScopeTitle: 'Public API scope', apiScopeText: 'This reference describes the session, direct-attempt, status, and pricing contracts present in the inspected code. It does not document a public route to cancel a payment, list all transactions, read a balance, or create a payout. No official merchant SDK is present in the inspected project; use the REST examples above.',
     security: 'Security & reliability', errors: 'HTTP status codes', idempotency: 'Idempotency', expiration: 'Expiration and amounts', securityText: 'Use HTTPS. Store the secret key and webhook secret (shown once at creation) in a secure vault. Compare signatures in constant time, check timestamp freshness, and process events only after verification.',
     errorsText: 'Error responses use the JSON format { "error": "…" }. A redirect or client response never proves payment; always verify status server-side.',
     error400: '400 — invalid parameters, headers, or payment data.',
@@ -209,8 +225,8 @@ const localized: Record<Language, Translation> = {
     expirationText: 'Sessions expire one hour after creation. The amount is fixed in XOF: 100 to 2,000,000. The payer cannot change it when starting an attempt.',
     rateLimits: 'Request limits', rateLimitsText: 'Per API key and per minute: 30 session creations, 120 session reads, 5 direct attempts, and 60 status checks. Checkout routes also enforce an IP-based limit. Rate-limited responses include 429 and Retry-After: 60.',
     statesTitle: 'Payment states', statesText: 'created: session created, no attempt yet. waiting: payment is pending. uncertain: outcome is not final; keep checking and do not treat it as paid or failed. succeeded: payment confirmed. failed: final failure confirmed.',
-    serviceAvailability: 'Service availability', serviceAvailabilityText: 'Session creation and payment execution depend on SendFlow enabling the flow and the merchant account being eligible. A 503 means the operation is unavailable; it is never proof of payment.',
-    hostedFlow: 'Hosted redirect flow', directFlow: 'Direct API flow', returnUrlText: 'returnUrl is optional and must be an HTTPS URL. SendFlow returns it only after a succeeded confirmation. This redirect supports the customer journey; your server must still verify the status.',
+    serviceAvailability: 'Service availability', serviceAvailabilityText: 'In the inspected code, the settlement-proof readiness gate is disabled: eligible session-creation and attempt-start requests return 503. Status reads do not create payments and never replace final confirmation.',
+    hostedFlow: 'Hosted redirect flow', directFlow: 'Direct API flow', returnUrlText: 'returnUrl is optional, must be an HTTPS URL, and applies to hosted mode: the payment page redirects to it only after a succeeded confirmation. In direct mode, the API status response does not provide this redirect; your application handles its own result screen after server verification.',
     language: 'Language', copyright: 'SendFlow · API documentation', lastUpdated: 'API reference v1',
     contents: 'Contents',
   },
@@ -225,13 +241,13 @@ const localizedLists: Record<Language, TranslationLists> = {
     directFlowTexts: [
       'Depuis votre backend, créez une session en mode direct avec le montant XOF fixe et une clé Idempotency-Key stable.',
       'La caisse utilise les identifiants publics de session pour lire les pays et opérateurs admissibles à cette session.',
-      'Envoyez les coordonnées du payeur et l’identifiant opérateur retourné par SendFlow. Le montant ne peut pas être modifié.',
+      'Envoyez le code pays en majuscules, operatorId tel que renvoyé par la session et le numéro au format international avec phonePrefix. Le montant ne peut pas être modifié.',
       'Suivez la tentative avec son pollToken ou lisez la session avec votre clé secrète. Seul l’état succeeded confirmé valide la commande.',
     ],
     hostedFlowTitles: ['Créer une session hébergée', 'Rediriger le client', 'Laisser le client payer', 'Confirmer côté serveur'],
     hostedFlowTexts: [
       'Votre backend crée la session avec mode=hosted, un montant fixe en XOF et une clé d’idempotence.',
-      'Combinez checkoutPath avec l’origine de paiement officielle communiquée par SendFlow, puis redirigez le navigateur.',
+      'Combinez le chemin relatif checkoutPath avec l’origine de paiement officielle communiquée par SendFlow, puis redirigez le navigateur.',
       'Le payeur choisit un moyen de paiement proposé sur la page SendFlow et suit les instructions affichées.',
       'Après le retour du navigateur, relisez la session avec votre clé secrète. N’acceptez la commande qu’après succeeded.',
     ],
@@ -244,13 +260,13 @@ const localizedLists: Record<Language, TranslationLists> = {
     directFlowTexts: [
       'From your backend, create a direct-mode session with a fixed XOF amount and a stable Idempotency-Key.',
       'The checkout uses public session credentials to read the countries and operators eligible for that session.',
-      'Send the payer details and the operator ID returned by SendFlow. The amount cannot be changed.',
+      'Send the uppercase country code, operatorId as returned by the session, and phone number with its international prefix. The amount cannot be changed.',
       'Poll the attempt with its pollToken or read the session using your secret key. Only a confirmed succeeded state completes the order.',
     ],
     hostedFlowTitles: ['Create a hosted session', 'Redirect the customer', 'Let the customer pay', 'Verify server-side'],
     hostedFlowTexts: [
       'Your backend creates the session with mode=hosted, a fixed XOF amount, and an idempotency key.',
-      'Combine checkoutPath with the official payment origin provided by SendFlow, then redirect the browser.',
+      'Combine the relative checkoutPath with the official payment origin provided by SendFlow, then redirect the browser.',
       'The payer selects a payment method shown on the SendFlow page and follows the displayed instructions.',
       'After the browser returns, read the session with your secret key. Accept the order only after succeeded.',
     ],
@@ -268,19 +284,19 @@ const apiEndpointInventory = [
     method: 'POST', path: '/api/v1/payment-sessions', description: 'endpointCreate', access: 'accessServerSecret', example: 'create-hosted',
     codesFr: 'HTTP : 201, 400, 401, 403, 409, 429, 503.',
     codesEn: 'HTTP: 201, 400, 401, 403, 409, 429, 503.',
-    requirementsFr: 'En-têtes : Authorization: Bearer <clé secrète>, Idempotency-Key (8–128 caractères), Content-Type: application/json. Champs requis : merchantReference (1–128), amountMinor (100–2 000 000), currency=XOF, mode=hosted|direct. Facultatifs : description (240 caractères max), returnUrl (URL HTTPS, utilisée après confirmation succeeded), metadata (8 Ko max). Expiration : 1 heure.',
-    requirementsEn: 'Headers: Authorization: Bearer <secret key>, Idempotency-Key (8–128 characters), Content-Type: application/json. Required: merchantReference (1–128), amountMinor (100–2,000,000), currency=XOF, mode=hosted|direct. Optional: description (max 240 characters), returnUrl (HTTPS URL, used after a succeeded confirmation), metadata (max 8 KB). Expires after 1 hour.',
+    requirementsFr: 'En-têtes : Authorization: Bearer <clé secrète>, Idempotency-Key (8–128 caractères, sans espaces en début/fin), Content-Type: application/json. Requis : merchantReference (1–128), amountMinor (100–2 000 000), currency=XOF, mode=hosted|direct. Facultatifs : description (240 caractères max), returnUrl (URL HTTPS utilisée uniquement par le parcours hosted après confirmation succeeded), metadata (8 Ko max). Expiration : 1 heure.',
+    requirementsEn: 'Headers: Authorization: Bearer <secret key>, Idempotency-Key (8–128 characters, no leading/trailing spaces), Content-Type: application/json. Required: merchantReference (1–128), amountMinor (100–2,000,000), currency=XOF, mode=hosted|direct. Optional: description (max 240 characters), returnUrl (HTTPS URL used only by hosted flow after succeeded confirmation), metadata (max 8 KB). Expires after 1 hour.',
     response: `{
-  "id": "<session-uuid>",
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
   "merchantReference": "ORDER-2026-0042",
   "mode": "hosted",
   "state": "created",
   "amountMinor": 12500,
   "currency": "XOF",
-  "checkoutPath": "/pay/<payment-token>",
-  "clientToken": "<session-client-token>",
-  "publicKey": "<public-key-from-session>",
-  "expiresAt": "<ISO-8601 timestamp>"
+  "checkoutPath": "/pay/demo-payment-token",
+  "clientToken": "<session-client-token-fictif>",
+  "publicKey": "<public-key-fictive>",
+  "expiresAt": "2026-10-29T11:30:00.000Z"
 }`,
   },
   {
@@ -290,15 +306,15 @@ const apiEndpointInventory = [
     requirementsFr: 'Paramètre de chemin : sessionId (UUID). En-tête : Authorization: Bearer <clé secrète>. États possibles : created, waiting, uncertain, succeeded, failed.',
     requirementsEn: 'Path parameter: sessionId (UUID). Header: Authorization: Bearer <secret key>. Possible states: created, waiting, uncertain, succeeded, failed.',
     response: `{
-  "id": "<session-uuid>",
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
   "merchantReference": "ORDER-2026-0042",
   "mode": "hosted",
   "state": "succeeded",
   "amountMinor": 12500,
   "currency": "XOF",
-  "attemptId": "<attempt-uuid>",
-  "createdAt": "<ISO-8601 timestamp>",
-  "expiresAt": "<ISO-8601 timestamp>"
+  "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
+  "createdAt": "2026-10-29T10:30:00.000Z",
+  "expiresAt": "2026-10-29T11:30:00.000Z"
 }`,
   },
   {
@@ -308,17 +324,17 @@ const apiEndpointInventory = [
     requirementsFr: 'Réservé aux sessions mode=direct. Paramètre : sessionId (UUID). En-têtes : X-SendFlow-Public-Key et X-SendFlow-Client-Token.',
     requirementsEn: 'For mode=direct sessions only. Parameter: sessionId (UUID). Headers: X-SendFlow-Public-Key and X-SendFlow-Client-Token.',
     response: `{
-  "id": "<session-uuid>",
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
   "merchantName": "Boutique Exemple",
-  "description": null,
+  "description": "Paiement ORDER-2026-0043",
   "mode": "direct",
   "state": "created",
   "amountMinor": 12500,
   "currency": "XOF",
-  "expiresAt": "<ISO-8601 timestamp>",
+  "expiresAt": "2026-10-29T11:30:00.000Z",
   "countries": [
     {
-      "code": "CI",
+      "code": "ci",
       "name": "Côte d’Ivoire",
       "flag": "🇨🇮",
       "phonePrefix": "+225",
@@ -333,16 +349,16 @@ const apiEndpointInventory = [
     method: 'POST', path: '/api/v1/public/payment-sessions/{sessionId}/attempts', description: 'endpointAttempt', access: 'accessPublicAttempt', example: 'start-attempt',
     codesFr: 'HTTP : 201, 400, 404, 409, 429, 503.',
     codesEn: 'HTTP: 201, 400, 404, 409, 429, 503.',
-    requirementsFr: 'Paramètre : sessionId (UUID). En-têtes : X-SendFlow-Public-Key, X-SendFlow-Client-Token, Idempotency-Key (8–128). Corps : firstName et lastName (1–80), countryCode (2 lettres majuscules), operatorId (1–80, pris dans la session), phoneNumber (6–20). Le montant est celui de la session.',
-    requirementsEn: 'Parameter: sessionId (UUID). Headers: X-SendFlow-Public-Key, X-SendFlow-Client-Token, Idempotency-Key (8–128). Body: firstName and lastName (1–80), countryCode (two uppercase letters), operatorId (1–80, from the session), phoneNumber (6–20). The session amount is fixed.',
+    requirementsFr: 'Paramètre : sessionId (UUID). En-têtes : X-SendFlow-Public-Key, X-SendFlow-Client-Token, Idempotency-Key (8–128). Corps : firstName et lastName (1–80), countryCode (2 lettres majuscules ; convertir le code de la session si nécessaire), operatorId (1–80, pris dans la session), phoneNumber (6–20 avec l’indicatif international phonePrefix). Le montant est celui de la session.',
+    requirementsEn: 'Parameter: sessionId (UUID). Headers: X-SendFlow-Public-Key, X-SendFlow-Client-Token, Idempotency-Key (8–128). Body: firstName and lastName (1–80), countryCode (two uppercase letters; convert the session value if needed), operatorId (1–80, from the session), phoneNumber (6–20 including the international phonePrefix). The session amount is fixed.',
     response: `{
-  "id": "<session-uuid>",
-  "attemptId": "<attempt-uuid>",
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+  "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
   "state": "waiting",
   "amountMinor": 12500,
   "currency": "XOF",
   "ussdCode": null,
-  "pollToken": "<attempt-poll-token>",
+  "pollToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "merchantReference": "ORDER-2026-0042"
 }`,
   },
@@ -353,13 +369,13 @@ const apiEndpointInventory = [
     requirementsFr: 'Paramètres : sessionId et attemptId (UUID). En-têtes : X-SendFlow-Public-Key, X-SendFlow-Client-Token et X-LinkFlow-Attempt-Token (pollToken renvoyé au démarrage).',
     requirementsEn: 'Parameters: sessionId and attemptId (UUID). Headers: X-SendFlow-Public-Key, X-SendFlow-Client-Token, and X-LinkFlow-Attempt-Token (the pollToken returned when the attempt starts).',
     response: `{
-  "id": "<session-uuid>",
-  "attemptId": "<attempt-uuid>",
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+  "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
   "state": "waiting",
   "amountMinor": 12500,
   "currency": "XOF",
   "ussdCode": null,
-  "pollToken": "<attempt-poll-token>",
+  "pollToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "merchantReference": "ORDER-2026-0042"
 }`,
   },
@@ -416,6 +432,71 @@ function renderHighlightedCode(source: string) {
     else if (/^(curl|const|let|var|await|async|function|if|throw|import|from|def|return|new|true|false|null|None)$/.test(part)) tokenClass = 'sf-docs-token-keyword';
     return tokenClass ? <span className={tokenClass} key={index}>{part}</span> : part;
   });
+}
+
+const hostedSessionResponse = `{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+  "merchantReference": "ORDER-2026-0042",
+  "mode": "hosted",
+  "state": "created",
+  "amountMinor": 12500,
+  "currency": "XOF",
+  "checkoutPath": "/pay/demo-payment-token",
+  "clientToken": "<session-client-token-fictif>",
+  "publicKey": "<public-key-fictive>",
+  "expiresAt": "2026-10-29T11:30:00.000Z"
+}`;
+
+const directSessionResponse = `{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+  "merchantReference": "ORDER-2026-0043",
+  "mode": "direct",
+  "state": "created",
+  "amountMinor": 12500,
+  "currency": "XOF",
+  "checkoutPath": null,
+  "clientToken": "<session-client-token-fictif>",
+  "publicKey": "<public-key-fictive>",
+  "expiresAt": "2026-10-29T11:30:00.000Z"
+}`;
+
+const directAttemptResponse = `{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+  "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
+  "state": "waiting",
+  "amountMinor": 12500,
+  "currency": "XOF",
+  "ussdCode": null,
+  "pollToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "merchantReference": "ORDER-2026-0043"
+}`;
+
+function ResponsePanel({ language, label, response }: { language: Language; label: string; response: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(response);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="sf-docs-code" data-testid="panel-response-example">
+      <div className="sf-docs-code-head">
+        <span className="sf-docs-code-label">{label}</span>
+        <div className="sf-docs-code-tools">
+          <button type="button" className="sf-docs-copy" onClick={() => void copy()} data-testid="button-copy-response">
+            {copied ? <Check size={13} /> : <Copy size={13} />}{copied ? (language === 'fr' ? 'Copié' : 'Copied') : (language === 'fr' ? 'Copier' : 'Copy')}
+          </button>
+        </div>
+      </div>
+      <pre><code>{renderHighlightedCode(response)}</code></pre>
+      <div className="sf-docs-code-note">{language === 'fr' ? 'JSON · valeurs illustratives' : 'JSON · illustrative values'}</div>
+    </div>
+  );
 }
 
 function CodePanel({ language, label, example }: { language: Language; label: string; example: DocsExampleId }) {
@@ -548,7 +629,8 @@ export default function DocsPage() {
         </div>
       </section>
       <div className="sf-docs-meta"><span className="sf-docs-status"><i className="sf-docs-status-dot" />{t.badge}</span><span>{t.prod}</span></div>
-      <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
+    <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
+    <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
       <section className="sf-docs-section">
         <h2>{t.capabilitiesTitle}</h2>
         <ul className="sf-docs-list">
@@ -600,33 +682,45 @@ export default function DocsPage() {
           <section className="sf-docs-section"><h2>{t.prerequisites}</h2><ul className="sf-docs-list"><li>{t.noCredentials}</li><li>{t.idempotencyText}</li></ul></section>
         </>}
         {pageKey === 'direct' && <>
+          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <section className="sf-docs-section"><h2>{t.model}</h2><p>{t.modelTextDirect}</p>
             <h3>{t.directFlow}</h3>
             <div className="sf-docs-steps">
               {localizedLists[language].directFlowTitles.map((heading, index) => <div className="sf-docs-step" key={heading}><span className="sf-docs-step-index">0{index + 1}</span><div><strong>{heading}</strong><p>{localizedLists[language].directFlowTexts[index]}</p></div></div>)}
             </div>
             <CodePanel language={language} label={t.codeLabel} example="create-direct" />
+            <ResponsePanel language={language} label={t.responseExample} response={directSessionResponse} />
             <CodePanel language={language} label={t.codeLabel} example="read-public-session" />
+            <div className="sf-docs-callout">{t.directInputText}</div>
             <CodePanel language={language} label={t.codeLabel} example="start-attempt" />
+            <ResponsePanel language={language} label={t.responseExample} response={directAttemptResponse} />
             <CodePanel language={language} label={t.codeLabel} example="poll-attempt" />
+            <div className="sf-docs-callout"><strong>{t.mobileMoneyTitle}.</strong> {t.mobileMoneyText}</div>
           </section>
           <section className="sf-docs-section"><h2>{t.responsibilities}</h2><ul className="sf-docs-list">{localizedLists[language].responsibilitiesText.map((line) => <li key={line}>{line}</li>)}</ul></section>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
         </>}
         {pageKey === 'hosted' && <>
+          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <section className="sf-docs-section"><h2>{t.model}</h2><p>{t.modelTextHosted}</p>
             <h3>{t.hostedFlow}</h3>
             <div className="sf-docs-steps">
               {localizedLists[language].hostedFlowTitles.map((heading, index) => <div className="sf-docs-step" key={heading}><span className="sf-docs-step-index">0{index + 1}</span><div><strong>{heading}</strong><p>{localizedLists[language].hostedFlowTexts[index]}</p></div></div>)}
             </div>
             <CodePanel language={language} label={t.codeLabel} example="create-hosted" />
+            <ResponsePanel language={language} label={t.responseExample} response={hostedSessionResponse} />
             <CodePanel language={language} label={t.codeLabel} example="read-session" />
-            <div className="sf-docs-callout">{t.returnUrlText}</div>
+            <div className="sf-docs-callout">
+              <p>{t.hostedOriginText}</p>
+              <p>{t.returnUrlText}</p>
+              <p>{t.hostedTimerText}</p>
+            </div>
           </section>
           <section className="sf-docs-section"><h2>{t.responsibilities}</h2><ul className="sf-docs-list">{localizedLists[language].responsibilitiesText.map((line) => <li key={line}>{line}</li>)}</ul></section>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
         </>}
         {pageKey === 'api' && <>
+          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <section className="sf-docs-section"><h2>{t.reference}</h2><p>{t.referenceIntro}</p>
             <div className="sf-docs-endpoints">
               {apiEndpointInventory.map((endpoint) => (
@@ -646,7 +740,7 @@ export default function DocsPage() {
                   </details>
                   <details className="sf-docs-endpoint-example">
                     <summary>{t.responseExample}</summary>
-                    <pre className="sf-docs-response"><code>{endpoint.response}</code></pre>
+                    <ResponsePanel language={language} label={`${t.responseExample} · JSON`} response={endpoint.response} />
                   </details>
                 </article>
               ))}
@@ -671,20 +765,21 @@ export default function DocsPage() {
 sendflow-delivery: <stable-delivery-id>
 sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
             </div>
-            <pre className="sf-docs-response"><code>{`{
+            <ResponsePanel language={language} label={`${t.responseExample} · JSON`} response={`{
   "id": "<stable-event-id>",
   "type": "payment.succeeded",
-  "createdAt": "<ISO-8601 timestamp>",
+  "createdAt": "2026-10-29T10:30:00.000Z",
   "data": {
-    "sessionId": "<session-uuid>",
+    "sessionId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
     "merchantReference": "ORDER-2026-0042",
-    "attemptId": "<attempt-uuid>",
-    "transactionId": "<transaction-uuid>",
+    "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
+    "transactionId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28643",
     "amountMinor": 12500,
     "currency": "XOF",
     "status": "succeeded"
   }
-}`}</code></pre>
+}`} />
+            <div className="sf-docs-callout">{t.webhookPayloadNote}</div>
             <CodePanel language={language} label={t.codeLabel} example="webhook" />
           </section>
         </>}
