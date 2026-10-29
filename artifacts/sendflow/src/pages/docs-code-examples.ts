@@ -1,4 +1,4 @@
-export type DocsCodeFormat = 'cURL' | 'JavaScript' | 'PHP' | 'Python';
+export type DocsCodeFormat = 'cURL' | 'JavaScript' | 'PHP' | 'Python' | 'Kotlin';
 export type DocsExampleId =
   | 'create-hosted'
   | 'create-direct'
@@ -9,7 +9,7 @@ export type DocsExampleId =
   | 'pricing'
   | 'webhook';
 
-type ExampleSet = Record<DocsCodeFormat, string>;
+type ExampleSet = Record<Exclude<DocsCodeFormat, 'Kotlin'>, string> & { Kotlin?: string };
 
 const examples: Record<DocsExampleId, ExampleSet> = {
   'create-hosted': {
@@ -260,6 +260,39 @@ response = requests.get(
 response.raise_for_status()
 checkout = response.json()
 # Use checkout["countries"] to display available payment choices.`,
+    Kotlin: `import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+suspend fun readDirectSession(
+    apiBaseUrl: String,
+    sessionId: String,
+    publicKey: String,
+    clientToken: String,
+): JSONObject = withContext(Dispatchers.IO) {
+    val connection = (URL("$apiBaseUrl/v1/public/payment-sessions/$sessionId").openConnection()
+        as HttpURLConnection).apply {
+        requestMethod = "GET"
+        connectTimeout = 15_000
+        readTimeout = 15_000
+        setRequestProperty("X-SendFlow-Public-Key", publicKey)
+        setRequestProperty("X-SendFlow-Client-Token", clientToken)
+    }
+    try {
+        val status = connection.responseCode
+        val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+        val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+        if (status !in 200..299) {
+            throw IOException(JSONObject(body).optString("error", "SendFlow request failed"))
+        }
+        JSONObject(body)
+    } finally {
+        connection.disconnect()
+    }
+}`,
   },
   'start-attempt': {
     cURL: `curl --request POST "$SENDFLOW_API_BASE_URL/v1/public/payment-sessions/$SESSION_ID/attempts" \\
@@ -341,6 +374,58 @@ response = requests.post(
 )
 response.raise_for_status()
 attempt = response.json()`,
+    Kotlin: `import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+suspend fun startDirectAttempt(
+    apiBaseUrl: String,
+    sessionId: String,
+    publicKey: String,
+    clientToken: String,
+    idempotencyKey: String,
+    firstName: String,
+    lastName: String,
+    countryCode: String,
+    operatorId: String,
+    phoneNumber: String,
+): JSONObject = withContext(Dispatchers.IO) {
+    // Obtain publicKey and clientToken from your merchant server; never embed the secret key here.
+    val url = URL("$apiBaseUrl/v1/public/payment-sessions/$sessionId/attempts")
+    val connection = (url.openConnection() as HttpURLConnection).apply {
+        requestMethod = "POST"
+        connectTimeout = 15_000
+        readTimeout = 15_000
+        doOutput = true
+        setRequestProperty("X-SendFlow-Public-Key", publicKey)
+        setRequestProperty("X-SendFlow-Client-Token", clientToken)
+        setRequestProperty("Idempotency-Key", idempotencyKey)
+        setRequestProperty("Content-Type", "application/json")
+    }
+    try {
+        val body = JSONObject()
+            .put("firstName", firstName)
+            .put("lastName", lastName)
+            .put("countryCode", countryCode.uppercase())
+            .put("operatorId", operatorId)
+            .put("phoneNumber", phoneNumber)
+        connection.outputStream.use {
+            it.write(body.toString().toByteArray(Charsets.UTF_8))
+        }
+        val status = connection.responseCode
+        val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+        val responseBody = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+        if (status !in 200..299) {
+            throw IOException(JSONObject(responseBody).optString("error", "Payment could not start"))
+        }
+        JSONObject(responseBody)
+    } finally {
+        connection.disconnect()
+    }
+}`,
   },
   'poll-attempt': {
     cURL: `curl "$SENDFLOW_API_BASE_URL/v1/public/payment-sessions/$SESSION_ID/attempts/$ATTEMPT_ID" \\
@@ -389,6 +474,42 @@ response = requests.get(
 response.raise_for_status()
 status = response.json()
 # Trust only the server-confirmed "succeeded" state.`,
+    Kotlin: `import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+suspend fun pollDirectAttempt(
+    apiBaseUrl: String,
+    sessionId: String,
+    attemptId: String,
+    publicKey: String,
+    clientToken: String,
+    pollToken: String,
+): JSONObject = withContext(Dispatchers.IO) {
+    val url = URL("$apiBaseUrl/v1/public/payment-sessions/$sessionId/attempts/$attemptId")
+    val connection = (url.openConnection() as HttpURLConnection).apply {
+        requestMethod = "GET"
+        connectTimeout = 15_000
+        readTimeout = 15_000
+        setRequestProperty("X-SendFlow-Public-Key", publicKey)
+        setRequestProperty("X-SendFlow-Client-Token", clientToken)
+        setRequestProperty("X-LinkFlow-Attempt-Token", pollToken)
+    }
+    try {
+        val status = connection.responseCode
+        val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+        val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+        if (status !in 200..299) {
+            throw IOException(JSONObject(body).optString("error", "Payment status unavailable"))
+        }
+        JSONObject(body)
+    } finally {
+        connection.disconnect()
+    }
+}`,
   },
   pricing: {
     cURL: `curl "$SENDFLOW_API_BASE_URL/pricing"`,
@@ -481,5 +602,11 @@ def verify_sendflow_webhook(raw_body: bytes, signature_header: str, secret: str)
 };
 
 export function getDocsCodeExample(example: DocsExampleId, format: DocsCodeFormat) {
-  return examples[example][format];
+  const code = examples[example][format];
+  if (!code) throw new Error(`No ${format} example is available for ${example}`);
+  return code;
+}
+
+export function getDocsCodeFormats(example: DocsExampleId): DocsCodeFormat[] {
+  return Object.keys(examples[example]) as DocsCodeFormat[];
 }

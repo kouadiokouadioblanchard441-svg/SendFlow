@@ -184,6 +184,7 @@
 .sf-docs-endpoint-head code { min-width: 0; overflow-wrap: anywhere; color: #292a30; font: 11px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .sf-docs-endpoint-pending { flex: 0 0 auto; margin-left: auto; border: 1px solid #e8dcf9; border-radius: 999px; background: #fbf8ff; padding: 4px 8px; color: #4e4560; font-size: 9px; font-weight: 800; }
 .sf-docs-endpoint > p { margin: 11px 0 0; color: #17181d; font-size: 13px; font-weight: 800; }
+.sf-docs-endpoint.sf-docs-info > p { color: #292a30; font-weight: 500; line-height: 1.65; }
 .sf-docs-endpoint-access { display: grid; gap: 4px; margin-top: 10px; border-top: 1px solid #e8dcf9; padding-top: 9px; }
 .sf-docs-endpoint-access span { color: #55515f; font-size: 10px; }
 .sf-docs-endpoint-access strong { color: #292a30; font-size: 11px; font-weight: 650; }
@@ -244,6 +245,10 @@
   .sf-docs-home .sf-docs-cards > .sf-docs-card { min-height: 208px; padding: 22px; }
   .sf-docs-endpoint-head { align-items: flex-start; flex-wrap: wrap; }
   .sf-docs-endpoint-pending { margin-left: 52px; }
+  .sf-docs-code-head { flex-wrap: wrap; }
+  .sf-docs-code-tools { width: 100%; min-width: 0; justify-content: space-between; }
+  .sf-docs-code-lang { min-width: 0; flex: 1 1 auto; overflow: visible; flex-wrap: wrap; }
+  .sf-docs-code-lang button { flex: 0 0 auto; }
 }
 @media (max-width: 520px) {
   .sf-docs-lang { padding-inline: 3px; font-size: 10px; }

@@ -5,6 +5,12 @@ description: Product decisions for merchant API credentials, payment sessions, a
 
 The merchant-space “Développeurs” area supports both direct API checkout and SendFlow-hosted checkout. Both payment modes must reuse LinkFlow’s configured country/operator fees and aggregator routing; do not hard-code a provider in the developer API. Webhooks may be emitted only for verified final payment results, after the existing settlement path credits the merchant wallet. Public integration documentation is a later milestone.
 
+Public developer documentation must not reveal third-party processor or aggregator names. Describe routing limits generically; name an operator only when needed for payer instructions and only with verified details.
+
+**Why:** the user explicitly set this public-documentation branding and accuracy rule.
+
+**How to apply:** Scan public developer docs for third-party provider names before delivery. Distinguish Mobile Money operator names from upstream processors, and state unverified country/operator behavior as unconfirmed.
+
 Each account receives one active public/secret API key pair during registration. Store only the public key and one-way hashes; return the secret only in the creation response, never persist or log it. Regeneration atomically revokes all currently active pairs and retains their revoked history. Live credentials must remain unavailable to test accounts, and API payment execution must stay closed until provider settlement evidence is validated.
 
 The owner-authorized viewing account receives a non-live, test-prefixed API key pair during provisioning. Those credentials must never authenticate live payment endpoints or trigger provider calls or webhook deliveries. Determine preview status from the server-validated session, never from client input; keep all other preview routes fail-closed.
