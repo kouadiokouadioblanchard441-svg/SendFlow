@@ -9,4 +9,4 @@ Organize the portal with clear groups for getting started, hosted checkout, inte
 
 **Why:** the user asked for the documentation to match `/confidentialite` specifically, including its background, typography, colors, and visual treatment.
 
-**How to apply:** preserve this palette and typography across the docs portal’s desktop and mobile layouts; keep 3D artwork secondary to the guides, navigation, and code samples. Adapt reference-site navigation to verified SendFlow flows rather than copying its product feature list.
+**How to apply:** preserve this palette and typography across the docs portal’s desktop and mobile layouts; on mobile, use a left drawer with expandable groups and SendFlow’s own sections. Keep 3D artwork secondary to guides, navigation, and code samples; adapt reference-site organization without copying its product feature list.

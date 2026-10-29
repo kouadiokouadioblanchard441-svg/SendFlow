@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   AlertTriangle, ArrowRight, BookOpen, Check, ChevronRight,
@@ -34,18 +34,18 @@ const docsItems: DocItem[] = [
   { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'reference', icon: ShieldCheck },
 ];
 
-const docGroups: { id: DocGroup; labelKey: string }[] = [
-  { id: 'start', labelKey: 'startGroup' },
-  { id: 'checkout', labelKey: 'checkoutGroup' },
-  { id: 'integration', labelKey: 'integrations' },
-  { id: 'directApi', labelKey: 'directApi' },
-  { id: 'reference', labelKey: 'reference' },
+const docGroups: { id: DocGroup; labelKey: string; icon: typeof BookOpen }[] = [
+  { id: 'start', labelKey: 'startGroup', icon: BookOpen },
+  { id: 'checkout', labelKey: 'checkoutGroup', icon: Globe2 },
+  { id: 'integration', labelKey: 'integrations', icon: Code2 },
+  { id: 'directApi', labelKey: 'directApi', icon: FileCode2 },
+  { id: 'reference', labelKey: 'reference', icon: ShieldCheck },
 ];
 
 const localized: Record<Language, Translation> = {
   fr: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
-    dashboard: 'Espace développeur', search: 'Rechercher dans la documentation…', startGroup: 'Démarrer',
+    dashboard: 'Espace développeur', search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
     checkoutGroup: 'Checkout', integrations: 'Intégration', directApi: 'API directe',
     reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
     home: 'Documentation', start: 'Bien démarrer', auth: 'Authentification', direct: 'Intégration directe',
@@ -111,7 +111,7 @@ const localized: Record<Language, Translation> = {
   },
   en: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
-    dashboard: 'Developer dashboard', search: 'Search documentation…', startGroup: 'Start here',
+    dashboard: 'Developer dashboard', search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
     checkoutGroup: 'Checkout', integrations: 'Integration', directApi: 'Direct API',
     reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
     home: 'Documentation', start: 'Getting started', auth: 'Authentication', direct: 'Direct integration',
@@ -267,7 +267,7 @@ export default function DocsPage() {
   const [language, setLanguage] = useState<Language>('fr');
   const [query, setQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set([...docGroups.map((group) => group.id), 'resources']));
   const pageKey = pageKeys[path] ?? 'home';
   const t = localized[language];
   const activeItem = docsItems.find((item) => item.path === path) ?? docsItems[0];
@@ -276,6 +276,27 @@ export default function DocsPage() {
   const filteredItems = useMemo(() => docsItems.filter((item) =>
     `${localized[language][item.key] ?? item.label} ${item.label} ${docSearchTerms[item.path] ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   ), [language, query]);
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSidebarOpen(false);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [sidebarOpen]);
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups((current) => {
+      const next = new Set(current);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  };
   const titleKey = `${pageKey}Title`;
   const description = t[`${pageKey}Sub`] ?? t.homeSub;
   const title = t[titleKey] ?? t.homeTitle;
@@ -465,41 +486,57 @@ export default function DocsPage() {
         <div className="sf-docs-header-tools">
           <Link href="/sign-in" className="sf-docs-dashboard" data-testid="link-docs-dashboard"><ArrowRight size={14} /><span>{t.dashboard}</span></Link>
           <button type="button" className="sf-docs-lang" onClick={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')} aria-label={language === 'fr' ? 'Switch to English' : 'Passer en français'} data-testid="button-docs-language">{language === 'fr' ? 'EN' : 'FR'}</button>
-          <button type="button" className="sf-docs-mobile-menu" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'} data-testid="button-docs-mobile-nav">{mobileNavOpen ? <X size={18} /> : <Menu size={18} />}</button>
+          <button type="button" className="sf-docs-mobile-menu" onClick={() => setSidebarOpen((open) => !open)} aria-expanded={sidebarOpen} aria-label={sidebarOpen ? t.menuClose : t.contents} data-testid="button-docs-mobile-nav">{sidebarOpen ? <X size={18} /> : <Menu size={18} />}</button>
         </div>
-        {mobileNavOpen && <nav className="sf-docs-mobile-nav" aria-label="Mobile navigation">
-          <Link href="/docs" onClick={() => setMobileNavOpen(false)} data-testid="link-docs-mobile-home">{t.navDocs}</Link>
-          <Link href="/docs/getting-started" onClick={() => setMobileNavOpen(false)} data-testid="link-docs-mobile-guides">{t.navGuides}</Link>
-          <Link href="/docs/api-reference" onClick={() => setMobileNavOpen(false)} data-testid="link-docs-mobile-api">{t.navApi}</Link>
-          <Link href="/docs/webhooks" onClick={() => setMobileNavOpen(false)} data-testid="link-docs-mobile-webhooks">{t.navWebhooks}</Link>
-        </nav>}
       </header>
       <div className="sf-docs-shell">
         {sidebarOpen && <button type="button" className="sf-docs-mobile-backdrop" aria-label="Close documentation menu" onClick={() => setSidebarOpen(false)} data-testid="button-close-docs-sidebar" />}
         <aside className={`sf-docs-sidebar${sidebarOpen ? ' is-open' : ''}`} aria-label={language === 'fr' ? 'Navigation de la documentation' : 'Documentation navigation'}>
+          <div className="sf-docs-drawer-head">
+            <button type="button" className="sf-docs-drawer-close" onClick={() => setSidebarOpen(false)} aria-label={t.menuClose} data-testid="button-close-docs-drawer"><X size={18} /></button>
+            <Link href="/docs" className="sf-docs-drawer-brand" onClick={() => setSidebarOpen(false)} aria-label="SendFlow documentation" data-testid="link-docs-drawer-brand">
+              <img className="sf-docs-drawer-mark" src={sendflowMark} alt="" />
+              <img className="sf-docs-drawer-word" src={sendflowWordmark} alt="SendFlow" />
+            </Link>
+            <button type="button" className="sf-docs-drawer-language" onClick={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')} aria-label={language === 'fr' ? 'Switch to English' : 'Passer en français'}>{language === 'fr' ? 'EN' : 'FR'}</button>
+          </div>
           <label className="sf-docs-search">
             <Search size={15} aria-hidden="true" />
             <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} aria-label={t.search} data-testid="input-docs-search" />
             <kbd>/</kbd>
           </label>
-          {sidebarGroups.map((group) => (
-            <div className="sf-docs-nav-group" key={group.key}>
-              <p className="sf-docs-group-label">{t[group.key]}</p>
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                return <Link href={item.path} key={item.path} onClick={() => setSidebarOpen(false)} className={`sf-docs-side-link${path === item.path ? ' is-active' : ''}`} aria-current={path === item.path ? 'page' : undefined} data-testid={`link-docs-${item.key}`}><Icon size={14} />{t[item.key] ?? item.label}</Link>;
-              })}
-            </div>
-          ))}
+          {sidebarGroups.filter((group) => group.items.length > 0).map((group) => {
+            const GroupIcon = docGroups.find((item) => item.labelKey === group.key)?.icon ?? BookOpen;
+            const groupId = docGroups.find((item) => item.labelKey === group.key)?.id ?? group.key;
+            const isOpen = openGroups.has(groupId) || Boolean(query.trim());
+            return (
+              <section className={`sf-docs-nav-group${isOpen ? ' is-open' : ''}${group.items.some((item) => item.path === path) ? ' is-active' : ''}`} key={group.key}>
+                <button type="button" className="sf-docs-group-toggle" onClick={() => toggleGroup(groupId)} aria-expanded={isOpen} aria-controls={`docs-nav-${groupId}`} data-testid={`button-docs-group-${groupId}`}>
+                  <GroupIcon size={15} aria-hidden="true" />
+                  <span>{t[group.key]}</span>
+                  <ChevronRight className="sf-docs-group-chevron" size={15} aria-hidden="true" />
+                </button>
+                <div className="sf-docs-nav-items" id={`docs-nav-${groupId}`} hidden={!isOpen}>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return <Link href={item.path} key={item.path} onClick={() => setSidebarOpen(false)} className={`sf-docs-side-link${path === item.path ? ' is-active' : ''}`} aria-current={path === item.path ? 'page' : undefined} data-testid={`link-docs-${item.key}`}><Icon size={13} />{t[item.key] ?? item.label}</Link>;
+                  })}
+                </div>
+              </section>
+            );
+          })}
           {query && filteredItems.length === 0 && <div className="sf-docs-search-empty">{t.noResults}</div>}
-          <div className="sf-docs-nav-group">
-            <p className="sf-docs-group-label">{t.resources}</p>
-            <a className="sf-docs-side-link" href="mailto:support@sendflow01.com" data-testid="link-docs-sidebar-support"><LifeBuoy size={14} />{t.contact}</a>
-          </div>
+          {(!query || `${t.resources} ${t.contact} support contact`.toLowerCase().includes(query.trim().toLowerCase())) && <section className={`sf-docs-nav-group${openGroups.has('resources') || Boolean(query.trim()) ? ' is-open' : ''}`}>
+            <button type="button" className="sf-docs-group-toggle" onClick={() => toggleGroup('resources')} aria-expanded={openGroups.has('resources') || Boolean(query.trim())} aria-controls="docs-nav-resources" data-testid="button-docs-group-resources">
+              <LifeBuoy size={15} aria-hidden="true" /><span>{t.resources}</span><ChevronRight className="sf-docs-group-chevron" size={15} aria-hidden="true" />
+            </button>
+            <div className="sf-docs-nav-items" id="docs-nav-resources" hidden={!openGroups.has('resources') && !query.trim()}>
+              <a className="sf-docs-side-link" href="mailto:support@sendflow01.com" data-testid="link-docs-sidebar-support"><LifeBuoy size={13} />{t.contact}</a>
+            </div>
+          </section>}
           <div className="sf-docs-sidebar-note"><ShieldCheck size={15} /><span>{t.prod}</span></div>
         </aside>
         <main className="sf-docs-main">
-          <button type="button" className="sf-docs-sidebar-trigger" onClick={() => setSidebarOpen(true)} data-testid="button-open-docs-sidebar"><Menu size={14} />{t.contents}</button>
           <article className="sf-docs-content" key={`${path}-${language}`}>{pageKey === 'home' ? renderHome() : renderDocument()}</article>
           <footer className="sf-docs-footer">
             <span>{t.copyright} · {t.lastUpdated}</span>
