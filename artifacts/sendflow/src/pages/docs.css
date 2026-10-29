@@ -35,8 +35,6 @@
 .sf-docs-nav a:hover, .sf-docs-nav a.is-active { color: var(--docs-accent); }
 .sf-docs-nav a.is-active { box-shadow: inset 0 -2px var(--docs-accent); padding: 27px 0 25px; }
 .sf-docs-header-tools { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
-.sf-docs-dashboard { display: inline-flex; min-height: 38px; align-items: center; gap: 7px; border: 1.5px solid #8b4cc8; border-radius: 11px; padding: 0 13px; color: #7736b5 !important; font-size: 11px !important; font-weight: 800 !important; }
-.sf-docs-dashboard:hover { border-color: #7736b5; background: #fbf8ff; }
 .sf-docs-lang { min-height: 34px; border: 0; background: transparent; padding: 0 5px; color: #292a30; font-size: 11px; font-weight: 700; cursor: pointer; }
 .sf-docs-mobile-menu { display: none; width: 40px; height: 40px; place-items: center; border: 1.5px solid #e8dcf9; border-radius: 12px; background: white; color: #8b4cc8; cursor: pointer; }
 .sf-docs-shell { display: grid; width: min(100%, 1440px); min-height: calc(100dvh - 70px); grid-template-columns: 260px minmax(0,1fr); margin: 0 auto; }
@@ -164,7 +162,6 @@
 @media (max-width: 960px) {
   .sf-docs-nav { gap: 14px; }
   .sf-docs-nav a { font-size: 10px; }
-  .sf-docs-dashboard { padding-inline: 8px; }
   .sf-docs-shell { grid-template-columns: 230px minmax(0,1fr); }
   .sf-docs-sidebar { padding-inline: 16px 13px; }
 }
@@ -174,7 +171,6 @@
   .sf-docs-mobile-menu { display: grid; }
   .sf-docs-nav { display: none; }
   .sf-docs-header-tools { margin-left: auto; gap: 7px; }
-  .sf-docs-dashboard { min-height: 34px; font-size: 10px !important; }
   .sf-docs-shell { display: block; min-height: calc(100dvh - 62px); }
   .sf-docs-sidebar { position: fixed; z-index: 50; top: 0; bottom: 0; left: 0; width: min(320px, 86vw); height: auto; overflow-x: hidden; transform: translateX(-102%); transition: transform .2s ease; border-right: 2px solid #d9c4ed; padding: 0 14px 24px; box-shadow: 12px 0 30px rgba(92,45,146,.12); }
   .sf-docs-sidebar.is-open { transform: translateX(0); }
@@ -193,8 +189,6 @@
   .sf-docs-endpoint-pending { margin-left: 52px; }
 }
 @media (max-width: 520px) {
-  .sf-docs-header-tools .sf-docs-dashboard span { display: none; }
-  .sf-docs-dashboard { width: 36px; justify-content: center; padding: 0; }
   .sf-docs-lang { padding-inline: 3px; font-size: 10px; }
   .sf-docs-title { font-size: 34px; }
   .sf-docs-lede { font-size: 13px; }

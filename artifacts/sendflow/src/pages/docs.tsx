@@ -45,7 +45,7 @@ const docGroups: { id: DocGroup; labelKey: string; icon: typeof BookOpen }[] = [
 const localized: Record<Language, Translation> = {
   fr: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
-    dashboard: 'Espace développeur', search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
+    search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
     checkoutGroup: 'Checkout', integrations: 'Intégration', directApi: 'API directe',
     reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
     home: 'Documentation', start: 'Bien démarrer', auth: 'Authentification', direct: 'Intégration directe',
@@ -111,7 +111,7 @@ const localized: Record<Language, Translation> = {
   },
   en: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
-    dashboard: 'Developer dashboard', search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
+    search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
     checkoutGroup: 'Checkout', integrations: 'Integration', directApi: 'Direct API',
     reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
     home: 'Documentation', start: 'Getting started', auth: 'Authentication', direct: 'Direct integration',
@@ -485,7 +485,6 @@ export default function DocsPage() {
           <Link href="/docs/webhooks" className={path === '/docs/webhooks' ? 'is-active' : ''} data-testid="link-docs-top-webhooks">{t.navWebhooks}</Link>
         </nav>
         <div className="sf-docs-header-tools">
-          <Link href="/sign-in" className="sf-docs-dashboard" data-testid="link-docs-dashboard"><ArrowRight size={14} /><span>{t.dashboard}</span></Link>
           <button type="button" className="sf-docs-lang" onClick={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')} aria-label={language === 'fr' ? 'Switch to English' : 'Passer en français'} data-testid="button-docs-language">{language === 'fr' ? 'EN' : 'FR'}</button>
         </div>
       </header>
