@@ -1835,7 +1835,7 @@ paths:
       operationId: createDeveloperPaymentSession
       tags: [developer]
       summary: Create a hosted or direct payment session
-      description: Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and one-time client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
+      description: Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and session client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
       security:
         - sendFlowApiSecret: []
       parameters:
@@ -1850,7 +1850,7 @@ paths:
             schema: { $ref: "#/components/schemas/DeveloperPaymentSessionInput" }
       responses:
         "201":
-          description: Payment session created.
+          description: Payment session created or matching idempotent session returned.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DeveloperPaymentSessionCreatedResponse" }
@@ -1861,6 +1861,11 @@ paths:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "401":
           description: Secret API key is invalid or revoked.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Merchant account or payment access is not eligible.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
@@ -1902,6 +1907,11 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "403":
+          description: Merchant account or payment access is not eligible.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "404":
           description: Payment session not found.
           content:
@@ -1916,7 +1926,8 @@ paths:
     get:
       operationId: getDeveloperPublicPaymentSession
       tags: [developer]
-      summary: Read public checkout details and available Mobile Money choices
+      summary: Read direct checkout details and available Mobile Money choices
+      description: Available for direct payment sessions. Hosted sessions use checkoutPath and the SendFlow-hosted page.
       parameters:
         - name: sessionId
           in: path
@@ -1941,6 +1952,11 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "429":
+          description: Public checkout request limit reached.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "503":
           description: Public payment session is temporarily unavailable.
           content:
@@ -1951,7 +1967,7 @@ paths:
       operationId: startDeveloperDirectPayment
       tags: [developer]
       summary: Start a direct Mobile Money payment attempt
-      description: Requires the publishable key and one-time client token returned by session creation. Only the fixed session amount can be charged.
+      description: Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged.
       parameters:
         - name: sessionId
           in: path
@@ -2039,6 +2055,11 @@ paths:
               schema: { $ref: "#/components/schemas/DeveloperDirectPaymentResponse" }
         "404":
           description: Session, attempt or token not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "429":
+          description: Payment status request limit reached.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
@@ -7114,7 +7135,7 @@ components:
         id: { type: string, format: uuid }
         merchantReference: { type: string }
         mode: { type: string, enum: [hosted, direct] }
-        state: { type: string, enum: [created] }
+        state: { type: string, enum: [created, waiting, uncertain, succeeded, failed] }
         amountMinor: { type: integer }
         currency: { type: string, enum: [XOF] }
         checkoutPath: { type: ["string", "null"] }

@@ -4572,7 +4572,7 @@ export const getCreateDeveloperPaymentSessionUrl = () => {
 }
 
 /**
- * Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and one-time client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
+ * Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and session client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
  * @summary Create a hosted or direct payment session
  */
 export const createDeveloperPaymentSession = async (developerPaymentSessionInput: DeveloperPaymentSessionInput, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperPaymentSessionCreatedResponse> => {
@@ -4738,7 +4738,8 @@ export const getGetDeveloperPublicPaymentSessionUrl = (sessionId: string,) => {
 }
 
 /**
- * @summary Read public checkout details and available Mobile Money choices
+ * Available for direct payment sessions. Hosted sessions use checkoutPath and the SendFlow-hosted page.
+ * @summary Read direct checkout details and available Mobile Money choices
  */
 export const getDeveloperPublicPaymentSession = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<DeveloperPublicPaymentSession> => {
 
@@ -4785,7 +4786,7 @@ export type GetDeveloperPublicPaymentSessionQueryError = ErrorType<ErrorEnvelope
 
 
 /**
- * @summary Read public checkout details and available Mobile Money choices
+ * @summary Read direct checkout details and available Mobile Money choices
  */
 
 export function useGetDeveloperPublicPaymentSession<TData = Awaited<ReturnType<typeof getDeveloperPublicPaymentSession>>, TError = ErrorType<ErrorEnvelope>>(
@@ -4815,7 +4816,7 @@ export const getStartDeveloperDirectPaymentUrl = (sessionId: string,) => {
 }
 
 /**
- * Requires the publishable key and one-time client token returned by session creation. Only the fixed session amount can be charged.
+ * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged.
  * @summary Start a direct Mobile Money payment attempt
  */
 export const startDeveloperDirectPayment = async (sessionId: string,

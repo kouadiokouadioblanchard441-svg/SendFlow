@@ -1466,7 +1466,7 @@ export const ListDeveloperWebhookDeliveriesResponse = zod.object({
 
 
 /**
- * Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and one-time client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
+ * Requires a server-side secret API key and an Idempotency-Key header. Direct sessions use the public key and session client token for payer-side initiation; hosted sessions return a SendFlow checkout path. Both use LinkFlow's configured fees and provider routing.
  * @summary Create a hosted or direct payment session
  */
 export const createDeveloperPaymentSessionHeaderIdempotencyKeyMin = 8;
@@ -1503,7 +1503,7 @@ export const CreateDeveloperPaymentSessionResponse = zod.object({
   "id": zod.uuid(),
   "merchantReference": zod.string(),
   "mode": zod.enum(['hosted', 'direct']),
-  "state": zod.enum(['created']),
+  "state": zod.enum(['created', 'waiting', 'uncertain', 'succeeded', 'failed']),
   "amountMinor": zod.int(),
   "currency": zod.enum(['XOF']),
   "checkoutPath": zod.string().nullable(),
@@ -1534,7 +1534,8 @@ export const GetDeveloperPaymentSessionResponse = zod.object({
 
 
 /**
- * @summary Read public checkout details and available Mobile Money choices
+ * Available for direct payment sessions. Hosted sessions use checkoutPath and the SendFlow-hosted page.
+ * @summary Read direct checkout details and available Mobile Money choices
  */
 export const GetDeveloperPublicPaymentSessionParams = zod.object({
   "sessionId": zod.uuid()
@@ -1580,7 +1581,7 @@ export const GetDeveloperPublicPaymentSessionResponse = zod.object({
 
 
 /**
- * Requires the publishable key and one-time client token returned by session creation. Only the fixed session amount can be charged.
+ * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged.
  * @summary Start a direct Mobile Money payment attempt
  */
 export const StartDeveloperDirectPaymentParams = zod.object({

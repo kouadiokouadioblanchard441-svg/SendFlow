@@ -2729,6 +2729,10 @@ export type DeveloperPaymentSessionCreatedResponseState = typeof DeveloperPaymen
 
 export const DeveloperPaymentSessionCreatedResponseState = {
   created: 'created',
+  waiting: 'waiting',
+  uncertain: 'uncertain',
+  succeeded: 'succeeded',
+  failed: 'failed',
 } as const;
 
 export type DeveloperPaymentSessionCreatedResponseCurrency = typeof DeveloperPaymentSessionCreatedResponseCurrency[keyof typeof DeveloperPaymentSessionCreatedResponseCurrency];
