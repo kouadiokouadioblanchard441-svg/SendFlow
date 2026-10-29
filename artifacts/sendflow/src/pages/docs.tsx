@@ -26,7 +26,7 @@ type TranslationLists = {
   hostedFlowTitles: string[];
   hostedFlowTexts: string[];
   mobileMoneyActors: { title: string; body: string }[];
-  mobileMoneyCards: { title: string; status: string; body: string; countryCode?: string; flag?: string; ussdCode?: string; codeLabel?: string; codeCaption?: string; sourceUrl?: string }[];
+  mobileMoneyCards: { title: string; status: string; body: string; countryCode?: string; flag?: string }[];
   troubleshooting: { symptom: string; action: string }[];
   credentialRows: { credential: string; usedFor: string; handling: string }[];
   paymentStateRows: { state: string; meaning: string; action: string }[];
@@ -116,7 +116,7 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Rôle et emplacement de chaque identifiant',
     credentialHeader: 'Identifiant', credentialUseHeader: 'Utilisation', credentialHandlingHeader: 'Protection',
     pollTokenNote: 'Le pollToken est un identifiant d’accès à la tentative. Préférez interroger l’état depuis votre serveur avec la clé secrète ; si le client doit le recevoir pour afficher la progression, gardez-le temporairement en mémoire et excluez-le des journaux, URL et outils analytiques.',
-    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse : remplacez les variables d’environnement et les identifiants d’exemple par les valeurs obtenues aux étapes précédentes. Les clés et jetons répétés dans les réponses sont fictifs et ne donnent aucun accès.',
+    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse : définissez apiBaseUrl avec la base API officielle communiquée par SendFlow, puis remplacez les variables d’environnement et identifiants d’exemple par ceux des étapes précédentes. Les clés et jetons affichés sont fictifs et ne donnent aucun accès ; gardez la clé secrète côté serveur.',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec l’origine de paiement SendFlow communiquée pour votre compte et redirigez le client.',
     apiAvailabilityTitle: 'Disponibilité actuelle',
@@ -126,11 +126,12 @@ const localized: Record<Language, Translation> = {
     webhookSharedNote: 'Les webhooks s’appliquent aux deux parcours, API directe et Hosted Checkout. Ils sont envoyés après un résultat final confirmé ; consultez le guide Webhooks pour vérifier la signature et dédupliquer les livraisons.',
     webhookGuideLink: 'Ouvrir le guide Webhooks',
     mobileMoneyTitle: 'Mobile Money, USSD et OTP',
-    mobileMoneyText: 'Les codes des fiches ci-dessous sont repris des captures que vous avez fournies et ne sont pas revalidés auprès des opérateurs. Ils décrivent des actions du payeur sur son téléphone, pas des commandes SendFlow confirmées. Dans le contrat actuel, la création d’une tentative n’accepte aucun OTP ni PIN ; le service commun API directe/Hosted Checkout rejette les canaux marqués requiresOtp. Ne demandez pas au payeur de transmettre son OTP ou son PIN à votre serveur. Pour une tentative SendFlow, affichez uniquement le ussdCode réellement renvoyé par l’API (il peut être null) et les choix retournés pour cette session. /api/pricing peut exposer requiresOtp et otpCommand comme métadonnées, pas comme preuve de prise en charge.',
+    mobileMoneyText: 'Les codes USSD et étapes OTP ne sont publiés que s’ils sont confirmés par une source officielle et applicables au parcours SendFlow. Aucun parcours OTP actuellement accepté par le contrat ne peut être documenté comme opérationnel : le corps de création de tentative n’accepte aucun OTP ni PIN et le service commun API directe/Hosted Checkout rejette les canaux marqués requiresOtp. Ne demandez jamais au payeur de transmettre son OTP ou son PIN à votre serveur. Pour un canal effectivement proposé, affichez uniquement le ussdCode renvoyé par l’API (il peut être null) et les choix retournés pour cette session. /api/pricing expose requiresOtp et otpCommand comme métadonnées, pas comme preuve de prise en charge.',
     mobileMoneyActorsTitle: 'Qui fait quoi dans le parcours Mobile Money ?',
-    mobileMoneyCountryTitle: 'Notes par pays et opérateur',
+    mobileMoneyCountryTitle: 'État documenté par pays et opérateur',
     androidDirectNote: 'L’exemple Kotlin ci-dessous utilise les routes publiques de session directe depuis Android. Il s’agit d’un exemple REST, pas d’un SDK officiel ; il suppose kotlinx-coroutines-android. Créez la session sur votre serveur et transmettez seulement la clé publique et les jetons de session nécessaires.',
     directInputText: 'Attention au format : la session peut renvoyer un code pays en minuscules (par exemple ci), mais la création de tentative exige deux lettres majuscules (CI). Convertissez-le en majuscules. phoneNumber doit inclure l’indicatif international renvoyé par la session (par exemple +225 suivi du numéro national). Utilisez operatorId directement depuis la réponse de session.',
+    directCorsNote: 'Les routes /api/v1/public/* ont leur propre configuration CORS : les appels navigateur sont autorisés sans cookies, en GET/POST/OPTIONS, avec Content-Type, X-SendFlow-Public-Key, X-SendFlow-Client-Token, X-LinkFlow-Attempt-Token et Idempotency-Key. La création et la lecture privée d’une session avec Authorization: Bearer restent côté serveur. N’exposez jamais la clé secrète dans le navigateur.',
     hostedTimerText: 'La page hébergée affiche un compte à rebours d’attente de 10 minutes. Son expiration peut afficher une vue d’échec au payeur, mais le suivi serveur continue et une confirmation finale reçue ensuite prévaut. Le compte à rebours n’est pas un statut de paiement : vérifiez l’état serveur ou un webhook signé et traitez uncertain comme non final.',
     responsibilities: 'Règles d’intégration',
     endpointStatus: 'API REST · JSON',
@@ -156,6 +157,7 @@ const localized: Record<Language, Translation> = {
     apiScopeTitle: 'Périmètre de l’API publique', apiScopeText: 'Cette référence décrit les contrats de session, tentative directe, statut et tarification présents dans le code. Elle ne documente pas de route publique pour annuler un paiement, lister toutes les transactions, consulter un solde ou effectuer un retrait. Aucun SDK marchand officiel n’est présent dans le projet inspecté ; l’exemple Kotlin Android est un appel REST, pas un SDK SendFlow.',
     security: 'Sécurité et fiabilité', errors: 'Erreurs HTTP', idempotency: 'Idempotence', expiration: 'Expiration et montants', securityText: 'Utilisez HTTPS. Stockez la clé secrète et le secret webhook (affiché une seule fois à sa création) dans un coffre sécurisé. Comparez la signature en temps constant, vérifiez la fraîcheur de l’horodatage et ne traitez l’événement qu’après validation.',
     errorsText: 'Les routes documentées renvoient une erreur JSON sous la forme { "error": "…" }. Le contrat ne définit pas de code d’erreur machine stable : basez votre traitement sur le statut HTTP et vos propres règles, pas sur le texte du message. Une réponse 503 indique une indisponibilité, pas un échec final du paiement. Une redirection ou un état affiché dans le navigateur ne confirme jamais le paiement : vérifiez toujours le statut côté serveur.',
+    globalHttpErrors: 'Le parseur global peut aussi renvoyer 413 si le corps dépasse 100 Ko ou 415 si l’encodage/jeu de caractères n’est pas pris en charge. Une erreur interne non prévue peut renvoyer 500. Les réponses conservent le format JSON { "error": "…" } ; en cas de 500/503, ne déduisez jamais le résultat du paiement.',
     errorEnvelopeTitle: 'Format d’erreur',
     httpErrorTableTitle: 'Réponses HTTP et conduite à tenir',
     errorStatusHeader: 'HTTP', errorMeaningHeader: 'Signification', errorActionHeader: 'Action recommandée',
@@ -226,7 +228,7 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Role and handling of each credential',
     credentialHeader: 'Credential', credentialUseHeader: 'Used for', credentialHandlingHeader: 'Handling',
     pollTokenNote: 'pollToken grants access to an attempt. Prefer checking status from your server with the secret key; if the client needs it to show progress, keep it in memory temporarily and exclude it from logs, URLs, and analytics.',
-    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Snippet to integrate into your server or checkout: replace environment variables and sample identifiers with values returned by previous steps. Repeated keys and tokens in response examples are fictitious and grant no access.',
+    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Snippet for your server or checkout: set apiBaseUrl to the official API base provided by SendFlow, then replace environment variables and sample identifiers with values from previous steps. Displayed keys and tokens are fictitious and grant no access; keep the secret key server-side.',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with the SendFlow payment origin provided for your account and redirect the customer.',
     apiAvailabilityTitle: 'Current availability',
@@ -236,11 +238,12 @@ const localized: Record<Language, Translation> = {
     webhookSharedNote: 'Webhooks apply to both Direct API and Hosted Checkout. They are sent after a confirmed final result; see the Webhooks guide to verify signatures and deduplicate deliveries.',
     webhookGuideLink: 'Open the Webhooks guide',
     mobileMoneyTitle: 'Mobile Money, USSD, and OTP',
-    mobileMoneyText: 'The codes in the cards below are reproduced from the screenshots you provided and have not been revalidated with the operators. They describe payer actions on a phone, not confirmed SendFlow commands. The current attempt contract accepts neither OTP nor PIN; the attempt service shared by Direct API and Hosted Checkout rejects channels marked as requiring OTP. Do not ask payers to send their OTP or PIN to your server. For a SendFlow attempt, display only the ussdCode actually returned by the API (it may be null) and the choices returned for that session. /api/pricing may expose requiresOtp and otpCommand as metadata, not proof that a flow is supported.',
+    mobileMoneyText: 'USSD codes and OTP steps are published only when confirmed by an official source and applicable to the SendFlow flow. No OTP flow accepted by the current contract can be documented as operational: the create-attempt body accepts neither OTP nor PIN, and the service shared by Direct API and Hosted Checkout rejects channels marked as requiring OTP. Never ask a payer to send an OTP or PIN to your server. For a channel actually offered, display only the ussdCode returned by the API (it may be null) and the choices returned for that session. /api/pricing exposes requiresOtp and otpCommand as metadata, not proof that a flow is supported.',
     mobileMoneyActorsTitle: 'Who does what in a Mobile Money payment?',
-    mobileMoneyCountryTitle: 'Country and operator notes',
+    mobileMoneyCountryTitle: 'Documented status by country and operator',
     androidDirectNote: 'The Kotlin example below uses public direct-session routes from Android. It is a REST example, not an official SDK; it assumes kotlinx-coroutines-android. Create the session on your server and pass only the public key and required session tokens to the app.',
     directInputText: 'Mind the format: the session may return a lowercase country code (for example ci), while creating an attempt requires two uppercase letters (CI). Convert it to uppercase. phoneNumber must include the international prefix returned by the session (for example +225 followed by the national number). Use operatorId directly from the session response.',
+    directCorsNote: 'The /api/v1/public/* routes have their own CORS configuration: browser calls are allowed without cookies, using GET/POST/OPTIONS and Content-Type, X-SendFlow-Public-Key, X-SendFlow-Client-Token, X-LinkFlow-Attempt-Token, and Idempotency-Key. Creating a session and reading a private session with Authorization: Bearer remain server-side. Never expose the secret key in a browser.',
     hostedTimerText: 'The hosted page displays a 10-minute waiting countdown. When it expires, the payer may see a failure screen, but server-side polling continues and a later final confirmation takes precedence. The countdown is not a payment status: check the server status or a signed webhook and treat uncertain as non-final.',
     responsibilities: 'Integration rules',
     endpointStatus: 'REST API · JSON',
@@ -266,6 +269,7 @@ const localized: Record<Language, Translation> = {
     apiScopeTitle: 'Public API scope', apiScopeText: 'This reference describes the session, direct-attempt, status, and pricing contracts present in the inspected code. It does not document a public route to cancel a payment, list all transactions, read a balance, or create a payout. No official merchant SDK is present in the inspected project; the Android Kotlin sample is a REST call, not a SendFlow SDK.',
     security: 'Security & reliability', errors: 'HTTP errors', idempotency: 'Idempotency', expiration: 'Expiration and amounts', securityText: 'Use HTTPS. Store the secret key and webhook secret (shown once at creation) in a secure vault. Compare signatures in constant time, check timestamp freshness, and process events only after verification.',
     errorsText: 'The documented routes return JSON errors in the form { "error": "…" }. The contract defines no stable machine-readable error code: handle HTTP status and your own business rules, not message text. A 503 means the operation is unavailable, not that payment finally failed. A redirect or client-side state never proves payment; always verify status server-side.',
+    globalHttpErrors: 'The global parser may also return 413 when a body exceeds 100 KB, or 415 for an unsupported charset or encoding. An unexpected internal error may return 500. Responses keep the JSON shape { "error": "…" }; never infer a payment result from a 500/503 response.',
     errorEnvelopeTitle: 'Error format',
     httpErrorTableTitle: 'HTTP responses and recommended handling',
     errorStatusHeader: 'HTTP', errorMeaningHeader: 'Meaning', errorActionHeader: 'Recommended action',
@@ -314,19 +318,19 @@ const localizedLists: Record<Language, TranslationLists> = {
     mobileMoneyActors: [
       { title: 'Client payeur', body: 'Choisit un pays et un opérateur renvoyés par la session, saisit son numéro et suit le code USSD effectivement fourni ou la notification de son opérateur. Il valide sur le parcours de l’opérateur ; l’application marchande ne doit pas collecter son OTP ou son PIN.' },
       { title: 'Marchand', body: 'Crée la session sur son serveur, affiche les choix disponibles, démarre la tentative et interroge son état. Il n’envoie jamais la clé secrète dans le navigateur ou l’application mobile.' },
-      { title: 'Réponse de l’API', body: 'La tentative renvoie notamment attemptId, state, amount, currency, pollToken et un ussdCode qui peut être null. Le corps de création ne contient aucun champ OTP ou PIN.' },
+      { title: 'Réponse de l’API', body: 'La tentative renvoie notamment attemptId, state, amountMinor, currency, pollToken et un ussdCode qui peut être null. Le corps de création ne contient aucun champ OTP ou PIN.' },
       { title: 'Webhook', body: 'Pour les deux modes, SendFlow notifie payment.succeeded ou payment.failed uniquement après confirmation finale. Vérifiez la signature HMAC et dédupliquez avec sendflow-delivery.' },
     ],
     mobileMoneyCards: [
-      { title: 'Burkina Faso · Orange Money', countryCode: 'BF', flag: '🇧🇫', status: 'Canal OTP rejeté par SendFlow', body: 'La capture indique que le payeur compose ce code avec le montant, puis reçoit un OTP par SMS ou USSD. Le canal Orange Money BF est marqué comme nécessitant un OTP dans le catalogue inspecté ; le service de tentative commun le rejette en API directe comme en Hosted Checkout. Le contrat SendFlow ne permet donc pas de transmettre l’OTP ni de terminer ce parcours.', ussdCode: '*144*4*6*<montant>#', codeLabel: 'Référence USSD · Burkina Faso', codeCaption: 'Reprise de vos captures · validité auprès de l’opérateur à reconfirmer · <montant> est un placeholder.' },
-      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', flag: '🇨🇮', status: 'OTP absent du contrat SendFlow', body: 'La capture indique que ce code sert à générer un code de paiement affiché sur le téléphone. Le catalogue SendFlow contient Orange Money CI, mais le contrat de tentative n’accepte aucun OTP ou PIN. /api/pricing peut renvoyer otpCommand avec la mention « option 2 », différente de la capture ; cette métadonnée n’est pas une instruction vérifiée et ne rend pas l’étape intégrable. Ce parcours ne doit pas être présenté comme opérationnel dans SendFlow.', ussdCode: '#144*82#', codeLabel: 'Référence USSD · Côte d’Ivoire', codeCaption: 'Reprise de vos captures · validité auprès de l’opérateur à reconfirmer · pas un paramètre API SendFlow.' },
-      { title: 'Sénégal · Orange Money', countryCode: 'SN', flag: '🇸🇳', status: 'Canal OTP rejeté par SendFlow', body: 'La capture indique que le payeur compose ce code et obtient un OTP dans le menu USSD. Le canal Orange Money SN est marqué comme nécessitant un OTP dans le catalogue inspecté ; le service de tentative commun le rejette en API directe comme en Hosted Checkout. Aucun champ OTP n’existe dans la requête SendFlow.', ussdCode: '#144*82#', codeLabel: 'Référence USSD · Sénégal', codeCaption: 'Reprise de vos captures · validité auprès de l’opérateur à reconfirmer · pas un paramètre API SendFlow.' },
-      { title: 'Mali · Orange Money', countryCode: 'ML', flag: '🇲🇱', status: 'Non présent dans le catalogue inspecté', body: 'La capture indique que le payeur compose ce code, choisit « Paiement marchand » (option 2), puis valide pour obtenir un OTP. Le Mali et son opérateur n’apparaissent pas dans le catalogue statique inspecté ; ne les présentez pas comme disponibles dans SendFlow sans confirmation par les choix d’une session. Le contrat actuel n’accepte aucun OTP.', ussdCode: '#144#', codeLabel: 'Référence USSD · Mali', codeCaption: 'Reprise de vos captures · validité auprès de l’opérateur à reconfirmer · pas un paramètre API SendFlow.' },
+      { title: 'Burkina Faso · Orange Money', countryCode: 'BF', flag: '🇧🇫', status: 'Parcours OTP non pris en charge', body: 'Le catalogue d’opérateurs inspecté marque ce canal comme nécessitant un OTP, et le service partagé rejette les canaux ainsi marqués pour les tentatives API directe et Hosted Checkout. Le contrat SendFlow ne reçoit aucun OTP ; le code USSD et les étapes par pays restent à confirmer officiellement et ne sont pas publiés comme procédure de paiement.' },
+      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', flag: '🇨🇮', status: 'Parcours OTP non confirmé', body: 'Orange Money CI apparaît dans le catalogue, mais le contrat de tentative n’accepte aucun OTP ou PIN. /api/pricing peut renvoyer une métadonnée otpCommand décrivant une option de menu ; cela ne confirme ni un code USSD exact ni un parcours de paiement SendFlow. Le code et les étapes applicables restent à confirmer auprès d’une source officielle et dans le flux réel.' },
+      { title: 'Sénégal · Orange Money', countryCode: 'SN', flag: '🇸🇳', status: 'Parcours OTP non pris en charge', body: 'Le catalogue d’opérateurs inspecté marque ce canal comme nécessitant un OTP, et le service partagé rejette les canaux ainsi marqués pour les tentatives API directe et Hosted Checkout. Le contrat SendFlow ne reçoit aucun OTP ; le code USSD et les étapes par pays restent à confirmer officiellement et ne sont pas publiés comme procédure de paiement.' },
+      { title: 'Mali · Orange Money', countryCode: 'ML', flag: '🇲🇱', status: 'Opérateur absent du catalogue inspecté', body: 'Le Mali et son opérateur n’apparaissent pas dans le catalogue statique de paiement inspecté. Aucune disponibilité SendFlow n’est confirmée pour ce pays ; n’affichez pas de code ni d’étapes de paiement avant que le pays et l’opérateur soient proposés par une session et que le parcours soit vérifié.' },
       { title: 'Autres pays et opérateurs', status: 'Choix dynamiques', body: 'Il n’existe pas de liste statique fiable à publier depuis le code seul. GET /api/pricing fournit un catalogue général, mais les choix de session directe sont filtrés par les règles de routage et de configuration ; ils font autorité pour cette session.' },
     ],
     troubleshooting: [
       { symptom: 'Aucun pays ou opérateur ne s’affiche', action: 'Vérifiez la réponse de la session directe. Le catalogue global de frais ne garantit pas qu’un opérateur soit admissible pour cette session.' },
-      { symptom: 'Aucun code USSD n’est renvoyé', action: 'ussdCode peut être null. Ne fabriquez pas de code ; demandez au payeur de suivre la notification affichée par son opérateur.' },
+      { symptom: 'Aucun code USSD n’est renvoyé', action: 'ussdCode peut être null. Ne fabriquez pas de code ; affichez uniquement les instructions fournies par la session SendFlow active.' },
       { symptom: 'Le client revient sans webhook', action: 'La redirection du navigateur n’est pas une confirmation. Lisez le statut serveur et consultez l’historique des livraisons webhook dans l’espace Développeurs.' },
       { symptom: 'Le compte à rebours hébergé expire', action: 'L’écran d’échec après 10 minutes n’est pas un état final serveur. Vérifiez la session et traitez uncertain comme non final.' },
       { symptom: 'Une création renvoie 503', action: 'Le parcours de création et de tentative est actuellement désactivé dans le code inspecté. N’essayez pas de contourner cette indisponibilité ni de présenter le paiement comme échoué ou réussi.' },
@@ -352,6 +356,9 @@ const localizedLists: Record<Language, TranslationLists> = {
       { status: '404', meaning: 'Session, tentative ou identifiants publics introuvables ou indisponibles.', action: 'Vérifiez les UUID, le mode et les jetons associés sans supposer qu’une ressource a été supprimée.' },
       { status: '409', meaning: 'Référence marchande en conflit ou clé d’idempotence réutilisée avec un corps différent.', action: 'Pour une reprise, renvoyez exactement la même demande avec la même clé ; une nouvelle opération reçoit une nouvelle clé.' },
       { status: '429', meaning: 'Limite de requêtes atteinte.', action: 'Respectez Retry-After: 60 et ralentissez les appels.' },
+      { status: '413', meaning: 'Corps de requête supérieur à la limite globale de 100 Ko.', action: 'Réduisez le corps ; les métadonnées de session sont limitées à 8 Ko.' },
+      { status: '415', meaning: 'Jeu de caractères ou encodage de requête non pris en charge.', action: 'Envoyez du JSON UTF-8 avec Content-Type: application/json.' },
+      { status: '500', meaning: 'Erreur interne inattendue.', action: 'Reprenez avec la même clé d’idempotence et le même corps ; ne créez pas une nouvelle opération. Vérifiez ensuite l’état serveur et contactez SendFlow si l’erreur persiste.' },
       { status: '503', meaning: 'Service indisponible ou verrou de création/démarrage fermé.', action: 'Ne classez pas le paiement comme échoué. Reprenez le suivi serveur lorsque le service est disponible.' },
     ],
   },
@@ -376,19 +383,19 @@ const localizedLists: Record<Language, TranslationLists> = {
     mobileMoneyActors: [
       { title: 'Payer', body: 'Chooses a country and operator returned by the session, enters a phone number, and follows only the returned USSD code or the operator notification. Authorization happens in the operator flow; the merchant app must not collect the payer’s OTP or PIN.' },
       { title: 'Merchant', body: 'Creates the session on its server, displays available choices, starts the attempt, and checks its status. Never send the secret key to a browser or mobile app.' },
-      { title: 'API response', body: 'The attempt returns, among other fields, attemptId, state, amount, currency, pollToken, and a possibly null ussdCode. The create-attempt body has no OTP or PIN field.' },
+      { title: 'API response', body: 'The attempt returns, among other fields, attemptId, state, amountMinor, currency, pollToken, and a possibly null ussdCode. The create-attempt body has no OTP or PIN field.' },
       { title: 'Webhook', body: 'For both modes, SendFlow sends payment.succeeded or payment.failed only after final confirmation. Verify the HMAC signature and deduplicate with sendflow-delivery.' },
     ],
     mobileMoneyCards: [
-      { title: 'Burkina Faso · Orange Money', countryCode: 'BF', flag: '🇧🇫', status: 'OTP channel rejected by SendFlow', body: 'The supplied screenshot says the payer dials this code with the amount and then receives an OTP by SMS or USSD. The inspected Orange Money BF channel is marked as requiring OTP; the shared attempt service rejects it for both Direct API and Hosted Checkout. The SendFlow contract therefore cannot receive the OTP or complete this flow.', ussdCode: '*144*4*6*<amount>#', codeLabel: 'USSD reference · Burkina Faso', codeCaption: 'Reproduced from your screenshots · reconfirm with the operator · <amount> is a placeholder.' },
-      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', flag: '🇨🇮', status: 'OTP absent from SendFlow contract', body: 'The supplied screenshot says this code generates a payment code shown on the phone. Orange Money CI appears in the SendFlow catalog, but the attempt contract accepts no OTP or PIN. /api/pricing may return otpCommand with an “option 2” note that differs from the screenshot; this metadata is not a verified instruction and does not make the step integratable. Do not present this as an operational SendFlow flow.', ussdCode: '#144*82#', codeLabel: 'USSD reference · Côte d’Ivoire', codeCaption: 'Reproduced from your screenshots · reconfirm with the operator · not a SendFlow API parameter.' },
-      { title: 'Senegal · Orange Money', countryCode: 'SN', flag: '🇸🇳', status: 'OTP channel rejected by SendFlow', body: 'The supplied screenshot says the payer dials this code and receives an OTP in the USSD menu. The inspected Orange Money SN channel is marked as requiring OTP; the shared attempt service rejects it for both Direct API and Hosted Checkout. No OTP field exists in the SendFlow request.', ussdCode: '#144*82#', codeLabel: 'USSD reference · Senegal', codeCaption: 'Reproduced from your screenshots · reconfirm with the operator · not a SendFlow API parameter.' },
-      { title: 'Mali · Orange Money', countryCode: 'ML', flag: '🇲🇱', status: 'Not in inspected catalog', body: 'The supplied screenshot says the payer dials this code, selects “Merchant payment” (option 2), and confirms to obtain an OTP. Mali and its operator do not appear in the inspected static catalog; do not describe them as available in SendFlow unless a session returns the choice. The current contract accepts no OTP.', ussdCode: '#144#', codeLabel: 'USSD reference · Mali', codeCaption: 'Reproduced from your screenshots · reconfirm with the operator · not a SendFlow API parameter.' },
+      { title: 'Burkina Faso · Orange Money', countryCode: 'BF', flag: '🇧🇫', status: 'OTP flow not supported', body: 'The inspected operator catalog marks this channel as requiring OTP, and the shared service rejects channels so marked for both Direct API and Hosted Checkout attempts. The SendFlow contract accepts no OTP; country-specific USSD codes and steps remain to be officially confirmed and are not published as payment instructions.' },
+      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', flag: '🇨🇮', status: 'OTP flow unconfirmed', body: 'Orange Money CI appears in the catalog, but the attempt contract accepts no OTP or PIN. /api/pricing may return otpCommand menu metadata; this does not confirm an exact USSD code or a SendFlow payment flow. The applicable code and steps remain unconfirmed against an official source and the real flow.' },
+      { title: 'Senegal · Orange Money', countryCode: 'SN', flag: '🇸🇳', status: 'OTP flow not supported', body: 'The inspected operator catalog marks this channel as requiring OTP, and the shared service rejects channels so marked for both Direct API and Hosted Checkout attempts. The SendFlow contract accepts no OTP; country-specific USSD codes and steps remain to be officially confirmed and are not published as payment instructions.' },
+      { title: 'Mali · Orange Money', countryCode: 'ML', flag: '🇲🇱', status: 'Operator absent from inspected catalog', body: 'Mali and its operator do not appear in the inspected static payment catalog. SendFlow availability is not confirmed for this country; do not display a code or payment steps until a session offers the country/operator and the flow is verified.' },
       { title: 'Other countries and operators', status: 'Dynamic choices', body: 'The source alone does not provide a reliable static support list. GET /api/pricing returns a global catalog, but direct-session choices are filtered by routing and configuration rules and are authoritative for that session.' },
     ],
     troubleshooting: [
       { symptom: 'No country or operator is displayed', action: 'Check the direct session response. The global fee catalog does not guarantee that a method is eligible for this session.' },
-      { symptom: 'No USSD code is returned', action: 'ussdCode may be null. Do not invent a code; ask the payer to follow the notification shown by the operator.' },
+      { symptom: 'No USSD code is returned', action: 'ussdCode may be null. Do not invent a code; display only the instructions returned for the active SendFlow session.' },
       { symptom: 'The customer returns but no webhook arrives', action: 'A browser redirect is not confirmation. Read the server status and check webhook delivery history in the Developers area.' },
       { symptom: 'The hosted countdown expires', action: 'The failure screen after 10 minutes is not a final server state. Check the session and treat uncertain as non-final.' },
       { symptom: 'A create request returns 503', action: 'Session and attempt creation are currently disabled in the inspected code. Do not work around this unavailability or label the payment as failed or successful.' },
@@ -414,6 +421,9 @@ const localizedLists: Record<Language, TranslationLists> = {
       { status: '404', meaning: 'Session, attempt, or public credentials are unknown or unavailable.', action: 'Check UUIDs, mode, and associated tokens; do not assume the resource was deleted.' },
       { status: '409', meaning: 'Merchant reference conflict or an idempotency key reused with a different body.', action: 'For a retry, resend the exact request with the same key; use a new key for a new operation.' },
       { status: '429', meaning: 'Request limit reached.', action: 'Respect Retry-After: 60 and reduce request frequency.' },
+      { status: '413', meaning: 'Request body exceeds the global 100 KB limit.', action: 'Reduce the body; session metadata is limited to 8 KB.' },
+      { status: '415', meaning: 'Request charset or encoding is unsupported.', action: 'Send UTF-8 JSON with Content-Type: application/json.' },
+      { status: '500', meaning: 'Unexpected internal error.', action: 'Retry with the same idempotency key and body; do not create a new operation. Then check the server status and contact SendFlow if the error persists.' },
       { status: '503', meaning: 'Service unavailable or creation/attempt gate is closed.', action: 'Do not mark the payment as failed. Resume server-side status checks when the service is available.' },
     ],
   },
@@ -978,6 +988,7 @@ export default function DocsPage() {
             <CodePanel language={language} label={t.codeLabel} example="read-public-session" />
             <div className="sf-docs-callout">{t.androidDirectNote}</div>
             <div className="sf-docs-callout">{t.directInputText}</div>
+            <div className="sf-docs-callout">{t.directCorsNote}</div>
             <CodePanel language={language} label={t.codeLabel} example="start-attempt" />
             <ResponsePanel language={language} label={t.responseExample} response={directAttemptResponse} />
             <div className="sf-docs-callout">{t.pollTokenNote}</div>
@@ -998,8 +1009,6 @@ export default function DocsPage() {
                 <article className="sf-docs-endpoint sf-docs-info" key={card.title}>
                   <div className="sf-docs-endpoint-head"><strong>{card.flag && <span aria-hidden="true">{card.flag} </span>}{card.title}{card.countryCode && <> <code className="sf-docs-inline-code">{`country_code: "${card.countryCode}"`}</code></>}</strong><span className="sf-docs-endpoint-pending">{card.status}</span></div>
                   <p>{card.body}</p>
-                  {card.ussdCode && <ResponsePanel language={language} label={card.codeLabel ?? (language === 'fr' ? 'Référence USSD' : 'USSD reference')} caption={card.codeCaption} response={card.ussdCode} />}
-                  {card.sourceUrl && <a className="sf-docs-inline-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 10, color: 'var(--docs-accent)', fontSize: 12, fontWeight: 650, textDecoration: 'underline' }} href={card.sourceUrl} target="_blank" rel="noreferrer noopener">{language === 'fr' ? 'Source officielle du code du menu' : 'Official source for the menu code'} <ArrowRight size={12} aria-hidden="true" /></a>}
                 </article>
               ))}
             </div>
@@ -1031,7 +1040,7 @@ export default function DocsPage() {
         </>}
         {pageKey === 'api' && <>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
-          <section className="sf-docs-section"><h2>{t.reference}</h2><p>{t.referenceIntro}</p>
+          <section className="sf-docs-section"><h2>{t.reference}</h2><p>{t.referenceIntro}</p><div className="sf-docs-callout">{t.globalHttpErrors}</div>
             <div className="sf-docs-endpoints">
               {apiEndpointInventory.filter((endpoint) => !activeDocSection || endpoint.anchor === activeDocSection).map((endpoint) => (
                 <article className="sf-docs-endpoint" key={endpoint.path} data-testid={`endpoint-card-${endpoint.method.toLowerCase()}-${endpoint.path.split('/').at(-1)}`}>
@@ -1140,7 +1149,7 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
             <CodePanel language={language} label={t.codeLabel} example="read-session" />
             <CodePanel language={language} label={t.codeLabel} example="webhook" />
           </section>}
-          {showReferenceSection('http-errors') && <section className="sf-docs-section"><h2>{t.errors}</h2><p>{t.errorsText}</p>
+          {showReferenceSection('http-errors') && <section className="sf-docs-section"><h2>{t.errors}</h2><p>{t.errorsText}</p><div className="sf-docs-callout">{t.globalHttpErrors}</div>
             <h3>{t.httpErrorTableTitle}</h3>
             <table className="sf-docs-reference-table">
               <thead><tr><th>{t.errorStatusHeader}</th><th>{t.errorMeaningHeader}</th><th>{t.errorActionHeader}</th></tr></thead>

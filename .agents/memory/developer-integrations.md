@@ -3,13 +3,19 @@ name: Merchant developer API
 description: Product decisions for merchant API credentials, payment sessions, and webhooks.
 ---
 
-The merchant-space “Développeurs” area supports both direct API checkout and SendFlow-hosted checkout. Both payment modes must reuse LinkFlow’s configured country/operator fees and aggregator routing; do not hard-code a provider in the developer API. Webhooks may be emitted only for verified final payment results, after the existing settlement path credits the merchant wallet. Public integration documentation is a later milestone.
+The merchant-space “Développeurs” area supports both direct API checkout and SendFlow-hosted checkout. Both payment modes must reuse LinkFlow’s configured country/operator fees and aggregator routing; do not hard-code a provider in the developer API. Webhooks may be emitted only for verified final payment results, after the existing settlement path credits the merchant wallet.
 
 Public developer documentation must not reveal third-party processor or aggregator names. Describe routing limits generically; name an operator only when needed for payer instructions and only with verified details.
 
 **Why:** the user explicitly set this public-documentation branding and accuracy rule.
 
 **How to apply:** Scan public developer docs for third-party provider names before delivery. Distinguish Mobile Money operator names from upstream processors, and state unverified country/operator behavior as unconfirmed.
+
+During documentation work, keep edits inside the developer documentation pages, presentation components, and code examples. Do not change payment routes or services, business rules, the database, authentication, secrets, global configuration, or the separate marketing site unless the user explicitly expands the scope.
+
+**Why:** the user has repeatedly restricted SendFlow documentation work to that surface to protect existing production functionality.
+
+**How to apply:** Report backend gaps as unavailable or unconfirmed instead of fixing them during a documentation-only task, and confirm the final diff contains only documentation files.
 
 Each account receives one active public/secret API key pair during registration. Store only the public key and one-way hashes; return the secret only in the creation response, never persist or log it. Regeneration atomically revokes all currently active pairs and retains their revoked history. Live credentials must remain unavailable to test accounts, and API payment execution must stay closed until provider settlement evidence is validated.
 

@@ -588,7 +588,9 @@ session = response.json()`,
   },
   pricing: {
     cURL: `curl "$SENDFLOW_API_BASE_URL/pricing"`,
-    JavaScript: `const response = await fetch(\`\${apiBaseUrl}/pricing\`);
+    JavaScript: `import { env } from "node:process";
+
+const response = await fetch(\`\${env.SENDFLOW_API_BASE_URL}/pricing\`);
 if (!response.ok) throw new Error("Pricing catalog unavailable");
 const catalog = await response.json();
 const linkFlowOperators = catalog.operators.filter(
@@ -616,10 +618,11 @@ linkflow = [
 ]`,
   },
   webhook: {
-    cURL: `timestamp=$(date +%s)
+    cURL: `# Local receiver test only. Never send this synthetic event to production.
+timestamp=$(date +%s)
 body='{"id":"9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644","type":"payment.succeeded","createdAt":"2026-01-01T12:00:00.000Z","data":{"sessionId":"00000000-0000-4000-8000-000000000001","merchantReference":"ORDER-2026-0042","attemptId":"00000000-0000-4000-8000-000000000002","transactionId":"00000000-0000-4000-8000-000000000003","amountMinor":12500,"currency":"XOF","status":"succeeded"}}'
 signature=$(printf '%s' "$timestamp.$body" | openssl dgst -sha256 -hmac "$SEND_FLOW_WEBHOOK_SECRET" | awk '{print $NF}')
-curl --request POST "$MERCHANT_WEBHOOK_URL" \\
+curl --request POST "http://127.0.0.1:3000/webhooks/sendflow" \\
   --header "Content-Type: application/json" \\
   --header "sendflow-event: payment.succeeded" \\
   --header "sendflow-delivery: 9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644" \\
