@@ -169,7 +169,7 @@
   .sf-docs-sidebar { padding-inline: 16px 13px; }
 }
 @media (max-width: 760px) {
-  .sf-docs-header { min-height: 62px; padding-inline: 14px; }
+  .sf-docs-header { min-height: 62px; justify-content: flex-start; gap: 10px; padding-inline: 14px; }
   .sf-docs-brand-word { width: 83px; }
   .sf-docs-mobile-menu { display: grid; }
   .sf-docs-nav { display: none; }

@@ -474,6 +474,7 @@ export default function DocsPage() {
   return (
     <div className="sf-docs">
       <header className="sf-docs-header">
+        <button type="button" className="sf-docs-mobile-menu" onClick={() => setSidebarOpen((open) => !open)} aria-expanded={sidebarOpen} aria-label={sidebarOpen ? t.menuClose : t.contents} data-testid="button-docs-mobile-nav">{sidebarOpen ? <X size={18} /> : <Menu size={18} />}</button>
         <Link href="/docs" className="sf-docs-brand" aria-label="SendFlow documentation" data-testid="link-docs-home">
           <span className="sf-docs-brand-mark"><img src={sendflowMark} alt="" /></span><img className="sf-docs-brand-word" src={sendflowWordmark} alt="SendFlow" />
         </Link>
@@ -486,7 +487,6 @@ export default function DocsPage() {
         <div className="sf-docs-header-tools">
           <Link href="/sign-in" className="sf-docs-dashboard" data-testid="link-docs-dashboard"><ArrowRight size={14} /><span>{t.dashboard}</span></Link>
           <button type="button" className="sf-docs-lang" onClick={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')} aria-label={language === 'fr' ? 'Switch to English' : 'Passer en français'} data-testid="button-docs-language">{language === 'fr' ? 'EN' : 'FR'}</button>
-          <button type="button" className="sf-docs-mobile-menu" onClick={() => setSidebarOpen((open) => !open)} aria-expanded={sidebarOpen} aria-label={sidebarOpen ? t.menuClose : t.contents} data-testid="button-docs-mobile-nav">{sidebarOpen ? <X size={18} /> : <Menu size={18} />}</button>
         </div>
       </header>
       <div className="sf-docs-shell">
