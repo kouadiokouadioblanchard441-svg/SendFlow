@@ -313,3 +313,369 @@
 .sf-docs-side-link.is-active {
   border-color: #d9c4ed;
 }
+
+/* Documentation-only visual refresh: neutral surfaces, SendFlow blue actions, dark examples. */
+.sf-docs {
+  --docs-line: #d7dce2;
+  --docs-accent: #1769d2;
+  --docs-accent-deep: #1457b3;
+  --docs-accent-wash: #f5f8fc;
+  --docs-red: #ff0000;
+  color: #171a1f;
+  background: #fff;
+}
+
+.sf-docs,
+.sf-docs-header,
+.sf-docs-sidebar,
+.sf-docs-main,
+.sf-docs-drawer-head {
+  background-color: #fff;
+}
+
+.sf-docs-header,
+.sf-docs-sidebar,
+.sf-docs-sidebar-note,
+.sf-docs-mobile-breadcrumb,
+.sf-docs-drawer-head,
+.sf-docs-footer {
+  border-color: #d7dce2;
+}
+
+.sf-docs-nav a:hover,
+.sf-docs-nav a.is-active,
+.sf-docs-breadcrumb a:hover,
+.sf-docs-footer a,
+.sf-docs-card-cta,
+.sf-docs-support a,
+.sf-docs-step > a {
+  color: #1769d2;
+}
+
+.sf-docs-mobile-menu,
+.sf-docs-search,
+.sf-docs-search kbd,
+.sf-docs-drawer-close,
+.sf-docs-drawer-language,
+.sf-docs-status,
+.sf-docs-card,
+.sf-docs-steps,
+.sf-docs-support,
+.sf-docs-endpoint,
+.sf-docs-reference-table tr,
+.sf-docs-warning,
+.sf-docs-callout,
+.sf-docs-inline-code,
+.sf-docs-method-badge,
+.sf-docs-endpoint-pending {
+  border-color: #d7dce2;
+}
+
+.sf-docs-search:focus-within {
+  border-color: #1769d2;
+  box-shadow: 0 0 0 3px rgba(23, 105, 210, .14);
+}
+
+.sf-docs-search kbd,
+.sf-docs-status,
+.sf-docs-endpoint-pending,
+.sf-docs-inline-code,
+.sf-docs-method-badge,
+.sf-docs-method-badge.is-post,
+.sf-docs-method-badge.is-get {
+  background: #f5f7f9;
+  color: #374151;
+}
+
+.sf-docs-method-badge.is-post,
+.sf-docs-method-badge.is-get {
+  border-color: #d7dce2;
+}
+
+.sf-docs-mobile-menu,
+.sf-docs-drawer-close,
+.sf-docs-drawer-language,
+.sf-docs-mobile-search,
+.sf-docs-mobile-crumb-menu,
+.sf-docs-mobile-breadcrumb > svg,
+.sf-docs-sidebar-note svg,
+.sf-docs-side-link svg,
+.sf-docs-side-link.is-active svg,
+.sf-docs-card-icon,
+.sf-docs-step-index,
+.sf-docs-status-dot {
+  color: #5b6572;
+}
+
+.sf-docs-card-arrow,
+.sf-docs-card-cta,
+.sf-docs-endpoint-example summary::marker {
+  color: #1769d2;
+}
+
+.sf-docs-status-dot,
+.sf-docs-list li::before {
+  background: #66717f;
+}
+
+.sf-docs-group-toggle > svg:first-child,
+.sf-docs-group-toggle:hover,
+.sf-docs-nav-group.is-active .sf-docs-group-toggle,
+.sf-docs-side-link:hover,
+.sf-docs-side-link.is-active,
+.sf-docs-side-link.is-active::before {
+  color: #1769d2 !important;
+}
+
+.sf-docs-group-toggle:hover,
+.sf-docs-nav-group.is-active .sf-docs-group-toggle,
+.sf-docs-side-link:hover,
+.sf-docs-side-link.is-active {
+  background: #f5f8fc;
+}
+
+.sf-docs-side-link.is-active {
+  border-color: #d7dce2;
+}
+
+.sf-docs-side-link.is-active::before {
+  background: #1769d2;
+}
+
+.sf-docs-nav-items,
+.sf-docs-nav-group,
+.sf-docs-method-details,
+.sf-docs-method-details > div + div,
+.sf-docs-step + .sf-docs-step,
+.sf-docs-reference-table th,
+.sf-docs-reference-table td,
+.sf-docs-reference-table td:first-child,
+.sf-docs-endpoint-access,
+.sf-docs-endpoint-example,
+.sf-docs-footer {
+  border-color: #d7dce2;
+}
+
+.sf-docs-eyebrow,
+.sf-docs-title,
+.sf-docs-lede,
+.sf-docs-section h2,
+.sf-docs-section h3,
+.sf-docs-card h3,
+.sf-docs-card p,
+.sf-docs-step strong,
+.sf-docs-step p,
+.sf-docs-base-url strong,
+.sf-docs-base-url span,
+.sf-docs-reference-table td,
+.sf-docs-reference-table td:first-child,
+.sf-docs-endpoint-head code,
+.sf-docs-endpoint > p,
+.sf-docs-endpoint-access strong,
+.sf-docs-endpoint > .sf-docs-endpoint-requirements,
+.sf-docs-endpoint-note {
+  color: #22262d;
+}
+
+.sf-docs-eyebrow,
+.sf-docs-meta,
+.sf-docs-breadcrumb,
+.sf-docs-section > p,
+.sf-docs-search,
+.sf-docs-search input::placeholder,
+.sf-docs-group-chevron,
+.sf-docs-method-details dt,
+.sf-docs-endpoint-access span,
+.sf-docs-endpoint > .sf-docs-endpoint-codes,
+.sf-docs-footer {
+  color: #586270;
+}
+
+.sf-docs-warning {
+  border-left: 4px solid #ff0000;
+  background: #fff;
+  box-shadow: none;
+  color: #22262d;
+}
+
+.sf-docs-warning > svg,
+.sf-docs-warning strong {
+  color: #ff0000;
+}
+
+.sf-docs-callout {
+  border-left-color: #d7dce2;
+  background: #f7f8fa;
+  color: #303640;
+}
+
+.sf-docs-card,
+.sf-docs-steps,
+.sf-docs-support,
+.sf-docs-endpoint,
+.sf-docs-reference-table tr {
+  border-width: 1px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+
+.sf-docs-card:hover {
+  border-color: #1769d2;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, .07);
+}
+
+.sf-docs-card-icon {
+  border-color: #d7dce2;
+  background: #f5f7f9;
+}
+
+.sf-docs-home .sf-docs-cards {
+  gap: 16px;
+}
+
+.sf-docs .sf-docs-home .sf-docs-cards > .sf-docs-card {
+  min-height: 0;
+}
+
+.sf-docs-step-index {
+  border-color: #d7dce2;
+  background: #fff;
+}
+
+.sf-docs-code,
+.sf-docs-response {
+  border: 1px solid #343b46;
+  border-radius: 12px;
+  background: #11151b;
+  box-shadow: none;
+  color: #e6edf3;
+}
+
+.sf-docs-code-head {
+  border-bottom-color: #343b46;
+  background: #1a2029;
+}
+
+.sf-docs-code-label {
+  color: #d1d8e0;
+}
+
+.sf-docs-code-lang button {
+  color: #c0c7d0;
+}
+
+.sf-docs-code-lang button:hover,
+.sf-docs-code-lang button.is-active {
+  border-color: #1769d2;
+  background: #202b39;
+  color: #a9d0ff;
+}
+
+.sf-docs-copy {
+  border-color: #5ca0f2;
+  background: #172638;
+  color: #b9d8ff;
+}
+
+.sf-docs-copy:hover {
+  border-color: #1769d2;
+  background: #1769d2;
+  color: #fff;
+}
+
+.sf-docs-code pre,
+.sf-docs-response {
+  color: #e6edf3;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.sf-docs-code pre {
+  overflow-x: auto;
+  padding: 18px;
+}
+
+.sf-docs-code-note {
+  border-top-color: #343b46;
+  color: #aab4c0;
+}
+
+.sf-docs-token-comment {
+  color: #9aa4b2;
+}
+
+.sf-docs-token-string {
+  color: #a5d6a7;
+}
+
+.sf-docs-token-keyword {
+  color: #8cc8ff;
+}
+
+.sf-docs-token-option {
+  color: #f2cc60;
+}
+
+.sf-docs-token-variable {
+  color: #9cdcfe;
+}
+
+.sf-docs-token-number {
+  color: #79c0ff;
+}
+
+.sf-docs-response {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 10px 0 0;
+  padding: 16px;
+  white-space: pre;
+}
+
+.sf-docs-inline-code {
+  background: #f1f3f5;
+  color: #303640;
+}
+
+.sf-docs-endpoint-example summary,
+.sf-docs-endpoint-example summary::marker {
+  color: #1769d2;
+}
+
+.sf-docs-endpoint-pending {
+  background: #f5f7f9;
+  color: #586270;
+}
+
+.sf-docs :focus-visible {
+  outline: 3px solid rgba(23, 105, 210, .35);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .sf-docs-sidebar {
+    border-right-color: #d7dce2;
+    box-shadow: 8px 0 24px rgba(16, 24, 40, .12);
+  }
+
+  .sf-docs-drawer-close,
+  .sf-docs-drawer-language {
+    border-color: #d7dce2;
+  }
+
+  .sf-docs-nav-group {
+    border-bottom-color: #e5e7eb;
+  }
+}
+
+@media (max-width: 520px) {
+  .sf-docs .sf-docs-home .sf-docs-cards > .sf-docs-card {
+    min-height: 0;
+  }
+
+  .sf-docs-reference-table tr {
+    border-color: #d7dce2;
+    box-shadow: none;
+  }
+}

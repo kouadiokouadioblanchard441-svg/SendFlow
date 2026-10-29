@@ -14,7 +14,7 @@ import { getDocsCodeExample, type DocsCodeFormat, type DocsExampleId } from './d
 import './docs.css';
 
 type Language = 'fr' | 'en';
-type DocGroup = 'start' | 'checkout' | 'integration' | 'directApi' | 'reference';
+type DocGroup = 'start' | 'checkout' | 'integration' | 'shared' | 'apiReference' | 'reference';
 type DocItem = { path: string; key: string; label: string; group: DocGroup; icon: typeof BookOpen };
 type Translation = Record<string, string>;
 type TranslationLists = {
@@ -33,8 +33,8 @@ const docsItems: DocItem[] = [
   { path: '/docs/authentication', key: 'auth', label: 'Authentication', group: 'start', icon: LockKeyhole },
   { path: '/docs/integrations/hosted', key: 'hosted', label: 'Hosted redirect', group: 'checkout', icon: Globe2 },
   { path: '/docs/integrations/direct', key: 'direct', label: 'Direct integration', group: 'integration', icon: Code2 },
-  { path: '/docs/api-reference', key: 'api', label: 'API reference', group: 'directApi', icon: FileCode2 },
-  { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'directApi', icon: Webhook },
+  { path: '/docs/api-reference', key: 'api', label: 'API reference', group: 'apiReference', icon: FileCode2 },
+  { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'shared', icon: Webhook },
   { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'reference', icon: ShieldCheck },
 ];
 
@@ -42,7 +42,8 @@ const docGroups: { id: DocGroup; labelKey: string; icon: typeof BookOpen }[] = [
   { id: 'start', labelKey: 'startGroup', icon: BookOpen },
   { id: 'checkout', labelKey: 'checkoutGroup', icon: Globe2 },
   { id: 'integration', labelKey: 'integrations', icon: Code2 },
-  { id: 'directApi', labelKey: 'directApi', icon: FileCode2 },
+  { id: 'shared', labelKey: 'sharedMethods', icon: Webhook },
+  { id: 'apiReference', labelKey: 'apiReferenceGroup', icon: FileCode2 },
   { id: 'reference', labelKey: 'reference', icon: ShieldCheck },
 ];
 
@@ -50,7 +51,8 @@ const localized: Record<Language, Translation> = {
   fr: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
     search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
-    checkoutGroup: 'Checkout', integrations: 'Intégration', directApi: 'API directe',
+    checkoutGroup: 'Checkout', integrations: 'Intégration', sharedMethods: 'Commun aux deux',
+    apiReferenceGroup: 'Référence API',
     reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
     home: 'Documentation', start: 'Bien démarrer', auth: 'Authentification', direct: 'Intégration directe',
     hosted: 'Redirection hébergée', api: 'Référence API', webhooks: 'Webhooks', ref: 'Erreurs et sécurité',
@@ -107,7 +109,7 @@ const localized: Record<Language, Translation> = {
     referenceIntro: 'Les exemples ci-dessous correspondent aux routes et schémas présents dans l’API SendFlow.',
     requestExample: 'Exemple de requête',
     responseExample: 'Exemple de réponse',
-    webhookEvents: 'Événements de paiement', webhookEventsSub: 'Configurez une URL HTTPS et les types d’événements dans l’espace Développeurs. Les événements ne sont émis qu’après confirmation finale. Jusqu’à 5 webhooks actifs peuvent être configurés pour un compte.',
+    webhookEvents: 'Événements de paiement', webhookEventsSub: 'Les webhooks sont communs aux parcours API directe et Hosted Checkout. Configurez une URL HTTPS et les types d’événements dans l’espace Développeurs. Les événements ne sont émis qu’après confirmation finale. Jusqu’à 5 webhooks actifs peuvent être configurés pour un compte.',
     eventNames: 'Événements disponibles', delivery: 'Signature et livraisons', deliveryText: 'La signature HMAC-SHA256 est calculée sur la chaîne <horodatage>.<corps JSON brut>. Répondez en HTTP 2xx pour acquitter la livraison. SendFlow effectue 8 tentatives au total au maximum : l’envoi initial puis jusqu’à 7 reprises, espacées de 10 s, 30 s, 2 min, 10 min, 30 min, 2 h et 12 h. L’identifiant sendflow-delivery reste stable entre les reprises : utilisez-le pour dédupliquer.',
     webhookHeadersTitle: 'En-têtes envoyés', webhookHeadersText: 'sendflow-event identifie le type d’événement, sendflow-delivery identifie la livraison et sendflow-signature suit le format t=<horodatage Unix>,v1=<signature hexadécimale>. La signature est calculée sur les octets exacts du corps reçu.',
     apiScopeTitle: 'Périmètre de l’API publique', apiScopeText: 'Cette référence décrit les routes de session, de tentative directe, de statut et de tarification disponibles dans SendFlow. Elle ne documente pas de route publique pour annuler un paiement, lister toutes les transactions, consulter un solde ou effectuer un retrait. Aucun SDK marchand officiel n’est référencé ici ; utilisez les exemples REST ci-dessus.',
@@ -132,7 +134,8 @@ const localized: Record<Language, Translation> = {
   en: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
     search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
-    checkoutGroup: 'Checkout', integrations: 'Integration', directApi: 'Direct API',
+    checkoutGroup: 'Checkout', integrations: 'Integration', sharedMethods: 'Shared',
+    apiReferenceGroup: 'API reference',
     reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
     home: 'Documentation', start: 'Getting started', auth: 'Authentication', direct: 'Direct integration',
     hosted: 'Hosted redirect', api: 'API reference', webhooks: 'Webhooks', ref: 'Errors & security',
@@ -189,7 +192,7 @@ const localized: Record<Language, Translation> = {
     referenceIntro: 'The examples below match routes and schemas present in the SendFlow API.',
     requestExample: 'Request example',
     responseExample: 'Response example',
-    webhookEvents: 'Payment events', webhookEventsSub: 'Configure an HTTPS URL and event types in the merchant account Developers area. Events are emitted only after a final confirmation. Up to 5 active webhook endpoints can be configured per account.',
+    webhookEvents: 'Payment events', webhookEventsSub: 'Webhooks are shared by Direct API and Hosted Checkout. Configure an HTTPS URL and event types in the merchant account Developers area. Events are emitted only after a final confirmation. Up to 5 active webhook endpoints can be configured per account.',
     eventNames: 'Available events', delivery: 'Signatures and delivery', deliveryText: 'The HMAC-SHA256 signature is computed over the string <timestamp>.<raw JSON body>. Return HTTP 2xx to acknowledge delivery. SendFlow makes at most 8 attempts total: the initial delivery plus up to 7 retries, spaced 10 s, 30 s, 2 min, 10 min, 30 min, 2 h, and 12 h apart. The sendflow-delivery ID stays stable across retries; use it for deduplication.',
     webhookHeadersTitle: 'Request headers', webhookHeadersText: 'sendflow-event identifies the event type, sendflow-delivery identifies the delivery, and sendflow-signature follows t=<Unix timestamp>,v1=<hex signature>. The signature is computed over the exact received body bytes.',
     apiScopeTitle: 'Public API scope', apiScopeText: 'This reference describes the session, direct-attempt, status, and pricing routes available in SendFlow. It does not document a public route to cancel a payment, list all transactions, read a balance, or create a payout. No official merchant SDK is referenced here; use the REST examples above.',
