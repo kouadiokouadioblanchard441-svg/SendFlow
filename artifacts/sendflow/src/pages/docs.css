@@ -42,27 +42,21 @@
 .sf-docs-mobile-nav { display: none; }
 .sf-docs-shell { display: grid; width: min(100%, 1440px); min-height: calc(100dvh - 70px); grid-template-columns: 260px minmax(0,1fr); margin: 0 auto; }
 .sf-docs-sidebar { position: sticky; top: 70px; height: calc(100dvh - 70px); overflow-y: auto; border-right: 1px solid var(--docs-line); background: #ffffff; padding: 28px 18px 24px 24px; }
-.sf-docs-sidebar-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; border: 2px solid #d9c4ed; border-radius: 14px; background: #fff; padding: 11px; box-shadow: 0 5px 16px rgba(92,45,146,.06); }
-.sf-docs-sidebar-heading-icon { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border: 1.5px solid #d9c4ed; border-radius: 11px; background: #fbf8ff; color: #7736b5; }
-.sf-docs-sidebar-heading > div { display: grid; min-width: 0; gap: 3px; }
-.sf-docs-sidebar-heading strong { color: #17181d; font-size: 12px; font-weight: 850; }
-.sf-docs-sidebar-heading > div > span { color: #55515f; font-size: 9px; line-height: 1.4; }
 .sf-docs-search { display: flex; min-height: 42px; align-items: center; gap: 8px; border: 1.5px solid #e8dcf9; border-radius: 12px; background: #fff; padding: 0 11px; color: #55515f; }
 .sf-docs-search:focus-within { border-color: #8b4cc8; box-shadow: 0 0 0 3px rgba(139,76,200,.13); }
 .sf-docs-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--docs-ink); font-size: 12px; }
 .sf-docs-search input::placeholder { color: #55515f; }
 .sf-docs-search kbd { flex: 0 0 auto; border: 1px solid #e8dcf9; border-radius: 4px; padding: 2px 5px; color: #77727e; font: 10px ui-monospace, monospace; }
-.sf-docs-nav-group { margin-top: 13px; border: 2px solid #d9c4ed; border-radius: 14px; background: #fff; padding: 9px; box-shadow: 0 5px 16px rgba(92,45,146,.055); }
-.sf-docs-group-label { margin: 0 0 7px; border: 1px solid #e8dcf9; border-radius: 8px; background: #fbf8ff; padding: 8px 9px; color: #7736b5; font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
-.sf-docs-side-link { display: flex; width: 100%; min-height: 39px; align-items: center; gap: 9px; border: 1.5px solid #e8dcf9; border-radius: 10px; background: #fff; padding: 7px 9px; color: #292a30 !important; font-size: 11px; font-weight: 700; line-height: 1.4; transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease; }
-.sf-docs-side-link + .sf-docs-side-link { margin-top: 6px; }
+.sf-docs-nav-group { margin-top: 28px; }
+.sf-docs-group-label { margin: 0 0 9px 9px; color: #55515f; font-size: 9px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.sf-docs-side-link { display: flex; min-height: 40px; align-items: center; gap: 9px; border: 1px solid transparent; border-radius: 11px; padding: 0 10px; color: #292a30 !important; font-size: 12px; font-weight: 650; transition: background-color .15s ease, color .15s ease; }
 .sf-docs-side-link:hover { background: #fbf8ff; color: #7736b5 !important; }
-.sf-docs-side-link.is-active { border: 2px solid #8b4cc8; background: #fbf8ff; color: #7736b5 !important; font-weight: 850; box-shadow: 0 3px 9px rgba(92,45,146,.1); }
+.sf-docs-side-link.is-active { border-color: #e8dcf9; background: #fbf8ff; color: #7736b5 !important; font-weight: 800; }
 .sf-docs-side-link.is-active::before { width: 3px; height: 20px; margin-left: -10px; border-radius: 3px; background: #8b4cc8; content: ''; }
 .sf-docs-side-link svg { flex: 0 0 auto; color: #77727e; }
 .sf-docs-side-link.is-active svg { color: #8b4cc8; }
 .sf-docs-search-empty { padding: 12px 9px; color: var(--docs-muted); font-size: 11px; line-height: 1.5; }
-.sf-docs-sidebar-note { display: flex; gap: 9px; margin-top: 14px; border: 1.5px solid #d9c4ed; border-radius: 12px; background: #fbf8ff; padding: 11px; color: #292a30; font-size: 10px; line-height: 1.5; }
+.sf-docs-sidebar-note { display: flex; gap: 9px; margin-top: 30px; border-top: 1px solid var(--docs-line); padding: 16px 5px 0; color: #292a30; font-size: 11px; line-height: 1.55; }
 .sf-docs-sidebar-note svg { flex: 0 0 auto; margin-top: 1px; color: #8b4cc8; }
 .sf-docs-main { min-width: 0; padding: 42px clamp(20px, 5vw, 72px) 72px; }
 .sf-docs-content { width: min(100%, 900px); margin: 0 auto; animation: sf-docs-enter .2s ease both; }

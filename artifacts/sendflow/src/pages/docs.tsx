@@ -45,7 +45,7 @@ const docGroups: { id: DocGroup; labelKey: string }[] = [
 const localized: Record<Language, Translation> = {
   fr: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
-    dashboard: 'Espace développeur', search: 'Rechercher dans la documentation…', sidebarSubtitle: 'Guides et API SendFlow', startGroup: 'Démarrer',
+    dashboard: 'Espace développeur', search: 'Rechercher dans la documentation…', startGroup: 'Démarrer',
     checkoutGroup: 'Checkout', integrations: 'Intégration', directApi: 'API directe',
     reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
     home: 'Documentation', start: 'Bien démarrer', auth: 'Authentification', direct: 'Intégration directe',
@@ -111,7 +111,7 @@ const localized: Record<Language, Translation> = {
   },
   en: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
-    dashboard: 'Developer dashboard', search: 'Search documentation…', sidebarSubtitle: 'SendFlow guides and API', startGroup: 'Start here',
+    dashboard: 'Developer dashboard', search: 'Search documentation…', startGroup: 'Start here',
     checkoutGroup: 'Checkout', integrations: 'Integration', directApi: 'Direct API',
     reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
     home: 'Documentation', start: 'Getting started', auth: 'Authentication', direct: 'Direct integration',
@@ -477,16 +477,12 @@ export default function DocsPage() {
       <div className="sf-docs-shell">
         {sidebarOpen && <button type="button" className="sf-docs-mobile-backdrop" aria-label="Close documentation menu" onClick={() => setSidebarOpen(false)} data-testid="button-close-docs-sidebar" />}
         <aside className={`sf-docs-sidebar${sidebarOpen ? ' is-open' : ''}`} aria-label={language === 'fr' ? 'Navigation de la documentation' : 'Documentation navigation'}>
-          <div className="sf-docs-sidebar-heading">
-            <span className="sf-docs-sidebar-heading-icon"><BookOpen size={17} /></span>
-            <div><strong>{t.contents}</strong><span>{t.sidebarSubtitle}</span></div>
-          </div>
           <label className="sf-docs-search">
             <Search size={15} aria-hidden="true" />
             <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} aria-label={t.search} data-testid="input-docs-search" />
             <kbd>/</kbd>
           </label>
-          {sidebarGroups.filter((group) => group.items.length > 0).map((group) => (
+          {sidebarGroups.map((group) => (
             <div className="sf-docs-nav-group" key={group.key}>
               <p className="sf-docs-group-label">{t[group.key]}</p>
               {group.items.map((item) => {
