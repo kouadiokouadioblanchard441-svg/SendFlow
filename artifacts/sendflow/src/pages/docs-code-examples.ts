@@ -24,12 +24,14 @@ const examples: Record<DocsExampleId, ExampleSet> = {
     "mode": "hosted",
     "returnUrl": "https://shop.example.com/payment/return"
   }'`,
-    JavaScript: `const response = await fetch(
-  \`\${process.env.SENDFLOW_API_BASE_URL}/v1/payment-sessions\`,
+    JavaScript: `import { env } from "node:process";
+
+const response = await fetch(
+  \`\${env.SENDFLOW_API_BASE_URL}/v1/payment-sessions\`,
   {
     method: "POST",
     headers: {
-      Authorization: \`Bearer \${process.env.SENDFLOW_SECRET_KEY}\`,
+      Authorization: \`Bearer \${env.SENDFLOW_SECRET_KEY}\`,
       "Idempotency-Key": "order-2026-0042",
       "Content-Type": "application/json",
     },
@@ -45,7 +47,7 @@ const examples: Record<DocsExampleId, ExampleSet> = {
 const session = await response.json();
 if (!response.ok) throw new Error(session.error ?? "SendFlow request failed");
 if (!session.checkoutPath) throw new Error("No hosted checkout path was returned");
-const checkoutOrigin = process.env.SENDFLOW_CHECKOUT_ORIGIN;
+const checkoutOrigin = env.SENDFLOW_CHECKOUT_ORIGIN;
 if (!checkoutOrigin) throw new Error("Set the official SendFlow checkout origin first");
 const checkoutUrl = new URL(session.checkoutPath, checkoutOrigin).toString();
 // Return checkoutUrl to your client, then redirect the customer's browser.`,
@@ -121,12 +123,14 @@ checkout_url = urljoin(checkout_origin.rstrip("/") + "/", session["checkoutPath"
     "currency": "XOF",
     "mode": "direct"
   }'`,
-    JavaScript: `const response = await fetch(
-  \`\${process.env.SENDFLOW_API_BASE_URL}/v1/payment-sessions\`,
+    JavaScript: `import { env } from "node:process";
+
+const response = await fetch(
+  \`\${env.SENDFLOW_API_BASE_URL}/v1/payment-sessions\`,
   {
     method: "POST",
     headers: {
-      Authorization: \`Bearer \${process.env.SENDFLOW_SECRET_KEY}\`,
+      Authorization: \`Bearer \${env.SENDFLOW_SECRET_KEY}\`,
       "Idempotency-Key": "order-2026-0043",
       "Content-Type": "application/json",
     },
@@ -187,9 +191,11 @@ session = response.json()`,
   'read-session': {
     cURL: `curl "$SENDFLOW_API_BASE_URL/v1/payment-sessions/$SESSION_ID" \\
   --header "Authorization: Bearer $SENDFLOW_SECRET_KEY"`,
-    JavaScript: `const response = await fetch(
-  \`\${process.env.SENDFLOW_API_BASE_URL}/v1/payment-sessions/\${sessionId}\`,
-  { headers: { Authorization: \`Bearer \${process.env.SENDFLOW_SECRET_KEY}\` } },
+    JavaScript: `import { env } from "node:process";
+
+const response = await fetch(
+  \`\${env.SENDFLOW_API_BASE_URL}/v1/payment-sessions/\${sessionId}\`,
+  { headers: { Authorization: \`Bearer \${env.SENDFLOW_SECRET_KEY}\` } },
 );
 const session = await response.json();
 if (!response.ok) throw new Error(session.error ?? "SendFlow request failed");

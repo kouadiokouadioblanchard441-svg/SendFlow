@@ -15,7 +15,7 @@ import './docs.css';
 
 type Language = 'fr' | 'en';
 type DocGroup = 'start' | 'checkout' | 'integration' | 'shared' | 'apiReference' | 'reference';
-type DocItem = { path: string; key: string; label: string; group: DocGroup; icon: typeof BookOpen };
+type DocItem = { path: string; key: string; label: string; group: DocGroup; icon: typeof BookOpen; section?: string; search?: string };
 type Translation = Record<string, string>;
 type TranslationLists = {
   stepTitles: string[];
@@ -30,6 +30,7 @@ type TranslationLists = {
   troubleshooting: { symptom: string; action: string }[];
   credentialRows: { credential: string; usedFor: string; handling: string }[];
   paymentStateRows: { state: string; meaning: string; action: string }[];
+  httpErrorRows: { status: string; meaning: string; action: string }[];
 };
 
 const docsItems: DocItem[] = [
@@ -39,8 +40,24 @@ const docsItems: DocItem[] = [
   { path: '/docs/integrations/hosted', key: 'hosted', label: 'Hosted redirect', group: 'checkout', icon: Globe2 },
   { path: '/docs/integrations/direct', key: 'direct', label: 'Direct integration', group: 'integration', icon: Code2 },
   { path: '/docs/api-reference', key: 'api', label: 'API reference', group: 'apiReference', icon: FileCode2 },
+  { path: '/docs/api-reference', section: 'create-session', key: 'endpointCreate', label: 'Create a session', group: 'apiReference', icon: FileCode2, search: 'merchantReference amountMinor currency mode description returnUrl metadata idempotency' },
+  { path: '/docs/api-reference', section: 'read-session', key: 'endpointRead', label: 'Read a session', group: 'apiReference', icon: FileCode2, search: 'sessionId state status Authorization Bearer' },
+  { path: '/docs/api-reference', section: 'direct-choices', key: 'endpointChoices', label: 'Direct checkout choices', group: 'apiReference', icon: FileCode2, search: 'countries operators phonePrefix countryCode publicKey clientToken' },
+  { path: '/docs/api-reference', section: 'create-attempt', key: 'endpointAttempt', label: 'Start a payment attempt', group: 'apiReference', icon: FileCode2, search: 'firstName lastName countryCode operatorId phoneNumber ussdCode otp pin' },
+  { path: '/docs/api-reference', section: 'read-attempt', key: 'endpointAttemptRead', label: 'Read attempt status', group: 'apiReference', icon: FileCode2, search: 'attemptId pollToken state status' },
+  { path: '/docs/api-reference', section: 'pricing-catalog', key: 'endpointPricing', label: 'Countries, operators & fees', group: 'apiReference', icon: FileCode2, search: 'countries operators fees requiresOtp otpCommand' },
   { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'shared', icon: Webhook },
+  { path: '/docs/webhooks', section: 'webhook-events', key: 'webhookEvents', label: 'Webhook events', group: 'shared', icon: Webhook, search: 'payment.succeeded payment.failed events notifications' },
+  { path: '/docs/webhooks', section: 'webhook-signature', key: 'delivery', label: 'Webhook signatures', group: 'shared', icon: Webhook, search: 'HMAC SHA-256 raw body sendflow-signature' },
+  { path: '/docs/webhooks', section: 'webhook-retries', key: 'webhookRetries', label: 'Retries & deduplication', group: 'shared', icon: Webhook, search: 'retries delivery deduplicate timeout attempts' },
   { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'reference', icon: ShieldCheck },
+  { path: '/docs/reference', section: 'payment-states', key: 'statesTitle', label: 'Payment states', group: 'reference', icon: ShieldCheck, search: 'created waiting uncertain succeeded failed' },
+  { path: '/docs/reference', section: 'http-errors', key: 'errors', label: 'HTTP errors', group: 'reference', icon: ShieldCheck, search: '400 401 403 404 409 429 503 Retry-After error message troubleshooting' },
+  { path: '/docs/reference', section: 'idempotency', key: 'idempotency', label: 'Idempotency', group: 'reference', icon: ShieldCheck, search: 'Idempotency-Key duplicate merchantReference retry' },
+  { path: '/docs/reference', section: 'expiration', key: 'expiration', label: 'Expiration & amounts', group: 'reference', icon: ShieldCheck, search: 'expiresAt one hour XOF amountMinor minimum maximum' },
+  { path: '/docs/reference', section: 'rate-limits', key: 'rateLimits', label: 'Rate limits', group: 'reference', icon: ShieldCheck, search: 'quota 429 Retry-After per minute' },
+  { path: '/docs/reference', section: 'service-availability', key: 'serviceAvailability', label: 'Service availability', group: 'reference', icon: ShieldCheck, search: '503 LINKFLOW_SETTLEMENT_PROOF_READY production base URL' },
+  { path: '/docs/reference', section: 'security', key: 'security', label: 'Security', group: 'reference', icon: ShieldCheck, search: 'secret public key HMAC HTTPS tokens' },
 ];
 
 const docGroups: { id: DocGroup; labelKey: string; icon: typeof BookOpen }[] = [
@@ -56,9 +73,11 @@ const localized: Record<Language, Translation> = {
   fr: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
     search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
+    sectionPageIntro: 'Cette rubrique détaille le contrat SendFlow correspondant. Les exemples restent illustratifs et les blocages de disponibilité sont signalés.',
     checkoutGroup: 'Checkout', integrations: 'Intégration', sharedMethods: 'Commun aux deux',
     apiReferenceGroup: 'Référence API',
     reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
+    webhookRetries: 'Relances et déduplication',
     home: 'Documentation', start: 'Bien démarrer', auth: 'Authentification', direct: 'Intégration directe',
     hosted: 'Redirection hébergée', api: 'Référence API', webhooks: 'Webhooks', ref: 'Erreurs et sécurité',
     badge: 'API REST · JSON', prod: 'Documentation API SendFlow',
@@ -85,7 +104,7 @@ const localized: Record<Language, Translation> = {
     capabilityStatus: 'Consulter le statut d’une session et d’une tentative.',
     capabilityWebhook: 'Recevoir les notifications de paiement réussi ou échoué par webhook.',
     baseUrlTitle: 'URL de base API',
-    baseUrlPending: 'Configurez SENDFLOW_API_BASE_URL avec l’origine API officielle communiquée par SendFlow, suivie de /api. Ne remplacez pas cet hôte par celui du portail de documentation.',
+    baseUrlPending: 'Dans l’aperçu Replit actuel, le service API est routé sous le même hôte au chemin /api : https://<hôte-du-preview>/api. Ce domaine de prévisualisation est temporaire. Aucun hôte API de production n’est défini dans la configuration du projet inspectée. Configurez SENDFLOW_API_BASE_URL avec l’origine API officielle suivie de /api lorsqu’elle vous sera communiquée ; n’utilisez ni le domaine de documentation, ni celui du marchand, ni une origine CORS comme hôte API.',
     threeSteps: 'En 3 étapes', stepOne: 'Créez votre compte marchand', stepOneSub: 'Un compte marchand actif et éligible est requis pour utiliser les paiements API.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Les clés sont créées pour le compte et gérées dans l’espace Développeurs.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Créez la session côté serveur et vérifiez le résultat auprès de SendFlow.',
     read: 'Lire le guide', support: 'Besoin d’aide ?', supportSub: 'Contactez l’équipe SendFlow pour toute question liée à votre intégration.', contact: 'Contacter le support',
     disclaimerTitle: 'Confirmation du paiement', disclaimer: 'Ne marquez jamais une commande comme payée sur la seule base d’une redirection ou d’un état affiché dans le navigateur. Vérifiez le statut serveur ou traitez un webhook dont la signature est valide.',
@@ -101,18 +120,18 @@ const localized: Record<Language, Translation> = {
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec l’origine de paiement SendFlow communiquée pour votre compte et redirigez le client.',
     apiAvailabilityTitle: 'Disponibilité actuelle',
-    apiAvailabilityText: 'Dans le code inspecté, la création de sessions et le démarrage de tentatives ne sont pas activés : les requêtes admissibles renvoient HTTP 503. Les exemples décrivent le contrat, pas une disponibilité de production. Le routage de cette API ne couvre pas encore tous les agrégateurs configurables dans le panel ; utilisez uniquement les choix réellement renvoyés pour chaque session.',
-    hostedOriginText: 'checkoutPath est un chemin relatif, pas une URL complète. Aucun domaine de paiement officiel n’est défini dans le code inspecté : demandez l’origine exacte à SendFlow et stockez-la dans SENDFLOW_CHECKOUT_ORIGIN. N’utilisez pas l’URL de la documentation.',
-    hostedFallbackText: 'Si aucune returnUrl n’est fournie, le parcours hébergé redirige actuellement vers https://sendflow.africa après la confirmation succeeded. Cette redirection reste une indication d’interface, jamais une preuve de paiement.',
+    apiAvailabilityText: 'Actuellement, le backend renvoie 503 à la création d’une session et au démarrage d’une tentative : LINKFLOW_SETTLEMENT_PROOF_READY=false. Les exemples décrivent le contrat, pas une disponibilité en production ; 503 n’est pas un échec final. Les prérequis de ce verrou sont détaillés dans la section « Disponibilité du service ».',
+    hostedOriginText: 'checkoutPath est un chemin relatif, pas une URL complète. La page SendFlow existe dans l’application à la route /pay/:token ; dans l’aperçu Replit, elle utilise l’hôte du frontend. Aucun hôte de paiement de production n’est défini dans la configuration inspectée. Pour la production, demandez l’origine officielle de la page de paiement à SendFlow et stockez-la dans SENDFLOW_CHECKOUT_ORIGIN. Ne déduisez pas cet hôte du domaine de documentation ou du marchand.',
+    hostedFallbackText: 'Après une confirmation succeeded, la page redirige vers returnUrl si elle a été fournie ; sinon, le code actuel utilise https://sendflow.africa. La page ne redirige pas vers returnUrl après un échec confirmé. Une redirection reste une indication d’interface, jamais une preuve de paiement.',
     webhookSharedNote: 'Les webhooks s’appliquent aux deux parcours, API directe et Hosted Checkout. Ils sont envoyés après un résultat final confirmé ; consultez le guide Webhooks pour vérifier la signature et dédupliquer les livraisons.',
     webhookGuideLink: 'Ouvrir le guide Webhooks',
     mobileMoneyTitle: 'Mobile Money, USSD et OTP',
-    mobileMoneyText: 'Un démarrage de tentative peut renvoyer ussdCode ou null. Affichez uniquement la valeur réellement renvoyée ; ne codez pas de commande USSD en dur. Le catalogue /api/pricing peut exposer requiresOtp et otpCommand comme métadonnées, pas comme instructions universelles de paiement. Le parcours direct écarte actuellement les canaux signalés comme nécessitant un OTP et son corps n’accepte ni OTP ni PIN. Le secret API du marchand n’est pas le code opérateur du client : ne demandez jamais ce dernier et ne le transmettez pas à SendFlow.',
+    mobileMoneyText: 'Un démarrage de tentative peut renvoyer ussdCode ou null. Affichez uniquement la valeur réellement renvoyée ; ne codez pas de commande USSD en dur. /api/pricing peut exposer requiresOtp et otpCommand comme métadonnées, pas comme instructions universelles. Le parcours direct écarte les canaux signalés comme nécessitant un OTP et son corps n’accepte ni OTP ni PIN. Le secret API du marchand est distinct du code demandé par l’opérateur au payeur : ne demandez jamais ce code au marchand et ne le transmettez pas à SendFlow.',
     mobileMoneyActorsTitle: 'Qui fait quoi dans le parcours Mobile Money ?',
     mobileMoneyCountryTitle: 'Notes par pays et opérateur',
     androidDirectNote: 'L’exemple Kotlin ci-dessous utilise les routes publiques de session directe depuis Android. Il s’agit d’un exemple REST, pas d’un SDK officiel ; il suppose kotlinx-coroutines-android. Créez la session sur votre serveur et transmettez seulement la clé publique et les jetons de session nécessaires.',
     directInputText: 'Attention au format : la session peut renvoyer un code pays en minuscules (par exemple ci), mais la création de tentative exige deux lettres majuscules (CI). Convertissez-le en majuscules. phoneNumber doit inclure l’indicatif international renvoyé par la session (par exemple +225 suivi du numéro national). Utilisez operatorId directement depuis la réponse de session.',
-    hostedTimerText: 'La page hébergée affiche un compte à rebours d’attente de 10 minutes. Son expiration peut afficher une vue d’échec au payeur, mais ne prouve pas que le prestataire a confirmé un échec final : vérifiez l’état serveur ou le webhook et traitez uncertain comme non final.',
+    hostedTimerText: 'La page hébergée affiche un compte à rebours d’attente de 10 minutes. Son expiration peut afficher une vue d’échec au payeur, mais le suivi serveur continue et une confirmation finale reçue ensuite prévaut. Le compte à rebours n’est pas un statut de paiement : vérifiez l’état serveur ou un webhook signé et traitez uncertain comme non final.',
     responsibilities: 'Règles d’intégration',
     endpointStatus: 'API REST · JSON',
     endpointCreate: 'Créer une session de paiement', endpointRead: 'Consulter une session et son état',
@@ -135,21 +154,27 @@ const localized: Record<Language, Translation> = {
     eventNames: 'Événements disponibles', delivery: 'Signature et livraisons', deliveryText: 'La signature HMAC-SHA256 est calculée sur la chaîne <horodatage>.<corps JSON brut>. Répondez en HTTP 2xx pour acquitter la livraison ; toute réponse non-2xx, erreur réseau ou expiration du délai sera retentée. Le délai de requête est de 8 secondes et le corps de réponse est limité à 8 Ko. SendFlow effectue 8 tentatives au total au maximum : l’envoi initial puis jusqu’à 7 reprises, espacées de 10 s, 30 s, 2 min, 10 min, 30 min, 2 h et 12 h. L’identifiant sendflow-delivery reste stable entre les reprises : utilisez-le pour dédupliquer.',
     webhookHeadersTitle: 'En-têtes envoyés', webhookHeadersText: 'sendflow-event identifie le type d’événement. sendflow-delivery contient le même UUID que payload.id et reste identique lors des reprises. sendflow-signature suit le format t=<horodatage Unix>,v1=<signature hexadécimale>. La signature est calculée sur les octets exacts du corps reçu. L’exemple de vérification choisit une fenêtre de fraîcheur de 300 secondes à titre de politique marchande ; SendFlow ne fixe pas cette valeur.',
     apiScopeTitle: 'Périmètre de l’API publique', apiScopeText: 'Cette référence décrit les contrats de session, tentative directe, statut et tarification présents dans le code. Elle ne documente pas de route publique pour annuler un paiement, lister toutes les transactions, consulter un solde ou effectuer un retrait. Aucun SDK marchand officiel n’est présent dans le projet inspecté ; l’exemple Kotlin Android est un appel REST, pas un SDK SendFlow.',
-    security: 'Sécurité et fiabilité', errors: 'Codes HTTP', idempotency: 'Idempotence', expiration: 'Expiration et montants', securityText: 'Utilisez HTTPS. Stockez la clé secrète et le secret webhook (affiché une seule fois à sa création) dans un coffre sécurisé. Comparez la signature en temps constant, vérifiez la fraîcheur de l’horodatage et ne traitez l’événement qu’après validation.',
-    errorsText: 'Les réponses d’erreur utilisent le format JSON { "error": "…" }. Une réponse 503 indique une indisponibilité, pas un échec final du paiement. Une redirection ou un état affiché dans le navigateur ne confirme jamais le paiement : vérifiez toujours le statut côté serveur.',
-    error400: '400 — paramètres ou en-têtes invalides. Vérifiez notamment currency=XOF, amountMinor, les champs requis, countryCode en deux majuscules et phoneNumber au format international.',
+    security: 'Sécurité et fiabilité', errors: 'Erreurs HTTP', idempotency: 'Idempotence', expiration: 'Expiration et montants', securityText: 'Utilisez HTTPS. Stockez la clé secrète et le secret webhook (affiché une seule fois à sa création) dans un coffre sécurisé. Comparez la signature en temps constant, vérifiez la fraîcheur de l’horodatage et ne traitez l’événement qu’après validation.',
+    errorsText: 'Les routes documentées renvoient une erreur JSON sous la forme { "error": "…" }. Le contrat ne définit pas de code d’erreur machine stable : basez votre traitement sur le statut HTTP et vos propres règles, pas sur le texte du message. Une réponse 503 indique une indisponibilité, pas un échec final du paiement. Une redirection ou un état affiché dans le navigateur ne confirme jamais le paiement : vérifiez toujours le statut côté serveur.',
+    errorEnvelopeTitle: 'Format d’erreur',
+    httpErrorTableTitle: 'Réponses HTTP et conduite à tenir',
+    errorStatusHeader: 'HTTP', errorMeaningHeader: 'Signification', errorActionHeader: 'Action recommandée',
+    parametersTitle: 'Paramètres du contrat', parameterFieldHeader: 'Champ / emplacement',
+    parameterTypeHeader: 'Type', parameterRequirementHeader: 'Exigence', parameterDescriptionHeader: 'Description',
+    noParameters: 'Aucun paramètre de requête ni authentification n’est requis.',
+    error400: '400 — corps, paramètres ou en-têtes invalides ; montant, devise, mode, URL HTTPS, métadonnées, pays, opérateur ou numéro non conformes au contrat.',
     error401: '401 — clé secrète absente, invalide ou révoquée. Vérifiez le secret côté serveur et l’en-tête Authorization: Bearer ; ne l’incluez jamais dans l’application cliente.',
-    error403: '403 — compte marchand ou accès au paiement non autorisé. Vérifiez l’état et les droits du compte avant de réessayer.',
-    error404: '404 — session, tentative ou identifiants publics introuvables. Réutilisez les identifiants renvoyés pour cette session et vérifiez qu’elle n’a pas expiré.',
+    error403: '403 — compte marchand non autorisé ou non éligible à la création de paiements API.',
+    error404: '404 — session, tentative ou identifiants publics indisponibles. Les identifiants publics invalides, une session expirée ou un mauvais mode peuvent aussi être masqués par cette réponse.',
     error409: '409 — référence marchand déjà utilisée ou clé Idempotency-Key réutilisée avec un corps différent. Pour une reprise, renvoyez la même requête avec la même clé ; une nouvelle opération métier reçoit une nouvelle clé.',
     error429: '429 — limite de requêtes atteinte. Respectez Retry-After: 60, ralentissez les vérifications de statut et ne relancez pas immédiatement.',
-    error503: '503 — création ou traitement indisponible. Le code actuel renvoie ce statut pour les créations de session et tentatives admissibles ; ne le présentez pas comme un échec final du paiement.',
-    idempotencyText: 'Pour chaque création de session ou de tentative, envoyez une clé Idempotency-Key stable de 8 à 128 caractères. Une reprise doit réutiliser la même clé et le même corps ; réutiliser la clé avec une autre demande renvoie 409. Utilisez une nouvelle clé uniquement pour une nouvelle opération métier.',
-    expirationText: 'Les sessions expirent une heure après leur création. Le montant est fixe en XOF : 100 à 2 000 000. Le payeur ne peut pas modifier le montant au lancement d’une tentative.',
-    rateLimits: 'Limites de requêtes', rateLimitsText: 'Par clé API et par minute : 30 créations de session, 120 lectures de session, 5 tentatives directes et 60 vérifications de statut. Les routes de caisse appliquent aussi une limite par adresse IP. En cas de limitation, l’API renvoie 429 et Retry-After: 60 ; attendez ce délai avant de reprendre.',
+    error503: '503 — service ou vérification serveur indisponible. Actuellement, LINKFLOW_SETTLEMENT_PROOF_READY=false bloque la création et le démarrage ; ce statut n’est jamais un échec final du paiement.',
+    idempotencyText: 'Pour chaque création de session ou de tentative, envoyez une clé Idempotency-Key stable de 8 à 128 caractères, sans espace en début ou fin. Une reprise avec la même clé et le même corps renvoie la même opération ; la réutiliser avec une autre demande renvoie 409. Une référence marchand déjà utilisée renvoie aussi 409. Utilisez une nouvelle clé uniquement pour une nouvelle opération métier.',
+    expirationText: 'Les sessions expirent une heure après leur création. Après expiration, les choix publics et le démarrage d’une tentative ne sont plus disponibles. La lecture serveur de la session et la vérification d’une tentative déjà créée restent possibles avec des identifiants valides. Le montant est fixe en XOF : 100 à 2 000 000, sans modification par le payeur.',
+    rateLimits: 'Limites de requêtes', rateLimitsText: 'Par clé API et par fenêtre d’une minute : 30 créations de session, 120 lectures, 5 tentatives directes et 60 vérifications de statut. Les choix publics sont aussi limités à 30 requêtes par minute et adresse IP ; les tentatives et vérifications publiques à 5 et 60 par minute et adresse IP. Les quotas de clé et d’adresse IP peuvent s’appliquer ensemble. En cas de limitation, l’API renvoie 429 et Retry-After: 60 ; attendez ce délai avant de reprendre.',
     statesTitle: 'États d’un paiement', statesText: 'Les états de session et de tentative décrivent l’avancement du paiement ; seul un état final confirmé peut déclencher la validation de votre commande.',
-    serviceAvailability: 'Disponibilité du service', serviceAvailabilityText: 'Dans le code inspecté, les requêtes admissibles de création de session et de démarrage de tentative renvoient HTTP 503. Les exemples ne prouvent pas que le parcours soit activé en production. Les lectures de statut ne créent pas de paiement et ne remplacent jamais la confirmation finale.',
-    environmentNote: 'Aucune URL publique d’environnement de test distincte n’est confirmée dans les routes et contrats inspectés. SENDFLOW_API_BASE_URL doit être fourni par SendFlow ; n’inventez pas de domaine de test et ne confondez pas le serveur de documentation avec l’API.',
+    serviceAvailability: 'Disponibilité du service', serviceAvailabilityText: 'LINKFLOW_SETTLEMENT_PROOF_READY est une constante du backend actuellement égale à false, non modifiable par un marchand. Le service exige également une configuration live autorisée, un environnement et une base de production, ainsi que des identifiants serveur actifs. Avant toute activation, une preuve de règlement authentifiée doit lier référence, montant, devise, marchand, canal et type d’opération attendu avec une signature vérifiée ; le résultat de statut actuellement consulté ne fournit pas toutes ces garanties. La création de session et le démarrage de tentative renvoient donc 503 dans le code inspecté. Les lectures de statut ne créent pas de paiement et 503 ne signifie pas un échec final.',
+    environmentNote: 'Dans l’aperçu Replit actuel, l’API est routée sous le même hôte au chemin /api ; la base d’aperçu est https://<hôte-du-preview>/api. Ce domaine est temporaire. Aucun hôte API de production n’est défini dans la configuration de déploiement inspectée. SENDFLOW_API_BASE_URL doit utiliser l’origine API officielle suivie de /api, une fois celle-ci communiquée par SendFlow. Ne déduisez pas l’hôte API du domaine de documentation, du marchand ou d’une origine CORS.',
     troubleshootingTitle: 'Diagnostic rapide',
     hostedFlow: 'Parcours de redirection', directFlow: 'Parcours API directe', returnUrlText: 'returnUrl est facultative, doit être une URL HTTPS et concerne le parcours hosted : la page de paiement ne redirige vers cette URL qu’après confirmation succeeded. En mode direct, la réponse de statut API ne fournit pas cette redirection ; votre application gère son propre écran après vérification serveur.',
     language: 'Langue', copyright: 'SendFlow · Documentation API', lastUpdated: 'Référence API v1',
@@ -158,9 +183,11 @@ const localized: Record<Language, Translation> = {
   en: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
     search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
+    sectionPageIntro: 'This section details the matching SendFlow contract. Examples are illustrative and current availability blocks are stated clearly.',
     checkoutGroup: 'Checkout', integrations: 'Integration', sharedMethods: 'Shared',
     apiReferenceGroup: 'API reference',
     reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
+    webhookRetries: 'Retries & deduplication',
     home: 'Documentation', start: 'Getting started', auth: 'Authentication', direct: 'Direct integration',
     hosted: 'Hosted redirect', api: 'API reference', webhooks: 'Webhooks', ref: 'Errors & security',
     badge: 'REST API · JSON', prod: 'SendFlow API documentation',
@@ -187,7 +214,7 @@ const localized: Record<Language, Translation> = {
     capabilityStatus: 'Read the status of a session and payment attempt.',
     capabilityWebhook: 'Receive successful or failed payment notifications by webhook.',
     baseUrlTitle: 'API base URL',
-    baseUrlPending: 'Set SENDFLOW_API_BASE_URL to the official API origin provided by SendFlow, followed by /api. Do not substitute the documentation portal host.',
+    baseUrlPending: 'In the current Replit preview, the API service is routed under the same host at /api: https://<preview-host>/api. This preview domain is temporary. No production API host is declared in the inspected project configuration. Set SENDFLOW_API_BASE_URL to the official API origin followed by /api when SendFlow provides it; do not use the documentation domain, merchant domain, or a CORS origin as the API host.',
     threeSteps: 'In 3 steps', stepOne: 'Create your merchant account', stepOneSub: 'An active, eligible merchant account is required to use API payments.', stepTwo: 'Configure your API keys', stepTwoSub: 'Keys are created for the account and managed in the Developers area.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Create sessions server-side and verify results with SendFlow.',
     read: 'Read the guide', support: 'Need help?', supportSub: 'Contact the SendFlow team with questions about your integration.', contact: 'Contact support',
     disclaimerTitle: 'Payment confirmation', disclaimer: 'Never mark an order as paid based only on a redirect or a browser-side state. Verify the server status or process a webhook whose signature is valid.',
@@ -203,18 +230,18 @@ const localized: Record<Language, Translation> = {
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with the SendFlow payment origin provided for your account and redirect the customer.',
     apiAvailabilityTitle: 'Current availability',
-    apiAvailabilityText: 'In the inspected code, session creation and payment-attempt start are not enabled: eligible requests return HTTP 503. The examples describe the contract, not production availability. This API route does not yet cover every aggregator configurable in the admin panel; use only the choices actually returned for each session.',
-    hostedOriginText: 'checkoutPath is a relative path, not a complete URL. No official payment domain is defined in the inspected code: ask SendFlow for the exact origin and store it in SENDFLOW_CHECKOUT_ORIGIN. Do not use the documentation URL.',
-    hostedFallbackText: 'If no returnUrl is provided, the hosted flow currently redirects to https://sendflow.africa after succeeded is confirmed. This redirect is a user-interface signal, never proof of payment.',
+    apiAvailabilityText: 'The backend currently returns 503 when creating a session or starting an attempt: LINKFLOW_SETTLEMENT_PROOF_READY=false. Examples describe the contract, not production availability; 503 is not a final failure. The gate prerequisites are detailed in the “Service availability” section.',
+    hostedOriginText: 'checkoutPath is a relative path, not a complete URL. The SendFlow page exists in the app at /pay/:token; in the Replit preview it uses the frontend host. No production payment host is declared in the inspected configuration. For production, ask SendFlow for the official payment-page origin and store it in SENDFLOW_CHECKOUT_ORIGIN. Do not infer this host from the documentation or merchant domain.',
+    hostedFallbackText: 'After succeeded is confirmed, the page redirects to returnUrl if provided; otherwise the current code uses https://sendflow.africa. The page does not redirect to returnUrl after a confirmed failure. A redirect is a user-interface signal, never proof of payment.',
     webhookSharedNote: 'Webhooks apply to both Direct API and Hosted Checkout. They are sent after a confirmed final result; see the Webhooks guide to verify signatures and deduplicate deliveries.',
     webhookGuideLink: 'Open the Webhooks guide',
     mobileMoneyTitle: 'Mobile Money, USSD, and OTP',
-    mobileMoneyText: 'Starting an attempt may return ussdCode or null. Display only the value actually returned; do not hardcode USSD commands. /api/pricing may expose requiresOtp and otpCommand as metadata, not universal payment instructions. The current direct connector excludes channels marked as requiring OTP, and its request body accepts neither OTP nor PIN. A merchant API secret is not the customer’s operator code: never ask for or send that code to SendFlow.',
+    mobileMoneyText: 'Starting an attempt may return ussdCode or null. Display only the value actually returned; do not hardcode USSD commands. /api/pricing may expose requiresOtp and otpCommand as metadata, not universal instructions. Direct mode excludes channels marked as requiring OTP, and its request body accepts neither OTP nor PIN. The merchant API secret is distinct from a code requested by the payer’s operator: never ask the merchant for that code or send it to SendFlow.',
     mobileMoneyActorsTitle: 'Who does what in a Mobile Money payment?',
     mobileMoneyCountryTitle: 'Country and operator notes',
     androidDirectNote: 'The Kotlin example below uses public direct-session routes from Android. It is a REST example, not an official SDK; it assumes kotlinx-coroutines-android. Create the session on your server and pass only the public key and required session tokens to the app.',
     directInputText: 'Mind the format: the session may return a lowercase country code (for example ci), while creating an attempt requires two uppercase letters (CI). Convert it to uppercase. phoneNumber must include the international prefix returned by the session (for example +225 followed by the national number). Use operatorId directly from the session response.',
-    hostedTimerText: 'The hosted page displays a 10-minute waiting countdown. When it expires, the payer may see a failure screen, but that does not prove a final failure was confirmed by the payment provider: check the server status or webhook and treat uncertain as non-final.',
+    hostedTimerText: 'The hosted page displays a 10-minute waiting countdown. When it expires, the payer may see a failure screen, but server-side polling continues and a later final confirmation takes precedence. The countdown is not a payment status: check the server status or a signed webhook and treat uncertain as non-final.',
     responsibilities: 'Integration rules',
     endpointStatus: 'REST API · JSON',
     endpointCreate: 'Create a payment session', endpointRead: 'Read a session and its status',
@@ -237,21 +264,27 @@ const localized: Record<Language, Translation> = {
     eventNames: 'Available events', delivery: 'Signatures and delivery', deliveryText: 'The HMAC-SHA256 signature is computed over the string <timestamp>.<raw JSON body>. Return HTTP 2xx to acknowledge delivery; non-2xx responses, network errors, and timeouts are retried. The request timeout is 8 seconds and response bodies are limited to 8 KB. SendFlow makes at most 8 attempts total: the initial delivery plus up to 7 retries, spaced 10 s, 30 s, 2 min, 10 min, 30 min, 2 h, and 12 h apart. The sendflow-delivery ID stays stable across retries; use it for deduplication.',
     webhookHeadersTitle: 'Request headers', webhookHeadersText: 'sendflow-event identifies the event type. sendflow-delivery contains the same UUID as payload.id and remains unchanged on retries. sendflow-signature follows t=<Unix timestamp>,v1=<hex signature>. The signature is computed over the exact received body bytes. The verification example chooses a 300-second freshness window as merchant policy; SendFlow does not set this value.',
     apiScopeTitle: 'Public API scope', apiScopeText: 'This reference describes the session, direct-attempt, status, and pricing contracts present in the inspected code. It does not document a public route to cancel a payment, list all transactions, read a balance, or create a payout. No official merchant SDK is present in the inspected project; the Android Kotlin sample is a REST call, not a SendFlow SDK.',
-    security: 'Security & reliability', errors: 'HTTP status codes', idempotency: 'Idempotency', expiration: 'Expiration and amounts', securityText: 'Use HTTPS. Store the secret key and webhook secret (shown once at creation) in a secure vault. Compare signatures in constant time, check timestamp freshness, and process events only after verification.',
-    errorsText: 'Error responses use the JSON format { "error": "…" }. A 503 response means the operation is unavailable, not that payment finally failed. A redirect or client-side state never proves payment; always verify status server-side.',
-    error400: '400 — invalid parameters or headers. Check currency=XOF, amountMinor, required fields, a two-letter uppercase countryCode, and an international phoneNumber.',
+    security: 'Security & reliability', errors: 'HTTP errors', idempotency: 'Idempotency', expiration: 'Expiration and amounts', securityText: 'Use HTTPS. Store the secret key and webhook secret (shown once at creation) in a secure vault. Compare signatures in constant time, check timestamp freshness, and process events only after verification.',
+    errorsText: 'The documented routes return JSON errors in the form { "error": "…" }. The contract defines no stable machine-readable error code: handle HTTP status and your own business rules, not message text. A 503 means the operation is unavailable, not that payment finally failed. A redirect or client-side state never proves payment; always verify status server-side.',
+    errorEnvelopeTitle: 'Error format',
+    httpErrorTableTitle: 'HTTP responses and recommended handling',
+    errorStatusHeader: 'HTTP', errorMeaningHeader: 'Meaning', errorActionHeader: 'Recommended action',
+    parametersTitle: 'Contract parameters', parameterFieldHeader: 'Field / location',
+    parameterTypeHeader: 'Type', parameterRequirementHeader: 'Requirement', parameterDescriptionHeader: 'Description',
+    noParameters: 'No request parameters or authentication are required.',
+    error400: '400 — invalid body, parameters, or headers; amount, currency, mode, HTTPS URL, metadata, country, operator, or phone number does not match the contract.',
     error401: '401 — secret key missing, invalid, or revoked. Check the server-side Bearer credential; never include the secret in a client app.',
-    error403: '403 — merchant account or payment access is not authorized. Check account status and permissions before retrying.',
-    error404: '404 — session, attempt, or public credentials not found. Reuse the identifiers returned for that session and check that it has not expired.',
+    error403: '403 — merchant account is not authorized or eligible to create API payments.',
+    error404: '404 — session, attempt, or public credentials are unavailable. Invalid public credentials, an expired session, or the wrong session mode may also be hidden behind this response.',
     error409: '409 — merchant reference already used, or Idempotency-Key reused with a different body. For a retry, resend the same request with the same key; use a new key only for a new business operation.',
     error429: '429 — request limit reached. Respect Retry-After: 60, slow down status checks, and do not retry immediately.',
-    error503: '503 — session creation or payment processing is unavailable. The current code returns this status for eligible session and attempt creation; it is not a final payment failure.',
-    idempotencyText: 'For each session or attempt creation, send a stable 8–128 character Idempotency-Key. A retry must reuse the same key and body; reusing the key with a different request returns 409. Use a new key only for a new business operation.',
-    expirationText: 'Sessions expire one hour after creation. The amount is fixed in XOF: 100 to 2,000,000. The payer cannot change it when starting an attempt.',
-    rateLimits: 'Request limits', rateLimitsText: 'Per API key and per minute: 30 session creations, 120 session reads, 5 direct attempts, and 60 status checks. Checkout routes also enforce an IP-based limit. A rate-limited response includes 429 and Retry-After: 60; wait before resuming.',
+    error503: '503 — service or server-side verification is unavailable. LINKFLOW_SETTLEMENT_PROOF_READY=false currently blocks session creation and attempt start; this status is never a final payment failure.',
+    idempotencyText: 'For each session or attempt creation, send a stable 8–128 character Idempotency-Key with no leading or trailing spaces. A retry with the same key and body returns the same operation; reusing it with a different request returns 409. A previously used merchant reference also returns 409. Use a new key only for a new business operation.',
+    expirationText: 'Sessions expire one hour after creation. After expiry, public choices and starting an attempt are unavailable. The server-side session read and status check for an already-created attempt remain possible with valid credentials. The amount is fixed in XOF: 100 to 2,000,000, and the payer cannot change it.',
+    rateLimits: 'Request limits', rateLimitsText: 'Per API key per one-minute window: 30 session creations, 120 reads, 5 direct attempts, and 60 status checks. Public choices are also limited to 30 requests per minute and client IP; public attempts and status checks to 5 and 60 per minute and client IP. Key and IP quotas can apply together. A rate-limited response includes 429 and Retry-After: 60; wait before resuming.',
     statesTitle: 'Payment states', statesText: 'Session and attempt states describe payment progress; only a confirmed final state should trigger your order decision.',
-    serviceAvailability: 'Service availability', serviceAvailabilityText: 'In the inspected code, eligible session-creation and attempt-start requests return HTTP 503. The examples do not mean the flow is enabled in production. Status reads do not create payments and never replace final confirmation.',
-    environmentNote: 'No separate public test-environment URL is confirmed by the inspected routes and contracts. SendFlow must provide SENDFLOW_API_BASE_URL; do not invent a test domain or confuse the documentation host with the API.',
+    serviceAvailability: 'Service availability', serviceAvailabilityText: 'LINKFLOW_SETTLEMENT_PROOF_READY is a backend constant currently set to false and cannot be changed by a merchant. The service also requires authorized live configuration, a production environment and database, and active server credentials. Before any activation, authenticated settlement evidence must bind the reference, amount, currency, merchant, channel, and expected operation type with a verified signature; the status result currently consulted does not provide all these guarantees. Session creation and attempt start therefore return 503 in the inspected code. Status reads do not create payments, and 503 does not mean final failure.',
+    environmentNote: 'In the current Replit preview, the API is routed under the same host at /api; the preview base is https://<preview-host>/api. This domain is temporary. No production API host is declared in the inspected deployment configuration. SENDFLOW_API_BASE_URL must use the official API origin followed by /api once SendFlow provides it. Do not infer the API host from the documentation domain, merchant domain, or a CORS origin.',
     troubleshootingTitle: 'Quick troubleshooting',
     hostedFlow: 'Hosted redirect flow', directFlow: 'Direct API flow', returnUrlText: 'returnUrl is optional, must be an HTTPS URL, and applies to hosted mode: the payment page redirects to it only after a succeeded confirmation. In direct mode, the API status response does not provide this redirect; your application handles its own result screen after server verification.',
     language: 'Language', copyright: 'SendFlow · API documentation', lastUpdated: 'API reference v1',
@@ -285,8 +318,8 @@ const localizedLists: Record<Language, TranslationLists> = {
       { title: 'Webhook', body: 'Pour les deux modes, SendFlow notifie payment.succeeded ou payment.failed uniquement après confirmation finale. Vérifiez la signature HMAC et dédupliquez avec sendflow-delivery.' },
     ],
     mobileMoneyCards: [
-      { title: 'Côte d’Ivoire · Orange Money', status: 'Parcours à confirmer', body: 'Le code contient une métadonnée otpCommand associée à orange-ci, mais elle ne décrit pas un parcours de paiement complet et ne signifie pas que le mode direct accepte ce canal : le connecteur exclut les canaux marqués comme OTP requis. N’affichez aucune commande comme garantie ; vérifiez les choix de la session et le parcours opérateur avant publication.' },
-      { title: 'Burkina Faso · Orange Money', status: 'Détails non confirmés', body: 'Aucun code USSD ni séquence OTP propre à ce pays n’est confirmé dans le contrat public inspecté. La disponibilité et les étapes propres à l’opérateur doivent être confirmées pour la session active. N’inventez pas d’étapes : utilisez uniquement un ussdCode réellement renvoyé ou les instructions de l’opérateur.' },
+      { title: 'Côte d’Ivoire · Orange Money', status: 'Parcours à confirmer', body: '/api/pricing peut renvoyer une métadonnée otpCommand pour un opérateur, mais cette valeur ne décrit pas un parcours complet et ne garantit pas l’acceptation en mode direct. Les canaux marqués requiresOtp sont exclus du parcours direct. Aucun code ni séquence universelle n’est documenté ; utilisez uniquement les choix de la session et les instructions confirmées pour le payeur.' },
+      { title: 'Burkina Faso · Orange Money', status: 'Détails non confirmés', body: 'Le catalogue de pays et d’opérateurs inspecté marque le canal Orange Money Burkina comme nécessitant un OTP ; le parcours direct exclut les canaux portant ce marqueur. Cela ne confirme ni sa disponibilité en production ni un parcours client précis. Aucun code USSD ou séquence OTP n’est publié : ne les inventez pas.' },
       { title: 'Autres pays et opérateurs', status: 'Choix dynamiques', body: 'Il n’existe pas de liste statique fiable à publier depuis le code seul. GET /api/pricing fournit un catalogue général, mais les choix de session directe sont filtrés par les règles de routage et de configuration ; ils font autorité pour cette session.' },
     ],
     troubleshooting: [
@@ -309,6 +342,15 @@ const localizedLists: Record<Language, TranslationLists> = {
       { state: 'uncertain', meaning: 'Le résultat n’est pas confirmé et peut encore évoluer.', action: 'Ne classez ni comme réussi ni comme échoué ; relisez le statut et attendez le résultat serveur.' },
       { state: 'succeeded', meaning: 'Le paiement a été confirmé avec succès.', action: 'Vous pouvez valider la commande après vérification côté serveur.' },
       { state: 'failed', meaning: 'Un échec final a été confirmé.', action: 'Ne livrez pas la commande ; appliquez votre parcours de nouvel essai métier.' },
+    ],
+    httpErrorRows: [
+      { status: '400', meaning: 'Corps, paramètre ou en-tête invalide au regard du contrat de la route.', action: 'Corrigez les champs indiqués par la route concernée. Le corps d’erreur ne fournit pas de code machine stable.' },
+      { status: '401', meaning: 'Clé secrète manquante, invalide ou révoquée.', action: 'Vérifiez Authorization: Bearer côté serveur et la clé active. Ne transmettez pas le secret au client.' },
+      { status: '403', meaning: 'Compte marchand non autorisé ou non éligible à cette opération API.', action: 'Vérifiez l’éligibilité et les droits du compte avant de reprendre.' },
+      { status: '404', meaning: 'Session, tentative ou identifiants publics introuvables ou indisponibles.', action: 'Vérifiez les UUID, le mode et les jetons associés sans supposer qu’une ressource a été supprimée.' },
+      { status: '409', meaning: 'Référence marchande en conflit ou clé d’idempotence réutilisée avec un corps différent.', action: 'Pour une reprise, renvoyez exactement la même demande avec la même clé ; une nouvelle opération reçoit une nouvelle clé.' },
+      { status: '429', meaning: 'Limite de requêtes atteinte.', action: 'Respectez Retry-After: 60 et ralentissez les appels.' },
+      { status: '503', meaning: 'Service indisponible ou verrou de création/démarrage fermé.', action: 'Ne classez pas le paiement comme échoué. Reprenez le suivi serveur lorsque le service est disponible.' },
     ],
   },
   en: {
@@ -336,8 +378,8 @@ const localizedLists: Record<Language, TranslationLists> = {
       { title: 'Webhook', body: 'For both modes, SendFlow sends payment.succeeded or payment.failed only after final confirmation. Verify the HMAC signature and deduplicate with sendflow-delivery.' },
     ],
     mobileMoneyCards: [
-      { title: 'Côte d’Ivoire · Orange Money', status: 'Flow needs confirmation', body: 'The code contains otpCommand metadata associated with orange-ci, but it does not describe a complete payment flow or mean that Direct mode accepts that channel: the connector excludes channels marked as requiring OTP. Do not publish a command as guaranteed; verify the session choices and operator flow first.' },
-      { title: 'Burkina Faso · Orange Money', status: 'Details unconfirmed', body: 'No USSD code or country-specific OTP sequence is confirmed in the inspected public contract. Availability and operator-specific steps must be confirmed for the active session. Do not invent steps: use only a ussdCode actually returned or the operator instructions.' },
+      { title: 'Côte d’Ivoire · Orange Money', status: 'Flow needs confirmation', body: '/api/pricing may return otpCommand metadata for an operator, but this value is not a complete flow and does not guarantee Direct-mode acceptance. Channels marked requiresOtp are excluded from Direct mode. No universal code or sequence is documented; use only session choices and instructions confirmed for the payer.' },
+      { title: 'Burkina Faso · Orange Money', status: 'Details unconfirmed', body: 'The inspected country and operator catalog marks the Orange Money Burkina channel as requiring OTP; Direct mode excludes channels with this marker. This does not confirm production availability or a specific payer flow. No USSD code or OTP sequence is published; do not invent one.' },
       { title: 'Other countries and operators', status: 'Dynamic choices', body: 'The source alone does not provide a reliable static support list. GET /api/pricing returns a global catalog, but direct-session choices are filtered by routing and configuration rules and are authoritative for that session.' },
     ],
     troubleshooting: [
@@ -361,6 +403,15 @@ const localizedLists: Record<Language, TranslationLists> = {
       { state: 'succeeded', meaning: 'Payment has been confirmed successfully.', action: 'You may fulfill the order after server-side verification.' },
       { state: 'failed', meaning: 'A final failure has been confirmed.', action: 'Do not fulfill the order; use your business retry flow.' },
     ],
+    httpErrorRows: [
+      { status: '400', meaning: 'Request body, parameter, or header does not match the route contract.', action: 'Correct the fields for the route. The error body does not provide a stable machine-readable code.' },
+      { status: '401', meaning: 'Secret key is missing, invalid, or revoked.', action: 'Check the server-side Authorization: Bearer credential and active key. Never expose the secret to the client.' },
+      { status: '403', meaning: 'Merchant account is not authorized or eligible for this API operation.', action: 'Check account eligibility and permissions before retrying.' },
+      { status: '404', meaning: 'Session, attempt, or public credentials are unknown or unavailable.', action: 'Check UUIDs, mode, and associated tokens; do not assume the resource was deleted.' },
+      { status: '409', meaning: 'Merchant reference conflict or an idempotency key reused with a different body.', action: 'For a retry, resend the exact request with the same key; use a new key for a new operation.' },
+      { status: '429', meaning: 'Request limit reached.', action: 'Respect Retry-After: 60 and reduce request frequency.' },
+      { status: '503', meaning: 'Service unavailable or creation/attempt gate is closed.', action: 'Do not mark the payment as failed. Resume server-side status checks when the service is available.' },
+    ],
   },
 };
 
@@ -373,8 +424,35 @@ const pageKeys: Record<string, string> = {
 const apiEndpointInventory = [
   {
     method: 'POST', path: '/api/v1/payment-sessions', description: 'endpointCreate', access: 'accessServerSecret', example: 'create-hosted',
+    anchor: 'create-session',
+    fieldsFr: [
+      { field: 'Authorization', type: 'En-tête · Bearer', requirement: 'Requis', description: 'Clé secrète du marchand ; serveur uniquement.' },
+      { field: 'Idempotency-Key', type: 'En-tête · chaîne', requirement: 'Requis', description: '8 à 128 caractères ; identique lors d’une reprise exacte.' },
+      { field: 'Content-Type', type: 'En-tête · chaîne', requirement: 'Requis', description: 'application/json.' },
+      { field: 'merchantReference', type: 'Chaîne', requirement: 'Requis · corps', description: 'Référence unique fournie par le marchand, 1 à 128 caractères.' },
+      { field: 'amountMinor', type: 'Entier', requirement: 'Requis · corps', description: 'Montant fixe entre 100 et 2 000 000.' },
+      { field: 'currency', type: 'Chaîne', requirement: 'Requis · corps', description: 'Valeur acceptée : XOF.' },
+      { field: 'mode', type: 'Chaîne', requirement: 'Requis · corps', description: 'hosted ou direct.' },
+      { field: 'description', type: 'Chaîne', requirement: 'Facultatif · corps', description: '240 caractères maximum.' },
+      { field: 'returnUrl', type: 'URL ou null', requirement: 'Facultatif · corps', description: 'URL HTTPS ; utilisée par le parcours hébergé après confirmation réussie.' },
+      { field: 'metadata', type: 'Objet JSON', requirement: 'Facultatif · corps', description: 'Données complémentaires limitées à 8 Ko ; n’y placez pas de données sensibles.' },
+    ],
+    fieldsEn: [
+      { field: 'Authorization', type: 'Header · Bearer', requirement: 'Required', description: 'Merchant secret key; server only.' },
+      { field: 'Idempotency-Key', type: 'Header · string', requirement: 'Required', description: '8–128 characters; reuse for an exact retry.' },
+      { field: 'Content-Type', type: 'Header · string', requirement: 'Required', description: 'application/json.' },
+      { field: 'merchantReference', type: 'String', requirement: 'Required · body', description: 'Unique merchant-supplied reference, 1–128 characters.' },
+      { field: 'amountMinor', type: 'Integer', requirement: 'Required · body', description: 'Fixed amount from 100 to 2,000,000.' },
+      { field: 'currency', type: 'String', requirement: 'Required · body', description: 'Accepted value: XOF.' },
+      { field: 'mode', type: 'String', requirement: 'Required · body', description: 'hosted or direct.' },
+      { field: 'description', type: 'String', requirement: 'Optional · body', description: 'Maximum 240 characters.' },
+      { field: 'returnUrl', type: 'URL or null', requirement: 'Optional · body', description: 'HTTPS URL; used by hosted checkout after successful confirmation.' },
+      { field: 'metadata', type: 'JSON object', requirement: 'Optional · body', description: 'Additional data limited to 8 KB; do not put sensitive data here.' },
+    ],
     codesFr: 'HTTP : 201, 400, 401, 403, 409, 429, 503.',
     codesEn: 'HTTP: 201, 400, 401, 403, 409, 429, 503.',
+    errorsFr: '400 : corps ou en-têtes invalides, limites de champs ou métadonnées dépassées. 401 : clé secrète absente, invalide ou révoquée. 403 : compte marchand non éligible. 409 : clé d’idempotence réutilisée avec un autre corps ou référence marchande déjà utilisée. 429 : quota dépassé. 503 : verrou de disponibilité fermé ou service indisponible ; dans l’état actuel, le verrou répond après authentification et avant la validation du corps.',
+    errorsEn: '400: invalid body or headers, field limits, or oversized metadata. 401: missing, invalid, or revoked secret key. 403: merchant account not eligible. 409: idempotency key reused with a different body or merchant reference already used. 429: quota exceeded. 503: availability gate closed or service unavailable; in the current code, the gate responds after authentication and before body validation.',
     requirementsFr: 'En-têtes : Authorization: Bearer <clé secrète>, Idempotency-Key (8–128 caractères, sans espaces en début/fin), Content-Type: application/json. Requis : merchantReference (1–128), amountMinor (100–2 000 000), currency=XOF, mode=hosted|direct. Facultatifs : description (240 caractères max), returnUrl (URL HTTPS utilisée uniquement par le parcours hosted après confirmation succeeded), metadata (8 Ko max). Expiration : 1 heure.',
     requirementsEn: 'Headers: Authorization: Bearer <secret key>, Idempotency-Key (8–128 characters, no leading/trailing spaces), Content-Type: application/json. Required: merchantReference (1–128), amountMinor (100–2,000,000), currency=XOF, mode=hosted|direct. Optional: description (max 240 characters), returnUrl (HTTPS URL used only by hosted flow after succeeded confirmation), metadata (max 8 KB). Expires after 1 hour.',
     response: `{
@@ -392,8 +470,19 @@ const apiEndpointInventory = [
   },
   {
     method: 'GET', path: '/api/v1/payment-sessions/{sessionId}', description: 'endpointRead', access: 'accessServerSecretRead', example: 'read-session',
+    anchor: 'read-session',
+    fieldsFr: [
+      { field: 'sessionId', type: 'UUID · chemin', requirement: 'Requis', description: 'Identifiant id renvoyé lors de la création de la session.' },
+      { field: 'Authorization', type: 'En-tête · Bearer', requirement: 'Requis', description: 'Clé secrète du marchand ; serveur uniquement.' },
+    ],
+    fieldsEn: [
+      { field: 'sessionId', type: 'UUID · path', requirement: 'Required', description: 'The id returned when the session was created.' },
+      { field: 'Authorization', type: 'Header · Bearer', requirement: 'Required', description: 'Merchant secret key; server only.' },
+    ],
     codesFr: 'HTTP : 200, 401, 403, 404, 429, 503.',
     codesEn: 'HTTP: 200, 401, 403, 404, 429, 503.',
+    errorsFr: '401 : clé secrète invalide ou révoquée. 403 : compte non autorisé. 404 : UUID ou session inconnus. 429 : quota de lectures dépassé. 503 : lecture serveur momentanément indisponible.',
+    errorsEn: '401: invalid or revoked secret key. 403: account not authorized. 404: unknown UUID or session. 429: read quota exceeded. 503: server-side read temporarily unavailable.',
     requirementsFr: 'Paramètre de chemin : sessionId (UUID). En-tête : Authorization: Bearer <clé secrète>. États possibles : created, waiting, uncertain, succeeded, failed.',
     requirementsEn: 'Path parameter: sessionId (UUID). Header: Authorization: Bearer <secret key>. Possible states: created, waiting, uncertain, succeeded, failed.',
     response: `{
@@ -410,8 +499,21 @@ const apiEndpointInventory = [
   },
   {
     method: 'GET', path: '/api/v1/public/payment-sessions/{sessionId}', description: 'endpointChoices', access: 'accessPublicSession', example: 'read-public-session',
+    anchor: 'direct-choices',
+    fieldsFr: [
+      { field: 'sessionId', type: 'UUID · chemin', requirement: 'Requis', description: 'Identifiant de la session en mode direct.' },
+      { field: 'X-SendFlow-Public-Key', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Clé publique, 20 à 80 caractères.' },
+      { field: 'X-SendFlow-Client-Token', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Jeton de session, 32 à 64 caractères.' },
+    ],
+    fieldsEn: [
+      { field: 'sessionId', type: 'UUID · path', requirement: 'Required', description: 'Identifier for a direct-mode session.' },
+      { field: 'X-SendFlow-Public-Key', type: 'Header · string', requirement: 'Required', description: 'Public key, 20–80 characters.' },
+      { field: 'X-SendFlow-Client-Token', type: 'Header · string', requirement: 'Required', description: 'Session token, 32–64 characters.' },
+    ],
     codesFr: 'HTTP : 200, 404, 429, 503.',
     codesEn: 'HTTP: 200, 404, 429, 503.',
+    errorsFr: '404 : identifiants publics invalides, session inconnue/expirée, lien inactif ou mode différent de direct. 429 : quota par clé ou adresse IP dépassé. 503 : session ou choix de paiement momentanément indisponibles.',
+    errorsEn: '404: invalid public credentials, unknown/expired session, inactive link, or mode other than direct. 429: key or client-IP quota exceeded. 503: session or payment choices temporarily unavailable.',
     requirementsFr: 'Réservé aux sessions mode=direct. Paramètre : sessionId (UUID). En-têtes : X-SendFlow-Public-Key et X-SendFlow-Client-Token.',
     requirementsEn: 'For mode=direct sessions only. Parameter: sessionId (UUID). Headers: X-SendFlow-Public-Key and X-SendFlow-Client-Token.',
     response: `{
@@ -438,10 +540,35 @@ const apiEndpointInventory = [
   },
   {
     method: 'POST', path: '/api/v1/public/payment-sessions/{sessionId}/attempts', description: 'endpointAttempt', access: 'accessPublicAttempt', example: 'start-attempt',
+    anchor: 'create-attempt',
+    fieldsFr: [
+      { field: 'sessionId', type: 'UUID · chemin', requirement: 'Requis', description: 'Identifiant de la session directe.' },
+      { field: 'X-SendFlow-Public-Key', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Clé publique de l’espace marchand.' },
+      { field: 'X-SendFlow-Client-Token', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Jeton renvoyé pour cette session.' },
+      { field: 'Idempotency-Key', type: 'En-tête · chaîne', requirement: 'Requis', description: '8 à 128 caractères ; même clé pour reprendre la même tentative.' },
+      { field: 'firstName', type: 'Chaîne', requirement: 'Requis · corps', description: '1 à 80 caractères.' },
+      { field: 'lastName', type: 'Chaîne', requirement: 'Requis · corps', description: '1 à 80 caractères.' },
+      { field: 'countryCode', type: 'Chaîne', requirement: 'Requis · corps', description: 'Code pays à deux lettres majuscules, par exemple CI.' },
+      { field: 'operatorId', type: 'Chaîne', requirement: 'Requis · corps', description: 'Identifiant exact d’un opérateur renvoyé pour la session, 1 à 80 caractères.' },
+      { field: 'phoneNumber', type: 'Chaîne', requirement: 'Requis · corps', description: '6 à 20 caractères ; inclure l’indicatif international phonePrefix renvoyé.' },
+    ],
+    fieldsEn: [
+      { field: 'sessionId', type: 'UUID · path', requirement: 'Required', description: 'Identifier for the direct session.' },
+      { field: 'X-SendFlow-Public-Key', type: 'Header · string', requirement: 'Required', description: 'Public key for the merchant account.' },
+      { field: 'X-SendFlow-Client-Token', type: 'Header · string', requirement: 'Required', description: 'Token returned for this session.' },
+      { field: 'Idempotency-Key', type: 'Header · string', requirement: 'Required', description: '8–128 characters; reuse to retry the same attempt.' },
+      { field: 'firstName', type: 'String', requirement: 'Required · body', description: '1–80 characters.' },
+      { field: 'lastName', type: 'String', requirement: 'Required · body', description: '1–80 characters.' },
+      { field: 'countryCode', type: 'String', requirement: 'Required · body', description: 'Two uppercase country letters, for example CI.' },
+      { field: 'operatorId', type: 'String', requirement: 'Required · body', description: 'Exact operator ID returned for the session, 1–80 characters.' },
+      { field: 'phoneNumber', type: 'String', requirement: 'Required · body', description: '6–20 characters; include the returned international phonePrefix.' },
+    ],
     codesFr: 'HTTP : 201, 400, 404, 409, 429, 503.',
     codesEn: 'HTTP: 201, 400, 404, 409, 429, 503.',
-    requirementsFr: 'Paramètre : sessionId (UUID). En-têtes : X-SendFlow-Public-Key, X-SendFlow-Client-Token, Idempotency-Key (8–128). Corps : firstName et lastName (1–80), countryCode (2 lettres majuscules ; convertir le code de la session si nécessaire), operatorId (1–80, pris dans la session), phoneNumber (6–20 avec l’indicatif international phonePrefix). Le montant est celui de la session.',
-    requirementsEn: 'Parameter: sessionId (UUID). Headers: X-SendFlow-Public-Key, X-SendFlow-Client-Token, Idempotency-Key (8–128). Body: firstName and lastName (1–80), countryCode (two uppercase letters; convert the session value if needed), operatorId (1–80, from the session), phoneNumber (6–20 including the international phonePrefix). The session amount is fixed.',
+    errorsFr: '400 : corps invalide, pays/opérateur non proposé, numéro non conforme ou canal exclu par la règle OTP. 404 : session/identifiants publics indisponibles ou expirés. 409 : tentative ou clé d’idempotence en conflit. 429 : quota par clé ou adresse IP dépassé. 503 : démarrage bloqué par le verrou actuel ou service indisponible ; aucun résultat final n’est alors confirmé.',
+    errorsEn: '400: invalid body, country/operator not offered, invalid phone number, or channel excluded by the OTP rule. 404: session/public credentials unavailable or expired. 409: attempt or idempotency conflict. 429: key or client-IP quota exceeded. 503: attempt start blocked by the current gate or service unavailable; no final result is confirmed.',
+    requirementsFr: 'Paramètre : sessionId (UUID). En-têtes : X-SendFlow-Public-Key, X-SendFlow-Client-Token, Idempotency-Key (8–128 caractères, sans espaces en début/fin). Corps : firstName et lastName (1–80), countryCode (2 lettres majuscules ; convertir le code de la session si nécessaire), operatorId (1–80, pris dans la session), phoneNumber (6–20 avec l’indicatif international phonePrefix). Le montant est celui de la session.',
+    requirementsEn: 'Parameter: sessionId (UUID). Headers: X-SendFlow-Public-Key, X-SendFlow-Client-Token, Idempotency-Key (8–128 characters, no leading/trailing spaces). Body: firstName and lastName (1–80), countryCode (two uppercase letters; convert the session value if needed), operatorId (1–80, from the session), phoneNumber (6–20 including the international phonePrefix). The session amount is fixed.',
     response: `{
   "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
   "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
@@ -455,8 +582,25 @@ const apiEndpointInventory = [
   },
   {
     method: 'GET', path: '/api/v1/public/payment-sessions/{sessionId}/attempts/{attemptId}', description: 'endpointAttemptRead', access: 'accessAttemptRead', example: 'poll-attempt',
+    anchor: 'read-attempt',
+    fieldsFr: [
+      { field: 'sessionId', type: 'UUID · chemin', requirement: 'Requis', description: 'Identifiant de la session.' },
+      { field: 'attemptId', type: 'UUID · chemin', requirement: 'Requis', description: 'Identifiant de tentative renvoyé au démarrage.' },
+      { field: 'X-SendFlow-Public-Key', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Clé publique du marchand.' },
+      { field: 'X-SendFlow-Client-Token', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Jeton associé à la session.' },
+      { field: 'X-LinkFlow-Attempt-Token', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Valeur pollToken renvoyée au démarrage de la tentative.' },
+    ],
+    fieldsEn: [
+      { field: 'sessionId', type: 'UUID · path', requirement: 'Required', description: 'Session identifier.' },
+      { field: 'attemptId', type: 'UUID · path', requirement: 'Required', description: 'Attempt identifier returned when it was started.' },
+      { field: 'X-SendFlow-Public-Key', type: 'Header · string', requirement: 'Required', description: 'Merchant public key.' },
+      { field: 'X-SendFlow-Client-Token', type: 'Header · string', requirement: 'Required', description: 'Token associated with the session.' },
+      { field: 'X-LinkFlow-Attempt-Token', type: 'Header · string', requirement: 'Required', description: 'pollToken returned when the attempt started.' },
+    ],
     codesFr: 'HTTP : 200, 404, 429, 503.',
     codesEn: 'HTTP: 200, 404, 429, 503.',
+    errorsFr: '404 : session, tentative ou jeton d’accès indisponible. 429 : quota de vérification par clé ou adresse IP dépassé. 503 : vérification serveur indisponible ; conservez waiting/uncertain comme états non finaux.',
+    errorsEn: '404: session, attempt, or access token unavailable. 429: key or client-IP status-check quota exceeded. 503: server verification unavailable; keep waiting/uncertain as non-final states.',
     requirementsFr: 'Paramètres : sessionId et attemptId (UUID). En-têtes : X-SendFlow-Public-Key, X-SendFlow-Client-Token et X-LinkFlow-Attempt-Token (pollToken renvoyé au démarrage).',
     requirementsEn: 'Parameters: sessionId and attemptId (UUID). Headers: X-SendFlow-Public-Key, X-SendFlow-Client-Token, and X-LinkFlow-Attempt-Token (the pollToken returned when the attempt starts).',
     response: `{
@@ -472,8 +616,17 @@ const apiEndpointInventory = [
   },
   {
     method: 'GET', path: '/api/pricing', description: 'endpointPricing', access: 'accessPublic', example: 'pricing',
+    anchor: 'pricing-catalog',
+    fieldsFr: [
+      { field: 'Paramètres', type: '—', requirement: 'Aucun', description: 'Aucune authentification ni paramètre de requête requis.' },
+    ],
+    fieldsEn: [
+      { field: 'Parameters', type: '—', requirement: 'None', description: 'No authentication or query parameters required.' },
+    ],
     codesFr: 'HTTP : 200, 503.',
     codesEn: 'HTTP: 200, 503.',
+    errorsFr: '503 : catalogue ou configuration tarifaire momentanément indisponible. Les taux affichés ne garantissent pas qu’un opérateur soit proposé dans une session ni qu’un paiement puisse être exécuté.',
+    errorsEn: '503: catalog or fee configuration temporarily unavailable. Published rates do not guarantee that an operator will be offered in a session or that a payment can be executed.',
     requirementsFr: 'Aucun en-tête d’authentification. fees.linkflow est un taux décimal (0,025 signifie 2,5 %). Les taux non configurés sont omis ; les valeurs de l’exemple sont illustratives.',
     requirementsEn: 'No authentication header. fees.linkflow is a decimal rate (0.025 means 2.5%). Unconfigured rates are omitted; example values are illustrative.',
     response: `{
@@ -630,11 +783,13 @@ export default function DocsPage() {
   const [language, setLanguage] = useState<Language>('fr');
   const [query, setQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedDocSection, setSelectedDocSection] = useState<{ path: string; section: string } | null>(null);
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set([...docGroups.map((group) => group.id), 'resources']));
   const pageKey = pageKeys[path] ?? 'home';
+  const activeDocSection = selectedDocSection?.path === path ? selectedDocSection.section : '';
   const t = localized[language];
   const filteredItems = useMemo(() => docsItems.filter((item) =>
-    `${localized[language][item.key] ?? item.label} ${item.label} ${docSearchTerms[item.path] ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()),
+    `${localized[language][item.key] ?? item.label} ${item.label} ${item.search ?? docSearchTerms[item.path] ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   ), [language, query]);
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -649,6 +804,20 @@ export default function DocsPage() {
       window.removeEventListener('keydown', closeOnEscape);
     };
   }, [sidebarOpen]);
+  useEffect(() => {
+    const syncSelectedSection = () => {
+      const section = window.location.hash.slice(1);
+      const exists = docsItems.some((item) => item.path === path && item.section === section);
+      setSelectedDocSection(section && exists ? { path, section } : null);
+    };
+    syncSelectedSection();
+    window.addEventListener('hashchange', syncSelectedSection);
+    window.addEventListener('popstate', syncSelectedSection);
+    return () => {
+      window.removeEventListener('hashchange', syncSelectedSection);
+      window.removeEventListener('popstate', syncSelectedSection);
+    };
+  }, [path]);
   const toggleGroup = (groupId: string) => {
     setOpenGroups((current) => {
       const next = new Set(current);
@@ -657,9 +826,18 @@ export default function DocsPage() {
       return next;
     });
   };
+  const isDocItemActive = (item: DocItem) => {
+    return item.path === path && (item.section ?? '') === activeDocSection;
+  };
+  const handleDocItemClick = (item: DocItem) => {
+    setSidebarOpen(false);
+    setSelectedDocSection(item.section ? { path: item.path, section: item.section } : null);
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 50);
+  };
   const titleKey = `${pageKey}Title`;
-  const description = t[`${pageKey}Sub`] ?? t.homeSub;
-  const title = t[titleKey] ?? t.homeTitle;
+  const activeDocItem = docsItems.find((item) => item.path === path && item.section === activeDocSection);
+  const description = activeDocItem ? t.sectionPageIntro : (t[`${pageKey}Sub`] ?? t.homeSub);
+  const title = activeDocItem ? (t[activeDocItem.key] ?? activeDocItem.label) : (t[titleKey] ?? t.homeTitle);
 
   useSeo({
     path,
@@ -752,9 +930,10 @@ export default function DocsPage() {
   );
 
   const renderDocument = () => {
+    const showReferenceSection = (section: string) => !activeDocSection || activeDocSection === section;
     return (
       <>
-        <div className="sf-docs-breadcrumb"><Link href="/docs">{t.breadcrumb}</Link><ChevronRight size={12} /><span>{t[pageKey] ?? t.home}</span></div>
+        <div className="sf-docs-breadcrumb"><Link href="/docs" onClick={() => setSelectedDocSection(null)}>{t.breadcrumb}</Link><ChevronRight size={12} /><span>{activeDocItem ? (t[activeDocItem.key] ?? activeDocItem.label) : (t[pageKey] ?? t.home)}</span></div>
         <div className="sf-docs-eyebrow">SENDFLOW / API</div>
         <h1 className="sf-docs-title">{title}</h1>
         <p className="sf-docs-lede">{description}</p>
@@ -844,7 +1023,7 @@ export default function DocsPage() {
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <section className="sf-docs-section"><h2>{t.reference}</h2><p>{t.referenceIntro}</p>
             <div className="sf-docs-endpoints">
-              {apiEndpointInventory.map((endpoint) => (
+              {apiEndpointInventory.filter((endpoint) => !activeDocSection || endpoint.anchor === activeDocSection).map((endpoint) => (
                 <article className="sf-docs-endpoint" key={endpoint.path} data-testid={`endpoint-card-${endpoint.method.toLowerCase()}-${endpoint.path.split('/').at(-1)}`}>
                   <div className="sf-docs-endpoint-head">
                     <span className={`sf-docs-method-badge is-${endpoint.method.toLowerCase()}`}>{endpoint.method}</span>
@@ -854,7 +1033,20 @@ export default function DocsPage() {
                   <p>{t[endpoint.description]}</p>
                   <div className="sf-docs-endpoint-access"><span>{t.endpointAccess}</span><strong>{t[endpoint.access]}</strong></div>
                   <p className="sf-docs-endpoint-requirements">{language === 'fr' ? endpoint.requirementsFr : endpoint.requirementsEn}</p>
+                  <h3>{t.parametersTitle}</h3>
+                  <table className="sf-docs-reference-table">
+                    <thead><tr><th>{t.parameterFieldHeader}</th><th>{t.parameterTypeHeader}</th><th>{t.parameterRequirementHeader}</th><th>{t.parameterDescriptionHeader}</th></tr></thead>
+                    <tbody>{(language === 'fr' ? endpoint.fieldsFr : endpoint.fieldsEn).map((field) => (
+                      <tr key={field.field}>
+                        <td data-label={t.parameterFieldHeader}><code className="sf-docs-inline-code">{field.field}</code></td>
+                        <td data-label={t.parameterTypeHeader}>{field.type}</td>
+                        <td data-label={t.parameterRequirementHeader}>{field.requirement}</td>
+                        <td data-label={t.parameterDescriptionHeader}>{field.description}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
                   <p className="sf-docs-endpoint-codes">{language === 'fr' ? endpoint.codesFr : endpoint.codesEn}</p>
+                  <p className="sf-docs-endpoint-requirements"><strong>{language === 'fr' ? 'Erreurs et cas métier : ' : 'Errors and business cases: '}</strong>{language === 'fr' ? endpoint.errorsFr : endpoint.errorsEn}</p>
                   <details className="sf-docs-endpoint-example">
                     <summary>{t.requestExample}</summary>
                     <CodePanel language={language} label={`${endpoint.method} ${endpoint.path}`} example={endpoint.example} />
@@ -871,14 +1063,15 @@ export default function DocsPage() {
           </section>
         </>}
         {pageKey === 'webhooks' && <>
-          <section className="sf-docs-section"><h2>{t.webhookEvents}</h2><p>{t.webhookEventsSub}</p>
+          {showReferenceSection('webhook-events') && <section className="sf-docs-section"><h2>{t.webhookEvents}</h2><p>{t.webhookEventsSub}</p>
             <div className="sf-docs-card" style={{ marginTop: 15 }}>
               <div className="sf-docs-card-top"><span className="sf-docs-card-icon"><Webhook size={18} /></span><span className="sf-docs-status">{t.endpointStatus}</span></div>
               <h3>{t.eventNames}</h3>
               <ul className="sf-docs-list"><li><code className="sf-docs-inline-code">payment.succeeded</code></li><li><code className="sf-docs-inline-code">payment.failed</code></li></ul>
             </div>
-          </section>
-          <section className="sf-docs-section"><h2>{t.delivery}</h2><p>{t.deliveryText}</p>
+          </section>}
+          {showReferenceSection('webhook-signature') || activeDocSection === 'webhook-retries' ? <section className="sf-docs-section"><h2>{t.delivery}</h2>
+            <p>{t.deliveryText}</p>
             <div className="sf-docs-callout">
               <strong>{t.webhookHeadersTitle}</strong>
               <p>{t.webhookHeadersText}</p>
@@ -902,15 +1095,20 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
 }`} />
             <div className="sf-docs-callout">{t.webhookPayloadNote}</div>
             <CodePanel language={language} label={t.codeLabel} example="webhook" />
-          </section>
+          </section> : null}
         </>}
         {pageKey === 'ref' && <>
-          <section className="sf-docs-section"><h2>{t.security}</h2><p>{t.securityText}</p></section>
-          <section className="sf-docs-section"><h2>{t.errors}</h2><p>{t.errorsText}</p><ul className="sf-docs-list">
-            <li>{t.error400}</li><li>{t.error401}</li><li>{t.error403}</li><li>{t.error404}</li>
-            <li>{t.error409}</li><li>{t.error429}</li><li>{t.error503}</li>
-          </ul></section>
-          <section className="sf-docs-section"><h2>{t.troubleshootingTitle}</h2>
+          {showReferenceSection('security') && <section className="sf-docs-section"><h2>{t.security}</h2><p>{t.securityText}</p></section>}
+          {showReferenceSection('http-errors') && <section className="sf-docs-section"><h2>{t.errors}</h2><p>{t.errorsText}</p>
+            <h3>{t.httpErrorTableTitle}</h3>
+            <table className="sf-docs-reference-table">
+              <thead><tr><th>{t.errorStatusHeader}</th><th>{t.errorMeaningHeader}</th><th>{t.errorActionHeader}</th></tr></thead>
+              <tbody>{localizedLists[language].httpErrorRows.map((row) => <tr key={row.status}><td data-label={t.errorStatusHeader}><code className="sf-docs-inline-code">{row.status}</code></td><td data-label={t.errorMeaningHeader}>{row.meaning}</td><td data-label={t.errorActionHeader}>{row.action}</td></tr>)}</tbody>
+            </table>
+            <ResponsePanel language={language} label={t.errorEnvelopeTitle} response={`{
+  "error": "${language === 'fr' ? 'Message d’erreur renvoyé par l’API' : 'Error message returned by the API'}"
+}`} /></section>}
+          {showReferenceSection('http-errors') && <section className="sf-docs-section"><h2>{t.troubleshootingTitle}</h2>
             <div className="sf-docs-endpoints">
               {localizedLists[language].troubleshooting.map((item) => (
                 <article className="sf-docs-endpoint sf-docs-info" key={item.symptom}>
@@ -919,18 +1117,18 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
                 </article>
               ))}
             </div>
-          </section>
-          <section className="sf-docs-section"><h2>{t.statesTitle}</h2><p>{t.statesText}</p>
+          </section>}
+          {showReferenceSection('payment-states') && <section className="sf-docs-section"><h2>{t.statesTitle}</h2><p>{t.statesText}</p>
             <table className="sf-docs-reference-table">
               <thead><tr><th>{language === 'fr' ? 'État' : 'State'}</th><th>{language === 'fr' ? 'Signification' : 'Meaning'}</th><th>{language === 'fr' ? 'Action marchande' : 'Merchant action'}</th></tr></thead>
               <tbody>{localizedLists[language].paymentStateRows.map((row) => <tr key={row.state}><td data-label={language === 'fr' ? 'État' : 'State'}><code className="sf-docs-inline-code">{row.state}</code></td><td data-label={language === 'fr' ? 'Signification' : 'Meaning'}>{row.meaning}</td><td data-label={language === 'fr' ? 'Action marchande' : 'Merchant action'}>{row.action}</td></tr>)}</tbody>
             </table>
-          </section>
-          <section className="sf-docs-section"><h2>{t.idempotency}</h2><p>{t.idempotencyText}</p></section>
-          <section className="sf-docs-section"><h2>{t.expiration}</h2><p>{t.expirationText}</p></section>
-          <section className="sf-docs-section"><h2>{t.rateLimits}</h2><p>{t.rateLimitsText}</p></section>
-          <div className="sf-docs-callout">{t.environmentNote}</div>
-          <div className="sf-docs-callout"><strong>{t.serviceAvailability}.</strong> {t.serviceAvailabilityText}</div>
+          </section>}
+          {showReferenceSection('idempotency') && <section className="sf-docs-section"><h2>{t.idempotency}</h2><p>{t.idempotencyText}</p></section>}
+          {showReferenceSection('expiration') && <section className="sf-docs-section"><h2>{t.expiration}</h2><p>{t.expirationText}</p></section>}
+          {showReferenceSection('rate-limits') && <section className="sf-docs-section"><h2>{t.rateLimits}</h2><p>{t.rateLimitsText}</p></section>}
+          {showReferenceSection('service-availability') && <><div className="sf-docs-callout">{t.environmentNote}</div>
+          <div className="sf-docs-callout"><strong>{t.serviceAvailability}.</strong> {t.serviceAvailabilityText}</div></>}
         </>}
       </>
     );
@@ -940,14 +1138,14 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
     <div className="sf-docs">
       <header className="sf-docs-header">
         <button type="button" className="sf-docs-mobile-menu" onClick={() => setSidebarOpen((open) => !open)} aria-expanded={sidebarOpen} aria-label={sidebarOpen ? t.menuClose : t.contents} data-testid="button-docs-mobile-nav">{sidebarOpen ? <X size={18} /> : <Menu size={18} />}</button>
-        <Link href="/docs" className="sf-docs-brand" aria-label="SendFlow documentation" data-testid="link-docs-home">
+          <Link href="/docs" className="sf-docs-brand" onClick={() => setSelectedDocSection(null)} aria-label="SendFlow documentation" data-testid="link-docs-home">
           <span className="sf-docs-brand-mark"><img src={sendflowMark} alt="" /></span><img className="sf-docs-brand-word" src={sendflowWordmark} alt="SendFlow" />
         </Link>
         <nav className="sf-docs-nav" aria-label="Main navigation">
-          <Link href="/docs" className={path === '/docs' ? 'is-active' : ''} data-testid="link-docs-top-home">{t.navDocs}</Link>
-          <Link href="/docs/getting-started" className={path === '/docs/getting-started' ? 'is-active' : ''} data-testid="link-docs-top-guides">{t.navGuides}</Link>
-          <Link href="/docs/api-reference" className={path === '/docs/api-reference' ? 'is-active' : ''} data-testid="link-docs-top-api">{t.navApi}</Link>
-          <Link href="/docs/webhooks" className={path === '/docs/webhooks' ? 'is-active' : ''} data-testid="link-docs-top-webhooks">{t.navWebhooks}</Link>
+          <Link href="/docs" className={path === '/docs' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-home">{t.navDocs}</Link>
+          <Link href="/docs/getting-started" className={path === '/docs/getting-started' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-guides">{t.navGuides}</Link>
+          <Link href="/docs/api-reference" className={path === '/docs/api-reference' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-api">{t.navApi}</Link>
+          <Link href="/docs/webhooks" className={path === '/docs/webhooks' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-webhooks">{t.navWebhooks}</Link>
         </nav>
         <div className="sf-docs-header-tools">
           <button type="button" className="sf-docs-mobile-search" onClick={() => setSidebarOpen(true)} aria-label={t.search} data-testid="button-docs-mobile-search"><Search size={18} /></button>
@@ -959,14 +1157,14 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
           {sidebarOpen ? <X size={17} /> : <Menu size={17} />}
         </button>
         <span>{t.startGroup}</span><ChevronRight size={15} aria-hidden="true" />
-        <span className="sf-docs-mobile-crumb-current">{t[pageKey] ?? t.home}</span>
+         <span className="sf-docs-mobile-crumb-current">{activeDocItem ? (t[activeDocItem.key] ?? activeDocItem.label) : (t[pageKey] ?? t.home)}</span>
       </div>
       <div className="sf-docs-shell">
         {sidebarOpen && <button type="button" className="sf-docs-mobile-backdrop" aria-label="Close documentation menu" onClick={() => setSidebarOpen(false)} data-testid="button-close-docs-sidebar" />}
         <aside className={`sf-docs-sidebar${sidebarOpen ? ' is-open' : ''}`} aria-label={language === 'fr' ? 'Navigation de la documentation' : 'Documentation navigation'}>
           <div className="sf-docs-drawer-head">
             <button type="button" className="sf-docs-drawer-close" onClick={() => setSidebarOpen(false)} aria-label={t.menuClose} data-testid="button-close-docs-drawer"><X size={18} /></button>
-            <Link href="/docs" className="sf-docs-drawer-brand" onClick={() => setSidebarOpen(false)} aria-label="SendFlow documentation" data-testid="link-docs-drawer-brand">
+            <Link href="/docs" className="sf-docs-drawer-brand" onClick={() => { setSidebarOpen(false); setSelectedDocSection(null); }} aria-label="SendFlow documentation" data-testid="link-docs-drawer-brand">
               <img className="sf-docs-drawer-mark" src={sendflowMark} alt="" />
               <img className="sf-docs-drawer-word" src={sendflowWordmark} alt="SendFlow" />
             </Link>
@@ -991,7 +1189,8 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
                 <div className="sf-docs-nav-items" id={`docs-nav-${groupId}`} hidden={!isOpen}>
                   {group.items.map((item) => {
                     const Icon = item.icon;
-                    return <Link href={item.path} key={item.path} onClick={() => setSidebarOpen(false)} className={`sf-docs-side-link${path === item.path ? ' is-active' : ''}`} aria-current={path === item.path ? 'page' : undefined} data-testid={`link-docs-${item.key}`}><Icon size={13} />{t[item.key] ?? item.label}</Link>;
+                    const isActive = isDocItemActive(item);
+                    return <Link href={item.section ? `${item.path}#${item.section}` : item.path} key={`${item.path}:${item.section ?? 'page'}`} onClick={() => handleDocItemClick(item)} className={`sf-docs-side-link${isActive ? ' is-active' : ''}`} aria-current={isActive ? 'page' : undefined} data-testid={`link-docs-${item.key}-${item.section ?? 'page'}`}><Icon size={13} />{t[item.key] ?? item.label}</Link>;
                   })}
                 </div>
               </section>
