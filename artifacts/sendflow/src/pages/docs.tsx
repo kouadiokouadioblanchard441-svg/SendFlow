@@ -105,18 +105,18 @@ const localized: Record<Language, Translation> = {
     capabilityWebhook: 'Recevoir les notifications de paiement réussi ou échoué par webhook.',
     baseUrlTitle: 'URL de base API',
     baseUrlPending: 'Dans l’aperçu Replit actuel, le service API est routé sous le même hôte au chemin /api : https://<hôte-du-preview>/api. Ce domaine de prévisualisation est temporaire. Aucun hôte API de production n’est défini dans la configuration du projet inspectée. Configurez SENDFLOW_API_BASE_URL avec l’origine API officielle suivie de /api lorsqu’elle vous sera communiquée ; n’utilisez ni le domaine de documentation, ni celui du marchand, ni une origine CORS comme hôte API.',
-    threeSteps: 'En 3 étapes', stepOne: 'Créez votre compte marchand', stepOneSub: 'Un compte marchand actif et éligible est requis pour utiliser les paiements API.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Les clés sont créées pour le compte et gérées dans l’espace Développeurs.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Créez la session côté serveur et vérifiez le résultat auprès de SendFlow.',
+    threeSteps: 'En 3 étapes', stepOne: 'Créez votre compte marchand', stepOneSub: 'Un compte marchand actif et éligible est requis pour utiliser les paiements API.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Créez ou régénérez votre paire dans l’espace Développeurs ; la clé secrète ne s’affiche qu’à sa création.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Créez la session côté serveur et vérifiez le résultat auprès de SendFlow.',
     read: 'Lire le guide', support: 'Besoin d’aide ?', supportSub: 'Contactez l’équipe SendFlow pour toute question liée à votre intégration.', contact: 'Contacter le support',
     disclaimerTitle: 'Confirmation du paiement', disclaimer: 'Ne marquez jamais une commande comme payée sur la seule base d’une redirection ou d’un état affiché dans le navigateur. Vérifiez le statut serveur ou traitez un webhook dont la signature est valide.',
     whatIs: 'Fonctionnement', whatIsText: 'SendFlow crée une session de paiement fixe en XOF, renvoie les informations nécessaires au parcours choisi, puis expose un statut de paiement vérifié côté serveur.',
     prerequisites: 'Prérequis', noCredentials: 'Ne placez jamais la clé secrète dans le navigateur, une application mobile distribuée, un dépôt public ou des journaux.',
-    notDocumented: 'Gestion des clés API', notDocumentedText: 'Une paire composée d’une clé publique et d’une clé secrète est créée automatiquement à la création du compte marchand. La clé secrète est réservée aux appels serveur ; la clé publique sert aux appels de caisse prévus par le parcours direct.',
+    notDocumented: 'Gestion des clés API', notDocumentedText: 'Créez ou régénérez la paire de clés dans l’espace Développeurs ; elle n’est pas créée automatiquement à l’ouverture du compte. Une nouvelle paire révoque l’ancienne. La clé secrète est réservée aux appels serveur ; la clé publique sert aux appels de caisse prévus par le parcours direct.',
     rotationText: 'La clé secrète complète est affichée lors de sa création. Enregistrez-la dans un gestionnaire de secrets. La régénération désactive immédiatement l’ancienne paire de clés.',
     serverOnly: 'Envoyez la clé secrète dans l’en-tête Authorization: Bearer depuis votre serveur. Ne la transmettez jamais au client.',
     credentialRolesTitle: 'Rôle et emplacement de chaque identifiant',
     credentialHeader: 'Identifiant', credentialUseHeader: 'Utilisation', credentialHandlingHeader: 'Protection',
     pollTokenNote: 'Le pollToken est un identifiant d’accès à la tentative. Préférez interroger l’état depuis votre serveur avec la clé secrète ; si le client doit le recevoir pour afficher la progression, gardez-le temporairement en mémoire et excluez-le des journaux, URL et outils analytiques.',
-    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse : remplacez les variables d’environnement et les identifiants d’exemple par les valeurs obtenues aux étapes précédentes.',
+    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse : remplacez les variables d’environnement et les identifiants d’exemple par les valeurs obtenues aux étapes précédentes. Les clés et jetons répétés dans les réponses sont fictifs et ne donnent aucun accès.',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec l’origine de paiement SendFlow communiquée pour votre compte et redirigez le client.',
     apiAvailabilityTitle: 'Disponibilité actuelle',
@@ -126,7 +126,7 @@ const localized: Record<Language, Translation> = {
     webhookSharedNote: 'Les webhooks s’appliquent aux deux parcours, API directe et Hosted Checkout. Ils sont envoyés après un résultat final confirmé ; consultez le guide Webhooks pour vérifier la signature et dédupliquer les livraisons.',
     webhookGuideLink: 'Ouvrir le guide Webhooks',
     mobileMoneyTitle: 'Mobile Money, USSD et OTP',
-    mobileMoneyText: 'Un démarrage de tentative peut renvoyer ussdCode ou null. Affichez uniquement la valeur réellement renvoyée ; ne codez pas de commande USSD en dur. /api/pricing peut exposer requiresOtp et otpCommand comme métadonnées, pas comme instructions universelles. Le parcours direct écarte les canaux signalés comme nécessitant un OTP et son corps n’accepte ni OTP ni PIN. Le secret API du marchand est distinct du code demandé par l’opérateur au payeur : ne demandez jamais ce code au marchand et ne le transmettez pas à SendFlow.',
+    mobileMoneyText: 'Un démarrage de tentative peut renvoyer ussdCode ou null. Affichez uniquement la valeur réellement renvoyée ; ne codez pas de commande USSD en dur. /api/pricing peut exposer requiresOtp et otpCommand comme métadonnées, pas comme instructions universelles. Le service de tentative commun aux parcours API directe et Hosted Checkout écarte les canaux signalés comme nécessitant un OTP ; le corps API direct n’accepte ni OTP ni PIN. Le secret API du marchand est distinct du code demandé par l’opérateur au payeur : ne demandez jamais ce code au marchand et ne le transmettez pas à SendFlow.',
     mobileMoneyActorsTitle: 'Qui fait quoi dans le parcours Mobile Money ?',
     mobileMoneyCountryTitle: 'Notes par pays et opérateur',
     androidDirectNote: 'L’exemple Kotlin ci-dessous utilise les routes publiques de session directe depuis Android. Il s’agit d’un exemple REST, pas d’un SDK officiel ; il suppose kotlinx-coroutines-android. Créez la session sur votre serveur et transmettez seulement la clé publique et les jetons de session nécessaires.',
@@ -171,7 +171,7 @@ const localized: Record<Language, Translation> = {
     error503: '503 — service ou vérification serveur indisponible. Actuellement, LINKFLOW_SETTLEMENT_PROOF_READY=false bloque la création et le démarrage ; ce statut n’est jamais un échec final du paiement.',
     idempotencyText: 'Pour chaque création de session ou de tentative, envoyez une clé Idempotency-Key stable de 8 à 128 caractères, sans espace en début ou fin. Une reprise avec la même clé et le même corps renvoie la même opération ; la réutiliser avec une autre demande renvoie 409. Une référence marchand déjà utilisée renvoie aussi 409. Utilisez une nouvelle clé uniquement pour une nouvelle opération métier.',
     expirationText: 'Les sessions expirent une heure après leur création. Après expiration, les choix publics et le démarrage d’une tentative ne sont plus disponibles. La lecture serveur de la session et la vérification d’une tentative déjà créée restent possibles avec des identifiants valides. Le montant est fixe en XOF : 100 à 2 000 000, sans modification par le payeur.',
-    rateLimits: 'Limites de requêtes', rateLimitsText: 'Par clé API et par fenêtre d’une minute : 30 créations de session, 120 lectures, 5 tentatives directes et 60 vérifications de statut. Les choix publics sont aussi limités à 30 requêtes par minute et adresse IP ; les tentatives et vérifications publiques à 5 et 60 par minute et adresse IP. Les quotas de clé et d’adresse IP peuvent s’appliquer ensemble. En cas de limitation, l’API renvoie 429 et Retry-After: 60 ; attendez ce délai avant de reprendre.',
+    rateLimits: 'Limites de requêtes', rateLimitsText: 'Par clé API et par fenêtre d’une minute : 30 créations de session, 120 lectures, 5 tentatives directes et 60 vérifications de statut. La création de session a aussi une limite de 10 par minute au niveau du compte marchand. Par adresse IP, les lectures publiques de session sont limitées à 120 par minute, les tentatives à 5 et les vérifications à 60. Les quotas de clé, de compte et d’adresse IP peuvent s’appliquer ensemble. En cas de limitation, l’API renvoie 429 et Retry-After: 60 ; attendez ce délai avant de reprendre.',
     statesTitle: 'États d’un paiement', statesText: 'Les états de session et de tentative décrivent l’avancement du paiement ; seul un état final confirmé peut déclencher la validation de votre commande.',
     serviceAvailability: 'Disponibilité du service', serviceAvailabilityText: 'LINKFLOW_SETTLEMENT_PROOF_READY est une constante du backend actuellement égale à false, non modifiable par un marchand. Le service exige également une configuration live autorisée, un environnement et une base de production, ainsi que des identifiants serveur actifs. Avant toute activation, une preuve de règlement authentifiée doit lier référence, montant, devise, marchand, canal et type d’opération attendu avec une signature vérifiée ; le résultat de statut actuellement consulté ne fournit pas toutes ces garanties. La création de session et le démarrage de tentative renvoient donc 503 dans le code inspecté. Les lectures de statut ne créent pas de paiement et 503 ne signifie pas un échec final.',
     environmentNote: 'Dans l’aperçu Replit actuel, l’API est routée sous le même hôte au chemin /api ; la base d’aperçu est https://<hôte-du-preview>/api. Ce domaine est temporaire. Aucun hôte API de production n’est défini dans la configuration de déploiement inspectée. SENDFLOW_API_BASE_URL doit utiliser l’origine API officielle suivie de /api, une fois celle-ci communiquée par SendFlow. Ne déduisez pas l’hôte API du domaine de documentation, du marchand ou d’une origine CORS.',
@@ -215,18 +215,18 @@ const localized: Record<Language, Translation> = {
     capabilityWebhook: 'Receive successful or failed payment notifications by webhook.',
     baseUrlTitle: 'API base URL',
     baseUrlPending: 'In the current Replit preview, the API service is routed under the same host at /api: https://<preview-host>/api. This preview domain is temporary. No production API host is declared in the inspected project configuration. Set SENDFLOW_API_BASE_URL to the official API origin followed by /api when SendFlow provides it; do not use the documentation domain, merchant domain, or a CORS origin as the API host.',
-    threeSteps: 'In 3 steps', stepOne: 'Create your merchant account', stepOneSub: 'An active, eligible merchant account is required to use API payments.', stepTwo: 'Configure your API keys', stepTwoSub: 'Keys are created for the account and managed in the Developers area.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Create sessions server-side and verify results with SendFlow.',
+    threeSteps: 'In 3 steps', stepOne: 'Create your merchant account', stepOneSub: 'An active, eligible merchant account is required to use API payments.', stepTwo: 'Configure your API keys', stepTwoSub: 'Create or regenerate your key pair in the Developers area; the secret key is shown only when created.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Create sessions server-side and verify results with SendFlow.',
     read: 'Read the guide', support: 'Need help?', supportSub: 'Contact the SendFlow team with questions about your integration.', contact: 'Contact support',
     disclaimerTitle: 'Payment confirmation', disclaimer: 'Never mark an order as paid based only on a redirect or a browser-side state. Verify the server status or process a webhook whose signature is valid.',
     whatIs: 'How it works', whatIsText: 'SendFlow creates a fixed XOF payment session, returns the information for the selected flow, and exposes a server-verified payment status.',
     prerequisites: 'Prerequisites', noCredentials: 'Never place the secret key in a browser, distributed mobile app, public repository, or client-side logs.',
-    notDocumented: 'API key management', notDocumentedText: 'A public and secret key pair is created automatically when the merchant account is created. The secret key is for server requests; the public key is used for checkout requests in the direct flow.',
+    notDocumented: 'API key management', notDocumentedText: 'Create or regenerate the key pair in the Developers area; it is not created automatically when an account is opened. Creating a new pair revokes the previous pair. The secret key is for server requests; the public key is used for checkout requests in the direct flow.',
     rotationText: 'The full secret key is shown when it is created. Store it in a secret manager. Regenerating the pair immediately disables the previous keys.',
     serverOnly: 'Send the secret key in the Authorization: Bearer header from your server. Never pass it to the client.',
     credentialRolesTitle: 'Role and handling of each credential',
     credentialHeader: 'Credential', credentialUseHeader: 'Used for', credentialHandlingHeader: 'Handling',
     pollTokenNote: 'pollToken grants access to an attempt. Prefer checking status from your server with the secret key; if the client needs it to show progress, keep it in memory temporarily and exclude it from logs, URLs, and analytics.',
-    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Snippet to integrate into your server or checkout: replace environment variables and sample identifiers with values returned by previous steps.',
+    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Snippet to integrate into your server or checkout: replace environment variables and sample identifiers with values returned by previous steps. Repeated keys and tokens in response examples are fictitious and grant no access.',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with the SendFlow payment origin provided for your account and redirect the customer.',
     apiAvailabilityTitle: 'Current availability',
@@ -236,7 +236,7 @@ const localized: Record<Language, Translation> = {
     webhookSharedNote: 'Webhooks apply to both Direct API and Hosted Checkout. They are sent after a confirmed final result; see the Webhooks guide to verify signatures and deduplicate deliveries.',
     webhookGuideLink: 'Open the Webhooks guide',
     mobileMoneyTitle: 'Mobile Money, USSD, and OTP',
-    mobileMoneyText: 'Starting an attempt may return ussdCode or null. Display only the value actually returned; do not hardcode USSD commands. /api/pricing may expose requiresOtp and otpCommand as metadata, not universal instructions. Direct mode excludes channels marked as requiring OTP, and its request body accepts neither OTP nor PIN. The merchant API secret is distinct from a code requested by the payer’s operator: never ask the merchant for that code or send it to SendFlow.',
+    mobileMoneyText: 'Starting an attempt may return ussdCode or null. Display only the value actually returned; do not hardcode USSD commands. /api/pricing may expose requiresOtp and otpCommand as metadata, not universal instructions. The attempt service shared by Direct API and Hosted Checkout excludes channels marked as requiring OTP; the Direct API request body accepts neither OTP nor PIN. The merchant API secret is distinct from a code requested by the payer’s operator: never ask the merchant for that code or send it to SendFlow.',
     mobileMoneyActorsTitle: 'Who does what in a Mobile Money payment?',
     mobileMoneyCountryTitle: 'Country and operator notes',
     androidDirectNote: 'The Kotlin example below uses public direct-session routes from Android. It is a REST example, not an official SDK; it assumes kotlinx-coroutines-android. Create the session on your server and pass only the public key and required session tokens to the app.',
@@ -281,7 +281,7 @@ const localized: Record<Language, Translation> = {
     error503: '503 — service or server-side verification is unavailable. LINKFLOW_SETTLEMENT_PROOF_READY=false currently blocks session creation and attempt start; this status is never a final payment failure.',
     idempotencyText: 'For each session or attempt creation, send a stable 8–128 character Idempotency-Key with no leading or trailing spaces. A retry with the same key and body returns the same operation; reusing it with a different request returns 409. A previously used merchant reference also returns 409. Use a new key only for a new business operation.',
     expirationText: 'Sessions expire one hour after creation. After expiry, public choices and starting an attempt are unavailable. The server-side session read and status check for an already-created attempt remain possible with valid credentials. The amount is fixed in XOF: 100 to 2,000,000, and the payer cannot change it.',
-    rateLimits: 'Request limits', rateLimitsText: 'Per API key per one-minute window: 30 session creations, 120 reads, 5 direct attempts, and 60 status checks. Public choices are also limited to 30 requests per minute and client IP; public attempts and status checks to 5 and 60 per minute and client IP. Key and IP quotas can apply together. A rate-limited response includes 429 and Retry-After: 60; wait before resuming.',
+    rateLimits: 'Request limits', rateLimitsText: 'Per API key per one-minute window: 30 session creations, 120 reads, 5 direct attempts, and 60 status checks. Session creation also has a merchant-account limit of 10 per minute. Per client IP, public session reads are limited to 120 per minute, attempts to 5, and status checks to 60. Key, account, and IP quotas can apply together. A rate-limited response includes 429 and Retry-After: 60; wait before resuming.',
     statesTitle: 'Payment states', statesText: 'Session and attempt states describe payment progress; only a confirmed final state should trigger your order decision.',
     serviceAvailability: 'Service availability', serviceAvailabilityText: 'LINKFLOW_SETTLEMENT_PROOF_READY is a backend constant currently set to false and cannot be changed by a merchant. The service also requires authorized live configuration, a production environment and database, and active server credentials. Before any activation, authenticated settlement evidence must bind the reference, amount, currency, merchant, channel, and expected operation type with a verified signature; the status result currently consulted does not provide all these guarantees. Session creation and attempt start therefore return 503 in the inspected code. Status reads do not create payments, and 503 does not mean final failure.',
     environmentNote: 'In the current Replit preview, the API is routed under the same host at /api; the preview base is https://<preview-host>/api. This domain is temporary. No production API host is declared in the inspected deployment configuration. SENDFLOW_API_BASE_URL must use the official API origin followed by /api once SendFlow provides it. Do not infer the API host from the documentation domain, merchant domain, or a CORS origin.',
@@ -295,7 +295,7 @@ const localized: Record<Language, Translation> = {
 const localizedLists: Record<Language, TranslationLists> = {
   fr: {
     stepTitles: ['Créez votre compte marchand', 'Configurez vos clés API', 'Intégrez SendFlow à votre application'],
-    stepTexts: ['Créez votre compte marchand SendFlow.', 'Les clés sont créées automatiquement et se gèrent dans l’espace Développeurs.', 'Créez les sessions côté serveur et vérifiez chaque résultat auprès de SendFlow.'],
+    stepTexts: ['Créez votre compte marchand SendFlow.', 'Créez ou régénérez votre paire dans l’espace Développeurs ; la clé secrète ne s’affiche qu’à sa création.', 'Créez les sessions côté serveur et vérifiez chaque résultat auprès de SendFlow.'],
     responsibilitiesText: ['Gardez la clé secrète sur votre serveur ; le navigateur utilise uniquement les identifiants publics de session.', 'Traitez les événements de webhook de façon idempotente et validez leur signature HMAC.', 'Ne confirmez une commande qu’après un statut succeeded renvoyé par l’API ou un webhook authentique.'],
     directFlowTitles: ['Créer la session', 'Charger les choix disponibles', 'Démarrer le paiement', 'Vérifier le résultat'],
     directFlowTexts: [
@@ -318,8 +318,8 @@ const localizedLists: Record<Language, TranslationLists> = {
       { title: 'Webhook', body: 'Pour les deux modes, SendFlow notifie payment.succeeded ou payment.failed uniquement après confirmation finale. Vérifiez la signature HMAC et dédupliquez avec sendflow-delivery.' },
     ],
     mobileMoneyCards: [
-      { title: 'Côte d’Ivoire · Orange Money', status: 'Menu général vérifié — pas code de paiement', body: 'Le code ci-dessous ouvre le menu général Orange Money. Ce n’est pas une commande de validation SendFlow ni une preuve de paiement. Pour une tentative, suivez uniquement le ussdCode réellement renvoyé (il peut être null) ou la notification de l’opérateur. La valeur otpCommand spécifique actuellement configurée dans le catalogue SendFlow n’a pas été confirmée comme instruction officielle et n’est pas publiée ici.', menuCode: '#144#', sourceUrl: 'https://www.orange.ci/fr/accueil-assistance-orange-money.html' },
-      { title: 'Burkina Faso · Orange Money', status: 'Menu général vérifié — paiement non confirmé', body: 'Le code ci-dessous permet d’accéder à la gestion du compte Orange Money. Ce n’est pas un code de validation d’une tentative SendFlow. Le catalogue inspecté marque ce canal comme nécessitant un OTP, ce qui l’exclut du parcours direct ; aucune séquence de paiement ou OTP propre à SendFlow n’est confirmée. Suivez uniquement les instructions affichées au payeur.', menuCode: '*144#', sourceUrl: 'https://www.orange.bf/fr/codes-utiles-new.html' },
+      { title: 'Côte d’Ivoire · Orange Money', status: 'Menu général · validité à revalider', body: 'Le code ci-dessous est présenté comme accès au menu général dans la référence publique liée. Sa validité n’est pas confirmée par SendFlow dans cette documentation ; vérifiez-la auprès de l’opérateur avant usage. Ce n’est pas une commande de paiement SendFlow ni une preuve de paiement. Pour une tentative, suivez uniquement le ussdCode réellement renvoyé (il peut être null) ou la notification de l’opérateur. La valeur otpCommand spécifique actuellement configurée dans le catalogue SendFlow n’a pas été confirmée comme instruction officielle et n’est pas publiée ici.', menuCode: '#144#', sourceUrl: 'https://www.orange.ci/fr/accueil-assistance-orange-money.html' },
+      { title: 'Burkina Faso · Orange Money', status: 'Menu général · validité à revalider', body: 'Le code ci-dessous est présenté comme accès au menu général dans la référence publique liée. Sa validité n’est pas confirmée par SendFlow dans cette documentation ; vérifiez-la auprès de l’opérateur avant usage. Ce n’est pas un code de validation d’une tentative SendFlow. Le canal est marqué comme nécessitant un OTP et est écarté par le service de tentative commun aux parcours API directe et Hosted Checkout ; aucune séquence de paiement ou OTP propre à SendFlow n’est confirmée. Suivez uniquement les instructions affichées au payeur.', menuCode: '*144#', sourceUrl: 'https://www.orange.bf/fr/codes-utiles-new.html' },
       { title: 'Autres pays et opérateurs', status: 'Choix dynamiques', body: 'Il n’existe pas de liste statique fiable à publier depuis le code seul. GET /api/pricing fournit un catalogue général, mais les choix de session directe sont filtrés par les règles de routage et de configuration ; ils font autorité pour cette session.' },
     ],
     troubleshooting: [
@@ -330,10 +330,10 @@ const localizedLists: Record<Language, TranslationLists> = {
       { symptom: 'Une création renvoie 503', action: 'Le parcours de création et de tentative est actuellement désactivé dans le code inspecté. N’essayez pas de contourner cette indisponibilité ni de présenter le paiement comme échoué ou réussi.' },
     ],
     credentialRows: [
-      { credential: 'Clé secrète', usedFor: 'Authorization: Bearer pour créer et lire une session depuis le backend marchand.', handling: 'Serveur uniquement. Stockez-la dans un gestionnaire de secrets et ne la journalisez jamais.' },
-      { credential: 'Clé publique', usedFor: 'X-SendFlow-Public-Key pour les appels de caisse du parcours direct.', handling: 'Peut être transmise au client dans le contexte de sa session ; elle ne remplace jamais la clé secrète.' },
-      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token pour lire la session directe et démarrer une tentative.', handling: 'Jeton limité à une session. Ne le partagez pas entre commandes et évitez de le conserver dans des journaux.' },
-      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token pour consulter une tentative directe.', handling: 'Identifiant d’accès à une tentative. Préférez le suivi serveur et ne l’exposez que temporairement si l’interface en a besoin.' },
+      { credential: 'Clé secrète', usedFor: 'Authorization: Bearer pour créer et lire une session depuis le backend marchand.', handling: 'Format live : sfsk_live_ suivi de 43 caractères URL-safe. Serveur uniquement ; stockez-la dans un gestionnaire de secrets et ne la journalisez jamais.' },
+      { credential: 'Clé publique', usedFor: 'X-SendFlow-Public-Key pour les appels de caisse du parcours direct.', handling: 'Format live : sfpk_live_ suivi de 43 caractères URL-safe. Peut être transmise au client dans le contexte de sa session ; elle ne remplace jamais la clé secrète.' },
+      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token pour lire la session directe et démarrer une tentative.', handling: '43 caractères URL-safe ; jeton limité à une session. Ne le partagez pas entre commandes et évitez de le conserver dans des journaux.' },
+      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token pour consulter une tentative directe.', handling: '64 caractères hexadécimaux minuscules ; identifiant d’accès à une tentative. Préférez le suivi serveur et ne l’exposez que temporairement si l’interface en a besoin.' },
       { credential: 'Secret de signature webhook', usedFor: 'Vérifier les notifications reçues sur votre endpoint.', handling: 'Secret distinct des clés API, affiché une seule fois à la configuration ; conservez-le côté serveur.' },
     ],
     paymentStateRows: [
@@ -355,7 +355,7 @@ const localizedLists: Record<Language, TranslationLists> = {
   },
   en: {
     stepTitles: ['Create your merchant account', 'Configure your API keys', 'Integrate SendFlow into your app'],
-    stepTexts: ['Create your SendFlow merchant account.', 'Keys are created automatically and managed in the Developers area.', 'Create sessions server-side and verify each result with SendFlow.'],
+    stepTexts: ['Create your SendFlow merchant account.', 'Create or regenerate your key pair in the Developers area; the secret key is shown only when created.', 'Create sessions server-side and verify each result with SendFlow.'],
     responsibilitiesText: ['Keep the secret key on your server; the browser uses only public session credentials.', 'Process webhook events idempotently and verify their HMAC signature.', 'Confirm an order only after the API returns succeeded or an authentic webhook is received.'],
     directFlowTitles: ['Create the session', 'Load available choices', 'Start the payment', 'Verify the result'],
     directFlowTexts: [
@@ -378,8 +378,8 @@ const localizedLists: Record<Language, TranslationLists> = {
       { title: 'Webhook', body: 'For both modes, SendFlow sends payment.succeeded or payment.failed only after final confirmation. Verify the HMAC signature and deduplicate with sendflow-delivery.' },
     ],
     mobileMoneyCards: [
-      { title: 'Côte d’Ivoire · Orange Money', status: 'General menu verified — not a payment code', body: 'The code below opens the general Orange Money menu. This is not a SendFlow validation command or proof of payment. For an attempt, follow only the ussdCode actually returned (it may be null) or the operator notification. The specific otpCommand currently configured in the SendFlow catalog has not been confirmed as an official instruction and is not published here.', menuCode: '#144#', sourceUrl: 'https://www.orange.ci/fr/accueil-assistance-orange-money.html' },
-      { title: 'Burkina Faso · Orange Money', status: 'General menu verified — payment flow unconfirmed', body: 'The code below opens Orange Money account management. This is not a code for confirming a SendFlow attempt. The inspected catalog marks this channel as requiring OTP, which excludes it from Direct mode; no SendFlow payment or OTP sequence is confirmed. Follow only the instructions shown to the payer.', menuCode: '*144#', sourceUrl: 'https://www.orange.bf/fr/codes-utiles-new.html' },
+      { title: 'Côte d’Ivoire · Orange Money', status: 'General menu · validity to reconfirm', body: 'The code below is listed as a general-menu entry in the linked public reference. SendFlow has not confirmed its current validity in this documentation; verify it with the operator before use. It is not a SendFlow payment command or proof of payment. For an attempt, follow only the ussdCode actually returned (it may be null) or the operator notification. The specific otpCommand currently configured in the SendFlow catalog has not been confirmed as an official instruction and is not published here.', menuCode: '#144#', sourceUrl: 'https://www.orange.ci/fr/accueil-assistance-orange-money.html' },
+      { title: 'Burkina Faso · Orange Money', status: 'General menu · validity to reconfirm', body: 'The code below is listed as a general-menu entry in the linked public reference. SendFlow has not confirmed its current validity in this documentation; verify it with the operator before use. It is not a code for confirming a SendFlow attempt. The channel is marked as requiring OTP and is excluded by the attempt service shared by Direct API and Hosted Checkout; no SendFlow payment or OTP sequence is confirmed. Follow only the instructions shown to the payer.', menuCode: '*144#', sourceUrl: 'https://www.orange.bf/fr/codes-utiles-new.html' },
       { title: 'Other countries and operators', status: 'Dynamic choices', body: 'The source alone does not provide a reliable static support list. GET /api/pricing returns a global catalog, but direct-session choices are filtered by routing and configuration rules and are authoritative for that session.' },
     ],
     troubleshooting: [
@@ -390,10 +390,10 @@ const localizedLists: Record<Language, TranslationLists> = {
       { symptom: 'A create request returns 503', action: 'Session and attempt creation are currently disabled in the inspected code. Do not work around this unavailability or label the payment as failed or successful.' },
     ],
     credentialRows: [
-      { credential: 'Secret key', usedFor: 'Authorization: Bearer to create and read a session from the merchant backend.', handling: 'Server only. Store it in a secrets manager and never log it.' },
-      { credential: 'Public key', usedFor: 'X-SendFlow-Public-Key for direct checkout requests.', handling: 'May be sent to the client for its session; it never replaces the secret key.' },
-      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token to read a direct session and start an attempt.', handling: 'Session-scoped token. Do not reuse across orders or place it in logs.' },
-      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token to read a direct attempt.', handling: 'Attempt access credential. Prefer server-side polling; expose it only temporarily if the interface requires it.' },
+      { credential: 'Secret key', usedFor: 'Authorization: Bearer to create and read a session from the merchant backend.', handling: 'Live format: sfsk_live_ followed by 43 URL-safe characters. Server only. Store it in a secrets manager and never log it.' },
+      { credential: 'Public key', usedFor: 'X-SendFlow-Public-Key for direct checkout requests.', handling: 'Live format: sfpk_live_ followed by 43 URL-safe characters. May be sent to the client for its session; it never replaces the secret key.' },
+      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token to read a direct session and start an attempt.', handling: '43 URL-safe characters; session-scoped token. Do not reuse across orders or place it in logs.' },
+      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token to read a direct attempt.', handling: '64 lowercase hexadecimal characters; attempt access credential. Prefer server-side polling; expose it only temporarily if the interface requires it.' },
       { credential: 'Webhook signing secret', usedFor: 'Verify notifications received by your endpoint.', handling: 'Separate from API keys and shown only once during setup; keep it server-side.' },
     ],
     paymentStateRows: [
@@ -462,9 +462,9 @@ const apiEndpointInventory = [
   "state": "created",
   "amountMinor": 12500,
   "currency": "XOF",
-  "checkoutPath": "/pay/demo-payment-token",
-  "clientToken": "<session-client-token-fictif>",
-  "publicKey": "<public-key-fictive>",
+  "checkoutPath": "/pay/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+  "clientToken": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+  "publicKey": "sfpk_live_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
   "expiresAt": "2026-10-29T11:30:00.000Z"
 }`,
   },
@@ -502,13 +502,13 @@ const apiEndpointInventory = [
     anchor: 'direct-choices',
     fieldsFr: [
       { field: 'sessionId', type: 'UUID · chemin', requirement: 'Requis', description: 'Identifiant de la session en mode direct.' },
-      { field: 'X-SendFlow-Public-Key', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Clé publique, 20 à 80 caractères.' },
-      { field: 'X-SendFlow-Client-Token', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Jeton de session, 32 à 64 caractères.' },
+      { field: 'X-SendFlow-Public-Key', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Format live : sfpk_live_ suivi de 43 caractères URL-safe.' },
+      { field: 'X-SendFlow-Client-Token', type: 'En-tête · chaîne', requirement: 'Requis', description: 'Jeton de cette session : 43 caractères URL-safe.' },
     ],
     fieldsEn: [
       { field: 'sessionId', type: 'UUID · path', requirement: 'Required', description: 'Identifier for a direct-mode session.' },
-      { field: 'X-SendFlow-Public-Key', type: 'Header · string', requirement: 'Required', description: 'Public key, 20–80 characters.' },
-      { field: 'X-SendFlow-Client-Token', type: 'Header · string', requirement: 'Required', description: 'Session token, 32–64 characters.' },
+      { field: 'X-SendFlow-Public-Key', type: 'Header · string', requirement: 'Required', description: 'Live format: sfpk_live_ followed by 43 URL-safe characters.' },
+      { field: 'X-SendFlow-Client-Token', type: 'Header · string', requirement: 'Required', description: 'Session token: 43 URL-safe characters.' },
     ],
     codesFr: 'HTTP : 200, 404, 429, 503.',
     codesEn: 'HTTP: 200, 404, 429, 503.',
@@ -685,9 +685,9 @@ const hostedSessionResponse = `{
   "state": "created",
   "amountMinor": 12500,
   "currency": "XOF",
-  "checkoutPath": "/pay/demo-payment-token",
-  "clientToken": "<session-client-token-fictif>",
-  "publicKey": "<public-key-fictive>",
+  "checkoutPath": "/pay/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+  "clientToken": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+  "publicKey": "sfpk_live_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
   "expiresAt": "2026-10-29T11:30:00.000Z"
 }`;
 
@@ -699,8 +699,8 @@ const directSessionResponse = `{
   "amountMinor": 12500,
   "currency": "XOF",
   "checkoutPath": null,
-  "clientToken": "<session-client-token-fictif>",
-  "publicKey": "<public-key-fictive>",
+  "clientToken": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+  "publicKey": "sfpk_live_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
   "expiresAt": "2026-10-29T11:30:00.000Z"
 }`;
 
@@ -1075,10 +1075,10 @@ export default function DocsPage() {
               <h3>{t.eventNames}</h3>
               <ul className="sf-docs-list"><li><code className="sf-docs-inline-code">payment.succeeded</code></li><li><code className="sf-docs-inline-code">payment.failed</code></li></ul>
             </div>
-            <ResponsePanel language={language} label={t.responseExample} response={`{
+            <ResponsePanel language={language} label={`${t.responseExample} · payment.succeeded`} response={`{
   "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644",
   "type": "payment.succeeded",
-  "createdAt": "2026-01-01T12:00:00.000Z",
+  "createdAt": "2026-10-29T10:31:00.000Z",
   "data": {
     "sessionId": "00000000-0000-4000-8000-000000000001",
     "merchantReference": "ORDER-2026-0042",
@@ -1087,6 +1087,20 @@ export default function DocsPage() {
     "amountMinor": 12500,
     "currency": "XOF",
     "status": "succeeded"
+  }
+}`} />
+            <ResponsePanel language={language} label={`${t.responseExample} · payment.failed`} response={`{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28645",
+  "type": "payment.failed",
+  "createdAt": "2026-10-29T10:32:00.000Z",
+  "data": {
+    "sessionId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+    "merchantReference": "ORDER-2026-0042",
+    "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
+    "transactionId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28643",
+    "amountMinor": 12500,
+    "currency": "XOF",
+    "status": "failed"
   }
 }`} />
           </section>}
@@ -1150,6 +1164,16 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
             </table>
             <CodePanel language={language} label={language === 'fr' ? 'Lire le statut de session' : 'Read session status'} example="read-session" />
             <CodePanel language={language} label={language === 'fr' ? 'Lire le statut d’une tentative directe' : 'Read direct attempt status'} example="poll-attempt" />
+            <ResponsePanel language={language} label={language === 'fr' ? 'Réponse de tentative · failed' : 'Attempt response · failed'} response={`{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+  "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
+  "state": "failed",
+  "amountMinor": 12500,
+  "currency": "XOF",
+  "ussdCode": null,
+  "pollToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "merchantReference": "ORDER-2026-0043"
+}`} />
           </section>}
           {showReferenceSection('idempotency') && <section className="sf-docs-section"><h2>{t.idempotency}</h2><p>{t.idempotencyText}</p><CodePanel language={language} label={t.codeLabel} example="create-hosted" /></section>}
           {showReferenceSection('expiration') && <section className="sf-docs-section"><h2>{t.expiration}</h2><p>{t.expirationText}</p><CodePanel language={language} label={t.codeLabel} example="read-session" /></section>}

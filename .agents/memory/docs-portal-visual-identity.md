@@ -7,6 +7,8 @@ Use the supplied API-documentation reference's Inter typography while retaining 
 
 Organize the portal with clear groups for getting started, hosted checkout, integration, direct API, reference, and resources. Keep every section tied to SendFlow features verified in the code; do not copy unconfirmed capabilities such as crypto or payouts from reference documentation.
 
-**Why:** the user later supplied a developer-documentation reference and explicitly changed the typography target while asking to keep SendFlow's colors.
+Public documentation must use the SendFlow brand exclusively. Do not mention payment providers, aggregators, or technical partners in prose, snippets, errors, examples, or labels. Operator names may appear only when needed to explain a verified payer flow.
 
-**How to apply:** use Inter only within the docs portal across desktop and mobile; keep the existing SendFlow palette and left-side expandable navigation. Treat the current reference as a typography/layout guide, not as authorization to copy another provider's brand or unverified features.
+**Why:** the user wants external references to guide organization and typography while preserving SendFlow's identity and keeping third-party provider and partner names out of public docs.
+
+**How to apply:** use Inter only within the docs portal across desktop and mobile; keep the existing SendFlow palette and left-side expandable navigation. Use operator names only for verified payer instructions, and search public docs and examples for partner names before release.
