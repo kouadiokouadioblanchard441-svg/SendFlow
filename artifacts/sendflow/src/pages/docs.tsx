@@ -13,7 +13,8 @@ import { useSeo } from '@/lib/seo';
 import './docs.css';
 
 type Language = 'fr' | 'en';
-type DocItem = { path: string; key: string; label: string; group: string; icon: typeof BookOpen };
+type DocGroup = 'start' | 'checkout' | 'integration' | 'directApi' | 'reference';
+type DocItem = { path: string; key: string; label: string; group: DocGroup; icon: typeof BookOpen };
 type Translation = Record<string, string>;
 type TranslationLists = {
   stepTitles: string[];
@@ -23,21 +24,30 @@ type TranslationLists = {
 };
 
 const docsItems: DocItem[] = [
-  { path: '/docs', key: 'home', label: 'Documentation', group: 'Start here', icon: BookOpen },
-  { path: '/docs/getting-started', key: 'start', label: 'Getting started', group: 'Start here', icon: ArrowRight },
-  { path: '/docs/authentication', key: 'auth', label: 'Authentication', group: 'Start here', icon: LockKeyhole },
-  { path: '/docs/integrations/direct', key: 'direct', label: 'Direct integration', group: 'Integrations', icon: Code2 },
-  { path: '/docs/integrations/hosted', key: 'hosted', label: 'Hosted redirect', group: 'Integrations', icon: Globe2 },
-  { path: '/docs/api-reference', key: 'api', label: 'API reference', group: 'Reference', icon: FileCode2 },
-  { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'Reference', icon: Webhook },
-  { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'Reference', icon: ShieldCheck },
+  { path: '/docs', key: 'home', label: 'Documentation', group: 'start', icon: BookOpen },
+  { path: '/docs/getting-started', key: 'start', label: 'Getting started', group: 'start', icon: ArrowRight },
+  { path: '/docs/authentication', key: 'auth', label: 'Authentication', group: 'start', icon: LockKeyhole },
+  { path: '/docs/integrations/hosted', key: 'hosted', label: 'Hosted redirect', group: 'checkout', icon: Globe2 },
+  { path: '/docs/integrations/direct', key: 'direct', label: 'Direct integration', group: 'integration', icon: Code2 },
+  { path: '/docs/api-reference', key: 'api', label: 'API reference', group: 'directApi', icon: FileCode2 },
+  { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'directApi', icon: Webhook },
+  { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'reference', icon: ShieldCheck },
+];
+
+const docGroups: { id: DocGroup; labelKey: string }[] = [
+  { id: 'start', labelKey: 'startGroup' },
+  { id: 'checkout', labelKey: 'checkoutGroup' },
+  { id: 'integration', labelKey: 'integrations' },
+  { id: 'directApi', labelKey: 'directApi' },
+  { id: 'reference', labelKey: 'reference' },
 ];
 
 const localized: Record<Language, Translation> = {
   fr: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
-    dashboard: 'Espace développeur', search: 'Rechercher dans la documentation…', startGroup: 'Pour commencer',
-    integrations: 'Intégrations', reference: 'Référence', noResults: 'Aucun document ne correspond à cette recherche.',
+    dashboard: 'Espace développeur', search: 'Rechercher dans la documentation…', startGroup: 'Démarrer',
+    checkoutGroup: 'Checkout', integrations: 'Intégration', directApi: 'API directe',
+    reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
     home: 'Documentation', start: 'Bien démarrer', auth: 'Authentification', direct: 'Intégration directe',
     hosted: 'Redirection hébergée', api: 'Référence API', webhooks: 'Webhooks', ref: 'Erreurs et sécurité',
     badge: 'Contrat à valider', prod: 'Disponibilité production non vérifiée',
@@ -59,7 +69,14 @@ const localized: Record<Language, Translation> = {
     restApi: 'API REST', sessionRedirect: 'Création de session puis redirection',
     authContract: 'Clé API selon le contrat à confirmer', returnToConfirm: 'À confirmer selon le contrat',
     directGuide: 'Voir le guide API directe', hostedGuide: 'Voir le guide de redirection',
-    threeSteps: 'En 3 étapes', stepOne: 'Créez votre compte marchand', stepOneSub: 'Préparez votre accès à l’espace marchand SendFlow.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Consultez et protégez les clés depuis l’espace Développeurs.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Faites valider le contrat avant d’activer un parcours réel.',
+    capabilitiesTitle: 'Ce que l’intégration SendFlow prévoit',
+    capabilitySession: 'Créer une session de paiement depuis votre serveur marchand.',
+    capabilityCheckout: 'Présenter un parcours hébergé SendFlow au payeur.',
+    capabilityStatus: 'Consulter le statut d’une session et d’une tentative.',
+    capabilityWebhook: 'Recevoir les notifications de paiement réussi ou échoué par webhook.',
+    baseUrlTitle: 'URL de base API',
+    baseUrlPending: 'À confirmer avant intégration. Ne vous basez pas sur l’adresse de cette documentation.',
+    threeSteps: 'Parcours recommandé', stepOne: 'Créez votre compte marchand', stepOneSub: 'Préparez votre accès à l’espace marchand SendFlow.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Consultez et protégez les clés depuis l’espace Développeurs.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Faites valider le contrat avant d’activer un parcours réel.',
     read: 'Lire le guide', support: 'Besoin d’un échange technique ?', supportSub: 'Contactez l’équipe SendFlow pour clarifier le périmètre et les éléments à confirmer avant une intégration.', contact: 'Contacter le support',
     disclaimerTitle: 'État du contrat API', disclaimer: 'Les paiements ne sont pas annoncés comme disponibles en production. L’exécution reste fermée tant que les preuves de règlement ne sont pas prêtes. Le contrat API et le flux fournisseur réel n’ont pas été validés pour la production.',
     whatIs: 'Avant de commencer', whatIsText: 'Cette documentation aide à cadrer un projet d’intégration. Elle ne remplace pas l’accès à un contrat API validé ni une confirmation de disponibilité par SendFlow.',
@@ -95,7 +112,8 @@ const localized: Record<Language, Translation> = {
   en: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
     dashboard: 'Developer dashboard', search: 'Search documentation…', startGroup: 'Start here',
-    integrations: 'Integrations', reference: 'Reference', noResults: 'No documents match your search.',
+    checkoutGroup: 'Checkout', integrations: 'Integration', directApi: 'Direct API',
+    reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
     home: 'Documentation', start: 'Getting started', auth: 'Authentication', direct: 'Direct integration',
     hosted: 'Hosted redirect', api: 'API reference', webhooks: 'Webhooks', ref: 'Errors & security',
     badge: 'Contract to validate', prod: 'Production availability not verified',
@@ -117,7 +135,14 @@ const localized: Record<Language, Translation> = {
     restApi: 'REST API', sessionRedirect: 'Create a session, then redirect',
     authContract: 'API key, subject to contract confirmation', returnToConfirm: 'To be confirmed against the contract',
     directGuide: 'View the direct API guide', hostedGuide: 'View the redirect guide',
-    threeSteps: 'In 3 steps', stepOne: 'Create your merchant account', stepOneSub: 'Prepare access to the SendFlow merchant dashboard.', stepTwo: 'Configure your API keys', stepTwoSub: 'View and protect your keys in the Developers area.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Validate the contract before enabling a real payment flow.',
+    capabilitiesTitle: 'What SendFlow integration covers',
+    capabilitySession: 'Create a payment session from your merchant server.',
+    capabilityCheckout: 'Present a SendFlow-hosted payment flow to the payer.',
+    capabilityStatus: 'Read the status of a session and payment attempt.',
+    capabilityWebhook: 'Receive successful or failed payment notifications by webhook.',
+    baseUrlTitle: 'API base URL',
+    baseUrlPending: 'To be confirmed before integration. Do not use the documentation address as the API host.',
+    threeSteps: 'Recommended flow', stepOne: 'Create your merchant account', stepOneSub: 'Prepare access to the SendFlow merchant dashboard.', stepTwo: 'Configure your API keys', stepTwoSub: 'View and protect your keys in the Developers area.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Validate the contract before enabling a real payment flow.',
     read: 'Read the guide', support: 'Need a technical conversation?', supportSub: 'Contact the SendFlow team to clarify scope and the items to confirm before integration.', contact: 'Contact support',
     disclaimerTitle: 'API contract status', disclaimer: 'Payments are not announced as production-ready. Execution remains closed until settlement proof is ready. The API contract and real provider flow have not been validated for production.',
     whatIs: 'Before you start', whatIsText: 'This documentation helps scope an integration project. It does not replace access to a validated API contract or a production availability confirmation from SendFlow.',
@@ -246,6 +271,8 @@ export default function DocsPage() {
   const pageKey = pageKeys[path] ?? 'home';
   const t = localized[language];
   const activeItem = docsItems.find((item) => item.path === path) ?? docsItems[0];
+  const activeGroup = docGroups.find((group) => group.id === activeItem.group);
+  const activeGroupLabel = t[activeGroup?.labelKey ?? 'startGroup'];
   const filteredItems = useMemo(() => docsItems.filter((item) =>
     `${localized[language][item.key] ?? item.label} ${item.label} ${docSearchTerms[item.path] ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   ), [language, query]);
@@ -261,11 +288,10 @@ export default function DocsPage() {
     robots: 'index,follow',
   });
 
-  const sidebarGroups = [
-    { key: 'startGroup', items: filteredItems.filter((item) => item.group === 'Start here') },
-    { key: 'integrations', items: filteredItems.filter((item) => item.group === 'Integrations') },
-    { key: 'reference', items: filteredItems.filter((item) => item.group === 'Reference') },
-  ];
+  const sidebarGroups = docGroups.map((group) => ({
+    key: group.labelKey,
+    items: filteredItems.filter((item) => item.group === group.id),
+  }));
 
   const renderHome = () => (
     <>
@@ -281,24 +307,6 @@ export default function DocsPage() {
       <section className="sf-docs-section">
         <h2>{t.methods}</h2><p>{t.methodsSub}</p>
         <div className="sf-docs-cards">
-          <Link href="/docs/integrations/direct" className="sf-docs-card sf-docs-card-link" data-testid="card-docs-direct">
-            <div className="sf-docs-card-art">
-              <img
-                src={apiIntegrationIllustration}
-                alt={language === 'fr' ? 'Illustration 3D d’un développeur intégrant SendFlow' : '3D illustration of a developer integrating SendFlow'}
-                loading="lazy"
-              />
-            </div>
-            <div className="sf-docs-card-top"><span className="sf-docs-card-icon"><Code2 size={19} /></span><ArrowRight className="sf-docs-card-arrow" size={16} /></div>
-            <h3>{t.directCard}</h3><p>{t.directCardSub}</p>
-            <dl className="sf-docs-method-details">
-              <div><dt>{t.methodLevel}</dt><dd>{t.developerLevel}</dd></div>
-              <div><dt>{t.methodControl}</dt><dd>{t.highControl}</dd></div>
-              <div><dt>{t.methodIntegration}</dt><dd>{t.restApi}</dd></div>
-              <div><dt>{t.methodAuth}</dt><dd>{t.authContract}</dd></div>
-            </dl>
-            <span className="sf-docs-card-cta">{t.directGuide}<ArrowRight size={13} /></span>
-          </Link>
           <Link href="/docs/integrations/hosted" className="sf-docs-card sf-docs-card-link" data-testid="card-docs-hosted">
             <div className="sf-docs-card-art">
               <img
@@ -317,6 +325,37 @@ export default function DocsPage() {
             </dl>
             <span className="sf-docs-card-cta">{t.hostedGuide}<ArrowRight size={13} /></span>
           </Link>
+          <Link href="/docs/integrations/direct" className="sf-docs-card sf-docs-card-link" data-testid="card-docs-direct">
+            <div className="sf-docs-card-art">
+              <img
+                src={apiIntegrationIllustration}
+                alt={language === 'fr' ? 'Illustration 3D d’un développeur intégrant SendFlow' : '3D illustration of a developer integrating SendFlow'}
+                loading="lazy"
+              />
+            </div>
+            <div className="sf-docs-card-top"><span className="sf-docs-card-icon"><Code2 size={19} /></span><ArrowRight className="sf-docs-card-arrow" size={16} /></div>
+            <h3>{t.directCard}</h3><p>{t.directCardSub}</p>
+            <dl className="sf-docs-method-details">
+              <div><dt>{t.methodLevel}</dt><dd>{t.developerLevel}</dd></div>
+              <div><dt>{t.methodControl}</dt><dd>{t.highControl}</dd></div>
+              <div><dt>{t.methodIntegration}</dt><dd>{t.restApi}</dd></div>
+              <div><dt>{t.methodAuth}</dt><dd>{t.authContract}</dd></div>
+            </dl>
+            <span className="sf-docs-card-cta">{t.directGuide}<ArrowRight size={13} /></span>
+          </Link>
+        </div>
+      </section>
+      <section className="sf-docs-section">
+        <h2>{t.capabilitiesTitle}</h2>
+        <ul className="sf-docs-list">
+          <li>{t.capabilitySession}</li>
+          <li>{t.capabilityCheckout}</li>
+          <li>{t.capabilityStatus}</li>
+          <li>{t.capabilityWebhook}</li>
+        </ul>
+        <div className="sf-docs-callout sf-docs-base-url">
+          <strong>{t.baseUrlTitle}</strong>
+          <span>{t.baseUrlPending}</span>
         </div>
       </section>
       <section className="sf-docs-section">
@@ -339,7 +378,7 @@ export default function DocsPage() {
     return (
       <>
         <div className="sf-docs-breadcrumb"><Link href="/docs">{t.breadcrumb}</Link><ChevronRight size={12} /><span>{t[pageKey] ?? t.home}</span></div>
-        <div className="sf-docs-eyebrow">SENDFLOW / {activeItem.group.toUpperCase()}</div>
+        <div className="sf-docs-eyebrow">SENDFLOW / {activeGroupLabel.toUpperCase()}</div>
         <h1 className="sf-docs-title">{title}</h1>
         <p className="sf-docs-lede">{description}</p>
         <div className="sf-docs-meta"><span className="sf-docs-status"><i className="sf-docs-status-dot" />{hasStatus ? t.endpointStatus : t.lastUpdated}</span></div>
@@ -453,6 +492,10 @@ export default function DocsPage() {
             </div>
           ))}
           {query && filteredItems.length === 0 && <div className="sf-docs-search-empty">{t.noResults}</div>}
+          <div className="sf-docs-nav-group">
+            <p className="sf-docs-group-label">{t.resources}</p>
+            <a className="sf-docs-side-link" href="mailto:support@sendflow01.com" data-testid="link-docs-sidebar-support"><LifeBuoy size={14} />{t.contact}</a>
+          </div>
           <div className="sf-docs-sidebar-note"><ShieldCheck size={15} /><span>{t.prod}</span></div>
         </aside>
         <main className="sf-docs-main">
