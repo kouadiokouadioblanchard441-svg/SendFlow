@@ -26,7 +26,7 @@ type TranslationLists = {
   hostedFlowTitles: string[];
   hostedFlowTexts: string[];
   mobileMoneyActors: { title: string; body: string }[];
-  mobileMoneyCards: { title: string; status: string; body: string }[];
+  mobileMoneyCards: { title: string; status: string; body: string; menuCode?: string; sourceUrl?: string }[];
   troubleshooting: { symptom: string; action: string }[];
   credentialRows: { credential: string; usedFor: string; handling: string }[];
   paymentStateRows: { state: string; meaning: string; action: string }[];
@@ -318,8 +318,8 @@ const localizedLists: Record<Language, TranslationLists> = {
       { title: 'Webhook', body: 'Pour les deux modes, SendFlow notifie payment.succeeded ou payment.failed uniquement après confirmation finale. Vérifiez la signature HMAC et dédupliquez avec sendflow-delivery.' },
     ],
     mobileMoneyCards: [
-      { title: 'Côte d’Ivoire · Orange Money', status: 'Parcours à confirmer', body: '/api/pricing peut renvoyer une métadonnée otpCommand pour un opérateur, mais cette valeur ne décrit pas un parcours complet et ne garantit pas l’acceptation en mode direct. Les canaux marqués requiresOtp sont exclus du parcours direct. Aucun code ni séquence universelle n’est documenté ; utilisez uniquement les choix de la session et les instructions confirmées pour le payeur.' },
-      { title: 'Burkina Faso · Orange Money', status: 'Détails non confirmés', body: 'Le catalogue de pays et d’opérateurs inspecté marque le canal Orange Money Burkina comme nécessitant un OTP ; le parcours direct exclut les canaux portant ce marqueur. Cela ne confirme ni sa disponibilité en production ni un parcours client précis. Aucun code USSD ou séquence OTP n’est publié : ne les inventez pas.' },
+      { title: 'Côte d’Ivoire · Orange Money', status: 'Menu général vérifié — pas code de paiement', body: 'Le code ci-dessous ouvre le menu général Orange Money. Ce n’est pas une commande de validation SendFlow ni une preuve de paiement. Pour une tentative, suivez uniquement le ussdCode réellement renvoyé (il peut être null) ou la notification de l’opérateur. La valeur otpCommand spécifique actuellement configurée dans le catalogue SendFlow n’a pas été confirmée comme instruction officielle et n’est pas publiée ici.', menuCode: '#144#', sourceUrl: 'https://www.orange.ci/fr/accueil-assistance-orange-money.html' },
+      { title: 'Burkina Faso · Orange Money', status: 'Menu général vérifié — paiement non confirmé', body: 'Le code ci-dessous permet d’accéder à la gestion du compte Orange Money. Ce n’est pas un code de validation d’une tentative SendFlow. Le catalogue inspecté marque ce canal comme nécessitant un OTP, ce qui l’exclut du parcours direct ; aucune séquence de paiement ou OTP propre à SendFlow n’est confirmée. Suivez uniquement les instructions affichées au payeur.', menuCode: '*144#', sourceUrl: 'https://www.orange.bf/fr/codes-utiles-new.html' },
       { title: 'Autres pays et opérateurs', status: 'Choix dynamiques', body: 'Il n’existe pas de liste statique fiable à publier depuis le code seul. GET /api/pricing fournit un catalogue général, mais les choix de session directe sont filtrés par les règles de routage et de configuration ; ils font autorité pour cette session.' },
     ],
     troubleshooting: [
@@ -378,8 +378,8 @@ const localizedLists: Record<Language, TranslationLists> = {
       { title: 'Webhook', body: 'For both modes, SendFlow sends payment.succeeded or payment.failed only after final confirmation. Verify the HMAC signature and deduplicate with sendflow-delivery.' },
     ],
     mobileMoneyCards: [
-      { title: 'Côte d’Ivoire · Orange Money', status: 'Flow needs confirmation', body: '/api/pricing may return otpCommand metadata for an operator, but this value is not a complete flow and does not guarantee Direct-mode acceptance. Channels marked requiresOtp are excluded from Direct mode. No universal code or sequence is documented; use only session choices and instructions confirmed for the payer.' },
-      { title: 'Burkina Faso · Orange Money', status: 'Details unconfirmed', body: 'The inspected country and operator catalog marks the Orange Money Burkina channel as requiring OTP; Direct mode excludes channels with this marker. This does not confirm production availability or a specific payer flow. No USSD code or OTP sequence is published; do not invent one.' },
+      { title: 'Côte d’Ivoire · Orange Money', status: 'General menu verified — not a payment code', body: 'The code below opens the general Orange Money menu. This is not a SendFlow validation command or proof of payment. For an attempt, follow only the ussdCode actually returned (it may be null) or the operator notification. The specific otpCommand currently configured in the SendFlow catalog has not been confirmed as an official instruction and is not published here.', menuCode: '#144#', sourceUrl: 'https://www.orange.ci/fr/accueil-assistance-orange-money.html' },
+      { title: 'Burkina Faso · Orange Money', status: 'General menu verified — payment flow unconfirmed', body: 'The code below opens Orange Money account management. This is not a code for confirming a SendFlow attempt. The inspected catalog marks this channel as requiring OTP, which excludes it from Direct mode; no SendFlow payment or OTP sequence is confirmed. Follow only the instructions shown to the payer.', menuCode: '*144#', sourceUrl: 'https://www.orange.bf/fr/codes-utiles-new.html' },
       { title: 'Other countries and operators', status: 'Dynamic choices', body: 'The source alone does not provide a reliable static support list. GET /api/pricing returns a global catalog, but direct-session choices are filtered by routing and configuration rules and are authoritative for that session.' },
     ],
     troubleshooting: [
@@ -715,7 +715,7 @@ const directAttemptResponse = `{
   "merchantReference": "ORDER-2026-0043"
 }`;
 
-function ResponsePanel({ language, label, response }: { language: Language; label: string; response: string }) {
+function ResponsePanel({ language, label, response, caption }: { language: Language; label: string; response: string; caption?: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
@@ -738,7 +738,7 @@ function ResponsePanel({ language, label, response }: { language: Language; labe
         </div>
       </div>
       <pre><code>{renderHighlightedCode(response)}</code></pre>
-      <div className="sf-docs-code-note">{language === 'fr' ? 'JSON · valeurs illustratives' : 'JSON · illustrative values'}</div>
+      <div className="sf-docs-code-note">{caption ?? (language === 'fr' ? 'JSON · valeurs illustratives' : 'JSON · illustrative values')}</div>
     </div>
   );
 }
@@ -944,7 +944,11 @@ export default function DocsPage() {
               {localizedLists[language].stepTitles.map((heading, index) => <div className="sf-docs-step" key={heading}><span className="sf-docs-step-index">0{index + 1}</span><div><strong>{heading}</strong><p>{localizedLists[language].stepTexts[index]}</p></div></div>)}
             </div>
           </section>
-          <section className="sf-docs-section"><h2>{t.prerequisites}</h2><ul className="sf-docs-list"><li>{t.notDocumentedText}</li><li>{t.noCredentials}</li><li>{t.baseUrlPending}</li><li>{t.environmentNote}</li></ul></section>
+          <section className="sf-docs-section"><h2>{t.prerequisites}</h2><ul className="sf-docs-list"><li>{t.notDocumentedText}</li><li>{t.noCredentials}</li><li>{t.baseUrlPending}</li></ul>
+            <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+            <CodePanel language={language} label={language === 'fr' ? 'Créer une session Hosted Checkout' : 'Create a Hosted Checkout session'} example="create-hosted" />
+            <ResponsePanel language={language} label={language === 'fr' ? 'Réponse de session illustrative' : 'Illustrative session response'} response={hostedSessionResponse} />
+          </section>
         </>}
         {pageKey === 'auth' && <>
           <section className="sf-docs-section"><h2>{t.notDocumented}</h2><p>{t.notDocumentedText}</p><p>{t.rotationText}</p><div className="sf-docs-callout">{t.serverOnly}</div>
@@ -990,6 +994,8 @@ export default function DocsPage() {
                 <article className="sf-docs-endpoint sf-docs-info" key={card.title}>
                   <div className="sf-docs-endpoint-head"><strong>{card.title}</strong><span className="sf-docs-endpoint-pending">{card.status}</span></div>
                   <p>{card.body}</p>
+                  {card.menuCode && <ResponsePanel language={language} label={language === 'fr' ? 'Code du menu général — pas un code de paiement' : 'General menu code — not a payment code'} caption={language === 'fr' ? 'Code USSD général · instructions de paiement non confirmées' : 'General USSD code · payment instructions unconfirmed'} response={card.menuCode} />}
+                  {card.sourceUrl && <a className="sf-docs-inline-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 10, color: 'var(--docs-accent)', fontSize: 12, fontWeight: 650, textDecoration: 'underline' }} href={card.sourceUrl} target="_blank" rel="noreferrer noopener">{language === 'fr' ? 'Source officielle du code du menu' : 'Official source for the menu code'} <ArrowRight size={12} aria-hidden="true" /></a>}
                 </article>
               ))}
             </div>
@@ -1069,6 +1075,20 @@ export default function DocsPage() {
               <h3>{t.eventNames}</h3>
               <ul className="sf-docs-list"><li><code className="sf-docs-inline-code">payment.succeeded</code></li><li><code className="sf-docs-inline-code">payment.failed</code></li></ul>
             </div>
+            <ResponsePanel language={language} label={t.responseExample} response={`{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644",
+  "type": "payment.succeeded",
+  "createdAt": "2026-01-01T12:00:00.000Z",
+  "data": {
+    "sessionId": "00000000-0000-4000-8000-000000000001",
+    "merchantReference": "ORDER-2026-0042",
+    "attemptId": "00000000-0000-4000-8000-000000000002",
+    "transactionId": "00000000-0000-4000-8000-000000000003",
+    "amountMinor": 12500,
+    "currency": "XOF",
+    "status": "succeeded"
+  }
+}`} />
           </section>}
           {showReferenceSection('webhook-signature') || activeDocSection === 'webhook-retries' ? <section className="sf-docs-section"><h2>{t.delivery}</h2>
             <p>{t.deliveryText}</p>
@@ -1098,7 +1118,10 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
           </section> : null}
         </>}
         {pageKey === 'ref' && <>
-          {showReferenceSection('security') && <section className="sf-docs-section"><h2>{t.security}</h2><p>{t.securityText}</p></section>}
+          {showReferenceSection('security') && <section className="sf-docs-section"><h2>{t.security}</h2><p>{t.securityText}</p>
+            <CodePanel language={language} label={t.codeLabel} example="read-session" />
+            <CodePanel language={language} label={t.codeLabel} example="webhook" />
+          </section>}
           {showReferenceSection('http-errors') && <section className="sf-docs-section"><h2>{t.errors}</h2><p>{t.errorsText}</p>
             <h3>{t.httpErrorTableTitle}</h3>
             <table className="sf-docs-reference-table">
@@ -1107,7 +1130,9 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
             </table>
             <ResponsePanel language={language} label={t.errorEnvelopeTitle} response={`{
   "error": "${language === 'fr' ? 'Message d’erreur renvoyé par l’API' : 'Error message returned by the API'}"
-}`} /></section>}
+}`} />
+            <CodePanel language={language} label={t.codeLabel} example="handle-http-errors" />
+          </section>}
           {showReferenceSection('http-errors') && <section className="sf-docs-section"><h2>{t.troubleshootingTitle}</h2>
             <div className="sf-docs-endpoints">
               {localizedLists[language].troubleshooting.map((item) => (
@@ -1123,12 +1148,14 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
               <thead><tr><th>{language === 'fr' ? 'État' : 'State'}</th><th>{language === 'fr' ? 'Signification' : 'Meaning'}</th><th>{language === 'fr' ? 'Action marchande' : 'Merchant action'}</th></tr></thead>
               <tbody>{localizedLists[language].paymentStateRows.map((row) => <tr key={row.state}><td data-label={language === 'fr' ? 'État' : 'State'}><code className="sf-docs-inline-code">{row.state}</code></td><td data-label={language === 'fr' ? 'Signification' : 'Meaning'}>{row.meaning}</td><td data-label={language === 'fr' ? 'Action marchande' : 'Merchant action'}>{row.action}</td></tr>)}</tbody>
             </table>
+            <CodePanel language={language} label={language === 'fr' ? 'Lire le statut de session' : 'Read session status'} example="read-session" />
+            <CodePanel language={language} label={language === 'fr' ? 'Lire le statut d’une tentative directe' : 'Read direct attempt status'} example="poll-attempt" />
           </section>}
-          {showReferenceSection('idempotency') && <section className="sf-docs-section"><h2>{t.idempotency}</h2><p>{t.idempotencyText}</p></section>}
-          {showReferenceSection('expiration') && <section className="sf-docs-section"><h2>{t.expiration}</h2><p>{t.expirationText}</p></section>}
-          {showReferenceSection('rate-limits') && <section className="sf-docs-section"><h2>{t.rateLimits}</h2><p>{t.rateLimitsText}</p></section>}
+          {showReferenceSection('idempotency') && <section className="sf-docs-section"><h2>{t.idempotency}</h2><p>{t.idempotencyText}</p><CodePanel language={language} label={t.codeLabel} example="create-hosted" /></section>}
+          {showReferenceSection('expiration') && <section className="sf-docs-section"><h2>{t.expiration}</h2><p>{t.expirationText}</p><CodePanel language={language} label={t.codeLabel} example="read-session" /></section>}
+          {showReferenceSection('rate-limits') && <section className="sf-docs-section"><h2>{t.rateLimits}</h2><p>{t.rateLimitsText}</p><CodePanel language={language} label={t.codeLabel} example="handle-http-errors" /></section>}
           {showReferenceSection('service-availability') && <><div className="sf-docs-callout">{t.environmentNote}</div>
-          <div className="sf-docs-callout"><strong>{t.serviceAvailability}.</strong> {t.serviceAvailabilityText}</div></>}
+          <div className="sf-docs-callout"><strong>{t.serviceAvailability}.</strong> {t.serviceAvailabilityText}</div><CodePanel language={language} label={t.codeLabel} example="handle-http-errors" /></>}
         </>}
       </>
     );

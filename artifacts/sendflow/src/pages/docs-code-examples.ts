@@ -6,6 +6,7 @@ export type DocsExampleId =
   | 'read-public-session'
   | 'start-attempt'
   | 'poll-attempt'
+  | 'handle-http-errors'
   | 'pricing'
   | 'webhook';
 
@@ -516,6 +517,74 @@ suspend fun pollDirectAttempt(
         connection.disconnect()
     }
 }`,
+  },
+  'handle-http-errors': {
+    cURL: `curl --include --silent --show-error \\
+  "$SENDFLOW_API_BASE_URL/v1/payment-sessions/$SESSION_ID" \\
+  --header "Authorization: Bearer $SENDFLOW_SECRET_KEY"
+# Inspect the HTTP status, Retry-After, and JSON { "error": "..." } body.
+# A 503 does not prove success or final failure; verify status server-side.`,
+    JavaScript: `const response = await fetch(
+  \`\${process.env.SENDFLOW_API_BASE_URL}/v1/payment-sessions/\${sessionId}\`,
+  {
+    headers: {
+      Authorization: \`Bearer \${process.env.SENDFLOW_SECRET_KEY}\`,
+    },
+  },
+);
+const payload = await response.json().catch(() => ({}));
+if (response.status === 429) {
+  const retryAfter = response.headers.get("Retry-After") ?? "60";
+  throw new Error(\`Rate limited; retry after \${retryAfter} seconds.\`);
+}
+if (response.status === 503) {
+  throw new Error("Service unavailable; do not infer a final payment result.");
+}
+if (!response.ok) {
+  throw new Error(payload.error ?? \`SendFlow returned HTTP \${response.status}\`);
+}`,
+    PHP: `$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/payment-sessions/" . rawurlencode($sessionId);
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HEADER => true,
+    CURLOPT_HTTPHEADER => ["Authorization: Bearer " . getenv("SENDFLOW_SECRET_KEY")],
+]);
+$raw = curl_exec($ch);
+if ($raw === false) {
+    throw new RuntimeException("SendFlow request could not be completed");
+}
+$status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+$headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+$headers = substr($raw, 0, $headerSize);
+$body = substr($raw, $headerSize);
+$payload = json_decode($body, true);
+if ($status === 429) {
+    preg_match('/^Retry-After:\\s*(\\d+)/im', $headers, $match);
+    throw new RuntimeException("Rate limited; wait " . ($match[1] ?? "60") . " seconds");
+}
+if ($status === 503) {
+    throw new RuntimeException("Service unavailable; do not infer a final payment result");
+}
+if ($status >= 400) {
+    throw new RuntimeException($payload["error"] ?? "SendFlow request failed");
+}`,
+    Python: `import os
+import requests
+
+response = requests.get(
+    f"{os.environ['SENDFLOW_API_BASE_URL']}/v1/payment-sessions/{session_id}",
+    headers={"Authorization": f"Bearer {os.environ['SENDFLOW_SECRET_KEY']}"},
+    timeout=15,
+)
+if response.status_code == 429:
+    retry_after = response.headers.get("Retry-After", "60")
+    raise RuntimeError(f"Rate limited; wait {retry_after} seconds")
+if response.status_code == 503:
+    raise RuntimeError("Service unavailable; do not infer a final payment result")
+if not response.ok:
+    raise RuntimeError(response.json().get("error", f"HTTP {response.status_code}"))
+session = response.json()`,
   },
   pricing: {
     cURL: `curl "$SENDFLOW_API_BASE_URL/pricing"`,
