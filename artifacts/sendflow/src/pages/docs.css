@@ -20,6 +20,13 @@
 }
 
 .sf-docs *, .sf-docs *::before, .sf-docs *::after { box-sizing: border-box; }
+.sf-docs .sf-docs-sidebar,
+.sf-docs .sf-docs-sidebar button,
+.sf-docs .sf-docs-sidebar a,
+.sf-docs .sf-docs-sidebar input {
+  font-family: 'Inter', sans-serif;
+  font-optical-sizing: auto;
+}
 .sf-docs a { color: inherit; text-decoration: none; }
 .sf-docs button, .sf-docs input { font: inherit; }
 .sf-docs button { -webkit-tap-highlight-color: transparent; }
@@ -52,7 +59,7 @@
 .sf-docs-search input::placeholder { color: #55515f; }
 .sf-docs-search kbd { flex: 0 0 auto; border: 1px solid #e8dcf9; border-radius: 4px; padding: 2px 5px; color: #77727e; font: 10px ui-monospace, monospace; }
 .sf-docs-nav-group { margin-top: 22px; }
-.sf-docs-group-toggle { display: flex; width: 100%; min-height: 38px; align-items: center; gap: 9px; border: 0; border-radius: 9px; background: transparent; padding: 0 7px; color: #292a30; font: inherit; font-size: 12px; font-weight: 750; text-align: left; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+.sf-docs-group-toggle { display: flex; width: 100%; min-height: 38px; align-items: center; gap: 9px; border: 0; border-radius: 9px; background: transparent; padding: 0 7px; color: #292a30; font: inherit; font-size: 13px; font-weight: 650; line-height: 1.4; text-align: left; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
 .sf-docs-group-toggle > span { flex: 1; }
 .sf-docs-group-toggle > svg:first-child { flex: 0 0 auto; color: #7736b5; }
 .sf-docs-group-toggle:hover, .sf-docs-nav-group.is-active .sf-docs-group-toggle { background: #fbf8ff; color: #7736b5; }
@@ -60,10 +67,10 @@
 .sf-docs-nav-group.is-open .sf-docs-group-chevron { transform: rotate(90deg); }
 .sf-docs-nav-items { margin: 3px 0 0 7px; border-left: 1px solid #e8dcf9; padding-left: 9px; }
 .sf-docs-nav-items[hidden] { display: none; }
-.sf-docs-side-link { display: flex; width: 100%; min-height: 38px; align-items: center; gap: 9px; border: 1px solid transparent; border-radius: 9px; padding: 0 9px; color: #292a30 !important; font-size: 12px; font-weight: 550; line-height: 1.35; transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+.sf-docs-side-link { display: flex; width: 100%; min-height: 38px; align-items: center; gap: 9px; border: 1px solid transparent; border-radius: 9px; padding: 0 9px; color: #292a30 !important; font-size: 13px; font-weight: 400; line-height: 1.4; transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
 .sf-docs-side-link + .sf-docs-side-link { margin-top: 2px; }
 .sf-docs-side-link:hover { background: #fbf8ff; color: #7736b5 !important; }
-.sf-docs-side-link.is-active { border-color: #e8dcf9; background: #fbf8ff; color: #7736b5 !important; font-weight: 800; }
+.sf-docs-side-link.is-active { border-color: #e8dcf9; background: #fbf8ff; color: #7736b5 !important; font-weight: 600; }
 .sf-docs-side-link.is-active::before { width: 3px; height: 20px; margin-left: -10px; border-radius: 3px; background: #8b4cc8; content: ''; }
 .sf-docs-side-link svg { flex: 0 0 auto; color: #77727e; }
 .sf-docs-side-link.is-active svg { color: #8b4cc8; }
@@ -214,9 +221,10 @@
   .sf-docs-drawer-mark { width: 26px; height: 30px; object-fit: contain; }
   .sf-docs-drawer-word { width: 82px; height: auto; object-fit: contain; }
   .sf-docs-nav-group { margin-top: 10px; border-bottom: 1px solid #eee7f5; padding-bottom: 7px; }
-  .sf-docs-group-toggle { min-height: 40px; gap: 10px; padding-inline: 5px; font-size: 13px; font-weight: 750; }
+  .sf-docs-group-toggle { min-height: 40px; gap: 10px; padding-inline: 5px; font-size: 14px; font-weight: 600; }
   .sf-docs-nav-items { margin: 2px 0 0 10px; padding-left: 11px; }
-  .sf-docs-side-link { min-height: 37px; gap: 9px; border-radius: 8px; padding-inline: 8px; font-size: 12px; font-weight: 550; }
+  .sf-docs-side-link { min-height: 39px; gap: 9px; border-radius: 8px; padding-inline: 8px; font-size: 14px; font-weight: 400; line-height: 1.4; }
+  .sf-docs-side-link.is-active { font-weight: 600; }
   .sf-docs-main { padding: 50px 18px 52px; }
   .sf-docs-home-methods { margin-top: 28px; }
   .sf-docs-home-methods > h2 { display: none; }
