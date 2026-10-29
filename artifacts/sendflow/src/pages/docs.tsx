@@ -28,6 +28,8 @@ type TranslationLists = {
   mobileMoneyActors: { title: string; body: string }[];
   mobileMoneyCards: { title: string; status: string; body: string }[];
   troubleshooting: { symptom: string; action: string }[];
+  credentialRows: { credential: string; usedFor: string; handling: string }[];
+  paymentStateRows: { state: string; meaning: string; action: string }[];
 };
 
 const docsItems: DocItem[] = [
@@ -92,7 +94,10 @@ const localized: Record<Language, Translation> = {
     notDocumented: 'Gestion des clés API', notDocumentedText: 'Une paire composée d’une clé publique et d’une clé secrète est créée automatiquement à la création du compte marchand. La clé secrète est réservée aux appels serveur ; la clé publique sert aux appels de caisse prévus par le parcours direct.',
     rotationText: 'La clé secrète complète est affichée lors de sa création. Enregistrez-la dans un gestionnaire de secrets. La régénération désactive immédiatement l’ancienne paire de clés.',
     serverOnly: 'Envoyez la clé secrète dans l’en-tête Authorization: Bearer depuis votre serveur. Ne la transmettez jamais au client.',
-    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Les valeurs entre chevrons ou dans les variables d’environnement sont à remplacer par les valeurs de votre compte.',
+    credentialRolesTitle: 'Rôle et emplacement de chaque identifiant',
+    credentialHeader: 'Identifiant', credentialUseHeader: 'Utilisation', credentialHandlingHeader: 'Protection',
+    pollTokenNote: 'Le pollToken est un identifiant d’accès à la tentative. Préférez interroger l’état depuis votre serveur avec la clé secrète ; si le client doit le recevoir pour afficher la progression, gardez-le temporairement en mémoire et excluez-le des journaux, URL et outils analytiques.',
+    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse : remplacez les variables d’environnement et les identifiants d’exemple par les valeurs obtenues aux étapes précédentes.',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec l’origine de paiement SendFlow communiquée pour votre compte et redirigez le client.',
     apiAvailabilityTitle: 'Disponibilité actuelle',
@@ -126,12 +131,12 @@ const localized: Record<Language, Translation> = {
     requestExample: 'Exemple de requête',
     responseExample: 'Exemple de réponse',
     webhookEvents: 'Événements de paiement', webhookEventsSub: 'Les webhooks sont communs aux parcours API directe et Hosted Checkout pour les sessions créées par l’API. Configurez une URL HTTPS publique et les événements dans l’espace Développeurs ; aucun endpoint public de gestion de webhooks n’est documenté. Les événements ne sont émis qu’après confirmation finale. Jusqu’à 5 webhooks actifs peuvent être configurés pour un compte.',
-    webhookPayloadNote: 'Le payload fournit des identifiants de session, tentative et transaction, la référence marchande, le montant, la devise et le statut. La référence marchande vient de votre requête : n’y placez pas de données personnelles.',
+    webhookPayloadNote: 'Le payload fournit des identifiants de session, tentative et transaction, la référence marchande, le montant, la devise et le statut. Son champ id est le même UUID que l’en-tête sendflow-delivery et reste stable lors des reprises. La référence marchande vient de votre requête : n’y placez pas de données personnelles.',
     eventNames: 'Événements disponibles', delivery: 'Signature et livraisons', deliveryText: 'La signature HMAC-SHA256 est calculée sur la chaîne <horodatage>.<corps JSON brut>. Répondez en HTTP 2xx pour acquitter la livraison ; toute réponse non-2xx, erreur réseau ou expiration du délai sera retentée. Le délai de requête est de 8 secondes et le corps de réponse est limité à 8 Ko. SendFlow effectue 8 tentatives au total au maximum : l’envoi initial puis jusqu’à 7 reprises, espacées de 10 s, 30 s, 2 min, 10 min, 30 min, 2 h et 12 h. L’identifiant sendflow-delivery reste stable entre les reprises : utilisez-le pour dédupliquer.',
-    webhookHeadersTitle: 'En-têtes envoyés', webhookHeadersText: 'sendflow-event identifie le type d’événement, sendflow-delivery identifie la livraison et sendflow-signature suit le format t=<horodatage Unix>,v1=<signature hexadécimale>. La signature est calculée sur les octets exacts du corps reçu. L’exemple de vérification choisit une fenêtre de fraîcheur de 300 secondes à titre de politique marchande ; SendFlow ne fixe pas cette valeur.',
+    webhookHeadersTitle: 'En-têtes envoyés', webhookHeadersText: 'sendflow-event identifie le type d’événement. sendflow-delivery contient le même UUID que payload.id et reste identique lors des reprises. sendflow-signature suit le format t=<horodatage Unix>,v1=<signature hexadécimale>. La signature est calculée sur les octets exacts du corps reçu. L’exemple de vérification choisit une fenêtre de fraîcheur de 300 secondes à titre de politique marchande ; SendFlow ne fixe pas cette valeur.',
     apiScopeTitle: 'Périmètre de l’API publique', apiScopeText: 'Cette référence décrit les contrats de session, tentative directe, statut et tarification présents dans le code. Elle ne documente pas de route publique pour annuler un paiement, lister toutes les transactions, consulter un solde ou effectuer un retrait. Aucun SDK marchand officiel n’est présent dans le projet inspecté ; l’exemple Kotlin Android est un appel REST, pas un SDK SendFlow.',
     security: 'Sécurité et fiabilité', errors: 'Codes HTTP', idempotency: 'Idempotence', expiration: 'Expiration et montants', securityText: 'Utilisez HTTPS. Stockez la clé secrète et le secret webhook (affiché une seule fois à sa création) dans un coffre sécurisé. Comparez la signature en temps constant, vérifiez la fraîcheur de l’horodatage et ne traitez l’événement qu’après validation.',
-    errorsText: 'Les réponses d’erreur utilisent le format JSON { "error": "…" }. Une redirection ou une réponse client ne confirme jamais le paiement : vérifiez toujours le statut côté serveur.',
+    errorsText: 'Les réponses d’erreur utilisent le format JSON { "error": "…" }. Une réponse 503 indique une indisponibilité, pas un échec final du paiement. Une redirection ou un état affiché dans le navigateur ne confirme jamais le paiement : vérifiez toujours le statut côté serveur.',
     error400: '400 — paramètres ou en-têtes invalides. Vérifiez notamment currency=XOF, amountMinor, les champs requis, countryCode en deux majuscules et phoneNumber au format international.',
     error401: '401 — clé secrète absente, invalide ou révoquée. Vérifiez le secret côté serveur et l’en-tête Authorization: Bearer ; ne l’incluez jamais dans l’application cliente.',
     error403: '403 — compte marchand ou accès au paiement non autorisé. Vérifiez l’état et les droits du compte avant de réessayer.',
@@ -142,7 +147,7 @@ const localized: Record<Language, Translation> = {
     idempotencyText: 'Pour chaque création de session ou de tentative, envoyez une clé Idempotency-Key stable de 8 à 128 caractères. Une reprise doit réutiliser la même clé et le même corps ; réutiliser la clé avec une autre demande renvoie 409. Utilisez une nouvelle clé uniquement pour une nouvelle opération métier.',
     expirationText: 'Les sessions expirent une heure après leur création. Le montant est fixe en XOF : 100 à 2 000 000. Le payeur ne peut pas modifier le montant au lancement d’une tentative.',
     rateLimits: 'Limites de requêtes', rateLimitsText: 'Par clé API et par minute : 30 créations de session, 120 lectures de session, 5 tentatives directes et 60 vérifications de statut. Les routes de caisse appliquent aussi une limite par adresse IP. En cas de limitation, l’API renvoie 429 et Retry-After: 60 ; attendez ce délai avant de reprendre.',
-    statesTitle: 'États d’un paiement', statesText: 'created : session créée, sans tentative. waiting : paiement en attente. uncertain : résultat encore indéterminé ; continuez la vérification et ne le traitez ni comme réussi ni comme échoué. succeeded : paiement confirmé. failed : échec final confirmé.',
+    statesTitle: 'États d’un paiement', statesText: 'Les états de session et de tentative décrivent l’avancement du paiement ; seul un état final confirmé peut déclencher la validation de votre commande.',
     serviceAvailability: 'Disponibilité du service', serviceAvailabilityText: 'Dans le code inspecté, les requêtes admissibles de création de session et de démarrage de tentative renvoient HTTP 503. Les exemples ne prouvent pas que le parcours soit activé en production. Les lectures de statut ne créent pas de paiement et ne remplacent jamais la confirmation finale.',
     environmentNote: 'Aucune URL publique d’environnement de test distincte n’est confirmée dans les routes et contrats inspectés. SENDFLOW_API_BASE_URL doit être fourni par SendFlow ; n’inventez pas de domaine de test et ne confondez pas le serveur de documentation avec l’API.',
     troubleshootingTitle: 'Diagnostic rapide',
@@ -191,7 +196,10 @@ const localized: Record<Language, Translation> = {
     notDocumented: 'API key management', notDocumentedText: 'A public and secret key pair is created automatically when the merchant account is created. The secret key is for server requests; the public key is used for checkout requests in the direct flow.',
     rotationText: 'The full secret key is shown when it is created. Store it in a secret manager. Regenerating the pair immediately disables the previous keys.',
     serverOnly: 'Send the secret key in the Authorization: Bearer header from your server. Never pass it to the client.',
-    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Replace angle-bracket values and environment variables with values from your account.',
+    credentialRolesTitle: 'Role and handling of each credential',
+    credentialHeader: 'Credential', credentialUseHeader: 'Used for', credentialHandlingHeader: 'Handling',
+    pollTokenNote: 'pollToken grants access to an attempt. Prefer checking status from your server with the secret key; if the client needs it to show progress, keep it in memory temporarily and exclude it from logs, URLs, and analytics.',
+    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Snippet to integrate into your server or checkout: replace environment variables and sample identifiers with values returned by previous steps.',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with the SendFlow payment origin provided for your account and redirect the customer.',
     apiAvailabilityTitle: 'Current availability',
@@ -225,12 +233,12 @@ const localized: Record<Language, Translation> = {
     requestExample: 'Request example',
     responseExample: 'Response example',
     webhookEvents: 'Payment events', webhookEventsSub: 'Webhooks are shared by Direct API and Hosted Checkout for API-created sessions. Configure a public HTTPS URL and event types in the merchant account Developers area; no public webhook-management endpoint is documented. Events are emitted only after final confirmation. Up to 5 active webhook endpoints can be configured per account.',
-    webhookPayloadNote: 'The payload contains session, attempt, and transaction IDs, the merchant reference, amount, currency, and status. The merchant reference comes from your request: do not put personal data in it.',
+    webhookPayloadNote: 'The payload contains session, attempt, and transaction IDs, the merchant reference, amount, currency, and status. Its id field is the same UUID as the sendflow-delivery header and remains stable on retries. The merchant reference comes from your request: do not put personal data in it.',
     eventNames: 'Available events', delivery: 'Signatures and delivery', deliveryText: 'The HMAC-SHA256 signature is computed over the string <timestamp>.<raw JSON body>. Return HTTP 2xx to acknowledge delivery; non-2xx responses, network errors, and timeouts are retried. The request timeout is 8 seconds and response bodies are limited to 8 KB. SendFlow makes at most 8 attempts total: the initial delivery plus up to 7 retries, spaced 10 s, 30 s, 2 min, 10 min, 30 min, 2 h, and 12 h apart. The sendflow-delivery ID stays stable across retries; use it for deduplication.',
-    webhookHeadersTitle: 'Request headers', webhookHeadersText: 'sendflow-event identifies the event type, sendflow-delivery identifies the delivery, and sendflow-signature follows t=<Unix timestamp>,v1=<hex signature>. The signature is computed over the exact received body bytes. The verification example chooses a 300-second freshness window as merchant policy; SendFlow does not set this value.',
+    webhookHeadersTitle: 'Request headers', webhookHeadersText: 'sendflow-event identifies the event type. sendflow-delivery contains the same UUID as payload.id and remains unchanged on retries. sendflow-signature follows t=<Unix timestamp>,v1=<hex signature>. The signature is computed over the exact received body bytes. The verification example chooses a 300-second freshness window as merchant policy; SendFlow does not set this value.',
     apiScopeTitle: 'Public API scope', apiScopeText: 'This reference describes the session, direct-attempt, status, and pricing contracts present in the inspected code. It does not document a public route to cancel a payment, list all transactions, read a balance, or create a payout. No official merchant SDK is present in the inspected project; the Android Kotlin sample is a REST call, not a SendFlow SDK.',
     security: 'Security & reliability', errors: 'HTTP status codes', idempotency: 'Idempotency', expiration: 'Expiration and amounts', securityText: 'Use HTTPS. Store the secret key and webhook secret (shown once at creation) in a secure vault. Compare signatures in constant time, check timestamp freshness, and process events only after verification.',
-    errorsText: 'Error responses use the JSON format { "error": "…" }. A redirect or client response never proves payment; always verify status server-side.',
+    errorsText: 'Error responses use the JSON format { "error": "…" }. A 503 response means the operation is unavailable, not that payment finally failed. A redirect or client-side state never proves payment; always verify status server-side.',
     error400: '400 — invalid parameters or headers. Check currency=XOF, amountMinor, required fields, a two-letter uppercase countryCode, and an international phoneNumber.',
     error401: '401 — secret key missing, invalid, or revoked. Check the server-side Bearer credential; never include the secret in a client app.',
     error403: '403 — merchant account or payment access is not authorized. Check account status and permissions before retrying.',
@@ -241,7 +249,7 @@ const localized: Record<Language, Translation> = {
     idempotencyText: 'For each session or attempt creation, send a stable 8–128 character Idempotency-Key. A retry must reuse the same key and body; reusing the key with a different request returns 409. Use a new key only for a new business operation.',
     expirationText: 'Sessions expire one hour after creation. The amount is fixed in XOF: 100 to 2,000,000. The payer cannot change it when starting an attempt.',
     rateLimits: 'Request limits', rateLimitsText: 'Per API key and per minute: 30 session creations, 120 session reads, 5 direct attempts, and 60 status checks. Checkout routes also enforce an IP-based limit. A rate-limited response includes 429 and Retry-After: 60; wait before resuming.',
-    statesTitle: 'Payment states', statesText: 'created: session created, no attempt yet. waiting: payment is pending. uncertain: outcome is not final; keep checking and do not treat it as paid or failed. succeeded: payment confirmed. failed: final failure confirmed.',
+    statesTitle: 'Payment states', statesText: 'Session and attempt states describe payment progress; only a confirmed final state should trigger your order decision.',
     serviceAvailability: 'Service availability', serviceAvailabilityText: 'In the inspected code, eligible session-creation and attempt-start requests return HTTP 503. The examples do not mean the flow is enabled in production. Status reads do not create payments and never replace final confirmation.',
     environmentNote: 'No separate public test-environment URL is confirmed by the inspected routes and contracts. SendFlow must provide SENDFLOW_API_BASE_URL; do not invent a test domain or confuse the documentation host with the API.',
     troubleshootingTitle: 'Quick troubleshooting',
@@ -288,6 +296,20 @@ const localizedLists: Record<Language, TranslationLists> = {
       { symptom: 'Le compte à rebours hébergé expire', action: 'L’écran d’échec après 10 minutes n’est pas un état final serveur. Vérifiez la session et traitez uncertain comme non final.' },
       { symptom: 'Une création renvoie 503', action: 'Le parcours de création et de tentative est actuellement désactivé dans le code inspecté. N’essayez pas de contourner cette indisponibilité ni de présenter le paiement comme échoué ou réussi.' },
     ],
+    credentialRows: [
+      { credential: 'Clé secrète', usedFor: 'Authorization: Bearer pour créer et lire une session depuis le backend marchand.', handling: 'Serveur uniquement. Stockez-la dans un gestionnaire de secrets et ne la journalisez jamais.' },
+      { credential: 'Clé publique', usedFor: 'X-SendFlow-Public-Key pour les appels de caisse du parcours direct.', handling: 'Peut être transmise au client dans le contexte de sa session ; elle ne remplace jamais la clé secrète.' },
+      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token pour lire la session directe et démarrer une tentative.', handling: 'Jeton limité à une session. Ne le partagez pas entre commandes et évitez de le conserver dans des journaux.' },
+      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token pour consulter une tentative directe.', handling: 'Identifiant d’accès à une tentative. Préférez le suivi serveur et ne l’exposez que temporairement si l’interface en a besoin.' },
+      { credential: 'Secret de signature webhook', usedFor: 'Vérifier les notifications reçues sur votre endpoint.', handling: 'Secret distinct des clés API, affiché une seule fois à la configuration ; conservez-le côté serveur.' },
+    ],
+    paymentStateRows: [
+      { state: 'created', meaning: 'La session existe, aucune tentative n’a encore été lancée.', action: 'Poursuivez le parcours de caisse prévu pour son mode.' },
+      { state: 'waiting', meaning: 'Une tentative est en attente de confirmation.', action: 'Continuez le suivi ; ne marquez pas la commande comme payée.' },
+      { state: 'uncertain', meaning: 'Le résultat n’est pas confirmé et peut encore évoluer.', action: 'Ne classez ni comme réussi ni comme échoué ; relisez le statut et attendez le résultat serveur.' },
+      { state: 'succeeded', meaning: 'Le paiement a été confirmé avec succès.', action: 'Vous pouvez valider la commande après vérification côté serveur.' },
+      { state: 'failed', meaning: 'Un échec final a été confirmé.', action: 'Ne livrez pas la commande ; appliquez votre parcours de nouvel essai métier.' },
+    ],
   },
   en: {
     stepTitles: ['Create your merchant account', 'Configure your API keys', 'Integrate SendFlow into your app'],
@@ -324,6 +346,20 @@ const localizedLists: Record<Language, TranslationLists> = {
       { symptom: 'The customer returns but no webhook arrives', action: 'A browser redirect is not confirmation. Read the server status and check webhook delivery history in the Developers area.' },
       { symptom: 'The hosted countdown expires', action: 'The failure screen after 10 minutes is not a final server state. Check the session and treat uncertain as non-final.' },
       { symptom: 'A create request returns 503', action: 'Session and attempt creation are currently disabled in the inspected code. Do not work around this unavailability or label the payment as failed or successful.' },
+    ],
+    credentialRows: [
+      { credential: 'Secret key', usedFor: 'Authorization: Bearer to create and read a session from the merchant backend.', handling: 'Server only. Store it in a secrets manager and never log it.' },
+      { credential: 'Public key', usedFor: 'X-SendFlow-Public-Key for direct checkout requests.', handling: 'May be sent to the client for its session; it never replaces the secret key.' },
+      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token to read a direct session and start an attempt.', handling: 'Session-scoped token. Do not reuse across orders or place it in logs.' },
+      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token to read a direct attempt.', handling: 'Attempt access credential. Prefer server-side polling; expose it only temporarily if the interface requires it.' },
+      { credential: 'Webhook signing secret', usedFor: 'Verify notifications received by your endpoint.', handling: 'Separate from API keys and shown only once during setup; keep it server-side.' },
+    ],
+    paymentStateRows: [
+      { state: 'created', meaning: 'The session exists; no attempt has started.', action: 'Continue with the checkout flow for its mode.' },
+      { state: 'waiting', meaning: 'An attempt is awaiting confirmation.', action: 'Continue checking; do not mark the order as paid.' },
+      { state: 'uncertain', meaning: 'The result is not confirmed and may still change.', action: 'Treat as neither success nor failure; re-read status and wait for server confirmation.' },
+      { state: 'succeeded', meaning: 'Payment has been confirmed successfully.', action: 'You may fulfill the order after server-side verification.' },
+      { state: 'failed', meaning: 'A final failure has been confirmed.', action: 'Do not fulfill the order; use your business retry flow.' },
     ],
   },
 };
@@ -735,6 +771,12 @@ export default function DocsPage() {
           <section className="sf-docs-section"><h2>{t.notDocumented}</h2><p>{t.notDocumentedText}</p><p>{t.rotationText}</p><div className="sf-docs-callout">{t.serverOnly}</div>
             <CodePanel language={language} label={t.codeLabel} example="read-session" />
           </section>
+          <section className="sf-docs-section"><h2>{t.credentialRolesTitle}</h2>
+            <table className="sf-docs-reference-table">
+              <thead><tr><th>{t.credentialHeader}</th><th>{t.credentialUseHeader}</th><th>{t.credentialHandlingHeader}</th></tr></thead>
+              <tbody>{localizedLists[language].credentialRows.map((row) => <tr key={row.credential}><td data-label={t.credentialHeader}>{row.credential}</td><td data-label={t.credentialUseHeader}>{row.usedFor}</td><td data-label={t.credentialHandlingHeader}>{row.handling}</td></tr>)}</tbody>
+            </table>
+          </section>
           <section className="sf-docs-section"><h2>{t.prerequisites}</h2><ul className="sf-docs-list"><li>{t.noCredentials}</li><li>{t.idempotencyText}</li></ul></section>
         </>}
         {pageKey === 'direct' && <>
@@ -751,6 +793,7 @@ export default function DocsPage() {
             <div className="sf-docs-callout">{t.directInputText}</div>
             <CodePanel language={language} label={t.codeLabel} example="start-attempt" />
             <ResponsePanel language={language} label={t.responseExample} response={directAttemptResponse} />
+            <div className="sf-docs-callout">{t.pollTokenNote}</div>
             <CodePanel language={language} label={t.codeLabel} example="poll-attempt" />
             <div className="sf-docs-callout"><strong>{t.mobileMoneyTitle}.</strong> {t.mobileMoneyText}</div>
             <h3>{t.mobileMoneyActorsTitle}</h3>
@@ -840,11 +883,11 @@ export default function DocsPage() {
               <strong>{t.webhookHeadersTitle}</strong>
               <p>{t.webhookHeadersText}</p>
               <pre className="sf-docs-response"><code>{`sendflow-event: payment.succeeded
-sendflow-delivery: <stable-delivery-id>
+sendflow-delivery: 9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644
 sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
             </div>
             <ResponsePanel language={language} label={`${t.responseExample} · JSON`} response={`{
-  "id": "<stable-event-id>",
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644",
   "type": "payment.succeeded",
   "createdAt": "2026-10-29T10:30:00.000Z",
   "data": {
@@ -877,7 +920,12 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
               ))}
             </div>
           </section>
-          <section className="sf-docs-section"><h2>{t.statesTitle}</h2><p>{t.statesText}</p></section>
+          <section className="sf-docs-section"><h2>{t.statesTitle}</h2><p>{t.statesText}</p>
+            <table className="sf-docs-reference-table">
+              <thead><tr><th>{language === 'fr' ? 'État' : 'State'}</th><th>{language === 'fr' ? 'Signification' : 'Meaning'}</th><th>{language === 'fr' ? 'Action marchande' : 'Merchant action'}</th></tr></thead>
+              <tbody>{localizedLists[language].paymentStateRows.map((row) => <tr key={row.state}><td data-label={language === 'fr' ? 'État' : 'State'}><code className="sf-docs-inline-code">{row.state}</code></td><td data-label={language === 'fr' ? 'Signification' : 'Meaning'}>{row.meaning}</td><td data-label={language === 'fr' ? 'Action marchande' : 'Merchant action'}>{row.action}</td></tr>)}</tbody>
+            </table>
+          </section>
           <section className="sf-docs-section"><h2>{t.idempotency}</h2><p>{t.idempotencyText}</p></section>
           <section className="sf-docs-section"><h2>{t.expiration}</h2><p>{t.expirationText}</p></section>
           <section className="sf-docs-section"><h2>{t.rateLimits}</h2><p>{t.rateLimitsText}</p></section>

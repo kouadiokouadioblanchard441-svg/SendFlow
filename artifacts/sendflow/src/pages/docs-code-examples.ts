@@ -542,12 +542,12 @@ linkflow = [
   },
   webhook: {
     cURL: `timestamp=$(date +%s)
-body='{"id":"evt_example","type":"payment.succeeded","createdAt":"2026-01-01T12:00:00.000Z","data":{"sessionId":"00000000-0000-4000-8000-000000000001","merchantReference":"ORDER-2026-0042","attemptId":"00000000-0000-4000-8000-000000000002","transactionId":"00000000-0000-4000-8000-000000000003","amountMinor":12500,"currency":"XOF","status":"succeeded"}}'
+body='{"id":"9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644","type":"payment.succeeded","createdAt":"2026-01-01T12:00:00.000Z","data":{"sessionId":"00000000-0000-4000-8000-000000000001","merchantReference":"ORDER-2026-0042","attemptId":"00000000-0000-4000-8000-000000000002","transactionId":"00000000-0000-4000-8000-000000000003","amountMinor":12500,"currency":"XOF","status":"succeeded"}}'
 signature=$(printf '%s' "$timestamp.$body" | openssl dgst -sha256 -hmac "$SEND_FLOW_WEBHOOK_SECRET" | awk '{print $NF}')
 curl --request POST "$MERCHANT_WEBHOOK_URL" \\
   --header "Content-Type: application/json" \\
   --header "sendflow-event: payment.succeeded" \\
-  --header "sendflow-delivery: evt_example" \\
+  --header "sendflow-delivery: 9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644" \\
   --header "sendflow-signature: t=$timestamp,v1=$signature" \\
   --data-binary "$body"`,
     JavaScript: `import { createHmac, timingSafeEqual } from "node:crypto";
