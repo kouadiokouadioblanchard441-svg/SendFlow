@@ -12,6 +12,7 @@ import {
 import { Link, Redirect, useLocation } from 'wouter';
 import { TransferRequestDialog, type TransferRequestState } from '@/components/transfer-request-dialog';
 import { OperatorMark } from '@/components/operator-mark';
+import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import PageLoadingScreen from '@/components/page-loading-screen';
 import { readAccountCountry } from '@/lib/account-country';
 import { isValidPhoneForCountry } from '@/lib/phone-rules';
@@ -32,7 +33,6 @@ import {
 } from '@/lib/server-transfer-quote';
 import {
   isValidTransactionAmount,
-  MAX_TRANSACTION_AMOUNT,
   parseWholeAmount,
 } from '@/lib/transfer-validation';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -86,6 +86,8 @@ export default function InterNetworkTransferPage() {
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountCountry = readAccountCountry();
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
+  const paymentLimitsQuery = usePaymentLimits();
+  const paymentLimits = paymentLimitsQuery.data;
   const pricingCountry = pricingQuery.data?.countries.find((item) =>
     accountCountry.countryCode ? item.id === accountCountry.countryCode : item.dialCode === accountCountry.dialCode);
   const phoneMaxDigits = pricingCountry?.maxPhoneDigits ?? 15;
@@ -132,8 +134,8 @@ export default function InterNetworkTransferPage() {
   const [contactsNotice, setContactsNotice] = useState('');
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const enteredAmount = parseWholeAmount(amount);
-  const quoteInput = sourceOperator && destinationOperator
-    && isValidTransactionAmount(enteredAmount)
+  const quoteInput = sourceOperator && destinationOperator && paymentLimits
+    && isValidTransactionAmount(enteredAmount, paymentLimits.minimumInterNetworkMinor, paymentLimits.maximumTransferMinor)
     && isValidCountryPhone(sourceNumber) && isValidCountryPhone(recipientNumber)
     ? {
       kind: 'inter-network' as const,
@@ -389,9 +391,14 @@ export default function InterNetworkTransferPage() {
               />
               <strong>FCFA</strong>
             </label>
-            {submitAttempted && !isValidTransactionAmount(enteredAmount) && (
+            {submitAttempted && paymentLimits && !isValidTransactionAmount(enteredAmount, paymentLimits.minimumInterNetworkMinor, paymentLimits.maximumTransferMinor) && (
               <p className="sendflow-international-field-error" role="alert">
-                Saisissez un montant compris entre 1 et {MAX_TRANSACTION_AMOUNT.toLocaleString('fr-FR')} FCFA.
+                Saisissez un montant compris entre {paymentLimits.minimumInterNetworkMinor.toLocaleString('fr-FR')} et {paymentLimits.maximumTransferMinor.toLocaleString('fr-FR')} FCFA.
+              </p>
+            )}
+            {paymentLimitsQuery.isError && (
+              <p className="sendflow-international-field-error" role="alert">
+                Les limites de paiement sont indisponibles. Réessayez avant de continuer.
               </p>
             )}
 

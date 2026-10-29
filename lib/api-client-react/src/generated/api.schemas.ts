@@ -180,6 +180,83 @@ export interface AdminRegistrationSettings {
   updatedAt: string | null;
 }
 
+export type PublicPaymentLimitsCurrency = typeof PublicPaymentLimitsCurrency[keyof typeof PublicPaymentLimitsCurrency];
+
+
+export const PublicPaymentLimitsCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface PublicPaymentLimits {
+  currency: PublicPaymentLimitsCurrency;
+  /**
+     * @minimum 200
+     * @maximum 2000000
+     */
+  minimumDepositMinor: number;
+  /**
+     * @minimum 200
+     * @maximum 2000000
+     */
+  minimumPayoutMinor: number;
+  /**
+     * @minimum 1
+     * @maximum 10000000
+     */
+  minimumInterNetworkMinor: number;
+  /**
+     * @minimum 1
+     * @maximum 10000000
+     */
+  maximumTransferMinor: number;
+  /**
+     * @minimum 200
+     * @maximum 2000000
+     */
+  maximumPayinMinor: number;
+}
+
+export type AdminPaymentLimits = PublicPaymentLimits & {
+  /** @minimum 1 */
+  version: number;
+  updatedAt: string;
+};
+
+export interface PaymentLimitsUpdate {
+  /**
+     * @minimum 200
+     * @maximum 2000000
+     */
+  minimumDepositMinor: number;
+  /**
+     * @minimum 200
+     * @maximum 2000000
+     */
+  minimumPayoutMinor: number;
+  /**
+     * @minimum 1
+     * @maximum 10000000
+     */
+  minimumInterNetworkMinor: number;
+  /**
+     * @minimum 1
+     * @maximum 10000000
+     */
+  maximumTransferMinor: number;
+  /**
+     * @minimum 200
+     * @maximum 2000000
+     */
+  maximumPayinMinor: number;
+  /** @minimum 1 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
 export interface RegistrationSettingsUpdate {
   smsVerificationEnabled: boolean;
   /** @minimum 1 */
@@ -930,6 +1007,7 @@ export interface TransferQuoteInput {
      */
   recipientPhone?: string;
   /**
+     * For kind=deposit, the configured minimum is returned by GET /payment-limits and enforced by the server. Inter-network and international transfer minimums are also configured separately and returned by that resource.
      * @minimum 1
      * @maximum 9007199254740991
      */
@@ -2700,7 +2778,8 @@ export interface DeveloperPaymentSessionInput {
      */
   merchantReference: string;
   /**
-     * @minimum 100
+     * Current accepted range is returned by GET /api/payment-limits; the server enforces the configured minimum and maximum.
+     * @minimum 200
      * @maximum 2000000
      */
   amountMinor: number;

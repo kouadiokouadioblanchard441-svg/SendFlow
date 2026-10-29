@@ -13,13 +13,13 @@ import { OperatorMark } from '@/components/operator-mark';
 import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { readAccountCountry } from '@/lib/account-country';
+import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import { useServerTransferQuote } from '@/hooks/use-server-transfer-quote';
 import { isValidPhoneForCountry } from '@/lib/phone-rules';
 import { formatServerFeePercent as formatPricingFeeRate, formatQuoteAmount, serverQuoteAmounts } from '@/lib/server-transfer-quote';
 import { useSeo } from '@/lib/seo';
 import {
   isValidTransactionAmount,
-  MAX_TRANSACTION_AMOUNT,
   parseWholeAmount,
 } from '@/lib/transfer-validation';
 import sendflowMark from '@assets/sendflow-mark-original.png';
@@ -43,6 +43,8 @@ export default function DepositPage() {
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountCountry = readAccountCountry();
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
+  const paymentLimitsQuery = usePaymentLimits();
+  const paymentLimits = paymentLimitsQuery.data;
   const pricingCountry = pricingQuery.data?.countries.find((country) =>
     accountCountry.countryCode ? country.id === accountCountry.countryCode : country.dialCode === accountCountry.dialCode);
   const phoneMaxDigits = pricingCountry?.maxPhoneDigits ?? 15;
@@ -77,7 +79,9 @@ export default function DepositPage() {
   const enteredAmount = parseWholeAmount(amount);
   const hasValidSourceNumber = !!pricingCountry && isValidPhoneForCountry(sourceNumber,
     pricingCountry.dialCode, { min: pricingCountry.minPhoneDigits, max: pricingCountry.maxPhoneDigits });
-  const quoteInput = operator && isValidTransactionAmount(enteredAmount) && hasValidSourceNumber
+  const quoteInput = operator && paymentLimits
+    && isValidTransactionAmount(enteredAmount, paymentLimits.minimumDepositMinor, paymentLimits.maximumPayinMinor)
+    && hasValidSourceNumber
     ? {
       kind: 'deposit' as const, sourceOperatorId: operator.id,
       senderPhone: `${accountCountry.dialCode}${sourceNumber}`,
@@ -123,7 +127,8 @@ export default function DepositPage() {
   const canSubmit = Boolean(
     operator &&
     transferQuote.data &&
-    isValidTransactionAmount(enteredAmount) &&
+    paymentLimits &&
+    isValidTransactionAmount(enteredAmount, paymentLimits.minimumDepositMinor, paymentLimits.maximumPayinMinor) &&
     walletAmount !== null &&
     hasValidSourceNumber &&
     (!operator.requiresOtp || otp.trim().length > 0),
@@ -195,13 +200,29 @@ export default function DepositPage() {
                 }}
                 placeholder="Montant du dépôt"
                 aria-label="Montant du dépôt"
+                aria-invalid={submitAttempted && !!paymentLimits && enteredAmount > 0 && enteredAmount < paymentLimits.minimumDepositMinor}
                 maxLength={10}
               />
               <strong>FCFA</strong>
             </label>
-            {submitAttempted && !isValidTransactionAmount(enteredAmount) && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {paymentLimits
+                ? `Montant minimum du dépôt : ${paymentLimits.minimumDepositMinor.toLocaleString('fr-FR')} FCFA.`
+                : 'Chargement des limites de paiement…'}
+            </p>
+            {submitAttempted && paymentLimits && enteredAmount > 0 && enteredAmount < paymentLimits.minimumDepositMinor && (
               <p className="sendflow-international-field-error" role="alert">
-                Saisissez un montant compris entre 1 et {MAX_TRANSACTION_AMOUNT.toLocaleString('fr-FR')} FCFA.
+                Le montant minimum d’un dépôt est de {paymentLimits.minimumDepositMinor.toLocaleString('fr-FR')} FCFA.
+              </p>
+            )}
+            {submitAttempted && paymentLimits && !isValidTransactionAmount(enteredAmount, paymentLimits.minimumDepositMinor, paymentLimits.maximumPayinMinor) && (
+              <p className="sendflow-international-field-error" role="alert">
+                Saisissez un montant compris entre {paymentLimits.minimumDepositMinor.toLocaleString('fr-FR')} et {paymentLimits.maximumPayinMinor.toLocaleString('fr-FR')} FCFA.
+              </p>
+            )}
+            {paymentLimitsQuery.isError && (
+              <p className="sendflow-international-field-error" role="alert">
+                Les limites de paiement sont indisponibles. Réessayez avant de continuer.
               </p>
             )}
 

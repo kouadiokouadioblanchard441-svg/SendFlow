@@ -29,6 +29,7 @@ import {
 } from "@workspace/api-zod";
 import express, { Router, type IRouter, type RequestHandler } from "express";
 import { consumePaymentLinkCreationQuota, consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
+import { loadPaymentLimits } from "../data/payment-limits";
 import { requireCustomerSession } from "../lib/customer-session";
 import {
   createPaymentLinkPublicToken,
@@ -251,6 +252,7 @@ router.patch("/me/payment-links/:linkId", async (req, res): Promise<void> => {
   }
 
   try {
+    const paymentLimits = await loadPaymentLimits();
     const outcome = await db.transaction(async (tx) => {
       const [link] = await tx.select().from(customerPaymentLinksTable).where(and(
         eq(customerPaymentLinksTable.id, params.data.linkId),
@@ -269,7 +271,7 @@ router.patch("/me/payment-links/:linkId", async (req, res): Promise<void> => {
 
       const amountMinor = parsed.data.amount === undefined
         ? link.amountMinor
-        : parsePaymentLinkAmountInput(parsed.data.amount, link.currency);
+        : parsePaymentLinkAmountInput(parsed.data.amount, link.currency, paymentLimits);
       const description = parsed.data.description === undefined
         ? link.description
         : parsed.data.description.trim();
@@ -406,7 +408,7 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
       res.status(400).json({ error: "Vérifiez les informations du lien." });
       return;
     }
-    const normalized = normalizePaymentLinkInput(parsed.data);
+    const normalized = normalizePaymentLinkInput(parsed.data, await loadPaymentLimits());
     const [existing] = await db.select(paymentLinkIdempotencyColumns).from(customerPaymentLinksTable).where(and(
       eq(customerPaymentLinksTable.userId, session.userId),
       eq(customerPaymentLinksTable.source, "linkflow"),
@@ -455,7 +457,7 @@ router.post("/me/payment-links", async (req, res): Promise<void> => {
     try {
       const parsed = CreateCustomerPaymentLinkBody.safeParse(req.body);
       if (parsed.success) {
-        const normalized = normalizePaymentLinkInput(parsed.data);
+        const normalized = normalizePaymentLinkInput(parsed.data, await loadPaymentLimits());
         const [existing] = await db.select(paymentLinkIdempotencyColumns).from(customerPaymentLinksTable).where(and(
           eq(customerPaymentLinksTable.userId, session.userId),
           eq(customerPaymentLinksTable.source, "linkflow"),
@@ -547,6 +549,7 @@ router.post("/me/payment-links/simulate/:token", async (req, res): Promise<void>
       parsedBody.data.amount,
       link.amountMinor,
       link.currency,
+      await loadPaymentLimits(),
     );
     res.json(SimulateCustomerPaymentLinkResponse.parse({
       mode: "simulation",

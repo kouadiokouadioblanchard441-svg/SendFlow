@@ -49,6 +49,7 @@ import {
 } from "@workspace/api-zod";
 import { consumeDeveloperApiQuota } from "../data/developer-api-quota";
 import { consumePaymentLinkCreationQuota, consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
+import { loadPaymentLimits } from "../data/payment-limits";
 import { requireCustomerSession } from "../lib/customer-session";
 import {
   decryptSensitiveData,
@@ -653,6 +654,14 @@ router.post("/v1/payment-sessions", async (req, res): Promise<void> => {
     res.status(400).json({ error: "La clé Idempotency-Key est invalide." });
     return;
   }
+  let paymentLimits;
+  try {
+    paymentLimits = await loadPaymentLimits();
+  } catch (error) {
+    req.log.error({ err: error }, "Developer payment limits are unavailable");
+    res.status(503).json({ error: "Les limites de paiement sont momentanément indisponibles." });
+    return;
+  }
   let metadata: Record<string, unknown>;
   let normalized: ReturnType<typeof normalizePaymentLinkInput>;
   let requestHash: string;
@@ -669,7 +678,7 @@ router.post("/v1/payment-sessions", async (req, res): Promise<void> => {
       maximumUses: 1,
       returnUrl: parsedBody.data.returnUrl ?? null,
       suffix: null,
-    });
+    }, paymentLimits);
     requestHash = hashDeveloperRequest({
       ...parsedBody.data,
       returnUrl: normalized.returnUrl,

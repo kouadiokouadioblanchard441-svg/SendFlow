@@ -38,6 +38,7 @@ export interface TransferQuoteInput {
      */
   recipientPhone?: string;
   /**
+     * For kind=deposit, the configured minimum is returned by GET /payment-limits and enforced by the server. Inter-network and international transfer minimums are also configured separately and returned by that resource.
      * @minimum 1
      * @maximum 9007199254740991
      */

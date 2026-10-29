@@ -14,6 +14,7 @@ import {
   paymentAggregatorsTable,
   paymentAttemptsTable,
   paymentConfirmationsTable,
+  paymentLimitsTable,
   paymentIntentsTable,
   sql,
   transactionsTable,
@@ -168,9 +169,12 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   if (link.currency !== "XOF" || link.paymentMethod === "card") {
     throw new LinkFlowPaymentError(400, "Ce moyen de paiement n’est pas disponible pour ce lien.");
   }
+  const [paymentLimits] = await tx.select().from(paymentLimitsTable)
+    .where(eq(paymentLimitsTable.id, "global")).limit(1);
+  if (!paymentLimits) throw new Error("Payment limits have not been initialized");
   let amountMinor: number;
   try {
-    amountMinor = parseLinkFlowPayerAmount(input.amount, link.amountMinor, link.currency);
+    amountMinor = parseLinkFlowPayerAmount(input.amount, link.amountMinor, link.currency, paymentLimits);
   } catch (error) {
     throw new LinkFlowPaymentError(400, error instanceof Error ? error.message : "Le montant saisi est invalide.");
   }

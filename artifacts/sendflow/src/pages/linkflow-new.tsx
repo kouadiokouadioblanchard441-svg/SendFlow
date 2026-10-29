@@ -14,6 +14,7 @@ import type {
   CustomerPaymentLinkInputPaymentMethod,
   CustomerPaymentLinkInputValidity,
 } from '@workspace/api-client-react';
+import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import { useSeo } from '@/lib/seo';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 
@@ -50,6 +51,8 @@ export default function LinkFlowNewPage() {
   const queryClient = useQueryClient();
   const createMutation = useCreateCustomerPaymentLink();
   const paymentLinksQuery = useGetCustomerPaymentLinks({ limit: 20 });
+  const paymentLimitsQuery = usePaymentLimits();
+  const paymentLimits = paymentLimitsQuery.data;
   const requestIdRef = useRef<{ fingerprint: string; id: string } | null>(null);
   const [currency, setCurrency] = useState<CustomerPaymentLinkInputCurrency>('XOF');
   const [linkName, setLinkName] = useState('');
@@ -150,12 +153,19 @@ export default function LinkFlowNewPage() {
     if (trimmedLinkName.length < 2) nextErrors.linkName = 'Le nom du lien doit comporter au moins 2 caractères.';
     if (trimmedLinkName.length > 120) nextErrors.linkName = 'Le nom du lien ne peut pas dépasser 120 caractères.';
     const decimalPlaces = selectedCurrencyOption.decimals;
-    if (trimmedAmount === '' || trimmedAmount === '0') {
+    if (!paymentLimits) {
+      nextErrors.amount = 'Les limites de paiement sont indisponibles. Réessayez avant de continuer.';
+    } else if (trimmedAmount === '' || trimmedAmount === '0') {
       if (currency !== 'XOF') nextErrors.amount = 'Le montant libre est disponible uniquement en XOF pour le moment.';
     } else {
       const amountMatch = /^([0-9]+)(?:\.([0-9]+))?$/.exec(trimmedAmount);
-      if (!amountMatch || !Number.isFinite(Number(trimmedAmount)) || Number(trimmedAmount) < 10) {
-        nextErrors.amount = 'Le montant minimum est de 10.';
+      const isCfa = currency === 'XOF' || currency === 'XAF';
+      const minimumAmount = isCfa ? paymentLimits.minimumDepositMinor : 10;
+      const maximumAmount = isCfa ? paymentLimits.maximumPayinMinor : Number.MAX_SAFE_INTEGER;
+      if (!amountMatch || !Number.isFinite(Number(trimmedAmount)) || Number(trimmedAmount) < minimumAmount) {
+        nextErrors.amount = `Le montant minimum est de ${minimumAmount.toLocaleString('fr-FR')} ${currency}.`;
+      } else if (Number(trimmedAmount) > maximumAmount) {
+        nextErrors.amount = `Le montant maximum est de ${maximumAmount.toLocaleString('fr-FR')} ${currency}.`;
       } else if ((amountMatch[2]?.length ?? 0) > decimalPlaces) {
         nextErrors.amount = decimalPlaces === 0
           ? `${currency} ne prend pas de décimales.`
@@ -298,7 +308,13 @@ export default function LinkFlowNewPage() {
           <label className={`sendflow-linkflow-field${errors.amount ? ' has-error' : ''}`}>
             <span>Montant <small>en {currency}</small></span>
             <div className="sendflow-linkflow-amount-input"><input aria-label={`Montant en ${currency}`} aria-invalid={Boolean(errors.amount)} aria-describedby={errors.amount ? 'linkflow-amount-error' : 'linkflow-amount-help'} value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" placeholder="0" data-testid="input-linkflow-amount" /><b>{currency}</b></div>
-            {errors.amount ? <small className="sendflow-linkflow-error" id="linkflow-amount-error">{errors.amount}</small> : <small id="linkflow-amount-help">{currency === 'XOF' ? 'Montant fixe, ou laissez vide pour que le payeur le saisisse.' : 'Saisissez le montant demandé.'}</small>}
+            {errors.amount ? <small className="sendflow-linkflow-error" id="linkflow-amount-error">{errors.amount}</small> : (
+              <small id="linkflow-amount-help">
+                {currency === 'XOF'
+                  ? `Minimum ${paymentLimits?.minimumDepositMinor.toLocaleString('fr-FR') ?? '—'} FCFA, maximum ${paymentLimits?.maximumPayinMinor.toLocaleString('fr-FR') ?? '—'} FCFA. Montant fixe, ou laissez vide pour que le payeur le saisisse.`
+                  : 'Saisissez le montant demandé.'}
+              </small>
+            )}
           </label>
 
           <label className={`sendflow-linkflow-field${errors.description ? ' has-error' : ''}`}>

@@ -1,4 +1,4 @@
-export type DocsCodeFormat = 'cURL' | 'JavaScript' | 'PHP' | 'Python' | 'Kotlin';
+export type DocsCodeFormat = 'cURL' | 'JavaScript' | 'Node.js' | 'PHP' | 'Python' | 'Kotlin';
 export type DocsExampleId =
   | 'create-hosted'
   | 'create-direct'
@@ -8,9 +8,13 @@ export type DocsExampleId =
   | 'poll-attempt'
   | 'handle-http-errors'
   | 'pricing'
+  | 'payment-limits'
   | 'webhook';
 
-type ExampleSet = Record<Exclude<DocsCodeFormat, 'Kotlin'>, string> & { Kotlin?: string };
+type ExampleSet = Record<Exclude<DocsCodeFormat, 'Kotlin' | 'Node.js'>, string> & {
+  'Node.js'?: string;
+  Kotlin?: string;
+};
 
 const examples: Record<DocsExampleId, ExampleSet> = {
   'create-hosted': {
@@ -52,6 +56,34 @@ const checkoutOrigin = env.SENDFLOW_CHECKOUT_ORIGIN;
 if (!checkoutOrigin) throw new Error("Set the official SendFlow checkout origin first");
 const checkoutUrl = new URL(session.checkoutPath, checkoutOrigin).toString();
 // Return checkoutUrl to your client, then redirect the customer's browser.`,
+    'Node.js': `// Node.js 18+; run on your merchant server, never in a browser.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+if (!apiBaseUrl || !secretKey) throw new Error("Configure SendFlow server environment variables");
+
+const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/v1/payment-sessions", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer " + secretKey,
+    "Idempotency-Key": "order-2026-0042",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    merchantReference: "ORDER-2026-0042",
+    amountMinor: 12500,
+    currency: "XOF",
+    mode: "hosted",
+    returnUrl: "https://shop.example.com/payment/return",
+  }),
+});
+const session = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(session.error ?? \`SendFlow returned HTTP \${response.status}\`);
+if (!session.checkoutPath) throw new Error("No hosted checkout path was returned");
+
+const checkoutOrigin = process.env.SENDFLOW_CHECKOUT_ORIGIN;
+if (!checkoutOrigin) throw new Error("Configure the official SendFlow checkout origin");
+const checkoutUrl = new URL(session.checkoutPath, checkoutOrigin).toString();
+// Return checkoutUrl to your client and redirect the payer's browser.`,
     PHP: `$body = [
     "merchantReference" => "ORDER-2026-0042",
     "amountMinor" => 12500,
@@ -147,6 +179,29 @@ const session = await response.json();
 if (!response.ok) throw new Error(session.error ?? "SendFlow request failed");
 // Send session.id, session.publicKey, and session.clientToken to your checkout client.
 // Never send SENDFLOW_SECRET_KEY to a browser or mobile app.`,
+    'Node.js': `// Node.js 18+; keep the secret key in server-side environment variables.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+if (!apiBaseUrl || !secretKey) throw new Error("Configure SendFlow server environment variables");
+
+const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/v1/payment-sessions", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer " + secretKey,
+    "Idempotency-Key": "order-2026-0043",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    merchantReference: "ORDER-2026-0043",
+    amountMinor: 12500,
+    currency: "XOF",
+    mode: "direct",
+  }),
+});
+const session = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(session.error ?? \`SendFlow returned HTTP \${response.status}\`);
+// Send only session.id, session.publicKey and session.clientToken to your direct-checkout client.
+// Never expose the secretKey.`,
     PHP: `$body = [
     "merchantReference" => "ORDER-2026-0043",
     "amountMinor" => 12500,
@@ -201,6 +256,18 @@ const response = await fetch(
 const session = await response.json();
 if (!response.ok) throw new Error(session.error ?? "SendFlow request failed");
 // Confirm the order only when session.state === "succeeded".`,
+    'Node.js': `// Merchant-server status check; sessionId comes from your stored creation response.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+if (!apiBaseUrl || !secretKey) throw new Error("Configure SendFlow server environment variables");
+
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/payment-sessions/" + encodeURIComponent(sessionId),
+  { headers: { Authorization: "Bearer " + secretKey } },
+);
+const session = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(session.error ?? \`SendFlow returned HTTP \${response.status}\`);
+// Confirm the order only when the server returns state === "succeeded".`,
     PHP: `$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/payment-sessions/" . rawurlencode($sessionId);
 $ch = curl_init($url);
 curl_setopt_array($ch, [
@@ -242,6 +309,22 @@ const response = await fetch(
 const checkout = await response.json();
 if (!response.ok) throw new Error(checkout.error ?? "SendFlow request failed");
 // Use checkout.countries to show the currently available countries/operators.`,
+    'Node.js': `// session comes from your server-side create-direct request.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+if (!apiBaseUrl) throw new Error("Configure SENDFLOW_API_BASE_URL on your server");
+
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/public/payment-sessions/" + encodeURIComponent(session.id),
+  {
+    headers: {
+      "X-SendFlow-Public-Key": session.publicKey,
+      "X-SendFlow-Client-Token": session.clientToken,
+    },
+  },
+);
+const checkout = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(checkout.error ?? \`SendFlow returned HTTP \${response.status}\`);
+// Use checkout.countries to render the currently available payment choices.`,
     PHP: `$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/public/payment-sessions/" . rawurlencode($sessionId);
 $ch = curl_init($url);
 curl_setopt_array($ch, [
@@ -347,6 +430,33 @@ const response = await fetch(
 const attempt = await response.json();
 if (!response.ok) throw new Error(attempt.error ?? "Payment could not start");
 // Keep attempt.pollToken in your server-side session where possible.`,
+    'Node.js': `// Use the public key and client token returned with the direct session.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+if (!apiBaseUrl) throw new Error("Configure SENDFLOW_API_BASE_URL on your server");
+
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/public/payment-sessions/" +
+    encodeURIComponent(session.id) + "/attempts",
+  {
+    method: "POST",
+    headers: {
+      "X-SendFlow-Public-Key": session.publicKey,
+      "X-SendFlow-Client-Token": session.clientToken,
+      "Idempotency-Key": "payer-order-2026-0042",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      firstName: "Awa",
+      lastName: "Kone",
+      countryCode: "CI",
+      operatorId: "<operator-id-from-session>",
+      phoneNumber: "+2250700000000",
+    }),
+  },
+);
+const attempt = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(attempt.error ?? \`SendFlow returned HTTP \${response.status}\`);
+// Keep attempt.pollToken private; this response is not proof of payment.`,
     PHP: `$body = [
     "firstName" => "Awa",
     "lastName" => "Kone",
@@ -472,6 +582,24 @@ const response = await fetch(
 const status = await response.json();
 if (!response.ok) throw new Error(status.error ?? "Payment status unavailable");
 // Treat only the server-confirmed "succeeded" state as a paid order.`,
+    'Node.js': `// session and attempt are responses from the previous direct-flow steps.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+if (!apiBaseUrl) throw new Error("Configure SENDFLOW_API_BASE_URL on your server");
+
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/public/payment-sessions/" +
+    encodeURIComponent(session.id) + "/attempts/" + encodeURIComponent(attempt.attemptId),
+  {
+    headers: {
+      "X-SendFlow-Public-Key": session.publicKey,
+      "X-SendFlow-Client-Token": session.clientToken,
+      "X-LinkFlow-Attempt-Token": attempt.pollToken,
+    },
+  },
+);
+const status = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(status.error ?? \`SendFlow returned HTTP \${response.status}\`);
+// Trust only the server-confirmed "succeeded" state.`,
     PHP: `$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/public/payment-sessions/" . rawurlencode($sessionId) . "/attempts/" . rawurlencode($attemptId);
 $ch = curl_init($url);
 curl_setopt_array($ch, [
@@ -572,6 +700,26 @@ if (response.status === 503) {
 if (!response.ok) {
   throw new Error(payload.error ?? \`SendFlow returned HTTP \${response.status}\`);
 }`,
+    'Node.js': `// Read the real HTTP status and { error: string } response body.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+if (!apiBaseUrl || !secretKey) throw new Error("Configure SendFlow server environment variables");
+
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/payment-sessions/" + encodeURIComponent(sessionId),
+  { headers: { Authorization: "Bearer " + secretKey } },
+);
+const payload = await response.json().catch(() => ({}));
+if (response.status === 429) {
+  const retryAfter = response.headers.get("Retry-After");
+  throw new Error("Rate limited; Retry-After: " + (retryAfter ?? "not provided"));
+}
+if (response.status === 503) {
+  throw new Error("Service unavailable; do not infer a final payment result.");
+}
+if (!response.ok) {
+  throw new Error(payload.error ?? \`SendFlow returned HTTP \${response.status}\`);
+}`,
     PHP: `$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/payment-sessions/" . rawurlencode($sessionId);
 $ch = curl_init($url);
 curl_setopt_array($ch, [
@@ -625,6 +773,15 @@ const catalog = await response.json();
 const linkFlowOperators = catalog.operators.filter(
   (operator) => operator.fees.linkflow !== undefined,
 );`,
+    'Node.js': `// Public pricing catalog; no merchant key is required.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+if (!apiBaseUrl) throw new Error("Configure SENDFLOW_API_BASE_URL");
+const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/pricing");
+const catalog = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(catalog.error ?? "Pricing catalog unavailable");
+const linkFlowOperators = catalog.operators.filter(
+  (operator) => operator.fees.linkflow !== undefined,
+);`,
     PHP: `$ch = curl_init(rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/pricing");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
@@ -645,6 +802,69 @@ linkflow = [
     operator for operator in catalog["operators"]
     if operator["fees"].get("linkflow") is not None
 ]`,
+  },
+  'payment-limits': {
+    cURL: `curl --request GET "$SENDFLOW_API_BASE_URL/payment-limits" \\
+  --header "Accept: application/json"`,
+    JavaScript: `const response = await fetch(
+  \`\${process.env.SENDFLOW_API_BASE_URL}/payment-limits\`,
+  { headers: { Accept: "application/json" } },
+);
+if (!response.ok) throw new Error(\`SendFlow limits returned HTTP \${response.status}\`);
+const limits = await response.json();
+console.log("Minimum pay-in:", limits.minimumDepositMinor, limits.currency);
+console.log("Minimum payout rule:", limits.minimumPayoutMinor, limits.currency);`,
+    'Node.js': `// Public read; the server still enforces configured limits on every payment.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+if (!apiBaseUrl) throw new Error("Configure SENDFLOW_API_BASE_URL");
+const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/payment-limits", {
+  headers: { Accept: "application/json" },
+});
+const limits = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(limits.error ?? \`Limits returned HTTP \${response.status}\`);
+console.log("Minimum pay-in:", limits.minimumDepositMinor, limits.currency);
+console.log("Minimum payout rule:", limits.minimumPayoutMinor, limits.currency);`,
+    PHP: `$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/payment-limits";
+$curl = curl_init($url);
+curl_setopt_array($curl, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => ["Accept: application/json"],
+]);
+$body = curl_exec($curl);
+$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+curl_close($curl);
+if ($body === false || $status < 200 || $status >= 300) {
+    throw new RuntimeException("SendFlow limits request failed: HTTP " . $status);
+}
+$limits = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
+echo $limits["minimumDepositMinor"] . " " . $limits["currency"];`,
+    Python: `import json
+import os
+from urllib.request import Request, urlopen
+
+base_url = os.environ["SENDFLOW_API_BASE_URL"].rstrip("/")
+request = Request(base_url + "/payment-limits", headers={"Accept": "application/json"})
+with urlopen(request, timeout=10) as response:
+    limits = json.load(response)
+
+print("Minimum pay-in:", limits["minimumDepositMinor"], limits["currency"])
+print("Minimum payout rule:", limits["minimumPayoutMinor"], limits["currency"])`,
+    Kotlin: `val url = URL("\${BuildConfig.SENDFLOW_API_BASE_URL}/payment-limits")
+val connection = (url.openConnection() as HttpURLConnection).apply {
+    requestMethod = "GET"
+    setRequestProperty("Accept", "application/json")
+    connectTimeout = 10_000
+    readTimeout = 10_000
+}
+try {
+    check(connection.responseCode in 200..299) {
+        "SendFlow limits returned HTTP \${connection.responseCode}"
+    }
+    val body = connection.inputStream.bufferedReader().use { it.readText() }
+    // Parse the public JSON response with your app's existing JSON library.
+} finally {
+    connection.disconnect()
+}`,
   },
   webhook: {
     cURL: `# Local receiver test only. Never send this synthetic event to production.
@@ -671,6 +891,28 @@ function verifySendFlowWebhook(rawBody, signatureHeader, secret) {
   return received.length === expected.length && timingSafeEqual(received, expected);
 }
 // Verify the raw request bytes before parsing JSON; use a replay time limit.`,
+    'Node.js': `import { createHmac, timingSafeEqual } from "node:crypto";
+
+// Pass the exact raw request bytes and sendflow-signature header to this function.
+// In Express, capture the raw body before applying express.json().
+export function verifySendFlowWebhook(rawBody, signatureHeader, secret) {
+  if (!Buffer.isBuffer(rawBody) || !secret) return null;
+  const match = /^t=(\\d+),v1=([a-f0-9]{64})$/.exec(signatureHeader ?? "");
+  if (!match) return null;
+
+  const timestamp = Number(match[1]);
+  // Example freshness window is merchant policy; SendFlow does not define it.
+  if (Math.abs(Date.now() / 1000 - timestamp) > 300) return null;
+
+  const expected = createHmac("sha256", secret)
+    .update(Buffer.concat([Buffer.from(match[1] + ".", "utf8"), rawBody]))
+    .digest();
+  const received = Buffer.from(match[2], "hex");
+  if (received.length !== expected.length || !timingSafeEqual(received, expected)) return null;
+
+  // Parse only after signature validation; persist payload.id idempotently before acknowledging.
+  return JSON.parse(rawBody.toString("utf8"));
+}`,
     PHP: `$rawBody = file_get_contents("php://input");
 $header = $_SERVER["HTTP_SENDFLOW_SIGNATURE"] ?? "";
 if (!preg_match('/^t=(\\d+),v1=([a-f0-9]{64})$/', $header, $matches)) {
@@ -708,9 +950,12 @@ def verify_sendflow_webhook(raw_body: bytes, signature_header: str, secret: str)
   },
 };
 
-export function getDocsCodeExample(example: DocsExampleId, format: DocsCodeFormat) {
+export function getDocsCodeExample(example: DocsExampleId, format: DocsCodeFormat, amountMinor = 12_500) {
   const code = examples[example][format];
   if (!code) throw new Error(`No ${format} example is available for ${example}`);
+  if (example === 'create-hosted' || example === 'create-direct') {
+    return code.replaceAll('12500', String(amountMinor));
+  }
   return code;
 }
 

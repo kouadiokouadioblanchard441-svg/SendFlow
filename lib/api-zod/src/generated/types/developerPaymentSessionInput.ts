@@ -16,7 +16,8 @@ export interface DeveloperPaymentSessionInput {
      */
   merchantReference: string;
   /**
-     * @minimum 100
+     * Current accepted range is returned by GET /api/payment-limits; the server enforces the configured minimum and maximum.
+     * @minimum 200
      * @maximum 2000000
      */
   amountMinor: number;

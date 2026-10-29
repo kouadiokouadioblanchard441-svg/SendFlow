@@ -25,6 +25,7 @@ import {
 } from "@workspace/api-zod";
 import { Router, type IRouter, type Request, type RequestHandler } from "express";
 import { consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
+import { loadPaymentLimits } from "../data/payment-limits";
 import { getCustomerSession } from "../lib/customer-session";
 import { flagFromCountryCode } from "../lib/operator-pricing-catalog";
 import { isReplitPaymentTestHost } from "../lib/replit-payment-test-access-policy";
@@ -418,6 +419,7 @@ const handlePublicPaymentLinkQuote: RequestHandler = async (req, res): Promise<v
         "amount" in parsedBody.data ? parsedBody.data.amount : undefined,
         link.amountMinor,
         link.currency,
+        await loadPaymentLimits(),
       );
     } catch (error) {
       if (error instanceof PaymentLinkInputError) {

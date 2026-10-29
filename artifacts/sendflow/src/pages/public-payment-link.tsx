@@ -15,6 +15,7 @@ import type {
   SimulatedPaymentLinkSuccess,
 } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
+import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 import linkUnavailableIllustration from '@assets/generated_images/sendflow-link-unavailable-3d-final.png';
 import linkExpiredIllustration from '@assets/generated_images/sendflow-link-expired-mascot-final.png';
@@ -100,6 +101,8 @@ export default function PublicPaymentLinkPage() {
       refetchOnWindowFocus: false,
     },
   });
+  const paymentLimitsQuery = usePaymentLimits();
+  const paymentLimits = paymentLimitsQuery.data;
   const [linkLoadCycle, setLinkLoadCycle] = useState(0);
   const [minimumLoadTimeElapsed, setMinimumLoadTimeElapsed] = useState(false);
   const [loadedPageAssetsKey, setLoadedPageAssetsKey] = useState('');
@@ -199,9 +202,15 @@ export default function PublicPaymentLinkPage() {
   const requestedAmountMinor = variableAmount
     ? parseAmountInputMinor(payerAmount, link?.currencyDecimals ?? 0)
     : link?.amountMinor ?? null;
+  const isCfaCurrency = link?.currency === 'XOF' || link?.currency === 'XAF';
+  const configuredMinimum = isCfaCurrency ? paymentLimits?.minimumDepositMinor : 1;
+  const configuredMaximum = isCfaCurrency ? paymentLimits?.maximumPayinMinor : Number.MAX_SAFE_INTEGER;
   const requestedAmountValid = variableAmount
-    ? Boolean(link?.currency === 'XOF' && requestedAmountMinor !== null && requestedAmountMinor >= 100 && requestedAmountMinor <= 2_000_000)
-    : requestedAmountMinor !== null && requestedAmountMinor > 0;
+    ? Boolean(link?.currency === 'XOF' && paymentLimits && requestedAmountMinor !== null
+      && requestedAmountMinor >= paymentLimits.minimumDepositMinor
+      && requestedAmountMinor <= paymentLimits.maximumPayinMinor)
+    : requestedAmountMinor !== null && configuredMinimum !== undefined && configuredMaximum !== undefined
+      && requestedAmountMinor >= configuredMinimum && requestedAmountMinor <= configuredMaximum;
   const payerFormValid = Boolean(
     requestedAmountValid &&
     country &&
@@ -632,7 +641,7 @@ export default function PublicPaymentLinkPage() {
           </div>
 
           <div
-            className={`sendflow-pay-amount-panel${variableAmount ? ' sendflow-pay-amount-panel--editable' : ''}${variableAmount && payerAmount && !requestedAmountValid ? ' is-invalid' : ''}`}
+            className={`sendflow-pay-amount-panel${variableAmount ? ' sendflow-pay-amount-panel--editable' : ''}${requestedAmountMinor !== null && !requestedAmountValid ? ' is-invalid' : ''}`}
             data-testid="public-pay-amount"
           >
             {variableAmount ? (
@@ -657,12 +666,25 @@ export default function PublicPaymentLinkPage() {
                 </label>
                 <small id="public-pay-amount-help">
                   {payerAmount && !requestedAmountValid
-                    ? 'Pour ce paiement, saisissez un montant compris entre 100 et 2 000 000 XOF.'
-                    : 'Montant libre : entrez le montant que vous souhaitez payer.'}
+                    ? paymentLimits
+                      ? `Pour ce paiement, saisissez un montant compris entre ${paymentLimits.minimumDepositMinor.toLocaleString('fr-FR')} et ${paymentLimits.maximumPayinMinor.toLocaleString('fr-FR')} XOF.`
+                      : 'Les limites de paiement sont momentanément indisponibles.'
+                    : paymentLimits
+                      ? `Montant libre : ${paymentLimits.minimumDepositMinor.toLocaleString('fr-FR')} à ${paymentLimits.maximumPayinMinor.toLocaleString('fr-FR')} XOF.`
+                      : 'Chargement des limites de paiement…'}
                 </small>
               </>
             ) : (
-              <strong>{amountLabel}</strong>
+              <>
+                <strong>{amountLabel}</strong>
+                {isCfaCurrency && requestedAmountMinor !== null && !requestedAmountValid && (
+                  <small role="alert">
+                    {paymentLimits
+                      ? `Ce lien est hors des limites de ${paymentLimits.minimumDepositMinor.toLocaleString('fr-FR')} à ${paymentLimits.maximumPayinMinor.toLocaleString('fr-FR')} ${link.currency}. Demandez un nouveau lien au marchand.`
+                      : 'Les limites de paiement sont indisponibles. Réessayez plus tard.'}
+                  </small>
+                )}
+              </>
             )}
           </div>
 

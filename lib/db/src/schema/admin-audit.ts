@@ -69,7 +69,8 @@ export type AdminAuditAction =
   | "update_country"
   | "view_countries"
   | "update_operator_pricing"
-  | "update_registration_settings";
+  | "update_registration_settings"
+  | "update_payment_limits";
 export type AdminAuditResourceType =
   | "admin_access"
   | "network_defense"
@@ -87,4 +88,5 @@ export type AdminAuditResourceType =
   | "operator"
   | "country"
   | "operator_pricing"
-  | "registration_settings";
+  | "registration_settings"
+  | "payment_limits";

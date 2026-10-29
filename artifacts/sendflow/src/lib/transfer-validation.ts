@@ -1,7 +1,5 @@
 import { getPhoneDigitsForCountry, isValidPhoneForCountry, normalizePhoneDigits } from '@/lib/phone-rules';
 
-export const MAX_TRANSACTION_AMOUNT = 10_000_000;
-
 export function parseWholeAmount(value: string): number {
   const normalized = value.replace(/\s/g, '');
 
@@ -11,10 +9,12 @@ export function parseWholeAmount(value: string): number {
   return Number.isSafeInteger(amount) ? amount : 0;
 }
 
-export function isValidTransactionAmount(amount: number): boolean {
+export function isValidTransactionAmount(amount: number, minimum: number, maximum: number): boolean {
   return Number.isSafeInteger(amount)
-    && amount >= 1
-    && amount <= MAX_TRANSACTION_AMOUNT;
+    && Number.isSafeInteger(minimum)
+    && Number.isSafeInteger(maximum)
+    && amount >= minimum
+    && amount <= maximum;
 }
 
 export function isValidIvoryCoastPhone(value: string): boolean {

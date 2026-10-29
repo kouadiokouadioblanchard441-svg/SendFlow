@@ -4257,6 +4257,90 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /payment-limits:
+    get:
+      operationId: getPublicPaymentLimits
+      tags: [public]
+      summary: Read the current public payment limits
+      description: Returns the current FCFA thresholds used by SendFlow. These values are informational; every payment or transfer is validated again by the server.
+      responses:
+        "200":
+          description: Current public payment limits.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicPaymentLimits"
+        "503":
+          description: Payment limit configuration is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMWh/payment-limits:
+    get:
+      operationId: getAdminPaymentLimits
+      tags: [admin]
+      summary: Read the current payment limits
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Current values, version and update time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPaymentLimits"
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Authorized administrator access is required.
+        "503":
+          description: Payment limit configuration is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateAdminPaymentLimits
+      tags: [admin]
+      summary: Update the payment limits
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentLimitsUpdate"
+      responses:
+        "200":
+          description: Updated values, version and update time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPaymentLimits"
+        "400":
+          description: Invalid limits or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Authorized administrator mutation access is required.
+        "409":
+          description: Another administrator changed the limits.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Payment limit configuration is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
 components:
   parameters:
     AdminFrom:
@@ -4559,6 +4643,35 @@ components:
           type: ["string", "null"]
           format: date-time
       required: [smsVerificationEnabled, version, updatedAt]
+    PublicPaymentLimits:
+      type: object
+      properties:
+        currency: { type: string, enum: [XOF] }
+        minimumDepositMinor: { type: integer, minimum: 200, maximum: 2000000 }
+        minimumPayoutMinor: { type: integer, minimum: 200, maximum: 2000000 }
+        minimumInterNetworkMinor: { type: integer, minimum: 1, maximum: 10000000 }
+        maximumTransferMinor: { type: integer, minimum: 1, maximum: 10000000 }
+        maximumPayinMinor: { type: integer, minimum: 200, maximum: 2000000 }
+      required: [currency, minimumDepositMinor, minimumPayoutMinor, minimumInterNetworkMinor, maximumTransferMinor, maximumPayinMinor]
+    AdminPaymentLimits:
+      allOf:
+        - $ref: "#/components/schemas/PublicPaymentLimits"
+        - type: object
+          properties:
+            version: { type: integer, minimum: 1 }
+            updatedAt: { type: string, format: date-time }
+          required: [version, updatedAt]
+    PaymentLimitsUpdate:
+      type: object
+      properties:
+        minimumDepositMinor: { type: integer, minimum: 200, maximum: 2000000 }
+        minimumPayoutMinor: { type: integer, minimum: 200, maximum: 2000000 }
+        minimumInterNetworkMinor: { type: integer, minimum: 1, maximum: 10000000 }
+        maximumTransferMinor: { type: integer, minimum: 1, maximum: 10000000 }
+        maximumPayinMinor: { type: integer, minimum: 200, maximum: 2000000 }
+        expectedVersion: { type: integer, minimum: 1 }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+      required: [minimumDepositMinor, minimumPayoutMinor, minimumInterNetworkMinor, maximumTransferMinor, maximumPayinMinor, expectedVersion, reason]
     RegistrationSettingsUpdate:
       type: object
       properties:
@@ -5269,6 +5382,7 @@ components:
           type: integer
           minimum: 1
           maximum: 9007199254740991
+          description: For kind=deposit, the configured minimum is returned by GET /payment-limits and enforced by the server. Inter-network and international transfer minimums are also configured separately and returned by that resource.
         senderPaysFees:
           type: boolean
       required:
@@ -7120,7 +7234,11 @@ components:
       type: object
       properties:
         merchantReference: { type: string, minLength: 1, maxLength: 128 }
-        amountMinor: { type: integer, minimum: 100, maximum: 2000000 }
+        amountMinor:
+          type: integer
+          minimum: 200
+          maximum: 2000000
+          description: Current accepted range is returned by GET /api/payment-limits; the server enforces the configured minimum and maximum.
         currency: { type: string, enum: [XOF] }
         mode: { type: string, enum: [hosted, direct] }
         description: { type: string, maxLength: 240 }

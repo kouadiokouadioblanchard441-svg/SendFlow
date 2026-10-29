@@ -40,6 +40,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { AdminActionDialog } from '@/components/admin-action-dialog';
+import { AdminPaymentLimitsSection } from '@/components/admin-payment-limits-section';
 import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
 import { AdminCountriesSection } from '@/components/admin-countries-section';
@@ -160,7 +161,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'ip-blocklist' | 'network-defense';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -178,6 +179,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   aggregators: { title: 'Partenaires de paiement', eyebrow: 'Routage multi-agrégateurs' },
   'operator-pricing': { title: 'Opérateurs et tarifs', eyebrow: 'Catalogue client' },
   'registration-settings': { title: 'Inscription', eyebrow: 'Sécurité des comptes' },
+  'payment-limits': { title: 'Limites de paiement', eyebrow: 'Configuration financière' },
   'ip-blocklist': { title: 'Blocage d’adresses IP', eyebrow: 'Sécurité réseau' },
   'network-defense': { title: 'Autodéfense', eyebrow: 'Sécurité réseau' },
 };
@@ -209,6 +211,7 @@ const navGroups: Array<{
       { href: adminRoute('/aggregators'), label: 'Agrégateurs', section: 'aggregators', icon: Network },
       { href: adminRoute('/operator-pricing'), label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
       { href: adminRoute('/registration-settings'), label: 'Vérification à l’inscription', section: 'registration-settings', icon: ShieldCheck },
+      { href: adminRoute('/payment-limits'), label: 'Limites de paiement', section: 'payment-limits', icon: Banknote },
     ],
   },
 ];
@@ -2740,6 +2743,7 @@ export function AdminRouter() {
   const [isAggregators] = useRoute(adminRoute('/aggregators'));
   const [isOperatorPricing] = useRoute(adminRoute('/operator-pricing'));
   const [isRegistrationSettings] = useRoute(adminRoute('/registration-settings'));
+  const [isPaymentLimits] = useRoute(adminRoute('/payment-limits'));
   const [isIpBlocklist] = useRoute(adminRoute('/ip-blocklist'));
   const [isNetworkDefense] = useRoute(adminRoute('/network-defense'));
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
@@ -2757,6 +2761,7 @@ export function AdminRouter() {
   if (isAggregators) return <AggregatorsPage />;
   if (isOperatorPricing) return <AdminShell section="operator-pricing"><AdminOperatorPricingPage /></AdminShell>;
   if (isRegistrationSettings) return <RegistrationSettingsPage />;
+  if (isPaymentLimits) return <AdminShell section="payment-limits"><AdminPaymentLimitsSection /></AdminShell>;
   if (isNetworkDefense) return <AdminShell section="network-defense"><AdminNetworkDefense /></AdminShell>;
   if (isIpBlocklist) return <AdminShell section="ip-blocklist"><AdminIpBlocklist /></AdminShell>;
   return <OverviewPage />;

@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import sharp from "sharp";
 import type { CustomerSessionContext } from "../lib/customer-session";
+import { DEFAULT_PAYMENT_LIMITS, type PaymentLimitValues } from "./payment-limits-policy.ts";
 
 export const PAYMENT_LINK_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const PAYMENT_LINK_IMAGE_MIME_TYPES = [
@@ -45,9 +46,6 @@ export const PAYMENT_LINK_METHODS = [
   { value: "card", label: "Carte" },
   { value: "all", label: "Tous" },
 ] as const;
-
-export const LINKFLOW_PAYER_AMOUNT_MIN_MINOR = 100;
-export const LINKFLOW_PAYER_AMOUNT_MAX_MINOR = 2_000_000;
 
 export const PAYMENT_LINK_VALIDITIES = [
   { value: "hour", label: "1 heure" },
@@ -142,7 +140,11 @@ export type NormalizedPaymentLinkInput = {
   requestHash: string;
 };
 
-export function parseAmountMinor(amount: string, currency: string) {
+export function parseAmountMinor(
+  amount: string,
+  currency: string,
+  limits: PaymentLimitValues = DEFAULT_PAYMENT_LIMITS,
+) {
   const currencyOption = PAYMENT_LINK_CURRENCIES.find((option) => option.code === currency);
   if (!currencyOption) throw new PaymentLinkInputError("Devise non prise en charge.");
 
@@ -159,14 +161,32 @@ export function parseAmountMinor(amount: string, currency: string) {
     ? 0n
     : BigInt((fractionalText + "0".repeat(currencyOption.decimals)).slice(0, currencyOption.decimals));
   const minor = BigInt(majorText) * scale + fraction;
-  if (minor < 10n * scale) throw new PaymentLinkInputError("Le montant minimum est de 10.");
+  const usesCfaLimits = currencyOption.code === "XOF" || currencyOption.code === "XAF";
+  const minimumMinor = usesCfaLimits
+    ? BigInt(limits.minimumDepositMinor)
+    : 10n * scale;
+  const maximumMinor = usesCfaLimits
+    ? BigInt(limits.maximumPayinMinor)
+    : BigInt(Number.MAX_SAFE_INTEGER);
+  if (minor < minimumMinor) {
+    const minimumMajor = minimumMinor / scale;
+    throw new PaymentLinkInputError(`Le montant minimum est de ${minimumMajor} ${currencyOption.code}.`);
+  }
+  if (minor > maximumMinor) {
+    const maximumMajor = maximumMinor / scale;
+    throw new PaymentLinkInputError(`Le montant maximum est de ${maximumMajor} ${currencyOption.code}.`);
+  }
   if (minor > BigInt(Number.MAX_SAFE_INTEGER)) {
     throw new PaymentLinkInputError("Le montant dépasse la limite autorisée.");
   }
   return Number(minor);
 }
 
-export function parsePaymentLinkAmountInput(amount: string, currency: string) {
+export function parsePaymentLinkAmountInput(
+  amount: string,
+  currency: string,
+  limits: PaymentLimitValues = DEFAULT_PAYMENT_LIMITS,
+) {
   const normalized = amount.trim();
   if (normalized === "0") {
     if (currency !== "XOF") {
@@ -174,13 +194,14 @@ export function parsePaymentLinkAmountInput(amount: string, currency: string) {
     }
     return 0;
   }
-  return parseAmountMinor(normalized, currency);
+  return parseAmountMinor(normalized, currency, limits);
 }
 
 export function parseLinkFlowPayerAmount(
   amount: string | undefined,
   linkAmountMinor: number,
   currency: string,
+  limits: PaymentLimitValues = DEFAULT_PAYMENT_LIMITS,
 ): number {
   if (linkAmountMinor === 0) {
     if (currency !== "XOF") {
@@ -189,18 +210,23 @@ export function parseLinkFlowPayerAmount(
     if (!amount?.trim()) {
       throw new PaymentLinkInputError("Saisissez le montant que vous souhaitez payer.");
     }
-    const amountMinor = parseAmountMinor(amount.trim(), "XOF");
-    if (amountMinor < LINKFLOW_PAYER_AMOUNT_MIN_MINOR || amountMinor > LINKFLOW_PAYER_AMOUNT_MAX_MINOR) {
-      throw new PaymentLinkInputError("Le montant doit être compris entre 100 et 2 000 000 XOF.");
-    }
+    const amountMinor = parseAmountMinor(amount.trim(), "XOF", limits);
     return amountMinor;
   }
 
   if (!Number.isSafeInteger(linkAmountMinor) || linkAmountMinor < 1) {
     throw new PaymentLinkInputError("Le montant de ce lien est invalide.");
   }
+  if (currency === "XOF" || currency === "XAF") {
+    if (linkAmountMinor < limits.minimumDepositMinor) {
+      throw new PaymentLinkInputError(`Le montant minimum de ce lien est de ${limits.minimumDepositMinor} ${currency}.`);
+    }
+    if (linkAmountMinor > limits.maximumPayinMinor) {
+      throw new PaymentLinkInputError(`Le montant maximum de ce lien est de ${limits.maximumPayinMinor} ${currency}.`);
+    }
+  }
   if (amount === undefined) return linkAmountMinor;
-  if (parseAmountMinor(amount, currency) !== linkAmountMinor) {
+  if (parseAmountMinor(amount, currency, limits) !== linkAmountMinor) {
     throw new PaymentLinkInputError("Le montant ne correspond pas à ce lien.");
   }
   return linkAmountMinor;
@@ -234,6 +260,7 @@ export function normalizePaymentLinkInput(
     returnUrl: string | null;
     suffix: string | null;
   },
+  limits: PaymentLimitValues = DEFAULT_PAYMENT_LIMITS,
   now = new Date(),
 ): NormalizedPaymentLinkInput {
   const linkName = input.linkName.trim();
@@ -247,7 +274,7 @@ export function normalizePaymentLinkInput(
   const amountText = input.amount?.trim() ?? "";
   const amountMinor = amountText === "" || amountText === "0"
     ? 0
-    : parsePaymentLinkAmountInput(amountText, input.currency);
+    : parsePaymentLinkAmountInput(amountText, input.currency, limits);
   if (amountMinor === 0 && input.currency !== "XOF") {
     throw new PaymentLinkInputError("Le montant libre est disponible uniquement en XOF pour le moment.");
   }

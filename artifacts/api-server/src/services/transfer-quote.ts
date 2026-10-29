@@ -1,4 +1,5 @@
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy.ts";
+import { getMinimumForTransfer, type PaymentLimitValues } from "./payment-limits-policy.ts";
 
 export type TransferQuoteInput = {
   kind: "deposit" | "inter-network" | "international";
@@ -33,6 +34,7 @@ export type QuoteDependencies = {
     minPhoneDigits: number;
     maxPhoneDigits: number;
   }>;
+  limits: PaymentLimitValues;
   remainingMonthlyAmount(userId: string): Promise<number>;
 };
 
@@ -60,6 +62,15 @@ export async function calculateCustomerTransferQuote(
   const isDeposit = input.kind === "deposit";
   const isInterNetwork = input.kind === "inter-network";
   const isInternational = input.kind === "international";
+  const minimum = getMinimumForTransfer(input.kind, dependencies.limits);
+  if (input.amountMinor < minimum) {
+    const label = isDeposit ? "dépôt" : isInterNetwork ? "transfert inter-réseaux" : "retrait";
+    invalid(`Le montant minimum d’un ${label} est de ${minimum} FCFA.`);
+  }
+  const maximum = isDeposit ? dependencies.limits.maximumPayinMinor : dependencies.limits.maximumTransferMinor;
+  if (input.amountMinor > maximum) {
+    invalid(`Le montant maximum autorisé est de ${maximum} FCFA.`);
+  }
   if ((!isDeposit && !isInterNetwork && !isInternational)
     || (isDeposit && (!input.sourceOperatorId || !input.senderPhone || input.destinationOperatorId))
     || (isInterNetwork && (!input.sourceOperatorId || !input.destinationOperatorId

@@ -1480,7 +1480,7 @@ export const CreateDeveloperPaymentSessionHeader = zod.object({
 
 export const createDeveloperPaymentSessionBodyMerchantReferenceMax = 128;
 
-export const createDeveloperPaymentSessionBodyAmountMinorMin = 100;
+export const createDeveloperPaymentSessionBodyAmountMinorMin = 200;
 export const createDeveloperPaymentSessionBodyAmountMinorMax = 2000000;
 
 export const createDeveloperPaymentSessionBodyDescriptionMax = 240;
@@ -1491,7 +1491,7 @@ export const createDeveloperPaymentSessionBodyReturnUrlMax = 2048;
 
 export const CreateDeveloperPaymentSessionBody = zod.object({
   "merchantReference": zod.string().min(1).max(createDeveloperPaymentSessionBodyMerchantReferenceMax),
-  "amountMinor": zod.int().min(createDeveloperPaymentSessionBodyAmountMinorMin).max(createDeveloperPaymentSessionBodyAmountMinorMax),
+  "amountMinor": zod.int().min(createDeveloperPaymentSessionBodyAmountMinorMin).max(createDeveloperPaymentSessionBodyAmountMinorMax).describe('Current accepted range is returned by GET /api/payment-limits; the server enforces the configured minimum and maximum.'),
   "currency": zod.enum(['XOF']),
   "mode": zod.enum(['hosted', 'direct']),
   "description": zod.string().max(createDeveloperPaymentSessionBodyDescriptionMax).optional(),
@@ -1732,7 +1732,7 @@ export const CreateCustomerTransferQuoteBody = zod.object({
   "destinationCountryCode": zod.string().min(createCustomerTransferQuoteBodyDestinationCountryCodeMin).max(createCustomerTransferQuoteBodyDestinationCountryCodeMax).regex(createCustomerTransferQuoteBodyDestinationCountryCodeRegExp).optional(),
   "senderPhone": zod.string().min(createCustomerTransferQuoteBodySenderPhoneMin).max(createCustomerTransferQuoteBodySenderPhoneMax).regex(createCustomerTransferQuoteBodySenderPhoneRegExp).optional(),
   "recipientPhone": zod.string().min(createCustomerTransferQuoteBodyRecipientPhoneMin).max(createCustomerTransferQuoteBodyRecipientPhoneMax).regex(createCustomerTransferQuoteBodyRecipientPhoneRegExp).optional(),
-  "amountMinor": zod.int().min(1).max(createCustomerTransferQuoteBodyAmountMinorMax),
+  "amountMinor": zod.int().min(1).max(createCustomerTransferQuoteBodyAmountMinorMax).describe('For kind=deposit, the configured minimum is returned by GET /payment-limits and enforced by the server. Inter-network and international transfer minimums are also configured separately and returned by that resource.'),
   "senderPaysFees": zod.boolean()
 })
 
@@ -3573,5 +3573,127 @@ export const ArchiveAdminTransactionResponse = zod.object({
   "action": zod.enum(['suspend_user', 'restore_user', 'delete_user', 'archive_transaction']),
   "status": zod.enum(['active', 'suspended', 'deleted', 'archived'])
 })
+
+
+/**
+ * Returns the current FCFA thresholds used by SendFlow. These values are informational; every payment or transfer is validated again by the server.
+ * @summary Read the current public payment limits
+ */
+export const getPublicPaymentLimitsResponseMinimumDepositMinorMin = 200;
+export const getPublicPaymentLimitsResponseMinimumDepositMinorMax = 2000000;
+
+export const getPublicPaymentLimitsResponseMinimumPayoutMinorMin = 200;
+export const getPublicPaymentLimitsResponseMinimumPayoutMinorMax = 2000000;
+
+export const getPublicPaymentLimitsResponseMinimumInterNetworkMinorMax = 10000000;
+
+export const getPublicPaymentLimitsResponseMaximumTransferMinorMax = 10000000;
+
+export const getPublicPaymentLimitsResponseMaximumPayinMinorMin = 200;
+export const getPublicPaymentLimitsResponseMaximumPayinMinorMax = 2000000;
+
+
+
+export const GetPublicPaymentLimitsResponse = zod.object({
+  "currency": zod.enum(['XOF']),
+  "minimumDepositMinor": zod.int().min(getPublicPaymentLimitsResponseMinimumDepositMinorMin).max(getPublicPaymentLimitsResponseMinimumDepositMinorMax),
+  "minimumPayoutMinor": zod.int().min(getPublicPaymentLimitsResponseMinimumPayoutMinorMin).max(getPublicPaymentLimitsResponseMinimumPayoutMinorMax),
+  "minimumInterNetworkMinor": zod.int().min(1).max(getPublicPaymentLimitsResponseMinimumInterNetworkMinorMax),
+  "maximumTransferMinor": zod.int().min(1).max(getPublicPaymentLimitsResponseMaximumTransferMinorMax),
+  "maximumPayinMinor": zod.int().min(getPublicPaymentLimitsResponseMaximumPayinMinorMin).max(getPublicPaymentLimitsResponseMaximumPayinMinorMax)
+})
+
+
+/**
+ * @summary Read the current payment limits
+ */
+export const getAdminPaymentLimitsResponseOneMinimumDepositMinorMin = 200;
+export const getAdminPaymentLimitsResponseOneMinimumDepositMinorMax = 2000000;
+
+export const getAdminPaymentLimitsResponseOneMinimumPayoutMinorMin = 200;
+export const getAdminPaymentLimitsResponseOneMinimumPayoutMinorMax = 2000000;
+
+export const getAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax = 10000000;
+
+export const getAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 10000000;
+
+export const getAdminPaymentLimitsResponseOneMaximumPayinMinorMin = 200;
+export const getAdminPaymentLimitsResponseOneMaximumPayinMinorMax = 2000000;
+
+
+
+
+export const GetAdminPaymentLimitsResponse = zod.object({
+  "currency": zod.enum(['XOF']),
+  "minimumDepositMinor": zod.int().min(getAdminPaymentLimitsResponseOneMinimumDepositMinorMin).max(getAdminPaymentLimitsResponseOneMinimumDepositMinorMax),
+  "minimumPayoutMinor": zod.int().min(getAdminPaymentLimitsResponseOneMinimumPayoutMinorMin).max(getAdminPaymentLimitsResponseOneMinimumPayoutMinorMax),
+  "minimumInterNetworkMinor": zod.int().min(1).max(getAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax),
+  "maximumTransferMinor": zod.int().min(1).max(getAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
+  "maximumPayinMinor": zod.int().min(getAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(getAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
+}).and(zod.object({
+  "version": zod.int().min(1),
+  "updatedAt": zod.coerce.date()
+}))
+
+
+/**
+ * @summary Update the payment limits
+ */
+export const updateAdminPaymentLimitsBodyMinimumDepositMinorMin = 200;
+export const updateAdminPaymentLimitsBodyMinimumDepositMinorMax = 2000000;
+
+export const updateAdminPaymentLimitsBodyMinimumPayoutMinorMin = 200;
+export const updateAdminPaymentLimitsBodyMinimumPayoutMinorMax = 2000000;
+
+export const updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax = 10000000;
+
+export const updateAdminPaymentLimitsBodyMaximumTransferMinorMax = 10000000;
+
+export const updateAdminPaymentLimitsBodyMaximumPayinMinorMin = 200;
+export const updateAdminPaymentLimitsBodyMaximumPayinMinorMax = 2000000;
+
+
+export const updateAdminPaymentLimitsBodyReasonMin = 3;
+export const updateAdminPaymentLimitsBodyReasonMax = 500;
+
+
+
+export const UpdateAdminPaymentLimitsBody = zod.object({
+  "minimumDepositMinor": zod.int().min(updateAdminPaymentLimitsBodyMinimumDepositMinorMin).max(updateAdminPaymentLimitsBodyMinimumDepositMinorMax),
+  "minimumPayoutMinor": zod.int().min(updateAdminPaymentLimitsBodyMinimumPayoutMinorMin).max(updateAdminPaymentLimitsBodyMinimumPayoutMinorMax),
+  "minimumInterNetworkMinor": zod.int().min(1).max(updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax),
+  "maximumTransferMinor": zod.int().min(1).max(updateAdminPaymentLimitsBodyMaximumTransferMinorMax),
+  "maximumPayinMinor": zod.int().min(updateAdminPaymentLimitsBodyMaximumPayinMinorMin).max(updateAdminPaymentLimitsBodyMaximumPayinMinorMax),
+  "expectedVersion": zod.int().min(1),
+  "reason": zod.string().min(updateAdminPaymentLimitsBodyReasonMin).max(updateAdminPaymentLimitsBodyReasonMax)
+})
+
+export const updateAdminPaymentLimitsResponseOneMinimumDepositMinorMin = 200;
+export const updateAdminPaymentLimitsResponseOneMinimumDepositMinorMax = 2000000;
+
+export const updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMin = 200;
+export const updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMax = 2000000;
+
+export const updateAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax = 10000000;
+
+export const updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 10000000;
+
+export const updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin = 200;
+export const updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax = 2000000;
+
+
+
+
+export const UpdateAdminPaymentLimitsResponse = zod.object({
+  "currency": zod.enum(['XOF']),
+  "minimumDepositMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMinimumDepositMinorMin).max(updateAdminPaymentLimitsResponseOneMinimumDepositMinorMax),
+  "minimumPayoutMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMin).max(updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMax),
+  "minimumInterNetworkMinor": zod.int().min(1).max(updateAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax),
+  "maximumTransferMinor": zod.int().min(1).max(updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
+  "maximumPayinMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
+}).and(zod.object({
+  "version": zod.int().min(1),
+  "updatedAt": zod.coerce.date()
+}))
 
 

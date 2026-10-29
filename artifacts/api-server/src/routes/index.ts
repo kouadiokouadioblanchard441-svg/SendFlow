@@ -20,6 +20,7 @@ import phoneOtpRouter from "./phone-otp";
 import customerAuthRouter from "./customer-auth";
 import customerRecoveryRouter from "./customer-recovery";
 import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRoutes } from "./registration-settings";
+import paymentLimitsRouter, { adminRoutes as adminPaymentLimitsRoutes } from "./payment-limits";
 import countryManagementRouter, { adminRoutes as adminCountryRoutes } from "./country-management";
 import transferQuoteRouter from "./transfer-quote";
 import paymentLinksRouter from "./payment-links";
@@ -52,6 +53,7 @@ router.use(identityVerificationRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);
 router.use(registrationSettingsRouter);
+router.use(paymentLimitsRouter);
 router.use(countryManagementRouter);
 
 adminHandlers.use(adminRouter);
@@ -66,6 +68,7 @@ adminHandlers.use(adminOperatorPricingRoutes);
 adminHandlers.use(adminOperatorLogoRoutes);
 adminHandlers.use(adminBannersRoutes);
 adminHandlers.use(adminRegistrationSettingsRoutes);
+adminHandlers.use(adminPaymentLimitsRoutes);
 adminHandlers.use(adminCountryRoutes);
 
 adminSurface.use(loadAdminSession);

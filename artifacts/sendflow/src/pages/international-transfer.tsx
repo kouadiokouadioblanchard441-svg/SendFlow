@@ -17,11 +17,11 @@ import {
 } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
+import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import { useSeo } from '@/lib/seo';
 import {
   isValidInternationalPhone,
   isValidTransactionAmount,
-  MAX_TRANSACTION_AMOUNT,
   parseWholeAmount,
   getPhoneDigitsForCountry,
 } from '@/lib/transfer-validation';
@@ -57,6 +57,8 @@ export default function InternationalTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
+  const paymentLimitsQuery = usePaymentLimits();
+  const paymentLimits = paymentLimitsQuery.data;
   const pricingOperators = useMemo(() => (pricingQuery.data?.operators ?? [])
     .filter((operator) => operator.operations.international), [pricingQuery.data?.operators]);
   const [countryId, setCountryId] = useState('ci');
@@ -93,7 +95,9 @@ export default function InternationalTransferPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const enteredAmount = parseWholeAmount(amount);
   const hasValidRecipient = !!country && isValidInternationalPhone(recipientNumber, country.dialCode);
-  const quoteInput = country && operator && isValidTransactionAmount(enteredAmount) && hasValidRecipient
+  const quoteInput = country && operator && paymentLimits
+    && isValidTransactionAmount(enteredAmount, paymentLimits.minimumPayoutMinor, paymentLimits.maximumTransferMinor)
+    && hasValidRecipient
     ? {
       kind: 'international' as const, destinationOperatorId: operator.id,
       destinationCountryCode: country.id.toUpperCase(),
@@ -288,9 +292,14 @@ export default function InternationalTransferPage() {
               />
               <strong>FCFA</strong>
             </label>
-            {submitAttempted && !isValidTransactionAmount(enteredAmount) && (
+            {submitAttempted && paymentLimits && !isValidTransactionAmount(enteredAmount, paymentLimits.minimumPayoutMinor, paymentLimits.maximumTransferMinor) && (
               <p className="sendflow-international-field-error" role="alert">
-                Saisissez un montant compris entre 1 et {MAX_TRANSACTION_AMOUNT.toLocaleString('fr-FR')} FCFA.
+                Saisissez un montant compris entre {paymentLimits.minimumPayoutMinor.toLocaleString('fr-FR')} et {paymentLimits.maximumTransferMinor.toLocaleString('fr-FR')} FCFA.
+              </p>
+            )}
+            {paymentLimitsQuery.isError && (
+              <p className="sendflow-international-field-error" role="alert">
+                Les limites de paiement sont indisponibles. Réessayez avant de continuer.
               </p>
             )}
             <div className="sendflow-international-wallet-source">
