@@ -228,7 +228,9 @@ session = response.json()
     cURL: `curl "$SENDFLOW_API_BASE_URL/v1/public/payment-sessions/$SESSION_ID" \\
   --header "X-SendFlow-Public-Key: $SENDFLOW_PUBLIC_KEY" \\
   --header "X-SendFlow-Client-Token: $SENDFLOW_CLIENT_TOKEN"`,
-    JavaScript: `const response = await fetch(
+    JavaScript: `const apiBaseUrl = "<SENDFLOW_API_BASE_URL>"; // Configure the official API base, including /api.
+// session is the response from your server-side create-direct request.
+const response = await fetch(
   \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}\`,
   {
     headers: {
@@ -254,7 +256,14 @@ if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Checkout details could not be read");
 }
 $checkout = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
-    Python: `import requests
+    Python: `import os
+import requests
+
+api_base_url = os.environ["SENDFLOW_API_BASE_URL"]
+# Set these from the response to your server-side create-direct request.
+session_id = "<session-id-from-create-response>"
+public_key = "<public-key-from-create-response>"
+client_token = "<client-token-from-create-response>"
 
 response = requests.get(
     f"{api_base_url}/v1/public/payment-sessions/{session_id}",
@@ -314,7 +323,9 @@ suspend fun readDirectSession(
     "operatorId": "<operator-id-from-session>",
     "phoneNumber": "+2250700000000"
   }'`,
-    JavaScript: `const response = await fetch(
+    JavaScript: `const apiBaseUrl = "<SENDFLOW_API_BASE_URL>"; // Configure the official API base, including /api.
+// session is the response from your server-side create-direct request.
+const response = await fetch(
   \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}/attempts\`,
   {
     method: "POST",
@@ -361,7 +372,14 @@ if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Payment attempt could not start");
 }
 $attempt = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
-    Python: `import requests
+    Python: `import os
+import requests
+
+api_base_url = os.environ["SENDFLOW_API_BASE_URL"]
+# Set these from the response to your server-side create-direct request.
+session_id = "<session-id-from-create-response>"
+public_key = "<public-key-from-create-response>"
+client_token = "<client-token-from-create-response>"
 
 response = requests.post(
     f"{api_base_url}/v1/public/payment-sessions/{session_id}/attempts",
@@ -439,12 +457,14 @@ suspend fun startDirectAttempt(
   --header "X-SendFlow-Public-Key: $SENDFLOW_PUBLIC_KEY" \\
   --header "X-SendFlow-Client-Token: $SENDFLOW_CLIENT_TOKEN" \\
   --header "X-LinkFlow-Attempt-Token: $SENDFLOW_POLL_TOKEN"`,
-    JavaScript: `const response = await fetch(
-  \`\${apiBaseUrl}/v1/public/payment-sessions/\${sessionId}/attempts/\${attemptId}\`,
+    JavaScript: `const apiBaseUrl = "<SENDFLOW_API_BASE_URL>"; // Configure the official API base, including /api.
+// session and attempt are the responses from the previous direct-flow steps.
+const response = await fetch(
+  \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}/attempts/\${attempt.attemptId}\`,
   {
     headers: {
-      "X-SendFlow-Public-Key": publicKey,
-      "X-SendFlow-Client-Token": clientToken,
+      "X-SendFlow-Public-Key": session.publicKey,
+      "X-SendFlow-Client-Token": session.clientToken,
       "X-LinkFlow-Attempt-Token": attempt.pollToken,
     },
   },
@@ -467,7 +487,16 @@ if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Payment status unavailable");
 }
 $status = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
-    Python: `import requests
+    Python: `import os
+import requests
+
+api_base_url = os.environ["SENDFLOW_API_BASE_URL"]
+# Set these from the previous direct-flow responses.
+session_id = "<session-id-from-create-response>"
+attempt_id = "<attempt-id-from-start-response>"
+public_key = "<public-key-from-create-response>"
+client_token = "<client-token-from-create-response>"
+poll_token = "<poll-token-from-start-response>"
 
 response = requests.get(
     f"{api_base_url}/v1/public/payment-sessions/{session_id}/attempts/{attempt_id}",
