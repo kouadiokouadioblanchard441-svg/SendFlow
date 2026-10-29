@@ -63,7 +63,6 @@ const localized: Record<Language, Translation> = {
     breadcrumb: 'Documentation développeur', methods: 'Choisissez votre approche', methodsSub: 'Les deux options décrivent des modèles d’intégration. Les détails techniques doivent être validés avant leur utilisation.',
     directCard: 'API directe', directCardSub: 'Votre serveur contrôle le parcours et orchestre l’expérience dans votre application.',
     hostedCard: 'Paiement hébergé', hostedCardSub: 'Votre application oriente le client vers un parcours hébergé, sous réserve de disponibilité.',
-    heroStart: 'Commencer l’intégration', heroApi: 'Explorer l’API',
     methodLevel: 'Niveau', methodControl: 'Contrôle du parcours', methodIntegration: 'Intégration', methodAuth: 'Authentification', methodReturn: 'Retour du paiement',
     developerLevel: 'Développeur', simpleLevel: 'Simple', highControl: 'Élevé', hostedControl: 'Limité à la page hébergée',
     restApi: 'API REST', sessionRedirect: 'Création de session puis redirection',
@@ -129,7 +128,6 @@ const localized: Record<Language, Translation> = {
     breadcrumb: 'Developer documentation', methods: 'Choose your approach', methodsSub: 'These options describe integration models. Technical details must be validated before use.',
     directCard: 'Direct API', directCardSub: 'Your server controls the flow and orchestrates the experience in your application.',
     hostedCard: 'Hosted payment', hostedCardSub: 'Your application routes the customer to a hosted flow, subject to availability.',
-    heroStart: 'Start integrating', heroApi: 'Explore the API',
     methodLevel: 'Level', methodControl: 'Flow control', methodIntegration: 'Integration', methodAuth: 'Authentication', methodReturn: 'Payment return',
     developerLevel: 'Developer', simpleLevel: 'Simple', highControl: 'High', hostedControl: 'Limited to hosted page',
     restApi: 'REST API', sessionRedirect: 'Create a session, then redirect',
@@ -319,10 +317,6 @@ export default function DocsPage() {
       <div className="sf-docs-eyebrow">SENDFLOW / DEVELOPERS</div>
       <h1 className="sf-docs-title">{t.homeTitle}</h1>
       <p className="sf-docs-lede">{t.homeSub}</p>
-      <div className="sf-docs-hero-actions">
-        <Link href="/docs/getting-started" className="sf-docs-primary-action" data-testid="link-docs-start">{t.heroStart}<ArrowRight size={15} /></Link>
-        <Link href="/docs/api-reference" className="sf-docs-secondary-action" data-testid="link-docs-explore-api">{t.heroApi}</Link>
-      </div>
       <div className="sf-docs-meta"><span className="sf-docs-status"><i className="sf-docs-status-dot" />{t.badge}</span><span>{t.prod}</span></div>
       <StatusNotice language={language} />
       <section className="sf-docs-section">
