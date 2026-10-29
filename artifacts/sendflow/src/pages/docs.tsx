@@ -317,9 +317,7 @@ export default function DocsPage() {
       <div className="sf-docs-eyebrow">SENDFLOW / DEVELOPERS</div>
       <h1 className="sf-docs-title">{t.homeTitle}</h1>
       <p className="sf-docs-lede">{t.homeSub}</p>
-      <div className="sf-docs-meta"><span className="sf-docs-status"><i className="sf-docs-status-dot" />{t.badge}</span><span>{t.prod}</span></div>
-      <StatusNotice language={language} />
-      <section className="sf-docs-section">
+      <section className="sf-docs-section sf-docs-home-methods">
         <h2>{t.methods}</h2><p>{t.methodsSub}</p>
         <div className="sf-docs-cards">
           <Link href="/docs/integrations/hosted" className="sf-docs-card sf-docs-card-link" data-testid="card-docs-hosted">
@@ -360,6 +358,8 @@ export default function DocsPage() {
           </Link>
         </div>
       </section>
+      <div className="sf-docs-meta"><span className="sf-docs-status"><i className="sf-docs-status-dot" />{t.badge}</span><span>{t.prod}</span></div>
+      <StatusNotice language={language} />
       <section className="sf-docs-section">
         <h2>{t.capabilitiesTitle}</h2>
         <ul className="sf-docs-list">
@@ -479,9 +479,17 @@ export default function DocsPage() {
           <Link href="/docs/webhooks" className={path === '/docs/webhooks' ? 'is-active' : ''} data-testid="link-docs-top-webhooks">{t.navWebhooks}</Link>
         </nav>
         <div className="sf-docs-header-tools">
+          <button type="button" className="sf-docs-mobile-search" onClick={() => setSidebarOpen(true)} aria-label={t.search} data-testid="button-docs-mobile-search"><Search size={18} /></button>
           <button type="button" className="sf-docs-lang" onClick={() => setLanguage((current) => current === 'fr' ? 'en' : 'fr')} aria-label={language === 'fr' ? 'Switch to English' : 'Passer en français'} data-testid="button-docs-language">{language === 'fr' ? 'EN' : 'FR'}</button>
         </div>
       </header>
+      <div className="sf-docs-mobile-breadcrumb">
+        <button type="button" className="sf-docs-mobile-crumb-menu" onClick={() => setSidebarOpen((open) => !open)} aria-expanded={sidebarOpen} aria-label={sidebarOpen ? t.menuClose : t.contents} data-testid="button-docs-mobile-crumb-menu">
+          {sidebarOpen ? <X size={17} /> : <Menu size={17} />}
+        </button>
+        <span>{t.startGroup}</span><ChevronRight size={15} aria-hidden="true" />
+        <span className="sf-docs-mobile-crumb-current">{t[pageKey] ?? t.home}</span>
+      </div>
       <div className="sf-docs-shell">
         {sidebarOpen && <button type="button" className="sf-docs-mobile-backdrop" aria-label="Close documentation menu" onClick={() => setSidebarOpen(false)} data-testid="button-close-docs-sidebar" />}
         <aside className={`sf-docs-sidebar${sidebarOpen ? ' is-open' : ''}`} aria-label={language === 'fr' ? 'Navigation de la documentation' : 'Documentation navigation'}>
@@ -530,7 +538,7 @@ export default function DocsPage() {
           <div className="sf-docs-sidebar-note"><ShieldCheck size={15} /><span>{t.prod}</span></div>
         </aside>
         <main className="sf-docs-main">
-          <article className="sf-docs-content" key={`${path}-${language}`}>{pageKey === 'home' ? renderHome() : renderDocument()}</article>
+          <article className={`sf-docs-content${pageKey === 'home' ? ' sf-docs-home' : ''}`} key={`${path}-${language}`}>{pageKey === 'home' ? renderHome() : renderDocument()}</article>
           <footer className="sf-docs-footer">
             <span>{t.copyright} · {t.lastUpdated}</span>
             <div className="sf-docs-footer-links"><Link href="/docs/reference" data-testid="link-docs-footer-security">{t.security}</Link><Link href="/docs/webhooks" data-testid="link-docs-footer-webhooks">{t.navWebhooks}</Link><a href="mailto:support@sendflow01.com" data-testid="link-docs-footer-support">{t.contact}</a></div>
