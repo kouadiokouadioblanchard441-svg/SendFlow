@@ -82,22 +82,22 @@
 .sf-docs-section h2 { margin: 0; color: #17181d; font-size: 24px; font-weight: 850; letter-spacing: -.04em; }
 .sf-docs-section > p { max-width: 700px; margin: 10px 0 0; color: #292a30; font-size: 14px; line-height: 1.7; }
 .sf-docs-section h3 { margin: 25px 0 7px; color: #17181d; font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
-.sf-docs-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 11px; margin-top: 16px; }
+.sf-docs-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 12px; }
 .sf-docs-card { min-width: 0; border: 1.5px solid #e8dcf9; border-radius: 16px; background: #fff; padding: 21px; box-shadow: 0 10px 30px rgba(92,45,146,.05); transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease; }
 .sf-docs-card:hover { transform: translateY(-2px); border-color: #8b4cc8; box-shadow: 0 10px 30px rgba(92,45,146,.1); }
 .sf-docs-card-art { display: grid; height: 148px; place-items: center; overflow: hidden; margin: -7px 0 10px; border-radius: 12px; background: #fff; }
 .sf-docs-card-art img { display: block; width: min(100%, 190px); height: 100%; object-fit: contain; }
-.sf-docs-cards > .sf-docs-card { padding: 16px; }
-.sf-docs-cards .sf-docs-card-art { height: 112px; margin: -4px 0 7px; }
-.sf-docs-cards .sf-docs-card-art img { width: min(100%, 172px); }
-.sf-docs-cards .sf-docs-card-icon { width: 36px; height: 36px; border-radius: 10px; }
-.sf-docs-cards .sf-docs-card h3 { margin-top: 10px; font-size: 15px; }
-.sf-docs-cards .sf-docs-card p { margin-top: 5px; font-size: 12px; line-height: 1.5; }
-.sf-docs-cards .sf-docs-method-details { margin-top: 10px; }
-.sf-docs-cards .sf-docs-method-details > div { padding: 7px 0; }
+.sf-docs-cards > .sf-docs-card { border-radius: 13px; padding: 14px; }
+.sf-docs-cards .sf-docs-card-art { height: 92px; margin: -3px 0 5px; }
+.sf-docs-cards .sf-docs-card-art img { width: min(100%, 150px); }
+.sf-docs-cards .sf-docs-card-icon { width: 34px; height: 34px; border-radius: 9px; }
+.sf-docs-cards .sf-docs-card h3 { margin-top: 8px; font-size: 15px; }
+.sf-docs-cards .sf-docs-card p { margin-top: 4px; font-size: 12px; line-height: 1.45; }
+.sf-docs-cards .sf-docs-method-details { margin-top: 8px; }
+.sf-docs-cards .sf-docs-method-details > div { padding: 6px 0; }
 .sf-docs-cards .sf-docs-method-details dt,
 .sf-docs-cards .sf-docs-method-details dd { font-size: 10px; }
-.sf-docs-cards .sf-docs-card-cta { margin-top: 10px; font-size: 11px; }
+.sf-docs-cards .sf-docs-card-cta { margin-top: 8px; font-size: 11px; }
 .sf-docs-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .sf-docs-card-icon { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid #e8dcf9; border-radius: 12px; background: #fbf8ff; color: #8b4cc8; }
 .sf-docs-card-arrow { color: #8b4cc8; }
@@ -164,6 +164,12 @@
 .sf-docs-mobile-backdrop { display: none; }
 .sf-docs :focus-visible { outline: 3px solid rgba(139,76,200,.28); outline-offset: 3px; }
 
+@media (min-width: 1200px) {
+  .sf-docs-cards { width: min(calc(100% + 60px), 960px); margin-left: -30px; }
+}
+@media (max-width: 1199px) {
+  .sf-docs-cards { grid-template-columns: 1fr; width: min(100%, 560px); margin: 12px auto 0; }
+}
 @media (max-width: 960px) {
   .sf-docs-nav { gap: 14px; }
   .sf-docs-nav a { font-size: 10px; }
@@ -197,9 +203,11 @@
   .sf-docs-lang { padding-inline: 3px; font-size: 10px; }
   .sf-docs-title { font-size: 34px; }
   .sf-docs-lede { font-size: 13px; }
-  .sf-docs-cards { grid-template-columns: 1fr; }
-  .sf-docs-cards .sf-docs-card-art { height: 124px; }
-  .sf-docs-cards .sf-docs-card-art img { width: min(100%, 176px); }
+  .sf-docs-cards { width: calc(100% + 8px); max-width: none; margin: 12px 0 0 -4px; }
+  .sf-docs-cards > .sf-docs-card { padding: 12px; }
+  .sf-docs-cards .sf-docs-card-art { height: 88px; }
+  .sf-docs-cards .sf-docs-card-art img { width: min(100%, 142px); }
+  .sf-docs-cards .sf-docs-method-details > div { padding: 5px 0; }
   .sf-docs-step { grid-template-columns: 29px minmax(0,1fr); padding: 14px 12px; }
   .sf-docs-step > a { grid-column: 2; justify-self: start; margin-top: 4px; }
   .sf-docs-support { align-items: flex-start; flex-direction: column; }
