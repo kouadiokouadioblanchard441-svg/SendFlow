@@ -13,7 +13,7 @@
 - [Security test isolation](security-test-isolation.md) — Authentication fixtures must isolate IP quotas as well as account identities; never weaken real rate limiting to make tests pass.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
 - [Operator logo storage](operator-logo-storage.md) — Store uploaded operator logos in the database; this exception does not extend to banners or unrelated media.
-- [Database environment isolation](neon-production-database.md) — Against shared Neon, previews must block private reads and writes and fail closed on unlisted API routes.
+- [Database provider transition](neon-production-database.md) — Supabase is the intended target, but the app is not switched until its connection and schema/data migration are verified.
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle production schema pushes](drizzle-scoped-pushes.md) — Keep production migrations additive and explicitly targeted; stop on unrelated Drizzle drift.
 - [eSMS Verify balance requirement](esms-verify-balance.md) — Test-prefixed keys still need available Verify credit; a start request can fail with HTTP 402.
