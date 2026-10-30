@@ -30,7 +30,7 @@ function requireVerifiedDatabaseUrl(value: string): string {
     }
   } catch {
     // Do not propagate URL parser errors: they can contain credentials.
-    throw new Error("Replit live database configuration is invalid.");
+    throw new Error("External database configuration is invalid.");
   }
   const sslMode = url.searchParams.get("sslmode");
   if (
@@ -47,7 +47,7 @@ function requireVerifiedDatabaseUrl(value: string): string {
 }
 
 /**
- * The user explicitly authorized real-payment testing against the connected Neon.
+ * Live payment testing against a shared external database requires explicit approval.
  * Authorization here never opens HTTP routes, grants account access, or moves funds.
  */
 export function resolveReplitLiveDatabaseUrl(environment: Environment): string {
@@ -55,14 +55,14 @@ export function resolveReplitLiveDatabaseUrl(environment: Environment): string {
     !environment.REPL_ID ||
     !environment.REPLIT_DEV_DOMAIN ||
     environment.NODE_ENV !== "development" ||
-    environment.SENDFLOW_DATABASE_TARGET !== "shared-neon" ||
+    environment.SENDFLOW_DATABASE_TARGET !== "shared-external" ||
     environment.SENDFLOW_REPLIT_LIVE_APPROVED !== "true" ||
-    environment.SENDFLOW_SHARED_NEON_LIVE_APPROVED !== "true"
+    environment.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED !== "true"
   ) {
-    throw new Error("Replit live requires explicit approval for the connected shared Neon.");
+    throw new Error("Replit live requires explicit approval for the connected shared database.");
   }
   return requireVerifiedDatabaseUrl(requireDatabaseUrl(
-    environment, "NEON_DATABASE_URL_PRODUCTION", "Replit shared Neon",
+    environment, "SUPABASE_DATABASE_URL", "Replit shared database",
   ));
 }
 
@@ -78,38 +78,36 @@ export function resolveRuntimeDatabaseUrl(environment: Environment): string {
     return requireDatabaseUrl(environment, "DATABASE_URL", "Replit development");
   }
 
-  if (target === "shared-neon") {
+  if (target === "shared-external") {
     if (environment.NODE_ENV === "production") {
       throw new Error(
-        "SENDFLOW_DATABASE_TARGET=shared-neon cannot be used when NODE_ENV=production.",
+        "SENDFLOW_DATABASE_TARGET=shared-external cannot be used when NODE_ENV=production.",
       );
     }
     if (!environment.REPL_ID) {
       throw new Error(
-        "SENDFLOW_DATABASE_TARGET=shared-neon can only be used inside Replit.",
+        "SENDFLOW_DATABASE_TARGET=shared-external can only be used inside Replit.",
       );
     }
     const url = requireDatabaseUrl(
       environment,
-      "NEON_DATABASE_URL_PRODUCTION",
-      "Replit shared Neon",
+      "SUPABASE_DATABASE_URL",
+      "Replit shared database",
     );
-    return environment.SENDFLOW_SHARED_NEON_LIVE_APPROVED === "true"
-      ? requireVerifiedDatabaseUrl(url)
-      : url;
+    return requireVerifiedDatabaseUrl(url);
   }
 
   if (target === "production") {
     requirePleskProduction(environment, "SENDFLOW_DATABASE_TARGET=production");
     return requireDatabaseUrl(
       environment,
-      "NEON_DATABASE_URL_PRODUCTION",
+      "DATABASE_URL",
       "Plesk production",
     );
   }
 
   throw new Error(
-    "SENDFLOW_DATABASE_TARGET must explicitly be 'development', 'shared-neon', or 'production'.",
+    "SENDFLOW_DATABASE_TARGET must explicitly be 'development', 'shared-external', or 'production'.",
   );
 }
 
@@ -125,16 +123,12 @@ export function resolveDrizzleDatabaseUrl(environment: Environment): string {
     return requireDatabaseUrl(environment, "DATABASE_URL", "Replit development");
   }
 
-  if (target === "neon-production") {
-    requirePleskProduction(environment, "DRIZZLE_DATABASE_TARGET=neon-production");
-    return requireDatabaseUrl(
-      environment,
-      "NEON_DATABASE_URL_PRODUCTION",
-      "Plesk production",
-    );
+  if (target === "production") {
+    requirePleskProduction(environment, "DRIZZLE_DATABASE_TARGET=production");
+    return requireDatabaseUrl(environment, "DATABASE_URL", "Plesk production");
   }
 
   throw new Error(
-    "DRIZZLE_DATABASE_TARGET must explicitly be 'replit-development' or 'neon-production'.",
+    "DRIZZLE_DATABASE_TARGET must explicitly be 'replit-development' or 'production'.",
   );
 }

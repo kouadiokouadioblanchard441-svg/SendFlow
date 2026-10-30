@@ -71,7 +71,7 @@ export const developerPaymentSessionsTable = pgTable("sf_developer_payment_sessi
   clientTokenHashCheck: check("sf_developer_payment_sessions_client_token_hash_check", sql`${table.clientTokenHash} ~ '^[a-f0-9]{64}$'`),
   clientTokenCipherCheck: check("sf_developer_payment_sessions_client_token_cipher_check", sql`${table.clientTokenEncrypted} ~ '^sfenc-v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'`),
   modeCheck: check("sf_developer_payment_sessions_mode_check", sql`${table.mode} in ('hosted','direct')`),
-  amountCheck: check("sf_developer_payment_sessions_amount_check", sql`${table.amountMinor} between 100 and 2000000`),
+  amountCheck: check("sf_developer_payment_sessions_amount_check", sql`${table.amountMinor} between 200 and 2000000`),
   currencyCheck: check("sf_developer_payment_sessions_currency_check", sql`${table.currency}='XOF'`),
   idempotencyKeyCheck: check("sf_developer_payment_sessions_idempotency_check", sql`length(btrim(${table.idempotencyKey})) between 8 and 128`),
   merchantReferenceCheck: check("sf_developer_payment_sessions_reference_check", sql`length(btrim(${table.merchantReference})) between 1 and 128`),
