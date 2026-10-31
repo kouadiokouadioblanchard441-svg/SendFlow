@@ -631,6 +631,8 @@ test("registration rejects unknown, mismatched, disabled countries and invalid n
 test("shared-database access is confined to one provisioned viewer, with real password/PIN and no provider or financial operation", async () => {
   const originalTarget = process.env.SENDFLOW_DATABASE_TARGET;
   const fixturePhone = "+2250000000002", otherPhone = "+2250000000009";
+  const fixtureEmail = "preview.viewer@example.invalid";
+  const otherEmail = "existing-fixture@example.invalid";
   const fixturePassword = randomBytes(20).toString("base64url");
   const normalPassword = randomBytes(20).toString("base64url");
   const pin = String(randomInt(1000, 10000));
@@ -639,19 +641,36 @@ test("shared-database access is confined to one provisioned viewer, with real pa
   try {
     await owner.query("UPDATE sf_users SET phone_lookup_hash=$1 WHERE id='fixture-a'",
       [runtime.createSensitiveDataLookupIndex(otherPhone, "user-phone")]);
+    await owner.query("UPDATE sf_users SET email_encrypted=$1,email_lookup_hash=$2 WHERE id='fixture-a'",
+      [runtime.encryptSensitiveData(otherEmail, "user-email"),
+        runtime.createSensitiveDataLookupIndex(otherEmail, "user-email")]);
     await owner.query("UPDATE sf_customer_credentials SET password_hash=$1 WHERE user_id='fixture-a'",
       [await runtime.hashCustomerSecret(normalPassword)]);
-    await assert.rejects(runtime.provisionPreviewAccount(otherPhone, fixturePassword), /already in use/);
+    await assert.rejects(
+      runtime.provisionPreviewAccount("collision@example.invalid", otherPhone, fixturePassword),
+      /already in use/,
+    );
     assert.equal((await owner.query("SELECT count(*) FROM sf_preview_access")).rows[0].count, "0");
-    await runtime.provisionPreviewAccount(fixturePhone, fixturePassword);
+    await runtime.provisionPreviewAccount(fixtureEmail, fixturePhone, fixturePassword);
     const { user_id: viewerId } = (await owner.query("SELECT user_id FROM sf_preview_access")).rows[0];
-    await assert.rejects(runtime.provisionPreviewAccount(fixturePhone, fixturePassword), /already provisioned/);
+    await assert.rejects(
+      runtime.provisionPreviewAccount(fixtureEmail, fixturePhone, fixturePassword),
+      /already provisioned/,
+    );
     assert.equal((await owner.query("SELECT balance_minor FROM sf_wallets WHERE user_id=$1", [viewerId])).rows[0].balance_minor, "0");
     const credential = (await owner.query("SELECT password_hash,privacy_policy_version FROM sf_customer_credentials WHERE user_id=$1", [viewerId])).rows[0];
     assert.ok(credential.password_hash.startsWith("scrypt$preview-v1$"));
     assert.equal(credential.privacy_policy_version, "internal-preview-authorization-v1");
-    const storedUser = (await owner.query("SELECT phone,phone_verified_at FROM sf_users WHERE id=$1", [viewerId])).rows[0];
+    const storedUser = (await owner.query(
+      "SELECT phone,email_encrypted,email_lookup_hash,phone_verified_at FROM sf_users WHERE id=$1",
+      [viewerId],
+    )).rows[0];
     assert.notEqual(storedUser.phone, fixturePhone);
+    assert.notEqual(storedUser.email_encrypted, fixtureEmail);
+    assert.equal(
+      storedUser.email_lookup_hash,
+      runtime.createSensitiveDataLookupIndex(fixtureEmail, "user-email"),
+    );
     assert.equal(storedUser.phone_verified_at, null);
     // An older production API cannot promote this account via recovery or
     // mint a legacy session, even if it does not know the preview grant table.
@@ -669,17 +688,17 @@ test("shared-database access is confined to one provisioned viewer, with real pa
       assert.equal((await pool.query(`INSERT INTO sf_customer_sessions(user_id,token_hash,expires_at)
         VALUES('fixture-a',$1,now()+interval '1 hour')`, [randomBytes(32).toString("hex")])).rowCount, 1);
     } finally { await owner.query("GRANT SELECT ON sf_preview_access TO sf_fixture_app"); }
-    const signin = (phone, password) => request("/api/auth/sign-in",
-      { method: "POST", headers: origin, body: { phone, password } });
-    assert.equal((await signin(otherPhone, normalPassword)).status, 401);
-    assert.equal((await signin(fixturePhone, "wrong-fixture-value")).status, 401);
+    const signin = (email, password) => request("/api/auth/sign-in",
+      { method: "POST", headers: origin, body: { email, password } });
+    assert.equal((await signin(otherEmail, normalPassword)).status, 401);
+    assert.equal((await signin(fixtureEmail, "wrong-fixture-value")).status, 401);
     assert.equal((await request("/api/me", { user: "fixture-a" })).status, 401);
     assert.equal((await request("/api/me/portal-eligibility")).status, 401);
     // Even a correctly scoped cookie belonging to another real customer is denied.
     await owner.query("UPDATE sf_customer_sessions SET token_hash=$1 WHERE user_id='fixture-b'",
       [runtime.hashCustomerSessionToken(tokens["fixture-b"])]);
     assert.equal((await request("/api/me", { user: "fixture-b" })).status, 401);
-    const signedIn = await signin(fixturePhone, fixturePassword);
+    const signedIn = await signin(fixtureEmail, fixturePassword);
     assert.equal(signedIn.status, 200);
     const setCookie = signedIn.headers["set-cookie"][0];
     for (const flag of ["HttpOnly", "Secure", "SameSite=None"]) assert.ok(setCookie.includes(flag));
@@ -689,7 +708,7 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     assert.equal((await request("/api/me", { headers })).status, 403);
     assert.equal((await request("/api/me/pin", { method: "PUT", headers, body: { newPin: pin } })).status, 200);
     assert.equal(JSON.parse((await request("/api/auth/session", { headers })).text).pinUnlocked, true);
-    const fresh = await signin(fixturePhone, fixturePassword);
+    const fresh = await signin(fixtureEmail, fixturePassword);
     assert.equal(fresh.status, 200);
     const freshHeaders = { ...origin, Cookie: fresh.headers["set-cookie"][0].split(";")[0] };
     assert.equal((await request("/api/me", { headers: freshHeaders })).status, 403);
@@ -719,26 +738,26 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     assert.equal((await request("/api/me/future-route", { headers })).status, 503);
     // Neither the password nor the preview session works in the production realm.
     process.env.SENDFLOW_DATABASE_TARGET = "development";
-    assert.equal((await signin(fixturePhone, fixturePassword)).status, 401);
+    assert.equal((await signin(fixtureEmail, fixturePassword)).status, 401);
     assert.equal((await request("/api/auth/session", { headers })).status, 401);
     process.env.SENDFLOW_DATABASE_TARGET = "shared-external";
     // A mistaken grant to a normal credential cannot turn the dummy hash into access.
     await owner.query("UPDATE sf_preview_access SET user_id='fixture-a'");
-    assert.equal((await signin(otherPhone, normalPassword)).status, 401);
+    assert.equal((await signin(otherEmail, normalPassword)).status, 401);
     // Separate authorization cases from the real brute-force lockout.
     // This resets only the disposable fixture database, never the application policy.
     await owner.query("DELETE FROM sf_customer_auth_attempts");
-    assert.equal((await signin(otherPhone, "sendflow-invalid-account-password")).status, 401);
+    assert.equal((await signin(otherEmail, "sendflow-invalid-account-password")).status, 401);
     await owner.query("UPDATE sf_preview_access SET user_id=$1", [viewerId]);
     await owner.query("UPDATE sf_preview_access SET revoked_at=now()");
     assert.equal((await request("/api/auth/session", { headers })).status, 401);
     await owner.query("DELETE FROM sf_customer_auth_attempts");
-    assert.equal((await signin(fixturePhone, fixturePassword)).status, 401);
+    assert.equal((await signin(fixtureEmail, fixturePassword)).status, 401);
     await owner.query(`UPDATE sf_preview_access SET revoked_at=NULL,
       created_at=now()-interval '2 days',expires_at=now()-interval '1 day'`);
     assert.equal((await request("/api/auth/session", { headers })).status, 401);
     await owner.query("DELETE FROM sf_customer_auth_attempts");
-    assert.equal((await signin(fixturePhone, fixturePassword)).status, 401);
+    assert.equal((await signin(fixtureEmail, fixturePassword)).status, 401);
     assert.equal((await owner.query("SELECT count(*) FROM sf_transactions")).rows[0].count, "3");
     assert.equal((await owner.query("SELECT count(*) FROM sf_wallet_ledger WHERE user_id=$1", [viewerId])).rows[0].count, "0");
     assert.equal((await owner.query("SELECT count(*) FROM sf_admin_audit_logs WHERE action='provision_preview_account'")).rows[0].count, "1");
