@@ -72,7 +72,14 @@ export type AdminAuditAction =
   | "delete_operator"
   | "update_operator_pricing"
   | "update_registration_settings"
-  | "update_payment_limits";
+  | "update_payment_limits"
+  | "view_email_campaign_recipients"
+  | "view_email_campaigns"
+  | "create_email_campaign"
+  | "update_email_campaign"
+  | "queue_email_campaign"
+  | "cancel_email_campaign"
+  | "delete_email_campaign";
 export type AdminAuditResourceType =
   | "admin_access"
   | "network_defense"
@@ -91,4 +98,5 @@ export type AdminAuditResourceType =
   | "country"
   | "operator_pricing"
   | "registration_settings"
-  | "payment_limits";
+  | "payment_limits"
+  | "email_campaign";

@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startDeveloperWebhookWorker } from "./services/developer-webhook-worker";
+import { startEmailCampaignWorker } from "./services/email-campaign-worker";
 
 const rawPort = process.env["PORT"];
 
@@ -27,6 +28,7 @@ async function startServer(): Promise<void> {
     logger.info({ port }, "Server listening");
     if (process.env.NODE_ENV === "production") {
       startDeveloperWebhookWorker(logger);
+      startEmailCampaignWorker(logger);
     }
   });
 }

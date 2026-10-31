@@ -3047,6 +3047,140 @@ export interface DeveloperDirectPaymentResponse {
   merchantReference: string;
 }
 
+export type AdminEmailCampaignRecipientAccountStatus = typeof AdminEmailCampaignRecipientAccountStatus[keyof typeof AdminEmailCampaignRecipientAccountStatus];
+
+
+export const AdminEmailCampaignRecipientAccountStatus = {
+  active: 'active',
+  suspended: 'suspended',
+} as const;
+
+export interface AdminEmailCampaignRecipient {
+  /** @minLength 1 */
+  userId: string;
+  /** @nullable */
+  displayName: string | null;
+  email: string;
+  accountStatus: AdminEmailCampaignRecipientAccountStatus;
+  /** @nullable */
+  emailVerifiedAt: string | null;
+}
+
+export interface AdminEmailCampaignRecipientCounts {
+  /** @minimum 0 */
+  draft: number;
+  /** @minimum 0 */
+  queued: number;
+  /** @minimum 0 */
+  sending: number;
+  /** @minimum 0 */
+  accepted: number;
+  /** @minimum 0 */
+  failed: number;
+  /** @minimum 0 */
+  cancelled: number;
+}
+
+export type AdminEmailCampaignSummaryAudienceMode = typeof AdminEmailCampaignSummaryAudienceMode[keyof typeof AdminEmailCampaignSummaryAudienceMode];
+
+
+export const AdminEmailCampaignSummaryAudienceMode = {
+  all: 'all',
+  selected: 'selected',
+} as const;
+
+export type AdminEmailCampaignSummaryStatus = typeof AdminEmailCampaignSummaryStatus[keyof typeof AdminEmailCampaignSummaryStatus];
+
+
+export const AdminEmailCampaignSummaryStatus = {
+  draft: 'draft',
+  queued: 'queued',
+  sending: 'sending',
+  completed: 'completed',
+  completed_with_errors: 'completed_with_errors',
+  cancelled: 'cancelled',
+} as const;
+
+export interface AdminEmailCampaignSummary {
+  /** @minLength 1 */
+  id: string;
+  subject: string;
+  bodyText: string;
+  audienceMode: AdminEmailCampaignSummaryAudienceMode;
+  status: AdminEmailCampaignSummaryStatus;
+  /** @minimum 0 */
+  recipientCount: number;
+  /** @minimum 0 */
+  unverifiedRecipientCount: number;
+  counts: AdminEmailCampaignRecipientCounts;
+  createdAt: string;
+  updatedAt: string;
+  /** @nullable */
+  queuedAt: string | null;
+  /** @nullable */
+  completedAt: string | null;
+}
+
+export interface AdminEmailCampaignListResponse {
+  items: AdminEmailCampaignSummary[];
+  sendingEnabled: boolean;
+}
+
+export interface AdminEmailCampaignRecipientsResponse {
+  items: AdminEmailCampaignRecipient[];
+  /** @minimum 1 */
+  page: number;
+  /** @minimum 1 */
+  pageSize: number;
+  /** @minimum 0 */
+  total: number;
+  /** @minimum 0 */
+  allRecipientCount: number;
+  /** @minimum 0 */
+  allUnverifiedRecipientCount: number;
+}
+
+export type AdminEmailCampaignInputAudienceMode = typeof AdminEmailCampaignInputAudienceMode[keyof typeof AdminEmailCampaignInputAudienceMode];
+
+
+export const AdminEmailCampaignInputAudienceMode = {
+  all: 'all',
+  selected: 'selected',
+} as const;
+
+export interface AdminEmailCampaignInput {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  subject: string;
+  /**
+     * @minLength 1
+     * @maxLength 20000
+     */
+  bodyText: string;
+  audienceMode: AdminEmailCampaignInputAudienceMode;
+  /**
+     * @maxItems 5000
+     * @items.minLength 1
+     * @items.maxLength 80
+     */
+  userIds: string[];
+}
+
+export interface AdminEmailCampaignMutationResponse {
+  campaign: AdminEmailCampaignSummary;
+}
+
+export interface AdminEmailCampaignDetailResponse {
+  campaign: AdminEmailCampaignSummary;
+  recipientUserIds: string[];
+}
+
+export interface AdminEmailCampaignDeleteResponse {
+  deleted: true;
+}
+
 /**
  * Inclusive UTC calendar date.
  */
@@ -3108,6 +3242,17 @@ from?: AdminFromParameter;
  * Inclusive UTC calendar date.
  */
 to?: AdminToParameter;
+};
+
+export type ListAdminEmailCampaignRecipientsParams = {
+/**
+ * @maxLength 254
+ */
+search?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
 };
 
 export type ListAdminLoginActivityParams = {

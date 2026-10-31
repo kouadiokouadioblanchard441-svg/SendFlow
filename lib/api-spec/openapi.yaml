@@ -3573,6 +3573,221 @@ paths:
           description: Setting was modified by another administrator.
         "503":
           description: Setting unavailable.
+  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns:
+    get:
+      operationId: listAdminEmailCampaigns
+      tags: [admin]
+      summary: List administrator email campaigns and sending readiness
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Campaign history and a safe dispatch-availability flag.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailCampaignListResponse"
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Administrator read access is required.
+        "503":
+          description: Campaign storage is unavailable.
+    post:
+      operationId: createAdminEmailCampaign
+      tags: [admin]
+      summary: Save an email campaign draft with a recipient snapshot
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminEmailCampaignInput"
+      responses:
+        "201":
+          description: Draft saved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailCampaignMutationResponse"
+        "400":
+          description: Invalid subject, message, or recipient selection.
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Administrator mutation access is required.
+        "503":
+          description: Campaign storage is unavailable.
+  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/recipients:
+    get:
+      operationId: listAdminEmailCampaignRecipients
+      tags: [admin]
+      summary: Search recipients available for an administrator campaign
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema: { type: string, maxLength: 254 }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+      responses:
+        "200":
+          description: Paged recipient candidates and the current all-user counts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailCampaignRecipientsResponse"
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Administrator mutation access is required to view recipient addresses.
+        "503":
+          description: Recipient storage is unavailable.
+  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/{campaignId}:
+    parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema: { type: string, minLength: 1, maxLength: 80 }
+    get:
+      operationId: getAdminEmailCampaign
+      tags: [admin]
+      summary: Read an administrator email campaign
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Campaign details and snapshotted recipient identifiers.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailCampaignDetailResponse"
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Administrator read access is required.
+        "404":
+          description: Campaign not found.
+        "503":
+          description: Campaign storage is unavailable.
+    patch:
+      operationId: updateAdminEmailCampaign
+      tags: [admin]
+      summary: Update a draft email campaign
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminEmailCampaignInput"
+      responses:
+        "200":
+          description: Draft updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailCampaignMutationResponse"
+        "400":
+          description: Invalid draft or recipient selection.
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Administrator mutation access is required.
+        "404":
+          description: Campaign not found.
+        "409":
+          description: Only a draft can be edited.
+        "503":
+          description: Campaign storage is unavailable.
+    delete:
+      operationId: deleteAdminEmailCampaign
+      tags: [admin]
+      summary: Delete an unsent email campaign draft
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Draft deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailCampaignDeleteResponse"
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Administrator mutation access is required.
+        "404":
+          description: Campaign not found.
+        "409":
+          description: Only an unsent draft can be deleted.
+        "503":
+          description: Campaign storage is unavailable.
+  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/{campaignId}/send:
+    parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema: { type: string, minLength: 1, maxLength: 80 }
+    post:
+      operationId: queueAdminEmailCampaign
+      tags: [admin]
+      summary: Queue a confirmed email campaign for delivery
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Campaign queued. Provider acceptance is not proof of inbox delivery.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailCampaignMutationResponse"
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Administrator mutation access is required.
+        "404":
+          description: Campaign not found.
+        "409":
+          description: Campaign is not an editable draft.
+        "503":
+          description: Campaign delivery is disabled or not configured.
+  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/{campaignId}/cancel:
+    parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema: { type: string, minLength: 1, maxLength: 80 }
+    post:
+      operationId: cancelAdminEmailCampaign
+      tags: [admin]
+      summary: Cancel a campaign that has not started delivery
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Campaign cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailCampaignMutationResponse"
+        "401":
+          description: Administrator authentication is required.
+        "403":
+          description: Administrator mutation access is required.
+        "404":
+          description: Campaign not found.
+        "409":
+          description: Campaign delivery has already started or completed.
+        "503":
+          description: Campaign storage is unavailable.
   /DMgrgmt-1np5g23g12bGFtMwh/otp-policies:
     get:
       operationId: listAdminOtpPolicies
@@ -7487,3 +7702,89 @@ components:
         pollToken: { type: string }
         merchantReference: { type: string }
       required: [id, attemptId, state, amountMinor, currency, ussdCode, pollToken, merchantReference]
+    AdminEmailCampaignRecipient:
+      type: object
+      required: [userId, displayName, email, accountStatus, emailVerifiedAt]
+      properties:
+        userId: { type: string, minLength: 1 }
+        displayName: { type: [string, "null"] }
+        email: { type: string, format: email }
+        accountStatus: { type: string, enum: [active, suspended] }
+        emailVerifiedAt: { type: [string, "null"], format: date-time }
+    AdminEmailCampaignRecipientCounts:
+      type: object
+      required: [draft, queued, sending, accepted, failed, cancelled]
+      properties:
+        draft: { type: integer, minimum: 0 }
+        queued: { type: integer, minimum: 0 }
+        sending: { type: integer, minimum: 0 }
+        accepted: { type: integer, minimum: 0 }
+        failed: { type: integer, minimum: 0 }
+        cancelled: { type: integer, minimum: 0 }
+    AdminEmailCampaignSummary:
+      type: object
+      required: [id, subject, bodyText, audienceMode, status, recipientCount, unverifiedRecipientCount, counts, createdAt, updatedAt, queuedAt, completedAt]
+      properties:
+        id: { type: string, minLength: 1 }
+        subject: { type: string }
+        bodyText: { type: string }
+        audienceMode: { type: string, enum: [all, selected] }
+        status: { type: string, enum: [draft, queued, sending, completed, completed_with_errors, cancelled] }
+        recipientCount: { type: integer, minimum: 0 }
+        unverifiedRecipientCount: { type: integer, minimum: 0 }
+        counts: { $ref: "#/components/schemas/AdminEmailCampaignRecipientCounts" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        queuedAt: { type: [string, "null"], format: date-time }
+        completedAt: { type: [string, "null"], format: date-time }
+    AdminEmailCampaignListResponse:
+      type: object
+      required: [items, sendingEnabled]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminEmailCampaignSummary" }
+        sendingEnabled: { type: boolean }
+    AdminEmailCampaignRecipientsResponse:
+      type: object
+      required: [items, page, pageSize, total, allRecipientCount, allUnverifiedRecipientCount]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminEmailCampaignRecipient" }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1 }
+        total: { type: integer, minimum: 0 }
+        allRecipientCount: { type: integer, minimum: 0 }
+        allUnverifiedRecipientCount: { type: integer, minimum: 0 }
+    AdminEmailCampaignInput:
+      type: object
+      additionalProperties: false
+      required: [subject, bodyText, audienceMode, userIds]
+      properties:
+        subject: { type: string, minLength: 1, maxLength: 200 }
+        bodyText: { type: string, minLength: 1, maxLength: 20000 }
+        audienceMode: { type: string, enum: [all, selected] }
+        userIds:
+          type: array
+          maxItems: 5000
+          uniqueItems: true
+          items: { type: string, minLength: 1, maxLength: 80 }
+    AdminEmailCampaignMutationResponse:
+      type: object
+      required: [campaign]
+      properties:
+        campaign: { $ref: "#/components/schemas/AdminEmailCampaignSummary" }
+    AdminEmailCampaignDetailResponse:
+      type: object
+      required: [campaign, recipientUserIds]
+      properties:
+        campaign: { $ref: "#/components/schemas/AdminEmailCampaignSummary" }
+        recipientUserIds:
+          type: array
+          items: { type: string }
+    AdminEmailCampaignDeleteResponse:
+      type: object
+      required: [deleted]
+      properties:
+        deleted: { type: boolean, enum: [true] }

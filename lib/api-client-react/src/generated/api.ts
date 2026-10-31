@@ -28,6 +28,12 @@ import type {
   AdminBannerReorderRequest,
   AdminCountry,
   AdminCountryCatalog,
+  AdminEmailCampaignDeleteResponse,
+  AdminEmailCampaignDetailResponse,
+  AdminEmailCampaignInput,
+  AdminEmailCampaignListResponse,
+  AdminEmailCampaignMutationResponse,
+  AdminEmailCampaignRecipientsResponse,
   AdminIpAuthorizationResult,
   AdminLoginActivityPage,
   AdminOperatorPricingCatalog,
@@ -118,6 +124,7 @@ import type {
   IpBlockInput,
   IpBlockList,
   IpBlockRevocation,
+  ListAdminEmailCampaignRecipientsParams,
   ListAdminIpBlocksParams,
   ListAdminLoginActivityParams,
   ListAdminOtpActivityParams,
@@ -7914,6 +7921,643 @@ export const useUpdateAdminRegistrationSettings = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getUpdateAdminRegistrationSettingsMutationOptions(options));
+    }
+
+export const getListAdminEmailCampaignsUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns`
+}
+
+/**
+ * @summary List administrator email campaigns and sending readiness
+ */
+export const listAdminEmailCampaigns = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignListResponse> => {
+
+  return customFetch<AdminEmailCampaignListResponse>(getListAdminEmailCampaignsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminEmailCampaignsQueryKey = () => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns`
+    ] as const;
+    }
+
+
+export const getListAdminEmailCampaignsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminEmailCampaigns>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaigns>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminEmailCampaignsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminEmailCampaigns>>> = ({ signal }) => listAdminEmailCampaigns({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaigns>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminEmailCampaignsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminEmailCampaigns>>>
+export type ListAdminEmailCampaignsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List administrator email campaigns and sending readiness
+ */
+
+export function useListAdminEmailCampaigns<TData = Awaited<ReturnType<typeof listAdminEmailCampaigns>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaigns>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminEmailCampaignsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAdminEmailCampaignUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns`
+}
+
+/**
+ * @summary Save an email campaign draft with a recipient snapshot
+ */
+export const createAdminEmailCampaign = async (adminEmailCampaignInput: AdminEmailCampaignInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignMutationResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminEmailCampaignMutationResponse>(getCreateAdminEmailCampaignUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminEmailCampaignInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminEmailCampaignMutationKey = () => ['createAdminEmailCampaign'] as const;
+
+export const getCreateAdminEmailCampaignMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminEmailCampaign>>, TError,CreateAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminEmailCampaign>>, TError,CreateAdminEmailCampaignMutationVariables, TContext> => {
+
+const mutationKey = getCreateAdminEmailCampaignMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminEmailCampaign>>, CreateAdminEmailCampaignMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminEmailCampaign(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminEmailCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminEmailCampaign>>>
+    export type CreateAdminEmailCampaignMutationBody = BodyType<AdminEmailCampaignInput>
+    export type CreateAdminEmailCampaignMutationError = ErrorType<void>
+    export type CreateAdminEmailCampaignMutationVariables = {data: BodyType<AdminEmailCampaignInput>}
+
+    /**
+ * @summary Save an email campaign draft with a recipient snapshot
+ */
+export const useCreateAdminEmailCampaign = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminEmailCampaign>>, TError,CreateAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminEmailCampaign>>,
+        TError,
+        CreateAdminEmailCampaignMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateAdminEmailCampaignMutationOptions(options));
+    }
+
+export const getListAdminEmailCampaignRecipientsUrl = (params?: ListAdminEmailCampaignRecipientsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/recipients?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/recipients`
+}
+
+/**
+ * @summary Search recipients available for an administrator campaign
+ */
+export const listAdminEmailCampaignRecipients = async (params?: ListAdminEmailCampaignRecipientsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignRecipientsResponse> => {
+
+  return customFetch<AdminEmailCampaignRecipientsResponse>(getListAdminEmailCampaignRecipientsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminEmailCampaignRecipientsQueryKey = (params?: ListAdminEmailCampaignRecipientsParams,) => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/recipients`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminEmailCampaignRecipientsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminEmailCampaignRecipients>>, TError = ErrorType<void>>(params?: ListAdminEmailCampaignRecipientsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaignRecipients>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminEmailCampaignRecipientsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminEmailCampaignRecipients>>> = ({ signal }) => listAdminEmailCampaignRecipients(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaignRecipients>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminEmailCampaignRecipientsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminEmailCampaignRecipients>>>
+export type ListAdminEmailCampaignRecipientsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Search recipients available for an administrator campaign
+ */
+
+export function useListAdminEmailCampaignRecipients<TData = Awaited<ReturnType<typeof listAdminEmailCampaignRecipients>>, TError = ErrorType<void>>(
+ params?: ListAdminEmailCampaignRecipientsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaignRecipients>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminEmailCampaignRecipientsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminEmailCampaignUrl = (campaignId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}`
+}
+
+/**
+ * @summary Read an administrator email campaign
+ */
+export const getAdminEmailCampaign = async (campaignId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignDetailResponse> => {
+
+  return customFetch<AdminEmailCampaignDetailResponse>(getGetAdminEmailCampaignUrl(campaignId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminEmailCampaignQueryKey = (campaignId: string,) => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}`
+    ] as const;
+    }
+
+
+export const getGetAdminEmailCampaignQueryOptions = <TData = Awaited<ReturnType<typeof getAdminEmailCampaign>>, TError = ErrorType<void>>(campaignId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminEmailCampaign>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminEmailCampaignQueryKey(campaignId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminEmailCampaign>>> = ({ signal }) => getAdminEmailCampaign(campaignId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: campaignId !== null && campaignId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminEmailCampaign>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminEmailCampaignQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminEmailCampaign>>>
+export type GetAdminEmailCampaignQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read an administrator email campaign
+ */
+
+export function useGetAdminEmailCampaign<TData = Awaited<ReturnType<typeof getAdminEmailCampaign>>, TError = ErrorType<void>>(
+ campaignId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminEmailCampaign>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminEmailCampaignQueryOptions(campaignId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateAdminEmailCampaignUrl = (campaignId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}`
+}
+
+/**
+ * @summary Update a draft email campaign
+ */
+export const updateAdminEmailCampaign = async (campaignId: string,
+    adminEmailCampaignInput: AdminEmailCampaignInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignMutationResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminEmailCampaignMutationResponse>(getUpdateAdminEmailCampaignUrl(campaignId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminEmailCampaignInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminEmailCampaignMutationKey = () => ['updateAdminEmailCampaign'] as const;
+
+export const getUpdateAdminEmailCampaignMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminEmailCampaign>>, TError,UpdateAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminEmailCampaign>>, TError,UpdateAdminEmailCampaignMutationVariables, TContext> => {
+
+const mutationKey = getUpdateAdminEmailCampaignMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminEmailCampaign>>, UpdateAdminEmailCampaignMutationVariables> = (props) => {
+          const {campaignId,data} = props ?? {};
+
+          return  updateAdminEmailCampaign(campaignId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminEmailCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminEmailCampaign>>>
+    export type UpdateAdminEmailCampaignMutationBody = BodyType<AdminEmailCampaignInput>
+    export type UpdateAdminEmailCampaignMutationError = ErrorType<void>
+    export type UpdateAdminEmailCampaignMutationVariables = {campaignId: string;data: BodyType<AdminEmailCampaignInput>}
+
+    /**
+ * @summary Update a draft email campaign
+ */
+export const useUpdateAdminEmailCampaign = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminEmailCampaign>>, TError,UpdateAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminEmailCampaign>>,
+        TError,
+        UpdateAdminEmailCampaignMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateAdminEmailCampaignMutationOptions(options));
+    }
+
+export const getDeleteAdminEmailCampaignUrl = (campaignId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}`
+}
+
+/**
+ * @summary Delete an unsent email campaign draft
+ */
+export const deleteAdminEmailCampaign = async (campaignId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignDeleteResponse> => {
+
+  return customFetch<AdminEmailCampaignDeleteResponse>(getDeleteAdminEmailCampaignUrl(campaignId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminEmailCampaignMutationKey = () => ['deleteAdminEmailCampaign'] as const;
+
+export const getDeleteAdminEmailCampaignMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminEmailCampaign>>, TError,DeleteAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminEmailCampaign>>, TError,DeleteAdminEmailCampaignMutationVariables, TContext> => {
+
+const mutationKey = getDeleteAdminEmailCampaignMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminEmailCampaign>>, DeleteAdminEmailCampaignMutationVariables> = (props) => {
+          const {campaignId} = props ?? {};
+
+          return  deleteAdminEmailCampaign(campaignId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminEmailCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminEmailCampaign>>>
+
+    export type DeleteAdminEmailCampaignMutationError = ErrorType<void>
+    export type DeleteAdminEmailCampaignMutationVariables = {campaignId: string}
+
+    /**
+ * @summary Delete an unsent email campaign draft
+ */
+export const useDeleteAdminEmailCampaign = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminEmailCampaign>>, TError,DeleteAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminEmailCampaign>>,
+        TError,
+        DeleteAdminEmailCampaignMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteAdminEmailCampaignMutationOptions(options));
+    }
+
+export const getQueueAdminEmailCampaignUrl = (campaignId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}/send`
+}
+
+/**
+ * @summary Queue a confirmed email campaign for delivery
+ */
+export const queueAdminEmailCampaign = async (campaignId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignMutationResponse> => {
+
+  return customFetch<AdminEmailCampaignMutationResponse>(getQueueAdminEmailCampaignUrl(campaignId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getQueueAdminEmailCampaignMutationKey = () => ['queueAdminEmailCampaign'] as const;
+
+export const getQueueAdminEmailCampaignMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof queueAdminEmailCampaign>>, TError,QueueAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof queueAdminEmailCampaign>>, TError,QueueAdminEmailCampaignMutationVariables, TContext> => {
+
+const mutationKey = getQueueAdminEmailCampaignMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof queueAdminEmailCampaign>>, QueueAdminEmailCampaignMutationVariables> = (props) => {
+          const {campaignId} = props ?? {};
+
+          return  queueAdminEmailCampaign(campaignId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type QueueAdminEmailCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof queueAdminEmailCampaign>>>
+
+    export type QueueAdminEmailCampaignMutationError = ErrorType<void>
+    export type QueueAdminEmailCampaignMutationVariables = {campaignId: string}
+
+    /**
+ * @summary Queue a confirmed email campaign for delivery
+ */
+export const useQueueAdminEmailCampaign = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof queueAdminEmailCampaign>>, TError,QueueAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof queueAdminEmailCampaign>>,
+        TError,
+        QueueAdminEmailCampaignMutationVariables,
+        TContext
+      > => {
+      return useMutation(getQueueAdminEmailCampaignMutationOptions(options));
+    }
+
+export const getCancelAdminEmailCampaignUrl = (campaignId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}/cancel`
+}
+
+/**
+ * @summary Cancel a campaign that has not started delivery
+ */
+export const cancelAdminEmailCampaign = async (campaignId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignMutationResponse> => {
+
+  return customFetch<AdminEmailCampaignMutationResponse>(getCancelAdminEmailCampaignUrl(campaignId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCancelAdminEmailCampaignMutationKey = () => ['cancelAdminEmailCampaign'] as const;
+
+export const getCancelAdminEmailCampaignMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelAdminEmailCampaign>>, TError,CancelAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelAdminEmailCampaign>>, TError,CancelAdminEmailCampaignMutationVariables, TContext> => {
+
+const mutationKey = getCancelAdminEmailCampaignMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelAdminEmailCampaign>>, CancelAdminEmailCampaignMutationVariables> = (props) => {
+          const {campaignId} = props ?? {};
+
+          return  cancelAdminEmailCampaign(campaignId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelAdminEmailCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof cancelAdminEmailCampaign>>>
+
+    export type CancelAdminEmailCampaignMutationError = ErrorType<void>
+    export type CancelAdminEmailCampaignMutationVariables = {campaignId: string}
+
+    /**
+ * @summary Cancel a campaign that has not started delivery
+ */
+export const useCancelAdminEmailCampaign = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelAdminEmailCampaign>>, TError,CancelAdminEmailCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof cancelAdminEmailCampaign>>,
+        TError,
+        CancelAdminEmailCampaignMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCancelAdminEmailCampaignMutationOptions(options));
     }
 
 export const getListAdminOtpPoliciesUrl = () => {

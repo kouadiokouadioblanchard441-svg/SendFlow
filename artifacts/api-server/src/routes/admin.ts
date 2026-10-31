@@ -51,7 +51,7 @@ export function getAdminUserId(req: Request, permission: AdminPermission = "read
   const session = adminSessionContext(req);
   if (!session) return { userId: null, status: 401, error: "Administrator authentication required" };
   // These grants restore catalogue management only, not financial or customer administration.
-  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits)\/?$/.test(req.path)) {
+  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?)\/?$/.test(req.path)) {
     return { userId: null, status: 403, error: "Administrator catalogue permission does not authorize this operation" };
   }
   if (permission === "mutate" && !session.canMutate) {

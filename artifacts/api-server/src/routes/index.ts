@@ -22,6 +22,7 @@ import customerRecoveryRouter from "./customer-recovery";
 import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRoutes } from "./registration-settings";
 import paymentLimitsRouter, { adminRoutes as adminPaymentLimitsRoutes } from "./payment-limits";
 import countryManagementRouter, { adminRoutes as adminCountryRoutes } from "./country-management";
+import emailCampaignRoutes from "./email-campaigns";
 import transferQuoteRouter from "./transfer-quote";
 import paymentLinksRouter from "./payment-links";
 import publicPaymentLinksRouter from "./public-payment-links";
@@ -70,6 +71,7 @@ adminHandlers.use(adminBannersRoutes);
 adminHandlers.use(adminRegistrationSettingsRoutes);
 adminHandlers.use(adminPaymentLimitsRoutes);
 adminHandlers.use(adminCountryRoutes);
+adminHandlers.use(emailCampaignRoutes);
 
 adminSurface.use(loadAdminSession);
 adminSurface.use(adminAccessRouter);

@@ -34,8 +34,13 @@ type ResendResponse = {
 type SendResendEmailOptions = {
   apiKey?: string;
   fromEmail?: string;
+  idempotencyKey?: string;
   fetchImpl?: typeof fetch;
 };
+
+export function isResendEmailConfigured(env: NodeJS.ProcessEnv = process.env) {
+  return Boolean(env.RESEND_API_KEY?.trim() && env.RESEND_FROM_EMAIL?.trim());
+}
 
 export async function sendResendEmail(
   message: ResendMessage,
@@ -57,6 +62,9 @@ export async function sendResendEmail(
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        ...(options.idempotencyKey?.trim()
+          ? { "Idempotency-Key": options.idempotencyKey.trim() }
+          : {}),
       },
       body: JSON.stringify({
         from: fromEmail.trim(),

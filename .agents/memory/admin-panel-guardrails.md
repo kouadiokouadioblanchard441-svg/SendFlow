@@ -104,3 +104,9 @@ The login-activity view must derive its identity and session data from the serve
 **Why:** IP geolocation is personal-data processing, and client-supplied headers can be forged unless a trusted proxy strips or overwrites them. A guessed city is worse than an honest unknown.
 
 **How to apply:** Do not accept inbound geolocation headers by default. Enable an approved server-side provider only after proxy trust, privacy, retention, and error behavior are defined.
+
+Do not add prefilled templates or canned campaign copy to the email-campaign interface until the user supplies approved templates for harmonization.
+
+**Why:** The user explicitly said they will provide the campaign email templates later and wants the current work limited to the interface.
+
+**How to apply:** Keep the campaign composer content blank and user-authored; do not invent branded email text or layouts.

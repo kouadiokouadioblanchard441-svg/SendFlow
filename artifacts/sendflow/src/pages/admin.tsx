@@ -21,6 +21,7 @@ import {
   Globe2,
   Landmark,
   LayoutDashboard,
+  Mail,
   LogIn,
   MapPin,
   Monitor,
@@ -44,6 +45,7 @@ import { AdminPaymentLimitsSection } from '@/components/admin-payment-limits-sec
 import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
 import { AdminCountriesSection } from '@/components/admin-countries-section';
+import { EmailCampaignsSection } from '@/components/email-campaigns-section';
 import AdminIpBlocklist from '@/components/admin-ip-blocklist';
 import AdminNetworkDefense from '@/components/admin-network-defense';
 import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
@@ -161,7 +163,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -182,6 +184,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'payment-limits': { title: 'Limites de paiement', eyebrow: 'Configuration financière' },
   'ip-blocklist': { title: 'Blocage d’adresses IP', eyebrow: 'Sécurité réseau' },
   'network-defense': { title: 'Autodéfense', eyebrow: 'Sécurité réseau' },
+  'email-campaigns': { title: 'Campagnes e-mail', eyebrow: 'Communication' },
 };
 
 const navGroups: Array<{
@@ -201,6 +204,12 @@ const navGroups: Array<{
       { href: adminRoute('/otp-activity'), label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
       { href: adminRoute('/ip-blocklist'), label: 'Blocage IP', section: 'ip-blocklist', icon: ShieldCheck },
       { href: adminRoute('/network-defense'), label: 'Autodéfense', section: 'network-defense', icon: ShieldCheck },
+    ],
+  },
+  {
+    label: 'Communication',
+    items: [
+      { href: adminRoute('/email-campaigns'), label: 'Campagnes e-mail', section: 'email-campaigns', icon: Mail },
     ],
   },
   {
@@ -2749,6 +2758,7 @@ export function AdminRouter() {
   const [isOperatorPricing] = useRoute(adminRoute('/operator-pricing'));
   const [isRegistrationSettings] = useRoute(adminRoute('/registration-settings'));
   const [isPaymentLimits] = useRoute(adminRoute('/payment-limits'));
+  const [isEmailCampaigns] = useRoute(adminRoute('/email-campaigns'));
   const [isIpBlocklist] = useRoute(adminRoute('/ip-blocklist'));
   const [isNetworkDefense] = useRoute(adminRoute('/network-defense'));
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
@@ -2767,6 +2777,7 @@ export function AdminRouter() {
   if (isOperatorPricing) return <AdminShell section="operator-pricing"><AdminOperatorPricingPage /></AdminShell>;
   if (isRegistrationSettings) return <RegistrationSettingsPage />;
   if (isPaymentLimits) return <AdminShell section="payment-limits"><AdminPaymentLimitsSection /></AdminShell>;
+  if (isEmailCampaigns) return <AdminShell section="email-campaigns"><EmailCampaignsSection /></AdminShell>;
   if (isNetworkDefense) return <AdminShell section="network-defense"><AdminNetworkDefense /></AdminShell>;
   if (isIpBlocklist) return <AdminShell section="ip-blocklist"><AdminIpBlocklist /></AdminShell>;
   return <OverviewPage />;
