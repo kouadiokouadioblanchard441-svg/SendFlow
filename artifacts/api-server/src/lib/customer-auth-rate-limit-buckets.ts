@@ -14,6 +14,13 @@ export function getCustomerLoginPhoneAttemptBucket(
   return fingerprint(`customer-login-phone:${phone}`);
 }
 
+export function getCustomerLoginEmailAttemptBucket(
+  emailLookupHash: string,
+  fingerprint: BucketFingerprinter,
+) {
+  return fingerprint(`customer-login-email:${emailLookupHash}`);
+}
+
 export function getCustomerPinAttemptBucket(
   userId: string,
   fingerprint: BucketFingerprinter,

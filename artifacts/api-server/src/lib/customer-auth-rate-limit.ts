@@ -10,6 +10,7 @@ import { fingerprint } from "./request-security";
 import {
   getCustomerAccessAttemptBuckets as createCustomerAccessAttemptBuckets,
   getCustomerAccessAttemptBucketsForRequest as createCustomerAccessAttemptBucketsForRequest,
+  getCustomerLoginEmailAttemptBucket as createCustomerLoginEmailAttemptBucket,
   getCustomerAccessPhoneAttemptBucket as createCustomerAccessPhoneAttemptBucket,
   getCustomerLoginPhoneAttemptBucket as createCustomerLoginPhoneAttemptBucket,
   getCustomerPinAttemptBucket as createCustomerPinAttemptBucket,
@@ -30,6 +31,10 @@ export function getCustomerAccessPhoneAttemptBucket(phoneHash: string) {
 
 export function getCustomerLoginPhoneAttemptBucket(phone: string) {
   return createCustomerLoginPhoneAttemptBucket(phone, fingerprint);
+}
+
+export function getCustomerLoginEmailAttemptBucket(emailLookupHash: string) {
+  return createCustomerLoginEmailAttemptBucket(emailLookupHash, fingerprint);
 }
 
 export function getCustomerPinAttemptBucket(userId: string) {

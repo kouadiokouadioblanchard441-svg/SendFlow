@@ -277,11 +277,11 @@ export interface CustomerRegistrationInput {
      */
   phone: string;
   /**
-     * Optional for compatibility with already deployed clients; the current SendFlow signup screen requires an address.
+     * Sign-in identifier. Addresses are normalized and indexed using a server-side keyed hash.
      * @minLength 5
      * @maxLength 254
      */
-  email?: string;
+  email: string;
   /**
      * @minLength 2
      * @maxLength 120
@@ -300,11 +300,10 @@ export interface CustomerRegistrationInput {
 
 export interface CustomerSignInInput {
   /**
-     * @minLength 9
-     * @maxLength 16
-     * @pattern ^\+[1-9][0-9]{7,14}$
+     * @minLength 5
+     * @maxLength 254
      */
-  phone: string;
+  email: string;
   /**
      * @minLength 4
      * @maxLength 64

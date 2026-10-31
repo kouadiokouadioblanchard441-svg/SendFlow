@@ -4,6 +4,7 @@ import test from "node:test";
 const {
   getCustomerAccessAttemptBuckets,
   getCustomerAccessAttemptBucketsForRequest,
+  getCustomerLoginEmailAttemptBucket,
   getCustomerLoginPhoneAttemptBucket,
   getCustomerPinAttemptBucket,
 } = await import("./customer-auth-rate-limit-buckets.ts");
@@ -53,5 +54,13 @@ test("recovery uses the same phone and PIN attempt bucket identities as authenti
   assert.equal(
     getCustomerPinAttemptBucket("customer-123", fingerprint),
     fingerprint("customer-pin-user:customer-123"),
+  );
+});
+
+test("email sign-in attempts use a separate non-plaintext account bucket", () => {
+  const emailLookupHash = "a".repeat(64);
+  assert.equal(
+    getCustomerLoginEmailAttemptBucket(emailLookupHash, fingerprint),
+    fingerprint(`customer-login-email:${emailLookupHash}`),
   );
 });

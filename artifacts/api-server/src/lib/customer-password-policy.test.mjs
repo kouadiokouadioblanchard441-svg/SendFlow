@@ -27,6 +27,7 @@ test("new and reset customer passwords require eight characters while legacy sig
   assert.equal(
     RegisterCustomerBody.safeParse({
       phone,
+      email,
       fullName: "Aminata Koné",
       birthDate: "1990-01-01",
       password: strongPassword,
@@ -75,7 +76,11 @@ test("new and reset customer passwords require eight characters while legacy sig
   );
 
   assert.equal(
-    SignInCustomerBody.safeParse({ phone, password: shortPassword }).success,
+    SignInCustomerBody.safeParse({ email: "customer@example.com", password: shortPassword }).success,
     true,
+  );
+  assert.equal(
+    SignInCustomerBody.safeParse({ phone, password: shortPassword }).success,
+    false,
   );
 });

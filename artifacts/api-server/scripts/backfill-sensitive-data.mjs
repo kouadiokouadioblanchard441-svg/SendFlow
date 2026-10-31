@@ -3,6 +3,7 @@ import {
   createSensitiveDataLookupIndex,
   decryptSensitiveDataIfEncrypted,
   encryptSensitiveData,
+  normalizeSensitiveEmailForLookup,
   normalizeSensitiveNameForLookup,
 } from "../src/lib/sensitive-data-crypto.ts";
 
@@ -33,12 +34,13 @@ const pool = new Pool({ connectionString, max: 2, connectionTimeoutMillis: 5000 
 const isEncrypted = (value) => typeof value === "string" && value.startsWith("sfenc-v1.");
 const pageSize = 200;
 const backfillTableColumns = {
-  sf_users: new Set(["phone", "display_name", "birth_date::text"]),
+  sf_users: new Set(["phone", "display_name", "birth_date::text", "email_encrypted", "email_lookup_hash"]),
   sf_contacts: new Set(["label", "phone"]),
   sf_transactions: new Set(["sender_phone", "recipient_phone", "provider_reference"]),
 };
 const backfillHashColumns = new Set([
   "phone_lookup_hash",
+  "email_lookup_hash",
   "display_name_lookup_hash",
   "sender_phone_lookup_hash",
   "recipient_phone_lookup_hash",
@@ -58,6 +60,44 @@ async function countLegacyRows(table, columns) {
     `SELECT count(*)::bigint AS count FROM public.${table} WHERE ${checks.join(" OR ")}`,
   );
   return Number(result.rows[0]?.count ?? 0);
+}
+
+async function countMissingEmailLookupHashes() {
+  const result = await pool.query(
+    `SELECT count(*)::bigint AS count
+     FROM public.sf_users
+     WHERE email_encrypted IS NOT NULL AND email_lookup_hash IS NULL`,
+  );
+  return Number(result.rows[0]?.count ?? 0);
+}
+
+async function countDuplicateEmailLookupHashes() {
+  const seenHashes = new Set();
+  let afterId = null;
+  let duplicates = 0;
+  while (true) {
+    const { rows } = await pool.query(
+      `SELECT id, email_encrypted
+       FROM public.sf_users
+       WHERE id > $1 AND email_encrypted IS NOT NULL
+       ORDER BY id LIMIT $2`,
+      [afterId, pageSize],
+    );
+    for (const row of rows) {
+      const email = decryptSensitiveDataIfEncrypted(row.email_encrypted, "user-email");
+      if (!email) continue;
+      const hash = createSensitiveDataLookupIndex(
+        normalizeSensitiveEmailForLookup(email),
+        "user-email",
+      );
+      if (seenHashes.has(hash)) duplicates += 1;
+      else seenHashes.add(hash);
+    }
+    if (rows.length === 0) break;
+    afterId = rows.at(-1).id;
+    if (rows.length < pageSize) break;
+  }
+  return duplicates;
 }
 
 async function updateBatch(statements, client) {
@@ -165,9 +205,10 @@ async function backfillSimpleTable(client, table, idColumn, fields) {
       for (const field of fields) {
         const current = row[field.column];
         if (current === null) continue;
-        const plaintext = decryptSensitiveDataIfEncrypted(current, field.purpose);
-        if (!plaintext) continue;
-        if (!isEncrypted(current)) {
+        const decrypted = decryptSensitiveDataIfEncrypted(current, field.purpose);
+        if (!decrypted) continue;
+        const plaintext = field.normalize ? field.normalize(decrypted) : decrypted;
+        if (!isEncrypted(current) || plaintext !== decrypted) {
           assignments.push(`${field.column} = $${values.length + 1}`);
           values.push(encryptSensitiveData(plaintext, field.purpose));
         }
@@ -198,19 +239,35 @@ try {
       countLegacyRows("sf_users", ["phone", "display_name", "birth_date::text"]),
       countLegacyRows("sf_contacts", ["label", "phone"]),
       countLegacyRows("sf_transactions", ["sender_phone", "recipient_phone", "provider_reference"]),
+      countMissingEmailLookupHashes(),
+      countDuplicateEmailLookupHashes(),
     ]);
     console.info(JSON.stringify({
       mode,
       usersWithLegacyValues: counts[0],
       contactsWithLegacyValues: counts[1],
       transactionsWithLegacyValues: counts[2],
+      usersMissingEmailLookupHashes: counts[3],
+      duplicateNormalizedUserEmails: counts[4],
       databaseHost: parsedUrl.hostname,
     }));
   } else {
+    const duplicateEmails = await countDuplicateEmailLookupHashes();
+    if (duplicateEmails > 0) {
+      throw new Error("Duplicate normalized customer emails detected; no backfill was applied");
+    }
     const client = await pool.connect();
     try {
       const counts = {
         users: await backfillUsers(client),
+        userEmailLookupHashes: await backfillSimpleTable(client, "sf_users", "id", [
+          {
+            column: "email_encrypted",
+            lookupHashColumn: "email_lookup_hash",
+            purpose: "user-email",
+            normalize: normalizeSensitiveEmailForLookup,
+          },
+        ]),
         contacts: await backfillSimpleTable(client, "sf_contacts", "id", [
           { column: "label", purpose: "contact-label" },
           { column: "phone", purpose: "contact-phone" },

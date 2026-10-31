@@ -11,9 +11,12 @@ if (process.argv[2] !== "--confirm-shared-database" || process.env.SENDFLOW_DATA
   || !process.env.REPL_ID || process.env.NODE_ENV === "production") {
   throw new Error("Explicit shared-database preview provisioning confirmation is required");
 }
+const email = process.env.SENDFLOW_VIEWER_EMAIL;
 const phone = process.env.SENDFLOW_VIEWER_PHONE;
 const password = process.env.SENDFLOW_VIEWER_PASSWORD;
-if (!phone || !password || password.length < 8) throw new Error("Preview credentials must be supplied through Secrets");
+if (!email || !phone || !password || password.length < 8) {
+  throw new Error("Preview email and credentials must be supplied through Secrets");
+}
 const connectionString = process.env.SUPABASE_DATABASE_URL;
 if (!connectionString) throw new Error("Configured shared database connection is required");
 const apiDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -30,7 +33,8 @@ try {
     where table_schema='public' and table_name in
     ('sf_users','sf_wallets','sf_customer_credentials','sf_customer_sessions','sf_admin_audit_logs')`);
   const has = (t, c) => result.rows.some(r => r.table_name === t && r.column_name === c);
-  if (!has("sf_users", "phone_lookup_hash") || !has("sf_customer_sessions", "pin_verified_until")
+  if (!has("sf_users", "phone_lookup_hash") || !has("sf_users", "email_lookup_hash")
+    || !has("sf_customer_sessions", "pin_verified_until")
     || !has("sf_customer_credentials", "privacy_policy_version") || !has("sf_wallets", "balance_minor")
     || !has("sf_admin_audit_logs", "action")) throw new Error("Required existing schema is missing; stopped without migration");
   const require = createRequire(join(apiDir, "package.json"));
@@ -54,15 +58,16 @@ try {
   phase = "service-load";
   runtime = require(output);
   phase = "account-provision";
-  const { expiresAt } = await runtime.provisionPreviewAccount(phone, password);
+  const { expiresAt } = await runtime.provisionPreviewAccount(email, phone, password);
   console.log(`Preview account created; access expires ${expiresAt.toISOString()}. No funds or providers involved.`);
 } catch (error) {
   // Never serialize database errors, parameters, credentials or connection URLs.
-  console.error("Preview provisioning stopped. No existing account was replaced. Check schema compatibility or number availability.");
+  console.error("Preview provisioning stopped. No existing account was replaced. Check schema compatibility or account availability.");
   const knownReasons = new Map([
     ["Invalid preview credentials", "invalid-credentials"],
     ["A preview account is already provisioned; no replacement was made", "grant-already-exists"],
     ["The chosen number is already in use; no account was changed", "number-already-used"],
+    ["The chosen email is already in use; no account was changed", "email-already-used"],
   ]);
   const reason = knownReasons.get(error?.message) ?? "unclassified";
   const sqlState = /^[0-9A-Z]{5}$/.test(error?.code ?? "") ? error.code : "unavailable";

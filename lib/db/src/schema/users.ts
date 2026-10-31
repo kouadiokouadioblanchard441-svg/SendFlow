@@ -1,5 +1,5 @@
 import { createInsertSchema } from "drizzle-zod";
-import { date, index, pgEnum, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { date, index, pgEnum, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 import { z } from "zod/v4";
 
 export const userAccountStatusEnum = pgEnum("sf_user_account_status", ["active", "suspended", "deleted"]);
@@ -10,6 +10,7 @@ export const usersTable = pgTable("sf_users", {
   phoneLookupHash: varchar("phone_lookup_hash", { length: 64 }).unique("sf_users_phone_lookup_hash_uq"),
   phoneVerifiedAt: timestamp("phone_verified_at", { withTimezone: true }),
   emailEncrypted: text("email_encrypted"),
+  emailLookupHash: varchar("email_lookup_hash", { length: 64 }),
   displayName: varchar("display_name", { length: 512 }),
   displayNameLookupHash: varchar("display_name_lookup_hash", { length: 64 }),
   countryCode: varchar("country_code", { length: 2 }),
@@ -26,6 +27,7 @@ export const usersTable = pgTable("sf_users", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
 }, (table) => ({
+  emailLookupHashUniqueIndex: uniqueIndex("sf_users_email_lookup_hash_uq").on(table.emailLookupHash),
   displayNameLookupHashIndex: index("sf_users_display_name_lookup_hash_idx").on(table.displayNameLookupHash),
 }));
 

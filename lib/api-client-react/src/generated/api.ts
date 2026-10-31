@@ -1379,7 +1379,7 @@ export const getSignInCustomerUrl = () => {
 }
 
 /**
- * Validates the phone and password and issues a secure customer session cookie.
+ * Validates the email address and password and issues a secure customer session cookie. Phone numbers remain available for other account and payment flows but are not accepted as the sign-in identifier.
  * @summary Sign in to a SendFlow customer account
  */
 export const signInCustomer = async (customerSignInInput: CustomerSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult> => {

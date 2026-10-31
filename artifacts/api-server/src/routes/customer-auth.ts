@@ -54,7 +54,7 @@ import {
   CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
   clearAuthFailures,
   getCustomerAccessAttemptBucketsForRequest,
-  getCustomerLoginPhoneAttemptBucket,
+  getCustomerLoginEmailAttemptBucket,
   getCustomerPinAttemptBucket,
   getAuthRateLimit,
   formatAuthRateLimitMessage,
@@ -68,6 +68,7 @@ import {
   createSensitiveDataLookupIndex,
   decryptSensitiveDataIfEncrypted,
   encryptSensitiveData,
+  normalizeSensitiveEmailForLookup,
   normalizeSensitiveNameForLookup,
 } from "../lib/sensitive-data-crypto";
 import {
@@ -172,11 +173,10 @@ function isAdultBirthDate(value: string, now = new Date()) {
   return parsed.getTime() <= cutoff.getTime();
 }
 
-function getLoginAttemptBuckets(phone: string | null, req: Parameters<typeof requesterAddress>[0]) {
+function getLoginAttemptBuckets(emailLookupHash: string | null, req: Parameters<typeof requesterAddress>[0]) {
   const address = requesterAddress(req);
   return [
-    ...getCustomerAccessAttemptBucketsForRequest(phone, address),
-    ...(phone ? [getCustomerLoginPhoneAttemptBucket(phone)] : []),
+    ...(emailLookupHash ? [getCustomerLoginEmailAttemptBucket(emailLookupHash)] : []),
     fingerprint(`customer-login-requester:${address}`),
   ];
 }
@@ -191,13 +191,24 @@ function normalizeSignupBody(body: unknown): unknown {
   if (typeof body !== "object" || body === null || Array.isArray(body)) return body;
   const record = body as Record<string, unknown>;
   if (typeof record.email !== "string") return body;
-  return { ...record, email: record.email.trim().toLowerCase() };
+  return { ...record, email: normalizeSensitiveEmailForLookup(record.email) };
 }
 
-function getLoginPhoneFromBody(body: unknown) {
+function normalizeSignInBody(body: unknown): unknown {
   if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
-  const phone = SignInCustomerBody.shape.phone.safeParse((body as { phone?: unknown }).phone);
-  return phone.success ? phone.data : null;
+  const record = body as Record<string, unknown>;
+  if (typeof record.email !== "string") return body;
+  return { ...record, email: normalizeSensitiveEmailForLookup(record.email) };
+}
+
+function getLoginEmailHashFromBody(body: unknown) {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const rawEmail = (body as { email?: unknown }).email;
+  if (typeof rawEmail !== "string") return null;
+  const email = SignInCustomerBody.shape.email.safeParse(normalizeSensitiveEmailForLookup(rawEmail));
+  return email.success
+    ? createSensitiveDataLookupIndex(email.data, "user-email")
+    : null;
 }
 
 function getPinAttemptBuckets(userId: string, req: Parameters<typeof requesterAddress>[0]) {
@@ -298,6 +309,12 @@ router.post("/auth/register", async (req, res): Promise<void> => {
           eq(usersTable.phone, parsed.data.phone),
         ))
         .limit(1);
+      const emailLookupHash = createSensitiveDataLookupIndex(parsed.data.email, "user-email");
+      const [existingEmail] = await tx
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(eq(usersTable.emailLookupHash, emailLookupHash))
+        .limit(1);
 
       if (challenge) {
         await tx
@@ -306,7 +323,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
           .where(eq(phoneOtpChallengesTable.id, challenge.id));
       }
 
-      if (existingUser) return registerFailure("exists");
+      if (existingUser || existingEmail) return registerFailure("exists");
 
       const passwordHash = await hashCustomerSecret(parsed.data.password);
       const userId = randomUUID();
@@ -316,9 +333,8 @@ router.post("/auth/register", async (req, res): Promise<void> => {
           id: userId,
           phone: encryptSensitiveData(parsed.data.phone, "user-phone"),
           phoneLookupHash: createSensitiveDataLookupIndex(parsed.data.phone, "user-phone"),
-          emailEncrypted: parsed.data.email
-            ? encryptSensitiveData(parsed.data.email, "user-email")
-            : null,
+          emailEncrypted: encryptSensitiveData(parsed.data.email, "user-email"),
+          emailLookupHash,
           phoneVerifiedAt: requiresOtp ? now : null,
           displayName: encryptSensitiveData(normalizedName, "user-name"),
           displayNameLookupHash: createSensitiveDataLookupIndex(
@@ -401,7 +417,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       return;
     }
     if (signupResult.kind === "exists") {
-      res.status(409).json({ error: "Ce numéro est déjà associé à un compte. Connectez-vous ou réinitialisez votre code secret." });
+      res.status(409).json({ error: "Ces informations sont déjà associées à un compte. Connectez-vous ou réinitialisez votre code secret." });
       return;
     }
     if (signupResult.kind !== "created") return;
@@ -419,7 +435,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         sendRateLimit(res, retry);
         return;
       }
-      res.status(409).json({ error: "Ce numéro est déjà associé à un compte. Connectez-vous ou réinitialisez votre code secret." });
+      res.status(409).json({ error: "Ces informations sont déjà associées à un compte. Connectez-vous ou réinitialisez votre code secret." });
       return;
     }
     req.log.error({ errorCode: safeErrorCode(error) }, "Customer registration failed");
@@ -433,11 +449,11 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
     return;
   }
 
-  const parsed = SignInCustomerBody.safeParse(req.body);
+  const parsed = SignInCustomerBody.safeParse(normalizeSignInBody(req.body));
   if (!parsed.success) {
     try {
-      const phone = getLoginPhoneFromBody(req.body);
-      const buckets = getLoginAttemptBuckets(phone, req);
+      const emailLookupHash = getLoginEmailHashFromBody(req.body);
+      const buckets = getLoginAttemptBuckets(emailLookupHash, req);
       const retry = await recordAuthFailureAndGetRetryAfter(
         buckets,
         new Date(),
@@ -452,12 +468,13 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
       res.status(503).json({ error: "La connexion est momentanément indisponible." });
       return;
     }
-    res.status(400).json({ error: "Numéro ou code secret invalide." });
+    res.status(400).json({ error: "Adresse e-mail ou code secret invalide." });
     return;
   }
 
   try {
-    const buckets = getLoginAttemptBuckets(parsed.data.phone, req);
+    const emailLookupHash = createSensitiveDataLookupIndex(parsed.data.email, "user-email");
+    const buckets = getLoginAttemptBuckets(emailLookupHash, req);
     const result = await withAuthAttemptLock(buckets, async (tx) => {
       const now = new Date();
       const retry = await getAuthRateLimit(buckets, now, tx);
@@ -480,10 +497,7 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         .from(usersTable)
         .innerJoin(customerCredentialsTable, eq(customerCredentialsTable.userId, usersTable.id))
         .where(and(
-          or(
-            eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
-            eq(usersTable.phone, parsed.data.phone),
-          ),
+          eq(usersTable.emailLookupHash, emailLookupHash),
           sharedDatabaseCustomerCondition(),
         ))
         .for("update");
@@ -533,7 +547,7 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
       return;
     }
     if (result.kind !== "signed-in") {
-      res.status(401).json({ error: "Numéro ou code secret incorrect." });
+      res.status(401).json({ error: "Adresse e-mail ou code secret incorrect." });
       return;
     }
 

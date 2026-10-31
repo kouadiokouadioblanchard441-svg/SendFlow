@@ -108,3 +108,7 @@ export function createSensitiveDataLookupIndex(
 export function normalizeSensitiveNameForLookup(value: string) {
   return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
 }
+
+export function normalizeSensitiveEmailForLookup(value: string) {
+  return value.normalize("NFKC").trim().toLowerCase();
+}

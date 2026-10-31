@@ -15,7 +15,7 @@ export type SignUpValidationInput = {
 };
 
 export type SignInValidationInput = {
-  phone: string;
+  email: string;
   password: string;
 };
 
@@ -117,13 +117,18 @@ export function validateSignUp(form: SignUpValidationInput, dialCode = '+225'): 
   return errors;
 }
 
-export function validateSignIn(form: SignInValidationInput, dialCode = '+225'): FieldErrors<SignInField> {
+export function validateSignIn(form: SignInValidationInput): FieldErrors<SignInField> {
   const errors: FieldErrors<SignInField> = {};
-  const phoneError = validatePhone(form.phone, dialCode);
+  const email = form.email.trim();
+  const emailError = !email
+    ? "L’adresse e-mail est requise."
+    : email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      ? "Saisissez une adresse e-mail valide."
+      : undefined;
   // Keep accepting existing four-character customer secrets at sign-in.
   const passwordError = validateCustomerPassword(form.password, LEGACY_CUSTOMER_PASSWORD_MIN_LENGTH);
 
-  if (phoneError) errors.phone = phoneError;
+  if (emailError) errors.email = emailError;
   if (passwordError) errors.password = passwordError;
 
   return errors;

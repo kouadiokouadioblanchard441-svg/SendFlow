@@ -2,25 +2,23 @@ import { useMemo, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
-import { CountryPhoneField } from '@/components/country-phone-field';
 import { validateSignIn, type SignInField } from '@/lib/auth-validation';
 import { useSignInCustomer } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearPinUnlock } from '@/lib/pin-unlock';
 import { clearLegacyAccountProfile } from '@/lib/account-profile';
-import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import signinIllustration from '@assets/generated_images/sendflow-signin-security-3d-clean.png';
 import signinPaymentsIllustration from '@assets/generated_images/sendflow-signin-payments-3d-clean.png';
 
 type SignInForm = {
-  phone: string;
+  email: string;
   password: string;
 };
 
 const initialForm: SignInForm = {
-  phone: '',
+  email: '',
   password: '',
 };
 
@@ -33,7 +31,6 @@ export default function SigninPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignInField, boolean>>>({});
-  const [phoneDialCode, setPhoneDialCode] = useState(DEFAULT_ACCOUNT_COUNTRY.dialCode);
   const signInCustomer = useSignInCustomer();
   const [requestError, setRequestError] = useState('');
 
@@ -45,7 +42,7 @@ export default function SigninPage() {
     robots: 'noindex,nofollow',
   });
 
-  const errors = useMemo(() => validateSignIn(form, phoneDialCode), [form, phoneDialCode]);
+  const errors = useMemo(() => validateSignIn(form), [form]);
   const canSubmit = Object.keys(errors).length === 0;
 
   const update = <K extends keyof SignInForm>(key: K, value: SignInForm[K]) => {
@@ -68,9 +65,8 @@ export default function SigninPage() {
     setSubmitted(false);
     setRequestError('');
     try {
-      const digits = form.phone.replace(/\D/g, '');
       const response = await signInCustomer.mutateAsync({
-        data: { phone: `${phoneDialCode}${digits}`, password: form.password },
+        data: { email: form.email.trim().toLowerCase(), password: form.password },
       });
       clearLegacyAccountProfile();
       queryClient.clear();
@@ -79,7 +75,7 @@ export default function SigninPage() {
       setLocation(response.pinConfigured ? '/pin' : '/create-pin');
     } catch (error) {
       const candidate = error as { data?: { error?: string }; message?: string };
-      setRequestError(candidate.data?.error ?? 'Numéro ou code secret incorrect.');
+      setRequestError(candidate.data?.error ?? 'Adresse e-mail ou code secret incorrect.');
     } finally {
       setIsSubmitting(false);
     }
@@ -109,13 +105,31 @@ export default function SigninPage() {
           </header>
 
           <form className="sendflow-signup-form" onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
-            <CountryPhoneField
-              value={form.phone}
-              onChange={(value) => update('phone', value)}
-              onCountryChange={(country) => setPhoneDialCode(country.dialCode)}
-              error={visibleError('phone')}
-              onBlur={() => markTouched('phone')}
-            />
+            <div className="sendflow-signup-control">
+              <label className={`sendflow-signup-field${visibleError('email') ? ' has-error' : ''}`}>
+                <span className="sr-only">Adresse e-mail</span>
+                <input
+                  id="signin-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => update('email', event.target.value)}
+                  onBlur={() => markTouched('email')}
+                  placeholder="Adresse e-mail"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  maxLength={254}
+                  aria-invalid={Boolean(visibleError('email'))}
+                  aria-describedby={visibleError('email') ? 'signin-email-error' : undefined}
+                  required
+                />
+              </label>
+              {visibleError('email') && (
+                <p id="signin-email-error" className="sendflow-signup-error" role="alert">
+                  {visibleError('email')}
+                </p>
+              )}
+            </div>
 
             <div className="sendflow-signup-control">
               <label className={`sendflow-signup-field${visibleError('password') ? ' has-error' : ''}`}>

@@ -382,7 +382,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "409":
-          description: The verification is invalid or the phone already has an account.
+          description: The verification is invalid or the phone or email is already associated with an account.
           content:
             application/json:
               schema:
@@ -404,7 +404,7 @@ paths:
       operationId: signInCustomer
       tags: [account]
       summary: Sign in to a SendFlow customer account
-      description: Validates the phone and password and issues a secure customer session cookie.
+      description: Validates the email address and password and issues a secure customer session cookie. Phone numbers remain available for other account and payment flows but are not accepted as the sign-in identifier.
       requestBody:
         required: true
         content:
@@ -425,13 +425,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "401":
-          description: Phone or password is incorrect.
+          description: Email address or password is incorrect.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "429":
-          description: Three failed sign-in attempts lock the phone and requester for 20 minutes.
+          description: Three failed sign-in attempts lock the email identifier and requester for 20 minutes.
           content:
             application/json:
               schema:
@@ -4811,7 +4811,7 @@ components:
           format: email
           minLength: 5
           maxLength: 254
-          description: Optional for compatibility with already deployed clients; the current SendFlow signup screen requires an address.
+          description: Sign-in identifier. Addresses are normalized and indexed using a server-side keyed hash.
         fullName:
           type: string
           minLength: 2
@@ -4828,21 +4828,20 @@ components:
           maxLength: 64
         acceptedPrivacy:
           type: boolean
-      required: [phone, fullName, birthDate, password, acceptedPrivacy]
+      required: [phone, email, fullName, birthDate, password, acceptedPrivacy]
     CustomerSignInInput:
       type: object
       properties:
-        phone:
+        email:
           type: string
-          format: phone
-          minLength: 9
-          maxLength: 16
-          pattern: "^\\+[1-9][0-9]{7,14}$"
+          format: email
+          minLength: 5
+          maxLength: 254
         password:
           type: string
           minLength: 4
           maxLength: 64
-      required: [phone, password]
+      required: [email, password]
     CustomerPasswordResetInput:
       type: object
       properties:

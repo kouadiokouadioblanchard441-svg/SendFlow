@@ -4,6 +4,7 @@ import {
   createSensitiveDataLookupIndex,
   decryptSensitiveData,
   encryptSensitiveData,
+  normalizeSensitiveEmailForLookup,
 } from "./sensitive-data-crypto.ts";
 
 const originalKey = process.env.CUSTOMER_PII_ENCRYPTION_KEY;
@@ -31,6 +32,17 @@ test("customer email is encrypted at rest with an email-specific purpose", () =>
   assert.equal(ciphertext.includes(email), false);
   assert.equal(decryptSensitiveData(ciphertext, "user-email"), email);
   assert.throws(() => decryptSensitiveData(ciphertext, "user-name"));
+});
+
+test("customer email lookup normalization is case and Unicode stable", () => {
+  assert.equal(
+    normalizeSensitiveEmailForLookup("  Customer@Example.com  "),
+    "customer@example.com",
+  );
+  assert.equal(
+    normalizeSensitiveEmailForLookup("ＣＵＳＴＯＭＥＲ@example.com"),
+    "customer@example.com",
+  );
 });
 
 test("encrypting the same value produces different ciphertexts", () => {

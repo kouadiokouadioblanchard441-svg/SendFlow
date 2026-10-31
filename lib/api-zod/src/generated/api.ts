@@ -370,7 +370,7 @@ export const registerCustomerBodyPasswordMax = 64;
 export const RegisterCustomerBody = zod.object({
   "challengeId": zod.uuid().optional(),
   "phone": zod.stringFormat('phone', registerCustomerBodyPhoneRegExp).min(registerCustomerBodyPhoneMin).max(registerCustomerBodyPhoneMax),
-  "email": zod.email().min(registerCustomerBodyEmailMin).max(registerCustomerBodyEmailMax).optional().describe('Optional for compatibility with already deployed clients; the current SendFlow signup screen requires an address.'),
+  "email": zod.email().min(registerCustomerBodyEmailMin).max(registerCustomerBodyEmailMax).describe('Sign-in identifier. Addresses are normalized and indexed using a server-side keyed hash.'),
   "fullName": zod.string().min(registerCustomerBodyFullNameMin).max(registerCustomerBodyFullNameMax),
   "birthDate": zod.coerce.date(),
   "countryCode": zod.string().regex(registerCustomerBodyCountryCodeRegExp).optional(),
@@ -399,13 +399,11 @@ export const RegisterCustomerResponse = zod.object({
 
 
 /**
- * Validates the phone and password and issues a secure customer session cookie.
+ * Validates the email address and password and issues a secure customer session cookie. Phone numbers remain available for other account and payment flows but are not accepted as the sign-in identifier.
  * @summary Sign in to a SendFlow customer account
  */
-export const signInCustomerBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
-
-export const signInCustomerBodyPhoneMin = 9;
-export const signInCustomerBodyPhoneMax = 16;
+export const signInCustomerBodyEmailMin = 5;
+export const signInCustomerBodyEmailMax = 254;
 
 export const signInCustomerBodyPasswordMin = 4;
 export const signInCustomerBodyPasswordMax = 64;
@@ -413,7 +411,7 @@ export const signInCustomerBodyPasswordMax = 64;
 
 
 export const SignInCustomerBody = zod.object({
-  "phone": zod.stringFormat('phone', signInCustomerBodyPhoneRegExp).min(signInCustomerBodyPhoneMin).max(signInCustomerBodyPhoneMax),
+  "email": zod.email().min(signInCustomerBodyEmailMin).max(signInCustomerBodyEmailMax),
   "password": zod.string().min(signInCustomerBodyPasswordMin).max(signInCustomerBodyPasswordMax)
 })
 
