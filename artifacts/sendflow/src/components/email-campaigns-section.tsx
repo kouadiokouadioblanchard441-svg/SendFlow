@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getListAdminEmailCampaignRecipientsQueryKey,
+  getListAdminEmailCampaignHistoryQueryKey,
   getListAdminEmailCampaignsQueryKey,
+  getAdminEmailCampaign,
+  retryAdminEmailCampaignRecipient,
   useCancelAdminEmailCampaign,
   useCreateAdminEmailCampaign,
   useDeleteAdminEmailCampaign,
   useListAdminEmailCampaignRecipients,
+  useListAdminEmailCampaignHistory,
   useListAdminEmailCampaigns,
   useQueueAdminEmailCampaign,
   useUpdateAdminEmailCampaign,
@@ -15,6 +19,7 @@ import type {
   AdminEmailCampaignInput,
   AdminEmailCampaignRecipient,
   AdminEmailCampaignSummary,
+  ListAdminEmailCampaignHistoryParams,
 } from "@workspace/api-client-react";
 import {
   AlertCircle,
@@ -23,16 +28,12 @@ import {
   ArrowRight,
   Check,
   Clock3,
-  FileText,
-  Image as ImageIcon,
   Mail,
-  Paperclip,
   RefreshCw,
   Search,
   Send,
   Trash2,
   Users,
-  X,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -43,10 +44,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 type AudienceMode = AdminEmailCampaignInput["audienceMode"];
-type LocalAttachment = { id: string; file: File; previewUrl: string | null };
 type PendingAction = { kind: "queue" | "cancel" | "delete"; campaign: AdminEmailCampaignSummary } | null;
+type CampaignView = "campaigns" | "drafts" | "history" | "accepted" | "failed";
 
 const PAGE_SIZE = 20;
+const sendFlowEmailTheme = {
+  "--primary": "211 100% 50%",
+  "--primary-foreground": "0 0% 100%",
+} as CSSProperties;
 
 function formatCount(value: number) {
   return new Intl.NumberFormat("fr-FR").format(value);
@@ -90,6 +95,10 @@ export function EmailCampaignsSection() {
   });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [campaignView, setCampaignView] = useState<CampaignView>("campaigns");
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyPage, setHistoryPage] = useState(1);
+  const [retryingRecipientId, setRetryingRecipientId] = useState<string | null>(null);
   const [audienceMode, setAudienceMode] = useState<AudienceMode>("all");
   const recipientParams = useMemo(
     () => ({ search: search.trim() || undefined, page }),
@@ -99,6 +108,22 @@ export function EmailCampaignsSection() {
     query: {
       queryKey: getListAdminEmailCampaignRecipientsQueryKey(recipientParams),
       enabled: audienceMode === "selected",
+      retry: false,
+    },
+  });
+  const historyStatus: ListAdminEmailCampaignHistoryParams["status"] = campaignView === "accepted"
+    ? "accepted"
+    : campaignView === "failed" ? "failed" : undefined;
+  const historyParams = useMemo(() => ({
+    page: historyPage,
+    pageSize: 25,
+    search: historySearch.trim() || undefined,
+    status: historyStatus,
+  }), [historyPage, historySearch, historyStatus]);
+  const historyQuery = useListAdminEmailCampaignHistory(historyParams, {
+    query: {
+      queryKey: getListAdminEmailCampaignHistoryQueryKey(historyParams),
+      enabled: campaignView === "history" || campaignView === "accepted" || campaignView === "failed",
       retry: false,
     },
   });
@@ -114,34 +139,26 @@ export function EmailCampaignsSection() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedRecipients, setSelectedRecipients] = useState<Record<string, AdminEmailCampaignRecipient>>({});
   const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null);
-  const [localCampaignInputs, setLocalCampaignInputs] = useState<Record<string, AdminEmailCampaignInput>>({});
-  const [attachments, setAttachments] = useState<LocalAttachment[]>([]);
-  const attachmentUrls = useRef(new Set<string>());
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [feedback, setFeedback] = useState("");
   const [formError, setFormError] = useState("");
   const [actionError, setActionError] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => () => {
-    attachmentUrls.current.forEach((url) => URL.revokeObjectURL(url));
-    attachmentUrls.current.clear();
-  }, []);
-
   const campaigns = campaignsQuery.data?.items ?? [];
   const recipients = recipientsQuery.data?.items ?? [];
   const sendingEnabled = campaignsQuery.data?.sendingEnabled === true;
   const pageCount = Math.max(1, Math.ceil((recipientsQuery.data?.total ?? 0) / (recipientsQuery.data?.pageSize ?? PAGE_SIZE)));
   const selectedCount = audienceMode === "all" ? null : selectedIds.length;
-  const unverifiedCount = audienceMode === "all"
-    ? null
-    : selectedIds.filter((id) => !selectedRecipients[id]?.emailVerifiedAt).length;
   const formValid = subject.trim().length > 0
     && subject.trim().length <= 200
     && bodyText.trim().length > 0
     && bodyText.length <= 20_000
     && (audienceMode === "all" || (selectedIds.length > 0 && selectedIds.length <= 5000));
   const anyMutationPending = createCampaign.isPending || updateCampaign.isPending;
+  const visibleCampaigns = campaigns.filter((campaign) =>
+    campaignView === "drafts" ? campaign.status === "draft"
+      : campaignView === "campaigns" ? campaign.status !== "draft"
+        : false,
+  );
 
   const invalidateCampaignData = async () => {
     await Promise.all([
@@ -166,15 +183,6 @@ export function EmailCampaignsSection() {
     setEditingCampaignId(null);
     setFeedback("");
     setFormError("");
-    setAttachments((current) => {
-      current.forEach(({ previewUrl }) => {
-        if (previewUrl) {
-          URL.revokeObjectURL(previewUrl);
-          attachmentUrls.current.delete(previewUrl);
-        }
-      });
-      return [];
-    });
   };
 
   const saveDraft = () => {
@@ -187,8 +195,7 @@ export function EmailCampaignsSection() {
     const data = currentInput();
     const onSaved = (campaign: AdminEmailCampaignSummary) => {
       setEditingCampaignId(campaign.id);
-      setLocalCampaignInputs((current) => ({ ...current, [campaign.id]: data }));
-      setFeedback("Brouillon enregistré sur le serveur. Les pièces jointes restent uniquement dans cet aperçu local.");
+      setFeedback("Brouillon enregistré sur le serveur. Aucun e-mail n’a été envoyé.");
       void invalidateCampaignData();
     };
     if (editingCampaignId) {
@@ -205,33 +212,20 @@ export function EmailCampaignsSection() {
   };
 
   const loadDraft = (campaign: AdminEmailCampaignSummary) => {
-    const savedInput = localCampaignInputs[campaign.id];
-    if (!savedInput && campaign.audienceMode === "selected") {
-      setActionError("Les identifiants des destinataires sélectionnés ne figurent pas dans la liste. Ce brouillon ne peut être modifié ici sans risquer de changer son audience.");
-      return;
-    }
-    const data = savedInput ?? {
-      subject: campaign.subject,
-      bodyText: campaign.bodyText,
-      audienceMode: "all" as const,
-      userIds: [],
-    };
-    setSubject(data.subject);
-    setBodyText(data.bodyText);
-    setAudienceMode(data.audienceMode);
-    setSelectedIds(data.userIds);
-    setSelectedRecipients((current) => {
-      const retained: Record<string, AdminEmailCampaignRecipient> = {};
-      data.userIds.forEach((id) => {
-        if (current[id]) retained[id] = current[id];
-      });
-      return retained;
-    });
-    setEditingCampaignId(campaign.id);
-    setFeedback("");
-    setFormError("");
     setActionError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    void getAdminEmailCampaign(campaign.id).then((result) => {
+      const data = result.campaign;
+      setSubject(data.subject);
+      setBodyText(data.bodyText);
+      setAudienceMode(data.audienceMode);
+      setSelectedIds(result.recipientUserIds);
+      setEditingCampaignId(campaign.id);
+      setFeedback("");
+      setFormError("");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }).catch(() => {
+      setActionError("Le brouillon complet n’a pas pu être chargé. Son audience n’a pas été modifiée.");
+    });
   };
 
   const toggleRecipient = (recipient: AdminEmailCampaignRecipient) => {
@@ -250,29 +244,26 @@ export function EmailCampaignsSection() {
     });
   };
 
-  const addFiles = (files: FileList | null) => {
-    if (!files) return;
-    const accepted = Array.from(files).filter((file) =>
-      file.type === "application/pdf" || file.type.startsWith("image/"),
-    );
-    const newFiles = accepted.map((file) => {
-      const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
-      if (previewUrl) attachmentUrls.current.add(previewUrl);
-      return { id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`, file, previewUrl };
-    });
-    setAttachments((current) => [...current, ...newFiles]);
-    if (accepted.length !== files.length) setFormError("Seuls les fichiers image et PDF peuvent être prévisualisés localement.");
-  };
-
-  const removeAttachment = (attachmentId: string) => {
-    setAttachments((current) => {
-      const removed = current.find(({ id }) => id === attachmentId);
-      if (removed?.previewUrl) {
-        URL.revokeObjectURL(removed.previewUrl);
-        attachmentUrls.current.delete(removed.previewUrl);
-      }
-      return current.filter(({ id }) => id !== attachmentId);
-    });
+  const retryRecipient = async (campaignId: string, recipientId: string) => {
+    if (retryingRecipientId || !window.crypto?.randomUUID) {
+      setActionError("Une relance est déjà en cours ou la génération sécurisée d’une clé est indisponible.");
+      return;
+    }
+    setRetryingRecipientId(recipientId);
+    setActionError("");
+    try {
+      await retryAdminEmailCampaignRecipient(campaignId, recipientId, {
+        headers: { "Idempotency-Key": window.crypto.randomUUID() },
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getListAdminEmailCampaignHistoryQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getListAdminEmailCampaignsQueryKey() }),
+      ]);
+    } catch {
+      setActionError("La relance n’a pas été confirmée. Actualisez l’historique avant toute nouvelle action.");
+    } finally {
+      setRetryingRecipientId(null);
+    }
   };
 
   const executePendingAction = () => {
@@ -314,7 +305,7 @@ export function EmailCampaignsSection() {
   const actionPending = queueCampaign.isPending || cancelCampaign.isPending || deleteCampaign.isPending;
 
   return (
-    <div className="space-y-6" data-testid="section-email-campaigns">
+    <div className="space-y-6" style={sendFlowEmailTheme} data-testid="section-email-campaigns">
       <header className="sendflow-admin-page-intro" data-testid="header-email-campaigns">
         <div>
           <p className="sendflow-admin-overline">Communication · Espace administrateur</p>
@@ -425,7 +416,7 @@ export function EmailCampaignsSection() {
               <div>
                 <h3 id="audience-heading" className="text-sm font-semibold">Destinataires</h3>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Le décompte est fourni par le serveur et peut inclure des comptes suspendus ou des adresses non vérifiées.
+                  Le décompte ne comprend que les comptes actifs ayant une adresse vérifiée et un accord marketing actif.
                 </p>
               </div>
               <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Mode de sélection des destinataires">
@@ -542,59 +533,8 @@ export function EmailCampaignsSection() {
                       </Button>
                     </div>
                   </div>
-                  {unverifiedCount !== null && unverifiedCount > 0 && selectedIds.length > 0 && (
-                    <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900" data-testid="warning-selected-unverified">
-                      {formatCount(unverifiedCount)} adresse(s) non vérifiée(s) parmi les destinataires actuellement sélectionnés.
-                    </p>
-                  )}
                   {selectedIds.length >= 5000 && <p className="text-xs font-medium text-amber-800" data-testid="warning-recipient-limit">Limite de 5 000 destinataires sélectionnés atteinte.</p>}
                 </div>
-              )}
-            </section>
-
-            <section className="space-y-3 border-t border-border pt-5" aria-labelledby="attachment-heading">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 id="attachment-heading" className="text-sm font-semibold">Aperçu de pièces jointes</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">Sélection locale d’images ou de PDF, sans transfert.</p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,application/pdf"
-                  multiple
-                  className="sr-only"
-                  onChange={(event) => { addFiles(event.target.files); event.currentTarget.value = ""; }}
-                  data-testid="input-campaign-attachments"
-                />
-                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} data-testid="button-add-attachment">
-                  <Paperclip className="mr-2 h-4 w-4" /> Choisir des fichiers
-                </Button>
-              </div>
-              <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs leading-5 text-amber-900" data-testid="notice-attachments-local-only">
-                Ces fichiers servent uniquement à l’aperçu local. Ils ne sont ni envoyés, ni enregistrés, ni inclus dans la campagne.
-              </div>
-              {attachments.length > 0 && (
-                <ul className="grid gap-2 sm:grid-cols-2" data-testid="list-attachment-previews">
-                  {attachments.map(({ id, file, previewUrl }) => (
-                    <li key={id} className="flex min-w-0 items-center gap-3 rounded-lg border border-border p-2" data-testid={`item-attachment-${id}`}>
-                      {previewUrl ? (
-                        <img src={previewUrl} alt={`Aperçu local de ${file.name}`} className="h-12 w-12 rounded-md object-cover" />
-                      ) : file.type === "application/pdf" ? (
-                        <span className="grid h-12 w-12 place-items-center rounded-md bg-primary/10 text-primary"><FileText className="h-5 w-5" /></span>
-                      ) : (
-                        <span className="grid h-12 w-12 place-items-center rounded-md bg-muted text-muted-foreground"><ImageIcon className="h-5 w-5" /></span>
-                      )}
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-medium">{file.name}</span>
-                        <span className="block text-[10px] text-muted-foreground">{(file.size / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} Ko · aperçu local</span>
-                      </span>
-                      <Button type="button" variant="ghost" size="icon" aria-label={`Retirer ${file.name}`} onClick={() => removeAttachment(id)} data-testid={`button-remove-attachment-${id}`}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
               )}
             </section>
 
@@ -632,7 +572,6 @@ export function EmailCampaignsSection() {
                 <div className="space-y-3 p-4">
                   <p className="break-words text-sm font-semibold" data-testid="preview-campaign-subject">{subject.trim() || "Objet de votre message"}</p>
                   <p className="min-h-24 whitespace-pre-wrap break-words text-xs leading-6 text-muted-foreground" data-testid="preview-campaign-body">{bodyText || "Le texte de votre message apparaîtra ici."}</p>
-                  {attachments.length > 0 && <p className="border-t border-border pt-2 text-[10px] text-muted-foreground">{attachments.length} aperçu(s) local(aux), non inclus dans l’envoi</p>}
                 </div>
               </div>
               <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/55 p-3 text-xs leading-5 text-muted-foreground" data-testid="notice-provider-acceptance">
@@ -645,11 +584,6 @@ export function EmailCampaignsSection() {
                   {selectedCount === null ? "Calculé à l’enregistrement" : formatCount(selectedCount)}
                 </span>
               </div>
-              {audienceMode === "selected" && unverifiedCount !== null && unverifiedCount > 0 && (
-                <p className="mt-2 text-xs font-medium text-amber-800" data-testid="text-preview-selected-unverified">
-                  {formatCount(unverifiedCount)} sélection(s) non vérifiée(s)
-                </p>
-              )}
             </CardContent>
           </Card>
 
@@ -675,11 +609,35 @@ export function EmailCampaignsSection() {
         </div>
       </div>
 
+      <nav className="flex gap-2 overflow-x-auto rounded-xl border border-border bg-card p-1.5" role="tablist" aria-label="Vues des campagnes e-mail" data-testid="campaign-views">
+        {([
+          ["campaigns", "Campagnes"],
+          ["drafts", "Brouillons"],
+          ["history", "Historique global"],
+          ["accepted", "Acceptés"],
+          ["failed", "Échecs"],
+        ] as const).map(([view, label]) => (
+          <button
+            key={view}
+            type="button"
+            role="tab"
+            aria-selected={campaignView === view}
+            onClick={() => { setCampaignView(view); setHistoryPage(1); }}
+            className={`min-h-10 shrink-0 rounded-lg px-3 text-xs font-semibold transition-colors ${campaignView === view ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+            data-testid={`tab-campaign-${view}`}
+          >
+            {label}
+            {view === "accepted" && historyQuery.data ? ` · ${formatCount(historyQuery.data.counts.accepted)}` : ""}
+            {view === "failed" && historyQuery.data ? ` · ${formatCount(historyQuery.data.counts.failed)}` : ""}
+          </button>
+        ))}
+      </nav>
+
       <Card className="overflow-hidden border-border/80 shadow-sm" data-testid="card-campaign-history">
         <CardHeader className="border-b border-border/70 bg-muted/25 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="sendflow-admin-overline">Suivi serveur</p>
-            <CardTitle className="mt-1 text-xl">Campagnes et historique</CardTitle>
+            <CardTitle className="mt-1 text-xl">{campaignView === "drafts" ? "Brouillons" : "Campagnes"}</CardTitle>
             <CardDescription className="mt-1">État et compteurs rapportés par le serveur, sans présumer de la réception.</CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={() => { void campaignsQuery.refetch(); }} disabled={campaignsQuery.isFetching} data-testid="button-refresh-campaigns">
@@ -696,15 +654,15 @@ export function EmailCampaignsSection() {
               <p className="text-sm font-medium">Aucun historique à afficher</p>
               <p className="mt-1 text-xs text-muted-foreground">La lecture des campagnes a échoué. Réessayez après vérification du serveur.</p>
             </div>
-          ) : campaigns.length === 0 ? (
+          ) : visibleCampaigns.length === 0 ? (
             <div className="px-5 py-12 text-center" data-testid="empty-campaign-history">
               <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary"><Mail className="h-5 w-5" /></span>
-              <p className="mt-3 text-sm font-semibold">Aucune campagne enregistrée</p>
+              <p className="mt-3 text-sm font-semibold">{campaignView === "drafts" ? "Aucun brouillon" : "Aucune campagne enregistrée"}</p>
               <p className="mt-1 text-xs text-muted-foreground">Les campagnes apparaîtront ici après leur création. Aucune donnée fictive n’est affichée.</p>
             </div>
           ) : (
             <div className="divide-y divide-border" data-testid="list-campaign-history">
-              {campaigns.map((campaign) => {
+              {visibleCampaigns.map((campaign) => {
                 const isBusy = actionPending;
                 return (
                   <article key={campaign.id} className="p-4 sm:p-5" data-testid={`campaign-row-${campaign.id}`}>
@@ -716,7 +674,7 @@ export function EmailCampaignsSection() {
                             {statusLabel(campaign.status)}
                           </span>
                           <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-medium text-muted-foreground" data-testid={`audience-campaign-${campaign.id}`}>
-                            {campaign.audienceMode === "all" ? "Tous les comptes avec e-mail" : "Sélection manuelle"}
+                        {campaign.audienceMode === "all" ? "Tous les comptes éligibles" : "Sélection manuelle"}
                           </span>
                         </div>
                         <p className="mt-2 line-clamp-2 whitespace-pre-wrap break-words text-xs leading-5 text-muted-foreground" data-testid={`text-campaign-body-preview-${campaign.id}`}>
@@ -724,7 +682,6 @@ export function EmailCampaignsSection() {
                         </p>
                         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
                           <span data-testid={`text-campaign-recipient-count-${campaign.id}`}>{formatCount(campaign.recipientCount)} destinataire(s)</span>
-                          {campaign.unverifiedRecipientCount > 0 && <span className="font-medium text-amber-800" data-testid={`text-campaign-unverified-${campaign.id}`}>{formatCount(campaign.unverifiedRecipientCount)} non vérifiée(s)</span>}
                           <span data-testid={`text-campaign-created-${campaign.id}`}>Créée le {formatDate(campaign.createdAt)}</span>
                           {campaign.queuedAt && <span data-testid={`text-campaign-queued-${campaign.id}`}>Mise en file le {formatDate(campaign.queuedAt)}</span>}
                           {campaign.completedAt && <span data-testid={`text-campaign-completed-${campaign.id}`}>Traitement terminé le {formatDate(campaign.completedAt)}</span>}
@@ -764,7 +721,7 @@ export function EmailCampaignsSection() {
                             </Button>
                           </>
                         )}
-                        {(campaign.status === "queued" || campaign.status === "sending") && (
+                        {campaign.status === "queued" && (
                           <Button variant="outline" size="sm" disabled={isBusy} onClick={() => setPendingAction({ kind: "cancel", campaign })} data-testid={`button-cancel-campaign-${campaign.id}`}>
                             Annuler la campagne
                           </Button>
@@ -774,16 +731,6 @@ export function EmailCampaignsSection() {
                         )}
                       </div>
                     </div>
-                    {campaign.audienceMode === "all" && campaign.unverifiedRecipientCount > 0 && (
-                      <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900" data-testid={`warning-campaign-unverified-${campaign.id}`}>
-                        Cette audience contient des adresses non vérifiées, y compris si elles ont été conservées sur des comptes suspendus.
-                      </p>
-                    )}
-                    {campaign.status === "draft" && campaign.audienceMode === "selected" && !localCampaignInputs[campaign.id] && (
-                      <p className="mt-3 text-[11px] leading-5 text-muted-foreground" data-testid={`notice-campaign-edit-limitation-${campaign.id}`}>
-                        Les identifiants de destinataires sélectionnés ne sont pas inclus dans la liste historique. Le chargement en modification est bloqué pour protéger l’audience enregistrée.
-                      </p>
-                    )}
                   </article>
                 );
               })}
@@ -791,6 +738,131 @@ export function EmailCampaignsSection() {
           )}
         </CardContent>
       </Card>
+
+      {(campaignView === "history" || campaignView === "accepted" || campaignView === "failed") && (
+        <Card className="overflow-hidden border-border/80 shadow-sm" data-testid="card-recipient-email-history">
+          <CardHeader className="gap-4 border-b border-border/70 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="sendflow-admin-overline">Suivi par destinataire</p>
+              <CardTitle className="mt-1 text-xl">
+                {campaignView === "accepted" ? "E-mails acceptés par le fournisseur" : campaignView === "failed" ? "E-mails en échec" : "Historique global"}
+              </CardTitle>
+              <CardDescription className="mt-1">L’acceptation du fournisseur ne confirme pas la livraison dans la boîte du destinataire.</CardDescription>
+            </div>
+            <div className="flex w-full gap-2 sm:max-w-lg">
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={historySearch}
+                  onChange={(event) => { setHistorySearch(event.target.value); setHistoryPage(1); }}
+                  placeholder="Rechercher objet, adresse ou identifiant"
+                  aria-label="Rechercher dans l’historique des e-mails"
+                  data-testid="input-email-history-search"
+                  className="pl-9"
+                />
+              </div>
+              <Button variant="outline" size="icon" aria-label="Actualiser l’historique" onClick={() => { void historyQuery.refetch(); }} disabled={historyQuery.isFetching} data-testid="button-refresh-email-history">
+                <RefreshCw className={`h-4 w-4 ${historyQuery.isFetching ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {historyQuery.data && (
+              <div className="grid grid-cols-2 gap-2 border-b border-border p-4 sm:grid-cols-5">
+                {([
+                  ["En attente", historyQuery.data.counts.queued],
+                  ["En cours", historyQuery.data.counts.sending],
+                  ["Acceptés", historyQuery.data.counts.accepted],
+                  ["Échecs", historyQuery.data.counts.failed],
+                  ["Annulés", historyQuery.data.counts.cancelled],
+                ] as const).map(([label, value]) => (
+                  <div key={label} className="rounded-lg border border-border bg-muted/20 px-3 py-2">
+                    <p className="text-[10px] text-muted-foreground">{label}</p>
+                    <p className="mt-0.5 text-sm font-semibold tabular-nums">{formatCount(value)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {historyQuery.isLoading ? (
+              <div className="space-y-3 p-5"><SkeletonLine className="h-20 w-full" /><SkeletonLine className="h-20 w-full" /></div>
+            ) : historyQuery.isError ? (
+              <p className="p-6 text-sm text-muted-foreground" role="status">L’historique par destinataire est indisponible. Réessayez après vérification du serveur.</p>
+            ) : (historyQuery.data?.items.length ?? 0) === 0 ? (
+              <p className="p-8 text-center text-sm text-muted-foreground">Aucun envoi ne correspond à cette vue.</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {historyQuery.data?.items.map((item) => (
+                  <article key={item.recipientId} className="space-y-3 p-4 sm:p-5" data-testid={`email-delivery-${item.recipientId}`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 space-y-1">
+                        <p className="break-all text-sm font-semibold">{item.email ?? "Adresse indisponible"}</p>
+                        <p className="break-words text-sm">{item.subject}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(item.createdAt)} · {formatCount(item.attemptCount)} tentative(s) · {item.manualRetries} relance(s) manuelle(s)
+                        </p>
+                        {item.providerMessageId && <p className="break-all font-mono text-[11px] text-muted-foreground">ID fournisseur : {item.providerMessageId}</p>}
+                        {item.acceptedAt && <p className="text-xs text-muted-foreground">Accepté le {formatDate(item.acceptedAt)}</p>}
+                        {item.lastErrorClass && (
+                          <p className="break-words text-xs text-destructive">
+                            Erreur : {item.lastErrorClass}{item.lastErrorStatus ? ` · HTTP ${item.lastErrorStatus}` : ""}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${item.status === "accepted" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : item.status === "failed" ? "border-red-200 bg-red-50 text-red-800" : "border-primary/20 bg-primary/10 text-primary"}`}>
+                          {item.status === "accepted" ? "Accepté" : item.status === "failed" ? "Échec" : item.status === "sending" ? "En cours" : item.status === "queued" ? "En attente" : "Annulé"}
+                        </span>
+                        {item.status === "failed" && item.lastErrorClass !== "network_or_response" && item.lastErrorClass !== "delivery_outcome_unknown" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!sendingEnabled || retryingRecipientId !== null}
+                            onClick={() => void retryRecipient(item.campaignId, item.recipientId)}
+                            data-testid={`button-retry-email-${item.recipientId}`}
+                          >
+                            {retryingRecipientId === item.recipientId ? "Relance…" : "Relancer"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {item.attempts.length > 0 && (
+                      <details className="rounded-lg border border-border bg-muted/20 px-3 py-2">
+                        <summary className="cursor-pointer text-xs font-semibold">Détail des tentatives ({item.attempts.length})</summary>
+                        <ol className="mt-2 space-y-2">
+                          {item.attempts.map((attempt, index) => (
+                            <li key={`${item.recipientId}-${attempt.attemptNumber}`} className="border-l-2 border-border pl-3 text-xs text-muted-foreground">
+                              <span className="font-medium text-foreground">Tentative {index + 1}</span> · {attempt.status} · {formatDate(attempt.startedAt)}
+                              {attempt.finishedAt && ` – ${formatDate(attempt.finishedAt)}`}
+                              {attempt.errorClass && ` · ${attempt.errorClass}`}
+                              {attempt.httpStatus && ` · HTTP ${attempt.httpStatus}`}
+                              {attempt.providerMessageId && <span className="block break-all font-mono">ID fournisseur : {attempt.providerMessageId}</span>}
+                            </li>
+                          ))}
+                        </ol>
+                      </details>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+            {historyQuery.data && (
+              <div className="flex items-center justify-between gap-3 border-t border-border p-4">
+                <p className="text-xs text-muted-foreground">
+                  {formatCount(historyQuery.data.total)} résultat(s) · page {historyPage} / {Math.max(1, Math.ceil(historyQuery.data.total / historyQuery.data.pageSize))}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon" aria-label="Page précédente" disabled={historyPage <= 1 || historyQuery.isFetching} onClick={() => setHistoryPage((value) => Math.max(1, value - 1))}>
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" aria-label="Page suivante" disabled={historyPage >= Math.max(1, Math.ceil(historyQuery.data.total / historyQuery.data.pageSize)) || historyQuery.isFetching} onClick={() => setHistoryPage((value) => value + 1)}>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex items-start gap-2 rounded-xl border border-border bg-muted/30 p-4 text-xs leading-5 text-muted-foreground" data-testid="notice-email-delivery-status">
         <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
@@ -805,7 +877,7 @@ export function EmailCampaignsSection() {
             </DialogTitle>
             <DialogDescription>
               {pendingAction?.kind === "queue"
-                ? `Le serveur préparera ${formatCount(pendingAction.campaign.recipientCount)} envoi(s). ${pendingAction.campaign.unverifiedRecipientCount > 0 ? `${formatCount(pendingAction.campaign.unverifiedRecipientCount)} adresse(s) ne sont pas vérifiées. ` : ""}La réception en boîte de réception n’est pas garantie.`
+                ? `Le serveur revérifiera le statut du compte, la vérification de l’adresse et le consentement avant chaque envoi. La réception en boîte de réception n’est pas garantie.`
                 : pendingAction?.kind === "cancel"
                   ? "Le serveur tentera d’annuler les envois qui n’ont pas commencé. Le statut sera relu depuis le serveur."
                   : "Cette action supprime définitivement le brouillon serveur. Elle ne peut pas être annulée."}

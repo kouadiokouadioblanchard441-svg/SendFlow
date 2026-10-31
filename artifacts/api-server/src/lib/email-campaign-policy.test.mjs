@@ -58,6 +58,12 @@ test("manual retries are limited to eligible failed deliveries and at most three
   assert.equal(canManuallyRetryCampaignRecipient({
     status: "failed",
     manualRetries: 0,
+    lastErrorClass: "network_or_response",
+    recipient,
+  }), false);
+  assert.equal(canManuallyRetryCampaignRecipient({
+    status: "failed",
+    manualRetries: 0,
     recipient: { ...recipient, emailMarketingUnsubscribedAt: new Date() },
   }), false);
 });

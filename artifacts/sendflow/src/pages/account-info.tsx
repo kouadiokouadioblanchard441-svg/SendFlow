@@ -2,11 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetCurrentAccountQueryKey,
+  getGetCustomerEmailMarketingPreferenceQueryKey,
   getGetCustomerPortalEligibilityQueryKey,
   getGetCustomerProfileQueryKey,
   useGetCurrentAccount,
+  useGetCustomerEmailMarketingPreference,
   useGetCustomerPortalEligibility,
   useGetCustomerProfile,
+  useUpdateCustomerEmailMarketingPreference,
   useUpdateCustomerProfile,
 } from '@workspace/api-client-react';
 import { ArrowLeft, CalendarDays, Check, ShieldCheck } from 'lucide-react';
@@ -142,6 +145,15 @@ export default function AccountInfoPage() {
       refetchOnMount: 'always',
     },
   });
+  const emailMarketingPreference = useGetCustomerEmailMarketingPreference({
+    query: {
+      queryKey: getGetCustomerEmailMarketingPreferenceQueryKey(),
+      enabled: isUnlocked,
+      retry: false,
+      refetchOnMount: 'always',
+    },
+  });
+  const updateEmailMarketingPreference = useUpdateCustomerEmailMarketingPreference();
   const updateProfileMutation = useUpdateCustomerProfile();
   const accountCountry = readAccountCountry();
   const [form, setForm] = useState<AccountProfile>({
@@ -154,6 +166,8 @@ export default function AccountInfoPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [saved, setSaved] = useState(false);
   const [requestError, setRequestError] = useState('');
+  const [marketingPreferenceError, setMarketingPreferenceError] = useState('');
+  const [marketingPreferenceSaved, setMarketingPreferenceSaved] = useState('');
 
   useEffect(() => {
     clearLegacyAccountProfile();
@@ -307,7 +321,7 @@ export default function AccountInfoPage() {
                 {profileQuery.data?.email ?? 'Aucune adresse e-mail enregistrée'}
               </div>
               <p className="sendflow-account-info-hint">
-                {profileQuery.data?.email ? 'Adresse enregistrée à l’inscription — non vérifiée.' : 'La vérification par e-mail n’est pas activée.'}
+                {profileQuery.data?.email ? 'Adresse enregistrée à l’inscription.' : 'Aucune adresse e-mail enregistrée.'}
               </p>
             </div>
 
@@ -352,6 +366,47 @@ export default function AccountInfoPage() {
             </p>
             {requestError && <p className="sendflow-account-info-error" role="alert">{requestError}</p>}
           </form>
+          <section className="mt-7 rounded-2xl border border-border bg-card p-4 sm:p-5" aria-labelledby="email-marketing-preference-title">
+            <h3 id="email-marketing-preference-title" className="text-sm font-semibold">Communications SendFlow</h3>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Choisissez si SendFlow peut vous envoyer des annonces et des offres par e-mail. Vous pouvez retirer votre accord à tout moment.
+            </p>
+            {emailMarketingPreference.isLoading ? (
+              <p className="mt-3 text-xs text-muted-foreground" role="status">Chargement de votre préférence…</p>
+            ) : emailMarketingPreference.isError ? (
+              <p className="mt-3 text-xs text-destructive" role="alert">Votre préférence n’est pas disponible. Réessayez plus tard.</p>
+            ) : (
+              <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 accent-[#007BFF]"
+                  checked={emailMarketingPreference.data?.optedIn === true}
+                  disabled={updateEmailMarketingPreference.isPending}
+                  onChange={(event) => {
+                    setMarketingPreferenceError('');
+                    setMarketingPreferenceSaved('');
+                    updateEmailMarketingPreference.mutate(
+                      { data: { optedIn: event.currentTarget.checked } },
+                      {
+                        onSuccess: () => {
+                          setMarketingPreferenceSaved('Votre préférence a été enregistrée.');
+                          void queryClient.invalidateQueries({ queryKey: getGetCustomerEmailMarketingPreferenceQueryKey() });
+                        },
+                        onError: () => setMarketingPreferenceError('La préférence n’a pas pu être enregistrée. Votre choix précédent est conservé.'),
+                      },
+                    );
+                  }}
+                  data-testid="checkbox-email-marketing-consent"
+                />
+                <span>Je souhaite recevoir les annonces et offres de SendFlow par e-mail.</span>
+              </label>
+            )}
+            {!emailMarketingPreference.isLoading && emailMarketingPreference.data && !emailMarketingPreference.data.emailVerified && (
+              <p className="mt-2 text-xs text-muted-foreground">Une adresse vérifiée est requise avant l’envoi de communications.</p>
+            )}
+            {marketingPreferenceSaved && <p className="mt-2 text-xs text-emerald-700" role="status">{marketingPreferenceSaved}</p>}
+            {marketingPreferenceError && <p className="mt-2 text-xs text-destructive" role="alert">{marketingPreferenceError}</p>}
+          </section>
         </div>
       </section>
     </main>

@@ -7961,10 +7961,12 @@ components:
         deleted: { type: boolean, enum: [true] }
     AdminEmailCampaignAttempt:
       type: object
-      required: [attemptNumber, status, startedAt, finishedAt, errorClass, httpStatus, providerMessageId]
+      required: [attemptNumber, status, email, addressSource, startedAt, finishedAt, errorClass, httpStatus, providerMessageId]
       properties:
         attemptNumber: { type: integer, minimum: 1 }
         status: { type: string, enum: [sending, accepted, failed] }
+        email: { type: [string, "null"], format: email }
+        addressSource: { type: string, enum: [send_snapshot, unavailable] }
         startedAt: { type: string, format: date-time }
         finishedAt: { type: [string, "null"], format: date-time }
         errorClass: { type: [string, "null"] }
@@ -8015,5 +8017,5 @@ components:
       required: [recipientId, status, replayed]
       properties:
         recipientId: { type: string }
-        status: { type: string, enum: [queued] }
+        status: { type: string, enum: [queued, sending, accepted, failed, cancelled] }
         replayed: { type: boolean }

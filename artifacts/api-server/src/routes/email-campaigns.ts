@@ -10,8 +10,10 @@ import {
   inArray,
   isNotNull,
   isNull,
+  ilike,
   ne,
   or,
+  sql,
   emailCampaignAttemptsTable,
   emailCampaignRetryRequestsTable,
   usersTable,
@@ -280,6 +282,174 @@ adminRoutes.get("/email-campaigns/recipients", async (req, res): Promise<void> =
   }
 });
 
+adminRoutes.get("/email-campaigns/history", async (req, res): Promise<void> => {
+  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  if (!adminUserId) return;
+
+  const rawSearch = typeof req.query.search === "string" ? req.query.search.trim() : "";
+  const rawStatus = typeof req.query.status === "string" ? req.query.status : undefined;
+  const campaignId = typeof req.query.campaignId === "string" ? req.query.campaignId : undefined;
+  const page = typeof req.query.page === "string" ? Number(req.query.page) : 1;
+  const pageSize = typeof req.query.pageSize === "string" ? Number(req.query.pageSize) : 25;
+  const statuses = new Set(["queued", "sending", "accepted", "failed", "cancelled"]);
+  if (
+    rawSearch.length > 254
+    || (rawStatus !== undefined && !statuses.has(rawStatus))
+    || (campaignId !== undefined && (campaignId.length < 1 || campaignId.length > 80))
+    || !Number.isInteger(page) || page < 1 || page > 100_000
+    || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100
+  ) {
+    res.status(400).json({ error: "Invalid delivery history filters" });
+    return;
+  }
+
+  const escapedSearch = rawSearch.replace(/[\\%_]/g, "\\$&");
+  const emailHash = rawSearch.includes("@")
+    ? createSensitiveDataLookupIndex(normalizeSensitiveEmailForLookup(rawSearch), "user-email")
+    : null;
+  const nameHash = normalizeSensitiveNameForLookup(rawSearch)
+    ? createSensitiveDataLookupIndex(normalizeSensitiveNameForLookup(rawSearch), "user-name")
+    : null;
+  const commonFilters = [
+    ne(emailCampaignRecipientsTable.status, "draft"),
+    campaignId ? eq(emailCampaignRecipientsTable.campaignId, campaignId) : undefined,
+    rawSearch ? or(
+      ilike(emailCampaignsTable.subject, `%${escapedSearch}%`),
+      emailHash ? eq(usersTable.emailLookupHash, emailHash) : undefined,
+      nameHash ? eq(usersTable.displayNameLookupHash, nameHash) : undefined,
+      ilike(emailCampaignRecipientsTable.providerMessageId, `%${escapedSearch}%`),
+    ) : undefined,
+  ].filter((filter): filter is NonNullable<typeof filter> => Boolean(filter));
+  const filters = rawStatus
+    ? [...commonFilters, eq(emailCampaignRecipientsTable.status, rawStatus)]
+    : commonFilters;
+
+  try {
+    const [rows, totalRows, countRows] = await Promise.all([
+      db.select({
+        recipientId: emailCampaignRecipientsTable.id,
+        campaignId: emailCampaignRecipientsTable.campaignId,
+        subject: emailCampaignsTable.subject,
+        emailSnapshotEncrypted: emailCampaignRecipientsTable.emailSnapshotEncrypted,
+        currentEmailEncrypted: usersTable.emailEncrypted,
+        status: emailCampaignRecipientsTable.status,
+        createdAt: emailCampaignRecipientsTable.createdAt,
+        acceptedAt: emailCampaignRecipientsTable.acceptedAt,
+        attempts: emailCampaignRecipientsTable.attempts,
+        manualRetries: emailCampaignRecipientsTable.manualRetries,
+        lastErrorClass: emailCampaignRecipientsTable.lastErrorClass,
+        lastErrorStatus: emailCampaignRecipientsTable.lastErrorStatus,
+        providerMessageId: emailCampaignRecipientsTable.providerMessageId,
+      }).from(emailCampaignRecipientsTable)
+        .innerJoin(emailCampaignsTable, eq(emailCampaignsTable.id, emailCampaignRecipientsTable.campaignId))
+        .leftJoin(usersTable, eq(usersTable.id, emailCampaignRecipientsTable.userId))
+        .where(and(...filters))
+        .orderBy(desc(emailCampaignRecipientsTable.updatedAt), desc(emailCampaignRecipientsTable.id))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      db.select({ value: count() })
+        .from(emailCampaignRecipientsTable)
+        .innerJoin(emailCampaignsTable, eq(emailCampaignsTable.id, emailCampaignRecipientsTable.campaignId))
+        .leftJoin(usersTable, eq(usersTable.id, emailCampaignRecipientsTable.userId))
+        .where(and(...filters)),
+      db.select({
+        status: emailCampaignRecipientsTable.status,
+        value: count(),
+      }).from(emailCampaignRecipientsTable)
+        .innerJoin(emailCampaignsTable, eq(emailCampaignsTable.id, emailCampaignRecipientsTable.campaignId))
+        .leftJoin(usersTable, eq(usersTable.id, emailCampaignRecipientsTable.userId))
+        .where(and(...commonFilters))
+        .groupBy(emailCampaignRecipientsTable.status),
+    ]);
+
+    const recipientIds = rows.map((row) => row.recipientId);
+    const attempts = recipientIds.length
+      ? await db.select({
+          recipientId: emailCampaignAttemptsTable.recipientId,
+          attemptNumber: emailCampaignAttemptsTable.attemptNumber,
+          status: emailCampaignAttemptsTable.status,
+          startedAt: emailCampaignAttemptsTable.startedAt,
+          finishedAt: emailCampaignAttemptsTable.finishedAt,
+          errorClass: emailCampaignAttemptsTable.errorClass,
+          httpStatus: emailCampaignAttemptsTable.httpStatus,
+          providerMessageId: emailCampaignAttemptsTable.providerMessageId,
+          emailSnapshotEncrypted: emailCampaignAttemptsTable.emailSnapshotEncrypted,
+        }).from(emailCampaignAttemptsTable)
+          .where(inArray(emailCampaignAttemptsTable.recipientId, recipientIds))
+          .orderBy(asc(emailCampaignAttemptsTable.createdAt), asc(emailCampaignAttemptsTable.attemptNumber))
+      : [];
+    const attemptsByRecipient = new Map<string, typeof attempts>();
+    for (const attempt of attempts) {
+      const group = attemptsByRecipient.get(attempt.recipientId) ?? [];
+      group.push(attempt);
+      attemptsByRecipient.set(attempt.recipientId, group);
+    }
+    const counts = {
+      queued: 0,
+      sending: 0,
+      accepted: 0,
+      failed: 0,
+      cancelled: 0,
+    };
+    for (const row of countRows) {
+      if (row.status in counts) counts[row.status as keyof typeof counts] = Number(row.value);
+    }
+
+    const response = {
+      items: rows.map((row) => {
+        const email = decryptSensitiveDataIfEncrypted(
+          row.emailSnapshotEncrypted ?? row.currentEmailEncrypted,
+          "user-email",
+        );
+        const recipientAttempts = attemptsByRecipient.get(row.recipientId) ?? [];
+        return {
+          recipientId: row.recipientId,
+          campaignId: row.campaignId,
+          subject: row.subject,
+          email,
+          addressSource: row.emailSnapshotEncrypted
+            ? "send_snapshot"
+            : row.currentEmailEncrypted ? "current_account" : "unavailable",
+          status: row.status,
+          createdAt: row.createdAt.toISOString(),
+          acceptedAt: row.acceptedAt?.toISOString() ?? null,
+          attemptCount: Math.max(recipientAttempts.length, row.attempts),
+          manualRetries: row.manualRetries,
+          lastErrorClass: row.lastErrorClass,
+          lastErrorStatus: row.lastErrorStatus,
+          providerMessageId: row.providerMessageId,
+          attempts: recipientAttempts.map((attempt) => ({
+            attemptNumber: attempt.attemptNumber,
+            status: attempt.status,
+            email: decryptSensitiveDataIfEncrypted(attempt.emailSnapshotEncrypted, "user-email"),
+            addressSource: attempt.emailSnapshotEncrypted ? "send_snapshot" : "unavailable",
+            startedAt: attempt.startedAt.toISOString(),
+            finishedAt: attempt.finishedAt?.toISOString() ?? null,
+            errorClass: attempt.errorClass,
+            httpStatus: attempt.httpStatus,
+            providerMessageId: attempt.providerMessageId,
+          })),
+        };
+      }),
+      page,
+      pageSize,
+      total: Number(totalRows[0]?.value ?? 0),
+      counts,
+    };
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_email_campaigns",
+      resourceType: "email_campaign",
+      resourceId: "delivery-history",
+    });
+    res.setHeader("Cache-Control", "no-store, private");
+    res.json(response);
+  } catch (error) {
+    req.log.error({ err: error }, "Email campaign delivery history lookup failed");
+    res.status(503).json({ error: "L’historique des envois est indisponible." });
+  }
+});
+
 adminRoutes.get("/email-campaigns", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
@@ -446,19 +616,68 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
         .limit(1);
       if (!campaign) return "missing" as const;
       if (campaign.status !== "draft" || campaign.recipientCount < 1) return "conflict" as const;
+      const [eligibleCount] = await transaction.select({ value: count() })
+        .from(emailCampaignRecipientsTable)
+        .innerJoin(usersTable, eq(usersTable.id, emailCampaignRecipientsTable.userId))
+        .where(and(
+          eq(emailCampaignRecipientsTable.campaignId, campaignId),
+          eq(emailCampaignRecipientsTable.status, "draft"),
+          eq(usersTable.status, "active"),
+          isNotNull(usersTable.emailEncrypted),
+          isNotNull(usersTable.emailVerifiedAt),
+          isNotNull(usersTable.emailMarketingConsentAt),
+          isNull(usersTable.emailMarketingUnsubscribedAt),
+        ));
+      if (Number(eligibleCount?.value ?? 0) === 0) return "no-eligible" as const;
+
+      const now = new Date();
+      await transaction.execute(sql`
+        UPDATE sf_email_campaign_recipients AS recipients
+        SET status = 'queued',
+            email_snapshot_encrypted = users.email_encrypted,
+            next_attempt_at = ${now},
+            last_error_class = NULL,
+            last_error_status = NULL,
+            updated_at = ${now}
+        FROM sf_users AS users
+        WHERE recipients.campaign_id = ${campaignId}
+          AND recipients.status = 'draft'
+          AND recipients.user_id = users.id
+          AND users.status = 'active'
+          AND users.email_encrypted IS NOT NULL
+          AND users.email_verified_at IS NOT NULL
+          AND users.email_marketing_consent_at IS NOT NULL
+          AND users.email_marketing_unsubscribed_at IS NULL
+      `);
+      await transaction.execute(sql`
+        UPDATE sf_email_campaign_recipients AS recipients
+        SET status = 'cancelled',
+            last_error_class = 'recipient_not_eligible',
+            next_attempt_at = NULL,
+            updated_at = ${now}
+        FROM sf_users AS users
+        WHERE recipients.campaign_id = ${campaignId}
+          AND recipients.status = 'draft'
+          AND recipients.user_id = users.id
+          AND (
+            users.status <> 'active'
+            OR users.email_encrypted IS NULL
+            OR users.email_verified_at IS NULL
+            OR users.email_marketing_consent_at IS NULL
+            OR users.email_marketing_unsubscribed_at IS NOT NULL
+          )
+      `);
       await transaction.update(emailCampaignsTable).set({
         status: "queued",
-        queuedAt: new Date(),
-        updatedAt: new Date(),
+        queuedAt: now,
+        updatedAt: now,
       }).where(eq(emailCampaignsTable.id, campaignId));
-      await transaction.update(emailCampaignRecipientsTable).set({
-        status: "queued",
-        nextAttemptAt: new Date(),
-        updatedAt: new Date(),
-      }).where(and(
-        eq(emailCampaignRecipientsTable.campaignId, campaignId),
-        eq(emailCampaignRecipientsTable.status, "draft"),
-      ));
+      await recordAdminAudit({
+        adminUserId,
+        action: "queue_email_campaign",
+        resourceType: "email_campaign",
+        resourceId: campaignId,
+      }, transaction);
       return "queued" as const;
     });
     if (result === "missing") {
@@ -469,12 +688,10 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
       res.status(409).json({ error: "Campaign is not an editable draft" });
       return;
     }
-    await recordAdminAudit({
-      adminUserId,
-      action: "queue_email_campaign",
-      resourceType: "email_campaign",
-      resourceId: campaignId,
-    });
+    if (result === "no-eligible") {
+      res.status(409).json({ error: "Aucun destinataire ne conserve actuellement une adresse vérifiée et un consentement actif." });
+      return;
+    }
     const [campaign] = await getCampaignSummaries([campaignId]);
     res.json({ campaign });
   } catch (error) {
@@ -508,6 +725,12 @@ adminRoutes.post("/email-campaigns/:campaignId/cancel", async (req, res): Promis
         eq(emailCampaignRecipientsTable.campaignId, campaignId),
         eq(emailCampaignRecipientsTable.status, "queued"),
       ));
+      await recordAdminAudit({
+        adminUserId,
+        action: "cancel_email_campaign",
+        resourceType: "email_campaign",
+        resourceId: campaignId,
+      }, transaction);
       return "cancelled" as const;
     });
     if (result === "missing") {
@@ -518,12 +741,6 @@ adminRoutes.post("/email-campaigns/:campaignId/cancel", async (req, res): Promis
       res.status(409).json({ error: "Campaign delivery has started or already completed" });
       return;
     }
-    await recordAdminAudit({
-      adminUserId,
-      action: "cancel_email_campaign",
-      resourceType: "email_campaign",
-      resourceId: campaignId,
-    });
     const [campaign] = await getCampaignSummaries([campaignId]);
     res.json({ campaign });
   } catch (error) {
@@ -531,6 +748,147 @@ adminRoutes.post("/email-campaigns/:campaignId/cancel", async (req, res): Promis
     res.status(503).json({ error: "La campagne n’a pas pu être annulée." });
   }
 });
+
+adminRoutes.post(
+  "/email-campaigns/:campaignId/recipients/:recipientId/retry",
+  async (req, res): Promise<void> => {
+    const adminUserId = respondAdminAuthError(req, res, "mutate");
+    if (!adminUserId) return;
+    if (!dispatchEnabled()) {
+      res.status(503).json({ error: "La relance est indisponible tant que l’envoi n’est pas configuré." });
+      return;
+    }
+
+    const idempotencyKey = req.get("Idempotency-Key")?.trim() ?? "";
+    if (!/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey)) {
+      res.status(400).json({ error: "Idempotency-Key is invalid" });
+      return;
+    }
+    const { campaignId, recipientId } = req.params;
+
+    try {
+      const result = await db.transaction(async (transaction) => {
+        const [previousRequest] = await transaction.select()
+          .from(emailCampaignRetryRequestsTable)
+          .where(eq(emailCampaignRetryRequestsTable.idempotencyKey, idempotencyKey))
+          .limit(1);
+        if (previousRequest) {
+          return previousRequest.recipientId === recipientId
+            && previousRequest.adminUserId === adminUserId
+            ? "replayed" as const
+            : "idempotency-conflict" as const;
+        }
+
+        // Every campaign mutation and worker claim locks campaign before recipient.
+        const [campaign] = await transaction.select({
+          id: emailCampaignsTable.id,
+          status: emailCampaignsTable.status,
+        }).from(emailCampaignsTable)
+          .where(eq(emailCampaignsTable.id, campaignId))
+          .for("update")
+          .limit(1);
+        if (!campaign) return "missing" as const;
+        if (campaign.status === "cancelled") return "campaign-conflict" as const;
+
+        const [recipient] = await transaction.select({
+          id: emailCampaignRecipientsTable.id,
+          status: emailCampaignRecipientsTable.status,
+          attempts: emailCampaignRecipientsTable.attempts,
+          manualRetries: emailCampaignRecipientsTable.manualRetries,
+          lastErrorClass: emailCampaignRecipientsTable.lastErrorClass,
+          accountStatus: usersTable.status,
+          emailEncrypted: usersTable.emailEncrypted,
+          emailVerifiedAt: usersTable.emailVerifiedAt,
+          emailMarketingConsentAt: usersTable.emailMarketingConsentAt,
+          emailMarketingUnsubscribedAt: usersTable.emailMarketingUnsubscribedAt,
+        }).from(emailCampaignRecipientsTable)
+          .innerJoin(usersTable, eq(usersTable.id, emailCampaignRecipientsTable.userId))
+          .where(and(
+            eq(emailCampaignRecipientsTable.id, recipientId),
+            eq(emailCampaignRecipientsTable.campaignId, campaignId),
+          ))
+          .for("update")
+          .limit(1);
+        if (!recipient) return "missing" as const;
+        if (!canManuallyRetryCampaignRecipient({
+          status: recipient.status,
+          manualRetries: recipient.manualRetries,
+          lastErrorClass: recipient.lastErrorClass,
+          recipient,
+        })) return "recipient-conflict" as const;
+
+        const now = new Date();
+        const [insertedRequest] = await transaction.insert(emailCampaignRetryRequestsTable)
+          .values({ idempotencyKey, recipientId, adminUserId, createdAt: now })
+          .onConflictDoNothing()
+          .returning({ idempotencyKey: emailCampaignRetryRequestsTable.idempotencyKey });
+        if (!insertedRequest) {
+          const [existingRequest] = await transaction.select()
+            .from(emailCampaignRetryRequestsTable)
+            .where(eq(emailCampaignRetryRequestsTable.idempotencyKey, idempotencyKey))
+            .limit(1);
+          return existingRequest?.recipientId === recipientId
+            && existingRequest.adminUserId === adminUserId
+            ? "replayed" as const
+            : "idempotency-conflict" as const;
+        }
+
+        await transaction.update(emailCampaignRecipientsTable).set({
+          status: "queued",
+          attempts: 0,
+          manualRetries: recipient.manualRetries + 1,
+          emailSnapshotEncrypted: recipient.emailEncrypted,
+          nextAttemptAt: now,
+          processingStartedAt: null,
+          updatedAt: now,
+        }).where(and(
+          eq(emailCampaignRecipientsTable.id, recipientId),
+          eq(emailCampaignRecipientsTable.status, "failed"),
+        ));
+        await transaction.update(emailCampaignsTable).set({
+          status: "queued",
+          completedAt: null,
+          updatedAt: now,
+        }).where(eq(emailCampaignsTable.id, campaignId));
+        await recordAdminAudit({
+          adminUserId,
+          action: "retry_email_campaign_recipient",
+          resourceType: "email_campaign",
+          resourceId: recipientId,
+        }, transaction);
+        return "queued" as const;
+      });
+
+      if (result === "missing") {
+        res.status(404).json({ error: "Campaign recipient not found" });
+        return;
+      }
+      if (result === "campaign-conflict" || result === "recipient-conflict" || result === "idempotency-conflict") {
+        res.status(409).json({ error: "Cette adresse n’est plus relançable, n’est pas éligible ou a atteint sa limite de relances." });
+        return;
+      }
+      if (result === "replayed") {
+        const [current] = await db.select({ status: emailCampaignRecipientsTable.status })
+          .from(emailCampaignRecipientsTable)
+          .where(and(
+            eq(emailCampaignRecipientsTable.id, recipientId),
+            eq(emailCampaignRecipientsTable.campaignId, campaignId),
+          ))
+          .limit(1);
+        if (!current) {
+          res.status(404).json({ error: "Campaign recipient not found" });
+          return;
+        }
+        res.json({ recipientId, status: current.status, replayed: true });
+        return;
+      }
+      res.json({ recipientId, status: "queued", replayed: false });
+    } catch (error) {
+      req.log.error({ err: error, campaignId, recipientId }, "Email campaign recipient retry could not be recorded");
+      res.status(503).json({ error: "La relance n’a pas pu être enregistrée." });
+    }
+  },
+);
 
 adminRoutes.delete("/email-campaigns/:campaignId", async (req, res): Promise<void> => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
@@ -546,6 +904,12 @@ adminRoutes.delete("/email-campaigns/:campaignId", async (req, res): Promise<voi
       if (!campaign) return "missing" as const;
       if (campaign.status !== "draft") return "conflict" as const;
       await transaction.delete(emailCampaignsTable).where(eq(emailCampaignsTable.id, campaignId));
+      await recordAdminAudit({
+        adminUserId,
+        action: "delete_email_campaign",
+        resourceType: "email_campaign",
+        resourceId: campaignId,
+      }, transaction);
       return "deleted" as const;
     });
     if (deleted === "missing") {
@@ -556,12 +920,6 @@ adminRoutes.delete("/email-campaigns/:campaignId", async (req, res): Promise<voi
       res.status(409).json({ error: "Only an unsent draft can be deleted" });
       return;
     }
-    await recordAdminAudit({
-      adminUserId,
-      action: "delete_email_campaign",
-      resourceType: "email_campaign",
-      resourceId: campaignId,
-    });
     res.json({ deleted: true });
   } catch (error) {
     req.log.error({ err: error, campaignId }, "Email campaign draft deletion failed");

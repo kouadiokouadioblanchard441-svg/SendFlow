@@ -54,9 +54,12 @@ export function isCampaignRecipientEligible(recipient: CampaignRecipientEligibil
 export function canManuallyRetryCampaignRecipient(input: {
   status: string;
   manualRetries: number;
+  lastErrorClass?: string | null;
   recipient: CampaignRecipientEligibility;
 }) {
   return input.status === "failed"
+    && input.lastErrorClass !== "network_or_response"
+    && input.lastErrorClass !== "delivery_outcome_unknown"
     && Number.isInteger(input.manualRetries)
     && input.manualRetries >= 0
     && input.manualRetries < 3

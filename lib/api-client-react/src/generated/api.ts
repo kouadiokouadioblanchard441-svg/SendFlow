@@ -30,10 +30,12 @@ import type {
   AdminCountryCatalog,
   AdminEmailCampaignDeleteResponse,
   AdminEmailCampaignDetailResponse,
+  AdminEmailCampaignHistoryResponse,
   AdminEmailCampaignInput,
   AdminEmailCampaignListResponse,
   AdminEmailCampaignMutationResponse,
   AdminEmailCampaignRecipientsResponse,
+  AdminEmailCampaignRetryResponse,
   AdminIpAuthorizationResult,
   AdminLoginActivityPage,
   AdminOperatorPricingCatalog,
@@ -70,6 +72,8 @@ import type {
   CustomerBiometricOptions,
   CustomerBiometricStatus,
   CustomerBiometricVerificationInput,
+  CustomerEmailMarketingPreference,
+  CustomerEmailMarketingPreferenceUpdate,
   CustomerMutationResult,
   CustomerPasswordResetInput,
   CustomerPaymentLink,
@@ -108,6 +112,8 @@ import type {
   DeveloperWebhookInput,
   DeveloperWebhooksResponse,
   DiditWebhookPayload,
+  EmailMarketingUnsubscribeInput,
+  EmailMarketingUnsubscribeResponse,
   EmailOtpSendInput,
   EmailOtpSendResult,
   EmailOtpVerifyInput,
@@ -124,6 +130,7 @@ import type {
   IpBlockInput,
   IpBlockList,
   IpBlockRevocation,
+  ListAdminEmailCampaignHistoryParams,
   ListAdminEmailCampaignRecipientsParams,
   ListAdminIpBlocksParams,
   ListAdminLoginActivityParams,
@@ -2834,12 +2841,266 @@ export function useGetCustomerProfile<TData = Awaited<ReturnType<typeof getCusto
 
 
 
+export const getGetCustomerEmailMarketingPreferenceUrl = () => {
+
+
+
+
+  return `/api/me/email-marketing-preference`
+}
+
+/**
+ * @summary Read the authenticated customer's marketing email preference
+ */
+export const getCustomerEmailMarketingPreference = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerEmailMarketingPreference> => {
+
+  return customFetch<CustomerEmailMarketingPreference>(getGetCustomerEmailMarketingPreferenceUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerEmailMarketingPreferenceQueryKey = () => {
+    return [
+    `/api/me/email-marketing-preference`
+    ] as const;
+    }
+
+
+export const getGetCustomerEmailMarketingPreferenceQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerEmailMarketingPreference>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerEmailMarketingPreference>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerEmailMarketingPreferenceQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerEmailMarketingPreference>>> = ({ signal }) => getCustomerEmailMarketingPreference({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerEmailMarketingPreference>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerEmailMarketingPreferenceQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerEmailMarketingPreference>>>
+export type GetCustomerEmailMarketingPreferenceQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read the authenticated customer's marketing email preference
+ */
+
+export function useGetCustomerEmailMarketingPreference<TData = Awaited<ReturnType<typeof getCustomerEmailMarketingPreference>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerEmailMarketingPreference>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerEmailMarketingPreferenceQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateCustomerEmailMarketingPreferenceUrl = () => {
+
+
+
+
+  return `/api/me/email-marketing-preference`
+}
+
+/**
+ * @summary Explicitly opt in or out of SendFlow marketing emails
+ */
+export const updateCustomerEmailMarketingPreference = async (customerEmailMarketingPreferenceUpdate: CustomerEmailMarketingPreferenceUpdate, options?: Parameters<typeof customFetch>[1]): Promise<CustomerEmailMarketingPreference> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerEmailMarketingPreference>(getUpdateCustomerEmailMarketingPreferenceUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerEmailMarketingPreferenceUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateCustomerEmailMarketingPreferenceMutationKey = () => ['updateCustomerEmailMarketingPreference'] as const;
+
+export const getUpdateCustomerEmailMarketingPreferenceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomerEmailMarketingPreference>>, TError,UpdateCustomerEmailMarketingPreferenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCustomerEmailMarketingPreference>>, TError,UpdateCustomerEmailMarketingPreferenceMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCustomerEmailMarketingPreferenceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCustomerEmailMarketingPreference>>, UpdateCustomerEmailMarketingPreferenceMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCustomerEmailMarketingPreference(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCustomerEmailMarketingPreferenceMutationResult = NonNullable<Awaited<ReturnType<typeof updateCustomerEmailMarketingPreference>>>
+    export type UpdateCustomerEmailMarketingPreferenceMutationBody = BodyType<CustomerEmailMarketingPreferenceUpdate>
+    export type UpdateCustomerEmailMarketingPreferenceMutationError = ErrorType<void>
+    export type UpdateCustomerEmailMarketingPreferenceMutationVariables = {data: BodyType<CustomerEmailMarketingPreferenceUpdate>}
+
+    /**
+ * @summary Explicitly opt in or out of SendFlow marketing emails
+ */
+export const useUpdateCustomerEmailMarketingPreference = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomerEmailMarketingPreference>>, TError,UpdateCustomerEmailMarketingPreferenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCustomerEmailMarketingPreference>>,
+        TError,
+        UpdateCustomerEmailMarketingPreferenceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCustomerEmailMarketingPreferenceMutationOptions(options));
+    }
+
+export const getUnsubscribeFromSendFlowMarketingEmailsUrl = () => {
+
+
+
+
+  return `/api/public/email-marketing/unsubscribe`
+}
+
+/**
+ * The signed token is issued only in SendFlow email links. The browser must confirm the action; a GET request never changes preference.
+ * @summary Apply a signed email unsubscribe request
+ */
+export const unsubscribeFromSendFlowMarketingEmails = async (emailMarketingUnsubscribeInput: EmailMarketingUnsubscribeInput, options?: Parameters<typeof customFetch>[1]): Promise<EmailMarketingUnsubscribeResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<EmailMarketingUnsubscribeResponse>(getUnsubscribeFromSendFlowMarketingEmailsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emailMarketingUnsubscribeInput)
+  }
+);}
+
+
+
+
+
+export const getUnsubscribeFromSendFlowMarketingEmailsMutationKey = () => ['unsubscribeFromSendFlowMarketingEmails'] as const;
+
+export const getUnsubscribeFromSendFlowMarketingEmailsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromSendFlowMarketingEmails>>, TError,UnsubscribeFromSendFlowMarketingEmailsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromSendFlowMarketingEmails>>, TError,UnsubscribeFromSendFlowMarketingEmailsMutationVariables, TContext> => {
+
+const mutationKey = getUnsubscribeFromSendFlowMarketingEmailsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unsubscribeFromSendFlowMarketingEmails>>, UnsubscribeFromSendFlowMarketingEmailsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  unsubscribeFromSendFlowMarketingEmails(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnsubscribeFromSendFlowMarketingEmailsMutationResult = NonNullable<Awaited<ReturnType<typeof unsubscribeFromSendFlowMarketingEmails>>>
+    export type UnsubscribeFromSendFlowMarketingEmailsMutationBody = BodyType<EmailMarketingUnsubscribeInput>
+    export type UnsubscribeFromSendFlowMarketingEmailsMutationError = ErrorType<void>
+    export type UnsubscribeFromSendFlowMarketingEmailsMutationVariables = {data: BodyType<EmailMarketingUnsubscribeInput>}
+
+    /**
+ * @summary Apply a signed email unsubscribe request
+ */
+export const useUnsubscribeFromSendFlowMarketingEmails = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromSendFlowMarketingEmails>>, TError,UnsubscribeFromSendFlowMarketingEmailsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unsubscribeFromSendFlowMarketingEmails>>,
+        TError,
+        UnsubscribeFromSendFlowMarketingEmailsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUnsubscribeFromSendFlowMarketingEmailsMutationOptions(options));
+    }
+
 export const getUpdateCustomerProfileUrl = () => {
 
 
 
 
-  return `/api/me/profile`
+  return `/api/public/email-marketing/unsubscribe`
 }
 
 /**
@@ -8172,6 +8433,90 @@ export function useListAdminEmailCampaignRecipients<TData = Awaited<ReturnType<t
 
 
 
+export const getListAdminEmailCampaignHistoryUrl = (params?: ListAdminEmailCampaignHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/history?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/history`
+}
+
+/**
+ * @summary Search recipient-level email campaign delivery history
+ */
+export const listAdminEmailCampaignHistory = async (params?: ListAdminEmailCampaignHistoryParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignHistoryResponse> => {
+
+  return customFetch<AdminEmailCampaignHistoryResponse>(getListAdminEmailCampaignHistoryUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminEmailCampaignHistoryQueryKey = (params?: ListAdminEmailCampaignHistoryParams,) => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminEmailCampaignHistoryQueryOptions = <TData = Awaited<ReturnType<typeof listAdminEmailCampaignHistory>>, TError = ErrorType<void>>(params?: ListAdminEmailCampaignHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaignHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminEmailCampaignHistoryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminEmailCampaignHistory>>> = ({ signal }) => listAdminEmailCampaignHistory(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaignHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminEmailCampaignHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminEmailCampaignHistory>>>
+export type ListAdminEmailCampaignHistoryQueryError = ErrorType<void>
+
+
+/**
+ * @summary Search recipient-level email campaign delivery history
+ */
+
+export function useListAdminEmailCampaignHistory<TData = Awaited<ReturnType<typeof listAdminEmailCampaignHistory>>, TError = ErrorType<void>>(
+ params?: ListAdminEmailCampaignHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminEmailCampaignHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminEmailCampaignHistoryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetAdminEmailCampaignUrl = (campaignId: string,) => {
 
 
@@ -8558,6 +8903,83 @@ export const useCancelAdminEmailCampaign = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCancelAdminEmailCampaignMutationOptions(options));
+    }
+
+export const getRetryAdminEmailCampaignRecipientUrl = (campaignId: string,
+    recipientId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}/recipients/${recipientId}/retry`
+}
+
+/**
+ * Only a failed recipient that is still active, verified, opted in, and not unsubscribed can be retried. In-flight and provider-accepted deliveries are never retried.
+ * @summary Queue an explicit, bounded retry for a failed recipient
+ */
+export const retryAdminEmailCampaignRecipient = async (campaignId: string,
+    recipientId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignRetryResponse> => {
+
+  return customFetch<AdminEmailCampaignRetryResponse>(getRetryAdminEmailCampaignRecipientUrl(campaignId,recipientId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRetryAdminEmailCampaignRecipientMutationKey = () => ['retryAdminEmailCampaignRecipient'] as const;
+
+export const getRetryAdminEmailCampaignRecipientMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retryAdminEmailCampaignRecipient>>, TError,RetryAdminEmailCampaignRecipientMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof retryAdminEmailCampaignRecipient>>, TError,RetryAdminEmailCampaignRecipientMutationVariables, TContext> => {
+
+const mutationKey = getRetryAdminEmailCampaignRecipientMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof retryAdminEmailCampaignRecipient>>, RetryAdminEmailCampaignRecipientMutationVariables> = (props) => {
+          const {campaignId,recipientId} = props ?? {};
+
+          return  retryAdminEmailCampaignRecipient(campaignId,recipientId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RetryAdminEmailCampaignRecipientMutationResult = NonNullable<Awaited<ReturnType<typeof retryAdminEmailCampaignRecipient>>>
+
+    export type RetryAdminEmailCampaignRecipientMutationError = ErrorType<void>
+    export type RetryAdminEmailCampaignRecipientMutationVariables = {campaignId: string;recipientId: string}
+
+    /**
+ * @summary Queue an explicit, bounded retry for a failed recipient
+ */
+export const useRetryAdminEmailCampaignRecipient = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retryAdminEmailCampaignRecipient>>, TError,RetryAdminEmailCampaignRecipientMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof retryAdminEmailCampaignRecipient>>,
+        TError,
+        RetryAdminEmailCampaignRecipientMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRetryAdminEmailCampaignRecipientMutationOptions(options));
     }
 
 export const getListAdminOtpPoliciesUrl = () => {

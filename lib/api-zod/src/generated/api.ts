@@ -704,6 +704,47 @@ export const GetCustomerProfileResponse = zod.object({
 
 
 /**
+ * @summary Read the authenticated customer's marketing email preference
+ */
+export const GetCustomerEmailMarketingPreferenceResponse = zod.object({
+  "optedIn": zod.boolean(),
+  "emailVerified": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Explicitly opt in or out of SendFlow marketing emails
+ */
+export const UpdateCustomerEmailMarketingPreferenceBody = zod.object({
+  "optedIn": zod.boolean()
+})
+
+export const UpdateCustomerEmailMarketingPreferenceResponse = zod.object({
+  "optedIn": zod.boolean(),
+  "emailVerified": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * The signed token is issued only in SendFlow email links. The browser must confirm the action; a GET request never changes preference.
+ * @summary Apply a signed email unsubscribe request
+ */
+export const unsubscribeFromSendFlowMarketingEmailsBodyTokenMax = 1024;
+
+
+
+export const UnsubscribeFromSendFlowMarketingEmailsBody = zod.object({
+  "token": zod.string().min(1).max(unsubscribeFromSendFlowMarketingEmailsBodyTokenMax)
+})
+
+export const UnsubscribeFromSendFlowMarketingEmailsResponse = zod.object({
+  "unsubscribed": zod.literal(true)
+})
+
+
+/**
  * Updates the authenticated account's name and date of birth and returns the stored email address. The email is not verified by this flow. The server requires a recently verified PIN.
  * @summary Update the authenticated customer's profile
  */
@@ -3160,7 +3201,7 @@ export const listAdminEmailCampaignRecipientsResponseTotalMin = 0;
 
 export const listAdminEmailCampaignRecipientsResponseAllRecipientCountMin = 0;
 
-export const listAdminEmailCampaignRecipientsResponseAllUnverifiedRecipientCountMin = 0;
+export const listAdminEmailCampaignRecipientsResponseAllIneligibleRecipientCountMin = 0;
 
 
 
@@ -3176,7 +3217,90 @@ export const ListAdminEmailCampaignRecipientsResponse = zod.object({
   "pageSize": zod.int().min(1),
   "total": zod.int().min(listAdminEmailCampaignRecipientsResponseTotalMin),
   "allRecipientCount": zod.int().min(listAdminEmailCampaignRecipientsResponseAllRecipientCountMin),
-  "allUnverifiedRecipientCount": zod.int().min(listAdminEmailCampaignRecipientsResponseAllUnverifiedRecipientCountMin)
+  "allIneligibleRecipientCount": zod.int().min(listAdminEmailCampaignRecipientsResponseAllIneligibleRecipientCountMin)
+})
+
+
+/**
+ * @summary Search recipient-level email campaign delivery history
+ */
+export const listAdminEmailCampaignHistoryQuerySearchMax = 254;
+
+export const listAdminEmailCampaignHistoryQueryCampaignIdMax = 80;
+
+export const listAdminEmailCampaignHistoryQueryPageDefault = 1;
+
+export const listAdminEmailCampaignHistoryQueryPageSizeDefault = 25;
+export const listAdminEmailCampaignHistoryQueryPageSizeMax = 100;
+
+
+
+export const ListAdminEmailCampaignHistoryQueryParams = zod.object({
+  "search": zod.coerce.string().max(listAdminEmailCampaignHistoryQuerySearchMax).optional(),
+  "status": zod.enum(['queued', 'sending', 'accepted', 'failed', 'cancelled']).optional(),
+  "campaignId": zod.coerce.string().max(listAdminEmailCampaignHistoryQueryCampaignIdMax).optional(),
+  "page": zod.coerce.number().int().min(1).default(listAdminEmailCampaignHistoryQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listAdminEmailCampaignHistoryQueryPageSizeMax).default(listAdminEmailCampaignHistoryQueryPageSizeDefault)
+})
+
+export const listAdminEmailCampaignHistoryResponseItemsItemAttemptCountMin = 0;
+
+export const listAdminEmailCampaignHistoryResponseItemsItemManualRetriesMin = 0;
+
+
+
+
+export const listAdminEmailCampaignHistoryResponseTotalMin = 0;
+
+export const listAdminEmailCampaignHistoryResponseCountsQueuedMin = 0;
+
+export const listAdminEmailCampaignHistoryResponseCountsSendingMin = 0;
+
+export const listAdminEmailCampaignHistoryResponseCountsAcceptedMin = 0;
+
+export const listAdminEmailCampaignHistoryResponseCountsFailedMin = 0;
+
+export const listAdminEmailCampaignHistoryResponseCountsCancelledMin = 0;
+
+
+
+export const ListAdminEmailCampaignHistoryResponse = zod.object({
+  "items": zod.array(zod.object({
+  "recipientId": zod.string(),
+  "campaignId": zod.string(),
+  "subject": zod.string(),
+  "email": zod.email().nullable(),
+  "addressSource": zod.enum(['send_snapshot', 'current_account', 'unavailable']),
+  "status": zod.enum(['draft', 'queued', 'sending', 'accepted', 'failed', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "acceptedAt": zod.coerce.date().nullable(),
+  "attemptCount": zod.int().min(listAdminEmailCampaignHistoryResponseItemsItemAttemptCountMin),
+  "manualRetries": zod.int().min(listAdminEmailCampaignHistoryResponseItemsItemManualRetriesMin),
+  "lastErrorClass": zod.string().nullable(),
+  "lastErrorStatus": zod.int().nullable(),
+  "providerMessageId": zod.string().nullable(),
+  "attempts": zod.array(zod.object({
+  "attemptNumber": zod.int().min(1),
+  "status": zod.enum(['sending', 'accepted', 'failed']),
+  "email": zod.email().nullable(),
+  "addressSource": zod.enum(['send_snapshot', 'unavailable']),
+  "startedAt": zod.coerce.date(),
+  "finishedAt": zod.coerce.date().nullable(),
+  "errorClass": zod.string().nullable(),
+  "httpStatus": zod.int().nullable(),
+  "providerMessageId": zod.string().nullable()
+}))
+})),
+  "page": zod.int().min(1),
+  "pageSize": zod.int().min(1),
+  "total": zod.int().min(listAdminEmailCampaignHistoryResponseTotalMin),
+  "counts": zod.object({
+  "queued": zod.int().min(listAdminEmailCampaignHistoryResponseCountsQueuedMin),
+  "sending": zod.int().min(listAdminEmailCampaignHistoryResponseCountsSendingMin),
+  "accepted": zod.int().min(listAdminEmailCampaignHistoryResponseCountsAcceptedMin),
+  "failed": zod.int().min(listAdminEmailCampaignHistoryResponseCountsFailedMin),
+  "cancelled": zod.int().min(listAdminEmailCampaignHistoryResponseCountsCancelledMin)
+})
 })
 
 
@@ -3431,6 +3555,37 @@ export const CancelAdminEmailCampaignResponse = zod.object({
   "queuedAt": zod.coerce.date().nullable(),
   "completedAt": zod.coerce.date().nullable()
 })
+})
+
+
+/**
+ * Only a failed recipient that is still active, verified, opted in, and not unsubscribed can be retried. In-flight and provider-accepted deliveries are never retried.
+ * @summary Queue an explicit, bounded retry for a failed recipient
+ */
+export const retryAdminEmailCampaignRecipientPathCampaignIdMax = 80;
+
+export const retryAdminEmailCampaignRecipientPathRecipientIdMax = 80;
+
+
+
+export const RetryAdminEmailCampaignRecipientParams = zod.object({
+  "campaignId": zod.coerce.string().min(1).max(retryAdminEmailCampaignRecipientPathCampaignIdMax),
+  "recipientId": zod.coerce.string().min(1).max(retryAdminEmailCampaignRecipientPathRecipientIdMax)
+})
+
+export const retryAdminEmailCampaignRecipientHeaderIdempotencyKeyMin = 8;
+export const retryAdminEmailCampaignRecipientHeaderIdempotencyKeyMax = 128;
+
+
+
+export const RetryAdminEmailCampaignRecipientHeader = zod.object({
+  "Idempotency-Key": zod.string().min(retryAdminEmailCampaignRecipientHeaderIdempotencyKeyMin).max(retryAdminEmailCampaignRecipientHeaderIdempotencyKeyMax)
+})
+
+export const RetryAdminEmailCampaignRecipientResponse = zod.object({
+  "recipientId": zod.string(),
+  "status": zod.enum(['queued', 'sending', 'accepted', 'failed', 'cancelled']),
+  "replayed": zod.boolean()
 })
 
 

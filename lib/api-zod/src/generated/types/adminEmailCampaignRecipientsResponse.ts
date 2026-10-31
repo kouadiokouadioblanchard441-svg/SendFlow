@@ -18,5 +18,5 @@ export interface AdminEmailCampaignRecipientsResponse {
   /** @minimum 0 */
   allRecipientCount: number;
   /** @minimum 0 */
-  allUnverifiedRecipientCount: number;
+  allIneligibleRecipientCount: number;
 }

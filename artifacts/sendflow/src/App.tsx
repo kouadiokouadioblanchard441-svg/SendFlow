@@ -27,6 +27,7 @@ const PrivacyPage = lazy(() =>
 const NotFound = lazy(() => import('@/pages/not-found'));
 const AccountPage = lazy(() => import('@/pages/account'));
 const AccountInfoPage = lazy(() => import('@/pages/account-info'));
+const EmailUnsubscribePage = lazy(() => import('@/pages/email-unsubscribe'));
 const AccountLimitPage = lazy(() => import('@/pages/account-limit'));
 const LinkFlowPage = lazy(() => import('@/pages/linkflow'));
 const LinkFlowDetailPage = lazy(() => import('@/pages/linkflow-detail'));
@@ -309,6 +310,7 @@ function App() {
                 <Route path="/forgot-pin" component={() => <ResetPage mode="pin" />} />
                 <Route path="/account" component={AccountPage} />
                 <Route path="/account-info" component={AccountInfoPage} />
+                <Route path="/email-unsubscribe" component={EmailUnsubscribePage} />
                 <Route path="/account-limit" component={AccountLimitPage} />
                 <Route path="/linkflow" component={LinkFlowPage} />
                 <Route path="/linkflow/new" component={LinkFlowNewPage} />

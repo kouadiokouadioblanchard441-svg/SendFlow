@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS "sf_email_campaign_attempts" (
   "attempt_number" integer NOT NULL,
   "status" varchar(16) NOT NULL,
   "idempotency_key" varchar(128) NOT NULL,
+  "email_snapshot_encrypted" text,
   "provider_message_id" varchar(255),
   "error_class" varchar(32),
   "http_status" integer,

@@ -510,6 +510,29 @@ export interface CustomerProfileUpdate {
   birthDate: string;
 }
 
+export interface CustomerEmailMarketingPreference {
+  optedIn: boolean;
+  emailVerified: boolean;
+  /** @nullable */
+  updatedAt: string | null;
+}
+
+export interface CustomerEmailMarketingPreferenceUpdate {
+  optedIn: boolean;
+}
+
+export interface EmailMarketingUnsubscribeInput {
+  /**
+     * @minLength 1
+     * @maxLength 1024
+     */
+  token: string;
+}
+
+export interface EmailMarketingUnsubscribeResponse {
+  unsubscribed: true;
+}
+
 export type CustomerPaymentLinkInputCurrency = typeof CustomerPaymentLinkInputCurrency[keyof typeof CustomerPaymentLinkInputCurrency];
 
 
@@ -3137,7 +3160,7 @@ export interface AdminEmailCampaignRecipientsResponse {
   /** @minimum 0 */
   allRecipientCount: number;
   /** @minimum 0 */
-  allUnverifiedRecipientCount: number;
+  allIneligibleRecipientCount: number;
 }
 
 export type AdminEmailCampaignInputAudienceMode = typeof AdminEmailCampaignInputAudienceMode[keyof typeof AdminEmailCampaignInputAudienceMode];
@@ -3179,6 +3202,127 @@ export interface AdminEmailCampaignDetailResponse {
 
 export interface AdminEmailCampaignDeleteResponse {
   deleted: true;
+}
+
+export type AdminEmailCampaignAttemptStatus = typeof AdminEmailCampaignAttemptStatus[keyof typeof AdminEmailCampaignAttemptStatus];
+
+
+export const AdminEmailCampaignAttemptStatus = {
+  sending: 'sending',
+  accepted: 'accepted',
+  failed: 'failed',
+} as const;
+
+export type AdminEmailCampaignAttemptAddressSource = typeof AdminEmailCampaignAttemptAddressSource[keyof typeof AdminEmailCampaignAttemptAddressSource];
+
+
+export const AdminEmailCampaignAttemptAddressSource = {
+  send_snapshot: 'send_snapshot',
+  unavailable: 'unavailable',
+} as const;
+
+export interface AdminEmailCampaignAttempt {
+  /** @minimum 1 */
+  attemptNumber: number;
+  status: AdminEmailCampaignAttemptStatus;
+  /** @nullable */
+  email: string | null;
+  addressSource: AdminEmailCampaignAttemptAddressSource;
+  startedAt: string;
+  /** @nullable */
+  finishedAt: string | null;
+  /** @nullable */
+  errorClass: string | null;
+  /** @nullable */
+  httpStatus: number | null;
+  /** @nullable */
+  providerMessageId: string | null;
+}
+
+export type AdminEmailCampaignDeliveryAddressSource = typeof AdminEmailCampaignDeliveryAddressSource[keyof typeof AdminEmailCampaignDeliveryAddressSource];
+
+
+export const AdminEmailCampaignDeliveryAddressSource = {
+  send_snapshot: 'send_snapshot',
+  current_account: 'current_account',
+  unavailable: 'unavailable',
+} as const;
+
+export type AdminEmailCampaignDeliveryStatus = typeof AdminEmailCampaignDeliveryStatus[keyof typeof AdminEmailCampaignDeliveryStatus];
+
+
+export const AdminEmailCampaignDeliveryStatus = {
+  draft: 'draft',
+  queued: 'queued',
+  sending: 'sending',
+  accepted: 'accepted',
+  failed: 'failed',
+  cancelled: 'cancelled',
+} as const;
+
+export interface AdminEmailCampaignDelivery {
+  recipientId: string;
+  campaignId: string;
+  subject: string;
+  /** @nullable */
+  email: string | null;
+  addressSource: AdminEmailCampaignDeliveryAddressSource;
+  status: AdminEmailCampaignDeliveryStatus;
+  createdAt: string;
+  /** @nullable */
+  acceptedAt: string | null;
+  /** @minimum 0 */
+  attemptCount: number;
+  /** @minimum 0 */
+  manualRetries: number;
+  /** @nullable */
+  lastErrorClass: string | null;
+  /** @nullable */
+  lastErrorStatus: number | null;
+  /** @nullable */
+  providerMessageId: string | null;
+  attempts: AdminEmailCampaignAttempt[];
+}
+
+export interface AdminEmailCampaignHistoryCounts {
+  /** @minimum 0 */
+  queued: number;
+  /** @minimum 0 */
+  sending: number;
+  /** @minimum 0 */
+  accepted: number;
+  /** @minimum 0 */
+  failed: number;
+  /** @minimum 0 */
+  cancelled: number;
+}
+
+export interface AdminEmailCampaignHistoryResponse {
+  items: AdminEmailCampaignDelivery[];
+  /** @minimum 1 */
+  page: number;
+  /** @minimum 1 */
+  pageSize: number;
+  /** @minimum 0 */
+  total: number;
+  counts: AdminEmailCampaignHistoryCounts;
+}
+
+export type AdminEmailCampaignRetryResponseStatus = typeof AdminEmailCampaignRetryResponseStatus[keyof typeof AdminEmailCampaignRetryResponseStatus];
+
+
+export const AdminEmailCampaignRetryResponseStatus = {
+  queued: 'queued',
+  sending: 'sending',
+  accepted: 'accepted',
+  failed: 'failed',
+  cancelled: 'cancelled',
+} as const;
+
+export interface AdminEmailCampaignRetryResponse {
+  recipientId: string;
+  status: AdminEmailCampaignRetryResponseStatus;
+  replayed: boolean;
 }
 
 /**
@@ -3254,6 +3398,38 @@ search?: string;
  */
 page?: number;
 };
+
+export type ListAdminEmailCampaignHistoryParams = {
+/**
+ * @maxLength 254
+ */
+search?: string;
+status?: ListAdminEmailCampaignHistoryStatus;
+/**
+ * @maxLength 80
+ */
+campaignId?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+pageSize?: number;
+};
+
+export type ListAdminEmailCampaignHistoryStatus = typeof ListAdminEmailCampaignHistoryStatus[keyof typeof ListAdminEmailCampaignHistoryStatus];
+
+
+export const ListAdminEmailCampaignHistoryStatus = {
+  queued: 'queued',
+  sending: 'sending',
+  accepted: 'accepted',
+  failed: 'failed',
+  cancelled: 'cancelled',
+} as const;
 
 export type ListAdminLoginActivityParams = {
 /**

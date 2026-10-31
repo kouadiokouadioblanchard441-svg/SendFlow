@@ -86,6 +86,7 @@ export const emailCampaignAttemptsTable = pgTable(
     attemptNumber: integer("attempt_number").notNull(),
     status: varchar("status", { length: 16 }).notNull(),
     idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
+    emailSnapshotEncrypted: text("email_snapshot_encrypted"),
     providerMessageId: varchar("provider_message_id", { length: 255 }),
     errorClass: varchar("error_class", { length: 32 }),
     httpStatus: integer("http_status"),

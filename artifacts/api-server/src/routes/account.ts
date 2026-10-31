@@ -1,15 +1,16 @@
 import { Router, type IRouter } from "express";
 import { randomUUID } from "node:crypto";
 import {
-  CustomerEmailMarketingPreference,
-  CustomerEmailMarketingPreferenceUpdate,
-  EmailMarketingUnsubscribeInput,
-  EmailMarketingUnsubscribeResponse,
   GetCustomerProfileResponse,
   GetCurrentAccountResponse,
+  GetCustomerEmailMarketingPreferenceResponse,
   GetCustomerPortalEligibilityResponse,
   GetCustomerTransactionResponse,
   GetCustomerTransactionsResponse,
+  UnsubscribeFromSendFlowMarketingEmailsBody,
+  UnsubscribeFromSendFlowMarketingEmailsResponse,
+  UpdateCustomerEmailMarketingPreferenceBody,
+  UpdateCustomerEmailMarketingPreferenceResponse,
   UpdateCustomerProfileBody,
   UpdateCustomerProfileResponse,
 } from "@workspace/api-zod";
@@ -271,7 +272,7 @@ router.get("/me/email-marketing-preference", async (req, res): Promise<void> => 
       .where(eq(emailMarketingPreferenceEventsTable.userId, session.userId))
       .orderBy(desc(emailMarketingPreferenceEventsTable.createdAt))
       .limit(1);
-    res.json(CustomerEmailMarketingPreference.parse({
+    res.json(GetCustomerEmailMarketingPreferenceResponse.parse({
       optedIn: Boolean(user.consentAt && !user.unsubscribedAt),
       emailVerified: Boolean(user.emailVerifiedAt),
       updatedAt: latestEvent?.createdAt?.toISOString() ?? null,
@@ -285,7 +286,7 @@ router.get("/me/email-marketing-preference", async (req, res): Promise<void> => 
 router.patch("/me/email-marketing-preference", async (req, res): Promise<void> => {
   const session = await requireCustomerSession(req, res, true);
   if (!session) return;
-  const parsed = CustomerEmailMarketingPreferenceUpdate.safeParse(req.body);
+  const parsed = UpdateCustomerEmailMarketingPreferenceBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid email preference" });
     return;
@@ -331,7 +332,7 @@ router.patch("/me/email-marketing-preference", async (req, res): Promise<void> =
       return;
     }
     res.setHeader("Cache-Control", "no-store, private");
-    res.json(CustomerEmailMarketingPreference.parse({
+    res.json(UpdateCustomerEmailMarketingPreferenceResponse.parse({
       optedIn: parsed.data.optedIn,
       emailVerified: Boolean(result.emailVerifiedAt),
       updatedAt: result.updatedAt?.toISOString() ?? null,
@@ -343,7 +344,7 @@ router.patch("/me/email-marketing-preference", async (req, res): Promise<void> =
 });
 
 router.post("/public/email-marketing/unsubscribe", async (req, res): Promise<void> => {
-  const parsed = EmailMarketingUnsubscribeInput.safeParse(req.body);
+  const parsed = UnsubscribeFromSendFlowMarketingEmailsBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid unsubscribe request" });
     return;
@@ -379,7 +380,7 @@ router.post("/public/email-marketing/unsubscribe", async (req, res): Promise<voi
       });
     });
     res.setHeader("Cache-Control", "no-store, private");
-    res.json(EmailMarketingUnsubscribeResponse.parse({ unsubscribed: true }));
+    res.json(UnsubscribeFromSendFlowMarketingEmailsResponse.parse({ unsubscribed: true }));
   } catch {
     req.log.error("Email unsubscribe request could not be recorded");
     res.status(503).json({ error: "Unsubscribe service unavailable" });
