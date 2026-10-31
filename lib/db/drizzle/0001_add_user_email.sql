@@ -1,0 +1,1 @@
+ALTER TABLE "sf_users" ADD COLUMN "email_encrypted" text;

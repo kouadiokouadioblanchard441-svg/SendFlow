@@ -611,7 +611,8 @@ test("registration rejects unknown, mismatched, disabled countries and invalid n
     VALUES('xy','Isolated disabled country','+989',8,8,false,'fixture','fixture')`);
   const before = (await owner.query("SELECT count(*) FROM sf_users")).rows[0].count;
   const body = { fullName: "Country Fixture", birthDate: "1990-01-01",
-    phone: "+2250000000777", password: "isolated-password-only", acceptedPrivacy: true };
+    phone: "+2250000000777", email: "country.fixture@example.invalid",
+    password: "isolated-password-only", acceptedPrivacy: true };
   for (const [index, change] of [
     { countryCode: "xx" }, { countryCode: "sn" },
     { countryCode: "ci", phone: "+225000000777" },

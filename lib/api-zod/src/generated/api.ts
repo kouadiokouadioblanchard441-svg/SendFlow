@@ -355,6 +355,9 @@ export const registerCustomerBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$
 export const registerCustomerBodyPhoneMin = 9;
 export const registerCustomerBodyPhoneMax = 16;
 
+export const registerCustomerBodyEmailMin = 5;
+export const registerCustomerBodyEmailMax = 254;
+
 export const registerCustomerBodyFullNameMin = 2;
 export const registerCustomerBodyFullNameMax = 120;
 
@@ -367,6 +370,7 @@ export const registerCustomerBodyPasswordMax = 64;
 export const RegisterCustomerBody = zod.object({
   "challengeId": zod.uuid().optional(),
   "phone": zod.stringFormat('phone', registerCustomerBodyPhoneRegExp).min(registerCustomerBodyPhoneMin).max(registerCustomerBodyPhoneMax),
+  "email": zod.email().min(registerCustomerBodyEmailMin).max(registerCustomerBodyEmailMax).optional().describe('Optional for compatibility with already deployed clients; the current SendFlow signup screen requires an address.'),
   "fullName": zod.string().min(registerCustomerBodyFullNameMin).max(registerCustomerBodyFullNameMax),
   "birthDate": zod.coerce.date(),
   "countryCode": zod.string().regex(registerCustomerBodyCountryCodeRegExp).optional(),
@@ -678,9 +682,11 @@ export const GetCustomerPortalEligibilityResponse = zod.object({
 
 
 /**
- * Returns the authenticated account's persisted name and birth date. The server requires a recently verified PIN.
+ * Returns the authenticated account's persisted name, birth date, and email address. The email is not verified by this flow. The server requires a recently verified PIN.
  * @summary Get the authenticated customer's profile
  */
+export const getCustomerProfileResponseEmailMax = 254;
+
 export const getCustomerProfileResponseFirstNameMax = 80;
 
 export const getCustomerProfileResponseLastNameMax = 80;
@@ -689,6 +695,7 @@ export const getCustomerProfileResponseBirthDateRegExp = new RegExp('^[0-9]{4}-[
 
 
 export const GetCustomerProfileResponse = zod.object({
+  "email": zod.string().max(getCustomerProfileResponseEmailMax).nullable(),
   "firstName": zod.string().max(getCustomerProfileResponseFirstNameMax),
   "lastName": zod.string().max(getCustomerProfileResponseLastNameMax),
   "birthDate": zod.string().regex(getCustomerProfileResponseBirthDateRegExp).nullable()
@@ -696,7 +703,7 @@ export const GetCustomerProfileResponse = zod.object({
 
 
 /**
- * Validates and encrypts the authenticated account's name and date of birth. The server requires a recently verified PIN.
+ * Updates the authenticated account's name and date of birth and returns the stored email address. The email is not verified by this flow. The server requires a recently verified PIN.
  * @summary Update the authenticated customer's profile
  */
 export const updateCustomerProfileBodyFirstNameMin = 2;
@@ -714,6 +721,8 @@ export const UpdateCustomerProfileBody = zod.object({
   "birthDate": zod.string().regex(updateCustomerProfileBodyBirthDateRegExp)
 })
 
+export const updateCustomerProfileResponseEmailMax = 254;
+
 export const updateCustomerProfileResponseFirstNameMax = 80;
 
 export const updateCustomerProfileResponseLastNameMax = 80;
@@ -722,6 +731,7 @@ export const updateCustomerProfileResponseBirthDateRegExp = new RegExp('^[0-9]{4
 
 
 export const UpdateCustomerProfileResponse = zod.object({
+  "email": zod.string().max(updateCustomerProfileResponseEmailMax).nullable(),
   "firstName": zod.string().max(updateCustomerProfileResponseFirstNameMax),
   "lastName": zod.string().max(updateCustomerProfileResponseLastNameMax),
   "birthDate": zod.string().regex(updateCustomerProfileResponseBirthDateRegExp).nullable()
@@ -3273,6 +3283,8 @@ export const GetAdminUserParams = zod.object({
   "userId": zod.coerce.string().min(1)
 })
 
+export const getAdminUserResponseUserEmailMax = 254;
+
 export const getAdminUserResponseWalletOneBalanceMinorMax = 9007199254740991;
 
 export const getAdminUserResponseTransactionSummaryVolumeMinorMax = 9007199254740991;
@@ -3284,6 +3296,7 @@ export const getAdminUserResponseTransactionSummaryFeesMinorMax = 90071992547409
 export const GetAdminUserResponse = zod.object({
   "user": zod.object({
   "id": zod.string(),
+  "email": zod.string().max(getAdminUserResponseUserEmailMax).nullable(),
   "displayName": zod.string().nullable(),
   "phone": zod.string().nullable(),
   "countryCode": zod.string().nullable(),

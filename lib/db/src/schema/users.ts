@@ -9,6 +9,7 @@ export const usersTable = pgTable("sf_users", {
   phone: varchar("phone", { length: 512 }).unique(),
   phoneLookupHash: varchar("phone_lookup_hash", { length: 64 }).unique("sf_users_phone_lookup_hash_uq"),
   phoneVerifiedAt: timestamp("phone_verified_at", { withTimezone: true }),
+  emailEncrypted: text("email_encrypted"),
   displayName: varchar("display_name", { length: 512 }),
   displayNameLookupHash: varchar("display_name_lookup_hash", { length: 64 }),
   countryCode: varchar("country_code", { length: 2 }),

@@ -8,6 +8,7 @@ const KEY_DERIVATION_SALT = Buffer.from("sendflow-sensitive-data-v1", "utf8");
 
 export type SensitiveDataPurpose =
   | "user-phone"
+  | "user-email"
   | "user-name"
   | "user-birth-date"
   | "contact-label"

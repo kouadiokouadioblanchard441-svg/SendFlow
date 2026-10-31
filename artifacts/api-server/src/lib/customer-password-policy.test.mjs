@@ -7,6 +7,7 @@ import {
 } from "../../../../lib/api-zod/src/generated/api.ts";
 
 const phone = "+2250700000000";
+const email = "aminata@example.invalid";
 
 test("new and reset customer passwords require eight characters while legacy sign-in remains compatible", () => {
   const shortPassword = "Ab12";
@@ -15,6 +16,7 @@ test("new and reset customer passwords require eight characters while legacy sig
   assert.equal(
     RegisterCustomerBody.safeParse({
       phone,
+      email,
       fullName: "Aminata Koné",
       birthDate: "1990-01-01",
       password: shortPassword,
@@ -31,6 +33,28 @@ test("new and reset customer passwords require eight characters while legacy sig
       acceptedPrivacy: true,
     }).success,
     true,
+  );
+  assert.equal(
+    RegisterCustomerBody.safeParse({
+      phone,
+      email,
+      fullName: "Aminata Koné",
+      birthDate: "1990-01-01",
+      password: strongPassword,
+      acceptedPrivacy: true,
+    }).success,
+    true,
+  );
+  assert.equal(
+    RegisterCustomerBody.safeParse({
+      phone,
+      email: "not-an-email",
+      fullName: "Aminata Koné",
+      birthDate: "1990-01-01",
+      password: strongPassword,
+      acceptedPrivacy: true,
+    }).success,
+    false,
   );
 
   assert.equal(

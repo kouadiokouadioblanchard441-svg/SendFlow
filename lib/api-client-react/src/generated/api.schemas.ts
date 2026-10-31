@@ -277,6 +277,12 @@ export interface CustomerRegistrationInput {
      */
   phone: string;
   /**
+     * Optional for compatibility with already deployed clients; the current SendFlow signup screen requires an address.
+     * @minLength 5
+     * @maxLength 254
+     */
+  email?: string;
+  /**
      * @minLength 2
      * @maxLength 120
      */
@@ -468,6 +474,11 @@ export interface CurrentAccount {
 }
 
 export interface CustomerProfile {
+  /**
+     * @maxLength 254
+     * @nullable
+     */
+  email: string | null;
   /** @maxLength 80 */
   firstName: string;
   /** @maxLength 80 */
@@ -1269,6 +1280,11 @@ export const AdminUserProfileStatus = {
 
 export interface AdminUserProfile {
   id: string;
+  /**
+     * @maxLength 254
+     * @nullable
+     */
+  email: string | null;
   /** @nullable */
   displayName: string | null;
   /** @nullable */

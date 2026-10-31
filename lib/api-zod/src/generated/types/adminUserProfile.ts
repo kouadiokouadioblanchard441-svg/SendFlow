@@ -9,6 +9,11 @@ import type { AdminUserProfileStatus } from './adminUserProfileStatus';
 
 export interface AdminUserProfile {
   id: string;
+  /**
+     * @maxLength 254
+     * @nullable
+     */
+  email: string | null;
   /** @nullable */
   displayName: string | null;
   /** @nullable */

@@ -15,6 +15,12 @@ export interface CustomerRegistrationInput {
      */
   phone: string;
   /**
+     * Optional for compatibility with already deployed clients; the current SendFlow signup screen requires an address.
+     * @minLength 5
+     * @maxLength 254
+     */
+  email?: string;
+  /**
      * @minLength 2
      * @maxLength 120
      */

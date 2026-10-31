@@ -187,6 +187,13 @@ function getSignupPhoneFromBody(body: unknown) {
   return phone.success ? phone.data : null;
 }
 
+function normalizeSignupBody(body: unknown): unknown {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return body;
+  const record = body as Record<string, unknown>;
+  if (typeof record.email !== "string") return body;
+  return { ...record, email: record.email.trim().toLowerCase() };
+}
+
 function getLoginPhoneFromBody(body: unknown) {
   if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
   const phone = SignInCustomerBody.shape.phone.safeParse((body as { phone?: unknown }).phone);
@@ -206,7 +213,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  const parsed = RegisterCustomerBody.safeParse(req.body);
+  const parsed = RegisterCustomerBody.safeParse(normalizeSignupBody(req.body));
   const phone = parsed.success ? parsed.data.phone : getSignupPhoneFromBody(req.body);
   let buckets: string[] = [];
   try {
@@ -309,6 +316,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
           id: userId,
           phone: encryptSensitiveData(parsed.data.phone, "user-phone"),
           phoneLookupHash: createSensitiveDataLookupIndex(parsed.data.phone, "user-phone"),
+          emailEncrypted: parsed.data.email
+            ? encryptSensitiveData(parsed.data.email, "user-email")
+            : null,
           phoneVerifiedAt: requiresOtp ? now : null,
           displayName: encryptSensitiveData(normalizedName, "user-name"),
           displayNameLookupHash: createSensitiveDataLookupIndex(

@@ -18,6 +18,7 @@ type SignUpForm = {
   fullName: string;
   birthDate: string;
   phone: string;
+  email: string;
   password: string;
   confirmation: string;
   acceptedPrivacy: boolean;
@@ -27,6 +28,7 @@ const initialForm: SignUpForm = {
   fullName: '',
   birthDate: '',
   phone: '',
+  email: '',
   password: '',
   confirmation: '',
   acceptedPrivacy: false,
@@ -248,6 +250,7 @@ export default function SignupPage() {
         const account = await registerCustomer.mutateAsync({
           data: {
             phone: e164Phone,
+            email: form.email.trim().toLowerCase(),
             countryCode: signupCountry.countryCode,
             fullName: form.fullName.trim().replace(/\s+/g, ' '),
             birthDate: form.birthDate,
@@ -291,6 +294,7 @@ export default function SignupPage() {
         data: {
           challengeId,
           phone: e164Phone,
+            email: form.email.trim().toLowerCase(),
           countryCode: signupCountry.countryCode,
           fullName: form.fullName.trim().replace(/\s+/g, ' '),
           birthDate: form.birthDate,
@@ -401,6 +405,30 @@ export default function SignupPage() {
               error={visibleError('phone')}
               onBlur={() => markTouched('phone')}
             />
+
+            <div className="sendflow-signup-control">
+              <label className={`sendflow-signup-field${visibleError('email') ? ' has-error' : ''}`}>
+                <span className="sr-only">Adresse e-mail</span>
+                <input
+                  id="signup-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => update('email', event.target.value)}
+                  onBlur={() => markTouched('email')}
+                  placeholder="Adresse e-mail"
+                  autoComplete="email"
+                  maxLength={254}
+                  aria-invalid={Boolean(visibleError('email'))}
+                  aria-describedby={visibleError('email') ? 'signup-email-error' : undefined}
+                  required
+                />
+              </label>
+              {visibleError('email') && (
+                <p id="signup-email-error" className="sendflow-signup-error" role="alert">
+                  {visibleError('email')}
+                </p>
+              )}
+            </div>
 
             <PasswordField
               label="Code secret"

@@ -7,6 +7,11 @@
  */
 
 export interface CustomerProfile {
+  /**
+     * @maxLength 254
+     * @nullable
+     */
+  email: string | null;
   /** @maxLength 80 */
   firstName: string;
   /** @maxLength 80 */

@@ -2756,7 +2756,7 @@ export const getGetCustomerProfileUrl = () => {
 }
 
 /**
- * Returns the authenticated account's persisted name and birth date. The server requires a recently verified PIN.
+ * Returns the authenticated account's persisted name, birth date, and email address. The email is not verified by this flow. The server requires a recently verified PIN.
  * @summary Get the authenticated customer's profile
  */
 export const getCustomerProfile = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerProfile> => {
@@ -2834,7 +2834,7 @@ export const getUpdateCustomerProfileUrl = () => {
 }
 
 /**
- * Validates and encrypts the authenticated account's name and date of birth. The server requires a recently verified PIN.
+ * Updates the authenticated account's name and date of birth and returns the stored email address. The email is not verified by this flow. The server requires a recently verified PIN.
  * @summary Update the authenticated customer's profile
  */
 export const updateCustomerProfile = async (customerProfileUpdate: CustomerProfileUpdate, options?: Parameters<typeof customFetch>[1]): Promise<CustomerProfile> => {

@@ -8,6 +8,7 @@ export type SignUpValidationInput = {
   fullName: string;
   birthDate: string;
   phone: string;
+  email: string;
   password: string;
   confirmation: string;
   acceptedPrivacy: boolean;
@@ -92,6 +93,13 @@ export function validateSignUp(form: SignUpValidationInput, dialCode = '+225'): 
 
   const phoneError = validatePhone(form.phone, dialCode);
   if (phoneError) errors.phone = phoneError;
+
+  const email = form.email.trim();
+  if (!email) {
+    errors.email = "L’adresse e-mail est requise.";
+  } else if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.email = "Saisissez une adresse e-mail valide.";
+  }
 
   const passwordError = validateCustomerPassword(form.password);
   if (passwordError) errors.password = passwordError;

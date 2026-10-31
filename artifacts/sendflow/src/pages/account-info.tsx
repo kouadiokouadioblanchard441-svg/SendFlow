@@ -302,6 +302,16 @@ export default function AccountInfoPage() {
             </div>
 
             <div className="sendflow-account-info-control">
+              <span className="sendflow-account-info-field-label">Adresse e-mail</span>
+              <div className="sendflow-account-info-field" data-testid="text-account-info-email">
+                {profileQuery.data?.email ?? 'Aucune adresse e-mail enregistrée'}
+              </div>
+              <p className="sendflow-account-info-hint">
+                {profileQuery.data?.email ? 'Adresse enregistrée à l’inscription — non vérifiée.' : 'La vérification par e-mail n’est pas activée.'}
+              </p>
+            </div>
+
+            <div className="sendflow-account-info-control">
               <span className="sendflow-account-info-field-label">Quelle est votre date de naissance ?</span>
               <label className={`sendflow-account-info-field sendflow-account-info-date${visibleError('birthDate') ? ' has-error' : ''}`} htmlFor="account-info-birth-date">
                 <span className="sr-only">Quelle est votre date de naissance ?</span>

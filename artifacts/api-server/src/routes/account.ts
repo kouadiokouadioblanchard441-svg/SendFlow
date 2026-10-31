@@ -165,6 +165,7 @@ router.get("/me/profile", async (req, res): Promise<void> => {
     const [user] = await db
       .select({
         displayName: usersTable.displayName,
+        emailEncrypted: usersTable.emailEncrypted,
         birthDate: usersTable.birthDate,
         birthDateEncrypted: usersTable.birthDateEncrypted,
       })
@@ -181,6 +182,7 @@ router.get("/me/profile", async (req, res): Promise<void> => {
       ? decryptSensitiveDataIfEncrypted(user.birthDateEncrypted, "user-birth-date")
       : user.birthDate;
     const profile = GetCustomerProfileResponse.parse({
+      email: decryptSensitiveDataIfEncrypted(user.emailEncrypted, "user-email"),
       ...splitCustomerDisplayName(displayName),
       birthDate,
     });
@@ -221,14 +223,20 @@ router.patch("/me/profile", async (req, res): Promise<void> => {
         birthDateEncrypted: encryptSensitiveData(profile.birthDate, "user-birth-date"),
       })
       .where(eq(usersTable.id, session.userId))
-      .returning({ id: usersTable.id });
+      .returning({
+        id: usersTable.id,
+        emailEncrypted: usersTable.emailEncrypted,
+      });
     if (!updatedUser) {
       res.status(503).json({ error: "Profile storage unavailable" });
       return;
     }
 
     res.setHeader("Cache-Control", "no-store, private");
-    res.json(UpdateCustomerProfileResponse.parse(profile));
+    res.json(UpdateCustomerProfileResponse.parse({
+      ...profile,
+      email: decryptSensitiveDataIfEncrypted(updatedUser.emailEncrypted, "user-email"),
+    }));
   } catch {
     // Never attach request or decrypted profile values to this log entry.
     req.log.error("Customer profile update failed");

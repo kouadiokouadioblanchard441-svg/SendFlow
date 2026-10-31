@@ -24,6 +24,15 @@ test("sensitive data round-trips with authenticated encryption", () => {
   assert.equal(decryptSensitiveData(ciphertext, "user-phone"), plaintext);
 });
 
+test("customer email is encrypted at rest with an email-specific purpose", () => {
+  const email = "customer@example.invalid";
+  const ciphertext = encryptSensitiveData(email, "user-email");
+  assert.notEqual(ciphertext, email);
+  assert.equal(ciphertext.includes(email), false);
+  assert.equal(decryptSensitiveData(ciphertext, "user-email"), email);
+  assert.throws(() => decryptSensitiveData(ciphertext, "user-name"));
+});
+
 test("encrypting the same value produces different ciphertexts", () => {
   const first = encryptSensitiveData("Awa Traoré", "user-name");
   const second = encryptSensitiveData("Awa Traoré", "user-name");

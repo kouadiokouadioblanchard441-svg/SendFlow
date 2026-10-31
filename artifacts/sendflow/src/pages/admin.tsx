@@ -730,6 +730,11 @@ function UserDetailPage({ userId }: { userId: string }) {
               </CardHeader>
               <CardContent className="sendflow-admin-detail-list">
                 <div><span>Téléphone</span><strong data-testid="text-admin-user-detail-phone">{detail.user.phone || 'Non renseigné'}</strong></div>
+                <div>
+                  <span>Adresse e-mail</span>
+                  <strong data-testid="text-admin-user-detail-email">{detail.user.email || 'Non renseignée'}</strong>
+                  {detail.user.email && <small>Non vérifiée</small>}
+                </div>
                 <div><span>Pays</span><strong data-testid="text-admin-user-detail-country">{detail.user.countryCode || 'Non renseigné'}</strong></div>
                 <div><span>Compte créé</span><strong data-testid="text-admin-user-detail-created">{formatDate(detail.user.createdAt)}</strong></div>
                 <div><span>Dernière mise à jour</span><strong data-testid="text-admin-user-detail-updated">{formatDate(detail.user.updatedAt)}</strong></div>
