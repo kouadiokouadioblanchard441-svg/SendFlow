@@ -57,7 +57,6 @@ o/bKiIz+Fq8=
 """
 
 [userenv.development]
-DIDIT_ENVIRONMENT = "live"
 SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "
 SENDFLOW_DATABASE_TARGET = "shared-external"
 TRUST_PROXY_HOPS = "1"
