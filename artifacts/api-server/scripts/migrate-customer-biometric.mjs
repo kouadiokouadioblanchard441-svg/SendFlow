@@ -7,18 +7,18 @@ const args = process.argv.slice(2).filter((arg) => arg !== "--");
 const apply = args.includes("--apply");
 const verifyOnly = args.includes("--verify");
 const expected = args.find((arg) => arg.startsWith("--expected-hash="))?.slice("--expected-hash=".length);
-const allowedArgs = new Set(["--apply", "--verify", "--confirm-shared-neon"]);
+const allowedArgs = new Set(["--apply", "--verify", "--confirm-shared-database"]);
 if (
-  process.env.SENDFLOW_DATABASE_TARGET !== "shared-neon"
+  process.env.SENDFLOW_DATABASE_TARGET !== "shared-external"
   || process.env.NODE_ENV !== "development"
-  || process.env.SENDFLOW_SHARED_NEON_LIVE_APPROVED !== "true"
+  || process.env.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED !== "true"
   || !process.env.REPL_ID
   || args.some((arg) => !allowedArgs.has(arg) && !/^--expected-hash=[a-f0-9]{64}$/.test(arg))
   || (apply && verifyOnly)
-  || (verifyOnly && (args.includes("--confirm-shared-neon") || expected))
-  || (apply && (!args.includes("--confirm-shared-neon") || !expected))
+  || (verifyOnly && (args.includes("--confirm-shared-database") || expected))
+  || (apply && (!args.includes("--confirm-shared-database") || !expected))
 ) {
-  console.error("Stopped: use the read-only plan, --verify, or --apply --confirm-shared-neon --expected-hash=<fingerprint>.");
+  console.error("Stopped: use the read-only plan, --verify, or --apply --confirm-shared-database --expected-hash=<fingerprint>.");
   process.exit(1);
 }
 
@@ -56,9 +56,9 @@ async function snapshot() {
     && state.credentials_columns_compatible && state.challenges_columns_compatible;
   const safeToApply = state.users_exists && state.sessions_exists && (bothAbsent || bothComplete);
   const fingerprint = createHash("sha256")
-    .update(JSON.stringify({ target: "shared-neon", migrationHash, state }))
+    .update(JSON.stringify({ target: "shared-external", migrationHash, state }))
     .digest("hex");
-  return { target: "shared-neon", schema: "public", state, safeToApply, alreadyApplied: bothComplete, migrationHash, fingerprint };
+  return { target: "shared-external", schema: "public", state, safeToApply, alreadyApplied: bothComplete, migrationHash, fingerprint };
 }
 
 async function verify() {
@@ -77,7 +77,7 @@ try {
     await client.query("BEGIN READ ONLY");
     await verify();
     await client.query("ROLLBACK");
-    console.log(JSON.stringify({ target: "shared-neon", verified: true, tables: [
+    console.log(JSON.stringify({ target: "shared-external", verified: true, tables: [
       "public.sf_customer_biometric_credentials",
       "public.sf_customer_biometric_challenges",
     ] }));
@@ -103,7 +103,7 @@ try {
     commitAttempted = true;
     await client.query("COMMIT");
     transactionOpen = false;
-    console.log(JSON.stringify({ target: "shared-neon", applied: !plan.alreadyApplied, verified: true, migrationHash, fingerprint: plan.fingerprint }));
+    console.log(JSON.stringify({ target: "shared-external", applied: !plan.alreadyApplied, verified: true, migrationHash, fingerprint: plan.fingerprint }));
   }
 } catch (error) {
   if (transactionOpen) await client.query("ROLLBACK").catch(() => {});

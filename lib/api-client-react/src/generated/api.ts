@@ -3340,7 +3340,7 @@ export const getSimulateCustomerPaymentLinkUrl = (token: string,) => {
 }
 
 /**
- * Available only to the authorized preview viewer in the Replit shared-Neon environment. This operation does not contact a provider, persist a payment attempt, or change a balance or transaction.
+ * Available only to the authorized preview viewer in the restricted shared-database preview. This operation does not contact a provider, persist a payment attempt, or change a balance or transaction.
  * @summary Simulate a payment-link success for the Replit viewer without charging or creating a financial record
  */
 export const simulateCustomerPaymentLink = async (token: string,

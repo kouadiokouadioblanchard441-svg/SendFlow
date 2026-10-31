@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isViewerRouteCandidate } from "./shared-neon-preview-guard.ts";
+import { isViewerRouteCandidate } from "./shared-database-preview-guard.ts";
 import { hashCustomerSecret, hashCustomerSessionToken, verifyCustomerSecret } from "./customer-auth-crypto.ts";
 import { toPreviewPasswordHash, previewPasswordForVerification } from "./preview-credential-policy.ts";
 import { randomBytes } from "node:crypto";
@@ -49,7 +49,7 @@ test("a cookie from one realm cannot authenticate in the other; production hashi
   const token = randomBytes(32).toString("base64url");
   const normal = hashCustomerSessionToken(token, { SENDFLOW_DATABASE_TARGET: "production" });
   assert.equal(normal, createHash("sha256").update(token).digest("hex"));
-  const preview = hashCustomerSessionToken(token, { SENDFLOW_DATABASE_TARGET: "shared-neon" });
+  const preview = hashCustomerSessionToken(token, { SENDFLOW_DATABASE_TARGET: "shared-external" });
   assert.notEqual(normal, preview);
   assert.match(preview, /^pv1_[0-9a-f]{60}$/);
 });

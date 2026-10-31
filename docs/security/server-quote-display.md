@@ -42,9 +42,9 @@ Le test des réponses tardives utilise le véritable QueryObserver de TanStack Q
 ## Limites conservées
 
 - Aucune clé réelle utilisée dans les tests, aucun appel prestataire réel, aucun mouvement de fonds.
-- Aucune migration exécutée contre Neon.
+- Aucune migration de paiement ou donnée métier exécutée contre la base partagée.
 - L'administration et l'exécution des transferts/dépôts restent fermées.
-- L'aperçu connecté à Neon réel conserve ses refus d'accès privés. S'il refuse le devis, les pages affichent « À confirmer », jamais un montant inventé.
+- L’aperçu partagé conserve ses refus d’accès privés. La nouvelle base ne contient pas les données métier précédentes; si le serveur refuse le devis, les pages affichent « À confirmer », jamais un montant inventé.
 - Les frais réels ne peuvent être affichés que si le serveur autorise la session et peut lire une configuration financière compatible avec les migrations nécessaires.
 - Aucun test navigateur connecté aux pages financières n'a été exécuté ; la préservation de leur présentation a été vérifiée dans le JSX, les états de devis par tests et les contrats par requêtes HTTP isolées.
 

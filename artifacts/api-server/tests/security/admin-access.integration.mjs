@@ -252,9 +252,9 @@ test("application role cannot promote an account or rewrite audit history", asyn
   await assert.rejects(runtime.pool.query("UPDATE sf_admin_grants SET can_mutate=true WHERE user_id='reader'"), { code: "42501" });
   await assert.rejects(runtime.pool.query("DELETE FROM sf_admin_audit_logs"), { code: "42501" });
 });
-test("shared-Neon preview blocks even an administrator token", async () => {
+test("shared-database preview blocks even an administrator token", async () => {
   const previous = process.env.SENDFLOW_DATABASE_TARGET;
-  process.env.SENDFLOW_DATABASE_TARGET = "shared-neon";
+  process.env.SENDFLOW_DATABASE_TARGET = "shared-external";
   try { assert.equal((await request("/access")).status, 503); }
   finally { process.env.SENDFLOW_DATABASE_TARGET = previous; }
 });

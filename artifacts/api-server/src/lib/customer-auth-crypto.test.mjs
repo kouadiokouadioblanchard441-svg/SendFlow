@@ -31,7 +31,7 @@ test("customer session tokens are random bearer values stored as one-way hashes"
   assert.equal(isCustomerSessionToken(secondToken), true);
   assert.notEqual(firstToken, secondToken);
   const productionHash = hashCustomerSessionToken(firstToken, { SENDFLOW_DATABASE_TARGET: "production" });
-  const previewHash = hashCustomerSessionToken(firstToken, { SENDFLOW_DATABASE_TARGET: "shared-neon" });
+  const previewHash = hashCustomerSessionToken(firstToken, { SENDFLOW_DATABASE_TARGET: "shared-external" });
   assert.match(productionHash, /^[a-f0-9]{64}$/);
   assert.match(previewHash, /^pv1_[a-f0-9]{60}$/);
   assert.notEqual(productionHash, previewHash);

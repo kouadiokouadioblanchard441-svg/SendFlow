@@ -14,7 +14,7 @@ Elle prépare exclusivement :
   existantes, **sans supprimer ni modifier leurs triggers ou leur corps** ;
 - la séparation entre le propriétaire de migration et le login utilisé par l’API.
 
-**Non effectués :** connexion à Neon/Plesk, lecture du schéma réel, sauvegarde réelle,
+**Non effectués :** connexion à Plesk/production, lecture du schéma réel de production, sauvegarde réelle,
 restauration réelle, changement de rôle ou de secret réel, migration réelle, déploiement.
 Les preuves locales utilisent un cluster jetable, des lignes synthétiques et des clés de test
 sans héritage des secrets de l’environnement. Elles ne prouvent pas l’état de la production.
@@ -253,7 +253,7 @@ psql -X 'service=sendflow_app_check' -v ON_ERROR_STOP=1 \
 7. **Puis seulement** démarrer le serveur candidat avec le login limité et sa configuration
    de production existante. Sur Plesk, préserver `NODE_ENV=production`,
    `SENDFLOW_DATABASE_TARGET=production`, les origines CORS HTTPS et `TRUST_PROXY_HOPS` exacts.
-   En preview conserver `shared-neon` et tous ses filtres ; ne jamais y forcer `production`
+   En preview conserver `shared-external` et tous ses filtres ; ne jamais y forcer `production`
    ou `development` pour contourner une erreur. Aucun changement de configuration de prix,
    de fournisseur, de compte viewer ou de rôle administrateur dans ce lot.
 8. Vérifier `/api/healthz`, démarrage sans erreur de schéma/permission et absence d’URI ou de
@@ -300,7 +300,7 @@ Sans connexion réelle ni services externes :
 node artifacts/api-server/tests/security/run-isolated-activation.mjs
 pnpm --filter @workspace/api-server run test:finance:isolated
 env -i PATH="$PATH" HOME="$HOME" bash -c \
-  'cd artifacts/api-server && node --experimental-strip-types --test src/lib/shared-neon-preview-guard.test.mjs'
+  'cd artifacts/api-server && node --experimental-strip-types --test src/lib/shared-database-preview-guard.test.mjs'
 ```
 
 Le premier runner n’accepte aucune URL. Il crée son propre cluster/socket Unix privé, sans

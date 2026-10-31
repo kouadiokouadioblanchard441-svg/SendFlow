@@ -20,7 +20,7 @@ financières réelles n'a été effectué.
 | --- | --- |
 | API de l'aperçu | Redémarrage réussi après rétablissement du secret de connexion manquant ; `/api/healthz` retourne HTTP 200. Ne prouve pas la santé de Plesk. |
 | Site de l'aperçu | Une capture initiale montrait encore HTTP 503 ; le redémarrage du serveur des pages après l'ajout du secret a rétabli HTTP 200 sur `/`, sans modification des pages. |
-| Schéma Neon partagé | Programme existant exécuté en transaction `READ ONLY` : migration des structures de paiement déjà appliquée, aucun conflit détecté, aucune écriture. |
+| Ancien schéma partagé | Constat historique d’une vérification en transaction `READ ONLY`; il ne décrit pas la nouvelle base Supabase, dont les 46 tables ont été créées sans transfert de données métier. |
 | Type d'intégration | REST direct depuis le serveur, sans checkout hébergé ni SDK dans le navigateur. |
 | Champs de redirection | Suppression de `returnUrl`/`cancelUrl` du contrat du client et rejet explicite des anciens appels ; aucun `return_url`/`cancel_url` envoyé. |
 | Chemins Payout et statut | Comparaison avec le contenu public de la documentation officielle, y compris son composant JavaScript pour les sections qui ne rendaient que « Loading ». |

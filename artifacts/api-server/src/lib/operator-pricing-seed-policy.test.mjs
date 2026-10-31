@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { shouldSeedOperatorPricingCatalog } from "./operator-pricing-seed-policy.ts";
 
-test("shared Neon previews never run the operator catalog seed", () => {
+test("shared external database previews never run the operator catalog seed", () => {
   assert.equal(
-    shouldSeedOperatorPricingCatalog({ SENDFLOW_DATABASE_TARGET: "shared-neon" }),
+    shouldSeedOperatorPricingCatalog({ SENDFLOW_DATABASE_TARGET: "shared-external" }),
     false,
   );
 });

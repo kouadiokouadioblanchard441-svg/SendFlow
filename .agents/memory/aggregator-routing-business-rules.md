@@ -64,7 +64,7 @@ Replit test journey unfinished. The user explicitly chose
 This authorizes preparing real-payment execution in Replit; do not initiate an
 unspecified charge or payout as a test without an approved concrete operation.
 The user explicitly requires « la vraie base de données connecter actuellement »:
-use the existing shared Neon, not a separate preview database. Do not request a
+use the existing shared database, not a separate preview database. Do not request a
 separate connection again as a prerequisite. This authorization must not open
 all production customer data to preview or bypass account-level permissions.
 
@@ -93,9 +93,9 @@ Preparatory FeexPay configuration uses explicit operator/operation assignments,
 not new country defaults, and must preserve existing activations and prices.
 
 **Why:** A country default could silently cover undocumented operators; shared
-Neon also serves Plesk, so preparing coverage must not activate real payments.
+The shared database also serves Plesk, so preparing coverage must not activate real payments.
 
-**How to apply:** Review the dry-run plan before shared-Neon writes. Operator
+**How to apply:** Review the dry-run plan before shared-database writes. Operator
 assignments take precedence over later country defaults until explicitly changed.
 Keep Coris deposit-only while a single inter-network flag covers both sender and
 recipient eligibility; separating those roles is required before widening it.

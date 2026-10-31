@@ -15,8 +15,8 @@ Revoking direct EXECUTE on a SECURITY DEFINER trigger function does not stop its
 
 **How to apply:** Review elevated routines individually, preserve trigger ownership/body/activation, and verify the guard still rejects invalid writes after any privilege change on an isolated database.
 
-When comparing PostgreSQL schema catalogs, treat `NOT NULL` separately from semantic constraints: newer Neon server versions may expose not-null entries in `pg_constraint`, while older local fixtures report them only through `pg_attribute.attnotnull`.
+When comparing PostgreSQL schema catalogs, treat `NOT NULL` separately from semantic constraints: server versions may expose not-null entries in `pg_constraint`, while older local fixtures report them only through `pg_attribute.attnotnull`.
 
-**Why:** A valid additive migration was falsely rejected when the local fixture and Neon represented the same not-null columns differently.
+**Why:** A valid additive migration was falsely rejected when the local fixture and shared PostgreSQL represented the same not-null columns differently.
 
 **How to apply:** Keep nullability in column metadata and filter `contype = 'n'` from check/unique/foreign-key constraint comparisons; test the verifier against the actual target server version.

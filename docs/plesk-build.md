@@ -72,12 +72,12 @@ Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un ch
 - Les API inconnues doivent rester des erreurs API, pas du HTML de la SPA. Un fichier
   JS/CSS absent doit rester un 404 ; les routes SPA valides doivent accepter un refresh.
 - Définir `NODE_ENV=production`, `SENDFLOW_DATABASE_TARGET=production`,
-  les secrets serveur nécessaires et `NEON_DATABASE_URL_PRODUCTION` dans l'environnement
+  les secrets serveur nécessaires et `DATABASE_URL` dans l'environnement
   privé Plesk. Les secrets Replit ne sont pas transférés par ce build.
 - Configurer `TRUST_PROXY_HOPS` selon la chaîne réellement observée, et
   `CORS_ALLOWED_ORIGINS` avec les origines HTTPS exactes. Ne pas reprendre les
   variables de prévisualisation Replit.
-- Préserver la vérification TLS de Neon, les sessions sécurisées, les contrôles OTP/PIN,
+- Préserver la vérification TLS de PostgreSQL, les sessions sécurisées, les contrôles OTP/PIN,
   les rôles et les protections financières. Ce build n'autorise aucun paiement.
 - Le Document Root ne doit exposer ni bundle serveur, ni `.map` privés, ni manifeste,
   ni fichiers de configuration. Le seul arbre publiable est `dist/public` du site.
@@ -90,7 +90,7 @@ Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un ch
 ## Livraison, vérification et retour arrière
 
 1. Conserver la release précédente, son manifeste et sa configuration privée ; confirmer
-   une sauvegarde/restauration de Neon avant toute évolution nécessitant une migration.
+   une sauvegarde/restauration de la base configurée avant toute évolution nécessitant une migration.
 2. Construire dans une nouvelle release et vérifier les manifestes et droits de lecture.
    Ne pas employer `chmod 777` ni remplacer les propriétaires sans vérifier les comptes.
 3. Vérifier DNS, certificat et chaîne proxy avant redirection HTTPS et bascule.
@@ -98,7 +98,7 @@ Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un ch
    les pages publiques, les assets, les routes imbriquées, les erreurs API et la santé.
    Vérifier séparément les sessions avec un compte autorisé, sans paiement réel.
 5. En cas d'échec, rétablir la release et la configuration précédentes, redémarrer les
-   deux services et recontrôler les mêmes chemins. Ne pas restaurer ou modifier Neon
+   deux services et recontrôler les mêmes chemins. Ne pas restaurer ou modifier la base
    automatiquement pour un retour de code ; la compatibilité des schémas est distincte.
 
 Sans accès authentifié à Plesk, DNS/proxy/SSL/runtime/production restent à vérifier.

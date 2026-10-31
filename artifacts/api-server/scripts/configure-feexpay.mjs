@@ -6,10 +6,10 @@ import { applyFeexpayConfiguration, readFeexpayConfiguration } from "../src/prov
 const args = process.argv.slice(2);
 const apply = args.includes("--apply");
 const fingerprint = args.find((argument) => argument.startsWith("--expected-hash="))?.slice("--expected-hash=".length);
-if (args.some((arg) => !["--apply", "--confirm-shared-neon"].includes(arg) && !/^--expected-hash=[a-f0-9]{64}$/.test(arg)) ||
-    (apply && (!args.includes("--confirm-shared-neon") || !fingerprint)) ||
-    process.env.SENDFLOW_DATABASE_TARGET !== "shared-neon") {
-  console.error("Stopped: explicit shared-neon target required; writes also require --apply --confirm-shared-neon --expected-hash=<reviewed hash>.");
+if (args.some((arg) => !["--apply", "--confirm-shared-database"].includes(arg) && !/^--expected-hash=[a-f0-9]{64}$/.test(arg)) ||
+    (apply && (!args.includes("--confirm-shared-database") || !fingerprint)) ||
+    process.env.SENDFLOW_DATABASE_TARGET !== "shared-external") {
+  console.error("Stopped: explicit shared-database target required; writes also require --apply --confirm-shared-database --expected-hash=<reviewed hash>.");
   process.exit(1);
 }
 const pool = new pg.Pool({
@@ -22,7 +22,7 @@ try {
   client = await pool.connect();
   if (apply) {
     console.log(JSON.stringify({
-      target: "shared-neon", applied: true,
+      target: "shared-external", applied: true,
       created: await applyFeexpayConfiguration(client, fingerprint),
       financialExecutionEnabled: false,
     }));
@@ -33,7 +33,7 @@ try {
     const routesByCountry = {};
     for (const route of plan.newRoutes) routesByCountry[route.country_code] = (routesByCountry[route.country_code] ?? 0) + 1;
     console.log(JSON.stringify({
-      target: "shared-neon", applied: false, fingerprint: plan.fingerprint,
+      target: "shared-external", applied: false, fingerprint: plan.fingerprint,
       createProvider: plan.createProvider,
       operatorsToCreate: plan.newOperators.map((operator) => operator.operator_id),
       routesToCreate: plan.newRoutes.length, routesByCountry,

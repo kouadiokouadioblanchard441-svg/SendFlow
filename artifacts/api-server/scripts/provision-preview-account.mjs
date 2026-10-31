@@ -7,15 +7,15 @@ import { createRequire } from "node:module";
 import { build } from "esbuild";
 import pg from "pg";
 
-if (process.argv[2] !== "--confirm-shared-neon" || process.env.SENDFLOW_DATABASE_TARGET !== "shared-neon"
+if (process.argv[2] !== "--confirm-shared-database" || process.env.SENDFLOW_DATABASE_TARGET !== "shared-external"
   || !process.env.REPL_ID || process.env.NODE_ENV === "production") {
-  throw new Error("Explicit shared-Neon preview provisioning confirmation is required");
+  throw new Error("Explicit shared-database preview provisioning confirmation is required");
 }
 const phone = process.env.SENDFLOW_VIEWER_PHONE;
 const password = process.env.SENDFLOW_VIEWER_PASSWORD;
 if (!phone || !password || password.length < 8) throw new Error("Preview credentials must be supplied through Secrets");
-const connectionString = process.env.NEON_DATABASE_URL_PRODUCTION;
-if (!connectionString) throw new Error("Configured Neon connection is required");
+const connectionString = process.env.SUPABASE_DATABASE_URL;
+if (!connectionString) throw new Error("Configured shared database connection is required");
 const apiDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const root = resolve(apiDir, "../..");
 const temp = mkdtempSync(join(tmpdir(), "sendflow-preview-provision-"));

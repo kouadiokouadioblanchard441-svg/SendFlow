@@ -91,23 +91,23 @@ pnpm run typecheck
 ```
 
 Le programme isolé crée un PostgreSQL temporaire sur socket Unix, désactive
-TCP, ne transmet aucune connexion Neon ni clé prestataire et détruit le
+TCP, ne transmet aucune connexion de base ni clé prestataire et détruit le
 cluster à la fin. Il vérifie aussi le retour arrière d'une migration dont
 l'enregistrement final échoue, puis une seconde application sans changement.
 Les confirmations de ces tests sont synthétiques : elles ne prouvent pas
 l'acceptation d'un vrai paiement ou la validité d'une signature FeexPay.
 
-## Application autorisée au Neon partagé
+## Application autorisée à la base partagée
 
 Ne jamais utiliser un `drizzle-kit push` global pour cette opération.
-Le programme utilise la connexion résolue pour `shared-neon`, sans afficher
+Le programme utilise la connexion résolue pour `shared-external`, sans afficher
 son URL, et refuse une structure préexistante non tracée ou modifiée.
 
 ```sh
 pnpm --filter @workspace/api-server run payments:schema-plan
 # Après examen du plan et autorisation explicite :
 pnpm --filter @workspace/api-server run payments:schema-plan \
-  --apply --confirm-shared-neon --expected-hash=<empreinte-du-plan>
+  --apply --confirm-shared-database --expected-hash=<empreinte-du-plan>
 ```
 
 L'application se fait dans une transaction, avec verrou de migration,

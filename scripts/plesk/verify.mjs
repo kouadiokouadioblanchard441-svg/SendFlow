@@ -62,7 +62,7 @@ export async function verifyDistribution(root, service) {
       if (file.path.endsWith(".map")) throw new Error("Public source maps are not permitted in the Plesk release");
       if (/\.(?:html|js|css|json|svg|webmanifest)$/.test(file.path)) {
         const text = await readFile(path.join(root, file.path), "utf8");
-        if (/\b(?:NEON_DATABASE_URL_(?:PRODUCTION|PREVIEW)|FEEXPAY_(?:API_KEY|SHOP_ID|SANDBOX_API_KEY|SANDBOX_SHOP_ID)|DIDIT_(?:API_KEY|WEBHOOK_SECRET)|ESMS_API_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY|SENDFLOW_(?:VIEWER_PASSWORD|VIEWER_PHONE|PAYMENT_TEST_PHONE))\b/.test(text)) {
+        if (/\b(?:SUPABASE_DATABASE_URL|DATABASE_URL|FEEXPAY_(?:API_KEY|SHOP_ID|SANDBOX_API_KEY|SANDBOX_SHOP_ID)|DIDIT_(?:API_KEY|WEBHOOK_SECRET)|ESMS_API_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY|SENDFLOW_(?:VIEWER_PASSWORD|VIEWER_PHONE|PAYMENT_TEST_PHONE))\b/.test(text)) {
           throw new Error(`Server-secret variable name found in public output: ${file.path}`);
         }
       }

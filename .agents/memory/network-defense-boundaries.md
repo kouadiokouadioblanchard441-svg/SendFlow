@@ -44,5 +44,5 @@ tests pass.
 
 **How to apply:** Verify proxy trust and every hosting path before claiming
 Plesk-wide protection. Never simulate hostile traffic or seed bans in shared
-Neon to prove the feature; use a disposable database and report infrastructure
+shared database to prove the feature; use a disposable database and report infrastructure
 checks separately.

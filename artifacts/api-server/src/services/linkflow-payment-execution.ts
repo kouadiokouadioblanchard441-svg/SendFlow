@@ -28,7 +28,7 @@ import {
   decryptSensitiveDataIfEncrypted,
   encryptSensitiveData,
 } from "../lib/sensitive-data-crypto";
-import { isSharedNeonPreview } from "../lib/shared-neon-preview-guard";
+import { isSharedDatabasePreview } from "../lib/shared-database-preview-guard";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { FeexpayClient, type FeexpayReceipt } from "../providers/feexpay/client";
 import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
@@ -855,7 +855,7 @@ async function refreshLinkFlowPaymentAttemptStatus(
   attemptId: string,
   tokenHash: string,
 ): Promise<PublicLinkFlowPaymentStatus> {
-  if (isSharedNeonPreview()) {
+  if (isSharedDatabasePreview()) {
     throw new LinkFlowPaymentError(503, "La vérification du paiement n’est pas disponible dans cet environnement.");
   }
   if (!uuidPattern.test(attemptId) || !/^[a-f0-9]{64}$/.test(tokenHash)) {

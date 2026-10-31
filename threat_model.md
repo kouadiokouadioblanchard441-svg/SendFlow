@@ -148,7 +148,7 @@ separate administrator PIN are all checked by the server.
 - Unit suites passed for security policies, authentication, OTP provider
   handling, transfer-quote calculations, sensitive-data cryptography, and
   frontend auth routing. Database concurrency tests were not run because the
-  configured preview shares live Neon; they require an isolated PostgreSQL
+  configured preview uses the shared PostgreSQL schema; they require an isolated PostgreSQL
   database.
 - No production database rows, secret values, paid SMS, or live provider
   operations were inspected or exercised.

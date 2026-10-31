@@ -4,7 +4,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { usersTable } from "./users";
 
 // This is an explicit, single-account exception for live-payment tests against
-// shared Neon. It never grants access to the viewer account or other customers.
+// shared database. It never grants access to the viewer account or other customers.
 export const replitPaymentTestAccessTable = pgTable("sf_replit_payment_test_access", {
   userId: text("user_id").primaryKey().references(() => usersTable.id, { onDelete: "restrict" }),
   state: varchar("state", { length: 12 }).notNull().default("active"),

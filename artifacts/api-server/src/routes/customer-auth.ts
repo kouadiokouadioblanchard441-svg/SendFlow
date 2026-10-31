@@ -86,9 +86,9 @@ import { createCustomerPinRotationSessionPolicy } from "../lib/customer-pin-sess
 import { createDeveloperApiKeyMaterial } from "../services/developer-api-security";
 import {
   activeReplitPaymentTestAccountCondition,
-  sharedNeonCustomerCondition,
+  sharedDatabaseCustomerCondition,
 } from "../lib/replit-payment-test-access";
-import { isSharedNeonPreview } from "../lib/shared-neon-preview-guard";
+import { isSharedDatabasePreview } from "../lib/shared-database-preview-guard";
 import { previewPasswordForVerification } from "../lib/preview-credential-policy";
 import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
 import { getCustomerBiometricOrigin } from "../lib/customer-biometric-origin";
@@ -474,11 +474,11 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
             eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
             eq(usersTable.phone, parsed.data.phone),
           ),
-          sharedNeonCustomerCondition(),
+          sharedDatabaseCustomerCondition(),
         ))
         .for("update");
 
-      const scopedHash = isSharedNeonPreview() && !record?.paymentTestAccount
+      const scopedHash = isSharedDatabasePreview() && !record?.paymentTestAccount
         ? previewPasswordForVerification(record?.passwordHash ?? "")
         : record?.passwordHash;
       const encodedHash = scopedHash || await DUMMY_PASSWORD_HASH;

@@ -7,7 +7,7 @@ PIN verification and PIN-change authorization must serialize attempts for both t
 
 **Why:** If attempts are counted only after verifying a PIN, simultaneous guesses can all pass a pre-check before any failures are recorded. A browser flag that outlives the server's PIN window can also keep previously loaded account information visible.
 
-**How to apply:** Preserve cross-instance, consistently ordered locks around PIN checks and rate-limit updates. Keep the client deadline slightly ahead of the server's, clear user-scoped caches on lock and authentication changes, and verify concurrent behavior against an isolated database rather than the shared Neon environment.
+**How to apply:** Preserve cross-instance, consistently ordered locks around PIN checks and rate-limit updates. Keep the client deadline slightly ahead of the server's, clear user-scoped caches on lock and authentication changes, and verify concurrent behavior against an isolated database rather than the shared database.
 
 PIN recovery must acquire the same user-scoped PIN attempt bucket before locking challenge or account rows, then clear that bucket in the transaction that writes the PIN and revokes sessions. Do not clear the requester-scoped bucket.
 
@@ -19,4 +19,4 @@ After a customer changes their PIN, every other active session for that user mus
 
 **Why:** Another device must not retain financial-data access under a PIN that has just been changed, and locally cached data must not outlive the server's access decision.
 
-**How to apply:** Keep the relock and current-session unlock atomic, and verify the behavior with an isolated database rather than the shared Neon environment.
+**How to apply:** Keep the relock and current-session unlock atomic, and verify the behavior with an isolated database rather than the shared database.

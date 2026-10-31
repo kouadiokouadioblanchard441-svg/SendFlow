@@ -36,7 +36,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   console.log(JSON.stringify({
     mode: proposal.mode,
     reviewedOn: proposal.reviewedOn,
-    comparison: "historical seed only, not live Neon",
+    comparison: "historical seed only, not the live database",
     changes: proposedLengthChanges(),
     openingApproved: false,
   }, null, 2));

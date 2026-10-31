@@ -41,8 +41,8 @@ export function normalizeRequestPath(requestPath: string): string | null {
     .toLowerCase() || "/";
 }
 
-export function isSharedNeonPreview(environment: Environment = process.env): boolean {
-  return environment.SENDFLOW_DATABASE_TARGET === "shared-neon";
+export function isSharedDatabasePreview(environment: Environment = process.env): boolean {
+  return environment.SENDFLOW_DATABASE_TARGET === "shared-external";
 }
 
 // This is only a route candidate, NOT an authorization. The second gate checks
@@ -87,12 +87,12 @@ function isPathOrChild(pathname: string, prefix: string): boolean {
   return pathname === normalizedPrefix || pathname.startsWith(`${normalizedPrefix}/`);
 }
 
-export function shouldBlockSharedNeonApiRequest(
+export function shouldBlockSharedDatabaseApiRequest(
   method: string,
   requestPath: string,
   environment: Environment = process.env,
 ): boolean {
-  if (environment.SENDFLOW_DATABASE_TARGET !== "shared-neon") return false;
+  if (environment.SENDFLOW_DATABASE_TARGET !== "shared-external") return false;
 
   const pathname = normalizeRequestPath(requestPath);
   if (!pathname) return true;

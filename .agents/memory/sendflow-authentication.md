@@ -21,9 +21,9 @@ After a successful password recovery, clear only the phone-scoped shared access 
 
 **How to apply:** Keep password recovery ordered like other customer-access operations: attempt-bucket locks before challenge/user rows, with the reset and counter clear committed atomically.
 
-Biometric PIN unlock must use a server-verified WebAuthn assertion, a one-use session-bound challenge, and credentials scoped to the current relying-party ID. Device capability or a client-side biometric success flag is never proof of authentication. Keep the PIN as fallback and expose shared-Neon preview routes only through the exact preview-account session gate.
+Biometric PIN unlock must use a server-verified WebAuthn assertion, a one-use session-bound challenge, and credentials scoped to the current relying-party ID. Device capability or a client-side biometric success flag is never proof of authentication. Keep the PIN as fallback and expose shared-database preview routes only through the exact preview-account session gate.
 
-**Why:** The user chose biometric unlock in browser and installed app only where supported; shared Neon is also used by production, and credentials from one app origin must not unlock another.
+**Why:** The user chose biometric unlock in browser and installed app only where supported; the preview database is shared with production, and credentials from one app origin must not unlock another.
 
 **How to apply:** Keep origin/RP checks on the server, retain the existing PIN attempt controls, and require a PIN-unlocked session to register or revoke credentials. Do not add native biometric plugins or platform configuration without the separate mobile phase approval.
 

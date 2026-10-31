@@ -181,11 +181,11 @@ Un registre d'ajustements administratifs ne constitue pas à lui seul un grand l
 
 ## 8. Pourquoi certaines fonctions peuvent être bloquées dans l'aperçu
 
-L'aperçu est configuré avec une base Neon partagée contenant des données réelles. Les garde-fous existants bloquent les accès privés et les écritures concernées dans cet environnement. Une réponse 503 à une fonction privée peut donc être un refus volontaire, pas une panne ni une indication de clé incorrecte.
+L’aperçu utilise maintenant une base PostgreSQL partagée dont le schéma a été créé, sans transfert des données métier précédentes. Les garde-fous bloquent les accès privés et les écritures concernées. Une réponse 503 à une fonction privée peut donc être un refus volontaire, pas une panne ni une indication de clé incorrecte.
 
 Une clé réelle reste une clé réelle ; l'environnement d'exécution de l'aperçu n'est pas pour autant un environnement autorisé à débiter ou à modifier des comptes réels. Je n'ai ni changé les clés ni retiré ces protections.
 
-Pour tester les parcours complets sans risque, il faut un environnement de données isolé. Les tests de ce passage créent leur propre PostgreSQL jetable sans utiliser Neon.
+Pour tester les parcours complets sans risque, il faut un environnement de données isolé. Les tests de ce passage créent leur propre PostgreSQL jetable sans utiliser la base partagée.
 
 ## 9. Résultats effectivement obtenus
 

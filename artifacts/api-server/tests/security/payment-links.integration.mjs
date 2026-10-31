@@ -15,8 +15,8 @@ import {
 import { toPreviewPasswordHash } from "../../src/lib/preview-credential-policy.ts";
 import {
   isViewerRouteCandidate,
-  shouldBlockSharedNeonApiRequest,
-} from "../../src/lib/shared-neon-preview-guard.ts";
+  shouldBlockSharedDatabaseApiRequest,
+} from "../../src/lib/shared-database-preview-guard.ts";
 
 if (!process.env.SENDFLOW_ISOLATED_RUNTIME?.includes("/sendflow-isolated-finance-")
   || !process.env.SENDFLOW_FIXTURE_SOCKET?.includes("/sendflow-isolated-finance-")) {
@@ -67,7 +67,7 @@ before(async () => {
     VALUES(1,$1,now()+interval '1 hour',now())`, [viewerId]);
   await owner.query(`INSERT INTO sf_customer_sessions(user_id,token_hash,expires_at,pin_verified_until)
     VALUES($1,$2,now()+interval '1 hour',NULL)`,
-  [viewerId, runtime.hashCustomerSessionToken(viewerToken, { SENDFLOW_DATABASE_TARGET: "shared-neon" })]);
+  [viewerId, runtime.hashCustomerSessionToken(viewerToken, { SENDFLOW_DATABASE_TARGET: "shared-external" })]);
   server = runtime.app.listen(0, "127.0.0.1");
   await new Promise((resolve, reject) => {
     server.once("listening", resolve);
@@ -180,7 +180,7 @@ function json(response) {
   return JSON.parse(response.text);
 }
 
-test("payment-link amount rules and shared-Neon preview scope fail closed", () => {
+test("payment-link amount rules and shared-database preview scope fail closed", () => {
   assert.equal(normalizePaymentLinkInput(validInput({
     linkName: "  Flow digital SARL  ",
   })).linkName, "Flow digital SARL");
@@ -202,15 +202,15 @@ test("payment-link amount rules and shared-Neon preview scope fail closed", () =
   })));
   assert.equal(isPaymentLinkCreationAllowed(
     { paymentTestAccount: false },
-    { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+    { SENDFLOW_DATABASE_TARGET: "shared-external" },
   ), true);
   assert.equal(isPaymentLinkCreationAllowed(
     { paymentTestAccount: true },
-    { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+    { SENDFLOW_DATABASE_TARGET: "shared-external" },
   ), false);
   assert.equal(isPaymentLinkSimulationAllowed(
     { previewAccount: true, paymentTestAccount: false },
-    { SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "replit" },
+    { SENDFLOW_DATABASE_TARGET: "shared-external", FEEXPAY_EXECUTION_HOST: "replit" },
   ), true);
   assert.equal(isPaymentLinkSimulationAllowed(
     { previewAccount: true, paymentTestAccount: false },
@@ -218,11 +218,11 @@ test("payment-link amount rules and shared-Neon preview scope fail closed", () =
   ), false);
   assert.equal(isPaymentLinkSimulationAllowed(
     { previewAccount: false, paymentTestAccount: false },
-    { SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "replit" },
+    { SENDFLOW_DATABASE_TARGET: "shared-external", FEEXPAY_EXECUTION_HOST: "replit" },
   ), false);
   assert.equal(isPaymentLinkSimulationAllowed(
     { previewAccount: true, paymentTestAccount: true },
-    { SENDFLOW_DATABASE_TARGET: "shared-neon", FEEXPAY_EXECUTION_HOST: "replit" },
+    { SENDFLOW_DATABASE_TARGET: "shared-external", FEEXPAY_EXECUTION_HOST: "replit" },
   ), false);
   assert.equal(isPaymentLinkCreationAllowed(
     { paymentTestAccount: true },
@@ -248,10 +248,10 @@ test("payment-link amount rules and shared-Neon preview scope fail closed", () =
     "POST",
     "/api/me/payment-links/123e4567-e89b-42d3-a456-426614174000/image/extra",
   ), false);
-  assert.equal(shouldBlockSharedNeonApiRequest(
+  assert.equal(shouldBlockSharedDatabaseApiRequest(
     "GET",
     "/api/public/payment-links/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+    { SENDFLOW_DATABASE_TARGET: "shared-external" },
   ), false);
 });
 
@@ -704,7 +704,7 @@ test("public payment page is token-scoped and quotes the fee from server pricing
 test("authorized Replit viewer can create, view and simulate a link without PIN or financial effects", async () => {
   const originalTarget = process.env.SENDFLOW_DATABASE_TARGET;
   const originalExecutionHost = process.env.FEEXPAY_EXECUTION_HOST;
-  process.env.SENDFLOW_DATABASE_TARGET = "shared-neon";
+  process.env.SENDFLOW_DATABASE_TARGET = "shared-external";
   process.env.FEEXPAY_EXECUTION_HOST = "replit";
   const viewerId = "payment-link-viewer";
   let linkId;

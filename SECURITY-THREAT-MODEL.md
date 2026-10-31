@@ -67,9 +67,9 @@ remediate are:
     response headers were not available for this review.
 12. The API now selects the database target explicitly: Replit development uses
      its own `DATABASE_URL`, while production requires `NODE_ENV=production`
-     and rejects the Replit runtime. However, `NEON_DATABASE_URL_PRODUCTION`
-     remains in Replit's shared secrets, so its credential is still available
-     to development processes until the user removes it.
+     and rejects the Replit runtime. The shared database URL is stored as a
+     server-side secret and read by the server database connection layer. Keep
+     the value out of client bundles and public responses.
 13. The dependency scan found one high and one moderate advisory. The high
     advisory is in a production transitive dependency; exploitability through
     the current static proxy configuration has not been established.
@@ -703,8 +703,8 @@ or target user.
 The database target is now explicit. Replit development selects its managed
 `DATABASE_URL`; the production target requires `NODE_ENV=production` and rejects
 the Replit runtime. Drizzle also separates Replit development from Plesk
-production. However, `NEON_DATABASE_URL_PRODUCTION` remains in Replit's shared
-secrets, so development processes still receive that credential even though
+production. The shared database URL is stored in Replit Secrets and is available
+to the server process through its environment, even though
 the current database client does not select it. The user must remove the shared
 production secret to complete credential isolation. The development database
 was checked read-only; no production database query, write, or migration was

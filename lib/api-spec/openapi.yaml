@@ -1215,7 +1215,7 @@ paths:
       operationId: simulateCustomerPaymentLink
       tags: [account]
       summary: Simulate a payment-link success for the Replit viewer without charging or creating a financial record
-      description: Available only to the authorized preview viewer in the Replit shared-Neon environment. This operation does not contact a provider, persist a payment attempt, or change a balance or transaction.
+      description: Available only to the authorized preview viewer in the restricted shared-database preview. This operation does not contact a provider, persist a payment attempt, or change a balance or transaction.
       security:
         - sendFlowSession: []
       parameters:

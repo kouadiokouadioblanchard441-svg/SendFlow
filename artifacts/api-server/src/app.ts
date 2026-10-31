@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { shouldBlockSharedNeonApiRequest, isViewerRouteCandidate } from "./lib/shared-neon-preview-guard";
+import { shouldBlockSharedDatabaseApiRequest, isViewerRouteCandidate } from "./lib/shared-database-preview-guard";
 import { enforcePreviewAccountAccess } from "./lib/preview-access-middleware";
 import { getAllowedOrigins, normalizeHttpOrigin } from "./lib/origin-policy";
 import { parseTrustProxyHops } from "./lib/trust-proxy-policy";
@@ -71,7 +71,7 @@ app.use(
 app.use("/api", apiRequestSecurity(allowedOrigins));
 app.use("/api", (req, res, next) => {
   if (
-    !shouldBlockSharedNeonApiRequest(
+    !shouldBlockSharedDatabaseApiRequest(
       req.method,
       req.originalUrl,
     ) || isViewerRouteCandidate(req.method, req.originalUrl)
@@ -83,7 +83,7 @@ app.use("/api", (req, res, next) => {
   const path = req.originalUrl.split("?")[0] ?? "";
   req.log.warn(
     { method: req.method, path },
-    "Blocked live-data API request in shared-Neon runtime",
+    "Blocked live-data API request in shared-database preview",
   );
   res.setHeader("Cache-Control", "no-store, private");
   res.status(503).json({

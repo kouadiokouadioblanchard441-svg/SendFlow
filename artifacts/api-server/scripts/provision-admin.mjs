@@ -10,8 +10,8 @@ if (!args.includes("--apply") || !args.includes("--user-id") || !args.includes("
   || value("--reason")?.trim().length < 3 || value("--reason").length > 500) {
   throw new Error("Required: --apply --user-id ID --permission read|write|revoke --reason AUDIT_REASON");
 }
-if (process.env.SENDFLOW_DATABASE_TARGET === "shared-neon") {
-  throw new Error("Administrator provisioning is forbidden from the shared-Neon preview");
+if (process.env.SENDFLOW_DATABASE_TARGET === "shared-external") {
+  throw new Error("Administrator provisioning is forbidden from the shared-database preview");
 }
 if (!process.env.DATABASE_URL) throw new Error("Explicit owner DATABASE_URL required");
 const revoke = value("--permission") === "revoke";

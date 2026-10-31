@@ -316,14 +316,14 @@ export function isPaymentLinkCreationAllowed(
   session: Pick<CustomerSessionContext, "paymentTestAccount">,
   environment: Readonly<Record<string, string | undefined>> = process.env,
 ) {
-  return environment.SENDFLOW_DATABASE_TARGET !== "shared-neon" || !session.paymentTestAccount;
+  return environment.SENDFLOW_DATABASE_TARGET !== "shared-external" || !session.paymentTestAccount;
 }
 
 export function isPaymentLinkSimulationAllowed(
   session: { previewAccount: boolean; paymentTestAccount: boolean },
   environment: Readonly<Record<string, string | undefined>> = process.env,
 ) {
-  return environment.SENDFLOW_DATABASE_TARGET === "shared-neon"
+  return environment.SENDFLOW_DATABASE_TARGET === "shared-external"
     && environment.FEEXPAY_EXECUTION_HOST === "replit"
     && session.previewAccount
     && !session.paymentTestAccount;

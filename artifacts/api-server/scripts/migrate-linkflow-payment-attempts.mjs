@@ -8,11 +8,11 @@ import {
 const args = process.argv.slice(2);
 const apply = args.includes("--apply");
 const expected = args.find((arg) => arg.startsWith("--expected-hash="))?.slice("--expected-hash=".length);
-if (process.env.SENDFLOW_DATABASE_TARGET !== "shared-neon" ||
-  args.some((arg) => !["--apply", "--confirm-shared-neon"].includes(arg) &&
+if (process.env.SENDFLOW_DATABASE_TARGET !== "shared-external" ||
+  args.some((arg) => !["--apply", "--confirm-shared-database"].includes(arg) &&
     !/^--expected-hash=[a-f0-9]{64}$/.test(arg)) ||
-  (apply && (!args.includes("--confirm-shared-neon") || !expected))) {
-  console.error("Stopped: shared-neon required; writes need --apply --confirm-shared-neon --expected-hash=<reviewed fingerprint>.");
+  (apply && (!args.includes("--confirm-shared-database") || !expected))) {
+  console.error("Stopped: shared database required; writes need --apply --confirm-shared-database --expected-hash=<reviewed fingerprint>.");
   process.exit(1);
 }
 
@@ -26,14 +26,14 @@ try {
   await client.connect();
   if (apply) {
     console.log(JSON.stringify({
-      target: "shared-neon",
+      target: "shared-external",
       ...await applyLinkFlowPaymentAssociation(client, expected),
     }));
   } else {
     await client.query("BEGIN READ ONLY");
     const plan = await planLinkFlowPaymentAssociation(client);
     await client.query("ROLLBACK");
-    console.log(JSON.stringify({ target: "shared-neon", ...plan }));
+    console.log(JSON.stringify({ target: "shared-external", ...plan }));
   }
 } catch (error) {
   console.error(JSON.stringify({

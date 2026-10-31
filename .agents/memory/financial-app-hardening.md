@@ -24,7 +24,7 @@ The server is the only authority for SendFlow. The frontend is untrusted and mus
 
 **Why:** The user explicitly requires no keys or sensitive information in frontend or backend code, and requires sensitive checks to be performed on their server.
 
-**How to apply:** Treat client claims, browser state, and persisted values as untrusted inputs. Keep credentials in Replit Secrets and access them only from server code; do not expose their values to the frontend. The server must check SendFlow sessions, database roles, PIN sessions, resource ownership, schemas, and financial invariants before returning or changing data. Fail closed on validation or storage errors, prevent duplicate or partial operations, and test without modifying real accounts or the shared Neon database.
+**How to apply:** Treat client claims, browser state, and persisted values as untrusted inputs. Keep credentials in Replit Secrets and access them only from server code; do not expose their values to the frontend. The server must check SendFlow sessions, database roles, PIN sessions, resource ownership, schemas, and financial invariants before returning or changing data. Fail closed on validation or storage errors, prevent duplicate or partial operations, and test without modifying real accounts or the shared database.
 
 Do not hardcode SendFlow's public application URL or deployment domain in application source or client bundles; keep deployment origins in the appropriate environment or hosting configuration.
 
@@ -34,9 +34,9 @@ Do not hardcode SendFlow's public application URL or deployment domain in applic
 
 Financial amount and balance invariants must also be enforced by database `CHECK` constraints; route validation alone does not protect alternate or future write paths. When historical rows cannot be reviewed, prepare additive `NOT VALID` constraints to protect new writes, then validate existing data separately after an authorized review.
 
-**Why:** Direct SQL and future code paths can bypass application validation, while the shared Neon database must not be inspected or changed without authorization.
+**Why:** Direct SQL and future code paths can bypass application validation, while the shared database must not be inspected or changed without authorization.
 
-**How to apply:** Keep matching checks in the Drizzle schema and a targeted additive migration. Never execute that migration against shared Neon during tests or previews; review historical values and obtain authorization before applying or validating it.
+**How to apply:** Keep matching checks in the Drizzle schema and a targeted additive migration. Never execute that migration against the shared database during tests or previews; review historical values and obtain authorization before applying or validating it.
 
 Treat existing versioned SQL migrations as immutable: add a new migration for schema changes rather than editing an earlier file that may already have been applied.
 

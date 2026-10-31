@@ -365,5 +365,5 @@ Ce contrôle empêche le retour accidentel vers certains points d’entrée SQL 
 5. **Valider les entrées pour leur contrat métier.** Limiter longueur, forme, valeurs numériques et pagination. Cela protège les règles de SendFlow et les ressources; la liaison SQL reste nécessaire même après validation.
 6. **Séparer contrôle d’accès et SQLi.** Vérifier session, rôle et propriété des lignes côté serveur. Une requête paramétrée peut être sans SQLi tout en lisant les mauvaises lignes si son filtre d’autorisation manque.
 7. **Traiter les jokers de recherche explicitement.** Décider si `%` et `_` sont des jokers voulus ou des caractères littéraux, puis appliquer et tester la règle.
-8. **Tester sans base partagée.** Les tests nécessitant PostgreSQL doivent utiliser une base isolée; ne pas envoyer de payloads d’essai à Neon partagé ou à la production.
+8. **Tester sans base partagée.** Les tests nécessitant PostgreSQL doivent utiliser une base isolée; ne pas envoyer de payloads d’essai à la base partagée ou à la production.
 9. **Ajouter un garde-fou quand une exception est nécessaire.** Documenter pourquoi le SQL brut est nécessaire, quelles parties sont des identifiants, comment elles sont autorisées, et quelles valeurs sont liées.

@@ -9,7 +9,7 @@ de finalité `admin_login`, puis un PIN administrateur individuel de huit chiffr
 ## Activation autorisée, hors aperçu partagé
 
 Aucune promotion de compte et aucune migration de production ne sont automatiques.
-L’aperçu partagé Neon continue de refuser toutes les routes d’administration et tous
+L’aperçu de la base partagée continue de refuser toutes les routes d’administration et tous
 les appels SMS réels. Ne pas enlever cette protection pour tester.
 
 Un responsable autorisé doit :

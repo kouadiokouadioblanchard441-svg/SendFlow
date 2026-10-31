@@ -94,7 +94,7 @@ Un SQLi absent ne garantit pas qu’une route ne divulgue pas les données d’u
 - [ ] Les curseurs et limites de pagination sont validés et bornés.
 - [ ] Les erreurs SQL internes et les secrets ne sont pas renvoyés ou journalisés dans une réponse publique.
 - [ ] Les tests de sécurité et le typecheck API passent.
-- [ ] Les tests PostgreSQL utilisent une base isolée, jamais Neon partagé ou la production.
+- [ ] Les tests PostgreSQL utilisent une base isolée, jamais la base partagée ou la production.
 - [ ] Aucune page client ou administrateur n’a été modifiée dans un changement limité au serveur.
 
 ## Références SendFlow

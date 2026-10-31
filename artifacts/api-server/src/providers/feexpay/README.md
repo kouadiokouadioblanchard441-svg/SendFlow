@@ -15,7 +15,7 @@ endpoints directly.
 ## Operator configuration, without activation
 
 `pnpm --filter @workspace/api-server run feexpay:configuration-plan` reads shared
-Neon only and reports a fingerprint binding the current catalog and proposed
+shared-database only and reports a fingerprint binding the current catalog and proposed
 changes. It is never an automatic startup seed.
 
 The plan uses exact identities, including TMoney → Togocom and Flooz → Moov in
@@ -32,8 +32,8 @@ No existing logos, rates, admin permissions, activation flags, secrets or
 financial records are changed. New operators receive no invented rate or
 substituted logo.
 
-Only after explicit permission to write shared Neon, the command accepts
-`--apply --confirm-shared-neon --expected-hash=<reviewed fingerprint>`.
+Only after explicit permission to write the shared database, the command accepts
+`--apply --confirm-shared-database --expected-hash=<reviewed fingerprint>`.
 A serializable transaction audits each insert and rejects stale plans and
 conflicting manual choices. Errors before commit roll back the entire import;
 an uncertain SQL commit requires reconciliation, never a blind retry.
@@ -41,7 +41,7 @@ Re-applying a freshly reviewed, up-to-date plan is a no-op.
 
 `pnpm --filter @workspace/api-server run test:feexpay-configuration` exercises
 coverage, duplicate/concurrent imports, unchanged prices and audit-failure
-rollback against disposable local PostgreSQL, without using Neon or FeexPay.
+rollback against disposable local PostgreSQL, without using the shared database or initiating a payment.
 
 ## Current implementation status
 
@@ -156,24 +156,24 @@ No environment variable is provisioned automatically by this implementation.
   `SENDFLOW_DATABASE_TARGET=production`, `FEEXPAY_LIVE_ENABLED=true` and
   production runtime, after explicit approval.
 - Replit real-payment testing has been explicitly authorized by the user.
-  The user explicitly requires the currently connected real Neon database, not a
+  The user explicitly requires the configured shared database, not a
   separate preview database. It requires `FEEXPAY_EXECUTION_HOST=replit`,
   `SENDFLOW_REPLIT_LIVE_APPROVED=true`,
-  `SENDFLOW_SHARED_NEON_LIVE_APPROVED=true`,
-  `SENDFLOW_DATABASE_TARGET=shared-neon`, and the
-  `NEON_DATABASE_URL_PRODUCTION` secret configured in the server runtime.
+  `SENDFLOW_SHARED_DATABASE_LIVE_APPROVED=true`,
+  `SENDFLOW_DATABASE_TARGET=shared-external`, and the
+  `SUPABASE_DATABASE_URL` secret configured in the server runtime.
   If that secret is absent, live authorization fails closed; its current
   availability must not be inferred from this documentation.
-  `NEON_DATABASE_URL_PREVIEW` is not required. Connections enforce
+  Connections enforce
   `sslmode=verify-full`. This configuration never grants access to private routes,
   makes a viewer financially eligible, migrates schemas, or moves funds.
-  The existing shared-Neon access middleware remains in force.
+The existing shared-database access middleware remains in force.
   Keep `FEEXPAY_LIVE_ENABLED=false` until the complete server payment lifecycle,
   account entitlements and environment readiness have been verified.
 - Do not pass return/cancel URLs: the direct REST client rejects these options.
   A browser return never confirms a payment.
 
-Live calls remain blocked on unapproved shared-Neon previews, managed development
+Live calls remain blocked on unapproved shared-database previews, managed development
 databases, unapproved runtimes and whenever the live switch is off. Environment authorization
 is not payment readiness: the existing customer submission lock must remain until
 the transfer service is operational. No call is made just by configuring a host.

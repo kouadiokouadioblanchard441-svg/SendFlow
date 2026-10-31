@@ -7,7 +7,7 @@ Date : 22 octobre 2026.
 - Corrections serveur, schéma/migration PostgreSQL, contrat API et tests.
 - Aucun composant, page, style ou comportement visuel de SendFlow modifié.
 - Les types de webhook et validateurs partagés ont été régénérés depuis OpenAPI ; aucune logique financière n'a été ajoutée au navigateur.
-- Aucun accès de test aux données Neon réelles, aucune migration réelle, aucun SMS, appel Didit réel ou mouvement de fonds.
+- Aucun accès de test aux données partagées, aucune migration de production, aucun SMS, appel Didit réel ou mouvement de fonds.
 - Les clés réelles de l'environnement n'ont pas été copiées, affichées ou requalifiées en clés de test. Les essais utilisent exclusivement des secrets synthétiques générés dans un processus isolé.
 - L'administration reste fermée ; les transferts/dépôts clients ne sont pas activés.
 
@@ -97,7 +97,7 @@ Les changements runtime essentiels sont l'extraction des services, le remplaceme
 
 ## Migration et permissions
 
-**Migration préparée et testée, NON appliquée à Neon ni à la production.**
+**Migration préparée et testée; elle n’a pas été appliquée à la base partagée actuelle ni à la production.**
 
 Le serveur mis à jour nécessite cette migration avant activation des routes concernées sur une base réelle. En son absence, les opérations qui utilisent les nouvelles colonnes/tables échouent fermées au lieu de contourner les contrôles.
 

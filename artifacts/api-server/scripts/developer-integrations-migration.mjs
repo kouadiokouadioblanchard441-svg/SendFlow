@@ -283,13 +283,13 @@ async function run() {
   const apply = args.includes("--apply");
   const expected = args.find((arg) => arg.startsWith("--expected-hash="))
     ?.slice("--expected-hash=".length);
-  if (process.env.SENDFLOW_DATABASE_TARGET !== "shared-neon" ||
-    process.env.SENDFLOW_SHARED_NEON_LIVE_APPROVED !== "true" ||
+  if (process.env.SENDFLOW_DATABASE_TARGET !== "shared-external" ||
+    process.env.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED !== "true" ||
     !process.env.REPL_ID || process.env.NODE_ENV === "production" ||
-    args.some((arg) => !["--apply", "--confirm-shared-neon"].includes(arg) &&
+    args.some((arg) => !["--apply", "--confirm-shared-database"].includes(arg) &&
       !/^--expected-hash=[a-f0-9]{64}$/.test(arg)) ||
-    (apply && (!args.includes("--confirm-shared-neon") || !expected))) {
-    console.error("Stopped: shared Neon must be explicit; writes require --apply, --confirm-shared-neon and a reviewed fingerprint.");
+    (apply && (!args.includes("--confirm-shared-database") || !expected))) {
+    console.error("Stopped: shared database must be explicit; writes require --apply, --confirm-shared-database and a reviewed fingerprint.");
     process.exitCode = 1;
     return;
   }
@@ -306,18 +306,18 @@ async function run() {
     await client.connect();
     const { rows } = await client.query("SELECT pg_is_in_recovery() AS read_replica");
     if (rows[0]?.read_replica) {
-      throw new DeveloperIntegrationsMigrationError("NEON_TARGET_IS_READ_ONLY_REPLICA");
+      throw new DeveloperIntegrationsMigrationError("SHARED_TARGET_IS_READ_ONLY_REPLICA");
     }
     if (apply) {
       console.log(JSON.stringify({
-        target: "shared-neon",
+        target: "shared-external",
         ...await applyDeveloperIntegrations(client, expected),
       }));
     } else {
       await client.query("BEGIN READ ONLY");
       const plan = await planDeveloperIntegrations(client);
       await client.query("ROLLBACK");
-      console.log(JSON.stringify({ target: "shared-neon", ...plan }));
+      console.log(JSON.stringify({ target: "shared-external", ...plan }));
     }
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});

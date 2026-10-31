@@ -7,20 +7,20 @@ const args = process.argv.slice(2).filter((arg) => arg !== "--");
 const apply = args.includes("--apply");
 const verifyOnly = args.includes("--verify");
 const expected = args.find((arg) => arg.startsWith("--expected-hash="))?.slice("--expected-hash=".length);
-const allowedArgs = new Set(["--apply", "--verify", "--confirm-shared-neon"]);
+const allowedArgs = new Set(["--apply", "--verify", "--confirm-shared-database"]);
 
 if (
-  process.env.SENDFLOW_DATABASE_TARGET !== "shared-neon"
+  process.env.SENDFLOW_DATABASE_TARGET !== "shared-external"
   || process.env.NODE_ENV !== "development"
   || process.env.SENDFLOW_REPLIT_LIVE_APPROVED !== "true"
-  || process.env.SENDFLOW_SHARED_NEON_LIVE_APPROVED !== "true"
+  || process.env.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED !== "true"
   || !process.env.REPL_ID
   || args.some((arg) => !allowedArgs.has(arg) && !/^--expected-hash=[a-f0-9]{64}$/.test(arg))
   || (apply && verifyOnly)
-  || (verifyOnly && (args.includes("--confirm-shared-neon") || expected))
-  || (apply && (!args.includes("--confirm-shared-neon") || !expected))
+  || (verifyOnly && (args.includes("--confirm-shared-database") || expected))
+  || (apply && (!args.includes("--confirm-shared-database") || !expected))
 ) {
-  console.error("Stopped: use a read-only plan, --verify, or --apply --confirm-shared-neon --expected-hash=<reviewed fingerprint>.");
+  console.error("Stopped: use a read-only plan, --verify, or --apply --confirm-shared-database --expected-hash=<reviewed fingerprint>.");
   process.exit(1);
 }
 
@@ -76,7 +76,7 @@ async function getSnapshot() {
 
   if (!safeSchema) {
     const fingerprint = createHash("sha256")
-      .update(JSON.stringify({ target: "shared-neon", migrationHash, schema }))
+      .update(JSON.stringify({ target: "shared-external", migrationHash, schema }))
       .digest("hex");
     return { schema, safeSchema: false, rows: [], fingerprint };
   }
@@ -99,7 +99,7 @@ async function getSnapshot() {
   `);
   const rows = rowsResult.rows;
   const fingerprint = createHash("sha256")
-    .update(JSON.stringify({ target: "shared-neon", migrationHash, schema, rows }))
+    .update(JSON.stringify({ target: "shared-external", migrationHash, schema, rows }))
     .digest("hex");
   return { schema, safeSchema: true, rows, fingerprint };
 }
@@ -107,7 +107,7 @@ async function getSnapshot() {
 function planSummary(snapshot) {
   const rows = snapshot.rows;
   return {
-    target: "shared-neon",
+    target: "shared-external",
     table: "public.sf_operator_pricing_rates",
     safeToApply: snapshot.safeSchema && rows.length > 0,
     operatorCount: rows.length,
@@ -160,7 +160,7 @@ try {
     }
     await client.query("ROLLBACK");
     console.log(JSON.stringify({
-      target: "shared-neon",
+      target: "shared-external",
       verified: true,
       operatorCount: snapshot.rows.length,
       linkflowRateCount: snapshot.rows.length,
@@ -193,7 +193,7 @@ try {
     await client.query("COMMIT");
     transactionOpen = false;
     console.log(JSON.stringify({
-      target: "shared-neon",
+      target: "shared-external",
       applied: plan.ratesToCreate > 0,
       verified: true,
       operatorCount: after.rows.length,

@@ -15,9 +15,9 @@ Do not configure a generic operator menu code as a LinkFlow payment-authorizatio
 
 **How to apply:** Derive the waiting screen from a real server-owned provider attempt and its documented authorization model. Keep static USSD settings empty unless their role in authorizing that exact payment flow is verified.
 
-The authorized Replit viewer may create and inspect LinkFlow links without a PIN because that provisioned account has no PIN, but only while its active preview grant is valid and only in the Replit shared-Neon environment. Its simulator must return an unmistakable simulation outcome, make no provider request, and create no payment attempt, transaction, ledger entry, or balance change.
+The authorized Replit viewer may create and inspect LinkFlow links without a PIN because that provisioned account has no PIN, but only while its active preview grant is valid and only in the restricted shared-database preview. Its simulator must return an unmistakable simulation outcome, make no provider request, and create no payment attempt, transaction, ledger entry, or balance change.
 
-**Why:** The owner needs to review the complete LinkFlow screen flow in Replit, while the same Neon database is shared with Plesk and must never mistake a preview for a real settlement.
+**Why:** The owner needs to review the complete LinkFlow screen flow in Replit, while the preview shares a database with Plesk and must never mistake a preview for a real settlement.
 
 **How to apply:** Limit the PIN exception to viewer-only link list/create/image operations in Replit; keep PIN checks for ordinary customers and all financial operations. Keep simulation results ephemeral and explicitly state that no charge or USSD request occurred.
 
@@ -33,7 +33,7 @@ A LinkFlow link with no fixed amount is stored with amount zero and lets the pay
 
 **How to apply:** Treat zero as the variable-amount sentinel only for XOF. Put the payer input inside the top bold amount panel, not in a separate field below. Require the value for quotes, simulations, and attempts, validate it on the server, include it in idempotency fingerprints and fee calculations, and never let a payer replace a fixed amount.
 
-For shared-Neon migration plans, normalize PostgreSQL-rendered constraint definitions before testing them; `pg_get_constraintdef` may quote numeric constants and include casts.
+For shared-database migration plans, normalize PostgreSQL-rendered constraint definitions before testing them; `pg_get_constraintdef` may quote numeric constants and include casts.
 
 **Why:** A valid existing LinkFlow schema was initially rejected because the planner expected an unquoted numeric literal.
 

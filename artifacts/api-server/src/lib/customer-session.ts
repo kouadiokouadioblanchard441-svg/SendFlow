@@ -2,8 +2,8 @@ import type { Request, Response } from "express";
 import { and, db, eq, gte, isNull, sql, customerCredentialsTable, customerSessionsTable, usersTable } from "@workspace/db";
 import { createCustomerSessionToken, hashCustomerSessionToken, isCustomerSessionToken } from "./customer-auth-crypto";
 import { decryptSensitiveDataIfEncrypted } from "./sensitive-data-crypto";
-import { isSharedNeonPreview } from "./shared-neon-preview-guard";
-import { sharedNeonCustomerCondition } from "./replit-payment-test-access";
+import { isSharedDatabasePreview } from "./shared-database-preview-guard";
+import { sharedDatabaseCustomerCondition } from "./replit-payment-test-access";
 import { previewPasswordForVerification } from "./preview-credential-policy";
 import { formatCustomerDisplayName } from "./customer-profile-policy";
 import { activePreviewAccountCondition } from "./preview-account-condition";
@@ -100,7 +100,7 @@ export async function getCustomerSession(
         select 1 from public.sf_replit_payment_test_access a
         where a.user_id=${usersTable.id} and a.state='active'
       )`,
-      previewAccount: isSharedNeonPreview()
+      previewAccount: isSharedDatabasePreview()
         ? activePreviewAccountCondition()
         : sql<boolean>`false`,
     })
@@ -112,15 +112,15 @@ export async function getCustomerSession(
         eq(customerSessionsTable.tokenHash, tokenHash),
         isNull(customerSessionsTable.revokedAt),
         gte(customerSessionsTable.expiresAt, now),
-        sharedNeonCustomerCondition(),
+        sharedDatabaseCustomerCondition(),
       ),
     )
     .limit(1);
 
   if (!row) return null;
-  const paymentTestAccount = isSharedNeonPreview() && row.paymentTestAccount;
+  const paymentTestAccount = isSharedDatabasePreview() && row.paymentTestAccount;
   if (
-    isSharedNeonPreview() &&
+    isSharedDatabasePreview() &&
     !paymentTestAccount &&
     !previewPasswordForVerification(row.credentialPasswordHash ?? "")
   ) return null;
@@ -154,7 +154,7 @@ export async function getCustomerSession(
       && row.pinVerifiedUntil >= now,
     phoneVerified: row.phoneVerifiedAt !== null,
     paymentTestAccount,
-    previewAccount: isSharedNeonPreview() && Boolean(row.previewAccount),
+    previewAccount: isSharedDatabasePreview() && Boolean(row.previewAccount),
   };
 }
 

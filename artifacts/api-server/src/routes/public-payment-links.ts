@@ -301,7 +301,7 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
         : null,
       countries,
       // Explicitly disabled by default and restricted to the production Plesk
-      // runtime. Replit's shared-Neon viewer stays simulation-only.
+      // runtime. Replit's shared-database viewer stays simulation-only.
       paymentAvailable: isLinkFlowPaymentExecutionEnabled(),
       simulationAvailable,
     };

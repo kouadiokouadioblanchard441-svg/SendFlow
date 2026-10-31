@@ -15,4 +15,4 @@ Do not move to dependent feature work until the relevant financial logic is chec
 
 **Why:** The user explicitly requires SendFlow's logic to be solid and correctly applied before development continues.
 
-**How to apply:** For each financial or security change, define the invariant and its trust boundary, exercise failure and concurrent cases without touching shared Neon or real services, and list any infrastructure-dependent checks that remain blocked before starting dependent work.
+**How to apply:** For each financial or security change, define the invariant and its trust boundary, exercise failure and concurrent cases without touching the shared database or real services, and list any infrastructure-dependent checks that remain blocked before starting dependent work.

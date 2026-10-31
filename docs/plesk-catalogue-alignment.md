@@ -3,7 +3,7 @@
 ## Conclusion du contrôle du 22 octobre 2026
 
 **Alignement non démontré : ne pas autoriser une bascule sur ce seul rapport.**
-Le schéma Neon contient les nouveaux objets, mais la version réellement exécutée
+Le nouveau schéma partagé contient les objets attendus, mais la version réellement exécutée
 par Plesk et son rôle PostgreSQL ne sont pas accessibles depuis cet environnement.
 Ce rapport distingue les preuves obtenues des contrôles encore nécessaires.
 Aucun déploiement, changement de droits, migration ou changement de données n'a été réalisé.
@@ -17,10 +17,10 @@ Les paiements et le provisionnement d'administrateurs sont hors périmètre.
 | Déploiement Replit | Le service de déploiement indique aucun déploiement Replit actif | Ne dit rien de l'hébergement externe Plesk |
 | Domaine de configuration mobile `app.africa.sendflow.africa` | Les GET `/api/healthz` et `/api/auth/countries` n'aboutissent pas ; curl indique une résolution DNS impossible | Domaine trouvé dans `.env.capacitor`, pas une URL Plesk confirmée ; ne prouve pas une panne mondiale |
 | Version backend Plesk | Inconnue | Aucun SHA, bundle, manifeste ni réponse HTTP exploitable obtenu |
-| Neon | Connexion via le secret existant, transaction `READ ONLY`, délai SQL limité, fin par `ROLLBACK` | Base externe ; ne pas confondre avec la base gérée Replit |
+| Base partagée précédente | Connexion via le secret serveur, transaction `READ ONLY`, délai SQL limité, fin par `ROLLBACK` | Constat historique ; ne pas confondre avec la base gérée Replit ni avec la nouvelle base vide |
 | Schéma | `sf_countries`, `sf_operator_catalog`, ancienne et nouvelle tables de routage, `sf_payment_aggregators` présentes | Présence ≠ migration intégralement validée ni compatibilité du runtime |
 | Colonnes | Trois booléens d'opération sur pays et opérateurs, défaut `false` ; colonne `operation` sur le nouveau routage | Contraintes, index et état fonctionnel détaillé contrôlés par le script joint |
-| Rôle disponible depuis Replit | `neondb_owner`, propriétaire des cinq tables ci-dessus ; SELECT/INSERT/UPDATE/DELETE et USAGE `public` accordés ; RLS désactivée sur ces tables | **Pas de preuve que Plesk utilise ce rôle** |
+| Rôle observé depuis Replit | Rôle propriétaire des cinq tables ci-dessus ; droits SELECT/INSERT/UPDATE/DELETE et USAGE `public` accordés ; RLS désactivée sur ces tables | **Pas de preuve que Plesk utilise ce rôle** |
 | Attributs de ce rôle | Non superutilisateur, mais CREATEDB, CREATEROLE et BYPASSRLS | Ce n'est pas un login runtime restreint ; aucun droit modifié |
 
 Les contrôles complémentaires du script SQL et leurs résultats sont décrits plus bas.
@@ -33,7 +33,7 @@ Exécution réussie, transaction en lecture seule terminée par `ROLLBACK` :
 
 - Les sept relations attendues sont présentes, dont tarification et audit.
   Le rôle disponible en est propriétaire et dispose également de TRUNCATE ;
-  il appartient directement à `neon_auth` et `neon_superuser`.
+  il appartient directement aux rôles internes du service PostgreSQL.
 - Les sept colonnes attendues sont présentes et non nullables. Les contraintes
   pays et d'opération contrôlées sont validées ; l'index unique
   `(scope_type, scope_key, operation)` et l'index pays sont valides.
@@ -105,7 +105,7 @@ Une fois les opérations différenciées, **trois choix ne se réduisent pas san
    avec `--set=ON_ERROR_STOP=1 --file=scripts/plesk-catalogue-readonly.sql`.
    Injecter les paramètres depuis le gestionnaire de secrets approuvé :
    aucune URL/mot de passe en argument, historique shell ou sortie.
-   Vérifier hors journal que la cible est la base Neon approuvée.
+   Vérifier hors journal que la cible est la base partagée approuvée.
    Ne pas changer de rôle pour obtenir artificiellement un résultat favorable.
 5. Le script ouvre une transaction en lecture seule et la ferme par `ROLLBACK` ;
    il lit attributs du rôle, appartenances, droits effectifs de table, colonnes,
@@ -141,7 +141,7 @@ séparée et une revue de **toutes** les fonctions du runtime ; pas de changemen
 
 1. **Décision préalable** : collecter les preuves Plesk ci-dessus, fixer une révision
    candidate immuable, ses empreintes et la release précédente, inventorier tous
-   les consommateurs de Neon (Plesk, Replit partagé, workers, anciens serveurs).
+   les consommateurs de la base (Plesk, Replit partagé, workers, anciens serveurs).
    Sans version et rôle confirmés : NO-GO.
 2. **Préparation hors production** : build verrouillée avec le lockfile, tests sur
    base jetable, sans SMS/Didit ni sortie fournisseur. Vérifier la migration depuis
@@ -187,7 +187,7 @@ séparée et une revue de **toutes** les fonctions du runtime ; pas de changemen
   Si l'ancien code ne sait pas appliquer les restrictions, garder le service fermé.
 - **Divergences après bascule** : aucune copie automatique nouveau → ancien.
   Conserver les deux états et l'audit ; faire approuver chaque éventuelle
-  réconciliation métier et modification de données. Ne pas restaurer toute Neon
+  réconciliation métier et modification de données. Ne pas restaurer toute la base
   pour un incident de catalogue : cela pourrait effacer des activités légitimes.
 - **Base et droits** : ne supprimer ni tables ni colonnes additives ; ne pas annuler
   aveuglément les grants ni réintroduire un login propriétaire. Toute restauration

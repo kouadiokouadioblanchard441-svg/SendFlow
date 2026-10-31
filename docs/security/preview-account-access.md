@@ -1,8 +1,8 @@
-# Compte de visualisation sur Neon partagé
+# Compte de visualisation sur la base partagée
 
 ## Autorisation et périmètre
 
-Le propriétaire a choisi d'utiliser la base Neon déjà connectée, et a autorisé uniquement l'accès du compte de visualisation depuis l'aperçu.
+Cette note décrit l’ancien environnement de visualisation. Le compte et ses données n’ont pas été transférés vers la nouvelle base; ne pas réexécuter son provisionnement sans vérification et autorisation distinctes.
 
 Aucune page ni aucun composant frontend n'est modifié par ce lot.
 
@@ -16,7 +16,7 @@ Le code ne contient aucun identifiant réel, mot de passe ou PIN de ce compte.
 - L'autorisation expire après sept jours ; la révocation et l'expiration sont vérifiées côté serveur.
 - Le mot de passe conserve le scrypt salé existant, avec une version réservée à l'aperçu, refusée par le vérificateur de production.
 - Les sessions ont une portée cryptographique et un préfixe distincts. Un cookie de production ne permet pas d'entrer dans l'aperçu, et inversement.
-- Deux contrôles SQL empêchent un ancien serveur partageant Neon de convertir ce mot de passe en mot de passe client normal ou de créer une session client normale pour cet utilisateur.
+- Deux contrôles SQL empêchent un ancien serveur partageant la base de convertir ce mot de passe en mot de passe client normal ou de créer une session client normale pour cet utilisateur.
 - Ces contrôles lisent leur table interne avec les seuls droits de leur propriétaire et un chemin SQL fixé à `pg_catalog`, sans SQL dynamique. Les anciens rôles applicatifs n'ont pas besoin de nouveaux droits sur la table d'autorisation pour continuer à authentifier les clients normaux.
 - Le PIN est créé par le propriétaire dans l'interface habituelle. Sa définition et son déverrouillage utilisent les contrôles, verrous et limites de tentatives existants.
 - Une liste fermée de routes permet la consultation du compte, de ses transactions, de ses limites et de son état KYC, ainsi que les devis.
@@ -33,7 +33,7 @@ La préparation du code ne crée aucun compte au démarrage.
 Après ajout des deux secrets d'initialisation `SENDFLOW_VIEWER_PHONE` et `SENDFLOW_VIEWER_PASSWORD`, l'opérateur peut exécuter :
 
 ```sh
-node artifacts/api-server/scripts/provision-preview-account.mjs --confirm-shared-neon
+node artifacts/api-server/scripts/provision-preview-account.mjs --confirm-shared-database
 ```
 
 La commande exige le mode partagé explicite dans Replit, utilise la connexion déjà configurée et vérifie les colonnes nécessaires. Elle applique uniquement la migration additive `2026-10-22-preview-access.sql`, sans `drizzle push` global ni migration financière indépendante.
@@ -44,7 +44,7 @@ La création de l'utilisateur, du hash, du wallet à zéro, de l'autorisation et
 
 La version de consentement enregistrée distingue l'autorisation interne du propriétaire d'une acceptation de conditions client ou d'une vérification d'identité. Aucun SMS, session utilisateur, faux historique ou fonds n'est généré lors de la création.
 
-## Vérifications exécutées avant Neon
+## Vérifications exécutées sur l’ancien environnement
 
 - Typecheck de l'ensemble du workspace réussi.
 - 10 tests unitaires de cryptographie, séparation de portée et listes de routes réussis.
@@ -55,9 +55,9 @@ La version de consentement enregistrée distingue l'autorisation interne du prop
 - Les migrations sont exécutées deux fois sur la base jetable pour vérifier leur réapplication.
 - Le compteur d'appels réseau externes des tests reste à zéro ; aucun mouvement financier n'est créé pour le viewer.
 
-Ces tests ne constituent pas une connexion navigateur au compte Neon réel.
+Ces tests ne constituent pas une connexion navigateur au compte réel.
 
-Le 22 octobre 2026, le compte a été provisionné dans la base Neon connectée avec les identifiants transmis via Secrets. Une vérification SQL en lecture seule a confirmé une seule autorisation active, un wallet à zéro, un téléphone non vérifié et un hash réservé au mode visualisation. L'accès expire le 29 octobre 2026 à 11:05:57 UTC. Aucun identifiant n'est reproduit dans ce rapport.
+Le 22 octobre 2026, le compte a été provisionné dans l’ancienne base connectée avec des identifiants transmis via Secrets. Une vérification SQL en lecture seule a confirmé une seule autorisation active, un wallet à zéro, un téléphone non vérifié et un hash réservé au mode visualisation. Ces données n’ont pas été transférées vers la nouvelle base. Aucun identifiant n'est reproduit dans ce rapport.
 
 ## Exploitation
 

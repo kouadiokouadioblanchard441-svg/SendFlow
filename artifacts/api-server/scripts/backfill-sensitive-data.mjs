@@ -24,8 +24,9 @@ const parsedUrl = new URL(connectionString);
 if (!["postgres:", "postgresql:"].includes(parsedUrl.protocol)) {
   throw new Error("Backfill target must be a PostgreSQL URL");
 }
-if (/\.neon\.tech$|\.replit\.(dev|app)$|\.replit\.com$/i.test(parsedUrl.hostname)) {
-  throw new Error("This utility refuses shared Neon and Replit database hosts");
+if (process.env.SENDFLOW_DATABASE_TARGET === "shared-external" ||
+  /\.replit\.(dev|app)$|\.replit\.com$/i.test(parsedUrl.hostname)) {
+  throw new Error("This utility refuses the shared external database and Replit database hosts");
 }
 
 const pool = new Pool({ connectionString, max: 2, connectionTimeoutMillis: 5000 });

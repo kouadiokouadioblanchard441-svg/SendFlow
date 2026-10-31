@@ -11,7 +11,7 @@ const patterns = [
   ['public-secret-variable', /(?:VITE_|NEXT_PUBLIC_|EXPO_PUBLIC_)[A-Z_]*(?:SECRET|PASSWORD|PRIVATE_KEY|DATABASE_URL|API_KEY|ACCESS_TOKEN)/],
 ];
 
-const literalCredential = /(?:^|[\s{;,])["']?(?:DIDIT_API_KEY|DIDIT_WEBHOOK_SECRET|ESMS_API_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY|NEON_DATABASE_URL_PRODUCTION|SENDFLOW_ADMIN_PIN|apiKey|clientSecret|sessionSecret|privateKey|password|passwd)["']?\s*[:=]\s*["']([^"'\n]{4,})["']/;
+const literalCredential = /(?:^|[\s{;,])["']?(?:DIDIT_API_KEY|DIDIT_WEBHOOK_SECRET|ESMS_API_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY|SUPABASE_DATABASE_URL|DATABASE_URL|SENDFLOW_ADMIN_PIN|apiKey|clientSecret|sessionSecret|privateKey|password|passwd)["']?\s*[:=]\s*["']([^"'\n]{4,})["']/;
 const publicEnvAllowlist = new Set(['VITE_API_URL', 'VITE_API_BASE_URL', 'VITE_PUBLIC_SITE_URL']);
 
 export function scanText(file, text) {

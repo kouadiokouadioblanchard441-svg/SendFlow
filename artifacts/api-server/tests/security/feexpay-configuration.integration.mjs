@@ -7,7 +7,7 @@ import { applyFeexpayConfiguration, readFeexpayConfiguration } from "../../src/p
 
 const socket = process.env.SENDFLOW_FIXTURE_SOCKET;
 if (!socket?.startsWith("/tmp/sendflow-isolated-finance-") || process.env.SENDFLOW_DATABASE_TARGET !== "development") {
-  throw new Error("Disposable local PostgreSQL fixture required; Neon credentials are never used.");
+  throw new Error("Disposable local PostgreSQL fixture required; shared database credentials are never used.");
 }
 const connection = { host: socket, port: 15432, database: "postgres" };
 const owner = new pg.Pool({ ...connection, user: "sf_fixture_owner" });

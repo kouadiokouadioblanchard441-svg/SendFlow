@@ -13,7 +13,7 @@
 - [Security test isolation](security-test-isolation.md) — Authentication fixtures must isolate IP quotas as well as account identities; never weaken real rate limiting to make tests pass.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
 - [Operator logo storage](operator-logo-storage.md) — Store uploaded operator logos in the database; this exception does not extend to banners or unrelated media.
-- [Database provider transition](neon-production-database.md) — Supabase is the intended target, but the app is not switched until its connection and schema/data migration are verified.
+- [Shared database transition](external-database-transition.md) — The new shared schema exists, but prior records, seeds, and production readiness are not migrated or verified.
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle production schema pushes](drizzle-scoped-pushes.md) — Keep production migrations additive and explicitly targeted; stop on unrelated Drizzle drift.
 - [eSMS Verify balance requirement](esms-verify-balance.md) — Test-prefixed keys still need available Verify credit; a start request can fail with HTTP 402.
@@ -35,7 +35,7 @@
 - [Network defense boundaries](network-defense-boundaries.md) — Target hostile behavior, not all cloud IPs; origin checks do not prove hosting-wide protection.
 - [Workflow process ownership](workflow-process-ownership.md) — Environment updates can leave old children serving ports despite a failed managed workflow; verify ownership before cleanup.
 - [FeexPay documentation](feexpay-documentation.md) — Payout pages may return only a loading shell; inspect the official public asset rather than infer the contract.
-- [LinkFlow image storage](linkflow-image-storage.md) — LinkFlow images stay in Neon by explicit choice; do not move them to external storage without approval.
+- [LinkFlow image storage](linkflow-image-storage.md) — LinkFlow images remain database-backed; the new database has no historical image rows until data migration is approved.
 - [LinkFlow payment integrity](linkflow-pending-state-integrity.md) — Keep the payer total fixed; soft-delete links while retaining history, and show payment stats only after real payments.
 - [LinkFlow fee availability](linkflow-fee-availability.md) — Configure rates independently per operator; new operators start unconfigured, and disabled countries stay out of customer pricing.
 - [Payment minimum](payment-minimum.md) — Keep the 200 FCFA floor server-side for CFA links and XOF deposits; initialize configurable XOF payout minimum at 200.

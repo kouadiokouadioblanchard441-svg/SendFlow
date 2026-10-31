@@ -7,7 +7,7 @@ régulateurs publiées par l’UIT. Trois corrections de longueur sont proposée
 **Mali 9 → 8, Niger 9 → 8, Congo-Brazzaville 7–12 → 9**.
 Les neuf indicatifs sont cohérents avec ces notifications et l’API publique eSMS.
 
-**Aucun pays n’est déclaré prêt à ouvrir.** Cet examen n’a lu ni modifié Neon,
+**Aucun pays n’est déclaré prêt à ouvrir.** Cet examen n’a lu ni modifié la base partagée,
 n’a lu aucune clé, n’a appelé aucun service authentifié, n’a envoyé aucun SMS.
 Les seules requêtes fournisseur ont été des GET publics de documentation,
 de tarification et de couverture. Les comptes et le pays associé aux appareils
@@ -15,12 +15,12 @@ ne sont pas modifiés.
 
 Le point de comparaison est
 `lib/db/migrations/2026-10-22-country-operations-and-routing.sql`, **pas un relevé
-des valeurs actuelles de Neon**. La migration historique n’est pas corrigée
+des valeurs actuellement enregistrées dans la base**. La migration historique n’est pas corrigée
 rétroactivement : son `ON CONFLICT DO NOTHING` ne corrigerait pas les lignes
 existantes. Les propositions sont dans [proposals.json](./proposals.json), fichier
 documentaire non importé par l’application, non exécuté par les migrations.
 `openingApproved: false` y exprime l’absence d’approbation dans cet examen ;
-ce n’est pas le statut réel `enabled` de Neon.
+ce n’est pas le statut réel `enabled` de la base.
 
 ## Comparaison par pays
 
@@ -168,7 +168,7 @@ existants doivent être conservés et toute suspension ou ouverture décidée
 explicitement. La route PATCH exige un corps complet : ne pas écraser les
 réglages d’opération avec des valeurs par défaut. Un conflit de version 409 exige
 une nouvelle lecture, pas un retry qui force la modification. Aucune commande de
-mutation, migration automatique ou patch prêt à exécuter sur Neon n’est fourni.
+mutation, migration automatique ou patch prêt à exécuter sur la base n’est fourni.
 
 ### 2. Limites qu’une correction de longueur ne peut pas résoudre
 
@@ -229,7 +229,7 @@ Les tests de caractérisation rendent explicites les lacunes restantes
 
 Pas de test HTTP d’inscription ou d’OTP connecté, de transaction SQL,
 de quota/concurrence, ni de livraison réelle. Ces tests ne prouvent pas
-le comportement d’une session complète ni l’état de Neon. Aucun écran,
+le comportement d’une session complète ni l’état actuel de la base. Aucun écran,
 service applicatif ou contrat n’a été modifié ; pas de redémarrage requis.
 
 ## Conditions avant une ouverture autorisée

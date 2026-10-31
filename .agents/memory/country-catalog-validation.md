@@ -13,4 +13,4 @@ For LinkFlow visual review, the authorized Replit viewer may inspect country/ope
 
 **Why:** The user wants to check flags, phone prefixes and operator logos in the test account before any production rollout.
 
-**How to apply:** Scope preview-only catalog visibility to the link owner’s authorized viewer session on Replit/shared Neon; keep quote and payment-attempt routes behind the normal country, operator and provider readiness checks.
+**How to apply:** Scope preview-only catalog visibility to the link owner’s authorized viewer session on Replit/shared database; keep quote and payment-attempt routes behind the normal country, operator and provider readiness checks.

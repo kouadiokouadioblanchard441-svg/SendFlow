@@ -1,4 +1,4 @@
--- Restrict Replit's shared-Neon live-payment path to one explicitly approved,
+-- Restrict Replit's shared-database live-payment path to one explicitly approved,
 -- verified customer account, separate from the read-only preview viewer.
 CREATE TABLE public.sf_replit_payment_test_access (
   user_id text PRIMARY KEY REFERENCES public.sf_users(id) ON DELETE RESTRICT,

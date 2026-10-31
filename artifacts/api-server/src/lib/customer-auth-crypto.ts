@@ -82,7 +82,7 @@ export function hashCustomerSessionToken(
 ) {
   // A viewer cookie cannot authenticate against production, even on an older
   // deployment sharing these tables. Production hashes remain unchanged.
-  const scope = environment.SENDFLOW_DATABASE_TARGET === "shared-neon" ? "sendflow-preview:v1:" : "";
+  const scope = environment.SENDFLOW_DATABASE_TARGET === "shared-external" ? "sendflow-preview:v1:" : "";
   const digest = createHash("sha256").update(scope).update(token).digest("hex");
   // Retain 240 bits while making the realm enforceable by a database trigger.
   // A legacy production SHA-256 lookup can never produce this prefix.

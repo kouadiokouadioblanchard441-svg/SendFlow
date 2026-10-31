@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import { adminGrantsTable, adminSessionsTable, and, db, eq, gt, isNull, usersTable } from "@workspace/db";
 import { isCustomerSessionToken } from "./customer-auth-crypto";
-import { isSharedNeonPreview } from "./shared-neon-preview-guard";
+import { isSharedDatabasePreview } from "./shared-database-preview-guard";
 
 export const ADMIN_SESSION_COOKIE = "__Host-sendflow_admin";
 export const ADMIN_SESSION_TTL_MS = 60 * 60 * 1000;
@@ -37,7 +37,7 @@ export function clearAdminSessionCookie(res: Response) {
 }
 export async function loadAdminSession(req: Request, res: Response, next: NextFunction): Promise<void> {
   res.setHeader("Cache-Control", "no-store, private");
-  if (isSharedNeonPreview()) {
+  if (isSharedDatabasePreview()) {
     res.status(503).json({ error: "L’administration est désactivée dans cet environnement." });
     return;
   }

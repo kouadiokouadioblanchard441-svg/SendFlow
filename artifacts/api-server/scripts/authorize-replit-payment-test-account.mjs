@@ -5,13 +5,13 @@ import { createSensitiveDataLookupIndex } from "../src/lib/sensitive-data-crypto
 const args = process.argv.slice(2);
 const apply = args.includes("--apply");
 if (
-  process.env.SENDFLOW_DATABASE_TARGET !== "shared-neon" ||
+  process.env.SENDFLOW_DATABASE_TARGET !== "shared-external" ||
   process.env.FEEXPAY_EXECUTION_HOST !== "replit" ||
   !process.env.SENDFLOW_PAYMENT_TEST_PHONE ||
-  args.some((arg) => !["--apply", "--confirm-shared-neon"].includes(arg)) ||
-  (apply && !args.includes("--confirm-shared-neon"))
+  args.some((arg) => !["--apply", "--confirm-shared-database"].includes(arg)) ||
+  (apply && !args.includes("--confirm-shared-database"))
 ) {
-  console.error("Stopped: shared-Neon Replit target and SENDFLOW_PAYMENT_TEST_PHONE are required; writes require --apply --confirm-shared-neon.");
+  console.error("Stopped: shared Replit database target and SENDFLOW_PAYMENT_TEST_PHONE are required; writes require --apply --confirm-shared-database.");
   process.exit(1);
 }
 
@@ -51,7 +51,7 @@ try {
   }
   if (account.already_authorized) {
     await client.query("ROLLBACK");
-    console.log(JSON.stringify({ target: "shared-neon", alreadyAuthorized: true, activeTestAccounts: 1 }));
+    console.log(JSON.stringify({ target: "shared-external", alreadyAuthorized: true, activeTestAccounts: 1 }));
     process.exit(0);
   }
   const { rows: activeRows } = await client.query(
@@ -60,7 +60,7 @@ try {
   if (activeRows[0].count !== 0) throw Object.assign(new Error(), { code: "ANOTHER_TEST_ACCOUNT_IS_AUTHORIZED" });
   if (!apply) {
     await client.query("ROLLBACK");
-    console.log(JSON.stringify({ target: "shared-neon", eligible: true, activeTestAccounts: 0, writes: false }));
+    console.log(JSON.stringify({ target: "shared-external", eligible: true, activeTestAccounts: 0, writes: false }));
     process.exit(0);
   }
 
@@ -70,7 +70,7 @@ try {
   [account.id]);
   await client.query("COMMIT");
   committed = true;
-  console.log(JSON.stringify({ target: "shared-neon", authorized: true, activeTestAccounts: 1 }));
+  console.log(JSON.stringify({ target: "shared-external", authorized: true, activeTestAccounts: 1 }));
 } catch (error) {
   await client.query("ROLLBACK").catch(() => {});
   console.error(JSON.stringify({ authorized: false, error: error.code ?? "TEST_ACCOUNT_AUTHORIZATION_FAILED" }));

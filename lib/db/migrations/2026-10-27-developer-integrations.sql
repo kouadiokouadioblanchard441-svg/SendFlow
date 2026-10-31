@@ -1,6 +1,6 @@
 -- Additive developer API, hosted-checkout session and webhook infrastructure.
 -- This migration does not create credentials, dispatch payments, or change
--- existing payment/ledger rows. Apply only through the reviewed Neon runner.
+-- existing payment/ledger rows. Apply only through the reviewed database runner.
 
 ALTER TABLE public.sf_customer_payment_links
   ADD COLUMN IF NOT EXISTS source varchar(12) NOT NULL DEFAULT 'linkflow';

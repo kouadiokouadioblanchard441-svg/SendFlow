@@ -1,9 +1,9 @@
 import type { RequestHandler } from "express";
 import { getCustomerSession } from "./customer-session";
-import { isSharedNeonPreview, isViewerRouteCandidate, normalizeRequestPath } from "./shared-neon-preview-guard";
+import { isSharedDatabasePreview, isViewerRouteCandidate, normalizeRequestPath } from "./shared-database-preview-guard";
 
 export const enforcePreviewAccountAccess: RequestHandler = async (req, res, next) => {
-  if (!isSharedNeonPreview() || !isViewerRouteCandidate(req.method, req.originalUrl)) {
+  if (!isSharedDatabasePreview() || !isViewerRouteCandidate(req.method, req.originalUrl)) {
     next();
     return;
   }

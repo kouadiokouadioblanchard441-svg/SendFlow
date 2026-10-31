@@ -165,7 +165,7 @@ function logoRequest(path, { method = "GET", body, headers = {} } = {}) {
   });
 }
 
-test("operator logos validate, store bytes in Neon, use version checks, and serve safely from the public catalog", async () => {
+test("operator logos validate, store bytes in the database, use version checks, and serve safely from the public catalog", async () => {
   const png = Buffer.from(
     "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000b49444154789c636000020000050001a5f645400000000049454e44ae426082",
     "hex",
@@ -627,14 +627,14 @@ test("registration rejects unknown, mismatched, disabled countries and invalid n
   assert.equal((await owner.query("SELECT count(*) FROM sf_users")).rows[0].count, before);
 });
 
-test("shared-Neon access is confined to one provisioned viewer, with real password/PIN and no provider or financial operation", async () => {
+test("shared-database access is confined to one provisioned viewer, with real password/PIN and no provider or financial operation", async () => {
   const originalTarget = process.env.SENDFLOW_DATABASE_TARGET;
   const fixturePhone = "+2250000000002", otherPhone = "+2250000000009";
   const fixturePassword = randomBytes(20).toString("base64url");
   const normalPassword = randomBytes(20).toString("base64url");
   const pin = String(randomInt(1000, 10000));
   const origin = { Origin: "https://sendflow-test.invalid" };
-  process.env.SENDFLOW_DATABASE_TARGET = "shared-neon";
+  process.env.SENDFLOW_DATABASE_TARGET = "shared-external";
   try {
     await owner.query("UPDATE sf_users SET phone_lookup_hash=$1 WHERE id='fixture-a'",
       [runtime.createSensitiveDataLookupIndex(otherPhone, "user-phone")]);
@@ -720,7 +720,7 @@ test("shared-Neon access is confined to one provisioned viewer, with real passwo
     process.env.SENDFLOW_DATABASE_TARGET = "development";
     assert.equal((await signin(fixturePhone, fixturePassword)).status, 401);
     assert.equal((await request("/api/auth/session", { headers })).status, 401);
-    process.env.SENDFLOW_DATABASE_TARGET = "shared-neon";
+    process.env.SENDFLOW_DATABASE_TARGET = "shared-external";
     // A mistaken grant to a normal credential cannot turn the dummy hash into access.
     await owner.query("UPDATE sf_preview_access SET user_id='fixture-a'");
     assert.equal((await signin(otherPhone, normalPassword)).status, 401);

@@ -34,10 +34,8 @@ FEEXPAY_MODE = "live"
 [userenv.development]
 DIDIT_ENVIRONMENT = "live"
 SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "
-SENDFLOW_DATABASE_TARGET = "shared-neon"
+SENDFLOW_DATABASE_TARGET = "shared-external"
 TRUST_PROXY_HOPS = "1"
-SENDFLOW_REPLIT_LIVE_APPROVED = "true"
-SENDFLOW_SHARED_NEON_LIVE_APPROVED = "true"
 
 [[ports]]
 localPort = 8080

@@ -30,15 +30,15 @@ const replitLive = () => ({
   ...live(),
   NODE_ENV: "development",
   FEEXPAY_EXECUTION_HOST: "replit",
-  SENDFLOW_DATABASE_TARGET: "shared-neon",
+  SENDFLOW_DATABASE_TARGET: "shared-external",
   SENDFLOW_REPLIT_LIVE_APPROVED: "true",
-  SENDFLOW_SHARED_NEON_LIVE_APPROVED: "true",
+  SENDFLOW_SHARED_DATABASE_LIVE_APPROVED: "true",
   REPL_ID: randomUUID(),
   REPLIT_DEV_DOMAIN: "workspace.invalid",
-  NEON_DATABASE_URL_PRODUCTION: "postgresql://production.invalid/sendflow?sslmode=require",
+  SUPABASE_DATABASE_URL: "postgresql://production.invalid/sendflow?sslmode=require",
 });
 
-test("approved Replit live uses the real API origin with the connected shared Neon (mocked transport)", async () => {
+test("approved Replit live uses the configured shared database (mocked transport)", async () => {
   for (const operation of ["payin", "payout"]) {
     let calls = 0;
     const client = new FeexpayClient(replitLive(), async (url, init) => {
@@ -55,15 +55,15 @@ test("approved Replit live uses the real API origin with the connected shared Ne
 test("Replit live never dispatches without both approvals, the connected database, runtime identity and its live switch", async () => {
   const variants = [
     { SENDFLOW_REPLIT_LIVE_APPROVED: "false" },
-    { SENDFLOW_SHARED_NEON_LIVE_APPROVED: "false" },
+    { SENDFLOW_SHARED_DATABASE_LIVE_APPROVED: "false" },
     { FEEXPAY_LIVE_ENABLED: "false" },
     { SENDFLOW_DATABASE_TARGET: "production" },
     { SENDFLOW_DATABASE_TARGET: "development" },
     { NODE_ENV: "test" },
     { REPL_ID: undefined },
     { REPLIT_DEV_DOMAIN: undefined },
-    { NEON_DATABASE_URL_PRODUCTION: undefined },
-    { NEON_DATABASE_URL_PRODUCTION: "postgresql://production.invalid/sendflow?sslmode=disable" },
+    { SUPABASE_DATABASE_URL: undefined },
+    { SUPABASE_DATABASE_URL: "postgresql://production.invalid/sendflow?sslmode=disable" },
     { FEEXPAY_EXECUTION_HOST: "unknown" },
   ];
   for (const variant of variants) {
@@ -223,7 +223,7 @@ test("documented v2 status response may omit currency; missing currency is never
 test("Plesk configuration fails closed on Replit, preview, development or missing explicit gates", async () => {
   const variants = [
     { NODE_ENV: "development" }, { FEEXPAY_LIVE_ENABLED: "false" },
-    { FEEXPAY_EXECUTION_HOST: "replit" }, { SENDFLOW_DATABASE_TARGET: "shared-neon" },
+    { FEEXPAY_EXECUTION_HOST: "replit" }, { SENDFLOW_DATABASE_TARGET: "shared-external" },
     { REPL_ID: randomUUID() }, { REPLIT_DEV_DOMAIN: "preview.invalid" },
   ];
   for (const variant of variants) {

@@ -3,7 +3,7 @@
 ## Périmètre réel
 
 Protection serveur des futures requêtes qui atteignent l’API Express et le serveur
-web SendFlow. Les décisions sont partagées dans Neon, pas dans le navigateur.
+web SendFlow. Les décisions sont partagées côté serveur, pas dans le navigateur.
 Les pages client n’ont pas été redessinées. Les rubriques administrateur sont
 « Blocage IP » et « Autodéfense ».
 
@@ -13,7 +13,7 @@ doivent être raccordés et vérifiés séparément. Copier uniquement les fichi
 statiques sur un hébergement ne protège pas ces fichiers par ce mécanisme.
 Le build produit un serveur web Node dans `artifacts/sendflow/dist/server/index.mjs`.
 Il doit recevoir les variables serveur adaptées à l’hébergement, dont `PORT`,
-`TRUST_PROXY_HOPS` et la configuration Neon. Ne jamais déplacer ses secrets dans
+`TRUST_PROXY_HOPS` et la configuration serveur de la base. Ne jamais déplacer ses secrets dans
 les variables publiques Vite.
 
 ## Ordre des contrôles
@@ -118,7 +118,7 @@ La lecture du panel est bornée aux 100 enregistrements de blocage récents et
 - Après redémarrage : accueil et santé HTTP 200 ; capture mobile de l’accueil
   sans erreur navigateur.
 
-Les attaques ont été simulées uniquement dans la base jetable. La migration Neon
+Les attaques ont été simulées uniquement dans la base jetable. La migration SQL
 a créé les tables dédiées sans modifier comptes, soldes ou transferts. Aucune
 adresse réelle n’a été ajoutée manuellement ou attaquée pendant les tests.
 Les actions du panel n’ont pas été parcourues dans un navigateur connecté :
@@ -128,7 +128,7 @@ l’authentification administrateur réelle reste fermée.
 
 Cette protection n’identifie pas toute attaque et ne remplace pas un WAF, un
 pare-feu réseau ou une protection DDoS chez l’hébergeur. Elle ne bloque pas
-l’accès réseau direct à PostgreSQL : cela relève aussi de Neon, des permissions
+l’accès réseau direct à PostgreSQL : cela relève aussi des règles réseau, des permissions
 et des identifiants de base.
 
 Une IP peut appartenir à plusieurs clients mobiles ; les seuils devront être

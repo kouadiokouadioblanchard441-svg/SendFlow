@@ -1,4 +1,4 @@
--- Additive; deploy BEFORE the matching API. Never run against shared Neon in tests.
+-- Additive; deploy BEFORE the matching API. Never run against the shared database in tests.
 -- No historical rows are updated or decrypted. Existing webhook receipts remain
 -- metadata-only; all newly accepted status events carry an encrypted receipt.
 BEGIN;
