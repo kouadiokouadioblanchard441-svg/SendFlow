@@ -1,5 +1,10 @@
 import { Router, type IRouter } from "express";
+import { randomUUID } from "node:crypto";
 import {
+  CustomerEmailMarketingPreference,
+  CustomerEmailMarketingPreferenceUpdate,
+  EmailMarketingUnsubscribeInput,
+  EmailMarketingUnsubscribeResponse,
   GetCustomerProfileResponse,
   GetCurrentAccountResponse,
   GetCustomerPortalEligibilityResponse,
@@ -15,6 +20,7 @@ import {
   db,
   desc,
   eq,
+  emailMarketingPreferenceEventsTable,
   ilike,
   isNull,
   lt,
@@ -43,6 +49,7 @@ import {
   splitCustomerDisplayName,
 } from "../lib/customer-profile-policy";
 import { projectCustomerTransactionHistoryValues } from "../lib/customer-transaction-history-policy";
+import { verifyEmailUnsubscribeToken } from "../lib/email-marketing-unsubscribe";
 
 const router: IRouter = Router();
 const DEFAULT_CUSTOMER_TRANSACTION_PAGE_SIZE = 50;
@@ -241,6 +248,141 @@ router.patch("/me/profile", async (req, res): Promise<void> => {
     // Never attach request or decrypted profile values to this log entry.
     req.log.error("Customer profile update failed");
     res.status(503).json({ error: "Profile storage unavailable" });
+  }
+});
+
+router.get("/me/email-marketing-preference", async (req, res): Promise<void> => {
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+  res.setHeader("Cache-Control", "no-store, private");
+
+  try {
+    const [user] = await db.select({
+      emailVerifiedAt: usersTable.emailVerifiedAt,
+      consentAt: usersTable.emailMarketingConsentAt,
+      unsubscribedAt: usersTable.emailMarketingUnsubscribedAt,
+    }).from(usersTable).where(eq(usersTable.id, session.userId)).limit(1);
+    if (!user) {
+      res.status(503).json({ error: "Preference storage unavailable" });
+      return;
+    }
+    const [latestEvent] = await db.select({ createdAt: emailMarketingPreferenceEventsTable.createdAt })
+      .from(emailMarketingPreferenceEventsTable)
+      .where(eq(emailMarketingPreferenceEventsTable.userId, session.userId))
+      .orderBy(desc(emailMarketingPreferenceEventsTable.createdAt))
+      .limit(1);
+    res.json(CustomerEmailMarketingPreference.parse({
+      optedIn: Boolean(user.consentAt && !user.unsubscribedAt),
+      emailVerified: Boolean(user.emailVerifiedAt),
+      updatedAt: latestEvent?.createdAt?.toISOString() ?? null,
+    }));
+  } catch {
+    req.log.error("Customer email preference lookup failed");
+    res.status(503).json({ error: "Preference storage unavailable" });
+  }
+});
+
+router.patch("/me/email-marketing-preference", async (req, res): Promise<void> => {
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+  const parsed = CustomerEmailMarketingPreferenceUpdate.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid email preference" });
+    return;
+  }
+
+  try {
+    const result = await db.transaction(async (transaction) => {
+      const [user] = await transaction.select({
+        emailVerifiedAt: usersTable.emailVerifiedAt,
+        consentAt: usersTable.emailMarketingConsentAt,
+        unsubscribedAt: usersTable.emailMarketingUnsubscribedAt,
+      }).from(usersTable).where(eq(usersTable.id, session.userId)).for("update").limit(1);
+      if (!user) return null;
+
+      const currentlyOptedIn = Boolean(user.consentAt && !user.unsubscribedAt);
+      if (currentlyOptedIn !== parsed.data.optedIn) {
+        const now = new Date();
+        await transaction.update(usersTable).set({
+          emailMarketingConsentAt: parsed.data.optedIn ? now : user.consentAt,
+          emailMarketingUnsubscribedAt: parsed.data.optedIn ? null : now,
+          updatedAt: now,
+        }).where(eq(usersTable.id, session.userId));
+        await transaction.insert(emailMarketingPreferenceEventsTable).values({
+          id: randomUUID(),
+          userId: session.userId,
+          action: parsed.data.optedIn ? "opted_in" : "opted_out",
+          source: "account_settings",
+          createdAt: now,
+        });
+        return { emailVerifiedAt: user.emailVerifiedAt, updatedAt: now };
+      }
+
+      const [latestEvent] = await transaction.select({
+        createdAt: emailMarketingPreferenceEventsTable.createdAt,
+      }).from(emailMarketingPreferenceEventsTable)
+        .where(eq(emailMarketingPreferenceEventsTable.userId, session.userId))
+        .orderBy(desc(emailMarketingPreferenceEventsTable.createdAt))
+        .limit(1);
+      return { emailVerifiedAt: user.emailVerifiedAt, updatedAt: latestEvent?.createdAt ?? null };
+    });
+    if (!result) {
+      res.status(503).json({ error: "Preference storage unavailable" });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store, private");
+    res.json(CustomerEmailMarketingPreference.parse({
+      optedIn: parsed.data.optedIn,
+      emailVerified: Boolean(result.emailVerifiedAt),
+      updatedAt: result.updatedAt?.toISOString() ?? null,
+    }));
+  } catch {
+    req.log.error("Customer email preference update failed");
+    res.status(503).json({ error: "Preference storage unavailable" });
+  }
+});
+
+router.post("/public/email-marketing/unsubscribe", async (req, res): Promise<void> => {
+  const parsed = EmailMarketingUnsubscribeInput.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid unsubscribe request" });
+    return;
+  }
+  const userId = verifyEmailUnsubscribeToken(
+    parsed.data.token,
+    process.env.EMAIL_UNSUBSCRIBE_SECRET,
+  );
+  if (!userId) {
+    res.status(400).json({ error: "Invalid unsubscribe request" });
+    return;
+  }
+
+  try {
+    await db.transaction(async (transaction) => {
+      const [user] = await transaction.select({
+        consentAt: usersTable.emailMarketingConsentAt,
+        unsubscribedAt: usersTable.emailMarketingUnsubscribedAt,
+      }).from(usersTable).where(eq(usersTable.id, userId)).for("update").limit(1);
+      if (!user || user.unsubscribedAt) return;
+
+      const now = new Date();
+      await transaction.update(usersTable).set({
+        emailMarketingUnsubscribedAt: now,
+        updatedAt: now,
+      }).where(eq(usersTable.id, userId));
+      await transaction.insert(emailMarketingPreferenceEventsTable).values({
+        id: randomUUID(),
+        userId,
+        action: "unsubscribed",
+        source: "email_link",
+        createdAt: now,
+      });
+    });
+    res.setHeader("Cache-Control", "no-store, private");
+    res.json(EmailMarketingUnsubscribeResponse.parse({ unsubscribed: true }));
+  } catch {
+    req.log.error("Email unsubscribe request could not be recorded");
+    res.status(503).json({ error: "Unsubscribe service unavailable" });
   }
 });
 

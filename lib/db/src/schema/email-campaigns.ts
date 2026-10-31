@@ -49,6 +49,8 @@ export const emailCampaignRecipientsTable = pgTable(
     userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "restrict" }),
     status: varchar("status", { length: 16 }).notNull().default("draft"),
     attempts: integer("attempts").notNull().default(0),
+    manualRetries: integer("manual_retries").notNull().default(0),
+    emailSnapshotEncrypted: text("email_snapshot_encrypted"),
     providerMessageId: varchar("provider_message_id", { length: 255 }),
     lastErrorClass: varchar("last_error_class", { length: 32 }),
     lastErrorStatus: integer("last_error_status"),
@@ -63,9 +65,65 @@ export const emailCampaignRecipientsTable = pgTable(
     queueIndex: index("sf_email_campaign_recipient_queue_idx").on(table.status, table.nextAttemptAt, table.createdAt),
     campaignStatusIndex: index("sf_email_campaign_recipient_campaign_status_idx").on(table.campaignId, table.status),
     attemptsCheck: check("sf_email_campaign_recipient_attempts_check", sql`${table.attempts} >= 0`),
+    manualRetriesCheck: check(
+      "sf_email_campaign_recipient_manual_retries_check",
+      sql`${table.manualRetries} between 0 and 3`,
+    ),
     statusCheck: check(
       "sf_email_campaign_recipient_status_check",
       sql`${table.status} in ('draft', 'queued', 'sending', 'accepted', 'failed', 'cancelled')`,
     ),
+  }),
+);
+
+export const emailCampaignAttemptsTable = pgTable(
+  "sf_email_campaign_attempts",
+  {
+    id: text("id").primaryKey(),
+    recipientId: text("recipient_id")
+      .notNull()
+      .references(() => emailCampaignRecipientsTable.id, { onDelete: "cascade" }),
+    attemptNumber: integer("attempt_number").notNull(),
+    status: varchar("status", { length: 16 }).notNull(),
+    idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
+    providerMessageId: varchar("provider_message_id", { length: 255 }),
+    errorClass: varchar("error_class", { length: 32 }),
+    httpStatus: integer("http_status"),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    recipientAttemptUnique: uniqueIndex("sf_email_campaign_attempt_recipient_number_uq")
+      .on(table.recipientId, table.attemptNumber),
+    recipientCreatedIndex: index("sf_email_campaign_attempt_recipient_created_idx")
+      .on(table.recipientId, table.createdAt),
+    idempotencyIndex: index("sf_email_campaign_attempt_idempotency_idx")
+      .on(table.idempotencyKey),
+    statusCheck: check(
+      "sf_email_campaign_attempt_status_check",
+      sql`${table.status} in ('sending', 'accepted', 'failed')`,
+    ),
+    attemptNumberCheck: check(
+      "sf_email_campaign_attempt_number_check",
+      sql`${table.attemptNumber} > 0`,
+    ),
+  }),
+);
+
+export const emailCampaignRetryRequestsTable = pgTable(
+  "sf_email_campaign_retry_requests",
+  {
+    idempotencyKey: varchar("idempotency_key", { length: 128 }).primaryKey(),
+    recipientId: text("recipient_id")
+      .notNull()
+      .references(() => emailCampaignRecipientsTable.id, { onDelete: "cascade" }),
+    adminUserId: text("admin_user_id").notNull().references(() => usersTable.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    recipientCreatedIndex: index("sf_email_campaign_retry_recipient_created_idx")
+      .on(table.recipientId, table.createdAt),
   }),
 );

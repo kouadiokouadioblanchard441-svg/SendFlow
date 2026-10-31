@@ -92,6 +92,7 @@ test("rejects malformed compressed input and keeps serving requests", async () =
     body: Buffer.from("not a gzip stream"),
   });
   assert.equal(malformed.status, 400);
+  assert.deepEqual(await malformed.json(), { error: "Malformed compressed request body" });
 
   const followUp = await fetch(`${origin}/echo`, {
     method: "POST",

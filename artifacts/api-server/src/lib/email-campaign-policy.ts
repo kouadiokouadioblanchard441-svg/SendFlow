@@ -3,17 +3,69 @@ export type CampaignDispatchEnvironment = {
   EMAIL_CAMPAIGNS_ENABLED?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
+  SENDFLOW_PUBLIC_SITE_URL?: string;
+  EMAIL_UNSUBSCRIBE_SECRET?: string;
 };
 
 export function isCampaignDispatchEnabled(env: CampaignDispatchEnvironment) {
   return env.NODE_ENV === "production"
     && env.EMAIL_CAMPAIGNS_ENABLED?.trim().toLowerCase() === "true"
     && Boolean(env.RESEND_API_KEY?.trim())
-    && Boolean(env.RESEND_FROM_EMAIL?.trim());
+    && Boolean(env.RESEND_FROM_EMAIL?.trim())
+    && isHttpsSiteUrl(env.SENDFLOW_PUBLIC_SITE_URL)
+    && (env.EMAIL_UNSUBSCRIBE_SECRET?.trim().length ?? 0) >= 32;
+}
+
+function isHttpsSiteUrl(value: string | undefined) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:"
+      && !url.username
+      && !url.password
+      && !url.search
+      && !url.hash
+      && url.pathname === "/";
+  } catch {
+    return false;
+  }
 }
 
 export function isRetryableCampaignEmailFailure(statusCode: number | null) {
   return statusCode === null || statusCode === 429 || (statusCode >= 500 && statusCode <= 599);
+}
+
+export type CampaignRecipientEligibility = {
+  accountStatus: string;
+  emailEncrypted: string | null;
+  emailVerifiedAt: Date | string | null;
+  emailMarketingConsentAt: Date | string | null;
+  emailMarketingUnsubscribedAt: Date | string | null;
+};
+
+export function isCampaignRecipientEligible(recipient: CampaignRecipientEligibility) {
+  return recipient.accountStatus === "active"
+    && Boolean(recipient.emailEncrypted)
+    && Boolean(recipient.emailVerifiedAt)
+    && Boolean(recipient.emailMarketingConsentAt)
+    && !recipient.emailMarketingUnsubscribedAt;
+}
+
+export function canManuallyRetryCampaignRecipient(input: {
+  status: string;
+  manualRetries: number;
+  recipient: CampaignRecipientEligibility;
+}) {
+  return input.status === "failed"
+    && Number.isInteger(input.manualRetries)
+    && input.manualRetries >= 0
+    && input.manualRetries < 3
+    && isCampaignRecipientEligible(input.recipient);
+}
+
+export function campaignProviderIdempotencyKey(recipientId: string, manualRetries: number) {
+  const base = `sf-campaign-${recipientId}`;
+  return manualRetries === 0 ? base : `${base}-retry-${manualRetries}`;
 }
 
 export function campaignRetryDelayMs(attempt: number) {

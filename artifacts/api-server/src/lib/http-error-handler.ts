@@ -10,12 +10,17 @@ const PUBLIC_BODY_ERRORS: Readonly<Record<string, { status: number; message: str
   "charset.unsupported": { status: 415, message: "Unsupported request charset" },
   "encoding.unsupported": { status: 415, message: "Unsupported request encoding" },
 };
+const MALFORMED_COMPRESSION_CODES = new Set(["Z_DATA_ERROR", "Z_BUF_ERROR", "Z_NEED_DICT"]);
 
 function publicBodyError(error: unknown) {
   if (!error || typeof error !== "object") return undefined;
   try {
     if (error instanceof URIError) return { status: 400, message: "Malformed request path" };
     const type = Object.getOwnPropertyDescriptor(error, "type")?.value;
+    const code = Object.getOwnPropertyDescriptor(error, "code")?.value;
+    if (typeof code === "string" && MALFORMED_COMPRESSION_CODES.has(code)) {
+      return { status: 400, message: "Malformed compressed request body" };
+    }
     return typeof type === "string" && Object.hasOwn(PUBLIC_BODY_ERRORS, type)
       ? PUBLIC_BODY_ERRORS[type] : undefined;
   } catch {

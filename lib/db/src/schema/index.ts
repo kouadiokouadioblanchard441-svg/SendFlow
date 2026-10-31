@@ -33,3 +33,4 @@ export * from "./customer-payment-link-attempts";
 export * from "./developer-integrations";
 export * from "./replit-payment-test-access";
 export * from "./email-campaigns";
+export * from "./email-marketing";

@@ -79,7 +79,8 @@ export type AdminAuditAction =
   | "update_email_campaign"
   | "queue_email_campaign"
   | "cancel_email_campaign"
-  | "delete_email_campaign";
+  | "delete_email_campaign"
+  | "retry_email_campaign_recipient";
 export type AdminAuditResourceType =
   | "admin_access"
   | "network_defense"

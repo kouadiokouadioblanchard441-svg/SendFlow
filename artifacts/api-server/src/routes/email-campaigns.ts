@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Router, type IRouter } from "express";
 import {
   and,
+  asc,
   count,
   db,
   desc,
@@ -11,6 +12,8 @@ import {
   isNull,
   ne,
   or,
+  emailCampaignAttemptsTable,
+  emailCampaignRetryRequestsTable,
   usersTable,
   emailCampaignRecipientsTable,
   emailCampaignsTable,
@@ -23,7 +26,11 @@ import {
 } from "../lib/sensitive-data-crypto";
 import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
 import { normalizeSensitiveNameForLookup } from "../lib/sensitive-data-crypto";
-import { isCampaignDispatchEnabled } from "../lib/email-campaign-policy";
+import {
+  canManuallyRetryCampaignRecipient,
+  isCampaignDispatchEnabled,
+  isCampaignRecipientEligible,
+} from "../lib/email-campaign-policy";
 import { respondAdminAuthError } from "./admin";
 import { z } from "zod";
 
@@ -52,6 +59,9 @@ type AudienceUser = {
   id: string;
   emailEncrypted: string | null;
   emailVerifiedAt: Date | null;
+  status: string;
+  emailMarketingConsentAt: Date | null;
+  emailMarketingUnsubscribedAt: Date | null;
 };
 
 function dispatchEnabled() {
@@ -120,16 +130,28 @@ async function resolveAudience(
   input: CampaignInput,
 ): Promise<AudienceUser[] | null> {
   const where = input.audienceMode === "all"
-    ? and(ne(usersTable.status, "deleted"), isNotNull(usersTable.emailEncrypted))
+    ? and(
+        eq(usersTable.status, "active"),
+        isNotNull(usersTable.emailEncrypted),
+        isNotNull(usersTable.emailVerifiedAt),
+        isNotNull(usersTable.emailMarketingConsentAt),
+        isNull(usersTable.emailMarketingUnsubscribedAt),
+      )
     : and(
         inArray(usersTable.id, input.userIds),
-        ne(usersTable.status, "deleted"),
+        eq(usersTable.status, "active"),
         isNotNull(usersTable.emailEncrypted),
+        isNotNull(usersTable.emailVerifiedAt),
+        isNotNull(usersTable.emailMarketingConsentAt),
+        isNull(usersTable.emailMarketingUnsubscribedAt),
       );
   const recipients = await database.select({
     id: usersTable.id,
     emailEncrypted: usersTable.emailEncrypted,
     emailVerifiedAt: usersTable.emailVerifiedAt,
+    status: usersTable.status,
+    emailMarketingConsentAt: usersTable.emailMarketingConsentAt,
+    emailMarketingUnsubscribedAt: usersTable.emailMarketingUnsubscribedAt,
   }).from(usersTable).where(where);
 
   if (
@@ -172,8 +194,11 @@ adminRoutes.get("/email-campaigns/recipients", async (req, res): Promise<void> =
   }
 
   const baseFilters = [
-    ne(usersTable.status, "deleted"),
+    eq(usersTable.status, "active"),
     isNotNull(usersTable.emailEncrypted),
+    isNotNull(usersTable.emailVerifiedAt),
+    isNotNull(usersTable.emailMarketingConsentAt),
+    isNull(usersTable.emailMarketingUnsubscribedAt),
   ];
   if (search) {
     const normalizedEmail = normalizeSensitiveEmailForLookup(search);
@@ -193,7 +218,7 @@ adminRoutes.get("/email-campaigns/recipients", async (req, res): Promise<void> =
 
   try {
     const filter = and(...baseFilters);
-    const [items, total, allCount, allUnverifiedCount] = await Promise.all([
+    const [items, total, allEligibleCount, allWithEmailCount] = await Promise.all([
       db.select({
         id: usersTable.id,
         displayName: usersTable.displayName,
@@ -207,13 +232,15 @@ adminRoutes.get("/email-campaigns/recipients", async (req, res): Promise<void> =
         .offset((rawPage - 1) * recipientPageSize),
       db.select({ value: count() }).from(usersTable).where(filter),
       db.select({ value: count() }).from(usersTable).where(and(
-        ne(usersTable.status, "deleted"),
+        eq(usersTable.status, "active"),
         isNotNull(usersTable.emailEncrypted),
+        isNotNull(usersTable.emailVerifiedAt),
+        isNotNull(usersTable.emailMarketingConsentAt),
+        isNull(usersTable.emailMarketingUnsubscribedAt),
       )),
       db.select({ value: count() }).from(usersTable).where(and(
         ne(usersTable.status, "deleted"),
         isNotNull(usersTable.emailEncrypted),
-        isNull(usersTable.emailVerifiedAt),
       )),
     ]);
 
@@ -241,8 +268,11 @@ adminRoutes.get("/email-campaigns/recipients", async (req, res): Promise<void> =
       page: rawPage,
       pageSize: recipientPageSize,
       total: Number(total[0]?.value ?? 0),
-      allRecipientCount: Number(allCount[0]?.value ?? 0),
-      allUnverifiedRecipientCount: Number(allUnverifiedCount[0]?.value ?? 0),
+      allRecipientCount: Number(allEligibleCount[0]?.value ?? 0),
+      allIneligibleRecipientCount: Math.max(
+        0,
+        Number(allWithEmailCount[0]?.value ?? 0) - Number(allEligibleCount[0]?.value ?? 0),
+      ),
     });
   } catch (error) {
     req.log.error({ err: error }, "Email campaign recipient lookup failed");
@@ -322,18 +352,18 @@ adminRoutes.post("/email-campaigns", async (req, res): Promise<void> => {
         createdBy: adminUserId,
       });
       await replaceDraftRecipients(transaction, campaignId, recipients);
+      await recordAdminAudit({
+        adminUserId,
+        action: "create_email_campaign",
+        resourceType: "email_campaign",
+        resourceId: campaignId,
+      }, transaction);
       return { recipientCount: recipients.length, unverifiedCount };
     });
     if (!result) {
       res.status(400).json({ error: "La sélection contient une adresse absente ou un compte supprimé, ou ne contient aucun destinataire." });
       return;
     }
-    await recordAdminAudit({
-      adminUserId,
-      action: "create_email_campaign",
-      resourceType: "email_campaign",
-      resourceId: campaignId,
-    });
     const [campaign] = await getCampaignSummaries([campaignId]);
     res.status(201).json({ campaign });
   } catch (error) {
@@ -371,6 +401,12 @@ adminRoutes.patch("/email-campaigns/:campaignId", async (req, res): Promise<void
         updatedAt: new Date(),
       }).where(eq(emailCampaignsTable.id, campaignId));
       await replaceDraftRecipients(transaction, campaignId, recipients);
+      await recordAdminAudit({
+        adminUserId,
+        action: "update_email_campaign",
+        resourceType: "email_campaign",
+        resourceId: campaignId,
+      }, transaction);
       return "updated" as const;
     });
     if (updated === "missing") {
@@ -385,12 +421,6 @@ adminRoutes.patch("/email-campaigns/:campaignId", async (req, res): Promise<void
       res.status(400).json({ error: "La sélection contient une adresse absente ou un compte supprimé, ou ne contient aucun destinataire." });
       return;
     }
-    await recordAdminAudit({
-      adminUserId,
-      action: "update_email_campaign",
-      resourceType: "email_campaign",
-      resourceId: campaignId,
-    });
     const [campaign] = await getCampaignSummaries([campaignId]);
     res.json({ campaign });
   } catch (error) {
