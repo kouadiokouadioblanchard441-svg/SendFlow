@@ -25,6 +25,7 @@ export type ResendMessage = {
   subject: string;
   text: string;
   html: string;
+  tags?: Array<{ name: string; value: string }>;
 };
 
 type ResendResponse = {
@@ -72,6 +73,7 @@ export async function sendResendEmail(
         subject: message.subject,
         text: message.text,
         html: message.html,
+        ...(message.tags?.length ? { tags: message.tags } : {}),
       }),
       signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
     });

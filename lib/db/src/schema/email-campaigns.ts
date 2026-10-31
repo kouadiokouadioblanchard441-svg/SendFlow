@@ -51,7 +51,9 @@ export const emailCampaignRecipientsTable = pgTable(
     attempts: integer("attempts").notNull().default(0),
     manualRetries: integer("manual_retries").notNull().default(0),
     emailSnapshotEncrypted: text("email_snapshot_encrypted"),
+    emailSnapshotLookupHash: varchar("email_snapshot_lookup_hash", { length: 64 }),
     providerMessageId: varchar("provider_message_id", { length: 255 }),
+    providerUpdatedAt: timestamp("provider_updated_at", { withTimezone: true }),
     lastErrorClass: varchar("last_error_class", { length: 32 }),
     lastErrorStatus: integer("last_error_status"),
     nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
@@ -71,7 +73,7 @@ export const emailCampaignRecipientsTable = pgTable(
     ),
     statusCheck: check(
       "sf_email_campaign_recipient_status_check",
-      sql`${table.status} in ('draft', 'queued', 'sending', 'accepted', 'failed', 'cancelled')`,
+      sql`${table.status} in ('draft', 'queued', 'sending', 'accepted', 'delivered', 'bounced', 'complained', 'failed', 'cancelled')`,
     ),
   }),
 );
@@ -87,7 +89,9 @@ export const emailCampaignAttemptsTable = pgTable(
     status: varchar("status", { length: 16 }).notNull(),
     idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
     emailSnapshotEncrypted: text("email_snapshot_encrypted"),
+    emailSnapshotLookupHash: varchar("email_snapshot_lookup_hash", { length: 64 }),
     providerMessageId: varchar("provider_message_id", { length: 255 }),
+    providerUpdatedAt: timestamp("provider_updated_at", { withTimezone: true }),
     errorClass: varchar("error_class", { length: 32 }),
     httpStatus: integer("http_status"),
     startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
@@ -104,11 +108,37 @@ export const emailCampaignAttemptsTable = pgTable(
       .on(table.idempotencyKey),
     statusCheck: check(
       "sf_email_campaign_attempt_status_check",
-      sql`${table.status} in ('sending', 'accepted', 'failed')`,
+      sql`${table.status} in ('sending', 'accepted', 'delivered', 'bounced', 'complained', 'failed')`,
     ),
     attemptNumberCheck: check(
       "sf_email_campaign_attempt_number_check",
       sql`${table.attemptNumber} > 0`,
+    ),
+  }),
+);
+
+export const emailCampaignProviderEventsTable = pgTable(
+  "sf_email_campaign_provider_events",
+  {
+    providerEventId: varchar("provider_event_id", { length: 255 }).primaryKey(),
+    recipientId: text("recipient_id")
+      .notNull()
+      .references(() => emailCampaignRecipientsTable.id, { onDelete: "cascade" }),
+    attemptId: text("attempt_id")
+      .notNull()
+      .references(() => emailCampaignAttemptsTable.id, { onDelete: "cascade" }),
+    providerMessageId: varchar("provider_message_id", { length: 255 }).notNull(),
+    eventType: varchar("event_type", { length: 32 }).notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+  },
+  (table) => ({
+    attemptEventIndex: index("sf_email_campaign_provider_event_attempt_idx").on(table.attemptId, table.occurredAt),
+    recipientEventIndex: index("sf_email_campaign_provider_event_recipient_idx").on(table.recipientId, table.occurredAt),
+    eventTypeCheck: check(
+      "sf_email_campaign_provider_event_type_check",
+      sql`${table.eventType} in ('email.delivered', 'email.bounced', 'email.complained')`,
     ),
   }),
 );
