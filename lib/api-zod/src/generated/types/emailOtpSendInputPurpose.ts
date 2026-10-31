@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PhoneOtpVerifyInputPurpose = typeof PhoneOtpVerifyInputPurpose[keyof typeof PhoneOtpVerifyInputPurpose];
+export type EmailOtpSendInputPurpose = typeof EmailOtpSendInputPurpose[keyof typeof EmailOtpSendInputPurpose];
 
 
-export const PhoneOtpVerifyInputPurpose = {
+export const EmailOtpSendInputPurpose = {
   signup: 'signup',
   password_reset: 'password_reset',
   pin_reset: 'pin_reset',

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Check, CheckCircle2, Copy, Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
-import { getGetRegistrationSettingsQueryKey, useGetRegistrationSettings, useRegisterCustomer, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
+import { getGetRegistrationSettingsQueryKey, useGetRegistrationSettings, useRegisterCustomer, useSendEmailOtp, useVerifyEmailOtp } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpField } from '@/lib/auth-validation';
@@ -135,11 +135,11 @@ export default function SignupPage() {
   const [resendInSeconds, setResendInSeconds] = useState(0);
   const [otpCode, setOtpCode] = useState('');
   const [verificationError, setVerificationError] = useState('');
-  const [verifiedOnSignup, setVerifiedOnSignup] = useState(false);
+  const [emailVerifiedOnSignup, setEmailVerifiedOnSignup] = useState(false);
   const [signupApiKeyPair, setSignupApiKeyPair] = useState<{ label: string; publicKey: string; secretKey: string } | null>(null);
   const [copiedSignupKey, setCopiedSignupKey] = useState<'public' | 'secret' | null>(null);
-  const sendPhoneOtp = useSendPhoneOtp();
-  const verifyPhoneOtp = useVerifyPhoneOtp();
+  const sendEmailOtp = useSendEmailOtp();
+  const verifyEmailOtp = useVerifyEmailOtp();
   const registerCustomer = useRegisterCustomer();
   const registrationSettings = useGetRegistrationSettings({
     query: { queryKey: getGetRegistrationSettingsQueryKey(), staleTime: 0, refetchOnWindowFocus: true },
@@ -157,8 +157,8 @@ export default function SignupPage() {
   const canSubmit = Object.keys(errors).length === 0;
   const normalizedPhone = normalizePhoneDigits(form.phone);
   const e164Phone = `${signupCountry.dialCode}${normalizedPhone}`;
-  const isSending = sendPhoneOtp.isPending || registerCustomer.isPending || registrationSettings.isFetching;
-  const isChecking = verifyPhoneOtp.isPending || registerCustomer.isPending;
+  const isSending = sendEmailOtp.isPending || registerCustomer.isPending || registrationSettings.isFetching;
+  const isChecking = verifyEmailOtp.isPending || registerCustomer.isPending;
 
   const update = <K extends keyof SignUpForm>(key: K, value: SignUpForm[K]) => {
     setSubmitted(false);
@@ -221,7 +221,9 @@ export default function SignupPage() {
   const sendCode = async () => {
     setVerificationError('');
     try {
-      const response = await sendPhoneOtp.mutateAsync({ data: { phone: e164Phone, purpose: 'signup' } });
+      const response = await sendEmailOtp.mutateAsync({
+        data: { phone: e164Phone, email: form.email.trim().toLowerCase(), purpose: 'signup' },
+      });
       setChallengeId(response.challengeId);
       setChallengeExpiresAt(response.expiresAt);
       setResendAvailableAt(Date.now() + response.resendAfterSeconds * 1000);
@@ -232,7 +234,7 @@ export default function SignupPage() {
       if (retryAfterSeconds !== undefined) {
         setResendAvailableAt(Date.now() + retryAfterSeconds * 1000);
       }
-      setVerificationError(getRequestErrorMessage(error, 'Impossible d’envoyer le code. Vérifiez le numéro puis réessayez.'));
+      setVerificationError(getRequestErrorMessage(error, 'Impossible d’envoyer le code. Vérifiez votre adresse e-mail puis réessayez.'));
     }
   };
 
@@ -244,7 +246,7 @@ export default function SignupPage() {
     try {
       const refreshed = await registrationSettings.refetch();
       if (refreshed.error || !refreshed.data) throw new Error('Le réglage de vérification est indisponible. Réessayez.');
-      if (refreshed.data.smsVerificationEnabled) {
+      if (refreshed.data.emailVerificationEnabled) {
         await sendCode();
       } else {
         const account = await registerCustomer.mutateAsync({
@@ -261,7 +263,7 @@ export default function SignupPage() {
         const createdApiKeyPair = account.developerApiKeyPair ?? null;
         registerCustomer.reset();
         savePendingSignup();
-        setVerifiedOnSignup(false);
+        setEmailVerifiedOnSignup(false);
         setSubmitted(true);
         setSignupApiKeyPair(createdApiKeyPair);
         setStep(createdApiKeyPair ? 'credentials' : 'success');
@@ -280,14 +282,14 @@ export default function SignupPage() {
       return;
     }
     if (!/^\d{6}$/.test(otpCode)) {
-      setVerificationError('Saisissez les 6 chiffres reçus par SMS.');
+      setVerificationError('Saisissez les 6 chiffres reçus par e-mail.');
       return;
     }
 
     try {
-      const response = await verifyPhoneOtp.mutateAsync({ data: { challengeId, purpose: 'signup', code: otpCode } });
-      if (!response.phoneVerified) {
-        setVerificationError('Le numéro n’a pas pu être vérifié. Vérifiez le code puis réessayez.');
+      const response = await verifyEmailOtp.mutateAsync({ data: { challengeId, purpose: 'signup', code: otpCode } });
+      if (!response.emailVerified) {
+        setVerificationError('L’adresse e-mail n’a pas pu être vérifiée. Vérifiez le code puis réessayez.');
         return;
       }
       const account = await registerCustomer.mutateAsync({
@@ -305,7 +307,7 @@ export default function SignupPage() {
       const createdApiKeyPair = account.developerApiKeyPair ?? null;
       registerCustomer.reset();
       savePendingSignup();
-      setVerifiedOnSignup(true);
+      setEmailVerifiedOnSignup(true);
       setSubmitted(true);
       setSignupApiKeyPair(createdApiKeyPair);
       setStep(createdApiKeyPair ? 'credentials' : 'success');
@@ -335,7 +337,7 @@ export default function SignupPage() {
 
           <header className="sendflow-signup-heading">
             <h1 id="signup-title">
-              {step === 'form' ? 'Bienvenue sur SendFlow' : step === 'verification' ? 'Vérifions votre numéro' : step === 'credentials' ? 'Vos clés API sont prêtes' : verifiedOnSignup ? 'Numéro vérifié' : 'Compte créé'}
+              {step === 'form' ? 'Bienvenue sur SendFlow' : step === 'verification' ? 'Vérifions votre adresse e-mail' : step === 'credentials' ? 'Vos clés API sont prêtes' : emailVerifiedOnSignup ? 'Adresse e-mail vérifiée' : 'Compte créé'}
             </h1>
             <p>
               {step === 'form' ? 'Créons votre compte' : step === 'verification' ? 'Une étape rapide avant de continuer' : step === 'credentials' ? 'Copiez et conservez ces clés avant de continuer.' : 'Votre compte peut maintenant être sécurisé'}
@@ -479,7 +481,7 @@ export default function SignupPage() {
               className="sendflow-signup-submit"
               disabled={!canSubmit || isSending || !registrationSettings.data || registrationSettings.isError}
             >
-              {isSending ? 'Patientez…' : registrationSettings.data?.smsVerificationEnabled ? 'Continuer' : 'Créer mon compte'}
+              {isSending ? 'Patientez…' : registrationSettings.data?.emailVerificationEnabled ? 'Continuer' : 'Créer mon compte'}
             </button>
             {registrationSettings.isError && (
               <p className="sendflow-signup-verification-error" role="alert">
@@ -488,7 +490,7 @@ export default function SignupPage() {
             )}
 
             {verificationError && (
-              <p className="sendflow-signup-verification-error" role="alert" data-testid="error-send-phone-otp">
+              <p className="sendflow-signup-verification-error" role="alert" data-testid="error-send-email-otp">
                 {verificationError}
               </p>
             )}
@@ -499,14 +501,14 @@ export default function SignupPage() {
 
           {step === 'verification' && (
             <form className="sendflow-signup-verification" onSubmit={handleVerification} noValidate aria-busy={isChecking}>
-              <p className="sendflow-signup-verification-heading">Saisissez le code à 6 chiffres</p>
+              <p className="sendflow-signup-verification-heading">Saisissez le code reçu par e-mail</p>
               <p className="sendflow-signup-verification-copy">
-                Nous avons envoyé un code à <span className="sendflow-signup-verification-number">{e164Phone}</span>.
+                Nous avons envoyé un code à <span className="sendflow-signup-verification-number">{form.email.trim().toLowerCase()}</span>.
               </p>
 
               <div className="sendflow-signup-otp-wrap">
                 <InputOTP
-                  id="signup-phone-otp"
+                  id="signup-email-otp"
                   maxLength={6}
                   value={otpCode}
                   onChange={(value) => {
@@ -518,7 +520,7 @@ export default function SignupPage() {
                   aria-label="Code de vérification à 6 chiffres"
                   aria-describedby="signup-otp-help"
                   containerClassName="sendflow-signup-otp"
-                  data-testid="input-phone-otp"
+                  data-testid="input-email-otp"
                 >
                   <InputOTPGroup>
                     {Array.from({ length: 6 }, (_, index) => (
@@ -526,7 +528,7 @@ export default function SignupPage() {
                         key={index}
                         index={index}
                         className="sendflow-signup-otp-slot"
-                        data-testid={`input-phone-otp-slot-${index + 1}`}
+                        data-testid={`input-email-otp-slot-${index + 1}`}
                       />
                     ))}
                   </InputOTPGroup>
@@ -538,7 +540,7 @@ export default function SignupPage() {
                 className={`sendflow-signup-verification-timing${expiresInSeconds === 0 ? ' is-expired' : ''}`}
                 role="status"
                 aria-live="polite"
-                data-testid="status-phone-otp-timing"
+                data-testid="status-email-otp-timing"
               >
                 {expiresInSeconds > 0
                   ? `Le code expire dans ${expiresInSeconds}s.`
@@ -546,7 +548,7 @@ export default function SignupPage() {
               </p>
 
               {verificationError && (
-                <p className="sendflow-signup-verification-error" role="alert" data-testid="error-phone-otp">
+                <p className="sendflow-signup-verification-error" role="alert" data-testid="error-email-otp">
                   {verificationError}
                 </p>
               )}
@@ -556,7 +558,7 @@ export default function SignupPage() {
                   type="submit"
                   className="sendflow-signup-submit sendflow-signup-check"
                   disabled={otpCode.length !== 6 || isChecking || expiresInSeconds === 0}
-                  data-testid="button-check-phone-otp"
+                  data-testid="button-check-email-otp"
                 >
                   {isChecking ? 'Vérification…' : 'Vérifier le numéro'}
                 </button>
@@ -565,7 +567,7 @@ export default function SignupPage() {
                   className="sendflow-signup-secondary-action"
                   onClick={sendCode}
                   disabled={isSending || resendInSeconds > 0}
-                  data-testid="button-resend-phone-otp"
+                  data-testid="button-resend-email-otp"
                 >
                   {isSending
                     ? 'Nouvel envoi…'
@@ -587,11 +589,11 @@ export default function SignupPage() {
           )}
 
           {step === 'success' && (
-            <div className="sendflow-signup-verification-success" role="status" aria-live="polite" data-testid={verifiedOnSignup ? 'status-phone-verified' : 'status-account-created'}>
+            <div className="sendflow-signup-verification-success" role="status" aria-live="polite" data-testid={emailVerifiedOnSignup ? 'status-email-verified' : 'status-account-created'}>
               <span className="sendflow-signup-verification-success-mark" aria-hidden="true">
                 <Check size={25} strokeWidth={2.2} />
               </span>
-              <strong>{verifiedOnSignup ? 'Votre numéro est vérifié' : 'Votre compte est créé sans vérification du numéro'}</strong>
+              <strong>{emailVerifiedOnSignup ? 'Votre adresse e-mail est vérifiée' : 'Votre compte est créé sans vérification de l’adresse e-mail'}</strong>
               <p>Préparation de la suite de votre inscription…</p>
             </div>
           )}

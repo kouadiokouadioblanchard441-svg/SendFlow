@@ -6,8 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface PhoneOtpRateLimitError {
-  error: string;
-  /** @minimum 1 */
-  retryAfterSeconds: number;
+export interface EmailOtpVerifyResult {
+  emailVerified: boolean;
+  verifiedAt: Date;
 }

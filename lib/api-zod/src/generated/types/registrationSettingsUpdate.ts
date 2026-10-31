@@ -7,7 +7,7 @@
  */
 
 export interface RegistrationSettingsUpdate {
-  smsVerificationEnabled: boolean;
+  emailVerificationEnabled: boolean;
   /** @minimum 1 */
   expectedVersion: number;
   /**

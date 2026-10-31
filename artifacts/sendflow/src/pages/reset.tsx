@@ -3,7 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
-import { useResetCustomerPassword, useResetCustomerPin, useSendPhoneOtp, useVerifyPhoneOtp } from '@workspace/api-client-react';
+import { useResetCustomerPassword, useResetCustomerPin, useSendEmailOtp, useVerifyEmailOtp } from '@workspace/api-client-react';
 import { clearPinUnlock } from '@/lib/pin-unlock';
 import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import { NEW_CUSTOMER_PASSWORD_MIN_LENGTH } from '@/lib/customer-password-validation';
@@ -74,15 +74,22 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   const [confirmation, setConfirmation] = useState('');
   const [secretError, setSecretError] = useState('');
   const [challengeId, setChallengeId] = useState('');
+  const [resendAt, setResendAt] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const sendOtp = useSendPhoneOtp();
-  const verifyOtp = useVerifyPhoneOtp();
+  const sendOtp = useSendEmailOtp();
+  const verifyOtp = useVerifyEmailOtp();
   const resetPassword = useResetCustomerPassword();
   const resetPin = useResetCustomerPin();
 
   const isPassword = mode === 'password';
   const secretLabel = isPassword ? 'Nouveau mot de passe' : 'Nouveau code secret';
   const maskedPhone = useMemo(() => maskPhone(phone), [phone]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useSeo({
     path: isPassword ? '/forgot-password' : '/forgot-pin',
@@ -98,6 +105,10 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
 
   const handlePhoneSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    await requestCode();
+  };
+
+  const requestCode = async () => {
     if (!isValidPhoneForCountry(phone, phoneDialCode)) {
       setPhoneError(getPhoneLengthMessage(phoneDialCode));
       return;
@@ -108,6 +119,8 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
         data: { phone: `${phoneDialCode}${phone.replace(/\D/g, '')}`, purpose: isPassword ? 'password_reset' : 'pin_reset' },
       });
       setChallengeId(response.challengeId);
+      setResendAt(Date.now() + response.resendAfterSeconds * 1000);
+      setOtp(['', '', '', '', '', '']);
       setStep('verify');
     } catch (error) {
       const candidate = error as { data?: { error?: string } };
@@ -141,7 +154,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       const response = await verifyOtp.mutateAsync({
         data: { challengeId, purpose: isPassword ? 'password_reset' : 'pin_reset', code: otp.join('') },
       });
-      if (!response.phoneVerified) throw new Error('Le numéro n’a pas pu être vérifié.');
+      if (!response.emailVerified) throw new Error('L’adresse e-mail n’a pas pu être vérifiée.');
       setStep('secret');
     } catch (error) {
       const candidate = error as { data?: { error?: string } };
@@ -229,10 +242,10 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
         {step === 'verify' && (
           <>
             <header className="sendflow-reset-heading sendflow-reset-heading-verify">
-              <h1 id="reset-title">Vérification du numéro</h1>
+              <h1 id="reset-title">Vérification par e-mail</h1>
               <p>
-                Veuillez saisir le code OTP que nous vous avons envoyé au{' '}
-                <strong>{maskedPhone}</strong>
+                Saisissez le code envoyé à l’adresse e-mail associée au compte identifié par{' '}
+                <strong>{maskedPhone}</strong>.
               </p>
             </header>
 
@@ -257,7 +270,16 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
               </div>
               {otpError && <p className="sendflow-reset-error" role="alert">{otpError}</p>}
               <p className="sendflow-reset-resend">
-                Vous n&apos;avez pas reçu le code ? <button type="button">Renvoyer</button>
+                Vous n&apos;avez pas reçu le code ?{' '}
+                <button
+                  type="button"
+                  disabled={sendOtp.isPending || now < resendAt}
+                  onClick={() => void requestCode()}
+                >
+                  {now < resendAt
+                    ? `Renvoyer dans ${Math.ceil((resendAt - now) / 1000)} s`
+                    : sendOtp.isPending ? 'Envoi…' : 'Renvoyer'}
+                </button>
               </p>
               <button type="submit" className="sendflow-reset-submit">Vérifier</button>
             </form>

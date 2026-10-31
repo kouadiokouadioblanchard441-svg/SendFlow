@@ -1133,7 +1133,7 @@ function OtpActivityPage() {
         <ShieldCheck className="size-4" />
         <AlertTitle>Secrets d’authentification exclus du journal</AlertTitle>
         <AlertDescription>
-          Les valeurs OTP et les corps SMS ne sont intentionnellement pas conservés. Le diagnostic affiché est un diagnostic eSMS/SendFlow assaini, jamais le contenu d’un message.
+          Les codes et les adresses e-mail ne sont intentionnellement pas conservés. Le diagnostic affiché est un état technique assaini, jamais le contenu d’un message.
         </AlertDescription>
       </Alert>
 
@@ -1141,7 +1141,7 @@ function OtpActivityPage() {
         <CardHeader className="sendflow-admin-otp-card-header">
           <div>
             <CardTitle>Événements OTP</CardTitle>
-            <CardDescription>Filtrez les requêtes transmises à eSMS par type, résultat ou période UTC. Les demandes bloquées par SendFlow avant l’appel au fournisseur ne sont pas enregistrées ici.</CardDescription>
+            <CardDescription>Filtrez les demandes de vérification par type, résultat ou période UTC. Les requêtes bloquées par SendFlow avant l’envoi ne sont pas enregistrées ici.</CardDescription>
           </div>
           <span className="sendflow-admin-data-source" data-testid="text-admin-otp-data-source"><Database className="size-3.5" aria-hidden="true" /> Source serveur</span>
         </CardHeader>
@@ -2581,7 +2581,7 @@ function RegistrationSettingsPage() {
     mutation.mutate(
       {
         data: {
-          smsVerificationEnabled: pendingValue,
+          emailVerificationEnabled: pendingValue,
           expectedVersion: current.version,
           reason: reason.trim(),
         },
@@ -2614,9 +2614,9 @@ function RegistrationSettingsPage() {
       <div className="sendflow-admin-page-intro">
         <div>
           <p className="sendflow-admin-overline">Sécurité · Création de compte</p>
-          <h2 data-testid="heading-admin-registration-settings">Vérification SMS à l’inscription</h2>
+          <h2 data-testid="heading-admin-registration-settings">Vérification e-mail à l’inscription</h2>
           <p className="sendflow-admin-subtitle">
-            Contrôlez si un nouveau numéro doit être vérifié par SMS avant la création du compte.
+            Contrôlez si une nouvelle adresse e-mail doit être vérifiée avant la création du compte.
           </p>
         </div>
       </div>
@@ -2625,7 +2625,7 @@ function RegistrationSettingsPage() {
         <CircleAlert className="size-4" />
         <AlertTitle>Impact sur la sécurité des comptes</AlertTitle>
         <AlertDescription>
-          Si vous désactivez la vérification SMS, les personnes pourront s’inscrire avec un numéro qui n’a pas été vérifié.
+          Un code e-mail vérifie uniquement l’adresse e-mail. Il ne vérifie pas le numéro de téléphone et ne lève pas les contrôles serveur qui protègent les opérations financières.
           Chaque changement est enregistré avec son motif d’audit.
         </AlertDescription>
       </Alert>
@@ -2654,14 +2654,14 @@ function RegistrationSettingsPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="font-semibold">
-                  {query.data.smsVerificationEnabled ? 'Vérification SMS activée' : 'Vérification SMS désactivée'}
+                  {query.data.emailVerificationEnabled ? 'Vérification e-mail activée' : 'Vérification e-mail désactivée'}
                 </p>
                 <p className="text-sm text-muted-foreground" data-testid="text-registration-settings-version">
                   Version {query.data.version} · Modifiée {formatDate(query.data.updatedAt)}
                 </p>
               </div>
               <Switch
-                checked={query.data.smsVerificationEnabled}
+                checked={query.data.emailVerificationEnabled}
                 disabled={mutation.isPending || query.isFetching || query.isError}
                 onCheckedChange={(enabled) => {
                   setPendingValue(enabled);
@@ -2669,16 +2669,16 @@ function RegistrationSettingsPage() {
                   setMutationError('');
                   setFeedback('');
                 }}
-                aria-label="Activer ou désactiver la vérification SMS à l’inscription"
-                data-testid="switch-registration-sms-verification"
+                aria-label="Activer ou désactiver la vérification e-mail à l’inscription"
+                data-testid="switch-registration-email-verification"
               />
             </div>
-            {!query.data.smsVerificationEnabled && (
-              <Alert variant="destructive" data-testid="warning-registration-unverified-numbers">
+            {!query.data.emailVerificationEnabled && (
+              <Alert variant="destructive" data-testid="warning-registration-unverified-email">
                 <CircleAlert className="size-4" />
-                <AlertTitle>Les numéros non vérifiés sont autorisés</AlertTitle>
+                <AlertTitle>Les adresses e-mail non vérifiées sont autorisées</AlertTitle>
                 <AlertDescription>
-                  La vérification étant désactivée, un numéro de téléphone non vérifié pourra être utilisé pour créer un compte.
+                  Les comptes créés sans e-mail vérifié restent sans preuve de propriété du numéro. Les opérations qui exigent un numéro vérifié demeurent bloquées côté serveur.
                 </AlertDescription>
               </Alert>
             )}
@@ -2689,11 +2689,11 @@ function RegistrationSettingsPage() {
       <Dialog open={pendingValue !== null} onOpenChange={closeConfirmation}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmer le changement de vérification SMS</DialogTitle>
+            <DialogTitle>Confirmer le changement de vérification e-mail</DialogTitle>
             <DialogDescription>
               {pendingValue === false
-                ? 'Vous allez désactiver la vérification SMS. Les personnes pourront créer un compte avec un numéro non vérifié.'
-                : 'Vous allez exiger la vérification SMS des numéros avant la création d’un compte.'}
+                ? 'Vous allez désactiver la vérification e-mail. Les nouvelles adresses ne seront plus vérifiées lors de la création du compte.'
+                : 'Vous allez exiger la vérification de l’adresse e-mail avant la création d’un compte.'}
               {' '}Cette action sera enregistrée dans le journal d’audit.
             </DialogDescription>
           </DialogHeader>

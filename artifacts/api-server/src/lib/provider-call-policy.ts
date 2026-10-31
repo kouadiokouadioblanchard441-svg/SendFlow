@@ -1,4 +1,4 @@
-export type ExternalProviderName = "Didit" | "eSMS Verify";
+export type ExternalProviderName = "Didit" | "Resend";
 
 export class ExternalProviderCallUnavailableError extends Error {
   readonly provider: ExternalProviderName;

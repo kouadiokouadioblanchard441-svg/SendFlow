@@ -18,8 +18,8 @@ tags:
     description: Development database diagnostics.
   - name: identity-verification
     description: Didit identity verification for development and sandbox testing.
-  - name: phone-verification
-    description: Public signup phone verification through eSMS Africa.
+  - name: authentication
+    description: Email verification for signup and account recovery. It does not prove ownership of the account phone number.
   - name: admin
     description: Protected SendFlow back-office read operations.
   - name: pricing
@@ -218,25 +218,25 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
   /auth/send-otp:
     post:
-      operationId: sendPhoneOtp
-      tags: [phone-verification]
-      summary: Send a phone verification code
-      description: Starts an eSMS Africa Verify request for signup or account recovery. Provider credentials stay on the server.
+      operationId: sendEmailOtp
+      tags: [authentication]
+      summary: Send an email verification code
+      description: Creates a short-lived verification challenge and sends its code to the signup email or the email associated with the account. The sender configuration and API credential stay on the server. A verified email does not prove ownership of the account phone number.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PhoneOtpSendInput"
+              $ref: "#/components/schemas/EmailOtpSendInput"
       responses:
         "202":
-          description: Verification code sent.
+          description: A verification challenge was accepted. For recovery or administrator access, the response does not reveal whether a matching account exists.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpSendResult"
+                $ref: "#/components/schemas/EmailOtpSendResult"
         "400":
-          description: Invalid phone number.
+          description: Invalid request or missing signup email.
           content:
             application/json:
               schema:
@@ -248,13 +248,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "429":
-          description: Phone or requester has reached an OTP send limit, or signup is temporarily locked after three failed attempts.
+          description: Phone, email or requester has reached an OTP send limit, or signup is temporarily locked after failed attempts.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+                $ref: "#/components/schemas/OtpRateLimitError"
         "502":
-          description: eSMS Africa Verify is unavailable.
+          description: Email delivery is unavailable.
           content:
             application/json:
               schema:
@@ -267,23 +267,23 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
   /auth/verify-otp:
     post:
-      operationId: verifyPhoneOtp
-      tags: [phone-verification]
-      summary: Check a phone verification code
-      description: Checks the code with eSMS Africa and persists the verified phone state for its declared purpose.
+      operationId: verifyEmailOtp
+      tags: [authentication]
+      summary: Verify an email code
+      description: Checks the one-time code stored by SendFlow and persists email verification for the declared purpose. It never marks the account phone as verified.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PhoneOtpVerifyInput"
+              $ref: "#/components/schemas/EmailOtpVerifyInput"
       responses:
         "200":
-          description: The provider approved the verification code.
+          description: The email code was verified.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpVerifyResult"
+                $ref: "#/components/schemas/EmailOtpVerifyResult"
         "400":
           description: Invalid request or code.
           content:
@@ -303,19 +303,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "429":
-          description: The OTP provider has limited verification checks, or signup is locked after three failed attempts.
+          description: Signup verification is temporarily rate-limited after failed attempts.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpRateLimitError"
-        "502":
-          description: eSMS Africa Verify is unavailable.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
+                $ref: "#/components/schemas/OtpRateLimitError"
         "503":
-          description: OTP storage or provider configuration is unavailable.
+          description: OTP storage is unavailable.
           content:
             application/json:
               schema:
@@ -342,7 +336,7 @@ paths:
     get:
       operationId: getRegistrationSettings
       tags: [account]
-      summary: Check whether phone SMS verification is required for signup
+      summary: Read whether email verification is required for signup
       responses:
         "200":
           description: Current signup verification requirement.
@@ -361,7 +355,7 @@ paths:
       operationId: registerCustomer
       tags: [account]
       summary: Create a customer account under the current verification policy
-      description: Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
+      description: Consumes a verified email challenge when email verification is enabled; otherwise records the email as unverified. The phone remains unverified in either case. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
       requestBody:
         required: true
         content:
@@ -392,7 +386,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+                $ref: "#/components/schemas/OtpRateLimitError"
         "503":
           description: Account storage is unavailable.
           content:
@@ -435,7 +429,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+                $ref: "#/components/schemas/OtpRateLimitError"
         "503":
           description: Account storage or session configuration is unavailable.
           content:
@@ -599,7 +593,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+                $ref: "#/components/schemas/OtpRateLimitError"
         "503":
           description: Account storage is unavailable.
           content:
@@ -742,7 +736,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+                $ref: "#/components/schemas/OtpRateLimitError"
   /me/pin:
     put:
       operationId: setCustomerPin
@@ -781,7 +775,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PhoneOtpRateLimitError"
+                $ref: "#/components/schemas/OtpRateLimitError"
         "503":
           description: Account storage is unavailable.
           content:
@@ -3534,7 +3528,7 @@ paths:
     get:
       operationId: getAdminRegistrationSettings
       tags: [admin]
-      summary: Read the signup SMS verification setting
+      summary: Read the signup email verification setting
       security:
         - sendFlowSession: []
       responses:
@@ -3553,7 +3547,7 @@ paths:
     patch:
       operationId: updateAdminRegistrationSettings
       tags: [admin]
-      summary: Turn signup SMS verification on or off
+      summary: Turn signup email verification on or off
       security:
         - sendFlowSession: []
       requestBody:
@@ -3854,7 +3848,7 @@ paths:
       operationId: listAdminOtpActivity
       tags: [admin]
       summary: List OTP send and verification activity
-      description: Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient phone numbers, API credentials, and provider verification identifiers are never included.
+      description: Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient email addresses and phone numbers, API credentials, and provider message identifiers are never included.
       security:
         - sendFlowSession: []
       parameters:
@@ -4676,7 +4670,7 @@ components:
           type: boolean
       required:
         - isAuthorized
-    PhoneOtpSendInput:
+    EmailOtpSendInput:
       type: object
       properties:
         phone:
@@ -4685,11 +4679,17 @@ components:
           minLength: 9
           maxLength: 16
           pattern: "^\\+[1-9][0-9]{7,14}$"
+          description: Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: Required for signup. For recovery or administrator access, SendFlow uses the email already associated with the account and ignores this field.
         purpose:
           type: string
           enum: [signup, password_reset, pin_reset, admin_login]
       required: [phone, purpose]
-    PhoneOtpSendResult:
+    EmailOtpSendResult:
       type: object
       properties:
         challengeId:
@@ -4702,7 +4702,7 @@ components:
           type: integer
           minimum: 0
       required: [challengeId, expiresAt, resendAfterSeconds]
-    PhoneOtpVerifyInput:
+    EmailOtpVerifyInput:
       type: object
       properties:
         challengeId:
@@ -4717,16 +4717,16 @@ components:
           maxLength: 6
           pattern: "^[0-9]{6}$"
       required: [challengeId, purpose, code]
-    PhoneOtpVerifyResult:
+    EmailOtpVerifyResult:
       type: object
       properties:
-        phoneVerified:
+        emailVerified:
           type: boolean
         verifiedAt:
           type: string
           format: date-time
-      required: [phoneVerified, verifiedAt]
-    PhoneOtpRateLimitError:
+      required: [emailVerified, verifiedAt]
+    OtpRateLimitError:
       type: object
       properties:
         error:
@@ -4738,20 +4738,20 @@ components:
     PublicRegistrationSettings:
       type: object
       properties:
-        smsVerificationEnabled:
+        emailVerificationEnabled:
           type: boolean
-      required: [smsVerificationEnabled]
+      required: [emailVerificationEnabled]
     AdminRegistrationSettings:
       type: object
       properties:
-        smsVerificationEnabled:
+        emailVerificationEnabled:
           type: boolean
         version:
           type: integer
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [smsVerificationEnabled, version, updatedAt]
+      required: [emailVerificationEnabled, version, updatedAt]
     PublicPaymentLimits:
       type: object
       properties:
@@ -4784,7 +4784,7 @@ components:
     RegistrationSettingsUpdate:
       type: object
       properties:
-        smsVerificationEnabled:
+        emailVerificationEnabled:
           type: boolean
         expectedVersion:
           type: integer
@@ -4793,7 +4793,7 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [smsVerificationEnabled, expectedVersion, reason]
+      required: [emailVerificationEnabled, expectedVersion, reason]
     CustomerRegistrationInput:
       type: object
       properties:

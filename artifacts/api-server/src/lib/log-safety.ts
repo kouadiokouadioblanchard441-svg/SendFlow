@@ -3,7 +3,7 @@ const sensitiveNames = [
   "accessToken", "refreshToken", "sessionToken", "sessionSecret",
   "phone", "email", "fullName", "displayName", "birthDate",
   "providerMessage", "diagnosticMessage", "authorization", "cookie",
-  "DIDIT_API_KEY", "DIDIT_WEBHOOK_SECRET", "ESMS_API_KEY",
+  "DIDIT_API_KEY", "DIDIT_WEBHOOK_SECRET", "ESMS_API_KEY", "RESEND_API_KEY",
   "SESSION_SECRET", "CUSTOMER_PII_ENCRYPTION_KEY", "SUPABASE_DATABASE_URL", "DATABASE_URL",
 ];
 

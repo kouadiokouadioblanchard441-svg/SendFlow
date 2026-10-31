@@ -4,7 +4,9 @@ import { z } from "zod/v4";
 
 export const registrationSettingsTable = pgTable("sf_registration_settings", {
   id: varchar("id", { length: 32 }).primaryKey(),
-  smsVerificationEnabled: boolean("sms_verification_enabled").notNull().default(true),
+  emailVerificationEnabled: boolean("email_verification_enabled").notNull().default(true),
+  // Retained for historical database compatibility; signup now uses email verification.
+  legacySmsVerificationEnabled: boolean("sms_verification_enabled").notNull().default(true),
   version: integer("version").notNull().default(1),
   updatedBy: varchar("updated_by", { length: 255 }).notNull().default("system"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

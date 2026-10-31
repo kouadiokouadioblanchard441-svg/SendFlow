@@ -69,7 +69,9 @@ router.post("/sign-in", async (req, res): Promise<void> => {
           eq(phoneOtpChallengesTable.purpose, "admin_login"),
           eq(phoneOtpChallengesTable.phoneHash, fingerprint(`phone:${phone}`)),
           eq(phoneOtpChallengesTable.requesterHash, fingerprint(`requester:${requesterAddress(req)}`)),
-          eq(phoneOtpChallengesTable.status, "verified"), eq(phoneOtpChallengesTable.phoneVerified, true),
+          eq(phoneOtpChallengesTable.deliveryChannel, "email"),
+          eq(phoneOtpChallengesTable.status, "verified"),
+          eq(phoneOtpChallengesTable.emailVerified, true),
           isNull(phoneOtpChallengesTable.consumedAt), gt(phoneOtpChallengesTable.expiresAt, now),
         )).returning({ id: phoneOtpChallengesTable.id });
       if (!challenge) {

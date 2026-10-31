@@ -4,8 +4,8 @@ import { Redirect, useLocation } from "wouter";
 import {
   getGetAdminAccessStatusQueryKey,
   useGetAdminAccessStatus,
-  useSendPhoneOtp,
-  useVerifyPhoneOtp,
+  useSendEmailOtp,
+  useVerifyEmailOtp,
   useSignInAdmin,
   useSignOutAdmin,
 } from "@workspace/api-client-react";
@@ -40,8 +40,8 @@ export function AdminSignInPage() {
   const [message, setMessage] = useState("");
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(Date.now());
-  const sendOtp = useSendPhoneOtp();
-  const verifyOtp = useVerifyPhoneOtp();
+  const sendOtp = useSendEmailOtp();
+  const verifyOtp = useVerifyEmailOtp();
   const signIn = useSignInAdmin();
   const busy = sendOtp.isPending || verifyOtp.isPending || signIn.isPending;
   useEffect(() => {
@@ -82,31 +82,31 @@ export function AdminSignInPage() {
       <section className="w-full max-w-md space-y-4 rounded-2xl border bg-card p-6 text-card-foreground shadow-sm">
         <h1 className="text-xl font-semibold">Connexion administrateur</h1>
         <p className="text-sm text-muted-foreground">
-          Accès réservé aux comptes autorisés par SendFlow. Après le code SMS, votre PIN administrateur sera demandé.
+          Accès réservé aux comptes autorisés par SendFlow. Un code est envoyé à l’adresse e-mail du compte avant la demande du PIN administrateur.
         </p>
         <form onSubmit={(event) => void submit(event)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="admin-phone">Numéro de téléphone international</Label>
+            <Label htmlFor="admin-phone">Numéro du compte administrateur</Label>
             <Input id="admin-phone" type="tel" autoComplete="tel" placeholder="+225…"
               value={phone} onChange={(event) => setPhone(event.target.value)}
               disabled={busy || !!challengeId} required pattern={"\\+[1-9][0-9]{7,14}"}
               data-testid="input-admin-phone" />
           </div>
           {challengeId && <div className="space-y-2">
-            <Label htmlFor="admin-otp">Code reçu par SMS</Label>
+            <Label htmlFor="admin-otp">Code reçu par e-mail</Label>
             <Input id="admin-otp" inputMode="numeric" autoComplete="one-time-code"
               value={code} onChange={(event) => setCode(event.target.value)} required
-              pattern="[0-9]{4,8}" maxLength={8} disabled={busy} data-testid="input-admin-otp" />
+              pattern="[0-9]{6}" maxLength={6} disabled={busy} data-testid="input-admin-otp" />
             <Button type="button" variant="ghost" disabled={busy || now < resendAt} onClick={() => void sendCode()}>
               {now < resendAt ? `Renvoyer dans ${Math.ceil((resendAt - now) / 1000)} s` : "Renvoyer le code"}
             </Button>
             <Button type="button" variant="ghost" disabled={busy} onClick={() => {
               setChallengeId(null); setCode(""); setMessage("");
-            }}>Changer de numéro</Button>
+              }}>Changer de numéro de compte</Button>
           </div>}
           {message && <p role="alert" className="text-sm text-destructive">{message}</p>}
           <Button type="submit" className="w-full" disabled={busy} data-testid="button-admin-sign-in">
-            {busy ? "Vérification…" : challengeId ? "Vérifier et continuer" : "Recevoir un code SMS"}
+            {busy ? "Vérification…" : challengeId ? "Vérifier et continuer" : "Recevoir un code par e-mail"}
           </Button>
         </form>
       </section>

@@ -110,46 +110,52 @@ export interface CustomerPortalEligibilityResult {
   isAuthorized: boolean;
 }
 
-export type PhoneOtpSendInputPurpose = typeof PhoneOtpSendInputPurpose[keyof typeof PhoneOtpSendInputPurpose];
+export type EmailOtpSendInputPurpose = typeof EmailOtpSendInputPurpose[keyof typeof EmailOtpSendInputPurpose];
 
 
-export const PhoneOtpSendInputPurpose = {
+export const EmailOtpSendInputPurpose = {
   signup: 'signup',
   password_reset: 'password_reset',
   pin_reset: 'pin_reset',
   admin_login: 'admin_login',
 } as const;
 
-export interface PhoneOtpSendInput {
+export interface EmailOtpSendInput {
   /**
+     * Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.
      * @minLength 9
      * @maxLength 16
      * @pattern ^\+[1-9][0-9]{7,14}$
      */
   phone: string;
-  purpose: PhoneOtpSendInputPurpose;
+  /**
+     * Required for signup. For recovery or administrator access, SendFlow uses the email already associated with the account and ignores this field.
+     * @maxLength 254
+     */
+  email?: string;
+  purpose: EmailOtpSendInputPurpose;
 }
 
-export interface PhoneOtpSendResult {
+export interface EmailOtpSendResult {
   challengeId: string;
   expiresAt: string;
   /** @minimum 0 */
   resendAfterSeconds: number;
 }
 
-export type PhoneOtpVerifyInputPurpose = typeof PhoneOtpVerifyInputPurpose[keyof typeof PhoneOtpVerifyInputPurpose];
+export type EmailOtpVerifyInputPurpose = typeof EmailOtpVerifyInputPurpose[keyof typeof EmailOtpVerifyInputPurpose];
 
 
-export const PhoneOtpVerifyInputPurpose = {
+export const EmailOtpVerifyInputPurpose = {
   signup: 'signup',
   password_reset: 'password_reset',
   pin_reset: 'pin_reset',
   admin_login: 'admin_login',
 } as const;
 
-export interface PhoneOtpVerifyInput {
+export interface EmailOtpVerifyInput {
   challengeId: string;
-  purpose: PhoneOtpVerifyInputPurpose;
+  purpose: EmailOtpVerifyInputPurpose;
   /**
      * @minLength 6
      * @maxLength 6
@@ -158,23 +164,23 @@ export interface PhoneOtpVerifyInput {
   code: string;
 }
 
-export interface PhoneOtpVerifyResult {
-  phoneVerified: boolean;
+export interface EmailOtpVerifyResult {
+  emailVerified: boolean;
   verifiedAt: string;
 }
 
-export interface PhoneOtpRateLimitError {
+export interface OtpRateLimitError {
   error: string;
   /** @minimum 1 */
   retryAfterSeconds: number;
 }
 
 export interface PublicRegistrationSettings {
-  smsVerificationEnabled: boolean;
+  emailVerificationEnabled: boolean;
 }
 
 export interface AdminRegistrationSettings {
-  smsVerificationEnabled: boolean;
+  emailVerificationEnabled: boolean;
   version: number;
   /** @nullable */
   updatedAt: string | null;
@@ -258,7 +264,7 @@ export interface PaymentLimitsUpdate {
 }
 
 export interface RegistrationSettingsUpdate {
-  smsVerificationEnabled: boolean;
+  emailVerificationEnabled: boolean;
   /** @minimum 1 */
   expectedVersion: number;
   /**

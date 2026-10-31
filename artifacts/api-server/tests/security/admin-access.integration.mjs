@@ -31,9 +31,10 @@ function request(path, { method = "GET", cookie, body, binary, origin = "https:/
 }
 async function challenge(user = "writer", { purpose = "admin_login", requester = "127.0.0.1", expired = false } = {}) {
   const { rows } = await owner.query(`INSERT INTO sf_phone_otp_challenges
-    (phone_hash,requester_hash,purpose,status,phone_verified,verified_at,expires_at,resend_after)
-    VALUES($1,$2,$3,'verified',true,now(),now()+$4::interval,now()) RETURNING id`,
-  [runtime.fingerprint(`phone:${phones[user]}`), runtime.fingerprint(`requester:${requester}`), purpose,
+    (phone_hash,email_hash,requester_hash,purpose,delivery_channel,status,phone_verified,email_verified,verified_at,expires_at,resend_after)
+    VALUES($1,$2,$3,$4,'email','verified',false,true,now(),now()+$5::interval,now()) RETURNING id`,
+  [runtime.fingerprint(`phone:${phones[user]}`), runtime.fingerprint(`email:${user}`),
+    runtime.fingerprint(`requester:${requester}`), purpose,
     expired ? "-1 minute" : "5 minutes"]);
   return rows[0].id;
 }
@@ -49,7 +50,7 @@ async function unlock(cookie, pin = "48261739") {
 async function clearAttempts() { await owner.query("DELETE FROM sf_customer_auth_attempts"); }
 
 before(async () => {
-  // No fetch transport can call SMS or any other provider during these tests.
+  // No fetch transport can call email delivery or any other provider during these tests.
   globalThis.fetch = async () => { throw new Error("External network forbidden"); };
   pinHash = await runtime.hashCustomerSecret("48261739");
   for (const [id, phone] of Object.entries(phones)) {
@@ -89,6 +90,7 @@ before(async () => {
   app.use(runtime.express.json());
   const surface = runtime.express.Router();
   surface.use(runtime.loadAdminSession, runtime.accessRouter, runtime.pricingRouter, runtime.logoRouter);
+  surface.use(runtime.otpRouter);
   surface.get("/overview", (req, res) => {
     if (runtime.respondAdminAuthError(req, res)) res.json({ allowed: true });
   });
@@ -130,6 +132,71 @@ test("only fresh requester-bound admin challenges work; OTP replay is refused", 
   assert.notEqual(stored.rows[0].token_hash, token);
   assert.equal(stored.rows[0].token_hash, runtime.hashAdminSessionToken(token));
   await clearAttempts();
+});
+test("signup email OTP is sent and verified without verifying the phone", async () => {
+  const oldNodeEnv = process.env.NODE_ENV;
+  const oldFetch = globalThis.fetch;
+  let sentRequest;
+  process.env.NODE_ENV = "production";
+  globalThis.fetch = async (url, init) => {
+    sentRequest = { url, init };
+    return new Response(JSON.stringify({ id: "isolated-email-message" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+  try {
+    const sent = await request("/auth/send-otp", {
+      method: "POST",
+      body: {
+        phone: "+2250700000014",
+        email: "otp-fixture@example.invalid",
+        purpose: "signup",
+      },
+    });
+    assert.equal(sent.status, 202);
+    assert.equal(sent.body.resendAfterSeconds, 60);
+    assert.equal(sentRequest.url, "https://api.resend.com/emails");
+    const emailPayload = JSON.parse(sentRequest.init.body);
+    assert.deepEqual(emailPayload.to, ["otp-fixture@example.invalid"]);
+    const code = emailPayload.text.match(/Code : ([0-9]{6})/)?.[1];
+    assert.ok(code);
+
+    const reserved = await owner.query(
+      "SELECT delivery_channel,status,phone_verified,email_verified,code_hash,provider_message_id FROM sf_phone_otp_challenges WHERE id=$1",
+      [sent.body.challengeId],
+    );
+    assert.equal(reserved.rows[0].delivery_channel, "email");
+    assert.equal(reserved.rows[0].status, "pending");
+    assert.equal(reserved.rows[0].phone_verified, false);
+    assert.equal(reserved.rows[0].email_verified, false);
+    assert.notEqual(reserved.rows[0].code_hash, code);
+    assert.equal(reserved.rows[0].provider_message_id, "isolated-email-message");
+
+    const verified = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { challengeId: sent.body.challengeId, purpose: "signup", code },
+    });
+    assert.equal(verified.status, 200);
+    assert.equal(verified.body.emailVerified, true);
+
+    const stored = await owner.query(
+      "SELECT status,phone_verified,email_verified,code_hash FROM sf_phone_otp_challenges WHERE id=$1",
+      [sent.body.challengeId],
+    );
+    assert.equal(stored.rows[0].status, "verified");
+    assert.equal(stored.rows[0].phone_verified, false);
+    assert.equal(stored.rows[0].email_verified, true);
+    assert.equal(stored.rows[0].code_hash, null);
+  } finally {
+    globalThis.fetch = oldFetch;
+    if (oldNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = oldNodeEnv;
+    await owner.query("DELETE FROM sf_customer_auth_attempts");
+    await owner.query("DELETE FROM sf_phone_otp_challenges WHERE phone_hash=$1", [
+      runtime.fingerprint("phone:+2250700000014"),
+    ]);
+  }
 });
 test("PIN gates reads/writes and catalogue grants never open other administration", async () => {
   const { cookie, status } = await login();

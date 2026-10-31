@@ -16,7 +16,7 @@ const SETTING_ID = "signup";
 
 function present(row: typeof registrationSettingsTable.$inferSelect) {
   return {
-    smsVerificationEnabled: row.smsVerificationEnabled,
+    emailVerificationEnabled: row.emailVerificationEnabled,
     version: row.version,
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -28,7 +28,7 @@ router.get("/auth/registration-settings", async (req, res): Promise<void> => {
       .where(eq(registrationSettingsTable.id, SETTING_ID)).limit(1);
     if (!setting) throw new Error("Signup setting is missing");
     res.setHeader("Cache-Control", "no-store");
-    res.json(GetRegistrationSettingsResponse.parse({ smsVerificationEnabled: setting.smsVerificationEnabled }));
+    res.json(GetRegistrationSettingsResponse.parse({ emailVerificationEnabled: setting.emailVerificationEnabled }));
   } catch (error) {
     req.log.error({ err: error }, "Registration settings lookup failed");
     res.status(503).json({ error: "Le réglage d'inscription est indisponible." });
@@ -70,7 +70,7 @@ adminRoutes.patch("/registration-settings", async (req, res): Promise<void> => {
         .where(eq(registrationSettingsTable.id, SETTING_ID)).for("update");
       if (!previous || previous.version !== parsed.data.expectedVersion) return null;
       const [setting] = await tx.update(registrationSettingsTable).set({
-        smsVerificationEnabled: parsed.data.smsVerificationEnabled,
+        emailVerificationEnabled: parsed.data.emailVerificationEnabled,
         version: parsed.data.expectedVersion + 1,
         updatedAt: new Date(),
         updatedBy: adminUserId,
@@ -84,7 +84,7 @@ adminRoutes.patch("/registration-settings", async (req, res): Promise<void> => {
         action: "update_registration_settings",
         resourceType: "registration_settings",
         resourceId: SETTING_ID,
-        reason: `${parsed.data.reason.trim().slice(0, 400)} [SMS ${previous.smsVerificationEnabled ? "on" : "off"} → ${setting.smsVerificationEnabled ? "on" : "off"}; v${previous.version} → v${setting.version}]`,
+        reason: `${parsed.data.reason.trim().slice(0, 400)} [Email ${previous.emailVerificationEnabled ? "on" : "off"} → ${setting.emailVerificationEnabled ? "on" : "off"}; v${previous.version} → v${setting.version}]`,
       }, tx);
       return setting;
     });

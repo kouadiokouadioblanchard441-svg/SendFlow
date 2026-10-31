@@ -289,14 +289,20 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         .where(eq(registrationSettingsTable.id, "signup"))
         .for("share");
       if (!setting) throw new Error("Signup setting is missing");
-      const requiresOtp = setting.smsVerificationEnabled;
+      const requiresOtp = setting.emailVerificationEnabled;
       let challenge: { id: string } | undefined;
       if (requiresOtp) {
         if (!parsed.data.challengeId) return registerFailure("invalid-challenge");
         [challenge] = await tx
           .select({ id: phoneOtpChallengesTable.id })
           .from(phoneOtpChallengesTable)
-          .where(verifiedCustomerOtpCondition(parsed.data.challengeId, parsed.data.phone, "signup", now))
+          .where(verifiedCustomerOtpCondition(
+            parsed.data.challengeId,
+            parsed.data.phone,
+            "signup",
+            now,
+            parsed.data.email,
+          ))
           .for("update");
         if (!challenge) return registerFailure("invalid-challenge");
       }
@@ -333,9 +339,10 @@ router.post("/auth/register", async (req, res): Promise<void> => {
           id: userId,
           phone: encryptSensitiveData(parsed.data.phone, "user-phone"),
           phoneLookupHash: createSensitiveDataLookupIndex(parsed.data.phone, "user-phone"),
+          emailVerifiedAt: requiresOtp ? now : null,
           emailEncrypted: encryptSensitiveData(parsed.data.email, "user-email"),
           emailLookupHash,
-          phoneVerifiedAt: requiresOtp ? now : null,
+          phoneVerifiedAt: null,
           displayName: encryptSensitiveData(normalizedName, "user-name"),
           displayNameLookupHash: createSensitiveDataLookupIndex(
             normalizeSensitiveNameForLookup(normalizedName),

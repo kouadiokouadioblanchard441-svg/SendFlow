@@ -7,7 +7,7 @@
  */
 
 export interface AdminRegistrationSettings {
-  smsVerificationEnabled: boolean;
+  emailVerificationEnabled: boolean;
   version: number;
   /** @nullable */
   updatedAt: Date | null;

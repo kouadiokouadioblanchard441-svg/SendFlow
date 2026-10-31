@@ -11,6 +11,7 @@ export const usersTable = pgTable("sf_users", {
   phoneVerifiedAt: timestamp("phone_verified_at", { withTimezone: true }),
   emailEncrypted: text("email_encrypted"),
   emailLookupHash: varchar("email_lookup_hash", { length: 64 }),
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   displayName: varchar("display_name", { length: 512 }),
   displayNameLookupHash: varchar("display_name_lookup_hash", { length: 64 }),
   countryCode: varchar("country_code", { length: 2 }),

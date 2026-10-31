@@ -44,7 +44,7 @@ try {
       export { default as accessRouter } from "./src/routes/admin-access";
       export { adminRoutes as pricingRouter } from "./src/routes/operator-pricing";
       export { adminOperatorLogoRoutes as logoRouter } from "./src/routes/admin-operator-logos";
-      export { default as otpRouter } from "./src/routes/phone-otp";
+      export { default as otpRouter } from "./src/routes/auth-otp";
       export { loadAdminSession, hashAdminSessionToken } from "./src/lib/admin-session";
       export { respondAdminAuthError } from "./src/routes/admin";
       export { fingerprint } from "./src/lib/request-security";
@@ -67,6 +67,7 @@ try {
       ...env, NODE_ENV: "development", SENDFLOW_DATABASE_TARGET: "development", DATABASE_URL: url.toString(),
       SENDFLOW_ISOLATED_RUNTIME: runtime, SENDFLOW_FIXTURE_SOCKET: socket,
       SESSION_SECRET: randomBytes(32).toString("hex"), CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
+      RESEND_API_KEY: "isolated-test-only", RESEND_FROM_EMAIL: "SendFlow <no-reply@example.invalid>",
       CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", LOG_LEVEL: "silent",
     },
   });

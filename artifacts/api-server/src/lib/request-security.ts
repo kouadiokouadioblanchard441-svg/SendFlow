@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import type { Request } from "express";
-import { getAllowedOrigins, normalizeHttpOrigin } from "./origin-policy";
+import { getAllowedOrigins, normalizeHttpOrigin } from "./origin-policy.ts";
 
 function fingerprintKey() {
   const key = process.env.SESSION_SECRET?.trim();

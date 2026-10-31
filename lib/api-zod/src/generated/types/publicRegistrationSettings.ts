@@ -7,5 +7,5 @@
  */
 
 export interface PublicRegistrationSettings {
-  smsVerificationEnabled: boolean;
+  emailVerificationEnabled: boolean;
 }

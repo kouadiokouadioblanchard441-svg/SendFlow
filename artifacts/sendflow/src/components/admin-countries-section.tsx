@@ -188,7 +188,7 @@ export function AdminCountriesSection() {
                 onChange={(event) => setForm({ ...form, enabled: event.target.checked })} />
               Autoriser les nouvelles inscriptions et les opérations configurées
             </label>
-            <p className="text-xs text-muted-foreground">Désactiver un pays ne retire pas la connexion aux comptes existants. Vérifiez la couverture SMS avant d’autoriser les inscriptions.</p>
+            <p className="text-xs text-muted-foreground">Désactiver un pays ne retire pas la connexion aux comptes existants. Vérifiez les opérateurs et les moyens de paiement configurés avant de le réactiver.</p>
              {selected ? <fieldset className="space-y-2"><legend className="mb-2 text-sm font-medium">Opérations autorisées dans ce pays</legend>
               {operationLabels.map(([key, label]) => (
                 <label key={key} className="flex items-center gap-2 text-sm">

@@ -102,6 +102,10 @@ import type {
   DeveloperWebhookInput,
   DeveloperWebhooksResponse,
   DiditWebhookPayload,
+  EmailOtpSendInput,
+  EmailOtpSendResult,
+  EmailOtpVerifyInput,
+  EmailOtpVerifyResult,
   ErrorEnvelope,
   GetAdminOverviewParams,
   GetCustomerPaymentLinksParams,
@@ -124,12 +128,8 @@ import type {
   NetworkException,
   NewOperatorInput,
   OperatorUpdate,
+  OtpRateLimitError,
   PaymentLimitsUpdate,
-  PhoneOtpRateLimitError,
-  PhoneOtpSendInput,
-  PhoneOtpSendResult,
-  PhoneOtpVerifyInput,
-  PhoneOtpVerifyResult,
   PricingRatesUpdate,
   PublicBannerList,
   PublicPaymentLimits,
@@ -949,7 +949,7 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
-export const getSendPhoneOtpUrl = () => {
+export const getSendEmailOtpUrl = () => {
 
 
 
@@ -958,10 +958,10 @@ export const getSendPhoneOtpUrl = () => {
 }
 
 /**
- * Starts an eSMS Africa Verify request for signup or account recovery. Provider credentials stay on the server.
- * @summary Send a phone verification code
+ * Creates a short-lived verification challenge and sends its code to the signup email or the email associated with the account. The sender configuration and API credential stay on the server. A verified email does not prove ownership of the account phone number.
+ * @summary Send an email verification code
  */
-export const sendPhoneOtp = async (phoneOtpSendInput: PhoneOtpSendInput, options?: Parameters<typeof customFetch>[1]): Promise<PhoneOtpSendResult> => {
+export const sendEmailOtp = async (emailOtpSendInput: EmailOtpSendInput, options?: Parameters<typeof customFetch>[1]): Promise<EmailOtpSendResult> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -977,12 +977,12 @@ export const sendPhoneOtp = async (phoneOtpSendInput: PhoneOtpSendInput, options
     }
     return headers;
   };
-return customFetch<PhoneOtpSendResult>(getSendPhoneOtpUrl(),
+return customFetch<EmailOtpSendResult>(getSendEmailOtpUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(phoneOtpSendInput)
+    body: JSON.stringify(emailOtpSendInput)
   }
 );}
 
@@ -990,13 +990,13 @@ return customFetch<PhoneOtpSendResult>(getSendPhoneOtpUrl(),
 
 
 
-export const getSendPhoneOtpMutationKey = () => ['sendPhoneOtp'] as const;
+export const getSendEmailOtpMutationKey = () => ['sendEmailOtp'] as const;
 
-export const getSendPhoneOtpMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPhoneOtp>>, TError,SendPhoneOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof sendPhoneOtp>>, TError,SendPhoneOtpMutationVariables, TContext> => {
+export const getSendEmailOtpMutationOptions = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendEmailOtp>>, TError,SendEmailOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendEmailOtp>>, TError,SendEmailOtpMutationVariables, TContext> => {
 
-const mutationKey = getSendPhoneOtpMutationKey();
+const mutationKey = getSendEmailOtpMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1006,10 +1006,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPhoneOtp>>, SendPhoneOtpMutationVariables> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendEmailOtp>>, SendEmailOtpMutationVariables> = (props) => {
           const {data} = props ?? {};
 
-          return  sendPhoneOtp(data,requestOptions)
+          return  sendEmailOtp(data,requestOptions)
         }
 
 
@@ -1019,26 +1019,26 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type SendPhoneOtpMutationResult = NonNullable<Awaited<ReturnType<typeof sendPhoneOtp>>>
-    export type SendPhoneOtpMutationBody = BodyType<PhoneOtpSendInput>
-    export type SendPhoneOtpMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
-    export type SendPhoneOtpMutationVariables = {data: BodyType<PhoneOtpSendInput>}
+    export type SendEmailOtpMutationResult = NonNullable<Awaited<ReturnType<typeof sendEmailOtp>>>
+    export type SendEmailOtpMutationBody = BodyType<EmailOtpSendInput>
+    export type SendEmailOtpMutationError = ErrorType<ErrorEnvelope | OtpRateLimitError>
+    export type SendEmailOtpMutationVariables = {data: BodyType<EmailOtpSendInput>}
 
     /**
- * @summary Send a phone verification code
+ * @summary Send an email verification code
  */
-export const useSendPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPhoneOtp>>, TError,SendPhoneOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useSendEmailOtp = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendEmailOtp>>, TError,SendEmailOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof sendPhoneOtp>>,
+        Awaited<ReturnType<typeof sendEmailOtp>>,
         TError,
-        SendPhoneOtpMutationVariables,
+        SendEmailOtpMutationVariables,
         TContext
       > => {
-      return useMutation(getSendPhoneOtpMutationOptions(options));
+      return useMutation(getSendEmailOtpMutationOptions(options));
     }
 
-export const getVerifyPhoneOtpUrl = () => {
+export const getVerifyEmailOtpUrl = () => {
 
 
 
@@ -1047,10 +1047,10 @@ export const getVerifyPhoneOtpUrl = () => {
 }
 
 /**
- * Checks the code with eSMS Africa and persists the verified phone state for its declared purpose.
- * @summary Check a phone verification code
+ * Checks the one-time code stored by SendFlow and persists email verification for the declared purpose. It never marks the account phone as verified.
+ * @summary Verify an email code
  */
-export const verifyPhoneOtp = async (phoneOtpVerifyInput: PhoneOtpVerifyInput, options?: Parameters<typeof customFetch>[1]): Promise<PhoneOtpVerifyResult> => {
+export const verifyEmailOtp = async (emailOtpVerifyInput: EmailOtpVerifyInput, options?: Parameters<typeof customFetch>[1]): Promise<EmailOtpVerifyResult> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -1066,12 +1066,12 @@ export const verifyPhoneOtp = async (phoneOtpVerifyInput: PhoneOtpVerifyInput, o
     }
     return headers;
   };
-return customFetch<PhoneOtpVerifyResult>(getVerifyPhoneOtpUrl(),
+return customFetch<EmailOtpVerifyResult>(getVerifyEmailOtpUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(phoneOtpVerifyInput)
+    body: JSON.stringify(emailOtpVerifyInput)
   }
 );}
 
@@ -1079,13 +1079,13 @@ return customFetch<PhoneOtpVerifyResult>(getVerifyPhoneOtpUrl(),
 
 
 
-export const getVerifyPhoneOtpMutationKey = () => ['verifyPhoneOtp'] as const;
+export const getVerifyEmailOtpMutationKey = () => ['verifyEmailOtp'] as const;
 
-export const getVerifyPhoneOtpMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPhoneOtp>>, TError,VerifyPhoneOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof verifyPhoneOtp>>, TError,VerifyPhoneOtpMutationVariables, TContext> => {
+export const getVerifyEmailOtpMutationOptions = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyEmailOtp>>, TError,VerifyEmailOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyEmailOtp>>, TError,VerifyEmailOtpMutationVariables, TContext> => {
 
-const mutationKey = getVerifyPhoneOtpMutationKey();
+const mutationKey = getVerifyEmailOtpMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1095,10 +1095,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyPhoneOtp>>, VerifyPhoneOtpMutationVariables> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyEmailOtp>>, VerifyEmailOtpMutationVariables> = (props) => {
           const {data} = props ?? {};
 
-          return  verifyPhoneOtp(data,requestOptions)
+          return  verifyEmailOtp(data,requestOptions)
         }
 
 
@@ -1108,23 +1108,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type VerifyPhoneOtpMutationResult = NonNullable<Awaited<ReturnType<typeof verifyPhoneOtp>>>
-    export type VerifyPhoneOtpMutationBody = BodyType<PhoneOtpVerifyInput>
-    export type VerifyPhoneOtpMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
-    export type VerifyPhoneOtpMutationVariables = {data: BodyType<PhoneOtpVerifyInput>}
+    export type VerifyEmailOtpMutationResult = NonNullable<Awaited<ReturnType<typeof verifyEmailOtp>>>
+    export type VerifyEmailOtpMutationBody = BodyType<EmailOtpVerifyInput>
+    export type VerifyEmailOtpMutationError = ErrorType<ErrorEnvelope | OtpRateLimitError>
+    export type VerifyEmailOtpMutationVariables = {data: BodyType<EmailOtpVerifyInput>}
 
     /**
- * @summary Check a phone verification code
+ * @summary Verify an email code
  */
-export const useVerifyPhoneOtp = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPhoneOtp>>, TError,VerifyPhoneOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useVerifyEmailOtp = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyEmailOtp>>, TError,VerifyEmailOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof verifyPhoneOtp>>,
+        Awaited<ReturnType<typeof verifyEmailOtp>>,
         TError,
-        VerifyPhoneOtpMutationVariables,
+        VerifyEmailOtpMutationVariables,
         TContext
       > => {
-      return useMutation(getVerifyPhoneOtpMutationOptions(options));
+      return useMutation(getVerifyEmailOtpMutationOptions(options));
     }
 
 export const getGetAuthCountriesUrl = () => {
@@ -1213,7 +1213,7 @@ export const getGetRegistrationSettingsUrl = () => {
 }
 
 /**
- * @summary Check whether phone SMS verification is required for signup
+ * @summary Read whether email verification is required for signup
  */
 export const getRegistrationSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicRegistrationSettings> => {
 
@@ -1260,7 +1260,7 @@ export type GetRegistrationSettingsQueryError = ErrorType<ErrorEnvelope>
 
 
 /**
- * @summary Check whether phone SMS verification is required for signup
+ * @summary Read whether email verification is required for signup
  */
 
 export function useGetRegistrationSettings<TData = Awaited<ReturnType<typeof getRegistrationSettings>>, TError = ErrorType<ErrorEnvelope>>(
@@ -1290,7 +1290,7 @@ export const getRegisterCustomerUrl = () => {
 }
 
 /**
- * Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
+ * Consumes a verified email challenge when email verification is enabled; otherwise records the email as unverified. The phone remains unverified in either case. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
  * @summary Create a customer account under the current verification policy
  */
 export const registerCustomer = async (customerRegistrationInput: CustomerRegistrationInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult> => {
@@ -1324,7 +1324,7 @@ return customFetch<CustomerAuthResult>(getRegisterCustomerUrl(),
 
 export const getRegisterCustomerMutationKey = () => ['registerCustomer'] as const;
 
-export const getRegisterCustomerMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const getRegisterCustomerMutationOptions = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerCustomer>>, TError,RegisterCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof registerCustomer>>, TError,RegisterCustomerMutationVariables, TContext> => {
 
@@ -1353,13 +1353,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RegisterCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof registerCustomer>>>
     export type RegisterCustomerMutationBody = BodyType<CustomerRegistrationInput>
-    export type RegisterCustomerMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+    export type RegisterCustomerMutationError = ErrorType<ErrorEnvelope | OtpRateLimitError>
     export type RegisterCustomerMutationVariables = {data: BodyType<CustomerRegistrationInput>}
 
     /**
  * @summary Create a customer account under the current verification policy
  */
-export const useRegisterCustomer = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const useRegisterCustomer = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerCustomer>>, TError,RegisterCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof registerCustomer>>,
@@ -1413,7 +1413,7 @@ return customFetch<CustomerAuthResult>(getSignInCustomerUrl(),
 
 export const getSignInCustomerMutationKey = () => ['signInCustomer'] as const;
 
-export const getSignInCustomerMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const getSignInCustomerMutationOptions = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInCustomer>>, TError,SignInCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof signInCustomer>>, TError,SignInCustomerMutationVariables, TContext> => {
 
@@ -1442,13 +1442,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SignInCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof signInCustomer>>>
     export type SignInCustomerMutationBody = BodyType<CustomerSignInInput>
-    export type SignInCustomerMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+    export type SignInCustomerMutationError = ErrorType<ErrorEnvelope | OtpRateLimitError>
     export type SignInCustomerMutationVariables = {data: BodyType<CustomerSignInInput>}
 
     /**
  * @summary Sign in to a SendFlow customer account
  */
-export const useSignInCustomer = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const useSignInCustomer = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInCustomer>>, TError,SignInCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof signInCustomer>>,
@@ -1830,7 +1830,7 @@ return customFetch<CustomerPinStateResult>(getUnlockCustomerSessionUrl(),
 
 export const getUnlockCustomerSessionMutationKey = () => ['unlockCustomerSession'] as const;
 
-export const getUnlockCustomerSessionMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const getUnlockCustomerSessionMutationOptions = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlockCustomerSession>>, TError,UnlockCustomerSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof unlockCustomerSession>>, TError,UnlockCustomerSessionMutationVariables, TContext> => {
 
@@ -1859,13 +1859,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UnlockCustomerSessionMutationResult = NonNullable<Awaited<ReturnType<typeof unlockCustomerSession>>>
     export type UnlockCustomerSessionMutationBody = BodyType<CustomerPinUnlockInput>
-    export type UnlockCustomerSessionMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+    export type UnlockCustomerSessionMutationError = ErrorType<ErrorEnvelope | OtpRateLimitError>
     export type UnlockCustomerSessionMutationVariables = {data: BodyType<CustomerPinUnlockInput>}
 
     /**
  * @summary Verify the customer PIN for the current session
  */
-export const useUnlockCustomerSession = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const useUnlockCustomerSession = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlockCustomerSession>>, TError,UnlockCustomerSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof unlockCustomerSession>>,
@@ -2305,7 +2305,7 @@ return customFetch<CustomerPinStateResult>(getVerifyCustomerBiometricAuthenticat
 
 export const getVerifyCustomerBiometricAuthenticationMutationKey = () => ['verifyCustomerBiometricAuthentication'] as const;
 
-export const getVerifyCustomerBiometricAuthenticationMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const getVerifyCustomerBiometricAuthenticationMutationOptions = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>, TError,VerifyCustomerBiometricAuthenticationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>, TError,VerifyCustomerBiometricAuthenticationMutationVariables, TContext> => {
 
@@ -2334,13 +2334,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type VerifyCustomerBiometricAuthenticationMutationResult = NonNullable<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>>
     export type VerifyCustomerBiometricAuthenticationMutationBody = BodyType<CustomerBiometricVerificationInput>
-    export type VerifyCustomerBiometricAuthenticationMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+    export type VerifyCustomerBiometricAuthenticationMutationError = ErrorType<ErrorEnvelope | OtpRateLimitError>
     export type VerifyCustomerBiometricAuthenticationMutationVariables = {data: BodyType<CustomerBiometricVerificationInput>}
 
     /**
  * @summary Verify biometric authentication and unlock the current PIN session
  */
-export const useVerifyCustomerBiometricAuthentication = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const useVerifyCustomerBiometricAuthentication = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>, TError,VerifyCustomerBiometricAuthenticationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof verifyCustomerBiometricAuthentication>>,
@@ -2394,7 +2394,7 @@ return customFetch<CustomerPinStateResult>(getSetCustomerPinUrl(),
 
 export const getSetCustomerPinMutationKey = () => ['setCustomerPin'] as const;
 
-export const getSetCustomerPinMutationOptions = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const getSetCustomerPinMutationOptions = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCustomerPin>>, TError,SetCustomerPinMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof setCustomerPin>>, TError,SetCustomerPinMutationVariables, TContext> => {
 
@@ -2423,13 +2423,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SetCustomerPinMutationResult = NonNullable<Awaited<ReturnType<typeof setCustomerPin>>>
     export type SetCustomerPinMutationBody = BodyType<CustomerPinSetInput>
-    export type SetCustomerPinMutationError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>
+    export type SetCustomerPinMutationError = ErrorType<ErrorEnvelope | OtpRateLimitError>
     export type SetCustomerPinMutationVariables = {data: BodyType<CustomerPinSetInput>}
 
     /**
  * @summary Set or change the customer PIN
  */
-export const useSetCustomerPin = <TError = ErrorType<ErrorEnvelope | PhoneOtpRateLimitError>,
+export const useSetCustomerPin = <TError = ErrorType<ErrorEnvelope | OtpRateLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCustomerPin>>, TError,SetCustomerPinMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof setCustomerPin>>,
@@ -7760,7 +7760,7 @@ export const getGetAdminRegistrationSettingsUrl = () => {
 }
 
 /**
- * @summary Read the signup SMS verification setting
+ * @summary Read the signup email verification setting
  */
 export const getAdminRegistrationSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminRegistrationSettings> => {
 
@@ -7807,7 +7807,7 @@ export type GetAdminRegistrationSettingsQueryError = ErrorType<void>
 
 
 /**
- * @summary Read the signup SMS verification setting
+ * @summary Read the signup email verification setting
  */
 
 export function useGetAdminRegistrationSettings<TData = Awaited<ReturnType<typeof getAdminRegistrationSettings>>, TError = ErrorType<void>>(
@@ -7837,7 +7837,7 @@ export const getUpdateAdminRegistrationSettingsUrl = () => {
 }
 
 /**
- * @summary Turn signup SMS verification on or off
+ * @summary Turn signup email verification on or off
  */
 export const updateAdminRegistrationSettings = async (registrationSettingsUpdate: RegistrationSettingsUpdate, options?: Parameters<typeof customFetch>[1]): Promise<AdminRegistrationSettings> => {
 
@@ -7903,7 +7903,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateAdminRegistrationSettingsMutationVariables = {data: BodyType<RegistrationSettingsUpdate>}
 
     /**
- * @summary Turn signup SMS verification on or off
+ * @summary Turn signup email verification on or off
  */
 export const useUpdateAdminRegistrationSettings = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminRegistrationSettings>>, TError,UpdateAdminRegistrationSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -8436,7 +8436,7 @@ export const getListAdminOtpActivityUrl = (params?: ListAdminOtpActivityParams,)
 }
 
 /**
- * Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient phone numbers, API credentials, and provider verification identifiers are never included.
+ * Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient email addresses and phone numbers, API credentials, and provider message identifiers are never included.
  * @summary List OTP send and verification activity
  */
 export const listAdminOtpActivity = async (params?: ListAdminOtpActivityParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminOtpActivityPage> => {

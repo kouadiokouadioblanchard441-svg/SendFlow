@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface PhoneOtpSendResult {
+export interface EmailOtpSendResult {
   challengeId: string;
   expiresAt: Date;
   /** @minimum 0 */

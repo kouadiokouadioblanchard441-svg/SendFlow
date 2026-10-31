@@ -1,12 +1,12 @@
 ---
 name: Unverified customer accounts
-description: Security boundary for customer accounts created while signup SMS verification is disabled.
+description: Email verification never establishes ownership of a customer's phone number.
 ---
 
-Accounts created while the administrator disables signup SMS are allowed to browse the app, but their phone number is not trusted. Re-enabling signup SMS does not retroactively verify those accounts. Require a fresh, purpose-bound OTP before introducing any financial operation that depends on phone ownership, and provide a way for these customers to verify later.
+Email-only OTP verifies the account email, never the phone number. An account may be email-verified and still have an unverified phone; do not treat email verification, account creation, PIN setup, or sign-in as proof of phone ownership. Require a separate, purpose-bound phone verification before any financial operation that depends on phone ownership.
 
 Do not tell customers that signup SMS verification is disabled or that their number is unverified. Keep this status internal to administration and enforce phone-ownership requirements on the server.
 
-**Why:** The user requested an admin-controlled bypass to create a viewing account despite the SMS provider's balance issue. Treating the bypass as permanent proof of phone ownership would make a temporary testing setting a financial security vulnerability.
+**Why:** The user chose email-only OTP verification. Email ownership and phone ownership are distinct security claims, especially in a financial product.
 
-**How to apply:** Keep financial capabilities blocked for unverified numbers when connecting actual payment providers. Do not infer ownership from account creation, PIN setup, a previous sign-in, or later changes to the signup policy.
+**How to apply:** Keep server-side phone-verification gates on financial operations that require phone ownership. Email OTP must update only email verification; do not silently promote the phone to verified.

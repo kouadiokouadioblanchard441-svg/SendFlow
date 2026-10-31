@@ -259,51 +259,54 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * Starts an eSMS Africa Verify request for signup or account recovery. Provider credentials stay on the server.
- * @summary Send a phone verification code
+ * Creates a short-lived verification challenge and sends its code to the signup email or the email associated with the account. The sender configuration and API credential stay on the server. A verified email does not prove ownership of the account phone number.
+ * @summary Send an email verification code
  */
-export const sendPhoneOtpBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const sendEmailOtpBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
 
-export const sendPhoneOtpBodyPhoneMin = 9;
-export const sendPhoneOtpBodyPhoneMax = 16;
+export const sendEmailOtpBodyPhoneMin = 9;
+export const sendEmailOtpBodyPhoneMax = 16;
+
+export const sendEmailOtpBodyEmailMax = 254;
 
 
 
-export const SendPhoneOtpBody = zod.object({
-  "phone": zod.stringFormat('phone', sendPhoneOtpBodyPhoneRegExp).min(sendPhoneOtpBodyPhoneMin).max(sendPhoneOtpBodyPhoneMax),
+export const SendEmailOtpBody = zod.object({
+  "phone": zod.stringFormat('phone', sendEmailOtpBodyPhoneRegExp).min(sendEmailOtpBodyPhoneMin).max(sendEmailOtpBodyPhoneMax).describe('Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.'),
+  "email": zod.email().max(sendEmailOtpBodyEmailMax).optional().describe('Required for signup. For recovery or administrator access, SendFlow uses the email already associated with the account and ignores this field.'),
   "purpose": zod.enum(['signup', 'password_reset', 'pin_reset', 'admin_login'])
 })
 
-export const sendPhoneOtpResponseResendAfterSecondsMin = 0;
+export const sendEmailOtpResponseResendAfterSecondsMin = 0;
 
 
 
-export const SendPhoneOtpResponse = zod.object({
+export const SendEmailOtpResponse = zod.object({
   "challengeId": zod.uuid(),
   "expiresAt": zod.coerce.date(),
-  "resendAfterSeconds": zod.int().min(sendPhoneOtpResponseResendAfterSecondsMin)
+  "resendAfterSeconds": zod.int().min(sendEmailOtpResponseResendAfterSecondsMin)
 })
 
 
 /**
- * Checks the code with eSMS Africa and persists the verified phone state for its declared purpose.
- * @summary Check a phone verification code
+ * Checks the one-time code stored by SendFlow and persists email verification for the declared purpose. It never marks the account phone as verified.
+ * @summary Verify an email code
  */
-export const verifyPhoneOtpBodyCodeMin = 6;
-export const verifyPhoneOtpBodyCodeMax = 6;
+export const verifyEmailOtpBodyCodeMin = 6;
+export const verifyEmailOtpBodyCodeMax = 6;
 
 
-export const verifyPhoneOtpBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+export const verifyEmailOtpBodyCodeRegExp = new RegExp('^[0-9]{6}$');
 
 
-export const VerifyPhoneOtpBody = zod.object({
+export const VerifyEmailOtpBody = zod.object({
   "challengeId": zod.uuid(),
   "purpose": zod.enum(['signup', 'password_reset', 'pin_reset', 'admin_login']),
-  "code": zod.string().min(verifyPhoneOtpBodyCodeMin).max(verifyPhoneOtpBodyCodeMax).regex(verifyPhoneOtpBodyCodeRegExp)
+  "code": zod.string().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp)
 })
 
-export const VerifyPhoneOtpResponse = zod.object({
-  "phoneVerified": zod.boolean(),
+export const VerifyEmailOtpResponse = zod.object({
+  "emailVerified": zod.boolean(),
   "verifiedAt": zod.coerce.date()
 })
 
@@ -339,15 +342,15 @@ export const GetAuthCountriesResponse = zod.object({
 
 
 /**
- * @summary Check whether phone SMS verification is required for signup
+ * @summary Read whether email verification is required for signup
  */
 export const GetRegistrationSettingsResponse = zod.object({
-  "smsVerificationEnabled": zod.boolean()
+  "emailVerificationEnabled": zod.boolean()
 })
 
 
 /**
- * Consumes a verified signup challenge when SMS verification is enabled; otherwise records the phone as unverified. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
+ * Consumes a verified email challenge when email verification is enabled; otherwise records the email as unverified. The phone remains unverified in either case. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
  * @summary Create a customer account under the current verification policy
  */
 export const registerCustomerBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
@@ -2993,17 +2996,17 @@ export const UpdateAdminOperatorPricingResponse = zod.object({
 
 
 /**
- * @summary Read the signup SMS verification setting
+ * @summary Read the signup email verification setting
  */
 export const GetAdminRegistrationSettingsResponse = zod.object({
-  "smsVerificationEnabled": zod.boolean(),
+  "emailVerificationEnabled": zod.boolean(),
   "version": zod.int(),
   "updatedAt": zod.coerce.date().nullable()
 })
 
 
 /**
- * @summary Turn signup SMS verification on or off
+ * @summary Turn signup email verification on or off
  */
 
 export const updateAdminRegistrationSettingsBodyReasonMin = 3;
@@ -3012,13 +3015,13 @@ export const updateAdminRegistrationSettingsBodyReasonMax = 500;
 
 
 export const UpdateAdminRegistrationSettingsBody = zod.object({
-  "smsVerificationEnabled": zod.boolean(),
+  "emailVerificationEnabled": zod.boolean(),
   "expectedVersion": zod.int().min(1),
   "reason": zod.string().min(updateAdminRegistrationSettingsBodyReasonMin).max(updateAdminRegistrationSettingsBodyReasonMax)
 })
 
 export const UpdateAdminRegistrationSettingsResponse = zod.object({
-  "smsVerificationEnabled": zod.boolean(),
+  "emailVerificationEnabled": zod.boolean(),
   "version": zod.int(),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -3246,7 +3249,7 @@ export const ListAdminLoginActivityResponse = zod.object({
 
 
 /**
- * Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient phone numbers, API credentials, and provider verification identifiers are never included.
+ * Returns paginated, redacted OTP request events for an authorized administrator. OTP codes, recipient email addresses and phone numbers, API credentials, and provider message identifiers are never included.
  * @summary List OTP send and verification activity
  */
 export const listAdminOtpActivityQueryPageDefault = 1;

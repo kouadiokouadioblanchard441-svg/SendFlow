@@ -20,7 +20,7 @@ function withNodeEnvironment(value, run) {
 test("outbound provider requests are permitted only in production", () => {
   withNodeEnvironment("production", () => {
     assert.doesNotThrow(() => assertExternalProviderCallsAllowed("Didit"));
-    assert.doesNotThrow(() => assertExternalProviderCallsAllowed("eSMS Verify"));
+    assert.doesNotThrow(() => assertExternalProviderCallsAllowed("Resend"));
   });
 
   for (const environment of ["development", "test", ""]) {
@@ -30,7 +30,7 @@ test("outbound provider requests are permitted only in production", () => {
         ExternalProviderCallUnavailableError,
       );
       assert.throws(
-        () => assertExternalProviderCallsAllowed("eSMS Verify"),
+        () => assertExternalProviderCallsAllowed("Resend"),
         ExternalProviderCallUnavailableError,
       );
     });

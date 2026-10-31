@@ -19,6 +19,7 @@ test('raw database/provider error contents never enter logs', () => {
   }, { write(chunk) { output += chunk; } });
   logger.error({
     err: error, error, apiKey: sensitive, phone: sensitive,
+    RESEND_API_KEY: sensitive,
     providerMessage: sensitive, body: { password: sensitive },
     nested: { deep: { token: sensitive } },
     req: { headers: { authorization: sensitive, cookie: sensitive } },
