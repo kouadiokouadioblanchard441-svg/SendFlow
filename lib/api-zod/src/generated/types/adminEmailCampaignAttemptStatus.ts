@@ -12,5 +12,8 @@ export type AdminEmailCampaignAttemptStatus = typeof AdminEmailCampaignAttemptSt
 export const AdminEmailCampaignAttemptStatus = {
   sending: 'sending',
   accepted: 'accepted',
+  delivered: 'delivered',
+  bounced: 'bounced',
+  complained: 'complained',
   failed: 'failed',
 } as const;

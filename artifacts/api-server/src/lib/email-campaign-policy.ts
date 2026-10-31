@@ -1,6 +1,7 @@
 export type CampaignDispatchEnvironment = {
   NODE_ENV?: string;
   EMAIL_CAMPAIGNS_ENABLED?: string;
+  EMAIL_CAMPAIGN_WEBHOOK_READY?: string;
   RESEND_API_KEY?: string;
   RESEND_WEBHOOK_SECRET?: string;
   RESEND_FROM_EMAIL?: string;
@@ -11,6 +12,7 @@ export type CampaignDispatchEnvironment = {
 export function isCampaignDispatchEnabled(env: CampaignDispatchEnvironment) {
   return env.NODE_ENV === "production"
     && env.EMAIL_CAMPAIGNS_ENABLED?.trim().toLowerCase() === "true"
+    && env.EMAIL_CAMPAIGN_WEBHOOK_READY?.trim().toLowerCase() === "true"
     && Boolean(env.RESEND_API_KEY?.trim())
     && (env.RESEND_WEBHOOK_SECRET?.trim().length ?? 0) >= 32
     && Boolean(env.RESEND_FROM_EMAIL?.trim())
@@ -82,4 +84,18 @@ export function campaignProviderIdempotencyKey(recipientId: string, manualRetrie
 export function campaignRetryDelayMs(attempt: number) {
   const boundedAttempt = Math.max(1, Math.min(Math.trunc(attempt), 4));
   return Math.min(30_000 * (2 ** (boundedAttempt - 1)), 8 * 60_000);
+}
+
+export function getEmailCampaignConfiguration(env: NodeJS.ProcessEnv = process.env) {
+  return {
+    sendingEnabled: isCampaignDispatchEnabled(env),
+    webhookConfigured: Boolean(env.RESEND_WEBHOOK_SECRET?.trim() && env.RESEND_WEBHOOK_SECRET.trim().length >= 32),
+    providerEventsReady: env.EMAIL_CAMPAIGN_WEBHOOK_READY?.trim().toLowerCase() === "true",
+    unsubscribeConfigured: Boolean(env.EMAIL_UNSUBSCRIBE_SECRET?.trim() && env.EMAIL_UNSUBSCRIBE_SECRET.trim().length >= 32),
+    attachmentsEnabled: false as const,
+    automaticAttemptLimit: 4,
+    manualRetryLimitPerRecipient: 3,
+    queueLimitPerAdminPerHour: 10,
+    retryLimitPerAdminPer15Minutes: 20,
+  };
 }

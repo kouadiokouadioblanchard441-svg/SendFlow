@@ -16,6 +16,12 @@ export interface AdminEmailCampaignRecipientCounts {
   /** @minimum 0 */
   accepted: number;
   /** @minimum 0 */
+  delivered: number;
+  /** @minimum 0 */
+  bounced: number;
+  /** @minimum 0 */
+  complained: number;
+  /** @minimum 0 */
   failed: number;
   /** @minimum 0 */
   cancelled: number;

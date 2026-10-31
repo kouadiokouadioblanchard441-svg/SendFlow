@@ -23,6 +23,7 @@ import registrationSettingsRouter, { adminRoutes as adminRegistrationSettingsRou
 import paymentLimitsRouter, { adminRoutes as adminPaymentLimitsRoutes } from "./payment-limits";
 import countryManagementRouter, { adminRoutes as adminCountryRoutes } from "./country-management";
 import emailCampaignRoutes from "./email-campaigns";
+import emailCampaignWebhookRouter from "./email-campaign-webhook";
 import transferQuoteRouter from "./transfer-quote";
 import paymentLinksRouter from "./payment-links";
 import publicPaymentLinksRouter from "./public-payment-links";
@@ -50,6 +51,7 @@ router.use(transferQuoteRouter);
 router.use(paymentLinksRouter);
 router.use(publicPaymentLinksRouter);
 router.use(developerRouter);
+router.use(emailCampaignWebhookRouter);
 router.use(identityVerificationRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);

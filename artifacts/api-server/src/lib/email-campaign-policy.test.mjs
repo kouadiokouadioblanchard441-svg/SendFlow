@@ -4,6 +4,7 @@ import {
   campaignRetryDelayMs,
   campaignProviderIdempotencyKey,
   canManuallyRetryCampaignRecipient,
+  getEmailCampaignConfiguration,
   isCampaignDispatchEnabled,
   isCampaignRecipientEligible,
   isRetryableCampaignEmailFailure,
@@ -16,7 +17,9 @@ import {
 test("campaign dispatch is closed unless production, explicit enablement, and Resend config are present", () => {
   const base = {
     EMAIL_CAMPAIGNS_ENABLED: "true",
+    EMAIL_CAMPAIGN_WEBHOOK_READY: "true",
     RESEND_API_KEY: "test-key",
+    RESEND_WEBHOOK_SECRET: "w".repeat(32),
     RESEND_FROM_EMAIL: "SendFlow <no-reply@sendflow.africa>",
     SENDFLOW_PUBLIC_SITE_URL: "https://merchant.business.sendflow.africa",
     EMAIL_UNSUBSCRIBE_SECRET: "x".repeat(32),
@@ -36,6 +39,8 @@ test("marketing audience eligibility requires an active, verified, opted-in addr
     emailVerifiedAt: new Date(),
     emailMarketingConsentAt: new Date(),
     emailMarketingUnsubscribedAt: null,
+    emailLookupHash: "a".repeat(64),
+    emailSnapshotLookupHash: "a".repeat(64),
   };
   assert.equal(isCampaignRecipientEligible(eligible), true);
   assert.equal(isCampaignRecipientEligible({ ...eligible, accountStatus: "suspended" }), false);
@@ -51,6 +56,8 @@ test("manual retries are limited to eligible failed deliveries and at most three
     emailVerifiedAt: new Date(),
     emailMarketingConsentAt: new Date(),
     emailMarketingUnsubscribedAt: null,
+    emailLookupHash: "a".repeat(64),
+    emailSnapshotLookupHash: "a".repeat(64),
   };
   assert.equal(canManuallyRetryCampaignRecipient({ status: "failed", manualRetries: 0, recipient }), true);
   assert.equal(canManuallyRetryCampaignRecipient({ status: "sending", manualRetries: 0, recipient }), false);
@@ -96,4 +103,37 @@ test("campaign retry delay is exponential and bounded", () => {
   assert.equal(campaignRetryDelayMs(3), 120_000);
   assert.equal(campaignRetryDelayMs(4), 240_000);
   assert.equal(campaignRetryDelayMs(10), 240_000);
+});
+
+test("campaign dispatch requires a configured signed provider webhook", () => {
+  const env = {
+    NODE_ENV: "production",
+    EMAIL_CAMPAIGNS_ENABLED: "true",
+    EMAIL_CAMPAIGN_WEBHOOK_READY: "true",
+    RESEND_API_KEY: "key",
+    RESEND_FROM_EMAIL: "SendFlow <no-reply@sendflow.africa>",
+    RESEND_WEBHOOK_SECRET: "w".repeat(32),
+    SENDFLOW_PUBLIC_SITE_URL: "https://merchant.business.sendflow.africa",
+    EMAIL_UNSUBSCRIBE_SECRET: "u".repeat(32),
+  };
+  assert.equal(isCampaignDispatchEnabled(env), true);
+  assert.equal(isCampaignDispatchEnabled({ ...env, RESEND_WEBHOOK_SECRET: "" }), false);
+  assert.equal(isCampaignDispatchEnabled({ ...env, EMAIL_CAMPAIGN_WEBHOOK_READY: "false" }), false);
+  assert.equal(getEmailCampaignConfiguration(env).attachmentsEnabled, false);
+  assert.equal(getEmailCampaignConfiguration(env).manualRetryLimitPerRecipient, 3);
+});
+
+test("a provider suppression or changed email lookup hash blocks campaign eligibility", () => {
+  const eligible = {
+    accountStatus: "active",
+    emailEncrypted: "encrypted-address",
+    emailVerifiedAt: new Date(),
+    emailMarketingConsentAt: new Date(),
+    emailMarketingUnsubscribedAt: null,
+    emailLookupHash: "a".repeat(64),
+    emailSnapshotLookupHash: "a".repeat(64),
+  };
+  assert.equal(isCampaignRecipientEligible({ ...eligible, providerSuppressed: true }), false);
+  assert.equal(isCampaignRecipientEligible({ ...eligible, emailLookupHash: "b".repeat(64) }), false);
+  assert.equal(isCampaignRecipientEligible({ ...eligible, emailSnapshotLookupHash: null }), false);
 });

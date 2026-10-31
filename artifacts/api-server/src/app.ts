@@ -11,6 +11,7 @@ import { errorLogSerializers } from "./lib/log-safety";
 import { httpErrorHandler } from "./lib/http-error-handler";
 import { enforceIpAccess } from "@workspace/db/ip-blocklist";
 import { apiRequestSecurity } from "./lib/api-request-security";
+import { captureRawResendWebhookBody } from "./lib/raw-resend-webhook-body";
 
 const app: Express = express();
 
@@ -90,7 +91,13 @@ app.use("/api", (req, res, next) => {
     error: "Les opérations sur les comptes ne sont pas disponibles dans cet aperçu.",
   });
 });
-app.use(express.json({ limit: "100kb", strict: true }));
+app.use(express.json({
+  limit: "100kb",
+  strict: true,
+  verify: (request, _response, buffer) => {
+    captureRawResendWebhookBody(request, buffer);
+  },
+}));
 app.use(express.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
 app.use("/api", enforcePreviewAccountAccess);
 app.use("/api/me", (_req, res, next) => {

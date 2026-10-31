@@ -13,6 +13,9 @@ export const ListAdminEmailCampaignHistoryStatus = {
   queued: 'queued',
   sending: 'sending',
   accepted: 'accepted',
+  delivered: 'delivered',
+  bounced: 'bounced',
+  complained: 'complained',
   failed: 'failed',
   cancelled: 'cancelled',
 } as const;

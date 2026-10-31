@@ -88,6 +88,18 @@ test("versioned API routes defer authentication to their API-key handlers", () =
   }
 });
 
+test("only the exact signed email-provider webhook route bypasses browser CSRF checks", () => {
+  const webhook = invoke("POST", "/webhooks/resend");
+  assert.equal(webhook.next, true);
+  assert.notEqual(webhook.body?.code, "csrf_token_invalid");
+
+  for (const path of ["/webhooks/resend/extra", "/webhooks/other"]) {
+    const result = invoke("POST", path, { origin: trustedOrigin });
+    assert.equal(result.status, 403, path);
+    assert.equal(result.next, false);
+  }
+});
+
 test("safe reads issue a short-lived HttpOnly binding cookie and expose a token", () => {
   const response = invoke("GET", "/auth/session");
   assert.equal(response.next, true);

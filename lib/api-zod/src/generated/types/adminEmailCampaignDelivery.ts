@@ -30,5 +30,7 @@ export interface AdminEmailCampaignDelivery {
   lastErrorStatus: number | null;
   /** @nullable */
   providerMessageId: string | null;
+  /** @nullable */
+  providerUpdatedAt?: Date | null;
   attempts: AdminEmailCampaignAttempt[];
 }

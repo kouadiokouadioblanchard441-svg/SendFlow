@@ -4,6 +4,7 @@ import express from "express";
 import { after, before, test } from "node:test";
 import { gzipSync } from "node:zlib";
 import { httpErrorHandler } from "./http-error-handler.ts";
+import { captureRawResendWebhookBody } from "./raw-resend-webhook-body.ts";
 
 const app = express();
 app.use(express.json({ limit: "100kb", strict: true }));
@@ -27,6 +28,20 @@ after(async () => {
   await new Promise((resolve, reject) => {
     server.close((error) => error ? reject(error) : resolve());
   });
+});
+
+test("captures exact raw bytes only for the exact signed email webhook route", () => {
+  const rawBytes = Buffer.from('{"type":"email.delivered"}');
+  const target = { method: "POST", url: "/api/webhooks/resend?source=test" };
+  captureRawResendWebhookBody(target, rawBytes);
+  assert.deepEqual(target.rawBody, rawBytes);
+
+  const otherMethod = { method: "GET", url: "/api/webhooks/resend" };
+  const otherRoute = { method: "POST", url: "/api/webhooks/resend/extra" };
+  captureRawResendWebhookBody(otherMethod, rawBytes);
+  captureRawResendWebhookBody(otherRoute, rawBytes);
+  assert.equal(otherMethod.rawBody, undefined);
+  assert.equal(otherRoute.rawBody, undefined);
 });
 
 test("accepts a valid JSON request", async () => {

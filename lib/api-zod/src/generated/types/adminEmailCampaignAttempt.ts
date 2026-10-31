@@ -24,4 +24,6 @@ export interface AdminEmailCampaignAttempt {
   httpStatus: number | null;
   /** @nullable */
   providerMessageId: string | null;
+  /** @nullable */
+  providerUpdatedAt?: Date | null;
 }

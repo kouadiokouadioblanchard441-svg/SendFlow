@@ -4,6 +4,7 @@ import {
   getListAdminEmailCampaignRecipientsQueryKey,
   getListAdminEmailCampaignHistoryQueryKey,
   getListAdminEmailCampaignsQueryKey,
+  getGetAdminEmailCampaignSettingsQueryKey,
   getAdminEmailCampaign,
   retryAdminEmailCampaignRecipient,
   useCancelAdminEmailCampaign,
@@ -12,6 +13,7 @@ import {
   useListAdminEmailCampaignRecipients,
   useListAdminEmailCampaignHistory,
   useListAdminEmailCampaigns,
+  useGetAdminEmailCampaignSettings,
   useQueueAdminEmailCampaign,
   useUpdateAdminEmailCampaign,
 } from "@workspace/api-client-react";
@@ -45,7 +47,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 type AudienceMode = AdminEmailCampaignInput["audienceMode"];
 type PendingAction = { kind: "queue" | "cancel" | "delete"; campaign: AdminEmailCampaignSummary } | null;
-type CampaignView = "campaigns" | "drafts" | "history" | "accepted" | "failed";
+type CampaignView = "campaigns" | "drafts" | "history" | "accepted" | "delivered" | "bounced" | "complained" | "failed" | "settings";
 
 const PAGE_SIZE = 20;
 const sendFlowEmailTheme = {
@@ -84,6 +86,20 @@ function statusClass(status: AdminEmailCampaignSummary["status"]) {
   return "border-secondary/70 bg-secondary/30 text-foreground";
 }
 
+function deliveryStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    queued: "En attente",
+    sending: "En cours",
+    accepted: "Accepté par le fournisseur",
+    delivered: "Livré au serveur de messagerie",
+    bounced: "Adresse rejetée",
+    complained: "Signalé comme indésirable",
+    failed: "Échec",
+    cancelled: "Annulé",
+  };
+  return labels[status] ?? status;
+}
+
 function SkeletonLine({ className = "" }: { className?: string }) {
   return <div className={`h-4 animate-pulse rounded-md bg-muted ${className}`} />;
 }
@@ -96,9 +112,17 @@ export function EmailCampaignsSection() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [campaignView, setCampaignView] = useState<CampaignView>("campaigns");
+  const settingsQuery = useGetAdminEmailCampaignSettings({
+    query: {
+      queryKey: getGetAdminEmailCampaignSettingsQueryKey(),
+      enabled: campaignView === "settings",
+      retry: false,
+    },
+  });
   const [historySearch, setHistorySearch] = useState("");
   const [historyPage, setHistoryPage] = useState(1);
   const [retryingRecipientId, setRetryingRecipientId] = useState<string | null>(null);
+  const [retryConfirmation, setRetryConfirmation] = useState<{ campaignId: string; recipientId: string; email: string | null; subject: string } | null>(null);
   const [audienceMode, setAudienceMode] = useState<AudienceMode>("all");
   const recipientParams = useMemo(
     () => ({ search: search.trim() || undefined, page }),
@@ -111,9 +135,10 @@ export function EmailCampaignsSection() {
       retry: false,
     },
   });
-  const historyStatus: ListAdminEmailCampaignHistoryParams["status"] = campaignView === "accepted"
-    ? "accepted"
-    : campaignView === "failed" ? "failed" : undefined;
+  const historyStatus: ListAdminEmailCampaignHistoryParams["status"] =
+    ["accepted", "delivered", "bounced", "complained", "failed"].includes(campaignView)
+      ? campaignView as ListAdminEmailCampaignHistoryParams["status"]
+      : undefined;
   const historyParams = useMemo(() => ({
     page: historyPage,
     pageSize: 25,
@@ -123,7 +148,7 @@ export function EmailCampaignsSection() {
   const historyQuery = useListAdminEmailCampaignHistory(historyParams, {
     query: {
       queryKey: getListAdminEmailCampaignHistoryQueryKey(historyParams),
-      enabled: campaignView === "history" || campaignView === "accepted" || campaignView === "failed",
+      enabled: ["history", "accepted", "delivered", "bounced", "complained", "failed"].includes(campaignView),
       retry: false,
     },
   });
@@ -146,6 +171,7 @@ export function EmailCampaignsSection() {
   const campaigns = campaignsQuery.data?.items ?? [];
   const recipients = recipientsQuery.data?.items ?? [];
   const sendingEnabled = campaignsQuery.data?.sendingEnabled === true;
+  const showCampaignWorkspace = campaignView === "campaigns" || campaignView === "drafts";
   const pageCount = Math.max(1, Math.ceil((recipientsQuery.data?.total ?? 0) / (recipientsQuery.data?.pageSize ?? PAGE_SIZE)));
   const selectedCount = audienceMode === "all" ? null : selectedIds.length;
   const formValid = subject.trim().length > 0
@@ -244,7 +270,7 @@ export function EmailCampaignsSection() {
     });
   };
 
-  const retryRecipient = async (campaignId: string, recipientId: string) => {
+  const executeRetry = async (campaignId: string, recipientId: string) => {
     if (retryingRecipientId || !window.crypto?.randomUUID) {
       setActionError("Une relance est déjà en cours ou la génération sécurisée d’une clé est indisponible.");
       return;
@@ -255,6 +281,7 @@ export function EmailCampaignsSection() {
       await retryAdminEmailCampaignRecipient(campaignId, recipientId, {
         headers: { "Idempotency-Key": window.crypto.randomUUID() },
       });
+      setRetryConfirmation(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: getListAdminEmailCampaignHistoryQueryKey() }),
         queryClient.invalidateQueries({ queryKey: getListAdminEmailCampaignsQueryKey() }),
@@ -264,6 +291,11 @@ export function EmailCampaignsSection() {
     } finally {
       setRetryingRecipientId(null);
     }
+  };
+
+  const openRetryConfirmation = (item: { campaignId: string; recipientId: string; email: string | null; subject: string }) => {
+    setRetryConfirmation(item);
+    setActionError("");
   };
 
   const executePendingAction = () => {
@@ -348,6 +380,7 @@ export function EmailCampaignsSection() {
         </Alert>
       )}
 
+      {showCampaignWorkspace && (
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(330px,0.85fr)]">
         <Card className="overflow-hidden border-border/80 shadow-sm" data-testid="card-campaign-composer">
           <CardHeader className="border-b border-border/70 bg-muted/35 pb-5">
@@ -427,8 +460,8 @@ export function EmailCampaignsSection() {
                   className={`rounded-xl border p-3 text-left transition-colors ${audienceMode === "all" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card hover:bg-muted/50"}`}
                   data-testid="button-audience-all"
                 >
-                  <span className="flex items-center gap-2 text-sm font-semibold"><Users className="h-4 w-4 text-primary" /> Tous les comptes avec e-mail</span>
-                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">Inclut les comptes conservés, même suspendus ou non vérifiés.</span>
+                  <span className="flex items-center gap-2 text-sm font-semibold"><Users className="h-4 w-4 text-primary" /> Tous les comptes éligibles</span>
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">Comptes actifs, e-mail vérifié, consentement actif et adresse non exclue.</span>
                 </button>
                 <button
                   type="button"
@@ -448,7 +481,7 @@ export function EmailCampaignsSection() {
                     Effectif calculé par le serveur à l’enregistrement du brouillon
                   </p>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    Le serveur inclut les comptes conservés avec une adresse enregistrée, même si elle n’est pas vérifiée ou si le compte est suspendu. Les comptes supprimés et ceux sans adresse sont exclus. Aucune adresse individuelle n’est chargée pour cette audience.
+                    Le serveur exclut les comptes supprimés ou suspendus, les e-mails non vérifiés, les utilisateurs désabonnés et les adresses rejetées ou signalées. Le consentement est revérifié au moment de la mise en file et avant chaque envoi.
                   </p>
                 </div>
               ) : (
@@ -608,6 +641,7 @@ export function EmailCampaignsSection() {
           </Card>
         </div>
       </div>
+      )}
 
       <nav className="flex gap-2 overflow-x-auto rounded-xl border border-border bg-card p-1.5" role="tablist" aria-label="Vues des campagnes e-mail" data-testid="campaign-views">
         {([
@@ -615,7 +649,11 @@ export function EmailCampaignsSection() {
           ["drafts", "Brouillons"],
           ["history", "Historique global"],
           ["accepted", "Acceptés"],
+          ["delivered", "Livrés"],
+          ["bounced", "Rejets"],
+          ["complained", "Plaintes"],
           ["failed", "Échecs"],
+          ["settings", "Paramètres"],
         ] as const).map(([view, label]) => (
           <button
             key={view}
@@ -628,11 +666,74 @@ export function EmailCampaignsSection() {
           >
             {label}
             {view === "accepted" && historyQuery.data ? ` · ${formatCount(historyQuery.data.counts.accepted)}` : ""}
+            {view === "delivered" && historyQuery.data ? ` · ${formatCount(historyQuery.data.counts.delivered)}` : ""}
+            {view === "bounced" && historyQuery.data ? ` · ${formatCount(historyQuery.data.counts.bounced)}` : ""}
+            {view === "complained" && historyQuery.data ? ` · ${formatCount(historyQuery.data.counts.complained)}` : ""}
             {view === "failed" && historyQuery.data ? ` · ${formatCount(historyQuery.data.counts.failed)}` : ""}
           </button>
         ))}
       </nav>
 
+      {campaignView === "settings" && (
+        <Card className="border-border/80 shadow-sm" data-testid="card-email-campaign-settings">
+          <CardHeader className="gap-4 border-b border-border/70 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="sendflow-admin-overline">État serveur</p>
+              <CardTitle className="mt-1 text-xl">Paramètres et limites</CardTitle>
+              <CardDescription className="mt-1">Indicateurs sans valeur de secret. Les pièces jointes ne sont pas prises en charge.</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => { void settingsQuery.refetch(); }} disabled={settingsQuery.isFetching}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${settingsQuery.isFetching ? "animate-spin" : ""}`} /> Actualiser
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-5 p-4 sm:p-6">
+            {settingsQuery.isLoading ? (
+              <div className="space-y-3" data-testid="loading-email-campaign-settings"><SkeletonLine /><SkeletonLine /><SkeletonLine /></div>
+            ) : settingsQuery.isError || !settingsQuery.data ? (
+              <Alert variant="destructive" data-testid="error-email-campaign-settings">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>État de configuration indisponible</AlertTitle>
+                <AlertDescription>Aucun état n’est simulé. Réessayez après vérification du serveur.</AlertDescription>
+              </Alert>
+            ) : (
+              <>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {([
+                    ["Mise en file", settingsQuery.data.sendingEnabled ? "Disponible" : "Désactivée"],
+                    ["Secret de signature reçu", settingsQuery.data.webhookConfigured ? "Configuré" : "Manquant"],
+                    ["Événements de livraison", settingsQuery.data.providerEventsReady ? "Confirmation déploiement requise" : "Non confirmé"],
+                    ["Désinscription", settingsQuery.data.unsubscribeConfigured ? "Configurée" : "Manquante"],
+                    ["Pièces jointes", settingsQuery.data.attachmentsEnabled ? "Activées" : "Non prises en charge"],
+                  ] as const).map(([label, value]) => (
+                    <div key={label} className="rounded-xl border border-border bg-muted/15 p-4">
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                      <p className={`mt-1 text-sm font-semibold ${value === "Désactivée" || value === "Manquant" || value === "Non confirmé" ? "text-amber-800" : "text-foreground"}`}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="rounded-lg border border-border bg-muted/25 p-3 text-xs leading-5 text-muted-foreground">
+                  « Événements de livraison » reflète le drapeau de configuration du déploiement; il ne vérifie pas le tableau de bord du fournisseur. Avant tout envoi, l’URL de webhook doit être enregistrée côté fournisseur pour les événements de livraison, rejet et plainte.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {([
+                    ["Tentatives automatiques", settingsQuery.data.automaticAttemptLimit],
+                    ["Relances max par destinataire", settingsQuery.data.manualRetryLimitPerRecipient],
+                    ["Mises en file / admin / heure", settingsQuery.data.queueLimitPerAdminPerHour],
+                    ["Relances / admin / 15 min", settingsQuery.data.retryLimitPerAdminPer15Minutes],
+                  ] as const).map(([label, value]) => (
+                    <div key={label} className="rounded-xl border border-border p-4">
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                      <p className="mt-1 text-lg font-semibold tabular-nums">{formatCount(value)}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {showCampaignWorkspace && (
       <Card className="overflow-hidden border-border/80 shadow-sm" data-testid="card-campaign-history">
         <CardHeader className="border-b border-border/70 bg-muted/25 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -691,6 +792,9 @@ export function EmailCampaignsSection() {
                             ["En attente", campaign.counts.queued],
                             ["En cours", campaign.counts.sending],
                             ["Acceptés par le fournisseur", campaign.counts.accepted],
+                            ["Livrés", campaign.counts.delivered],
+                            ["Rejets", campaign.counts.bounced],
+                            ["Plaintes", campaign.counts.complained],
                             ["Échecs", campaign.counts.failed],
                             ["Annulés", campaign.counts.cancelled],
                           ] as const).map(([label, count]) => (
@@ -738,14 +842,20 @@ export function EmailCampaignsSection() {
           )}
         </CardContent>
       </Card>
+      )}
 
-      {(campaignView === "history" || campaignView === "accepted" || campaignView === "failed") && (
+      {(["history", "accepted", "delivered", "bounced", "complained", "failed"] as CampaignView[]).includes(campaignView) && (
         <Card className="overflow-hidden border-border/80 shadow-sm" data-testid="card-recipient-email-history">
           <CardHeader className="gap-4 border-b border-border/70 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="sendflow-admin-overline">Suivi par destinataire</p>
               <CardTitle className="mt-1 text-xl">
-                {campaignView === "accepted" ? "E-mails acceptés par le fournisseur" : campaignView === "failed" ? "E-mails en échec" : "Historique global"}
+                {campaignView === "accepted" ? "Acceptés par le fournisseur"
+                  : campaignView === "delivered" ? "Livrés au serveur de messagerie"
+                    : campaignView === "bounced" ? "Adresses rejetées"
+                      : campaignView === "complained" ? "Plaintes"
+                        : campaignView === "failed" ? "Échecs de traitement"
+                          : "Historique global"}
               </CardTitle>
               <CardDescription className="mt-1">L’acceptation du fournisseur ne confirme pas la livraison dans la boîte du destinataire.</CardDescription>
             </div>
@@ -768,11 +878,14 @@ export function EmailCampaignsSection() {
           </CardHeader>
           <CardContent className="p-0">
             {historyQuery.data && (
-              <div className="grid grid-cols-2 gap-2 border-b border-border p-4 sm:grid-cols-5">
+              <div className="grid grid-cols-2 gap-2 border-b border-border p-4 sm:grid-cols-4 xl:grid-cols-8">
                 {([
                   ["En attente", historyQuery.data.counts.queued],
                   ["En cours", historyQuery.data.counts.sending],
                   ["Acceptés", historyQuery.data.counts.accepted],
+                  ["Livrés", historyQuery.data.counts.delivered],
+                  ["Rejets", historyQuery.data.counts.bounced],
+                  ["Plaintes", historyQuery.data.counts.complained],
                   ["Échecs", historyQuery.data.counts.failed],
                   ["Annulés", historyQuery.data.counts.cancelled],
                 ] as const).map(([label, value]) => (
@@ -796,12 +909,13 @@ export function EmailCampaignsSection() {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 space-y-1">
                         <p className="break-all text-sm font-semibold">{item.email ?? "Adresse indisponible"}</p>
-                        <p className="break-words text-sm">{item.subject}</p>
+                        <p className="break-words text-sm">Campagne : {item.subject}</p>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(item.createdAt)} · {formatCount(item.attemptCount)} tentative(s) · {item.manualRetries} relance(s) manuelle(s)
                         </p>
                         {item.providerMessageId && <p className="break-all font-mono text-[11px] text-muted-foreground">ID fournisseur : {item.providerMessageId}</p>}
                         {item.acceptedAt && <p className="text-xs text-muted-foreground">Accepté le {formatDate(item.acceptedAt)}</p>}
+                        {item.providerUpdatedAt && <p className="text-xs text-muted-foreground">Dernier événement fournisseur : {formatDate(item.providerUpdatedAt)}</p>}
                         {item.lastErrorClass && (
                           <p className="break-words text-xs text-destructive">
                             Erreur : {item.lastErrorClass}{item.lastErrorStatus ? ` · HTTP ${item.lastErrorStatus}` : ""}
@@ -809,15 +923,25 @@ export function EmailCampaignsSection() {
                         )}
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${item.status === "accepted" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : item.status === "failed" ? "border-red-200 bg-red-50 text-red-800" : "border-primary/20 bg-primary/10 text-primary"}`}>
-                          {item.status === "accepted" ? "Accepté" : item.status === "failed" ? "Échec" : item.status === "sending" ? "En cours" : item.status === "queued" ? "En attente" : "Annulé"}
+                        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+                          item.status === "delivered" ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : item.status === "bounced" || item.status === "complained" || item.status === "failed" ? "border-red-200 bg-red-50 text-red-800"
+                              : item.status === "accepted" ? "border-blue-200 bg-blue-50 text-blue-800"
+                                : "border-primary/20 bg-primary/10 text-primary"
+                        }`}>
+                          {deliveryStatusLabel(item.status)}
                         </span>
                         {item.status === "failed" && item.lastErrorClass !== "network_or_response" && item.lastErrorClass !== "delivery_outcome_unknown" && (
                           <Button
                             size="sm"
                             variant="outline"
                             disabled={!sendingEnabled || retryingRecipientId !== null}
-                            onClick={() => void retryRecipient(item.campaignId, item.recipientId)}
+                            onClick={() => openRetryConfirmation({
+                              campaignId: item.campaignId,
+                              recipientId: item.recipientId,
+                              email: item.email,
+                              subject: item.subject,
+                            })}
                             data-testid={`button-retry-email-${item.recipientId}`}
                           >
                             {retryingRecipientId === item.recipientId ? "Relance…" : "Relancer"}
@@ -831,10 +955,11 @@ export function EmailCampaignsSection() {
                         <ol className="mt-2 space-y-2">
                           {item.attempts.map((attempt, index) => (
                             <li key={`${item.recipientId}-${attempt.attemptNumber}`} className="border-l-2 border-border pl-3 text-xs text-muted-foreground">
-                              <span className="font-medium text-foreground">Tentative {index + 1}</span> · {attempt.status} · {formatDate(attempt.startedAt)}
+                              <span className="font-medium text-foreground">Tentative {index + 1}</span> · {deliveryStatusLabel(attempt.status)} · {formatDate(attempt.startedAt)}
                               {attempt.finishedAt && ` – ${formatDate(attempt.finishedAt)}`}
                               {attempt.errorClass && ` · ${attempt.errorClass}`}
                               {attempt.httpStatus && ` · HTTP ${attempt.httpStatus}`}
+                              {attempt.providerUpdatedAt && <span className="block">Événement fournisseur : {formatDate(attempt.providerUpdatedAt)}</span>}
                               {attempt.providerMessageId && <span className="block break-all font-mono">ID fournisseur : {attempt.providerMessageId}</span>}
                             </li>
                           ))}
@@ -892,6 +1017,40 @@ export function EmailCampaignsSection() {
               data-testid="button-confirm-campaign-action"
             >
               {actionPending ? "Traitement…" : pendingAction?.kind === "queue" ? "Confirmer la mise en file" : pendingAction?.kind === "cancel" ? "Confirmer l’annulation" : "Supprimer le brouillon"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(retryConfirmation)} onOpenChange={(open) => { if (!open && retryingRecipientId === null) setRetryConfirmation(null); }}>
+        <DialogContent data-testid="dialog-email-retry-confirmation">
+          <DialogHeader>
+            <DialogTitle>Confirmer la relance</DialogTitle>
+            <DialogDescription>
+              {retryConfirmation
+                ? `Relancer l’e-mail « ${retryConfirmation.subject} » vers ${retryConfirmation.email ?? "l’adresse conservée côté serveur"} ? Le serveur revérifiera l’échec, l’éligibilité et l’absence d’un envoi en cours avant d’enregistrer une nouvelle tentative.`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {!sendingEnabled && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Relance désactivée</AlertTitle>
+              <AlertDescription>La configuration serveur n’autorise pas actuellement le traitement des campagnes.</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter className="flex-col-reverse sm:flex-row">
+            <Button variant="outline" disabled={retryingRecipientId !== null} onClick={() => setRetryConfirmation(null)} data-testid="button-dismiss-email-retry">
+              Annuler
+            </Button>
+            <Button
+              disabled={!sendingEnabled || retryingRecipientId !== null || !retryConfirmation}
+              onClick={() => {
+                if (retryConfirmation) void executeRetry(retryConfirmation.campaignId, retryConfirmation.recipientId);
+              }}
+              data-testid="button-confirm-email-retry"
+            >
+              {retryingRecipientId ? "Relance en cours…" : "Confirmer la relance"}
             </Button>
           </DialogFooter>
         </DialogContent>

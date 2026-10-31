@@ -36,6 +36,13 @@
       "when": 1793469000000,
       "tag": "0004_email_campaign_delivery_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793484338863,
+      "tag": "0005_spotty_kingpin",
+      "breakpoints": true
     }
   ]
 }

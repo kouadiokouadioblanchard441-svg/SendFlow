@@ -36,6 +36,7 @@ import type {
   AdminEmailCampaignMutationResponse,
   AdminEmailCampaignRecipientsResponse,
   AdminEmailCampaignRetryResponse,
+  AdminEmailCampaignSettings,
   AdminIpAuthorizationResult,
   AdminLoginActivityPage,
   AdminOperatorPricingCatalog,
@@ -8756,6 +8757,83 @@ export const useDeleteAdminEmailCampaign = <TError = ErrorType<void>,
       > => {
       return useMutation(getDeleteAdminEmailCampaignMutationOptions(options));
     }
+
+export const getGetAdminEmailCampaignSettingsUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/settings`
+}
+
+/**
+ * @summary Read safe email campaign readiness and operational limits
+ */
+export const getAdminEmailCampaignSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminEmailCampaignSettings> => {
+
+  return customFetch<AdminEmailCampaignSettings>(getGetAdminEmailCampaignSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminEmailCampaignSettingsQueryKey = () => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/settings`
+    ] as const;
+    }
+
+
+export const getGetAdminEmailCampaignSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminEmailCampaignSettings>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminEmailCampaignSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminEmailCampaignSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminEmailCampaignSettings>>> = ({ signal }) => getAdminEmailCampaignSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminEmailCampaignSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminEmailCampaignSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminEmailCampaignSettings>>>
+export type GetAdminEmailCampaignSettingsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read safe email campaign readiness and operational limits
+ */
+
+export function useGetAdminEmailCampaignSettings<TData = Awaited<ReturnType<typeof getAdminEmailCampaignSettings>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminEmailCampaignSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminEmailCampaignSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getQueueAdminEmailCampaignUrl = (campaignId: string,) => {
 

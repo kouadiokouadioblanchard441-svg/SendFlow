@@ -3099,6 +3099,12 @@ export interface AdminEmailCampaignRecipientCounts {
   /** @minimum 0 */
   accepted: number;
   /** @minimum 0 */
+  delivered: number;
+  /** @minimum 0 */
+  bounced: number;
+  /** @minimum 0 */
+  complained: number;
+  /** @minimum 0 */
   failed: number;
   /** @minimum 0 */
   cancelled: number;
@@ -3147,6 +3153,46 @@ export interface AdminEmailCampaignSummary {
 export interface AdminEmailCampaignListResponse {
   items: AdminEmailCampaignSummary[];
   sendingEnabled: boolean;
+}
+
+export type AdminEmailCampaignSettingsAutomaticAttemptLimit = typeof AdminEmailCampaignSettingsAutomaticAttemptLimit[keyof typeof AdminEmailCampaignSettingsAutomaticAttemptLimit];
+
+
+export const AdminEmailCampaignSettingsAutomaticAttemptLimit = {
+  NUMBER_4: 4,
+} as const;
+
+export type AdminEmailCampaignSettingsManualRetryLimitPerRecipient = typeof AdminEmailCampaignSettingsManualRetryLimitPerRecipient[keyof typeof AdminEmailCampaignSettingsManualRetryLimitPerRecipient];
+
+
+export const AdminEmailCampaignSettingsManualRetryLimitPerRecipient = {
+  NUMBER_3: 3,
+} as const;
+
+export type AdminEmailCampaignSettingsQueueLimitPerAdminPerHour = typeof AdminEmailCampaignSettingsQueueLimitPerAdminPerHour[keyof typeof AdminEmailCampaignSettingsQueueLimitPerAdminPerHour];
+
+
+export const AdminEmailCampaignSettingsQueueLimitPerAdminPerHour = {
+  NUMBER_10: 10,
+} as const;
+
+export type AdminEmailCampaignSettingsRetryLimitPerAdminPer15Minutes = typeof AdminEmailCampaignSettingsRetryLimitPerAdminPer15Minutes[keyof typeof AdminEmailCampaignSettingsRetryLimitPerAdminPer15Minutes];
+
+
+export const AdminEmailCampaignSettingsRetryLimitPerAdminPer15Minutes = {
+  NUMBER_20: 20,
+} as const;
+
+export interface AdminEmailCampaignSettings {
+  sendingEnabled: boolean;
+  webhookConfigured: boolean;
+  providerEventsReady: boolean;
+  unsubscribeConfigured: boolean;
+  attachmentsEnabled: false;
+  automaticAttemptLimit: AdminEmailCampaignSettingsAutomaticAttemptLimit;
+  manualRetryLimitPerRecipient: AdminEmailCampaignSettingsManualRetryLimitPerRecipient;
+  queueLimitPerAdminPerHour: AdminEmailCampaignSettingsQueueLimitPerAdminPerHour;
+  retryLimitPerAdminPer15Minutes: AdminEmailCampaignSettingsRetryLimitPerAdminPer15Minutes;
 }
 
 export interface AdminEmailCampaignRecipientsResponse {
@@ -3210,6 +3256,9 @@ export type AdminEmailCampaignAttemptStatus = typeof AdminEmailCampaignAttemptSt
 export const AdminEmailCampaignAttemptStatus = {
   sending: 'sending',
   accepted: 'accepted',
+  delivered: 'delivered',
+  bounced: 'bounced',
+  complained: 'complained',
   failed: 'failed',
 } as const;
 
@@ -3237,6 +3286,8 @@ export interface AdminEmailCampaignAttempt {
   httpStatus: number | null;
   /** @nullable */
   providerMessageId: string | null;
+  /** @nullable */
+  providerUpdatedAt?: string | null;
 }
 
 export type AdminEmailCampaignDeliveryAddressSource = typeof AdminEmailCampaignDeliveryAddressSource[keyof typeof AdminEmailCampaignDeliveryAddressSource];
@@ -3256,6 +3307,9 @@ export const AdminEmailCampaignDeliveryStatus = {
   queued: 'queued',
   sending: 'sending',
   accepted: 'accepted',
+  delivered: 'delivered',
+  bounced: 'bounced',
+  complained: 'complained',
   failed: 'failed',
   cancelled: 'cancelled',
 } as const;
@@ -3281,6 +3335,8 @@ export interface AdminEmailCampaignDelivery {
   lastErrorStatus: number | null;
   /** @nullable */
   providerMessageId: string | null;
+  /** @nullable */
+  providerUpdatedAt?: string | null;
   attempts: AdminEmailCampaignAttempt[];
 }
 
@@ -3291,6 +3347,12 @@ export interface AdminEmailCampaignHistoryCounts {
   sending: number;
   /** @minimum 0 */
   accepted: number;
+  /** @minimum 0 */
+  delivered: number;
+  /** @minimum 0 */
+  bounced: number;
+  /** @minimum 0 */
+  complained: number;
   /** @minimum 0 */
   failed: number;
   /** @minimum 0 */
@@ -3315,6 +3377,9 @@ export const AdminEmailCampaignRetryResponseStatus = {
   queued: 'queued',
   sending: 'sending',
   accepted: 'accepted',
+  delivered: 'delivered',
+  bounced: 'bounced',
+  complained: 'complained',
   failed: 'failed',
   cancelled: 'cancelled',
 } as const;
@@ -3427,6 +3492,9 @@ export const ListAdminEmailCampaignHistoryStatus = {
   queued: 'queued',
   sending: 'sending',
   accepted: 'accepted',
+  delivered: 'delivered',
+  bounced: 'bounced',
+  complained: 'complained',
   failed: 'failed',
   cancelled: 'cancelled',
 } as const;

@@ -5,6 +5,7 @@ import {
   db,
   desc,
   emailCampaignAttemptsTable,
+  emailCampaignProviderEventsTable,
   emailCampaignRecipientsTable,
   emailCampaignsTable,
   eq,
@@ -16,9 +17,15 @@ import {
   lte,
   ne,
   or,
+  sql,
   usersTable,
+  emailMarketingSuppressionsTable,
 } from "@workspace/db";
-import { decryptSensitiveDataIfEncrypted } from "../lib/sensitive-data-crypto";
+import {
+  createSensitiveDataLookupIndex,
+  decryptSensitiveDataIfEncrypted,
+  normalizeSensitiveEmailForLookup,
+} from "../lib/sensitive-data-crypto";
 import {
   campaignRetryDelayMs,
   isCampaignDispatchEnabled,
@@ -28,11 +35,26 @@ import {
 } from "../lib/email-campaign-policy";
 import { ResendConfigurationError, ResendDeliveryError, sendResendEmail } from "../lib/resend-email";
 import { createEmailUnsubscribeToken } from "../lib/email-marketing-unsubscribe";
+import { applyPendingCampaignProviderEvents } from "./email-campaign-provider-events";
 
 const MAX_ATTEMPTS = 4;
 const BATCH_SIZE = 5;
 const STALE_LOCK_MS = 2 * 60_000;
 const POLL_INTERVAL_MS = 5_000;
+
+function resolveSnapshotLookupHash(
+  savedHash: string | null,
+  savedEncryptedEmail: string | null,
+  currentEncryptedEmail: string | null,
+) {
+  if (savedHash) return savedHash;
+  const email = decryptSensitiveDataIfEncrypted(
+    savedEncryptedEmail ?? currentEncryptedEmail,
+    "user-email",
+  );
+  if (!email) return null;
+  return createSensitiveDataLookupIndex(normalizeSensitiveEmailForLookup(email), "user-email");
+}
 
 type WorkerLogger = {
   error: (context: Record<string, unknown>, message: string) => void;
@@ -55,7 +77,7 @@ function renderPlainTextEmail(bodyText: string, unsubscribeUrl: string) {
   return `<div style="font-family:Arial,sans-serif;line-height:1.6;white-space:pre-wrap">${escaped}</div><hr><p style="font-family:Arial,sans-serif;font-size:12px;color:#555">Vous recevez ce message car vous avez accepté les communications SendFlow. <a href="${safeUnsubscribeUrl}">Se désinscrire</a></p>`;
 }
 
-async function refreshCampaignStatus(campaignId: string) {
+export async function refreshCampaignStatus(campaignId: string) {
   await db.transaction(async (transaction) => {
     const [campaign] = await transaction.select({ status: emailCampaignsTable.status })
       .from(emailCampaignsTable)
@@ -80,12 +102,10 @@ async function refreshCampaignStatus(campaignId: string) {
       ));
       return;
     }
-    const accepted = Number(statuses.find((item) => item.status === "accepted")?.value ?? 0);
-    const failed = Number(statuses.find((item) => item.status === "failed")?.value ?? 0);
-    const cancelled = Number(statuses.find((item) => item.status === "cancelled")?.value ?? 0);
-    const finalStatus = accepted > 0 && failed === 0 && cancelled === 0
-      ? "completed"
-      : "completed_with_errors";
+    const hasIssues = statuses.some((item) =>
+      ["failed", "bounced", "complained", "cancelled"].includes(item.status),
+    );
+    const finalStatus = hasIssues ? "completed_with_errors" : "completed";
     await transaction.update(emailCampaignsTable).set({
       status: finalStatus,
       completedAt: new Date(),
@@ -95,6 +115,14 @@ async function refreshCampaignStatus(campaignId: string) {
       ne(emailCampaignsTable.status, "cancelled"),
     ));
   });
+}
+
+export async function refreshCampaignStatusForRecipient(recipientId: string) {
+  const [recipient] = await db.select({ campaignId: emailCampaignRecipientsTable.campaignId })
+    .from(emailCampaignRecipientsTable)
+    .where(eq(emailCampaignRecipientsTable.id, recipientId))
+    .limit(1);
+  if (recipient) await refreshCampaignStatus(recipient.campaignId);
 }
 
 async function claimNextRecipient() {
@@ -129,7 +157,13 @@ async function claimNextRecipient() {
         subject: emailCampaignsTable.subject,
         bodyText: emailCampaignsTable.bodyText,
         emailSnapshotEncrypted: emailCampaignRecipientsTable.emailSnapshotEncrypted,
+        emailSnapshotLookupHash: emailCampaignRecipientsTable.emailSnapshotLookupHash,
         currentEmailEncrypted: usersTable.emailEncrypted,
+        emailLookupHash: usersTable.emailLookupHash,
+        providerSuppressed: sql<boolean>`EXISTS (
+          SELECT 1 FROM sf_email_marketing_suppressions
+          WHERE sf_email_marketing_suppressions.email_lookup_hash = ${usersTable.emailLookupHash}
+        )`,
         accountStatus: usersTable.status,
         emailVerifiedAt: usersTable.emailVerifiedAt,
         emailMarketingConsentAt: usersTable.emailMarketingConsentAt,
@@ -150,9 +184,17 @@ async function claimNextRecipient() {
         .for("update", { of: emailCampaignRecipientsTable, skipLocked: true });
       if (recipient) {
         const emailSnapshotEncrypted = recipient.emailSnapshotEncrypted ?? recipient.currentEmailEncrypted;
+        const emailSnapshotLookupHash = resolveSnapshotLookupHash(
+          recipient.emailSnapshotLookupHash,
+          recipient.emailSnapshotEncrypted,
+          recipient.currentEmailEncrypted,
+        );
         const eligible = isCampaignRecipientEligible({
           accountStatus: recipient.accountStatus,
           emailEncrypted: emailSnapshotEncrypted,
+          emailLookupHash: recipient.emailLookupHash,
+          emailSnapshotLookupHash,
+          providerSuppressed: recipient.providerSuppressed,
           emailVerifiedAt: recipient.emailVerifiedAt,
           emailMarketingConsentAt: recipient.emailMarketingConsentAt,
           emailMarketingUnsubscribedAt: recipient.emailMarketingUnsubscribedAt,
@@ -181,6 +223,7 @@ async function claimNextRecipient() {
           status: "sending",
           idempotencyKey,
           emailSnapshotEncrypted,
+          emailSnapshotLookupHash,
           startedAt: now,
           createdAt: now,
           updatedAt: now,
@@ -190,6 +233,7 @@ async function claimNextRecipient() {
           status: "sending",
           attempts,
           emailSnapshotEncrypted,
+          emailSnapshotLookupHash,
           processingStartedAt: now,
           updatedAt: now,
         }).where(eq(emailCampaignRecipientsTable.id, recipient.id));
@@ -212,6 +256,7 @@ async function claimNextRecipient() {
           emailVerifiedAt: recipient.emailVerifiedAt,
           emailMarketingConsentAt: recipient.emailMarketingConsentAt,
           emailMarketingUnsubscribedAt: recipient.emailMarketingUnsubscribedAt,
+          emailLookupHash: recipient.emailLookupHash,
           skipped: false as const,
         };
       }
@@ -241,7 +286,13 @@ async function claimNextRecipient() {
       subject: emailCampaignsTable.subject,
       bodyText: emailCampaignsTable.bodyText,
       emailSnapshotEncrypted: emailCampaignRecipientsTable.emailSnapshotEncrypted,
+      emailSnapshotLookupHash: emailCampaignRecipientsTable.emailSnapshotLookupHash,
       currentEmailEncrypted: usersTable.emailEncrypted,
+      emailLookupHash: usersTable.emailLookupHash,
+      providerSuppressed: sql<boolean>`EXISTS (
+        SELECT 1 FROM sf_email_marketing_suppressions
+        WHERE sf_email_marketing_suppressions.email_lookup_hash = ${usersTable.emailLookupHash}
+      )`,
       accountStatus: usersTable.status,
       emailVerifiedAt: usersTable.emailVerifiedAt,
       emailMarketingConsentAt: usersTable.emailMarketingConsentAt,
@@ -269,6 +320,9 @@ async function claimNextRecipient() {
     const eligible = isCampaignRecipientEligible({
       accountStatus: stale.accountStatus,
       emailEncrypted: emailSnapshotEncrypted,
+      emailLookupHash: stale.emailLookupHash,
+      emailSnapshotLookupHash: stale.emailSnapshotLookupHash,
+      providerSuppressed: stale.providerSuppressed,
       emailVerifiedAt: stale.emailVerifiedAt,
       emailMarketingConsentAt: stale.emailMarketingConsentAt,
       emailMarketingUnsubscribedAt: stale.emailMarketingUnsubscribedAt,
@@ -306,6 +360,7 @@ async function claimNextRecipient() {
         status: "sending",
         idempotencyKey,
         emailSnapshotEncrypted,
+        emailSnapshotLookupHash: stale.emailSnapshotLookupHash ?? stale.emailLookupHash,
         startedAt: now,
         createdAt: now,
         updatedAt: now,
@@ -313,6 +368,7 @@ async function claimNextRecipient() {
     }
     await transaction.update(emailCampaignRecipientsTable).set({
       emailSnapshotEncrypted,
+      emailSnapshotLookupHash: stale.emailSnapshotLookupHash ?? stale.emailLookupHash,
       processingStartedAt: now,
       updatedAt: now,
     }).where(eq(emailCampaignRecipientsTable.id, stale.id));
@@ -331,6 +387,7 @@ async function claimNextRecipient() {
       emailVerifiedAt: stale.emailVerifiedAt,
       emailMarketingConsentAt: stale.emailMarketingConsentAt,
       emailMarketingUnsubscribedAt: stale.emailMarketingUnsubscribedAt,
+      emailLookupHash: stale.emailLookupHash,
       skipped: false as const,
     };
   });
@@ -349,6 +406,12 @@ async function deliverOne(logger: WorkerLogger) {
   const email = decryptSensitiveDataIfEncrypted(recipient.emailSnapshotEncrypted, "user-email");
   if (!email) {
     await db.transaction(async (transaction) => {
+      await transaction.select({ id: emailCampaignsTable.id }).from(emailCampaignsTable)
+        .where(eq(emailCampaignsTable.id, recipient.campaignId)).for("update").limit(1);
+      await transaction.select({ id: emailCampaignRecipientsTable.id }).from(emailCampaignRecipientsTable)
+        .where(eq(emailCampaignRecipientsTable.id, recipient.id)).for("update").limit(1);
+      await transaction.select({ id: emailCampaignAttemptsTable.id }).from(emailCampaignAttemptsTable)
+        .where(eq(emailCampaignAttemptsTable.id, recipient.attemptId)).for("update").limit(1);
       await transaction.update(emailCampaignAttemptsTable).set({
         status: "failed",
         errorClass: "recipient_address_unavailable",
@@ -384,11 +447,21 @@ async function deliverOne(logger: WorkerLogger) {
       subject: recipient.subject,
       text: `${recipient.bodyText}\n\nVous recevez ce message car vous avez accepté les communications SendFlow.\nSe désinscrire : ${unsubscribeUrl}`,
       html: renderPlainTextEmail(recipient.bodyText, unsubscribeUrl),
+      tags: [
+        { name: "sendflow_campaign_recipient", value: recipient.id },
+        { name: "sendflow_campaign_attempt", value: recipient.attemptId },
+      ],
     }, {
       idempotencyKey: recipient.idempotencyKey,
     });
     await db.transaction(async (transaction) => {
       const finishedAt = new Date();
+      await transaction.select({ id: emailCampaignsTable.id }).from(emailCampaignsTable)
+        .where(eq(emailCampaignsTable.id, recipient.campaignId)).for("update").limit(1);
+      await transaction.select({ id: emailCampaignRecipientsTable.id }).from(emailCampaignRecipientsTable)
+        .where(eq(emailCampaignRecipientsTable.id, recipient.id)).for("update").limit(1);
+      await transaction.select({ id: emailCampaignAttemptsTable.id }).from(emailCampaignAttemptsTable)
+        .where(eq(emailCampaignAttemptsTable.id, recipient.attemptId)).for("update").limit(1);
       const [updatedAttempt] = await transaction.update(emailCampaignAttemptsTable).set({
         status: "accepted",
         providerMessageId: sent.messageId,
@@ -414,6 +487,12 @@ async function deliverOne(logger: WorkerLogger) {
         eq(emailCampaignRecipientsTable.id, recipient.id),
         inArray(emailCampaignRecipientsTable.status, ["sending", "queued"]),
       ));
+      await applyPendingCampaignProviderEvents(
+        transaction,
+        recipient.attemptId,
+        sent.messageId,
+        finishedAt,
+      );
     });
   } catch (error) {
     const statusCode = error instanceof ResendDeliveryError ? error.statusCode : null;
@@ -425,6 +504,12 @@ async function deliverOne(logger: WorkerLogger) {
       : statusCode === null ? "network_or_response" : "provider_http";
     const finishedAt = new Date();
     await db.transaction(async (transaction) => {
+      await transaction.select({ id: emailCampaignsTable.id }).from(emailCampaignsTable)
+        .where(eq(emailCampaignsTable.id, recipient.campaignId)).for("update").limit(1);
+      await transaction.select({ id: emailCampaignRecipientsTable.id }).from(emailCampaignRecipientsTable)
+        .where(eq(emailCampaignRecipientsTable.id, recipient.id)).for("update").limit(1);
+      await transaction.select({ id: emailCampaignAttemptsTable.id }).from(emailCampaignAttemptsTable)
+        .where(eq(emailCampaignAttemptsTable.id, recipient.attemptId)).for("update").limit(1);
       const [updatedAttempt] = await transaction.update(emailCampaignAttemptsTable).set({
         status: "failed",
         errorClass,

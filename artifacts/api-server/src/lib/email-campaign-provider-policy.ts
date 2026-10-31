@@ -25,12 +25,12 @@ export function verifyResendWebhook(
   if (!headers.id || !headers.timestamp || !headers.signature) {
     throw new Error("Webhook signature headers are missing");
   }
-  const verified = new Webhook(secret).verify(rawBody, {
+  new Webhook(secret).verify(rawBody, {
     "svix-id": headers.id,
     "svix-timestamp": headers.timestamp,
     "svix-signature": headers.signature,
   });
-  return verified;
+  return JSON.parse(typeof rawBody === "string" ? rawBody : rawBody.toString("utf8")) as unknown;
 }
 
 export function campaignProviderIdentifiers(tags: unknown): CampaignProviderIdentifiers | null {

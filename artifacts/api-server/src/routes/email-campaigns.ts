@@ -7,6 +7,7 @@ import {
   db,
   desc,
   eq,
+  gte,
   inArray,
   isNotNull,
   isNull,
@@ -14,8 +15,10 @@ import {
   ne,
   or,
   sql,
+  adminAuditLogsTable,
   emailCampaignAttemptsTable,
   emailCampaignRetryRequestsTable,
+  emailMarketingSuppressionsTable,
   usersTable,
   emailCampaignRecipientsTable,
   emailCampaignsTable,
@@ -30,14 +33,37 @@ import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
 import { normalizeSensitiveNameForLookup } from "../lib/sensitive-data-crypto";
 import {
   canManuallyRetryCampaignRecipient,
+  getEmailCampaignConfiguration,
   isCampaignDispatchEnabled,
   isCampaignRecipientEligible,
 } from "../lib/email-campaign-policy";
+import { campaignAdminActionWithinLimit } from "../lib/email-campaign-provider-policy";
 import { respondAdminAuthError } from "./admin";
 import { z } from "zod";
 
 const adminRoutes: IRouter = Router();
 const recipientPageSize = 50;
+
+async function hasCampaignActionCapacity(
+  transaction: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  adminUserId: string,
+  action: "queue" | "retry",
+) {
+  const limit = action === "queue" ? 10 : 20;
+  const windowMs = action === "queue" ? 60 * 60_000 : 15 * 60_000;
+  const auditAction = action === "queue" ? "queue_email_campaign" : "retry_email_campaign_recipient";
+  await transaction.execute(sql`
+    SELECT pg_advisory_xact_lock(hashtext(${adminUserId}), hashtext('sendflow-email-campaign-' || ${action}))
+  `);
+  const [recentActions] = await transaction.select({ value: count() })
+    .from(adminAuditLogsTable)
+    .where(and(
+      eq(adminAuditLogsTable.adminUserId, adminUserId),
+      eq(adminAuditLogsTable.action, auditAction),
+      gte(adminAuditLogsTable.createdAt, new Date(Date.now() - windowMs)),
+    ));
+  return campaignAdminActionWithinLimit(Number(recentActions?.value ?? 0), limit);
+}
 
 const campaignInput = z.object({
   subject: z.string().trim().min(1).max(200),
@@ -60,6 +86,7 @@ type CampaignInput = z.infer<typeof campaignInput>;
 type AudienceUser = {
   id: string;
   emailEncrypted: string | null;
+  emailLookupHash: string | null;
   emailVerifiedAt: Date | null;
   status: string;
   emailMarketingConsentAt: Date | null;
@@ -76,6 +103,9 @@ function campaignStateCounts(rows: Array<{ status: string; value: number }>) {
     queued: 0,
     sending: 0,
     accepted: 0,
+    delivered: 0,
+    bounced: 0,
+    complained: 0,
     failed: 0,
     cancelled: 0,
   };
@@ -135,21 +165,26 @@ async function resolveAudience(
     ? and(
         eq(usersTable.status, "active"),
         isNotNull(usersTable.emailEncrypted),
+        isNotNull(usersTable.emailLookupHash),
         isNotNull(usersTable.emailVerifiedAt),
         isNotNull(usersTable.emailMarketingConsentAt),
         isNull(usersTable.emailMarketingUnsubscribedAt),
+        sql`NOT EXISTS (SELECT 1 FROM ${emailMarketingSuppressionsTable} WHERE ${emailMarketingSuppressionsTable.emailLookupHash} = ${usersTable.emailLookupHash})`,
       )
     : and(
         inArray(usersTable.id, input.userIds),
         eq(usersTable.status, "active"),
         isNotNull(usersTable.emailEncrypted),
+        isNotNull(usersTable.emailLookupHash),
         isNotNull(usersTable.emailVerifiedAt),
         isNotNull(usersTable.emailMarketingConsentAt),
         isNull(usersTable.emailMarketingUnsubscribedAt),
+        sql`NOT EXISTS (SELECT 1 FROM ${emailMarketingSuppressionsTable} WHERE ${emailMarketingSuppressionsTable.emailLookupHash} = ${usersTable.emailLookupHash})`,
       );
   const recipients = await database.select({
     id: usersTable.id,
     emailEncrypted: usersTable.emailEncrypted,
+    emailLookupHash: usersTable.emailLookupHash,
     emailVerifiedAt: usersTable.emailVerifiedAt,
     status: usersTable.status,
     emailMarketingConsentAt: usersTable.emailMarketingConsentAt,
@@ -198,9 +233,11 @@ adminRoutes.get("/email-campaigns/recipients", async (req, res): Promise<void> =
   const baseFilters = [
     eq(usersTable.status, "active"),
     isNotNull(usersTable.emailEncrypted),
+    isNotNull(usersTable.emailLookupHash),
     isNotNull(usersTable.emailVerifiedAt),
     isNotNull(usersTable.emailMarketingConsentAt),
     isNull(usersTable.emailMarketingUnsubscribedAt),
+    sql`NOT EXISTS (SELECT 1 FROM ${emailMarketingSuppressionsTable} WHERE ${emailMarketingSuppressionsTable.emailLookupHash} = ${usersTable.emailLookupHash})`,
   ];
   if (search) {
     const normalizedEmail = normalizeSensitiveEmailForLookup(search);
@@ -236,9 +273,11 @@ adminRoutes.get("/email-campaigns/recipients", async (req, res): Promise<void> =
       db.select({ value: count() }).from(usersTable).where(and(
         eq(usersTable.status, "active"),
         isNotNull(usersTable.emailEncrypted),
+        isNotNull(usersTable.emailLookupHash),
         isNotNull(usersTable.emailVerifiedAt),
         isNotNull(usersTable.emailMarketingConsentAt),
         isNull(usersTable.emailMarketingUnsubscribedAt),
+        sql`NOT EXISTS (SELECT 1 FROM ${emailMarketingSuppressionsTable} WHERE ${emailMarketingSuppressionsTable.emailLookupHash} = ${usersTable.emailLookupHash})`,
       )),
       db.select({ value: count() }).from(usersTable).where(and(
         ne(usersTable.status, "deleted"),
@@ -291,7 +330,7 @@ adminRoutes.get("/email-campaigns/history", async (req, res): Promise<void> => {
   const campaignId = typeof req.query.campaignId === "string" ? req.query.campaignId : undefined;
   const page = typeof req.query.page === "string" ? Number(req.query.page) : 1;
   const pageSize = typeof req.query.pageSize === "string" ? Number(req.query.pageSize) : 25;
-  const statuses = new Set(["queued", "sending", "accepted", "failed", "cancelled"]);
+  const statuses = new Set(["queued", "sending", "accepted", "delivered", "bounced", "complained", "failed", "cancelled"]);
   if (
     rawSearch.length > 254
     || (rawStatus !== undefined && !statuses.has(rawStatus))
@@ -340,6 +379,7 @@ adminRoutes.get("/email-campaigns/history", async (req, res): Promise<void> => {
         lastErrorClass: emailCampaignRecipientsTable.lastErrorClass,
         lastErrorStatus: emailCampaignRecipientsTable.lastErrorStatus,
         providerMessageId: emailCampaignRecipientsTable.providerMessageId,
+        providerUpdatedAt: emailCampaignRecipientsTable.providerUpdatedAt,
       }).from(emailCampaignRecipientsTable)
         .innerJoin(emailCampaignsTable, eq(emailCampaignsTable.id, emailCampaignRecipientsTable.campaignId))
         .leftJoin(usersTable, eq(usersTable.id, emailCampaignRecipientsTable.userId))
@@ -373,6 +413,7 @@ adminRoutes.get("/email-campaigns/history", async (req, res): Promise<void> => {
           errorClass: emailCampaignAttemptsTable.errorClass,
           httpStatus: emailCampaignAttemptsTable.httpStatus,
           providerMessageId: emailCampaignAttemptsTable.providerMessageId,
+          providerUpdatedAt: emailCampaignAttemptsTable.providerUpdatedAt,
           emailSnapshotEncrypted: emailCampaignAttemptsTable.emailSnapshotEncrypted,
         }).from(emailCampaignAttemptsTable)
           .where(inArray(emailCampaignAttemptsTable.recipientId, recipientIds))
@@ -388,6 +429,9 @@ adminRoutes.get("/email-campaigns/history", async (req, res): Promise<void> => {
       queued: 0,
       sending: 0,
       accepted: 0,
+      delivered: 0,
+      bounced: 0,
+      complained: 0,
       failed: 0,
       cancelled: 0,
     };
@@ -418,6 +462,7 @@ adminRoutes.get("/email-campaigns/history", async (req, res): Promise<void> => {
           lastErrorClass: row.lastErrorClass,
           lastErrorStatus: row.lastErrorStatus,
           providerMessageId: row.providerMessageId,
+          providerUpdatedAt: row.providerUpdatedAt?.toISOString() ?? null,
           attempts: recipientAttempts.map((attempt) => ({
             attemptNumber: attempt.attemptNumber,
             status: attempt.status,
@@ -428,6 +473,7 @@ adminRoutes.get("/email-campaigns/history", async (req, res): Promise<void> => {
             errorClass: attempt.errorClass,
             httpStatus: attempt.httpStatus,
             providerMessageId: attempt.providerMessageId,
+            providerUpdatedAt: attempt.providerUpdatedAt?.toISOString() ?? null,
           })),
         };
       }),
@@ -465,6 +511,25 @@ adminRoutes.get("/email-campaigns", async (req, res): Promise<void> => {
   } catch (error) {
     req.log.error({ err: error }, "Email campaign list lookup failed");
     res.status(503).json({ error: "L’historique des campagnes est indisponible." });
+  }
+});
+
+adminRoutes.get("/email-campaigns/settings", async (req, res): Promise<void> => {
+  const adminUserId = respondAdminAuthError(req, res, "read");
+  if (!adminUserId) return;
+  try {
+    const settings = getEmailCampaignConfiguration();
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_email_campaigns",
+      resourceType: "email_campaign",
+      resourceId: "settings",
+    });
+    res.setHeader("Cache-Control", "no-store, private");
+    res.json(settings);
+  } catch {
+    req.log.error("Email campaign settings lookup failed");
+    res.status(503).json({ error: "Les paramètres de campagne sont indisponibles." });
   }
 });
 
@@ -616,6 +681,9 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
         .limit(1);
       if (!campaign) return "missing" as const;
       if (campaign.status !== "draft" || campaign.recipientCount < 1) return "conflict" as const;
+      if (!await hasCampaignActionCapacity(transaction, adminUserId, "queue")) {
+        return "rate-limited" as const;
+      }
       const [eligibleCount] = await transaction.select({ value: count() })
         .from(emailCampaignRecipientsTable)
         .innerJoin(usersTable, eq(usersTable.id, emailCampaignRecipientsTable.userId))
@@ -624,9 +692,11 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
           eq(emailCampaignRecipientsTable.status, "draft"),
           eq(usersTable.status, "active"),
           isNotNull(usersTable.emailEncrypted),
+          isNotNull(usersTable.emailLookupHash),
           isNotNull(usersTable.emailVerifiedAt),
           isNotNull(usersTable.emailMarketingConsentAt),
           isNull(usersTable.emailMarketingUnsubscribedAt),
+          sql`NOT EXISTS (SELECT 1 FROM ${emailMarketingSuppressionsTable} WHERE ${emailMarketingSuppressionsTable.emailLookupHash} = ${usersTable.emailLookupHash})`,
         ));
       if (Number(eligibleCount?.value ?? 0) === 0) return "no-eligible" as const;
 
@@ -635,6 +705,7 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
         UPDATE sf_email_campaign_recipients AS recipients
         SET status = 'queued',
             email_snapshot_encrypted = users.email_encrypted,
+            email_snapshot_lookup_hash = users.email_lookup_hash,
             next_attempt_at = ${now},
             last_error_class = NULL,
             last_error_status = NULL,
@@ -645,9 +716,14 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
           AND recipients.user_id = users.id
           AND users.status = 'active'
           AND users.email_encrypted IS NOT NULL
+          AND users.email_lookup_hash IS NOT NULL
           AND users.email_verified_at IS NOT NULL
           AND users.email_marketing_consent_at IS NOT NULL
           AND users.email_marketing_unsubscribed_at IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM sf_email_marketing_suppressions AS suppressions
+            WHERE suppressions.email_lookup_hash = users.email_lookup_hash
+          )
       `);
       await transaction.execute(sql`
         UPDATE sf_email_campaign_recipients AS recipients
@@ -662,9 +738,14 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
           AND (
             users.status <> 'active'
             OR users.email_encrypted IS NULL
+            OR users.email_lookup_hash IS NULL
             OR users.email_verified_at IS NULL
             OR users.email_marketing_consent_at IS NULL
             OR users.email_marketing_unsubscribed_at IS NOT NULL
+            OR EXISTS (
+              SELECT 1 FROM sf_email_marketing_suppressions AS suppressions
+              WHERE suppressions.email_lookup_hash = users.email_lookup_hash
+            )
           )
       `);
       await transaction.update(emailCampaignsTable).set({
@@ -686,6 +767,11 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
     }
     if (result === "conflict") {
       res.status(409).json({ error: "Campaign is not an editable draft" });
+      return;
+    }
+    if (result === "rate-limited") {
+      res.setHeader("Retry-After", "3600");
+      res.status(429).json({ error: "La limite de mises en file pour cet administrateur est atteinte. Réessayez plus tard." });
       return;
     }
     if (result === "no-eligible") {
@@ -768,17 +854,6 @@ adminRoutes.post(
 
     try {
       const result = await db.transaction(async (transaction) => {
-        const [previousRequest] = await transaction.select()
-          .from(emailCampaignRetryRequestsTable)
-          .where(eq(emailCampaignRetryRequestsTable.idempotencyKey, idempotencyKey))
-          .limit(1);
-        if (previousRequest) {
-          return previousRequest.recipientId === recipientId
-            && previousRequest.adminUserId === adminUserId
-            ? "replayed" as const
-            : "idempotency-conflict" as const;
-        }
-
         // Every campaign mutation and worker claim locks campaign before recipient.
         const [campaign] = await transaction.select({
           id: emailCampaignsTable.id,
@@ -789,6 +864,22 @@ adminRoutes.post(
           .limit(1);
         if (!campaign) return "missing" as const;
         if (campaign.status === "cancelled") return "campaign-conflict" as const;
+
+        // Recheck after the campaign lock so concurrent duplicate keys replay
+        // the committed request rather than racing into a 409 on recipient state.
+        const [previousRequest] = await transaction.select()
+          .from(emailCampaignRetryRequestsTable)
+          .where(eq(emailCampaignRetryRequestsTable.idempotencyKey, idempotencyKey))
+          .limit(1);
+        if (previousRequest) {
+          return previousRequest.recipientId === recipientId
+            && previousRequest.adminUserId === adminUserId
+            ? "replayed" as const
+            : "idempotency-conflict" as const;
+        }
+        if (!await hasCampaignActionCapacity(transaction, adminUserId, "retry")) {
+          return "rate-limited" as const;
+        }
 
         const [recipient] = await transaction.select({
           id: emailCampaignRecipientsTable.id,
@@ -801,6 +892,13 @@ adminRoutes.post(
           emailVerifiedAt: usersTable.emailVerifiedAt,
           emailMarketingConsentAt: usersTable.emailMarketingConsentAt,
           emailMarketingUnsubscribedAt: usersTable.emailMarketingUnsubscribedAt,
+          emailLookupHash: usersTable.emailLookupHash,
+          emailSnapshotEncrypted: emailCampaignRecipientsTable.emailSnapshotEncrypted,
+          emailSnapshotLookupHash: emailCampaignRecipientsTable.emailSnapshotLookupHash,
+          providerSuppressed: sql<boolean>`EXISTS (
+            SELECT 1 FROM sf_email_marketing_suppressions
+            WHERE sf_email_marketing_suppressions.email_lookup_hash = ${usersTable.emailLookupHash}
+          )`,
         }).from(emailCampaignRecipientsTable)
           .innerJoin(usersTable, eq(usersTable.id, emailCampaignRecipientsTable.userId))
           .where(and(
@@ -810,11 +908,23 @@ adminRoutes.post(
           .for("update")
           .limit(1);
         if (!recipient) return "missing" as const;
+        const savedEmail = decryptSensitiveDataIfEncrypted(
+          recipient.emailSnapshotEncrypted ?? recipient.emailEncrypted,
+          "user-email",
+        );
+        const emailSnapshotLookupHash = recipient.emailSnapshotLookupHash
+          ?? (savedEmail
+            ? createSensitiveDataLookupIndex(normalizeSensitiveEmailForLookup(savedEmail), "user-email")
+            : null);
         if (!canManuallyRetryCampaignRecipient({
           status: recipient.status,
           manualRetries: recipient.manualRetries,
           lastErrorClass: recipient.lastErrorClass,
-          recipient,
+          recipient: {
+            ...recipient,
+            emailSnapshotLookupHash,
+            providerSuppressed: recipient.providerSuppressed,
+          },
         })) return "recipient-conflict" as const;
 
         const now = new Date();
@@ -837,7 +947,8 @@ adminRoutes.post(
           status: "queued",
           attempts: 0,
           manualRetries: recipient.manualRetries + 1,
-          emailSnapshotEncrypted: recipient.emailEncrypted,
+          emailSnapshotEncrypted: recipient.emailSnapshotEncrypted ?? recipient.emailEncrypted,
+          emailSnapshotLookupHash,
           nextAttemptAt: now,
           processingStartedAt: null,
           updatedAt: now,
@@ -865,6 +976,11 @@ adminRoutes.post(
       }
       if (result === "campaign-conflict" || result === "recipient-conflict" || result === "idempotency-conflict") {
         res.status(409).json({ error: "Cette adresse n’est plus relançable, n’est pas éligible ou a atteint sa limite de relances." });
+        return;
+      }
+      if (result === "rate-limited") {
+        res.setHeader("Retry-After", "900");
+        res.status(429).json({ error: "La limite de relances pour cet administrateur est atteinte. Réessayez plus tard." });
         return;
       }
       if (result === "replayed") {

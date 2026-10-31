@@ -25,12 +25,17 @@ async function inProduction(action) {
   }
 }
 
-test("Resend sends the OTP using server-side bearer authentication", async () => {
+test("email delivery uses server authentication, campaign correlation tags, and idempotency", async () => {
   await inProduction(async () => {
     let request;
-    const result = await sendResendEmail(message, {
+    const campaignTags = [
+      { name: "sendflow_campaign_recipient", value: "recipient-id" },
+      { name: "sendflow_campaign_attempt", value: "attempt-id" },
+    ];
+    const result = await sendResendEmail({ ...message, tags: campaignTags }, {
       apiKey: "test-resend-key",
       fromEmail: "SendFlow <no-reply@example.invalid>",
+      idempotencyKey: "test-campaign-idempotency-key",
       fetchImpl: async (url, init) => {
         request = { url, init };
         return new Response(JSON.stringify({ id: "email-message-id" }), {
@@ -44,12 +49,14 @@ test("Resend sends the OTP using server-side bearer authentication", async () =>
     assert.equal(request.init.method, "POST");
     assert.equal(request.init.headers.Authorization, "Bearer test-resend-key");
     assert.equal(request.init.headers["Content-Type"], "application/json");
+    assert.equal(request.init.headers["Idempotency-Key"], "test-campaign-idempotency-key");
     assert.deepEqual(JSON.parse(request.init.body), {
       from: "SendFlow <no-reply@example.invalid>",
       to: ["person@example.invalid"],
       subject: message.subject,
       text: message.text,
       html: message.html,
+      tags: campaignTags,
     });
     assert.deepEqual(result, { messageId: "email-message-id", statusCode: 200 });
   });

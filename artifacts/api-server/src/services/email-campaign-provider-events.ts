@@ -1,5 +1,6 @@
 import {
   and,
+  count,
   db,
   emailCampaignAttemptsTable,
   emailCampaignProviderEventsTable,
@@ -123,6 +124,33 @@ async function applyStoredEvent(
   return "processed" as const;
 }
 
+async function refreshCampaignStatusInTransaction(
+  transaction: CampaignEmailTransaction,
+  campaignId: string,
+) {
+  const [campaign] = await transaction.select({ status: emailCampaignsTable.status })
+    .from(emailCampaignsTable)
+    .where(eq(emailCampaignsTable.id, campaignId))
+    .limit(1);
+  if (!campaign || campaign.status === "cancelled") return;
+  const statuses = await transaction.select({
+    status: emailCampaignRecipientsTable.status,
+    value: count(),
+  }).from(emailCampaignRecipientsTable)
+    .where(eq(emailCampaignRecipientsTable.campaignId, campaignId))
+    .groupBy(emailCampaignRecipientsTable.status);
+  const pending = statuses.some((item) => item.status === "queued" || item.status === "sending");
+  const hasIssues = statuses.some((item) =>
+    ["failed", "bounced", "complained", "cancelled"].includes(item.status),
+  );
+  const now = new Date();
+  await transaction.update(emailCampaignsTable).set({
+    status: pending ? "sending" : hasIssues ? "completed_with_errors" : "completed",
+    completedAt: pending ? null : now,
+    updatedAt: now,
+  }).where(eq(emailCampaignsTable.id, campaignId));
+}
+
 export async function receiveCampaignProviderEvent(event: StoredCampaignProviderEvent): Promise<CampaignProviderEventResult> {
   return db.transaction(async (transaction) => {
     const [identity] = await transaction.select({
@@ -190,6 +218,9 @@ export async function receiveCampaignProviderEvent(event: StoredCampaignProvider
     if ("processedAt" in stored && stored.processedAt) return "duplicate";
 
     const result = await applyStoredEvent(transaction, event, new Date());
+    if (result === "processed") {
+      await refreshCampaignStatusInTransaction(transaction, identity.campaignId);
+    }
     return inserted ? result : result === "processed" ? "duplicate" : result;
   });
 }

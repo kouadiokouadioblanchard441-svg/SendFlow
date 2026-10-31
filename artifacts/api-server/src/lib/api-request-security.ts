@@ -37,7 +37,10 @@ export function apiRequestSecurity(allowedOrigins: ReadonlySet<string>): Request
 
     // This exact machine-to-machine endpoint authenticates the signed payload
     // in its handler. Never exempt an entire /webhooks prefix.
-    if (req.method === "POST" && req.path === "/webhooks/didit") {
+    if (
+      req.method === "POST"
+      && (req.path === "/webhooks/didit" || req.path === "/webhooks/resend")
+    ) {
       next();
       return;
     }

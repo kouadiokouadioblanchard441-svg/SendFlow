@@ -3084,6 +3084,12 @@ export const listAdminEmailCampaignsResponseItemsItemCountsSendingMin = 0;
 
 export const listAdminEmailCampaignsResponseItemsItemCountsAcceptedMin = 0;
 
+export const listAdminEmailCampaignsResponseItemsItemCountsDeliveredMin = 0;
+
+export const listAdminEmailCampaignsResponseItemsItemCountsBouncedMin = 0;
+
+export const listAdminEmailCampaignsResponseItemsItemCountsComplainedMin = 0;
+
 export const listAdminEmailCampaignsResponseItemsItemCountsFailedMin = 0;
 
 export const listAdminEmailCampaignsResponseItemsItemCountsCancelledMin = 0;
@@ -3104,6 +3110,9 @@ export const ListAdminEmailCampaignsResponse = zod.object({
   "queued": zod.int().min(listAdminEmailCampaignsResponseItemsItemCountsQueuedMin),
   "sending": zod.int().min(listAdminEmailCampaignsResponseItemsItemCountsSendingMin),
   "accepted": zod.int().min(listAdminEmailCampaignsResponseItemsItemCountsAcceptedMin),
+  "delivered": zod.int().min(listAdminEmailCampaignsResponseItemsItemCountsDeliveredMin),
+  "bounced": zod.int().min(listAdminEmailCampaignsResponseItemsItemCountsBouncedMin),
+  "complained": zod.int().min(listAdminEmailCampaignsResponseItemsItemCountsComplainedMin),
   "failed": zod.int().min(listAdminEmailCampaignsResponseItemsItemCountsFailedMin),
   "cancelled": zod.int().min(listAdminEmailCampaignsResponseItemsItemCountsCancelledMin)
 }),
@@ -3149,6 +3158,12 @@ export const createAdminEmailCampaignResponseCampaignCountsSendingMin = 0;
 
 export const createAdminEmailCampaignResponseCampaignCountsAcceptedMin = 0;
 
+export const createAdminEmailCampaignResponseCampaignCountsDeliveredMin = 0;
+
+export const createAdminEmailCampaignResponseCampaignCountsBouncedMin = 0;
+
+export const createAdminEmailCampaignResponseCampaignCountsComplainedMin = 0;
+
 export const createAdminEmailCampaignResponseCampaignCountsFailedMin = 0;
 
 export const createAdminEmailCampaignResponseCampaignCountsCancelledMin = 0;
@@ -3169,6 +3184,9 @@ export const CreateAdminEmailCampaignResponse = zod.object({
   "queued": zod.int().min(createAdminEmailCampaignResponseCampaignCountsQueuedMin),
   "sending": zod.int().min(createAdminEmailCampaignResponseCampaignCountsSendingMin),
   "accepted": zod.int().min(createAdminEmailCampaignResponseCampaignCountsAcceptedMin),
+  "delivered": zod.int().min(createAdminEmailCampaignResponseCampaignCountsDeliveredMin),
+  "bounced": zod.int().min(createAdminEmailCampaignResponseCampaignCountsBouncedMin),
+  "complained": zod.int().min(createAdminEmailCampaignResponseCampaignCountsComplainedMin),
   "failed": zod.int().min(createAdminEmailCampaignResponseCampaignCountsFailedMin),
   "cancelled": zod.int().min(createAdminEmailCampaignResponseCampaignCountsCancelledMin)
 }),
@@ -3237,7 +3255,7 @@ export const listAdminEmailCampaignHistoryQueryPageSizeMax = 100;
 
 export const ListAdminEmailCampaignHistoryQueryParams = zod.object({
   "search": zod.coerce.string().max(listAdminEmailCampaignHistoryQuerySearchMax).optional(),
-  "status": zod.enum(['queued', 'sending', 'accepted', 'failed', 'cancelled']).optional(),
+  "status": zod.enum(['queued', 'sending', 'accepted', 'delivered', 'bounced', 'complained', 'failed', 'cancelled']).optional(),
   "campaignId": zod.coerce.string().max(listAdminEmailCampaignHistoryQueryCampaignIdMax).optional(),
   "page": zod.coerce.number().int().min(1).default(listAdminEmailCampaignHistoryQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listAdminEmailCampaignHistoryQueryPageSizeMax).default(listAdminEmailCampaignHistoryQueryPageSizeDefault)
@@ -3258,6 +3276,12 @@ export const listAdminEmailCampaignHistoryResponseCountsSendingMin = 0;
 
 export const listAdminEmailCampaignHistoryResponseCountsAcceptedMin = 0;
 
+export const listAdminEmailCampaignHistoryResponseCountsDeliveredMin = 0;
+
+export const listAdminEmailCampaignHistoryResponseCountsBouncedMin = 0;
+
+export const listAdminEmailCampaignHistoryResponseCountsComplainedMin = 0;
+
 export const listAdminEmailCampaignHistoryResponseCountsFailedMin = 0;
 
 export const listAdminEmailCampaignHistoryResponseCountsCancelledMin = 0;
@@ -3271,7 +3295,7 @@ export const ListAdminEmailCampaignHistoryResponse = zod.object({
   "subject": zod.string(),
   "email": zod.email().nullable(),
   "addressSource": zod.enum(['send_snapshot', 'current_account', 'unavailable']),
-  "status": zod.enum(['draft', 'queued', 'sending', 'accepted', 'failed', 'cancelled']),
+  "status": zod.enum(['draft', 'queued', 'sending', 'accepted', 'delivered', 'bounced', 'complained', 'failed', 'cancelled']),
   "createdAt": zod.coerce.date(),
   "acceptedAt": zod.coerce.date().nullable(),
   "attemptCount": zod.int().min(listAdminEmailCampaignHistoryResponseItemsItemAttemptCountMin),
@@ -3279,16 +3303,18 @@ export const ListAdminEmailCampaignHistoryResponse = zod.object({
   "lastErrorClass": zod.string().nullable(),
   "lastErrorStatus": zod.int().nullable(),
   "providerMessageId": zod.string().nullable(),
+  "providerUpdatedAt": zod.coerce.date().nullish(),
   "attempts": zod.array(zod.object({
   "attemptNumber": zod.int().min(1),
-  "status": zod.enum(['sending', 'accepted', 'failed']),
+  "status": zod.enum(['sending', 'accepted', 'delivered', 'bounced', 'complained', 'failed']),
   "email": zod.email().nullable(),
   "addressSource": zod.enum(['send_snapshot', 'unavailable']),
   "startedAt": zod.coerce.date(),
   "finishedAt": zod.coerce.date().nullable(),
   "errorClass": zod.string().nullable(),
   "httpStatus": zod.int().nullable(),
-  "providerMessageId": zod.string().nullable()
+  "providerMessageId": zod.string().nullable(),
+  "providerUpdatedAt": zod.coerce.date().nullish()
 }))
 })),
   "page": zod.int().min(1),
@@ -3298,6 +3324,9 @@ export const ListAdminEmailCampaignHistoryResponse = zod.object({
   "queued": zod.int().min(listAdminEmailCampaignHistoryResponseCountsQueuedMin),
   "sending": zod.int().min(listAdminEmailCampaignHistoryResponseCountsSendingMin),
   "accepted": zod.int().min(listAdminEmailCampaignHistoryResponseCountsAcceptedMin),
+  "delivered": zod.int().min(listAdminEmailCampaignHistoryResponseCountsDeliveredMin),
+  "bounced": zod.int().min(listAdminEmailCampaignHistoryResponseCountsBouncedMin),
+  "complained": zod.int().min(listAdminEmailCampaignHistoryResponseCountsComplainedMin),
   "failed": zod.int().min(listAdminEmailCampaignHistoryResponseCountsFailedMin),
   "cancelled": zod.int().min(listAdminEmailCampaignHistoryResponseCountsCancelledMin)
 })
@@ -3328,6 +3357,12 @@ export const getAdminEmailCampaignResponseCampaignCountsSendingMin = 0;
 
 export const getAdminEmailCampaignResponseCampaignCountsAcceptedMin = 0;
 
+export const getAdminEmailCampaignResponseCampaignCountsDeliveredMin = 0;
+
+export const getAdminEmailCampaignResponseCampaignCountsBouncedMin = 0;
+
+export const getAdminEmailCampaignResponseCampaignCountsComplainedMin = 0;
+
 export const getAdminEmailCampaignResponseCampaignCountsFailedMin = 0;
 
 export const getAdminEmailCampaignResponseCampaignCountsCancelledMin = 0;
@@ -3348,6 +3383,9 @@ export const GetAdminEmailCampaignResponse = zod.object({
   "queued": zod.int().min(getAdminEmailCampaignResponseCampaignCountsQueuedMin),
   "sending": zod.int().min(getAdminEmailCampaignResponseCampaignCountsSendingMin),
   "accepted": zod.int().min(getAdminEmailCampaignResponseCampaignCountsAcceptedMin),
+  "delivered": zod.int().min(getAdminEmailCampaignResponseCampaignCountsDeliveredMin),
+  "bounced": zod.int().min(getAdminEmailCampaignResponseCampaignCountsBouncedMin),
+  "complained": zod.int().min(getAdminEmailCampaignResponseCampaignCountsComplainedMin),
   "failed": zod.int().min(getAdminEmailCampaignResponseCampaignCountsFailedMin),
   "cancelled": zod.int().min(getAdminEmailCampaignResponseCampaignCountsCancelledMin)
 }),
@@ -3401,6 +3439,12 @@ export const updateAdminEmailCampaignResponseCampaignCountsSendingMin = 0;
 
 export const updateAdminEmailCampaignResponseCampaignCountsAcceptedMin = 0;
 
+export const updateAdminEmailCampaignResponseCampaignCountsDeliveredMin = 0;
+
+export const updateAdminEmailCampaignResponseCampaignCountsBouncedMin = 0;
+
+export const updateAdminEmailCampaignResponseCampaignCountsComplainedMin = 0;
+
 export const updateAdminEmailCampaignResponseCampaignCountsFailedMin = 0;
 
 export const updateAdminEmailCampaignResponseCampaignCountsCancelledMin = 0;
@@ -3421,6 +3465,9 @@ export const UpdateAdminEmailCampaignResponse = zod.object({
   "queued": zod.int().min(updateAdminEmailCampaignResponseCampaignCountsQueuedMin),
   "sending": zod.int().min(updateAdminEmailCampaignResponseCampaignCountsSendingMin),
   "accepted": zod.int().min(updateAdminEmailCampaignResponseCampaignCountsAcceptedMin),
+  "delivered": zod.int().min(updateAdminEmailCampaignResponseCampaignCountsDeliveredMin),
+  "bounced": zod.int().min(updateAdminEmailCampaignResponseCampaignCountsBouncedMin),
+  "complained": zod.int().min(updateAdminEmailCampaignResponseCampaignCountsComplainedMin),
   "failed": zod.int().min(updateAdminEmailCampaignResponseCampaignCountsFailedMin),
   "cancelled": zod.int().min(updateAdminEmailCampaignResponseCampaignCountsCancelledMin)
 }),
@@ -3449,6 +3496,22 @@ export const DeleteAdminEmailCampaignResponse = zod.object({
 
 
 /**
+ * @summary Read safe email campaign readiness and operational limits
+ */
+export const GetAdminEmailCampaignSettingsResponse = zod.object({
+  "sendingEnabled": zod.boolean(),
+  "webhookConfigured": zod.boolean(),
+  "providerEventsReady": zod.boolean(),
+  "unsubscribeConfigured": zod.boolean(),
+  "attachmentsEnabled": zod.literal(false),
+  "automaticAttemptLimit": zod.literal(4),
+  "manualRetryLimitPerRecipient": zod.literal(3),
+  "queueLimitPerAdminPerHour": zod.literal(10),
+  "retryLimitPerAdminPer15Minutes": zod.literal(20)
+})
+
+
+/**
  * @summary Queue a confirmed email campaign for delivery
  */
 export const queueAdminEmailCampaignPathCampaignIdMax = 80;
@@ -3472,6 +3535,12 @@ export const queueAdminEmailCampaignResponseCampaignCountsSendingMin = 0;
 
 export const queueAdminEmailCampaignResponseCampaignCountsAcceptedMin = 0;
 
+export const queueAdminEmailCampaignResponseCampaignCountsDeliveredMin = 0;
+
+export const queueAdminEmailCampaignResponseCampaignCountsBouncedMin = 0;
+
+export const queueAdminEmailCampaignResponseCampaignCountsComplainedMin = 0;
+
 export const queueAdminEmailCampaignResponseCampaignCountsFailedMin = 0;
 
 export const queueAdminEmailCampaignResponseCampaignCountsCancelledMin = 0;
@@ -3492,6 +3561,9 @@ export const QueueAdminEmailCampaignResponse = zod.object({
   "queued": zod.int().min(queueAdminEmailCampaignResponseCampaignCountsQueuedMin),
   "sending": zod.int().min(queueAdminEmailCampaignResponseCampaignCountsSendingMin),
   "accepted": zod.int().min(queueAdminEmailCampaignResponseCampaignCountsAcceptedMin),
+  "delivered": zod.int().min(queueAdminEmailCampaignResponseCampaignCountsDeliveredMin),
+  "bounced": zod.int().min(queueAdminEmailCampaignResponseCampaignCountsBouncedMin),
+  "complained": zod.int().min(queueAdminEmailCampaignResponseCampaignCountsComplainedMin),
   "failed": zod.int().min(queueAdminEmailCampaignResponseCampaignCountsFailedMin),
   "cancelled": zod.int().min(queueAdminEmailCampaignResponseCampaignCountsCancelledMin)
 }),
@@ -3527,6 +3599,12 @@ export const cancelAdminEmailCampaignResponseCampaignCountsSendingMin = 0;
 
 export const cancelAdminEmailCampaignResponseCampaignCountsAcceptedMin = 0;
 
+export const cancelAdminEmailCampaignResponseCampaignCountsDeliveredMin = 0;
+
+export const cancelAdminEmailCampaignResponseCampaignCountsBouncedMin = 0;
+
+export const cancelAdminEmailCampaignResponseCampaignCountsComplainedMin = 0;
+
 export const cancelAdminEmailCampaignResponseCampaignCountsFailedMin = 0;
 
 export const cancelAdminEmailCampaignResponseCampaignCountsCancelledMin = 0;
@@ -3547,6 +3625,9 @@ export const CancelAdminEmailCampaignResponse = zod.object({
   "queued": zod.int().min(cancelAdminEmailCampaignResponseCampaignCountsQueuedMin),
   "sending": zod.int().min(cancelAdminEmailCampaignResponseCampaignCountsSendingMin),
   "accepted": zod.int().min(cancelAdminEmailCampaignResponseCampaignCountsAcceptedMin),
+  "delivered": zod.int().min(cancelAdminEmailCampaignResponseCampaignCountsDeliveredMin),
+  "bounced": zod.int().min(cancelAdminEmailCampaignResponseCampaignCountsBouncedMin),
+  "complained": zod.int().min(cancelAdminEmailCampaignResponseCampaignCountsComplainedMin),
   "failed": zod.int().min(cancelAdminEmailCampaignResponseCampaignCountsFailedMin),
   "cancelled": zod.int().min(cancelAdminEmailCampaignResponseCampaignCountsCancelledMin)
 }),
@@ -3584,7 +3665,7 @@ export const RetryAdminEmailCampaignRecipientHeader = zod.object({
 
 export const RetryAdminEmailCampaignRecipientResponse = zod.object({
   "recipientId": zod.string(),
-  "status": zod.enum(['queued', 'sending', 'accepted', 'failed', 'cancelled']),
+  "status": zod.enum(['queued', 'sending', 'accepted', 'delivered', 'bounced', 'complained', 'failed', 'cancelled']),
   "replayed": zod.boolean()
 })
 
