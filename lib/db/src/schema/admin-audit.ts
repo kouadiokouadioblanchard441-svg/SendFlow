@@ -67,7 +67,9 @@ export type AdminAuditAction =
   | "update_operator_logo"
   | "create_country"
   | "update_country"
+  | "delete_country"
   | "view_countries"
+  | "delete_operator"
   | "update_operator_pricing"
   | "update_registration_settings"
   | "update_payment_limits";

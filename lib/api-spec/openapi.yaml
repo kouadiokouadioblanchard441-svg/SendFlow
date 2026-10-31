@@ -2842,6 +2842,64 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteAdminCountry
+      tags: [admin]
+      summary: Remove an unused, disabled country from the catalog
+      security:
+        - sendFlowSession: []
+      parameters:
+        - name: countryCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z]{2}$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteAdminCountryRequest"
+      responses:
+        "204":
+          description: Country removed after confirming that no data or configuration references it.
+        "400":
+          description: Invalid deletion reason or version.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Country not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Country is active, changed, or referenced by existing data or configuration. Disable it instead.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /DMgrgmt-1np5g23g12bGFtMwh/ussd-instructions:
     put:
       operationId: updateAdminUssdInstruction
@@ -3221,6 +3279,57 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "409":
           description: Operator changed since it was loaded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteAdminOperator
+      tags: [admin]
+      summary: Remove an unused, disabled operator and its empty pricing setup
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteAdminOperatorRequest"
+      responses:
+        "204":
+          description: Operator removed after confirming no route references it.
+        "400":
+          description: Invalid deletion reason or version.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Mutation access is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Operator not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Operator is active, changed, or referenced by routing. Disable or detach it instead.
           content:
             application/json:
               schema:
@@ -6171,11 +6280,38 @@ components:
           maximum: 15
         enabled:
           type: boolean
+        initialOperators:
+          type: array
+          maxItems: 30
+          items:
+            $ref: "#/components/schemas/InitialCountryOperatorInput"
         reason:
           type: string
           minLength: 3
           maxLength: 500
       required: [countryCode, countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, reason]
+    InitialCountryOperatorInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        brand:
+          type: string
+          enum: [orange, wave, mtn, moov, generic]
+      required: [name, brand]
+    DeleteAdminCountryRequest:
+      type: object
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [expectedVersion, reason]
     UpdateAdminCountryRequest:
       type: object
       properties:
@@ -6526,6 +6662,17 @@ components:
           minLength: 3
           maxLength: 500
       required: [name, brand, enabled, depositEnabled, interNetworkEnabled, internationalEnabled, expectedVersion, reason]
+    DeleteAdminOperatorRequest:
+      type: object
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required: [expectedVersion, reason]
     PricingRateChangeInput:
       type: object
       properties:

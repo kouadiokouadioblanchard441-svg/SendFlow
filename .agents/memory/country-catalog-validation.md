@@ -14,3 +14,9 @@ For LinkFlow visual review, the authorized Replit viewer may inspect country/ope
 **Why:** The user wants to check flags, phone prefixes and operator logos in the test account before any production rollout.
 
 **How to apply:** Scope preview-only catalog visibility to the link owner’s authorized viewer session on Replit/shared database; keep quote and payment-attempt routes behind the normal country, operator and provider readiness checks.
+
+The user wants country and country-specific operator catalogs managed through the existing admin panel, with no runtime hardcoded country list. Administrators need to add, edit, deactivate, and safely remove unused entries.
+
+**Why:** the user asked for the initial West/Central African country set and future additions to be configurable from the existing panel rather than coded into the application.
+
+**How to apply:** Keep the database-backed admin catalog as the source of truth. New countries and operators must start with payment operations disabled; refuse deletion when existing data or routing depends on an entry.

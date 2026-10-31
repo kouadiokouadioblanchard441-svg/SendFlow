@@ -5,14 +5,17 @@ import {
   eq,
   inArray,
   countriesTable,
+  legacyPaymentAggregatorRoutesTable,
   operatorCatalogTable,
   operatorOtpPoliciesTable,
   operatorPricingRatesTable,
+  paymentAggregatorRoutesTable,
   sql,
 } from "@workspace/db";
 import {
   CreateAdminOperatorBody,
   CreateAdminOperatorResponse,
+  DeleteAdminOperatorBody,
   GetAdminOperatorPricingResponse,
   GetPublicPricingResponse,
   UpdateAdminOperatorBody,
@@ -414,6 +417,91 @@ adminRoutes.patch("/operators/:operatorId", async (req, res): Promise<void> => {
     res.json(UpdateAdminOperatorResponse.parse(toManagedOperator(updated)));
   } catch (error) {
     req.log.error({ err: error }, "Admin operator update failed");
+    res.status(503).json({ error: "Administrator storage unavailable" });
+  }
+});
+
+adminRoutes.delete("/operators/:operatorId", async (req, res): Promise<void> => {
+  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  if (!adminUserId) return;
+
+  const body = DeleteAdminOperatorBody.safeParse(req.body);
+  const operatorId = typeof req.params.operatorId === "string" ? req.params.operatorId : "";
+  if (!body.success || body.data.reason.trim().length < 3
+    || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(operatorId)) {
+    res.status(400).json({ error: "Invalid operator deletion request" });
+    return;
+  }
+
+  try {
+    const deleted = await db.transaction(async (tx) => {
+      const [operator] = await tx
+        .select()
+        .from(operatorCatalogTable)
+        .where(eq(operatorCatalogTable.operatorId, operatorId))
+        .for("update")
+        .limit(1);
+      if (!operator) return "missing" as const;
+      if (operator.version !== body.data.expectedVersion) return "changed" as const;
+      if (
+        operator.enabled ||
+        operator.depositEnabled ||
+        operator.interNetworkEnabled ||
+        operator.internationalEnabled
+      ) {
+        return "referenced" as const;
+      }
+
+      const routeReferences = await Promise.all([
+        tx.select({ operatorId: paymentAggregatorRoutesTable.operatorId })
+          .from(paymentAggregatorRoutesTable)
+          .where(eq(paymentAggregatorRoutesTable.operatorId, operator.operatorId))
+          .limit(1),
+        tx.select({ operatorId: legacyPaymentAggregatorRoutesTable.operatorId })
+          .from(legacyPaymentAggregatorRoutesTable)
+          .where(eq(legacyPaymentAggregatorRoutesTable.operatorId, operator.operatorId))
+          .limit(1),
+      ]);
+      if (routeReferences.some((rows) => rows.length > 0)) return "referenced" as const;
+
+      await tx.delete(operatorOtpPoliciesTable).where(and(
+        eq(operatorOtpPoliciesTable.countryCode, operator.countryCode),
+        eq(operatorOtpPoliciesTable.operatorId, operator.operatorId),
+      ));
+      await tx.delete(operatorPricingRatesTable)
+        .where(eq(operatorPricingRatesTable.operatorId, operator.operatorId));
+
+      const [removed] = await tx.delete(operatorCatalogTable).where(and(
+        eq(operatorCatalogTable.operatorId, operator.operatorId),
+        eq(operatorCatalogTable.version, body.data.expectedVersion),
+      )).returning({ operatorId: operatorCatalogTable.operatorId });
+      if (!removed) return "changed" as const;
+
+      await recordAdminAudit({
+        adminUserId,
+        action: "delete_operator",
+        resourceType: "operator",
+        resourceId: operator.operatorId,
+        reason: body.data.reason.trim(),
+      }, tx);
+      return "deleted" as const;
+    });
+
+    if (deleted === "missing") {
+      res.status(404).json({ error: "Operator not found" });
+      return;
+    }
+    if (deleted === "changed") {
+      res.status(409).json({ error: "Operator changed since it was loaded" });
+      return;
+    }
+    if (deleted === "referenced") {
+      res.status(409).json({ error: "Disable the operator and remove its routing before deleting it" });
+      return;
+    }
+    res.status(204).end();
+  } catch (error) {
+    req.log.error({ err: error }, "Admin operator deletion failed");
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });

@@ -1655,6 +1655,26 @@ export interface AdminCountryCatalog {
   countries: AdminCountry[];
 }
 
+export type InitialCountryOperatorInputBrand = typeof InitialCountryOperatorInputBrand[keyof typeof InitialCountryOperatorInputBrand];
+
+
+export const InitialCountryOperatorInputBrand = {
+  orange: 'orange',
+  wave: 'wave',
+  mtn: 'mtn',
+  moov: 'moov',
+  generic: 'generic',
+} as const;
+
+export interface InitialCountryOperatorInput {
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  name: string;
+  brand: InitialCountryOperatorInputBrand;
+}
+
 export interface CreateAdminCountryRequest {
   /** @pattern ^[a-z]{2}$ */
   countryCode: string;
@@ -1676,6 +1696,18 @@ export interface CreateAdminCountryRequest {
      */
   maxPhoneDigits: number;
   enabled: boolean;
+  /** @maxItems 30 */
+  initialOperators?: InitialCountryOperatorInput[];
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface DeleteAdminCountryRequest {
+  /** @minimum 1 */
+  expectedVersion: number;
   /**
      * @minLength 3
      * @maxLength 500
@@ -2004,6 +2036,16 @@ export interface OperatorUpdate {
   depositEnabled: boolean;
   interNetworkEnabled: boolean;
   internationalEnabled: boolean;
+  /** @minimum 1 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface DeleteAdminOperatorRequest {
   /** @minimum 1 */
   expectedVersion: number;
   /**

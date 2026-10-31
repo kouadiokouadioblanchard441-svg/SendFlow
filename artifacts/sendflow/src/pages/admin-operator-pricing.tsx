@@ -5,6 +5,7 @@ import {
   getGetAdminAccessStatusQueryKey,
   getGetPublicPricingQueryKey,
   useCreateAdminOperator,
+  useDeleteAdminOperator,
   useGetAdminOperatorPricing,
   useGetAdminAccessStatus,
   useUploadAdminOperatorLogo,
@@ -13,7 +14,7 @@ import {
 } from '@workspace/api-client-react';
 import type { ManagedOperatorBrand, PublicPricingCategory } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { CircleAlert, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { CircleAlert, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { OperatorMark } from '@/components/operator-mark';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -87,6 +88,7 @@ export default function AdminOperatorPricingPage() {
   const queryErrorStatus = getErrorStatus(query.error);
   const createMutation = useCreateAdminOperator();
   const operatorMutation = useUpdateAdminOperator();
+  const deleteMutation = useDeleteAdminOperator();
   const ratesMutation = useUpdateAdminOperatorPricing();
   const logoUploadHeaders = useRef<Record<string, string>>({ 'Content-Type': 'image/png' });
   const logoUploadMutation = useUploadAdminOperatorLogo({
@@ -100,6 +102,12 @@ export default function AdminOperatorPricingPage() {
   const [rateDrafts, setRateDrafts] = useState<Record<string, string>>({});
   const [rateReason, setRateReason] = useState('');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<(typeof countries)[number]['operators'][number] | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editBrand, setEditBrand] = useState<ManagedOperatorBrand>('generic');
+  const [editReason, setEditReason] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<(typeof countries)[number]['operators'][number] | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
   const [newOperatorName, setNewOperatorName] = useState('');
   const [newOperatorBrand, setNewOperatorBrand] = useState<ManagedOperatorBrand>('generic');
   const [newOperatorReason, setNewOperatorReason] = useState('');
@@ -241,6 +249,70 @@ export default function AdminOperatorPricingPage() {
           setToggleReason('');
         },
         onError: (error) => setErrorMessage(getMutationError(error)),
+      },
+    );
+  };
+
+  const openEditOperator = (operator: (typeof countries)[number]['operators'][number]) => {
+    setErrorMessage('');
+    setEditTarget(operator);
+    setEditName(operator.name);
+    setEditBrand(operator.brand);
+    setEditReason('');
+  };
+
+  const saveOperatorDetails = () => {
+    if (!editTarget || editName.trim().length < 2 || editReason.trim().length < 3) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    operatorMutation.mutate(
+      {
+        operatorId: editTarget.operatorId,
+        data: {
+          name: editName.trim(),
+          brand: editBrand,
+          enabled: editTarget.enabled,
+          depositEnabled: editTarget.depositEnabled,
+          interNetworkEnabled: editTarget.interNetworkEnabled,
+          internationalEnabled: editTarget.internationalEnabled,
+          expectedVersion: editTarget.version,
+          reason: editReason.trim(),
+        },
+      },
+      {
+        onSuccess: async () => {
+          await invalidateCatalog();
+          setEditTarget(null);
+          setSuccessMessage('Les informations de l’opérateur ont été mises à jour.');
+        },
+        onError: (error) => setErrorMessage(getMutationError(error)),
+      },
+    );
+  };
+
+  const deleteOperator = () => {
+    if (!deleteTarget || deleteReason.trim().length < 3) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    deleteMutation.mutate(
+      {
+        operatorId: deleteTarget.operatorId,
+        data: { expectedVersion: deleteTarget.version, reason: deleteReason.trim() },
+      },
+      {
+        onSuccess: async () => {
+          const name = deleteTarget.name;
+          await invalidateCatalog();
+          setDeleteTarget(null);
+          setDeleteReason('');
+          setSuccessMessage(`${name} a été retiré du catalogue.`);
+        },
+        onError: (error) => {
+          const status = getErrorStatus(error);
+          setErrorMessage(status === 409
+            ? 'Désactivez d’abord cet opérateur et retirez son routage. Un opérateur utilisé ne peut pas être supprimé.'
+            : getMutationError(error));
+        },
       },
     );
   };
@@ -537,6 +609,16 @@ export default function AdminOperatorPricingPage() {
                               >
                                 {operator.enabled ? 'Désactiver' : 'Activer'}
                               </Button>
+                              <Button type="button" size="sm" variant="outline" disabled={!canMutate}
+                                onClick={() => openEditOperator(operator)}
+                                data-testid={`button-edit-operator-${operator.operatorId}`}>
+                                <Pencil className="mr-1 size-3.5" /> Modifier
+                              </Button>
+                              <Button type="button" size="sm" variant="destructive" disabled={!canMutate}
+                                onClick={() => { setErrorMessage(''); setDeleteTarget(operator); setDeleteReason(''); }}
+                                data-testid={`button-delete-operator-${operator.operatorId}`}>
+                                <Trash2 className="mr-1 size-3.5" /> Supprimer
+                              </Button>
                               {categoryId !== 'linkflow' && (
                                 <Button type="button" size="sm" variant="outline"
                                   disabled={!canMutate}
@@ -654,6 +736,69 @@ export default function AdminOperatorPricingPage() {
               data-testid="button-confirm-add-operator"
             >
               {createMutation.isPending ? 'Ajout…' : 'Ajouter désactivé'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editTarget !== null} onOpenChange={(open) => { if (!open && !operatorMutation.isPending) setEditTarget(null); }}>
+        <DialogContent data-testid="dialog-edit-country-operator">
+          <DialogHeader>
+            <DialogTitle>Modifier l’opérateur</DialogTitle>
+            <DialogDescription>Ces informations sont propres à {country?.countryName ?? 'ce pays'}.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-operator-name">Nom de l’opérateur</Label>
+              <Input id="edit-operator-name" value={editName} maxLength={120}
+                onChange={(event) => setEditName(event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-operator-brand">Apparence</Label>
+              <Select value={editBrand} onValueChange={(value) => setEditBrand(value as ManagedOperatorBrand)}>
+                <SelectTrigger id="edit-operator-brand"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(brandLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-operator-reason">Motif obligatoire</Label>
+              <Textarea id="edit-operator-reason" value={editReason} maxLength={500}
+                onChange={(event) => setEditReason(event.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={operatorMutation.isPending} onClick={() => setEditTarget(null)}>Annuler</Button>
+            <Button type="button" disabled={!canMutate || editName.trim().length < 2 || editReason.trim().length < 3 || operatorMutation.isPending}
+              onClick={saveOperatorDetails}>
+              {operatorMutation.isPending ? 'Enregistrement…' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open && !deleteMutation.isPending) setDeleteTarget(null); }}>
+        <DialogContent data-testid="dialog-delete-country-operator">
+          <DialogHeader>
+            <DialogTitle>Supprimer cet opérateur du catalogue ?</DialogTitle>
+            <DialogDescription>
+              Seuls les opérateurs désactivés et sans routage peuvent être supprimés. Les opérateurs encore utilisés doivent être désactivés afin de préserver les configurations.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="delete-operator-reason">Motif obligatoire</Label>
+            <Textarea id="delete-operator-reason" value={deleteReason} maxLength={500}
+              disabled={deleteMutation.isPending} onChange={(event) => setDeleteReason(event.target.value)} />
+          </div>
+          {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={deleteMutation.isPending} onClick={() => setDeleteTarget(null)}>Annuler</Button>
+            <Button type="button" variant="destructive" disabled={!canMutate || deleteReason.trim().length < 3 || deleteMutation.isPending}
+              onClick={deleteOperator}>
+              {deleteMutation.isPending ? 'Suppression…' : 'Supprimer l’opérateur'}
             </Button>
           </DialogFooter>
         </DialogContent>

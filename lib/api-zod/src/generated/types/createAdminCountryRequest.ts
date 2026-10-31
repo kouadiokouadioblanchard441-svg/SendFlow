@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { InitialCountryOperatorInput } from './initialCountryOperatorInput';
 
 export interface CreateAdminCountryRequest {
   /** @pattern ^[a-z]{2}$ */
@@ -27,6 +28,8 @@ export interface CreateAdminCountryRequest {
      */
   maxPhoneDigits: number;
   enabled: boolean;
+  /** @maxItems 30 */
+  initialOperators?: InitialCountryOperatorInput[];
   /**
      * @minLength 3
      * @maxLength 500

@@ -2290,6 +2290,11 @@ export const createAdminCountryBodyMinPhoneDigitsMax = 15;
 export const createAdminCountryBodyMaxPhoneDigitsMin = 4;
 export const createAdminCountryBodyMaxPhoneDigitsMax = 15;
 
+export const createAdminCountryBodyInitialOperatorsItemNameMin = 2;
+export const createAdminCountryBodyInitialOperatorsItemNameMax = 120;
+
+export const createAdminCountryBodyInitialOperatorsMax = 30;
+
 export const createAdminCountryBodyReasonMin = 3;
 export const createAdminCountryBodyReasonMax = 500;
 
@@ -2302,6 +2307,10 @@ export const CreateAdminCountryBody = zod.object({
   "minPhoneDigits": zod.int().min(createAdminCountryBodyMinPhoneDigitsMin).max(createAdminCountryBodyMinPhoneDigitsMax),
   "maxPhoneDigits": zod.int().min(createAdminCountryBodyMaxPhoneDigitsMin).max(createAdminCountryBodyMaxPhoneDigitsMax),
   "enabled": zod.boolean(),
+  "initialOperators": zod.array(zod.object({
+  "name": zod.string().min(createAdminCountryBodyInitialOperatorsItemNameMin).max(createAdminCountryBodyInitialOperatorsItemNameMax),
+  "brand": zod.enum(['orange', 'wave', 'mtn', 'moov', 'generic'])
+})).max(createAdminCountryBodyInitialOperatorsMax).optional(),
   "reason": zod.string().min(createAdminCountryBodyReasonMin).max(createAdminCountryBodyReasonMax)
 })
 
@@ -2402,6 +2411,30 @@ export const UpdateAdminCountryResponse = zod.object({
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 }))
+
+
+/**
+ * @summary Remove an unused, disabled country from the catalog
+ */
+export const deleteAdminCountryPathCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+
+
+export const DeleteAdminCountryParams = zod.object({
+  "countryCode": zod.coerce.string().regex(deleteAdminCountryPathCountryCodeRegExp)
+})
+
+
+export const deleteAdminCountryBodyReasonMin = 3;
+export const deleteAdminCountryBodyReasonMax = 500;
+
+
+
+export const DeleteAdminCountryBody = zod.object({
+  "expectedVersion": zod.int().min(1),
+  "reason": zod.string().min(deleteAdminCountryBodyReasonMin).max(deleteAdminCountryBodyReasonMax)
+})
+
+export const DeleteAdminCountryResponse = zod.void()
 
 
 /**
@@ -2800,6 +2833,34 @@ export const UpdateAdminOperatorResponse = zod.object({
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })
+
+
+/**
+ * @summary Remove an unused, disabled operator and its empty pricing setup
+ */
+export const deleteAdminOperatorPathOperatorIdMin = 2;
+export const deleteAdminOperatorPathOperatorIdMax = 60;
+
+
+export const deleteAdminOperatorPathOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+
+
+export const DeleteAdminOperatorParams = zod.object({
+  "operatorId": zod.coerce.string().min(deleteAdminOperatorPathOperatorIdMin).max(deleteAdminOperatorPathOperatorIdMax).regex(deleteAdminOperatorPathOperatorIdRegExp)
+})
+
+
+export const deleteAdminOperatorBodyReasonMin = 3;
+export const deleteAdminOperatorBodyReasonMax = 500;
+
+
+
+export const DeleteAdminOperatorBody = zod.object({
+  "expectedVersion": zod.int().min(1),
+  "reason": zod.string().min(deleteAdminOperatorBodyReasonMin).max(deleteAdminOperatorBodyReasonMax)
+})
+
+export const DeleteAdminOperatorResponse = zod.void()
 
 
 /**

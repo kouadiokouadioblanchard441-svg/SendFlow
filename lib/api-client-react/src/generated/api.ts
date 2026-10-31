@@ -85,6 +85,8 @@ import type {
   CustomerTransactionPage,
   DatabaseStatus,
   DeleteAdminBannerResult,
+  DeleteAdminCountryRequest,
+  DeleteAdminOperatorRequest,
   DeveloperApiKeyCreatedResponse,
   DeveloperApiKeyInitializationResponse,
   DeveloperApiKeyInput,
@@ -6631,6 +6633,95 @@ export const useUpdateAdminCountry = <TError = ErrorType<ErrorEnvelope>,
       return useMutation(getUpdateAdminCountryMutationOptions(options));
     }
 
+export const getDeleteAdminCountryUrl = (countryCode: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/countries/${countryCode}`
+}
+
+/**
+ * @summary Remove an unused, disabled country from the catalog
+ */
+export const deleteAdminCountry = async (countryCode: string,
+    deleteAdminCountryRequest: DeleteAdminCountryRequest, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getDeleteAdminCountryUrl(countryCode),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(deleteAdminCountryRequest)
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminCountryMutationKey = () => ['deleteAdminCountry'] as const;
+
+export const getDeleteAdminCountryMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminCountry>>, TError,DeleteAdminCountryMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminCountry>>, TError,DeleteAdminCountryMutationVariables, TContext> => {
+
+const mutationKey = getDeleteAdminCountryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminCountry>>, DeleteAdminCountryMutationVariables> = (props) => {
+          const {countryCode,data} = props ?? {};
+
+          return  deleteAdminCountry(countryCode,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminCountryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminCountry>>>
+    export type DeleteAdminCountryMutationBody = BodyType<DeleteAdminCountryRequest>
+    export type DeleteAdminCountryMutationError = ErrorType<ErrorEnvelope>
+    export type DeleteAdminCountryMutationVariables = {countryCode: string;data: BodyType<DeleteAdminCountryRequest>}
+
+    /**
+ * @summary Remove an unused, disabled country from the catalog
+ */
+export const useDeleteAdminCountry = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminCountry>>, TError,DeleteAdminCountryMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminCountry>>,
+        TError,
+        DeleteAdminCountryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteAdminCountryMutationOptions(options));
+    }
+
 export const getUpdateAdminUssdInstructionUrl = () => {
 
 
@@ -7312,6 +7403,95 @@ export const useUpdateAdminOperator = <TError = ErrorType<ErrorEnvelope>,
         TContext
       > => {
       return useMutation(getUpdateAdminOperatorMutationOptions(options));
+    }
+
+export const getDeleteAdminOperatorUrl = (operatorId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators/${operatorId}`
+}
+
+/**
+ * @summary Remove an unused, disabled operator and its empty pricing setup
+ */
+export const deleteAdminOperator = async (operatorId: string,
+    deleteAdminOperatorRequest: DeleteAdminOperatorRequest, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getDeleteAdminOperatorUrl(operatorId),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(deleteAdminOperatorRequest)
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminOperatorMutationKey = () => ['deleteAdminOperator'] as const;
+
+export const getDeleteAdminOperatorMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOperator>>, TError,DeleteAdminOperatorMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOperator>>, TError,DeleteAdminOperatorMutationVariables, TContext> => {
+
+const mutationKey = getDeleteAdminOperatorMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminOperator>>, DeleteAdminOperatorMutationVariables> = (props) => {
+          const {operatorId,data} = props ?? {};
+
+          return  deleteAdminOperator(operatorId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminOperatorMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminOperator>>>
+    export type DeleteAdminOperatorMutationBody = BodyType<DeleteAdminOperatorRequest>
+    export type DeleteAdminOperatorMutationError = ErrorType<ErrorEnvelope>
+    export type DeleteAdminOperatorMutationVariables = {operatorId: string;data: BodyType<DeleteAdminOperatorRequest>}
+
+    /**
+ * @summary Remove an unused, disabled operator and its empty pricing setup
+ */
+export const useDeleteAdminOperator = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOperator>>, TError,DeleteAdminOperatorMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminOperator>>,
+        TError,
+        DeleteAdminOperatorMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteAdminOperatorMutationOptions(options));
     }
 
 export const getUploadAdminOperatorLogoUrl = (operatorId: string,
