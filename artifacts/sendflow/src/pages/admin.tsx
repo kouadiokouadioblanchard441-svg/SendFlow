@@ -58,6 +58,7 @@ import {
   useListAdminLoginActivity,
   useListAdminOtpActivity,
   useListAdminUsers,
+  useListAdminUserDeveloperWebhooks,
   useListAdminBanners,
   useCreateAdminBanner,
   useUpdateAdminBanner,
@@ -667,14 +668,21 @@ function transactionKindLabel(kind: 'inter-network' | 'deposit' | 'international
 
 function UserDetailPage({ userId }: { userId: string }) {
   const [page, setPage] = useState(1);
+  const [webhookPage, setWebhookPage] = useState(1);
   const pageSize = 20;
+  const webhookPageSize = 10;
   const detailQuery = useGetAdminUser(userId);
   const transactionsQuery = useListAdminTransactions(
     useMemo(() => ({ userId, page, pageSize }), [userId, page]),
   );
+  const webhooksQuery = useListAdminUserDeveloperWebhooks(
+    useMemo(() => ({ userId, page: webhookPage, pageSize: webhookPageSize }), [userId, webhookPage]),
+  );
   const detail = detailQuery.data;
   const transactionResult = transactionsQuery.data;
   const transactions = transactionResult?.items ?? [];
+  const webhookResult = webhooksQuery.data;
+  const webhooks = webhookResult?.items ?? [];
 
   return (
     <AdminShell section="users">
@@ -729,6 +737,8 @@ function UserDetailPage({ userId }: { userId: string }) {
             <MetricCard label="Volume traité" value={formatMoney(detail.transactionSummary.volumeMinor)} detail={`${formatMoney(detail.transactionSummary.feesMinor)} de frais`} icon={Banknote} tone="green" />
             <MetricCard label="En attente" value={formatNumber(detail.transactionSummary.pending)} detail={`${formatNumber(detail.transactionSummary.failed)} échouées`} icon={CircleAlert} tone="orange" />
             <MetricCard label="Dernière activité" value={formatDate(detail.user.lastSeenAt)} detail="Dernière présence enregistrée" icon={Clock3} tone="blue" />
+            <MetricCard label="Total encaissé" value={formatMoney(detail.financialTotals.depositsMinor, detail.financialTotals.currency)} detail="Dépôts réussis" icon={ArrowDownToLine} tone="violet" />
+            <MetricCard label="Total retiré" value={formatMoney(detail.financialTotals.internationalPayoutsMinor, detail.financialTotals.currency)} detail="Retraits internationaux réussis" icon={ArrowUpRight} tone="blue" />
           </div>
 
           <div className="sendflow-admin-overview-grid">
@@ -776,6 +786,62 @@ function UserDetailPage({ userId }: { userId: string }) {
               </CardContent>
             </Card>
           </div>
+
+          <Card className="sendflow-admin-detail-card" data-testid="card-admin-user-webhooks">
+            <CardHeader>
+              <CardTitle>URL de webhook</CardTitle>
+              <CardDescription>
+                Toutes les URL enregistrées pour ce compte, actives ou révoquées. Ces URL peuvent contenir des paramètres sensibles; les secrets de signature restent masqués.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {webhooksQuery.isLoading && (
+                <div className="sendflow-admin-table-skeleton" data-testid="loading-admin-user-webhooks">
+                  {Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-20 w-full" />)}
+                </div>
+              )}
+              {webhooksQuery.isError && <div className="p-5"><QueryState error={webhooksQuery.error} onRetry={() => void webhooksQuery.refetch()} /></div>}
+              {!webhooksQuery.isLoading && !webhooksQuery.isError && webhooks.length === 0 && (
+                <EmptyState label="Aucune URL de webhook enregistrée pour cet utilisateur." />
+              )}
+              {!webhooksQuery.isLoading && !webhooksQuery.isError && webhooks.length > 0 && (
+                <div className="divide-y">
+                  {webhooks.map((webhook) => (
+                    <article className="space-y-3 p-4 sm:p-5" key={webhook.id} data-testid={`row-admin-user-webhook-${webhook.id}`}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <strong className="text-sm text-foreground">{webhook.label}</strong>
+                        <Badge
+                          variant="outline"
+                          className={webhook.status === 'active'
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                            : 'border-neutral-200 bg-neutral-50 text-neutral-600'}
+                          data-testid={`status-admin-user-webhook-${webhook.id}`}
+                        >
+                          {webhook.status === 'active' ? 'Active' : 'Révoquée'}
+                        </Badge>
+                      </div>
+                      <code className="block max-w-full whitespace-normal break-all rounded-lg border bg-muted/30 p-3 text-xs leading-relaxed text-foreground" data-testid={`text-admin-user-webhook-url-${webhook.id}`}>
+                        {webhook.url}
+                      </code>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span>Événements : {webhook.events.join(', ')}</span>
+                        <span>
+                          Créée le {formatDate(webhook.createdAt)}
+                          {webhook.revokedAt ? ` · Révoquée le ${formatDate(webhook.revokedAt)}` : ''}
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                  <Pager
+                    page={webhookResult?.page ?? webhookPage}
+                    pageSize={webhookResult?.pageSize ?? webhookPageSize}
+                    total={webhookResult?.total ?? 0}
+                    onPage={setWebhookPage}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className="sendflow-admin-list-card">
             <CardHeader>

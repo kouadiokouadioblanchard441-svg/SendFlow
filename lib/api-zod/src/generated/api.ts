@@ -3922,7 +3922,7 @@ export const ListAdminUsersResponse = zod.object({
 
 
 /**
- * Returns the persisted profile, wallet, and transaction summary for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
+ * Returns the persisted profile, wallet, transaction summary, and successful XOF pay-in and payout totals for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
  * @summary Get a SendFlow user detail for administrators
  */
 
@@ -3939,6 +3939,12 @@ export const getAdminUserResponseWalletOneBalanceMinorMax = 9007199254740991;
 export const getAdminUserResponseTransactionSummaryVolumeMinorMax = 9007199254740991;
 
 export const getAdminUserResponseTransactionSummaryFeesMinorMax = 9007199254740991;
+
+export const getAdminUserResponseFinancialTotalsDepositsMinorMin = 0;
+export const getAdminUserResponseFinancialTotalsDepositsMinorMax = 9007199254740991;
+
+export const getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMin = 0;
+export const getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMax = 9007199254740991;
 
 
 
@@ -3971,7 +3977,54 @@ export const GetAdminUserResponse = zod.object({
   "failed": zod.int(),
   "volumeMinor": zod.int().max(getAdminUserResponseTransactionSummaryVolumeMinorMax),
   "feesMinor": zod.int().max(getAdminUserResponseTransactionSummaryFeesMinorMax)
+}),
+  "financialTotals": zod.object({
+  "currency": zod.enum(['XOF']),
+  "depositsMinor": zod.int().min(getAdminUserResponseFinancialTotalsDepositsMinorMin).max(getAdminUserResponseFinancialTotalsDepositsMinorMax),
+  "internationalPayoutsMinor": zod.int().min(getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMin).max(getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMax)
 })
+})
+
+
+/**
+ * Returns all active and revoked webhook endpoints registered to this user, paginated. Signing secrets and delivery payloads are never included.
+ * @summary List a user's registered webhook URLs
+ */
+
+export const listAdminUserDeveloperWebhooksQueryPageDefault = 1;
+export const listAdminUserDeveloperWebhooksQueryPageMax = 1000;
+
+export const listAdminUserDeveloperWebhooksQueryPageSizeDefault = 20;
+export const listAdminUserDeveloperWebhooksQueryPageSizeMax = 50;
+
+
+
+export const ListAdminUserDeveloperWebhooksQueryParams = zod.object({
+  "userId": zod.coerce.string().min(1),
+  "page": zod.coerce.number().int().min(1).max(listAdminUserDeveloperWebhooksQueryPageMax).default(listAdminUserDeveloperWebhooksQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listAdminUserDeveloperWebhooksQueryPageSizeMax).default(listAdminUserDeveloperWebhooksQueryPageSizeDefault)
+})
+
+
+export const listAdminUserDeveloperWebhooksResponsePageSizeMax = 50;
+
+export const listAdminUserDeveloperWebhooksResponseTotalMin = 0;
+
+
+
+export const ListAdminUserDeveloperWebhooksResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.uuid(),
+  "label": zod.string(),
+  "url": zod.url(),
+  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed'])),
+  "status": zod.enum(['active', 'revoked']),
+  "createdAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable()
+})),
+  "page": zod.int().min(1),
+  "pageSize": zod.int().min(1).max(listAdminUserDeveloperWebhooksResponsePageSizeMax),
+  "total": zod.int().min(listAdminUserDeveloperWebhooksResponseTotalMin)
 })
 
 

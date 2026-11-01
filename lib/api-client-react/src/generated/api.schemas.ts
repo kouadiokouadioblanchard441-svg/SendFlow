@@ -1322,6 +1322,67 @@ export interface AdminUserTransactionSummary {
   feesMinor: number;
 }
 
+export type AdminUserFinancialTotalsCurrency = typeof AdminUserFinancialTotalsCurrency[keyof typeof AdminUserFinancialTotalsCurrency];
+
+
+export const AdminUserFinancialTotalsCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface AdminUserFinancialTotals {
+  currency: AdminUserFinancialTotalsCurrency;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  depositsMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  internationalPayoutsMinor: number;
+}
+
+export type AdminUserDeveloperWebhookEventsItem = typeof AdminUserDeveloperWebhookEventsItem[keyof typeof AdminUserDeveloperWebhookEventsItem];
+
+
+export const AdminUserDeveloperWebhookEventsItem = {
+  paymentsucceeded: 'payment.succeeded',
+  paymentfailed: 'payment.failed',
+} as const;
+
+export type AdminUserDeveloperWebhookStatus = typeof AdminUserDeveloperWebhookStatus[keyof typeof AdminUserDeveloperWebhookStatus];
+
+
+export const AdminUserDeveloperWebhookStatus = {
+  active: 'active',
+  revoked: 'revoked',
+} as const;
+
+export interface AdminUserDeveloperWebhook {
+  id: string;
+  label: string;
+  url: string;
+  events: AdminUserDeveloperWebhookEventsItem[];
+  status: AdminUserDeveloperWebhookStatus;
+  createdAt: string;
+  /** @nullable */
+  revokedAt: string | null;
+}
+
+export interface AdminUserDeveloperWebhookPage {
+  items: AdminUserDeveloperWebhook[];
+  /** @minimum 1 */
+  page: number;
+  /**
+     * @minimum 1
+     * @maximum 50
+     */
+  pageSize: number;
+  /** @minimum 0 */
+  total: number;
+}
+
 export type AdminTransactionSummaryKind = typeof AdminTransactionSummaryKind[keyof typeof AdminTransactionSummaryKind];
 
 
@@ -2456,6 +2517,7 @@ export interface AdminUserDetail {
   /** @nullable */
   wallet: AdminWalletDetail | null;
   transactionSummary: AdminUserTransactionSummary;
+  financialTotals: AdminUserFinancialTotals;
 }
 
 export type AdminWalletAdjustmentRequestDirection = typeof AdminWalletAdjustmentRequestDirection[keyof typeof AdminWalletAdjustmentRequestDirection];
@@ -3336,6 +3398,8 @@ export type AdminPageSizeParameter = number;
 
 export type AdminUserIdFilterParameter = string;
 
+export type AdminUserIdRequiredFilterParameter = string;
+
 export type ListAdminIpBlocksParams = {
 /**
  * @minimum 1
@@ -3514,6 +3578,23 @@ export type ListAdminUsersParams = {
  * @maxLength 120
  */
 search?: AdminSearchParameter;
+/**
+ * @minimum 1
+ * @maximum 1000
+ */
+page?: AdminPageParameter;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+pageSize?: AdminPageSizeParameter;
+};
+
+export type ListAdminUserDeveloperWebhooksParams = {
+/**
+ * @minLength 1
+ */
+userId: AdminUserIdRequiredFilterParameter;
 /**
  * @minimum 1
  * @maximum 1000

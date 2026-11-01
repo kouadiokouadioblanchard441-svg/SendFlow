@@ -3,6 +3,7 @@ import { recordAdminAudit } from "../lib/admin-audit";
 import { adminPinUnlocked, adminSessionContext } from "../lib/admin-session";
 import {
   createSensitiveDataLookupIndex,
+  decryptSensitiveData,
   decryptSensitiveDataIfEncrypted,
   normalizeSensitiveNameForLookup,
 } from "../lib/sensitive-data-crypto";
@@ -18,12 +19,15 @@ import {
   ListAdminTransactionsResponse,
   ListAdminUsersQueryParams,
   ListAdminUsersResponse,
+  ListAdminUserDeveloperWebhooksQueryParams,
+  ListAdminUserDeveloperWebhooksResponse,
 } from "@workspace/api-zod";
 import {
   and,
   count,
   db,
   desc,
+  developerWebhookEndpointsTable,
   eq,
   gte,
   ilike,
@@ -85,6 +89,25 @@ export function respondAdminAuthError(
     return null;
   }
   return userId;
+}
+
+const adminUserReadPath = /^\/(?:users(?:\/[^/]+)?|developer-webhooks)\/?$/;
+
+export function respondAdminUserReadAuthError(req: Request, res: Response) {
+  const session = adminSessionContext(req);
+  if (!session) {
+    res.status(401).json({ error: "Administrator authentication required" });
+    return null;
+  }
+  if (req.method !== "GET" || !adminUserReadPath.test(req.path)) {
+    res.status(403).json({ error: "Administrator user profile read access required" });
+    return null;
+  }
+  if (!adminPinUnlocked(session)) {
+    res.status(403).json({ error: "Administrator PIN verification required" });
+    return null;
+  }
+  return session.userId;
 }
 
 function parseDateRange(query: Record<string, unknown>): DateRange {
@@ -237,7 +260,7 @@ router.get("/overview", async (req, res): Promise<void> => {
 });
 
 router.get("/users", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res);
+  const adminUserId = respondAdminUserReadAuthError(req, res);
   if (!adminUserId) return;
 
   const parsed = ListAdminUsersQueryParams.safeParse({
@@ -331,7 +354,7 @@ router.get("/users", async (req, res): Promise<void> => {
 });
 
 router.get("/users/:userId", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res);
+  const adminUserId = respondAdminUserReadAuthError(req, res);
   if (!adminUserId) return;
 
   const parsedParams = GetAdminUserParams.safeParse(req.params);
@@ -365,7 +388,7 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
       return;
     }
 
-    const [wallet, transactionSummary] = await Promise.all([
+    const [wallet, transactionSummary, financialTotals] = await Promise.all([
       db
         .select({
           id: walletsTable.id,
@@ -379,6 +402,18 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
         .where(eq(walletsTable.userId, userId))
         .then((items) => items[0]),
       getTransactionSummary({}, [eq(transactionsTable.userId, userId)]),
+      db.select({
+        depositsMinor: sql<number>`coalesce(sum(${transactionsTable.amountMinor}) filter (where ${transactionsTable.kind} = 'deposit'), 0)`,
+        internationalPayoutsMinor: sql<number>`coalesce(sum(${transactionsTable.amountMinor}) filter (where ${transactionsTable.kind} = 'international'), 0)`,
+      }).from(transactionsTable).where(and(
+        eq(transactionsTable.userId, userId),
+        eq(transactionsTable.status, "succeeded"),
+        eq(transactionsTable.currency, "XOF"),
+      )).then((items) => ({
+        currency: "XOF" as const,
+        depositsMinor: toMinor(items[0]?.depositsMinor),
+        internationalPayoutsMinor: toMinor(items[0]?.internationalPayoutsMinor),
+      })),
     ]);
 
     await recordAdminAudit({
@@ -400,10 +435,81 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
         },
         wallet: wallet ?? null,
         transactionSummary,
+        financialTotals,
       }),
     );
   } catch (error) {
     req.log.error({ err: error, userId }, "Admin user detail lookup failed");
+    res.status(503).json({ error: "Administrator storage unavailable" });
+  }
+});
+
+router.get("/developer-webhooks", async (req, res): Promise<void> => {
+  const adminUserId = respondAdminUserReadAuthError(req, res);
+  if (!adminUserId) return;
+
+  const parsedQuery = ListAdminUserDeveloperWebhooksQueryParams.safeParse({
+    userId: req.query.userId,
+    page: req.query.page,
+    pageSize: req.query.pageSize,
+  });
+  if (!parsedQuery.success) {
+    res.status(400).json({ error: "Invalid user identifier or pagination filters" });
+    return;
+  }
+
+  const { userId, page, pageSize } = parsedQuery.data;
+  const offset = (page - 1) * pageSize;
+
+  try {
+    const [user] = await db.select({ id: usersTable.id })
+      .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    const endpointFilter = eq(developerWebhookEndpointsTable.userId, userId);
+    const [items, total] = await Promise.all([
+      db.select({
+        id: developerWebhookEndpointsTable.id,
+        label: developerWebhookEndpointsTable.label,
+        urlEncrypted: developerWebhookEndpointsTable.urlEncrypted,
+        events: developerWebhookEndpointsTable.events,
+        status: developerWebhookEndpointsTable.status,
+        createdAt: developerWebhookEndpointsTable.createdAt,
+        revokedAt: developerWebhookEndpointsTable.revokedAt,
+      }).from(developerWebhookEndpointsTable)
+        .where(endpointFilter)
+        .orderBy(desc(developerWebhookEndpointsTable.createdAt), desc(developerWebhookEndpointsTable.id))
+        .limit(pageSize)
+        .offset(offset),
+      db.select({ value: count() }).from(developerWebhookEndpointsTable).where(endpointFilter),
+    ]);
+
+    const response = ListAdminUserDeveloperWebhooksResponse.parse({
+      items: items.map((item) => ({
+        id: item.id,
+        label: item.label,
+        url: decryptSensitiveData(item.urlEncrypted, "developer-webhook-url"),
+        events: item.events,
+        status: item.status,
+        createdAt: item.createdAt,
+        revokedAt: item.revokedAt,
+      })),
+      page,
+      pageSize,
+      total: Number(total[0]?.value ?? 0),
+    });
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_developer_webhooks",
+      resourceType: "developer_webhook",
+      resourceId: userId,
+    });
+    res.json(response);
+  } catch (error) {
+    req.log.error({ err: error, userId }, "Admin developer webhook lookup failed");
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });

@@ -1517,7 +1517,7 @@
 .sendflow-admin-profile-heading h3 { margin: 0; color: var(--admin-ink); font-size: 17px; font-weight: 750; letter-spacing: -.03em; }
 .sendflow-admin-profile-heading p { margin: 4px 0 0; color: var(--admin-muted); font-size: 11px; }
 .sendflow-admin-profile-status { display: inline-flex; align-items: center; gap: 7px; color: var(--admin-violet-deep); font-size: 11px; font-weight: 700; }
-.sendflow-admin-detail-metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sendflow-admin-detail-metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .sendflow-admin-detail-card h3 { font-size: 15px; }
 .sendflow-admin-detail-list, .sendflow-admin-wallet-detail { display: grid; gap: 0; }
 .sendflow-admin-detail-list > div, .sendflow-admin-wallet-detail > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-top: 1px solid var(--admin-line); padding: 13px 0; color: var(--admin-muted); font-size: 11px; }

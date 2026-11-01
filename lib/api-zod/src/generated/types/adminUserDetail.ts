@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminUserFinancialTotals } from './adminUserFinancialTotals';
 import type { AdminUserProfile } from './adminUserProfile';
 import type { AdminUserTransactionSummary } from './adminUserTransactionSummary';
 import type { AdminWalletDetail } from './adminWalletDetail';
@@ -14,4 +15,5 @@ export interface AdminUserDetail {
   /** @nullable */
   wallet: AdminWalletDetail | null;
   transactionSummary: AdminUserTransactionSummary;
+  financialTotals: AdminUserFinancialTotals;
 }

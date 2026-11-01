@@ -16,7 +16,7 @@ if (!process.env.SENDFLOW_ISOLATED_RUNTIME?.includes("/sendflow-isolated-finance
 const require = createRequire(import.meta.url);
 // Enforce the no-provider-call guarantee independently of server configuration.
 globalThis.fetch = async () => { throw new Error("External network forbidden in route audit"); };
-const { app, pool, createSiteServer, hashAdminSessionToken, ADMIN_SESSION_COOKIE, hashCustomerSecret } =
+const { app, pool, createSiteServer, hashAdminSessionToken, ADMIN_SESSION_COOKIE, hashCustomerSecret, encryptSensitiveData } =
   require(process.env.SENDFLOW_ISOLATED_RUNTIME);
 const pg = require("pg");
 const owner = new pg.Pool({ host: process.env.SENDFLOW_FIXTURE_SOCKET, port: 15432,
@@ -35,6 +35,31 @@ before(async () => {
     SELECT user_id,authorization_version,$1,now()+interval '1 hour',now()+interval '10 minutes'
     FROM sf_admin_grants WHERE user_id='audit-admin'`,
   [hashAdminSessionToken(adminToken)]);
+  await owner.query("INSERT INTO sf_users(id,status,display_name) VALUES('audit-webhook-owner','active','Webhook owner')");
+  for (const [kind, status, amount] of [
+    ["deposit", "succeeded", 10000],
+    ["international", "succeeded", 5500],
+    ["inter-network", "succeeded", 4000],
+    ["deposit", "failed", 7000],
+  ]) {
+    await owner.query(`INSERT INTO sf_transactions
+      (user_id,kind,status,sender_phone,recipient_phone,amount_minor,reference,idempotency_key)
+      VALUES('audit-webhook-owner',$1,$2,'fixture-sender','fixture-recipient',$3,$4,$5)`,
+    [kind, status, amount, randomBytes(16).toString("hex"), randomBytes(16).toString("hex")]);
+  }
+  for (const [label, url, status, createdOffset] of [
+    ["Production endpoint", "https://merchant.example/hooks/sendflow?source=primary", "active", 0],
+    ["Old endpoint", "https://archive.example/hooks/sendflow", "revoked", 1],
+  ]) {
+    await owner.query(`INSERT INTO sf_developer_webhook_endpoints
+      (user_id,label,url_encrypted,events,signing_secret_encrypted,status,created_at,revoked_at)
+      VALUES('audit-webhook-owner',$1,$2,$3,$4,$5,now()-($6::int * interval '1 day'),
+        CASE WHEN $5::varchar='revoked' THEN now()-interval '1 hour' ELSE NULL END)`,
+    [label, encryptSensitiveData(url, "developer-webhook-url"),
+      ["payment.succeeded", "payment.failed"],
+      encryptSensitiveData("fixture-signing-secret", "developer-webhook-secret"),
+      status, createdOffset]);
+  }
   server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
   writeFileSync(join(siteRoot, "index.html"), "<!doctype html><html><body>SPA fixture</body></html>");
@@ -279,18 +304,55 @@ test("unknown API and lookalike webhook paths fail closed without sensitive diag
   }
 });
 
-test("full mounted admin router preserves allowed catalogue reads and rejects scope escalation", async () => {
+test("full mounted admin router allows read-only user profiles and rejects unrelated scope escalation", async () => {
   const headers = { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` };
   const allowed = await request(`/api${adminPrefix}/operator-pricing`, { headers });
   assert.equal(allowed.status, 200, allowed.text);
-  for (const path of ["/overview", "/users", "/network-defense", "/ip-blocklist"]) {
+  for (const path of ["/overview", "/network-defense", "/ip-blocklist"]) {
     const blocked = await request(`/api${adminPrefix}${path}`, { headers });
     assert.equal(blocked.status, 403, blocked.text);
   }
+  assert.equal((await request(`/api${adminPrefix}/users`, { headers })).status, 200);
+  assert.equal((await request(`/api${adminPrefix}/users/audit-webhook-owner`, { headers })).status, 200);
+  await owner.query("UPDATE sf_admin_grants SET can_mutate=false WHERE user_id='audit-admin'");
+  assert.equal((await request(`/api${adminPrefix}/users/audit-webhook-owner`, { headers })).status, 200);
+  await owner.query("UPDATE sf_admin_grants SET can_mutate=true WHERE user_id='audit-admin'");
   const forged = await request(`/api${adminPrefix}/operator-pricing`, {
     headers: { Cookie: `__Host-sendflow_session=${adminToken}`, "x-admin-role": "owner" },
   });
   assert.equal(forged.status, 401);
+});
+
+test("admin user profile shows financial totals and every paginated webhook without signing secrets", async () => {
+  const headers = { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` };
+  const profileResponse = await request(`/api${adminPrefix}/users/audit-webhook-owner`, { headers });
+  assert.equal(profileResponse.status, 200, profileResponse.text);
+  const profile = JSON.parse(profileResponse.text);
+  assert.equal(profile.financialTotals.currency, "XOF");
+  assert.equal(profile.financialTotals.depositsMinor, 10000);
+  assert.equal(profile.financialTotals.internationalPayoutsMinor, 5500);
+
+  const pageOne = await request(`/api${adminPrefix}/developer-webhooks?userId=audit-webhook-owner&page=1&pageSize=1`, { headers });
+  const pageTwo = await request(`/api${adminPrefix}/developer-webhooks?userId=audit-webhook-owner&page=2&pageSize=1`, { headers });
+  assert.equal(pageOne.status, 200, pageOne.text);
+  assert.equal(pageTwo.status, 200, pageTwo.text);
+  const firstPage = JSON.parse(pageOne.text);
+  const secondPage = JSON.parse(pageTwo.text);
+  assert.equal(firstPage.total, 2);
+  assert.equal(firstPage.items.length, 1);
+  assert.equal(secondPage.items.length, 1);
+  assert.deepEqual(
+    new Set([...firstPage.items, ...secondPage.items].map(({ status }) => status)),
+    new Set(["active", "revoked"]),
+  );
+  const serializedEndpoints = JSON.stringify([firstPage, secondPage]);
+  assert.match(serializedEndpoints, /https:\/\/(?:merchant|archive)\.example\/hooks\/sendflow/);
+  assert.doesNotMatch(serializedEndpoints, /fixture-signing-secret|signingSecretEncrypted|signingSecret/);
+
+  const audit = await pool.query(`SELECT count(*)::int AS n FROM sf_admin_audit_logs
+    WHERE admin_user_id='audit-admin' AND action='view_developer_webhooks'
+      AND resource_type='developer_webhook' AND resource_id='audit-webhook-owner'`);
+  assert.equal(audit.rows[0].n, 2);
 });
 
 test("an authorized admin mutation with a valid CSRF token reaches validation without changing data", async () => {
@@ -315,6 +377,7 @@ test("full mounted admin router enforces current mutation rights and PIN before 
   const headers = { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` };
   await owner.query("UPDATE sf_admin_sessions SET pin_verified_until=NULL WHERE user_id='audit-admin'");
   assert.equal((await request(`/api${adminPrefix}/operator-pricing`, { headers })).status, 403);
+  assert.equal((await request(`/api${adminPrefix}/users/audit-webhook-owner`, { headers })).status, 403);
   await owner.query("UPDATE sf_admin_sessions SET pin_verified_until=now()+interval '10 minutes' WHERE user_id='audit-admin'");
   await owner.query("UPDATE sf_admin_grants SET can_mutate=false WHERE user_id='audit-admin'");
   // Grant mutations may revoke this session; neither rejection may reach a handler.

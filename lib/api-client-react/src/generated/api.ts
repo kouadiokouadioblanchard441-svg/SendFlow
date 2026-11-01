@@ -58,6 +58,7 @@ import type {
   AdminTransactionPage,
   AdminUserActionRequest,
   AdminUserDetail,
+  AdminUserDeveloperWebhookPage,
   AdminUserPage,
   AdminUssdInstructionUpdate,
   AdminWalletAdjustmentRequest,
@@ -133,6 +134,7 @@ import type {
   ListAdminLoginActivityParams,
   ListAdminOtpActivityParams,
   ListAdminTransactionsParams,
+  ListAdminUserDeveloperWebhooksParams,
   ListAdminUsersParams,
   ManagedOperator,
   NetworkDefenseStatus,
@@ -9559,7 +9561,7 @@ export const getGetAdminUserUrl = (userId: string,) => {
 }
 
 /**
- * Returns the persisted profile, wallet, and transaction summary for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
+ * Returns the persisted profile, wallet, transaction summary, and successful XOF pay-in and payout totals for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
  * @summary Get a SendFlow user detail for administrators
  */
 export const getAdminUser = async (userId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminUserDetail> => {
@@ -9616,6 +9618,91 @@ export function useGetAdminUser<TData = Awaited<ReturnType<typeof getAdminUser>>
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAdminUserQueryOptions(userId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminUserDeveloperWebhooksUrl = (params: ListAdminUserDeveloperWebhooksParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/developer-webhooks?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/developer-webhooks`
+}
+
+/**
+ * Returns all active and revoked webhook endpoints registered to this user, paginated. Signing secrets and delivery payloads are never included.
+ * @summary List a user's registered webhook URLs
+ */
+export const listAdminUserDeveloperWebhooks = async (params: ListAdminUserDeveloperWebhooksParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminUserDeveloperWebhookPage> => {
+
+  return customFetch<AdminUserDeveloperWebhookPage>(getListAdminUserDeveloperWebhooksUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminUserDeveloperWebhooksQueryKey = (params?: ListAdminUserDeveloperWebhooksParams,) => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/developer-webhooks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminUserDeveloperWebhooksQueryOptions = <TData = Awaited<ReturnType<typeof listAdminUserDeveloperWebhooks>>, TError = ErrorType<ErrorEnvelope>>(params: ListAdminUserDeveloperWebhooksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminUserDeveloperWebhooks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminUserDeveloperWebhooksQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminUserDeveloperWebhooks>>> = ({ signal }) => listAdminUserDeveloperWebhooks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminUserDeveloperWebhooks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminUserDeveloperWebhooksQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminUserDeveloperWebhooks>>>
+export type ListAdminUserDeveloperWebhooksQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List a user's registered webhook URLs
+ */
+
+export function useListAdminUserDeveloperWebhooks<TData = Awaited<ReturnType<typeof listAdminUserDeveloperWebhooks>>, TError = ErrorType<ErrorEnvelope>>(
+ params: ListAdminUserDeveloperWebhooksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminUserDeveloperWebhooks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminUserDeveloperWebhooksQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
