@@ -7,7 +7,11 @@ import databaseRouter from "./database";
 import accountRouter from "./account";
 import accountLimitRouter from "./account-limit";
 import adminAccessRouter from "./admin-access";
-import adminRouter, { respondAdminAuthError, respondAdminUserReadAuthError } from "./admin";
+import adminRouter, {
+  respondAdminAuthError,
+  respondAdminTransactionReadAuthError,
+  respondAdminUserReadAuthError,
+} from "./admin";
 import adminActionsRouter from "./admin-actions";
 import adminLoginActivityRouter from "./admin-login-activity";
 import adminOtpActivityRouter from "./admin-otp-activity";
@@ -36,12 +40,16 @@ const adminHandlers: IRouter = Router();
 const adminSurface: IRouter = Router();
 
 // Defense in depth: administrative routes cannot accidentally omit the
-// server session, current grant, scope, mutation right and PIN checks. User
-// profile reads use a separate exact-GET allowlist and still require the PIN.
+// server session, current grant, scope, mutation right and PIN checks. Sensitive
+// user-profile and transaction reads use exact-GET allowlists and still require the PIN.
 // The access/sign-in/PIN/sign-out router remains outside this protected group.
 adminHandlers.use((req, res, next) => {
   if (req.method === "GET" && /^\/(?:users(?:\/[^/]+)?|developer-webhooks)\/?$/.test(req.path)) {
     if (respondAdminUserReadAuthError(req, res)) next();
+    return;
+  }
+  if (req.method === "GET" && /^\/transactions(?:\/[^/]+)?\/?$/.test(req.path)) {
+    if (respondAdminTransactionReadAuthError(req, res)) next();
     return;
   }
   const permission = ["GET", "HEAD", "OPTIONS"].includes(req.method) ? "read" : "mutate";

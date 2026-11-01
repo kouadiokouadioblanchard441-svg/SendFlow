@@ -99,6 +99,12 @@ Administrator catalogue access is not permission to enable financial or customer
 
 **How to apply:** Do not re-enable administrator routes until the server verifies an OTP-authenticated SendFlow session and its database role, then separately enforces PIN verification. Customer sign-in and PIN state alone must never grant panel access.
 
+Administrative transaction reads must be allowed by both the route-specific read guard and the central admin-handler middleware; changing only one layer still leaves the endpoint denied.
+
+**Why:** The admin router has defense-in-depth checks at the mount and route levels, so an otherwise correct handler-level permission change can be unreachable behind the global allowlist.
+
+**How to apply:** When adding a protected admin GET endpoint, update and test both exact-path allowlists while preserving the admin session and PIN requirements; keep mutations on their separate authorization path.
+
 The login-activity view must derive its identity and session data from the server-validated SendFlow session, not client-supplied account identifiers. It stores server-observed network and device metadata, but leaves location blank until a proxy contract is verified.
 
 **Why:** IP geolocation is personal-data processing, and client-supplied headers can be forged unless a trusted proxy strips or overwrites them. A guessed city is worse than an honest unknown.
