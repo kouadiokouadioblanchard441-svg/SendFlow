@@ -33,6 +33,7 @@ import {
   ExternalProviderCallUnavailableError,
 } from "../lib/provider-call-policy";
 import {
+  EMAIL_OTP_LIFETIME_SECONDS,
   createEmailOtpCode,
   hashEmailOtpCode,
   matchesEmailOtpCode,
@@ -56,7 +57,6 @@ import {
 } from "../lib/customer-auth-rate-limit";
 
 const router: IRouter = Router();
-const OTP_LIFETIME_SECONDS = 5 * 60;
 const RESEND_COOLDOWN_SECONDS = 60;
 const MAX_SENDS_PER_PHONE_PER_HOUR = 5;
 const MAX_SENDS_PER_EMAIL_PER_HOUR = 5;
@@ -385,7 +385,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
 
   const now = new Date();
   const hourAgo = new Date(now.getTime() - HOUR_MS);
-  const expiresAt = new Date(now.getTime() + OTP_LIFETIME_SECONDS * 1000);
+  const expiresAt = new Date(now.getTime() + EMAIL_OTP_LIFETIME_SECONDS * 1000);
   const resendAt = new Date(now.getTime() + RESEND_COOLDOWN_SECONDS * 1000);
   const challengeId = randomUUID();
   const code = recipient ? createEmailOtpCode() : null;

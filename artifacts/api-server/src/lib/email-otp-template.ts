@@ -1,4 +1,4 @@
-import type { EmailOtpPurpose } from "./email-otp-code.ts";
+import { EMAIL_OTP_LIFETIME_SECONDS, type EmailOtpPurpose } from "./email-otp-code.ts";
 
 const FONT_STACK = "'DM Sans',Roboto,'Helvetica Neue',Arial,sans-serif";
 
@@ -65,7 +65,8 @@ export function renderEmailOtpContent(
     ? `<img src="${escapeHtml(logoUrl)}" width="44" height="44" alt="Logo SendFlow" style="display:block;width:44px;height:44px;object-fit:contain;border:0">`
     : "";
   const year = (options.now ?? new Date()).getFullYear();
-  const expiryMessage = "Ce code est valable pendant 5 minutes.";
+  const expiryMinutes = Math.ceil(EMAIL_OTP_LIFETIME_SECONDS / 60);
+  const expiryMessage = `Ce code est valable pendant ${expiryMinutes} minutes.`;
   const securityMessage = "Si vous n’avez pas demandé ce code, ignorez cet e-mail. En cas de doute, contactez le service client depuis l’application SendFlow.";
   const noReplyMessage = "Merci de ne pas répondre à cet e-mail.";
 

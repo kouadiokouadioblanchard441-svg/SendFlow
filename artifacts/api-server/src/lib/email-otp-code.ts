@@ -3,6 +3,8 @@ import { fingerprint } from "./request-security.ts";
 
 export type EmailOtpPurpose = "signup" | "password_reset" | "pin_reset" | "admin_login";
 
+export const EMAIL_OTP_LIFETIME_SECONDS = 5 * 60;
+
 export function createEmailOtpCode() {
   return randomInt(0, 1_000_000).toString().padStart(6, "0");
 }

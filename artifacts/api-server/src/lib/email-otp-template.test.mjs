@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { renderEmailOtpContent } from "./email-otp-template.ts";
+import { EMAIL_OTP_LIFETIME_SECONDS } from "./email-otp-code.ts";
 
 const testDate = new Date("2026-11-01T12:00:00.000Z");
 
 test("renders the branded French OTP email for each supported purpose", () => {
+  assert.equal(EMAIL_OTP_LIFETIME_SECONDS, 5 * 60);
   for (const purpose of ["signup", "password_reset", "pin_reset", "admin_login"]) {
     const email = renderEmailOtpContent(purpose, "123456", {
       publicSiteUrl: "https://merchant.business.sendflow.africa",
