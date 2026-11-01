@@ -27,6 +27,7 @@ import {
   ResendDeliveryError,
   sendResendEmail,
 } from "../lib/resend-email";
+import { renderEmailOtpContent } from "../lib/email-otp-template";
 import {
   assertExternalProviderCallsAllowed,
   ExternalProviderCallUnavailableError,
@@ -91,33 +92,6 @@ function emailOtpConfigured() {
 
 function normalizeEmail(value: string) {
   return normalizeSensitiveEmailForLookup(value);
-}
-
-function otpEmailContent(purpose: OtpPurpose, code: string) {
-  const labels: Record<OtpPurpose, { subject: string; intro: string }> = {
-    signup: {
-      subject: "Vérifiez votre adresse e-mail — SendFlow",
-      intro: "Utilisez ce code pour vérifier votre adresse e-mail et terminer la création de votre compte SendFlow.",
-    },
-    password_reset: {
-      subject: "Réinitialisation de votre mot de passe — SendFlow",
-      intro: "Utilisez ce code pour continuer la réinitialisation de votre mot de passe SendFlow.",
-    },
-    pin_reset: {
-      subject: "Réinitialisation de votre code PIN — SendFlow",
-      intro: "Utilisez ce code pour continuer la réinitialisation de votre code PIN SendFlow.",
-    },
-    admin_login: {
-      subject: "Connexion administrateur — SendFlow",
-      intro: "Utilisez ce code pour continuer votre connexion administrateur SendFlow.",
-    },
-  };
-  const label = labels[purpose];
-  return {
-    subject: label.subject,
-    text: `${label.intro}\n\nCode : ${code}\n\nCe code expire dans 5 minutes. Si vous n'avez pas demandé cette vérification, ignorez ce message.`,
-    html: `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f8fa;font-family:Arial,sans-serif;color:#15171a"><main style="max-width:520px;margin:32px auto;padding:28px;background:#fff;border:1px solid #e5e7eb;border-radius:12px"><h1 style="font-size:20px;margin:0 0 16px">SendFlow</h1><p style="font-size:15px;line-height:1.6">${label.intro}</p><p style="margin:24px 0;padding:16px;background:#f4f6f8;border-radius:8px;text-align:center;font-family:monospace;font-size:30px;letter-spacing:8px;font-weight:700">${code}</p><p style="font-size:13px;line-height:1.6;color:#555">Ce code expire dans 5 minutes. Si vous n'avez pas demandé cette vérification, ignorez ce message.</p></main></body></html>`,
-  };
 }
 
 async function resolveOtpRecipient(
@@ -588,7 +562,9 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
 
   if (reservation.shouldSend && recipient && code && reservation.eventId) {
     try {
-      const email = otpEmailContent(purpose, code);
+      const email = renderEmailOtpContent(purpose, code, {
+        publicSiteUrl: process.env.SENDFLOW_PUBLIC_SITE_URL,
+      });
       const providerResult = await sendResendEmail({
         to: recipient.email,
         subject: email.subject,
