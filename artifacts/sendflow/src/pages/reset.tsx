@@ -23,13 +23,6 @@ function maskPhone(phone: string) {
   return `${digits.slice(0, 2)}******${digits.slice(-2)}`;
 }
 
-function maskEmail(email: string) {
-  const [local = '', domain = ''] = email.trim().split('@');
-  if (!domain) return '***';
-  const visible = local.length > 1 ? local.slice(0, 1) : '';
-  return `${visible}***@${domain}`;
-}
-
 function SecretInput({
   label,
   value,
@@ -95,7 +88,6 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   const isPassword = mode === 'password';
   const secretLabel = isPassword ? 'Nouveau mot de passe' : 'Nouveau code secret';
   const maskedPhone = useMemo(() => maskPhone(phone), [phone]);
-  const maskedEmail = useMemo(() => maskEmail(email), [email]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -299,19 +291,17 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
           <>
             <header className="sendflow-reset-heading sendflow-reset-heading-verify">
               <h1 id="reset-title">Vérification par e-mail</h1>
-              <p>
-                {isPassword
-                  ? <>Nous vérifions si <strong>{maskedEmail}</strong> peut recevoir un code.</>
-                  : <>Saisissez le code envoyé à l’adresse e-mail associée au compte identifié par <strong>{maskedPhone}</strong>.</>}
-              </p>
+              {!isPassword && (
+                <p>
+                  Saisissez le code envoyé à l’adresse e-mail associée au compte identifié par <strong>{maskedPhone}</strong>.
+                </p>
+              )}
             </header>
             {isPassword && (
               <aside className="sendflow-reset-availability" role="status" aria-live="polite">
-                <strong>Pour protéger votre compte</strong>
+                <strong>Vérifiez votre e-mail</strong>
                 <span>
-                  Aucun code ne sera envoyé si cette adresse ne correspond pas à un compte actif avec e-mail vérifié.
-                  Nous ne confirmons pas cette correspondance. Si vous ne recevez pas le code, vérifiez l’adresse
-                  et vos courriers indésirables, puis contactez le service client SendFlow.
+                  Si un code peut être envoyé, vous le recevrez par e-mail. Pensez aux courriers indésirables.
                 </span>
               </aside>
             )}
