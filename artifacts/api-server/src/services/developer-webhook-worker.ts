@@ -13,6 +13,7 @@ import {
   sql,
 } from "@workspace/db";
 import { decryptSensitiveData } from "../lib/sensitive-data-crypto";
+import { decryptDeveloperWebhookPayload } from "../lib/developer-webhook-payload";
 import { resolvePublicWebhookTarget } from "./developer-api-security";
 
 const MAX_ATTEMPTS = 8;
@@ -173,7 +174,11 @@ async function deliverOne() {
   try {
     const url = decryptSensitiveData(endpoint.urlEncrypted, "developer-webhook-url");
     const signingSecret = decryptSensitiveData(endpoint.signingSecretEncrypted, "developer-webhook-secret");
-    result = await postWebhook(url, signingSecret, delivery.payload);
+    result = await postWebhook(
+      url,
+      signingSecret,
+      decryptDeveloperWebhookPayload(delivery.payload),
+    );
   } catch {
     result = { ok: false, status: null, errorClass: "unsafe_target" };
   }

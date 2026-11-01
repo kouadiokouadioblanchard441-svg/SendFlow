@@ -24,6 +24,7 @@ export type SensitiveDataPurpose =
   | "identity-webhook-payload"
   | "identity-verification-data"
   | "developer-webhook-secret"
+  | "developer-webhook-payload"
   | "developer-client-token"
   | "developer-webhook-url"
   | "developer-payment-metadata";

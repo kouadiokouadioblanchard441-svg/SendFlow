@@ -7,6 +7,10 @@ import {
   eq,
 } from "@workspace/db";
 import { db } from "@workspace/db";
+import {
+  encryptDeveloperWebhookPayload,
+  type DeveloperWebhookPayload,
+} from "../lib/developer-webhook-payload";
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -44,7 +48,7 @@ export async function enqueueDeveloperPaymentEvent(
   for (const endpoint of endpoints) {
     if (!endpoint.events.includes(input.eventType)) continue;
     const eventId = randomUUID();
-    const payload = {
+    const payload: DeveloperWebhookPayload = {
       id: eventId,
       type: input.eventType,
       createdAt: input.occurredAt.toISOString(),
@@ -63,7 +67,7 @@ export async function enqueueDeveloperPaymentEvent(
       endpointId: endpoint.id,
       paymentSessionId: session.id,
       eventType: input.eventType,
-      payload,
+      payload: encryptDeveloperWebhookPayload(payload),
       status: "pending",
     }).onConflictDoNothing();
   }

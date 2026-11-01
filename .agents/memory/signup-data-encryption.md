@@ -1,13 +1,13 @@
 ---
 name: SendFlow sensitive-data encryption
-description: User requirements for signup and transfer data to be server-routed and encrypted, with strict E2EE boundaries clarified before implementation.
+description: User requirements for server-side encryption of SendFlow data and the boundary between it and strict E2EE.
 ---
 
-The user requires every requested customer-signup field to be mandatory and wants both server-side encryption and true end-to-end encryption where feasible. Define field boundaries before implementation: the server and OTP provider must process the phone number, and current registration logic validates and uses the name and birth date. Passwords must remain non-reversible salted hashes.
+The user requires every requested customer-signup field to be mandatory. Passwords must remain non-reversible salted hashes.
 
-Before operator or partner integrations, the user requires every transfer operation to pass through the server and all data to be encrypted end to end. The exact meaning of "end to end" for server-processed transaction data is unresolved and must be clarified before implementation.
+The user confirmed application-level encryption with server-side decryption for data that SendFlow must process. Do not call this strict end-to-end encryption: the backend must read customer, identity, and payment data to perform authorized operations.
 
-For transfer data the server must validate or process, the user chose HTTPS in transit plus encryption at rest, with the server authorized to decrypt. Do not use strict client-only E2EE for those fields.
+The user requires transfers to remain server-routed and protected in transit and at rest. Do not use strict client-only E2EE for fields needed by payment processing, account recovery, or authorized identity review.
 
 The user confirmed that encryption at rest must include financial values as well: transaction amounts, fees, and wallet balances.
 
