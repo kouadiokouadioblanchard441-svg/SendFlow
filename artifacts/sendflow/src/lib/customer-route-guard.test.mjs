@@ -7,6 +7,7 @@ const protectedRoutePath = '/restricted-control-test';
 test('customer routes still require customer PIN unlock', () => {
   assert.equal(requiresCustomerPinUnlock('/account'), true);
   assert.equal(requiresCustomerPinUnlock('/biometric'), true);
+  assert.equal(requiresCustomerPinUnlock('/identity-verification'), true);
   assert.equal(requiresCustomerPinUnlock('/linkflow'), true);
   assert.equal(requiresCustomerPinUnlock('/linkflow/new'), true);
   assert.equal(requiresCustomerPinUnlock('/transaction/test-id'), true);

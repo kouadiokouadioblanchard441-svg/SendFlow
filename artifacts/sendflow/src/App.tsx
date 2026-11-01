@@ -37,6 +37,7 @@ const AccountPage = lazy(() => import('@/pages/account'));
 const AccountInfoPage = lazy(() => import('@/pages/account-info'));
 const EmailUnsubscribePage = lazy(() => import('@/pages/email-unsubscribe'));
 const AccountLimitPage = lazy(() => import('@/pages/account-limit'));
+const IdentityVerificationPage = lazy(() => import('@/pages/identity-verification'));
 const LinkFlowPage = lazy(() => import('@/pages/linkflow'));
 const LinkFlowDetailPage = lazy(() => import('@/pages/linkflow-detail'));
 const LinkFlowNewPage = lazy(() => import('@/pages/linkflow-new'));
@@ -335,6 +336,7 @@ function App() {
                 <Route path="/account-info" component={AccountInfoPage} />
                 <Route path="/email-unsubscribe" component={EmailUnsubscribePage} />
                 <Route path="/account-limit" component={AccountLimitPage} />
+                <Route path="/identity-verification" component={IdentityVerificationPage} />
                 <Route path="/linkflow" component={LinkFlowPage} />
                 <Route path="/linkflow/new" component={LinkFlowNewPage} />
                 <Route path="/linkflow/:linkId" component={LinkFlowDetailPage} />

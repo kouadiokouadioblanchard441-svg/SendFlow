@@ -2,6 +2,7 @@ const protectedCustomerPaths = new Set([
   '/account',
   '/account-info',
   '/account-limit',
+  '/identity-verification',
   '/linkflow',
   '/developers',
   '/customer-service',

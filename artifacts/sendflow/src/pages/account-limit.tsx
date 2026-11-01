@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import type { AccountLimitResult } from '@workspace/api-client-react';
-import { fetchWithCsrf, resolveApiUrl } from '@workspace/api-client-react';
+import { resolveApiUrl } from '@workspace/api-client-react';
 import { formatAccountLimitAmount } from '@/lib/account-limit';
 import { useSeo } from '@/lib/seo';
 import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
@@ -16,7 +16,6 @@ export default function AccountLimitPage() {
   const [verificationStatus, setVerificationStatus] = useState<AccountLimitResult['status']>('unverified');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isStarting, setIsStarting] = useState(false);
   const isPending = verificationStatus === 'pending';
   const isVerified = verificationStatus === 'verified';
   const isFailed = verificationStatus === 'failed';
@@ -75,41 +74,6 @@ export default function AccountLimitPage() {
       cancelled = true;
     };
   }, [isUnlocked]);
-
-  const startVerification = async () => {
-    if (isStarting) return;
-    setIsStarting(true);
-    setStatusMessage(null);
-
-    try {
-      const response = await fetchWithCsrf(resolveApiUrl('/api/me/identity-verification'), {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      const body = await response.json().catch(() => null) as {
-        status?: typeof verificationStatus;
-        verificationUrl?: string;
-        error?: string;
-      } | null;
-
-      if (!response.ok) {
-        throw { status: response.status, url: response.url || '/api/me/identity-verification' };
-      }
-      if (!body?.verificationUrl) {
-        throw new Error('Le parcours de vérification n’a pas fourni de lien.');
-      }
-
-      setVerificationStatus(body.status ?? 'pending');
-      window.location.assign(body.verificationUrl);
-    } catch (error: unknown) {
-      reportGlobalApiError(error);
-      setStatusMessage(getSafeApiErrorCopy(error).message);
-    } finally {
-      setIsStarting(false);
-    }
-  };
 
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
@@ -220,11 +184,10 @@ export default function AccountLimitPage() {
           <button
             type="button"
             className="sendflow-account-limit-primary"
-             onClick={startVerification}
-             disabled={isStarting}
+            onClick={() => setLocation('/identity-verification')}
             data-testid="button-increase-account-limit"
           >
-             {isStarting ? 'Préparation de la vérification…' : 'Relever mon plafond'}
+            Relever mon plafond
           </button>
         )}
       </section>
