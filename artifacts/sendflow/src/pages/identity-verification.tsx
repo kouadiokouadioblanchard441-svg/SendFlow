@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { ArrowLeft, Camera, CalendarDays, Check, ChevronDown, IdCard, LockKeyhole, Sun } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Check, ChevronDown, LockKeyhole } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
+import { FaCamera, FaIdCard, FaSun } from 'react-icons/fa';
 import {
   getGetCustomerProfileQueryKey,
   useGetCustomerProfile,
@@ -13,6 +14,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
 import { useSeo } from '@/lib/seo';
 import identityCardFrontIllustration from '@assets/generated_images/sendflow-identity-card-front-3d.webp';
@@ -119,7 +121,17 @@ export default function IdentityVerificationPage() {
   const [step, setStep] = useState<1 | PhotoStep>(1);
   const [photos, setPhotos] = useState<Partial<Record<PhotoStep, IdentityPhoto>>>({});
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const cameraRequestId = useRef(0);
+  const cameraStartLock = useRef(false);
+  const cameraCaptureLock = useRef(false);
   const photoUrls = useRef(new Set<string>());
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const [cameraCapturing, setCameraCapturing] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState('');
   const hasEditedForm = useRef(false);
 
   useSeo({
@@ -140,7 +152,28 @@ export default function IdentityVerificationPage() {
     }));
   }, [profileQuery.data]);
 
+  useEffect(() => {
+    if (!cameraStream || !cameraOpen || !videoRef.current) return;
+    const video = videoRef.current;
+    video.srcObject = cameraStream;
+    void video.play().catch(() => {
+      if (cameraStreamRef.current !== cameraStream) return;
+      cameraStream.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+      setCameraStream(null);
+      setCameraError('La caméra ne peut pas démarrer. Vérifiez son autorisation ou choisissez une image.');
+    });
+    return () => {
+      video.srcObject = null;
+    };
+  }, [cameraOpen, cameraStream]);
+
   useEffect(() => () => {
+    cameraRequestId.current += 1;
+    cameraStartLock.current = false;
+    cameraCaptureLock.current = false;
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
     photoUrls.current.forEach((url) => URL.revokeObjectURL(url));
     photoUrls.current.clear();
   }, []);
@@ -154,17 +187,13 @@ export default function IdentityVerificationPage() {
     setNotice('');
   };
 
-  const handlePhotoSelected = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0];
-    event.currentTarget.value = '';
-    if (!file || step === 1) return;
-
+  const savePhoto = (file: File, targetStep: PhotoStep) => {
     if (!file.type.startsWith('image/')) {
       setNotice('Choisissez une image pour continuer.');
-      return;
+      return false;
     }
 
-    const previousPhoto = photos[step];
+    const previousPhoto = photos[targetStep];
     if (previousPhoto) {
       URL.revokeObjectURL(previousPhoto.previewUrl);
       photoUrls.current.delete(previousPhoto.previewUrl);
@@ -172,8 +201,136 @@ export default function IdentityVerificationPage() {
 
     const previewUrl = URL.createObjectURL(file);
     photoUrls.current.add(previewUrl);
-    setPhotos((current) => ({ ...current, [step]: { file, previewUrl } }));
+    setPhotos((current) => ({ ...current, [targetStep]: { file, previewUrl } }));
     setNotice('');
+    return true;
+  };
+
+  const handlePhotoSelected = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file || step === 1) return;
+
+    savePhoto(file, step);
+  };
+
+  const stopCamera = () => {
+    cameraRequestId.current += 1;
+    cameraStartLock.current = false;
+    cameraCaptureLock.current = false;
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    setCameraStream(null);
+    setCameraLoading(false);
+    setCameraCapturing(false);
+    setCameraOpen(false);
+  };
+
+  const openCamera = async () => {
+    if (cameraStartLock.current) return;
+    cameraStartLock.current = true;
+    setCameraError('');
+    setCameraOpen(true);
+    setCameraLoading(true);
+
+    const requestId = cameraRequestId.current + 1;
+    cameraRequestId.current = requestId;
+
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      cameraStartLock.current = false;
+      setCameraLoading(false);
+      setCameraError('La caméra n’est pas disponible dans ce navigateur. Choisissez une image depuis votre appareil.');
+      return;
+    }
+
+    try {
+      const facingMode = step === 4 ? 'user' : 'environment';
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+      });
+
+      if (cameraRequestId.current !== requestId) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      cameraStreamRef.current = stream;
+      setCameraStream(stream);
+    } catch (error) {
+      if (cameraRequestId.current !== requestId) return;
+      const errorName = error instanceof DOMException ? error.name : '';
+      if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
+        setCameraError('L’accès à la caméra est refusé. Autorisez-le dans les réglages puis réessayez.');
+      } else if (errorName === 'NotFoundError' || errorName === 'OverconstrainedError') {
+        setCameraError('Aucune caméra compatible n’est disponible sur cet appareil.');
+      } else if (errorName === 'NotReadableError') {
+        setCameraError('La caméra est déjà utilisée. Fermez les autres applications qui l’utilisent puis réessayez.');
+      } else {
+        setCameraError('La caméra ne peut pas démarrer pour le moment. Vous pouvez choisir une image depuis votre appareil.');
+      }
+    } finally {
+      if (cameraRequestId.current === requestId) {
+        cameraStartLock.current = false;
+        setCameraLoading(false);
+      }
+    }
+  };
+
+  const captureCameraPhoto = () => {
+    if (step === 1 || cameraCapturing || cameraCaptureLock.current) return;
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+      setCameraError('La caméra n’est pas encore prête. Patientez un instant puis réessayez.');
+      return;
+    }
+
+    const maxDimension = 1920;
+    const scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    const context = canvas.getContext('2d');
+    if (!context) {
+      setCameraError('La photo n’a pas pu être préparée. Réessayez ou choisissez une image.');
+      return;
+    }
+
+    const captureRequestId = cameraRequestId.current;
+    cameraCaptureLock.current = true;
+    setCameraCapturing(true);
+    try {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    } catch {
+      cameraCaptureLock.current = false;
+      setCameraCapturing(false);
+      setCameraError('La photo n’a pas pu être préparée. Réessayez ou choisissez une image.');
+      return;
+    }
+    canvas.toBlob((blob) => {
+      if (cameraRequestId.current !== captureRequestId) {
+        cameraCaptureLock.current = false;
+        return;
+      }
+      cameraCaptureLock.current = false;
+      setCameraCapturing(false);
+      if (!blob) {
+        setCameraError('La photo n’a pas pu être préparée. Réessayez ou choisissez une image.');
+        return;
+      }
+      const fileName = step === 2 ? 'sendflow-document-recto.jpg' : step === 3 ? 'sendflow-document-verso.jpg' : 'sendflow-selfie.jpg';
+      const imageFile = new File([blob], fileName, { type: 'image/jpeg', lastModified: Date.now() });
+      if (savePhoto(imageFile, step)) stopCamera();
+    }, 'image/jpeg', 0.9);
+  };
+
+  const chooseFromGallery = () => {
+    stopCamera();
+    photoInputRef.current?.click();
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -431,21 +588,21 @@ export default function IdentityVerificationPage() {
               ) : (
                 <div className="sendflow-identity-selfie-tips">
                   <div className="sendflow-identity-tip">
-                    <IdCard size={22} aria-hidden="true" />
+                    <FaIdCard size={22} aria-hidden="true" />
                     <div>
                       <strong>Tenez votre pièce près de votre visage</strong>
                       <span>Toutes les informations doivent rester visibles.</span>
                     </div>
                   </div>
                   <div className="sendflow-identity-tip">
-                    <Camera size={22} aria-hidden="true" />
+                    <FaCamera size={22} aria-hidden="true" />
                     <div>
                       <strong>Regardez la caméra</strong>
                       <span>Gardez votre visage centré et bien visible.</span>
                     </div>
                   </div>
                   <div className="sendflow-identity-tip">
-                    <Sun size={22} aria-hidden="true" />
+                    <FaSun size={22} aria-hidden="true" />
                     <div>
                       <strong>Choisissez une bonne luminosité</strong>
                       <span>La photo doit être nette et claire.</span>
@@ -459,7 +616,6 @@ export default function IdentityVerificationPage() {
                 className="sendflow-identity-file-input"
                 type="file"
                 accept="image/*"
-                capture={step === 4 ? 'user' : 'environment'}
                 onChange={handlePhotoSelected}
                 aria-label={step === 4 ? 'Prendre un selfie' : 'Prendre une photo de la pièce'}
                 data-testid="input-identity-photo"
@@ -469,10 +625,11 @@ export default function IdentityVerificationPage() {
                 <button
                   type="button"
                   className="sendflow-identity-submit sendflow-identity-capture"
-                  onClick={() => photoInputRef.current?.click()}
+                  onClick={() => void openCamera()}
+                  disabled={cameraLoading}
                   data-testid="button-identity-photo-capture"
                 >
-                  <Camera size={27} strokeWidth={2.5} aria-hidden="true" />
+                  <FaCamera size={25} aria-hidden="true" />
                   {activePhoto
                     ? (step === 4 ? 'Reprendre le selfie' : 'Reprendre la photo')
                     : (step === 4 ? 'Prendre un selfie' : 'Prendre une photo')}
@@ -507,6 +664,63 @@ export default function IdentityVerificationPage() {
             <span>Les éléments saisis ne sont pas transmis ni sauvegardés à cette étape</span>
           </p>
         </div>
+
+        <Dialog open={cameraOpen} onOpenChange={(open) => { if (!open) stopCamera(); }}>
+          <DialogContent className="sendflow-identity-camera-dialog" data-testid="dialog-identity-camera">
+            <DialogHeader className="sendflow-identity-camera-header">
+              <DialogTitle>{step === 4 ? 'Prendre un selfie' : 'Photographier votre pièce'}</DialogTitle>
+              <DialogDescription>
+                Gardez le document entier dans le cadre. La photo reste sur cet écran.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="sendflow-identity-camera-preview">
+              {cameraStream ? (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  aria-label="Aperçu en direct de la caméra"
+                  data-testid="video-identity-camera"
+                />
+              ) : cameraLoading ? (
+                <p className="sendflow-identity-camera-loading" role="status">
+                  <FaCamera size={26} aria-hidden="true" />
+                  Ouverture de la caméra…
+                </p>
+              ) : (
+                <div className="sendflow-identity-camera-error" role="status">
+                  <FaCamera size={28} aria-hidden="true" />
+                  <p>{cameraError || 'La caméra n’est pas disponible.'}</p>
+                  <button type="button" className="sendflow-identity-gallery" onClick={chooseFromGallery}>
+                    Choisir une image
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {cameraError && cameraStream && (
+              <p className="sendflow-identity-camera-inline-error" role="alert">{cameraError}</p>
+            )}
+
+            <div className="sendflow-identity-camera-actions">
+              <button type="button" className="sendflow-identity-camera-cancel" onClick={stopCamera}>
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="sendflow-identity-camera-capture"
+                onClick={captureCameraPhoto}
+                disabled={!cameraStream || cameraLoading || cameraCapturing}
+                data-testid="button-identity-camera-capture"
+              >
+                {cameraCapturing ? <span className="sendflow-identity-camera-spinner" aria-hidden="true" /> : <FaCamera size={20} aria-hidden="true" />}
+                {cameraCapturing ? 'Préparation de la photo…' : 'Prendre la photo'}
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </section>
     </main>
   );

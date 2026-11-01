@@ -4297,6 +4297,34 @@
   flex: 0 0 auto;
 }
 
+.sendflow-identity-capture:disabled {
+  cursor: wait;
+  opacity: .72;
+}
+
+.sendflow-identity-gallery {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #5f1eaa;
+  cursor: pointer;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.sendflow-identity-gallery:hover,
+.sendflow-identity-gallery:focus-visible {
+  background: #f0e8fb;
+  outline: 0;
+}
+
 .sendflow-identity-continue {
   width: 100%;
   min-height: 52px;
@@ -4331,6 +4359,190 @@
   text-align: center;
 }
 
+.sendflow-identity-camera-dialog {
+  width: calc(100% - 28px);
+  max-width: 440px;
+  max-height: 92dvh;
+  gap: 16px;
+  overflow-y: auto;
+  border: 1px solid #ece5f4;
+  border-radius: 24px;
+  background: #fff;
+  padding: 22px;
+  box-shadow: 0 24px 80px rgba(27, 14, 43, .24);
+}
+
+.sendflow-identity-camera-dialog > button {
+  top: 15px;
+  right: 15px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #f5f1fa;
+  color: #4d3d60;
+  opacity: 1;
+}
+
+.sendflow-identity-camera-dialog > button:hover,
+.sendflow-identity-camera-dialog > button:focus-visible {
+  background: #ece3f6;
+  outline: 0;
+}
+
+.sendflow-identity-camera-header {
+  padding-right: 32px;
+  text-align: center;
+}
+
+.sendflow-identity-camera-header h2 {
+  color: #211d28;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sendflow-identity-camera-header p {
+  color: #706a78;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sendflow-identity-camera-preview {
+  display: grid;
+  width: 100%;
+  min-height: 220px;
+  max-height: 56dvh;
+  aspect-ratio: 3 / 4;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #372b45;
+  border-radius: 18px;
+  background: #17121d;
+}
+
+.sendflow-identity-camera-preview video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 56dvh;
+  object-fit: contain;
+  background: #17121d;
+}
+
+.sendflow-identity-camera-loading,
+.sendflow-identity-camera-error {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin: 0;
+  color: #fff;
+  padding: 24px;
+  text-align: center;
+}
+
+.sendflow-identity-camera-loading svg,
+.sendflow-identity-camera-error > svg {
+  color: #d4b4ff;
+}
+
+.sendflow-identity-camera-error p {
+  max-width: 320px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.sendflow-identity-camera-error .sendflow-identity-gallery {
+  border: 1px solid rgba(255, 255, 255, .5);
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+}
+
+.sendflow-identity-camera-error .sendflow-identity-gallery:hover,
+.sendflow-identity-camera-error .sendflow-identity-gallery:focus-visible {
+  background: rgba(255, 255, 255, .18);
+}
+
+.sendflow-identity-camera-inline-error {
+  margin: 0;
+  border-radius: 10px;
+  background: #fff4f3;
+  color: #a3231a;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.sendflow-identity-camera-actions {
+  display: grid;
+  grid-template-columns: minmax(90px, .7fr) minmax(0, 1.3fr);
+  gap: 10px;
+}
+
+.sendflow-identity-camera-cancel,
+.sendflow-identity-camera-capture {
+  display: inline-flex;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sendflow-identity-camera-cancel {
+  border: 1px solid #e5deed;
+  background: #fff;
+  color: #40364c;
+}
+
+.sendflow-identity-camera-capture {
+  border: 1px solid #7620db;
+  background: #7620db;
+  color: #fff;
+}
+
+.sendflow-identity-camera-capture:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.sendflow-identity-camera-spinner {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  border: 2px solid rgba(255, 255, 255, .45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: sendflow-camera-spin .75s linear infinite;
+}
+
+@keyframes sendflow-camera-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sendflow-identity-camera-cancel:not(:disabled):hover,
+.sendflow-identity-camera-cancel:focus-visible {
+  background: #f8f5fb;
+  outline: 0;
+}
+
+.sendflow-identity-camera-capture:not(:disabled):hover,
+.sendflow-identity-camera-capture:focus-visible {
+  border-color: #5d16b9;
+  background: #6518c3;
+  outline: 0;
+  box-shadow: 0 0 0 4px rgba(118, 32, 219, .15);
+}
+
 @media (max-width: 380px) {
   .sendflow-identity-header {
     padding-right: 14px;
@@ -4353,6 +4565,14 @@
 
   .sendflow-identity-photo-caption {
     font-size: 14px;
+  }
+
+  .sendflow-identity-camera-dialog {
+    padding: 18px 16px;
+  }
+
+  .sendflow-identity-camera-actions {
+    grid-template-columns: 1fr;
   }
 }
 
