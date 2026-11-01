@@ -29,6 +29,9 @@ import paymentLimitsRouter, { adminRoutes as adminPaymentLimitsRoutes } from "./
 import countryManagementRouter, { adminRoutes as adminCountryRoutes } from "./country-management";
 import emailCampaignRoutes from "./email-campaigns";
 import emailCampaignWebhookRouter from "./email-campaign-webhook";
+import identityVerificationRouter, {
+  adminRoutes as adminIdentityVerificationRoutes,
+} from "./identity-verification";
 import transferQuoteRouter from "./transfer-quote";
 import paymentLinksRouter from "./payment-links";
 import publicPaymentLinksRouter from "./public-payment-links";
@@ -67,6 +70,7 @@ router.use(publicPaymentLinksRouter);
 router.use(developerRouter);
 router.use(emailCampaignWebhookRouter);
 router.use(accountLimitRouter);
+router.use(identityVerificationRouter);
 router.use(operatorPricingRouter);
 router.use(bannersRouter);
 router.use(registrationSettingsRouter);
@@ -90,6 +94,7 @@ adminHandlers.use(adminCustomerServiceSettingsRoutes);
 adminHandlers.use(adminPaymentLimitsRoutes);
 adminHandlers.use(adminCountryRoutes);
 adminHandlers.use(emailCampaignRoutes);
+adminHandlers.use(adminIdentityVerificationRoutes);
 
 adminSurface.use(loadAdminSession);
 adminSurface.use(adminAccessRouter);

@@ -65,7 +65,7 @@ export function getAdminUserId(req: Request, permission: AdminPermission = "read
   // Keep mutation access narrow: catalogue/campaign operations plus explicit
   // account block/unblock actions. Financial operations and account deletion
   // remain outside this authorization scope.
-  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?|users\/[^/]+\/(?:suspend|restore))\/?$/.test(req.path)) {
+  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?|identity-verifications(?:\/.*)?|users\/[^/]+\/(?:suspend|restore))\/?$/.test(req.path)) {
     return { userId: null, status: 403, error: "Administrator permission does not authorize this operation" };
   }
   if (permission === "mutate" && !session.canMutate) {

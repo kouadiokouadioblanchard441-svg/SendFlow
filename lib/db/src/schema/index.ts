@@ -11,6 +11,7 @@ export * from "./customer-biometric";
 export * from "./customer-credentials";
 export * from "./customer-sessions";
 export * from "./identity-verification";
+export * from "./customer-identity-requests";
 export * from "./login-events";
 export * from "./operator-otp-policies";
 export * from "./operator-pricing";

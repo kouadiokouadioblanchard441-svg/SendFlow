@@ -22,6 +22,7 @@ export type SensitiveDataPurpose =
   | "linkflow-payer-name"
   | "linkflow-request-fingerprint"
   | "identity-webhook-payload"
+  | "identity-verification-data"
   | "developer-webhook-secret"
   | "developer-client-token"
   | "developer-webhook-url"

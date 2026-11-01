@@ -7,6 +7,7 @@ import {
   lt,
   sql,
   transactionsTable,
+  customerIdentityRequestsTable,
 } from "@workspace/db";
 import {
   getMonthlyAccountLimit,
@@ -14,7 +15,19 @@ import {
 } from "./account-limit-policy";
 
 export async function getAccountLimitSnapshot(userId: string, now = new Date()) {
-  const status = "unverified" as const;
+  const [latestVerification] = await db
+    .select({ status: customerIdentityRequestsTable.status })
+    .from(customerIdentityRequestsTable)
+    .where(eq(customerIdentityRequestsTable.userId, userId))
+    .orderBy(sql`${customerIdentityRequestsTable.submittedAt} desc`)
+    .limit(1);
+  const status = latestVerification?.status === "approved"
+    ? "verified" as const
+    : latestVerification?.status === "pending"
+      ? "pending" as const
+      : latestVerification?.status === "rejected"
+        ? "failed" as const
+        : "unverified" as const;
   const monthlyLimit = getMonthlyAccountLimit();
   const { periodStart, periodEnd } = getUtcMonthRange(now);
 

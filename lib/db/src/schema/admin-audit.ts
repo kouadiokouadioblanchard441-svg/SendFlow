@@ -82,7 +82,10 @@ export type AdminAuditAction =
   | "delete_email_campaign"
   | "retry_email_campaign_recipient"
   | "update_customer_service_settings"
-  | "view_developer_webhooks";
+  | "view_developer_webhooks"
+  | "view_identity_verification"
+  | "download_identity_verification"
+  | "decide_identity_verification";
 export type AdminAuditResourceType =
   | "admin_access"
   | "network_defense"
@@ -104,4 +107,5 @@ export type AdminAuditResourceType =
   | "payment_limits"
   | "email_campaign"
   | "customer_service_settings"
-  | "developer_webhook";
+  | "developer_webhook"
+  | "identity_verification";
