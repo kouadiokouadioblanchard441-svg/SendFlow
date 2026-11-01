@@ -159,7 +159,7 @@ test("signup email OTP is sent and verified without verifying the phone", async 
     assert.equal(sentRequest.url, "https://api.resend.com/emails");
     const emailPayload = JSON.parse(sentRequest.init.body);
     assert.deepEqual(emailPayload.to, ["otp-fixture@example.invalid"]);
-    const code = emailPayload.text.match(/Code : ([0-9]{6})/)?.[1];
+    const code = emailPayload.text.match(/\b([0-9]{6})\b/)?.[1];
     assert.ok(code);
 
     const reserved = await owner.query(
