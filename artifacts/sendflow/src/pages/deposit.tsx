@@ -351,7 +351,6 @@ export default function DepositPage() {
           failureCopy="Aucun montant n’a été crédité. Vérifiez votre opération USSD puis réessayez."
           cancelLabel="Annuler le dépôt"
           successButtonLabel="Fermer le dépôt"
-          failureButtonLabel="Réessayer le dépôt"
           onClose={cancelDepositRequest}
         />
 

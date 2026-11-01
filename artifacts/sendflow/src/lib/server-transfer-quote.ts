@@ -28,16 +28,16 @@ export function serverQuoteErrorMessage(error: unknown): string {
     ? (error as { status?: unknown }).status
     : undefined;
   if (status === 400) {
-    return 'Vérifiez le montant, le pays, l’opérateur et les numéros. Si le problème persiste, contactez le service client SendFlow.';
+    return 'Vérifiez le montant, le pays, l’opérateur et les numéros. Aucun transfert n’a été lancé. Si le problème persiste, contactez le service client SendFlow.';
   }
   if (status === 401 || status === 403) {
-    return 'Reconnectez-vous puis réessayez. Si le problème persiste, contactez le service client SendFlow.';
+    return 'Reconnectez-vous puis réessayez. Aucun transfert n’a été lancé. Si le problème persiste, contactez le service client SendFlow.';
   }
   if (status === 409) {
-    return 'Ce montant dépasse la limite disponible sur votre compte. Réduisez-le ou contactez le service client SendFlow.';
+    return 'Ce montant dépasse la limite disponible sur votre compte. Aucun transfert n’a été lancé. Réduisez-le ou contactez le service client SendFlow.';
   }
   if (status === 429) {
-    return 'Vous avez fait plusieurs demandes. Patientez un instant avant de réessayer. Si le problème persiste, contactez le service client SendFlow.';
+    return 'Vous avez fait plusieurs demandes. Aucun transfert n’a été lancé. Patientez un instant avant de réessayer. Si le problème persiste, contactez le service client SendFlow.';
   }
   return 'Nous ne pouvons pas vérifier le montant pour le moment. Aucun transfert n’a été lancé. Réessayez plus tard ou contactez le service client SendFlow.';
 }

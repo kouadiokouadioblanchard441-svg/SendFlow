@@ -16,6 +16,8 @@ import {
   useGetPublicPricing,
 } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
+import { reportGlobalApiError } from '@/lib/global-api-errors';
+import { shouldShowGlobalQueryError } from '@/lib/safe-api-error';
 import { NativeWalletIcon } from '@/components/native-wallet-icon';
 import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import { useSeo } from '@/lib/seo';
@@ -259,6 +261,10 @@ export default function InternationalTransferPage() {
               setRequestState('failure');
             }).catch((error: unknown) => {
               if (error instanceof Error && error.name === 'AbortError') return;
+              if (shouldShowGlobalQueryError(error)) {
+                reportGlobalApiError(error);
+                return;
+              }
               const status = typeof error === 'object' && error !== null && 'status' in error
                 ? (error as { status?: number }).status
                 : undefined;
@@ -412,7 +418,7 @@ export default function InternationalTransferPage() {
                 Calcul du devis avec les tarifs du serveur…
               </p>
             )}
-            {transferQuote.isError && quoteInput !== null && (
+            {transferQuote.isError && quoteInput !== null && !shouldShowGlobalQueryError(transferQuote.error) && (
               <p className="sendflow-international-field-error" role="alert" data-testid="transfer-quote-error">
                 {serverQuoteErrorMessage(transferQuote.error)}
               </p>
@@ -463,7 +469,6 @@ export default function InternationalTransferPage() {
           failureCopy={dialogFailureCopy}
           cancelLabel="Annuler l’envoi international"
           successButtonLabel="Fermer le transfert international"
-          failureButtonLabel="Fermer"
           onClose={() => setRequestState('idle')}
         />
 

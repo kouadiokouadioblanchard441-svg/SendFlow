@@ -48,6 +48,10 @@ function isFinancialRequest(path: string): boolean {
   return /payment|transaction|transfer|payout|withdraw|deposit|checkout|linkflow/.test(path);
 }
 
+function isTransferQuoteRequest(path: string): boolean {
+  return /\/transfer-quote(?:\/|$)/.test(path);
+}
+
 export function getSafeApiErrorCopy(error: unknown): SafeApiErrorCopy {
   const status = getApiErrorStatus(error);
   const path = getRequestPath(error);
@@ -87,6 +91,18 @@ export function getSafeApiErrorCopy(error: unknown): SafeApiErrorCopy {
     if (/auth\/reset-password|auth\/reset-pin|auth\/verify-otp/.test(path)) {
       return safeCopy('Code à renouveler', 'Le code a expiré ou a déjà été utilisé. Demandez-en un nouveau.');
     }
+    if (isTransferQuoteRequest(path)) {
+      return safeCopy(
+        'Plafond mensuel dépassé',
+        'Ce montant dépasse la limite disponible sur votre compte. Aucun transfert n’a été lancé. Réduisez le montant puis réessayez.',
+      );
+    }
+    if (isFinancialRequest(path)) {
+      return safeCopy(
+        'Opération à vérifier',
+        'Cette opération ne peut pas être préparée. Vérifiez le montant et les limites applicables, puis réessayez.',
+      );
+    }
     return safeCopy('Modification non enregistrée', 'Les informations ont changé. Actualisez la page puis vérifiez avant de recommencer.');
   }
 
@@ -107,6 +123,12 @@ export function getSafeApiErrorCopy(error: unknown): SafeApiErrorCopy {
   }
 
   if (status !== undefined && status >= 500) {
+    if (isTransferQuoteRequest(path)) {
+      return safeCopy(
+        'Vérification indisponible',
+        'Nous ne pouvons pas vérifier le montant pour le moment. Aucun transfert n’a été lancé. Réessayez plus tard.',
+      );
+    }
     return safeCopy(
       'Service momentanément indisponible',
       isFinancialRequest(path)
@@ -116,8 +138,12 @@ export function getSafeApiErrorCopy(error: unknown): SafeApiErrorCopy {
   }
 
   return safeCopy(
-    'Une erreur est survenue',
-    isFinancialRequest(path)
+    isTransferQuoteRequest(path)
+      ? 'Vérification indisponible'
+      : 'Une erreur est survenue',
+    isTransferQuoteRequest(path)
+      ? 'Nous ne pouvons pas vérifier le montant pour le moment. Aucun transfert n’a été lancé. Réessayez plus tard.'
+      : isFinancialRequest(path)
       ? 'Nous n’avons pas pu confirmer cette opération. Consultez son état avant de recommencer pour éviter un doublon.'
       : 'La demande n’a pas abouti. Vérifiez votre connexion puis réessayez.',
   );
@@ -133,6 +159,7 @@ export function shouldShowGlobalQueryError(error: unknown): boolean {
 
   const status = getApiErrorStatus(error);
   // Auth, not-found, and validation responses are often expected while the app
-  // checks access. Mutation errors and user-submitted forms use the dialog.
-  return status === undefined || status === 429 || status >= 500;
+  // checks access. A financial conflict is actionable and belongs in the dialog.
+  const financialConflict = status === 409 && isFinancialRequest(getRequestPath(error));
+  return status === undefined || status === 429 || status >= 500 || financialConflict;
 }

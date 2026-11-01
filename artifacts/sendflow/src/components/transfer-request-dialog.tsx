@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import depositSuccessIllustration from '@assets/generated_images/sendflow-deposit-success-3d-alpha.png';
-import depositFailureIllustration from '@assets/generated_images/sendflow-deposit-failure-3d-alpha.png';
 import depositPendingIllustration from '@assets/generated_images/sendflow-deposit-pending-3d-alpha.png';
+import { ErrorDialog } from '@/components/error-dialog';
 
 export type TransferRequestState = 'idle' | 'pending' | 'success' | 'failure';
 
@@ -20,7 +20,6 @@ type TransferRequestDialogProps = {
   failureCopy: string;
   cancelLabel: string;
   successButtonLabel: string;
-  failureButtonLabel: string;
   onClose: () => void;
 };
 
@@ -39,11 +38,10 @@ export function TransferRequestDialog({
   failureCopy,
   cancelLabel,
   successButtonLabel,
-  failureButtonLabel,
   onClose,
 }: TransferRequestDialogProps) {
   useEffect(() => {
-    if (state === 'idle') return;
+    if (state === 'idle' || state === 'failure') return;
 
     const previousOverflow = document.body.style.overflow;
     const previousOverscrollBehavior = document.body.style.overscrollBehavior;
@@ -57,6 +55,17 @@ export function TransferRequestDialog({
   }, [state]);
 
   if (state === 'idle') return null;
+
+  if (state === 'failure') {
+    return (
+      <ErrorDialog
+        open
+        title={failureTitle}
+        message={failureCopy}
+        onClose={onClose}
+      />
+    );
+  }
 
   const titleId = `sendflow-${operation.toLowerCase().replace(/\s+/g, '-')}-request-title`;
 
@@ -111,18 +120,6 @@ export function TransferRequestDialog({
           </div>
         )}
 
-        {state === 'failure' && (
-          <div className="sendflow-deposit-request-state is-failure">
-            <div className="sendflow-deposit-failure-art">
-              <img src={depositFailureIllustration} alt="" />
-            </div>
-            <h2 id={titleId}>{failureTitle}</h2>
-            <p>{failureCopy}</p>
-            <button type="button" className="sendflow-deposit-request-confirm" onClick={onClose}>
-              {failureButtonLabel}
-            </button>
-          </div>
-        )}
       </section>
     </div>
   );

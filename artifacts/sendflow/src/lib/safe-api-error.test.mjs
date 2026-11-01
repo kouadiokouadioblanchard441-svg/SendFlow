@@ -46,6 +46,35 @@ test('financial server failures advise checking status rather than repeating an 
   assert.doesNotMatch(copy.message, /\b503\b|HTTP/);
 });
 
+test('financial conflicts use the shared dialog while unrelated conflicts remain inline', () => {
+  const financialError = {
+    status: 409,
+    url: 'https://api.sendflow.example/api/transfers/quote',
+  };
+  const ordinaryError = {
+    status: 409,
+    url: 'https://api.sendflow.example/api/profile',
+  };
+
+  assert.equal(shouldShowGlobalQueryError(financialError), true);
+  assert.equal(getSafeApiErrorCopy(financialError).title, 'Opération à vérifier');
+  assert.match(getSafeApiErrorCopy(financialError).message, /montant et les limites/);
+  assert.equal(shouldShowGlobalQueryError(ordinaryError), false);
+});
+
+test('transfer quote failures state that no transfer was started', () => {
+  const error = {
+    status: 503,
+    url: 'https://api.sendflow.example/api/me/transfer-quote',
+    data: { error: 'private provider failure' },
+  };
+
+  assert.equal(shouldShowGlobalQueryError(error), true);
+  assert.equal(getSafeApiErrorCopy(error).title, 'Vérification indisponible');
+  assert.match(getSafeApiErrorCopy(error).message, /Aucun transfert n’a été lancé/);
+  assert.doesNotMatch(getSafeApiErrorCopy(error).message, /provider failure|503|HTTP/);
+});
+
 test('query dialogs do not fire for expected auth, validation, or missing-resource responses', () => {
   assert.equal(shouldShowGlobalQueryError({ status: 401 }), false);
   assert.equal(shouldShowGlobalQueryError({ status: 404 }), false);
