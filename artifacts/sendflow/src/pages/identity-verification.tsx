@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
+import { MIN_BIRTH_DATE } from '@/lib/auth-validation';
 import { ErrorDialog } from '@/components/error-dialog';
 import { useSeo } from '@/lib/seo';
 import identityCardFrontIllustration from '@assets/generated_images/sendflow-identity-card-front-3d.webp';
@@ -73,13 +73,17 @@ function isValidCalendarDate(value: string): boolean {
     && parsed.getDate() === day;
 }
 
-function getTodayDate(): string {
-  const now = new Date();
-  return [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0'),
-  ].join('-');
+function getTomorrowDate(): string {
+  const tomorrow = new Date();
+  tomorrow.setUTCHours(0, 0, 0, 0);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  return tomorrow.toISOString().slice(0, 10);
+}
+
+function getIdentityAdultBirthDateLimit(referenceDate = new Date()): string {
+  const limit = new Date(referenceDate);
+  limit.setUTCFullYear(limit.getUTCFullYear() - 18);
+  return limit.toISOString().slice(0, 10);
 }
 
 function validateForm(form: VerificationForm): VerificationErrors {
@@ -89,24 +93,30 @@ function validateForm(form: VerificationForm): VerificationErrors {
   const documentNumber = form.documentNumber.trim();
 
   if (!lastName) errors.lastName = 'Le nom est requis.';
-  else if (lastName.length < 2 || !/\p{L}/u.test(lastName)) errors.lastName = 'Saisissez un nom valide.';
+  else if (lastName.length < 2 || lastName.length > 100 || !/\p{L}/u.test(lastName) || !/^[\p{L}\p{M} .'-]+$/u.test(lastName)) {
+    errors.lastName = 'Saisissez un nom valide.';
+  }
 
   if (!firstName) errors.firstName = 'Le prénom est requis.';
-  else if (firstName.length < 2 || !/\p{L}/u.test(firstName)) errors.firstName = 'Saisissez un prénom valide.';
+  else if (firstName.length < 2 || firstName.length > 100 || !/\p{L}/u.test(firstName) || !/^[\p{L}\p{M} .'-]+$/u.test(firstName)) {
+    errors.firstName = 'Saisissez un prénom valide.';
+  }
 
   if (!form.documentType) errors.documentType = 'Choisissez un type de document.';
   if (!documentNumber) errors.documentNumber = 'Le numéro du document est requis.';
-  else if (documentNumber.length > 80) errors.documentNumber = 'Le numéro du document est trop long.';
+  else if (documentNumber.length > 80 || !/^[\p{L}\p{N} ./'-]+$/u.test(documentNumber)) {
+    errors.documentNumber = 'Vérifiez le numéro de votre document.';
+  }
 
   if (!form.birthDate || !isValidCalendarDate(form.birthDate) || form.birthDate < MIN_BIRTH_DATE) {
     errors.birthDate = 'Saisissez une date de naissance valide.';
-  } else if (form.birthDate > getAdultBirthDateLimit()) {
+  } else if (form.birthDate > getIdentityAdultBirthDateLimit()) {
     errors.birthDate = 'La date de naissance indiquée n’est pas valide.';
   }
 
   if (!form.documentExpiryDate || !isValidCalendarDate(form.documentExpiryDate)) {
     errors.documentExpiryDate = 'Saisissez une date d’expiration valide.';
-  } else if (form.documentExpiryDate < getTodayDate()) {
+  } else if (form.documentExpiryDate < getTomorrowDate()) {
     errors.documentExpiryDate = 'La pièce doit être en cours de validité.';
   }
 
@@ -133,6 +143,7 @@ export default function IdentityVerificationPage() {
   const [requestStatus, setRequestStatus] = useState<IdentityRequestStatus>('unverified');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorDialogMessage, setErrorDialogMessage] = useState('');
+  const [errorDialogTitle, setErrorDialogTitle] = useState('Vérification indisponible');
   const idempotencyKey = useRef<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -182,8 +193,9 @@ export default function IdentityVerificationPage() {
         setStep(5);
       }
     }).catch(() => {
-      // The submission endpoint remains the authority; a status lookup failure
-      // must not falsely display a submitted state.
+      if (!active) return;
+      setErrorDialogTitle('Vérification indisponible');
+      setErrorDialogMessage('Nous ne pouvons pas vérifier votre dossier pour le moment. Réessayez plus tard ou contactez le service client SendFlow.');
     });
     return () => { active = false; };
   }, [isUnlocked]);
@@ -383,6 +395,12 @@ export default function IdentityVerificationPage() {
     setNotice('');
   };
 
+  const clearPhotoSelections = () => {
+    setPhotos({});
+    photoUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    photoUrls.current.clear();
+  };
+
   const submitIdentityRequest = async () => {
     if (isSubmitting) return;
     const nextErrors = validateForm(form);
@@ -399,6 +417,31 @@ export default function IdentityVerificationPage() {
 
     setIsSubmitting(true);
     try {
+      const statusResponse = await fetch(resolveApiUrl('/api/me/identity-verification'), {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!statusResponse.ok) throw new Error('status');
+      const currentStatus = await statusResponse.json() as { status?: IdentityRequestStatus };
+      if (
+        currentStatus.status !== 'unverified'
+        && currentStatus.status !== 'rejected'
+        && currentStatus.status !== 'pending'
+        && currentStatus.status !== 'approved'
+      ) {
+        throw new Error('status');
+      }
+      if (currentStatus.status === 'pending' || currentStatus.status === 'approved') {
+        setRequestStatus(currentStatus.status);
+        setStep(5);
+        clearPhotoSelections();
+        idempotencyKey.current = null;
+        return;
+      }
+      if (currentStatus.status === 'rejected') {
+        idempotencyKey.current = null;
+      }
+
       if (!idempotencyKey.current) idempotencyKey.current = crypto.randomUUID();
       const uploaded: Array<{ id: string; kind: 'front' | 'back' | 'selfie' }> = [];
 
@@ -414,17 +457,15 @@ export default function IdentityVerificationPage() {
           }),
         });
         if (!uploadResponse.ok) throw new Error('upload-ticket');
-        const upload = await uploadResponse.json() as {
-          uploadId: string;
-          uploadUrl: string;
-          headers: Record<string, string>;
-        };
-        const objectResponse = await fetch(upload.uploadUrl, {
-          method: 'PUT',
-          headers: upload.headers,
-          body: file,
-          credentials: 'omit',
-        });
+        const upload = await uploadResponse.json() as { uploadId: string };
+        const objectResponse = await fetchWithCsrf(
+          resolveApiUrl(`/api/me/identity-verification/uploads/${upload.uploadId}/content`),
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type },
+            body: file,
+          },
+        );
         if (!objectResponse.ok) throw new Error('upload-file');
         uploaded.push({ id: upload.uploadId, kind: entry.kind });
       }
@@ -455,6 +496,8 @@ export default function IdentityVerificationPage() {
             const status = await statusResponse.json() as { status?: IdentityRequestStatus };
             if (status.status === 'pending' || status.status === 'approved') {
               setRequestStatus(status.status);
+              clearPhotoSelections();
+              idempotencyKey.current = null;
               return;
             }
           }
@@ -466,18 +509,17 @@ export default function IdentityVerificationPage() {
         throw new Error('unexpected-status');
       }
       setRequestStatus(submitted.status);
-      setPhotos({});
-      photoUrls.current.forEach((url) => URL.revokeObjectURL(url));
-      photoUrls.current.clear();
+      clearPhotoSelections();
       idempotencyKey.current = null;
     } catch {
+      setErrorDialogTitle('Envoi impossible');
       setErrorDialogMessage('La transmission sécurisée n’a pas abouti. Vérifiez votre connexion puis réessayez. Si le problème persiste, contactez le service client SendFlow.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const today = getTodayDate();
+  const minimumExpiryDate = getTomorrowDate();
   const activePhoto = step === 2 || step === 3 || step === 4 ? photos[step] : undefined;
   const photoTitle = step === 2
     ? 'Photo recto de votre pièce d’identité'
@@ -548,7 +590,7 @@ export default function IdentityVerificationPage() {
                 name="lastName"
                 type="text"
                 autoComplete="family-name"
-                maxLength={80}
+                maxLength={100}
                 value={form.lastName}
                 onChange={(event) => updateField('lastName', event.target.value)}
                 aria-invalid={Boolean(errors.lastName)}
@@ -566,7 +608,7 @@ export default function IdentityVerificationPage() {
                 name="firstName"
                 type="text"
                 autoComplete="given-name"
-                maxLength={80}
+                maxLength={100}
                 value={form.firstName}
                 onChange={(event) => updateField('firstName', event.target.value)}
                 aria-invalid={Boolean(errors.firstName)}
@@ -654,7 +696,7 @@ export default function IdentityVerificationPage() {
                   type="date"
                   autoComplete="bday"
                   min={MIN_BIRTH_DATE}
-                  max={getAdultBirthDateLimit()}
+                  max={getIdentityAdultBirthDateLimit()}
                   value={form.birthDate}
                   onChange={(event) => updateField('birthDate', event.target.value)}
                   aria-invalid={Boolean(errors.birthDate)}
@@ -674,7 +716,7 @@ export default function IdentityVerificationPage() {
                   id="identity-document-expiry"
                   name="documentExpiryDate"
                   type="date"
-                  min={today}
+                  min={minimumExpiryDate}
                   value={form.documentExpiryDate}
                   onChange={(event) => updateField('documentExpiryDate', event.target.value)}
                   aria-invalid={Boolean(errors.documentExpiryDate)}
@@ -739,6 +781,8 @@ export default function IdentityVerificationPage() {
                       setStep(1);
                       setForm(EMPTY_FORM);
                       setErrors({});
+                      idempotencyKey.current = null;
+                      clearPhotoSelections();
                     }}
                     data-testid="button-identity-resubmit"
                   >
@@ -844,7 +888,7 @@ export default function IdentityVerificationPage() {
                 ref={photoInputRef}
                 className="sendflow-identity-file-input"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={handlePhotoSelected}
                 aria-label={step === 4 ? 'Prendre un selfie' : 'Prendre une photo de la pièce'}
                 data-testid="input-identity-photo"
@@ -951,7 +995,7 @@ export default function IdentityVerificationPage() {
         </Dialog>
         <ErrorDialog
           open={Boolean(errorDialogMessage)}
-          title="Envoi impossible"
+          title={errorDialogTitle}
           message={errorDialogMessage}
           onClose={() => setErrorDialogMessage('')}
         />

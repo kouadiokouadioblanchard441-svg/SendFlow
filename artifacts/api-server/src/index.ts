@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { startDeveloperWebhookWorker } from "./services/developer-webhook-worker";
 import { startEmailCampaignWorker } from "./services/email-campaign-worker";
+import { startIdentityVerificationUploadCleanup } from "./services/identity-verification-upload-cleanup";
 
 const rawPort = process.env["PORT"];
 
@@ -29,6 +30,7 @@ async function startServer(): Promise<void> {
     if (process.env.NODE_ENV === "production") {
       startDeveloperWebhookWorker(logger);
       startEmailCampaignWorker(logger);
+      startIdentityVerificationUploadCleanup(logger);
     }
   });
 }
