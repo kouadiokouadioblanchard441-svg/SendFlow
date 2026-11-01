@@ -20,6 +20,7 @@ import {
   sql,
   usersTable,
   emailMarketingSuppressionsTable,
+  customerServiceSettingsTable,
 } from "@workspace/db";
 import {
   createSensitiveDataLookupIndex,
@@ -36,6 +37,7 @@ import {
 import { ResendConfigurationError, ResendDeliveryError, sendResendEmail } from "../lib/resend-email";
 import { createEmailUnsubscribeToken } from "../lib/email-marketing-unsubscribe";
 import { applyPendingCampaignProviderEvents } from "./email-campaign-provider-events";
+import { renderCampaignEmailHtml, renderCampaignEmailText } from "../lib/email-campaign-template";
 
 const MAX_ATTEMPTS = 4;
 const BATCH_SIZE = 5;
@@ -60,22 +62,6 @@ type WorkerLogger = {
   error: (context: Record<string, unknown>, message: string) => void;
   info?: (context: Record<string, unknown>, message: string) => void;
 };
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  })[character] ?? character);
-}
-
-function renderPlainTextEmail(bodyText: string, unsubscribeUrl: string) {
-  const escaped = escapeHtml(bodyText);
-  const safeUnsubscribeUrl = escapeHtml(unsubscribeUrl);
-  return `<div style="font-family:Arial,sans-serif;line-height:1.6;white-space:pre-wrap">${escaped}</div><hr><p style="font-family:Arial,sans-serif;font-size:12px;color:#555">Vous recevez ce message car vous avez accepté les communications SendFlow. <a href="${safeUnsubscribeUrl}">Se désinscrire</a></p>`;
-}
 
 export async function refreshCampaignStatus(campaignId: string) {
   await db.transaction(async (transaction) => {
@@ -394,6 +380,14 @@ async function claimNextRecipient() {
 }
 
 async function deliverOne(logger: WorkerLogger) {
+  const [configuredContacts] = await db.select({
+    phoneNumber: customerServiceSettingsTable.phoneNumber,
+    whatsappNumber: customerServiceSettingsTable.whatsappNumber,
+  }).from(customerServiceSettingsTable)
+    .where(eq(customerServiceSettingsTable.id, "global"))
+    .limit(1);
+  if (!configuredContacts?.phoneNumber && !configuredContacts?.whatsappNumber) return false;
+
   const claim = await claimNextRecipient();
   if (!claim) return false;
   if (claim.skipped) {
@@ -442,11 +436,29 @@ async function deliverOne(logger: WorkerLogger) {
     );
     const unsubscribeUrl = new URL("/email-unsubscribe", process.env.SENDFLOW_PUBLIC_SITE_URL)
       .toString() + `?token=${encodeURIComponent(unsubscribeToken)}`;
+    const [contacts] = await db.select({
+      phoneNumber: customerServiceSettingsTable.phoneNumber,
+      whatsappNumber: customerServiceSettingsTable.whatsappNumber,
+      facebookLabel: customerServiceSettingsTable.facebookLabel,
+      facebookUrl: customerServiceSettingsTable.facebookUrl,
+    }).from(customerServiceSettingsTable)
+      .where(eq(customerServiceSettingsTable.id, "global"))
+      .limit(1);
+    if (!contacts) throw new Error("Customer service contact settings are not initialized");
+    if (!contacts.phoneNumber && !contacts.whatsappNumber) {
+      throw new Error("Customer service phone contact is not configured");
+    }
+    const template = {
+      subject: recipient.subject,
+      bodyText: recipient.bodyText,
+      unsubscribeUrl,
+      contacts,
+    };
     const sent = await sendResendEmail({
       to: email,
       subject: recipient.subject,
-      text: `${recipient.bodyText}\n\nVous recevez ce message car vous avez accepté les communications SendFlow.\nSe désinscrire : ${unsubscribeUrl}`,
-      html: renderPlainTextEmail(recipient.bodyText, unsubscribeUrl),
+      text: renderCampaignEmailText(template),
+      html: renderCampaignEmailHtml(template),
       tags: [
         { name: "sendflow_campaign_recipient", value: recipient.id },
         { name: "sendflow_campaign_attempt", value: recipient.attemptId },

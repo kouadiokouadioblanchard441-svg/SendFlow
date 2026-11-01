@@ -5,6 +5,7 @@ import {
   getListAdminEmailCampaignHistoryQueryKey,
   getListAdminEmailCampaignsQueryKey,
   getGetAdminEmailCampaignSettingsQueryKey,
+  getGetCustomerServiceSettingsQueryKey,
   getAdminEmailCampaign,
   retryAdminEmailCampaignRecipient,
   useCancelAdminEmailCampaign,
@@ -14,6 +15,7 @@ import {
   useListAdminEmailCampaignHistory,
   useListAdminEmailCampaigns,
   useGetAdminEmailCampaignSettings,
+  useGetCustomerServiceSettings,
   useQueueAdminEmailCampaign,
   useUpdateAdminEmailCampaign,
 } from "@workspace/api-client-react";
@@ -103,6 +105,13 @@ export function EmailCampaignsSection() {
   const queryClient = useQueryClient();
   const campaignsQuery = useListAdminEmailCampaigns({
     query: { queryKey: getListAdminEmailCampaignsQueryKey(), retry: false },
+  });
+  const customerServiceQuery = useGetCustomerServiceSettings({
+    query: {
+      queryKey: getGetCustomerServiceSettingsQueryKey(),
+      retry: false,
+      staleTime: 0,
+    },
   });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -584,22 +593,38 @@ export function EmailCampaignsSection() {
         <div className="space-y-6">
           <Card className="border-border/80 shadow-sm" data-testid="card-campaign-preview">
             <CardHeader className="pb-3">
-              <p className="sendflow-admin-overline">Vérification</p>
-              <CardTitle className="text-lg">Aperçu du message</CardTitle>
-              <CardDescription>Rendu indicatif du texte saisi, sans envoi.</CardDescription>
+              <p className="sendflow-admin-overline">Modèle SendFlow</p>
+              <CardTitle className="text-lg">Aperçu de l’e-mail</CardTitle>
+              <CardDescription>Présentation responsive utilisée pour les prochaines campagnes, sans envoi.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-hidden rounded-xl border border-border bg-background">
-                <div className="flex items-center gap-3 border-b border-border bg-muted/35 px-4 py-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-primary"><Mail className="h-4 w-4" /></span>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold">SendFlow</p>
-                    <p className="text-[10px] text-muted-foreground">Aperçu du contenu</p>
+              <div className="rounded-xl bg-muted/60 p-3 sm:p-4" data-testid="preview-campaign-email-frame">
+                <div className="mx-auto max-w-[600px] overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+                  <div className="border-b border-border px-5 py-4">
+                    <p className="text-base font-bold tracking-tight text-foreground">SendFlow</p>
                   </div>
-                </div>
-                <div className="space-y-3 p-4">
-                  <p className="break-words text-sm font-semibold" data-testid="preview-campaign-subject">{subject.trim() || "Objet de votre message"}</p>
-                  <p className="min-h-24 whitespace-pre-wrap break-words text-xs leading-6 text-muted-foreground" data-testid="preview-campaign-body">{bodyText || "Le texte de votre message apparaîtra ici."}</p>
+                  <div className="px-5 py-6 sm:px-7">
+                    <p className="mb-5 break-words text-xl font-bold leading-tight text-foreground" data-testid="preview-campaign-subject">
+                      {subject.trim() || "Titre de votre message"}
+                    </p>
+                    <p className="min-h-24 whitespace-pre-wrap break-words text-sm leading-7 text-foreground/90" data-testid="preview-campaign-body">
+                      {bodyText || "Le texte de votre message apparaîtra ici."}
+                    </p>
+                    <p className="mt-6 text-sm font-semibold text-foreground">L’équipe SendFlow</p>
+                  </div>
+                  <div className="border-t border-border bg-muted/35 px-5 py-4 text-xs leading-5 text-muted-foreground sm:px-7">
+                    <p className="font-semibold text-foreground">Service client SendFlow</p>
+                    {customerServiceQuery.data?.phoneNumber && <p className="mt-1">Téléphone : {customerServiceQuery.data.phoneNumber}</p>}
+                    {customerServiceQuery.data?.whatsappNumber && <p>WhatsApp : {customerServiceQuery.data.whatsappNumber}</p>}
+                    {customerServiceQuery.data?.facebookLabel && customerServiceQuery.data.facebookUrl && (
+                      <p>Facebook : {customerServiceQuery.data.facebookLabel}</p>
+                    )}
+                    {!customerServiceQuery.isLoading && !customerServiceQuery.isError
+                      && !customerServiceQuery.data?.phoneNumber && !customerServiceQuery.data?.whatsappNumber
+                      && <p className="mt-1">Coordonnées du service client à configurer dans le panel.</p>}
+                    <p className="mt-3">Merci de ne pas répondre à cet e-mail. Cette adresse n’est pas surveillée.</p>
+                    <p className="mt-2">Vous recevez ce message car vous avez accepté les communications SendFlow. Le lien de désinscription est ajouté lors de l’envoi.</p>
+                  </div>
                 </div>
               </div>
               <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/55 p-3 text-xs leading-5 text-muted-foreground" data-testid="notice-provider-acceptance">

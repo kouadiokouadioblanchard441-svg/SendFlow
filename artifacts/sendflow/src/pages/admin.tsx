@@ -19,6 +19,7 @@ import {
   ExternalLink,
   FileSearch,
   Globe2,
+  Headset,
   Landmark,
   LayoutDashboard,
   Mail,
@@ -42,6 +43,7 @@ import {
 } from 'lucide-react';
 import { AdminActionDialog } from '@/components/admin-action-dialog';
 import { AdminPaymentLimitsSection } from '@/components/admin-payment-limits-section';
+import { AdminCustomerServiceSettingsSection } from '@/components/admin-customer-service-settings';
 import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
 import { AdminCountriesSection } from '@/components/admin-countries-section';
@@ -166,7 +168,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -188,6 +190,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'ip-blocklist': { title: 'Blocage d’adresses IP', eyebrow: 'Sécurité réseau' },
   'network-defense': { title: 'Autodéfense', eyebrow: 'Sécurité réseau' },
   'email-campaigns': { title: 'Campagnes e-mail', eyebrow: 'Communication' },
+  'customer-service-settings': { title: 'Service client', eyebrow: 'Coordonnées publiques' },
 };
 
 const navGroups: Array<{
@@ -224,6 +227,7 @@ const navGroups: Array<{
       { href: adminRoute('/operator-pricing'), label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
       { href: adminRoute('/registration-settings'), label: 'Vérification à l’inscription', section: 'registration-settings', icon: ShieldCheck },
       { href: adminRoute('/payment-limits'), label: 'Limites de paiement', section: 'payment-limits', icon: Banknote },
+      { href: adminRoute('/customer-service-settings'), label: 'Coordonnées du service client', section: 'customer-service-settings', icon: Headset },
     ],
   },
 ];
@@ -3137,6 +3141,7 @@ export function AdminRouter() {
   const [isRegistrationSettings] = useRoute(adminRoute('/registration-settings'));
   const [isPaymentLimits] = useRoute(adminRoute('/payment-limits'));
   const [isEmailCampaigns] = useRoute(adminRoute('/email-campaigns'));
+  const [isCustomerServiceSettings] = useRoute(adminRoute('/customer-service-settings'));
   const [isIpBlocklist] = useRoute(adminRoute('/ip-blocklist'));
   const [isNetworkDefense] = useRoute(adminRoute('/network-defense'));
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
@@ -3156,6 +3161,7 @@ export function AdminRouter() {
   if (isRegistrationSettings) return <RegistrationSettingsPage />;
   if (isPaymentLimits) return <AdminShell section="payment-limits"><AdminPaymentLimitsSection /></AdminShell>;
   if (isEmailCampaigns) return <AdminShell section="email-campaigns"><EmailCampaignsSection /></AdminShell>;
+  if (isCustomerServiceSettings) return <AdminShell section="customer-service-settings"><AdminCustomerServiceSettingsSection /></AdminShell>;
   if (isNetworkDefense) return <AdminShell section="network-defense"><AdminNetworkDefense /></AdminShell>;
   if (isIpBlocklist) return <AdminShell section="ip-blocklist"><AdminIpBlocklist /></AdminShell>;
   return <OverviewPage />;

@@ -43,6 +43,13 @@
       "when": 1793484338863,
       "tag": "0005_spotty_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793539086330,
+      "tag": "0006_customer_service_settings",
+      "breakpoints": true
     }
   ]
 }

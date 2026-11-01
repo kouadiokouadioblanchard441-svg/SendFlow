@@ -28,6 +28,7 @@ import type {
   AdminBannerReorderRequest,
   AdminCountry,
   AdminCountryCatalog,
+  AdminCustomerServiceSettings,
   AdminEmailCampaignDeleteResponse,
   AdminEmailCampaignDetailResponse,
   AdminEmailCampaignHistoryResponse,
@@ -91,6 +92,7 @@ import type {
   CustomerProfile,
   CustomerProfileUpdate,
   CustomerRegistrationInput,
+  CustomerServiceSettingsUpdate,
   CustomerSessionResult,
   CustomerSignInInput,
   CustomerTransaction,
@@ -145,6 +147,7 @@ import type {
   PaymentLimitsUpdate,
   PricingRatesUpdate,
   PublicBannerList,
+  PublicCustomerServiceSettings,
   PublicPaymentLimits,
   PublicPaymentLink,
   PublicPaymentLinkAttemptCreated,
@@ -1281,6 +1284,83 @@ export function useGetRegistrationSettings<TData = Awaited<ReturnType<typeof get
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetRegistrationSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCustomerServiceSettingsUrl = () => {
+
+
+
+
+  return `/api/customer-service-settings`
+}
+
+/**
+ * @summary Read the currently active SendFlow customer-service contacts
+ */
+export const getCustomerServiceSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicCustomerServiceSettings> => {
+
+  return customFetch<PublicCustomerServiceSettings>(getGetCustomerServiceSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerServiceSettingsQueryKey = () => {
+    return [
+    `/api/customer-service-settings`
+    ] as const;
+    }
+
+
+export const getGetCustomerServiceSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerServiceSettings>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerServiceSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerServiceSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerServiceSettings>>> = ({ signal }) => getCustomerServiceSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerServiceSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerServiceSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerServiceSettings>>>
+export type GetCustomerServiceSettingsQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Read the currently active SendFlow customer-service contacts
+ */
+
+export function useGetCustomerServiceSettings<TData = Awaited<ReturnType<typeof getCustomerServiceSettings>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerServiceSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerServiceSettingsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -8002,6 +8082,171 @@ export const useUpdateAdminRegistrationSettings = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getUpdateAdminRegistrationSettingsMutationOptions(options));
+    }
+
+export const getGetAdminCustomerServiceSettingsUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/customer-service-settings`
+}
+
+/**
+ * @summary Read the active customer-service contact settings
+ */
+export const getAdminCustomerServiceSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminCustomerServiceSettings> => {
+
+  return customFetch<AdminCustomerServiceSettings>(getGetAdminCustomerServiceSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminCustomerServiceSettingsQueryKey = () => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/customer-service-settings`
+    ] as const;
+    }
+
+
+export const getGetAdminCustomerServiceSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminCustomerServiceSettings>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminCustomerServiceSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminCustomerServiceSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminCustomerServiceSettings>>> = ({ signal }) => getAdminCustomerServiceSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminCustomerServiceSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminCustomerServiceSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminCustomerServiceSettings>>>
+export type GetAdminCustomerServiceSettingsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read the active customer-service contact settings
+ */
+
+export function useGetAdminCustomerServiceSettings<TData = Awaited<ReturnType<typeof getAdminCustomerServiceSettings>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminCustomerServiceSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminCustomerServiceSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateAdminCustomerServiceSettingsUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/customer-service-settings`
+}
+
+/**
+ * @summary Update the active customer-service contact settings
+ */
+export const updateAdminCustomerServiceSettings = async (customerServiceSettingsUpdate: CustomerServiceSettingsUpdate, options?: Parameters<typeof customFetch>[1]): Promise<AdminCustomerServiceSettings> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminCustomerServiceSettings>(getUpdateAdminCustomerServiceSettingsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerServiceSettingsUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminCustomerServiceSettingsMutationKey = () => ['updateAdminCustomerServiceSettings'] as const;
+
+export const getUpdateAdminCustomerServiceSettingsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminCustomerServiceSettings>>, TError,UpdateAdminCustomerServiceSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminCustomerServiceSettings>>, TError,UpdateAdminCustomerServiceSettingsMutationVariables, TContext> => {
+
+const mutationKey = getUpdateAdminCustomerServiceSettingsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminCustomerServiceSettings>>, UpdateAdminCustomerServiceSettingsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateAdminCustomerServiceSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminCustomerServiceSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminCustomerServiceSettings>>>
+    export type UpdateAdminCustomerServiceSettingsMutationBody = BodyType<CustomerServiceSettingsUpdate>
+    export type UpdateAdminCustomerServiceSettingsMutationError = ErrorType<void>
+    export type UpdateAdminCustomerServiceSettingsMutationVariables = {data: BodyType<CustomerServiceSettingsUpdate>}
+
+    /**
+ * @summary Update the active customer-service contact settings
+ */
+export const useUpdateAdminCustomerServiceSettings = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminCustomerServiceSettings>>, TError,UpdateAdminCustomerServiceSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminCustomerServiceSettings>>,
+        TError,
+        UpdateAdminCustomerServiceSettingsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateAdminCustomerServiceSettingsMutationOptions(options));
     }
 
 export const getListAdminEmailCampaignsUrl = () => {

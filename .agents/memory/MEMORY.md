@@ -43,3 +43,4 @@
 - [Documentation portal visual identity](docs-portal-visual-identity.md) — Use the reference's Inter typography while preserving white surfaces, SendFlow violet, and clear card borders.
 - [SendFlow page loader](sendflow-page-loader.md) — Keep the shared LinkFlow-style four-dot violet animation for full-page waits and route transitions.
 - [Merchant developer API](developer-integrations.md) — Keep direct and SendFlow-hosted API checkout on the same LinkFlow routing and settlement path.
+- [Campaign contact details](campaign-contact-settings.md) — Campaign email contact details must come from the active admin settings; never bake support numbers into templates.

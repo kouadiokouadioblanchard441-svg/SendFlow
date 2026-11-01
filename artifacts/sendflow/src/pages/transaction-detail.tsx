@@ -3,7 +3,7 @@ import { Redirect, useLocation } from 'wouter';
 import { getGetCurrentAccountQueryKey, useGetCurrentAccount } from '@workspace/api-client-react';
 import { OperatorLogo } from '@/components/transaction-card';
 import PageLoadingScreen from '@/components/page-loading-screen';
-import { customerServiceProvider } from '@/lib/customer-service';
+import { useCustomerServiceContact } from '@/lib/customer-service';
 import { useCustomerTransaction } from '@/lib/customer-transactions';
 import {
   formatCurrencyMinor,
@@ -49,6 +49,7 @@ export default function TransactionDetailPage() {
   const accountQuery = useGetCurrentAccount({
     query: { queryKey: getGetCurrentAccountQueryKey(), enabled: isUnlocked },
   });
+  const { contact: supportContact } = useCustomerServiceContact();
   const detailQuery = useCustomerTransaction(accountQuery.data?.userId, transactionId);
   const transaction = detailQuery.data;
 
@@ -109,7 +110,6 @@ export default function TransactionDetailPage() {
     isDeposit ? transaction.fromOperator : transaction.toOperator,
   );
   const operatorName = operatorNames[transactionOperator];
-  const supportContact = customerServiceProvider.getContact();
   const whatsappMessage = [
     "Bonjour, je souhaite obtenir de l'aide concernant une transaction SendFlow.",
     '',
@@ -123,7 +123,9 @@ export default function TransactionDetailPage() {
     '',
     'Pouvez-vous m’aider à vérifier cette opération ?',
   ].join('\n');
-  const whatsappHref = `${supportContact.whatsappHref}${supportContact.whatsappHref.includes('?') ? '&' : '?'}text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappHref = supportContact.whatsappHref
+    ? `${supportContact.whatsappHref}?text=${encodeURIComponent(whatsappMessage)}`
+    : null;
 
   const handleDownload = () => {
     window.print();
@@ -206,7 +208,7 @@ export default function TransactionDetailPage() {
             <Star size={17} strokeWidth={2} aria-hidden="true" />
             Noter l'application
           </button>
-          <a
+          {whatsappHref && <a
             className="sendflow-receipt-report"
             href={whatsappHref}
             target="_blank"
@@ -215,7 +217,7 @@ export default function TransactionDetailPage() {
           >
             <CircleHelp size={19} strokeWidth={2.2} aria-hidden="true" />
             Besoin d’aide ?
-          </a>
+          </a>}
         </div>
       </section>
     </main>

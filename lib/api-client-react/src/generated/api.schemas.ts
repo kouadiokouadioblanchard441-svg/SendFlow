@@ -192,6 +192,71 @@ export interface AdminRegistrationSettings {
   updatedAt: string | null;
 }
 
+export interface PublicCustomerServiceSettings {
+  /**
+     * @maxLength 16
+     * @nullable
+     * @pattern ^[+][1-9][0-9]{7,14}$
+     */
+  phoneNumber: string | null;
+  /**
+     * @maxLength 16
+     * @nullable
+     * @pattern ^[+][1-9][0-9]{7,14}$
+     */
+  whatsappNumber: string | null;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  facebookLabel: string | null;
+  /**
+     * @maxLength 500
+     * @nullable
+     * @pattern ^https://(www[.])?facebook[.]com/
+     */
+  facebookUrl: string | null;
+}
+
+export type AdminCustomerServiceSettings = PublicCustomerServiceSettings & {
+  /** @minimum 1 */
+  version: number;
+  updatedAt: string;
+};
+
+export interface CustomerServiceSettingsUpdate {
+  /**
+     * @maxLength 16
+     * @nullable
+     * @pattern ^[+][1-9][0-9]{7,14}$
+     */
+  phoneNumber: string | null;
+  /**
+     * @maxLength 16
+     * @nullable
+     * @pattern ^[+][1-9][0-9]{7,14}$
+     */
+  whatsappNumber: string | null;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  facebookLabel: string | null;
+  /**
+     * @maxLength 500
+     * @nullable
+     * @pattern ^https://(www[.])?facebook[.]com/
+     */
+  facebookUrl: string | null;
+  /** @minimum 1 */
+  expectedVersion: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
 export type PublicPaymentLimitsCurrency = typeof PublicPaymentLimitsCurrency[keyof typeof PublicPaymentLimitsCurrency];
 
 

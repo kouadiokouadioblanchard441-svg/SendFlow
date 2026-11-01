@@ -350,6 +350,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /customer-service-settings:
+    get:
+      operationId: getCustomerServiceSettings
+      tags: [account]
+      summary: Read the currently active SendFlow customer-service contacts
+      responses:
+        "200":
+          description: Public support contact settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCustomerServiceSettings"
+        "503":
+          description: Contact settings are unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /auth/register:
     post:
       operationId: registerCustomer
@@ -3519,6 +3537,55 @@ paths:
           description: Setting was modified by another administrator.
         "503":
           description: Setting unavailable.
+  /DMgrgmt-1np5g23g12bGFtMwh/customer-service-settings:
+    get:
+      operationId: getAdminCustomerServiceSettings
+      tags: [admin]
+      summary: Read the active customer-service contact settings
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Current contacts and version.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCustomerServiceSettings"
+        "401":
+          description: Authentication is required.
+        "403":
+          description: Administrator access is required.
+        "503":
+          description: Contact settings are unavailable.
+    patch:
+      operationId: updateAdminCustomerServiceSettings
+      tags: [admin]
+      summary: Update the active customer-service contact settings
+      security:
+        - sendFlowSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerServiceSettingsUpdate"
+      responses:
+        "200":
+          description: Updated contacts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCustomerServiceSettings"
+        "400":
+          description: Invalid phone number, link, or audit reason.
+        "401":
+          description: Authentication is required.
+        "403":
+          description: Administrator mutation access is required.
+        "409":
+          description: Settings changed in another administrator session.
+        "503":
+          description: Contact settings are unavailable.
   /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns:
     get:
       operationId: listAdminEmailCampaigns
@@ -5128,6 +5195,32 @@ components:
           type: ["string", "null"]
           format: date-time
       required: [emailVerificationEnabled, version, updatedAt]
+    PublicCustomerServiceSettings:
+      type: object
+      properties:
+        phoneNumber: { type: ["string", "null"], maxLength: 16, pattern: '^[+][1-9][0-9]{7,14}$' }
+        whatsappNumber: { type: ["string", "null"], maxLength: 16, pattern: '^[+][1-9][0-9]{7,14}$' }
+        facebookLabel: { type: ["string", "null"], maxLength: 100 }
+        facebookUrl: { type: ["string", "null"], format: uri, maxLength: 500, pattern: '^https://(www[.])?facebook[.]com/' }
+      required: [phoneNumber, whatsappNumber, facebookLabel, facebookUrl]
+    AdminCustomerServiceSettings:
+      allOf:
+        - $ref: "#/components/schemas/PublicCustomerServiceSettings"
+        - type: object
+          properties:
+            version: { type: integer, minimum: 1 }
+            updatedAt: { type: string, format: date-time }
+          required: [version, updatedAt]
+    CustomerServiceSettingsUpdate:
+      type: object
+      properties:
+        phoneNumber: { type: ["string", "null"], maxLength: 16, pattern: '^[+][1-9][0-9]{7,14}$' }
+        whatsappNumber: { type: ["string", "null"], maxLength: 16, pattern: '^[+][1-9][0-9]{7,14}$' }
+        facebookLabel: { type: ["string", "null"], maxLength: 100 }
+        facebookUrl: { type: ["string", "null"], format: uri, maxLength: 500, pattern: '^https://(www[.])?facebook[.]com/' }
+        expectedVersion: { type: integer, minimum: 1 }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+      required: [phoneNumber, whatsappNumber, facebookLabel, facebookUrl, expectedVersion, reason]
     PublicPaymentLimits:
       type: object
       properties:

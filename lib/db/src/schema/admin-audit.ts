@@ -81,6 +81,7 @@ export type AdminAuditAction =
   | "cancel_email_campaign"
   | "delete_email_campaign"
   | "retry_email_campaign_recipient"
+  | "update_customer_service_settings"
   | "view_developer_webhooks";
 export type AdminAuditResourceType =
   | "admin_access"
@@ -102,4 +103,5 @@ export type AdminAuditResourceType =
   | "registration_settings"
   | "payment_limits"
   | "email_campaign"
+  | "customer_service_settings"
   | "developer_webhook";

@@ -363,6 +363,33 @@ export const GetRegistrationSettingsResponse = zod.object({
 
 
 /**
+ * @summary Read the currently active SendFlow customer-service contacts
+ */
+export const getCustomerServiceSettingsResponsePhoneNumberMax = 16;
+
+
+export const getCustomerServiceSettingsResponsePhoneNumberRegExp = new RegExp('^[+][1-9][0-9]{7,14}$');
+export const getCustomerServiceSettingsResponseWhatsappNumberMax = 16;
+
+
+export const getCustomerServiceSettingsResponseWhatsappNumberRegExp = new RegExp('^[+][1-9][0-9]{7,14}$');
+export const getCustomerServiceSettingsResponseFacebookLabelMax = 100;
+
+export const getCustomerServiceSettingsResponseFacebookUrlMax = 500;
+
+
+export const getCustomerServiceSettingsResponseFacebookUrlRegExp = new RegExp('^https://(www[.])?facebook[.]com');
+
+
+export const GetCustomerServiceSettingsResponse = zod.object({
+  "phoneNumber": zod.string().max(getCustomerServiceSettingsResponsePhoneNumberMax).regex(getCustomerServiceSettingsResponsePhoneNumberRegExp).nullable(),
+  "whatsappNumber": zod.string().max(getCustomerServiceSettingsResponseWhatsappNumberMax).regex(getCustomerServiceSettingsResponseWhatsappNumberRegExp).nullable(),
+  "facebookLabel": zod.string().max(getCustomerServiceSettingsResponseFacebookLabelMax).nullable(),
+  "facebookUrl": zod.url().max(getCustomerServiceSettingsResponseFacebookUrlMax).regex(getCustomerServiceSettingsResponseFacebookUrlRegExp).nullable()
+})
+
+
+/**
  * Consumes a verified email challenge when email verification is enabled; otherwise records the email as unverified. The phone remains unverified in either case. Creates the account, wallet, initial public/secret developer API key pair, and customer session. The secret is returned only in this creation response.
  * @summary Create a customer account under the current verification policy
  */
@@ -3020,6 +3047,97 @@ export const UpdateAdminRegistrationSettingsResponse = zod.object({
   "version": zod.int(),
   "updatedAt": zod.coerce.date().nullable()
 })
+
+
+/**
+ * @summary Read the active customer-service contact settings
+ */
+export const getAdminCustomerServiceSettingsResponseOnePhoneNumberMax = 16;
+
+
+export const getAdminCustomerServiceSettingsResponseOnePhoneNumberRegExp = new RegExp('^[+][1-9][0-9]{7,14}$');
+export const getAdminCustomerServiceSettingsResponseOneWhatsappNumberMax = 16;
+
+
+export const getAdminCustomerServiceSettingsResponseOneWhatsappNumberRegExp = new RegExp('^[+][1-9][0-9]{7,14}$');
+export const getAdminCustomerServiceSettingsResponseOneFacebookLabelMax = 100;
+
+export const getAdminCustomerServiceSettingsResponseOneFacebookUrlMax = 500;
+
+
+export const getAdminCustomerServiceSettingsResponseOneFacebookUrlRegExp = new RegExp('^https://(www[.])?facebook[.]com');
+
+
+
+export const GetAdminCustomerServiceSettingsResponse = zod.object({
+  "phoneNumber": zod.string().max(getAdminCustomerServiceSettingsResponseOnePhoneNumberMax).regex(getAdminCustomerServiceSettingsResponseOnePhoneNumberRegExp).nullable(),
+  "whatsappNumber": zod.string().max(getAdminCustomerServiceSettingsResponseOneWhatsappNumberMax).regex(getAdminCustomerServiceSettingsResponseOneWhatsappNumberRegExp).nullable(),
+  "facebookLabel": zod.string().max(getAdminCustomerServiceSettingsResponseOneFacebookLabelMax).nullable(),
+  "facebookUrl": zod.url().max(getAdminCustomerServiceSettingsResponseOneFacebookUrlMax).regex(getAdminCustomerServiceSettingsResponseOneFacebookUrlRegExp).nullable()
+}).and(zod.object({
+  "version": zod.int().min(1),
+  "updatedAt": zod.coerce.date()
+}))
+
+
+/**
+ * @summary Update the active customer-service contact settings
+ */
+export const updateAdminCustomerServiceSettingsBodyPhoneNumberMax = 16;
+
+
+export const updateAdminCustomerServiceSettingsBodyPhoneNumberRegExp = new RegExp('^[+][1-9][0-9]{7,14}$');
+export const updateAdminCustomerServiceSettingsBodyWhatsappNumberMax = 16;
+
+
+export const updateAdminCustomerServiceSettingsBodyWhatsappNumberRegExp = new RegExp('^[+][1-9][0-9]{7,14}$');
+export const updateAdminCustomerServiceSettingsBodyFacebookLabelMax = 100;
+
+export const updateAdminCustomerServiceSettingsBodyFacebookUrlMax = 500;
+
+
+export const updateAdminCustomerServiceSettingsBodyFacebookUrlRegExp = new RegExp('^https://(www[.])?facebook[.]com');
+
+export const updateAdminCustomerServiceSettingsBodyReasonMin = 3;
+export const updateAdminCustomerServiceSettingsBodyReasonMax = 500;
+
+
+
+export const UpdateAdminCustomerServiceSettingsBody = zod.object({
+  "phoneNumber": zod.string().max(updateAdminCustomerServiceSettingsBodyPhoneNumberMax).regex(updateAdminCustomerServiceSettingsBodyPhoneNumberRegExp).nullable(),
+  "whatsappNumber": zod.string().max(updateAdminCustomerServiceSettingsBodyWhatsappNumberMax).regex(updateAdminCustomerServiceSettingsBodyWhatsappNumberRegExp).nullable(),
+  "facebookLabel": zod.string().max(updateAdminCustomerServiceSettingsBodyFacebookLabelMax).nullable(),
+  "facebookUrl": zod.url().max(updateAdminCustomerServiceSettingsBodyFacebookUrlMax).regex(updateAdminCustomerServiceSettingsBodyFacebookUrlRegExp).nullable(),
+  "expectedVersion": zod.int().min(1),
+  "reason": zod.string().min(updateAdminCustomerServiceSettingsBodyReasonMin).max(updateAdminCustomerServiceSettingsBodyReasonMax)
+})
+
+export const updateAdminCustomerServiceSettingsResponseOnePhoneNumberMax = 16;
+
+
+export const updateAdminCustomerServiceSettingsResponseOnePhoneNumberRegExp = new RegExp('^[+][1-9][0-9]{7,14}$');
+export const updateAdminCustomerServiceSettingsResponseOneWhatsappNumberMax = 16;
+
+
+export const updateAdminCustomerServiceSettingsResponseOneWhatsappNumberRegExp = new RegExp('^[+][1-9][0-9]{7,14}$');
+export const updateAdminCustomerServiceSettingsResponseOneFacebookLabelMax = 100;
+
+export const updateAdminCustomerServiceSettingsResponseOneFacebookUrlMax = 500;
+
+
+export const updateAdminCustomerServiceSettingsResponseOneFacebookUrlRegExp = new RegExp('^https://(www[.])?facebook[.]com');
+
+
+
+export const UpdateAdminCustomerServiceSettingsResponse = zod.object({
+  "phoneNumber": zod.string().max(updateAdminCustomerServiceSettingsResponseOnePhoneNumberMax).regex(updateAdminCustomerServiceSettingsResponseOnePhoneNumberRegExp).nullable(),
+  "whatsappNumber": zod.string().max(updateAdminCustomerServiceSettingsResponseOneWhatsappNumberMax).regex(updateAdminCustomerServiceSettingsResponseOneWhatsappNumberRegExp).nullable(),
+  "facebookLabel": zod.string().max(updateAdminCustomerServiceSettingsResponseOneFacebookLabelMax).nullable(),
+  "facebookUrl": zod.url().max(updateAdminCustomerServiceSettingsResponseOneFacebookUrlMax).regex(updateAdminCustomerServiceSettingsResponseOneFacebookUrlRegExp).nullable()
+}).and(zod.object({
+  "version": zod.int().min(1),
+  "updatedAt": zod.coerce.date()
+}))
 
 
 /**

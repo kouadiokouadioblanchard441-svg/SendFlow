@@ -1,6 +1,6 @@
 import { ArrowLeft, PhoneCall, type LucideIcon } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
-import { customerServiceProvider } from '@/lib/customer-service';
+import { useCustomerServiceContact } from '@/lib/customer-service';
 import { useSeo } from '@/lib/seo';
 import facebookLogo from '@assets/facebook-logo-clean-icon-png_1789744005304.png';
 import whatsappLogo from '@assets/logo-whatsapp-fond-blanc-vecteur_980129-12073_1789744005252.jpg';
@@ -20,13 +20,13 @@ type SupportChannel = {
 export default function CustomerServicePage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const contact = customerServiceProvider.getContact();
-  const channels: SupportChannel[] = [
+  const { contact, query } = useCustomerServiceContact();
+  const channels = ([
     {
       id: 'whatsapp',
       label: 'WhatsApp',
-      value: contact.whatsappNumber,
-      href: contact.whatsappHref,
+      value: contact.whatsappNumber ?? '',
+      href: contact.whatsappHref ?? '',
       logo: whatsappLogo,
       showValue: false,
       external: true,
@@ -34,8 +34,8 @@ export default function CustomerServicePage() {
     {
       id: 'facebook',
       label: 'Facebook',
-      value: contact.facebookLabel,
-      href: contact.facebookHref,
+      value: contact.facebookLabel ?? '',
+      href: contact.facebookHref ?? '',
       logo: facebookLogo,
       showValue: false,
       external: true,
@@ -43,12 +43,12 @@ export default function CustomerServicePage() {
     {
       id: 'phone',
       label: 'Téléphone',
-      value: contact.phoneNumber,
-      href: contact.phoneHref,
+      value: contact.phoneNumber ?? '',
+      href: contact.phoneHref ?? '',
       icon: PhoneCall,
       showValue: true,
     },
-  ];
+  ] satisfies SupportChannel[]).filter((channel) => Boolean(channel.value && channel.href));
 
   useSeo({
     path: '/customer-service',
@@ -80,6 +80,11 @@ export default function CustomerServicePage() {
         </header>
 
         <section className="sendflow-customer-service-list" aria-label="Moyens de contact">
+          {query.isLoading && <p role="status">Chargement des coordonnées du service client…</p>}
+          {query.isError && <p role="alert">Les coordonnées du service client sont momentanément indisponibles. Réessayez plus tard.</p>}
+          {!query.isLoading && !query.isError && channels.length === 0 && (
+            <p role="status">Aucun moyen de contact n’est actuellement configuré.</p>
+          )}
           {channels.map((channel) => {
             const Icon = channel.icon;
 

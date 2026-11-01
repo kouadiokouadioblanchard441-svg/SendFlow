@@ -1,28 +1,29 @@
-export type CustomerServiceContact = {
-  whatsappNumber: string;
-  whatsappHref: string;
-  playStoreHref: string | null;
-  facebookLabel: string;
-  facebookHref: string;
-  phoneNumber: string;
-  phoneHref: string;
-};
+import {
+  getGetCustomerServiceSettingsQueryKey,
+  useGetCustomerServiceSettings,
+} from "@workspace/api-client-react";
 
-export interface CustomerServiceProvider {
-  getContact: () => CustomerServiceContact;
+export function useCustomerServiceContact() {
+  const query = useGetCustomerServiceSettings({
+    query: {
+      queryKey: getGetCustomerServiceSettingsQueryKey(),
+      retry: false,
+      staleTime: 0,
+    },
+  });
+  const settings = query.data;
+  const whatsappDigits = settings?.whatsappNumber?.replace(/\D/g, "") ?? "";
+
+  return {
+    query,
+    contact: {
+      phoneNumber: settings?.phoneNumber ?? null,
+      phoneHref: settings?.phoneNumber ? `tel:${settings.phoneNumber}` : null,
+      whatsappNumber: settings?.whatsappNumber ?? null,
+      whatsappHref: whatsappDigits ? `https://wa.me/${whatsappDigits}` : null,
+      facebookLabel: settings?.facebookLabel ?? null,
+      facebookHref: settings?.facebookUrl ?? null,
+      playStoreHref: null,
+    },
+  };
 }
-
-// Coordonnées de démonstration en attendant la configuration du panel.
-const fictionalCustomerServiceContact: CustomerServiceContact = {
-  whatsappNumber: '+225 07 00 00 00 00',
-  whatsappHref: 'https://wa.me/2250700000000',
-  playStoreHref: null,
-  facebookLabel: 'facebook.com/SendFlow',
-  facebookHref: 'https://www.facebook.com/SendFlow',
-  phoneNumber: '+225 07 00 00 00 00',
-  phoneHref: 'tel:+2250700000000',
-};
-
-export const customerServiceProvider: CustomerServiceProvider = {
-  getContact: () => fictionalCustomerServiceContact,
-};

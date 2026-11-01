@@ -22,6 +22,7 @@ import {
   usersTable,
   emailCampaignRecipientsTable,
   emailCampaignsTable,
+  customerServiceSettingsTable,
 } from "@workspace/db";
 import { recordAdminAudit } from "../lib/admin-audit";
 import {
@@ -95,6 +96,16 @@ type AudienceUser = {
 
 function dispatchEnabled() {
   return isCampaignDispatchEnabled(process.env);
+}
+
+async function customerServiceContactsReady() {
+  const [contacts] = await db.select({
+    phoneNumber: customerServiceSettingsTable.phoneNumber,
+    whatsappNumber: customerServiceSettingsTable.whatsappNumber,
+  }).from(customerServiceSettingsTable)
+    .where(eq(customerServiceSettingsTable.id, "global"))
+    .limit(1);
+  return Boolean(contacts?.phoneNumber || contacts?.whatsappNumber);
 }
 
 function campaignStateCounts(rows: Array<{ status: string; value: number }>) {
@@ -507,7 +518,7 @@ adminRoutes.get("/email-campaigns", async (req, res): Promise<void> => {
       resourceType: "email_campaign",
       resourceId: "campaign-list",
     });
-    res.json({ items, sendingEnabled: dispatchEnabled() });
+    res.json({ items, sendingEnabled: dispatchEnabled() && await customerServiceContactsReady() });
   } catch (error) {
     req.log.error({ err: error }, "Email campaign list lookup failed");
     res.status(503).json({ error: "L’historique des campagnes est indisponible." });
@@ -519,6 +530,7 @@ adminRoutes.get("/email-campaigns/settings", async (req, res): Promise<void> => 
   if (!adminUserId) return;
   try {
     const settings = getEmailCampaignConfiguration();
+    const contactsReady = await customerServiceContactsReady();
     await recordAdminAudit({
       adminUserId,
       action: "view_email_campaigns",
@@ -526,7 +538,7 @@ adminRoutes.get("/email-campaigns/settings", async (req, res): Promise<void> => 
       resourceId: "settings",
     });
     res.setHeader("Cache-Control", "no-store, private");
-    res.json(settings);
+    res.json({ ...settings, sendingEnabled: settings.sendingEnabled && contactsReady });
   } catch {
     req.log.error("Email campaign settings lookup failed");
     res.status(503).json({ error: "Les paramètres de campagne sont indisponibles." });
@@ -673,6 +685,10 @@ adminRoutes.post("/email-campaigns/:campaignId/send", async (req, res): Promise<
   }
   const campaignId = req.params.campaignId;
   try {
+    if (!await customerServiceContactsReady()) {
+      res.status(503).json({ error: "Configurez au moins un numéro du service client avant de mettre une campagne en file." });
+      return;
+    }
     const result = await db.transaction(async (transaction) => {
       const [campaign] = await transaction.select()
         .from(emailCampaignsTable)
