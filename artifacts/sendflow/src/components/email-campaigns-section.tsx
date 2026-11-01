@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getListAdminEmailCampaignRecipientsQueryKey,
@@ -50,11 +50,6 @@ type PendingAction = { kind: "queue" | "cancel" | "delete"; campaign: AdminEmail
 type CampaignView = "campaigns" | "drafts" | "history" | "accepted" | "delivered" | "bounced" | "complained" | "failed" | "settings";
 
 const PAGE_SIZE = 20;
-const sendFlowEmailTheme = {
-  "--primary": "211 100% 50%",
-  "--primary-foreground": "0 0% 100%",
-} as CSSProperties;
-
 function formatCount(value: number) {
   return new Intl.NumberFormat("fr-FR").format(value);
 }
@@ -337,7 +332,7 @@ export function EmailCampaignsSection() {
   const actionPending = queueCampaign.isPending || cancelCampaign.isPending || deleteCampaign.isPending;
 
   return (
-    <div className="space-y-6" style={sendFlowEmailTheme} data-testid="section-email-campaigns">
+    <div className="space-y-6" data-testid="section-email-campaigns">
       <header className="sendflow-admin-page-intro" data-testid="header-email-campaigns">
         <div>
           <p className="sendflow-admin-overline">Communication · Espace administrateur</p>
