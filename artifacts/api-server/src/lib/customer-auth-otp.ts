@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, phoneOtpChallengesTable } from "@workspace/db";
+import { and, eq, gt, isNull, phoneOtpChallengesTable } from "@workspace/db";
 import { fingerprint } from "./request-security";
 import { createSensitiveDataLookupIndex, normalizeSensitiveEmailForLookup } from "./sensitive-data-crypto";
 
@@ -25,7 +25,7 @@ export function verifiedCustomerOtpCondition(
       )
       : undefined,
     isNull(phoneOtpChallengesTable.consumedAt),
-    gte(phoneOtpChallengesTable.expiresAt, now),
+    gt(phoneOtpChallengesTable.expiresAt, now),
   );
 }
 
@@ -45,6 +45,6 @@ export function verifiedCustomerEmailOtpCondition(
     eq(phoneOtpChallengesTable.status, "verified"),
     eq(phoneOtpChallengesTable.emailVerified, true),
     isNull(phoneOtpChallengesTable.consumedAt),
-    gte(phoneOtpChallengesTable.expiresAt, now),
+    gt(phoneOtpChallengesTable.expiresAt, now),
   );
 }
