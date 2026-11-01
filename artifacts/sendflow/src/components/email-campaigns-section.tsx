@@ -598,7 +598,7 @@ export function EmailCampaignsSection() {
               <CardDescription>Présentation responsive utilisée pour les prochaines campagnes, sans envoi.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl bg-muted/60 p-3 sm:p-4" data-testid="preview-campaign-email-frame">
+              <div className="rounded-xl bg-muted/60 p-3 font-sans sm:p-4" data-testid="preview-campaign-email-frame">
                 <div className="mx-auto max-w-[600px] overflow-hidden rounded-xl border border-border bg-white shadow-sm">
                   <div className="border-b border-border px-5 py-4">
                     <p className="text-base font-bold tracking-tight text-foreground">SendFlow</p>

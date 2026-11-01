@@ -20,6 +20,8 @@ const input = {
 test("campaign email template renders a branded responsive layout with live contact settings", () => {
   const html = renderCampaignEmailHtml(input);
   assert.match(html, /max-width:600px/);
+  assert.match(html, /font-family:'DM Sans'/);
+  assert.match(html, /fonts\.googleapis\.com\/css2\?family=DM\+Sans/);
   assert.match(html, /background:#ffffff/);
   assert.match(html, /<h1[^>]*>Information &lt;importante&gt;<\/h1>/);
   assert.match(html, /tel:\+2250102030405/);
