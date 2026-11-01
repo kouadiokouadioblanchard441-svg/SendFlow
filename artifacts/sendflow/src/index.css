@@ -3912,28 +3912,28 @@
 .sendflow-identity-select {
   width: 100%;
   min-width: 0;
-  min-height: 52px;
-  border: 1px solid #cfc9d8;
-  border-radius: 11px;
+  min-height: 56px;
+  border: 2px solid #e6e6e6;
+  border-radius: 12px;
   background: #fff;
   color: #25212c;
   padding: 0 15px;
   font: inherit;
   font-size: 16px;
-  transition: border-color .16s ease, box-shadow .16s ease;
+  transition: border-color .18s ease, box-shadow .18s ease;
 }
 
 .sendflow-identity-field input:focus,
 .sendflow-identity-select:focus-visible {
-  border-color: #7620db;
+  border-color: #6d35d8;
   outline: 0;
-  box-shadow: 0 0 0 3px rgba(118, 32, 219, .13);
+  box-shadow: 0 0 0 3px rgba(109, 53, 216, .12);
 }
 
 .sendflow-identity-field input[aria-invalid="true"],
 .sendflow-identity-select.has-error,
 .sendflow-identity-date.has-error {
-  border-color: #bc3544;
+  border-color: #c2414d;
 }
 
 .sendflow-identity-select {
@@ -4009,21 +4009,21 @@
 .sendflow-identity-date {
   position: relative;
   display: flex;
-  min-height: 52px;
+  min-height: 56px;
   align-items: center;
   overflow: hidden;
-  border: 1px solid #cfc9d8;
-  border-radius: 11px;
+  border: 2px solid #e6e6e6;
+  border-radius: 12px;
   background: #fff;
 }
 
 .sendflow-identity-date:focus-within {
-  border-color: #7620db;
-  box-shadow: 0 0 0 3px rgba(118, 32, 219, .13);
+  border-color: #6d35d8;
+  box-shadow: 0 0 0 3px rgba(109, 53, 216, .12);
 }
 
 .sendflow-identity-date input {
-  min-height: 50px;
+  min-height: 52px;
   border: 0;
   background: transparent;
   padding-right: 48px;
