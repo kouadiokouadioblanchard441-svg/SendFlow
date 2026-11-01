@@ -7267,10 +7267,21 @@ body:has(.sendflow-linkflow-shell) {
 }
 
 .sendflow-reset-login a,
+.sendflow-reset-login button,
 .sendflow-reset-resend button {
   color: #6d35d8;
   font-weight: 700;
   text-decoration: none;
+}
+
+.sendflow-reset-login button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .sendflow-reset-heading-verify {
@@ -7280,6 +7291,25 @@ body:has(.sendflow-linkflow-shell) {
 .sendflow-reset-heading-verify p {
   max-width: 320px;
   line-height: 1.38;
+}
+
+.sendflow-reset-availability {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0 0;
+  border: 1px solid #e7e1f1;
+  border-radius: 12px;
+  background: #faf9fc;
+  color: #4f5863;
+  padding: 13px 15px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sendflow-reset-availability strong {
+  color: #30243f;
+  font-weight: 700;
 }
 
 .sendflow-reset-verify-form {

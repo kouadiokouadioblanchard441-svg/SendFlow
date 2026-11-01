@@ -110,17 +110,14 @@ export interface CustomerPortalEligibilityResult {
   isAuthorized: boolean;
 }
 
-export type EmailOtpSendInputPurpose = typeof EmailOtpSendInputPurpose[keyof typeof EmailOtpSendInputPurpose];
-
-
-export const EmailOtpSendInputPurpose = {
-  signup: 'signup',
-  password_reset: 'password_reset',
-  pin_reset: 'pin_reset',
-  admin_login: 'admin_login',
-} as const;
-
-export interface EmailOtpSendInput {
+export type EmailOtpSendInput = {
+  /**
+     * Email associated with the active SendFlow account.
+     * @maxLength 254
+     */
+  email: string;
+  purpose: 'password_reset';
+} | {
   /**
      * Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.
      * @minLength 9
@@ -129,12 +126,21 @@ export interface EmailOtpSendInput {
      */
   phone: string;
   /**
-     * Required for signup. For recovery or administrator access, SendFlow uses the email already associated with the account and ignores this field.
+     * Required for signup.
      * @maxLength 254
      */
-  email?: string;
-  purpose: EmailOtpSendInputPurpose;
-}
+  email: string;
+  purpose: 'signup';
+} | {
+  /**
+     * Account phone identifier.
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phone: string;
+  purpose: 'pin_reset' | 'admin_login';
+};
 
 export interface EmailOtpSendResult {
   challengeId: string;
@@ -319,12 +325,8 @@ export interface CustomerSignInInput {
 
 export interface CustomerPasswordResetInput {
   challengeId: string;
-  /**
-     * @minLength 9
-     * @maxLength 16
-     * @pattern ^\+[1-9][0-9]{7,14}$
-     */
-  phone: string;
+  /** @maxLength 254 */
+  email: string;
   /**
      * @minLength 8
      * @maxLength 64

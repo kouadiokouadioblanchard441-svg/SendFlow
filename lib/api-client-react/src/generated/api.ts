@@ -1631,8 +1631,8 @@ export const getResetCustomerPasswordUrl = () => {
 }
 
 /**
- * Requires a single-use password-recovery OTP. The response does not reveal whether the phone has an account.
- * @summary Reset a customer password using a verified phone code
+ * Requires a single-use password-recovery code sent to the verified email address on the account. The response does not reveal whether the email belongs to an account.
+ * @summary Reset a customer password using a verified email code
  */
 export const resetCustomerPassword = async (customerPasswordResetInput: CustomerPasswordResetInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerMutationResult> => {
 
@@ -1698,7 +1698,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ResetCustomerPasswordMutationVariables = {data: BodyType<CustomerPasswordResetInput>}
 
     /**
- * @summary Reset a customer password using a verified phone code
+ * @summary Reset a customer password using a verified email code
  */
 export const useResetCustomerPassword = <TError = ErrorType<ErrorEnvelope>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetCustomerPassword>>, TError,ResetCustomerPasswordMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}

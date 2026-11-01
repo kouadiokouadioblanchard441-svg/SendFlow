@@ -99,7 +99,11 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
       if (passwordHash === null) return { kind: "invalid" } as const;
 
       const [user] = await tx
-        .select({ id: usersTable.id, status: usersTable.status })
+        .select({
+          id: usersTable.id,
+          status: usersTable.status,
+          emailVerifiedAt: usersTable.emailVerifiedAt,
+        })
         .from(usersTable)
         .where(eq(usersTable.emailLookupHash, emailLookupHash))
         .for("update");
@@ -109,7 +113,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
         .set({ consumedAt: now })
         .where(eq(phoneOtpChallengesTable.id, challenge.id));
 
-      if (!user || user.status !== "active") return { kind: "processed" } as const;
+      if (!user || user.status !== "active" || !user.emailVerifiedAt) return { kind: "processed" } as const;
 
       const [credential] = await tx
         .update(customerCredentialsTable)

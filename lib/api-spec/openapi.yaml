@@ -492,8 +492,8 @@ paths:
     post:
       operationId: resetCustomerPassword
       tags: [account]
-      summary: Reset a customer password using a verified phone code
-      description: Requires a single-use password-recovery OTP. The response does not reveal whether the phone has an account.
+      summary: Reset a customer password using a verified email code
+      description: Requires a single-use password-recovery code sent to the verified email address on the account. The response does not reveal whether the email belongs to an account.
       requestBody:
         required: true
         content:

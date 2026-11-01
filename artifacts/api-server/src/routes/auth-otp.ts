@@ -359,9 +359,10 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   }
 
   const purpose = parsed.data.purpose as OtpPurpose;
-  const phone = parsed.data.phone ?? null;
-  const recoveryEmail = purpose === "password_reset"
-    ? normalizeEmail(parsed.data.email!)
+  const phone = "phone" in parsed.data ? parsed.data.phone : null;
+  const providedEmail = "email" in parsed.data ? parsed.data.email : undefined;
+  const recoveryEmail = purpose === "password_reset" && providedEmail
+    ? normalizeEmail(providedEmail)
     : null;
   let phoneHash: string;
   let emailLookupHash: string | null = null;
@@ -388,7 +389,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   try {
     recipient = recoveryEmail && emailLookupHash
       ? await resolvePasswordResetOtpRecipient(recoveryEmail, emailLookupHash)
-      : await resolveOtpRecipient(phone!, purpose, parsed.data.email);
+      : await resolveOtpRecipient(phone!, purpose, providedEmail);
   } catch (error) {
     req.log.error({ err: error }, "Email OTP recipient lookup failed");
     res.status(503).json({ error: "La vérification par e-mail est indisponible." });
@@ -632,6 +633,21 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
         });
       } catch (storageError) {
         req.log.error({ err: storageError, challengeId: reservation.id }, "Failed OTP email request could not be marked");
+      }
+
+      if (purpose === "password_reset") {
+        req.log.warn(
+          { challengeId: reservation.id, providerHttpStatus: failure.providerHttpStatus },
+          "Password reset email delivery could not be confirmed",
+        );
+        res.status(202).json(
+          SendEmailOtpResponse.parse({
+            challengeId: reservation.id,
+            expiresAt,
+            resendAfterSeconds: RESEND_COOLDOWN_SECONDS,
+          }),
+        );
+        return;
       }
 
       if (error instanceof ExternalProviderCallUnavailableError || error instanceof ResendConfigurationError) {

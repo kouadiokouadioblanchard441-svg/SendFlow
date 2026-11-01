@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   RegisterCustomerBody,
   ResetCustomerPasswordBody,
+  SendEmailOtpBody,
   SignInCustomerBody,
 } from "../../../../lib/api-zod/src/generated/api.ts";
 
@@ -61,7 +62,7 @@ test("new and reset customer passwords require eight characters while legacy sig
   assert.equal(
     ResetCustomerPasswordBody.safeParse({
       challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
-      phone,
+      email,
       newPassword: shortPassword,
     }).success,
     false,
@@ -69,9 +70,33 @@ test("new and reset customer passwords require eight characters while legacy sig
   assert.equal(
     ResetCustomerPasswordBody.safeParse({
       challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
+      email,
+      newPassword: strongPassword,
+    }).success,
+    true,
+  );
+  assert.equal(
+    ResetCustomerPasswordBody.safeParse({
+      challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
       phone,
       newPassword: strongPassword,
     }).success,
+    false,
+  );
+  assert.equal(
+    SendEmailOtpBody.safeParse({ email, purpose: "password_reset" }).success,
+    true,
+  );
+  assert.equal(
+    SendEmailOtpBody.safeParse({ phone, purpose: "password_reset" }).success,
+    false,
+  );
+  assert.equal(
+    SendEmailOtpBody.safeParse({ phone, purpose: "pin_reset" }).success,
+    true,
+  );
+  assert.equal(
+    SendEmailOtpBody.safeParse({ phone, email, purpose: "signup" }).success,
     true,
   );
 

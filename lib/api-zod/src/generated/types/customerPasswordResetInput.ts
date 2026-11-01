@@ -8,12 +8,8 @@
 
 export interface CustomerPasswordResetInput {
   challengeId: string;
-  /**
-     * @minLength 9
-     * @maxLength 16
-     * @pattern ^\+[1-9][0-9]{7,14}$
-     */
-  phone: string;
+  /** @maxLength 254 */
+  email: string;
   /**
      * @minLength 8
      * @maxLength 64

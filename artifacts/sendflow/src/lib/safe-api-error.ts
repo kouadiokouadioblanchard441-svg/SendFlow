@@ -84,6 +84,9 @@ export function getSafeApiErrorCopy(error: unknown): SafeApiErrorCopy {
   }
 
   if (status === 409) {
+    if (/auth\/reset-password|auth\/reset-pin|auth\/verify-otp/.test(path)) {
+      return safeCopy('Code à renouveler', 'Le code a expiré ou a déjà été utilisé. Demandez-en un nouveau.');
+    }
     return safeCopy('Modification non enregistrée', 'Les informations ont changé. Actualisez la page puis vérifiez avant de recommencer.');
   }
 

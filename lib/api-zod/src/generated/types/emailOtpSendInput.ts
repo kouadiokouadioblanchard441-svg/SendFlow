@@ -5,9 +5,15 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { EmailOtpSendInputPurpose } from './emailOtpSendInputPurpose';
 
-export interface EmailOtpSendInput {
+export type EmailOtpSendInput = {
+  /**
+     * Email associated with the active SendFlow account.
+     * @maxLength 254
+     */
+  email: string;
+  purpose: 'password_reset';
+} | {
   /**
      * Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.
      * @minLength 9
@@ -16,9 +22,18 @@ export interface EmailOtpSendInput {
      */
   phone: string;
   /**
-     * Required for signup. For recovery or administrator access, SendFlow uses the email already associated with the account and ignores this field.
+     * Required for signup.
      * @maxLength 254
      */
-  email?: string;
-  purpose: EmailOtpSendInputPurpose;
-}
+  email: string;
+  purpose: 'signup';
+} | {
+  /**
+     * Account phone identifier.
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phone: string;
+  purpose: 'pin_reset' | 'admin_login';
+};

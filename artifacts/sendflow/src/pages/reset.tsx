@@ -130,6 +130,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
         return;
       }
       setEmailError('');
+      setOtpError('');
     } else {
       if (!isValidPhoneForCountry(phone, phoneDialCode)) {
         setPhoneError(getPhoneLengthMessage(phoneDialCode));
@@ -149,7 +150,13 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       setOtp(['', '', '', '', '', '']);
       setStep('verify');
     } catch (error) {
-      setPhoneError(getSafeApiErrorCopy(error).message);
+      const safeMessage = getSafeApiErrorCopy(error).message;
+      if (isPassword) {
+        if (step === 'verify') setOtpError(safeMessage);
+        else setEmailError(safeMessage);
+      } else {
+        setPhoneError(safeMessage);
+      }
     }
   };
 
@@ -294,10 +301,20 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
               <h1 id="reset-title">Vérification par e-mail</h1>
               <p>
                 {isPassword
-                  ? <>Saisissez le code envoyé à l’adresse <strong>{maskedEmail}</strong>.</>
+                  ? <>Nous vérifions si <strong>{maskedEmail}</strong> peut recevoir un code.</>
                   : <>Saisissez le code envoyé à l’adresse e-mail associée au compte identifié par <strong>{maskedPhone}</strong>.</>}
               </p>
             </header>
+            {isPassword && (
+              <aside className="sendflow-reset-availability" role="status" aria-live="polite">
+                <strong>Pour protéger votre compte</strong>
+                <span>
+                  Aucun code ne sera envoyé si cette adresse ne correspond pas à un compte actif avec e-mail vérifié.
+                  Nous ne confirmons pas cette correspondance. Si vous ne recevez pas le code, vérifiez l’adresse
+                  et vos courriers indésirables, puis contactez le service client SendFlow.
+                </span>
+              </aside>
+            )}
 
             <form className="sendflow-reset-form sendflow-reset-verify-form" onSubmit={handleVerify} noValidate>
               <div className="sendflow-reset-otp" aria-label="Code de vérification à six chiffres">
@@ -334,6 +351,20 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
               <button type="submit" className="sendflow-reset-submit">Vérifier</button>
             </form>
 
+            {isPassword && (
+              <p className="sendflow-reset-login">
+                Adresse incorrecte ?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpError('');
+                    setStep('identifier');
+                  }}
+                >
+                  Modifier l’adresse e-mail
+                </button>
+              </p>
+            )}
             <p className="sendflow-reset-login">
               Vous vous en souvenez ? <Link href="/sign-in">Connectez-vous</Link>
             </p>

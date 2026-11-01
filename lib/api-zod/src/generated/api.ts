@@ -262,20 +262,33 @@ export const HealthCheckResponse = zod.object({
  * Creates a short-lived verification challenge and sends its code to the signup email or the email associated with the account. The sender configuration and API credential stay on the server. A verified email does not prove ownership of the account phone number.
  * @summary Send an email verification code
  */
-export const sendEmailOtpBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const sendEmailOtpBodyOneEmailMax = 254;
 
-export const sendEmailOtpBodyPhoneMin = 9;
-export const sendEmailOtpBodyPhoneMax = 16;
+export const sendEmailOtpBodyTwoPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
 
-export const sendEmailOtpBodyEmailMax = 254;
+export const sendEmailOtpBodyTwoPhoneMin = 9;
+export const sendEmailOtpBodyTwoPhoneMax = 16;
+
+export const sendEmailOtpBodyTwoEmailMax = 254;
+
+export const sendEmailOtpBodyThreePhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+
+export const sendEmailOtpBodyThreePhoneMin = 9;
+export const sendEmailOtpBodyThreePhoneMax = 16;
 
 
 
-export const SendEmailOtpBody = zod.object({
-  "phone": zod.stringFormat('phone', sendEmailOtpBodyPhoneRegExp).min(sendEmailOtpBodyPhoneMin).max(sendEmailOtpBodyPhoneMax).describe('Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.'),
-  "email": zod.email().max(sendEmailOtpBodyEmailMax).optional().describe('Required for signup. For recovery or administrator access, SendFlow uses the email already associated with the account and ignores this field.'),
-  "purpose": zod.enum(['signup', 'password_reset', 'pin_reset', 'admin_login'])
-})
+export const SendEmailOtpBody = zod.union([zod.object({
+  "email": zod.email().max(sendEmailOtpBodyOneEmailMax).describe('Email associated with the active SendFlow account.'),
+  "purpose": zod.enum(['password_reset'])
+}),zod.object({
+  "phone": zod.stringFormat('phone', sendEmailOtpBodyTwoPhoneRegExp).min(sendEmailOtpBodyTwoPhoneMin).max(sendEmailOtpBodyTwoPhoneMax).describe('Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.'),
+  "email": zod.email().max(sendEmailOtpBodyTwoEmailMax).describe('Required for signup.'),
+  "purpose": zod.enum(['signup'])
+}),zod.object({
+  "phone": zod.stringFormat('phone', sendEmailOtpBodyThreePhoneRegExp).min(sendEmailOtpBodyThreePhoneMin).max(sendEmailOtpBodyThreePhoneMax).describe('Account phone identifier.'),
+  "purpose": zod.enum(['pin_reset', 'admin_login'])
+})])
 
 export const sendEmailOtpResponseResendAfterSecondsMin = 0;
 
@@ -460,13 +473,10 @@ export const SignOutCustomerResponse = zod.object({
 
 
 /**
- * Requires a single-use password-recovery OTP. The response does not reveal whether the phone has an account.
- * @summary Reset a customer password using a verified phone code
+ * Requires a single-use password-recovery code sent to the verified email address on the account. The response does not reveal whether the email belongs to an account.
+ * @summary Reset a customer password using a verified email code
  */
-export const resetCustomerPasswordBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
-
-export const resetCustomerPasswordBodyPhoneMin = 9;
-export const resetCustomerPasswordBodyPhoneMax = 16;
+export const resetCustomerPasswordBodyEmailMax = 254;
 
 export const resetCustomerPasswordBodyNewPasswordMin = 8;
 export const resetCustomerPasswordBodyNewPasswordMax = 64;
@@ -475,7 +485,7 @@ export const resetCustomerPasswordBodyNewPasswordMax = 64;
 
 export const ResetCustomerPasswordBody = zod.object({
   "challengeId": zod.uuid(),
-  "phone": zod.stringFormat('phone', resetCustomerPasswordBodyPhoneRegExp).min(resetCustomerPasswordBodyPhoneMin).max(resetCustomerPasswordBodyPhoneMax),
+  "email": zod.email().max(resetCustomerPasswordBodyEmailMax),
   "newPassword": zod.string().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax)
 })
 
