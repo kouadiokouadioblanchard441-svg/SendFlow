@@ -113,7 +113,7 @@ export default function SigninPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-1">
             <AlertDialogAction className="h-12 w-full rounded-full text-base font-semibold">
-              Okay
+              OK
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
