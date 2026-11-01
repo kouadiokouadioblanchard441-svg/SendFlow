@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Check, CheckCircle2, Copy, Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/turnstile-widget';
 import { getGetRegistrationSettingsQueryKey, useGetRegistrationSettings, useRegisterCustomer, useSendEmailOtp, useVerifyEmailOtp } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
@@ -120,9 +121,12 @@ export default function SignupPage() {
   const [resendInSeconds, setResendInSeconds] = useState(0);
   const [otpCode, setOtpCode] = useState('');
   const [verificationError, setVerificationError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [emailVerifiedOnSignup, setEmailVerifiedOnSignup] = useState(false);
   const [signupApiKeyPair, setSignupApiKeyPair] = useState<{ label: string; publicKey: string; secretKey: string } | null>(null);
   const [copiedSignupKey, setCopiedSignupKey] = useState<'public' | 'secret' | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const submissionLock = useRef(false);
   const sendEmailOtp = useSendEmailOtp();
   const verifyEmailOtp = useVerifyEmailOtp();
   const registerCustomer = useRegisterCustomer();
@@ -203,11 +207,26 @@ export default function SignupPage() {
     window.sessionStorage.setItem('sendflow.pending-signup', 'true');
   };
 
-  const sendCode = async () => {
+  const consumeTurnstileToken = () => {
+    const token = turnstileToken;
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
+    return token;
+  };
+
+  const sendCode = async (turnstileTokenForRequest?: string) => {
     setVerificationError('');
+    const token = turnstileTokenForRequest ?? consumeTurnstileToken();
+    if (!token || submissionLock.current) return;
+    submissionLock.current = true;
     try {
       const response = await sendEmailOtp.mutateAsync({
-        data: { phone: e164Phone, email: form.email.trim().toLowerCase(), purpose: 'signup' },
+        data: {
+          phone: e164Phone,
+          email: form.email.trim().toLowerCase(),
+          purpose: 'signup',
+          turnstileToken: token,
+        },
       });
       setChallengeId(response.challengeId);
       setChallengeExpiresAt(response.expiresAt);
@@ -220,20 +239,28 @@ export default function SignupPage() {
         setResendAvailableAt(Date.now() + retryAfterSeconds * 1000);
       }
       setVerificationError(getRequestErrorMessage(error, 'Impossible d’envoyer le code. Vérifiez votre adresse e-mail puis réessayez.'));
+    } finally {
+      submissionLock.current = false;
     }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!canSubmit || isSending) return;
+    if (!canSubmit || isSending || submissionLock.current || !turnstileToken) return;
     setVerificationError('');
+    submissionLock.current = true;
     try {
       const refreshed = await registrationSettings.refetch();
       if (refreshed.error || !refreshed.data) throw new Error('Le réglage de vérification est indisponible. Réessayez.');
       if (refreshed.data.emailVerificationEnabled) {
-        await sendCode();
+        const token = consumeTurnstileToken();
+        if (!token) return;
+        submissionLock.current = false;
+        await sendCode(token);
       } else {
+        const token = consumeTurnstileToken();
+        if (!token) return;
         const account = await registerCustomer.mutateAsync({
           data: {
             phone: e164Phone,
@@ -243,6 +270,7 @@ export default function SignupPage() {
             birthDate: form.birthDate,
             password: form.password,
             acceptedPrivacy: true,
+            turnstileToken: token,
           },
         });
         const createdApiKeyPair = account.developerApiKeyPair ?? null;
@@ -256,6 +284,8 @@ export default function SignupPage() {
     } catch (error) {
       setVerificationError(getRequestErrorMessage(error, 'La création du compte a échoué. Réessayez.'));
       void registrationSettings.refetch();
+    } finally {
+      submissionLock.current = false;
     }
   };
 
@@ -270,6 +300,10 @@ export default function SignupPage() {
       setVerificationError('Saisissez les 6 chiffres reçus par e-mail.');
       return;
     }
+    if (submissionLock.current || !turnstileToken) return;
+    const token = consumeTurnstileToken();
+    if (!token) return;
+    submissionLock.current = true;
 
     try {
       const response = await verifyEmailOtp.mutateAsync({ data: { challengeId, purpose: 'signup', code: otpCode } });
@@ -287,6 +321,7 @@ export default function SignupPage() {
           birthDate: form.birthDate,
           password: form.password,
           acceptedPrivacy: true,
+            turnstileToken: token,
         },
       });
       const createdApiKeyPair = account.developerApiKeyPair ?? null;
@@ -299,6 +334,8 @@ export default function SignupPage() {
     } catch (error) {
       setOtpCode('');
       setVerificationError(getRequestErrorMessage(error, 'Code incorrect ou expiré. Vérifiez les chiffres puis réessayez.'));
+    } finally {
+      submissionLock.current = false;
     }
   };
 
@@ -461,10 +498,16 @@ export default function SignupPage() {
               )}
             </div>
 
+            <TurnstileWidget
+              ref={turnstileRef}
+              action="signup"
+              onTokenChange={setTurnstileToken}
+            />
+
             <button
               type="submit"
               className="sendflow-signup-submit"
-              disabled={!canSubmit || isSending || !registrationSettings.data || registrationSettings.isError}
+              disabled={!canSubmit || !turnstileToken || isSending || !registrationSettings.data || registrationSettings.isError}
             >
               {isSending ? 'Patientez…' : registrationSettings.data?.emailVerificationEnabled ? 'Continuer' : 'Créer mon compte'}
             </button>
@@ -538,11 +581,17 @@ export default function SignupPage() {
                 </p>
               )}
 
+              <TurnstileWidget
+                ref={turnstileRef}
+                action="signup"
+                onTokenChange={setTurnstileToken}
+              />
+
               <div className="sendflow-signup-verification-actions">
                 <button
                   type="submit"
                   className="sendflow-signup-submit sendflow-signup-check"
-                  disabled={otpCode.length !== 6 || isChecking || expiresInSeconds === 0}
+                  disabled={otpCode.length !== 6 || !turnstileToken || isChecking || expiresInSeconds === 0}
                   data-testid="button-check-email-otp"
                 >
                   {isChecking ? 'Vérification…' : 'Vérifier le numéro'}
@@ -550,8 +599,8 @@ export default function SignupPage() {
                 <button
                   type="button"
                   className="sendflow-signup-secondary-action"
-                  onClick={sendCode}
-                  disabled={isSending || resendInSeconds > 0}
+                  onClick={() => void sendCode()}
+                  disabled={!turnstileToken || isSending || resendInSeconds > 0}
                   data-testid="button-resend-email-otp"
                 >
                   {isSending

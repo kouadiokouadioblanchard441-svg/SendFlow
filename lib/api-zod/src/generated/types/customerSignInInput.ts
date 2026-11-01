@@ -17,4 +17,10 @@ export interface CustomerSignInInput {
      * @maxLength 64
      */
   password: string;
+  /**
+     * Single-use Cloudflare Turnstile token for sign-in.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
 }

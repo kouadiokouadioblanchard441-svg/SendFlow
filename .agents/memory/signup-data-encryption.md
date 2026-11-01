@@ -16,3 +16,9 @@ For large-scale ledger behavior, the user selected numeric SQL columns for amoun
 **Why:** The user explicitly requested mandatory registration information and both types of encryption.
 
 **How to apply:** Do not describe server-side encryption as strict E2EE. Keep data needed by OTP, validation, or account operations server-processable with transport protection and encryption at rest; reserve strict E2EE for data the server never needs to inspect.
+
+Webhook payloads use a context-bound, key-ID-bearing envelope for new records. The generic legacy `sfenc-v1` envelope has no key identifier, so changing the shared master key can make existing encrypted columns unreadable; do not rotate it until a complete migration plan covers every v1 field. The webhook keyring only preserves decryptability for key-ID-bearing v2 payloads.
+
+**Why:** A partial keyring must not be mistaken for application-wide key rotation support.
+
+**How to apply:** Before changing `CUSTOMER_PII_ENCRYPTION_KEY`, inventory every encrypted field and ciphertext version, preserve required historical keys, and test a staged migration on an isolated database.

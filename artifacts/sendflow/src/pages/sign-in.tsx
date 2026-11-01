@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/turnstile-widget';
 import { useSeo } from '@/lib/seo';
 import { validateSignIn, type SignInField } from '@/lib/auth-validation';
 import { useSignInCustomer } from '@workspace/api-client-react';
@@ -29,8 +30,11 @@ export default function SigninPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignInField, boolean>>>({});
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const submissionLock = useRef(false);
   const signInCustomer = useSignInCustomer();
 
   useSeo({
@@ -59,12 +63,20 @@ export default function SigninPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!canSubmit || isSubmitting) return;
+    if (!canSubmit || isSubmitting || submissionLock.current || !turnstileToken) return;
+    const oneTimeToken = turnstileToken;
+    submissionLock.current = true;
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
     setIsSubmitting(true);
     setSubmitted(false);
     try {
       const response = await signInCustomer.mutateAsync({
-        data: { email: form.email.trim().toLowerCase(), password: form.password },
+        data: {
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+          turnstileToken: oneTimeToken,
+        },
       });
       clearLegacyAccountProfile();
       queryClient.clear();
@@ -75,6 +87,7 @@ export default function SigninPage() {
       // The global API error dialog displays a sanitized, status-specific message.
     } finally {
       setIsSubmitting(false);
+      submissionLock.current = false;
     }
   };
 
@@ -164,7 +177,13 @@ export default function SigninPage() {
               Mot de passe oublié ?
             </Link>
 
-            <button type="submit" className="sendflow-signup-submit" disabled={!canSubmit || isSubmitting}>
+            <TurnstileWidget
+              ref={turnstileRef}
+              action="login"
+              onTokenChange={setTurnstileToken}
+            />
+
+            <button type="submit" className="sendflow-signup-submit" disabled={!canSubmit || !turnstileToken || isSubmitting}>
               {isSubmitting ? 'Connexion…' : 'Se connecter'}
             </button>
 

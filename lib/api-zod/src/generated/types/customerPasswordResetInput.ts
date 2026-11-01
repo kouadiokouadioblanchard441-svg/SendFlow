@@ -15,4 +15,10 @@ export interface CustomerPasswordResetInput {
      * @maxLength 64
      */
   newPassword: string;
+  /**
+     * Single-use Cloudflare Turnstile token for password reset.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
 }

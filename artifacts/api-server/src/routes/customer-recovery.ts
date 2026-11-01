@@ -34,6 +34,10 @@ import {
 } from "../lib/customer-auth-otp";
 import { hashSecretForClaimedOtpChallenge } from "../lib/customer-recovery-policy";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
+import {
+  rejectTurnstileRequest,
+  verifyTurnstileRequest,
+} from "../lib/turnstile";
 
 const router: IRouter = Router();
 
@@ -49,9 +53,31 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     return;
   }
 
+  const rawTurnstileToken = typeof req.body === "object" && req.body !== null
+    ? (req.body as { turnstileToken?: unknown }).turnstileToken
+    : undefined;
+  if (typeof rawTurnstileToken !== "string" || rawTurnstileToken.length === 0) {
+    rejectTurnstileRequest(req, res, {
+      success: false,
+      category: "missing_token",
+      unavailable: false,
+    });
+    return;
+  }
+
   const parsed = ResetCustomerPasswordBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Vérifiez les informations de récupération." });
+    return;
+  }
+
+  const turnstile = await verifyTurnstileRequest(
+    req,
+    parsed.data.turnstileToken,
+    "password_reset",
+  );
+  if (!turnstile.success) {
+    rejectTurnstileRequest(req, res, turnstile);
     return;
   }
 

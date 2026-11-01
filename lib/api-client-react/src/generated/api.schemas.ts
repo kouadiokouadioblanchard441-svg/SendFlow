@@ -116,6 +116,12 @@ export type EmailOtpSendInput = {
      * @maxLength 254
      */
   email: string;
+  /**
+     * Single-use Cloudflare Turnstile token for password recovery.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
   purpose: 'password_reset';
 } | {
   /**
@@ -130,6 +136,12 @@ export type EmailOtpSendInput = {
      * @maxLength 254
      */
   email: string;
+  /**
+     * Single-use Cloudflare Turnstile token for signup.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
   purpose: 'signup';
 } | {
   /**
@@ -372,6 +384,12 @@ export interface CustomerRegistrationInput {
      * @maxLength 64
      */
   password: string;
+  /**
+     * Single-use Cloudflare Turnstile token for signup.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
   acceptedPrivacy: boolean;
 }
 
@@ -386,6 +404,12 @@ export interface CustomerSignInInput {
      * @maxLength 64
      */
   password: string;
+  /**
+     * Single-use Cloudflare Turnstile token for sign-in.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
 }
 
 export interface CustomerPasswordResetInput {
@@ -397,6 +421,12 @@ export interface CustomerPasswordResetInput {
      * @maxLength 64
      */
   newPassword: string;
+  /**
+     * Single-use Cloudflare Turnstile token for password reset.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
 }
 
 export interface CustomerPinResetInput {

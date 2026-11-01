@@ -46,6 +46,10 @@ import {
 } from "../lib/sensitive-data-crypto";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
 import {
+  rejectTurnstileRequest,
+  verifyTurnstileRequest,
+} from "../lib/turnstile";
+import {
   CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
   formatAuthRateLimitMessage,
   getCustomerAccessAttemptBuckets,
@@ -297,6 +301,23 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     return;
   }
 
+  const rawBody = typeof req.body === "object" && req.body !== null
+    ? req.body as Record<string, unknown>
+    : {};
+  const requiresTurnstile = rawBody.purpose === "signup"
+    || rawBody.purpose === "password_reset";
+  if (
+    requiresTurnstile
+    && (typeof rawBody.turnstileToken !== "string" || rawBody.turnstileToken.length === 0)
+  ) {
+    rejectTurnstileRequest(req, res, {
+      success: false,
+      category: "missing_token",
+      unavailable: false,
+    });
+    return;
+  }
+
   const parsed = SendEmailOtpBody.safeParse(req.body);
   const invalidIdentifier = parsed.success && (
     parsed.data.purpose === "password_reset"
@@ -316,6 +337,18 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     }
     res.status(400).json({ error: "Adresse e-mail ou numéro de compte invalide." });
     return;
+  }
+
+  if (parsed.data.purpose === "signup" || parsed.data.purpose === "password_reset") {
+    const turnstile = await verifyTurnstileRequest(
+      req,
+      parsed.data.turnstileToken,
+      parsed.data.purpose === "signup" ? "signup" : "password_reset",
+    );
+    if (!turnstile.success) {
+      rejectTurnstileRequest(req, res, turnstile);
+      return;
+    }
   }
 
   if (!emailOtpConfigured()) {

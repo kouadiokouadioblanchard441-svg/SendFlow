@@ -82,6 +82,10 @@ import {
 } from "../lib/customer-session";
 import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
 import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
+import {
+  rejectTurnstileRequest,
+  verifyTurnstileRequest,
+} from "../lib/turnstile";
 import { recordLoginActivity } from "../lib/login-activity";
 import { createCustomerPinRotationSessionPolicy } from "../lib/customer-pin-session-policy";
 import { createDeveloperApiKeyMaterial } from "../services/developer-api-security";
@@ -224,6 +228,18 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
+  const rawTurnstileToken = typeof req.body === "object" && req.body !== null
+    ? (req.body as { turnstileToken?: unknown }).turnstileToken
+    : undefined;
+  if (typeof rawTurnstileToken !== "string" || rawTurnstileToken.length === 0) {
+    rejectTurnstileRequest(req, res, {
+      success: false,
+      category: "missing_token",
+      unavailable: false,
+    });
+    return;
+  }
+
   const parsed = RegisterCustomerBody.safeParse(normalizeSignupBody(req.body));
   const phone = parsed.success ? parsed.data.phone : getSignupPhoneFromBody(req.body);
   let buckets: string[] = [];
@@ -232,6 +248,16 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     const preliminaryRetry = await getAuthRateLimit(buckets);
     if (preliminaryRetry !== null) {
       sendRateLimit(res, preliminaryRetry);
+      return;
+    }
+
+    const turnstile = await verifyTurnstileRequest(
+      req,
+      parsed.success ? parsed.data.turnstileToken : rawTurnstileToken,
+      "signup",
+    );
+    if (!turnstile.success) {
+      rejectTurnstileRequest(req, res, turnstile);
       return;
     }
 
@@ -456,6 +482,18 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
     return;
   }
 
+  const rawTurnstileToken = typeof req.body === "object" && req.body !== null
+    ? (req.body as { turnstileToken?: unknown }).turnstileToken
+    : undefined;
+  if (typeof rawTurnstileToken !== "string" || rawTurnstileToken.length === 0) {
+    rejectTurnstileRequest(req, res, {
+      success: false,
+      category: "missing_token",
+      unavailable: false,
+    });
+    return;
+  }
+
   const parsed = SignInCustomerBody.safeParse(normalizeSignInBody(req.body));
   if (!parsed.success) {
     try {
@@ -482,6 +520,21 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
   try {
     const emailLookupHash = createSensitiveDataLookupIndex(parsed.data.email, "user-email");
     const buckets = getLoginAttemptBuckets(emailLookupHash, req);
+    const preliminaryRetry = await getAuthRateLimit(buckets);
+    if (preliminaryRetry !== null) {
+      sendRateLimit(res, preliminaryRetry);
+      return;
+    }
+    const turnstile = await verifyTurnstileRequest(
+      req,
+      parsed.data.turnstileToken,
+      "login",
+    );
+    if (!turnstile.success) {
+      rejectTurnstileRequest(req, res, turnstile);
+      return;
+    }
+
     const result = await withAuthAttemptLock(buckets, async (tx) => {
       const now = new Date();
       const retry = await getAuthRateLimit(buckets, now, tx);

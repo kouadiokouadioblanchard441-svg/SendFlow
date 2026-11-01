@@ -13,7 +13,37 @@ if (!runtimePath?.includes("/sendflow-isolated-finance-") || !socket?.includes("
   throw new Error("Run via run-isolated-finance.mjs; a disposable database is mandatory");
 }
 let externalCalls = 0;
-globalThis.fetch = async () => { externalCalls++; throw new Error("External network is forbidden in this suite"); };
+let turnstileCalls = 0;
+const turnstileActions = new Map();
+const turnstileResponses = new Map();
+const consumedTurnstileTokens = new Set();
+process.env.TURNSTILE_SECRET_KEY = "isolated-test-secret";
+globalThis.fetch = async (input, init) => {
+  if (String(input) === "https://challenges.cloudflare.com/turnstile/v0/siteverify") {
+    turnstileCalls += 1;
+    const form = new URLSearchParams(init?.body);
+    assert.equal(form.get("secret"), process.env.TURNSTILE_SECRET_KEY);
+    const token = form.get("response");
+    let result;
+    if (!token || consumedTurnstileTokens.has(token)) {
+      result = { success: false, "error-codes": ["timeout-or-duplicate"] };
+    } else {
+      consumedTurnstileTokens.add(token);
+      result = turnstileResponses.get(token) ?? {
+        success: true,
+        hostname: "sendflow-test.invalid",
+        action: turnstileActions.get(token),
+      };
+    }
+    if (result?.throw) throw new Error("Mocked Siteverify timeout");
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  externalCalls += 1;
+  throw new Error("External network is forbidden in this suite");
+};
 const runtime = createRequire(import.meta.url)(runtimePath);
 const owner = new pg.Pool({ host: socket, port: 15432, database: "postgres", user: "sf_fixture_owner" });
 const { pool, executeAdminWalletAdjustment, consumeTransferQuoteQuota } = runtime;
@@ -106,9 +136,27 @@ function headerValue(headers, name) {
 }
 
 async function request(path, options = {}) {
-  const { method = "GET", user, headers = {} } = options;
+  const { method = "GET", user, headers = {}, skipTurnstile = false } = options;
   if (["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase())) {
     return rawRequest(path, options);
+  }
+
+  let requestBody = options.body;
+  let action;
+  if (path === "/api/auth/sign-in") action = "login";
+  else if (path === "/api/auth/register") action = "signup";
+  else if (path === "/api/auth/reset-password") action = "password_reset";
+  else if (path === "/api/auth/send-otp" && options.body?.purpose === "signup") action = "signup";
+  else if (path === "/api/auth/send-otp" && options.body?.purpose === "password_reset") action = "password_reset";
+  if (
+    action
+    && !skipTurnstile
+    && requestBody && typeof requestBody === "object"
+    && !Object.hasOwn(requestBody, "turnstileToken")
+  ) {
+    const token = `isolated-${randomUUID()}`;
+    turnstileActions.set(token, action);
+    requestBody = { ...requestBody, turnstileToken: token };
   }
 
   const suppliedCookie = headerValue(headers, "cookie")
@@ -136,7 +184,14 @@ async function request(path, options = {}) {
   }
   requestHeaders.Cookie = cookieParts.join("; ");
   requestHeaders["X-CSRF-Token"] = csrfToken;
-  return rawRequest(path, { ...options, headers: requestHeaders });
+  return rawRequest(path, { ...options, body: requestBody, headers: requestHeaders });
+}
+
+function makeTurnstileToken(action, response) {
+  const token = `scenario-${randomUUID()}`;
+  turnstileActions.set(token, action);
+  if (response) turnstileResponses.set(token, response);
+  return token;
 }
 
 function logoRequest(path, { method = "GET", body, headers = {} } = {}) {
@@ -363,6 +418,140 @@ test("legacy identity records remain stored but never grant the elevated monthly
   assert.equal((await owner.query("SELECT status FROM sf_identity_verifications WHERE provider_session_id='fixture-old-approved'")).rows[0].status, "Approved");
   assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 150_000);
 });
+test("Turnstile failures stop login, signup OTP, account creation, and password reset before auth state changes", async () => {
+  const before = {
+    users: (await owner.query("SELECT count(*) FROM sf_users")).rows[0].count,
+    sessions: (await owner.query("SELECT count(*) FROM sf_customer_sessions")).rows[0].count,
+    attempts: (await owner.query("SELECT count(*) FROM sf_customer_auth_attempts")).rows[0].count,
+  };
+  const beforeVerifications = turnstileCalls;
+  const missing = await request("/api/auth/sign-in", {
+    method: "POST",
+    skipTurnstile: true,
+    body: { email: "turnstile.missing@example.invalid", password: "invalid-test-password" },
+  });
+  assert.equal(missing.status, 403);
+  assert.equal(turnstileCalls, beforeVerifications);
+
+  const invalid = { success: false, "error-codes": ["invalid-input-response"] };
+  const cases = [
+    ["/api/auth/sign-in", "login", {
+      email: "turnstile.login@example.invalid",
+      password: "invalid-test-password",
+    }],
+    ["/api/auth/register", "signup", {
+      phone: "+2250700000001",
+      email: "turnstile.signup@example.invalid",
+      fullName: "Turnstile Test",
+      birthDate: "1990-01-01",
+      password: "isolated-password-only",
+      acceptedPrivacy: true,
+    }],
+    ["/api/auth/send-otp", "signup", {
+      phone: "+2250700000002",
+      email: "turnstile.otp@example.invalid",
+      purpose: "signup",
+    }],
+    ["/api/auth/send-otp", "password_reset", {
+      email: "turnstile.recovery@example.invalid",
+      purpose: "password_reset",
+    }],
+    ["/api/auth/reset-password", "password_reset", {
+      challengeId: randomUUID(),
+      email: "turnstile.recovery@example.invalid",
+      newPassword: "isolated-password-only",
+    }],
+  ];
+  for (const [path, action, body] of cases) {
+    const token = makeTurnstileToken(action, invalid);
+    const response = await request(path, {
+      method: "POST",
+      body: { ...body, turnstileToken: token },
+    });
+    assert.equal(response.status, 403, `${path} must reject an invalid challenge`);
+    assert.ok(!response.text.includes(token));
+    assert.ok(!response.text.includes(process.env.TURNSTILE_SECRET_KEY));
+  }
+
+  assert.equal(turnstileCalls, beforeVerifications + cases.length);
+  assert.equal((await owner.query("SELECT count(*) FROM sf_users")).rows[0].count, before.users);
+  assert.equal((await owner.query("SELECT count(*) FROM sf_customer_sessions")).rows[0].count, before.sessions);
+  assert.equal((await owner.query("SELECT count(*) FROM sf_customer_auth_attempts")).rows[0].count, before.attempts);
+  assert.equal(externalCalls, 0);
+});
+
+test("Turnstile token replay and Siteverify outage fail closed on authentication routes", async () => {
+  const replayToken = makeTurnstileToken("login");
+  const signinBody = {
+    email: "turnstile.replay@example.invalid",
+    password: "isolated-invalid-password",
+    turnstileToken: replayToken,
+  };
+  const first = await request("/api/auth/sign-in", { method: "POST", body: signinBody });
+  assert.equal(first.status, 401);
+  const attemptsAfterFirst = (await owner.query(
+    "SELECT count(*) FROM sf_customer_auth_attempts",
+  )).rows[0].count;
+  const replay = await request("/api/auth/sign-in", { method: "POST", body: signinBody });
+  assert.equal(replay.status, 403);
+  assert.equal(
+    (await owner.query("SELECT count(*) FROM sf_customer_auth_attempts")).rows[0].count,
+    attemptsAfterFirst,
+  );
+
+  const timeoutToken = makeTurnstileToken("login", { throw: true });
+  const timeout = await request("/api/auth/sign-in", {
+    method: "POST",
+    body: { ...signinBody, email: "turnstile.timeout@example.invalid", turnstileToken: timeoutToken },
+  });
+  assert.equal(timeout.status, 503);
+  assert.ok(!timeout.text.includes(timeoutToken));
+  assert.equal(externalCalls, 0);
+});
+
+test("Turnstile context mismatches are denied and a valid recovery token reaches the existing OTP check", async () => {
+  const wrongHostToken = makeTurnstileToken("login", {
+    success: true,
+    hostname: "untrusted.example",
+    action: "login",
+  });
+  assert.equal((await request("/api/auth/sign-in", {
+    method: "POST",
+    body: {
+      email: "turnstile.host@example.invalid",
+      password: "isolated-invalid-password",
+      turnstileToken: wrongHostToken,
+    },
+  })).status, 403);
+
+  const wrongActionToken = makeTurnstileToken("login", {
+    success: true,
+    hostname: "sendflow-test.invalid",
+    action: "signup",
+  });
+  assert.equal((await request("/api/auth/sign-in", {
+    method: "POST",
+    body: {
+      email: "turnstile.action@example.invalid",
+      password: "isolated-invalid-password",
+      turnstileToken: wrongActionToken,
+    },
+  })).status, 403);
+
+  const validRecoveryToken = makeTurnstileToken("password_reset");
+  const recovery = await request("/api/auth/reset-password", {
+    method: "POST",
+    body: {
+      challengeId: randomUUID(),
+      email: "turnstile.recovery@example.invalid",
+      newPassword: "isolated-password-only",
+      turnstileToken: validRecoveryToken,
+    },
+  });
+  assert.equal(recovery.status, 409);
+  assert.equal(externalCalls, 0);
+});
+
 test("identity verification compatibility action returns unavailable without contacting an external service", async () => {
   const before = externalCalls;
   const response = await request("/api/me/identity-verification", {

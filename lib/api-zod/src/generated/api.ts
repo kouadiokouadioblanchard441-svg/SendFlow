@@ -264,12 +264,16 @@ export const HealthCheckResponse = zod.object({
  */
 export const sendEmailOtpBodyOneEmailMax = 254;
 
+export const sendEmailOtpBodyOneTurnstileTokenMax = 2048;
+
 export const sendEmailOtpBodyTwoPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
 
 export const sendEmailOtpBodyTwoPhoneMin = 9;
 export const sendEmailOtpBodyTwoPhoneMax = 16;
 
 export const sendEmailOtpBodyTwoEmailMax = 254;
+
+export const sendEmailOtpBodyTwoTurnstileTokenMax = 2048;
 
 export const sendEmailOtpBodyThreePhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
 
@@ -280,10 +284,12 @@ export const sendEmailOtpBodyThreePhoneMax = 16;
 
 export const SendEmailOtpBody = zod.union([zod.object({
   "email": zod.email().max(sendEmailOtpBodyOneEmailMax).describe('Email associated with the active SendFlow account.'),
+  "turnstileToken": zod.string().min(1).max(sendEmailOtpBodyOneTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for password recovery.'),
   "purpose": zod.enum(['password_reset'])
 }),zod.object({
   "phone": zod.stringFormat('phone', sendEmailOtpBodyTwoPhoneRegExp).min(sendEmailOtpBodyTwoPhoneMin).max(sendEmailOtpBodyTwoPhoneMax).describe('Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.'),
   "email": zod.email().max(sendEmailOtpBodyTwoEmailMax).describe('Required for signup.'),
+  "turnstileToken": zod.string().min(1).max(sendEmailOtpBodyTwoTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for signup.'),
   "purpose": zod.enum(['signup'])
 }),zod.object({
   "phone": zod.stringFormat('phone', sendEmailOtpBodyThreePhoneRegExp).min(sendEmailOtpBodyThreePhoneMin).max(sendEmailOtpBodyThreePhoneMax).describe('Account phone identifier.'),
@@ -408,6 +414,8 @@ export const registerCustomerBodyCountryCodeRegExp = new RegExp('^[A-Za-z]{2}$')
 export const registerCustomerBodyPasswordMin = 8;
 export const registerCustomerBodyPasswordMax = 64;
 
+export const registerCustomerBodyTurnstileTokenMax = 2048;
+
 
 
 export const RegisterCustomerBody = zod.object({
@@ -418,6 +426,7 @@ export const RegisterCustomerBody = zod.object({
   "birthDate": zod.coerce.date(),
   "countryCode": zod.string().regex(registerCustomerBodyCountryCodeRegExp).optional(),
   "password": zod.string().min(registerCustomerBodyPasswordMin).max(registerCustomerBodyPasswordMax),
+  "turnstileToken": zod.string().min(1).max(registerCustomerBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for signup.'),
   "acceptedPrivacy": zod.boolean()
 })
 
@@ -451,11 +460,14 @@ export const signInCustomerBodyEmailMax = 254;
 export const signInCustomerBodyPasswordMin = 4;
 export const signInCustomerBodyPasswordMax = 64;
 
+export const signInCustomerBodyTurnstileTokenMax = 2048;
+
 
 
 export const SignInCustomerBody = zod.object({
   "email": zod.email().min(signInCustomerBodyEmailMin).max(signInCustomerBodyEmailMax),
-  "password": zod.string().min(signInCustomerBodyPasswordMin).max(signInCustomerBodyPasswordMax)
+  "password": zod.string().min(signInCustomerBodyPasswordMin).max(signInCustomerBodyPasswordMax),
+  "turnstileToken": zod.string().min(1).max(signInCustomerBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for sign-in.')
 })
 
 export const signInCustomerResponseDeveloperApiKeyPairLabelMax = 80;
@@ -508,12 +520,15 @@ export const resetCustomerPasswordBodyEmailMax = 254;
 export const resetCustomerPasswordBodyNewPasswordMin = 8;
 export const resetCustomerPasswordBodyNewPasswordMax = 64;
 
+export const resetCustomerPasswordBodyTurnstileTokenMax = 2048;
+
 
 
 export const ResetCustomerPasswordBody = zod.object({
   "challengeId": zod.uuid(),
   "email": zod.email().max(resetCustomerPasswordBodyEmailMax),
-  "newPassword": zod.string().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax)
+  "newPassword": zod.string().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax),
+  "turnstileToken": zod.string().min(1).max(resetCustomerPasswordBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for password reset.')
 })
 
 export const ResetCustomerPasswordResponse = zod.object({

@@ -67,7 +67,10 @@ export async function enqueueDeveloperPaymentEvent(
       endpointId: endpoint.id,
       paymentSessionId: session.id,
       eventType: input.eventType,
-      payload: encryptDeveloperWebhookPayload(payload),
+      payload: encryptDeveloperWebhookPayload(payload, {
+        deliveryId: eventId,
+        eventType: input.eventType,
+      }),
       status: "pending",
     }).onConflictDoNothing();
   }

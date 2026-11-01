@@ -12,6 +12,12 @@ export type EmailOtpSendInput = {
      * @maxLength 254
      */
   email: string;
+  /**
+     * Single-use Cloudflare Turnstile token for password recovery.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
   purpose: 'password_reset';
 } | {
   /**
@@ -26,6 +32,12 @@ export type EmailOtpSendInput = {
      * @maxLength 254
      */
   email: string;
+  /**
+     * Single-use Cloudflare Turnstile token for signup.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
   purpose: 'signup';
 } | {
   /**

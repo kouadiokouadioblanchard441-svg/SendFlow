@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/turnstile-widget';
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { useResetCustomerPassword, useResetCustomerPin, useSendEmailOtp, useVerifyEmailOtp } from '@workspace/api-client-react';
@@ -80,6 +81,9 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(Date.now());
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
+  const submissionLock = useRef(false);
   const sendOtp = useSendEmailOtp();
   const verifyOtp = useVerifyEmailOtp();
   const resetPassword = useResetCustomerPassword();
@@ -108,10 +112,12 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
 
   const handleIdentifierSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isPassword && !turnstileToken) return;
     await requestCode();
   };
 
   const requestCode = async () => {
+    if (sendOtp.isPending || submissionLock.current) return;
     const normalizedEmail = email.trim().toLowerCase();
     const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
       && normalizedEmail.length <= 254;
@@ -131,10 +137,17 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       setPhoneError('');
     }
 
+    const token = isPassword ? turnstileToken : null;
+    if (isPassword && !token) return;
+    if (isPassword) {
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
+    }
+    submissionLock.current = true;
     try {
       const response = await sendOtp.mutateAsync({
         data: isPassword
-          ? { email: normalizedEmail, purpose: 'password_reset' }
+          ? { email: normalizedEmail, purpose: 'password_reset', turnstileToken: token! }
           : { phone: `${phoneDialCode}${phone.replace(/\D/g, '')}`, purpose: 'pin_reset' },
       });
       setChallengeId(response.challengeId);
@@ -149,6 +162,8 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       } else {
         setPhoneError(safeMessage);
       }
+    } finally {
+      submissionLock.current = false;
     }
   };
 
@@ -187,6 +202,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
 
   const handleSecretSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submissionLock.current) return;
     const minimumLength = isPassword ? NEW_CUSTOMER_PASSWORD_MIN_LENGTH : 4;
     if (newSecret.length < minimumLength) {
       setSecretError(`${secretLabel} doit contenir au moins ${minimumLength} caractères.`);
@@ -198,10 +214,22 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
     }
 
     setSecretError('');
+    const token = isPassword ? turnstileToken : null;
+    if (isPassword && !token) return;
+    if (isPassword) {
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
+    }
+    submissionLock.current = true;
     try {
       if (isPassword) {
         await resetPassword.mutateAsync({
-          data: { challengeId, email: email.trim().toLowerCase(), newPassword: newSecret },
+          data: {
+            challengeId,
+            email: email.trim().toLowerCase(),
+            newPassword: newSecret,
+            turnstileToken: token!,
+          },
         });
       } else {
         const fullPhone = `${phoneDialCode}${phone.replace(/\D/g, '')}`;
@@ -215,6 +243,8 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       setLocation('/sign-in');
     } catch (error) {
       setSecretError(getSafeApiErrorCopy(error).message);
+    } finally {
+      submissionLock.current = false;
     }
   };
 
@@ -278,7 +308,20 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                   defaultCountryName="Côte d’Ivoire"
                 />
               )}
-              <button type="submit" className="sendflow-reset-submit">Suivant</button>
+              {isPassword && (
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  action="password_reset"
+                  onTokenChange={setTurnstileToken}
+                />
+              )}
+              <button
+                type="submit"
+                className="sendflow-reset-submit"
+                disabled={sendOtp.isPending || (isPassword && !turnstileToken)}
+              >
+                {sendOtp.isPending ? 'Envoi…' : 'Suivant'}
+              </button>
             </form>
 
             <p className="sendflow-reset-login">
@@ -326,11 +369,18 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                 ))}
               </div>
               {otpError && <p className="sendflow-reset-error" role="alert">{otpError}</p>}
+              {isPassword && (
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  action="password_reset"
+                  onTokenChange={setTurnstileToken}
+                />
+              )}
               <p className="sendflow-reset-resend">
                 Vous n&apos;avez pas reçu le code ?{' '}
                 <button
                   type="button"
-                  disabled={sendOtp.isPending || now < resendAt}
+                  disabled={sendOtp.isPending || now < resendAt || (isPassword && !turnstileToken)}
                   onClick={() => void requestCode()}
                 >
                   {now < resendAt
@@ -338,7 +388,9 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                     : sendOtp.isPending ? 'Envoi…' : 'Renvoyer'}
                 </button>
               </p>
-              <button type="submit" className="sendflow-reset-submit">Vérifier</button>
+              <button type="submit" className="sendflow-reset-submit" disabled={verifyOtp.isPending}>
+                {verifyOtp.isPending ? 'Vérification…' : 'Vérifier'}
+              </button>
             </form>
 
             {isPassword && (
@@ -371,7 +423,20 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
             <form className="sendflow-reset-form sendflow-reset-secret-form" onSubmit={handleSecretSubmit} noValidate>
               <SecretInput label={secretLabel} value={newSecret} onChange={setNewSecret} error={secretError} />
               <SecretInput label={`Confirmer ${secretLabel.toLowerCase()}`} value={confirmation} onChange={setConfirmation} />
-              <button type="submit" className="sendflow-reset-submit">Enregistrer</button>
+              {isPassword && (
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  action="password_reset"
+                  onTokenChange={setTurnstileToken}
+                />
+              )}
+              <button
+                type="submit"
+                className="sendflow-reset-submit"
+                disabled={resetPassword.isPending || resetPin.isPending || (isPassword && !turnstileToken)}
+              >
+                {resetPassword.isPending || resetPin.isPending ? 'Enregistrement…' : 'Enregistrer'}
+              </button>
             </form>
           </>
         )}

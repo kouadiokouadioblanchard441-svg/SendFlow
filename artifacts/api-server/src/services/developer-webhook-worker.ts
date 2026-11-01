@@ -13,7 +13,10 @@ import {
   sql,
 } from "@workspace/db";
 import { decryptSensitiveData } from "../lib/sensitive-data-crypto";
-import { decryptDeveloperWebhookPayload } from "../lib/developer-webhook-payload";
+import {
+  decryptDeveloperWebhookPayload,
+  DeveloperWebhookPayloadError,
+} from "../lib/developer-webhook-payload";
 import { resolvePublicWebhookTarget } from "./developer-api-security";
 
 const MAX_ATTEMPTS = 8;
@@ -29,19 +32,42 @@ const RETRY_DELAYS_MS = [
   2 * 60 * 60_000,
   12 * 60 * 60_000,
 ];
+const MAX_RETRY_AFTER_MS = 24 * 60 * 60_000;
 
 type DeliveryResult = { ok: true; status: number } | {
   ok: false;
   status: number | null;
   errorClass: "unsafe_target" | "network_error" | "timeout" | "http_error" | "response_too_large";
+  retryAfterMs?: number;
 };
 
-async function postWebhook(url: string, secret: string, payload: Record<string, unknown>): Promise<DeliveryResult> {
+type WorkerRuntime = {
+  request?: typeof httpsRequest;
+  resolveTarget?: typeof resolvePublicWebhookTarget;
+};
+
+function parseRetryAfter(value: string | string[] | undefined, now = Date.now()) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return undefined;
+  const seconds = Number(raw);
+  const target = Number.isFinite(seconds) && seconds >= 0
+    ? now + seconds * 1000
+    : Date.parse(raw);
+  if (!Number.isFinite(target)) return undefined;
+  return Math.min(MAX_RETRY_AFTER_MS, Math.max(0, target - now));
+}
+
+async function postWebhook(
+  url: string,
+  secret: string,
+  payload: Record<string, unknown>,
+  runtime: WorkerRuntime = {},
+): Promise<DeliveryResult> {
   let parsedUrl: URL;
   let target: Awaited<ReturnType<typeof resolvePublicWebhookTarget>>;
   try {
     parsedUrl = new URL(url);
-    target = await resolvePublicWebhookTarget(url);
+    target = await (runtime.resolveTarget ?? resolvePublicWebhookTarget)(url);
   } catch {
     return { ok: false, status: null, errorClass: "unsafe_target" };
   }
@@ -58,10 +84,10 @@ async function postWebhook(url: string, secret: string, payload: Record<string, 
       settled = true;
       resolve(result);
     };
-    const request = httpsRequest({
+    const request = (runtime.request ?? httpsRequest)({
       protocol: "https:",
       hostname: target.hostname,
-      port: 443,
+      port: parsedUrl.port ? Number(parsedUrl.port) : 443,
       servername: target.hostname,
       path: `${parsedUrl.pathname}${parsedUrl.search}`,
       method: "POST",
@@ -87,7 +113,12 @@ async function postWebhook(url: string, secret: string, payload: Record<string, 
         const status = response.statusCode ?? 0;
         finish(status >= 200 && status < 300
           ? { ok: true, status }
-          : { ok: false, status, errorClass: "http_error" });
+          : {
+            ok: false,
+            status,
+            errorClass: "http_error",
+            retryAfterMs: parseRetryAfter(response.headers["retry-after"]),
+          });
       });
       response.on("error", () => finish({
         ok: false,
@@ -152,7 +183,7 @@ async function claimNextDelivery() {
   });
 }
 
-async function deliverOne() {
+export async function processNextDeveloperWebhookDelivery(runtime: WorkerRuntime = {}) {
   const delivery = await claimNextDelivery();
   if (!delivery) return false;
   const [endpoint] = await db.select().from(developerWebhookEndpointsTable)
@@ -174,12 +205,24 @@ async function deliverOne() {
   try {
     const url = decryptSensitiveData(endpoint.urlEncrypted, "developer-webhook-url");
     const signingSecret = decryptSensitiveData(endpoint.signingSecretEncrypted, "developer-webhook-secret");
-    result = await postWebhook(
-      url,
-      signingSecret,
-      decryptDeveloperWebhookPayload(delivery.payload),
-    );
-  } catch {
+    const payload = decryptDeveloperWebhookPayload(delivery.payload, {
+      deliveryId: delivery.id,
+      eventType: delivery.eventType as "payment.succeeded" | "payment.failed",
+    });
+    result = await postWebhook(url, signingSecret, payload, runtime);
+  } catch (error) {
+    if (error instanceof DeveloperWebhookPayloadError) {
+      await db.update(developerWebhookDeliveriesTable).set({
+        status: "failed",
+        lastHttpStatus: null,
+        lastErrorClass: "payload_invalid",
+        updatedAt: new Date(),
+      }).where(and(
+        eq(developerWebhookDeliveriesTable.id, delivery.id),
+        eq(developerWebhookDeliveriesTable.status, "delivering"),
+      ));
+      return true;
+    }
     result = { ok: false, status: null, errorClass: "unsafe_target" };
   }
 
@@ -199,7 +242,8 @@ async function deliverOne() {
   }
 
   const isFinal = delivery.attempts >= MAX_ATTEMPTS;
-  const delay = RETRY_DELAYS_MS[Math.min(delivery.attempts - 1, RETRY_DELAYS_MS.length - 1)]!;
+  const backoff = RETRY_DELAYS_MS[Math.min(delivery.attempts - 1, RETRY_DELAYS_MS.length - 1)]!;
+  const delay = Math.max(backoff, result.retryAfterMs ?? 0);
   await db.update(developerWebhookDeliveriesTable).set({
     status: isFinal ? "failed" : "pending",
     lastHttpStatus: result.status === null ? null : String(result.status),
@@ -223,7 +267,7 @@ export function startDeveloperWebhookWorker(logger: {
     active = true;
     try {
       for (let index = 0; index < BATCH_SIZE; index += 1) {
-        if (!await deliverOne()) break;
+        if (!await processNextDeveloperWebhookDelivery()) break;
       }
     } catch {
       logger.error({ component: "developer-webhook-worker" }, "Webhook worker batch failed");

@@ -5097,10 +5097,15 @@ components:
               format: email
               maxLength: 254
               description: Email associated with the active SendFlow account.
+            turnstileToken:
+              type: string
+              minLength: 1
+              maxLength: 2048
+              description: Single-use Cloudflare Turnstile token for password recovery.
             purpose:
               type: string
               enum: [password_reset]
-          required: [email, purpose]
+          required: [email, purpose, turnstileToken]
         - type: object
           properties:
             phone:
@@ -5115,10 +5120,15 @@ components:
               format: email
               maxLength: 254
               description: Required for signup.
+            turnstileToken:
+              type: string
+              minLength: 1
+              maxLength: 2048
+              description: Single-use Cloudflare Turnstile token for signup.
             purpose:
               type: string
               enum: [signup]
-          required: [phone, email, purpose]
+          required: [phone, email, purpose, turnstileToken]
         - type: object
           properties:
             phone:
@@ -5295,9 +5305,14 @@ components:
           type: string
           minLength: 8
           maxLength: 64
+        turnstileToken:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: Single-use Cloudflare Turnstile token for signup.
         acceptedPrivacy:
           type: boolean
-      required: [phone, email, fullName, birthDate, password, acceptedPrivacy]
+      required: [phone, email, fullName, birthDate, password, acceptedPrivacy, turnstileToken]
     CustomerSignInInput:
       type: object
       properties:
@@ -5310,7 +5325,12 @@ components:
           type: string
           minLength: 4
           maxLength: 64
-      required: [email, password]
+        turnstileToken:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: Single-use Cloudflare Turnstile token for sign-in.
+      required: [email, password, turnstileToken]
     CustomerPasswordResetInput:
       type: object
       properties:
@@ -5325,7 +5345,12 @@ components:
           type: string
           minLength: 8
           maxLength: 64
-      required: [challengeId, email, newPassword]
+        turnstileToken:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: Single-use Cloudflare Turnstile token for password reset.
+      required: [challengeId, email, newPassword, turnstileToken]
     CustomerPinResetInput:
       type: object
       properties:

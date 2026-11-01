@@ -20,10 +20,12 @@ test('raw database/provider error contents never enter logs', () => {
   logger.error({
     err: error, error, apiKey: sensitive, phone: sensitive,
     RESEND_API_KEY: sensitive,
+    TURNSTILE_SECRET_KEY: sensitive,
     providerMessage: sensitive, body: { password: sensitive },
     nested: { deep: { token: sensitive } },
     req: { headers: { authorization: sensitive, cookie: sensitive } },
     res: { headers: { 'set-cookie': sensitive } },
+    CUSTOMER_PII_ENCRYPTION_KEYRING: sensitive,
   }, 'Provider request failed');
   assert.equal(output.includes(sensitive), false);
   assert.equal(JSON.parse(output).err.errorCode, '23505');

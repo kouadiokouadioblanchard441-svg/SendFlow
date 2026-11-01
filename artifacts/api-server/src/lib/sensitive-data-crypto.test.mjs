@@ -79,3 +79,66 @@ test("missing or weak keys fail closed", () => {
   assert.throws(() => createSensitiveDataLookupIndex("value", "user-name"));
   process.env.CUSTOMER_PII_ENCRYPTION_KEY = configured;
 });
+
+test("context-bound envelopes authenticate context and preserve key-version rotation", () => {
+  const originalId = process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID;
+  const originalKeyring = process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
+  const oldKey = process.env.CUSTOMER_PII_ENCRYPTION_KEY;
+  try {
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = "key-old";
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY = "old-test-key-material-longer-than-32-bytes";
+    delete process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
+    const ciphertext = encryptSensitiveData("bound-payload", "developer-webhook-payload", {
+      authenticatedContext: '["delivery","payment.succeeded"]',
+    });
+    assert.match(ciphertext, /^sfenc-v2\.key-old\./);
+
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = "key-new";
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY = "new-test-key-material-longer-than-32-bytes";
+    assert.throws(() => decryptSensitiveData(ciphertext, "developer-webhook-payload", {
+      authenticatedContext: '["delivery","payment.succeeded"]',
+    }));
+    process.env.CUSTOMER_PII_ENCRYPTION_KEYRING = JSON.stringify({
+      "key-old": "old-test-key-material-longer-than-32-bytes",
+    });
+    assert.equal(
+      decryptSensitiveData(ciphertext, "developer-webhook-payload", {
+        authenticatedContext: '["delivery","payment.succeeded"]',
+      }),
+      "bound-payload",
+    );
+    assert.throws(() => decryptSensitiveData(
+      ciphertext.replace("sfenc-v2", "sfenc-v3"),
+      "developer-webhook-payload",
+      { authenticatedContext: '["delivery","payment.succeeded"]' },
+    ));
+  } finally {
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY = oldKey;
+    if (originalId === undefined) delete process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID;
+    else process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = originalId;
+    if (originalKeyring === undefined) delete process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
+    else process.env.CUSTOMER_PII_ENCRYPTION_KEYRING = originalKeyring;
+  }
+});
+
+test("unknown historical key versions fail without exposing key material", () => {
+  const originalId = process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID;
+  const originalKeyring = process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
+  try {
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = "key-current";
+    process.env.CUSTOMER_PII_ENCRYPTION_KEYRING = "{}";
+    assert.throws(
+      () => decryptSensitiveData(
+        "sfenc-v2.key-retired.AAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAA.AA",
+        "developer-webhook-payload",
+        { authenticatedContext: "context" },
+      ),
+      (error) => error.message === "Sensitive-data encryption key version is unavailable",
+    );
+  } finally {
+    if (originalId === undefined) delete process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID;
+    else process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = originalId;
+    if (originalKeyring === undefined) delete process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
+    else process.env.CUSTOMER_PII_ENCRYPTION_KEYRING = originalKeyring;
+  }
+});
