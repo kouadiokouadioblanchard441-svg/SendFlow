@@ -14,6 +14,7 @@ if (!runtimePath?.includes("/sendflow-isolated-finance-") || !socket?.includes("
 }
 let externalCalls = 0;
 let turnstileCalls = 0;
+let syntheticRequesterSequence = 0;
 const turnstileActions = new Map();
 const turnstileResponses = new Map();
 const consumedTurnstileTokens = new Set();
@@ -135,6 +136,11 @@ function headerValue(headers, name) {
   return entry?.[1];
 }
 
+function nextSyntheticRequesterIp() {
+  syntheticRequesterSequence += 1;
+  return `198.51.100.${((syntheticRequesterSequence - 1) % 254) + 1}`;
+}
+
 async function request(path, options = {}) {
   const { method = "GET", user, headers = {}, skipTurnstile = false } = options;
   if (["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase())) {
@@ -181,6 +187,9 @@ async function request(path, options = {}) {
   const requestHeaders = { ...headers };
   for (const key of Object.keys(requestHeaders)) {
     if (["cookie", "x-csrf-token"].includes(key.toLowerCase())) delete requestHeaders[key];
+  }
+  if (!headerValue(requestHeaders, "x-forwarded-for")) {
+    requestHeaders["X-Forwarded-For"] = nextSyntheticRequesterIp();
   }
   requestHeaders.Cookie = cookieParts.join("; ");
   requestHeaders["X-CSRF-Token"] = csrfToken;

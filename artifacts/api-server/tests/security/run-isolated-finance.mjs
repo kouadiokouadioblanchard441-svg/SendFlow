@@ -4,7 +4,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve, join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
 import { randomBytes } from "node:crypto";
 import { build } from "esbuild";
@@ -235,18 +235,33 @@ try {
       export { evaluateNetworkDefense } from "@workspace/db/network-defense";
     `, resolveDir: apiDir },
     outfile: runtime, bundle: true, platform: "node", format: "cjs", logLevel: "silent",
-    plugins: [{ name: "external-installed-packages", setup(builder) {
-      builder.onResolve({ filter: /^[^./]/ }, (args) => {
-        if (args.path.startsWith("@workspace/") || args.path.startsWith("node:")) return;
-        try { return { path: require.resolve(args.path), external: true }; } catch { return; }
-      });
-    } }],
+    plugins: [
+      { name: "isolated-runtime-module-url", setup(builder) {
+        builder.onLoad({ filter: /identity-verification\.ts$/ }, (args) => ({
+          contents: readFileSync(args.path, "utf8").replace(
+            "createRequire(import.meta.url)",
+            `createRequire(${JSON.stringify(pathToFileURL(join(apiDir, "package.json")).href)})`,
+          ),
+          loader: "ts",
+          resolveDir: dirname(args.path),
+        }));
+      } },
+      { name: "external-installed-packages", setup(builder) {
+        builder.onResolve({ filter: /^[^./]/ }, (args) => {
+          if (args.path.startsWith("@workspace/") || args.path.startsWith("node:")) return;
+          try { return { path: require.resolve(args.path), external: true }; } catch { return; }
+        });
+      } },
+    ],
   });
   const databaseUrl = new URL("postgresql://localhost/postgres");
   databaseUrl.searchParams.set("host", socket);
   databaseUrl.searchParams.set("port", "15432");
   databaseUrl.searchParams.set("user", "sf_fixture_app");
-  const testFiles = process.argv.includes("--routes-security-only")
+  const turnstileOnly = process.argv.includes("--turnstile-only");
+  const testFiles = turnstileOnly
+    ? [join(apiDir, "tests/security/finance.integration.mjs")]
+    : process.argv.includes("--routes-security-only")
     ? [join(apiDir, "tests/security/routes-security.integration.mjs")]
     : process.argv.includes("--payment-structures-only")
     ? [join(apiDir, "tests/security/payment-structures.integration.mjs")]
@@ -257,6 +272,7 @@ try {
     : [join(apiDir, "tests/security/finance.integration.mjs"),
        join(apiDir, "tests/security/catalog.integration.mjs")];
   const testArgs = ["--experimental-strip-types", "--test"];
+  if (turnstileOnly) testArgs.push("--test-name-pattern=Turnstile");
   // Link-flow tests temporarily switch the isolated app to its Replit preview
   // policy; keep those process-environment changes from racing sibling tests.
   if (process.argv.includes("--payment-links-only")) testArgs.push("--test-concurrency=1");

@@ -48,15 +48,19 @@ is available, SendFlow omits `remoteip` rather than trusting a request header.
    SendFlow hostname that will render the widget. Production and development
    preview hostnames are separate allow-list entries. Do not use a wildcard
    unless Cloudflare's site configuration explicitly supports and requires it.
-2. Add `VITE_TURNSTILE_SITE_KEY` as a shared Replit environment variable. This
-   value is public and is included in the web client bundle; it is not the
-   verification secret.
+2. Add `VITE_TURNSTILE_SITE_KEY` as a Replit environment variable. It may be
+   shared when one Cloudflare site key allows all required hostnames; use
+   environment-specific values if development and production use separate site
+   keys. This value is public and is included in the web client bundle; it is
+   not the verification secret.
 3. Add `TURNSTILE_SECRET_KEY` through Replit Secrets for the API server only.
    Never add the secret to a `VITE_` variable, a frontend file, or a committed
    environment file.
 4. Confirm `CORS_ALLOWED_ORIGINS` contains the exact production web origins.
-   Preview origins must be present in the SendFlow preview origin policy, and
-   the Cloudflare site key must allow the corresponding hostname.
+   In development, SendFlow also uses `REPLIT_DOMAINS` and
+   `REPLIT_DEV_DOMAIN` for trusted origins. Production rejects Replit preview
+   domains and requires explicit HTTPS origins. The Cloudflare site key must
+   separately allow each hostname where the widget is rendered.
 5. Restart the API and web workflows after changing environment values. Build
    the web client again after changing the public site key.
 

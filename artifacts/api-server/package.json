@@ -9,6 +9,7 @@
     "start": "node --enable-source-maps ./dist/index.mjs",
     "test:otp": "node --experimental-strip-types --test src/lib/resend-email.test.mjs src/lib/email-otp-code.test.mjs",
     "test:turnstile": "node --experimental-strip-types --test src/lib/turnstile.test.mjs",
+    "test:turnstile:isolated": "node tests/security/run-isolated-finance.mjs --turnstile-only",
     "test:log-safety": "node --experimental-strip-types --test src/lib/log-safety.test.mjs",
     "test:auth": "node --experimental-strip-types --test src/lib/customer-auth-crypto.test.mjs src/lib/sensitive-data-crypto.test.mjs src/lib/admin-pin-session.test.mjs src/lib/customer-auth-rate-limit-policy.test.mjs src/lib/customer-auth-rate-limit-buckets.test.mjs src/lib/customer-pin-session-policy.test.mjs src/lib/customer-password-policy.test.mjs src/lib/customer-recovery-policy.test.mjs src/lib/customer-biometric-origin.test.mjs",
     "test:identity-verification": "node --experimental-strip-types --test src/lib/identity-verification-policy.test.mjs src/lib/identity-verification-image.test.mjs src/lib/identity-verification-pdf.test.mjs",
