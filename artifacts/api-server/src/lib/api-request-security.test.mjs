@@ -244,18 +244,20 @@ test("a trusted origin with a valid token proceeds; an untrusted origin still fa
   assert.notEqual(rejected.body.code, "csrf_token_invalid");
 });
 
-test("only the exact signed Didit POST bypasses browser CSRF and origin checks", () => {
-  assert.equal(invoke("POST", "/webhooks/didit").next, true);
+test("only the exact signed Resend POST bypasses browser CSRF and origin checks", () => {
+  assert.equal(invoke("POST", "/webhooks/resend").next, true);
   for (const path of [
-    "/webhooks/didit/",
-    "/webhooks/didit/extra",
+    "/webhooks/resend/",
+    "/webhooks/resend/extra",
     "/webhooks/feexpay",
-    "/webhooks/didit%2f",
-    "/WEBHOOKS/DIDIT",
+    "/webhooks/identity-verification",
+    "/webhooks/identity-verification/extra",
+    "/webhooks/resend%2f",
+    "/WEBHOOKS/RESEND",
   ]) {
     assert.equal(invoke("POST", path).status, 403, path);
   }
-  assert.equal(invoke("PUT", "/webhooks/didit").status, 403);
+  assert.equal(invoke("PUT", "/webhooks/resend").status, 403);
 });
 
 test("CSRF tokens are signed, session-bound, unpredictable and expire", () => {

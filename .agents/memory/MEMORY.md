@@ -6,7 +6,6 @@
 - [SendFlow transfer business rules](transfer-business-rules.md) — Keep the user-confirmed funding direction and sender/recipient fee calculations consistent across the three transfer types.
 - [Preview session reset](preview-session-reset.md) — App screenshots start a fresh browser session, so sessionStorage cannot be used to target a later onboarding slide.
 - [Mobile overlay positioning](mobile-overlay-positioning.md) — Render full-screen mobile overlays at document level when animated cards could create a fixed-position containing block.
-- [Didit credentials](didit-development.md) — User supplies live credentials; do not relabel them sandbox or weaken preview safeguards. Keep all secret values out of code.
 - [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.
 - [Aggregator business rules](aggregator-routing-business-rules.md) — “Retrait” means international; manual primary routing and country/operator/operation settings must remain independent.
 - [Country catalog validation](country-catalog-validation.md) — Imported telephone rules need independent numbering-plan and provider-coverage checks before opening countries.
@@ -29,7 +28,6 @@
 - [Customer profile storage](customer-profile-storage.md) — Preserve exact name-part boundaries in the existing encrypted display-name field without a schema migration.
 - [Safe HTTP logging](log-safety-boundaries.md) — HTTP middleware can override parent error serializers; protect both levels against credential and personal-data leaks.
 - [Strix upload failures](strix-upload-failures.md) — If cloud upload completion is invalid, check scan status and confirm any staged upload before retrying.
-- [Didit event ordering](didit-event-ordering.md) — Retry dispatch times change; order signed record updates and allow AML withdrawals of approval.
 - [GitHub connection readiness](github-connection-readiness.md) — Attachment and healthy OAuth do not prove a task workspace can read the source repository.
 - [PostgreSQL operational scripts](postgresql-operational-scripts.md) — Make psql guard failures nonzero; revoking direct EXECUTE does not disable an existing trigger.
 - [Network defense boundaries](network-defense-boundaries.md) — Target hostile behavior, not all cloud IPs; origin checks do not prove hosting-wide protection.

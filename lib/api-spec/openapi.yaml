@@ -17,7 +17,7 @@ tags:
   - name: database
     description: Development database diagnostics.
   - name: identity-verification
-    description: Didit identity verification for development and sandbox testing.
+    description: Account-limit identity verification status.
   - name: authentication
     description: Email verification for signup and account recovery. It does not prove ownership of the account phone number.
   - name: admin
@@ -2318,155 +2318,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
   /me/identity-verification:
-    get:
-      operationId: getIdentityVerificationStatus
+    post:
+      operationId: requestIdentityVerificationUnavailable
       tags: [identity-verification]
-      summary: Get the current identity verification status
+      summary: Request identity verification
+      description: Deprecated compatibility endpoint. Identity verification is currently unavailable; the server returns HTTP 410 and does not contact a provider.
+      deprecated: true
       security:
         - sendFlowSession: []
       responses:
-        "200":
-          description: Current verification status.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IdentityVerificationStatusResult"
         "401":
           description: Authentication is required.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-        "503":
-          description: Verification storage is unavailable.
+        "403":
+          description: Request origin is not trusted.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-    post:
-      operationId: createIdentityVerificationSession
-      tags: [identity-verification]
-      summary: Create a Didit verification session
-      description: Creates a development or sandbox verification session. Didit credentials remain server-side.
-      security:
-        - sendFlowSession: []
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/IdentityVerificationSessionRequest"
-      responses:
-        "201":
-          description: Verification session created.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IdentityVerificationSessionResult"
-        "200":
-          description: Existing in-progress session reused.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IdentityVerificationSessionResult"
-        "400":
-          description: Invalid request.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "401":
-          description: Authentication is required.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "429":
-          description: The user has reached the rolling Didit session attempt limit.
-          headers:
-            Retry-After:
-              description: Seconds until the oldest counted attempt expires.
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "409":
-          description: Another Didit session reservation is still being processed.
-          headers:
-            Retry-After:
-              description: Seconds until the in-progress reservation expires.
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "502":
-          description: Didit is unavailable.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "503":
-          description: Didit configuration or identity-verification storage is unavailable.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-  /webhooks/didit:
-    post:
-      operationId: receiveDiditWebhook
-      tags: [identity-verification]
-      summary: Receive a signed Didit webhook
-      description: Verifies X-Signature-V2 before applying an idempotent status update.
-      parameters:
-        - name: X-Timestamp
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Unix timestamp sent by Didit. Requests older than five minutes are rejected.
-        - name: X-Signature-V2
-          in: header
-          required: true
-          schema:
-            type: string
-          description: HMAC-SHA256 signature of Didit's canonical JSON payload.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DiditWebhookPayload"
-      responses:
-        "200":
-          description: Webhook accepted or recognized as a duplicate.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WebhookReceipt"
-        "400":
-          description: Invalid webhook payload.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "409":
-          description: Event identifier conflicts with a previously received event.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "401":
-          description: Invalid webhook signature.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "503":
-          description: Webhook processing is unavailable.
+        "410":
+          description: Identity verification is currently unavailable.
           content:
             application/json:
               schema:
@@ -6035,45 +5909,6 @@ components:
     IdentityVerificationStatus:
       type: string
       enum: [unverified, pending, review, verified, failed]
-    IdentityVerificationSessionRequest:
-      type: object
-      properties:
-        sandboxScenario:
-          type: string
-          enum: [approve, decline_aml_hit]
-          description: Sandbox-only Didit scenario for development tests.
-    IdentityVerificationSessionResult:
-      type: object
-      properties:
-        sessionId:
-          type: string
-        verificationUrl:
-          type: string
-          format: uri
-        status:
-          $ref: "#/components/schemas/IdentityVerificationStatus"
-        diditStatus:
-          type: string
-        sandboxScenario:
-          type: ["string", "null"]
-        reused:
-          type: boolean
-      required: [sessionId, verificationUrl, status, diditStatus, sandboxScenario, reused]
-    IdentityVerificationStatusResult:
-      type: object
-      properties:
-        status:
-          $ref: "#/components/schemas/IdentityVerificationStatus"
-        diditStatus:
-          type: ["string", "null"]
-        sessionId:
-          type: ["string", "null"]
-        verificationUrl:
-          type: ["string", "null"]
-          format: uri
-        sandboxScenario:
-          type: ["string", "null"]
-      required: [status, diditStatus, sessionId, verificationUrl, sandboxScenario]
     AccountLimitResult:
       type: object
       properties:
@@ -7524,40 +7359,6 @@ components:
         transactionSummary:
           $ref: "#/components/schemas/AdminUserTransactionSummary"
       required: [user, wallet, transactionSummary]
-    DiditWebhookPayload:
-      type: object
-      properties:
-        created_at:
-          type: integer
-          minimum: 1
-          description: Signed provider record update time, in Unix seconds; not the refreshed dispatch time.
-        timestamp:
-          type: integer
-          minimum: 1
-          description: Dispatch time, which Didit refreshes on retry.
-        event_id:
-          type: string
-          minLength: 1
-          maxLength: 255
-        session_id:
-          type: string
-          minLength: 1
-          maxLength: 255
-        webhook_type:
-          type: string
-          minLength: 1
-          maxLength: 128
-        status:
-          type: string
-      required: [event_id, session_id, webhook_type, status, created_at, timestamp]
-    WebhookReceipt:
-      type: object
-      properties:
-        received:
-          type: boolean
-        duplicate:
-          type: boolean
-      required: [received, duplicate]
     AdminWalletAdjustmentRequest:
       type: object
       properties:

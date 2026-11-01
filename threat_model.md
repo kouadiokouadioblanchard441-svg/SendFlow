@@ -1,15 +1,15 @@
 # Threat Model
 
-> **Current status (2026-10-18):** The external identity provider has been removed from the application. Customer authentication continues to use SendFlow's server-owned sessions. Administrator access is fail-closed and unavailable until phone OTP and a database role are configured. The older security assessment below is a historical snapshot and does not describe the current administrator boundary.
+> **Current status (2026-11-01):** The external identity-verification integration has been retired. The compatibility action returns `410` when it reaches the API route; the shared-database preview guard may reject it earlier with `503`. No provider calls or identity webhook are active. Historical verification rows and schema remain for audit, but never grant the previous higher limit; the monthly limit is `150,000 XOF` for every account until a replacement flow is approved. The account-limit page was intentionally left unchanged and still contains old provider-specific fallback text. Old secret names remain only in log redaction and secret-detection safeguards. The detailed assessment below is a historical snapshot and must not be treated as the current identity integration or administrator boundary.
 
 ## Project Overview
 
 SendFlow is a mobile-first financial transfer application with a React frontend,
 an Express API, and PostgreSQL storage. Customer accounts use phone/password
-authentication, eSMS Verify for signup and recovery, and server-owned opaque
-sessions. Administrator access is currently disabled. Didit is used by the API
-server for identity verification and must not be treated as money-movement
-authorization.
+authentication, server-owned opaque sessions, and the configured email-based OTP
+flow. The identity-verification provider previously described in this historical
+assessment is no longer integrated. Historical verification records do not
+authorize money movement or raise account limits.
 
 The consolidated pre-remediation baseline in
 [SECURITY-THREAT-MODEL.md](SECURITY-THREAT-MODEL.md) covers customer OTP and

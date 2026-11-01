@@ -1,4 +1,4 @@
-export type ExternalProviderName = "Didit" | "Resend";
+export type ExternalProviderName = "Resend";
 
 export class ExternalProviderCallUnavailableError extends Error {
   readonly provider: ExternalProviderName;

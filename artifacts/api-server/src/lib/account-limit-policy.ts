@@ -5,17 +5,10 @@ export type AccountLimitStatus =
   | "failed"
   | "review";
 
-export function mapDiditStatusToAccountLimitStatus(status: string | null): AccountLimitStatus {
-  if (status === "Approved") return "verified";
-  if (status === "Declined" || status === "Expired" || status === "Kyc Expired" || status === "Abandoned") {
-    return "failed";
-  }
-  if (status === "In Review") return "review";
-  return status === null ? "unverified" : "pending";
-}
-
-export function getMonthlyAccountLimit(status: AccountLimitStatus) {
-  return status === "verified" ? 10_000_000 : 150_000;
+export function getMonthlyAccountLimit() {
+  // Until a replacement verification flow is implemented, no historical
+  // provider status may grant the elevated monthly limit.
+  return 150_000;
 }
 
 export function getUtcMonthRange(now: Date) {

@@ -63,6 +63,10 @@ try {
     "lib/db/migrations/2026-10-26-linkflow-variable-amount.sql"), "utf8");
   await owner.query(variableAmountMigration);
   await owner.query(variableAmountMigration);
+  const paymentLimitsMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-10-29-payment-limits.sql"), "utf8");
+  await owner.query(paymentLimitsMigration);
+  await owner.query(paymentLimitsMigration);
   const developerMigrationClient = await owner.connect();
   try {
     const developerPlan = await planDeveloperIntegrations(developerMigrationClient);
@@ -213,14 +217,13 @@ try {
       export { executeAdminWalletAdjustment } from "./src/services/wallet-adjustment";
       export { consumeTransferQuoteQuota } from "./src/data/transfer-quote-quota";
       export { getAccountLimitSnapshot } from "./src/lib/account-limit";
-      export { reconcileIdentityVerification } from "./src/services/identity-reconciliation";
-      export { retrieveDiditDecision } from "./src/lib/didit";
       export { hashCustomerSessionToken } from "./src/lib/customer-auth-crypto";
       export { hashCustomerSecret } from "./src/lib/customer-auth-crypto";
       export { hashAdminSessionToken, ADMIN_SESSION_COOKIE } from "./src/lib/admin-session";
       export { provisionPreviewAccount } from "./src/services/provision-preview-account";
       export { createSensitiveDataLookupIndex } from "./src/lib/sensitive-data-crypto";
       export { decryptSensitiveData } from "./src/lib/sensitive-data-crypto";
+       export { encryptSensitiveData } from "./src/lib/sensitive-data-crypto";
       export { createIpBlock, revokeIpBlock, listIpBlocks } from "./src/services/ip-blocklist";
       export { isIpBlocked, enforceIpAccess } from "@workspace/db/ip-blocklist";
       export { createAdminIpBlocklistRouter } from "./src/routes/admin-ip-blocklist";
@@ -265,9 +268,7 @@ try {
       DATABASE_URL: databaseUrl.toString(), SENDFLOW_ISOLATED_RUNTIME: runtime,
       SENDFLOW_FIXTURE_SOCKET: socket, SESSION_SECRET: randomBytes(32).toString("hex"),
       CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
-      DIDIT_WEBHOOK_SECRET: randomBytes(32).toString("hex"),
-      DIDIT_ENVIRONMENT: "sandbox", CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", TRUST_PROXY_HOPS: "1",
-      DIDIT_WORKFLOW_ID: "fixture-workflow",
+       CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", TRUST_PROXY_HOPS: "1",
       TRUST_PROXY_HOPS: "1", LOG_LEVEL: process.env.SENDFLOW_TEST_LOG_LEVEL ?? "silent",
     },
   });

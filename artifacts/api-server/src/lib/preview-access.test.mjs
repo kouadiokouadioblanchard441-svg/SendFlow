@@ -14,7 +14,7 @@ test("viewer candidate list admits exact owner-scoped account, LinkFlow, and bio
     ["POST", "/api/auth/biometric/authentication/verify"], ["DELETE", "/api/auth/biometric"],
     ["POST", "/api/auth/sign-out"], ["PUT", "/api/me/pin"], ["GET", "/api/me"],
     ["GET", "/api/me/transactions"], ["POST", "/api/me/transfer-quote"],
-    ["GET", "/api/me/account-limit"], ["GET", "/api/me/identity-verification"],
+    ["GET", "/api/me/account-limit"],
     ["GET", "/api/me/payment-links"], ["POST", "/api/me/payment-links"],
     ["POST", "/api/me/payment-links/123e4567-e89b-42d3-a456-426614174000/image"],
   ]) assert.equal(isViewerRouteCandidate(method, path), true);

@@ -1925,67 +1925,11 @@ export const GetCustomerTransactionResponse = zod.object({
 
 
 /**
- * @summary Get the current identity verification status
+ * Deprecated compatibility endpoint. Identity verification is currently unavailable; the server returns HTTP 410 and does not contact a provider.
+ * @deprecated
+ * @summary Request identity verification
  */
-export const GetIdentityVerificationStatusResponse = zod.object({
-  "status": zod.enum(['unverified', 'pending', 'review', 'verified', 'failed']),
-  "diditStatus": zod.string().nullable(),
-  "sessionId": zod.string().nullable(),
-  "verificationUrl": zod.url().nullable(),
-  "sandboxScenario": zod.string().nullable()
-})
-
-
-/**
- * Creates a development or sandbox verification session. Didit credentials remain server-side.
- * @summary Create a Didit verification session
- */
-export const CreateIdentityVerificationSessionBody = zod.object({
-  "sandboxScenario": zod.enum(['approve', 'decline_aml_hit']).optional().describe('Sandbox-only Didit scenario for development tests.')
-})
-
-export const CreateIdentityVerificationSessionResponse = zod.object({
-  "sessionId": zod.string(),
-  "verificationUrl": zod.url(),
-  "status": zod.enum(['unverified', 'pending', 'review', 'verified', 'failed']),
-  "diditStatus": zod.string(),
-  "sandboxScenario": zod.string().nullable(),
-  "reused": zod.boolean()
-})
-
-
-/**
- * Verifies X-Signature-V2 before applying an idempotent status update.
- * @summary Receive a signed Didit webhook
- */
-export const ReceiveDiditWebhookHeader = zod.object({
-  "X-Timestamp": zod.string().describe('Unix timestamp sent by Didit. Requests older than five minutes are rejected.'),
-  "X-Signature-V2": zod.string().describe('HMAC-SHA256 signature of Didit\'s canonical JSON payload.')
-})
-
-
-
-export const receiveDiditWebhookBodyEventIdMax = 255;
-
-export const receiveDiditWebhookBodySessionIdMax = 255;
-
-export const receiveDiditWebhookBodyWebhookTypeMax = 128;
-
-
-
-export const ReceiveDiditWebhookBody = zod.object({
-  "created_at": zod.int().min(1).describe('Signed provider record update time, in Unix seconds; not the refreshed dispatch time.'),
-  "timestamp": zod.int().min(1).describe('Dispatch time, which Didit refreshes on retry.'),
-  "event_id": zod.string().min(1).max(receiveDiditWebhookBodyEventIdMax),
-  "session_id": zod.string().min(1).max(receiveDiditWebhookBodySessionIdMax),
-  "webhook_type": zod.string().min(1).max(receiveDiditWebhookBodyWebhookTypeMax),
-  "status": zod.string()
-})
-
-export const ReceiveDiditWebhookResponse = zod.object({
-  "received": zod.boolean(),
-  "duplicate": zod.boolean()
-})
+export const RequestIdentityVerificationUnavailableResponse = zod.void()
 
 
 /**

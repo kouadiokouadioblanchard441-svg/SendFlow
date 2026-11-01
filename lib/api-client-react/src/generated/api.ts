@@ -112,7 +112,6 @@ import type {
   DeveloperWebhookDeliveriesResponse,
   DeveloperWebhookInput,
   DeveloperWebhooksResponse,
-  DiditWebhookPayload,
   EmailMarketingUnsubscribeInput,
   EmailMarketingUnsubscribeResponse,
   EmailOtpSendInput,
@@ -124,9 +123,6 @@ import type {
   GetCustomerPaymentLinksParams,
   GetCustomerTransactionsParams,
   HealthStatus,
-  IdentityVerificationSessionRequest,
-  IdentityVerificationSessionResult,
-  IdentityVerificationStatusResult,
   IpBlock,
   IpBlockInput,
   IpBlockList,
@@ -163,8 +159,7 @@ import type {
   UpdateAdminCountryRequest,
   UpdateAdminUssdInstructionRequest,
   UpdatePaymentAggregatorRequest,
-  UpdatePaymentAggregatorRouteRequest,
-  WebhookReceipt
+  UpdatePaymentAggregatorRouteRequest
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -5582,7 +5577,7 @@ export function useGetCustomerTransaction<TData = Awaited<ReturnType<typeof getC
 
 
 
-export const getGetIdentityVerificationStatusUrl = () => {
+export const getRequestIdentityVerificationUnavailableUrl = () => {
 
 
 
@@ -5591,14 +5586,16 @@ export const getGetIdentityVerificationStatusUrl = () => {
 }
 
 /**
- * @summary Get the current identity verification status
+ * Deprecated compatibility endpoint. Identity verification is currently unavailable; the server returns HTTP 410 and does not contact a provider.
+ * @deprecated
+ * @summary Request identity verification
  */
-export const getIdentityVerificationStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<IdentityVerificationStatusResult> => {
+export const requestIdentityVerificationUnavailable = async ( options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
 
-  return customFetch<IdentityVerificationStatusResult>(getGetIdentityVerificationStatusUrl(),
+  return customFetch<unknown>(getRequestIdentityVerificationUnavailableUrl(),
   {
     ...options,
-    method: 'GET'
+    method: 'POST'
 
 
   }
@@ -5608,105 +5605,13 @@ export const getIdentityVerificationStatus = async ( options?: Parameters<typeof
 
 
 
-export const getGetIdentityVerificationStatusQueryKey = () => {
-    return [
-    `/api/me/identity-verification`
-    ] as const;
-    }
+export const getRequestIdentityVerificationUnavailableMutationKey = () => ['requestIdentityVerificationUnavailable'] as const;
 
+export const getRequestIdentityVerificationUnavailableMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestIdentityVerificationUnavailable>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestIdentityVerificationUnavailable>>, TError,void, TContext> => {
 
-export const getGetIdentityVerificationStatusQueryOptions = <TData = Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetIdentityVerificationStatusQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getIdentityVerificationStatus>>> = ({ signal }) => getIdentityVerificationStatus({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetIdentityVerificationStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getIdentityVerificationStatus>>>
-export type GetIdentityVerificationStatusQueryError = ErrorType<ErrorEnvelope>
-
-
-/**
- * @summary Get the current identity verification status
- */
-
-export function useGetIdentityVerificationStatus<TData = Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError = ErrorType<ErrorEnvelope>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getIdentityVerificationStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetIdentityVerificationStatusQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
-export const getCreateIdentityVerificationSessionUrl = () => {
-
-
-
-
-  return `/api/me/identity-verification`
-}
-
-/**
- * Creates a development or sandbox verification session. Didit credentials remain server-side.
- * @summary Create a Didit verification session
- */
-export const createIdentityVerificationSession = async (identityVerificationSessionRequest?: IdentityVerificationSessionRequest, options?: Parameters<typeof customFetch>[1]): Promise<IdentityVerificationSessionResult> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return customFetch<IdentityVerificationSessionResult>(getCreateIdentityVerificationSessionUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(identityVerificationSessionRequest)
-  }
-);}
-
-
-
-
-
-export const getCreateIdentityVerificationSessionMutationKey = () => ['createIdentityVerificationSession'] as const;
-
-export const getCreateIdentityVerificationSessionMutationOptions = <TError = ErrorType<ErrorEnvelope>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createIdentityVerificationSession>>, TError,CreateIdentityVerificationSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createIdentityVerificationSession>>, TError,CreateIdentityVerificationSessionMutationVariables, TContext> => {
-
-const mutationKey = getCreateIdentityVerificationSessionMutationKey();
+const mutationKey = getRequestIdentityVerificationUnavailableMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5716,10 +5621,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createIdentityVerificationSession>>, CreateIdentityVerificationSessionMutationVariables> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestIdentityVerificationUnavailable>>, void> = () => {
 
-          return  createIdentityVerificationSession(data,requestOptions)
+
+          return  requestIdentityVerificationUnavailable(requestOptions)
         }
 
 
@@ -5729,112 +5634,24 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateIdentityVerificationSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createIdentityVerificationSession>>>
-    export type CreateIdentityVerificationSessionMutationBody = BodyType<IdentityVerificationSessionRequest> | undefined
-    export type CreateIdentityVerificationSessionMutationError = ErrorType<ErrorEnvelope>
-    export type CreateIdentityVerificationSessionMutationVariables = {data?: BodyType<IdentityVerificationSessionRequest>}
+    export type RequestIdentityVerificationUnavailableMutationResult = NonNullable<Awaited<ReturnType<typeof requestIdentityVerificationUnavailable>>>
+
+    export type RequestIdentityVerificationUnavailableMutationError = ErrorType<ErrorEnvelope>
+
 
     /**
- * @summary Create a Didit verification session
+ * @deprecated
+ * @summary Request identity verification
  */
-export const useCreateIdentityVerificationSession = <TError = ErrorType<ErrorEnvelope>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createIdentityVerificationSession>>, TError,CreateIdentityVerificationSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useRequestIdentityVerificationUnavailable = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestIdentityVerificationUnavailable>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof createIdentityVerificationSession>>,
+        Awaited<ReturnType<typeof requestIdentityVerificationUnavailable>>,
         TError,
-        CreateIdentityVerificationSessionMutationVariables,
+        void,
         TContext
       > => {
-      return useMutation(getCreateIdentityVerificationSessionMutationOptions(options));
-    }
-
-export const getReceiveDiditWebhookUrl = () => {
-
-
-
-
-  return `/api/webhooks/didit`
-}
-
-/**
- * Verifies X-Signature-V2 before applying an idempotent status update.
- * @summary Receive a signed Didit webhook
- */
-export const receiveDiditWebhook = async (diditWebhookPayload: DiditWebhookPayload, options?: Parameters<typeof customFetch>[1]): Promise<WebhookReceipt> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return customFetch<WebhookReceipt>(getReceiveDiditWebhookUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(diditWebhookPayload)
-  }
-);}
-
-
-
-
-
-export const getReceiveDiditWebhookMutationKey = () => ['receiveDiditWebhook'] as const;
-
-export const getReceiveDiditWebhookMutationOptions = <TError = ErrorType<ErrorEnvelope>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveDiditWebhook>>, TError,ReceiveDiditWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof receiveDiditWebhook>>, TError,ReceiveDiditWebhookMutationVariables, TContext> => {
-
-const mutationKey = getReceiveDiditWebhookMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveDiditWebhook>>, ReceiveDiditWebhookMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  receiveDiditWebhook(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReceiveDiditWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveDiditWebhook>>>
-    export type ReceiveDiditWebhookMutationBody = BodyType<DiditWebhookPayload>
-    export type ReceiveDiditWebhookMutationError = ErrorType<ErrorEnvelope>
-    export type ReceiveDiditWebhookMutationVariables = {data: BodyType<DiditWebhookPayload>}
-
-    /**
- * @summary Receive a signed Didit webhook
- */
-export const useReceiveDiditWebhook = <TError = ErrorType<ErrorEnvelope>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveDiditWebhook>>, TError,ReceiveDiditWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof receiveDiditWebhook>>,
-        TError,
-        ReceiveDiditWebhookMutationVariables,
-        TContext
-      > => {
-      return useMutation(getReceiveDiditWebhookMutationOptions(options));
+      return useMutation(getRequestIdentityVerificationUnavailableMutationOptions(options));
     }
 
 export const getSignInAdminUrl = () => {

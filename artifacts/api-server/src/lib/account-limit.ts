@@ -11,15 +11,11 @@ import {
 import {
   getMonthlyAccountLimit,
   getUtcMonthRange,
-  mapDiditStatusToAccountLimitStatus,
 } from "./account-limit-policy";
-import { loadLatestIdentityVerification } from "../data/identity-verification";
 
 export async function getAccountLimitSnapshot(userId: string, now = new Date()) {
-  const latestVerification = await loadLatestIdentityVerification(userId);
-
-  const status = mapDiditStatusToAccountLimitStatus(latestVerification?.status ?? null);
-  const monthlyLimit = getMonthlyAccountLimit(status);
+  const status = "unverified" as const;
+  const monthlyLimit = getMonthlyAccountLimit();
   const { periodStart, periodEnd } = getUtcMonthRange(now);
 
   const [usage] = await db

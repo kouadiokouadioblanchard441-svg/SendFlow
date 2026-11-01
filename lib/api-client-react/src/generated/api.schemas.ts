@@ -1188,44 +1188,6 @@ export const IdentityVerificationStatus = {
   failed: 'failed',
 } as const;
 
-/**
- * Sandbox-only Didit scenario for development tests.
- */
-export type IdentityVerificationSessionRequestSandboxScenario = typeof IdentityVerificationSessionRequestSandboxScenario[keyof typeof IdentityVerificationSessionRequestSandboxScenario];
-
-
-export const IdentityVerificationSessionRequestSandboxScenario = {
-  approve: 'approve',
-  decline_aml_hit: 'decline_aml_hit',
-} as const;
-
-export interface IdentityVerificationSessionRequest {
-  /** Sandbox-only Didit scenario for development tests. */
-  sandboxScenario?: IdentityVerificationSessionRequestSandboxScenario;
-}
-
-export interface IdentityVerificationSessionResult {
-  sessionId: string;
-  verificationUrl: string;
-  status: IdentityVerificationStatus;
-  diditStatus: string;
-  /** @nullable */
-  sandboxScenario: string | null;
-  reused: boolean;
-}
-
-export interface IdentityVerificationStatusResult {
-  status: IdentityVerificationStatus;
-  /** @nullable */
-  diditStatus: string | null;
-  /** @nullable */
-  sessionId: string | null;
-  /** @nullable */
-  verificationUrl: string | null;
-  /** @nullable */
-  sandboxScenario: string | null;
-}
-
 export type AccountLimitResultCurrency = typeof AccountLimitResultCurrency[keyof typeof AccountLimitResultCurrency];
 
 
@@ -2494,40 +2456,6 @@ export interface AdminUserDetail {
   /** @nullable */
   wallet: AdminWalletDetail | null;
   transactionSummary: AdminUserTransactionSummary;
-}
-
-export interface DiditWebhookPayload {
-  /**
-     * Signed provider record update time, in Unix seconds; not the refreshed dispatch time.
-     * @minimum 1
-     */
-  created_at: number;
-  /**
-     * Dispatch time, which Didit refreshes on retry.
-     * @minimum 1
-     */
-  timestamp: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  event_id: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  session_id: string;
-  /**
-     * @minLength 1
-     * @maxLength 128
-     */
-  webhook_type: string;
-  status: string;
-}
-
-export interface WebhookReceipt {
-  received: boolean;
-  duplicate: boolean;
 }
 
 export type AdminWalletAdjustmentRequestDirection = typeof AdminWalletAdjustmentRequestDirection[keyof typeof AdminWalletAdjustmentRequestDirection];

@@ -17,7 +17,6 @@ async function buildAll() {
   await esbuild({
     entryPoints: {
       index: path.resolve(artifactDir, "src/index.ts"),
-      "reconcile-identities": path.resolve(artifactDir, "scripts/reconcile-identities.mjs"),
     },
     platform: "node",
     bundle: true,

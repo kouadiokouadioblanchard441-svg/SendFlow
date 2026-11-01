@@ -64,7 +64,7 @@ test("Blocked IP is refused before every API method, auth, preflight and webhook
   try {
     for(const [path,method] of [
       ["/api/healthz","GET"],["/api/me","GET"],["/api/auth/sign-in","POST"],
-      ["/api/auth/sign-in","OPTIONS"],["/api/webhooks/didit","POST"],["/api/anything","DELETE"],
+      ["/api/auth/sign-in","OPTIONS"],["/api/anything","DELETE"],
     ]) {
       const result=await request(server,path,{method,ip:"198.51.100.43",body:method==="POST"?{}:undefined});
       assert.equal(result.status,403,`${method} ${path}`); assert.match(result.headers["cache-control"],/no-store/);

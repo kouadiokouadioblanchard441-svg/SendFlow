@@ -39,7 +39,7 @@ export function apiRequestSecurity(allowedOrigins: ReadonlySet<string>): Request
     // in its handler. Never exempt an entire /webhooks prefix.
     if (
       req.method === "POST"
-      && (req.path === "/webhooks/didit" || req.path === "/webhooks/resend")
+      && req.path === "/webhooks/resend"
     ) {
       next();
       return;

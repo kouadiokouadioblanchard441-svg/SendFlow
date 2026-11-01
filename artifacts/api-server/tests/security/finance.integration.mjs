@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { before, after, test } from "node:test";
 import { createRequire } from "node:module";
-import { createHmac, randomBytes, randomUUID, randomInt } from "node:crypto";
+import { randomBytes, randomUUID, randomInt } from "node:crypto";
 import http from "node:http";
 import pg from "pg";
 import "./ip-blocklist.integration.mjs";
@@ -107,8 +107,7 @@ function headerValue(headers, name) {
 
 async function request(path, options = {}) {
   const { method = "GET", user, headers = {} } = options;
-  if (["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase())
-    || path === "/api/webhooks/didit") {
+  if (["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase())) {
     return rawRequest(path, options);
   }
 
@@ -274,20 +273,6 @@ test("operator logos validate, store bytes in the database, use version checks, 
   assert.equal(unauthorized.status, 401);
 });
 
-function canonical(value) {
-  if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === "object") return Object.fromEntries(
-    Object.entries(value).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
-      .map(([key, item]) => [key, canonical(item)]));
-  return value;
-}
-function webhook(body, signature, timestamp = String(body.timestamp ?? Math.floor(Date.now() / 1000))) {
-  return request("/api/webhooks/didit", { method: "POST", body, headers: {
-    "X-Timestamp": timestamp,
-    "X-Signature-V2": signature ?? createHmac("sha256", process.env.DIDIT_WEBHOOK_SECRET)
-      .update(JSON.stringify(canonical(body))).digest("hex"),
-  } });
-}
 const adjustment = (extra = {}) => ({
   direction: "debit", amountMinor: 1, expectedBalanceMinor: 100,
   reason: "Isolated financial integrity test", idempotencyKey: randomUUID(), ...extra,
@@ -372,11 +357,22 @@ test("SQL constraints and append-only triggers prevent alteration of financial h
   const legacy = (await owner.query("SELECT payload_digest FROM sf_identity_webhook_events WHERE event_id='legacy-fixture'")).rows[0];
   assert.equal(legacy.payload_digest, null);
 });
-test("a historical approval cannot override the most recent verification", async () => {
+test("legacy identity records remain stored but never grant the elevated monthly limit", async () => {
   await owner.query(`INSERT INTO sf_identity_verifications(user_id,provider_session_id,vendor_data,verification_url,status,created_at)
-    VALUES('fixture-b','fixture-old-approved','fixture-b','https://verify.didit.me/session/fixture','Approved',now()-interval '2 days'),
-    ('fixture-b','fixture-latest-expired','fixture-b','https://verify.didit.me/session/fixture','Expired',now()-interval '1 day')`);
+    VALUES('fixture-b','fixture-old-approved','fixture-b','https://historical.invalid/session','Approved',now()-interval '2 days')`);
+  assert.equal((await owner.query("SELECT status FROM sf_identity_verifications WHERE provider_session_id='fixture-old-approved'")).rows[0].status, "Approved");
   assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 150_000);
+});
+test("identity verification compatibility action returns unavailable without contacting an external service", async () => {
+  const before = externalCalls;
+  const response = await request("/api/me/identity-verification", {
+    method: "POST", user: "fixture-a", body: {},
+  });
+  assert.equal(response.status, 410);
+  assert.deepEqual(JSON.parse(response.text), {
+    error: "Account limit verification is not available yet",
+  });
+  assert.equal(externalCalls, before);
 });
 test("persistent quote quota is atomic across connections and resets after expiry", async () => {
   const results = await Promise.all(Array.from({ length: 90 }, () => consumeTransferQuoteQuota("fixture-quota")));
@@ -384,171 +380,10 @@ test("persistent quote quota is atomic across connections and resets after expir
   await owner.query("UPDATE sf_api_request_limits SET window_started_at=now()-interval '2 minutes'");
   assert.equal(await consumeTransferQuoteQuota("fixture-quota"), true);
 });
-test("signed KYC expiry lowers the limit; duplicates, conflicts and stale approval cannot restore it", async () => {
-  const session = `fixture-didit-${randomUUID()}`;
-  await owner.query(`INSERT INTO sf_identity_verifications(user_id,provider_session_id,vendor_data,verification_url,status)
-    VALUES('fixture-a',$1,'fixture-a','https://verify.didit.me/session/fixture','Approved')`, [session]);
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-a")).monthlyLimit, 10_000_000);
-  const body = { event_id: randomUUID(), session_id: session, webhook_type: "status.updated",
-    status: "Kyc Expired", environment: "sandbox", created_at: Math.floor(Date.now() / 1000) - 20,
-    timestamp: Math.floor(Date.now() / 1000) - 5 };
-  assert.equal((await webhook(body, "invalid")).status, 401);
-  assert.equal((await webhook(body)).status, 200);
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-a")).monthlyLimit, 150_000);
-  assert.equal(JSON.parse((await webhook(body)).text).duplicate, true);
-  assert.equal(JSON.parse((await webhook({ ...body, timestamp: body.timestamp + 1 })).text).duplicate, true);
-  assert.equal((await webhook({ ...body, status: "Approved" })).status, 409);
-  assert.equal((await webhook({ ...body, event_id: randomUUID(), status: "Approved",
-    created_at: body.created_at - 1 })).status, 200);
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-a")).monthlyLimit, 150_000);
-  const receipt = (await owner.query("SELECT encrypted_payload,status_applied FROM sf_identity_webhook_events WHERE event_id=$1",
-    [body.event_id])).rows[0];
-  assert.equal(receipt.status_applied, true);
-  assert.equal(receipt.encrypted_payload.includes(session), false);
-  assert.deepEqual(JSON.parse(runtime.decryptSensitiveData(receipt.encrypted_payload, "identity-webhook-payload")), body);
-  // A newer webhook cannot clear an ambiguity; only a server read can.
-  const reopen = { ...body, event_id: randomUUID(), status: "Approved", created_at: body.created_at + 5 };
-  assert.equal((await webhook(reopen)).status, 200);
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-a")).monthlyLimit, 150_000);
-  const { id } = (await owner.query("SELECT id FROM sf_identity_verifications WHERE provider_session_id=$1", [session])).rows[0];
-  assert.equal(await runtime.reconcileIdentityVerification(id, async () => ({
-    session_id: session, vendor_data: "fixture-a", environment: "sandbox",
-    workflow_id: "fixture-workflow", status: "Approved",
-  })), "resolved");
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-a")).monthlyLimit, 10_000_000);
-  const aml = { ...body, event_id: randomUUID(), status: "In Review", created_at: body.created_at + 10 };
-  assert.equal((await webhook(aml)).status, 200);
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-a")).monthlyLimit, 150_000);
-  assert.equal((await webhook({ ...reopen, event_id: randomUUID() })).status, 200);
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-a")).monthlyLimit, 150_000);
-});
 test("API errors do not expose database internals or secret configuration names", async () => {
   const res = await request("/api/me/transfer-quote", { method: "POST", user: "fixture-a", body: { amountMinor: -1 } });
   assert.equal(res.status, 400);
-  assert.doesNotMatch(res.text, /DATABASE_URL|DIDIT_WEBHOOK_SECRET|CUSTOMER_PII_ENCRYPTION_KEY|postgresql|stack|sf_fixture/i);
-});
-test("ambiguous signed events hold privileges; only bound server decisions resolve idempotently", async () => {
-  const session = randomUUID();
-  const seconds = Math.floor(Date.now() / 1000) - 30;
-  const { id } = (await owner.query(`INSERT INTO sf_identity_verifications
-    (user_id,provider_session_id,vendor_data,verification_url,status,last_provider_event_at)
-    VALUES('fixture-b',$1,'fixture-b','https://verify.didit.me/session/fixture','Approved',to_timestamp($2))
-    RETURNING id`, [session, seconds])).rows[0];
-  const event = { event_id: randomUUID(), session_id: session, webhook_type: "status.updated",
-    status: "Declined", environment: "sandbox", created_at: seconds,
-    timestamp: Math.floor(Date.now() / 1000) };
-  const state = async () => (await owner.query("SELECT * FROM sf_identity_verifications WHERE id=$1", [id])).rows[0];
-  const decision = { session_id: session, vendor_data: "fixture-b", environment: "sandbox",
-    workflow_id: "fixture-workflow", status: "Approved", created_at: "2020-01-01T00:00:00Z" };
-  assert.equal((await webhook(event, "invalid")).status, 401);
-  assert.equal((await state()).reconciliation_required, false);
-  assert.equal((await webhook(event)).status, 200);
-  assert.equal((await state()).status, "In Review");
-  assert.equal((await state()).reconciliation_required, true);
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 150_000);
-  const version = (await state()).reconciliation_version;
-  await Promise.all(Array.from({ length: 8 }, () => webhook({ ...event, timestamp: event.timestamp + 1 })));
-  assert.equal((await state()).reconciliation_version, version);
-  const receipt = (await owner.query("SELECT * FROM sf_identity_webhook_events WHERE event_id=$1", [event.event_id])).rows[0];
-  assert.equal(receipt.status_applied, false);
-  assert.deepEqual(JSON.parse(runtime.decryptSensitiveData(receipt.encrypted_payload, "identity-webhook-payload")), event);
-  for (const patch of [{ session_id: randomUUID() }, { vendor_data: "other" },
-    { environment: "live" }, { workflow_id: "other" }, { status: "APPROVED" },
-    { expires_at: "2000-01-01T00:00:00Z" }, { expires_at: "invalid" }, { session_kind: "business" }]) {
-    await assert.rejects(runtime.reconcileIdentityVerification(id, async () => ({ ...decision, ...patch })));
-    assert.equal((await state()).reconciliation_required, true);
-  }
-  await assert.rejects(runtime.reconcileIdentityVerification(id, async () => { throw new Error("timeout"); }));
-  await assert.rejects(runtime.reconcileIdentityVerification(id), /disabled outside production/);
-  let arrived;
-  const waiting = new Promise(resolve => { arrived = resolve; });
-  let release;
-  const gate = new Promise(resolve => { release = resolve; });
-  const inflight = runtime.reconcileIdentityVerification(id, async () => { arrived(); await gate; return decision; });
-  await waiting;
-  assert.equal((await webhook({ ...event, event_id: randomUUID(), status: "Approved", created_at: seconds + 5 })).status, 200);
-  release();
-  assert.equal(await inflight, "superseded");
-  assert.equal((await state()).status, "In Review");
-  const results = await Promise.all(Array.from({ length: 6 }, () =>
-    runtime.reconcileIdentityVerification(id, async () => decision)));
-  assert.equal(results.filter(x => x === "resolved").length, 1);
-  assert.equal((await state()).status, "Approved");
-  assert.equal((await state()).reconciliation_required, false);
-  // Replaying the additive migration must not resurrect a resolved old receipt.
-  const { readFileSync } = await import("node:fs");
-  await owner.query(readFileSync("lib/db/migrations/2026-10-22-identity-reconciliation.sql", "utf8"));
-  assert.equal((await state()).reconciliation_required, false);
-  assert.equal(await runtime.reconcileIdentityVerification(id, async () => { throw new Error("must not read"); }), "not_pending");
-  const proof = (await owner.query(`SELECT encrypted_payload FROM sf_identity_webhook_events
-    WHERE provider_session_id=$1 AND event_type='reconciliation.resolved'`, [session])).rows;
-  assert.equal(proof.length, 1);
-  assert.deepEqual(JSON.parse(runtime.decryptSensitiveData(proof[0].encrypted_payload, "identity-webhook-payload")).decision, decision);
-  assert.equal((await webhook({ ...event, status: "Approved" })).status, 409);
-  const conflictedVersion = (await state()).reconciliation_version;
-  assert.equal((await state()).status, "In Review");
-  assert.equal((await webhook({ ...event, status: "Approved" })).status, 409);
-  assert.equal((await state()).reconciliation_version, conflictedVersion);
-  assert.equal((await owner.query(`SELECT count(*)::int AS count FROM sf_identity_webhook_events
-    WHERE provider_session_id=$1 AND event_id LIKE 'conflict:%'`, [session])).rows[0].count, 1);
-  await owner.query(`CREATE FUNCTION fixture_fail_identity_evidence() RETURNS trigger LANGUAGE plpgsql AS $$
-    BEGIN IF NEW.event_type='reconciliation.resolved' THEN RAISE EXCEPTION 'fixture'; END IF; RETURN NEW; END $$;
-    CREATE TRIGGER fixture_fail_identity_evidence BEFORE INSERT ON sf_identity_webhook_events
-    FOR EACH ROW EXECUTE FUNCTION fixture_fail_identity_evidence()`);
-  try {
-    await assert.rejects(runtime.reconcileIdentityVerification(id, async () => decision));
-    assert.equal((await state()).reconciliation_required, true);
-    assert.equal((await state()).status, "In Review");
-  } finally {
-    await owner.query("DROP TRIGGER fixture_fail_identity_evidence ON sf_identity_webhook_events; DROP FUNCTION fixture_fail_identity_evidence()");
-  }
-});
-test("legacy receipts without digests never disguise a signed approval withdrawal as a duplicate", async () => {
-  for (const historicalStatus of ["Approved", null]) {
-    const session = randomUUID(), eventId = randomUUID();
-    const seconds = Math.floor(Date.now() / 1000) - 30;
-    const { id } = (await owner.query(`INSERT INTO sf_identity_verifications
-      (user_id,provider_session_id,vendor_data,verification_url,status,last_provider_event_at)
-      VALUES('fixture-b',$1,'fixture-b','https://verify.didit.me/session/fixture','Approved',to_timestamp($2))
-      RETURNING id`, [session, seconds])).rows[0];
-    await owner.query(`INSERT INTO sf_identity_webhook_events
-      (event_id,provider_session_id,event_type,status,matched_verification,status_applied)
-      VALUES($1,$2,'status.updated',$3,true,true)`, [eventId, session, historicalStatus]);
-    const state = async () => (await owner.query(
-      "SELECT status,reconciliation_required,reconciliation_version FROM sf_identity_verifications WHERE id=$1", [id])).rows[0];
-    assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 10_000_000);
-    const withdrawal = { event_id: eventId, session_id: session, webhook_type: "status.updated",
-      status: "Declined", environment: "sandbox", created_at: seconds + 5,
-      timestamp: Math.floor(Date.now() / 1000) };
-    const response = await webhook(withdrawal);
-    assert.equal(response.status, 409);
-    assert.notEqual(JSON.parse(response.text).duplicate, true);
-    assert.equal((await state()).reconciliation_required, true);
-    assert.equal((await state()).status, "In Review");
-    assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 150_000);
-    const version = (await state()).reconciliation_version;
-    assert.equal((await webhook({ ...withdrawal, timestamp: withdrawal.timestamp + 1 })).status, 409);
-    assert.equal((await state()).reconciliation_version, version);
-    const original = (await owner.query(
-      "SELECT status,payload_digest FROM sf_identity_webhook_events WHERE event_id=$1", [eventId])).rows[0];
-    assert.equal(original.status, historicalStatus);
-    assert.equal(original.payload_digest, null);
-    const conflict = (await owner.query(`SELECT encrypted_payload,status_applied FROM sf_identity_webhook_events
-      WHERE provider_session_id=$1 AND event_id LIKE 'conflict:%'`, [session])).rows;
-    assert.equal(conflict.length, 1);
-    assert.equal(conflict[0].status_applied, false);
-    assert.deepEqual(JSON.parse(runtime.decryptSensitiveData(conflict[0].encrypted_payload, "identity-webhook-payload")), withdrawal);
-    // A later signed approval also cannot remove this hold.
-    await webhook({ ...withdrawal, event_id: randomUUID(), status: "Approved", created_at: seconds + 10 });
-    assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 150_000);
-    assert.equal(await runtime.reconcileIdentityVerification(id, async () => ({
-      session_id: session, vendor_data: "fixture-b", workflow_id: "fixture-workflow",
-      environment: "sandbox", status: "Declined",
-    })), "resolved");
-    assert.equal((await state()).reconciliation_required, false);
-    assert.equal((await state()).status, "Declined");
-    assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 150_000);
-  }
+  assert.doesNotMatch(res.text, /DATABASE_URL|CUSTOMER_PII_ENCRYPTION_KEY|postgresql|stack|sf_fixture/i);
 });
 test("malformed and oversized HTTP bodies return safe JSON even in development", async () => {
   const marker = randomUUID();
@@ -571,16 +406,6 @@ test("malformed and oversized HTTP bodies return safe JSON even in development",
   const invalidPath = await request("/api/me/transactions/%E0%A4%A", { user: "fixture-a" });
   assert.equal(invalidPath.status, 400);
   assert.deepEqual(JSON.parse(invalidPath.text), { error: "Malformed request path" });
-});
-test("a captured signed webhook remains expired when only its unsigned header is refreshed", async () => {
-  const now = Math.floor(Date.now() / 1000);
-  const stale = { event_id: randomUUID(), session_id: "fixture-old-session", webhook_type: "status.updated",
-    status: "Approved", environment: "sandbox", created_at: now - 601, timestamp: now - 601 };
-  assert.equal((await webhook(stale, undefined, String(now))).status, 401);
-  assert.equal((await webhook({ ...stale, timestamp: now }, "é".repeat(64), String(now))).status, 401);
-  assert.equal((await owner.query("SELECT count(*) FROM sf_identity_webhook_events WHERE event_id=$1",
-    [stale.event_id])).rows[0].count, "0");
-  assert.equal((await webhook({ ...stale, timestamp: undefined }, undefined, String(now))).status, 401);
 });
 test("deposit and international page payloads receive the real server totals for both fee choices", async () => {
   for (const senderPaysFees of [true, false]) {
@@ -730,10 +555,12 @@ test("shared-database access is confined to one provisioned viewer, with real pa
       senderPhone: fixturePhone, recipientPhone: "+2250000000001",
     } })).status, 200);
     for (const path of ["/api/auth/send-otp", "/api/auth/verify-otp", "/api/auth/register",
-      "/api/auth/reset-password", "/api/auth/reset-pin", "/api/me/identity-verification",
-      "/api/me/transfer", "/api/payments"]) {
+      "/api/auth/reset-password", "/api/auth/reset-pin", "/api/me/transfer", "/api/payments"]) {
       assert.equal((await request(path, { method: "POST", headers, body: {} })).status, 503);
     }
+    assert.equal((await request("/api/me/identity-verification", {
+      method: "POST", headers, body: {},
+    })).status, 503);
     assert.equal((await request("/api/DMgrgmt-1np5g23g12bGFtMwh/overview", { headers })).status, 503);
     assert.equal((await request("/api/me/future-route", { headers })).status, 503);
     // Neither the password nor the preview session works in the production realm.

@@ -168,16 +168,6 @@ for (const route of routes.filter((r) => r.category === "public-read")) {
   });
 }
 
-test("unsigned webhook is rejected without browser Origin and without a database receipt", async () => {
-  const before = await pool.query("SELECT count(*)::int AS n FROM sf_identity_webhook_events");
-  for (const origin of [null, "https://untrusted.invalid"]) {
-    const response = await request("/api/webhooks/didit", { method: "POST", origin });
-    assert.equal(response.status, 401);
-  }
-  const { rows } = await pool.query("SELECT count(*)::int AS n FROM sf_identity_webhook_events");
-  assert.equal(rows[0].n, before.rows[0].n);
-});
-
 test("valid CSRF tokens pass the global guard while customer and admin routes still require authorization", async () => {
   const bootstrap = await request("/api/auth/session");
   assert.ok(bootstrap.headers["x-csrf-token"]);
@@ -280,7 +270,7 @@ test("untrusted requests are rejected before parsing malformed bodies or consumi
 });
 
 test("unknown API and lookalike webhook paths fail closed without sensitive diagnostics", async () => {
-  for (const path of ["/api/unknown-route", "/api/webhooks/didit/extra"]) {
+  for (const path of ["/api/unknown-route", "/api/webhooks/identity-provider"]) {
     const read = await request(path);
     assert.equal(read.status, 404);
     const write = await request(path, { method: "POST", origin: null });

@@ -4,14 +4,13 @@ import {
   getMonthlyAccountLimit,
   getUtcMonthRange,
   isWithinMonthlyAccountLimit,
-  mapDiditStatusToAccountLimitStatus,
 } from "./account-limit-policy.ts";
 
-test("only an approved Didit status grants the verified monthly limit", () => {
-  assert.equal(getMonthlyAccountLimit(mapDiditStatusToAccountLimitStatus("Approved")), 10_000_000);
-  for (const status of [null, "In Progress", "In Review", "Declined", "Expired"]) {
-    assert.equal(getMonthlyAccountLimit(mapDiditStatusToAccountLimitStatus(status)), 150_000);
-  }
+test("the monthly limit remains at the default while identity verification is unavailable", () => {
+  assert.equal(getMonthlyAccountLimit(), 150_000);
+  // Legacy statuses are deliberately ignored; only a future server-owned
+  // verification flow may change the account-limit policy.
+  assert.equal(getMonthlyAccountLimit("verified"), 150_000);
 });
 
 test("a quote can reach but never exceed the remaining monthly limit", () => {
