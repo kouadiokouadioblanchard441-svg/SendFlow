@@ -1329,6 +1329,24 @@ export const AdminUserFinancialTotalsCurrency = {
   XOF: 'XOF',
 } as const;
 
+export interface AdminUserTransactionFeesByKind {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  depositMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  interNetworkMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  internationalMinor: number;
+}
+
 export interface AdminUserFinancialTotals {
   currency: AdminUserFinancialTotalsCurrency;
   /**
@@ -1341,6 +1359,7 @@ export interface AdminUserFinancialTotals {
      * @maximum 9007199254740991
      */
   internationalPayoutsMinor: number;
+  feesByKind: AdminUserTransactionFeesByKind;
 }
 
 export type AdminUserDeveloperWebhookEventsItem = typeof AdminUserDeveloperWebhookEventsItem[keyof typeof AdminUserDeveloperWebhookEventsItem];

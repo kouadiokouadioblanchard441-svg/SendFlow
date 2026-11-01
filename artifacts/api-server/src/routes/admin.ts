@@ -405,6 +405,9 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
       db.select({
         depositsMinor: sql<number>`coalesce(sum(${transactionsTable.amountMinor}) filter (where ${transactionsTable.kind} = 'deposit'), 0)`,
         internationalPayoutsMinor: sql<number>`coalesce(sum(${transactionsTable.amountMinor}) filter (where ${transactionsTable.kind} = 'international'), 0)`,
+        depositFeesMinor: sql<number>`coalesce(sum(${transactionsTable.feeMinor}) filter (where ${transactionsTable.kind} = 'deposit'), 0)`,
+        interNetworkFeesMinor: sql<number>`coalesce(sum(${transactionsTable.feeMinor}) filter (where ${transactionsTable.kind} = 'inter-network'), 0)`,
+        internationalFeesMinor: sql<number>`coalesce(sum(${transactionsTable.feeMinor}) filter (where ${transactionsTable.kind} = 'international'), 0)`,
       }).from(transactionsTable).where(and(
         eq(transactionsTable.userId, userId),
         eq(transactionsTable.status, "succeeded"),
@@ -413,6 +416,11 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
         currency: "XOF" as const,
         depositsMinor: toMinor(items[0]?.depositsMinor),
         internationalPayoutsMinor: toMinor(items[0]?.internationalPayoutsMinor),
+        feesByKind: {
+          depositMinor: toMinor(items[0]?.depositFeesMinor),
+          interNetworkMinor: toMinor(items[0]?.interNetworkFeesMinor),
+          internationalMinor: toMinor(items[0]?.internationalFeesMinor),
+        },
       })),
     ]);
 

@@ -734,12 +734,35 @@ function UserDetailPage({ userId }: { userId: string }) {
 
           <div className="sendflow-admin-metric-grid sendflow-admin-detail-metric-grid">
             <MetricCard label="Transactions" value={formatNumber(detail.transactionSummary.total)} detail={`${formatNumber(detail.transactionSummary.succeeded)} réussies`} icon={ArrowLeftRight} tone="violet" />
-            <MetricCard label="Volume traité" value={formatMoney(detail.transactionSummary.volumeMinor)} detail={`${formatMoney(detail.transactionSummary.feesMinor)} de frais`} icon={Banknote} tone="green" />
+            <MetricCard label="Volume des opérations" value={formatMoney(detail.transactionSummary.volumeMinor)} detail="Montants enregistrés, tous statuts confondus" icon={Banknote} tone="green" />
             <MetricCard label="En attente" value={formatNumber(detail.transactionSummary.pending)} detail={`${formatNumber(detail.transactionSummary.failed)} échouées`} icon={CircleAlert} tone="orange" />
             <MetricCard label="Dernière activité" value={formatDate(detail.user.lastSeenAt)} detail="Dernière présence enregistrée" icon={Clock3} tone="blue" />
             <MetricCard label="Total encaissé" value={formatMoney(detail.financialTotals.depositsMinor, detail.financialTotals.currency)} detail="Dépôts réussis" icon={ArrowDownToLine} tone="violet" />
             <MetricCard label="Total retiré" value={formatMoney(detail.financialTotals.internationalPayoutsMinor, detail.financialTotals.currency)} detail="Retraits internationaux réussis" icon={ArrowUpRight} tone="blue" />
           </div>
+
+          <Card className="sendflow-admin-detail-card" data-testid="card-admin-user-fees">
+            <CardHeader>
+              <CardTitle>Frais collectés par type</CardTitle>
+              <CardDescription>
+                Total des frais enregistrés sur les transactions réussies, en {detail.financialTotals.currency}. Les opérations en attente ou échouées ne sont pas comptées.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border bg-muted/20 p-4" data-testid="admin-user-fees-deposit">
+                <span className="text-sm text-muted-foreground">Dépôts</span>
+                <strong className="mt-2 block text-lg tabular-nums">{formatMoney(detail.financialTotals.feesByKind.depositMinor, detail.financialTotals.currency)}</strong>
+              </div>
+              <div className="rounded-xl border bg-muted/20 p-4" data-testid="admin-user-fees-inter-network">
+                <span className="text-sm text-muted-foreground">Transferts inter-réseaux</span>
+                <strong className="mt-2 block text-lg tabular-nums">{formatMoney(detail.financialTotals.feesByKind.interNetworkMinor, detail.financialTotals.currency)}</strong>
+              </div>
+              <div className="rounded-xl border bg-muted/20 p-4" data-testid="admin-user-fees-international">
+                <span className="text-sm text-muted-foreground">Retraits internationaux</span>
+                <strong className="mt-2 block text-lg tabular-nums">{formatMoney(detail.financialTotals.feesByKind.internationalMinor, detail.financialTotals.currency)}</strong>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="sendflow-admin-overview-grid">
             <Card className="sendflow-admin-detail-card">

@@ -36,16 +36,16 @@ before(async () => {
     FROM sf_admin_grants WHERE user_id='audit-admin'`,
   [hashAdminSessionToken(adminToken)]);
   await owner.query("INSERT INTO sf_users(id,status,display_name) VALUES('audit-webhook-owner','active','Webhook owner')");
-  for (const [kind, status, amount] of [
-    ["deposit", "succeeded", 10000],
-    ["international", "succeeded", 5500],
-    ["inter-network", "succeeded", 4000],
-    ["deposit", "failed", 7000],
+  for (const [kind, status, amount, fee] of [
+    ["deposit", "succeeded", 10000, 300],
+    ["international", "succeeded", 5500, 250],
+    ["inter-network", "succeeded", 4000, 175],
+    ["deposit", "failed", 7000, 500],
   ]) {
     await owner.query(`INSERT INTO sf_transactions
-      (user_id,kind,status,sender_phone,recipient_phone,amount_minor,reference,idempotency_key)
-      VALUES('audit-webhook-owner',$1,$2,'fixture-sender','fixture-recipient',$3,$4,$5)`,
-    [kind, status, amount, randomBytes(16).toString("hex"), randomBytes(16).toString("hex")]);
+      (user_id,kind,status,sender_phone,recipient_phone,amount_minor,fee_minor,reference,idempotency_key)
+      VALUES('audit-webhook-owner',$1,$2,'fixture-sender','fixture-recipient',$3,$4,$5,$6)`,
+    [kind, status, amount, fee, randomBytes(16).toString("hex"), randomBytes(16).toString("hex")]);
   }
   for (const [label, url, status, createdOffset] of [
     ["Production endpoint", "https://merchant.example/hooks/sendflow?source=primary", "active", 0],
@@ -331,6 +331,11 @@ test("admin user profile shows financial totals and every paginated webhook with
   assert.equal(profile.financialTotals.currency, "XOF");
   assert.equal(profile.financialTotals.depositsMinor, 10000);
   assert.equal(profile.financialTotals.internationalPayoutsMinor, 5500);
+  assert.deepEqual(profile.financialTotals.feesByKind, {
+    depositMinor: 300,
+    interNetworkMinor: 175,
+    internationalMinor: 250,
+  });
 
   const pageOne = await request(`/api${adminPrefix}/developer-webhooks?userId=audit-webhook-owner&page=1&pageSize=1`, { headers });
   const pageTwo = await request(`/api${adminPrefix}/developer-webhooks?userId=audit-webhook-owner&page=2&pageSize=1`, { headers });

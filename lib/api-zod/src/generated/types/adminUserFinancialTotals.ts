@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AdminUserFinancialTotalsCurrency } from './adminUserFinancialTotalsCurrency';
+import type { AdminUserTransactionFeesByKind } from './adminUserTransactionFeesByKind';
 
 export interface AdminUserFinancialTotals {
   currency: AdminUserFinancialTotalsCurrency;
@@ -19,4 +20,5 @@ export interface AdminUserFinancialTotals {
      * @maximum 9007199254740991
      */
   internationalPayoutsMinor: bigint;
+  feesByKind: AdminUserTransactionFeesByKind;
 }

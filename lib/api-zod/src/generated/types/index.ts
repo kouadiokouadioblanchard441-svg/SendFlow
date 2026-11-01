@@ -113,6 +113,7 @@ export * from './adminUserProfile';
 export * from './adminUserProfileStatus';
 export * from './adminUserSummary';
 export * from './adminUserSummaryStatus';
+export * from './adminUserTransactionFeesByKind';
 export * from './adminUserTransactionSummary';
 export * from './adminUssdInstructionUpdate';
 export * from './adminWalletAdjustmentRequest';

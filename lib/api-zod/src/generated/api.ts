@@ -3946,6 +3946,15 @@ export const getAdminUserResponseFinancialTotalsDepositsMinorMax = 9007199254740
 export const getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMin = 0;
 export const getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMax = 9007199254740991;
 
+export const getAdminUserResponseFinancialTotalsFeesByKindDepositMinorMin = 0;
+export const getAdminUserResponseFinancialTotalsFeesByKindDepositMinorMax = 9007199254740991;
+
+export const getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMin = 0;
+export const getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMax = 9007199254740991;
+
+export const getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMin = 0;
+export const getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMax = 9007199254740991;
+
 
 
 export const GetAdminUserResponse = zod.object({
@@ -3981,7 +3990,12 @@ export const GetAdminUserResponse = zod.object({
   "financialTotals": zod.object({
   "currency": zod.enum(['XOF']),
   "depositsMinor": zod.int().min(getAdminUserResponseFinancialTotalsDepositsMinorMin).max(getAdminUserResponseFinancialTotalsDepositsMinorMax),
-  "internationalPayoutsMinor": zod.int().min(getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMin).max(getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMax)
+  "internationalPayoutsMinor": zod.int().min(getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMin).max(getAdminUserResponseFinancialTotalsInternationalPayoutsMinorMax),
+  "feesByKind": zod.object({
+  "depositMinor": zod.int().min(getAdminUserResponseFinancialTotalsFeesByKindDepositMinorMin).max(getAdminUserResponseFinancialTotalsFeesByKindDepositMinorMax),
+  "interNetworkMinor": zod.int().min(getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMin).max(getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMax),
+  "internationalMinor": zod.int().min(getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMin).max(getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMax)
+})
 })
 })
 
