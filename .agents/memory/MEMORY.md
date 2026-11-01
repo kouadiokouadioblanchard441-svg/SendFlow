@@ -16,6 +16,7 @@
 - [Shared database transition](external-database-transition.md) — The new shared schema exists, but prior records, seeds, and production readiness are not migrated or verified.
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle production schema pushes](drizzle-scoped-pushes.md) — Keep production migrations additive and explicitly targeted; stop on unrelated Drizzle drift.
+- [PostgreSQL metadata arrays](postgres-metadata-arrays.md) — Cast catalog `name` values to `text` before `array_agg` when comparing metadata through node-postgres.
 - [eSMS Verify balance requirement](esms-verify-balance.md) — Test-prefixed keys still need available Verify credit; a start request can fail with HTTP 402.
 - [Unverified signup accounts](unverified-signup-accounts.md) — SMS-free signup allows viewing, not phone ownership; future financial operations need OTP verification.
 - [SendFlow PIN keypad](pin-keypad-behavior.md) — User explicitly wants digits to reshuffle after every PIN entry, including confirmation; fix mismatches without freezing it.

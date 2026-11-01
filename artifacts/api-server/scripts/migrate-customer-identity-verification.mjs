@@ -103,7 +103,7 @@ async function getSnapshot() {
           AND table_name = 'sf_customer_identity_uploads'
       ), ARRAY[]::text[]) AS upload_columns,
       coalesce((
-        SELECT array_agg(indexname ORDER BY indexname)
+        SELECT array_agg(indexname::text ORDER BY indexname)
         FROM pg_indexes
         WHERE schemaname = 'public'
           AND indexname = ANY($1::text[])
