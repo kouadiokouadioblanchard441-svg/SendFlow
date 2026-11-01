@@ -7,4 +7,4 @@ Display server and network failures in the shared SendFlow error dialog with con
 
 **Why:** The user explicitly wants clear error popups across the application while preventing disclosure of technical or sensitive details.
 
-**How to apply:** Route API mutation failures, initial server/network load failures, and transaction failures through the same shared popup. Map statuses to fixed safe text, suppress expected authorization probes and background refresh noise, and preserve specialized blocked-account copy. Keep field validation inline; never label an uncertain payment as failed or successful.
+**How to apply:** Route API mutation failures, initial server/network load failures, and operational transaction errors through the shared popup by updating shared error components, not unrelated page layouts. Map statuses to fixed safe text, suppress expected authorization probes and background refresh noise, and preserve specialized blocked-account copy. Keep field validation inline and preserve dedicated payment-result screens; never label an uncertain payment as failed or successful.

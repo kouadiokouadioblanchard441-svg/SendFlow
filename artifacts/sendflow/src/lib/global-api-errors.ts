@@ -12,10 +12,9 @@ function notifyListeners() {
   listeners.forEach((listener) => listener());
 }
 
-export function reportGlobalApiError(error: unknown) {
+export function reportGlobalErrorCopy(nextError: SafeApiErrorCopy) {
   if (activeError) return;
 
-  const nextError = getSafeApiErrorCopy(error);
   const messageKey = `${nextError.title}\u0000${nextError.message}`;
   const now = Date.now();
 
@@ -25,6 +24,10 @@ export function reportGlobalApiError(error: unknown) {
   lastReportedAt = now;
   activeError = nextError;
   notifyListeners();
+}
+
+export function reportGlobalApiError(error: unknown) {
+  reportGlobalErrorCopy(getSafeApiErrorCopy(error));
 }
 
 export function dismissGlobalApiError() {

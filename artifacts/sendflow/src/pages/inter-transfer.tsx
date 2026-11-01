@@ -21,8 +21,6 @@ import {
   useGetPublicPricing,
 } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
-import { reportGlobalApiError } from '@/lib/global-api-errors';
-import { shouldShowGlobalQueryError } from '@/lib/safe-api-error';
 import { useSeo } from '@/lib/seo';
 import { useServerTransferQuote } from '@/hooks/use-server-transfer-quote';
 import {
@@ -361,10 +359,6 @@ export default function InterNetworkTransferPage() {
               setRequestState('failure');
             }).catch((error: unknown) => {
               if (error instanceof Error && error.name === 'AbortError') return;
-              if (shouldShowGlobalQueryError(error)) {
-                reportGlobalApiError(error);
-                return;
-              }
               const status = typeof error === 'object' && error !== null && 'status' in error
                 ? (error as { status?: number }).status
                 : undefined;
@@ -562,7 +556,7 @@ export default function InterNetworkTransferPage() {
                 Calcul du devis avec les tarifs du serveur…
               </p>
             )}
-            {transferQuote.isError && quoteInput !== null && !shouldShowGlobalQueryError(transferQuote.error) && (
+            {transferQuote.isError && quoteInput !== null && (
               <p className="sendflow-international-field-error" role="alert" data-testid="transfer-quote-error">
                 {serverQuoteErrorMessage(transferQuote.error)}
               </p>
@@ -610,6 +604,7 @@ export default function InterNetworkTransferPage() {
           failureCopy={dialogFailureCopy}
           cancelLabel="Annuler le transfert inter-réseau"
           successButtonLabel="Fermer le transfert inter-réseau"
+          failureButtonLabel="Fermer"
           onClose={() => setRequestState('idle')}
         />
 

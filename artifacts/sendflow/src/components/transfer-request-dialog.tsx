@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import depositSuccessIllustration from '@assets/generated_images/sendflow-deposit-success-3d-alpha.png';
 import depositPendingIllustration from '@assets/generated_images/sendflow-deposit-pending-3d-alpha.png';
-import { ErrorDialog } from '@/components/error-dialog';
+import { reportGlobalErrorCopy } from '@/lib/global-api-errors';
 
 export type TransferRequestState = 'idle' | 'pending' | 'success' | 'failure';
 
@@ -20,6 +20,8 @@ type TransferRequestDialogProps = {
   failureCopy: string;
   cancelLabel: string;
   successButtonLabel: string;
+  /** Existing callers may provide a retry label; the shared error popup intentionally uses "OK". */
+  failureButtonLabel: string;
   onClose: () => void;
 };
 
@@ -41,7 +43,11 @@ export function TransferRequestDialog({
   onClose,
 }: TransferRequestDialogProps) {
   useEffect(() => {
-    if (state === 'idle' || state === 'failure') return;
+    if (state === 'failure') {
+      reportGlobalErrorCopy({ title: failureTitle, message: failureCopy });
+      return;
+    }
+    if (state === 'idle') return;
 
     const previousOverflow = document.body.style.overflow;
     const previousOverscrollBehavior = document.body.style.overscrollBehavior;
@@ -52,20 +58,10 @@ export function TransferRequestDialog({
       document.body.style.overflow = previousOverflow;
       document.body.style.overscrollBehavior = previousOverscrollBehavior;
     };
-  }, [state]);
+  }, [failureCopy, failureTitle, state]);
 
   if (state === 'idle') return null;
-
-  if (state === 'failure') {
-    return (
-      <ErrorDialog
-        open
-        title={failureTitle}
-        message={failureCopy}
-        onClose={onClose}
-      />
-    );
-  }
+  if (state === 'failure') return null;
 
   const titleId = `sendflow-${operation.toLowerCase().replace(/\s+/g, '-')}-request-title`;
 
