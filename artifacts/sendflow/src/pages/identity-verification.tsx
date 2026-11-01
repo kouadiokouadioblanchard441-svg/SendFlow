@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'r
 import { ArrowLeft, CalendarDays, Check, ChevronDown, LockKeyhole } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { FaCamera, FaIdCard, FaSun } from 'react-icons/fa';
+import { fetchWithCsrf, resolveApiUrl } from '@workspace/api-client-react';
 import {
   getGetCustomerProfileQueryKey,
   useGetCustomerProfile,
@@ -16,10 +17,12 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
+import { ErrorDialog } from '@/components/error-dialog';
 import { useSeo } from '@/lib/seo';
 import identityCardFrontIllustration from '@assets/generated_images/sendflow-identity-card-front-3d.webp';
 import identityCardBackIllustration from '@assets/generated_images/sendflow-identity-card-back-3d.webp';
 import identitySelfieIllustration from '@assets/generated_images/sendflow-identity-selfie-3d.webp';
+import identitySubmissionIllustration from '@assets/generated_images/sendflow-identity-submission-3d.webp';
 
 const DOCUMENT_TYPES = [
   "Carte nationale d’identité (CNI, CIP)",
@@ -27,6 +30,11 @@ const DOCUMENT_TYPES = [
   'Carte CEDEAO ou carte consulaire',
   'Permis de conduire',
 ] as const;
+const PHOTO_ENTRIES = [
+  { step: 2 as const, kind: 'front' as const },
+  { step: 3 as const, kind: 'back' as const },
+  { step: 4 as const, kind: 'selfie' as const },
+];
 
 type VerificationForm = {
   lastName: string;
@@ -40,7 +48,9 @@ type VerificationForm = {
 type VerificationField = keyof VerificationForm;
 type VerificationErrors = Partial<Record<VerificationField, string>>;
 type PhotoStep = 2 | 3 | 4;
+type VerificationStep = 1 | PhotoStep | 5;
 type IdentityPhoto = { file: File; previewUrl: string };
+type IdentityRequestStatus = 'unverified' | 'pending' | 'approved' | 'rejected';
 
 const EMPTY_FORM: VerificationForm = {
   lastName: '',
@@ -118,8 +128,12 @@ export default function IdentityVerificationPage() {
   const [errors, setErrors] = useState<VerificationErrors>({});
   const [documentTypeOpen, setDocumentTypeOpen] = useState(false);
   const [notice, setNotice] = useState('');
-  const [step, setStep] = useState<1 | PhotoStep>(1);
+  const [step, setStep] = useState<VerificationStep>(1);
   const [photos, setPhotos] = useState<Partial<Record<PhotoStep, IdentityPhoto>>>({});
+  const [requestStatus, setRequestStatus] = useState<IdentityRequestStatus>('unverified');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorDialogMessage, setErrorDialogMessage] = useState('');
+  const idempotencyKey = useRef<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
@@ -151,6 +165,28 @@ export default function IdentityVerificationPage() {
       birthDate: profileQuery.data.birthDate ?? '',
     }));
   }, [profileQuery.data]);
+
+  useEffect(() => {
+    if (!isUnlocked) return;
+    let active = true;
+    void fetch(resolveApiUrl('/api/me/identity-verification'), {
+      credentials: 'include',
+      cache: 'no-store',
+    }).then(async (response) => {
+      if (!response.ok) throw new Error('Identity status unavailable');
+      return response.json() as Promise<{ status?: IdentityRequestStatus }>;
+    }).then((result) => {
+      if (!active) return;
+      if (result.status === 'pending' || result.status === 'approved' || result.status === 'rejected') {
+        setRequestStatus(result.status);
+        setStep(5);
+      }
+    }).catch(() => {
+      // The submission endpoint remains the authority; a status lookup failure
+      // must not falsely display a submitted state.
+    });
+    return () => { active = false; };
+  }, [isUnlocked]);
 
   useEffect(() => {
     if (!cameraStream || !cameraOpen || !videoRef.current) return;
@@ -188,8 +224,12 @@ export default function IdentityVerificationPage() {
   };
 
   const savePhoto = (file: File, targetStep: PhotoStep) => {
-    if (!file.type.startsWith('image/')) {
-      setNotice('Choisissez une image pour continuer.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setNotice('Utilisez une photo JPG, PNG ou WebP.');
+      return false;
+    }
+    if (file.size < 8 * 1024 || file.size > 8 * 1024 * 1024) {
+      setNotice('La photo doit peser entre 8 Ko et 8 Mo.');
       return false;
     }
 
@@ -209,7 +249,7 @@ export default function IdentityVerificationPage() {
   const handlePhotoSelected = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = '';
-    if (!file || step === 1) return;
+    if (!file || step === 1 || step === 5) return;
 
     savePhoto(file, step);
   };
@@ -282,7 +322,7 @@ export default function IdentityVerificationPage() {
   };
 
   const captureCameraPhoto = () => {
-    if (step === 1 || cameraCapturing || cameraCaptureLock.current) return;
+    if ((step !== 2 && step !== 3 && step !== 4) || cameraCapturing || cameraCaptureLock.current) return;
     const video = videoRef.current;
     if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
       setCameraError('La caméra n’est pas encore prête. Patientez un instant puis réessayez.');
@@ -343,8 +383,102 @@ export default function IdentityVerificationPage() {
     setNotice('');
   };
 
+  const submitIdentityRequest = async () => {
+    if (isSubmitting) return;
+    const nextErrors = validateForm(form);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setStep(1);
+      return;
+    }
+
+    if (PHOTO_ENTRIES.some(({ step: photoStep }) => !photos[photoStep])) {
+      setErrorDialogMessage('Ajoutez les trois photos demandées avant de transmettre votre dossier.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (!idempotencyKey.current) idempotencyKey.current = crypto.randomUUID();
+      const uploaded: Array<{ id: string; kind: 'front' | 'back' | 'selfie' }> = [];
+
+      for (const entry of PHOTO_ENTRIES) {
+        const file = photos[entry.step]!.file;
+        const uploadResponse = await fetchWithCsrf(resolveApiUrl('/api/me/identity-verification/uploads'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            kind: entry.kind,
+            contentType: file.type,
+            sizeBytes: file.size,
+          }),
+        });
+        if (!uploadResponse.ok) throw new Error('upload-ticket');
+        const upload = await uploadResponse.json() as {
+          uploadId: string;
+          uploadUrl: string;
+          headers: Record<string, string>;
+        };
+        const objectResponse = await fetch(upload.uploadUrl, {
+          method: 'PUT',
+          headers: upload.headers,
+          body: file,
+          credentials: 'omit',
+        });
+        if (!objectResponse.ok) throw new Error('upload-file');
+        uploaded.push({ id: upload.uploadId, kind: entry.kind });
+      }
+
+      const response = await fetchWithCsrf(resolveApiUrl('/api/me/identity-verification'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idempotencyKey: idempotencyKey.current,
+          personalData: {
+            firstName: form.firstName.trim().replace(/\s+/g, ' '),
+            lastName: form.lastName.trim().replace(/\s+/g, ' '),
+            documentType: form.documentType,
+            documentNumber: form.documentNumber.trim(),
+            birthDate: form.birthDate,
+            documentExpiryDate: form.documentExpiryDate,
+          },
+          uploads: uploaded,
+        }),
+      });
+      if (!response.ok) {
+        if (response.status === 409) {
+          const statusResponse = await fetch(resolveApiUrl('/api/me/identity-verification'), {
+            credentials: 'include',
+            cache: 'no-store',
+          });
+          if (statusResponse.ok) {
+            const status = await statusResponse.json() as { status?: IdentityRequestStatus };
+            if (status.status === 'pending' || status.status === 'approved') {
+              setRequestStatus(status.status);
+              return;
+            }
+          }
+        }
+        throw new Error('submit');
+      }
+      const submitted = await response.json() as { status?: IdentityRequestStatus };
+      if (submitted.status !== 'pending' && submitted.status !== 'approved') {
+        throw new Error('unexpected-status');
+      }
+      setRequestStatus(submitted.status);
+      setPhotos({});
+      photoUrls.current.forEach((url) => URL.revokeObjectURL(url));
+      photoUrls.current.clear();
+      idempotencyKey.current = null;
+    } catch {
+      setErrorDialogMessage('La transmission sécurisée n’a pas abouti. Vérifiez votre connexion puis réessayez. Si le problème persiste, contactez le service client SendFlow.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const today = getTodayDate();
-  const activePhoto = step === 1 ? undefined : photos[step];
+  const activePhoto = step === 2 || step === 3 || step === 4 ? photos[step] : undefined;
   const photoTitle = step === 2
     ? 'Photo recto de votre pièce d’identité'
     : step === 3
@@ -363,8 +497,14 @@ export default function IdentityVerificationPage() {
           <button
             type="button"
             className="sendflow-identity-back"
-            onClick={() => (step === 1 ? setLocation('/account-limit') : setStep((current) => (current - 1) as 1 | PhotoStep))}
-            aria-label={step === 1 ? 'Revenir au plafond du compte' : 'Revenir à l’étape précédente'}
+            onClick={() => {
+              if (requestStatus === 'pending' || requestStatus === 'approved') {
+                setLocation('/account-limit');
+              } else {
+                setStep((current) => (current === 5 ? 4 : current === 1 ? 1 : (current - 1)) as VerificationStep);
+              }
+            }}
+            aria-label={step === 1 || requestStatus === 'pending' || requestStatus === 'approved' ? 'Revenir au plafond du compte' : 'Revenir à l’étape précédente'}
             data-testid="button-identity-verification-back"
           >
             <ArrowLeft size={22} strokeWidth={2} aria-hidden="true" />
@@ -558,6 +698,95 @@ export default function IdentityVerificationPage() {
                 </button>
               </form>
             </>
+          ) : step === 5 ? (
+            <section className="sendflow-identity-review" aria-labelledby="identity-review-title" data-testid="identity-review-step">
+              {requestStatus === 'pending' || requestStatus === 'approved' ? (
+                <>
+                  <figure className="sendflow-identity-submission-art">
+                    <img src={identitySubmissionIllustration} alt="" />
+                  </figure>
+                  <h2 id="identity-review-title">
+                    {requestStatus === 'approved' ? 'Identité vérifiée' : 'Demande envoyée'}
+                  </h2>
+                  <p className="sendflow-identity-review-copy">
+                    {requestStatus === 'approved'
+                      ? 'Votre demande a été examinée et approuvée.'
+                      : 'Votre dossier a bien été transmis. Il est maintenant en attente d’examen par SendFlow.'}
+                  </p>
+                  <button
+                    type="button"
+                    className="sendflow-identity-submit"
+                    onClick={() => setLocation('/account-limit')}
+                    data-testid="button-identity-return-limit"
+                  >
+                    Retourner à mon plafond
+                  </button>
+                </>
+              ) : requestStatus === 'rejected' ? (
+                <>
+                  <div className="sendflow-identity-result-icon is-review">
+                    <LockKeyhole size={30} aria-hidden="true" />
+                  </div>
+                  <h2 id="identity-review-title">Demande examinée</h2>
+                  <p className="sendflow-identity-review-copy">
+                    Votre demande n’a pas été approuvée. Vérifiez les informations et les photos, puis envoyez un nouveau dossier.
+                  </p>
+                  <button
+                    type="button"
+                    className="sendflow-identity-submit"
+                    onClick={() => {
+                      setRequestStatus('unverified');
+                      setStep(1);
+                      setForm(EMPTY_FORM);
+                      setErrors({});
+                    }}
+                    data-testid="button-identity-resubmit"
+                  >
+                    Reprendre la demande
+                  </button>
+                </>
+              ) : (
+                <>
+                  <figure className="sendflow-identity-submission-art">
+                    <img src={identitySubmissionIllustration} alt="" />
+                  </figure>
+                  <h2 id="identity-review-title">Vérifiez votre dossier</h2>
+                  <p className="sendflow-identity-review-copy">
+                    Confirmez les informations et les trois photos avant de transmettre votre demande.
+                  </p>
+                  <div className="sendflow-identity-review-personal">
+                    <div><span>Nom</span><strong>{form.lastName} {form.firstName}</strong></div>
+                    <div><span>Document</span><strong>{form.documentType} · ••••{form.documentNumber.slice(-4)}</strong></div>
+                    <div><span>Date de naissance</span><strong>{form.birthDate}</strong></div>
+                  </div>
+                  <div className="sendflow-identity-review-photos" aria-label="Photos prêtes à transmettre">
+                    {PHOTO_ENTRIES.map(({ step: photoStep, kind }) => (
+                      <div className="sendflow-identity-review-photo" key={kind}>
+                        {photos[photoStep] && <img src={photos[photoStep]!.previewUrl} alt="" />}
+                        <span><Check size={17} aria-hidden="true" />{kind === 'front' ? 'Pièce recto' : kind === 'back' ? 'Pièce verso' : 'Selfie'}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="sendflow-identity-submit"
+                    onClick={() => void submitIdentityRequest()}
+                    disabled={isSubmitting}
+                    data-testid="button-identity-submit"
+                  >
+                    {isSubmitting ? 'Transmission sécurisée…' : 'Envoyer'}
+                  </button>
+                  <button
+                    type="button"
+                    className="sendflow-identity-continue"
+                    onClick={() => setStep(1)}
+                    disabled={isSubmitting}
+                  >
+                    Modifier les informations
+                  </button>
+                </>
+              )}
+            </section>
           ) : (
             <section className="sendflow-identity-photo-flow" aria-labelledby="identity-photo-title">
               <h2 className="sendflow-identity-visually-hidden" id="identity-photo-title">{photoTitle}</h2>
@@ -635,33 +864,32 @@ export default function IdentityVerificationPage() {
                     : (step === 4 ? 'Prendre un selfie' : 'Prendre une photo')}
                 </button>
 
-                {(step === 2 || step === 3) && activePhoto && (
+                {activePhoto && (
                   <button
                     type="button"
                     className="sendflow-identity-continue"
                     onClick={() => {
-                      setStep(step === 2 ? 3 : 4);
+                      setStep(step === 2 ? 3 : step === 3 ? 4 : 5);
                       setNotice('');
                     }}
                     data-testid="button-identity-photo-continue"
                   >
-                    Continuer
+                    {step === 4 ? 'Vérifier et envoyer' : 'Continuer'}
                   </button>
                 )}
               </div>
 
               {notice && <p className="sendflow-identity-error" role="alert" data-testid="status-identity-photo-error">{notice}</p>}
-              {step === 4 && activePhoto && (
-                <p className="sendflow-identity-next-step-note" role="status" data-testid="status-identity-next-step">
-                  Votre selfie reste sur cet écran. La suite de la démarche sera ajoutée avec les prochaines instructions.
-                </p>
-              )}
             </section>
           )}
 
           <p className="sendflow-identity-privacy-note" role="note" data-testid="text-identity-verification-privacy">
             <LockKeyhole size={14} aria-hidden="true" />
-            <span>Les éléments saisis ne sont pas transmis ni sauvegardés à cette étape</span>
+            <span>
+              {requestStatus === 'pending' || requestStatus === 'approved'
+                ? 'Vos données restent accessibles uniquement aux administrateurs autorisés.'
+                : 'Vos données seront protégées et consultables uniquement par les administrateurs autorisés.'}
+            </span>
           </p>
         </div>
 
@@ -670,7 +898,7 @@ export default function IdentityVerificationPage() {
             <DialogHeader className="sendflow-identity-camera-header">
               <DialogTitle>{step === 4 ? 'Prendre un selfie' : 'Photographier votre pièce'}</DialogTitle>
               <DialogDescription>
-                Gardez le document entier dans le cadre. La photo reste sur cet écran.
+                Gardez le document entier dans le cadre. Les photos ne seront transmises qu’après votre confirmation.
               </DialogDescription>
             </DialogHeader>
 
@@ -721,6 +949,12 @@ export default function IdentityVerificationPage() {
             </div>
           </DialogContent>
         </Dialog>
+        <ErrorDialog
+          open={Boolean(errorDialogMessage)}
+          title="Envoi impossible"
+          message={errorDialogMessage}
+          onClose={() => setErrorDialogMessage('')}
+        />
       </section>
     </main>
   );

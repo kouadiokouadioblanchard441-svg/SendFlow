@@ -37,17 +37,4 @@ router.get("/me/account-limit", async (req, res): Promise<void> => {
   }
 });
 
-// Keep the existing page's action endpoint compatible until its replacement
-// page is built. No external verification provider is contacted.
-router.post("/me/identity-verification", async (req, res): Promise<void> => {
-  if (!isTrustedOrigin(req)) {
-    res.status(403).json({ error: "Untrusted request origin" });
-    return;
-  }
-  const session = await requireCustomerSession(req, res, true);
-  if (!session) return;
-  res.setHeader("Cache-Control", "no-store, private");
-  res.status(410).json({ error: "Account limit verification is not available yet" });
-});
-
 export default router;

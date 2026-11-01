@@ -7,6 +7,7 @@
 - [Preview session reset](preview-session-reset.md) — App screenshots start a fresh browser session, so sessionStorage cannot be used to target a later onboarding slide.
 - [Mobile overlay positioning](mobile-overlay-positioning.md) — Render full-screen mobile overlays at document level when animated cards could create a fixed-position containing block.
 - [SendFlow admin guardrails](admin-panel-guardrails.md) — Keep back-office access server-authorized and financial metrics database-backed; never add demo values or unsupported operations.
+- [Identity review privacy](identity-review-privacy.md) — Keep manual identity submissions encrypted and private, with admin-only review, auditable decisions, and no unrelated page changes.
 - [Aggregator business rules](aggregator-routing-business-rules.md) — “Retrait” means international; manual primary routing and country/operator/operation settings must remain independent.
 - [Country catalog validation](country-catalog-validation.md) — Imported telephone rules need independent numbering-plan and provider-coverage checks before opening countries.
 - [Security test isolation](security-test-isolation.md) — Authentication fixtures must isolate IP quotas as well as account identities; never weaken real rate limiting to make tests pass.

@@ -50,6 +50,7 @@ import { AdminCountriesSection } from '@/components/admin-countries-section';
 import { EmailCampaignsSection } from '@/components/email-campaigns-section';
 import AdminIpBlocklist from '@/components/admin-ip-blocklist';
 import AdminNetworkDefense from '@/components/admin-network-defense';
+import { AdminIdentityVerificationsPage, AdminUserIdentitySummary } from '@/pages/admin-identity-verifications';
 import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import {
@@ -168,7 +169,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings' | 'identity-verifications';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -191,6 +192,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'network-defense': { title: 'Autodéfense', eyebrow: 'Sécurité réseau' },
   'email-campaigns': { title: 'Campagnes e-mail', eyebrow: 'Communication' },
   'customer-service-settings': { title: 'Service client', eyebrow: 'Coordonnées publiques' },
+  'identity-verifications': { title: 'Vérifications d’identité', eyebrow: 'Contrôle sécurisé' },
 };
 
 const navGroups: Array<{
@@ -208,6 +210,7 @@ const navGroups: Array<{
       { href: adminRoute('/transfers'), label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
       { href: adminRoute('/login-activity'), label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
       { href: adminRoute('/otp-activity'), label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
+      { href: adminRoute('/identity-verifications'), label: 'Vérification d’identité', section: 'identity-verifications', icon: FileSearch },
       { href: adminRoute('/ip-blocklist'), label: 'Blocage IP', section: 'ip-blocklist', icon: ShieldCheck },
       { href: adminRoute('/network-defense'), label: 'Autodéfense', section: 'network-defense', icon: ShieldCheck },
     ],
@@ -867,6 +870,7 @@ function UserDetailPage({ userId }: { userId: string }) {
             </Card>
           </div>
 
+          <AdminUserIdentitySummary userId={userId} />
           <Card className="sendflow-admin-detail-card" data-testid="card-admin-user-webhooks">
             <CardHeader>
               <CardTitle>URL de webhook</CardTitle>
@@ -3142,6 +3146,7 @@ export function AdminRouter() {
   const [isPaymentLimits] = useRoute(adminRoute('/payment-limits'));
   const [isEmailCampaigns] = useRoute(adminRoute('/email-campaigns'));
   const [isCustomerServiceSettings] = useRoute(adminRoute('/customer-service-settings'));
+  const [isIdentityVerifications] = useRoute(adminRoute('/identity-verifications'));
   const [isIpBlocklist] = useRoute(adminRoute('/ip-blocklist'));
   const [isNetworkDefense] = useRoute(adminRoute('/network-defense'));
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
@@ -3162,6 +3167,7 @@ export function AdminRouter() {
   if (isPaymentLimits) return <AdminShell section="payment-limits"><AdminPaymentLimitsSection /></AdminShell>;
   if (isEmailCampaigns) return <AdminShell section="email-campaigns"><EmailCampaignsSection /></AdminShell>;
   if (isCustomerServiceSettings) return <AdminShell section="customer-service-settings"><AdminCustomerServiceSettingsSection /></AdminShell>;
+  if (isIdentityVerifications) return <AdminShell section="identity-verifications"><AdminIdentityVerificationsPage /></AdminShell>;
   if (isNetworkDefense) return <AdminShell section="network-defense"><AdminNetworkDefense /></AdminShell>;
   if (isIpBlocklist) return <AdminShell section="ip-blocklist"><AdminIpBlocklist /></AdminShell>;
   return <OverviewPage />;

@@ -4127,6 +4127,137 @@
   gap: 0;
 }
 
+.sendflow-identity-review {
+  display: grid;
+  gap: 14px;
+}
+
+.sendflow-identity-submission-art {
+  display: grid;
+  width: 100%;
+  max-height: 280px;
+  aspect-ratio: 1.35;
+  place-items: center;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid #e7def2;
+  border-radius: 22px;
+  background: #f1ebfa;
+}
+
+.sendflow-identity-submission-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sendflow-identity-review > h2 {
+  margin: 2px 0 0;
+  color: #211d28;
+  font-size: 21px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sendflow-identity-review-copy {
+  margin: -7px auto 2px;
+  max-width: 420px;
+  color: #706a78;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.sendflow-identity-review-personal {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #e7e1ed;
+  border-radius: 14px;
+  background: #e7e1ed;
+}
+
+.sendflow-identity-review-personal > div {
+  display: grid;
+  gap: 3px;
+  background: #fff;
+  padding: 11px 13px;
+}
+
+.sendflow-identity-review-personal span {
+  color: #77717e;
+  font-size: 12px;
+}
+
+.sendflow-identity-review-personal strong {
+  overflow-wrap: anywhere;
+  color: #28232f;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sendflow-identity-review-photos {
+  display: grid;
+  gap: 8px;
+}
+
+.sendflow-identity-review-photo {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  gap: 11px;
+  overflow: hidden;
+  border: 1px solid #eee8f5;
+  border-radius: 12px;
+  background: #fff;
+  padding: 7px 10px;
+}
+
+.sendflow-identity-review-photo img {
+  width: 72px;
+  height: 52px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #f4f2f8;
+  object-fit: cover;
+}
+
+.sendflow-identity-review-photo span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #28232f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sendflow-identity-review-photo svg {
+  color: #7620db;
+}
+
+.sendflow-identity-result-icon {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  place-items: center;
+  justify-self: center;
+  border: 1px solid #ddc9f5;
+  border-radius: 50%;
+  background: #f2eafb;
+  color: #7620db;
+}
+
+.sendflow-identity-result-icon.is-review {
+  color: #9f3342;
+  border-color: #f0d4d8;
+  background: #fff1f2;
+}
+
+.sendflow-identity-review .sendflow-identity-submit:disabled {
+  cursor: wait;
+  opacity: .72;
+}
+
 .sendflow-identity-photo-stage {
   position: relative;
   display: flex;

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { createRequire } from "node:module";
 import { Readable } from "node:stream";
 import { Router, type IRouter, type Request, type Response } from "express";
-import archiver from "archiver";
 import sharp from "sharp";
 import { z } from "zod";
 import {
@@ -28,10 +28,25 @@ import {
 } from "../lib/sensitive-data-crypto";
 import { getSignedObjectUrl, parseStoragePath } from "../lib/publicObjectStorage";
 import { recordAdminAudit } from "../lib/admin-audit";
+import {
+  canReviewIdentityRequest,
+  hasAllIdentityPhotoKinds,
+  isIdentityUniqueConstraintViolation,
+  meetsIdentityDateRules,
+} from "../lib/identity-verification-policy";
 import { respondAdminAuthError } from "./admin";
 
 const customerRouter: IRouter = Router();
 const adminRouter: IRouter = Router();
+const archiver = createRequire(import.meta.url)("archiver") as (
+  format: "zip",
+  options: { zlib: { level: number } },
+) => {
+  on(event: "error", listener: (error: Error) => void): void;
+  pipe(destination: Response): void;
+  append(data: string | Buffer, options: { name: string }): void;
+  finalize(): Promise<void>;
+};
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MIN_IMAGE_BYTES = 8 * 1024;
 const UPLOAD_URL_TTL_MS = 15 * 60 * 1000;
@@ -182,11 +197,9 @@ function mapListItem(row: {
 }) {
   return {
     id: row.id,
-    user: {
-      id: row.userId,
-      displayName: decryptSensitiveDataIfEncrypted(row.displayName, "user-name"),
-      countryCode: row.countryCode,
-    },
+    userId: row.userId,
+    displayName: decryptSensitiveDataIfEncrypted(row.displayName, "user-name"),
+    countryCode: row.countryCode,
     status: row.status,
     submittedAt: row.submittedAt,
     reviewedAt: row.reviewedAt,
@@ -285,19 +298,12 @@ customerRouter.post("/me/identity-verification", async (req, res): Promise<void>
     return;
   }
   const { personalData, uploads, idempotencyKey } = parsed.data;
-  if (new Set(uploads.map((upload) => upload.kind)).size !== DOCUMENT_KINDS.length) {
+  if (!hasAllIdentityPhotoKinds(uploads.map((upload) => upload.kind))) {
     res.status(400).json({ error: "All required identity photos must be provided" });
     return;
   }
-  const today = new Date().toISOString().slice(0, 10);
-  const adultCutoff = new Date();
-  adultCutoff.setUTCFullYear(adultCutoff.getUTCFullYear() - 18);
-  if (personalData.birthDate > adultCutoff.toISOString().slice(0, 10)) {
-    res.status(400).json({ error: "The provided birth date is not eligible" });
-    return;
-  }
-  if (personalData.documentExpiryDate <= today) {
-    res.status(400).json({ error: "The identity document has expired" });
+  if (!meetsIdentityDateRules(personalData.birthDate, personalData.documentExpiryDate)) {
+    res.status(400).json({ error: "The provided dates are not eligible" });
     return;
   }
 
@@ -345,6 +351,18 @@ customerRouter.post("/me/identity-verification", async (req, res): Promise<void>
         throw new IdentityRequestError(409, "The account is not eligible for identity verification");
       }
 
+      const [sameKey] = await tx.select({
+        id: customerIdentityRequestsTable.id,
+        status: customerIdentityRequestsTable.status,
+        submittedAt: customerIdentityRequestsTable.submittedAt,
+      }).from(customerIdentityRequestsTable)
+        .where(and(
+          eq(customerIdentityRequestsTable.userId, session.userId),
+          eq(customerIdentityRequestsTable.idempotencyKey, idempotencyKey),
+        ))
+        .limit(1);
+      if (sameKey) return { request: sameKey, replay: true };
+
       const [existingPending] = await tx.select({
         id: customerIdentityRequestsTable.id,
         status: customerIdentityRequestsTable.status,
@@ -388,14 +406,44 @@ customerRouter.post("/me/identity-verification", async (req, res): Promise<void>
       if (uploadIds.some((id) => !linkedIds.has(id))) {
         throw new IdentityRequestError(409, "Identity photo uploads were already used");
       }
-      return created;
+      return { request: created, replay: false };
     });
 
-    res.status(201).json(result);
+    res.status(result.replay ? 200 : 201).json(result.request);
   } catch (error) {
     if (error instanceof IdentityRequestError) {
       res.status(error.statusCode).json({ error: error.message });
       return;
+    }
+    if (isIdentityUniqueConstraintViolation(error)) {
+      const [sameRequest] = await db.select({
+        id: customerIdentityRequestsTable.id,
+        status: customerIdentityRequestsTable.status,
+        submittedAt: customerIdentityRequestsTable.submittedAt,
+      }).from(customerIdentityRequestsTable)
+        .where(and(
+          eq(customerIdentityRequestsTable.userId, session.userId),
+          eq(customerIdentityRequestsTable.idempotencyKey, idempotencyKey),
+        ))
+        .limit(1);
+      if (sameRequest) {
+        res.status(200).json(sameRequest);
+        return;
+      }
+      const [pendingRequest] = await db.select({
+        id: customerIdentityRequestsTable.id,
+        status: customerIdentityRequestsTable.status,
+        submittedAt: customerIdentityRequestsTable.submittedAt,
+      }).from(customerIdentityRequestsTable)
+        .where(and(
+          eq(customerIdentityRequestsTable.userId, session.userId),
+          eq(customerIdentityRequestsTable.status, "pending"),
+        ))
+        .limit(1);
+      if (pendingRequest) {
+        res.status(409).json({ error: "An identity verification request is already pending" });
+        return;
+      }
     }
     req.log.error({ err: error }, "Identity verification submission failed");
     res.status(503).json({ error: "Identity verification is temporarily unavailable" });
@@ -564,6 +612,10 @@ async function getAdminRequestDocuments(requestId: string) {
     personalDataEncrypted: customerIdentityRequestsTable.personalDataEncrypted,
     status: customerIdentityRequestsTable.status,
     submittedAt: customerIdentityRequestsTable.submittedAt,
+    displayName: usersTable.displayName,
+    phone: usersTable.phone,
+    emailEncrypted: usersTable.emailEncrypted,
+    countryCode: usersTable.countryCode,
   }).from(customerIdentityRequestsTable)
     .innerJoin(usersTable, eq(usersTable.id, customerIdentityRequestsTable.userId))
     .where(eq(customerIdentityRequestsTable.id, requestId))
@@ -676,7 +728,7 @@ adminRouter.get("/identity-verifications/:requestId/export", async (req, res): P
     res.setHeader("Content-Type", "application/zip");
     res.setHeader("Content-Disposition", `attachment; filename="sendflow-identity-${result.request.id}.zip"`);
     const archive = archiver("zip", { zlib: { level: 6 } });
-    archive.on("error", (error) => {
+    archive.on("error", (error: Error) => {
       req.log.error({ err: error, requestId: requestId.data }, "Identity verification archive failed");
       if (!res.destroyed) res.destroy();
     });
@@ -726,15 +778,16 @@ adminRouter.post("/identity-verifications/:requestId/decision", async (req, res)
         .for("update")
         .limit(1);
       if (!request) throw new IdentityRequestError(404, "Identity verification request not found");
-      if (request.status !== "pending") {
+      if (!canReviewIdentityRequest(request.status)) {
         throw new IdentityRequestError(409, "This identity verification request has already been reviewed");
       }
       const now = new Date();
       const [user] = await tx.select({ status: usersTable.status })
         .from(usersTable)
         .where(eq(usersTable.id, request.userId))
+        .for("update")
         .limit(1);
-      if (!user || user.status !== "active") {
+      if (!user || (parsed.data.decision === "approved" && user.status !== "active")) {
         throw new IdentityRequestError(409, "The account is not active");
       }
       await tx.update(customerIdentityRequestsTable)

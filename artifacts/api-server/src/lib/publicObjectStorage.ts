@@ -1,6 +1,6 @@
 const REPLIT_SIDECAR_ENDPOINT = 'http://127.0.0.1:1106';
 
-export type SignedObjectMethod = 'GET' | 'PUT';
+export type SignedObjectMethod = 'GET' | 'PUT' | 'DELETE';
 
 export function getPublicObjectSearchPaths(): string[] {
   const paths = (process.env.PUBLIC_OBJECT_SEARCH_PATHS ?? '')
