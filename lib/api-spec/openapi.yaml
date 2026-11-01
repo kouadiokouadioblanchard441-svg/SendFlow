@@ -424,6 +424,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+        "423":
+          description: The credentials are valid, but the account is blocked. Contact SendFlow support.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
         "429":
           description: Three failed sign-in attempts lock the email identifier and requester for 20 minutes.
           content:
@@ -4313,6 +4319,35 @@ paths:
           schema:
             type: string
             enum: [pending, succeeded, failed]
+        - name: countryCode
+          in: query
+          required: false
+          description: ISO 3166-1 alpha-2 country code recorded on a related payment attempt.
+          schema:
+            type: string
+            pattern: "^[a-z]{2}$"
+        - name: channelId
+          in: query
+          required: false
+          description: Exact payment channel identifier recorded on a related payment attempt.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 80
+        - name: paymentSource
+          in: query
+          required: false
+          description: Origin of the related payment link.
+          schema:
+            type: string
+            enum: [linkflow, api]
+        - name: integrationMode
+          in: query
+          required: false
+          description: Integration mode of a related developer payment session.
+          schema:
+            type: string
+            enum: [direct, hosted]
         - $ref: "#/components/parameters/AdminFrom"
         - $ref: "#/components/parameters/AdminTo"
         - $ref: "#/components/parameters/AdminPage"
@@ -7456,7 +7491,38 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, direction, countryCode, countryName, channelId, operationReference, amountMinor, currency, status, dispatchedAt, finalConfirmationId, createdAt, updatedAt]
+        confirmations:
+          type: array
+          description: Safe confirmation metadata ordered by verification and persistence time. Encrypted payloads, hashes, and signatures are never returned.
+          items:
+            $ref: "#/components/schemas/AdminTransactionPaymentConfirmation"
+      required: [id, direction, countryCode, countryName, channelId, operationReference, amountMinor, currency, status, dispatchedAt, finalConfirmationId, createdAt, updatedAt, confirmations]
+    AdminTransactionPaymentConfirmation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [provider_status, verified_webhook]
+        providerStatus:
+          type: string
+          enum: [pending, succeeded, failed]
+        amountMinor:
+          type: integer
+          format: int64
+          maximum: 9007199254740991
+        currency:
+          type: string
+          enum: [XOF, XAF]
+        verifiedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, source, providerStatus, amountMinor, currency, verifiedAt, createdAt]
     AdminTransactionPaymentIntent:
       type: object
       properties:

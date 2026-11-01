@@ -8,6 +8,7 @@
 import type { AdminTransactionPaymentAttemptCurrency } from './adminTransactionPaymentAttemptCurrency';
 import type { AdminTransactionPaymentAttemptDirection } from './adminTransactionPaymentAttemptDirection';
 import type { AdminTransactionPaymentAttemptStatus } from './adminTransactionPaymentAttemptStatus';
+import type { AdminTransactionPaymentConfirmation } from './adminTransactionPaymentConfirmation';
 
 export interface AdminTransactionPaymentAttempt {
   id: string;
@@ -28,4 +29,6 @@ export interface AdminTransactionPaymentAttempt {
   finalConfirmationId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /** Safe confirmation metadata ordered by verification and persistence time. Encrypted payloads, hashes, and signatures are never returned. */
+  confirmations: AdminTransactionPaymentConfirmation[];
 }

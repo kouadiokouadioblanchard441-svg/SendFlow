@@ -16,13 +16,27 @@ if (!process.env.SENDFLOW_ISOLATED_RUNTIME?.includes("/sendflow-isolated-finance
 const require = createRequire(import.meta.url);
 // Enforce the no-provider-call guarantee independently of server configuration.
 globalThis.fetch = async () => { throw new Error("External network forbidden in route audit"); };
-const { app, pool, createSiteServer, hashAdminSessionToken, ADMIN_SESSION_COOKIE, hashCustomerSecret, encryptSensitiveData } =
+const {
+  app,
+  pool,
+  createSiteServer,
+  hashAdminSessionToken,
+  hashCustomerSessionToken,
+  ADMIN_SESSION_COOKIE,
+  hashCustomerSecret,
+  createSensitiveDataLookupIndex,
+  encryptSensitiveData,
+} =
   require(process.env.SENDFLOW_ISOLATED_RUNTIME);
 const pg = require("pg");
 const owner = new pg.Pool({ host: process.env.SENDFLOW_FIXTURE_SOCKET, port: 15432,
   database: "postgres", user: "sf_fixture_owner" });
 const routes = routeInventory();
 const adminToken = randomBytes(32).toString("base64url");
+const readOnlyAdminToken = randomBytes(32).toString("base64url");
+const blockedAccountId = randomUUID();
+const blockedAccountEmail = `blocked-${randomUUID()}@example.invalid`;
+const blockedAccountPassword = randomBytes(24).toString("base64url");
 let server, site, traceTransactionId;
 const siteRoot = mkdtempSync(join(tmpdir(), "sendflow-route-static-"));
 
@@ -31,11 +45,30 @@ before(async () => {
   await owner.query("INSERT INTO sf_users(id,status) VALUES('audit-admin','active')");
   await owner.query("INSERT INTO sf_admin_grants(user_id,can_mutate,pin_hash) VALUES('audit-admin',true,$1)",
     [await hashCustomerSecret(randomBytes(16).toString("hex"))]);
+  await owner.query("INSERT INTO sf_users(id,status) VALUES('audit-readonly-admin','active')");
+  await owner.query("INSERT INTO sf_admin_grants(user_id,can_mutate,pin_hash) VALUES('audit-readonly-admin',false,$1)",
+    [await hashCustomerSecret(randomBytes(16).toString("hex"))]);
   await owner.query(`INSERT INTO sf_admin_sessions(user_id,authorization_version,token_hash,expires_at,pin_verified_until)
     SELECT user_id,authorization_version,$1,now()+interval '1 hour',now()+interval '10 minutes'
     FROM sf_admin_grants WHERE user_id='audit-admin'`,
   [hashAdminSessionToken(adminToken)]);
+  await owner.query(`INSERT INTO sf_admin_sessions(user_id,authorization_version,token_hash,expires_at,pin_verified_until)
+    SELECT user_id,authorization_version,$1,now()+interval '1 hour',now()+interval '10 minutes'
+    FROM sf_admin_grants WHERE user_id='audit-readonly-admin'`,
+  [hashAdminSessionToken(readOnlyAdminToken)]);
   await owner.query("INSERT INTO sf_users(id,status,display_name) VALUES('audit-webhook-owner','active','Webhook owner')");
+  await owner.query(`INSERT INTO sf_users(id,status,email_encrypted,email_lookup_hash)
+    VALUES($1,'active',$2,$3)`,
+  [blockedAccountId, encryptSensitiveData(blockedAccountEmail, "user-email"),
+    createSensitiveDataLookupIndex(blockedAccountEmail, "user-email")]);
+  await owner.query(`INSERT INTO sf_customer_credentials
+    (user_id,password_hash,privacy_accepted_at,privacy_policy_version)
+    VALUES($1,$2,now(),'isolated-account-block-test')`,
+  [blockedAccountId, await hashCustomerSecret(blockedAccountPassword)]);
+  const blockedAccountSessionToken = randomBytes(32).toString("base64url");
+  await owner.query(`INSERT INTO sf_customer_sessions(user_id,token_hash,expires_at,pin_verified_until)
+    VALUES($1,$2,now()+interval '1 hour',now()+interval '10 minutes')`,
+  [blockedAccountId, hashCustomerSessionToken(blockedAccountSessionToken)]);
   for (const [kind, status, amount, fee] of [
     ["deposit", "succeeded", 10000, 300],
     ["international", "succeeded", 5500, 250],
@@ -69,6 +102,19 @@ before(async () => {
     VALUES('audit-webhook-owner',$1,$2,$3,'XOF',2500,'API trace fixture','Test de traçabilité',
       'mobile_money','api','active') RETURNING id`,
   [randomBytes(32).toString("base64url"), randomUUID(), randomBytes(32).toString("hex")]);
+  const publicKey = `sfpk_test_${randomBytes(32).toString("base64url")}`;
+  const apiKey = await owner.query(`INSERT INTO sf_developer_api_keys
+    (user_id,label,public_key,public_key_prefix,public_key_hash,secret_key_prefix,secret_key_hash,status)
+    VALUES('audit-webhook-owner','Trace fixture',$1,$2,$3,'sfsk_test_fixture',$4,'active')
+    RETURNING id`,
+  [publicKey, publicKey.slice(0, 20), randomBytes(32).toString("hex"), randomBytes(32).toString("hex")]);
+  await owner.query(`INSERT INTO sf_developer_payment_sessions
+    (user_id,api_key_id,payment_link_id,idempotency_key,merchant_reference,request_hash,
+     client_token_hash,client_token_encrypted,mode,amount_minor,currency,metadata_encrypted,expires_at)
+    VALUES('audit-webhook-owner',$1,$2,$3,'TRACE-ORDER-001',$4,$5,$6,'hosted',2500,'XOF',$7,now()+interval '10 minutes')`,
+  [apiKey.rows[0].id, paymentLink.rows[0].id, randomUUID(), randomBytes(32).toString("hex"),
+    randomBytes(32).toString("hex"), encryptSensitiveData("fixture-client-token", "developer-client-token"),
+    encryptSensitiveData("{}", "developer-session-metadata")]);
   await owner.query(`INSERT INTO sf_customer_payment_link_payments
     (payment_link_id,intent_id,idempotency_key,request_hash,poll_token_hash,merchant_name,
      payer_first_name_encrypted,payer_last_name_encrypted)
@@ -76,10 +122,22 @@ before(async () => {
   [paymentLink.rows[0].id, intent.rows[0].id, randomUUID(), randomBytes(32).toString("hex"),
     randomBytes(32).toString("hex"), encryptSensitiveData("Test", "linkflow-payer-name"),
     encryptSensitiveData("User", "linkflow-payer-name")]);
-  await owner.query(`INSERT INTO sf_payment_attempts
+  const attempt = await owner.query(`INSERT INTO sf_payment_attempts
     (intent_id,direction,country_code,channel_id,operation_reference,amount_minor,currency,status)
-    VALUES($1,'payin','ci','mobile-money-ci',$2,2500,'XOF','prepared')`,
+    VALUES($1,'payin','ci','mobile-money-ci',$2,2500,'XOF','prepared') RETURNING id`,
   [intent.rows[0].id, randomBytes(12).toString("hex").toUpperCase()]);
+  await owner.query("UPDATE sf_payment_attempts SET status='dispatching' WHERE id=$1", [attempt.rows[0].id]);
+  const providerReferenceHash = randomBytes(32).toString("hex");
+  await owner.query(`UPDATE sf_payment_attempts
+    SET status='pending',provider_reference=$2,provider_reference_hash=$3
+    WHERE id=$1`,
+  [attempt.rows[0].id, encryptSensitiveData("fixture-provider-reference", "provider-reference"), providerReferenceHash]);
+  await owner.query(`INSERT INTO sf_payment_confirmations
+    (attempt_id,event_fingerprint,source,provider_status,provider_reference_hash,amount_minor,currency,
+     encrypted_payload,verified_at)
+    VALUES($1,$2,'provider_status','pending',$3,2500,'XOF',$4,now())`,
+  [attempt.rows[0].id, randomBytes(32).toString("hex"), providerReferenceHash,
+    encryptSensitiveData(JSON.stringify({ fixture: true }), "payment-confirmation-payload")]);
   for (const [label, url, status, createdOffset] of [
     ["Production endpoint", "https://merchant.example/hooks/sendflow?source=primary", "active", 0],
     ["Old endpoint", "https://archive.example/hooks/sendflow", "revoked", 1],
@@ -250,6 +308,108 @@ test("valid CSRF tokens pass the global guard while customer and admin routes st
   assert.equal(after.rows[0].n, before.rows[0].n);
 });
 
+test("administrator can block and unblock an account and blocked sign-in directs valid credentials to support", async () => {
+  const readOnlyCsrfBootstrap = await request("/api/auth/session", {
+    headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${readOnlyAdminToken}` },
+  });
+  assert.ok(readOnlyCsrfBootstrap.headers["x-csrf-token"]);
+  const readOnlyMutation = await request(`/api${adminPrefix}/users/${blockedAccountId}/suspend`, {
+    method: "POST",
+    headers: {
+      Cookie: `${ADMIN_SESSION_COOKIE}=${readOnlyAdminToken}`,
+      "X-CSRF-Token": readOnlyCsrfBootstrap.headers["x-csrf-token"],
+    },
+    rawBody: JSON.stringify({
+      reason: "Tentative non autorisée de test.",
+      confirmation: "CONFIRMER",
+    }),
+  });
+  assert.equal(readOnlyMutation.status, 403, readOnlyMutation.text);
+  assert.equal((await owner.query("SELECT status FROM sf_users WHERE id=$1", [blockedAccountId])).rows[0].status, "active");
+
+  const csrfBootstrap = await request("/api/auth/session", {
+    headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` },
+  });
+  assert.ok(csrfBootstrap.headers["x-csrf-token"]);
+  const adminMutationHeaders = {
+    Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}`,
+    "X-CSRF-Token": csrfBootstrap.headers["x-csrf-token"],
+  };
+  const block = await request(`/api${adminPrefix}/users/${blockedAccountId}/suspend`, {
+    method: "POST",
+    headers: adminMutationHeaders,
+    rawBody: JSON.stringify({
+      reason: "Motif de blocage de test isolé.",
+      confirmation: "CONFIRMER",
+    }),
+  });
+  assert.equal(block.status, 200, block.text);
+  assert.equal(JSON.parse(block.text).status, "suspended");
+  const storedBlocked = await owner.query(
+    "SELECT status,suspension_reason FROM sf_users WHERE id=$1",
+    [blockedAccountId],
+  );
+  assert.equal(storedBlocked.rows[0].status, "suspended");
+  assert.equal(storedBlocked.rows[0].suspension_reason, "Motif de blocage de test isolé.");
+  const revokedSession = await owner.query(
+    "SELECT revoked_at FROM sf_customer_sessions WHERE user_id=$1",
+    [blockedAccountId],
+  );
+  assert.ok(revokedSession.rows[0].revoked_at);
+
+  const customerCsrfBootstrap = await request("/api/auth/session");
+  const customerCsrfCookie = customerCsrfBootstrap.headers["set-cookie"]
+    ?.find((cookie) => cookie.startsWith("__Host-sendflow_csrf="))
+    ?.split(";")[0];
+  assert.ok(customerCsrfCookie);
+  assert.ok(customerCsrfBootstrap.headers["x-csrf-token"]);
+  const customerSignInHeaders = {
+    Cookie: customerCsrfCookie,
+    "X-CSRF-Token": customerCsrfBootstrap.headers["x-csrf-token"],
+  };
+  const blockedLogin = await request("/api/auth/sign-in", {
+    method: "POST",
+    headers: customerSignInHeaders,
+    rawBody: JSON.stringify({ email: blockedAccountEmail, password: blockedAccountPassword }),
+  });
+  assert.equal(blockedLogin.status, 423, blockedLogin.text);
+  assert.match(blockedLogin.text, /compte est bloqué.*contacter le support SendFlow/i);
+  const invalidBlockedLogin = await request("/api/auth/sign-in", {
+    method: "POST",
+    headers: customerSignInHeaders,
+    rawBody: JSON.stringify({ email: blockedAccountEmail, password: "wrong-password-for-test" }),
+  });
+  assert.equal(invalidBlockedLogin.status, 401, invalidBlockedLogin.text);
+  assert.doesNotMatch(invalidBlockedLogin.text, /compte est bloqué/i);
+
+  const restore = await request(`/api${adminPrefix}/users/${blockedAccountId}/restore`, {
+    method: "POST",
+    headers: adminMutationHeaders,
+    rawBody: JSON.stringify({
+      reason: "Fin du blocage de test isolé.",
+      confirmation: "CONFIRMER",
+    }),
+  });
+  assert.equal(restore.status, 200, restore.text);
+  assert.equal(JSON.parse(restore.text).status, "active");
+  const storedRestored = await owner.query(
+    "SELECT status,suspended_at,suspended_by,suspension_reason FROM sf_users WHERE id=$1",
+    [blockedAccountId],
+  );
+  assert.deepEqual(storedRestored.rows[0], {
+    status: "active",
+    suspended_at: null,
+    suspended_by: null,
+    suspension_reason: null,
+  });
+  const unblockedLogin = await request("/api/auth/sign-in", {
+    method: "POST",
+    headers: customerSignInHeaders,
+    rawBody: JSON.stringify({ email: blockedAccountEmail, password: blockedAccountPassword }),
+  });
+  assert.equal(unblockedLogin.status, 200, unblockedLogin.text);
+});
+
 test("admin transaction detail returns persisted payment trace without link secrets", async () => {
   const response = await request(`/api${adminPrefix}/transactions/${traceTransactionId}`, {
     headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` },
@@ -260,14 +420,34 @@ test("admin transaction detail returns persisted payment trace without link secr
   assert.equal(detail.paymentTrace.intent.kind, "deposit");
   assert.equal(detail.paymentTrace.paymentLink.source, "api");
   assert.equal(detail.paymentTrace.paymentLink.paymentMethod, "mobile_money");
-  assert.equal(detail.paymentTrace.integrationSession, null);
+  assert.equal(detail.paymentTrace.integrationSession.mode, "hosted");
+  assert.equal(detail.paymentTrace.integrationSession.merchantReference, "TRACE-ORDER-001");
   assert.equal(detail.paymentTrace.attempts.length, 1);
   assert.equal(detail.paymentTrace.attempts[0].countryCode, "ci");
   assert.equal(typeof detail.paymentTrace.attempts[0].countryName, "string");
   assert.ok(detail.paymentTrace.attempts[0].countryName.length > 0);
   assert.equal(detail.paymentTrace.attempts[0].channelId, "mobile-money-ci");
-  assert.equal(detail.paymentTrace.attempts[0].status, "prepared");
-  assert.doesNotMatch(response.text, /public_token|pollTokenHash|idempotencyKey|sfenc-v1\./i);
+  assert.equal(detail.paymentTrace.attempts[0].status, "pending");
+  assert.equal(detail.paymentTrace.attempts[0].confirmations.length, 1);
+  assert.equal(detail.paymentTrace.attempts[0].confirmations[0].source, "provider_status");
+  assert.equal(detail.paymentTrace.attempts[0].confirmations[0].providerStatus, "pending");
+  assert.equal(detail.paymentTrace.attempts[0].confirmations[0].amountMinor, 2500);
+  assert.equal("encryptedPayload" in detail.paymentTrace.attempts[0].confirmations[0], false);
+  assert.equal("eventFingerprint" in detail.paymentTrace.attempts[0].confirmations[0], false);
+  assert.equal("providerReferenceHash" in detail.paymentTrace.attempts[0].confirmations[0], false);
+  assert.doesNotMatch(response.text, /public_token|pollTokenHash|idempotencyKey|clientToken|sfenc-v1\./i);
+});
+
+test("admin transaction filters apply country, channel, source and integration mode before pagination", async () => {
+  const response = await request(
+    `/api${adminPrefix}/transactions?countryCode=ci&channelId=mobile-money-ci&paymentSource=api&integrationMode=hosted&page=1&pageSize=1`,
+    { headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` } },
+  );
+  assert.equal(response.status, 200, response.text);
+  const page = JSON.parse(response.text);
+  assert.equal(page.total, 1);
+  assert.equal(page.items.length, 1);
+  assert.equal(page.items[0].id, traceTransactionId);
 });
 
 test("CORS preflight permits the CSRF header only for an allowed origin", async () => {

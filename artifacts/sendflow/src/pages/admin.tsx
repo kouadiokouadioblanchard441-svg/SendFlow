@@ -54,6 +54,8 @@ import {
   useGetAdminTransaction,
   useGetAdminUser,
   useGetAdminOverview,
+  getGetAdminAccessStatusQueryKey,
+  useGetAdminAccessStatus,
   useListAdminTransactions,
   useListAdminLoginActivity,
   useListAdminOtpActivity,
@@ -397,6 +399,19 @@ function paymentAttemptDirectionLabel(direction: string) {
   return direction;
 }
 
+function paymentConfirmationSourceLabel(source: string) {
+  if (source === 'verified_webhook') return 'Webhook vérifié';
+  if (source === 'provider_status') return 'Mise à jour du statut';
+  return source;
+}
+
+function paymentConfirmationStatusLabel(status: string) {
+  if (status === 'pending') return 'En attente';
+  if (status === 'succeeded') return 'Réussie';
+  if (status === 'failed') return 'Échouée';
+  return status;
+}
+
 function MetricCard({
   label,
   value,
@@ -678,7 +693,7 @@ function UsersPage() {
                       <TableCell data-testid={`text-user-country-${user.id}`}>{user.countryCode || '—'}</TableCell>
                       <TableCell data-testid={`text-user-created-${user.id}`}>{formatDate(user.createdAt)}</TableCell>
                       <TableCell data-testid={`text-user-lastseen-${user.id}`}>{formatDate(user.lastSeenAt)}</TableCell>
-                       <TableCell><div className="sendflow-admin-status-stack"><Badge variant="outline" className="sendflow-admin-wallet-badge" data-testid={`status-user-wallet-${user.id}`}>{user.wallet.status === 'active' ? 'Actif' : user.wallet.status === 'locked' ? 'Bloqué' : 'Fermé'}</Badge><Badge variant="outline" className={`sendflow-admin-account-status sendflow-admin-account-status-${user.status}`} data-testid={`status-admin-user-${user.id}`}>{user.status === 'active' ? 'Compte actif' : user.status === 'suspended' ? 'Suspendu' : 'Supprimé'}</Badge></div></TableCell>
+                       <TableCell><div className="sendflow-admin-status-stack"><Badge variant="outline" className="sendflow-admin-wallet-badge" data-testid={`status-user-wallet-${user.id}`}>{user.wallet.status === 'active' ? 'Actif' : user.wallet.status === 'locked' ? 'Bloqué' : 'Fermé'}</Badge><Badge variant="outline" className={`sendflow-admin-account-status sendflow-admin-account-status-${user.status}`} data-testid={`status-admin-user-${user.id}`}>{user.status === 'active' ? 'Compte actif' : user.status === 'suspended' ? 'Compte bloqué' : 'Supprimé'}</Badge></div></TableCell>
                       <TableCell className="font-semibold tabular-nums" data-testid={`text-user-balance-${user.id}`}>{formatMoney(user.wallet.balanceMinor, user.wallet.currency)}</TableCell>
                     </TableRow>
                   ))}
@@ -700,6 +715,10 @@ function transactionKindLabel(kind: 'inter-network' | 'deposit' | 'international
 }
 
 function UserDetailPage({ userId }: { userId: string }) {
+  const access = useGetAdminAccessStatus({
+    query: { queryKey: getGetAdminAccessStatusQueryKey(), staleTime: 15_000 },
+  });
+  const canMutate = access.data?.canMutate === true;
   const [page, setPage] = useState(1);
   const [webhookPage, setWebhookPage] = useState(1);
   const pageSize = 20;
@@ -757,9 +776,9 @@ function UserDetailPage({ userId }: { userId: string }) {
                 </div>
               </div>
                <div className="sendflow-admin-profile-actions">
-                 <div className="sendflow-admin-profile-status"><UserRound className="size-4" /> {detail.user.status === 'active' ? 'Compte actif' : detail.user.status === 'suspended' ? 'Compte suspendu' : 'Compte supprimé'}</div>
-                 {detail.user.status === 'active' && <AdminActionDialog kind="suspend" targetId={userId} />}
-                 {detail.user.status === 'suspended' && <AdminActionDialog kind="restore" targetId={userId} />}
+                 <div className="sendflow-admin-profile-status"><UserRound className="size-4" /> {detail.user.status === 'active' ? 'Compte actif' : detail.user.status === 'suspended' ? 'Compte bloqué' : 'Compte supprimé'}</div>
+                 {canMutate && detail.user.status === 'active' && <AdminActionDialog kind="suspend" targetId={userId} />}
+                 {canMutate && detail.user.status === 'suspended' && <AdminActionDialog kind="restore" targetId={userId} />}
                  {detail.user.status !== 'deleted' && <AdminActionDialog kind="delete-user" targetId={userId} />}
                </div>
             </CardContent>
@@ -1164,6 +1183,44 @@ function TransactionDetailPage({ transactionId }: { transactionId: string }) {
                           </strong>
                         </div>
                       </div>
+                      <div className="mt-4 border-t border-border pt-4" data-testid={`timeline-admin-payment-confirmations-${attempt.id}`}>
+                        <h5 className="mb-3 text-sm font-semibold">Historique des confirmations</h5>
+                        {attempt.confirmations.length > 0 ? (
+                          <ol className="space-y-3">
+                            {attempt.confirmations.map((confirmation) => (
+                              <li
+                                key={confirmation.id}
+                                className="rounded-lg border border-border bg-muted/20 p-3"
+                                data-testid={`event-admin-payment-confirmation-${confirmation.id}`}
+                              >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div>
+                                    <p className="font-medium">{paymentConfirmationSourceLabel(confirmation.source)}</p>
+                                    <p className="break-all font-mono text-xs text-muted-foreground">{confirmation.id}</p>
+                                  </div>
+                                  <Badge variant="outline">{paymentConfirmationStatusLabel(confirmation.providerStatus)}</Badge>
+                                </div>
+                                <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
+                                  <div>
+                                    <span className="block text-xs text-muted-foreground">Montant confirmé</span>
+                                    <strong>{formatMoney(confirmation.amountMinor, confirmation.currency)}</strong>
+                                  </div>
+                                  <div>
+                                    <span className="block text-xs text-muted-foreground">Vérifiée le</span>
+                                    <strong>{formatDate(confirmation.verifiedAt)}</strong>
+                                  </div>
+                                  <div>
+                                    <span className="block text-xs text-muted-foreground">Enregistrée le</span>
+                                    <strong>{formatDate(confirmation.createdAt)}</strong>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Aucune confirmation persistée pour cette tentative.</p>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1537,6 +1594,10 @@ function OtpActivityPage() {
 function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 'international' | 'transfers' }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [countryCode, setCountryCode] = useState('');
+  const [channelId, setChannelId] = useState('');
+  const [paymentSource, setPaymentSource] = useState<'all' | 'linkflow' | 'api'>('all');
+  const [integrationMode, setIntegrationMode] = useState<'all' | 'direct' | 'hosted'>('all');
   const [page, setPage] = useState(1);
   const pageSize = 20;
   const kind: TransactionKind | undefined =
@@ -1551,9 +1612,13 @@ function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 
     ...(kind ? { kind } : {}),
     ...(search ? { search } : {}),
     ...(status !== 'all' ? { status: status as Status } : {}),
+    ...(countryCode ? { countryCode } : {}),
+    ...(channelId.trim() ? { channelId: channelId.trim() } : {}),
+    ...(paymentSource !== 'all' ? { paymentSource } : {}),
+    ...(integrationMode !== 'all' ? { integrationMode } : {}),
     page,
     pageSize,
-  }), [kind, search, status, page]);
+  }), [kind, search, status, countryCode, channelId, paymentSource, integrationMode, page]);
   const query = useListAdminTransactions(params);
   const result = query.data;
   const items = result?.items ?? [];
@@ -1579,6 +1644,10 @@ function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 
         : section === 'transfers'
           ? 'Aucun transfert inter-réseaux ne correspond à vos filtres.'
           : 'Aucune transaction ne correspond à vos filtres.';
+  const updateFilter = <T,>(setter: (value: T) => void, value: T) => {
+    setter(value);
+    setPage(1);
+  };
 
   return (
     <AdminShell section={section}>
@@ -1589,6 +1658,54 @@ function TransactionsPage({ section }: { section: 'transactions' | 'deposits' | 
       <Card className="sendflow-admin-list-card">
         <CardContent className="p-0">
           <FilterBar search={search} setSearch={(value) => { setSearch(value); setPage(1); }} status={status} setStatus={(value) => { setStatus(value); setPage(1); }} />
+          <div className="grid grid-cols-1 gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-4" data-testid="form-admin-transaction-trace-filters">
+            <div className="grid gap-1.5">
+              <Label htmlFor="admin-transaction-country" className="text-xs text-muted-foreground">Pays (code ISO)</Label>
+              <Input
+                id="admin-transaction-country"
+                value={countryCode.toUpperCase()}
+                maxLength={2}
+                placeholder="CI"
+                autoComplete="off"
+                onChange={(event) => updateFilter(setCountryCode, event.target.value.replace(/[^a-z]/gi, '').slice(0, 2).toLowerCase())}
+                data-testid="input-admin-transaction-country"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="admin-transaction-channel" className="text-xs text-muted-foreground">Canal de paiement</Label>
+              <Input
+                id="admin-transaction-channel"
+                value={channelId}
+                maxLength={80}
+                placeholder="Identifiant exact du canal"
+                autoComplete="off"
+                onChange={(event) => updateFilter(setChannelId, event.target.value.slice(0, 80))}
+                data-testid="input-admin-transaction-channel"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="admin-transaction-source" className="text-xs text-muted-foreground">Origine du paiement</Label>
+              <Select value={paymentSource} onValueChange={(value) => updateFilter(setPaymentSource, value as typeof paymentSource)}>
+                <SelectTrigger id="admin-transaction-source" data-testid="select-admin-transaction-source"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les origines</SelectItem>
+                  <SelectItem value="linkflow">Lien SendFlow</SelectItem>
+                  <SelectItem value="api">API marchand</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="admin-transaction-mode" className="text-xs text-muted-foreground">Mode d’intégration</Label>
+              <Select value={integrationMode} onValueChange={(value) => updateFilter(setIntegrationMode, value as typeof integrationMode)}>
+                <SelectTrigger id="admin-transaction-mode" data-testid="select-admin-transaction-mode"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les modes</SelectItem>
+                  <SelectItem value="direct">API directe</SelectItem>
+                  <SelectItem value="hosted">Hosted Checkout</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           {query.isLoading && <div className="sendflow-admin-table-skeleton" data-testid={`loading-admin-${section}`}>{Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-12 w-full" />)}</div>}
           {query.isError && <div className="p-5"><QueryState error={query.error} onRetry={() => void query.refetch()} /></div>}
           {!query.isLoading && !query.isError && items.length === 0 && <EmptyState label={emptyLabel} />}

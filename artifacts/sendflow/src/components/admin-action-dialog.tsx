@@ -70,16 +70,16 @@ const actionMeta: Record<AdminActionKind, {
     destructive: true,
   },
   suspend: {
-    title: 'Suspendre le compte',
-    trigger: 'Suspendre',
-    description: 'Le compte ne pourra plus initialiser sa session applicative. La suspension sera auditée.',
+    title: 'Bloquer le compte',
+    trigger: 'Bloquer',
+    description: 'L’utilisateur ne pourra plus se connecter. Ses sessions actives seront révoquées et l’action sera auditée.',
     icon: Ban,
     destructive: true,
   },
   restore: {
-    title: 'Restaurer le compte',
-    trigger: 'Restaurer',
-    description: 'Le compte repassera à l’état actif. La restauration sera auditée.',
+    title: 'Débloquer le compte',
+    trigger: 'Débloquer',
+    description: 'Le compte repassera à l’état actif. L’utilisateur pourra se reconnecter ; l’action sera auditée.',
     icon: RotateCcw,
   },
   'delete-user': {
@@ -208,11 +208,11 @@ export function AdminActionDialog({
       } else if (kind === 'suspend') {
         await suspendMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
         await invalidate();
-        setSuccess('Compte suspendu et action auditée.');
+        setSuccess('Compte bloqué. Les sessions actives ont été révoquées et l’action auditée.');
       } else if (kind === 'restore') {
         await restoreMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
         await invalidate();
-        setSuccess('Compte restauré et action auditée.');
+        setSuccess('Compte débloqué. L’utilisateur peut se reconnecter et l’action est auditée.');
       } else if (kind === 'delete-user') {
         await deleteMutation.mutateAsync({ userId: targetId, data: { reason: reason.trim(), confirmation: 'CONFIRMER' } });
         await invalidate();

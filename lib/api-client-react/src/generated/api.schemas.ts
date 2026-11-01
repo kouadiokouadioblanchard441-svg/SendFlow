@@ -2512,6 +2512,42 @@ export const AdminTransactionPaymentAttemptStatus = {
   failed: 'failed',
 } as const;
 
+export type AdminTransactionPaymentConfirmationSource = typeof AdminTransactionPaymentConfirmationSource[keyof typeof AdminTransactionPaymentConfirmationSource];
+
+
+export const AdminTransactionPaymentConfirmationSource = {
+  provider_status: 'provider_status',
+  verified_webhook: 'verified_webhook',
+} as const;
+
+export type AdminTransactionPaymentConfirmationProviderStatus = typeof AdminTransactionPaymentConfirmationProviderStatus[keyof typeof AdminTransactionPaymentConfirmationProviderStatus];
+
+
+export const AdminTransactionPaymentConfirmationProviderStatus = {
+  pending: 'pending',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export type AdminTransactionPaymentConfirmationCurrency = typeof AdminTransactionPaymentConfirmationCurrency[keyof typeof AdminTransactionPaymentConfirmationCurrency];
+
+
+export const AdminTransactionPaymentConfirmationCurrency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+} as const;
+
+export interface AdminTransactionPaymentConfirmation {
+  id: string;
+  source: AdminTransactionPaymentConfirmationSource;
+  providerStatus: AdminTransactionPaymentConfirmationProviderStatus;
+  /** @maximum 9007199254740991 */
+  amountMinor: number;
+  currency: AdminTransactionPaymentConfirmationCurrency;
+  verifiedAt: string;
+  createdAt: string;
+}
+
 export interface AdminTransactionPaymentAttempt {
   id: string;
   direction: AdminTransactionPaymentAttemptDirection;
@@ -2531,6 +2567,8 @@ export interface AdminTransactionPaymentAttempt {
   finalConfirmationId: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Safe confirmation metadata ordered by verification and persistence time. Encrypted payloads, hashes, and signatures are never returned. */
+  confirmations: AdminTransactionPaymentConfirmation[];
 }
 
 export type AdminTransactionPaymentIntentKind = typeof AdminTransactionPaymentIntentKind[keyof typeof AdminTransactionPaymentIntentKind];
@@ -3811,6 +3849,25 @@ userId?: AdminUserIdFilterParameter;
 kind?: ListAdminTransactionsKind;
 status?: ListAdminTransactionsStatus;
 /**
+ * ISO 3166-1 alpha-2 country code recorded on a related payment attempt.
+ * @pattern ^[a-z]{2}$
+ */
+countryCode?: string;
+/**
+ * Exact payment channel identifier recorded on a related payment attempt.
+ * @minLength 1
+ * @maxLength 80
+ */
+channelId?: string;
+/**
+ * Origin of the related payment link.
+ */
+paymentSource?: ListAdminTransactionsPaymentSource;
+/**
+ * Integration mode of a related developer payment session.
+ */
+integrationMode?: ListAdminTransactionsIntegrationMode;
+/**
  * Inclusive UTC calendar date.
  */
 from?: AdminFromParameter;
@@ -3846,5 +3903,21 @@ export const ListAdminTransactionsStatus = {
   pending: 'pending',
   succeeded: 'succeeded',
   failed: 'failed',
+} as const;
+
+export type ListAdminTransactionsPaymentSource = typeof ListAdminTransactionsPaymentSource[keyof typeof ListAdminTransactionsPaymentSource];
+
+
+export const ListAdminTransactionsPaymentSource = {
+  linkflow: 'linkflow',
+  api: 'api',
+} as const;
+
+export type ListAdminTransactionsIntegrationMode = typeof ListAdminTransactionsIntegrationMode[keyof typeof ListAdminTransactionsIntegrationMode];
+
+
+export const ListAdminTransactionsIntegrationMode = {
+  direct: 'direct',
+  hosted: 'hosted',
 } as const;
 

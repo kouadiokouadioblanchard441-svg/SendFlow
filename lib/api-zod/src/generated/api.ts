@@ -4048,6 +4048,9 @@ export const ListAdminUserDeveloperWebhooksResponse = zod.object({
 export const listAdminTransactionsQuerySearchMax = 120;
 
 
+export const listAdminTransactionsQueryCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const listAdminTransactionsQueryChannelIdMax = 80;
+
 export const listAdminTransactionsQueryPageDefault = 1;
 export const listAdminTransactionsQueryPageMax = 1000;
 
@@ -4061,6 +4064,10 @@ export const ListAdminTransactionsQueryParams = zod.object({
   "userId": zod.coerce.string().min(1).optional(),
   "kind": zod.enum(['inter-network', 'deposit', 'international']).optional(),
   "status": zod.enum(['pending', 'succeeded', 'failed']).optional(),
+  "countryCode": zod.coerce.string().regex(listAdminTransactionsQueryCountryCodeRegExp).optional().describe('ISO 3166-1 alpha-2 country code recorded on a related payment attempt.'),
+  "channelId": zod.coerce.string().min(1).max(listAdminTransactionsQueryChannelIdMax).optional().describe('Exact payment channel identifier recorded on a related payment attempt.'),
+  "paymentSource": zod.enum(['linkflow', 'api']).optional().describe('Origin of the related payment link.'),
+  "integrationMode": zod.enum(['direct', 'hosted']).optional().describe('Integration mode of a related developer payment session.'),
   "from": zod.date().optional().describe('Inclusive UTC calendar date.'),
   "to": zod.date().optional().describe('Inclusive UTC calendar date.'),
   "page": zod.coerce.number().int().min(1).max(listAdminTransactionsQueryPageMax).default(listAdminTransactionsQueryPageDefault),
@@ -4119,6 +4126,8 @@ export const getAdminTransactionResponsePaymentTraceIntentOneSenderTotalMinorMax
 export const getAdminTransactionResponsePaymentTraceIntentOneRecipientTotalMinorMax = 9007199254740991;
 
 export const getAdminTransactionResponsePaymentTraceAttemptsItemAmountMinorMax = 9007199254740991;
+
+export const getAdminTransactionResponsePaymentTraceAttemptsItemConfirmationsItemAmountMinorMax = 9007199254740991;
 
 
 
@@ -4184,7 +4193,16 @@ export const GetAdminTransactionResponse = zod.object({
   "dispatchedAt": zod.coerce.date().nullable(),
   "finalConfirmationId": zod.uuid().nullable(),
   "createdAt": zod.coerce.date(),
-  "updatedAt": zod.coerce.date()
+  "updatedAt": zod.coerce.date(),
+  "confirmations": zod.array(zod.object({
+  "id": zod.uuid(),
+  "source": zod.enum(['provider_status', 'verified_webhook']),
+  "providerStatus": zod.enum(['pending', 'succeeded', 'failed']),
+  "amountMinor": zod.int().max(getAdminTransactionResponsePaymentTraceAttemptsItemConfirmationsItemAmountMinorMax),
+  "currency": zod.enum(['XOF', 'XAF']),
+  "verifiedAt": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+})).describe('Safe confirmation metadata ordered by verification and persistence time. Encrypted payloads, hashes, and signatures are never returned.')
 }))
 })
 })

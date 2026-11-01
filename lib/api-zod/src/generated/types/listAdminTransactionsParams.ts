@@ -11,7 +11,9 @@ import type { AdminPageSizeParameter } from './adminPageSizeParameter';
 import type { AdminSearchParameter } from './adminSearchParameter';
 import type { AdminToParameter } from './adminToParameter';
 import type { AdminUserIdFilterParameter } from './adminUserIdFilterParameter';
+import type { ListAdminTransactionsIntegrationMode } from './listAdminTransactionsIntegrationMode';
 import type { ListAdminTransactionsKind } from './listAdminTransactionsKind';
+import type { ListAdminTransactionsPaymentSource } from './listAdminTransactionsPaymentSource';
 import type { ListAdminTransactionsStatus } from './listAdminTransactionsStatus';
 
 export type ListAdminTransactionsParams = {
@@ -25,6 +27,25 @@ search?: AdminSearchParameter;
 userId?: AdminUserIdFilterParameter;
 kind?: ListAdminTransactionsKind;
 status?: ListAdminTransactionsStatus;
+/**
+ * ISO 3166-1 alpha-2 country code recorded on a related payment attempt.
+ * @pattern ^[a-z]{2}$
+ */
+countryCode?: string;
+/**
+ * Exact payment channel identifier recorded on a related payment attempt.
+ * @minLength 1
+ * @maxLength 80
+ */
+channelId?: string;
+/**
+ * Origin of the related payment link.
+ */
+paymentSource?: ListAdminTransactionsPaymentSource;
+/**
+ * Integration mode of a related developer payment session.
+ */
+integrationMode?: ListAdminTransactionsIntegrationMode;
 /**
  * Inclusive UTC calendar date.
  */

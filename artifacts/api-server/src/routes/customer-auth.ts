@@ -514,7 +514,12 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         : record?.passwordHash;
       const encodedHash = scopedHash || await DUMMY_PASSWORD_HASH;
       const validPassword = await verifyCustomerSecret(parsed.data.password, encodedHash);
-      if (!record || !scopedHash || record.accountStatus !== "active" || !validPassword) {
+      if (
+        !record
+        || !scopedHash
+        || !validPassword
+        || (record.accountStatus !== "active" && record.accountStatus !== "suspended")
+      ) {
         const retryAfterFailure = await recordAuthFailureAndGetRetryAfter(
           buckets,
           now,
@@ -524,6 +529,10 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         return retryAfterFailure !== null
           ? { kind: "rate", retry: retryAfterFailure } as const
           : { kind: "invalid" } as const;
+      }
+
+      if (record.accountStatus === "suspended") {
+        return { kind: "blocked" } as const;
       }
 
       await tx
@@ -551,6 +560,12 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
 
     if (result.kind === "rate") {
       sendRateLimit(res, result.retry);
+      return;
+    }
+    if (result.kind === "blocked") {
+      res.status(423).json({
+        error: "Votre compte est bloqué. Veuillez contacter le support SendFlow pour obtenir de l’aide.",
+      });
       return;
     }
     if (result.kind !== "signed-in") {

@@ -41,6 +41,7 @@ import {
   lte,
   or,
   paymentAttemptsTable,
+  paymentConfirmationsTable,
   paymentIntentsTable,
   sql,
   sum,
@@ -61,9 +62,11 @@ export type AdminPermission = "read" | "mutate";
 export function getAdminUserId(req: Request, permission: AdminPermission = "read") {
   const session = adminSessionContext(req);
   if (!session) return { userId: null, status: 401, error: "Administrator authentication required" };
-  // These grants restore catalogue management only, not financial or customer administration.
-  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?)\/?$/.test(req.path)) {
-    return { userId: null, status: 403, error: "Administrator catalogue permission does not authorize this operation" };
+  // Keep mutation access narrow: catalogue/campaign operations plus explicit
+  // account block/unblock actions. Financial operations and account deletion
+  // remain outside this authorization scope.
+  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?|users\/[^/]+\/(?:suspend|restore))\/?$/.test(req.path)) {
+    return { userId: null, status: 403, error: "Administrator permission does not authorize this operation" };
   }
   if (permission === "mutate" && !session.canMutate) {
     return { userId: null, status: 403, error: "Administrator mutation permission required" };
@@ -556,6 +559,10 @@ router.get("/transactions", async (req, res): Promise<void> => {
     userId: req.query.userId,
     kind: req.query.kind,
     status: req.query.status,
+    countryCode: req.query.countryCode,
+    channelId: req.query.channelId,
+    paymentSource: req.query.paymentSource,
+    integrationMode: req.query.integrationMode,
     from: typeof req.query.from === "string" ? new Date(`${req.query.from}T00:00:00.000Z`) : undefined,
     to: typeof req.query.to === "string" ? new Date(`${req.query.to}T00:00:00.000Z`) : undefined,
     page: req.query.page,
@@ -567,13 +574,76 @@ router.get("/transactions", async (req, res): Promise<void> => {
     return;
   }
 
-  const { search, userId, kind, status, page, pageSize } = parsed.data;
+  const { search, userId, kind, status, countryCode, channelId, paymentSource, integrationMode, page, pageSize } = parsed.data;
   const range = parseDateRange(req.query as Record<string, unknown>);
   const filters = [
     ...transactionDateFilters(range),
     userId ? eq(transactionsTable.userId, userId) : undefined,
     kind ? eq(transactionsTable.kind, kind) : undefined,
     status ? eq(transactionsTable.status, status) : undefined,
+    countryCode
+      ? inArray(
+          transactionsTable.id,
+          db.select({ transactionId: paymentIntentsTable.transactionId })
+            .from(paymentIntentsTable)
+            .innerJoin(paymentAttemptsTable, eq(paymentAttemptsTable.intentId, paymentIntentsTable.id))
+            .where(eq(paymentAttemptsTable.countryCode, countryCode)),
+        )
+      : undefined,
+    channelId
+      ? inArray(
+          transactionsTable.id,
+          db.select({ transactionId: paymentIntentsTable.transactionId })
+            .from(paymentIntentsTable)
+            .innerJoin(paymentAttemptsTable, eq(paymentAttemptsTable.intentId, paymentIntentsTable.id))
+            .where(eq(paymentAttemptsTable.channelId, channelId)),
+        )
+      : undefined,
+    paymentSource
+      ? inArray(
+          transactionsTable.id,
+          db.select({ transactionId: paymentIntentsTable.transactionId })
+            .from(paymentIntentsTable)
+            .innerJoin(
+              customerPaymentLinkAttemptsTable,
+              eq(customerPaymentLinkAttemptsTable.intentId, paymentIntentsTable.id),
+            )
+            .innerJoin(
+              customerPaymentLinksTable,
+              and(
+                eq(customerPaymentLinksTable.id, customerPaymentLinkAttemptsTable.paymentLinkId),
+                eq(customerPaymentLinksTable.userId, transactionsTable.userId),
+              ),
+            )
+            .where(eq(customerPaymentLinksTable.source, paymentSource)),
+        )
+      : undefined,
+    integrationMode
+      ? inArray(
+          transactionsTable.id,
+          db.select({ transactionId: paymentIntentsTable.transactionId })
+            .from(paymentIntentsTable)
+            .innerJoin(
+              customerPaymentLinkAttemptsTable,
+              eq(customerPaymentLinkAttemptsTable.intentId, paymentIntentsTable.id),
+            )
+            .innerJoin(
+              customerPaymentLinksTable,
+              and(
+                eq(customerPaymentLinksTable.id, customerPaymentLinkAttemptsTable.paymentLinkId),
+                eq(customerPaymentLinksTable.userId, transactionsTable.userId),
+              ),
+            )
+            .innerJoin(
+              developerPaymentSessionsTable,
+              and(
+                eq(developerPaymentSessionsTable.paymentLinkId, customerPaymentLinksTable.id),
+                eq(developerPaymentSessionsTable.userId, customerPaymentLinksTable.userId),
+              ),
+            )
+            .where(eq(developerPaymentSessionsTable.mode, integrationMode)),
+        )
+      : undefined,
     search
       ? or(
           ilike(transactionsTable.reference, `%${search}%`),
@@ -781,6 +851,35 @@ router.get("/transactions/:transactionId", async (req, res): Promise<void> => {
             .orderBy(asc(paymentAttemptsTable.createdAt), asc(paymentAttemptsTable.direction)),
         ])
       : [undefined, []];
+    const confirmations = attempts.length
+      ? await db
+          .select({
+            id: paymentConfirmationsTable.id,
+            attemptId: paymentConfirmationsTable.attemptId,
+            source: paymentConfirmationsTable.source,
+            providerStatus: paymentConfirmationsTable.providerStatus,
+            amountMinor: paymentConfirmationsTable.amountMinor,
+            currency: paymentConfirmationsTable.currency,
+            verifiedAt: paymentConfirmationsTable.verifiedAt,
+            createdAt: paymentConfirmationsTable.createdAt,
+          })
+          .from(paymentConfirmationsTable)
+          .where(inArray(
+            paymentConfirmationsTable.attemptId,
+            attempts.map((attempt) => attempt.id),
+          ))
+          .orderBy(asc(paymentConfirmationsTable.verifiedAt), asc(paymentConfirmationsTable.createdAt))
+      : [];
+    const confirmationsByAttempt = new Map<string, typeof confirmations>();
+    for (const confirmation of confirmations) {
+      const existing = confirmationsByAttempt.get(confirmation.attemptId) ?? [];
+      existing.push(confirmation);
+      confirmationsByAttempt.set(confirmation.attemptId, existing);
+    }
+    const tracedAttempts = attempts.map((attempt) => ({
+      ...attempt,
+      confirmations: confirmationsByAttempt.get(attempt.id) ?? [],
+    }));
 
     await recordAdminAudit({
       adminUserId,
@@ -819,7 +918,7 @@ router.get("/transactions/:transactionId", async (req, res): Promise<void> => {
               expiresAt: paymentContext.sessionExpiresAt,
             }
           : null,
-        attempts,
+        attempts: tracedAttempts,
       },
     }));
   } catch (error) {
