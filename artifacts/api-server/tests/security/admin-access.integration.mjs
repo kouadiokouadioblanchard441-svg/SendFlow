@@ -48,6 +48,57 @@ async function unlock(cookie, pin = "48261739") {
   return request("/pin/unlock", { method: "POST", cookie, body: { pin } });
 }
 async function clearAttempts() { await owner.query("DELETE FROM sf_customer_auth_attempts"); }
+async function withMockedEmailProvider(action) {
+  const oldNodeEnv = process.env.NODE_ENV;
+  const oldFetch = globalThis.fetch;
+  const sentRequests = [];
+  process.env.NODE_ENV = "production";
+  globalThis.fetch = async (url, init) => {
+    sentRequests.push({ url, init });
+    return new Response(JSON.stringify({ id: `isolated-email-message-${sentRequests.length}` }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+  try {
+    return await action(sentRequests);
+  } finally {
+    globalThis.fetch = oldFetch;
+    if (oldNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = oldNodeEnv;
+  }
+}
+async function sendOtp(body) {
+  return withMockedEmailProvider(async (sentRequests) => {
+    const response = await request("/auth/send-otp", { method: "POST", body });
+    const sentRequest = sentRequests[0];
+    const emailPayload = sentRequest ? JSON.parse(sentRequest.init.body) : null;
+    const code = emailPayload?.text.match(/\b([0-9]{6})\b/)?.[1] ?? null;
+    return { response, sentRequest, emailPayload, code, sentRequests };
+  });
+}
+async function sendSignupOtp(phone, email) {
+  return sendOtp({ phone, email, purpose: "signup" });
+}
+async function setUserEmail(userId, email, verified) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const emailLookupHash = runtime.createSensitiveDataLookupIndex(normalizedEmail, "user-email");
+  const emailEncrypted = runtime.encryptSensitiveData(normalizedEmail, "user-email");
+  await owner.query(
+    "UPDATE sf_users SET email_encrypted=$1,email_lookup_hash=$2,email_verified_at=$3 WHERE id=$4",
+    [emailEncrypted, emailLookupHash, verified ? new Date() : null, userId],
+  );
+}
+async function clearOtpChallenge(challengeId) {
+  await owner.query("DELETE FROM sf_phone_otp_challenges WHERE id=$1", [challengeId]);
+  await clearAttempts();
+}
+async function clearOtpFixture(phone) {
+  await owner.query("DELETE FROM sf_phone_otp_challenges WHERE phone_hash=$1", [
+    runtime.fingerprint(`phone:${phone}`),
+  ]);
+  await clearAttempts();
+}
 
 before(async () => {
   // No fetch transport can call email delivery or any other provider during these tests.
@@ -134,33 +185,29 @@ test("only fresh requester-bound admin challenges work; OTP replay is refused", 
   await clearAttempts();
 });
 test("signup email OTP is sent and verified without verifying the phone", async () => {
-  const oldNodeEnv = process.env.NODE_ENV;
-  const oldFetch = globalThis.fetch;
-  let sentRequest;
-  process.env.NODE_ENV = "production";
-  globalThis.fetch = async (url, init) => {
-    sentRequest = { url, init };
-    return new Response(JSON.stringify({ id: "isolated-email-message" }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  };
+  const phone = "+2250700000014";
+  const email = "otp-fixture@example.invalid";
   try {
-    const sent = await request("/auth/send-otp", {
-      method: "POST",
-      body: {
-        phone: "+2250700000014",
-        email: "otp-fixture@example.invalid",
-        purpose: "signup",
-      },
-    });
+    const { response: sent, sentRequest, emailPayload, code } = await sendSignupOtp(phone, email);
     assert.equal(sent.status, 202);
     assert.equal(sent.body.resendAfterSeconds, 60);
+    assert.equal("code" in sent.body, false);
+    const expiresAt = new Date(sent.body.expiresAt).getTime();
+    assert.ok(expiresAt > Date.now());
+    assert.ok(expiresAt <= Date.now() + 5 * 60 * 1000 + 1000);
     assert.equal(sentRequest.url, "https://api.resend.com/emails");
-    const emailPayload = JSON.parse(sentRequest.init.body);
     assert.deepEqual(emailPayload.to, ["otp-fixture@example.invalid"]);
-    const code = emailPayload.text.match(/\b([0-9]{6})\b/)?.[1];
     assert.ok(code);
+
+    const cooldown = await sendSignupOtp(phone, email);
+    assert.equal(cooldown.response.status, 429);
+    assert.equal(cooldown.sentRequests.length, 0);
+
+    const wrongPurpose = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { challengeId: sent.body.challengeId, purpose: "pin_reset", code },
+    });
+    assert.equal(wrongPurpose.status, 409);
 
     const reserved = await owner.query(
       "SELECT delivery_channel,status,phone_verified,email_verified,code_hash,provider_message_id FROM sf_phone_otp_challenges WHERE id=$1",
@@ -171,14 +218,14 @@ test("signup email OTP is sent and verified without verifying the phone", async 
     assert.equal(reserved.rows[0].phone_verified, false);
     assert.equal(reserved.rows[0].email_verified, false);
     assert.notEqual(reserved.rows[0].code_hash, code);
-    assert.equal(reserved.rows[0].provider_message_id, "isolated-email-message");
+    assert.equal(reserved.rows[0].provider_message_id, "isolated-email-message-1");
 
-    const verified = await request("/auth/verify-otp", {
+    const verificationResponses = await Promise.all([0, 1].map(() => request("/auth/verify-otp", {
       method: "POST",
       body: { challengeId: sent.body.challengeId, purpose: "signup", code },
-    });
-    assert.equal(verified.status, 200);
-    assert.equal(verified.body.emailVerified, true);
+    })));
+    assert.ok(verificationResponses.some((response) => response.status === 200));
+    assert.ok(verificationResponses.every((response) => [200, 409].includes(response.status)));
 
     const stored = await owner.query(
       "SELECT status,phone_verified,email_verified,code_hash FROM sf_phone_otp_challenges WHERE id=$1",
@@ -188,14 +235,242 @@ test("signup email OTP is sent and verified without verifying the phone", async 
     assert.equal(stored.rows[0].phone_verified, false);
     assert.equal(stored.rows[0].email_verified, true);
     assert.equal(stored.rows[0].code_hash, null);
+    const verifiedEvents = await owner.query(
+      "SELECT count(*)::int AS count FROM sf_phone_otp_events WHERE challenge_id=$1 AND outcome='verified'",
+      [sent.body.challengeId],
+    );
+    assert.equal(verifiedEvents.rows[0].count, 1);
   } finally {
-    globalThis.fetch = oldFetch;
-    if (oldNodeEnv === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = oldNodeEnv;
-    await owner.query("DELETE FROM sf_customer_auth_attempts");
-    await owner.query("DELETE FROM sf_phone_otp_challenges WHERE phone_hash=$1", [
-      runtime.fingerprint("phone:+2250700000014"),
-    ]);
+    await clearOtpFixture(phone);
+  }
+});
+test("OTP verification expires and erases the code hash", async () => {
+  const phone = "+2250700000021";
+  try {
+    const { response: sent, code } = await sendSignupOtp(phone, "otp-expired@example.invalid");
+    assert.equal(sent.status, 202);
+    assert.ok(code);
+    await owner.query(
+      "UPDATE sf_phone_otp_challenges SET expires_at=now()-interval '1 second' WHERE id=$1",
+      [sent.body.challengeId],
+    );
+    const response = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { challengeId: sent.body.challengeId, purpose: "signup", code },
+    });
+    assert.equal(response.status, 409);
+    const { rows } = await owner.query(
+      "SELECT status,code_hash FROM sf_phone_otp_challenges WHERE id=$1",
+      [sent.body.challengeId],
+    );
+    assert.equal(rows[0].status, "expired");
+    assert.equal(rows[0].code_hash, null);
+  } finally {
+    await clearOtpFixture(phone);
+  }
+});
+test("signup OTP locks after three incorrect codes", async () => {
+  const phone = "+2250700000022";
+  try {
+    const { response: sent, code } = await sendSignupOtp(phone, "otp-locked@example.invalid");
+    assert.equal(sent.status, 202);
+    assert.ok(code);
+    const wrongCode = code === "000000" ? "000001" : "000000";
+    const responses = [];
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      responses.push(await request("/auth/verify-otp", {
+        method: "POST",
+        body: { challengeId: sent.body.challengeId, purpose: "signup", code: wrongCode },
+      }));
+    }
+    assert.deepEqual(responses.map((response) => response.status), [400, 400, 429]);
+    const { rows } = await owner.query(
+      "SELECT status,check_attempts,code_hash FROM sf_phone_otp_challenges WHERE id=$1",
+      [sent.body.challengeId],
+    );
+    assert.equal(rows[0].status, "locked");
+    assert.equal(rows[0].check_attempts, 3);
+    assert.equal(rows[0].code_hash, null);
+  } finally {
+    await clearOtpFixture(phone);
+  }
+});
+test("unknown password-reset addresses receive no email and keep a generic response", async () => {
+  await setUserEmail("customer", "unverified-reset@example.invalid", false);
+  const unverified = await sendOtp({
+    email: "unverified-reset@example.invalid",
+    purpose: "password_reset",
+  });
+  assert.equal(unverified.response.status, 202);
+  assert.equal(unverified.sentRequests.length, 0);
+  assert.equal("code" in unverified.response.body, false);
+  await clearOtpChallenge(unverified.response.body.challengeId);
+
+  const result = await withMockedEmailProvider(async (sentRequests) => {
+    const response = await request("/auth/send-otp", {
+      method: "POST",
+      body: { email: "unknown-reset@example.invalid", purpose: "password_reset" },
+    });
+    return { response, sentRequests };
+  });
+  assert.equal(result.response.status, 202);
+  assert.equal(result.sentRequests.length, 0);
+  assert.equal(typeof result.response.body.challengeId, "string");
+  assert.equal("code" in result.response.body, false);
+  const { rows } = await owner.query(
+    "SELECT status,code_hash FROM sf_phone_otp_challenges WHERE id=$1",
+    [result.response.body.challengeId],
+  );
+  assert.equal(rows[0].status, "failed");
+  assert.equal(rows[0].code_hash, null);
+  await clearOtpChallenge(result.response.body.challengeId);
+});
+test("untrusted origins cannot request OTP email", async () => {
+  const result = await withMockedEmailProvider(async (sentRequests) => {
+    const response = await request("/auth/send-otp", {
+      method: "POST",
+      origin: "https://evil.invalid",
+      body: {
+        phone: "+2250700000023",
+        email: "otp-origin@example.invalid",
+        purpose: "signup",
+      },
+    });
+    return { response, sentRequests };
+  });
+  assert.equal(result.response.status, 403);
+  assert.equal(result.sentRequests.length, 0);
+});
+test("concurrent OTP requests create only one active challenge and one delivery", async () => {
+  const phone = "+2250700000024";
+  const email = "otp-concurrent@example.invalid";
+  try {
+    const result = await withMockedEmailProvider(async (sentRequests) => {
+      const responses = await Promise.all([0, 1].map(() => request("/auth/send-otp", {
+        method: "POST",
+        body: { phone, email, purpose: "signup" },
+      })));
+      return { responses, sentRequests };
+    });
+    assert.deepEqual(result.responses.map((response) => response.status).sort(), [202, 429]);
+    assert.equal(result.sentRequests.length, 1);
+    const active = await owner.query(
+      "SELECT count(*)::int AS count FROM sf_phone_otp_challenges WHERE phone_hash=$1 AND status IN ('starting','pending')",
+      [runtime.fingerprint(`phone:${phone}`)],
+    );
+    assert.equal(active.rows[0].count, 1);
+  } finally {
+    await clearOtpFixture(phone);
+  }
+});
+test("the hourly phone limit blocks a sixth OTP request", async () => {
+  const phone = "+2250700000025";
+  const phoneHash = runtime.fingerprint(`phone:${phone}`);
+  try {
+    for (let index = 0; index < 5; index += 1) {
+      await owner.query(
+        `INSERT INTO sf_phone_otp_challenges
+          (phone_hash,email_hash,requester_hash,purpose,delivery_channel,status,phone_verified,email_verified,check_attempts,created_at,expires_at,resend_after)
+         VALUES($1,$2,$3,'signup','email','failed',false,false,0,now()-interval '10 minutes',now()+interval '2 minutes',now()-interval '9 minutes')`,
+        [
+          phoneHash,
+          runtime.fingerprint(`otp-history-email:${index}`),
+          runtime.fingerprint(`otp-history-requester:${index}`),
+        ],
+      );
+    }
+    const result = await sendSignupOtp(phone, "otp-hourly@example.invalid");
+    assert.equal(result.response.status, 429);
+    assert.equal(result.sentRequests.length, 0);
+  } finally {
+    await clearOtpFixture(phone);
+  }
+});
+test("password-reset OTP is delivered only to the stored verified email", async () => {
+  const email = "password-reset-fixture@example.invalid";
+  await setUserEmail("customer", email, true);
+  let challengeId;
+  try {
+    const sent = await sendOtp({ email, purpose: "password_reset" });
+    assert.equal(sent.response.status, 202);
+    assert.deepEqual(sent.emailPayload.to, [email]);
+    assert.ok(sent.code);
+    challengeId = sent.response.body.challengeId;
+    const verified = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { challengeId, purpose: "password_reset", code: sent.code },
+    });
+    assert.equal(verified.status, 200);
+    assert.equal(verified.body.emailVerified, true);
+    const { rows } = await owner.query(
+      "SELECT status,email_verified,phone_verified,code_hash FROM sf_phone_otp_challenges WHERE id=$1",
+      [challengeId],
+    );
+    assert.equal(rows[0].status, "verified");
+    assert.equal(rows[0].email_verified, true);
+    assert.equal(rows[0].phone_verified, false);
+    assert.equal(rows[0].code_hash, null);
+  } finally {
+    if (challengeId) await clearOtpChallenge(challengeId);
+  }
+});
+test("PIN-reset OTP is sent to the account email and never verifies the phone", async () => {
+  const email = "pin-reset-fixture@example.invalid";
+  await setUserEmail("reader", email, true);
+  let challengeId;
+  try {
+    const sent = await sendOtp({ phone: phones.reader, purpose: "pin_reset" });
+    assert.equal(sent.response.status, 202);
+    assert.deepEqual(sent.emailPayload.to, [email]);
+    assert.ok(sent.code);
+    challengeId = sent.response.body.challengeId;
+    const verified = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { challengeId, purpose: "pin_reset", code: sent.code },
+    });
+    assert.equal(verified.status, 200);
+    const { rows } = await owner.query(
+      "SELECT status,email_verified,phone_verified,code_hash FROM sf_phone_otp_challenges WHERE id=$1",
+      [challengeId],
+    );
+    assert.equal(rows[0].status, "verified");
+    assert.equal(rows[0].email_verified, true);
+    assert.equal(rows[0].phone_verified, false);
+    assert.equal(rows[0].code_hash, null);
+  } finally {
+    if (challengeId) await clearOtpChallenge(challengeId);
+  }
+});
+test("admin login OTP is purpose-bound and consumed by the authenticated sign-in", async () => {
+  await owner.query("DELETE FROM sf_phone_otp_challenges WHERE phone_hash=$1", [
+    runtime.fingerprint(`phone:${phones.writer}`),
+  ]);
+  await clearAttempts();
+  const email = "admin-login-fixture@example.invalid";
+  await setUserEmail("writer", email, true);
+  let challengeId;
+  try {
+    const sent = await sendOtp({ phone: phones.writer, purpose: "admin_login" });
+    assert.equal(sent.response.status, 202);
+    assert.deepEqual(sent.emailPayload.to, [email]);
+    assert.ok(sent.code);
+    challengeId = sent.response.body.challengeId;
+    const verified = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { challengeId, purpose: "admin_login", code: sent.code },
+    });
+    assert.equal(verified.status, 200);
+    assert.equal((await login("writer", challengeId)).status, 200);
+    assert.equal((await login("writer", challengeId)).status, 403);
+    const { rows } = await owner.query(
+      "SELECT status,consumed_at,code_hash FROM sf_phone_otp_challenges WHERE id=$1",
+      [challengeId],
+    );
+    assert.equal(rows[0].status, "verified");
+    assert.ok(rows[0].consumed_at);
+    assert.equal(rows[0].code_hash, null);
+  } finally {
+    if (challengeId) await clearOtpChallenge(challengeId);
   }
 });
 test("PIN gates reads/writes and catalogue grants never open other administration", async () => {

@@ -17,6 +17,9 @@ const publicEnvAllowlist = new Set(['VITE_API_URL', 'VITE_API_BASE_URL', 'VITE_P
 export function scanText(file, text) {
   const findings = [];
   const isTest = /(?:\.test\.|\/tests\/)/.test(file);
+  // This module is a static catalog of merchant-side server examples shown as text.
+  // It intentionally contains process.env references but never evaluates them.
+  const isStaticServerExampleCatalog = file === 'artifacts/sendflow/src/pages/docs-code-examples.ts';
   // Synthetic credential fixtures belong only in isolated test files.
   for (const [index, line] of text.split(/\r?\n/).entries()) {
     for (const [rule, pattern] of patterns) {
@@ -35,7 +38,8 @@ export function scanText(file, text) {
         findings.push({ file, line: index + 1, rule: 'tracked-private-environment' });
       }
     }
-    if (/^(?:artifacts\/(?:sendflow|mockup-sandbox)\/src|lib\/api-client-react\/src)\//.test(file) &&
+    if (!isStaticServerExampleCatalog &&
+        /^(?:artifacts\/(?:sendflow|mockup-sandbox)\/src|lib\/api-client-react\/src)\//.test(file) &&
         !isTest && /\bprocess\.env\b|from\s+["'][^"']*(?:api-server|@workspace\/db|\/db\/src)/.test(line)) {
       findings.push({ file, line: index + 1, rule: 'client-server-boundary' });
     }

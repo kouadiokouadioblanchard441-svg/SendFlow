@@ -48,6 +48,7 @@ try {
       export { loadAdminSession, hashAdminSessionToken } from "./src/lib/admin-session";
       export { respondAdminAuthError } from "./src/routes/admin";
       export { fingerprint } from "./src/lib/request-security";
+      export { createSensitiveDataLookupIndex, encryptSensitiveData } from "./src/lib/sensitive-data-crypto";
       export { hashCustomerSecret } from "./src/lib/customer-auth-crypto";
       export { pool } from "@workspace/db";
       export { default as express } from "express";

@@ -42,6 +42,9 @@ const siteRoot = mkdtempSync(join(tmpdir(), "sendflow-route-static-"));
 
 before(async () => {
   await owner.query("INSERT INTO sf_registration_settings(id) VALUES('signup')");
+  await owner.query(
+    "INSERT INTO sf_customer_service_settings(id) VALUES('global') ON CONFLICT (id) DO NOTHING",
+  );
   await owner.query("INSERT INTO sf_users(id,status) VALUES('audit-admin','active')");
   await owner.query("INSERT INTO sf_admin_grants(user_id,can_mutate,pin_hash) VALUES('audit-admin',true,$1)",
     [await hashCustomerSecret(randomBytes(16).toString("hex"))]);

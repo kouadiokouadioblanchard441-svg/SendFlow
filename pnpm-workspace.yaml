@@ -106,7 +106,10 @@ overrides:
   lightningcss>lightningcss-win32-x64-msvc: '-'
   nanoid: 3.3.18
   postcss-selector-parser: 7.1.6
-  qs: 6.16.0
+  qs: 6.17.1
+  http-proxy>follow-redirects: 1.16.2
+  rimraf>glob: 14.0.3
+  glob>minimatch: 11.0.3
   rollup>@rollup/rollup-android-arm-eabi: '-'
   rollup>@rollup/rollup-android-arm64: '-'
   rollup>@rollup/rollup-darwin-arm64: '-'

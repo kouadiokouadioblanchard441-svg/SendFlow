@@ -24,6 +24,13 @@ test('client code cannot import the database or access server environment variab
   assert.deepEqual(scanText(file, 'const origin = import.meta.env.VITE_API_URL;'), []);
 });
 
+test('static API examples can show server environment usage without masking credentials', () => {
+  const file = 'artifacts/sendflow/src/pages/docs-code-examples.ts';
+  assert.deepEqual(scanText(file, 'const secretKey = process.env.SENDFLOW_SECRET_KEY;'), []);
+  const token = ['sk_', 'live_', 'A'.repeat(32)].join('');
+  assert.ok(scanText(file, `const example = "${token}";`).some(f => f.rule === 'provider-key'));
+});
+
 test('private .env values cannot be committed; public routing metadata is allowed', () => {
   assert.ok(scanText('artifacts/api-server/.env', 'LOG_LEVEL=info').some(f => f.rule === 'tracked-private-environment'));
   assert.deepEqual(scanText('.env.capacitor', 'VITE_API_URL=https://example.invalid/api'), []);
