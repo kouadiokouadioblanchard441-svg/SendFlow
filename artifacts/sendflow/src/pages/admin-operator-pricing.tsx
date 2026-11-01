@@ -53,6 +53,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 
 type CategoryId = PublicPricingCategory['id'];
 
@@ -71,13 +72,7 @@ function getErrorStatus(error: unknown): number | undefined {
 }
 
 function getMutationError(error: unknown): string {
-  const status = getErrorStatus(error);
-  if (status === 401) return 'Votre session administrateur a expiré. Reconnectez-vous avant de réessayer.';
-  if (status === 403) return 'Votre compte ne peut pas modifier le catalogue.';
-  if (status === 409) return 'Une autre personne a modifié ces données. Actualisez la page avant de réessayer.';
-  if (status === 413) return 'Le logo dépasse la taille maximale de 512 Ko.';
-  if (status === 415) return 'Choisissez une image PNG, JPEG ou WebP.';
-  return 'La modification n’a pas été enregistrée. Réessayez dans quelques instants.';
+  return getSafeApiErrorCopy(error).message;
 }
 
 export default function AdminOperatorPricingPage() {
@@ -432,7 +427,7 @@ export default function AdminOperatorPricingPage() {
           <CircleAlert className="size-4" />
           <AlertTitle>
             {queryErrorStatus === 401
-              ? 'Session administrateur requise'
+              ? 'Connectez-vous avec un compte administrateur'
               : queryErrorStatus === 403
                 ? 'Accès refusé'
                 : 'Catalogue indisponible'}

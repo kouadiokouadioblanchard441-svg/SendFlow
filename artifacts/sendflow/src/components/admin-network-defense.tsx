@@ -14,6 +14,7 @@ import type { AutomaticIpBlock, NetworkException } from '@workspace/api-client-r
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -49,15 +50,7 @@ function errStatus(error: unknown): number | undefined {
 }
 
 function errMessage(error: unknown): string {
-  const status = errStatus(error);
-  const data = (error as { data?: { error?: unknown } } | null)?.data;
-  const serverMsg = data && typeof data.error === 'string' ? data.error : null;
-  if (status === 401) return 'Session administrateur requise. L’accès administrateur est peut-être désactivé côté serveur.';
-  if (status === 403) return 'Accès administrateur refusé ou désactivé côté serveur.';
-  if (status === 409) return serverMsg ?? 'Cette entrée a changé entre-temps. Les données ont été actualisées ; vérifiez avant de réessayer.';
-  if (status === 400 || status === 422) return serverMsg ?? 'Requête refusée par le serveur (format ou motif invalide).';
-  if (status === 503) return 'Service indisponible : l’accès administrateur ou la défense réseau n’est peut-être pas disponible.';
-  return serverMsg ?? 'La requête a échoué. Réessayez.';
+  return getSafeApiErrorCopy(error).message;
 }
 
 function fmt(value: string | null) {

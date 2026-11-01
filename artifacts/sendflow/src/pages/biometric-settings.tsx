@@ -10,13 +10,10 @@ import { useLocation } from "wouter";
 import { useSeo } from "@/lib/seo";
 import { hasPlatformBiometricAuthenticator } from "@/lib/customer-biometric";
 import biometricIllustration from "@/assets/sendflow-biometric-3d.webp";
+import { getSafeApiErrorCopy } from "@/lib/safe-api-error";
 
 function errorMessage(error: unknown, fallback: string) {
-  if (typeof error === "object" && error !== null && "data" in error) {
-    const data = (error as { data?: { error?: unknown } }).data;
-    if (typeof data?.error === "string") return data.error;
-  }
-  return fallback;
+  return error ? getSafeApiErrorCopy(error).message : fallback;
 }
 
 export default function BiometricSettingsPage() {

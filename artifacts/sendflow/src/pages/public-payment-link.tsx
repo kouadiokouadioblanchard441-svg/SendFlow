@@ -15,6 +15,7 @@ import type {
   SimulatedPaymentLinkSuccess,
 } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 import linkUnavailableIllustration from '@assets/generated_images/sendflow-link-unavailable-3d-final.png';
@@ -845,9 +846,7 @@ export default function PublicPaymentLinkPage() {
               {startPaymentMutation.isError && (
                 <div className="sendflow-pay-inline-error" role="alert">
                   <span>
-                    {startPaymentMutation.error instanceof Error
-                      ? startPaymentMutation.error.message
-                      : 'Le paiement n’a pas pu démarrer. Ne recommencez pas si une demande est déjà affichée.'}
+                    {getSafeApiErrorCopy(startPaymentMutation.error).message}
                   </span>
                 </div>
               )}

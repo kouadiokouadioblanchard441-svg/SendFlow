@@ -8,18 +8,26 @@ import { clearPinUnlock } from '@/lib/pin-unlock';
 import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import { NEW_CUSTOMER_PASSWORD_MIN_LENGTH } from '@/lib/customer-password-validation';
 import { getPhoneLengthMessage, isValidPhoneForCountry } from '@/lib/phone-rules';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import resetPasswordIllustration from '@assets/generated_images/sendflow-reset-password-3d-alpha.png';
 import resetPinIllustration from '@assets/generated_images/sendflow-reset-pin-3d-alpha.png';
 
 type ResetMode = 'password' | 'pin';
-type ResetStep = 'phone' | 'verify' | 'secret';
+type ResetStep = 'identifier' | 'verify' | 'secret';
 
 function maskPhone(phone: string) {
   const digits = phone.replace(/\D/g, '');
   if (digits.length < 4) return '05******98';
   return `${digits.slice(0, 2)}******${digits.slice(-2)}`;
+}
+
+function maskEmail(email: string) {
+  const [local = '', domain = ''] = email.trim().split('@');
+  if (!domain) return '***';
+  const visible = local.length > 1 ? local.slice(0, 1) : '';
+  return `${visible}***@${domain}`;
 }
 
 function SecretInput({
@@ -64,7 +72,9 @@ function SecretInput({
 
 export default function ResetPage({ mode }: { mode: ResetMode }) {
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState<ResetStep>('phone');
+  const [step, setStep] = useState<ResetStep>('identifier');
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [phoneDialCode, setPhoneDialCode] = useState(DEFAULT_ACCOUNT_COUNTRY.dialCode);
@@ -85,6 +95,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   const isPassword = mode === 'password';
   const secretLabel = isPassword ? 'Nouveau mot de passe' : 'Nouveau code secret';
   const maskedPhone = useMemo(() => maskPhone(phone), [phone]);
+  const maskedEmail = useMemo(() => maskEmail(email), [email]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -103,28 +114,42 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
     if (step === 'verify') otpRefs.current[0]?.focus();
   }, [step]);
 
-  const handlePhoneSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleIdentifierSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await requestCode();
   };
 
   const requestCode = async () => {
-    if (!isValidPhoneForCountry(phone, phoneDialCode)) {
-      setPhoneError(getPhoneLengthMessage(phoneDialCode));
-      return;
+    const normalizedEmail = email.trim().toLowerCase();
+    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+      && normalizedEmail.length <= 254;
+
+    if (isPassword) {
+      if (!validEmail) {
+        setEmailError('Saisissez une adresse e-mail valide.');
+        return;
+      }
+      setEmailError('');
+    } else {
+      if (!isValidPhoneForCountry(phone, phoneDialCode)) {
+        setPhoneError(getPhoneLengthMessage(phoneDialCode));
+        return;
+      }
+      setPhoneError('');
     }
-    setPhoneError('');
+
     try {
       const response = await sendOtp.mutateAsync({
-        data: { phone: `${phoneDialCode}${phone.replace(/\D/g, '')}`, purpose: isPassword ? 'password_reset' : 'pin_reset' },
+        data: isPassword
+          ? { email: normalizedEmail, purpose: 'password_reset' }
+          : { phone: `${phoneDialCode}${phone.replace(/\D/g, '')}`, purpose: 'pin_reset' },
       });
       setChallengeId(response.challengeId);
       setResendAt(Date.now() + response.resendAfterSeconds * 1000);
       setOtp(['', '', '', '', '', '']);
       setStep('verify');
     } catch (error) {
-      const candidate = error as { data?: { error?: string } };
-      setPhoneError(candidate.data?.error ?? 'Impossible d’envoyer le code. Réessayez.');
+      setPhoneError(getSafeApiErrorCopy(error).message);
     }
   };
 
@@ -157,8 +182,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       if (!response.emailVerified) throw new Error('L’adresse e-mail n’a pas pu être vérifiée.');
       setStep('secret');
     } catch (error) {
-      const candidate = error as { data?: { error?: string } };
-      setOtpError(candidate.data?.error ?? 'Code incorrect ou expiré.');
+      setOtpError(getSafeApiErrorCopy(error).message);
     }
   };
 
@@ -176,10 +200,12 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
 
     setSecretError('');
     try {
-      const fullPhone = `${phoneDialCode}${phone.replace(/\D/g, '')}`;
       if (isPassword) {
-        await resetPassword.mutateAsync({ data: { challengeId, phone: fullPhone, newPassword: newSecret } });
+        await resetPassword.mutateAsync({
+          data: { challengeId, email: email.trim().toLowerCase(), newPassword: newSecret },
+        });
       } else {
+        const fullPhone = `${phoneDialCode}${phone.replace(/\D/g, '')}`;
         if (!/^\d{4}$/.test(newSecret)) {
           setSecretError('Le code PIN doit contenir 4 chiffres.');
           return;
@@ -189,8 +215,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       clearPinUnlock();
       setLocation('/sign-in');
     } catch (error) {
-      const candidate = error as { data?: { error?: string } };
-      setSecretError(candidate.data?.error ?? 'Impossible de réinitialiser ce secret.');
+      setSecretError(getSafeApiErrorCopy(error).message);
     }
   };
 
@@ -210,26 +235,50 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
           <img src={sendflowWordmark} alt="SendFlow" className="sendflow-reset-wordmark" />
         </div>
 
-        {step === 'phone' && (
+        {step === 'identifier' && (
           <>
             <header className="sendflow-reset-heading">
               <h1 id="reset-title">{isPassword ? 'Mot de passe oublié ? 😭' : 'Code secret oublié ? 🥹'}</h1>
               <p>
-                Nous sommes là pour vous aider ! Veuillez entrer le numéro de téléphone associé à votre compte.
+                {isPassword
+                  ? 'Nous sommes là pour vous aider ! Saisissez l’adresse e-mail associée à votre compte.'
+                  : 'Nous sommes là pour vous aider ! Saisissez le numéro de téléphone associé à votre compte.'}
               </p>
             </header>
 
-            <form className="sendflow-reset-form" onSubmit={handlePhoneSubmit} noValidate>
-              <CountryPhoneField
-                value={phone}
-                onChange={(value) => {
-                  setPhoneError('');
-                  setPhone(value);
-                }}
-                onCountryChange={(country) => setPhoneDialCode(country.dialCode)}
-                error={phoneError}
-                defaultCountryName="Côte d’Ivoire"
-              />
+            <form className="sendflow-reset-form" onSubmit={handleIdentifierSubmit} noValidate>
+              {isPassword ? (
+                <div className="sendflow-reset-control">
+                  <label className={`sendflow-reset-field${emailError ? ' has-error' : ''}`}>
+                    <span className="sr-only">Adresse e-mail</span>
+                    <input
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => {
+                        setEmailError('');
+                        setEmail(event.target.value);
+                      }}
+                      placeholder="Adresse e-mail"
+                      maxLength={254}
+                      required
+                    />
+                  </label>
+                  {emailError && <p className="sendflow-reset-error" role="alert">{emailError}</p>}
+                </div>
+              ) : (
+                <CountryPhoneField
+                  value={phone}
+                  onChange={(value) => {
+                    setPhoneError('');
+                    setPhone(value);
+                  }}
+                  onCountryChange={(country) => setPhoneDialCode(country.dialCode)}
+                  error={phoneError}
+                  defaultCountryName="Côte d’Ivoire"
+                />
+              )}
               <button type="submit" className="sendflow-reset-submit">Suivant</button>
             </form>
 
@@ -244,8 +293,9 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
             <header className="sendflow-reset-heading sendflow-reset-heading-verify">
               <h1 id="reset-title">Vérification par e-mail</h1>
               <p>
-                Saisissez le code envoyé à l’adresse e-mail associée au compte identifié par{' '}
-                <strong>{maskedPhone}</strong>.
+                {isPassword
+                  ? <>Saisissez le code envoyé à l’adresse <strong>{maskedEmail}</strong>.</>
+                  : <>Saisissez le code envoyé à l’adresse e-mail associée au compte identifié par <strong>{maskedPhone}</strong>.</>}
               </p>
             </header>
 

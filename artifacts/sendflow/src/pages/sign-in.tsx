@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CircleAlert, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { validateSignIn, type SignInField } from '@/lib/auth-validation';
@@ -7,15 +7,6 @@ import { useSignInCustomer } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearPinUnlock } from '@/lib/pin-unlock';
 import { clearLegacyAccountProfile } from '@/lib/account-profile';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
 import signinIllustration from '@assets/generated_images/sendflow-signin-security-3d-clean.png';
@@ -41,8 +32,6 @@ export default function SigninPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignInField, boolean>>>({});
   const signInCustomer = useSignInCustomer();
-  const [requestError, setRequestError] = useState('');
-  const [blockedDialogOpen, setBlockedDialogOpen] = useState(false);
 
   useSeo({
     path: '/sign-in',
@@ -73,7 +62,6 @@ export default function SigninPage() {
     if (!canSubmit || isSubmitting) return;
     setIsSubmitting(true);
     setSubmitted(false);
-    setRequestError('');
     try {
       const response = await signInCustomer.mutateAsync({
         data: { email: form.email.trim().toLowerCase(), password: form.password },
@@ -83,14 +71,8 @@ export default function SigninPage() {
       clearPinUnlock();
       setSubmitted(true);
       setLocation(response.pinConfigured ? '/pin' : '/create-pin');
-    } catch (error) {
-      const candidate = error as { status?: number; data?: { error?: string }; message?: string };
-      if (candidate.status === 423) {
-        setRequestError('');
-        setBlockedDialogOpen(true);
-      } else {
-        setRequestError(candidate.data?.error ?? 'Adresse e-mail ou code secret incorrect.');
-      }
+    } catch {
+      // The global API error dialog displays a sanitized, status-specific message.
     } finally {
       setIsSubmitting(false);
     }
@@ -98,26 +80,6 @@ export default function SigninPage() {
 
   return (
     <main className="sendflow-signup-shell sendflow-auth-shell is-signin">
-      <AlertDialog open={blockedDialogOpen} onOpenChange={setBlockedDialogOpen}>
-        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-[380px] gap-5 rounded-[26px] border-0 bg-white px-6 py-7 shadow-2xl sm:rounded-[26px]">
-          <AlertDialogHeader className="items-center space-y-4 text-center">
-            <div className="flex size-[68px] items-center justify-center rounded-full bg-red-50 text-red-500" aria-hidden="true">
-              <CircleAlert className="size-8" strokeWidth={2.2} />
-            </div>
-            <AlertDialogTitle className="text-xl font-bold text-foreground">
-              Compte bloqué
-            </AlertDialogTitle>
-            <AlertDialogDescription className="max-w-[300px] text-[15px] leading-6">
-              Votre compte est bloqué. Veuillez contacter le support SendFlow pour obtenir de l’aide.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-1">
-            <AlertDialogAction className="h-12 w-full rounded-full text-base font-semibold">
-              OK
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       <section className="sendflow-signup-card" aria-labelledby="signin-title">
         <div className="sendflow-auth-art is-signin-primary" aria-hidden="true">
           <span className="sendflow-auth-art-glow" />
@@ -206,7 +168,6 @@ export default function SigninPage() {
               {isSubmitting ? 'Connexion…' : 'Se connecter'}
             </button>
 
-            {requestError && <p className="sendflow-signup-error" role="alert">{requestError}</p>}
             {submitted && <p className="sendflow-signup-feedback" role="status" aria-live="polite">Connexion en cours…</p>}
           </form>
 

@@ -8,6 +8,7 @@ import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpFiel
 import { DEFAULT_ACCOUNT_COUNTRY, saveAccountCountry, type AccountCountry } from '@/lib/account-country';
 import { clearLegacyAccountProfile } from '@/lib/account-profile';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import sendflowMark from '@assets/sendflow-mark-original.png';
 import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
@@ -37,23 +38,7 @@ const initialForm: SignUpForm = {
 type SignupStep = 'form' | 'verification' | 'credentials' | 'success';
 
 function getRequestErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === 'object' && error !== null) {
-    const candidate = error as {
-      error?: string;
-      message?: string;
-      data?: { error?: string; message?: string };
-      response?: { data?: { error?: string; message?: string } };
-    };
-    return candidate.error
-      ?? candidate.message
-      ?? candidate.data?.error
-      ?? candidate.data?.message
-      ?? candidate.response?.data?.error
-      ?? candidate.response?.data?.message
-      ?? fallback;
-  }
-  return fallback;
+  return error ? getSafeApiErrorCopy(error).message : fallback;
 }
 
 function getRetryAfterSeconds(error: unknown) {

@@ -265,31 +265,32 @@ function QueryState({ error, onRetry }: { error: unknown; onRetry: () => void })
   const status = getErrorStatus(error);
   const title =
     status === 401
-      ? 'Session administrateur requise'
+      ? 'Connexion à renouveler'
       : status === 403
-        ? 'Accès administrateur refusé'
+        ? 'Accès refusé'
         : status === 409
-          ? 'Les données ont changé'
+          ? 'Informations modifiées'
         : status === 503
-          ? 'Service temporairement indisponible'
+          ? 'Service indisponible'
           : 'Impossible de charger ces données';
   const description =
     status === 401
-      ? 'Cette session ne correspond pas à un compte administrateur autorisé. Vérifiez l’identité utilisée, puis réessayez.'
+      ? 'Reconnectez-vous puis réessayez.'
       : status === 403
-        ? 'Votre compte est authentifié mais ne dispose pas des droits nécessaires.'
+        ? 'Votre compte ne peut pas afficher ces informations.'
         : status === 409
-          ? 'Une modification concurrente a changé cette liste. Actualisez les données avant de réessayer.'
+          ? 'Ces informations ont changé. Actualisez la page puis réessayez.'
         : status === 503
-          ? 'Le service de données ne répond pas pour le moment. Réessayez dans quelques instants.'
-          : 'SendFlow n’a pas pu joindre le service d’administration. Aucun chiffre n’est affiché.';
+          ? 'Le service est momentanément indisponible.'
+          : 'Nous n’avons pas pu afficher ces informations.';
+  const supportDescription = `${description} Si le problème persiste, contactez le service client SendFlow.`;
 
   return (
     <Alert variant="destructive" className="sendflow-admin-error" data-testid={`alert-admin-error-${status ?? 'general'}`}>
       <CircleAlert className="size-4" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription className="flex flex-wrap items-center gap-3">
-        <span>{description}</span>
+        <span>{supportDescription}</span>
         <Button type="button" variant="outline" size="sm" onClick={onRetry} data-testid="button-retry-admin-query">
           Réessayer
         </Button>

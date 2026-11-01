@@ -1,9 +1,18 @@
 import {
   Component,
   type ComponentType,
-  type ErrorInfo,
   type ReactNode,
 } from 'react';
+import { CircleAlert } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export interface ErrorFallbackProps {
   error: Error;
@@ -35,32 +44,33 @@ function toError(value: unknown): Error {
   }
 }
 
-function DefaultFallback({ error, resetError }: ErrorFallbackProps) {
+function DefaultFallback({ resetError }: ErrorFallbackProps) {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-6">
-      <div className="max-w-lg w-full text-center">
-        <h1 className="text-xl font-semibold text-gray-900">
-          Something went wrong
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          This part of the app hit an error. The rest of the app is still
-          running.
-        </p>
-        {/* Dev only: messages can carry API responses and other internals. */}
-        {import.meta.env.DEV ? (
-          <pre className="mt-4 overflow-x-auto rounded bg-gray-100 p-3 text-left text-xs text-gray-800">
-            {error.message || String(error)}
-          </pre>
-        ) : null}
-        <button
-          type="button"
-          onClick={resetError}
-          className="mt-4 rounded bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700"
-        >
-          Try again
-        </button>
-      </div>
-    </div>
+    <main className="flex min-h-screen w-full items-center justify-center bg-background p-6">
+      <AlertDialog open onOpenChange={(open) => { if (!open) resetError(); }}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-[380px] gap-5 rounded-[26px] border-0 bg-white px-6 py-7 shadow-2xl sm:rounded-[26px]">
+          <AlertDialogHeader className="items-center space-y-4 text-center">
+            <div className="flex size-[68px] items-center justify-center rounded-full bg-red-50 text-red-500" aria-hidden="true">
+              <CircleAlert className="size-8" strokeWidth={2.2} />
+            </div>
+            <AlertDialogTitle className="text-xl font-bold text-foreground">
+              Une erreur est survenue
+            </AlertDialogTitle>
+            <AlertDialogDescription className="max-w-[300px] text-[15px] leading-6">
+              Un problème empêche l’affichage de cette page. Réessayez. Si le problème persiste, contactez le service client SendFlow.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-1">
+            <AlertDialogAction
+              onClick={resetError}
+              className="h-12 w-full rounded-full text-base font-semibold"
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </main>
   );
 }
 
@@ -74,12 +84,8 @@ export class ErrorBoundary extends Component<
     return { error: toError(error) };
   }
 
-  componentDidCatch(error: unknown, info: ErrorInfo): void {
-    console.error(
-      'ErrorBoundary caught an error:',
-      toError(error),
-      info.componentStack,
-    );
+  componentDidCatch(): void {
+    console.error('SendFlow encountered a page rendering error.');
   }
 
   componentDidUpdate(prevProps: ErrorBoundaryProps): void {

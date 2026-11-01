@@ -5,6 +5,8 @@ import type { AccountLimitResult } from '@workspace/api-client-react';
 import { fetchWithCsrf, resolveApiUrl } from '@workspace/api-client-react';
 import { formatAccountLimitAmount } from '@/lib/account-limit';
 import { useSeo } from '@/lib/seo';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
+import { reportGlobalApiError } from '@/lib/global-api-errors';
 import limitVerificationIllustration from '@assets/generated_images/sendflow-account-limit-verification-3d-transparent.png';
 
 export default function AccountLimitPage() {
@@ -50,13 +52,7 @@ export default function AccountLimitPage() {
     fetch(resolveApiUrl('/api/me/account-limit'), { credentials: 'include' })
       .then(async (response) => {
         const body = await response.json().catch(() => null) as (AccountLimitResult & { error?: string }) | null;
-        if (!response.ok) {
-          throw new Error(
-            response.status === 401
-              ? 'Votre session sécurisée a expiré. Veuillez vous reconnecter.'
-              : 'Le statut de vérification est temporairement indisponible.',
-          );
-        }
+        if (!response.ok) throw { status: response.status, url: response.url || '/api/me/account-limit' };
         return body;
       })
       .then((body) => {
@@ -67,7 +63,8 @@ export default function AccountLimitPage() {
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          setStatusMessage(error instanceof Error ? error.message : 'Impossible de charger le statut de vérification.');
+          reportGlobalApiError(error);
+          setStatusMessage(getSafeApiErrorCopy(error).message);
         }
       })
       .finally(() => {
@@ -98,26 +95,17 @@ export default function AccountLimitPage() {
       } | null;
 
       if (!response.ok) {
-        throw new Error(
-          response.status === 401
-            ? 'Votre session sécurisée a expiré. Veuillez vous reconnecter.'
-            : response.status === 429
-              ? body?.error ?? 'Vous avez atteint la limite de nouvelles tentatives. Réessayez plus tard.'
-              : response.status === 409
-                ? body?.error ?? 'Une vérification est déjà en cours. Réessayez dans quelques secondes.'
-                : response.status === 503
-                  ? 'Le service de vérification est temporairement indisponible. Veuillez réessayer plus tard.'
-                  : 'Impossible de démarrer la vérification pour le moment.',
-        );
+        throw { status: response.status, url: response.url || '/api/me/identity-verification' };
       }
       if (!body?.verificationUrl) {
-        throw new Error('Didit n’a pas fourni de lien de vérification.');
+        throw new Error('Le parcours de vérification n’a pas fourni de lien.');
       }
 
       setVerificationStatus(body.status ?? 'pending');
       window.location.assign(body.verificationUrl);
     } catch (error: unknown) {
-      setStatusMessage(error instanceof Error ? error.message : 'Impossible de démarrer la vérification.');
+      reportGlobalApiError(error);
+      setStatusMessage(getSafeApiErrorCopy(error).message);
     } finally {
       setIsStarting(false);
     }

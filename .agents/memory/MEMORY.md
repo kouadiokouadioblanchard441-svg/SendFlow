@@ -27,6 +27,7 @@
 - [SendFlow data encryption](signup-data-encryption.md) — Keep transfers server-routed; encrypt ledger storage and application-encrypt personal identifiers without breaking SQL invariants.
 - [Customer profile storage](customer-profile-storage.md) — Preserve exact name-part boundaries in the existing encrypted display-name field without a schema migration.
 - [Safe HTTP logging](log-safety-boundaries.md) — HTTP middleware can override parent error serializers; protect both levels against credential and personal-data leaks.
+- [Customer-safe error dialogs](global-error-dialogs.md) — Show API failures in a consistent modal using safe status-based copy, never raw server response text.
 - [Strix upload failures](strix-upload-failures.md) — If cloud upload completion is invalid, check scan status and confirm any staged upload before retrying.
 - [GitHub connection readiness](github-connection-readiness.md) — Attachment and healthy OAuth do not prove a task workspace can read the source repository.
 - [PostgreSQL operational scripts](postgresql-operational-scripts.md) — Make psql guard failures nonzero; revoking direct EXECUTE does not disable an existing trigger.

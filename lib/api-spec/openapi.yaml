@@ -5022,24 +5022,49 @@ components:
       required:
         - isAuthorized
     EmailOtpSendInput:
-      type: object
-      properties:
-        phone:
-          type: string
-          format: phone
-          minLength: 9
-          maxLength: 16
-          pattern: "^\\+[1-9][0-9]{7,14}$"
-          description: Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.
-        email:
-          type: string
-          format: email
-          maxLength: 254
-          description: Required for signup. For recovery or administrator access, SendFlow uses the email already associated with the account and ignores this field.
-        purpose:
-          type: string
-          enum: [signup, password_reset, pin_reset, admin_login]
-      required: [phone, purpose]
+      oneOf:
+        - type: object
+          properties:
+            email:
+              type: string
+              format: email
+              maxLength: 254
+              description: Email associated with the active SendFlow account.
+            purpose:
+              type: string
+              enum: [password_reset]
+          required: [email, purpose]
+        - type: object
+          properties:
+            phone:
+              type: string
+              format: phone
+              minLength: 9
+              maxLength: 16
+              pattern: "^\\+[1-9][0-9]{7,14}$"
+              description: Account phone identifier. For signup, this is associated with the new account but is not verified by the email code.
+            email:
+              type: string
+              format: email
+              maxLength: 254
+              description: Required for signup.
+            purpose:
+              type: string
+              enum: [signup]
+          required: [phone, email, purpose]
+        - type: object
+          properties:
+            phone:
+              type: string
+              format: phone
+              minLength: 9
+              maxLength: 16
+              pattern: "^\\+[1-9][0-9]{7,14}$"
+              description: Account phone identifier.
+            purpose:
+              type: string
+              enum: [pin_reset, admin_login]
+          required: [phone, purpose]
     EmailOtpSendResult:
       type: object
       properties:
@@ -5199,17 +5224,15 @@ components:
         challengeId:
           type: string
           format: uuid
-        phone:
+        email:
           type: string
-          format: phone
-          minLength: 9
-          maxLength: 16
-          pattern: "^\\+[1-9][0-9]{7,14}$"
+          format: email
+          maxLength: 254
         newPassword:
           type: string
           minLength: 8
           maxLength: 64
-      required: [challengeId, phone, newPassword]
+      required: [challengeId, email, newPassword]
     CustomerPinResetInput:
       type: object
       properties:

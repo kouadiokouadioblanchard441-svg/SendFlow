@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 
 export type AdminActionKind = 'credit' | 'debit' | 'suspend' | 'restore' | 'delete-user' | 'archive-transaction';
 
@@ -39,9 +40,7 @@ type AdminActionDialogProps = {
 };
 
 function getErrorMessage(error: unknown) {
-  if (!error || typeof error !== 'object') return 'L’action n’a pas pu être exécutée.';
-  const candidate = error as { data?: { error?: string }; message?: string };
-  return candidate.data?.error || candidate.message || 'L’action n’a pas pu être exécutée.';
+  return getSafeApiErrorCopy(error).message;
 }
 
 function formatMinor(minor: number | undefined, currency = 'XOF') {

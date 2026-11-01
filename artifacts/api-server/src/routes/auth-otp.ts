@@ -165,6 +165,39 @@ async function resolveOtpRecipient(
   };
 }
 
+async function resolvePasswordResetOtpRecipient(
+  email: string,
+  emailLookupHash: string,
+): Promise<OtpRecipient | null> {
+  const [user] = await db
+    .select({
+      status: usersTable.status,
+      emailEncrypted: usersTable.emailEncrypted,
+      emailLookupHash: usersTable.emailLookupHash,
+      emailVerifiedAt: usersTable.emailVerifiedAt,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.emailLookupHash, emailLookupHash))
+    .limit(1);
+
+  if (
+    !user
+    || user.status !== "active"
+    || !user.emailEncrypted
+    || !user.emailVerifiedAt
+    || user.emailLookupHash !== emailLookupHash
+  ) return null;
+
+  const storedEmail = decryptSensitiveDataIfEncrypted(user.emailEncrypted, "user-email");
+  if (!storedEmail) return null;
+  const normalizedEmail = normalizeEmail(storedEmail);
+  if (normalizedEmail !== email || createSensitiveDataLookupIndex(normalizedEmail, "user-email") !== emailLookupHash) {
+    return null;
+  }
+
+  return { email: normalizedEmail, emailHash: emailLookupHash };
+}
+
 async function getSignupAttemptBucketsForVerifyRequest(
   req: Parameters<typeof requesterAddress>[0],
 ) {
@@ -291,7 +324,12 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   }
 
   const parsed = SendEmailOtpBody.safeParse(req.body);
-  if (!parsed.success || (parsed.success && parsed.data.purpose === "signup" && !parsed.data.email)) {
+  const invalidIdentifier = parsed.success && (
+    parsed.data.purpose === "password_reset"
+      ? !parsed.data.email || Object.hasOwn(req.body ?? {}, "phone")
+      : !parsed.data.phone || (parsed.data.purpose === "signup" && !parsed.data.email)
+  );
+  if (!parsed.success || invalidIdentifier) {
     if (hasSignupPurpose(req.body)) {
       try {
         const buckets = getCustomerAccessAttemptBucketsForRequest(null, requesterAddress(req));
@@ -321,11 +359,24 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   }
 
   const purpose = parsed.data.purpose as OtpPurpose;
-  const phone = parsed.data.phone;
+  const phone = parsed.data.phone ?? null;
+  const recoveryEmail = purpose === "password_reset"
+    ? normalizeEmail(parsed.data.email!)
+    : null;
   let phoneHash: string;
+  let emailLookupHash: string | null = null;
   let requesterHash: string;
   try {
-    phoneHash = fingerprint(`phone:${phone}`);
+    if (recoveryEmail) {
+      emailLookupHash = createSensitiveDataLookupIndex(recoveryEmail, "user-email");
+      // Keep the existing challenge column opaque and account-specific without
+      // requiring the customer to disclose a phone number during recovery.
+      phoneHash = fingerprint(`password-reset-email:${emailLookupHash}`);
+    } else if (phone) {
+      phoneHash = fingerprint(`phone:${phone}`);
+    } else {
+      throw new Error("OTP identity is missing");
+    }
     requesterHash = fingerprint(`requester:${requesterAddress(req)}`);
   } catch (error) {
     req.log.error({ err: error }, "Email OTP fingerprinting is unavailable");
@@ -335,7 +386,9 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
 
   let recipient: OtpRecipient | null;
   try {
-    recipient = await resolveOtpRecipient(phone, purpose, parsed.data.email);
+    recipient = recoveryEmail && emailLookupHash
+      ? await resolvePasswordResetOtpRecipient(recoveryEmail, emailLookupHash)
+      : await resolveOtpRecipient(phone!, purpose, parsed.data.email);
   } catch (error) {
     req.log.error({ err: error }, "Email OTP recipient lookup failed");
     res.status(503).json({ error: "La vérification par e-mail est indisponible." });
@@ -362,7 +415,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   const challengeId = randomUUID();
   const code = recipient ? createEmailOtpCode() : null;
   const codeHash = recipient && code ? hashEmailOtpCode(challengeId, purpose, code) : null;
-  const rateEmailHash = recipient?.emailHash ?? fingerprint(`unknown-email:${phoneHash}`);
+  const rateEmailHash = recipient?.emailHash ?? emailLookupHash ?? fingerprint(`unknown-email:${phoneHash}`);
 
   let reservation:
     | { rateLimited: true; retryAfterSeconds: number; reason: "cooldown" | "phone" | "email" | "requester" | "account" }
@@ -372,7 +425,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     reservation = await db.transaction(async (tx) => {
       const lockKeys = [
         ...(signupBuckets ?? []),
-        `sendflow-otp-phone:${phoneHash}`,
+        `sendflow-otp-identity:${phoneHash}`,
         `sendflow-otp-email:${rateEmailHash}`,
         `sendflow-otp-requester:${requesterHash}`,
       ].sort();

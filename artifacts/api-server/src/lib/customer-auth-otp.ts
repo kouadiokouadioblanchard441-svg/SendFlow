@@ -28,3 +28,23 @@ export function verifiedCustomerOtpCondition(
     gte(phoneOtpChallengesTable.expiresAt, now),
   );
 }
+
+export function verifiedCustomerEmailOtpCondition(
+  challengeId: string,
+  email: string,
+  purpose: CustomerOtpPurpose,
+  now: Date,
+) {
+  const normalizedEmail = normalizeSensitiveEmailForLookup(email);
+  const emailHash = createSensitiveDataLookupIndex(normalizedEmail, "user-email");
+  return and(
+    eq(phoneOtpChallengesTable.id, challengeId),
+    eq(phoneOtpChallengesTable.emailHash, emailHash),
+    eq(phoneOtpChallengesTable.purpose, purpose),
+    eq(phoneOtpChallengesTable.deliveryChannel, "email"),
+    eq(phoneOtpChallengesTable.status, "verified"),
+    eq(phoneOtpChallengesTable.emailVerified, true),
+    isNull(phoneOtpChallengesTable.consumedAt),
+    gte(phoneOtpChallengesTable.expiresAt, now),
+  );
+}

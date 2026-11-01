@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getSafeApiErrorCopy } from "@/lib/safe-api-error";
 
 type AdminPinDialogProps = {
   open: boolean;
@@ -20,21 +21,7 @@ type AdminPinDialogProps = {
 };
 
 function getPinErrorMessage(error: unknown) {
-  if (!error || typeof error !== "object") {
-    return "La vérification du PIN a échoué. Réessayez.";
-  }
-
-  const status = "status" in error ? error.status : undefined;
-  if (status === 429) return "Trop de tentatives. Réessayez après le délai indiqué.";
-  if (status === 503) return "La vérification du PIN est temporairement indisponible.";
-
-  const data = "data" in error ? error.data : undefined;
-  if (data && typeof data === "object" && "error" in data && typeof data.error === "string") {
-    return data.error;
-  }
-
-  if (status === 403) return "PIN incorrect ou compte non autorisé.";
-  return "La vérification du PIN a échoué. Réessayez.";
+  return getSafeApiErrorCopy(error).message;
 }
 
 export function AdminPinDialog({

@@ -15,12 +15,10 @@ import { ADMIN_ROUTE_PATH, adminRoute } from "@/lib/admin-route";
 import { useSeo } from "@/lib/seo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getSafeApiErrorCopy } from "@/lib/safe-api-error";
 
 function authErrorMessage(error: unknown) {
-  if (error && typeof error === "object" && "data" in error
-    && error.data && typeof error.data === "object" && "error" in error.data
-    && typeof error.data.error === "string") return error.data.error;
-  return "La connexion administrateur est momentanément indisponible.";
+  return getSafeApiErrorCopy(error).message;
 }
 
 const AdminRouter = lazy(() => import("@/pages/admin").then((module) => ({

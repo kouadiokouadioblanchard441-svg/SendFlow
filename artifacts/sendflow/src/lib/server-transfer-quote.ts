@@ -28,18 +28,18 @@ export function serverQuoteErrorMessage(error: unknown): string {
     ? (error as { status?: unknown }).status
     : undefined;
   if (status === 400) {
-    return 'Les informations du transfert ne correspondent pas aux tarifs disponibles. Vérifiez le montant, les opérateurs et les numéros.';
+    return 'Vérifiez le montant, le pays, l’opérateur et les numéros. Si le problème persiste, contactez le service client SendFlow.';
   }
   if (status === 401 || status === 403) {
-    return 'Votre session de vérification a expiré. Reconnectez-vous avant de demander un nouveau devis.';
+    return 'Reconnectez-vous puis réessayez. Si le problème persiste, contactez le service client SendFlow.';
   }
   if (status === 409) {
-    return 'Ce montant dépasse votre plafond mensuel restant. Réduisez le montant ou consultez le plafond du compte.';
+    return 'Ce montant dépasse la limite disponible sur votre compte. Réduisez-le ou contactez le service client SendFlow.';
   }
   if (status === 429) {
-    return 'Trop de demandes de devis. Patientez une minute avant de réessayer.';
+    return 'Vous avez fait plusieurs demandes. Patientez un instant avant de réessayer. Si le problème persiste, contactez le service client SendFlow.';
   }
-  return 'Les tarifs ne peuvent pas être vérifiés pour le moment. Aucun transfert n’a été initié et aucun montant n’a été débité. Réessayez plus tard.';
+  return 'Nous ne pouvons pas vérifier le montant pour le moment. Aucun transfert n’a été lancé. Réessayez plus tard ou contactez le service client SendFlow.';
 }
 
 type QuoteRequester = (input: TransferQuoteInput, options: { signal: AbortSignal }) => Promise<TransferQuoteResult>;

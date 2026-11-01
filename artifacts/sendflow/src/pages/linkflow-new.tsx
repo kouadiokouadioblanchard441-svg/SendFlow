@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
+import { reportGlobalApiError } from '@/lib/global-api-errors';
 import { ArrowLeft, ArrowRight, ImagePlus, RefreshCw, X } from 'lucide-react';
 import {
   getGetCustomerPaymentLinksQueryKey,
@@ -119,7 +121,8 @@ export default function LinkFlowNewPage() {
       await uploadImage(createdLinkId, selectedImage);
       await finishCreation();
     } catch (error) {
-      setImageUploadError(error instanceof Error ? error.message : 'Réessayez l’envoi de l’image.');
+      reportGlobalApiError(error);
+      setImageUploadError(getSafeApiErrorCopy(error).message);
     } finally {
       setImageUploadPending(false);
     }
@@ -212,7 +215,7 @@ export default function LinkFlowNewPage() {
       }
       setRequestIdError('');
     } catch (error) {
-      setRequestIdError(error instanceof Error ? error.message : 'Impossible de créer une demande sécurisée.');
+      setRequestIdError('Impossible de préparer cette demande sécurisée. Actualisez la page puis réessayez.');
       return;
     }
 
@@ -231,7 +234,8 @@ export default function LinkFlowNewPage() {
           await uploadImage(created.id, selectedImage);
           await finishCreation();
         } catch (error) {
-          setImageUploadError(error instanceof Error ? error.message : 'Réessayez l’envoi de l’image.');
+          reportGlobalApiError(error);
+          setImageUploadError(getSafeApiErrorCopy(error).message);
         } finally {
           setImageUploadPending(false);
         }

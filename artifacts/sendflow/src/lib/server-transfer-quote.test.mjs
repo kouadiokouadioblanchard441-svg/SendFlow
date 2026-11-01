@@ -39,11 +39,12 @@ test('pricing version changes are detectable and quote errors are mapped without
   assert.equal(didPricingVersionChange(null, 1), false);
   assert.equal(didPricingVersionChange(1, 1), false);
   assert.equal(didPricingVersionChange(1, 2), true);
-  assert.match(serverQuoteErrorMessage({ status: 400 }), /opérateurs et les numéros/);
-  assert.match(serverQuoteErrorMessage({ status: 401 }), /session.*expiré/);
-  assert.match(serverQuoteErrorMessage({ status: 409 }), /plafond mensuel/);
-  assert.match(serverQuoteErrorMessage({ status: 429 }), /Patientez une minute/);
-  assert.match(serverQuoteErrorMessage({ status: 503, message: 'sensitive internal detail' }), /aucun montant n’a été débité/i);
+  assert.match(serverQuoteErrorMessage({ status: 400 }), /opérateur et les numéros/);
+  assert.match(serverQuoteErrorMessage({ status: 401 }), /Reconnectez-vous/);
+  assert.match(serverQuoteErrorMessage({ status: 409 }), /limite disponible/);
+  assert.match(serverQuoteErrorMessage({ status: 429 }), /Patientez un instant/);
+  assert.match(serverQuoteErrorMessage({ status: 503, message: 'sensitive internal detail' }), /Aucun transfert n’a été lancé/i);
+  assert.match(serverQuoteErrorMessage({ status: 503 }), /service client SendFlow/);
   assert.doesNotMatch(serverQuoteErrorMessage({ status: 503, message: 'sensitive internal detail' }), /sensitive internal detail/);
 });
 test('intent keys cover every quote-relevant field and do not depend on property order', () => {

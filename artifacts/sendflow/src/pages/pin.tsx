@@ -3,6 +3,7 @@ import { ArrowLeft, Delete, Fingerprint } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
 import { markPinUnlocked } from '@/lib/pin-unlock';
+import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetCustomerBiometricStatusQueryKey,
@@ -32,11 +33,7 @@ const PIN_LENGTH = 4;
 const PIN_CHANGE_SUCCESS_KEY = 'sendflow.pin.change-success';
 
 function biometricErrorMessage(error: unknown, fallback: string) {
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const data = (error as { data?: { error?: unknown } }).data;
-    if (typeof data?.error === 'string') return data.error;
-  }
-  return fallback;
+  return getSafeApiErrorCopy(error).message || fallback;
 }
 
 function createShuffledKeypad(previous?: readonly PinKey[]): PinKey[] {
@@ -338,7 +335,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
         setLocation('/sign-in');
         return;
       }
-      setError(candidate.data?.error ?? 'Code PIN incorrect. Veuillez réessayer.');
+      setError(getSafeApiErrorCopy(error).message);
       setProcessing(false);
       processingRef.current = false;
     }
@@ -394,7 +391,7 @@ export default function PinPage({ mode }: { mode: PinMode }) {
       const candidate = error as { name?: string; data?: { error?: string } };
       setError(candidate.name === 'NotAllowedError'
         ? 'Authentification annulée. Vous pouvez saisir votre code PIN.'
-        : candidate.data?.error ?? 'La biométrie n’a pas pu être vérifiée. Saisissez votre code PIN.');
+        : biometricErrorMessage(error, 'La biométrie n’a pas pu être vérifiée. Saisissez votre code PIN.'));
       setProcessing(false);
       processingRef.current = false;
     }
@@ -622,7 +619,7 @@ export function ChangePinPage() {
     } catch (error) {
       clearEntry();
     const candidate = error as { data?: { error?: string } };
-      setError(candidate.data?.error ?? 'Code PIN incorrect. Veuillez réessayer.');
+      setError(getSafeApiErrorCopy(error).message);
       setProcessing(false);
       processingRef.current = false;
     }

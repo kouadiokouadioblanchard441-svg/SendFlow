@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import PageLoadingScreen from "@/components/page-loading-screen";
 import { adminRoute } from "@/lib/admin-route";
 import { useSeo } from "@/lib/seo";
+import { getSafeApiErrorCopy } from "@/lib/safe-api-error";
 
 const adminPinSchema = z.object({
   pin: z.string().length(8).regex(/^[0-9]{8}$/),
@@ -21,14 +22,7 @@ const adminPinSchema = z.object({
 type AdminPinValues = z.infer<typeof adminPinSchema>;
 
 function pinErrorMessage(error: unknown) {
-  if (!error || typeof error !== "object") return "La vérification du PIN a échoué. Réessayez.";
-  const status = "status" in error ? error.status : undefined;
-  if (status === 429) return "Trop de tentatives. Réessayez après le délai indiqué.";
-  if (status === 503) return "La vérification du PIN est temporairement indisponible.";
-  if (status === 403) return "PIN incorrect ou compte non autorisé.";
-  if ("data" in error && error.data && typeof error.data === "object"
-    && "error" in error.data && typeof error.data.error === "string") return error.data.error;
-  return "La vérification du PIN a échoué. Réessayez.";
+  return getSafeApiErrorCopy(error).message;
 }
 
 export default function AdminPinPage() {

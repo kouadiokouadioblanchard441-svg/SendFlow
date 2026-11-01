@@ -18,6 +18,8 @@ import {
 } from "@workspace/api-zod";
 import {
   clearAuthFailures,
+  getCustomerAccessAttemptBucketsForRequest,
+  getCustomerLoginEmailAttemptBucket,
   getCustomerAccessPhoneAttemptBucket,
   getCustomerLoginPhoneAttemptBucket,
   getCustomerPinAttemptBucket,
@@ -26,9 +28,12 @@ import {
 } from "../lib/customer-auth-rate-limit";
 import { hashCustomerSecret } from "../lib/customer-auth-crypto";
 import { createSensitiveDataLookupIndex } from "../lib/sensitive-data-crypto";
-import { verifiedCustomerOtpCondition } from "../lib/customer-auth-otp";
+import {
+  verifiedCustomerEmailOtpCondition,
+  verifiedCustomerOtpCondition,
+} from "../lib/customer-auth-otp";
 import { hashSecretForClaimedOtpChallenge } from "../lib/customer-recovery-policy";
-import { fingerprint, isTrustedOrigin } from "../lib/request-security";
+import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-security";
 
 const router: IRouter = Router();
 
@@ -52,17 +57,18 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
 
   const now = new Date();
   try {
+    const emailLookupHash = createSensitiveDataLookupIndex(parsed.data.email, "user-email");
     const authAttemptBuckets = [
-      getCustomerAccessPhoneAttemptBucket(fingerprint(`phone:${parsed.data.phone}`)),
-      getCustomerLoginPhoneAttemptBucket(parsed.data.phone),
+      getCustomerLoginEmailAttemptBucket(emailLookupHash),
+      ...getCustomerAccessAttemptBucketsForRequest(null, requesterAddress(req)),
     ];
     const [availableChallenge] = await db
       .select({ id: phoneOtpChallengesTable.id })
       .from(phoneOtpChallengesTable)
       .where(
-        verifiedCustomerOtpCondition(
+        verifiedCustomerEmailOtpCondition(
           parsed.data.challengeId,
-          parsed.data.phone,
+          parsed.data.email,
           "password_reset",
           now,
         ),
@@ -78,9 +84,9 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
         .select({ id: phoneOtpChallengesTable.id })
         .from(phoneOtpChallengesTable)
         .where(
-          verifiedCustomerOtpCondition(
+          verifiedCustomerEmailOtpCondition(
             parsed.data.challengeId,
-            parsed.data.phone,
+            parsed.data.email,
             "password_reset",
             now,
           ),
@@ -95,10 +101,7 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
       const [user] = await tx
         .select({ id: usersTable.id, status: usersTable.status })
         .from(usersTable)
-        .where(or(
-          eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(parsed.data.phone, "user-phone")),
-          eq(usersTable.phone, parsed.data.phone),
-        ))
+        .where(eq(usersTable.emailLookupHash, emailLookupHash))
         .for("update");
 
       await tx

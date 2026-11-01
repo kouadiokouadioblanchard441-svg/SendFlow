@@ -1,5 +1,10 @@
 import { lazy, Suspense, useEffect, useState, type ComponentType, type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
 import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -17,6 +22,9 @@ import { useSeo } from '@/lib/seo';
 import { clearPinUnlock, getPinUnlockExpiry } from '@/lib/pin-unlock';
 import { requiresCustomerPinUnlock, shouldRelockCustomerPinUnlock } from '@/lib/customer-route-guard';
 import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
+import { GlobalErrorDialog } from '@/components/global-error-dialog';
+import { reportGlobalApiError } from '@/lib/global-api-errors';
+import { shouldShowGlobalQueryError } from '@/lib/safe-api-error';
 
 const LegalMentionsPage = lazy(() =>
   import('@/pages/legal').then((module) => ({ default: module.LegalMentionsPage })),
@@ -68,7 +76,22 @@ function getHttpStatus(error: unknown) {
   return candidate.status ?? candidate.response?.status;
 }
 
+const reportedQueryErrors = new WeakSet<object>();
+
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      if (query.state.data !== undefined || reportedQueryErrors.has(query)) return;
+      reportedQueryErrors.add(query);
+      if (shouldShowGlobalQueryError(error)) reportGlobalApiError(error);
+    },
+    onSuccess: (_data, query) => {
+      reportedQueryErrors.delete(query);
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => reportGlobalApiError(error),
+  }),
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
@@ -360,6 +383,7 @@ function App() {
             </Suspense>
           </CustomerPinGuard>
           <Toaster />
+          <GlobalErrorDialog />
         </TooltipProvider>
       </QueryClientProvider>
     </WouterRouter>
