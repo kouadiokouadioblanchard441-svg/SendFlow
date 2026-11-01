@@ -105,6 +105,8 @@ export function AdminIdentityVerificationsPage() {
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [downloadingPhoto, setDownloadingPhoto] = useState<string | null>(null);
   const [error, setError] = useState('');
   const pageSize = 20;
 
@@ -162,6 +164,9 @@ export function AdminIdentityVerificationsPage() {
     { kind: 'back' as const, label: 'Pièce d’identité — verso' },
     { kind: 'selfie' as const, label: 'Selfie avec la pièce' },
   ], []);
+  const hasCompletePhotos = Boolean(
+    detail && documentKinds.every(({ kind }) => detail.documents.some((document) => document.kind === kind)),
+  );
 
   const downloadExport = async () => {
     if (!selectedId || downloading) return;
@@ -183,6 +188,53 @@ export function AdminIdentityVerificationsPage() {
       setError('Le téléchargement sécurisé n’a pas abouti. Réessayez plus tard.');
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const downloadPdf = async () => {
+    if (!selectedId || downloadingPdf) return;
+    setDownloadingPdf(true);
+    try {
+      const response = await fetch(resolveApiUrl(adminRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/pdf`)), {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('pdf-export-failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `sendflow-identity-${selectedId}.pdf`;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    } catch {
+      setError('Le PDF sécurisé n’a pas pu être préparé. Réessayez plus tard.');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  const downloadPhoto = async (kind: 'front' | 'back' | 'selfie') => {
+    if (!selectedId || downloadingPhoto) return;
+    setDownloadingPhoto(kind);
+    try {
+      const response = await fetch(
+        resolveApiUrl(adminRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/documents/${kind}?download=1`)),
+        { credentials: 'include', cache: 'no-store' },
+      );
+      if (!response.ok) throw new Error('photo-download-failed');
+      const blob = await response.blob();
+      const extension = blob.type === 'image/jpeg' ? 'jpg' : blob.type.split('/')[1] || 'img';
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `sendflow-identity-${kind}-${selectedId}.${extension}`;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    } catch {
+      setError('La photo sécurisée n’a pas pu être téléchargée. Réessayez plus tard.');
+    } finally {
+      setDownloadingPhoto(null);
     }
   };
 
@@ -366,7 +418,22 @@ export function AdminIdentityVerificationsPage() {
                                 ) : (
                                   <div className="grid h-36 place-items-center text-xs text-muted-foreground">Document indisponible</div>
                                 )}
-                                <p className="p-2 text-xs font-medium">{label}</p>
+                                <div className="flex items-center justify-between gap-2 p-2">
+                                  <p className="text-xs font-medium">{label}</p>
+                                  {document && (
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      aria-label={`Télécharger ${label.toLocaleLowerCase('fr-FR')}`}
+                                      title={`Télécharger ${label.toLocaleLowerCase('fr-FR')}`}
+                                      disabled={downloadingPhoto !== null}
+                                      aria-busy={downloadingPhoto === kind}
+                                      onClick={() => void downloadPhoto(kind)}
+                                    >
+                                      <Download className="size-4" />
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
@@ -378,8 +445,11 @@ export function AdminIdentityVerificationsPage() {
                         </div>
                       )}
                       <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" onClick={() => void downloadExport()} disabled={downloading}>
-                          <Download className="mr-2 size-4" />{downloading ? 'Préparation…' : 'Télécharger le dossier'}
+                        <Button variant="outline" onClick={() => void downloadExport()} disabled={downloading || !hasCompletePhotos}>
+                          <Download className="mr-2 size-4" />{downloading ? 'Préparation…' : 'Télécharger le dossier ZIP'}
+                        </Button>
+                        <Button variant="outline" onClick={() => void downloadPdf()} disabled={downloadingPdf || !hasCompletePhotos}>
+                          <Download className="mr-2 size-4" />{downloadingPdf ? 'Préparation du PDF…' : 'Télécharger en PDF'}
                         </Button>
                         {detail.status === 'pending' && canMutate && (
                           <>
@@ -388,6 +458,11 @@ export function AdminIdentityVerificationsPage() {
                           </>
                         )}
                       </div>
+                      {!hasCompletePhotos && (
+                        <p className="text-xs text-muted-foreground">
+                          Les exports sont disponibles lorsque les trois photos du dossier sont présentes.
+                        </p>
+                      )}
                       <a href={adminRoute(`/users/${encodeURIComponent(detail.user.id)}`)} className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline">
                         <FileSearch className="size-4" />Ouvrir le profil utilisateur
                       </a>

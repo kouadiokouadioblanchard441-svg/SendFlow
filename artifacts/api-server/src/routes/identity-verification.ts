@@ -39,6 +39,7 @@ import {
   verifyStoredIdentityImage,
 } from "../lib/identity-verification-image";
 import { recordAdminAudit } from "../lib/admin-audit";
+import { buildIdentityVerificationPdf } from "../lib/identity-verification-pdf";
 import {
   canStartIdentityVerification,
   canReviewIdentityRequest,
@@ -826,10 +827,14 @@ async function getAdminRequestDocuments(requestId: string) {
     personalDataEncrypted: customerIdentityRequestsTable.personalDataEncrypted,
     status: customerIdentityRequestsTable.status,
     submittedAt: customerIdentityRequestsTable.submittedAt,
+    reviewedAt: customerIdentityRequestsTable.reviewedAt,
+    reviewedBy: customerIdentityRequestsTable.reviewedBy,
+    decisionReasonEncrypted: customerIdentityRequestsTable.decisionReasonEncrypted,
     displayName: usersTable.displayName,
     phone: usersTable.phone,
     emailEncrypted: usersTable.emailEncrypted,
     countryCode: usersTable.countryCode,
+    userStatus: usersTable.status,
   }).from(customerIdentityRequestsTable)
     .innerJoin(usersTable, eq(usersTable.id, customerIdentityRequestsTable.userId))
     .where(eq(customerIdentityRequestsTable.id, requestId))
@@ -847,7 +852,8 @@ adminRouter.get("/identity-verifications/:requestId/documents/:kind", async (req
   res.setHeader("Cache-Control", "no-store, private");
   const requestId = z.string().uuid().safeParse(req.params.requestId);
   const kind = z.enum(DOCUMENT_KINDS).safeParse(req.params.kind);
-  if (!requestId.success || !kind.success) {
+  const query = z.object({ download: z.enum(["1"]).optional() }).strict().safeParse(req.query);
+  if (!requestId.success || !kind.success || !query.success) {
     res.status(400).json({ error: "Invalid identity document request" });
     return;
   }
@@ -863,15 +869,17 @@ adminRouter.get("/identity-verifications/:requestId/documents/:kind", async (req
       res.status(404).json({ error: "Identity document not found" });
       return;
     }
+    const verifiedImage = await readVerifiedImage(document);
     await recordAdminAudit({
       adminUserId,
       action: "download_identity_verification",
       resourceType: "identity_verification",
       resourceId: requestId.data,
+      reason: `document_${kind.data}`,
     });
-    const verifiedImage = await readVerifiedImage(document);
     res.setHeader("Content-Type", document.contentType);
-    res.setHeader("Content-Disposition", `inline; filename="identity-${kind.data}.${document.contentType === "image/jpeg" ? "jpg" : document.contentType.slice(6)}"`);
+    const disposition = query.data.download === "1" ? "attachment" : "inline";
+    res.setHeader("Content-Disposition", `${disposition}; filename="sendflow-identity-${kind.data}.${document.contentType === "image/jpeg" ? "jpg" : document.contentType.slice(6)}"`);
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
     res.setHeader("Content-Length", String(verifiedImage.buffer.length));
@@ -882,6 +890,79 @@ adminRouter.get("/identity-verifications/:requestId/documents/:kind", async (req
       "Identity document download failed",
     );
     if (!res.headersSent) res.status(503).json({ error: "Identity document is temporarily unavailable" });
+    else if (!res.destroyed) res.destroy();
+  }
+});
+
+adminRouter.get("/identity-verifications/:requestId/pdf", async (req, res): Promise<void> => {
+  const adminUserId = getAdminUserId(req, res);
+  if (!adminUserId) return;
+  res.setHeader("Cache-Control", "no-store, private");
+  const requestId = z.string().uuid().safeParse(req.params.requestId);
+  if (!requestId.success) {
+    res.status(400).json({ error: "Invalid identity verification identifier" });
+    return;
+  }
+  try {
+    const result = await getAdminRequestDocuments(requestId.data);
+    if (!result) {
+      res.status(404).json({ error: "Identity verification request not found" });
+      return;
+    }
+    if (!hasAllIdentityPhotoKinds(result.documents.map((document) => document.kind))) {
+      res.status(409).json({ error: "Identity verification dossier is incomplete" });
+      return;
+    }
+
+    let personalData: z.infer<typeof identitySubmissionSchema>["personalData"];
+    try {
+      personalData = JSON.parse(decryptSensitiveData(
+        result.request.personalDataEncrypted,
+        "identity-verification-data",
+      ));
+    } catch {
+      throw new Error("Identity verification data could not be decrypted");
+    }
+    const decisionReason = result.request.decisionReasonEncrypted
+      ? decryptSensitiveData(result.request.decisionReasonEncrypted, "identity-verification-data")
+      : null;
+    const photos = await Promise.all(result.documents.map(async (document) => ({
+      kind: document.kind,
+      buffer: (await readVerifiedImage(document)).buffer,
+    })));
+    const pdf = await buildIdentityVerificationPdf({
+      requestId: result.request.id,
+      status: result.request.status,
+      submittedAt: result.request.submittedAt,
+      reviewedAt: result.request.reviewedAt,
+      reviewedBy: result.request.reviewedBy,
+      decisionReason,
+      personalData,
+      user: {
+        id: result.request.userId,
+        displayName: decryptSensitiveDataIfEncrypted(result.request.displayName, "user-name"),
+        phone: decryptSensitiveDataIfEncrypted(result.request.phone, "user-phone"),
+        email: decryptSensitiveDataIfEncrypted(result.request.emailEncrypted, "user-email"),
+        countryCode: result.request.countryCode,
+        status: result.request.userStatus,
+      },
+      photos,
+    });
+    await recordAdminAudit({
+      adminUserId,
+      action: "download_identity_verification",
+      resourceType: "identity_verification",
+      resourceId: result.request.id,
+      reason: "complete_pdf_export",
+    });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="sendflow-identity-${result.request.id}.pdf"`);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Content-Length", String(pdf.length));
+    res.end(pdf);
+  } catch (error) {
+    req.log.error({ failure: "identity-pdf-export", requestId: requestId.data }, "Identity verification PDF export failed");
+    if (!res.headersSent) res.status(503).json({ error: "Identity verification PDF is temporarily unavailable" });
     else if (!res.destroyed) res.destroy();
   }
 });
@@ -902,18 +983,23 @@ adminRouter.get("/identity-verifications/:requestId/export", async (req, res): P
       return;
     }
     if (!hasAllIdentityPhotoKinds(result.documents.map((document) => document.kind))) {
-      throw new Error("Identity verification export is incomplete");
+      res.status(409).json({ error: "Identity verification dossier is incomplete" });
+      return;
     }
     const personalData = JSON.parse(decryptSensitiveData(
       result.request.personalDataEncrypted,
       "identity-verification-data",
     ));
+    const decisionReason = result.request.decisionReasonEncrypted
+      ? decryptSensitiveData(result.request.decisionReasonEncrypted, "identity-verification-data")
+      : null;
     const userProfile = {
       id: result.request.userId,
       displayName: decryptSensitiveDataIfEncrypted(result.request.displayName, "user-name"),
       phone: decryptSensitiveDataIfEncrypted(result.request.phone, "user-phone"),
       email: decryptSensitiveDataIfEncrypted(result.request.emailEncrypted, "user-email"),
       countryCode: result.request.countryCode,
+      status: result.request.userStatus,
     };
     const downloadedDocuments = await Promise.all(result.documents.map(async (document) => {
       const verifiedImage = await readVerifiedImage(document);
@@ -942,6 +1028,9 @@ adminRouter.get("/identity-verifications/:requestId/export", async (req, res): P
       requestId: result.request.id,
       status: result.request.status,
       submittedAt: result.request.submittedAt,
+      reviewedAt: result.request.reviewedAt,
+      reviewedBy: result.request.reviewedBy,
+      decisionReason,
       personalData,
       user: userProfile,
     }, null, 2), { name: "identity-verification.json" });
