@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowLeft, CalendarDays, Check, ChevronDown, LockKeyhole } from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { ArrowLeft, Camera, CalendarDays, Check, ChevronDown, IdCard, LockKeyhole, Sun } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import {
   getGetCustomerProfileQueryKey,
@@ -15,6 +15,9 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
 import { useSeo } from '@/lib/seo';
+import identityCardFrontIllustration from '@assets/generated_images/sendflow-identity-card-front-3d.webp';
+import identityCardBackIllustration from '@assets/generated_images/sendflow-identity-card-back-3d.webp';
+import identitySelfieIllustration from '@assets/generated_images/sendflow-identity-selfie-3d.webp';
 
 const DOCUMENT_TYPES = [
   "Carte nationale d’identité (CNI, CIP)",
@@ -34,6 +37,8 @@ type VerificationForm = {
 
 type VerificationField = keyof VerificationForm;
 type VerificationErrors = Partial<Record<VerificationField, string>>;
+type PhotoStep = 2 | 3 | 4;
+type IdentityPhoto = { file: File; previewUrl: string };
 
 const EMPTY_FORM: VerificationForm = {
   lastName: '',
@@ -111,6 +116,10 @@ export default function IdentityVerificationPage() {
   const [errors, setErrors] = useState<VerificationErrors>({});
   const [documentTypeOpen, setDocumentTypeOpen] = useState(false);
   const [notice, setNotice] = useState('');
+  const [step, setStep] = useState<1 | PhotoStep>(1);
+  const [photos, setPhotos] = useState<Partial<Record<PhotoStep, IdentityPhoto>>>({});
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoUrls = useRef(new Set<string>());
   const hasEditedForm = useRef(false);
 
   useSeo({
@@ -131,6 +140,11 @@ export default function IdentityVerificationPage() {
     }));
   }, [profileQuery.data]);
 
+  useEffect(() => () => {
+    photoUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    photoUrls.current.clear();
+  }, []);
+
   if (!isUnlocked) return <Redirect to="/sign-in" />;
 
   const updateField = <K extends VerificationField>(field: K, value: VerificationForm[K]) => {
@@ -140,18 +154,50 @@ export default function IdentityVerificationPage() {
     setNotice('');
   };
 
+  const handlePhotoSelected = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file || step === 1) return;
+
+    if (!file.type.startsWith('image/')) {
+      setNotice('Choisissez une image pour continuer.');
+      return;
+    }
+
+    const previousPhoto = photos[step];
+    if (previousPhoto) {
+      URL.revokeObjectURL(previousPhoto.previewUrl);
+      photoUrls.current.delete(previousPhoto.previewUrl);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    photoUrls.current.add(previewUrl);
+    setPhotos((current) => ({ ...current, [step]: { file, previewUrl } }));
+    setNotice('');
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextErrors = validateForm(form);
     setErrors(nextErrors);
-    setNotice(
-      Object.keys(nextErrors).length === 0
-        ? 'Cette première étape est prête. Les informations ne sont pas envoyées ni enregistrées pour le moment.'
-        : '',
-    );
+    if (Object.keys(nextErrors).length === 0) {
+      setStep(2);
+    }
+    setNotice('');
   };
 
   const today = getTodayDate();
+  const activePhoto = step === 1 ? undefined : photos[step];
+  const photoTitle = step === 2
+    ? 'Photo recto de votre pièce d’identité'
+    : step === 3
+      ? 'Photo verso de votre pièce d’identité'
+      : 'Selfie avec votre pièce d’identité';
+  const photoIllustration = step === 2
+    ? identityCardFrontIllustration
+    : step === 3
+      ? identityCardBackIllustration
+      : identitySelfieIllustration;
 
   return (
     <main className="sendflow-identity-shell">
@@ -160,8 +206,8 @@ export default function IdentityVerificationPage() {
           <button
             type="button"
             className="sendflow-identity-back"
-            onClick={() => setLocation('/account-limit')}
-            aria-label="Revenir au plafond du compte"
+            onClick={() => (step === 1 ? setLocation('/account-limit') : setStep((current) => (current - 1) as 1 | PhotoStep))}
+            aria-label={step === 1 ? 'Revenir au plafond du compte' : 'Revenir à l’étape précédente'}
             data-testid="button-identity-verification-back"
           >
             <ArrowLeft size={22} strokeWidth={2} aria-hidden="true" />
@@ -174,28 +220,30 @@ export default function IdentityVerificationPage() {
         </header>
 
         <div className="sendflow-identity-content">
-          <ol className="sendflow-identity-progress" aria-label="Étape 1 sur 5">
+          <ol className="sendflow-identity-progress" aria-label={`Étape ${step} sur 5`}>
             {Array.from({ length: 5 }, (_, index) => (
               <li
                 key={index}
-                className={index === 0 ? 'is-current' : ''}
-                aria-current={index === 0 ? 'step' : undefined}
+                className={index < step ? 'is-complete' : ''}
+                aria-current={index === step - 1 ? 'step' : undefined}
                 data-testid={`identity-progress-step-${index + 1}`}
               >
-                {index === 0 ? <Check size={13} strokeWidth={3} aria-hidden="true" /> : null}
+                {index < step ? <Check size={13} strokeWidth={3} aria-hidden="true" /> : null}
               </li>
             ))}
           </ol>
 
-          <h2>Informations personnelles</h2>
+          {step === 1 ? (
+            <>
+              <h2>Informations personnelles</h2>
 
-          {profileQuery.isError && (
-            <p className="sendflow-identity-profile-note" role="status">
-              Vos informations de compte ne sont pas disponibles pour le préremplissage. Vous pouvez les saisir ici.
-            </p>
-          )}
+              {profileQuery.isError && (
+                <p className="sendflow-identity-profile-note" role="status">
+                  Vos informations de compte ne sont pas disponibles pour le préremplissage. Vous pouvez les saisir ici.
+                </p>
+              )}
 
-          <form className="sendflow-identity-form" onSubmit={handleSubmit} noValidate>
+              <form className="sendflow-identity-form" onSubmit={handleSubmit} noValidate>
             <div className="sendflow-identity-field">
               <label htmlFor="identity-last-name">Nom</label>
               <input
@@ -344,18 +392,119 @@ export default function IdentityVerificationPage() {
 
             {notice && <p className="sendflow-identity-notice" role="status" aria-live="polite" data-testid="status-identity-verification">{notice}</p>}
 
-            <button
-              type="submit"
-              className="sendflow-identity-submit"
-              data-testid="button-identity-verification-next"
-            >
-              Suivant
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  className="sendflow-identity-submit"
+                  data-testid="button-identity-verification-next"
+                >
+                  Suivant
+                </button>
+              </form>
+            </>
+          ) : (
+            <section className="sendflow-identity-photo-flow" aria-labelledby="identity-photo-title">
+              <h2 className="sendflow-identity-visually-hidden" id="identity-photo-title">{photoTitle}</h2>
+
+              <figure className={`sendflow-identity-photo-stage${step === 4 ? ' is-selfie' : ''}${activePhoto ? ' has-photo' : ''}`}>
+                <img
+                  src={activePhoto?.previewUrl ?? photoIllustration}
+                  alt={activePhoto ? `Aperçu de la photo sélectionnée : ${photoTitle.toLowerCase()}` : ''}
+                  data-testid="img-identity-photo-preview"
+                />
+                {activePhoto && (
+                  <figcaption className="sendflow-identity-photo-ready" data-testid="status-identity-photo-selected">
+                    <Check size={15} aria-hidden="true" />
+                    Photo sélectionnée
+                  </figcaption>
+                )}
+              </figure>
+
+              <p className="sendflow-identity-photo-caption">{photoTitle}</p>
+
+              {step !== 4 ? (
+                <section className="sendflow-identity-documents" aria-label="Pièces autorisées">
+                  <p>Les pièces autorisées sont</p>
+                  <ul>
+                    {DOCUMENT_TYPES.map((documentType) => <li key={documentType}>{documentType}</li>)}
+                  </ul>
+                </section>
+              ) : (
+                <div className="sendflow-identity-selfie-tips">
+                  <div className="sendflow-identity-tip">
+                    <IdCard size={22} aria-hidden="true" />
+                    <div>
+                      <strong>Tenez votre pièce près de votre visage</strong>
+                      <span>Toutes les informations doivent rester visibles.</span>
+                    </div>
+                  </div>
+                  <div className="sendflow-identity-tip">
+                    <Camera size={22} aria-hidden="true" />
+                    <div>
+                      <strong>Regardez la caméra</strong>
+                      <span>Gardez votre visage centré et bien visible.</span>
+                    </div>
+                  </div>
+                  <div className="sendflow-identity-tip">
+                    <Sun size={22} aria-hidden="true" />
+                    <div>
+                      <strong>Choisissez une bonne luminosité</strong>
+                      <span>La photo doit être nette et claire.</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <input
+                ref={photoInputRef}
+                className="sendflow-identity-file-input"
+                type="file"
+                accept="image/*"
+                capture={step === 4 ? 'user' : 'environment'}
+                onChange={handlePhotoSelected}
+                aria-label={step === 4 ? 'Prendre un selfie' : 'Prendre une photo de la pièce'}
+                data-testid="input-identity-photo"
+              />
+
+              <div className="sendflow-identity-photo-actions">
+                <button
+                  type="button"
+                  className="sendflow-identity-submit sendflow-identity-capture"
+                  onClick={() => photoInputRef.current?.click()}
+                  data-testid="button-identity-photo-capture"
+                >
+                  <Camera size={27} strokeWidth={2.5} aria-hidden="true" />
+                  {activePhoto
+                    ? (step === 4 ? 'Reprendre le selfie' : 'Reprendre la photo')
+                    : (step === 4 ? 'Prendre un selfie' : 'Prendre une photo')}
+                </button>
+
+                {(step === 2 || step === 3) && activePhoto && (
+                  <button
+                    type="button"
+                    className="sendflow-identity-continue"
+                    onClick={() => {
+                      setStep(step === 2 ? 3 : 4);
+                      setNotice('');
+                    }}
+                    data-testid="button-identity-photo-continue"
+                  >
+                    Continuer
+                  </button>
+                )}
+              </div>
+
+              {notice && <p className="sendflow-identity-error" role="alert" data-testid="status-identity-photo-error">{notice}</p>}
+              {step === 4 && activePhoto && (
+                <p className="sendflow-identity-next-step-note" role="status" data-testid="status-identity-next-step">
+                  Votre selfie reste sur cet écran. La suite de la démarche sera ajoutée avec les prochaines instructions.
+                </p>
+              )}
+            </section>
+          )}
 
           <p className="sendflow-identity-privacy-note" role="note" data-testid="text-identity-verification-privacy">
             <LockKeyhole size={14} aria-hidden="true" />
-            <span>Vos informations ne sont pas envoyées pour le moment</span>
+            <span>Les éléments saisis ne sont pas transmis ni sauvegardés à cette étape</span>
           </p>
         </div>
       </section>
