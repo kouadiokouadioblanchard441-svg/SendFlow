@@ -2484,6 +2484,178 @@ export interface DeleteAdminBannerResult {
   deleted: boolean;
 }
 
+export type AdminTransactionPaymentAttemptDirection = typeof AdminTransactionPaymentAttemptDirection[keyof typeof AdminTransactionPaymentAttemptDirection];
+
+
+export const AdminTransactionPaymentAttemptDirection = {
+  payin: 'payin',
+  payout: 'payout',
+} as const;
+
+export type AdminTransactionPaymentAttemptCurrency = typeof AdminTransactionPaymentAttemptCurrency[keyof typeof AdminTransactionPaymentAttemptCurrency];
+
+
+export const AdminTransactionPaymentAttemptCurrency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+} as const;
+
+export type AdminTransactionPaymentAttemptStatus = typeof AdminTransactionPaymentAttemptStatus[keyof typeof AdminTransactionPaymentAttemptStatus];
+
+
+export const AdminTransactionPaymentAttemptStatus = {
+  prepared: 'prepared',
+  dispatching: 'dispatching',
+  pending: 'pending',
+  uncertain: 'uncertain',
+  succeeded: 'succeeded',
+  failed: 'failed',
+} as const;
+
+export interface AdminTransactionPaymentAttempt {
+  id: string;
+  direction: AdminTransactionPaymentAttemptDirection;
+  /** @nullable */
+  countryCode: string | null;
+  /** @nullable */
+  countryName: string | null;
+  channelId: string;
+  operationReference: string;
+  /** @maximum 9007199254740991 */
+  amountMinor: number;
+  currency: AdminTransactionPaymentAttemptCurrency;
+  status: AdminTransactionPaymentAttemptStatus;
+  /** @nullable */
+  dispatchedAt: string | null;
+  /** @nullable */
+  finalConfirmationId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AdminTransactionPaymentIntentKind = typeof AdminTransactionPaymentIntentKind[keyof typeof AdminTransactionPaymentIntentKind];
+
+
+export const AdminTransactionPaymentIntentKind = {
+  deposit: 'deposit',
+  'inter-network': 'inter-network',
+  international: 'international',
+} as const;
+
+export type AdminTransactionPaymentIntentState = typeof AdminTransactionPaymentIntentState[keyof typeof AdminTransactionPaymentIntentState];
+
+
+export const AdminTransactionPaymentIntentState = {
+  created: 'created',
+  collecting: 'collecting',
+  funded: 'funded',
+  paying: 'paying',
+  succeeded: 'succeeded',
+  failed: 'failed',
+  uncertain: 'uncertain',
+  refund_due: 'refund_due',
+} as const;
+
+export type AdminTransactionPaymentIntentCurrency = typeof AdminTransactionPaymentIntentCurrency[keyof typeof AdminTransactionPaymentIntentCurrency];
+
+
+export const AdminTransactionPaymentIntentCurrency = {
+  XOF: 'XOF',
+  XAF: 'XAF',
+} as const;
+
+export type AdminTransactionPaymentIntentFeePayer = typeof AdminTransactionPaymentIntentFeePayer[keyof typeof AdminTransactionPaymentIntentFeePayer];
+
+
+export const AdminTransactionPaymentIntentFeePayer = {
+  sender: 'sender',
+  recipient: 'recipient',
+} as const;
+
+export interface AdminTransactionPaymentIntent {
+  id: string;
+  kind: AdminTransactionPaymentIntentKind;
+  state: AdminTransactionPaymentIntentState;
+  currency: AdminTransactionPaymentIntentCurrency;
+  /** @maximum 9007199254740991 */
+  amountMinor: number;
+  /** @maximum 9007199254740991 */
+  feeMinor: number;
+  feePayer: AdminTransactionPaymentIntentFeePayer;
+  /** @maximum 9007199254740991 */
+  senderTotalMinor: number;
+  /** @maximum 9007199254740991 */
+  recipientTotalMinor: number;
+  /** @nullable */
+  ledgerEntryId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AdminTransactionPaymentLinkSource = typeof AdminTransactionPaymentLinkSource[keyof typeof AdminTransactionPaymentLinkSource];
+
+
+export const AdminTransactionPaymentLinkSource = {
+  linkflow: 'linkflow',
+  api: 'api',
+} as const;
+
+export type AdminTransactionPaymentLinkPaymentMethod = typeof AdminTransactionPaymentLinkPaymentMethod[keyof typeof AdminTransactionPaymentLinkPaymentMethod];
+
+
+export const AdminTransactionPaymentLinkPaymentMethod = {
+  mobile_money: 'mobile_money',
+  card: 'card',
+  all: 'all',
+} as const;
+
+export type AdminTransactionPaymentLinkStatus = typeof AdminTransactionPaymentLinkStatus[keyof typeof AdminTransactionPaymentLinkStatus];
+
+
+export const AdminTransactionPaymentLinkStatus = {
+  draft: 'draft',
+  active: 'active',
+  paused: 'paused',
+  expired: 'expired',
+  exhausted: 'exhausted',
+} as const;
+
+export interface AdminTransactionPaymentLink {
+  id: string;
+  /** @nullable */
+  name: string | null;
+  source: AdminTransactionPaymentLinkSource;
+  paymentMethod: AdminTransactionPaymentLinkPaymentMethod;
+  currency: string;
+  status: AdminTransactionPaymentLinkStatus;
+}
+
+export type AdminTransactionIntegrationSessionMode = typeof AdminTransactionIntegrationSessionMode[keyof typeof AdminTransactionIntegrationSessionMode];
+
+
+export const AdminTransactionIntegrationSessionMode = {
+  hosted: 'hosted',
+  direct: 'direct',
+} as const;
+
+export interface AdminTransactionIntegrationSession {
+  id: string;
+  mode: AdminTransactionIntegrationSessionMode;
+  merchantReference: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface AdminTransactionPaymentTrace {
+  /** @nullable */
+  intent: AdminTransactionPaymentIntent | null;
+  /** @nullable */
+  paymentLink: AdminTransactionPaymentLink | null;
+  /** @nullable */
+  integrationSession: AdminTransactionIntegrationSession | null;
+  attempts: AdminTransactionPaymentAttempt[];
+}
+
 export type AdminTransactionDetailKind = typeof AdminTransactionDetailKind[keyof typeof AdminTransactionDetailKind];
 
 
@@ -2529,6 +2701,7 @@ export interface AdminTransactionDetail {
   updatedAt?: string;
   /** @nullable */
   archivedAt?: string | null;
+  paymentTrace: AdminTransactionPaymentTrace;
 }
 
 export interface AdminUserDetail {

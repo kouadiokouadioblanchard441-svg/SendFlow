@@ -23,10 +23,15 @@ import {
   ListAdminUserDeveloperWebhooksResponse,
 } from "@workspace/api-zod";
 import {
+  asc,
   and,
   count,
+  countriesTable,
+  customerPaymentLinkAttemptsTable,
+  customerPaymentLinksTable,
   db,
   desc,
+  developerPaymentSessionsTable,
   developerWebhookEndpointsTable,
   eq,
   gte,
@@ -35,6 +40,8 @@ import {
   isNull,
   lte,
   or,
+  paymentAttemptsTable,
+  paymentIntentsTable,
   sql,
   sum,
   transactionsTable,
@@ -92,6 +99,7 @@ export function respondAdminAuthError(
 }
 
 const adminUserReadPath = /^\/(?:users(?:\/[^/]+)?|developer-webhooks)\/?$/;
+const adminTransactionReadPath = /^\/transactions(?:\/[^/]+)?\/?$/;
 
 export function respondAdminUserReadAuthError(req: Request, res: Response) {
   const session = adminSessionContext(req);
@@ -101,6 +109,23 @@ export function respondAdminUserReadAuthError(req: Request, res: Response) {
   }
   if (req.method !== "GET" || !adminUserReadPath.test(req.path)) {
     res.status(403).json({ error: "Administrator user profile read access required" });
+    return null;
+  }
+  if (!adminPinUnlocked(session)) {
+    res.status(403).json({ error: "Administrator PIN verification required" });
+    return null;
+  }
+  return session.userId;
+}
+
+export function respondAdminTransactionReadAuthError(req: Request, res: Response) {
+  const session = adminSessionContext(req);
+  if (!session) {
+    res.status(401).json({ error: "Administrator authentication required" });
+    return null;
+  }
+  if (req.method !== "GET" || !adminTransactionReadPath.test(req.path)) {
+    res.status(403).json({ error: "Administrator transaction read access required" });
     return null;
   }
   if (!adminPinUnlocked(session)) {
@@ -523,7 +548,7 @@ router.get("/developer-webhooks", async (req, res): Promise<void> => {
 });
 
 router.get("/transactions", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res);
+  const adminUserId = respondAdminTransactionReadAuthError(req, res);
   if (!adminUserId) return;
 
   const rawQuery = {
@@ -639,7 +664,7 @@ router.get("/transactions", async (req, res): Promise<void> => {
 });
 
 router.get("/transactions/:transactionId", async (req, res): Promise<void> => {
-  const adminUserId = respondAdminAuthError(req, res);
+  const adminUserId = respondAdminTransactionReadAuthError(req, res);
   if (!adminUserId) return;
 
   const parsedParams = GetAdminTransactionParams.safeParse(req.params);
@@ -681,6 +706,82 @@ router.get("/transactions/:transactionId", async (req, res): Promise<void> => {
       return;
     }
 
+    const [intent] = await db
+      .select({
+        id: paymentIntentsTable.id,
+        kind: paymentIntentsTable.kind,
+        state: paymentIntentsTable.state,
+        currency: paymentIntentsTable.currency,
+        amountMinor: paymentIntentsTable.amountMinor,
+        feeMinor: paymentIntentsTable.feeMinor,
+        feePayer: paymentIntentsTable.feePayer,
+        senderTotalMinor: paymentIntentsTable.senderTotalMinor,
+        recipientTotalMinor: paymentIntentsTable.recipientTotalMinor,
+        ledgerEntryId: paymentIntentsTable.ledgerEntryId,
+        createdAt: paymentIntentsTable.createdAt,
+        updatedAt: paymentIntentsTable.updatedAt,
+      })
+      .from(paymentIntentsTable)
+      .where(eq(paymentIntentsTable.transactionId, transactionId))
+      .limit(1);
+
+    const [paymentContext, attempts] = intent
+      ? await Promise.all([
+          db
+            .select({
+              linkId: customerPaymentLinksTable.id,
+              linkName: customerPaymentLinksTable.linkName,
+              linkSource: customerPaymentLinksTable.source,
+              paymentMethod: customerPaymentLinksTable.paymentMethod,
+              linkCurrency: customerPaymentLinksTable.currency,
+              linkStatus: customerPaymentLinksTable.status,
+              sessionId: developerPaymentSessionsTable.id,
+              sessionMode: developerPaymentSessionsTable.mode,
+              merchantReference: developerPaymentSessionsTable.merchantReference,
+              sessionCreatedAt: developerPaymentSessionsTable.createdAt,
+              sessionExpiresAt: developerPaymentSessionsTable.expiresAt,
+            })
+            .from(customerPaymentLinkAttemptsTable)
+            .innerJoin(
+              customerPaymentLinksTable,
+              eq(customerPaymentLinksTable.id, customerPaymentLinkAttemptsTable.paymentLinkId),
+            )
+            .leftJoin(
+              developerPaymentSessionsTable,
+              and(
+                eq(developerPaymentSessionsTable.paymentLinkId, customerPaymentLinksTable.id),
+                eq(developerPaymentSessionsTable.userId, transaction.userId),
+              ),
+            )
+            .where(and(
+              eq(customerPaymentLinkAttemptsTable.intentId, intent.id),
+              eq(customerPaymentLinksTable.userId, transaction.userId),
+            ))
+            .limit(1)
+            .then((items) => items[0]),
+          db
+            .select({
+              id: paymentAttemptsTable.id,
+              direction: paymentAttemptsTable.direction,
+              countryCode: paymentAttemptsTable.countryCode,
+              countryName: countriesTable.countryName,
+              channelId: paymentAttemptsTable.channelId,
+              operationReference: paymentAttemptsTable.operationReference,
+              amountMinor: paymentAttemptsTable.amountMinor,
+              currency: paymentAttemptsTable.currency,
+              status: paymentAttemptsTable.status,
+              dispatchedAt: paymentAttemptsTable.dispatchedAt,
+              finalConfirmationId: paymentAttemptsTable.finalConfirmationId,
+              createdAt: paymentAttemptsTable.createdAt,
+              updatedAt: paymentAttemptsTable.updatedAt,
+            })
+            .from(paymentAttemptsTable)
+            .leftJoin(countriesTable, eq(countriesTable.countryCode, paymentAttemptsTable.countryCode))
+            .where(eq(paymentAttemptsTable.intentId, intent.id))
+            .orderBy(asc(paymentAttemptsTable.createdAt), asc(paymentAttemptsTable.direction)),
+        ])
+      : [undefined, []];
+
     await recordAdminAudit({
       adminUserId,
       action: "view_transaction_detail",
@@ -697,6 +798,29 @@ router.get("/transactions/:transactionId", async (req, res): Promise<void> => {
       senderPhone: decryptSensitiveDataIfEncrypted(transaction.senderPhone, "transaction-sender-phone"),
       recipientPhone: decryptSensitiveDataIfEncrypted(transaction.recipientPhone, "transaction-recipient-phone"),
       providerReference: decryptSensitiveDataIfEncrypted(transaction.providerReference, "provider-reference"),
+      paymentTrace: {
+        intent: intent ?? null,
+        paymentLink: paymentContext
+          ? {
+              id: paymentContext.linkId,
+              name: paymentContext.linkName,
+              source: paymentContext.linkSource,
+              paymentMethod: paymentContext.paymentMethod,
+              currency: paymentContext.linkCurrency,
+              status: paymentContext.linkStatus,
+            }
+          : null,
+        integrationSession: paymentContext?.sessionId
+          ? {
+              id: paymentContext.sessionId,
+              mode: paymentContext.sessionMode,
+              merchantReference: paymentContext.merchantReference,
+              createdAt: paymentContext.sessionCreatedAt,
+              expiresAt: paymentContext.sessionExpiresAt,
+            }
+          : null,
+        attempts,
+      },
     }));
   } catch (error) {
     req.log.error({ err: error, transactionId }, "Admin transaction detail lookup failed");

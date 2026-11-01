@@ -7417,6 +7417,148 @@ components:
         deleted:
           type: boolean
       required: [id, deleted]
+    AdminTransactionPaymentAttempt:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        direction:
+          type: string
+          enum: [payin, payout]
+        countryCode:
+          type: ["string", "null"]
+        countryName:
+          type: ["string", "null"]
+        channelId:
+          type: string
+        operationReference:
+          type: string
+        amountMinor:
+          type: integer
+          format: int64
+          maximum: 9007199254740991
+        currency:
+          type: string
+          enum: [XOF, XAF]
+        status:
+          type: string
+          enum: [prepared, dispatching, pending, uncertain, succeeded, failed]
+        dispatchedAt:
+          type: ["string", "null"]
+          format: date-time
+        finalConfirmationId:
+          type: ["string", "null"]
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, direction, countryCode, countryName, channelId, operationReference, amountMinor, currency, status, dispatchedAt, finalConfirmationId, createdAt, updatedAt]
+    AdminTransactionPaymentIntent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [deposit, inter-network, international]
+        state:
+          type: string
+          enum: [created, collecting, funded, paying, succeeded, failed, uncertain, refund_due]
+        currency:
+          type: string
+          enum: [XOF, XAF]
+        amountMinor:
+          type: integer
+          format: int64
+          maximum: 9007199254740991
+        feeMinor:
+          type: integer
+          format: int64
+          maximum: 9007199254740991
+        feePayer:
+          type: string
+          enum: [sender, recipient]
+        senderTotalMinor:
+          type: integer
+          format: int64
+          maximum: 9007199254740991
+        recipientTotalMinor:
+          type: integer
+          format: int64
+          maximum: 9007199254740991
+        ledgerEntryId:
+          type: ["string", "null"]
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, kind, state, currency, amountMinor, feeMinor, feePayer, senderTotalMinor, recipientTotalMinor, ledgerEntryId, createdAt, updatedAt]
+    AdminTransactionPaymentLink:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: ["string", "null"]
+        source:
+          type: string
+          enum: [linkflow, api]
+        paymentMethod:
+          type: string
+          enum: [mobile_money, card, all]
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, paused, expired, exhausted]
+      required: [id, name, source, paymentMethod, currency, status]
+    AdminTransactionIntegrationSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [hosted, direct]
+        merchantReference:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+      required: [id, mode, merchantReference, createdAt, expiresAt]
+    AdminTransactionPaymentTrace:
+      type: object
+      properties:
+        intent:
+          type: ["object", "null"]
+          allOf:
+            - $ref: "#/components/schemas/AdminTransactionPaymentIntent"
+        paymentLink:
+          type: ["object", "null"]
+          allOf:
+            - $ref: "#/components/schemas/AdminTransactionPaymentLink"
+        integrationSession:
+          type: ["object", "null"]
+          allOf:
+            - $ref: "#/components/schemas/AdminTransactionIntegrationSession"
+        attempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminTransactionPaymentAttempt"
+      required: [intent, paymentLink, integrationSession, attempts]
     AdminTransactionDetail:
       type: object
       properties:
@@ -7466,6 +7608,8 @@ components:
         archivedAt:
           type: ["string", "null"]
           format: date-time
+        paymentTrace:
+          $ref: "#/components/schemas/AdminTransactionPaymentTrace"
       required:
         - id
         - userId
@@ -7485,6 +7629,7 @@ components:
         - createdAt
          - updatedAt
          - archivedAt
+        - paymentTrace
     AdminUserDetail:
       type: object
       properties:

@@ -364,6 +364,39 @@ function AdminOperatorRoute({
   );
 }
 
+function paymentMethodLabel(method: string | null | undefined) {
+  if (method === 'mobile_money') return 'Mobile Money';
+  if (method === 'card') return 'Carte';
+  if (method === 'all') return 'Tous les moyens configurés';
+  return 'Non renseigné';
+}
+
+function transactionSourceLabel(source: string | null | undefined, mode: string | null | undefined) {
+  if (mode === 'direct') return 'API directe';
+  if (mode === 'hosted') return 'Hosted Checkout';
+  if (source === 'api') return 'API marchand — mode non enregistré';
+  if (source === 'linkflow') return 'Lien de paiement SendFlow';
+  return 'Source non enregistrée';
+}
+
+function paymentAttemptStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    prepared: 'Préparée',
+    dispatching: 'En cours d’envoi',
+    pending: 'En attente',
+    uncertain: 'À confirmer',
+    succeeded: 'Réussie',
+    failed: 'Échouée',
+  };
+  return labels[status] ?? status;
+}
+
+function paymentAttemptDirectionLabel(direction: string) {
+  if (direction === 'payin') return 'Encaissement entrant';
+  if (direction === 'payout') return 'Versement sortant';
+  return direction;
+}
+
 function MetricCard({
   label,
   value,
@@ -1002,6 +1035,144 @@ function TransactionDetailPage({ transactionId }: { transactionId: string }) {
               <div><span>Référence SendFlow</span><strong data-testid="text-admin-transaction-reference-secondary">{transaction.reference}</strong></div>
               <div><span>Référence opérateur</span><strong data-testid="text-admin-transaction-provider-reference">{transaction.providerReference || 'Non renseignée'}</strong></div>
               <div><span>Dernière mise à jour</span><strong data-testid="text-admin-transaction-updated">{formatDate(transaction.updatedAt)}</strong></div>
+            </CardContent>
+          </Card>
+          <Card className="sendflow-admin-detail-card" data-testid="card-admin-payment-trace">
+            <CardHeader>
+              <CardTitle>Parcours et traçabilité du paiement</CardTitle>
+              <CardDescription>
+                Pays, canal et identifiants issus des tentatives réellement enregistrées.
+                Les données absentes ne sont pas déduites.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="sendflow-admin-detail-list sendflow-admin-detail-list-wide">
+                <div>
+                  <span>Origine du paiement</span>
+                  <strong data-testid="text-admin-payment-source">
+                    {transactionSourceLabel(
+                      transaction.paymentTrace.paymentLink?.source,
+                      transaction.paymentTrace.integrationSession?.mode,
+                    )}
+                  </strong>
+                </div>
+                <div>
+                  <span>Moyen demandé</span>
+                  <strong data-testid="text-admin-payment-method">
+                    {paymentMethodLabel(transaction.paymentTrace.paymentLink?.paymentMethod)}
+                  </strong>
+                </div>
+                {transaction.paymentTrace.paymentLink && (
+                  <>
+                    <div>
+                      <span>ID du lien</span>
+                      <strong className="break-all font-mono text-xs">{transaction.paymentTrace.paymentLink.id}</strong>
+                    </div>
+                    <div>
+                      <span>Nom du lien</span>
+                      <strong>{transaction.paymentTrace.paymentLink.name || 'Sans nom'}</strong>
+                    </div>
+                  </>
+                )}
+                {transaction.paymentTrace.integrationSession && (
+                  <>
+                    <div>
+                      <span>ID de session d’intégration</span>
+                      <strong className="break-all font-mono text-xs">{transaction.paymentTrace.integrationSession.id}</strong>
+                    </div>
+                    <div>
+                      <span>Référence marchand</span>
+                      <strong className="break-all font-mono text-xs">
+                        {transaction.paymentTrace.integrationSession.merchantReference}
+                      </strong>
+                    </div>
+                  </>
+                )}
+                {transaction.paymentTrace.intent && (
+                  <>
+                    <div>
+                      <span>ID du parcours financier</span>
+                      <strong className="break-all font-mono text-xs">{transaction.paymentTrace.intent.id}</strong>
+                    </div>
+                    <div>
+                      <span>État du parcours financier</span>
+                      <strong>{transaction.paymentTrace.intent.state}</strong>
+                    </div>
+                    <div>
+                      <span>Frais à la charge</span>
+                      <strong>
+                        {transaction.paymentTrace.intent.feePayer === 'sender' ? 'Expéditeur' : 'Destinataire'}
+                      </strong>
+                    </div>
+                    {transaction.paymentTrace.intent.ledgerEntryId && (
+                      <div>
+                        <span>ID de l’écriture de portefeuille</span>
+                        <strong className="break-all font-mono text-xs">
+                          {transaction.paymentTrace.intent.ledgerEntryId}
+                        </strong>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {transaction.paymentTrace.attempts.length > 0 ? (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold">Tentatives de paiement</h4>
+                  {transaction.paymentTrace.attempts.map((attempt) => (
+                    <div
+                      key={attempt.id}
+                      className="rounded-xl border border-border bg-background p-4"
+                      data-testid={`card-admin-payment-attempt-${attempt.id}`}
+                    >
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="font-semibold">{paymentAttemptDirectionLabel(attempt.direction)}</p>
+                          <p className="break-all font-mono text-xs text-muted-foreground">{attempt.id}</p>
+                        </div>
+                        <Badge variant="outline">{paymentAttemptStatusLabel(attempt.status)}</Badge>
+                      </div>
+                      <div className="sendflow-admin-detail-list sendflow-admin-detail-list-wide">
+                        <div>
+                          <span>Pays</span>
+                          <strong>
+                            {attempt.countryName
+                              ? `${attempt.countryName} (${attempt.countryCode?.toUpperCase()})`
+                              : attempt.countryCode?.toUpperCase() || 'Non enregistré'}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>Moyen / canal enregistré</span>
+                          <strong className="break-all font-mono text-xs">{attempt.channelId}</strong>
+                        </div>
+                        <div>
+                          <span>Référence d’opération</span>
+                          <strong className="break-all font-mono text-xs">{attempt.operationReference}</strong>
+                        </div>
+                        <div>
+                          <span>Montant de cette étape</span>
+                          <strong>{formatMoney(attempt.amountMinor, attempt.currency)}</strong>
+                        </div>
+                        <div>
+                          <span>Envoyée le</span>
+                          <strong>{attempt.dispatchedAt ? formatDate(attempt.dispatchedAt) : 'Pas encore envoyée'}</strong>
+                        </div>
+                        <div>
+                          <span>Confirmation finale</span>
+                          <strong className="break-all font-mono text-xs">
+                            {attempt.finalConfirmationId || 'Non disponible'}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
+                  Aucune tentative de paiement liée n’est enregistrée pour cette transaction.
+                  Le pays et le canal ne peuvent donc pas être confirmés ici.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -4110,6 +4110,16 @@ export const getAdminTransactionResponseAmountMinorMax = 9007199254740991;
 
 export const getAdminTransactionResponseFeeMinorMax = 9007199254740991;
 
+export const getAdminTransactionResponsePaymentTraceIntentOneAmountMinorMax = 9007199254740991;
+
+export const getAdminTransactionResponsePaymentTraceIntentOneFeeMinorMax = 9007199254740991;
+
+export const getAdminTransactionResponsePaymentTraceIntentOneSenderTotalMinorMax = 9007199254740991;
+
+export const getAdminTransactionResponsePaymentTraceIntentOneRecipientTotalMinorMax = 9007199254740991;
+
+export const getAdminTransactionResponsePaymentTraceAttemptsItemAmountMinorMax = 9007199254740991;
+
 
 
 export const GetAdminTransactionResponse = zod.object({
@@ -4130,7 +4140,53 @@ export const GetAdminTransactionResponse = zod.object({
   "providerReference": zod.string().nullable(),
   "createdAt": zod.coerce.date().optional(),
   "updatedAt": zod.coerce.date().optional(),
-  "archivedAt": zod.coerce.date().nullish()
+  "archivedAt": zod.coerce.date().nullish(),
+  "paymentTrace": zod.object({
+  "intent": zod.object({
+  "id": zod.uuid(),
+  "kind": zod.enum(['deposit', 'inter-network', 'international']),
+  "state": zod.enum(['created', 'collecting', 'funded', 'paying', 'succeeded', 'failed', 'uncertain', 'refund_due']),
+  "currency": zod.enum(['XOF', 'XAF']),
+  "amountMinor": zod.int().max(getAdminTransactionResponsePaymentTraceIntentOneAmountMinorMax),
+  "feeMinor": zod.int().max(getAdminTransactionResponsePaymentTraceIntentOneFeeMinorMax),
+  "feePayer": zod.enum(['sender', 'recipient']),
+  "senderTotalMinor": zod.int().max(getAdminTransactionResponsePaymentTraceIntentOneSenderTotalMinorMax),
+  "recipientTotalMinor": zod.int().max(getAdminTransactionResponsePaymentTraceIntentOneRecipientTotalMinorMax),
+  "ledgerEntryId": zod.uuid().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).nullable(),
+  "paymentLink": zod.object({
+  "id": zod.uuid(),
+  "name": zod.string().nullable(),
+  "source": zod.enum(['linkflow', 'api']),
+  "paymentMethod": zod.enum(['mobile_money', 'card', 'all']),
+  "currency": zod.string(),
+  "status": zod.enum(['draft', 'active', 'paused', 'expired', 'exhausted'])
+}).nullable(),
+  "integrationSession": zod.object({
+  "id": zod.uuid(),
+  "mode": zod.enum(['hosted', 'direct']),
+  "merchantReference": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date()
+}).nullable(),
+  "attempts": zod.array(zod.object({
+  "id": zod.uuid(),
+  "direction": zod.enum(['payin', 'payout']),
+  "countryCode": zod.string().nullable(),
+  "countryName": zod.string().nullable(),
+  "channelId": zod.string(),
+  "operationReference": zod.string(),
+  "amountMinor": zod.int().max(getAdminTransactionResponsePaymentTraceAttemptsItemAmountMinorMax),
+  "currency": zod.enum(['XOF', 'XAF']),
+  "status": zod.enum(['prepared', 'dispatching', 'pending', 'uncertain', 'succeeded', 'failed']),
+  "dispatchedAt": zod.coerce.date().nullable(),
+  "finalConfirmationId": zod.uuid().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
 })
 
 

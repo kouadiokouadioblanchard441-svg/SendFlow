@@ -7,6 +7,7 @@
  */
 import type { AdminTransactionDetailKind } from './adminTransactionDetailKind';
 import type { AdminTransactionDetailStatus } from './adminTransactionDetailStatus';
+import type { AdminTransactionPaymentTrace } from './adminTransactionPaymentTrace';
 
 export interface AdminTransactionDetail {
   id: string;
@@ -35,4 +36,5 @@ export interface AdminTransactionDetail {
   updatedAt?: Date;
   /** @nullable */
   archivedAt?: Date | null;
+  paymentTrace: AdminTransactionPaymentTrace;
 }

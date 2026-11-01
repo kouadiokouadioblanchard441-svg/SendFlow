@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import http from "node:http";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -23,7 +23,7 @@ const owner = new pg.Pool({ host: process.env.SENDFLOW_FIXTURE_SOCKET, port: 154
   database: "postgres", user: "sf_fixture_owner" });
 const routes = routeInventory();
 const adminToken = randomBytes(32).toString("base64url");
-let server, site;
+let server, site, traceTransactionId;
 const siteRoot = mkdtempSync(join(tmpdir(), "sendflow-route-static-"));
 
 before(async () => {
@@ -41,12 +41,45 @@ before(async () => {
     ["international", "succeeded", 5500, 250],
     ["inter-network", "succeeded", 4000, 175],
     ["deposit", "failed", 7000, 500],
+    ["deposit", "pending", 2500, 100],
   ]) {
-    await owner.query(`INSERT INTO sf_transactions
+    const inserted = await owner.query(`INSERT INTO sf_transactions
       (user_id,kind,status,sender_phone,recipient_phone,amount_minor,fee_minor,reference,idempotency_key)
-      VALUES('audit-webhook-owner',$1,$2,'fixture-sender','fixture-recipient',$3,$4,$5,$6)`,
+      VALUES('audit-webhook-owner',$1,$2,'fixture-sender','fixture-recipient',$3,$4,$5,$6)
+      RETURNING id`,
     [kind, status, amount, fee, randomBytes(16).toString("hex"), randomBytes(16).toString("hex")]);
+    if (kind === "deposit" && status === "pending") traceTransactionId = inserted.rows[0].id;
   }
+  await owner.query(`INSERT INTO sf_payment_aggregators(code,name,enabled,created_by,updated_by)
+    VALUES('trace-fixture','Trace fixture',false,'audit-admin','audit-admin')
+    ON CONFLICT (code) DO NOTHING`);
+  await owner.query(`INSERT INTO sf_countries
+    (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,created_by,updated_by)
+    VALUES('ci','Côte d’Ivoire','+225',8,10,'audit-admin','audit-admin')
+    ON CONFLICT (country_code) DO NOTHING`);
+  const intent = await owner.query(`INSERT INTO sf_payment_intents
+    (transaction_id,provider_code,request_hash,kind,currency,amount_minor,fee_minor,fee_payer,
+     sender_total_minor,recipient_total_minor,state)
+    SELECT id,'trace-fixture',$1,'deposit','XOF',2500,100,'recipient',2500,2400,'created'
+    FROM sf_transactions WHERE id=$2 RETURNING id`,
+  [randomBytes(32).toString("hex"), traceTransactionId]);
+  const paymentLink = await owner.query(`INSERT INTO sf_customer_payment_links
+    (user_id,public_token,idempotency_key,request_hash,currency,amount_minor,link_name,description,
+     payment_method,source,status)
+    VALUES('audit-webhook-owner',$1,$2,$3,'XOF',2500,'API trace fixture','Test de traçabilité',
+      'mobile_money','api','active') RETURNING id`,
+  [randomBytes(32).toString("base64url"), randomUUID(), randomBytes(32).toString("hex")]);
+  await owner.query(`INSERT INTO sf_customer_payment_link_payments
+    (payment_link_id,intent_id,idempotency_key,request_hash,poll_token_hash,merchant_name,
+     payer_first_name_encrypted,payer_last_name_encrypted)
+    VALUES($1,$2,$3,$4,$5,'SendFlow fixture',$6,$7)`,
+  [paymentLink.rows[0].id, intent.rows[0].id, randomUUID(), randomBytes(32).toString("hex"),
+    randomBytes(32).toString("hex"), encryptSensitiveData("Test", "linkflow-payer-name"),
+    encryptSensitiveData("User", "linkflow-payer-name")]);
+  await owner.query(`INSERT INTO sf_payment_attempts
+    (intent_id,direction,country_code,channel_id,operation_reference,amount_minor,currency,status)
+    VALUES($1,'payin','ci','mobile-money-ci',$2,2500,'XOF','prepared')`,
+  [intent.rows[0].id, randomBytes(12).toString("hex").toUpperCase()]);
   for (const [label, url, status, createdOffset] of [
     ["Production endpoint", "https://merchant.example/hooks/sendflow?source=primary", "active", 0],
     ["Old endpoint", "https://archive.example/hooks/sendflow", "revoked", 1],
@@ -215,6 +248,26 @@ test("valid CSRF tokens pass the global guard while customer and admin routes st
   assert.equal(admin.status, 401, admin.text);
   const after = await pool.query("SELECT count(*)::int AS n FROM sf_transactions");
   assert.equal(after.rows[0].n, before.rows[0].n);
+});
+
+test("admin transaction detail returns persisted payment trace without link secrets", async () => {
+  const response = await request(`/api${adminPrefix}/transactions/${traceTransactionId}`, {
+    headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` },
+  });
+  assert.equal(response.status, 200, response.text);
+  const detail = JSON.parse(response.text);
+  assert.equal(detail.kind, "deposit");
+  assert.equal(detail.paymentTrace.intent.kind, "deposit");
+  assert.equal(detail.paymentTrace.paymentLink.source, "api");
+  assert.equal(detail.paymentTrace.paymentLink.paymentMethod, "mobile_money");
+  assert.equal(detail.paymentTrace.integrationSession, null);
+  assert.equal(detail.paymentTrace.attempts.length, 1);
+  assert.equal(detail.paymentTrace.attempts[0].countryCode, "ci");
+  assert.equal(typeof detail.paymentTrace.attempts[0].countryName, "string");
+  assert.ok(detail.paymentTrace.attempts[0].countryName.length > 0);
+  assert.equal(detail.paymentTrace.attempts[0].channelId, "mobile-money-ci");
+  assert.equal(detail.paymentTrace.attempts[0].status, "prepared");
+  assert.doesNotMatch(response.text, /public_token|pollTokenHash|idempotencyKey|sfenc-v1\./i);
 });
 
 test("CORS preflight permits the CSRF header only for an allowed origin", async () => {
