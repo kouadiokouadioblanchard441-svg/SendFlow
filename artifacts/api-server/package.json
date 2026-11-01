@@ -31,6 +31,7 @@
     "customer-biometric:schema-plan": "node --experimental-strip-types scripts/migrate-customer-biometric.mjs",
     "customer-biometric:rp-scope-plan": "node --experimental-strip-types scripts/migrate-customer-biometric-rp-scope.mjs",
     "developers:test-keys-migration": "node --experimental-strip-types scripts/migrate-developer-api-test-keys.mjs",
+    "identity-verification:migration": "node --experimental-strip-types scripts/migrate-customer-identity-verification.mjs",
     "linkflow-pricing-migration": "node --experimental-strip-types scripts/migrate-linkflow-pricing-rates.mjs",
     "payments:test-access-plan": "node --experimental-strip-types scripts/migrate-payment-test-access.mjs",
     "payments:test-account-plan": "node --experimental-strip-types scripts/authorize-replit-payment-test-account.mjs",
