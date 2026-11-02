@@ -561,14 +561,14 @@ test("Turnstile context mismatches are denied and a valid recovery token reaches
   assert.equal(externalCalls, 0);
 });
 
-test("identity verification compatibility action returns unavailable without contacting an external service", async () => {
+test("identity verification submission rejects an invalid payload before processing", async () => {
   const before = externalCalls;
   const response = await request("/api/me/identity-verification", {
     method: "POST", user: "fixture-a", body: {},
   });
-  assert.equal(response.status, 410);
+  assert.equal(response.status, 400);
   assert.deepEqual(JSON.parse(response.text), {
-    error: "Account limit verification is not available yet",
+    error: "Invalid identity verification submission",
   });
   assert.equal(externalCalls, before);
 });
