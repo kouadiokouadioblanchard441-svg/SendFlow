@@ -579,9 +579,23 @@ test("persistent quote quota is atomic across connections and resets after expir
   assert.equal(await consumeTransferQuoteQuota("fixture-quota"), true);
 });
 test("API errors do not expose database internals or secret configuration names", async () => {
-  const res = await request("/api/me/transfer-quote", { method: "POST", user: "fixture-a", body: { amountMinor: -1 } });
+  const previousTurnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  const secretMarker = `isolated-secret-${randomUUID()}`;
+  process.env.TURNSTILE_SECRET_KEY = secretMarker;
+  let res;
+  try {
+    res = await request("/api/me/transfer-quote", {
+      method: "POST",
+      user: "fixture-a",
+      body: { amountMinor: -1 },
+    });
+  } finally {
+    if (previousTurnstileSecret === undefined) delete process.env.TURNSTILE_SECRET_KEY;
+    else process.env.TURNSTILE_SECRET_KEY = previousTurnstileSecret;
+  }
   assert.equal(res.status, 400);
   assert.doesNotMatch(res.text, /DATABASE_URL|CUSTOMER_PII_ENCRYPTION_KEY|postgresql|stack|sf_fixture/i);
+  assert.equal(res.text.includes(secretMarker), false);
 });
 test("malformed and oversized HTTP bodies return safe JSON even in development", async () => {
   const marker = randomUUID();

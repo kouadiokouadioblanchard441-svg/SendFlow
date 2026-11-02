@@ -284,6 +284,7 @@ try {
       DATABASE_URL: databaseUrl.toString(), SENDFLOW_ISOLATED_RUNTIME: runtime,
       SENDFLOW_FIXTURE_SOCKET: socket, SESSION_SECRET: randomBytes(32).toString("hex"),
       CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
+      TURNSTILE_SECRET_KEY: "isolated-test-turnstile-secret",
        CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", TRUST_PROXY_HOPS: "1",
       TRUST_PROXY_HOPS: "1", LOG_LEVEL: process.env.SENDFLOW_TEST_LOG_LEVEL ?? "silent",
     },

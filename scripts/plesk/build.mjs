@@ -41,6 +41,7 @@ try {
   const buildEnvironment = { ...process.env, NODE_ENV: "production", BASE_PATH: "/" };
   run("pnpm", ["--filter", "@workspace/api-server", "run", "build"], { env: buildEnvironment });
   run("pnpm", ["--filter", "@workspace/sendflow", "run", "build"], { env: buildEnvironment });
+  run("pnpm", ["run", "check:public-artifacts"]);
 
   const lockfile = await readFile(path.join(root, "pnpm-lock.yaml"));
   const metadata = {

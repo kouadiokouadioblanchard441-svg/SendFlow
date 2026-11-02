@@ -23,7 +23,8 @@ export default defineConfig(async ({ mode }) => ({
   base: basePath,
   // Keep environment files at the workspace root; capacitor mode has its own public API origin.
   envDir,
-  // No automatic VITE_* exposure: only the exact public URL names below are embedded.
+  // No automatic VITE_* exposure: only explicit public routing values and the
+  // Cloudflare site key are embedded. Verification secrets stay server-side.
   envPrefix: [],
   define: publicClientDefinitions(loadEnv(mode, envDir, 'VITE_')),
   plugins: [

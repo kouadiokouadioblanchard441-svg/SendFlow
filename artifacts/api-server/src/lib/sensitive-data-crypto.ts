@@ -207,15 +207,20 @@ export function decryptSensitiveData(
 
   // sfenc-v1 predates key IDs. Keep old records readable after a rotation by
   // trying the active key first, then the explicitly configured historical
-  // keyring. GCM authentication determines the only key that can succeed.
+  // keyring. Reject ambiguous duplicate key material instead of guessing.
   const keyIds = [activeKeyId(), ...Object.keys(readKeyring()).filter((id) => id !== activeKeyId())];
+  let decryptedValue: string | undefined;
+  let successfulKeys = 0;
   for (const candidateKeyId of keyIds) {
     try {
-      return decryptWithKey(candidateKeyId);
+      const candidateValue = decryptWithKey(candidateKeyId);
+      successfulKeys += 1;
+      if (successfulKeys === 1) decryptedValue = candidateValue;
     } catch {
       // Continue without retaining or logging cryptographic error details.
     }
   }
+  if (successfulKeys === 1) return decryptedValue!;
   throw new Error("Sensitive-data ciphertext authentication failed");
 }
 

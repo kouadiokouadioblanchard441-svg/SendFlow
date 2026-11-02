@@ -17,8 +17,8 @@ For large-scale ledger behavior, the user selected numeric SQL columns for amoun
 
 **How to apply:** Do not describe server-side encryption as strict E2EE. Keep data needed by OTP, validation, or account operations server-processable with transport protection and encryption at rest; reserve strict E2EE for data the server never needs to inspect.
 
-Webhook payloads use a context-bound, key-ID-bearing envelope for new records. The generic legacy `sfenc-v1` envelope has no key identifier, so changing the shared master key can make existing encrypted columns unreadable; do not rotate it until a complete migration plan covers every v1 field. The webhook keyring only preserves decryptability for key-ID-bearing v2 payloads.
+New context-bound ciphertexts use a key-ID-bearing envelope. Legacy `sfenc-v1` data has no key identifier, so retain its old key in the server keyring while records remain. Deterministic lookup indexes also depend on a key; keep `CUSTOMER_PII_LOOKUP_KEY_ID` stable when rotating encryption keys.
 
-**Why:** A partial keyring must not be mistaken for application-wide key rotation support.
+**Why:** Encryption-key rotation must preserve old ciphertext access and database lookup behavior; changing the lookup key can make existing records unfindable even when they still decrypt.
 
-**How to apply:** Before changing `CUSTOMER_PII_ENCRYPTION_KEY`, inventory every encrypted field and ciphertext version, preserve required historical keys, and test a staged migration on an isolated database.
+**How to apply:** Preserve historical keys until encrypted records and restore requirements are covered. Rotate lookup-index keys only through a separately reviewed, idempotent reindex; test the rotation using isolated data before changing production configuration.

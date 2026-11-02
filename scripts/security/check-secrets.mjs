@@ -9,10 +9,16 @@ const patterns = [
   ['credential-url', /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|https?):\/\/[^\s/:]+:[^\s@]+@/],
   ['jwt-literal', /\beyJ[\w-]{10,}\.eyJ[\w-]{10,}\.[\w-]{16,}\b/],
   ['public-secret-variable', /(?:VITE_|NEXT_PUBLIC_|EXPO_PUBLIC_)[A-Z_]*(?:SECRET|PASSWORD|PRIVATE_KEY|DATABASE_URL|API_KEY|ACCESS_TOKEN)/],
+  ['server-secret-client-access', /(?:import\.meta\.env|window|globalThis)\s*(?:\.\s*|\[\s*["'])(?:TURNSTILE_SECRET_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY(?:RING)?|SUPABASE_DATABASE_URL|SENDFLOW_PII_BACKFILL_DATABASE_URL|DATABASE_URL|FEEXPAY_(?:API_KEY|SANDBOX_API_KEY|SHOP_ID)|RESEND_API_KEY|RESEND_WEBHOOK_SECRET|EMAIL_UNSUBSCRIBE_SECRET|SENDFLOW_SECRET_KEY|SENDFLOW_VIEWER_PASSWORD|DATABASE_CA_CERT|AWS_SECRET_ACCESS_KEY|WEBHOOK_SECRET|HMAC_SECRET|ANDROID_KEYSTORE_(?:BASE64|PASSWORD|ALIAS)|ANDROID_KEY_PASSWORD|ANDROID_KEY_ALIAS)\b/],
 ];
 
-const literalCredential = /(?:^|[\s{;,])["']?(?:DIDIT_API_KEY|DIDIT_WEBHOOK_SECRET|ESMS_API_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY|SUPABASE_DATABASE_URL|DATABASE_URL|SENDFLOW_ADMIN_PIN|apiKey|clientSecret|sessionSecret|privateKey|password|passwd)["']?\s*[:=]\s*["']([^"'\n]{4,})["']/;
-const publicEnvAllowlist = new Set(['VITE_API_URL', 'VITE_API_BASE_URL', 'VITE_PUBLIC_SITE_URL']);
+const literalCredential = /(?:^|[\s{;,])["']?(?:DIDIT_API_KEY|DIDIT_WEBHOOK_SECRET|ESMS_API_KEY|TURNSTILE_SECRET_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY(?:RING)?|SUPABASE_DATABASE_URL|SENDFLOW_PII_BACKFILL_DATABASE_URL|DATABASE_URL|FEEXPAY_(?:API_KEY|SANDBOX_API_KEY|SHOP_ID)|RESEND_API_KEY|RESEND_WEBHOOK_SECRET|EMAIL_UNSUBSCRIBE_SECRET|SENDFLOW_SECRET_KEY|SENDFLOW_VIEWER_PASSWORD|AWS_SECRET_ACCESS_KEY|ANDROID_KEYSTORE_BASE64|ANDROID_KEYSTORE_PASSWORD|ANDROID_KEY_PASSWORD|ANDROID_KEY_ALIAS|SENDFLOW_ADMIN_PIN|apiKey|clientSecret|sessionSecret|privateKey|password|passwd)["']?\s*[:=]\s*["']([^"'\n]{4,})["']/;
+const publicEnvAllowlist = new Set([
+  'VITE_API_URL',
+  'VITE_API_BASE_URL',
+  'VITE_PUBLIC_SITE_URL',
+  'VITE_TURNSTILE_SITE_KEY',
+]);
 
 export function scanText(file, text) {
   const findings = [];
@@ -24,7 +30,7 @@ export function scanText(file, text) {
   for (const [index, line] of text.split(/\r?\n/).entries()) {
     for (const [rule, pattern] of patterns) {
       // The regression suite constructs malicious inputs in memory.
-      if (rule === 'public-secret-variable' && isTest) continue;
+      if (isTest && ['public-secret-variable', 'server-secret-client-access'].includes(rule)) continue;
       if (pattern.test(line)) findings.push({ file, line: index + 1, rule });
     }
     const literal = line.match(literalCredential);

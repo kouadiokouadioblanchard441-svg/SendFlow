@@ -68,6 +68,7 @@ try {
       ...env, NODE_ENV: "development", SENDFLOW_DATABASE_TARGET: "development", DATABASE_URL: url.toString(),
       SENDFLOW_ISOLATED_RUNTIME: runtime, SENDFLOW_FIXTURE_SOCKET: socket,
       SESSION_SECRET: randomBytes(32).toString("hex"), CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
+      TURNSTILE_SECRET_KEY: "isolated-test-turnstile-secret",
       RESEND_API_KEY: "isolated-test-only", RESEND_FROM_EMAIL: "SendFlow <no-reply@example.invalid>",
       CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", LOG_LEVEL: "silent",
     },

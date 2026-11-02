@@ -7,15 +7,28 @@ import {
   normalizeSensitiveEmailForLookup,
 } from "./sensitive-data-crypto.ts";
 
-const originalKey = process.env.CUSTOMER_PII_ENCRYPTION_KEY;
+const encryptionEnvironmentNames = [
+  "CUSTOMER_PII_ENCRYPTION_KEY",
+  "CUSTOMER_PII_ENCRYPTION_KEY_ID",
+  "CUSTOMER_PII_ENCRYPTION_KEYRING",
+  "CUSTOMER_PII_LOOKUP_KEY_ID",
+];
+const originalEnvironment = new Map(
+  encryptionEnvironmentNames.map((name) => [name, process.env[name]]),
+);
 
 test.before(() => {
   process.env.CUSTOMER_PII_ENCRYPTION_KEY = "test-only-secret-key-with-more-than-32-bytes";
+  process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = "test-current";
+  delete process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
+  delete process.env.CUSTOMER_PII_LOOKUP_KEY_ID;
 });
 
 test.after(() => {
-  if (originalKey === undefined) delete process.env.CUSTOMER_PII_ENCRYPTION_KEY;
-  else process.env.CUSTOMER_PII_ENCRYPTION_KEY = originalKey;
+  for (const [name, value] of originalEnvironment) {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+  }
 });
 
 test("sensitive data round-trips with authenticated encryption", () => {
@@ -121,6 +134,44 @@ test("context-bound envelopes authenticate context and preserve key-version rota
   }
 });
 
+test("legacy v1 ciphertext remains decryptable through the historical keyring after rotation", () => {
+  const names = [
+    "CUSTOMER_PII_ENCRYPTION_KEY",
+    "CUSTOMER_PII_ENCRYPTION_KEY_ID",
+    "CUSTOMER_PII_ENCRYPTION_KEYRING",
+    "CUSTOMER_PII_LOOKUP_KEY_ID",
+  ];
+  const previous = new Map(names.map((name) => [name, process.env[name]]));
+  try {
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = "legacy-key";
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY = "legacy-test-key-material-longer-than-32-bytes";
+    delete process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
+    delete process.env.CUSTOMER_PII_LOOKUP_KEY_ID;
+    const legacyCiphertext = encryptSensitiveData("legacy-value", "user-email");
+    const legacyLookupIndex = createSensitiveDataLookupIndex("account@example.invalid", "user-email");
+
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = "current-key";
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY = "current-test-key-material-longer-than-32-bytes";
+    process.env.CUSTOMER_PII_ENCRYPTION_KEYRING = JSON.stringify({
+      "legacy-key": "legacy-test-key-material-longer-than-32-bytes",
+    });
+    process.env.CUSTOMER_PII_LOOKUP_KEY_ID = "legacy-key";
+
+    assert.equal(decryptSensitiveData(legacyCiphertext, "user-email"), "legacy-value");
+    assert.equal(
+      createSensitiveDataLookupIndex("account@example.invalid", "user-email"),
+      legacyLookupIndex,
+    );
+    const newCiphertext = encryptSensitiveData("current-value", "user-email");
+    assert.equal(decryptSensitiveData(newCiphertext, "user-email"), "current-value");
+  } finally {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+});
+
 test("unknown historical key versions fail without exposing key material", () => {
   const originalId = process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID;
   const originalKeyring = process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
@@ -140,5 +191,33 @@ test("unknown historical key versions fail without exposing key material", () =>
     else process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = originalId;
     if (originalKeyring === undefined) delete process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
     else process.env.CUSTOMER_PII_ENCRYPTION_KEYRING = originalKeyring;
+  }
+});
+
+test("legacy ciphertext fails closed when multiple configured IDs accept the same key", () => {
+  const names = [
+    "CUSTOMER_PII_ENCRYPTION_KEY",
+    "CUSTOMER_PII_ENCRYPTION_KEY_ID",
+    "CUSTOMER_PII_ENCRYPTION_KEYRING",
+  ];
+  const previous = new Map(names.map((name) => [name, process.env[name]]));
+  try {
+    const duplicateKey = "duplicate-test-key-material-longer-than-32-bytes";
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID = "active-key";
+    process.env.CUSTOMER_PII_ENCRYPTION_KEY = duplicateKey;
+    delete process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
+    const ciphertext = encryptSensitiveData("ambiguous-legacy-value", "user-email");
+    process.env.CUSTOMER_PII_ENCRYPTION_KEYRING = JSON.stringify({
+      "duplicate-alias": duplicateKey,
+    });
+    assert.throws(
+      () => decryptSensitiveData(ciphertext, "user-email"),
+      (error) => error.message === "Sensitive-data ciphertext authentication failed",
+    );
+  } finally {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
   }
 });

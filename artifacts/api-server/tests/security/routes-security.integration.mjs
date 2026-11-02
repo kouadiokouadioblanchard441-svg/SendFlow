@@ -37,8 +37,37 @@ const readOnlyAdminToken = randomBytes(32).toString("base64url");
 const blockedAccountId = randomUUID();
 const blockedAccountEmail = `blocked-${randomUUID()}@example.invalid`;
 const blockedAccountPassword = randomBytes(24).toString("base64url");
+const turnstileTokens = new Map();
+const usedTurnstileTokens = new Set();
 let server, site, traceTransactionId;
 const siteRoot = mkdtempSync(join(tmpdir(), "sendflow-route-static-"));
+
+function createTurnstileTestToken(action) {
+  const token = `isolated-route-${randomUUID()}`;
+  turnstileTokens.set(token, action);
+  return token;
+}
+
+globalThis.fetch = async (input, init) => {
+  if (String(input) !== "https://challenges.cloudflare.com/turnstile/v0/siteverify") {
+    throw new Error("External network forbidden in route audit");
+  }
+  const form = new URLSearchParams(init?.body ?? "");
+  const token = form.get("response") ?? "";
+  const action = turnstileTokens.get(token);
+  const accepted = Boolean(
+    action
+    && !usedTurnstileTokens.has(token)
+    && form.get("secret") === process.env.TURNSTILE_SECRET_KEY,
+  );
+  if (accepted) usedTurnstileTokens.add(token);
+  return new Response(JSON.stringify(accepted
+    ? { success: true, hostname: "sendflow-test.invalid", action }
+    : { success: false, "error-codes": ["invalid-input-response"] }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+};
 
 before(async () => {
   await owner.query("INSERT INTO sf_registration_settings(id) VALUES('signup')");
@@ -373,14 +402,22 @@ test("administrator can block and unblock an account and blocked sign-in directs
   const blockedLogin = await request("/api/auth/sign-in", {
     method: "POST",
     headers: customerSignInHeaders,
-    rawBody: JSON.stringify({ email: blockedAccountEmail, password: blockedAccountPassword }),
+    rawBody: JSON.stringify({
+      email: blockedAccountEmail,
+      password: blockedAccountPassword,
+      turnstileToken: createTurnstileTestToken("login"),
+    }),
   });
   assert.equal(blockedLogin.status, 423, blockedLogin.text);
   assert.match(blockedLogin.text, /compte est bloqué.*contacter le support SendFlow/i);
   const invalidBlockedLogin = await request("/api/auth/sign-in", {
     method: "POST",
     headers: customerSignInHeaders,
-    rawBody: JSON.stringify({ email: blockedAccountEmail, password: "wrong-password-for-test" }),
+    rawBody: JSON.stringify({
+      email: blockedAccountEmail,
+      password: "wrong-password-for-test",
+      turnstileToken: createTurnstileTestToken("login"),
+    }),
   });
   assert.equal(invalidBlockedLogin.status, 401, invalidBlockedLogin.text);
   assert.doesNotMatch(invalidBlockedLogin.text, /compte est bloqué/i);
@@ -408,7 +445,11 @@ test("administrator can block and unblock an account and blocked sign-in directs
   const unblockedLogin = await request("/api/auth/sign-in", {
     method: "POST",
     headers: customerSignInHeaders,
-    rawBody: JSON.stringify({ email: blockedAccountEmail, password: blockedAccountPassword }),
+    rawBody: JSON.stringify({
+      email: blockedAccountEmail,
+      password: blockedAccountPassword,
+      turnstileToken: createTurnstileTestToken("login"),
+    }),
   });
   assert.equal(unblockedLogin.status, 200, unblockedLogin.text);
 });

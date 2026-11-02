@@ -48,14 +48,15 @@ is available, SendFlow omits `remoteip` rather than trusting a request header.
    SendFlow hostname that will render the widget. Production and development
    preview hostnames are separate allow-list entries. Do not use a wildcard
    unless Cloudflare's site configuration explicitly supports and requires it.
-2. Add `VITE_TURNSTILE_SITE_KEY` as a Replit environment variable. It may be
-   shared when one Cloudflare site key allows all required hostnames; use
+2. Add `VITE_TURNSTILE_SITE_KEY` as a Replit environment variable. The Vite
+   build injects only this exact public value through its explicit allowlist.
+   It may be shared when one site key allows all required hostnames; use
    environment-specific values if development and production use separate site
-   keys. This value is public and is included in the web client bundle; it is
-   not the verification secret.
+   keys. This site key is designed to be public and may appear in web/Android
+   bundles. It is not the verification secret.
 3. Add `TURNSTILE_SECRET_KEY` through Replit Secrets for the API server only.
-   Never add the secret to a `VITE_` variable, a frontend file, or a committed
-   environment file.
+   Never add the secret to a `VITE_` variable, a frontend file, Android
+   configuration, an API response, a log, or a committed environment file.
 4. Confirm `CORS_ALLOWED_ORIGINS` contains the exact production web origins.
    In development, SendFlow also uses `REPLIT_DOMAINS` and
    `REPLIT_DEV_DOMAIN` for trusted origins. Production rejects Replit preview
@@ -63,6 +64,12 @@ is available, SendFlow omits `remoteip` rather than trusting a request header.
    separately allow each hostname where the widget is rendered.
 5. Restart the API and web workflows after changing environment values. Build
    the web client again after changing the public site key.
+
+The browser build does not expose arbitrary `VITE_*` values: only the three
+approved public routing values and `VITE_TURNSTILE_SITE_KEY` are injected.
+If the site key is absent, the widget remains in its configuration-error state
+and protected submit buttons stay disabled. A missing server secret continues
+to fail closed; no public configuration endpoint or frontend bypass is used.
 
 If the public site key is absent, the widget displays a configuration error and
 keeps the affected submit buttons disabled. If the server secret is absent,
@@ -77,3 +84,6 @@ unavailability. No Cloudflare account key or live verification request is used
 by the test suite. The configured site key and hostname allow-list still need to
 be supplied and confirmed in Replit/Cloudflare before a real browser challenge
 can be exercised.
+
+For the other server-only keys and the safe key-rotation procedure, see
+[SendFlow key management](./key-management.md).

@@ -15,6 +15,16 @@ const runtime = createRequire(import.meta.url)(runtimePath);
 const owner = new pg.Pool({ host: socket, port: 15433, database: "postgres", user: "sf_fixture_owner" });
 let server, port, pinHash;
 const phones = { writer: "+2250700000011", reader: "+2250700000012", customer: "+2250700000013" };
+let turnstileTokenSequence = 0;
+const turnstileTokens = new Map();
+const usedTurnstileTokens = new Set();
+
+function createTurnstileTestToken(action) {
+  const token = `isolated-admin-${action}-${++turnstileTokenSequence}`;
+  turnstileTokens.set(token, action);
+  return token;
+}
+
 function request(path, { method = "GET", cookie, body, binary, origin = "https://sendflow-test.invalid" } = {}) {
   return new Promise((resolve, reject) => {
     const data = binary ?? (body === undefined ? undefined : JSON.stringify(body));
@@ -54,6 +64,26 @@ async function withMockedEmailProvider(action) {
   const sentRequests = [];
   process.env.NODE_ENV = "production";
   globalThis.fetch = async (url, init) => {
+    if (String(url) === "https://challenges.cloudflare.com/turnstile/v0/siteverify") {
+      const form = new URLSearchParams(init?.body ?? "");
+      const token = form.get("response") ?? "";
+      const action = turnstileTokens.get(token);
+      const accepted = Boolean(
+        action
+        && !usedTurnstileTokens.has(token)
+        && form.get("secret") === process.env.TURNSTILE_SECRET_KEY,
+      );
+      if (accepted) usedTurnstileTokens.add(token);
+      return new Response(JSON.stringify(accepted
+        ? { success: true, hostname: "sendflow-test.invalid", action }
+        : { success: false, "error-codes": ["invalid-input-response"] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (String(url) !== "https://api.resend.com/emails") {
+      throw new Error("External network forbidden");
+    }
     sentRequests.push({ url, init });
     return new Response(JSON.stringify({ id: `isolated-email-message-${sentRequests.length}` }), {
       status: 200,
@@ -70,7 +100,15 @@ async function withMockedEmailProvider(action) {
 }
 async function sendOtp(body) {
   return withMockedEmailProvider(async (sentRequests) => {
-    const response = await request("/auth/send-otp", { method: "POST", body });
+    const action = body.purpose === "signup"
+      ? "signup"
+      : body.purpose === "password_reset"
+        ? "password_reset"
+        : undefined;
+    const requestBody = action
+      ? { ...body, turnstileToken: createTurnstileTestToken(action) }
+      : body;
+    const response = await request("/auth/send-otp", { method: "POST", body: requestBody });
     const sentRequest = sentRequests[0];
     const emailPayload = sentRequest ? JSON.parse(sentRequest.init.body) : null;
     const code = emailPayload?.text.match(/\b([0-9]{6})\b/)?.[1] ?? null;
@@ -309,7 +347,11 @@ test("unknown password-reset addresses receive no email and keep a generic respo
   const result = await withMockedEmailProvider(async (sentRequests) => {
     const response = await request("/auth/send-otp", {
       method: "POST",
-      body: { email: "unknown-reset@example.invalid", purpose: "password_reset" },
+      body: {
+        email: "unknown-reset@example.invalid",
+        purpose: "password_reset",
+        turnstileToken: createTurnstileTestToken("password_reset"),
+      },
     });
     return { response, sentRequests };
   });
@@ -348,7 +390,12 @@ test("concurrent OTP requests create only one active challenge and one delivery"
     const result = await withMockedEmailProvider(async (sentRequests) => {
       const responses = await Promise.all([0, 1].map(() => request("/auth/send-otp", {
         method: "POST",
-        body: { phone, email, purpose: "signup" },
+        body: {
+          phone,
+          email,
+          purpose: "signup",
+          turnstileToken: createTurnstileTestToken("signup"),
+        },
       })));
       return { responses, sentRequests };
     });
