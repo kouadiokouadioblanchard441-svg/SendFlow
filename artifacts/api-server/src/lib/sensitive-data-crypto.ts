@@ -47,6 +47,14 @@ function activeKeyId() {
   return keyId;
 }
 
+function lookupKeyId() {
+  const keyId = process.env.CUSTOMER_PII_LOOKUP_KEY_ID?.trim() || activeKeyId();
+  if (!KEY_ID_PATTERN.test(keyId)) {
+    throw new Error("Sensitive-data lookup key identifier is invalid");
+  }
+  return keyId;
+}
+
 function readKeyring(): Record<string, string> {
   const encoded = process.env.CUSTOMER_PII_ENCRYPTION_KEYRING;
   if (!encoded) return {};
@@ -59,7 +67,12 @@ function readKeyring(): Record<string, string> {
   } catch {
     throw new Error("Sensitive-data keyring configuration is invalid");
   }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+  if (
+    typeof parsed !== "object"
+    || parsed === null
+    || Array.isArray(parsed)
+    || Object.keys(parsed).length > 32
+  ) {
     throw new Error("Sensitive-data keyring configuration is invalid");
   }
   const keyring = parsed as Record<string, unknown>;
@@ -91,9 +104,7 @@ function masterKeyForId(keyId: string) {
 }
 
 function deriveKey(purpose: "encryption" | "lookup", keyId = activeKeyId()): Buffer {
-  const masterKey = purpose === "lookup"
-    ? process.env.CUSTOMER_PII_ENCRYPTION_KEY
-    : masterKeyForId(keyId);
+  const masterKey = masterKeyForId(purpose === "lookup" ? lookupKeyId() : keyId);
   if (!masterKey || Buffer.byteLength(masterKey, "utf8") < KEY_BYTES) {
     throw new Error("Sensitive-data encryption key is missing or too short");
   }
@@ -173,8 +184,8 @@ export function decryptSensitiveData(
   if (isV1 && options.authenticatedContext !== undefined) {
     throw new Error("Sensitive-data ciphertext is not context-bound");
   }
-  const keyId = isV2 ? parts[1]! : activeKeyId();
-  if (isV2 && !KEY_ID_PATTERN.test(keyId)) {
+  const keyId = isV2 ? parts[1]! : undefined;
+  if (isV2 && !KEY_ID_PATTERN.test(keyId!)) {
     throw new Error("Sensitive-data encryption key identifier is invalid");
   }
   const nonce = Buffer.from(parts[isV2 ? 2 : 1]!, "base64url");
@@ -185,10 +196,27 @@ export function decryptSensitiveData(
   }
 
   const version = isV2 ? CONTEXT_FORMAT_VERSION : FORMAT_VERSION;
-  const decipher = createDecipheriv("aes-256-gcm", deriveKey("encryption", keyId), nonce);
-  decipher.setAAD(additionalData(purpose, version, options.authenticatedContext));
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  const decryptWithKey = (candidateKeyId: string) => {
+    const decipher = createDecipheriv("aes-256-gcm", deriveKey("encryption", candidateKeyId), nonce);
+    decipher.setAAD(additionalData(purpose, version, options.authenticatedContext));
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  };
+
+  if (isV2) return decryptWithKey(keyId!);
+
+  // sfenc-v1 predates key IDs. Keep old records readable after a rotation by
+  // trying the active key first, then the explicitly configured historical
+  // keyring. GCM authentication determines the only key that can succeed.
+  const keyIds = [activeKeyId(), ...Object.keys(readKeyring()).filter((id) => id !== activeKeyId())];
+  for (const candidateKeyId of keyIds) {
+    try {
+      return decryptWithKey(candidateKeyId);
+    } catch {
+      // Continue without retaining or logging cryptographic error details.
+    }
+  }
+  throw new Error("Sensitive-data ciphertext authentication failed");
 }
 
 export function decryptSensitiveDataIfEncrypted(

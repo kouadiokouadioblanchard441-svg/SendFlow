@@ -1,14 +1,24 @@
-// Only public routing metadata belongs in a browser or Android JavaScript bundle.
+// Only explicitly public routing metadata and the Cloudflare site key belong
+// in a browser or Android JavaScript bundle. Verification secrets are excluded.
 const publicNames = [
   'VITE_API_URL',
   'VITE_API_BASE_URL',
   'VITE_PUBLIC_SITE_URL',
+  'VITE_TURNSTILE_SITE_KEY',
 ];
+const turnstileSiteKeyPattern = /^[A-Za-z0-9_-]{1,128}$/;
 
 export function publicClientDefinitions(environment) {
   const definitions = {};
   for (const name of publicNames) {
     const value = environment[name]?.trim() ?? '';
+    if (name === 'VITE_TURNSTILE_SITE_KEY') {
+      if (value && !turnstileSiteKeyPattern.test(value)) {
+        throw new Error(`${name} must contain only public site-key characters`);
+      }
+      definitions[`import.meta.env.${name}`] = JSON.stringify(value);
+      continue;
+    }
     if (value) {
       let url;
       try {
