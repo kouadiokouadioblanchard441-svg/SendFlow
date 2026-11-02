@@ -55,6 +55,7 @@ CMTyZKG3XEu5Ghl1LEnI3QmEKsqaCLv12BnVjbkSeZsMnevJPs1Ye6TjjJwdik5P
 o/bKiIz+Fq8=
 -----END CERTIFICATE-----
 """
+VITE_TURNSTILE_SITE_KEY = "0x4AAAAAAFwM4y2TRTrwsOyP"
 
 [userenv.development]
 SENDFLOW_MUTATION_ADMIN_USER_IDS = "Il faut laisser d'abord "
