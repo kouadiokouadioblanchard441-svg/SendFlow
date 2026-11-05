@@ -47,3 +47,4 @@
 - [Merchant developer API](developer-integrations.md) — Keep direct and SendFlow-hosted API checkout on the same LinkFlow routing and settlement path.
 - [Campaign contact details](campaign-contact-settings.md) — Campaign email contact details must come from the active admin settings; never bake support numbers into templates.
 - [Plesk Node runtime](plesk-node-runtime.md) — The user’s current Plesk runtime is Node.js 24.22.2; use this instead of the older screenshot value.
+- [Plesk pnpm build approvals](plesk-pnpm-build-approvals.md) — Keep only reviewed lifecycle scripts allowed in both pnpm build-approval formats for Plesk compatibility.
