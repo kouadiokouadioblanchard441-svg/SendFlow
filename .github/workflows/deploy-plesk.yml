@@ -1,0 +1,95 @@
+name: Build SendFlow on Plesk
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plesk-production
+  cancel-in-progress: false
+
+jobs:
+  build-on-plesk:
+    name: Pull and build on Plesk
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Validate deployment settings and build on Plesk
+        shell: bash
+        env:
+          PLESK_SSH_HOST: ${{ vars.PLESK_SSH_HOST }}
+          PLESK_SSH_PORT: ${{ vars.PLESK_SSH_PORT }}
+          PLESK_SSH_USER: ${{ vars.PLESK_SSH_USER }}
+          PLESK_APP_ROOT: ${{ vars.PLESK_APP_ROOT }}
+          PLESK_SSH_KNOWN_HOSTS: ${{ vars.PLESK_SSH_KNOWN_HOSTS }}
+          PLESK_SSH_PRIVATE_KEY: ${{ secrets.PLESK_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          for name in PLESK_SSH_HOST PLESK_SSH_PORT PLESK_SSH_USER PLESK_APP_ROOT PLESK_SSH_KNOWN_HOSTS PLESK_SSH_PRIVATE_KEY; do
+            if [[ -z "${!name:-}" ]]; then
+              printf 'Missing GitHub Actions variable or secret: %s\n' "$name" >&2
+              exit 1
+            fi
+          done
+
+          if [[ ! "$PLESK_SSH_HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]]; then
+            echo "PLESK_SSH_HOST must be a hostname or IPv4 address." >&2
+            exit 1
+          fi
+          if [[ ! "$PLESK_SSH_PORT" =~ ^[0-9]{1,5}$ ]] || (( PLESK_SSH_PORT < 1 || PLESK_SSH_PORT > 65535 )); then
+            echo "PLESK_SSH_PORT must be between 1 and 65535." >&2
+            exit 1
+          fi
+          if [[ ! "$PLESK_SSH_USER" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "PLESK_SSH_USER contains unsupported characters." >&2
+            exit 1
+          fi
+          if [[ "$PLESK_APP_ROOT" != /* || "$PLESK_APP_ROOT" == *$'\n'* || "$PLESK_APP_ROOT" == *$'\r'* ]]; then
+            echo "PLESK_APP_ROOT must be an absolute path without newlines." >&2
+            exit 1
+          fi
+
+          ssh_dir="$RUNNER_TEMP/plesk-ssh"
+          install -d -m 700 "$ssh_dir"
+          trap 'rm -rf "$ssh_dir"' EXIT
+          key_file="$ssh_dir/deploy_key"
+          known_hosts_file="$ssh_dir/known_hosts"
+          umask 077
+          printf '%s\n' "$PLESK_SSH_PRIVATE_KEY" > "$key_file"
+          printf '%s\n' "$PLESK_SSH_KNOWN_HOSTS" > "$known_hosts_file"
+          chmod 600 "$key_file" "$known_hosts_file"
+
+          app_root_b64="$(printf '%s' "$PLESK_APP_ROOT" | base64 -w0)"
+          ssh \
+            -T \
+            -p "$PLESK_SSH_PORT" \
+            -i "$key_file" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$known_hosts_file" \
+            -o LogLevel=ERROR \
+            "$PLESK_SSH_USER@$PLESK_SSH_HOST" \
+            "bash -s -- '$app_root_b64'" <<'REMOTE'
+          set -euo pipefail
+          app_root="$(printf '%s' "$1" | base64 --decode)"
+          cd -- "$app_root"
+
+          if [[ ! -f package.json || ! -f pnpm-lock.yaml || ! -d .git ]]; then
+            echo "PLESK_APP_ROOT must be the SendFlow Git checkout root." >&2
+            exit 1
+          fi
+          if [[ "$(git branch --show-current)" != "main" ]]; then
+            echo "The Plesk checkout must be on branch main." >&2
+            exit 1
+          fi
+
+          git fetch origin main
+          git merge --ff-only origin/main
+          bash scripts/plesk/deploy-after-push.sh
+          REMOTE
