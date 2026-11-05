@@ -52,14 +52,14 @@ lockfile, révision source, état des fichiers suivis et empreintes SHA-256 des 
 Le manifeste ne contient aucune variable secrète. Les répertoires `dist` restent ignorés
 par Git ; le hook doit les reconstruire après récupération de la bonne révision.
 
-## Pull puis Deploy depuis Plesk
+## Auto-déploiement déclenché par un push
 
-Le flux prévu est manuel : pousser le code sur GitHub, faire **Pull** dans le dépôt
-Git de Plesk, puis **Deploy** depuis Plesk. Aucun workflow GitHub ne se connecte en
-SSH au serveur et aucun secret SSH n'est requis par le dépôt.
+Le flux prévu est le suivant : pousser le code sur GitHub, puis laisser le dépôt Git
+Plesk récupérer automatiquement `main` et exécuter son action de déploiement. Aucun
+workflow GitHub ne se connecte en SSH au serveur et aucun secret SSH n'est requis.
 
-Dans les actions de déploiement du dépôt Plesk, configurer cette commande après le
-Pull, depuis le checkout SendFlow :
+Dans les paramètres du dépôt Git Plesk, l'auto-déploiement doit être activé et cette
+commande configurée comme action après le Pull, depuis le checkout SendFlow :
 
 ```sh
 bash scripts/plesk/build-after-pull.sh
@@ -68,8 +68,8 @@ bash scripts/plesk/build-after-pull.sh
 Le script vérifie que le checkout est sur `main`, que Node.js est exactement
 `24.22.2` et que pnpm est `10.26.1`. Il exécute ensuite `pnpm install
 --frozen-lockfile` puis `pnpm run build:plesk` sur Plesk. Si le mode de déploiement
-Plesk utilisé n'exécute pas d'actions après Pull, lancer la même commande depuis le
-terminal Plesk, à l'intérieur du checkout, après chaque Pull.
+Plesk n'est pas configuré pour l'auto-déploiement ou les actions après Pull, le build
+ne se lancera pas automatiquement.
 
 Le script ne démarre pas les applications. Après un build réussi, configurer les
 fichiers de démarrage des applications Node Plesk, relatifs à la racine du checkout :
