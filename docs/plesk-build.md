@@ -68,8 +68,8 @@ commande configurée comme action après le Pull, depuis le checkout SendFlow :
 bash scripts/plesk/build-after-pull.sh
 ```
 
-Le script retrouve la racine du checkout à partir de son propre chemin (Git n'est
-pas nécessaire dans l'environnement du hook), vérifie que Node.js est exactement
+Le script retrouve la racine du checkout avec Bash, sans dépendre de Git ni de
+`dirname` dans l'environnement du hook, vérifie que Node.js est exactement
 `24.22.2` et que pnpm est `10.26.1`. Il exécute ensuite `pnpm install
 --frozen-lockfile` puis `pnpm run build:plesk` sur Plesk. Si le mode de déploiement
 Plesk n'est pas configuré pour l'auto-déploiement ou les actions après Pull, le build

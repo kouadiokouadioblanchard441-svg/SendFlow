@@ -41,11 +41,9 @@ test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", a
     'console.log("synthetic-entry-started");');
 });
 
-test("Plesk post-pull build does not require git in PATH", async (t) => {
+test("Plesk post-pull build works without git or dirname in PATH", async (t) => {
   const bin = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-bin-"));
   t.after(() => rm(bin, { recursive: true, force: true }));
-  const systemDirname = spawnSync("which", ["dirname"], { encoding: "utf8" }).stdout.trim();
-  await symlink(systemDirname, path.join(bin, "dirname"));
   const fakeNode = path.join(bin, "node");
   await writeFile(fakeNode, '#!/bin/sh\nprintf "24.22.2\\\\n"\n');
   await chmod(fakeNode, 0o755);
@@ -61,7 +59,7 @@ test("Plesk post-pull build does not require git in PATH", async (t) => {
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /pnpm install --frozen-lockfile/);
   assert.match(result.stdout, /pnpm run build:plesk/);
-  assert.doesNotMatch(result.stderr, /git: command not found/);
+  assert.doesNotMatch(result.stderr, /(?:git|dirname): command not found/);
 });
 
 test("missing JS or CSS is an error, not an accepted SPA fallback", async (t) => {

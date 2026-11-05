@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+script_path="${BASH_SOURCE[0]}"
+if [[ "$script_path" != /* ]]; then
+  script_path="$PWD/$script_path"
+fi
+script_dir="${script_path%/*}"
 repo_root="$(cd -- "$script_dir/../.." && pwd -P)"
 cd "$repo_root"
 
