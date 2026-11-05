@@ -62,6 +62,19 @@ test("Plesk post-pull build works without git or dirname in PATH", async (t) => 
   assert.doesNotMatch(result.stderr, /(?:git|dirname): command not found/);
 });
 
+test("Plesk post-pull build fails clearly if Node is unavailable", async (t) => {
+  const emptyPath = await mkdtemp(path.join(tmpdir(), "sendflow-no-node-"));
+  t.after(() => rm(emptyPath, { recursive: true, force: true }));
+  const result = spawnSync("/bin/bash", [path.join(projectRoot, "scripts/plesk/build-after-pull.sh")], {
+    cwd: projectRoot,
+    env: { ...process.env, PATH: emptyPath },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Node\.js is unavailable to the Plesk deployment action/);
+  assert.doesNotMatch(result.stderr, /command not found/);
+});
+
 test("missing JS or CSS is an error, not an accepted SPA fallback", async (t) => {
   const root = await fixture(t);
   await rm(path.join(root, "public/assets/app.js"));
