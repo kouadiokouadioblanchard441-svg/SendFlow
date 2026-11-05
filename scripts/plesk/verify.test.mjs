@@ -75,6 +75,29 @@ test("Plesk post-pull build fails clearly if Node is unavailable", async (t) => 
   assert.doesNotMatch(result.stderr, /command not found/);
 });
 
+test("Plesk post-pull build accepts an explicit Node binary outside PATH", async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), "sendflow-explicit-node-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const nodeDir = path.join(root, "plesk-node");
+  const toolsDir = path.join(root, "tools");
+  await mkdir(nodeDir);
+  await mkdir(toolsDir);
+  const fakeNode = path.join(nodeDir, "node");
+  await writeFile(fakeNode, '#!/bin/sh\nprintf "24.22.2\\\\n"\n');
+  await chmod(fakeNode, 0o755);
+  const fakePnpm = path.join(toolsDir, "pnpm");
+  await writeFile(fakePnpm, '#!/bin/sh\nif [ "$1" = "--version" ]; then printf "10.26.1\\\\n"; else printf "pnpm PATH=%s %s\\\\n" "$PATH" "$*"; fi\n');
+  await chmod(fakePnpm, 0o755);
+
+  const result = spawnSync("/bin/bash", [path.join(projectRoot, "scripts/plesk/build-after-pull.sh")], {
+    cwd: projectRoot,
+    env: { ...process.env, PATH: toolsDir, NODE_BINARY: fakeNode, PNPM_BINARY: fakePnpm },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, new RegExp(nodeDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+});
+
 test("missing JS or CSS is an error, not an accepted SPA fallback", async (t) => {
   const root = await fixture(t);
   await rm(path.join(root, "public/assets/app.js"));

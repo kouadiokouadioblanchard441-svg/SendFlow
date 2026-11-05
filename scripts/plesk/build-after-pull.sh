@@ -14,11 +14,26 @@ if [[ ! -f package.json || ! -f pnpm-lock.yaml ]]; then
   exit 1
 fi
 
-node_bin="${NODE_BINARY:-$(command -v node || true)}"
+resolve_executable() {
+  local requested="$1"
+  if [[ "$requested" == */* ]]; then
+    [[ -x "$requested" ]] && printf '%s\n' "$requested"
+  else
+    command -v "$requested" || true
+  fi
+}
+
+node_bin="$(resolve_executable "${NODE_BINARY:-node}")"
 if [[ -z "$node_bin" || ! -x "$node_bin" ]]; then
-  echo "Node.js is unavailable to the Plesk deployment action. Expose the selected Node binary in PATH or set NODE_BINARY to its executable path." >&2
+  echo "Node.js is unavailable to the Plesk deployment action. Expose the selected Node binary in PATH or set NODE_BINARY to its exact executable path." >&2
   exit 1
 fi
+
+node_bin_dir="${node_bin%/*}"
+if [[ "$node_bin_dir" == "$node_bin" ]]; then
+  node_bin_dir="$PWD"
+fi
+export PATH="$node_bin_dir:$PATH"
 
 if ! node_version="$("$node_bin" -p 'process.versions.node' 2>/dev/null)"; then
   echo "The configured Node.js executable could not be run." >&2
@@ -29,9 +44,9 @@ if [[ "$node_version" != "24.22.2" ]]; then
   exit 1
 fi
 
-pnpm_bin="${PNPM_BINARY:-$(command -v pnpm || true)}"
+pnpm_bin="$(resolve_executable "${PNPM_BINARY:-pnpm}")"
 if [[ -z "$pnpm_bin" || ! -x "$pnpm_bin" ]]; then
-  echo "pnpm is unavailable to the Plesk deployment action. Expose it in PATH or set PNPM_BINARY to its executable path." >&2
+  echo "pnpm is unavailable to the Plesk deployment action. Expose it in PATH or set PNPM_BINARY to its exact executable path." >&2
   exit 1
 fi
 

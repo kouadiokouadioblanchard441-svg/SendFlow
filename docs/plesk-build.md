@@ -75,6 +75,12 @@ Le script retrouve la racine du checkout avec Bash, sans dépendre de Git ni de
 Plesk n'est pas configuré pour l'auto-déploiement ou les actions après Pull, le build
 ne se lancera pas automatiquement.
 
+L'action doit exposer les exécutables Node et pnpm dans `PATH`. Si Plesk ne les
+fournit pas automatiquement, définir les variables non secrètes `NODE_BINARY` et
+`PNPM_BINARY` avec leurs chemins exacts dans l'environnement de l'action. Le script
+ne devine aucun chemin Plesk ; il s'arrête avant installation/build si un outil est
+introuvable ou si sa version ne correspond pas.
+
 Le script ne démarre pas les applications. Après un build réussi, configurer les
 racines et fichiers de démarrage des applications Node Plesk :
 
