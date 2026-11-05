@@ -12,15 +12,21 @@ fichiers statiques seul ne remplace pas ce service.
 
 ## Construction reproductible
 
-Depuis la racine du dépôt, avec la version pnpm compatible avec le lockfile :
+Depuis la racine du dépôt, avec la version pnpm déclarée dans `package.json`
+(`pnpm@10.26.1`) :
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm run build:plesk
 ```
 
-Installer les dépendances de développement pour compiler. Ne pas remplacer pnpm
-par npm, ne pas régénérer le lockfile et ne pas lancer de migration dans le hook.
+Le réglage `manage-package-manager-versions=true` dans `.npmrc` demande à pnpm
+d'utiliser cette version déclarée.
+
+Installer les dépendances de développement pour compiler. Le dépôt approuve
+explicitement `esbuild` dans `pnpm-workspace.yaml` ; ne pas approuver globalement les
+scripts de toutes les dépendances. Ne pas remplacer pnpm par npm, ne pas régénérer
+le lockfile et ne pas lancer de migration dans le hook.
 Les compilateurs déjà installés sont utilisés ; le build ne lance pas d'installation.
 
 La commande impose `NODE_ENV=production` et `BASE_PATH=/` seulement aux processus de
@@ -70,9 +76,9 @@ Ajouter sous **GitHub Actions Secrets** :
 
 Ne pas coller ces valeurs dans le dépôt, dans Replit Secrets ou dans le chat. Le
 checkout Plesk doit déjà avoir un remote `origin` authentifié vers le dépôt GitHub
-et être positionné sur `main`. Le shell SSH doit exposer Node.js 24.22.2 et pnpm.
-Si ces réglages manquent, le workflow s'arrête sans afficher leurs valeurs ni lancer
-le build.
+et être positionné sur `main`. Le shell SSH doit exposer Node.js 24.22.2 et pnpm
+10.26.1, sélectionné par la propriété `packageManager`. Si ces réglages manquent,
+le workflow s'arrête sans afficher leurs valeurs ni lancer le build.
 
 Après le build, les fichiers de démarrage Plesk restent dans les deux chemins du
 tableau ci-dessus ; aucun `index.cjs` n'est créé à la racine du dépôt.

@@ -20,5 +20,12 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 1
 fi
 
+pnpm_version="$(pnpm --version)"
+if [[ "$pnpm_version" != "10.26.1" ]]; then
+  echo "SendFlow requires pnpm 10.26.1; found ${pnpm_version}." >&2
+  echo "Use the packageManager version declared in package.json, then retry." >&2
+  exit 1
+fi
+
 pnpm install --frozen-lockfile
 pnpm run build:plesk
