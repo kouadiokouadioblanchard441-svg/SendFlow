@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(git rev-parse --show-toplevel)"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+repo_root="$(cd -- "$script_dir/../.." && pwd -P)"
 cd "$repo_root"
 
-if [[ "$(git branch --show-current)" != "main" ]]; then
-  echo "Plesk build requires the main branch." >&2
+if [[ ! -f package.json || ! -f pnpm-lock.yaml ]]; then
+  echo "Plesk build must run from a complete SendFlow checkout." >&2
   exit 1
 fi
 

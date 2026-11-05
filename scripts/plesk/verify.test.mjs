@@ -1,10 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm, symlink, chmod } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { commonJsLauncher, stagePleskWebDistribution, verifyDistribution } from "./verify.mjs";
+
+const projectRoot = fileURLToPath(new URL("../../", import.meta.url));
 
 async function fixture(t) {
   const root = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-"));
@@ -36,6 +39,29 @@ test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", a
     '<script src="/assets/app.js"></script><link rel="stylesheet" href="/assets/app.css">');
   assert.equal(await readFile(path.join(target, "server/index.mjs"), "utf8"),
     'console.log("synthetic-entry-started");');
+});
+
+test("Plesk post-pull build does not require git in PATH", async (t) => {
+  const bin = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-bin-"));
+  t.after(() => rm(bin, { recursive: true, force: true }));
+  const systemDirname = spawnSync("which", ["dirname"], { encoding: "utf8" }).stdout.trim();
+  await symlink(systemDirname, path.join(bin, "dirname"));
+  const fakeNode = path.join(bin, "node");
+  await writeFile(fakeNode, '#!/bin/sh\nprintf "24.22.2\\\\n"\n');
+  await chmod(fakeNode, 0o755);
+  const fakePnpm = path.join(bin, "pnpm");
+  await writeFile(fakePnpm, '#!/bin/sh\nif [ "$1" = "--version" ]; then printf "10.26.1\\\\n"; else printf "pnpm %s\\\\n" "$*"; fi\n');
+  await chmod(fakePnpm, 0o755);
+
+  const result = spawnSync("/bin/bash", [path.join(projectRoot, "scripts/plesk/build-after-pull.sh")], {
+    cwd: projectRoot,
+    env: { ...process.env, PATH: bin },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /pnpm install --frozen-lockfile/);
+  assert.match(result.stdout, /pnpm run build:plesk/);
+  assert.doesNotMatch(result.stderr, /git: command not found/);
 });
 
 test("missing JS or CSS is an error, not an accepted SPA fallback", async (t) => {
