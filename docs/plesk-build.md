@@ -2,9 +2,10 @@
 
 ## Périmètre
 
-Cette procédure prépare le code ici ou dans un hook Git Plesk. Elle ne déploie rien,
-ne démarre pas les applications de production et n'exécute aucune migration, aucun SMS
-et aucun paiement. Les pages et le code métier restent inchangés.
+Cette procédure construit le code localement ou depuis une action de déploiement
+post-Pull dans Plesk. Elle ne connecte pas GitHub à Plesk, ne démarre pas les
+applications de production et n'exécute aucune migration, aucun SMS ni paiement.
+Les pages et le code métier restent inchangés.
 
 Le projet utilise pnpm et deux services Node : site React/Vite et API Express.
 Le serveur du site applique la défense IP avant les fichiers publics : un dépôt de
@@ -51,39 +52,35 @@ lockfile, révision source, état des fichiers suivis et empreintes SHA-256 des 
 Le manifeste ne contient aucune variable secrète. Les répertoires `dist` restent ignorés
 par Git ; le hook doit les reconstruire après récupération de la bonne révision.
 
-## Build automatique après un push GitHub
+## Pull puis Deploy depuis Plesk
 
-Le workflow `.github/workflows/deploy-plesk.yml` s'exécute après chaque push sur
-`main`. Il se connecte en SSH à Plesk, met à jour le checkout uniquement par
-fast-forward, puis lance `scripts/plesk/deploy-after-push.sh`. Ce script vérifie
-Node.js 24.22.2, installe les dépendances avec le lockfile figé et lance
-`pnpm run build:plesk` **sur Plesk**. Les dossiers `dist` sont donc créés sur le
-serveur après le push ; ils ne sont pas inclus dans Git. Le workflow ne redémarre
-pas les applications : redémarre les deux services dans Plesk après un build réussi.
+Le flux prévu est manuel : pousser le code sur GitHub, faire **Pull** dans le dépôt
+Git de Plesk, puis **Deploy** depuis Plesk. Aucun workflow GitHub ne se connecte en
+SSH au serveur et aucun secret SSH n'est requis par le dépôt.
 
-Dans les paramètres du dépôt GitHub, ajouter les variables Actions suivantes :
+Dans les actions de déploiement du dépôt Plesk, configurer cette commande après le
+Pull, depuis le checkout SendFlow :
 
-| Variable         | Valeur attendue                             |
-| ---------------- | ------------------------------------------- |
-| `PLESK_SSH_HOST` | Hôte SSH Plesk (nom DNS ou IPv4)            |
-| `PLESK_SSH_PORT` | Port SSH                                    |
-| `PLESK_SSH_USER` | Utilisateur SSH limité au checkout SendFlow |
-| `PLESK_APP_ROOT` | Chemin absolu du checkout vu depuis SSH     |
+```sh
+bash scripts/plesk/build-after-pull.sh
+```
 
-Ajouter sous **GitHub Actions Secrets** :
+Le script vérifie que le checkout est sur `main`, que Node.js est exactement
+`24.22.2` et que pnpm est `10.26.1`. Il exécute ensuite `pnpm install
+--frozen-lockfile` puis `pnpm run build:plesk` sur Plesk. Si le mode de déploiement
+Plesk utilisé n'exécute pas d'actions après Pull, lancer la même commande depuis le
+terminal Plesk, à l'intérieur du checkout, après chaque Pull.
 
-- `PLESK_SSH_PRIVATE_KEY` : clé privée du compte de déploiement ;
-- `PLESK_SSH_KNOWN_HOSTS` : entrée `known_hosts` épinglant la clé publique de l’hôte
-  (pour un port non standard, utiliser le format `[hôte]:port`).
+Le script ne démarre pas les applications. Après un build réussi, configurer les
+fichiers de démarrage des applications Node Plesk, relatifs à la racine du checkout :
 
-Ne pas coller ces valeurs dans le dépôt, dans Replit Secrets ou dans le chat. Le
-checkout Plesk doit déjà avoir un remote `origin` authentifié vers le dépôt GitHub
-et être positionné sur `main`. Le shell SSH doit exposer Node.js 24.22.2 et pnpm
-10.26.1, sélectionné par la propriété `packageManager`. Si ces réglages manquent,
-le workflow s'arrête sans afficher leurs valeurs ni lancer le build.
+| Service | Fichier de démarrage |
+| ------- | -------------------- |
+| Site    | `artifacts/sendflow/dist/index.cjs` |
+| API     | `artifacts/api-server/dist/index.cjs` |
 
-Après le build, les fichiers de démarrage Plesk restent dans les deux chemins du
-tableau ci-dessus ; aucun `index.cjs` n'est créé à la racine du dépôt.
+Redémarrer les deux services dans Plesk après le build. Aucun `index.cjs` n'est
+créé à la racine du dépôt.
 
 ## Écart avec la proposition `/httpdocs/dist`
 
