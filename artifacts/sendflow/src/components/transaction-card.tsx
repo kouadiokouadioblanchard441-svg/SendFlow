@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import sendflowMark from '@assets/sendflow-mark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
 import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
 import { operatorNames, type OperatorCode, type Transaction } from '@/lib/transactions';
 

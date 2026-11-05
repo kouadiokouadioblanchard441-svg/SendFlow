@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useSeo } from '@/lib/seo';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import successIllustration from '@assets/generated_images/sendflow-pin-change-success-3d-clean.png';
 
 const PIN_CHANGE_SUCCESS_KEY = 'sendflow.pin.change-success';

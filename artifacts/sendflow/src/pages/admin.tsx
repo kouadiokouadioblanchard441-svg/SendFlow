@@ -52,7 +52,7 @@ import AdminIpBlocklist from '@/components/admin-ip-blocklist';
 import AdminNetworkDefense from '@/components/admin-network-defense';
 import { AdminIdentityVerificationsPage, AdminUserIdentitySummary } from '@/pages/admin-identity-verifications';
 import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
-import sendflowMark from '@assets/sendflow-mark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
 import {
   useGetAdminTransaction,
   useGetAdminUser,

@@ -1,8 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import { operatorNames } from '@/lib/transactions';
 import { notifications, type SendFlowNotification } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';

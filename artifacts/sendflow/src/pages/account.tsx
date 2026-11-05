@@ -39,9 +39,9 @@ import { notifications } from '@/lib/notifications';
 import { useSeo } from '@/lib/seo';
 import { clearLegacyAccountProfile, splitFullName } from '@/lib/account-profile';
 import { getAvatarForUser, getCurrentAvatarUserKey } from '@/lib/avatar-bank';
-import notificationBell from '@assets/633486_1789677628502.png';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/téléchargement_1789667092840.png';
+import notificationBell from '@/assets/notification-bell.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 
 type SheetName = 'notifications' | null;
 const NOTIFICATIONS_READ_KEY = 'sendflow.notifications.read';

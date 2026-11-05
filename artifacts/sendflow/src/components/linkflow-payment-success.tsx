@@ -1,5 +1,5 @@
 import { Check, ShieldCheck } from 'lucide-react';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 
 export interface LinkFlowPaymentConfirmation {
   mode: 'simulation';

@@ -20,7 +20,7 @@ import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import linkflowIllustration from '@assets/generated_images/sendflow-linkflow-payment-3d.webp';
 import linkUnavailableIllustration from '@assets/generated_images/sendflow-link-unavailable-3d-final.png';
 import linkExpiredIllustration from '@assets/generated_images/sendflow-link-expired-mascot-final.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import securePaymentMark from '@assets/generated_images/sendflow-secure-payment-mark-3d-clean.png';
 import waveOperatorLogo from '@/assets/wave-logo-reference.png';
 import { OperatorMark } from '@/components/operator-mark';

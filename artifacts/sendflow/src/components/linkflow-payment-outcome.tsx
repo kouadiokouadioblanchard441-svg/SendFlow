@@ -1,5 +1,5 @@
 import { ArrowRight, Check, CircleAlert, ShieldCheck, X } from 'lucide-react';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import LinkFlowSecureFooter from '@/components/linkflow-secure-footer';
 
 export interface LinkFlowPaymentOutcomeProps {

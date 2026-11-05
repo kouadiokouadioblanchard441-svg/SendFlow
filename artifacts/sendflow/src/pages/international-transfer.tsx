@@ -34,8 +34,8 @@ import {
   serverQuoteAmounts,
   serverQuoteErrorMessage,
 } from '@/lib/server-transfer-quote';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 
 type TransferCountry = {
   id: string;

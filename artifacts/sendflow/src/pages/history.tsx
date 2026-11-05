@@ -6,8 +6,8 @@ import { TransactionCard } from '@/components/transaction-card';
 import { useCustomerTransactions } from '@/lib/customer-transactions';
 import { toTransactionView } from '@/lib/transactions';
 import { useSeo } from '@/lib/seo';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 
 export default function HistoryPage() {
   const [, setLocation] = useLocation();

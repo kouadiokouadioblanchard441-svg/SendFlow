@@ -2,8 +2,8 @@ import { ArrowLeft, PhoneCall, type LucideIcon } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { useCustomerServiceContact } from '@/lib/customer-service';
 import { useSeo } from '@/lib/seo';
-import facebookLogo from '@assets/facebook-logo-clean-icon-png_1789744005304.png';
-import whatsappLogo from '@assets/logo-whatsapp-fond-blanc-vecteur_980129-12073_1789744005252.jpg';
+import facebookLogo from '@/assets/facebook-logo.png';
+import whatsappLogo from '@/assets/whatsapp-logo.jpg';
 import customerServiceIllustration from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
 
 type SupportChannel = {

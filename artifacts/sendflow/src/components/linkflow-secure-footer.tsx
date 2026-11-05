@@ -1,4 +1,4 @@
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import securePaymentMark from '@assets/generated_images/sendflow-secure-payment-mark-3d-clean.png';
 
 export default function LinkFlowSecureFooter() {

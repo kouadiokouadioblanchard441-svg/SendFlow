@@ -20,8 +20,8 @@ import {
   getPlatformBiometricAssertion,
   hasPlatformBiometricAuthenticator,
 } from '@/lib/customer-biometric';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import pinCharacterPrimary from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
 import pinCharacterSecondary from '@assets/generated_images/sendflow-network-person-3d-transparent.png';
 

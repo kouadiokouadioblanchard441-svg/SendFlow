@@ -10,8 +10,8 @@ import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import { NEW_CUSTOMER_PASSWORD_MIN_LENGTH } from '@/lib/customer-password-validation';
 import { getPhoneLengthMessage, isValidPhoneForCountry } from '@/lib/phone-rules';
 import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import resetPasswordIllustration from '@assets/generated_images/sendflow-reset-password-3d-alpha.png';
 import resetPinIllustration from '@assets/generated_images/sendflow-reset-pin-3d-alpha.png';
 

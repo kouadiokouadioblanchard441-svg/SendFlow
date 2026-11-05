@@ -11,8 +11,8 @@ import { clearLegacyAccountProfile } from '@/lib/account-profile';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
 import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import signupIllustration from '@assets/generated_images/sendflow-signup-welcome-3d-clean.png';
 import signupProfileIllustration from '@assets/generated_images/sendflow-signup-profile-3d-clean.png';
 

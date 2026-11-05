@@ -5,8 +5,8 @@ import {
   Code2, Copy, FileCode2, Globe2, LifeBuoy, LockKeyhole, Menu, Search, ShieldCheck,
   Webhook, X,
 } from 'lucide-react';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import apiIntegrationIllustration from '../assets/docs-api-integration-3d.webp';
 import hostedCheckoutIllustration from '../assets/docs-hosted-checkout-3d.webp';
 import { useSeo } from '@/lib/seo';

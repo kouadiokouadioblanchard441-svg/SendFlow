@@ -1,4 +1,4 @@
-import nativeWalletIcon from '@assets/10149443_1789713972148.png';
+import nativeWalletIcon from '@/assets/native-wallet-icon.png';
 
 type NativeWalletIconProps = {
   className?: string;

@@ -8,8 +8,8 @@ import { useSignInCustomer } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearPinUnlock } from '@/lib/pin-unlock';
 import { clearLegacyAccountProfile } from '@/lib/account-profile';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import signinIllustration from '@assets/generated_images/sendflow-signin-security-3d-clean.png';
 import signinPaymentsIllustration from '@assets/generated_images/sendflow-signin-payments-3d-clean.png';
 

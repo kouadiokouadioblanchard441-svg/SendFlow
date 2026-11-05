@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'wouter';
 import { useSeo } from '@/lib/seo';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import networkIllustration from '@assets/generated_images/sendflow-network-person-3d-transparent.png';
 import howIllustration from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
 import coverageIllustration from '@assets/generated_images/sendflow-coverage-person-3d-flags-clean.png';

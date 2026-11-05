@@ -35,8 +35,8 @@ import {
   isValidTransactionAmount,
   parseWholeAmount,
 } from '@/lib/transfer-validation';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 
 type CountryCode = string;
 type TransferSide = 'source' | 'destination';

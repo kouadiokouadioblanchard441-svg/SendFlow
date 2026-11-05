@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { Link } from 'wouter';
 import { useLocation } from 'wouter';
-import sendflowMark from '@assets/sendflow-mark-original.png';
-import sendflowWordmark from '@assets/sendflow-wordmark-original.png';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import privacyArtSecurity from '@assets/generated_images/sendflow-security-hero-3d-clean.png';
 import privacyArtLimit from '@assets/generated_images/sendflow-account-limit-verification-3d-transparent.png';
 import privacyArtHow from '@assets/generated_images/sendflow-how-person-3d-transparent.png';
