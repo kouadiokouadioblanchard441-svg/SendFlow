@@ -23,10 +23,12 @@ pnpm run build:plesk
 Le réglage `manage-package-manager-versions=true` dans `.npmrc` demande à pnpm
 d'utiliser cette version déclarée.
 
-Installer les dépendances de développement pour compiler. Le dépôt approuve
-explicitement `esbuild` dans `pnpm-workspace.yaml` ; ne pas approuver globalement les
-scripts de toutes les dépendances. Ne pas remplacer pnpm par npm, ne pas régénérer
-le lockfile et ne pas lancer de migration dans le hook.
+Installer les dépendances de développement pour compiler. Le dépôt autorise
+explicitement les quatre scripts nécessaires (`@swc/core`, `esbuild`, `msw` et
+`unrs-resolver`) dans `pnpm-workspace.yaml`, avec les syntaxes `allowBuilds` et
+`onlyBuiltDependencies` pour la compatibilité pnpm. Ne pas approuver globalement les
+scripts de toutes les dépendances. Ne pas remplacer pnpm par npm, ne pas régénérer le
+lockfile et ne pas lancer de migration dans le hook.
 Les compilateurs déjà installés sont utilisés ; le build ne lance pas d'installation.
 
 La commande impose `NODE_ENV=production` et `BASE_PATH=/` seulement aux processus de
