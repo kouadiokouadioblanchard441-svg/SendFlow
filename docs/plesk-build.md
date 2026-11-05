@@ -42,7 +42,7 @@ puis compile uniquement API et SendFlow (pas le mockup-sandbox). Il génère :
 
 | Service | Racine de distribution relative au dépôt | Startup Plesk |
 | ------- | ---------------------------------------- | ------------- |
-| Site    | `artifacts/sendflow/dist`                | `index.cjs`   |
+| Site    | `artifacts/dist`                         | `index.cjs`   |
 | API     | `artifacts/api-server/dist`              | `index.cjs`   |
 
 Les adaptateurs CommonJS importent les bundles ESM existants et exigent
@@ -51,6 +51,9 @@ un manifeste privé `plesk-manifest.json` avec version du constructeur, empreint
 lockfile, révision source, état des fichiers suivis et empreintes SHA-256 des fichiers.
 Le manifeste ne contient aucune variable secrète. Les répertoires `dist` restent ignorés
 par Git ; le hook doit les reconstruire après récupération de la bonne révision.
+Pour le site, `artifacts/dist` est le package attendu par Plesk : il contient
+`index.cjs`, `server/` et `public/`. Il est généré à partir du build SendFlow après
+validation, tandis que `artifacts/sendflow/dist` reste la sortie native de Vite.
 
 ## Auto-déploiement déclenché par un push
 
@@ -72,22 +75,26 @@ Plesk n'est pas configuré pour l'auto-déploiement ou les actions après Pull, 
 ne se lancera pas automatiquement.
 
 Le script ne démarre pas les applications. Après un build réussi, configurer les
-fichiers de démarrage des applications Node Plesk, relatifs à la racine du checkout :
+racines et fichiers de démarrage des applications Node Plesk :
 
-| Service | Fichier de démarrage |
-| ------- | -------------------- |
-| Site    | `artifacts/sendflow/dist/index.cjs` |
-| API     | `artifacts/api-server/dist/index.cjs` |
+| Service | Application root relative au checkout | Fichier de démarrage relatif à cette racine |
+| ------- | --------------------------------------- | ------------------------------------------- |
+| Site    | `artifacts`                             | `dist/index.cjs`                            |
+| API     | `artifacts/api-server`                  | `dist/index.cjs`                            |
 
-Redémarrer les deux services dans Plesk après le build. Aucun `index.cjs` n'est
-créé à la racine du dépôt.
+Le dossier `artifacts/dist/public` contient les fichiers statiques, mais ils doivent
+être servis par le serveur Node du site pour conserver le contrôle IP appliqué par
+l'application. Ne pas exposer directement le dossier par un serveur statique Nginx
+ou Apache sans protection équivalente. Redémarrer les deux services dans Plesk après
+le build. Aucun `index.cjs` n'est créé à la racine du dépôt.
 
 ## Écart avec la proposition `/httpdocs/dist`
 
 La compétence fournie mentionne une **proposition à vérifier**, pas un accès Plesk
 observé : `/httpdocs/dist`, `/httpdocs/dist/public`, `index.cjs`, Node 22.23.3.
-Le dépôt ne produit pas de `dist/index.cjs` unique à sa racine. Il produit les deux
-distributions ci-dessus. Ne pas appliquer cette proposition telle quelle.
+Le build crée `artifacts/dist/index.cjs` et `artifacts/dist/public` pour le site,
+ainsi que la distribution API séparée. Il ne crée pas un package combiné unique
+`dist/` à la racine du dépôt.
 
 Selon l'emplacement réel du checkout, configurer deux applications/processus Node,
 ou préparer une autre architecture explicitement approuvée. Les chemins absolus, les

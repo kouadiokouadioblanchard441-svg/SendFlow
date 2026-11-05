@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, writeFile, rm, symlink } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { commonJsLauncher, verifyDistribution } from "./verify.mjs";
+import { commonJsLauncher, stagePleskWebDistribution, verifyDistribution } from "./verify.mjs";
 
 async function fixture(t) {
   const root = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-"));
@@ -25,6 +25,17 @@ test("verifies a root-mounted web release and hashes its files", async (t) => {
   assert.equal(result.startupFile, "index.cjs");
   assert.equal(result.files.length, 5);
   assert.ok(result.files.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
+});
+
+test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", async (t) => {
+  const source = await fixture(t);
+  const target = path.join(path.dirname(source), "artifacts", "dist");
+  const result = await stagePleskWebDistribution(source, target);
+  assert.equal(result.startupFile, "index.cjs");
+  assert.equal(await readFile(path.join(target, "public/index.html"), "utf8"),
+    '<script src="/assets/app.js"></script><link rel="stylesheet" href="/assets/app.css">');
+  assert.equal(await readFile(path.join(target, "server/index.mjs"), "utf8"),
+    'console.log("synthetic-entry-started");');
 });
 
 test("missing JS or CSS is an error, not an accepted SPA fallback", async (t) => {

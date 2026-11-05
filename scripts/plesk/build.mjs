@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { readFile, statfs, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { commonJsLauncher, verifyDistribution } from "./verify.mjs";
+import { commonJsLauncher, stagePleskWebDistribution, verifyDistribution } from "./verify.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 process.chdir(root);
@@ -39,6 +39,7 @@ try {
 
   // Root-mounted, same-origin Plesk release. Do not change stored environments.
   const buildEnvironment = { ...process.env, NODE_ENV: "production", BASE_PATH: "/" };
+  const pleskWebDistribution = path.join(root, "artifacts/dist");
   run("pnpm", ["--filter", "@workspace/api-server", "run", "build"], { env: buildEnvironment });
   run("pnpm", ["--filter", "@workspace/sendflow", "run", "build"], { env: buildEnvironment });
   run("pnpm", ["run", "check:public-artifacts"]);
@@ -68,6 +69,17 @@ try {
     await writeFile(path.join(distribution, "plesk-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o644 });
     console.log(`Plesk ${service}: ${manifest.files.length} files verified; ${directory}/index.cjs ready.`);
   }
+  const stagedWeb = await stagePleskWebDistribution(
+    path.join(root, "artifacts/sendflow/dist"),
+    pleskWebDistribution,
+  );
+  const stagedManifest = { ...metadata, ...stagedWeb };
+  await writeFile(
+    path.join(pleskWebDistribution, "plesk-manifest.json"),
+    `${JSON.stringify(stagedManifest, null, 2)}\n`,
+    { mode: 0o644 },
+  );
+  console.log(`Plesk website root: ${path.relative(root, pleskWebDistribution)}/index.cjs and public/ ready.`);
   console.log("SUCCESS: Plesk distributions generated. Read docs/plesk-build.md before deploying.");
 } catch (error) {
   // Our own diagnostics have no supplied values; subprocess output is from the existing build scripts.

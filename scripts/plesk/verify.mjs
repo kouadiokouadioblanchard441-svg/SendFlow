@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { lstat, readdir, readFile } from "node:fs/promises";
+import { cp, lstat, readdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 export function commonJsLauncher(target) {
@@ -76,4 +76,10 @@ export async function verifyDistribution(root, service) {
     }
   }
   return { service, startupFile: "index.cjs", esmEntry: entry, files };
+}
+
+export async function stagePleskWebDistribution(source, target) {
+  await rm(target, { recursive: true, force: true });
+  await cp(source, target, { recursive: true });
+  return verifyDistribution(target, "web");
 }
