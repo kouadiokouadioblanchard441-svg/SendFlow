@@ -25,7 +25,7 @@ jobs:
           PLESK_SSH_PORT: ${{ vars.PLESK_SSH_PORT }}
           PLESK_SSH_USER: ${{ vars.PLESK_SSH_USER }}
           PLESK_APP_ROOT: ${{ vars.PLESK_APP_ROOT }}
-          PLESK_SSH_KNOWN_HOSTS: ${{ vars.PLESK_SSH_KNOWN_HOSTS }}
+          PLESK_SSH_KNOWN_HOSTS: ${{ secrets.PLESK_SSH_KNOWN_HOSTS }}
           PLESK_SSH_PRIVATE_KEY: ${{ secrets.PLESK_SSH_PRIVATE_KEY }}
         run: |
           set -euo pipefail
@@ -41,7 +41,12 @@ jobs:
             echo "PLESK_SSH_HOST must be a hostname or IPv4 address." >&2
             exit 1
           fi
-          if [[ ! "$PLESK_SSH_PORT" =~ ^[0-9]{1,5}$ ]] || (( PLESK_SSH_PORT < 1 || PLESK_SSH_PORT > 65535 )); then
+          if [[ ! "$PLESK_SSH_PORT" =~ ^[0-9]{1,5}$ ]]; then
+            echo "PLESK_SSH_PORT must be between 1 and 65535." >&2
+            exit 1
+          fi
+          port_number=$((10#$PLESK_SSH_PORT))
+          if (( port_number < 1 || port_number > 65535 )); then
             echo "PLESK_SSH_PORT must be between 1 and 65535." >&2
             exit 1
           fi
@@ -67,7 +72,7 @@ jobs:
           app_root_b64="$(printf '%s' "$PLESK_APP_ROOT" | base64 -w0)"
           ssh \
             -T \
-            -p "$PLESK_SSH_PORT" \
+            -p "$port_number" \
             -i "$key_file" \
             -o BatchMode=yes \
             -o IdentitiesOnly=yes \
@@ -88,8 +93,12 @@ jobs:
             echo "The Plesk checkout must be on branch main." >&2
             exit 1
           fi
+          if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+            echo "The Plesk checkout has tracked local changes; refusing to deploy over them." >&2
+            exit 1
+          fi
 
           git fetch origin main
-          git merge --ff-only origin/main
+          git merge --ff-only FETCH_HEAD
           bash scripts/plesk/deploy-after-push.sh
           REMOTE

@@ -32,9 +32,9 @@ Le build contrôle les secrets du source, le typage, les tests du conditionnemen
 puis compile uniquement API et SendFlow (pas le mockup-sandbox). Il génère :
 
 | Service | Racine de distribution relative au dépôt | Startup Plesk |
-|---|---|---|
-| Site | `artifacts/sendflow/dist` | `index.cjs` |
-| API | `artifacts/api-server/dist` | `index.cjs` |
+| ------- | ---------------------------------------- | ------------- |
+| Site    | `artifacts/sendflow/dist`                | `index.cjs`   |
+| API     | `artifacts/api-server/dist`              | `index.cjs`   |
 
 Les adaptateurs CommonJS importent les bundles ESM existants et exigent
 `NODE_ENV=production`. La logique n'est pas dupliquée. Chaque distribution contient
@@ -42,6 +42,40 @@ un manifeste privé `plesk-manifest.json` avec version du constructeur, empreint
 lockfile, révision source, état des fichiers suivis et empreintes SHA-256 des fichiers.
 Le manifeste ne contient aucune variable secrète. Les répertoires `dist` restent ignorés
 par Git ; le hook doit les reconstruire après récupération de la bonne révision.
+
+## Build automatique après un push GitHub
+
+Le workflow `.github/workflows/deploy-plesk.yml` s'exécute après chaque push sur
+`main`. Il se connecte en SSH à Plesk, met à jour le checkout uniquement par
+fast-forward, puis lance `scripts/plesk/deploy-after-push.sh`. Ce script vérifie
+Node.js 24.22.2, installe les dépendances avec le lockfile figé et lance
+`pnpm run build:plesk` **sur Plesk**. Les dossiers `dist` sont donc créés sur le
+serveur après le push ; ils ne sont pas inclus dans Git. Le workflow ne redémarre
+pas les applications : redémarre les deux services dans Plesk après un build réussi.
+
+Dans les paramètres du dépôt GitHub, ajouter les variables Actions suivantes :
+
+| Variable         | Valeur attendue                             |
+| ---------------- | ------------------------------------------- |
+| `PLESK_SSH_HOST` | Hôte SSH Plesk (nom DNS ou IPv4)            |
+| `PLESK_SSH_PORT` | Port SSH                                    |
+| `PLESK_SSH_USER` | Utilisateur SSH limité au checkout SendFlow |
+| `PLESK_APP_ROOT` | Chemin absolu du checkout vu depuis SSH     |
+
+Ajouter sous **GitHub Actions Secrets** :
+
+- `PLESK_SSH_PRIVATE_KEY` : clé privée du compte de déploiement ;
+- `PLESK_SSH_KNOWN_HOSTS` : entrée `known_hosts` épinglant la clé publique de l’hôte
+  (pour un port non standard, utiliser le format `[hôte]:port`).
+
+Ne pas coller ces valeurs dans le dépôt, dans Replit Secrets ou dans le chat. Le
+checkout Plesk doit déjà avoir un remote `origin` authentifié vers le dépôt GitHub
+et être positionné sur `main`. Le shell SSH doit exposer Node.js 24.22.2 et pnpm.
+Si ces réglages manquent, le workflow s'arrête sans afficher leurs valeurs ni lancer
+le build.
+
+Après le build, les fichiers de démarrage Plesk restent dans les deux chemins du
+tableau ci-dessus ; aucun `index.cjs` n'est créé à la racine du dépôt.
 
 ## Écart avec la proposition `/httpdocs/dist`
 
@@ -57,9 +91,10 @@ Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un ch
 
 ## Runtime et routage à confirmer sur Plesk
 
-- La version Node du constructeur figure dans les manifestes. La documentation du
-  dépôt utilise Node 24. Le fonctionnement complet sous Node 22.23.3 et la version
-  effectivement disponible sur Plesk ne sont **pas démontrés** par un build Node 24.
+- La version Node du constructeur figure dans les manifestes. Le runtime Plesk actuel
+  indiqué par l’utilisateur est Node.js 24.22.2 ; le build local précédent a tourné sous
+  24.22.1. Le fonctionnement Plesk sous une autre version, dont Node 22.23.3, n’est pas
+  démontré.
 - Vérifier la prise en charge du démarrage `index.cjs`/import ESM par le gestionnaire
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
 - Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
