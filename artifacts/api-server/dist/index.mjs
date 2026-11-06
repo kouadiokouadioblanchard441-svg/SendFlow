@@ -28592,7 +28592,7 @@ var require_pino = __commonJS({
     function pinoBundlerAbsolutePath(p) {
       try {
         const path = __require("path");
-        const outputDir = "/home/runner/workspace/artifacts/api-server/dist";
+        const outputDir = "/home/runner/work/SendFlow/SendFlow/artifacts/api-server/dist";
         return path.resolve(outputDir, p.replace(/^\.\//, ""));
       } catch (e) {
         const f = new Function("p", "return new URL(p, import.meta.url).pathname");
@@ -212036,10 +212036,12 @@ var SendEmailOtpResponse = object({
 var verifyEmailOtpBodyCodeMin = 6;
 var verifyEmailOtpBodyCodeMax = 6;
 var verifyEmailOtpBodyCodeRegExp = new RegExp("^[0-9]{6}$");
+var verifyEmailOtpBodyTurnstileTokenMax = 2048;
 var VerifyEmailOtpBody = object({
   "challengeId": uuid3(),
   "purpose": _enum2(["signup", "password_reset", "pin_reset", "admin_login"]),
-  "code": string2().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp)
+  "code": string2().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp),
+  "turnstileToken": string2().min(1).max(verifyEmailOtpBodyTurnstileTokenMax).describe("Single-use Cloudflare Turnstile token for OTP verification.")
 });
 var VerifyEmailOtpResponse = object({
   "emailVerified": boolean3(),
@@ -219653,6 +219655,17 @@ var MAX_SENDS_PER_REQUESTER_PER_HOUR = 60;
 var MAX_CODE_CHECKS = 5;
 var MAX_SIGNUP_CODE_CHECKS = CUSTOMER_ACCESS_RATE_LIMIT_POLICY.maxFailures;
 var HOUR_MS = 60 * 60 * 1e3;
+function turnstileActionForOtpPurpose(purpose) {
+  switch (purpose) {
+    case "signup":
+    case "password_reset":
+    case "pin_reset":
+    case "admin_login":
+      return purpose;
+    default:
+      return null;
+  }
+}
 function retryAfterSeconds2(until, now = /* @__PURE__ */ new Date()) {
   return Math.max(1, Math.ceil((until.getTime() - now.getTime()) / 1e3));
 }
@@ -220101,6 +220114,17 @@ router14.post("/auth/verify-otp", async (req, res) => {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
   }
+  const rawBody = typeof req.body === "object" && req.body !== null && !Array.isArray(req.body) ? req.body : null;
+  const expectedAction = turnstileActionForOtpPurpose(rawBody?.purpose);
+  const rawTurnstileToken = rawBody?.turnstileToken;
+  if (expectedAction && (typeof rawTurnstileToken !== "string" || rawTurnstileToken.length === 0)) {
+    rejectTurnstileRequest(req, res, {
+      success: false,
+      category: "missing_token",
+      unavailable: false
+    });
+    return;
+  }
   const parsed = VerifyEmailOtpBody.safeParse(req.body);
   if (!parsed.success) {
     if (hasSignupPurpose(req.body)) {
@@ -220127,6 +220151,15 @@ router14.post("/auth/verify-otp", async (req, res) => {
       return;
     }
     if (await isSignupRateLimited(req, res, signupBuckets)) return;
+  }
+  const turnstile = await verifyTurnstileRequest(
+    req,
+    parsed.data.turnstileToken,
+    turnstileActionForOtpPurpose(purpose)
+  );
+  if (!turnstile.success) {
+    rejectTurnstileRequest(req, res, turnstile);
+    return;
   }
   const now = /* @__PURE__ */ new Date();
   const maxCodeChecks = purpose === "signup" ? MAX_SIGNUP_CODE_CHECKS : MAX_CODE_CHECKS;
