@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm, symlink, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -49,6 +49,17 @@ async function deploymentFixture(t) {
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, "fixture");
   }
+  const runtimeSource = path.join(root, ".runtime-fixture/node_modules");
+  await mkdir(path.join(runtimeSource, "sharp"), { recursive: true });
+  await mkdir(path.join(runtimeSource, "@swc/helpers"), { recursive: true });
+  await writeFile(path.join(runtimeSource, "sharp/package.json"), '{"name":"sharp"}');
+  await writeFile(path.join(runtimeSource, "@swc/helpers/package.json"), '{"name":"@swc/helpers"}');
+  const archive = path.join(root, "artifacts/api-server/plesk-runtime-dependencies.tar.gz");
+  const archiveResult = spawnSync("tar", [
+    "-czf", archive, "-C", path.join(root, ".runtime-fixture"), "node_modules",
+  ], { encoding: "utf8" });
+  assert.equal(archiveResult.status, 0, archiveResult.stderr);
+  await rm(path.join(root, ".runtime-fixture"), { recursive: true, force: true });
   return { root, scriptDir };
 }
 
@@ -71,7 +82,7 @@ test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", a
     'console.log("synthetic-entry-started");');
 });
 
-test("Plesk post-pull validation succeeds without Node, pnpm, git, or dirname", async (t) => {
+test("Plesk post-pull activates packaged API dependencies without Node, pnpm, git, or dirname", async (t) => {
   const { root, scriptDir } = await deploymentFixture(t);
   const emptyPath = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-empty-path-"));
   t.after(() => rm(emptyPath, { recursive: true, force: true }));
@@ -82,7 +93,12 @@ test("Plesk post-pull validation succeeds without Node, pnpm, git, or dirname", 
   });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /Verified prebuilt SendFlow Plesk packages/);
-  assert.doesNotMatch(result.stdout, /pnpm install|pnpm run build:plesk/i);
+  assert.match(result.stdout, /Activated committed Linux x64 API runtime dependencies/);
+  assert.equal(
+    await readFile(path.join(root, "artifacts/api-server/node_modules/sharp/package.json"), "utf8"),
+    '{"name":"sharp"}',
+  );
+  assert.doesNotMatch(result.stdout, /pnpm install|pnpm run build:plesk|node_modules.*build/i);
 });
 
 test("Plesk post-pull validation rejects an incomplete API package", async (t) => {
@@ -123,7 +139,16 @@ test("rejects missing runtime entry points", async (t) => {
 test("rejects public source maps", async (t) => {
   const root = await fixture(t);
   await writeFile(path.join(root, "public/assets/app.js.map"), "{}");
-  await assert.rejects(verifyDistribution(root, "web"), /Public source maps/);
+  await assert.rejects(verifyDistribution(root, "web"), /source maps are not included/);
+});
+
+test("rejects source maps in API release packages", async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-api-map-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(path.join(root, "index.cjs"), commonJsLauncher("./index.mjs"));
+  await writeFile(path.join(root, "index.mjs"), 'console.log("api-entry");');
+  await writeFile(path.join(root, "index.mjs.map"), "{}");
+  await assert.rejects(verifyDistribution(root, "api"), /source maps are not included/);
 });
 
 test("rejects server-secret variable names in the public bundle without printing values", async (t) => {

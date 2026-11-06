@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - "artifacts/dist/**"
       - "artifacts/api-server/dist/**"
+      - "artifacts/api-server/plesk-runtime-dependencies.tar.gz"
       - "index.cjs"
   pull_request:
     branches:
@@ -64,7 +65,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- artifacts/dist artifacts/api-server/dist index.cjs
+          git add -- artifacts/dist artifacts/api-server/dist artifacts/api-server/plesk-runtime-dependencies.tar.gz index.cjs
           if git diff --cached --quiet; then
             echo "Plesk build outputs are already current; no artifact commit is needed."
             exit 0

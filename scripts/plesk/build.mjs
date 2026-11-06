@@ -4,6 +4,7 @@ import { readFile, statfs, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { commonJsLauncher, stagePleskWebDistribution, verifyDistribution } from "./verify.mjs";
+import { packageApiRuntimeDependencies } from "./package-runtime.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 process.chdir(root);
@@ -27,10 +28,19 @@ function git(args) {
 }
 
 try {
+  if (process.version !== "v24.22.2") {
+    throw new Error(`Plesk production builds require Node.js 24.22.2; found ${process.version}`);
+  }
+  if (process.platform !== "linux" || process.arch !== "x64") {
+    throw new Error(`Plesk runtime dependencies must be packaged on Linux x64; found ${process.platform}-${process.arch}`);
+  }
   const disk = await statfs(root);
   if (disk.bavail * disk.bsize < 1024 ** 3) throw new Error("At least 1 GiB of free build space is required");
   const pnpm = spawnSync("pnpm", ["--version"], { encoding: "utf8" });
   if (pnpm.status !== 0) throw new Error("pnpm is required; do not replace the lockfile");
+  if (pnpm.stdout.trim() !== "10.26.1") {
+    throw new Error(`Plesk production builds require pnpm 10.26.1; found ${pnpm.stdout.trim()}`);
+  }
   console.log(`Plesk build preflight: Node ${process.version}; pnpm ${pnpm.stdout.trim()}; disk check passed.`);
   console.log("Build only: no production startup, migration, provider call or deployment.");
   run("pnpm", ["run", "check:secrets"]);
@@ -43,6 +53,10 @@ try {
   run("pnpm", ["--filter", "@workspace/api-server", "run", "build"], { env: buildEnvironment });
   run("pnpm", ["--filter", "@workspace/sendflow", "run", "build"], { env: buildEnvironment });
   run("pnpm", ["run", "check:public-artifacts"]);
+  const runtimePackage = await packageApiRuntimeDependencies({
+    root,
+    output: path.join(root, "artifacts/api-server/plesk-runtime-dependencies.tar.gz"),
+  });
 
   const lockfile = await readFile(path.join(root, "pnpm-lock.yaml"));
   const metadata = {
@@ -65,7 +79,11 @@ try {
     await writeFile(launcher, commonJsLauncher(target), { mode: 0o644 });
     run(process.execPath, ["--check", launcher]);
     run(process.execPath, ["--check", path.join(distribution, target)]);
-    const manifest = { ...metadata, ...await verifyDistribution(distribution, service) };
+    const manifest = {
+      ...metadata,
+      ...await verifyDistribution(distribution, service),
+      ...(service === "api" ? { runtimeDependencies: runtimePackage } : {}),
+    };
     await writeFile(path.join(distribution, "plesk-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o644 });
     console.log(`Plesk ${service}: ${manifest.files.length} files verified; ${directory}/index.cjs ready.`);
   }
@@ -88,6 +106,7 @@ try {
   );
   console.log(`Plesk website root: ${path.relative(root, pleskWebDistribution)}/index.cjs and public/ ready.`);
   console.log("Plesk project-root startup file: index.cjs ready.");
+  console.log(`Plesk API runtime dependencies: ${runtimePackage.sizeBytes} bytes; Linux x64 package ready.`);
   console.log("SUCCESS: Plesk distributions generated. Read docs/plesk-build.md before deploying.");
 } catch (error) {
   // Our own diagnostics have no supplied values; subprocess output is from the existing build scripts.

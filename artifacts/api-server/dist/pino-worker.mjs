@@ -4707,4 +4707,3 @@ var require_worker = __commonJS({
   }
 });
 export default require_worker();
-//# sourceMappingURL=pino-worker.mjs.map

@@ -45,7 +45,9 @@ de routage Vite doivent viser les bonnes origines avant compilation. Aucune clé
 ne doit être placée dans `VITE_*`. Aucun domaine Plesk n'est supposé par la commande.
 
 Le build contrôle les secrets du source, le typage, les tests du conditionnement,
-puis compile uniquement API et SendFlow (pas le mockup-sandbox). Il génère :
+puis compile uniquement API et SendFlow (pas le mockup-sandbox). Il construit aussi
+une archive Linux x64 des dépendances de production encore externes au bundle API
+(notamment le module natif `sharp`). Il génère :
 
 | Service | Racine de distribution relative au dépôt | Startup Plesk |
 | ------- | ---------------------------------------- | ------------- |
@@ -61,14 +63,18 @@ Le manifeste ne contient aucune variable secrète. Les deux packages Plesk
 que le Pull les récupère avec le code. Le build génère aussi un `index.cjs` à la racine
 du dépôt pour le réglage de démarrage Plesk affiché dans la capture. La sortie native
 Vite `artifacts/sendflow/dist` reste ignorée et n'est pas nécessaire à l'exécution Plesk.
+Le build versionne également `artifacts/api-server/plesk-runtime-dependencies.tar.gz`.
+Cette archive contient les dépendances de production nécessaires à l'API dans un
+format compressé ; aucun répertoire `node_modules` n'est ajouté à Git.
 
 ## Pull et validation Plesk
 
 Le flux prévu est le suivant : pousser le code source sur `main`, laisser GitHub Actions
 construire et publier les packages de production dans un commit sur `main`, puis laisser
-Plesk récupérer ce commit. Les fichiers compilés sont dans Git ; le serveur n'a pas à
-compiler les sources après le Pull. Aucun workflow GitHub ne se connecte en SSH au
-serveur et aucun secret SSH n'est requis.
+Plesk récupérer ce commit. Les fichiers compilés et l'archive runtime sont dans Git ; le
+serveur n'a pas à compiler les sources ni installer les paquets depuis le registre après
+le Pull. Aucun workflow GitHub ne se connecte en SSH au serveur et aucun secret SSH
+n'est requis.
 
 Le workflow possède uniquement la permission `contents: write` nécessaire à ce commit.
 Il ne lit aucun secret applicatif. Les événements Pull Request construisent et vérifient
@@ -86,9 +92,11 @@ bash scripts/plesk/build-after-pull.sh
 
 Le script retrouve le checkout avec Bash et vérifie les fichiers compilés livrés par
 Git. Il n'appelle ni Git, ni `dirname`, ni Node, ni pnpm : le hook reste utilisable dans
-l'environnement restreint de déploiement Plesk. Il échoue avec la liste des fichiers
-manquants au lieu de déclarer qu'un package incomplet est prêt. Le build GitHub Actions
-est exécuté sous Node.js `24.22.2` avant le commit d'artefacts.
+l'environnement restreint de déploiement Plesk. Il exige `tar`, `gzip` et les utilitaires
+de fichiers usuels, puis extrait l'archive runtime vers `artifacts/api-server/node_modules`
+(répertoire ignoré par Git) avant le démarrage. Il n'exécute ni compilation ni installation
+depuis un registre. Il échoue clairement si un fichier ou un outil manque. Le build GitHub
+Actions est exécuté sous Node.js `24.22.2` avant le commit d'artefacts.
 
 Configurer les racines et fichiers de démarrage des applications Node Plesk :
 
@@ -96,6 +104,13 @@ Configurer les racines et fichiers de démarrage des applications Node Plesk :
 | ------- | ------------------------------------- | ------------------------------------------- |
 | Site    | `.`                                   | `index.cjs`                                 |
 | API     | `artifacts/api-server`                | `dist/index.cjs`                            |
+
+Pour les deux applications, si Plesk exige un Document Root, choisir
+`artifacts/plesk-empty-document-root` (relatif au checkout). Ne pas choisir
+`artifacts`, `artifacts/dist` ou `artifacts/api-server` : ces répertoires contiennent
+des bundles serveur et des manifestes. Le site sert lui-même `artifacts/dist/public`
+à travers le contrôle IP ; ne pas exposer directement ce dossier par Apache/Nginx.
+Document Root vide ne remplace pas le routage vers les deux applications Node.
 
 Le dossier `artifacts/dist/public` contient les fichiers statiques, mais ils doivent
 être servis par le serveur Node du site pour conserver le contrôle IP appliqué par
@@ -118,10 +133,14 @@ Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un ch
 
 ## Runtime et routage à confirmer sur Plesk
 
-- La version Node du constructeur figure dans les manifestes. Le build local vérifié a
-  été généré sous Node.js 24.22.2. L’utilisateur indique également que le runtime
-  Plesk est en 24.22.2, mais son exécution réelle reste à confirmer sur le serveur.
-  Le fonctionnement sous une autre version, dont Node 22.23.3, n’est pas démontré.
+- La version Node du constructeur figure dans les manifestes. Le workflow de build
+  exige Node.js 24.22.2 et pnpm 10.26.1. Le runtime Plesk doit aussi utiliser Node.js
+  24.22.2 ; le runtime réel reste à confirmer sur le serveur. Le fonctionnement sous
+  une autre version, dont Node 22.23.3, n’est pas démontré.
+- L'archive des dépendances API est construite pour Linux x64/glibc (runner GitHub
+  `ubuntu-latest`). La compatibilité exacte doit être confirmée avec l'architecture et
+  la distribution système de l'hébergement Plesk ; aucun accès serveur ne permet de
+  la certifier depuis ce dépôt.
 - Vérifier la prise en charge du démarrage `index.cjs`/import ESM par le gestionnaire
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
 - Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
