@@ -320,11 +320,13 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                   defaultCountryName="Côte d’Ivoire"
                 />
               )}
-              <TurnstileWidget
-                ref={turnstileRef}
-                action={isPassword ? 'password_reset' : 'pin_reset'}
-                onTokenChange={setTurnstileToken}
-              />
+              {isPassword && (
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  action="password_reset"
+                  onTokenChange={setTurnstileToken}
+                />
+              )}
               <button
                 type="submit"
                 className="sendflow-reset-submit"
@@ -379,13 +381,11 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                 ))}
               </div>
               {otpError && <p className="sendflow-reset-error" role="alert">{otpError}</p>}
-              {isPassword && (
-                <TurnstileWidget
-                  ref={turnstileRef}
-                  action="password_reset"
-                  onTokenChange={setTurnstileToken}
-                />
-              )}
+              <TurnstileWidget
+                ref={turnstileRef}
+                action={isPassword ? 'password_reset' : 'pin_reset'}
+                onTokenChange={setTurnstileToken}
+              />
               <p className="sendflow-reset-resend">
                 Vous n&apos;avez pas reçu le code ?{' '}
                 <button
