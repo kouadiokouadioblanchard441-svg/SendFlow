@@ -13,8 +13,15 @@ fichiers statiques seul ne remplace pas ce service.
 
 ## Construction reproductible
 
-Depuis la racine du dépôt, avec la version pnpm déclarée dans `package.json`
-(`pnpm@10.26.1`) :
+Le workflow GitHub Actions `.github/workflows/plesk-build.yml` construit et publie les
+artefacts lorsqu'un push accepté arrive sur `main`. Il utilise Node.js `24.22.2` et
+pnpm `10.26.1`, installe le lockfile sans le modifier, exécute `pnpm run build:plesk`,
+puis ajoute uniquement les packages Plesk au dépôt. Le commit d'artefacts est ensuite
+disponible au Pull Git Plesk. Le workflow vérifie que `main` n'a pas avancé pendant le
+build et échoue plutôt que de publier un paquet obsolète.
+
+Le build peut aussi être lancé manuellement depuis la racine du dépôt, avec les mêmes
+versions :
 
 ```sh
 pnpm install --frozen-lockfile
@@ -55,13 +62,20 @@ que le Pull les récupère avec le code. Le build génère aussi un `index.cjs` 
 du dépôt pour le réglage de démarrage Plesk affiché dans la capture. La sortie native
 Vite `artifacts/sendflow/dist` reste ignorée et n'est pas nécessaire à l'exécution Plesk.
 
-## Auto-déploiement déclenché par un push
+## Pull et validation Plesk
 
-Le flux prévu est le suivant : générer et committer les packages de production avec
-`pnpm run build:plesk`, pousser le commit, puis laisser Plesk récupérer `main`. Les
-fichiers compilés sont dans le commit ; le serveur n'a pas à compiler les sources après
-le Pull. Aucun workflow GitHub ne se connecte en SSH au serveur et aucun secret SSH
-n'est requis.
+Le flux prévu est le suivant : pousser le code source sur `main`, laisser GitHub Actions
+construire et publier les packages de production dans un commit sur `main`, puis laisser
+Plesk récupérer ce commit. Les fichiers compilés sont dans Git ; le serveur n'a pas à
+compiler les sources après le Pull. Aucun workflow GitHub ne se connecte en SSH au
+serveur et aucun secret SSH n'est requis.
+
+Le workflow possède uniquement la permission `contents: write` nécessaire à ce commit.
+Il ne lit aucun secret applicatif. Les événements Pull Request construisent et vérifient
+le package sans le publier. Les chemins d'artefacts sont exclus du déclenchement pour
+éviter une boucle ; les pushes générés par `GITHUB_TOKEN` ne relancent pas les workflows.
+Une règle de protection de branche qui interdit les pushes du `github-actions[bot]`
+fera échouer explicitement l'étape de publication et devra être compatible avec ce flux.
 
 Dans les paramètres du dépôt Git Plesk, l'auto-déploiement doit être activé et cette
 commande configurée comme action après le Pull, depuis le checkout SendFlow :
@@ -70,11 +84,11 @@ commande configurée comme action après le Pull, depuis le checkout SendFlow :
 bash scripts/plesk/build-after-pull.sh
 ```
 
-Le script retrouve le checkout avec Bash et vérifie les fichiers compilés suivis par
+Le script retrouve le checkout avec Bash et vérifie les fichiers compilés livrés par
 Git. Il n'appelle ni Git, ni `dirname`, ni Node, ni pnpm : le hook reste utilisable dans
 l'environnement restreint de déploiement Plesk. Il échoue avec la liste des fichiers
-manquants au lieu de déclarer qu'un package incomplet est prêt. Le build doit être
-exécuté sous Node.js `24.22.2` avant le commit et le Push.
+manquants au lieu de déclarer qu'un package incomplet est prêt. Le build GitHub Actions
+est exécuté sous Node.js `24.22.2` avant le commit d'artefacts.
 
 Configurer les racines et fichiers de démarrage des applications Node Plesk :
 

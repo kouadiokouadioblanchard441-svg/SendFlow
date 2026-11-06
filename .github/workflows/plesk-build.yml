@@ -1,0 +1,74 @@
+name: Build and publish Plesk artifacts
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "artifacts/dist/**"
+      - "artifacts/api-server/dist/**"
+      - "index.cjs"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: plesk-production-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    name: Build production packages for Plesk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: ${{ github.event_name != 'pull_request' }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.2
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.1
+
+      - name: Install locked workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run production checks and build
+        run: pnpm run build:plesk
+
+      - name: Verify Plesk package and clean diff
+        run: |
+          bash scripts/plesk/build-after-pull.sh
+          git diff --check
+
+      - name: Publish built packages to main
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          remote_main="$(git rev-parse refs/remotes/origin/main)"
+          if [[ "$remote_main" != "$GITHUB_SHA" ]]; then
+            echo "::error::Refusing to publish a stale build. Built $GITHUB_SHA, but main is now $remote_main."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- artifacts/dist artifacts/api-server/dist index.cjs
+          if git diff --cached --quiet; then
+            echo "Plesk build outputs are already current; no artifact commit is needed."
+            exit 0
+          fi
+
+          git commit -m "build: publish Plesk production artifacts"
+          git push origin HEAD:main

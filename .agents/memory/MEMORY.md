@@ -47,6 +47,6 @@
 - [Merchant developer API](developer-integrations.md) — Keep direct and SendFlow-hosted API checkout on the same LinkFlow routing and settlement path.
 - [Campaign contact details](campaign-contact-settings.md) — Campaign email contact details must come from the active admin settings; never bake support numbers into templates.
 - [Plesk Node runtime](plesk-node-runtime.md) — The user’s current Plesk runtime is Node.js 24.22.2; use this instead of the older screenshot value.
-- [Plesk auto-deployment](plesk-auto-deployment.md) — Post-Pull actions may lack Git, dirname, and Node; never assume PATH or invent Plesk binary paths.
+- [Plesk auto-deployment](plesk-auto-deployment.md) — GitHub Actions builds and tracks only Plesk production packages; keep Plesk's restricted post-Pull check shell-only.
 - [Plesk pnpm build approvals](plesk-pnpm-build-approvals.md) — Keep only reviewed lifecycle scripts allowed in both pnpm build-approval formats for Plesk compatibility.
 - [Frontend asset tracking](ci-asset-tracking.md) — Move imported production assets out of globally ignored uploads into tracked artifact source directories.
