@@ -16,6 +16,7 @@ import { useSeo } from "@/lib/seo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSafeApiErrorCopy } from "@/lib/safe-api-error";
+import TurnstileWidget, { type TurnstileWidgetHandle } from "@/components/turnstile-widget";
 
 function authErrorMessage(error: unknown) {
   return getSafeApiErrorCopy(error).message;
@@ -38,6 +39,8 @@ export function AdminSignInPage() {
   const [message, setMessage] = useState("");
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(Date.now());
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
   const sendOtp = useSendEmailOtp();
   const verifyOtp = useVerifyEmailOtp();
   const signIn = useSignInAdmin();
@@ -49,6 +52,8 @@ export function AdminSignInPage() {
   async function sendCode() {
     setMessage("");
     try {
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
       const result = await sendOtp.mutateAsync({ data: { phone, purpose: "admin_login" } });
       setChallengeId(result.challengeId);
       setCode("");
@@ -59,9 +64,15 @@ export function AdminSignInPage() {
     event.preventDefault();
     if (busy) return;
     if (!challengeId) { await sendCode(); return; }
+    if (!turnstileToken) return;
     setMessage("");
+    const token = turnstileToken;
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
     try {
-      await verifyOtp.mutateAsync({ data: { challengeId, code, purpose: "admin_login" } });
+      await verifyOtp.mutateAsync({
+        data: { challengeId, code, purpose: "admin_login", turnstileToken: token },
+      });
       await signIn.mutateAsync({ data: { phone, challengeId } });
       queryClient.clear();
       setLocation(adminRoute("/pin"));
@@ -95,6 +106,11 @@ export function AdminSignInPage() {
             <Input id="admin-otp" inputMode="numeric" autoComplete="one-time-code"
               value={code} onChange={(event) => setCode(event.target.value)} required
               pattern="[0-9]{6}" maxLength={6} disabled={busy} data-testid="input-admin-otp" />
+            <TurnstileWidget
+              ref={turnstileRef}
+              action="admin_login"
+              onTokenChange={setTurnstileToken}
+            />
             <Button type="button" variant="ghost" disabled={busy || now < resendAt} onClick={() => void sendCode()}>
               {now < resendAt ? `Renvoyer dans ${Math.ceil((resendAt - now) / 1000)} s` : "Renvoyer le code"}
             </Button>
@@ -103,7 +119,7 @@ export function AdminSignInPage() {
               }}>Changer de numéro de compte</Button>
           </div>}
           {message && <p role="alert" className="text-sm text-destructive">{message}</p>}
-          <Button type="submit" className="w-full" disabled={busy} data-testid="button-admin-sign-in">
+          <Button type="submit" className="w-full" disabled={busy || (!!challengeId && !turnstileToken)} data-testid="button-admin-sign-in">
             {busy ? "Vérification…" : challengeId ? "Vérifier et continuer" : "Recevoir un code par e-mail"}
           </Button>
         </form>

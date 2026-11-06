@@ -5,6 +5,7 @@ import {
   ResetCustomerPasswordBody,
   SendEmailOtpBody,
   SignInCustomerBody,
+  VerifyEmailOtpBody,
 } from "../../../../lib/api-zod/src/generated/api.ts";
 
 const phone = "+2250700000000";
@@ -122,7 +123,7 @@ test("new and reset customer passwords require eight characters while legacy sig
   );
 });
 
-test("Turnstile is mandatory only on sign-in, signup, and password-recovery contracts", () => {
+test("Turnstile is mandatory on sign-in, signup, password-recovery, and OTP-verification contracts", () => {
   assert.equal(
     SignInCustomerBody.safeParse({
       email,
@@ -148,6 +149,23 @@ test("Turnstile is mandatory only on sign-in, signup, and password-recovery cont
       newPassword: "Ab12cd34",
     }).success,
     false,
+  );
+  assert.equal(
+    VerifyEmailOtpBody.safeParse({
+      challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
+      purpose: "signup",
+      code: "123456",
+    }).success,
+    false,
+  );
+  assert.equal(
+    VerifyEmailOtpBody.safeParse({
+      challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
+      purpose: "signup",
+      code: "123456",
+      turnstileToken,
+    }).success,
+    true,
   );
   assert.equal(SendEmailOtpBody.safeParse({ email, purpose: "password_reset" }).success, false);
   assert.equal(SendEmailOtpBody.safeParse({ phone, email, purpose: "signup" }).success, false);

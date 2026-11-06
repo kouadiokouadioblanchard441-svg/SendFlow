@@ -188,15 +188,27 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       setOtpError('Saisissez le code de vérification à 6 chiffres.');
       return;
     }
+    if (submissionLock.current || !turnstileToken) return;
     setOtpError('');
+    const token = turnstileToken;
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
+    submissionLock.current = true;
     try {
       const response = await verifyOtp.mutateAsync({
-        data: { challengeId, purpose: isPassword ? 'password_reset' : 'pin_reset', code: otp.join('') },
+        data: {
+          challengeId,
+          purpose: isPassword ? 'password_reset' : 'pin_reset',
+          code: otp.join(''),
+          turnstileToken: token,
+        },
       });
       if (!response.emailVerified) throw new Error('L’adresse e-mail n’a pas pu être vérifiée.');
       setStep('secret');
     } catch (error) {
       setOtpError(getSafeApiErrorCopy(error).message);
+    } finally {
+      submissionLock.current = false;
     }
   };
 
@@ -308,13 +320,11 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                   defaultCountryName="Côte d’Ivoire"
                 />
               )}
-              {isPassword && (
-                <TurnstileWidget
-                  ref={turnstileRef}
-                  action="password_reset"
-                  onTokenChange={setTurnstileToken}
-                />
-              )}
+              <TurnstileWidget
+                ref={turnstileRef}
+                action={isPassword ? 'password_reset' : 'pin_reset'}
+                onTokenChange={setTurnstileToken}
+              />
               <button
                 type="submit"
                 className="sendflow-reset-submit"
@@ -388,7 +398,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                     : sendOtp.isPending ? 'Envoi…' : 'Renvoyer'}
                 </button>
               </p>
-              <button type="submit" className="sendflow-reset-submit" disabled={verifyOtp.isPending}>
+              <button type="submit" className="sendflow-reset-submit" disabled={verifyOtp.isPending || !turnstileToken}>
                 {verifyOtp.isPending ? 'Vérification…' : 'Vérifier'}
               </button>
             </form>

@@ -16,4 +16,10 @@ export interface EmailOtpVerifyInput {
      * @pattern ^[0-9]{6}$
      */
   code: string;
+  /**
+     * Single-use Cloudflare Turnstile token for OTP verification.
+     * @minLength 1
+     * @maxLength 2048
+     */
+  turnstileToken: string;
 }

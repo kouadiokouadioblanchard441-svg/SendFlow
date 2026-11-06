@@ -26,8 +26,13 @@ function createTurnstileTestToken(action) {
 }
 
 function request(path, { method = "GET", cookie, body, binary, origin = "https://sendflow-test.invalid" } = {}) {
-  return new Promise((resolve, reject) => {
-    const data = binary ?? (body === undefined ? undefined : JSON.stringify(body));
+  const perform = () => new Promise((resolve, reject) => {
+    const requestBody = method === "POST" && path === "/auth/verify-otp"
+      && body && typeof body.purpose === "string"
+      && !Object.hasOwn(body, "turnstileToken")
+      ? { ...body, turnstileToken: createTurnstileTestToken(body.purpose) }
+      : body;
+    const data = binary ?? (requestBody === undefined ? undefined : JSON.stringify(requestBody));
     const req = http.request({ hostname: "127.0.0.1", port, path: `/secure-access${path}`, method,
       headers: { origin, ...(cookie ? { cookie } : {}),
         ...(data ? { "content-type": binary ? "image/png" : "application/json", "content-length": Buffer.byteLength(data) } : {}) },
@@ -38,6 +43,9 @@ function request(path, { method = "GET", cookie, body, binary, origin = "https:/
     });
     req.on("error", reject); if (data) req.write(data); req.end();
   });
+  return method === "POST" && path === "/auth/verify-otp"
+    ? withMockedEmailProvider(perform)
+    : perform();
 }
 async function challenge(user = "writer", { purpose = "admin_login", requester = "127.0.0.1", expired = false } = {}) {
   const { rows } = await owner.query(`INSERT INTO sf_phone_otp_challenges
@@ -281,6 +289,36 @@ test("signup email OTP is sent and verified without verifying the phone", async 
   } finally {
     await clearOtpFixture(phone);
   }
+});
+test("OTP verification requires a valid, matching, single-use Turnstile token", async () => {
+  await withMockedEmailProvider(async () => {
+    const challengeId = await challenge("writer");
+    const requestBody = { challengeId, purpose: "admin_login", code: "000000" };
+    const missing = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { ...requestBody, turnstileToken: "" },
+    });
+    assert.equal(missing.status, 403);
+
+    const mismatched = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { ...requestBody, turnstileToken: createTurnstileTestToken("signup") },
+    });
+    assert.equal(mismatched.status, 403);
+
+    const token = createTurnstileTestToken("admin_login");
+    const accepted = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { ...requestBody, turnstileToken: token },
+    });
+    assert.equal(accepted.status, 200);
+
+    const replayed = await request("/auth/verify-otp", {
+      method: "POST",
+      body: { ...requestBody, turnstileToken: token },
+    });
+    assert.equal(replayed.status, 403);
+  });
 });
 test("OTP verification expires and erases the code hash", async () => {
   const phone = "+2250700000021";

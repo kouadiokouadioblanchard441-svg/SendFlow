@@ -316,12 +316,15 @@ export const verifyEmailOtpBodyCodeMax = 6;
 
 
 export const verifyEmailOtpBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+export const verifyEmailOtpBodyTurnstileTokenMax = 2048;
+
 
 
 export const VerifyEmailOtpBody = zod.object({
   "challengeId": zod.uuid(),
   "purpose": zod.enum(['signup', 'password_reset', 'pin_reset', 'admin_login']),
-  "code": zod.string().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp)
+  "code": zod.string().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp),
+  "turnstileToken": zod.string().min(1).max(verifyEmailOtpBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for OTP verification.')
 })
 
 export const VerifyEmailOtpResponse = zod.object({
