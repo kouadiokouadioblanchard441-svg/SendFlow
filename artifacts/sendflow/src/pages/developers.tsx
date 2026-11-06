@@ -30,7 +30,7 @@ import {
   useRevokeDeveloperWebhook,
 } from '@workspace/api-client-react';
 import { toast } from '@/hooks/use-toast';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import apiIntegrationIllustration from '@assets/generated_images/sendflow-api-integration-people-3d-transparent.png';
 import apiKeyWarningIllustration from '@assets/generated_images/sendflow-api-key-warning-3d-transparent.png';
 import type {
@@ -518,7 +518,7 @@ export default function DevelopersPage() {
 
         <section className="dev-docs-card" aria-labelledby="dev-docs-heading">
           <h2 id="dev-docs-heading">Documentation</h2>
-          <Link href="/docs" className="dev-docs-card-content" data-testid="link-developers-docs">
+          <a href="https://apis.docs.sendflow.africa" className="dev-docs-card-content" data-testid="link-developers-docs">
             <span className="dev-docs-icon" aria-hidden="true"><FileText size={19} /></span>
             <div className="dev-docs-card-copy">
               <div className="dev-docs-card-title-row">
@@ -527,7 +527,7 @@ export default function DevelopersPage() {
               </div>
               <p>Consultez les guides d’intégration et l’état de validation du contrat API.</p>
             </div>
-          </Link>
+          </a>
         </section>
         <figure className="dev-api-integration-illustration">
           <img

@@ -42,7 +42,6 @@ const LinkFlowPage = lazy(() => import('@/pages/linkflow'));
 const LinkFlowDetailPage = lazy(() => import('@/pages/linkflow-detail'));
 const LinkFlowNewPage = lazy(() => import('@/pages/linkflow-new'));
 const DevelopersPage = lazy(() => import('@/pages/developers'));
-const DocsPage = lazy(() => import('@/pages/docs'));
 const PublicPaymentLinkPage = lazy(() => import('@/pages/public-payment-link'));
 const CustomerServicePage = lazy(() => import('@/pages/customer-service'));
 const DepositPage = lazy(() => import('@/pages/deposit'));
@@ -340,14 +339,6 @@ function App() {
                 <Route path="/linkflow" component={LinkFlowPage} />
                 <Route path="/linkflow/new" component={LinkFlowNewPage} />
                 <Route path="/linkflow/:linkId" component={LinkFlowDetailPage} />
-                <Route path="/docs" component={DocsPage} />
-                <Route path="/docs/getting-started" component={DocsPage} />
-                <Route path="/docs/authentication" component={DocsPage} />
-                <Route path="/docs/integrations/direct" component={DocsPage} />
-                <Route path="/docs/integrations/hosted" component={DocsPage} />
-                <Route path="/docs/api-reference" component={DocsPage} />
-                <Route path="/docs/webhooks" component={DocsPage} />
-                <Route path="/docs/reference" component={DocsPage} />
                 <Route path="/developers" component={DevelopersPage} />
                 <Route path="/pay/:token" component={PublicPaymentLinkPage} />
                 <Route path="/customer-service" component={CustomerServicePage} />
