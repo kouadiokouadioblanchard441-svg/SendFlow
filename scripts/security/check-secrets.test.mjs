@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { scanText } from './check-secrets.mjs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { checkRepository, scanText } from './check-secrets.mjs';
 
 test('literal secrets, authenticated URLs and private key material are rejected', () => {
   const token = ['sk_', 'live_', 'A'.repeat(32)].join('');
@@ -96,4 +99,25 @@ test('server references and synthetic test fixtures are not production credentia
   assert.deepEqual(scanText('artifacts/api-server/src/example.test.mjs', 'const apiKey = "synthetic-fixture";'), []);
   const token = ['sk_', 'live_', 'A'.repeat(32)].join('');
   assert.ok(scanText('example.test.mjs', `const x = "${token}"`).some(f => f.rule === 'provider-key'));
+});
+
+test('deployment checkout without .git is scanned without reading ignored outputs or environment files', () => {
+  const root = mkdtempSync(join(tmpdir(), 'sendflow-secret-scan-'));
+  try {
+    mkdirSync(join(root, 'src'), { recursive: true });
+    mkdirSync(join(root, 'node_modules/pkg'), { recursive: true });
+    mkdirSync(join(root, 'dist/public'), { recursive: true });
+    writeFileSync(join(root, 'src/example.ts'), 'const apiKey = "synthetic-secret-marker-123456";\n');
+    writeFileSync(join(root, 'node_modules/pkg/ignored.js'), 'const apiKey = "synthetic-secret-marker-123456";\n');
+    writeFileSync(join(root, 'dist/public/ignored.js'), 'const apiKey = "synthetic-secret-marker-123456";\n');
+    writeFileSync(join(root, '.env'), 'SESSION_SECRET="synthetic-secret-marker-123456"\n');
+
+    const result = checkRepository(root);
+    assert.equal(result.source, 'filesystem');
+    assert.deepEqual(result.findings.map(({ file, rule }) => ({ file, rule })), [
+      { file: 'src/example.ts', rule: 'literal-credential' },
+    ]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

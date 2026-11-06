@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { lstatSync, readFileSync, readdirSync } from 'node:fs';
+import { relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const patterns = [
@@ -19,6 +19,67 @@ const publicEnvAllowlist = new Set([
   'VITE_PUBLIC_SITE_URL',
   'VITE_TURNSTILE_SITE_KEY',
 ]);
+
+const fallbackIgnoredDirectories = new Set([
+  '.cache',
+  '.expo',
+  '.expo-shared',
+  '.git',
+  '.local',
+  'coverage',
+  'dist',
+  'node_modules',
+  'out-tsc',
+  'tmp',
+]);
+
+function isIgnoredByFallback(file, isDirectory) {
+  const normalized = file.split(sep).join('/');
+  const segments = normalized.split('/');
+  const basename = segments.at(-1) ?? '';
+
+  if (segments.some((segment) => fallbackIgnoredDirectories.has(segment))) return true;
+
+  // Match the root .gitignore environment-file rules without reading local secrets.
+  if (basename === '.env' || basename.startsWith('.env.')) {
+    if (basename === '.env.example') return false;
+    if (normalized === '.env.capacitor') return false;
+    return true;
+  }
+
+  if (/\.(?:jks|keystore|p12|pfx|pem|key)$/i.test(basename)) return true;
+  if (basename === '.DS_Store' || basename === 'Thumbs.db' || basename.endsWith('.tsbuildinfo')) return true;
+  if (/^(?:npm-debug\.log|yarn-error\.log|testem\.log)$/.test(basename) || basename.endsWith('.log')) return true;
+
+  const isAndroid = normalized.startsWith('artifacts/sendflow/android/');
+  if (isAndroid) {
+    if (isDirectory && ['.gradle', '.cxx', '.externalNativeBuild', 'build', 'bin', 'gen', 'out', 'captures'].includes(basename)) return true;
+    if (/\.(?:apk|aar|ap_|aab|dex|class|hprof|iml)$/i.test(basename)) return true;
+    if (basename === 'local.properties') return true;
+  }
+
+  return false;
+}
+
+function collectFilesystemFiles(root) {
+  const files = [];
+  const visit = (directory) => {
+    for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const absolute = resolve(directory, entry.name);
+      const file = relative(root, absolute);
+      if (entry.isDirectory()) {
+        if (!isIgnoredByFallback(file, true)) visit(absolute);
+      } else if (entry.isSymbolicLink()) {
+        // Do not follow links outside the checked-out source tree.
+        throw new Error('Symbolic links cannot be inspected without Git metadata.');
+      } else if (entry.isFile() && !isIgnoredByFallback(file, false)) {
+        files.push(file.split(sep).join('/'));
+      }
+    }
+  };
+  visit(root);
+  return files;
+}
 
 export function scanText(file, text) {
   const findings = [];
@@ -53,17 +114,31 @@ export function scanText(file, text) {
   return findings;
 }
 
-export function checkRepository() {
-  // Git supplies paths, never environment values. Ignored local secrets are not read.
-  const files = [...new Set(execFileSync('git', [
-    'ls-files', '--cached', '--others', '--exclude-standard', '-z',
-  ], { encoding: 'utf8' }).split('\0').filter(Boolean))];
+export function checkRepository(repositoryRoot = process.cwd()) {
+  const root = resolve(repositoryRoot);
+  let files;
+  let source;
+  try {
+    // Git supplies paths, never environment values. Ignored local secrets are not read.
+    files = [...new Set(execFileSync('git', [
+      'ls-files', '--cached', '--others', '--exclude-standard', '-z',
+    ], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).split('\0').filter(Boolean))];
+    source = 'git';
+  } catch {
+    // Plesk deployment checkouts may contain the source without the .git directory.
+    files = collectFilesystemFiles(root);
+    source = 'filesystem';
+  }
   const findings = [];
   let inspected = 0;
   for (const file of files) {
     if (file.endsWith('pnpm-lock.yaml') || /\.(?:svg|map)$/.test(file)) continue;
     let raw;
-    try { raw = readFileSync(file); } catch (error) {
+    try { raw = readFileSync(resolve(root, file)); } catch (error) {
       if (error.code === 'ENOENT') continue; // Locally deleted tracked file.
       throw error;
     }
@@ -73,17 +148,17 @@ export function checkRepository() {
     inspected++;
     findings.push(...scanText(file, text));
   }
-  return { inspected, findings };
+  return { inspected, findings, source };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    const { inspected, findings } = checkRepository();
+    const { inspected, findings, source } = checkRepository();
     for (const finding of findings) {
       // Never echo matches, source lines, URLs, tokens, or credential values.
       console.error(`${finding.file}:${finding.line} [${finding.rule}] (value hidden)`);
     }
-    console.log(`Secret-boundary check: ${inspected} text files, ${findings.length} finding(s).`);
+    console.log(`Secret-boundary check: ${inspected} text files, ${findings.length} finding(s) (${source} scan).`);
     process.exitCode = findings.length ? 1 : 0;
   } catch {
     console.error('Secret-boundary check could not inspect the repository.');
