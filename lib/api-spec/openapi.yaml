@@ -5169,7 +5169,12 @@ components:
           minLength: 6
           maxLength: 6
           pattern: "^[0-9]{6}$"
-      required: [challengeId, purpose, code]
+        turnstileToken:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: Single-use Cloudflare Turnstile token for OTP verification.
+      required: [challengeId, purpose, code, turnstileToken]
     EmailOtpVerifyResult:
       type: object
       properties:

@@ -122,6 +122,7 @@ export default function SignupPage() {
   const [otpCode, setOtpCode] = useState('');
   const [verificationError, setVerificationError] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [emailOtpVerified, setEmailOtpVerified] = useState(false);
   const [emailVerifiedOnSignup, setEmailVerifiedOnSignup] = useState(false);
   const [signupApiKeyPair, setSignupApiKeyPair] = useState<{ label: string; publicKey: string; secretKey: string } | null>(null);
   const [copiedSignupKey, setCopiedSignupKey] = useState<'public' | 'secret' | null>(null);
@@ -158,6 +159,7 @@ export default function SignupPage() {
       setResendAvailableAt(0);
       setOtpCode('');
       setVerificationError('');
+      setEmailOtpVerified(false);
     }
     setForm((current) => ({ ...current, [key]: value }));
   };
@@ -199,12 +201,36 @@ export default function SignupPage() {
     setResendInSeconds(0);
     setOtpCode('');
     setVerificationError('');
+    setEmailOtpVerified(false);
   };
 
   const savePendingSignup = () => {
     saveAccountCountry(signupCountry);
     clearLegacyAccountProfile();
     window.sessionStorage.setItem('sendflow.pending-signup', 'true');
+  };
+
+  const completeVerifiedSignup = async (token: string) => {
+    const account = await registerCustomer.mutateAsync({
+      data: {
+        challengeId,
+        phone: e164Phone,
+        email: form.email.trim().toLowerCase(),
+        countryCode: signupCountry.countryCode,
+        fullName: form.fullName.trim().replace(/\s+/g, ' '),
+        birthDate: form.birthDate,
+        password: form.password,
+        acceptedPrivacy: true,
+        turnstileToken: token,
+      },
+    });
+    const createdApiKeyPair = account.developerApiKeyPair ?? null;
+    registerCustomer.reset();
+    savePendingSignup();
+    setEmailVerifiedOnSignup(true);
+    setSubmitted(true);
+    setSignupApiKeyPair(createdApiKeyPair);
+    setStep(createdApiKeyPair ? 'credentials' : 'success');
   };
 
   const consumeTurnstileToken = () => {
@@ -232,6 +258,7 @@ export default function SignupPage() {
       setChallengeExpiresAt(response.expiresAt);
       setResendAvailableAt(Date.now() + response.resendAfterSeconds * 1000);
       setOtpCode('');
+      setEmailOtpVerified(false);
       setStep('verification');
     } catch (error) {
       const retryAfterSeconds = getRetryAfterSeconds(error);
@@ -296,7 +323,7 @@ export default function SignupPage() {
       setVerificationError('Ce code a expiré. Demandez un nouveau code pour continuer.');
       return;
     }
-    if (!/^\d{6}$/.test(otpCode)) {
+    if (!emailOtpVerified && !/^\d{6}$/.test(otpCode)) {
       setVerificationError('Saisissez les 6 chiffres reçus par e-mail.');
       return;
     }
@@ -306,34 +333,27 @@ export default function SignupPage() {
     submissionLock.current = true;
 
     try {
-      const response = await verifyEmailOtp.mutateAsync({ data: { challengeId, purpose: 'signup', code: otpCode } });
+      if (emailOtpVerified) {
+        await completeVerifiedSignup(token);
+        return;
+      }
+      const response = await verifyEmailOtp.mutateAsync({
+        data: { challengeId, purpose: 'signup', code: otpCode, turnstileToken: token },
+      });
       if (!response.emailVerified) {
         setVerificationError('L’adresse e-mail n’a pas pu être vérifiée. Vérifiez le code puis réessayez.');
         return;
       }
-      const account = await registerCustomer.mutateAsync({
-        data: {
-          challengeId,
-          phone: e164Phone,
-            email: form.email.trim().toLowerCase(),
-          countryCode: signupCountry.countryCode,
-          fullName: form.fullName.trim().replace(/\s+/g, ' '),
-          birthDate: form.birthDate,
-          password: form.password,
-          acceptedPrivacy: true,
-            turnstileToken: token,
-        },
-      });
-      const createdApiKeyPair = account.developerApiKeyPair ?? null;
-      registerCustomer.reset();
-      savePendingSignup();
-      setEmailVerifiedOnSignup(true);
-      setSubmitted(true);
-      setSignupApiKeyPair(createdApiKeyPair);
-      setStep(createdApiKeyPair ? 'credentials' : 'success');
-    } catch (error) {
+      setEmailOtpVerified(true);
       setOtpCode('');
-      setVerificationError(getRequestErrorMessage(error, 'Code incorrect ou expiré. Vérifiez les chiffres puis réessayez.'));
+    } catch (error) {
+      if (!emailOtpVerified) setOtpCode('');
+      setVerificationError(getRequestErrorMessage(
+        error,
+        emailOtpVerified
+          ? 'La création du compte a échoué. Validez à nouveau la vérification puis réessayez.'
+          : 'Code incorrect ou expiré. Vérifiez les chiffres puis réessayez.',
+      ));
     } finally {
       submissionLock.current = false;
     }
@@ -534,46 +554,54 @@ export default function SignupPage() {
                 Nous avons envoyé un code à <span className="sendflow-signup-verification-number">{form.email.trim().toLowerCase()}</span>.
               </p>
 
-              <div className="sendflow-signup-otp-wrap">
-                <InputOTP
-                  id="signup-email-otp"
-                  maxLength={6}
-                  value={otpCode}
-                  onChange={(value) => {
-                    setVerificationError('');
-                    setOtpCode(value.replace(/\D/g, '').slice(0, 6));
-                  }}
-                  inputMode="numeric"
-                  autoFocus
-                  aria-label="Code de vérification à 6 chiffres"
-                  aria-describedby="signup-otp-help"
-                  containerClassName="sendflow-signup-otp"
-                  data-testid="input-email-otp"
-                >
-                  <InputOTPGroup>
-                    {Array.from({ length: 6 }, (_, index) => (
-                      <InputOTPSlot
-                        key={index}
-                        index={index}
-                        className="sendflow-signup-otp-slot"
-                        data-testid={`input-email-otp-slot-${index + 1}`}
-                      />
-                    ))}
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
+              {emailOtpVerified ? (
+                <p className="sendflow-signup-verification-timing" role="status" aria-live="polite">
+                  Code vérifié. Validez la nouvelle vérification de sécurité pour terminer la création du compte.
+                </p>
+              ) : (
+                <>
+                  <div className="sendflow-signup-otp-wrap">
+                    <InputOTP
+                      id="signup-email-otp"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(value) => {
+                        setVerificationError('');
+                        setOtpCode(value.replace(/\D/g, '').slice(0, 6));
+                      }}
+                      inputMode="numeric"
+                      autoFocus
+                      aria-label="Code de vérification à 6 chiffres"
+                      aria-describedby="signup-otp-help"
+                      containerClassName="sendflow-signup-otp"
+                      data-testid="input-email-otp"
+                    >
+                      <InputOTPGroup>
+                        {Array.from({ length: 6 }, (_, index) => (
+                          <InputOTPSlot
+                            key={index}
+                            index={index}
+                            className="sendflow-signup-otp-slot"
+                            data-testid={`input-email-otp-slot-${index + 1}`}
+                          />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
 
-              <p
-                id="signup-otp-help"
-                className={`sendflow-signup-verification-timing${expiresInSeconds === 0 ? ' is-expired' : ''}`}
-                role="status"
-                aria-live="polite"
-                data-testid="status-email-otp-timing"
-              >
-                {expiresInSeconds > 0
-                  ? `Le code expire dans ${expiresInSeconds}s.`
-                  : 'Ce code a expiré. Demandez-en un nouveau.'}
-              </p>
+                  <p
+                    id="signup-otp-help"
+                    className={`sendflow-signup-verification-timing${expiresInSeconds === 0 ? ' is-expired' : ''}`}
+                    role="status"
+                    aria-live="polite"
+                    data-testid="status-email-otp-timing"
+                  >
+                    {expiresInSeconds > 0
+                      ? `Le code expire dans ${expiresInSeconds}s.`
+                      : 'Ce code a expiré. Demandez-en un nouveau.'}
+                  </p>
+                </>
+              )}
 
               {verificationError && (
                 <p className="sendflow-signup-verification-error" role="alert" data-testid="error-email-otp">
@@ -591,16 +619,16 @@ export default function SignupPage() {
                 <button
                   type="submit"
                   className="sendflow-signup-submit sendflow-signup-check"
-                  disabled={otpCode.length !== 6 || !turnstileToken || isChecking || expiresInSeconds === 0}
+                  disabled={(!emailOtpVerified && otpCode.length !== 6) || !turnstileToken || isChecking || expiresInSeconds === 0}
                   data-testid="button-check-email-otp"
                 >
-                  {isChecking ? 'Vérification…' : 'Vérifier le numéro'}
+                  {isChecking ? 'Vérification…' : emailOtpVerified ? 'Créer mon compte' : 'Vérifier le code'}
                 </button>
                 <button
                   type="button"
                   className="sendflow-signup-secondary-action"
                   onClick={() => void sendCode()}
-                  disabled={!turnstileToken || isSending || resendInSeconds > 0}
+                  disabled={emailOtpVerified || !turnstileToken || isSending || resendInSeconds > 0}
                   data-testid="button-resend-email-otp"
                 >
                   {isSending

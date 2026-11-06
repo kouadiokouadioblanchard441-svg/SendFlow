@@ -93,9 +93,9 @@ est exécuté sous Node.js `24.22.2` avant le commit d'artefacts.
 Configurer les racines et fichiers de démarrage des applications Node Plesk :
 
 | Service | Application root relative au checkout | Fichier de démarrage relatif à cette racine |
-| ------- | --------------------------------------- | ------------------------------------------- |
-| Site    | `.`                                     | `index.cjs`                                 |
-| API     | `artifacts/api-server`                  | `dist/index.cjs`                            |
+| ------- | ------------------------------------- | ------------------------------------------- |
+| Site    | `.`                                   | `index.cjs`                                 |
+| API     | `artifacts/api-server`                | `dist/index.cjs`                            |
 
 Le dossier `artifacts/dist/public` contient les fichiers statiques, mais ils doivent
 être servis par le serveur Node du site pour conserver le contrôle IP appliqué par

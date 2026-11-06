@@ -48,6 +48,7 @@ import { fingerprint, isTrustedOrigin, requesterAddress } from "../lib/request-s
 import {
   rejectTurnstileRequest,
   verifyTurnstileRequest,
+  type TurnstileAction,
 } from "../lib/turnstile";
 import {
   CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
@@ -71,6 +72,18 @@ const HOUR_MS = 60 * 60 * 1000;
 
 type OtpPurpose = EmailOtpPurpose;
 type OtpRecipient = { email: string; emailHash: string };
+
+function turnstileActionForOtpPurpose(purpose: unknown): TurnstileAction | null {
+  switch (purpose) {
+    case "signup":
+    case "password_reset":
+    case "pin_reset":
+    case "admin_login":
+      return purpose;
+    default:
+      return null;
+  }
+}
 
 function retryAfterSeconds(until: Date, now = new Date()) {
   return Math.max(1, Math.ceil((until.getTime() - now.getTime()) / 1000));
@@ -687,6 +700,20 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
     return;
   }
 
+  const rawBody = typeof req.body === "object" && req.body !== null && !Array.isArray(req.body)
+    ? req.body as Record<string, unknown>
+    : null;
+  const expectedAction = turnstileActionForOtpPurpose(rawBody?.purpose);
+  const rawTurnstileToken = rawBody?.turnstileToken;
+  if (expectedAction && (typeof rawTurnstileToken !== "string" || rawTurnstileToken.length === 0)) {
+    rejectTurnstileRequest(req, res, {
+      success: false,
+      category: "missing_token",
+      unavailable: false,
+    });
+    return;
+  }
+
   const parsed = VerifyEmailOtpBody.safeParse(req.body);
   if (!parsed.success) {
     if (hasSignupPurpose(req.body)) {
@@ -714,6 +741,16 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       return;
     }
     if (await isSignupRateLimited(req, res, signupBuckets)) return;
+  }
+
+  const turnstile = await verifyTurnstileRequest(
+    req,
+    parsed.data.turnstileToken,
+    turnstileActionForOtpPurpose(purpose)!,
+  );
+  if (!turnstile.success) {
+    rejectTurnstileRequest(req, res, turnstile);
+    return;
   }
 
   const now = new Date();

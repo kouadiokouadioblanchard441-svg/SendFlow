@@ -6,7 +6,12 @@ export const TURNSTILE_SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 export const TURNSTILE_VERIFY_TIMEOUT_MS = 5_000;
 
-export type TurnstileAction = "login" | "signup" | "password_reset";
+export type TurnstileAction =
+  | "login"
+  | "signup"
+  | "password_reset"
+  | "pin_reset"
+  | "admin_login";
 export type TurnstileFailureCategory =
   | "missing_token"
   | "invalid_token"
