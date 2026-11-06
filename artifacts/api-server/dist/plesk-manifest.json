@@ -1,6 +1,6 @@
 {
-  "builtAt": "2026-11-06T18:48:25.838Z",
-  "sourceCommit": "bf269f6ef2839da884072f024b27a89da3c4149c",
+  "builtAt": "2026-11-06T18:54:38.790Z",
+  "sourceCommit": "8355054a0d265046da37368447953d9d9a183941",
   "trackedWorktreeModified": true,
   "builderNode": "v24.22.2",
   "builderPnpm": "10.26.1",
@@ -19,13 +19,13 @@
     },
     {
       "path": "index.mjs",
-      "bytes": 6697280,
-      "sha256": "e4d625e84b0b216d96e9d5852bb32654531292b9eb3528b8b4d80194ac16f8af"
+      "bytes": 6697293,
+      "sha256": "d2aabb887f1f8bfd5d35cc838199ef02955345449db4a9c07863cb5d1e099f2b"
     },
     {
       "path": "pino-file.mjs",
-      "bytes": 145477,
-      "sha256": "ce3e321991962e882d8d00fb0849ca21b12fe19c97a9e7dc325f18a1a304da65"
+      "bytes": 145490,
+      "sha256": "c765a2d8be72601c8c22b7bc5c5380db53d248465b3245ede729df9bbcd56695"
     },
     {
       "path": "pino-pretty.mjs",
@@ -34,8 +34,8 @@
     },
     {
       "path": "pino-worker.mjs",
-      "bytes": 157113,
-      "sha256": "cc43a689a93e7107eabcb942fcaa231d044675e1f5388dc1ec6e3017ca989985"
+      "bytes": 157126,
+      "sha256": "a4bdacee4573a235c50fc1f17a4963ff9f4bf56a6ef0dfe8bf07dac350d9e12a"
     },
     {
       "path": "thread-stream-worker.mjs",
@@ -45,12 +45,12 @@
   ],
   "runtimeDependencies": {
     "archive": "artifacts/api-server/plesk-runtime-dependencies.tar.gz",
-    "bytes": 22758917,
-    "sizeBytes": 22758917,
-    "sha256": "3e6e5743c19a64fb82c3fe662d603d969d58d5c27658a7fd6bdd0ccba9ac3ab3",
+    "bytes": 22928818,
+    "sizeBytes": 22928818,
+    "sha256": "528a2264fee3253449e437922d6893861d4b60dc6828041cf25793b04d2c4060",
     "platform": "linux-x64",
     "node": "v24.22.2",
-    "entries": 11726,
+    "entries": 11670,
     "externalRuntimePackages": [
       "sharp",
       "@swc/helpers"
