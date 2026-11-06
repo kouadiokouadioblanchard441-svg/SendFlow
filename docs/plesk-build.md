@@ -110,10 +110,10 @@ Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un ch
 
 ## Runtime et routage à confirmer sur Plesk
 
-- La version Node du constructeur figure dans les manifestes. Le runtime Plesk actuel
-  indiqué par l’utilisateur est Node.js 24.22.2 ; le build local précédent a tourné sous
-  24.22.1. Le fonctionnement Plesk sous une autre version, dont Node 22.23.3, n’est pas
-  démontré.
+- La version Node du constructeur figure dans les manifestes. Le build local vérifié a
+  été généré sous Node.js 24.22.2. L’utilisateur indique également que le runtime
+  Plesk est en 24.22.2, mais son exécution réelle reste à confirmer sur le serveur.
+  Le fonctionnement sous une autre version, dont Node 22.23.3, n’est pas démontré.
 - Vérifier la prise en charge du démarrage `index.cjs`/import ESM par le gestionnaire
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
 - Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
