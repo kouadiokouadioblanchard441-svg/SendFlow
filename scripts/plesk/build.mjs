@@ -46,6 +46,7 @@ try {
   run("pnpm", ["run", "check:secrets"]);
   run("pnpm", ["run", "typecheck"]);
   run("pnpm", ["run", "test:plesk-build"]);
+  run("pnpm", ["--filter", "@workspace/sendflow", "run", "test:auth-routing"]);
 
   // Root-mounted, same-origin Plesk release. Do not change stored environments.
   const buildEnvironment = { ...process.env, NODE_ENV: "production", BASE_PATH: "/" };

@@ -25,6 +25,7 @@ import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 import { GlobalErrorDialog } from '@/components/global-error-dialog';
 import { reportGlobalApiError } from '@/lib/global-api-errors';
 import { shouldShowGlobalQueryError } from '@/lib/safe-api-error';
+import { isSendFlowDocumentationHost } from '@/lib/documentation-host';
 
 const LegalMentionsPage = lazy(() =>
   import('@/pages/legal').then((module) => ({ default: module.LegalMentionsPage })),
@@ -69,6 +70,7 @@ const AdminSignInPage = lazy(() => import('@/pages/admin-access').then((module) 
   default: module.AdminSignInPage,
 })));
 const AdminPinPage = lazy(() => import('@/pages/admin-pin'));
+const DocsPage = lazy(() => import('@/pages/docs'));
 
 function getHttpStatus(error: unknown) {
   if (!error || typeof error !== 'object') return undefined;
@@ -282,6 +284,25 @@ function useProtectImages() {
 
 function App() {
   useProtectImages();
+
+  if (
+    typeof window !== 'undefined' &&
+    isSendFlowDocumentationHost(window.location.hostname)
+  ) {
+    return (
+      <WouterRouter base={basePath}>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Suspense fallback={<PageLoadingScreen />}>
+              <DocsPage />
+            </Suspense>
+            <Toaster />
+            <GlobalErrorDialog />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </WouterRouter>
+    );
+  }
 
   return (
     <WouterRouter base={basePath}>

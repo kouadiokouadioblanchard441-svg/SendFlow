@@ -111,6 +111,10 @@ Pour les deux applications, si Plesk exige un Document Root, choisir
 des bundles serveur et des manifestes. Le site sert lui-même `artifacts/dist/public`
 à travers le contrôle IP ; ne pas exposer directement ce dossier par Apache/Nginx.
 Document Root vide ne remplace pas le routage vers les deux applications Node.
+Le domaine `apis.docs.sendflow.africa` sert la page documentaire dans le même
+processus site (`index.cjs`) ; il n'y a pas de troisième serveur Docs à démarrer.
+Il doit router le site vers ce processus et ses chemins `/api` vers l'API, comme le
+domaine marchand. Le sélecteur d'hôte ne décide d'aucune autorisation ou règle financière.
 
 Le dossier `artifacts/dist/public` contient les fichiers statiques, mais ils doivent
 être servis par le serveur Node du site pour conserver le contrôle IP appliqué par
