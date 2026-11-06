@@ -1,0 +1,1 @@
+const e="sendflow.account.profile",c=`${e}:`;function n(t){const o=t.trim().replace(/\s+/g," ").split(" ").filter(Boolean),[a="",...l]=o;return{firstName:a,lastName:l.join(" ")}}function r(){try{for(let t=window.localStorage.length-1;t>=0;t-=1){const o=window.localStorage.key(t);(o===e||o?.startsWith(c))&&window.localStorage.removeItem(o)}}catch{}}export{r as c,n as s};

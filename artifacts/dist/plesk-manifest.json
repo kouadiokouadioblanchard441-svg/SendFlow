@@ -1,0 +1,786 @@
+{
+  "builtAt": "2026-11-06T12:28:43.419Z",
+  "sourceCommit": "f7a74d85fad80f50ef6b6748d542f892eb4b7162",
+  "trackedWorktreeModified": true,
+  "builderNode": "v24.22.1",
+  "builderPnpm": "10.26.1",
+  "lockfileSha256": "46a06d18ad881bb0c9350a01bad7eb54bf70e8048fa906a88d0a8771d25319d5",
+  "productionHostVerified": false,
+  "buildMode": "production",
+  "basePath": "/",
+  "service": "web",
+  "startupFile": "index.cjs",
+  "esmEntry": "server/index.mjs",
+  "files": [
+    {
+      "path": "index.cjs",
+      "bytes": 499,
+      "sha256": "297f03d716da08889012696989373a6ea13b509ff14aed886bdcc5705521812d"
+    },
+    {
+      "path": "public/assets/chunk-3H_THPUU.js",
+      "bytes": 594,
+      "sha256": "e6dc88602068e7085ff6fe9ec4702680835b1740658d4875822b321f9bd7867c"
+    },
+    {
+      "path": "public/assets/chunk-3UDz13uo.js",
+      "bytes": 475,
+      "sha256": "dbfcdc809f39a9a22159108cf34d85fe4e7576480f8ae7cef1b2f3d1c51f0177"
+    },
+    {
+      "path": "public/assets/chunk-3qLwavUx.js",
+      "bytes": 14744,
+      "sha256": "a365cf7396dfe7d61823b9b3ca55c1c103ad1ca038ee086855e4d946ee493e2b"
+    },
+    {
+      "path": "public/assets/chunk-9zQcetOW.js",
+      "bytes": 257,
+      "sha256": "3ee6b71a4d64472723ce6803575131a20f872fc1d55893cebb068d919304129e"
+    },
+    {
+      "path": "public/assets/chunk-B5pu-Th9.js",
+      "bytes": 54497,
+      "sha256": "0526f215fefcfc3b20dd9fda7d7036371961c0e1c2aab89011ccf5e0fcde4721"
+    },
+    {
+      "path": "public/assets/chunk-BEcdGv_b.js",
+      "bytes": 10717,
+      "sha256": "8fcb34900c05162f184b27bfe21a745b4ad7cf262dd9dbc8f9888399961ef14b"
+    },
+    {
+      "path": "public/assets/chunk-BF8eb9Ju.js",
+      "bytes": 424,
+      "sha256": "dfc372f8fc8133216eb73828e548460b1c82d44b7d953f7559c9379ae6fed4d2"
+    },
+    {
+      "path": "public/assets/chunk-BLvjoB-z.js",
+      "bytes": 10050,
+      "sha256": "48c1a17bb901951c68db1ef8863c12a211702ee6eff2ea3bc80368a50394632a"
+    },
+    {
+      "path": "public/assets/chunk-BMgMlFmh.js",
+      "bytes": 129,
+      "sha256": "3a300e6bb5713d283a894705c1675b619b7c80354be16d266bfa9c6025bf2f26"
+    },
+    {
+      "path": "public/assets/chunk-BU7D9let.js",
+      "bytes": 14631,
+      "sha256": "66d8848018a02ace65209e63bdfb992051dedc40223f64eb96d22224ce119551"
+    },
+    {
+      "path": "public/assets/chunk-BZFQbS8J.js",
+      "bytes": 25731,
+      "sha256": "87f496d203a2441c2f4d1f4449e5362292ba71dbc41299942ed01be438d1f415"
+    },
+    {
+      "path": "public/assets/chunk-BeLuOYLF.js",
+      "bytes": 448,
+      "sha256": "7e81ca9c7eef7e6fff46997055e41caf3816b258805c4a2fbf021e8ad325dec1"
+    },
+    {
+      "path": "public/assets/chunk-BhSGouLG.js",
+      "bytes": 285989,
+      "sha256": "8d1f86b932fee0605da5d7cb5be87042048cce0368f24adea21bcb3f50ea6cce"
+    },
+    {
+      "path": "public/assets/chunk-Bk2Kf1CH.js",
+      "bytes": 495,
+      "sha256": "a7c561134ebd8862ea2f6cab6f27c1a699673f814bdb88e22e976c78942c638a"
+    },
+    {
+      "path": "public/assets/chunk-BmbsaBXC.js",
+      "bytes": 6178,
+      "sha256": "f0c90e04fdfc691cccad67a5a668c25ee99f9210cfd0986d5c3419ce2f6e07ff"
+    },
+    {
+      "path": "public/assets/chunk-Bnf912U_.js",
+      "bytes": 166,
+      "sha256": "895eec4967fa6580096a31891319001ae68eec0075476ca4e906f46608c2342f"
+    },
+    {
+      "path": "public/assets/chunk-BsClmVsS.js",
+      "bytes": 8185,
+      "sha256": "54aa0a1974f88a3adc81dfe9a1f8a78dd05385e65b537509c7cecc43540a80c8"
+    },
+    {
+      "path": "public/assets/chunk-Bt5j2-aC.js",
+      "bytes": 1742,
+      "sha256": "8e153d8ea397004fe97b5ede093abf6b3d0c6239b60bebbeabd6a38d6da0cdd8"
+    },
+    {
+      "path": "public/assets/chunk-BtpK_m-B.js",
+      "bytes": 45238,
+      "sha256": "3f3a581cde2b9665cddddba0b3fb03a12c2be97badf8850d002ea1a925325dd8"
+    },
+    {
+      "path": "public/assets/chunk-Bx5n05KL.js",
+      "bytes": 14399,
+      "sha256": "082967797db2c60b9a9ee8a82a15f5bfe78ed6f21d5a1d67a5ebdf4792a31ba7"
+    },
+    {
+      "path": "public/assets/chunk-C-F15kR3.js",
+      "bytes": 3841,
+      "sha256": "fc2349610598f0100a31ff25ad7d61f7af18faad44baf891b24e2037bd0a1ab9"
+    },
+    {
+      "path": "public/assets/chunk-C2YpWhdY.js",
+      "bytes": 551,
+      "sha256": "8f86abf64228ef2cd12665d1a75895cb4292c63cd9c55cbcbf8619e39dc61bea"
+    },
+    {
+      "path": "public/assets/chunk-C4vWpRXt.js",
+      "bytes": 5706,
+      "sha256": "0764f2d493725afd34479132125ec3fbb15bd20d1f7d4c7da61db862733abaad"
+    },
+    {
+      "path": "public/assets/chunk-C6t721Eq.js",
+      "bytes": 98,
+      "sha256": "bd7e4320ac5525746f68ca7e38282fc9c6bb9d59961c2ec6b9377f7e1b3225f2"
+    },
+    {
+      "path": "public/assets/chunk-CBZFgx3V.js",
+      "bytes": 176,
+      "sha256": "1e8ef3f523da7d327012ab7d134daa420f41d3392811eda35d90b6e0f30595e4"
+    },
+    {
+      "path": "public/assets/chunk-CEsSTmlJ.js",
+      "bytes": 2533,
+      "sha256": "bf6e30db7df8574917e847f9608a3b623073a9957fb2fc9e76c1ee6b061ef647"
+    },
+    {
+      "path": "public/assets/chunk-CIF4hgzf.js",
+      "bytes": 84,
+      "sha256": "30581c38989957d50611d6186b90288da6d8dc14eb5ec9ff2571fdbd571b09b9"
+    },
+    {
+      "path": "public/assets/chunk-CQc8fHX9.js",
+      "bytes": 668,
+      "sha256": "1e2c0b67ce3b7b3448889c261497cd430f2efaa65f4435bc6287cc2e2feb71ed"
+    },
+    {
+      "path": "public/assets/chunk-CTVDfqtD.js",
+      "bytes": 2630,
+      "sha256": "9d6a6a5c9c4e46b6319c7485ad3b89bfad9c74373a5460f86099bd3d760df020"
+    },
+    {
+      "path": "public/assets/chunk-CTu6zINE.js",
+      "bytes": 233,
+      "sha256": "f381ccdb496d1f93509e90d50b8f7851050db5addf6270ff9b2095658a4ae75b"
+    },
+    {
+      "path": "public/assets/chunk-CV_tKUYR.js",
+      "bytes": 4862,
+      "sha256": "d129f190de158b5f627534235ce0dcd04c75fbf755322f68c907692ab2cea632"
+    },
+    {
+      "path": "public/assets/chunk-CW1aCWxa.js",
+      "bytes": 243,
+      "sha256": "16429cb8cfc1676198b1b07372dbc777c27f97c62878a37bca244a0c59dd8f18"
+    },
+    {
+      "path": "public/assets/chunk-C_-NCBbx.js",
+      "bytes": 16354,
+      "sha256": "e44389c047e16a28a97a45917b36f28b794d32ca6f27814c04b57b65a0db0a87"
+    },
+    {
+      "path": "public/assets/chunk-C_5aVmjj.js",
+      "bytes": 65,
+      "sha256": "3f915f603830ba6f42296b65d69bcf586b22d33574b2b88af2df03ede636ad6b"
+    },
+    {
+      "path": "public/assets/chunk-Chy73Wxz.js",
+      "bytes": 1150,
+      "sha256": "c1248f0f7521a48a00194796190ef7b816225220c247aa4a4600f2950d388a0e"
+    },
+    {
+      "path": "public/assets/chunk-CpJVrZxx.js",
+      "bytes": 120,
+      "sha256": "7d1ad99ca94eb71d53da4211e9d542453240407e7f949e790a6840fdd0c6d1c9"
+    },
+    {
+      "path": "public/assets/chunk-CqhquLPc.js",
+      "bytes": 85217,
+      "sha256": "c14f8cd63c073aa41547822c50050f2602b638d9563e07540bcb3df0b304f91c"
+    },
+    {
+      "path": "public/assets/chunk-Css_D3SZ.js",
+      "bytes": 980,
+      "sha256": "dfb39d0f2ecb8b6aba06eb7d290815bc7d2187b50bb5620a7d484ea0a10177dd"
+    },
+    {
+      "path": "public/assets/chunk-Cutym3Zb.js",
+      "bytes": 950,
+      "sha256": "127e2028930575acad3c5b95b64c88bf5771758d7f1266fd5e12cdc7d7a602d1"
+    },
+    {
+      "path": "public/assets/chunk-CvmmcuW3.js",
+      "bytes": 2452,
+      "sha256": "87732cb6bf163d7f4f297d21b3eea9318038e31db69c6ce0c62f3762c57a05ac"
+    },
+    {
+      "path": "public/assets/chunk-D1SqeI8c.js",
+      "bytes": 621,
+      "sha256": "295d1c065cf481825373b2f35892754ee67218048d3f183fd535f1d9b6fa8d52"
+    },
+    {
+      "path": "public/assets/chunk-D1WNDUST.js",
+      "bytes": 9020,
+      "sha256": "e584e04757222f599669d6681eff66dfa3fdcf2689200812e353a3facacd384b"
+    },
+    {
+      "path": "public/assets/chunk-D1rakvVa.js",
+      "bytes": 81,
+      "sha256": "2d42c3b906837881896c4647e17464c68b0b9ed57ca98c82b35d749f7bdd69da"
+    },
+    {
+      "path": "public/assets/chunk-D3hmXm26.js",
+      "bytes": 198,
+      "sha256": "f5de4e4e28a677bf0dba218719eaec0af8b83c9f3eed0968ec7e57c31678c7ff"
+    },
+    {
+      "path": "public/assets/chunk-D3jxEdyD.js",
+      "bytes": 342,
+      "sha256": "2db99e0ce6049a1dff7445da4270acd66d7f08fc176296ecd3a5b194e08900cd"
+    },
+    {
+      "path": "public/assets/chunk-D3m9FDeL.js",
+      "bytes": 6403,
+      "sha256": "16739c7d75c9b584c3ebba5fb0633c88a4c8cf29102153c3b9fca9e3ef449254"
+    },
+    {
+      "path": "public/assets/chunk-D8FpDISF.js",
+      "bytes": 214,
+      "sha256": "c4acb2e56d5bed540129c447d40ebf3507fc04e31605ad1a438b668dff73a552"
+    },
+    {
+      "path": "public/assets/chunk-D9ssAmT-.js",
+      "bytes": 316,
+      "sha256": "f07a467d386108919fd7c741326044551bcd4ec20502eb7a60a1e5ab2536d8ed"
+    },
+    {
+      "path": "public/assets/chunk-DB4CoBWg.js",
+      "bytes": 165,
+      "sha256": "d9984a90d1a3a40858d0385bc652d4d980ad97b6897dd2ebd70ae9bd57d05be5"
+    },
+    {
+      "path": "public/assets/chunk-DHatubrC.js",
+      "bytes": 244,
+      "sha256": "50eee0b306bc797bb54bf88e063ff9617ca1b4f284773ace75baface8639ff14"
+    },
+    {
+      "path": "public/assets/chunk-DNWU_i1v.js",
+      "bytes": 762,
+      "sha256": "8dc591034830a8745f7253dee728077243fd13ea143c160b9b39fad83a493903"
+    },
+    {
+      "path": "public/assets/chunk-DPMZNrQJ.js",
+      "bytes": 1650,
+      "sha256": "52413a4db17e4111f6fb91d328365096d0f842fc9f63abca1fd9c5c20306e4b8"
+    },
+    {
+      "path": "public/assets/chunk-DQ7Di6qZ.js",
+      "bytes": 467,
+      "sha256": "c027972d2166982e70fa480594ff28e6edcbb16ea5deb123751fa55eb264b0df"
+    },
+    {
+      "path": "public/assets/chunk-DQEBknvW.js",
+      "bytes": 166,
+      "sha256": "d98b2550e46a6a14e3d13c5c2f510a507e0f721ff205a0f2ffd37262e48d0185"
+    },
+    {
+      "path": "public/assets/chunk-DSdCwhhM.js",
+      "bytes": 4964,
+      "sha256": "6941b838aaf301f4107a0f4cfabdc115544a27e2e7e9a2128296f22255fefeb9"
+    },
+    {
+      "path": "public/assets/chunk-DXpX3EzE.js",
+      "bytes": 22825,
+      "sha256": "24759bb5a5a167276982a3b0c23ce5017d82c1a5842a8e8181a401adc4bc2720"
+    },
+    {
+      "path": "public/assets/chunk-DZy8q7f7.js",
+      "bytes": 232,
+      "sha256": "987723af601b38ff21392ff2ee182738034dd39e77b877c04e5da34f3b958ff9"
+    },
+    {
+      "path": "public/assets/chunk-DbqFlz4Z.js",
+      "bytes": 72,
+      "sha256": "56089685a2c6c7519940e42ac52fba9c1e57fe925c9100cdde6232a29b7a2424"
+    },
+    {
+      "path": "public/assets/chunk-DdU4hMRS.js",
+      "bytes": 373,
+      "sha256": "97ecf51ba3013629b08fc25e3100debf08c306ab0ce80e0250b2085097ff20f2"
+    },
+    {
+      "path": "public/assets/chunk-De-A6DKa.js",
+      "bytes": 11230,
+      "sha256": "3fa2ce26e583eac55c82c25b4a2f0fc362d9ea3f20094916a16218d358743b54"
+    },
+    {
+      "path": "public/assets/chunk-Di1QC8Ey.js",
+      "bytes": 380,
+      "sha256": "13a7f813b0d7502bd11da337313ba78b7cccdfa0e898961c2dd034a83aa41728"
+    },
+    {
+      "path": "public/assets/chunk-Dk0v4U6h.js",
+      "bytes": 2766,
+      "sha256": "f855c3ce58a05ec4c7bd829e68753df01984933dcd484036a05dfe2675b0d1b1"
+    },
+    {
+      "path": "public/assets/chunk-DqbSq5j6.js",
+      "bytes": 17093,
+      "sha256": "459eb6d8d3898c2001654c554d55207acb251556a217b2689f7c0e4613ac1daa"
+    },
+    {
+      "path": "public/assets/chunk-Dt617CWE.js",
+      "bytes": 238,
+      "sha256": "ae6d2a679fbe91bdd355342bc4b9143dffb2086fbba066b7c91aad2a584c1c91"
+    },
+    {
+      "path": "public/assets/chunk-DvrIJckX.js",
+      "bytes": 256,
+      "sha256": "e630f6f7b78f11c8124a654d53e3002f009984239b41b9029cff911a1fe05e11"
+    },
+    {
+      "path": "public/assets/chunk-DyfruH8Q.js",
+      "bytes": 257,
+      "sha256": "6596a615510ddf0e32646ad88d38f078c992d7e2691d08e4d66bb69dc478d73f"
+    },
+    {
+      "path": "public/assets/chunk-DzZOArOp.js",
+      "bytes": 1704,
+      "sha256": "03f0d00e1575da262e927ce48b890949b3fe984a8c9570474cb3e6fa51009cf2"
+    },
+    {
+      "path": "public/assets/chunk-FGuTrMj1.js",
+      "bytes": 154,
+      "sha256": "93d0de25f19b362f303d576a7965c59aab9c04c950c7ef4de7c64e6c5fee4692"
+    },
+    {
+      "path": "public/assets/chunk-IG9OGxYZ.js",
+      "bytes": 82,
+      "sha256": "7a6601a47ab07a1e459313e3d25aa6c0a3e913683320f08335500b0709ef9ec4"
+    },
+    {
+      "path": "public/assets/chunk-IIVr9JQU.js",
+      "bytes": 69,
+      "sha256": "3d46694ea9df13b6b707b76e2050b20998e2ba373a027c66d87a8fb49281f3cf"
+    },
+    {
+      "path": "public/assets/chunk-LiLJhFfg.js",
+      "bytes": 2010,
+      "sha256": "3ed5dffeccfe7db2e488aad7deed0b1a909fca07b1a71676a14e64476c0f27bb"
+    },
+    {
+      "path": "public/assets/chunk-Pzgw6Q1M.js",
+      "bytes": 639,
+      "sha256": "cf84f27f2ad0202da8ad45066d2ffb4994ce984cae82b6fbb60fe1ee85d1ba3a"
+    },
+    {
+      "path": "public/assets/chunk-RWji-_7f.js",
+      "bytes": 174,
+      "sha256": "d8435e5eb833f9af3383dbfcef3f3e7bf86f7d23064a035956d8cc4891e9523d"
+    },
+    {
+      "path": "public/assets/chunk-YfvV_dc1.js",
+      "bytes": 3318,
+      "sha256": "5d79dcaf3b94e87297d89cf16eb424c3cba37530375010cdd138f04a92efccc2"
+    },
+    {
+      "path": "public/assets/chunk-_eNv-vfq.js",
+      "bytes": 6223,
+      "sha256": "e07101181c95efd25d69b7848598d847c7119b2e802761f8e700fc54c58d3015"
+    },
+    {
+      "path": "public/assets/chunk-aNdfpDvt.js",
+      "bytes": 22,
+      "sha256": "45d38e1d546eb200a93d0a5271117a06e7ef96e38ac044926cd80be89d20c4c3"
+    },
+    {
+      "path": "public/assets/chunk-bOkWI0qt.js",
+      "bytes": 140,
+      "sha256": "f3ff15595e5b72a105f73b266779cc820e08737c9fa2bbdd81ae4da2438bf92f"
+    },
+    {
+      "path": "public/assets/chunk-fkzyQH8z.js",
+      "bytes": 5790,
+      "sha256": "88a720823aaec67c30b26c01d3962979b4f102edd2e0a6dd9005dabe9acc2a67"
+    },
+    {
+      "path": "public/assets/chunk-kDm0lmOc.js",
+      "bytes": 2147,
+      "sha256": "aed6f68edd650051bf5eb6503bfad919645e1879e5693d55e2adf6ada523e873"
+    },
+    {
+      "path": "public/assets/chunk-lVO42piX.js",
+      "bytes": 131,
+      "sha256": "0b8c3eee8ea45c9e68146f34e5a5eb6704a933d29dfa7b8b229c0e15ba91c062"
+    },
+    {
+      "path": "public/assets/chunk-m1w7biU-.js",
+      "bytes": 11420,
+      "sha256": "16df5ff0ffe81ffeb93f6409611045adda505314a3659412b648de5645e5518c"
+    },
+    {
+      "path": "public/assets/chunk-mNcQeHzv.js",
+      "bytes": 716,
+      "sha256": "19535ace3373fa5ee4a488ac7974b35d0f0d52ecd9658c4733ce25f5f13678c9"
+    },
+    {
+      "path": "public/assets/chunk-nuYNVNfU.js",
+      "bytes": 26048,
+      "sha256": "f304144e27686e1fceeaa7354fc79cfbbfc4d42e536026f9e5fbbec21c7e0af4"
+    },
+    {
+      "path": "public/assets/chunk-txR--gE2.js",
+      "bytes": 170,
+      "sha256": "f5c5dc0b08a7580ac0758478f3daa9dad96069347191937f1fb437c4d7807f67"
+    },
+    {
+      "path": "public/assets/chunk-ujgn2Erh.js",
+      "bytes": 322,
+      "sha256": "2bad155a7f48ac4f904655ffaeaf96f20ab59cd469b700bc14516a9c9e10ae8e"
+    },
+    {
+      "path": "public/assets/chunk-vjX8vzsg.js",
+      "bytes": 4273,
+      "sha256": "d1c274e2cd313b21ef4cf932f7dac143b26dd11a222f2ac14eaaa8bbf5076d15"
+    },
+    {
+      "path": "public/assets/chunk-yRo8pXXE.js",
+      "bytes": 4149,
+      "sha256": "c295ec4927ca311fac9a5a24398d925f41dba1675f669fa276ff4507107139db"
+    },
+    {
+      "path": "public/assets/chunk-yotU_5WA.js",
+      "bytes": 34285,
+      "sha256": "7a4451decd6638c341895c4c12e6fe276be02ad2ec7a82331670731717355d8f"
+    },
+    {
+      "path": "public/assets/chunk-zmQC6ts9.js",
+      "bytes": 1091,
+      "sha256": "756a68c011789d6906e2cd0b16594d6cf9d0968ab9280ef8194e3e012fb8f2a2"
+    },
+    {
+      "path": "public/assets/developers-BTXm9tR2.css",
+      "bytes": 36144,
+      "sha256": "41864d0f863d848de3ec8ca2c4e33b4d1401c76f5d01c9637187c29eefef51a6"
+    },
+    {
+      "path": "public/assets/facebook-logo-LNGkMboG.png",
+      "bytes": 6486,
+      "sha256": "6a465edec9aa212c7a52ead3ed28ce234ca02accdae2bc7ceaf07a4296afc9a8"
+    },
+    {
+      "path": "public/assets/index-4vUYdLjz.js",
+      "bytes": 446630,
+      "sha256": "d805bee8e320b47545d2f81d6aaf8401c7ad6f10875bb71f832d95dcbe9d68ca"
+    },
+    {
+      "path": "public/assets/index-IwpEU9JB.css",
+      "bytes": 400708,
+      "sha256": "329e1379d8536b0375d4fda18237bb9d0232539774bf76fb3ce2cd4f15a97dc3"
+    },
+    {
+      "path": "public/assets/native-wallet-icon-CBbTim5T.png",
+      "bytes": 14427,
+      "sha256": "a3ef05177c675842b1187993beba418728361df6ca1b81f5a66f25bc9218b96b"
+    },
+    {
+      "path": "public/assets/notification-bell-QEUtmhMt.png",
+      "bytes": 9024,
+      "sha256": "cd51207b29556064e9811ce89f20f9d4abbd8c2814fad802f3fd77956decfc9f"
+    },
+    {
+      "path": "public/assets/sendflow-account-info-profile-3d-transparent-4bna_vwn.png",
+      "bytes": 213522,
+      "sha256": "95f94eef3971bb129094d27a80409edad86d0581b353f5ec260c7a3d005498db"
+    },
+    {
+      "path": "public/assets/sendflow-account-limit-verification-3d-transparent-BaVdDkae.png",
+      "bytes": 808205,
+      "sha256": "fa5c78512c7cd8cddc8a0a0be385c6b6da08b9884daafd5e8c6412bfcca48f5d"
+    },
+    {
+      "path": "public/assets/sendflow-api-integration-people-3d-transparent-CbDNiPSB.png",
+      "bytes": 153696,
+      "sha256": "7f179c8ab505c02c356a850c74ced52d3d8fb8ea930de63ac0eb146f8a2f06e2"
+    },
+    {
+      "path": "public/assets/sendflow-api-key-warning-3d-transparent-zfOLPj2H.png",
+      "bytes": 104665,
+      "sha256": "feafe97a5dce10661c8f5b9965551579e5cd798b998250b62fd3fafeccdc5001"
+    },
+    {
+      "path": "public/assets/sendflow-avatar-amina-BjyMIF-Z.png",
+      "bytes": 1490086,
+      "sha256": "35a3415f235e6f3032642b316a9e3e4e190ce9cb35abe4519346cc3aadfe936b"
+    },
+    {
+      "path": "public/assets/sendflow-avatar-fatou-C56iCdqN.png",
+      "bytes": 1409498,
+      "sha256": "802c3a00bc1388c3cde0596880cb6a374d84e2e378eb5700c6bd8a1cc2c8718f"
+    },
+    {
+      "path": "public/assets/sendflow-avatar-ibrahima-eG32vn4D.png",
+      "bytes": 1480292,
+      "sha256": "2e27727b25ab05a05cb9899b2a2a63aa2ca9ecd81c8124d005d1f90cc7132f4f"
+    },
+    {
+      "path": "public/assets/sendflow-avatar-kofi-CTsx05SV.png",
+      "bytes": 1348903,
+      "sha256": "a8968fee1ef88a4157fa4318132685d681749cd1eac694a4e618f5d5b0ba3e8a"
+    },
+    {
+      "path": "public/assets/sendflow-avatar-nadia-CLFdz8Mo.png",
+      "bytes": 1355711,
+      "sha256": "458f24ceb8d0b540b9ea58a44343a922bedffe8cddc917b286f0394036efeaf8"
+    },
+    {
+      "path": "public/assets/sendflow-avatar-ousmane-Cve9mIU_.png",
+      "bytes": 1595187,
+      "sha256": "d46b19a10eadd05ec8e337d720bf3b4b32f7c1a3b860ddfe2757e32255e6578b"
+    },
+    {
+      "path": "public/assets/sendflow-avatar-salma-B3VKHySu.png",
+      "bytes": 1312256,
+      "sha256": "c7b341025303e3f8c48335d5a5bff06858e7d2a2bbc22b3382a0e33f221d896d"
+    },
+    {
+      "path": "public/assets/sendflow-avatar-yannick-D5iivPX6.png",
+      "bytes": 1244056,
+      "sha256": "b7b23d44b23aa9305400cc46ef87525d78b3cd5c9c40a6e8fe20352f659947a5"
+    },
+    {
+      "path": "public/assets/sendflow-biometric-3d-dd16ezLp.webp",
+      "bytes": 70714,
+      "sha256": "b82c0193c30d97813047ff656a7a405a05a608811097ecf5599535cd1128e622"
+    },
+    {
+      "path": "public/assets/sendflow-coverage-person-3d-flags-clean-DcGXKU1_.png",
+      "bytes": 1382287,
+      "sha256": "12b68c2343f937e4e9330afb0a40268a4502b9485b5fb47db70ea3831bafa666"
+    },
+    {
+      "path": "public/assets/sendflow-coverage-person-3d-transparent-DFFOddd0.png",
+      "bytes": 1294831,
+      "sha256": "4b76b1338bae5120a8334f43a016b014b5ee0199eca84c06023afc1a419684d9"
+    },
+    {
+      "path": "public/assets/sendflow-deposit-pending-3d-alpha-BZRd6rhi.png",
+      "bytes": 564403,
+      "sha256": "69c1f63f49dfc6c9558723972380ddd862d568b187c52c404bb6061c85e406ac"
+    },
+    {
+      "path": "public/assets/sendflow-deposit-success-3d-alpha-BUA0_qYb.png",
+      "bytes": 504865,
+      "sha256": "bb6c3f500628994ae181c38a307d03066aa972fe4f4183f64bf5e895b21162b7"
+    },
+    {
+      "path": "public/assets/sendflow-download-person-3d-transparent-BG7kDZBz.png",
+      "bytes": 1208233,
+      "sha256": "2c106aa3a20355eb3f37181fb0aac1ac7a1d2bfdb71036559f40b827c3b37f05"
+    },
+    {
+      "path": "public/assets/sendflow-history-transactions-3d-KEPnttxy.png",
+      "bytes": 1094806,
+      "sha256": "f7596ed8d096f13a079240ee5022be6dae319127d53e550e4f3bd8fb6bdde1b8"
+    },
+    {
+      "path": "public/assets/sendflow-how-person-3d-transparent-DtKnmYtX.png",
+      "bytes": 1080820,
+      "sha256": "4b016b14b016bae998c6684ad996cbe22f463cd2615147ec68ca59582fbe5429"
+    },
+    {
+      "path": "public/assets/sendflow-identity-card-back-3d-DnlZaSo2.webp",
+      "bytes": 33676,
+      "sha256": "5f935258ba20a7043ada3470b6f0749699785d34fed017e2b90a4795529eeab2"
+    },
+    {
+      "path": "public/assets/sendflow-identity-card-front-3d-D98Rop01.webp",
+      "bytes": 11942,
+      "sha256": "c3c4fbc60e839ffb0e7f5cad939f78e9bc1d8c6df21621bd120329015a27f83d"
+    },
+    {
+      "path": "public/assets/sendflow-identity-selfie-3d-BH1HDDht.webp",
+      "bytes": 53766,
+      "sha256": "a1b329ecd79d9f62b2df3596de7892d4de34fbbc3ef7c598baa1bb804a3ddaa2"
+    },
+    {
+      "path": "public/assets/sendflow-identity-submission-3d-DYgFROwY.webp",
+      "bytes": 29848,
+      "sha256": "ff6c184d7f4590f0d188b9231e9370116391db9d85a69646b1f057937f6f145e"
+    },
+    {
+      "path": "public/assets/sendflow-international-person-3d-transparent-ByMtcrXJ.png",
+      "bytes": 1068350,
+      "sha256": "8f872b0bd70f585e318f53ef05cd05f6ef992175702aa1d1490a12c2823ba42e"
+    },
+    {
+      "path": "public/assets/sendflow-link-expired-mascot-final-D0M45uaz.png",
+      "bytes": 166850,
+      "sha256": "e48b8bad5605bd228da4a41f9961571c8a38007ca6932e2218b3c469c7608d3a"
+    },
+    {
+      "path": "public/assets/sendflow-link-unavailable-3d-final-muW-3aUe.png",
+      "bytes": 416518,
+      "sha256": "b5450585e15ece26370fa38049f1986543f2c9372cb39e3d5c5ebfcdbb82e97b"
+    },
+    {
+      "path": "public/assets/sendflow-linkflow-history-3d-CfjIq303.webp",
+      "bytes": 33734,
+      "sha256": "4b2576bb2ce4daaaedeacaac284fc98418c07672d0fc94b9e4313699fb80a122"
+    },
+    {
+      "path": "public/assets/sendflow-linkflow-payment-3d-RBGpKVrI.webp",
+      "bytes": 26832,
+      "sha256": "8b9b21a1784174382b5940ddc4c82b224efa572420d0a1b1f4fe3fe54c28d12e"
+    },
+    {
+      "path": "public/assets/sendflow-mark-original-BB_wIQru.png",
+      "bytes": 283351,
+      "sha256": "acbb0b9ea1e14363375349686d6513b7ae990f00a866a76c6e3fe4160b6ba0dd"
+    },
+    {
+      "path": "public/assets/sendflow-network-person-3d-transparent-Cl0YpTaM.png",
+      "bytes": 1079659,
+      "sha256": "8bd241302787c5f94d24f626cf2552c4743be7bfe5309ea58d42afefda00234e"
+    },
+    {
+      "path": "public/assets/sendflow-onboarding-momentum-3d-clean-DP7R4KnH.png",
+      "bytes": 1236179,
+      "sha256": "0773c94c0f25966a294b5261c9bf8e0a791f299f4b8ecabcca416f58dd2e4f7d"
+    },
+    {
+      "path": "public/assets/sendflow-onboarding-security-3d-transparent-clean-DEoF08ni.png",
+      "bytes": 1374861,
+      "sha256": "f901cbfe46fe5221019d1e4ffee7a72eb8a8655a462788474a5fed0818161b14"
+    },
+    {
+      "path": "public/assets/sendflow-pin-change-success-3d-clean-D0NIgIEK.png",
+      "bytes": 308909,
+      "sha256": "de491e16dbc16ffedadfe783d74e4b77d249b80f68f6a16c2b1285369600efdc"
+    },
+    {
+      "path": "public/assets/sendflow-pricing-fees-3d-transparent-CAGBX2LO.png",
+      "bytes": 617108,
+      "sha256": "2a2edf232d41f5e960427d52c822cf57d3acc6327531014b775b5a04812cf1f6"
+    },
+    {
+      "path": "public/assets/sendflow-reset-password-3d-alpha-BcwyXONg.png",
+      "bytes": 446037,
+      "sha256": "ef3f06e4e285512891c711c25ea3397d05d3a76094ddf1a37979030f1aef0bf2"
+    },
+    {
+      "path": "public/assets/sendflow-reset-pin-3d-alpha-BNanE8Gm.png",
+      "bytes": 753757,
+      "sha256": "04339dca21eb509147885e216d5e4691c351b69d8e8979c5bbfdb4b549261cd7"
+    },
+    {
+      "path": "public/assets/sendflow-secure-payment-mark-3d-clean-CCDw0eSH.png",
+      "bytes": 85398,
+      "sha256": "7fde80b7eb08144c1053763fc80c7e158dd2c02ec683360c3b41d41fd36fe24b"
+    },
+    {
+      "path": "public/assets/sendflow-security-hero-3d-clean-DRC76q9q.png",
+      "bytes": 977446,
+      "sha256": "bc91c885f35abf65a818d668b99c68999a30ae130b1765afc3b6643e60f4d6e9"
+    },
+    {
+      "path": "public/assets/sendflow-signin-payments-3d-clean-cp4IHkM5.png",
+      "bytes": 703317,
+      "sha256": "ad9237afc7043aa45826306f9477b5fc0fb72195e00851208ff22aeb24055fdc"
+    },
+    {
+      "path": "public/assets/sendflow-signin-security-3d-clean-QJ4vTd9T.png",
+      "bytes": 553704,
+      "sha256": "bcfb715ee8a0882cf537c6e72f1b26b1ebcdf98656838622ce49f4e6bf1115d3"
+    },
+    {
+      "path": "public/assets/sendflow-signup-profile-3d-clean-D37BcG0B.png",
+      "bytes": 692342,
+      "sha256": "5f5cfc30409a358b37689b88b464e275f09621f79be01bdef08d93f1eb4454eb"
+    },
+    {
+      "path": "public/assets/sendflow-signup-welcome-3d-clean-ChdYw-sM.png",
+      "bytes": 625938,
+      "sha256": "0824b9934598b81355d20fbfc3601239120d86c3c5788158b1c7e7f5d8d8ffe3"
+    },
+    {
+      "path": "public/assets/sendflow-step-check-3d-transparent-pXwZVxr_.png",
+      "bytes": 1142816,
+      "sha256": "dc80a650c0c781548947b0175d33340569e5538be7ab62ca57323131ab56ce15"
+    },
+    {
+      "path": "public/assets/sendflow-wordmark-original-511ABOAY.png",
+      "bytes": 155853,
+      "sha256": "59bce196c5335da58de5b11e4bd8176d31693bfca272db55f14708f737bdc4a5"
+    },
+    {
+      "path": "public/assets/wave-logo-reference-C3MMA--h.png",
+      "bytes": 4470,
+      "sha256": "6c506e743e66ce119bfa50ed1b9c9be18e4d654641cc4b675a8c2e2d3f627bee"
+    },
+    {
+      "path": "public/assets/whatsapp-logo-DuHt73lY.jpg",
+      "bytes": 28806,
+      "sha256": "8eab7eee62ccb917e43efa838e89037c53514c3d0d90595d5dd1191468f828cc"
+    },
+    {
+      "path": "public/banners/sendflow-account.jpg",
+      "bytes": 33654,
+      "sha256": "b0175fd8b53d10dd2119c47505c01db6436f3e0571403b871c6a43614f4c15ec"
+    },
+    {
+      "path": "public/banners/sendflow-deposit.jpg",
+      "bytes": 37207,
+      "sha256": "37f16e7cb812edc9552f3a9d63d1f89ab4bdd5b231cd91a19bbcdf683dfcaa43"
+    },
+    {
+      "path": "public/banners/sendflow-international.jpg",
+      "bytes": 39648,
+      "sha256": "ba645d2627a54ffb2ef45e68c3849c85ac7818896340f98aaa9abfda0fa60082"
+    },
+    {
+      "path": "public/banners/sendflow-networks.jpg",
+      "bytes": 34406,
+      "sha256": "d300bd577be77378138b5ecd85aff2cc589c7e91acf538403b4f32620f0108c0"
+    },
+    {
+      "path": "public/banners/sendflow-support.jpg",
+      "bytes": 33005,
+      "sha256": "d2e2220e3d05f957a84880c35ac4ae99a161de7a468615245595666d969e648f"
+    },
+    {
+      "path": "public/favicon.svg",
+      "bytes": 163,
+      "sha256": "8ffbde9092b1fa4de97c9481b76f518b131268c82e7c555041925225b1dab6e0"
+    },
+    {
+      "path": "public/index.html",
+      "bytes": 1616,
+      "sha256": "6672de0e82d682fa38968af9b30f6c0f8e0ca8a8b0645b62e964c9569837a5e4"
+    },
+    {
+      "path": "public/robots.txt",
+      "bytes": 83,
+      "sha256": "60620498b054b0ccc3df59f93bd560473eacbc533487524e5cd0edf30bd6fd83"
+    },
+    {
+      "path": "public/sendflow-favicon.png",
+      "bytes": 133510,
+      "sha256": "72399368d7d73496f69e268b2bc77b42da0ace0ff95f749420cb2e2822d19823"
+    },
+    {
+      "path": "public/sitemap.xml",
+      "bytes": 302,
+      "sha256": "a8f9ad93d53d22bc2897c9c8f6fce83ead3e67593feff6c7e67e36c4d1b8856a"
+    },
+    {
+      "path": "server/index.mjs",
+      "bytes": 393386,
+      "sha256": "dac47c354dc8c93773f8b31d0ccd79b0055b2706fadc2c07b64a2f089b00303b"
+    }
+  ]
+}

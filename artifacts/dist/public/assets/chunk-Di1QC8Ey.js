@@ -1,0 +1,1 @@
+function s(i,n){return n&&n.minPhoneDigits===n.maxPhoneDigits?n.maxPhoneDigits:void 0}function a(i){return i.replace(/\D/g,"")}function g(i,n,t){const e=a(i),o=`${n}${e}`;return/^\+[1-9][0-9]{7,14}$/.test(o)&&(!t||e.length>=t.min&&e.length<=t.max)}function h(i,n){return"Saisissez un numéro de téléphone valide pour le pays sélectionné."}export{h as a,s as g,g as i,a as n};
