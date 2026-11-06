@@ -4,6 +4,8 @@
 dist/
 !artifacts/dist/
 !artifacts/dist/**
+!artifacts/api-server/dist/
+!artifacts/api-server/dist/**
 tmp
 out-tsc
 *.tsbuildinfo

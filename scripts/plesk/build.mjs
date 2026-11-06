@@ -73,6 +73,13 @@ try {
     path.join(root, "artifacts/sendflow/dist"),
     pleskWebDistribution,
   );
+  const rootWebLauncher = path.join(root, "index.cjs");
+  await writeFile(
+    rootWebLauncher,
+    commonJsLauncher("./artifacts/dist/server/index.mjs"),
+    { mode: 0o644 },
+  );
+  run(process.execPath, ["--check", rootWebLauncher]);
   const stagedManifest = { ...metadata, ...stagedWeb };
   await writeFile(
     path.join(pleskWebDistribution, "plesk-manifest.json"),
@@ -80,6 +87,7 @@ try {
     { mode: 0o644 },
   );
   console.log(`Plesk website root: ${path.relative(root, pleskWebDistribution)}/index.cjs and public/ ready.`);
+  console.log("Plesk project-root startup file: index.cjs ready.");
   console.log("SUCCESS: Plesk distributions generated. Read docs/plesk-build.md before deploying.");
 } catch (error) {
   // Our own diagnostics have no supplied values; subprocess output is from the existing build scripts.

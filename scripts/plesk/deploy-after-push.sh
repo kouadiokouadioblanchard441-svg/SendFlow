@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Compatibility alias for any existing Plesk deployment action using the old name.
-exec bash "$(dirname "$0")/build-after-pull.sh" "$@"
+# Compatibility alias for Plesk actions configured with the former script name.
+script_path="${BASH_SOURCE[0]}"
+if [[ "$script_path" != /* ]]; then
+  script_path="$PWD/$script_path"
+fi
+script_dir="${script_path%/*}"
+source "$script_dir/build-after-pull.sh" "$@"

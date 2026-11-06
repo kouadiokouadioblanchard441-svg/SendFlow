@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, writeFile, rm, symlink, chmod } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -22,6 +22,36 @@ async function fixture(t) {
   return root;
 }
 
+async function deploymentFixture(t) {
+  const root = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-deploy-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const scriptDir = path.join(root, "scripts/plesk");
+  await mkdir(scriptDir, { recursive: true });
+  for (const name of ["build-after-pull.sh", "deploy-after-push.sh"]) {
+    await writeFile(
+      path.join(scriptDir, name),
+      await readFile(path.join(projectRoot, "scripts/plesk", name), "utf8"),
+    );
+  }
+  await writeFile(path.join(root, "package.json"), "{}");
+  await writeFile(path.join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+  for (const file of [
+    "index.cjs",
+    "artifacts/dist/index.cjs",
+    "artifacts/dist/server/index.mjs",
+    "artifacts/dist/public/index.html",
+    "artifacts/dist/plesk-manifest.json",
+    "artifacts/api-server/dist/index.cjs",
+    "artifacts/api-server/dist/index.mjs",
+    "artifacts/api-server/dist/plesk-manifest.json",
+  ]) {
+    const target = path.join(root, file);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, "fixture");
+  }
+  return { root, scriptDir };
+}
+
 test("verifies a root-mounted web release and hashes its files", async (t) => {
   const root = await fixture(t);
   const result = await verifyDistribution(root, "web");
@@ -41,61 +71,41 @@ test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", a
     'console.log("synthetic-entry-started");');
 });
 
-test("Plesk post-pull build works without git or dirname in PATH", async (t) => {
-  const bin = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-bin-"));
-  t.after(() => rm(bin, { recursive: true, force: true }));
-  const fakeNode = path.join(bin, "node");
-  await writeFile(fakeNode, '#!/bin/sh\nprintf "24.22.2\\\\n"\n');
-  await chmod(fakeNode, 0o755);
-  const fakePnpm = path.join(bin, "pnpm");
-  await writeFile(fakePnpm, '#!/bin/sh\nif [ "$1" = "--version" ]; then printf "10.26.1\\\\n"; else printf "pnpm %s\\\\n" "$*"; fi\n');
-  await chmod(fakePnpm, 0o755);
-
-  const result = spawnSync("/bin/bash", [path.join(projectRoot, "scripts/plesk/build-after-pull.sh")], {
-    cwd: projectRoot,
-    env: { ...process.env, PATH: bin },
+test("Plesk post-pull validation succeeds without Node, pnpm, git, or dirname", async (t) => {
+  const { root, scriptDir } = await deploymentFixture(t);
+  const emptyPath = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-empty-path-"));
+  t.after(() => rm(emptyPath, { recursive: true, force: true }));
+  const result = spawnSync("/bin/bash", [path.join(scriptDir, "build-after-pull.sh")], {
+    cwd: root,
+    env: { PATH: emptyPath },
     encoding: "utf8",
   });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /pnpm install --frozen-lockfile/);
-  assert.match(result.stdout, /pnpm run build:plesk/);
-  assert.doesNotMatch(result.stderr, /(?:git|dirname): command not found/);
+  assert.match(result.stdout, /Verified prebuilt SendFlow Plesk packages/);
+  assert.doesNotMatch(result.stdout, /pnpm install|pnpm run build:plesk/i);
 });
 
-test("Plesk post-pull build fails clearly if Node is unavailable", async (t) => {
-  const emptyPath = await mkdtemp(path.join(tmpdir(), "sendflow-no-node-"));
-  t.after(() => rm(emptyPath, { recursive: true, force: true }));
-  const result = spawnSync("/bin/bash", [path.join(projectRoot, "scripts/plesk/build-after-pull.sh")], {
-    cwd: projectRoot,
-    env: { ...process.env, PATH: emptyPath },
+test("Plesk post-pull validation rejects an incomplete API package", async (t) => {
+  const { root, scriptDir } = await deploymentFixture(t);
+  await rm(path.join(root, "artifacts/api-server/dist/index.cjs"));
+  const result = spawnSync("/bin/bash", [path.join(scriptDir, "build-after-pull.sh")], {
+    cwd: root,
+    env: { PATH: "" },
     encoding: "utf8",
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /Node\.js is unavailable to the Plesk deployment action/);
-  assert.doesNotMatch(result.stderr, /command not found/);
+  assert.match(result.stderr, /artifacts\/api-server\/dist\/index\.cjs/);
 });
 
-test("Plesk post-pull build accepts an explicit Node binary outside PATH", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "sendflow-explicit-node-"));
-  t.after(() => rm(root, { recursive: true, force: true }));
-  const nodeDir = path.join(root, "plesk-node");
-  const toolsDir = path.join(root, "tools");
-  await mkdir(nodeDir);
-  await mkdir(toolsDir);
-  const fakeNode = path.join(nodeDir, "node");
-  await writeFile(fakeNode, '#!/bin/sh\nprintf "24.22.2\\\\n"\n');
-  await chmod(fakeNode, 0o755);
-  const fakePnpm = path.join(toolsDir, "pnpm");
-  await writeFile(fakePnpm, '#!/bin/sh\nif [ "$1" = "--version" ]; then printf "10.26.1\\\\n"; else printf "pnpm PATH=%s %s\\\\n" "$PATH" "$*"; fi\n');
-  await chmod(fakePnpm, 0o755);
-
-  const result = spawnSync("/bin/bash", [path.join(projectRoot, "scripts/plesk/build-after-pull.sh")], {
-    cwd: projectRoot,
-    env: { ...process.env, PATH: toolsDir, NODE_BINARY: fakeNode, PNPM_BINARY: fakePnpm },
+test("legacy Plesk action name works without dirname", async (t) => {
+  const { root, scriptDir } = await deploymentFixture(t);
+  const result = spawnSync("/bin/bash", [path.join(scriptDir, "deploy-after-push.sh")], {
+    cwd: root,
+    env: { PATH: "" },
     encoding: "utf8",
   });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, new RegExp(nodeDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(result.stdout, /Verified prebuilt SendFlow Plesk packages/);
 });
 
 test("missing JS or CSS is an error, not an accepted SPA fallback", async (t) => {
@@ -141,6 +151,21 @@ test("CommonJS adapter imports the existing ESM entry under production", async (
   });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /synthetic-entry-started/);
+});
+
+test("project-root Plesk startup file imports the tracked site package", async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-root-start-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const entry = path.join(root, "artifacts/dist/server/index.mjs");
+  await mkdir(path.dirname(entry), { recursive: true });
+  await writeFile(entry, 'console.log("project-root-entry-started");');
+  const launcher = path.join(root, "index.cjs");
+  await writeFile(launcher, commonJsLauncher("./artifacts/dist/server/index.mjs"));
+  const result = spawnSync(process.execPath, [launcher], {
+    env: { NODE_ENV: "production" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /project-root-entry-started/);
 });
 
 test("CommonJS adapter refuses non-production startup", async (t) => {

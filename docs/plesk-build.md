@@ -2,9 +2,9 @@
 
 ## Périmètre
 
-Cette procédure construit le code localement ou depuis une action de déploiement
-post-Pull dans Plesk. Elle ne connecte pas GitHub à Plesk, ne démarre pas les
-applications de production et n'exécute aucune migration, aucun SMS ni paiement.
+Cette procédure construit les packages localement avant le Push et vérifie leur
+présence dans l'action post-Pull Plesk. Elle ne connecte pas GitHub à Plesk, ne démarre
+pas les applications de production et n'exécute aucune migration, aucun SMS ni paiement.
 Les pages et le code métier restent inchangés.
 
 Le projet utilise pnpm et deux services Node : site React/Vite et API Express.
@@ -24,13 +24,13 @@ pnpm run build:plesk
 Le réglage `manage-package-manager-versions=true` dans `.npmrc` demande à pnpm
 d'utiliser cette version déclarée.
 
-Installer les dépendances de développement pour compiler. Le dépôt autorise
-explicitement les quatre scripts nécessaires (`@swc/core`, `esbuild`, `msw` et
+Installer les dépendances de développement dans l'environnement de build. Le dépôt
+autorise explicitement les quatre scripts nécessaires (`@swc/core`, `esbuild`, `msw` et
 `unrs-resolver`) dans `pnpm-workspace.yaml`, avec les syntaxes `allowBuilds` et
 `onlyBuiltDependencies` pour la compatibilité pnpm. Ne pas approuver globalement les
 scripts de toutes les dépendances. Ne pas remplacer pnpm par npm, ne pas régénérer le
-lockfile et ne pas lancer de migration dans le hook.
-Les compilateurs déjà installés sont utilisés ; le build ne lance pas d'installation.
+lockfile et ne pas lancer d'installation de dépendances ou de migration dans le hook
+Plesk. Celui-ci vérifie seulement les packages déjà livrés par Git.
 
 La commande impose `NODE_ENV=production` et `BASE_PATH=/` seulement aux processus de
 compilation ; elle ne modifie aucune variable enregistrée. Les variables publiques
@@ -49,17 +49,19 @@ Les adaptateurs CommonJS importent les bundles ESM existants et exigent
 `NODE_ENV=production`. La logique n'est pas dupliquée. Chaque distribution contient
 un manifeste privé `plesk-manifest.json` avec version du constructeur, empreinte du
 lockfile, révision source, état des fichiers suivis et empreintes SHA-256 des fichiers.
-Le manifeste ne contient aucune variable secrète. Les répertoires `dist` restent ignorés
-par Git ; le hook doit les reconstruire après récupération de la bonne révision.
-Pour le site, `artifacts/dist` est le package attendu par Plesk : il contient
-`index.cjs`, `server/` et `public/`. Il est généré à partir du build SendFlow après
-validation, tandis que `artifacts/sendflow/dist` reste la sortie native de Vite.
+Le manifeste ne contient aucune variable secrète. Les deux packages Plesk
+`artifacts/dist` et `artifacts/api-server/dist` sont explicitement suivis par Git afin
+que le Pull les récupère avec le code. Le build génère aussi un `index.cjs` à la racine
+du dépôt pour le réglage de démarrage Plesk affiché dans la capture. La sortie native
+Vite `artifacts/sendflow/dist` reste ignorée et n'est pas nécessaire à l'exécution Plesk.
 
 ## Auto-déploiement déclenché par un push
 
-Le flux prévu est le suivant : pousser le code sur GitHub, puis laisser le dépôt Git
-Plesk récupérer automatiquement `main` et exécuter son action de déploiement. Aucun
-workflow GitHub ne se connecte en SSH au serveur et aucun secret SSH n'est requis.
+Le flux prévu est le suivant : générer et committer les packages de production avec
+`pnpm run build:plesk`, pousser le commit, puis laisser Plesk récupérer `main`. Les
+fichiers compilés sont dans le commit ; le serveur n'a pas à compiler les sources après
+le Pull. Aucun workflow GitHub ne se connecte en SSH au serveur et aucun secret SSH
+n'est requis.
 
 Dans les paramètres du dépôt Git Plesk, l'auto-déploiement doit être activé et cette
 commande configurée comme action après le Pull, depuis le checkout SendFlow :
@@ -68,40 +70,32 @@ commande configurée comme action après le Pull, depuis le checkout SendFlow :
 bash scripts/plesk/build-after-pull.sh
 ```
 
-Le script retrouve la racine du checkout avec Bash, sans dépendre de Git ni de
-`dirname` dans l'environnement du hook, vérifie que Node.js est exactement
-`24.22.2` et que pnpm est `10.26.1`. Il exécute ensuite `pnpm install
---frozen-lockfile` puis `pnpm run build:plesk` sur Plesk. Si le mode de déploiement
-Plesk n'est pas configuré pour l'auto-déploiement ou les actions après Pull, le build
-ne se lancera pas automatiquement.
+Le script retrouve le checkout avec Bash et vérifie les fichiers compilés suivis par
+Git. Il n'appelle ni Git, ni `dirname`, ni Node, ni pnpm : le hook reste utilisable dans
+l'environnement restreint de déploiement Plesk. Il échoue avec la liste des fichiers
+manquants au lieu de déclarer qu'un package incomplet est prêt. Le build doit être
+exécuté sous Node.js `24.22.2` avant le commit et le Push.
 
-L'action doit exposer les exécutables Node et pnpm dans `PATH`. Si Plesk ne les
-fournit pas automatiquement, définir les variables non secrètes `NODE_BINARY` et
-`PNPM_BINARY` avec leurs chemins exacts dans l'environnement de l'action. Le script
-ne devine aucun chemin Plesk ; il s'arrête avant installation/build si un outil est
-introuvable ou si sa version ne correspond pas.
-
-Le script ne démarre pas les applications. Après un build réussi, configurer les
-racines et fichiers de démarrage des applications Node Plesk :
+Configurer les racines et fichiers de démarrage des applications Node Plesk :
 
 | Service | Application root relative au checkout | Fichier de démarrage relatif à cette racine |
 | ------- | --------------------------------------- | ------------------------------------------- |
-| Site    | `artifacts`                             | `dist/index.cjs`                            |
+| Site    | `.`                                     | `index.cjs`                                 |
 | API     | `artifacts/api-server`                  | `dist/index.cjs`                            |
 
 Le dossier `artifacts/dist/public` contient les fichiers statiques, mais ils doivent
 être servis par le serveur Node du site pour conserver le contrôle IP appliqué par
 l'application. Ne pas exposer directement le dossier par un serveur statique Nginx
-ou Apache sans protection équivalente. Redémarrer les deux services dans Plesk après
-le build. Aucun `index.cjs` n'est créé à la racine du dépôt.
+ou Apache sans protection équivalente. Le `index.cjs` racine est un adaptateur généré
+qui importe le bundle site déjà suivi par Git. Le serveur Plesk doit démarrer les deux
+processus Node nécessaires (site et API), chacun avec ses variables privées.
 
 ## Écart avec la proposition `/httpdocs/dist`
 
 La compétence fournie mentionne une **proposition à vérifier**, pas un accès Plesk
 observé : `/httpdocs/dist`, `/httpdocs/dist/public`, `index.cjs`, Node 22.23.3.
-Le build crée `artifacts/dist/index.cjs` et `artifacts/dist/public` pour le site,
-ainsi que la distribution API séparée. Il ne crée pas un package combiné unique
-`dist/` à la racine du dépôt.
+Le build crée `index.cjs` à la racine, `artifacts/dist/index.cjs` et
+`artifacts/dist/public` pour le site, ainsi que la distribution API séparée.
 
 Selon l'emplacement réel du checkout, configurer deux applications/processus Node,
 ou préparer une autre architecture explicitement approuvée. Les chemins absolus, les
