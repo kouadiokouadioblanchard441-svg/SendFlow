@@ -4,7 +4,7 @@ import { scanPublicArtifactText } from "./check-public-artifacts.mjs";
 
 test("public Turnstile site key is not classified as a secret", () => {
   const findings = scanPublicArtifactText(
-    "artifacts/sendflow/dist/public/assets/auth.js",
+    "dist/public/assets/auth.js",
     'const siteKey="1x00000000000000000000AA";',
   );
   assert.deepEqual(findings, []);
@@ -18,11 +18,11 @@ test("server secret assignments and client exposure are detected without returni
     ";",
   ].join("");
   const assignment = scanPublicArtifactText(
-    "artifacts/sendflow/dist/public/assets/auth.js",
+    "dist/public/assets/auth.js",
     assignmentSource,
   );
   const clientAccess = scanPublicArtifactText(
-    "artifacts/sendflow/dist/public/assets/auth.js",
+    "dist/public/assets/auth.js",
     "const secret = import.meta.env.TURNSTILE_SECRET_KEY;",
   );
   assert.ok(assignment.some((finding) => finding.rule === "literal-credential"));

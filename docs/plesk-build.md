@@ -51,18 +51,18 @@ une archive Linux x64 des dépendances de production encore externes au bundle A
 
 | Service | Racine de distribution relative au dépôt | Startup Plesk |
 | ------- | ---------------------------------------- | ------------- |
-| Site    | `artifacts/dist`                         | `index.cjs`   |
+| Site    | `dist`                                   | `index.cjs`   |
 | API     | `artifacts/api-server/dist`              | `index.cjs`   |
 
 Les adaptateurs CommonJS importent les bundles ESM existants et exigent
 `NODE_ENV=production`. La logique n'est pas dupliquée. Chaque distribution contient
 un manifeste privé `plesk-manifest.json` avec version du constructeur, empreinte du
 lockfile, révision source, état des fichiers suivis et empreintes SHA-256 des fichiers.
-Le manifeste ne contient aucune variable secrète. Les deux packages Plesk
-`artifacts/dist` et `artifacts/api-server/dist` sont explicitement suivis par Git afin
-que le Pull les récupère avec le code. Le build génère aussi un `index.cjs` à la racine
-du dépôt pour le réglage de démarrage Plesk affiché dans la capture. La sortie native
-Vite `artifacts/sendflow/dist` reste ignorée et n'est pas nécessaire à l'exécution Plesk.
+Le manifeste ne contient aucune variable secrète. Les packages Plesk
+`dist` et `artifacts/api-server/dist` sont explicitement suivis par Git afin que le Pull
+les récupère avec le code. Le build génère aussi un `index.cjs` à la racine du dépôt
+pour le réglage de démarrage Plesk. La sortie native Vite
+`artifacts/sendflow/dist` reste ignorée et n'est pas nécessaire à l'exécution Plesk.
 Le build versionne également `artifacts/api-server/plesk-runtime-dependencies.tar.gz`.
 Cette archive contient les dépendances de production nécessaires à l'API dans un
 format compressé ; aucun répertoire `node_modules` n'est ajouté à Git.
@@ -105,35 +105,32 @@ Configurer les racines et fichiers de démarrage des applications Node Plesk :
 | Site    | `.`                                   | `index.cjs`                                 |
 | API     | `artifacts/api-server`                | `dist/index.cjs`                            |
 
-Pour les deux applications, si Plesk exige un Document Root, choisir
-`artifacts/plesk-empty-document-root` (relatif au checkout). Ne pas choisir
-`artifacts`, `artifacts/dist` ou `artifacts/api-server` : ces répertoires contiennent
-des bundles serveur et des manifestes. Le site sert lui-même `artifacts/dist/public`
-à travers le contrôle IP ; ne pas exposer directement ce dossier par Apache/Nginx.
-Document Root vide ne remplace pas le routage vers les deux applications Node.
+Pour le site, choisir `dist/public` comme Document Root (relatif au checkout), ce qui
+correspond à `/merchent.business.sendflow.africa/dist/public` quand le checkout est à
+la racine du domaine. L'application doit tout de même router les requêtes vers Node :
+le serveur applique le contrôle IP avant de servir chaque fichier. Il ne faut pas
+laisser Apache/Nginx servir directement des fichiers de `dist/public` avant ce contrôle.
+Pour l'API, choisir le Document Root privé vide
+`artifacts/plesk-empty-document-root`. Ne jamais choisir `dist` au complet,
+`artifacts` ou `artifacts/api-server` : ils contiennent également des bundles serveur
+et des manifestes.
 Le domaine `apis.docs.sendflow.africa` sert la page documentaire dans le même
 processus site (`index.cjs`) ; il n'y a pas de troisième serveur Docs à démarrer.
 Il doit router le site vers ce processus et ses chemins `/api` vers l'API, comme le
 domaine marchand. Le sélecteur d'hôte ne décide d'aucune autorisation ou règle financière.
 
-Le dossier `artifacts/dist/public` contient les fichiers statiques, mais ils doivent
-être servis par le serveur Node du site pour conserver le contrôle IP appliqué par
-l'application. Ne pas exposer directement le dossier par un serveur statique Nginx
-ou Apache sans protection équivalente. Le `index.cjs` racine est un adaptateur généré
-qui importe le bundle site déjà suivi par Git. Le serveur Plesk doit démarrer les deux
-processus Node nécessaires (site et API), chacun avec ses variables privées.
+Le dossier `dist/public` contient uniquement le site public. Le `index.cjs` racine est
+un adaptateur généré qui importe `dist/server/index.mjs`, lequel sert ce contenu après
+le contrôle IP. Le serveur Plesk doit démarrer les deux processus Node nécessaires
+(site et API), chacun avec ses variables privées. Vérifier dans Plesk que les fichiers
+statiques ne sont pas servis directement avant le passage par Node.
 
-## Écart avec la proposition `/httpdocs/dist`
+## Correspondance avec le Document Root Plesk
 
-La compétence fournie mentionne une **proposition à vérifier**, pas un accès Plesk
-observé : `/httpdocs/dist`, `/httpdocs/dist/public`, `index.cjs`, Node 22.23.3.
-Le build crée `index.cjs` à la racine, `artifacts/dist/index.cjs` et
-`artifacts/dist/public` pour le site, ainsi que la distribution API séparée.
-
-Selon l'emplacement réel du checkout, configurer deux applications/processus Node,
-ou préparer une autre architecture explicitement approuvée. Les chemins absolus, les
-domaines, les ports et les comptes système Plesk sont inconnus ici. Ne pas les inventer.
-Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un chemin.
+Le build crée le dossier racine `dist/public` demandé pour le Document Root,
+un `index.cjs` à la racine pour démarrer le serveur site, ainsi que la distribution API
+séparée. Les chemins absolus, les ports et les comptes système Plesk restent à vérifier
+sur le serveur ; le chemin relatif `dist/public` est celui à utiliser depuis le checkout.
 
 ## Runtime et routage à confirmer sur Plesk
 
@@ -164,13 +161,11 @@ Ne pas écraser une ancienne release fonctionnelle pour faire correspondre un ch
   variables de prévisualisation Replit.
 - Préserver la vérification TLS de PostgreSQL, les sessions sécurisées, les contrôles OTP/PIN,
   les rôles et les protections financières. Ce build n'autorise aucun paiement.
-- Le Document Root ne doit exposer ni bundle serveur, ni `.map` privés, ni manifeste,
-  ni fichiers de configuration. Le seul arbre publiable est `dist/public` du site.
-- **Attention :** si Nginx/Apache sert directement cet arbre sans passer par Node,
-  les contrôles IP applicatifs sont contournés pour ces requêtes. Désactiver ce
-  contournement ou prouver une protection équivalente au proxy avant toute bascule.
-  L'API n'a pas de Document Root à exposer ; utiliser un répertoire public vide privé
-  des fichiers serveur si Plesk exige un champ Document Root.
+- Le Document Root du site est `dist/public` ; il ne doit pas exposer le bundle serveur,
+  les `.map`, le manifeste ou des fichiers de configuration. Les requêtes vers ces
+  fichiers doivent toujours passer par le serveur Node afin que le contrôle IP s'exécute.
+- L'API n'a aucun fichier public à exposer ; utiliser le répertoire vide privé si Plesk
+  exige un Document Root pour cette application.
 
 ## Livraison, vérification et retour arrière
 

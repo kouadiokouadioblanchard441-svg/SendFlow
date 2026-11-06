@@ -11,6 +11,7 @@ import { scanText } from "./check-secrets.mjs";
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const publicRoots = [
   "artifacts/sendflow/dist/public",
+  "dist/public",
   "artifacts/sendflow/android/app/src/main/assets",
   "artifacts/sendflow/android/app/build/outputs",
   "artifacts/sendflow/android/app/build/intermediates/assets",

@@ -33,10 +33,10 @@ fi
 
 required_files=(
   "index.cjs"
-  "artifacts/dist/index.cjs"
-  "artifacts/dist/server/index.mjs"
-  "artifacts/dist/public/index.html"
-  "artifacts/dist/plesk-manifest.json"
+  "dist/index.cjs"
+  "dist/server/index.mjs"
+  "dist/public/index.html"
+  "dist/plesk-manifest.json"
   "artifacts/api-server/dist/index.cjs"
   "artifacts/api-server/dist/index.mjs"
   "artifacts/api-server/dist/plesk-manifest.json"

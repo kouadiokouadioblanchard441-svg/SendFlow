@@ -3,7 +3,7 @@ import { cp, lstat, readdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 export function commonJsLauncher(target) {
-  if (!["./index.mjs", "./server/index.mjs", "./artifacts/dist/server/index.mjs"].includes(target)) {
+  if (!["./index.mjs", "./server/index.mjs", "./dist/server/index.mjs"].includes(target)) {
     throw new Error("Unsupported Plesk entry point");
   }
   return `"use strict";

@@ -2,8 +2,8 @@
 
 # compiled output
 dist/
-!artifacts/dist/
-!artifacts/dist/**
+!/dist/
+!/dist/**
 !artifacts/api-server/dist/
 !artifacts/api-server/dist/**
 tmp

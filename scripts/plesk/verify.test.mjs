@@ -37,10 +37,10 @@ async function deploymentFixture(t) {
   await writeFile(path.join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
   for (const file of [
     "index.cjs",
-    "artifacts/dist/index.cjs",
-    "artifacts/dist/server/index.mjs",
-    "artifacts/dist/public/index.html",
-    "artifacts/dist/plesk-manifest.json",
+    "dist/index.cjs",
+    "dist/server/index.mjs",
+    "dist/public/index.html",
+    "dist/plesk-manifest.json",
     "artifacts/api-server/dist/index.cjs",
     "artifacts/api-server/dist/index.mjs",
     "artifacts/api-server/dist/plesk-manifest.json",
@@ -73,7 +73,7 @@ test("verifies a root-mounted web release and hashes its files", async (t) => {
 
 test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", async (t) => {
   const source = await fixture(t);
-  const target = path.join(path.dirname(source), "artifacts", "dist");
+  const target = path.join(path.dirname(source), "dist");
   const result = await stagePleskWebDistribution(source, target);
   assert.equal(result.startupFile, "index.cjs");
   assert.equal(await readFile(path.join(target, "public/index.html"), "utf8"),
@@ -181,11 +181,11 @@ test("CommonJS adapter imports the existing ESM entry under production", async (
 test("project-root Plesk startup file imports the tracked site package", async (t) => {
   const root = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-root-start-"));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const entry = path.join(root, "artifacts/dist/server/index.mjs");
+  const entry = path.join(root, "dist/server/index.mjs");
   await mkdir(path.dirname(entry), { recursive: true });
   await writeFile(entry, 'console.log("project-root-entry-started");');
   const launcher = path.join(root, "index.cjs");
-  await writeFile(launcher, commonJsLauncher("./artifacts/dist/server/index.mjs"));
+  await writeFile(launcher, commonJsLauncher("./dist/server/index.mjs"));
   const result = spawnSync(process.execPath, [launcher], {
     env: { NODE_ENV: "production" }, encoding: "utf8",
   });
