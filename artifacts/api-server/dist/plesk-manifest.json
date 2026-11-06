@@ -1,5 +1,5 @@
 {
-  "builtAt": "2026-11-06T16:51:18.769Z",
+  "builtAt": "2026-11-06T17:01:47.909Z",
   "sourceCommit": "45e05915b8e58be1c10c3b259f8a42813856cad0",
   "trackedWorktreeModified": true,
   "builderNode": "v24.22.2",
@@ -19,23 +19,23 @@
     },
     {
       "path": "index.mjs",
-      "bytes": 6697328,
-      "sha256": "562c86b5cbc52e7e8052267474f469b3067c21f6233a9a4bcc038f067c2566eb"
+      "bytes": 6697315,
+      "sha256": "76789143db7a4521894826397a52a4603638b7b9c061949c61fa460601d0143e"
     },
     {
       "path": "index.mjs.map",
-      "bytes": 11804424,
-      "sha256": "61b8c17135e2ff72c00f619df8945a6384e22e701e3bd041b286628d9ebac654"
+      "bytes": 11804411,
+      "sha256": "41600d58cd1fd286e64b9d99d5b7b46671ac1e74d56f4fb5841808299694214b"
     },
     {
       "path": "pino-file.mjs",
-      "bytes": 145529,
-      "sha256": "24c05cda932807a6eb72b785100c89b76e0171dd75e8141540cba7c59bfad183"
+      "bytes": 145516,
+      "sha256": "7a0e1a89cbec9ab1926bd65905dd9ab9a1f81788a2afebc300fa176b6d97382e"
     },
     {
       "path": "pino-file.mjs.map",
-      "bytes": 234558,
-      "sha256": "675299802dc741d353a8533293bfec5191a282a265d3cc5de000b72d34c0db25"
+      "bytes": 234545,
+      "sha256": "dd9122aa49f68478caedb16510cff74792bb75671c5d0ae69cfdb8cca03d33e1"
     },
     {
       "path": "pino-pretty.mjs",
@@ -49,13 +49,13 @@
     },
     {
       "path": "pino-worker.mjs",
-      "bytes": 157167,
-      "sha256": "e4bd9d2bb90ad176a64de7cb45f4e7d4890494256fe173d28eb78f2687e1f03b"
+      "bytes": 157154,
+      "sha256": "db8a7d6b0b1e6ec9d747e8079bd340c13a0ce4eb7884a1dd80ac467cd61de644"
     },
     {
       "path": "pino-worker.mjs.map",
-      "bytes": 263050,
-      "sha256": "e822aa70da2635455e5c37b368f80097893e0e42ca4c7fa2310454ce9b239475"
+      "bytes": 263037,
+      "sha256": "801cb0b43214b0acfa2c27ef51e9aefd4c54c3be24cb4651ed2b49321e80d781"
     },
     {
       "path": "thread-stream-worker.mjs",
