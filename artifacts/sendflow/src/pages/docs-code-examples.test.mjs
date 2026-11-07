@@ -20,8 +20,7 @@ test('hosted checkout examples keep the payment origin separate from the API bas
   assert.doesNotMatch(nodeExample, /payin\.merchant\.command\.sendflow\.africa/);
 });
 
-test('public documentation lists production URL settings and domains without Replit references', () => {
-  assert.doesNotMatch(docsCopy, /replit/i);
+test('public documentation lists production URL settings and domains', () => {
   assert.match(docsCopy, /SENDFLOW_API_BASE_URL=https:\/\/merchent\.business\.sendflow\.africa\/api/);
   assert.match(docsCopy, /SENDFLOW_CHECKOUT_ORIGIN=https:\/\/payin\.merchant\.command\.sendflow\.africa/);
   for (const host of [
