@@ -82,8 +82,8 @@ test('OTP-required merchant channels are all disclosed with their actual unsuppo
       line.includes(`title: '${labels.en} · ${channel.operator}`));
     assert.ok(frenchCard, `Missing French OTP card for ${channel.id}`);
     assert.ok(englishCard, `Missing English OTP card for ${channel.id}`);
-    assert.match(frenchCard, /OTP requis · API marchande non prise en charge/);
-    assert.match(englishCard, /OTP required · merchant API unsupported/);
+    assert.match(frenchCard, /OTP requis · non pris en charge/);
+    assert.match(englishCard, /OTP required · unsupported/);
   }
 });
 
@@ -91,6 +91,9 @@ test('attempt examples never send an OTP or PIN to the merchant API', () => {
   for (const format of getDocsCodeFormats('start-attempt')) {
     const example = getDocsCodeExample('start-attempt', format);
     assert.doesNotMatch(example, /["'](?:otp|pin)["']\s*:/i, `${format} must not send an OTP or PIN`);
+    assert.match(example, /ussdCode/i, `${format} must use only the USSD instruction returned by SendFlow`);
   }
+  assert.match(docsCopy, /Réponse attempt\.ussdCode ou null/);
+  assert.match(docsCopy, /attempt\.ussdCode or null/);
   assert.doesNotMatch(docsCopy, /#144\*82#/i, 'Unverified operator menu text must not be published as an OTP');
 });

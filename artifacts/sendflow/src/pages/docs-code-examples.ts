@@ -405,7 +405,8 @@ suspend fun readDirectSession(
     "countryCode": "CI",
     "operatorId": "<operator-id-from-session>",
     "phoneNumber": "+2250700000000"
-  }'`,
+  }'
+# The response includes ussdCode when configured; it may be null. Never invent one.`,
     JavaScript: `const apiBaseUrl = "https://merchent.business.sendflow.africa/api";
 // session is the response from your server-side create-direct request.
 const response = await fetch(
@@ -429,6 +430,12 @@ const response = await fetch(
 );
 const attempt = await response.json();
 if (!response.ok) throw new Error(attempt.error ?? "Payment could not start");
+// Render only the exact server-returned instruction; never build or inject HTML.
+const ussdCodeElement = document.querySelector("[data-sendflow-ussd-code]");
+if (ussdCodeElement) {
+  ussdCodeElement.textContent = typeof attempt.ussdCode === "string" ? attempt.ussdCode : "";
+  ussdCodeElement.hidden = !ussdCodeElement.textContent;
+}
 // Keep attempt.pollToken in your server-side session where possible.`,
     'Node.js': `// Use the public key and client token returned with the direct session.
 const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
@@ -456,6 +463,8 @@ const response = await fetch(
 );
 const attempt = await response.json().catch(() => ({}));
 if (!response.ok) throw new Error(attempt.error ?? \`SendFlow returned HTTP \${response.status}\`);
+const customerInstruction = { state: attempt.state, ussdCode: attempt.ussdCode ?? null };
+// Return this instruction to the checkout UI. Do not return pollToken or a merchant secret.
 // Keep attempt.pollToken private; this response is not proof of payment.`,
     PHP: `$body = [
     "firstName" => "Awa",
@@ -481,7 +490,11 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Payment attempt could not start");
 }
-$attempt = json_decode($response, true, 512, JSON_THROW_ON_ERROR);`,
+    $attempt = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+    $customerInstruction = [
+        "state" => $attempt["state"],
+        "ussdCode" => $attempt["ussdCode"] ?? null,
+    ]; // Return only this instruction; never construct a code locally.`,
     Python: `import os
 import requests
 
@@ -508,7 +521,11 @@ response = requests.post(
     timeout=15,
 )
 response.raise_for_status()
-attempt = response.json()`,
+attempt = response.json()
+customer_instruction = {
+    "state": attempt["state"],
+    "ussdCode": attempt.get("ussdCode"),
+}  # Display only this API-provided code; it can be null.`,
     Kotlin: `import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -556,7 +573,11 @@ suspend fun startDirectAttempt(
         if (status !in 200..299) {
             throw IOException(JSONObject(responseBody).optString("error", "Payment could not start"))
         }
-        JSONObject(responseBody)
+        val attempt = JSONObject(responseBody)
+        val ussdCode = attempt.opt("ussdCode") as? String
+        // Render ussdCode with TextView.text; it may be null. Never assemble it locally.
+        attempt.put("ussdCode", ussdCode ?: JSONObject.NULL)
+        attempt
     } finally {
         connection.disconnect()
     }

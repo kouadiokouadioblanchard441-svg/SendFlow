@@ -29,7 +29,8 @@ type TranslationLists = {
   hostedFlowTitles: string[];
   hostedFlowTexts: string[];
   mobileMoneyActors: { title: string; body: string }[];
-  mobileMoneyCards: { title: string; status: string; body: string; countryCode?: string; flag?: string }[];
+  mobileMoneyFlowRows: { flow: string; response: string; action: string }[];
+  mobileMoneyCards: { title: string; status: string; code: string; body: string; countryCode?: string; flag?: string }[];
   troubleshooting: { symptom: string; action: string }[];
   credentialRows: { credential: string; usedFor: string; handling: string }[];
   paymentStateRows: { state: string; meaning: string; action: string }[];
@@ -135,8 +136,16 @@ const localized: Record<Language, Translation> = {
     webhookGuideLink: 'Ouvrir le guide Webhooks',
     mobileMoneyTitle: 'Mobile Money, USSD et OTP',
     mobileMoneyText: 'Pour le checkout marchand API directe et hébergé, les canaux du connecteur marqués comme exigeant un OTP sont refusés ; le corps de tentative n’accepte aucun OTP ni PIN. La liste ci-dessous couvre uniquement ces règles techniques du checkout, pas toutes les politiques OTP configurées par pays/opérateur. Elle reflète le code inspecté, pas une vérification du catalogue de production Plesk. /api/pricing.requiresOtp est une politique opérateur distincte, et otpCommand est une métadonnée d’instruction/menu : ni l’un ni l’autre ne prouve qu’un parcours de paiement soit pris en charge, et otpCommand n’est pas le code OTP reçu par le client. L’OTP d’inscription envoyé par e-mail est distinct de l’authentification opérateur. Ne demandez jamais au payeur de transmettre son OTP ou son PIN à votre serveur. Pour un canal proposé par une session active, affichez uniquement son ussdCode, qui peut être null, et les choix de cette session.',
+    mobileMoneyFlowsTitle: 'Résumé des parcours',
+    mobileMoneyFlowHeader: 'Parcours',
+    mobileMoneyResponseHeader: 'Réponse SendFlow',
+    mobileMoneyActionHeader: 'Action correcte',
     mobileMoneyActorsTitle: 'Qui fait quoi dans le parcours Mobile Money ?',
     mobileMoneyCountryTitle: 'État documenté par pays et opérateur',
+    mobileMoneyCountryHeader: 'Pays / opérateur',
+    mobileMoneyStatusHeader: 'Parcours et statut',
+    mobileMoneyCodeHeader: 'Code renvoyé par l’API',
+    mobileMoneyDetailsHeader: 'Détails',
     androidDirectNote: 'L’exemple Kotlin ci-dessous utilise les routes publiques de session directe depuis Android. Il s’agit d’un exemple REST, pas d’un SDK officiel ; il suppose kotlinx-coroutines-android. Créez la session sur votre serveur et transmettez seulement la clé publique et les jetons de session nécessaires.',
     directInputText: 'Attention au format : la session peut renvoyer un code pays en minuscules (par exemple ci), mais la création de tentative exige deux lettres majuscules (CI). Convertissez-le en majuscules. phoneNumber doit inclure l’indicatif international renvoyé par la session (par exemple +225 suivi du numéro national). Utilisez operatorId directement depuis la réponse de session.',
     directCorsNote: 'Les routes /api/v1/public/* ont leur propre configuration CORS : les appels navigateur sont autorisés sans cookies, en GET/POST/OPTIONS, avec Content-Type, X-SendFlow-Public-Key, X-SendFlow-Client-Token, X-LinkFlow-Attempt-Token et Idempotency-Key. La création et la lecture privée d’une session avec Authorization: Bearer restent côté serveur. N’exposez jamais la clé secrète dans le navigateur.',
@@ -256,8 +265,16 @@ const localized: Record<Language, Translation> = {
     webhookGuideLink: 'Open the Webhooks guide',
     mobileMoneyTitle: 'Mobile Money, USSD, and OTP',
     mobileMoneyText: 'For merchant Direct API and Hosted Checkout, connector channels marked as requiring OTP are rejected; the attempt body accepts neither OTP nor PIN. The list below covers only these technical checkout rules, not every country/operator OTP policy configured in SendFlow. It reflects the inspected code, not a live check of the Plesk production catalog. /api/pricing.requiresOtp is a separate operator policy, and otpCommand is menu/instruction metadata: neither proves a payment flow is supported, and otpCommand is not the OTP received by the customer. Signup email OTP is separate from operator authentication. Never ask a payer to send an OTP or PIN to your server. For a channel offered by an active session, display only its ussdCode, which may be null, and that session’s choices.',
+    mobileMoneyFlowsTitle: 'Flow summary',
+    mobileMoneyFlowHeader: 'Flow',
+    mobileMoneyResponseHeader: 'SendFlow response',
+    mobileMoneyActionHeader: 'Correct action',
     mobileMoneyActorsTitle: 'Who does what in a Mobile Money payment?',
     mobileMoneyCountryTitle: 'Documented status by country and operator',
+    mobileMoneyCountryHeader: 'Country / operator',
+    mobileMoneyStatusHeader: 'Flow and status',
+    mobileMoneyCodeHeader: 'Code returned by the API',
+    mobileMoneyDetailsHeader: 'Details',
     androidDirectNote: 'The Kotlin example below uses public direct-session routes from Android. It is a REST example, not an official SDK; it assumes kotlinx-coroutines-android. Create the session on your server and pass only the public key and required session tokens to the app.',
     directInputText: 'Mind the format: the session may return a lowercase country code (for example ci), while creating an attempt requires two uppercase letters (CI). Convert it to uppercase. phoneNumber must include the international prefix returned by the session (for example +225 followed by the national number). Use operatorId directly from the session response.',
     directCorsNote: 'The /api/v1/public/* routes have their own CORS configuration: browser calls are allowed without cookies, using GET/POST/OPTIONS and Content-Type, X-SendFlow-Public-Key, X-SendFlow-Client-Token, X-LinkFlow-Attempt-Token, and Idempotency-Key. Creating a session and reading a private session with Authorization: Bearer remain server-side. Never expose the secret key in a browser.',
@@ -343,14 +360,19 @@ const localizedLists: Record<Language, TranslationLists> = {
       { title: 'Réponse de l’API', body: 'La tentative renvoie notamment attemptId, state, amountMinor, currency, pollToken et un ussdCode qui peut être null. Le corps de création ne contient aucun champ OTP ou PIN.' },
       { title: 'Webhook', body: 'Pour les deux modes, SendFlow notifie payment.succeeded ou payment.failed uniquement après confirmation finale. Vérifiez la signature HMAC et dédupliquez avec sendflow-delivery.' },
     ],
+    mobileMoneyFlowRows: [
+      { flow: 'Instruction USSD', response: 'La tentative renvoie ussdCode, ou null, depuis la configuration active.', action: 'Affichez exactement la valeur reçue. Ne construisez pas un code depuis le pays, l’opérateur ou le montant.' },
+      { flow: 'Validation sur le téléphone', response: 'L’état reste waiting ou uncertain jusqu’à confirmation serveur.', action: 'Le payeur suit l’instruction sur son téléphone ; attendez un état final ou un webhook signé.' },
+      { flow: 'OTP opérateur', response: 'Le contrat marchand n’accepte ni otp ni pin ; les canaux techniques marqués OTP sont refusés.', action: 'Ne demandez pas le code au payeur. Ce parcours n’est pas pris en charge par l’API marchande actuelle.' },
+    ],
     mobileMoneyCards: [
-      { title: 'Bénin · Coris', countryCode: 'BJ', flag: '🇧🇯', status: 'OTP requis · API marchande non prise en charge', body: 'Le catalogue technique du connecteur marque Coris au Bénin comme exigeant un OTP. Le checkout marchand API directe et hébergé exclut ce canal ; le contrat de tentative ne reçoit aucun OTP ni PIN. Aucun OTP opérateur n’est généré par SendFlow ni transmis au marchand dans ce parcours.' },
-      { title: 'Burkina Faso · Orange Money', countryCode: 'BF', flag: '🇧🇫', status: 'OTP requis · API marchande non prise en charge', body: 'Le catalogue technique du connecteur marque ce canal comme exigeant un OTP. Le checkout marchand API directe et hébergé exclut ce canal ; le contrat de tentative ne reçoit aucun OTP ni PIN. Aucun OTP opérateur n’est généré par SendFlow ni transmis au marchand dans ce parcours.' },
-      { title: 'Burkina Faso · Wave', countryCode: 'BF', flag: '🇧🇫', status: 'OTP requis · API marchande non prise en charge', body: 'Le catalogue technique du connecteur marque ce canal comme exigeant un OTP. Le checkout marchand API directe et hébergé exclut ce canal ; le contrat de tentative ne reçoit aucun OTP ni PIN. Aucun OTP opérateur n’est généré par SendFlow ni transmis au marchand dans ce parcours.' },
-      { title: 'Sénégal · Orange Money', countryCode: 'SN', flag: '🇸🇳', status: 'OTP requis · API marchande non prise en charge', body: 'Le catalogue technique du connecteur marque ce canal comme exigeant un OTP. Le checkout marchand API directe et hébergé exclut ce canal ; le contrat de tentative ne reçoit aucun OTP ni PIN. Aucun OTP opérateur n’est généré par SendFlow ni transmis au marchand dans ce parcours.' },
-      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', flag: '🇨🇮', status: 'Instruction/menu non confirmé comme OTP', body: 'Le contrat de tentative n’accepte aucun OTP ou PIN. /api/pricing peut renvoyer otpCommand comme métadonnée d’instruction/menu ; ce champ n’est pas le code OTP reçu par le client et ne prouve pas qu’un parcours de paiement soit pris en charge. Ne publiez pas cette valeur comme procédure de paiement sans confirmation officielle.' },
-      { title: 'Mali · Orange Money', countryCode: 'ML', flag: '🇲🇱', status: 'Opérateur absent du catalogue technique inspecté', body: 'Le Mali et son opérateur n’apparaissent pas dans le catalogue technique du checkout marchand inspecté. Aucune disponibilité SendFlow n’est confirmée pour ce pays ; n’affichez pas de code ni d’étapes de paiement avant que le pays et l’opérateur soient proposés par une session et que le parcours soit vérifié.' },
-      { title: 'Autres pays et opérateurs', status: 'Choix dynamiques', body: 'Il n’existe pas de liste statique fiable à publier depuis le code seul. GET /api/pricing fournit un catalogue général, mais les choix de session directe sont filtrés par les règles de routage et de configuration ; ils font autorité pour cette session.' },
+      { title: 'Bénin · Coris', countryCode: 'BJ', flag: '🇧🇯', status: 'OTP requis · non pris en charge', code: 'Aucun code OTP transmis par l’API', body: 'Le catalogue technique du connecteur marque ce canal comme exigeant un OTP. Le checkout marchand API directe et hébergé l’exclut ; le contrat de tentative ne reçoit aucun OTP ni PIN.' },
+      { title: 'Burkina Faso · Orange Money', countryCode: 'BF', flag: '🇧🇫', status: 'OTP requis · non pris en charge', code: 'Aucun code OTP transmis par l’API', body: 'Le catalogue technique du connecteur marque ce canal comme exigeant un OTP. Le checkout marchand API directe et hébergé l’exclut ; le contrat de tentative ne reçoit aucun OTP ni PIN.' },
+      { title: 'Burkina Faso · Wave', countryCode: 'BF', flag: '🇧🇫', status: 'OTP requis · non pris en charge', code: 'Aucun code OTP transmis par l’API', body: 'Le catalogue technique du connecteur marque ce canal comme exigeant un OTP. Le checkout marchand API directe et hébergé l’exclut ; le contrat de tentative ne reçoit aucun OTP ni PIN.' },
+      { title: 'Sénégal · Orange Money', countryCode: 'SN', flag: '🇸🇳', status: 'OTP requis · non pris en charge', code: 'Aucun code OTP transmis par l’API', body: 'Le catalogue technique du connecteur marque ce canal comme exigeant un OTP. Le checkout marchand API directe et hébergé l’exclut ; le contrat de tentative ne reçoit aucun OTP ni PIN.' },
+      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', flag: '🇨🇮', status: 'Instruction/menu non confirmé', code: 'Non publié', body: '/api/pricing peut renvoyer otpCommand comme métadonnée d’instruction/menu. Ce n’est pas le code OTP reçu par le client et ce n’est pas une confirmation du parcours marchand.' },
+      { title: 'Mali · Orange Money', countryCode: 'ML', flag: '🇲🇱', status: 'Absent du catalogue technique inspecté', code: 'Aucun code vérifié', body: 'Le pays et l’opérateur n’apparaissent pas dans le catalogue technique du checkout marchand inspecté ; aucune instruction ne peut être confirmée.' },
+      { title: 'Autres pays et opérateurs', status: 'Dynamique selon la session', code: 'Réponse attempt.ussdCode ou null', body: 'La session active et sa tentative sont la source de vérité. N’utilisez pas une table codée en dur ; affichez seulement le code renvoyé par l’API.' },
     ],
     troubleshooting: [
       { symptom: 'Aucun pays ou opérateur ne s’affiche', action: 'Vérifiez la réponse de la session directe. Le catalogue global de frais ne garantit pas qu’un opérateur soit admissible pour cette session.' },
@@ -410,14 +432,19 @@ const localizedLists: Record<Language, TranslationLists> = {
       { title: 'API response', body: 'The attempt returns, among other fields, attemptId, state, amountMinor, currency, pollToken, and a possibly null ussdCode. The create-attempt body has no OTP or PIN field.' },
       { title: 'Webhook', body: 'For both modes, SendFlow sends payment.succeeded or payment.failed only after final confirmation. Verify the HMAC signature and deduplicate with sendflow-delivery.' },
     ],
+    mobileMoneyFlowRows: [
+      { flow: 'USSD instruction', response: 'The attempt returns ussdCode, or null, from the active configuration.', action: 'Display the exact returned value. Never build a code from the country, operator, or amount.' },
+      { flow: 'Phone confirmation', response: 'The attempt remains waiting or uncertain until the server confirms it.', action: 'The payer follows the instruction on their phone; wait for a final status or signed webhook.' },
+      { flow: 'Operator OTP', response: 'The merchant contract accepts neither otp nor pin; technically OTP-required channels are rejected.', action: 'Do not ask the payer for the code. This flow is not supported by the current merchant API.' },
+    ],
     mobileMoneyCards: [
-      { title: 'Benin · Coris', countryCode: 'BJ', flag: '🇧🇯', status: 'OTP required · merchant API unsupported', body: 'The connector’s technical catalog marks Coris in Benin as requiring an OTP. Merchant Direct API and Hosted Checkout exclude this channel; the attempt contract accepts neither OTP nor PIN. SendFlow neither generates an operator OTP nor sends it to the merchant in this flow.' },
-      { title: 'Burkina Faso · Orange Money', countryCode: 'BF', flag: '🇧🇫', status: 'OTP required · merchant API unsupported', body: 'The connector’s technical catalog marks this channel as requiring an OTP. Merchant Direct API and Hosted Checkout exclude it; the attempt contract accepts neither OTP nor PIN. SendFlow neither generates an operator OTP nor sends it to the merchant in this flow.' },
-      { title: 'Burkina Faso · Wave', countryCode: 'BF', flag: '🇧🇫', status: 'OTP required · merchant API unsupported', body: 'The connector’s technical catalog marks this channel as requiring an OTP. Merchant Direct API and Hosted Checkout exclude it; the attempt contract accepts neither OTP nor PIN. SendFlow neither generates an operator OTP nor sends it to the merchant in this flow.' },
-      { title: 'Senegal · Orange Money', countryCode: 'SN', flag: '🇸🇳', status: 'OTP required · merchant API unsupported', body: 'The connector’s technical catalog marks this channel as requiring an OTP. Merchant Direct API and Hosted Checkout exclude it; the attempt contract accepts neither OTP nor PIN. SendFlow neither generates an operator OTP nor sends it to the merchant in this flow.' },
-      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', flag: '🇨🇮', status: 'Menu instruction not confirmed as OTP', body: 'The attempt contract accepts neither OTP nor PIN. /api/pricing may return otpCommand as menu/instruction metadata; this field is not the OTP received by the customer and does not prove that a payment flow is supported. Do not publish it as payment instructions without official confirmation.' },
-      { title: 'Mali · Orange Money', countryCode: 'ML', flag: '🇲🇱', status: 'Operator absent from inspected technical catalog', body: 'Mali and this operator do not appear in the inspected technical catalog for merchant checkout. SendFlow availability is not confirmed for this country; do not display a code or payment steps until a session offers the country/operator and the flow is verified.' },
-      { title: 'Other countries and operators', status: 'Dynamic choices', body: 'The source alone does not provide a reliable static support list. GET /api/pricing returns a global catalog, but direct-session choices are filtered by routing and configuration rules and are authoritative for that session.' },
+      { title: 'Benin · Coris', countryCode: 'BJ', flag: '🇧🇯', status: 'OTP required · unsupported', code: 'No OTP code returned by the API', body: 'The connector technical catalog marks this channel as requiring OTP. Merchant Direct API and Hosted Checkout exclude it; the attempt contract accepts neither OTP nor PIN.' },
+      { title: 'Burkina Faso · Orange Money', countryCode: 'BF', flag: '🇧🇫', status: 'OTP required · unsupported', code: 'No OTP code returned by the API', body: 'The connector technical catalog marks this channel as requiring OTP. Merchant Direct API and Hosted Checkout exclude it; the attempt contract accepts neither OTP nor PIN.' },
+      { title: 'Burkina Faso · Wave', countryCode: 'BF', flag: '🇧🇫', status: 'OTP required · unsupported', code: 'No OTP code returned by the API', body: 'The connector technical catalog marks this channel as requiring OTP. Merchant Direct API and Hosted Checkout exclude it; the attempt contract accepts neither OTP nor PIN.' },
+      { title: 'Senegal · Orange Money', countryCode: 'SN', flag: '🇸🇳', status: 'OTP required · unsupported', code: 'No OTP code returned by the API', body: 'The connector technical catalog marks this channel as requiring OTP. Merchant Direct API and Hosted Checkout exclude it; the attempt contract accepts neither OTP nor PIN.' },
+      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', flag: '🇨🇮', status: 'Menu instruction unconfirmed', code: 'Not published', body: '/api/pricing may return otpCommand as menu/instruction metadata. It is not the OTP received by the customer and does not confirm merchant-flow support.' },
+      { title: 'Mali · Orange Money', countryCode: 'ML', flag: '🇲🇱', status: 'Absent from inspected technical catalog', code: 'No verified code', body: 'This country and operator do not appear in the inspected merchant-checkout technical catalog; no instruction can be confirmed.' },
+      { title: 'Other countries and operators', status: 'Session-dependent', code: 'attempt.ussdCode or null', body: 'The active session and its attempt are authoritative. Do not use a hard-coded table; display only the code returned by the API.' },
     ],
     troubleshooting: [
       { symptom: 'No country or operator is displayed', action: 'Check the direct session response. The global fee catalog does not guarantee that a method is eligible for this session.' },
@@ -1069,6 +1096,17 @@ export default function DocsPage() {
             <div className="sf-docs-callout">{t.pollTokenNote}</div>
             <CodePanel language={language} label={t.codeLabel} example="poll-attempt" />
             <div className="sf-docs-callout"><strong>{t.mobileMoneyTitle}.</strong> {t.mobileMoneyText}</div>
+            <h3>{t.mobileMoneyFlowsTitle}</h3>
+            <table className="sf-docs-reference-table">
+              <thead><tr><th>{t.mobileMoneyFlowHeader}</th><th>{t.mobileMoneyResponseHeader}</th><th>{t.mobileMoneyActionHeader}</th></tr></thead>
+              <tbody>{localizedLists[language].mobileMoneyFlowRows.map((row) => (
+                <tr key={row.flow}>
+                  <td data-label={t.mobileMoneyFlowHeader}>{row.flow}</td>
+                  <td data-label={t.mobileMoneyResponseHeader}>{row.response}</td>
+                  <td data-label={t.mobileMoneyActionHeader}>{row.action}</td>
+                </tr>
+              ))}</tbody>
+            </table>
             <h3>{t.mobileMoneyActorsTitle}</h3>
             <div className="sf-docs-endpoints">
               {localizedLists[language].mobileMoneyActors.map((actor) => (
@@ -1079,14 +1117,20 @@ export default function DocsPage() {
               ))}
             </div>
             <h3>{t.mobileMoneyCountryTitle}</h3>
-            <div className="sf-docs-endpoints">
-              {localizedLists[language].mobileMoneyCards.map((card) => (
-                <article className="sf-docs-endpoint sf-docs-info" key={card.title}>
-                  <div className="sf-docs-endpoint-head"><strong>{card.flag && <span aria-hidden="true">{card.flag} </span>}{card.title}{card.countryCode && <> <code className="sf-docs-inline-code">{`country_code: "${card.countryCode}"`}</code></>}</strong><span className="sf-docs-endpoint-pending">{card.status}</span></div>
-                  <p>{card.body}</p>
-                </article>
-              ))}
-            </div>
+            <table className="sf-docs-reference-table">
+              <thead><tr><th>{t.mobileMoneyCountryHeader}</th><th>{t.mobileMoneyStatusHeader}</th><th>{t.mobileMoneyCodeHeader}</th><th>{t.mobileMoneyDetailsHeader}</th></tr></thead>
+              <tbody>{localizedLists[language].mobileMoneyCards.map((card) => (
+                <tr key={card.title}>
+                  <td data-label={t.mobileMoneyCountryHeader}>
+                    <strong>{card.flag && <span aria-hidden="true">{card.flag} </span>}{card.title}</strong>
+                    {card.countryCode && <> <code className="sf-docs-inline-code">{`country_code: "${card.countryCode}"`}</code></>}
+                  </td>
+                  <td data-label={t.mobileMoneyStatusHeader}>{card.status}</td>
+                  <td data-label={t.mobileMoneyCodeHeader}><code>{card.code}</code></td>
+                  <td data-label={t.mobileMoneyDetailsHeader}>{card.body}</td>
+                </tr>
+              ))}</tbody>
+            </table>
           </section>
           <div className="sf-docs-callout"><strong>{t.webhookSharedNote}</strong> <Link href="/docs/webhooks">{t.webhookGuideLink}</Link></div>
           <section className="sf-docs-section"><h2>{t.responsibilities}</h2><ul className="sf-docs-list">{localizedLists[language].responsibilitiesText.map((line) => <li key={line}>{line}</li>)}</ul></section>
