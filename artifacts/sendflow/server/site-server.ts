@@ -39,6 +39,9 @@ export function createSiteServer(
       res.setHeader("Cache-Control", "no-store, private");
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Referrer-Policy", "no-referrer");
+      if (process.env.NODE_ENV === "production") {
+        res.setHeader("Strict-Transport-Security", "max-age=31536000");
+      }
       let pathname: string;
       try {
         pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);

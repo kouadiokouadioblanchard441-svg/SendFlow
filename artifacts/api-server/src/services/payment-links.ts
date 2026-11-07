@@ -232,6 +232,16 @@ export function parseLinkFlowPayerAmount(
   return linkAmountMinor;
 }
 
+export function canChangePaymentLinkTerms(input: {
+  usageCount: number;
+  activeReservationCount: number;
+  amountChanged: boolean;
+  descriptionChanged: boolean;
+}) {
+  const termsChanged = input.amountChanged || input.descriptionChanged;
+  return !termsChanged || (input.usageCount === 0 && input.activeReservationCount === 0);
+}
+
 function normalizeReturnUrl(value: string | null) {
   if (value === null) return null;
   if (value.length > 2048) throw new PaymentLinkInputError("L’adresse de retour est trop longue.");

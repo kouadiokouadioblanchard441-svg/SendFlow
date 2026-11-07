@@ -32,6 +32,7 @@ import { consumePaymentLinkCreationQuota, consumePublicPaymentLinkQuota } from "
 import { loadPaymentLimits } from "../data/payment-limits";
 import { requireCustomerSession } from "../lib/customer-session";
 import {
+  canChangePaymentLinkTerms,
   createPaymentLinkPublicToken,
   getPaymentLinkCurrencyDecimals,
   isPaymentLinkCreationAllowed,
@@ -290,33 +291,39 @@ router.patch("/me/payment-links/:linkId", async (req, res): Promise<void> => {
       if (maximumUses !== null && maximumUses < link.usageCount) {
         throw new PaymentLinkInputError("La limite ne peut pas être inférieure aux utilisations déjà enregistrées.");
       }
-      if (maximumUses !== null) {
-        const activeReservations = await tx.select({ id: customerPaymentLinkAttemptsTable.id })
-          .from(customerPaymentLinkAttemptsTable)
-          .innerJoin(paymentIntentsTable, eq(paymentIntentsTable.id, customerPaymentLinkAttemptsTable.intentId))
-          .innerJoin(paymentAttemptsTable, and(
-            eq(paymentAttemptsTable.intentId, paymentIntentsTable.id),
-            eq(paymentAttemptsTable.direction, "payin"),
-          ))
-          .where(and(
-            eq(customerPaymentLinkAttemptsTable.paymentLinkId, link.id),
-            inArray(paymentAttemptsTable.status, activeLinkPaymentAttemptStates),
-            inArray(paymentIntentsTable.state, activeLinkPaymentIntentStates),
-          ));
-        if (maximumUses < link.usageCount + activeReservations.length) {
-          return {
-            kind: "conflict" as const,
-            message: "La limite ne peut pas être inférieure aux paiements déjà en cours.",
-          };
-        }
+      const activeReservations = await tx.select({ id: customerPaymentLinkAttemptsTable.id })
+        .from(customerPaymentLinkAttemptsTable)
+        .innerJoin(paymentIntentsTable, eq(paymentIntentsTable.id, customerPaymentLinkAttemptsTable.intentId))
+        .innerJoin(paymentAttemptsTable, and(
+          eq(paymentAttemptsTable.intentId, paymentIntentsTable.id),
+          eq(paymentAttemptsTable.direction, "payin"),
+        ))
+        .where(and(
+          eq(customerPaymentLinkAttemptsTable.paymentLinkId, link.id),
+          inArray(paymentAttemptsTable.status, activeLinkPaymentAttemptStates),
+          inArray(paymentIntentsTable.state, activeLinkPaymentIntentStates),
+        ));
+      if (
+        maximumUses !== null
+        && maximumUses < link.usageCount + activeReservations.length
+      ) {
+        return {
+          kind: "conflict" as const,
+          message: "La limite ne peut pas être inférieure aux paiements déjà en cours.",
+        };
       }
 
       const amountChanged = amountMinor !== link.amountMinor;
       const descriptionChanged = description !== link.description;
-      if (link.usageCount > 0 && (amountChanged || descriptionChanged)) {
+      if (!canChangePaymentLinkTerms({
+        usageCount: link.usageCount,
+        activeReservationCount: activeReservations.length,
+        amountChanged,
+        descriptionChanged,
+      })) {
         return {
           kind: "conflict" as const,
-          message: "Le montant et la description ne peuvent plus changer après une utilisation.",
+          message: "Le montant et la description ne peuvent plus changer après une utilisation ou pendant un paiement en cours.",
         };
       }
 

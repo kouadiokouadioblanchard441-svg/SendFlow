@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  canChangePaymentLinkTerms,
   normalizePaymentLinkInput,
   parseLinkFlowPayerAmount,
 } from "./payment-links.ts";
@@ -89,4 +90,25 @@ test("fixed links use the saved amount and reject a payer-submitted replacement"
   assert.equal(parseLinkFlowPayerAmount("2500", 2500, "XOF"), 2500);
   assert.throws(() => parseLinkFlowPayerAmount("3000", 2500, "XOF"), /ne correspond pas/);
   assert.throws(() => parseLinkFlowPayerAmount(undefined, 199, "XOF"), /minimum de ce lien est de 200 XOF/);
+});
+
+test("payment-link amount and description stay fixed while a payment is reserved", () => {
+  assert.equal(canChangePaymentLinkTerms({
+    usageCount: 0,
+    activeReservationCount: 1,
+    amountChanged: true,
+    descriptionChanged: false,
+  }), false);
+  assert.equal(canChangePaymentLinkTerms({
+    usageCount: 0,
+    activeReservationCount: 1,
+    amountChanged: false,
+    descriptionChanged: true,
+  }), false);
+  assert.equal(canChangePaymentLinkTerms({
+    usageCount: 0,
+    activeReservationCount: 1,
+    amountChanged: false,
+    descriptionChanged: false,
+  }), true);
 });
