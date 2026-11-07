@@ -4,8 +4,9 @@ import { realpath, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { enforceIpAccess, trustedProxyHops } from "@workspace/db/ip-blocklist";
-import { checkPortalRouteAccess, type PortalRouteDecision } from "./portal-route-access";
-import { isPortalRouteRequest } from "./portal-route-path";
+import { checkPortalRouteAccess, type PortalRouteDecision } from "./portal-route-access.ts";
+import { isPortalRouteRequest } from "./portal-route-path.ts";
+import { isKnownSitePage } from "./site-route-matcher.ts";
 
 const mime: Record<string, string> = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
@@ -15,6 +16,15 @@ const mime: Record<string, string> = {
   ".ico": "image/x-icon", ".woff2": "font/woff2", ".woff": "font/woff",
   ".mp4": "video/mp4", ".pdf": "application/pdf",
 };
+
+function sendNotFound(req: IncomingMessage, res: ServerResponse) {
+  const body = "404 Not Found";
+  res.statusCode = 404;
+  res.setHeader("Cache-Control", "no-store, private");
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Content-Length", String(Buffer.byteLength(body)));
+  res.end(req.method === "HEAD" ? undefined : body);
+}
 
 /** Shared by the production entry and isolated tests; every file passes the gate. */
 export function createSiteServer(
@@ -29,15 +39,21 @@ export function createSiteServer(
       res.setHeader("Cache-Control", "no-store, private");
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Referrer-Policy", "no-referrer");
-      const pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);
+      let pathname: string;
+      try {
+        pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);
+      } catch {
+        sendNotFound(req, res);
+        return;
+      }
       if (pathname.includes("\0") || pathname.includes("\\") || pathname.split("/").some((p) => p.startsWith("."))) {
-        res.writeHead(404).end(); return;
+        sendNotFound(req, res); return;
       }
       if (isPortalRouteRequest(req.url, process.env.BASE_PATH ?? "/")) {
         const access: PortalRouteDecision = await portalAccess(req);
         if (access !== "allowed") {
-          res.setHeader("Cache-Control", "no-store, private");
-          res.writeHead(access === "not-found" ? 404 : 503).end();
+          if (access === "not-found") sendNotFound(req, res);
+          else { res.setHeader("Cache-Control", "no-store, private"); res.writeHead(503).end(); }
           return;
         }
       }
@@ -45,16 +61,22 @@ export function createSiteServer(
         res.setHeader("Allow", "GET, HEAD"); res.writeHead(405).end(); return;
       }
       let file = resolve(root, `.${pathname}`);
-      if (!file.startsWith(root + sep) && file !== root) { res.writeHead(404).end(); return; }
+      if (!file.startsWith(root + sep) && file !== root) { sendNotFound(req, res); return; }
       let info;
       try { info = await stat(file); } catch { /* SPA fallback below, never to arbitrary files. */ }
       if (!info?.isFile()) {
-        if (extname(pathname) || pathname.startsWith("/api/")) { res.writeHead(404).end(); return; }
+        const isApiPath = pathname === "/api" || pathname.startsWith("/api/");
+        const isKnownPage = isKnownSitePage(
+          req.headers.host ?? "",
+          pathname,
+          process.env.BASE_PATH ?? "/",
+        );
+        if (extname(pathname) || isApiPath || !isKnownPage) { sendNotFound(req, res); return; }
         file = resolve(root, "index.html");
         info = await stat(file);
       }
       const actual = await realpath(file);
-      if (!actual.startsWith(root + sep) || file.endsWith(".map")) { res.writeHead(404).end(); return; }
+      if (!actual.startsWith(root + sep) || file.endsWith(".map")) { sendNotFound(req, res); return; }
       res.setHeader("Content-Type", mime[extname(file)] ?? "application/octet-stream");
       res.setHeader("Content-Length", info.size);
       res.statusCode = 200;

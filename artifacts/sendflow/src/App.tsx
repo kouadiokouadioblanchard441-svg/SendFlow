@@ -9,6 +9,7 @@ import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wo
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import PageLoadingScreen from '@/components/page-loading-screen';
+import ServerNotFoundNavigation from '@/components/server-not-found-navigation';
 import {
   getGetCurrentAccountQueryKey,
   getGetCustomerPortalEligibilityQueryKey,
@@ -34,7 +35,6 @@ const LegalMentionsPage = lazy(() =>
 const PrivacyPage = lazy(() =>
   import('@/pages/legal').then((module) => ({ default: module.PrivacyPage })),
 );
-const NotFound = lazy(() => import('@/pages/not-found'));
 const AccountPage = lazy(() => import('@/pages/account'));
 const AccountInfoPage = lazy(() => import('@/pages/account-info'));
 const EmailUnsubscribePage = lazy(() => import('@/pages/email-unsubscribe'));
@@ -190,7 +190,7 @@ function PublicLegalRoute({
 }
 
 function NotFoundRoute() {
-  return <NotFound />;
+  return <ServerNotFoundNavigation />;
 }
 
 function PortalRouteGate({ children }: { children: ReactNode }) {
@@ -309,7 +309,7 @@ function App() {
             <Suspense fallback={<PageLoadingScreen />}>
               <Switch>
                 <Route path="/pay/:token" component={PublicPaymentLinkPage} />
-                <Route component={NotFound} />
+                <Route component={NotFoundRoute} />
               </Switch>
             </Suspense>
             <Toaster />

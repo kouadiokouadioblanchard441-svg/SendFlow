@@ -12,8 +12,8 @@ import hostedCheckoutIllustration from '../assets/docs-hosted-checkout-3d.webp';
 import { useSeo } from '@/lib/seo';
 import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import { getDocumentationPageKey } from '@/lib/documentation-host';
+import ServerNotFoundNavigation from '@/components/server-not-found-navigation';
 import { getDocsCodeExample, getDocsCodeFormats, type DocsCodeFormat, type DocsExampleId } from './docs-code-examples';
-import NotFound from './not-found';
 import './docs.css';
 
 type Language = 'fr' | 'en';
@@ -911,7 +911,7 @@ export default function DocsPage() {
     robots: resolvedPageKey ? 'index,follow' : 'noindex,nofollow',
   });
 
-  if (!resolvedPageKey) return <NotFound />;
+  if (!resolvedPageKey) return <ServerNotFoundNavigation />;
 
   const sidebarGroups = docGroups.map((group) => ({
     key: group.labelKey,
