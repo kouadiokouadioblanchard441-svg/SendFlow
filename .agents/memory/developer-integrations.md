@@ -52,3 +52,9 @@ Show a confirmation popup before API-key rotation, then show the returned public
 **Why:** the user wants a clear warning before old keys are invalidated, while the new pair should remain directly available in the card.
 
 **How to apply:** Disable the button while the request is pending, show an error if rotation fails, and never persist or log the secret. Keep webhook signing-secret dialogs separate.
+
+For OTP documentation, distinguish the database-backed operator `requiresOtp` policy exposed by pricing from the connector’s technical channel flag that blocks merchant-checkout execution. `otpCommand` is menu/instruction metadata, not the customer’s OTP. Do not describe either flag as a complete live-production support list without checking the active catalog.
+
+**Why:** these values come from separate sources and answer different questions; confusing them can make documentation claim an unsupported payment flow or publish an unverified operator instruction.
+
+**How to apply:** In merchant docs, label the technical checkout restrictions separately from operator policies, never ask merchants to collect payer OTPs/PINs, and report production catalog status as unverified when the live API cannot be reached.

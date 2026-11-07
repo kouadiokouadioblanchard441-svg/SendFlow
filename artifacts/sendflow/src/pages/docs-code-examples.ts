@@ -106,7 +106,7 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("SendFlow session could not be created");
 }
-$session = json_decode($response, true, flags: JSON_THROW_ON_ERROR);
+$session = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
 if (empty($session["checkoutPath"])) {
     throw new RuntimeException("No hosted checkout path was returned");
 }
@@ -223,7 +223,7 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("SendFlow session could not be created");
 }
-$session = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
+$session = json_decode($response, true, 512, JSON_THROW_ON_ERROR);`,
     Python: `import os
 import requests
 
@@ -278,7 +278,7 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("SendFlow status could not be read");
 }
-$session = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
+$session = json_decode($response, true, 512, JSON_THROW_ON_ERROR);`,
     Python: `import os
 import requests
 
@@ -338,7 +338,7 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Checkout details could not be read");
 }
-$checkout = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
+$checkout = json_decode($response, true, 512, JSON_THROW_ON_ERROR);`,
     Python: `import os
 import requests
 
@@ -481,7 +481,7 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Payment attempt could not start");
 }
-$attempt = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
+$attempt = json_decode($response, true, 512, JSON_THROW_ON_ERROR);`,
     Python: `import os
 import requests
 
@@ -614,7 +614,7 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Payment status unavailable");
 }
-$status = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
+$status = json_decode($response, true, 512, JSON_THROW_ON_ERROR);`,
     Python: `import os
 import requests
 
@@ -788,7 +788,7 @@ $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Pricing catalog unavailable");
 }
-$catalog = json_decode($response, true, flags: JSON_THROW_ON_ERROR);`,
+$catalog = json_decode($response, true, 512, JSON_THROW_ON_ERROR);`,
     Python: `import os
 import requests
 
@@ -836,7 +836,7 @@ curl_close($curl);
 if ($body === false || $status < 200 || $status >= 300) {
     throw new RuntimeException("SendFlow limits request failed: HTTP " . $status);
 }
-$limits = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
+$limits = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
 echo $limits["minimumDepositMinor"] . " " . $limits["currency"];`,
     Python: `import json
 import os
