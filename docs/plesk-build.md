@@ -92,8 +92,9 @@ n'est requis.
 
 Le workflow possède uniquement la permission `contents: write` nécessaire à ce commit.
 Il ne lit aucun secret applicatif. Les événements Pull Request construisent et vérifient
-le package sans le publier. Les chemins d'artefacts sont exclus du déclenchement pour
-éviter une boucle ; les pushes générés par `GITHUB_TOKEN` ne relancent pas les workflows.
+le package sans le publier. Tous les pushes sur `main`, y compris la suppression d'un
+artefact, déclenchent le build afin que les lanceurs manquants soient recréés. Les pushes
+générés par `GITHUB_TOKEN` ne relancent pas les workflows, ce qui évite une boucle.
 Une règle de protection de branche qui interdit les pushes du `github-actions[bot]`
 fera échouer explicitement l'étape de publication et devra être compatible avec ce flux.
 

@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
+    "dev": "export NODE_ENV=development && pnpm run build && pnpm run start:dev",
     "build": "node ./build.mjs",
+    "start:dev": "node --enable-source-maps ./.dev-dist/index.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "test:otp": "node --experimental-strip-types --test src/lib/resend-email.test.mjs src/lib/email-otp-code.test.mjs",
     "test:turnstile": "node --experimental-strip-types --test src/lib/turnstile.test.mjs",

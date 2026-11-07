@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - "dist/**"
-      - "artifacts/api-server/dist/**"
-      - "artifacts/api-server/plesk-runtime-dependencies.tar.gz"
-      - "index.cjs"
   pull_request:
     branches:
       - main

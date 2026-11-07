@@ -11,7 +11,9 @@ globalThis.require = createRequire(import.meta.url);
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 
 async function buildAll() {
-  const distDir = path.resolve(artifactDir, "dist");
+  // Keep the live development workflow from deleting the committed Plesk package.
+  const outputDirectory = process.env.NODE_ENV === "development" ? ".dev-dist" : "dist";
+  const distDir = path.resolve(artifactDir, outputDirectory);
   await rm(distDir, { recursive: true, force: true });
 
   await esbuild({
