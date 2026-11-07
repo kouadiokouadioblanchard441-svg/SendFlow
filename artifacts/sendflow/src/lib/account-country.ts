@@ -18,19 +18,22 @@ export function saveAccountCountry(country: AccountCountry) {
   window.sessionStorage.setItem(ACCOUNT_COUNTRY_KEY, JSON.stringify(country));
 }
 
-export function readAccountCountry(): AccountCountry {
+export function readSavedAccountCountry(): AccountCountry | undefined {
+  if (typeof window === 'undefined') return undefined;
   const storedCountry = window.sessionStorage.getItem(ACCOUNT_COUNTRY_KEY);
-  if (!storedCountry) return DEFAULT_ACCOUNT_COUNTRY;
+  if (!storedCountry) return undefined;
 
   try {
     const parsed = JSON.parse(storedCountry) as Partial<AccountCountry>;
     if (
+      typeof parsed.countryCode === 'string' &&
+      /^[a-z]{2}$/.test(parsed.countryCode) &&
       typeof parsed.name === 'string' &&
       typeof parsed.dialCode === 'string' &&
       typeof parsed.flag === 'string'
     ) {
       return {
-        ...(typeof parsed.countryCode === 'string' ? { countryCode: parsed.countryCode } : {}),
+        countryCode: parsed.countryCode,
         name: parsed.name,
         dialCode: parsed.dialCode,
         flag: parsed.flag,
@@ -40,5 +43,9 @@ export function readAccountCountry(): AccountCountry {
     window.sessionStorage.removeItem(ACCOUNT_COUNTRY_KEY);
   }
 
-  return DEFAULT_ACCOUNT_COUNTRY;
+  return undefined;
+}
+
+export function readAccountCountry(): AccountCountry {
+  return readSavedAccountCountry() ?? DEFAULT_ACCOUNT_COUNTRY;
 }

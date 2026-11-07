@@ -38,9 +38,10 @@ export function normalizePhone(phone: string) {
   return phone.replace(/\D/g, '');
 }
 
-function validatePhone(phone: string, dialCode = '+225') {
+function validatePhone(phone: string, dialCode?: string) {
   const digits = normalizePhoneDigits(phone);
 
+  if (!dialCode) return 'Sélectionnez un pays dans la liste.';
   if (!digits) return 'Le numéro de téléphone est requis.';
   if (!isValidPhoneForCountry(digits, dialCode)) {
     return getPhoneLengthMessage(dialCode);
@@ -74,7 +75,7 @@ function validateBirthDate(birthDate: string) {
   return undefined;
 }
 
-export function validateSignUp(form: SignUpValidationInput, dialCode = '+225'): FieldErrors<SignUpField> {
+export function validateSignUp(form: SignUpValidationInput, dialCode?: string): FieldErrors<SignUpField> {
   const errors: FieldErrors<SignUpField> = {};
   const fullName = form.fullName.trim().replace(/\s+/g, ' ');
 

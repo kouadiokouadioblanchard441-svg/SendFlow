@@ -13,7 +13,7 @@
 - [Security test isolation](security-test-isolation.md) — Authentication fixtures must isolate IP quotas as well as account identities; never weaken real rate limiting to make tests pass.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
 - [Operator logo storage](operator-logo-storage.md) — Store uploaded operator logos in the database; this exception does not extend to banners or unrelated media.
-- [Shared database transition](external-database-transition.md) — The new shared schema exists, but prior records, seeds, and production readiness are not migrated or verified.
+- [Shared database transition](external-database-transition.md) — Verify exact columns, singleton settings, TLS and Plesk target; external schema can drift from Drizzle.
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle production schema pushes](drizzle-scoped-pushes.md) — Keep production migrations additive and explicitly targeted; stop on unrelated Drizzle drift.
 - [PostgreSQL metadata arrays](postgres-metadata-arrays.md) — Cast catalog `name` values to `text` before `array_agg` when comparing metadata through node-postgres.

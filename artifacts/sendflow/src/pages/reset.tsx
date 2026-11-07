@@ -6,7 +6,6 @@ import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { useResetCustomerPassword, useResetCustomerPin, useSendEmailOtp, useVerifyEmailOtp } from '@workspace/api-client-react';
 import { clearPinUnlock } from '@/lib/pin-unlock';
-import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
 import { NEW_CUSTOMER_PASSWORD_MIN_LENGTH } from '@/lib/customer-password-validation';
 import { getPhoneLengthMessage, isValidPhoneForCountry } from '@/lib/phone-rules';
 import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
@@ -71,7 +70,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   const [emailError, setEmailError] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
-  const [phoneDialCode, setPhoneDialCode] = useState(DEFAULT_ACCOUNT_COUNTRY.dialCode);
+  const [phoneDialCode, setPhoneDialCode] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [otpError, setOtpError] = useState('');
   const [newSecret, setNewSecret] = useState('');
@@ -130,6 +129,10 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
       setEmailError('');
       setOtpError('');
     } else {
+      if (!phoneDialCode) {
+        setPhoneError('Sélectionnez un pays dans la liste.');
+        return;
+      }
       if (!isValidPhoneForCountry(phone, phoneDialCode)) {
         setPhoneError(getPhoneLengthMessage(phoneDialCode));
         return;
@@ -317,7 +320,6 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
                   }}
                   onCountryChange={(country) => setPhoneDialCode(country.dialCode)}
                   error={phoneError}
-                  defaultCountryName="Côte d’Ivoire"
                 />
               )}
               {isPassword && (

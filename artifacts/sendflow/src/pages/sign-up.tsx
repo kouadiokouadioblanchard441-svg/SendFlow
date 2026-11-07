@@ -6,7 +6,7 @@ import { getGetRegistrationSettingsQueryKey, useGetRegistrationSettings, useRegi
 import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpField } from '@/lib/auth-validation';
-import { DEFAULT_ACCOUNT_COUNTRY, saveAccountCountry, type AccountCountry } from '@/lib/account-country';
+import { saveAccountCountry, type AccountCountry } from '@/lib/account-country';
 import { clearLegacyAccountProfile } from '@/lib/account-profile';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
 import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
@@ -112,7 +112,7 @@ export default function SignupPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignUpField, boolean>>>({});
-  const [signupCountry, setSignupCountry] = useState<AccountCountry>(DEFAULT_ACCOUNT_COUNTRY);
+  const [signupCountry, setSignupCountry] = useState<AccountCountry | null>(null);
   const [step, setStep] = useState<SignupStep>('form');
   const [challengeId, setChallengeId] = useState('');
   const [challengeExpiresAt, setChallengeExpiresAt] = useState('');
@@ -143,10 +143,10 @@ export default function SignupPage() {
     robots: 'noindex,nofollow',
   });
 
-  const errors = useMemo(() => validateSignUp(form, signupCountry.dialCode), [form, signupCountry.dialCode]);
-  const canSubmit = Object.keys(errors).length === 0;
+  const errors = useMemo(() => validateSignUp(form, signupCountry?.dialCode), [form, signupCountry?.dialCode]);
+  const canSubmit = Boolean(signupCountry?.countryCode) && Object.keys(errors).length === 0;
   const normalizedPhone = normalizePhoneDigits(form.phone);
-  const e164Phone = `${signupCountry.dialCode}${normalizedPhone}`;
+  const e164Phone = signupCountry ? `${signupCountry.dialCode}${normalizedPhone}` : '';
   const isSending = sendEmailOtp.isPending || registerCustomer.isPending || registrationSettings.isFetching;
   const isChecking = verifyEmailOtp.isPending || registerCustomer.isPending;
 
@@ -205,12 +205,16 @@ export default function SignupPage() {
   };
 
   const savePendingSignup = () => {
+    if (!signupCountry?.countryCode) return;
     saveAccountCountry(signupCountry);
     clearLegacyAccountProfile();
     window.sessionStorage.setItem('sendflow.pending-signup', 'true');
   };
 
   const completeVerifiedSignup = async (token: string) => {
+    if (!signupCountry?.countryCode) {
+      throw new Error('Sélectionnez un pays dans la liste.');
+    }
     const account = await registerCustomer.mutateAsync({
       data: {
         challengeId,
@@ -274,7 +278,7 @@ export default function SignupPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!canSubmit || isSending || submissionLock.current || !turnstileToken) return;
+    if (!canSubmit || !signupCountry?.countryCode || isSending || submissionLock.current || !turnstileToken) return;
     setVerificationError('');
     submissionLock.current = true;
     try {

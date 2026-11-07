@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X } from 'lucide-react';
 import { getGetAuthCountriesQueryKey, useGetAuthCountries } from '@workspace/api-client-react';
-import { DEFAULT_ACCOUNT_COUNTRY } from '@/lib/account-country';
+import { readSavedAccountCountry } from '@/lib/account-country';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
 
 export type CountryOption = {
@@ -20,13 +20,12 @@ type CountryPhoneFieldProps = {
   onCountryChange?: (country: CountryOption) => void;
   error?: string;
   onBlur?: () => void;
-  defaultCountryName?: string;
   registrationOnly?: boolean;
 };
 
 export function CountryPhoneField({
   value, onChange, onCountryChange, error, onBlur,
-  defaultCountryName = DEFAULT_ACCOUNT_COUNTRY.name, registrationOnly = false,
+  registrationOnly = false,
 }: CountryPhoneFieldProps) {
   const catalog = useGetAuthCountries({
     query: {
@@ -41,10 +40,10 @@ export function CountryPhoneField({
       dialCode: country.phonePrefix, flag: country.flag,
       minPhoneDigits: country.minPhoneDigits, maxPhoneDigits: country.maxPhoneDigits,
     })), [catalog.data, registrationOnly]);
-  const [selectedCode, setSelectedCode] = useState<string | null>(null);
-  const selectedCountry = countries.find((country) => country.countryCode === selectedCode)
-    ?? countries.find((country) => country.name === defaultCountryName)
-    ?? countries[0];
+  const [selectedCode, setSelectedCode] = useState<string | null>(
+    () => readSavedAccountCountry()?.countryCode ?? null,
+  );
+  const selectedCountry = countries.find((country) => country.countryCode === selectedCode);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
@@ -132,10 +131,9 @@ export function CountryPhoneField({
     requestAnimationFrame(() => pickerTriggerRef.current?.focus());
   };
   const maxPhoneDigits = selectedCountry?.maxPhoneDigits ?? 15;
-  const displayedCountry = selectedCountry ?? DEFAULT_ACCOUNT_COUNTRY;
   const displayedError = error || (catalog.isError
     ? 'La liste des pays est temporairement indisponible.'
-    : !catalog.isLoading && !selectedCountry ? 'Aucun pays n’est disponible pour le moment.' : undefined);
+    : !catalog.isLoading && countries.length === 0 ? 'Aucun pays n’est disponible pour le moment.' : undefined);
 
   return (
     <>
@@ -143,11 +141,14 @@ export function CountryPhoneField({
         <div className={`sendflow-signup-phone${displayedError ? ' has-error' : ''}`}>
           <label className="sr-only" htmlFor={inputId}>Numéro de téléphone</label>
           <button type="button" className="sendflow-signup-country" ref={pickerTriggerRef}
-            onClick={() => { setQuery(''); setIsOpen(true); }} disabled={!selectedCountry}
+            onClick={() => { setQuery(''); setIsOpen(true); }}
+            disabled={catalog.isLoading || catalog.isError || countries.length === 0}
             aria-haspopup="dialog" aria-expanded={isOpen}
-            aria-label={`Pays sélectionné : ${displayedCountry.name}, ${displayedCountry.dialCode}. Ouvrir la liste`}>
-            <span aria-hidden="true">{displayedCountry.flag}</span>
-            <span>{displayedCountry.dialCode}</span>
+            aria-label={selectedCountry
+              ? `Pays sélectionné : ${selectedCountry.name}, ${selectedCountry.dialCode}. Ouvrir la liste`
+              : 'Sélectionner un pays'}>
+            <span aria-hidden="true">{selectedCountry?.flag ?? '🌍'}</span>
+            <span>{selectedCountry?.dialCode ?? 'Pays'}</span>
           </button>
           <input id={inputId} type="tel" value={value}
             onChange={(event) => onChange(normalizePhoneDigits(event.target.value).slice(0, maxPhoneDigits))}
