@@ -3,7 +3,7 @@ name: Shared database transition
 description: Current external PostgreSQL schema state and the guardrails required before enabling SendFlow operations.
 ---
 
-The Replit preview uses a shared external PostgreSQL target through a server-side secret and CA certificate. Its baseline schema has 46 tables, five enum types, and 132 indexes. No customer, wallet, payment, country, operator, or admin data was transferred or seeded. The runtime now connects with certificate and hostname verification, and the read-only health endpoint succeeds. Payment-limit reads still lack the required `global` row; custom financial triggers, catalog seeds, runtime roles, and the production `DATABASE_URL` remain unverified.
+The Replit preview uses a shared external PostgreSQL target through a server-side secret and CA certificate. Its baseline schema has 46 tables, five enum types, and 132 indexes. The runtime connects with certificate and hostname verification, and the read-only health endpoint succeeds. Payment-limit reads still lack the required `global` row; custom financial triggers, runtime roles, and the production `DATABASE_URL` remain unverified.
 
 The user states that the Supabase connection stored in Replit Secrets is the production database intended for Plesk. The code still separates Replit's `SUPABASE_DATABASE_URL` shared-external target from Plesk's `DATABASE_URL` production target; verify that Plesk points to the same database before claiming production data is live.
 
