@@ -295,7 +295,7 @@ session = response.json()
     cURL: `curl "$SENDFLOW_API_BASE_URL/v1/public/payment-sessions/$SESSION_ID" \\
   --header "X-SendFlow-Public-Key: $SENDFLOW_PUBLIC_KEY" \\
   --header "X-SendFlow-Client-Token: $SENDFLOW_CLIENT_TOKEN"`,
-    JavaScript: `const apiBaseUrl = "<SENDFLOW_API_BASE_URL>"; // Configure the official API base, including /api.
+    JavaScript: `const apiBaseUrl = "https://merchent.business.sendflow.africa/api";
 // session is the response from your server-side create-direct request.
 const response = await fetch(
   \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}\`,
@@ -406,7 +406,7 @@ suspend fun readDirectSession(
     "operatorId": "<operator-id-from-session>",
     "phoneNumber": "+2250700000000"
   }'`,
-    JavaScript: `const apiBaseUrl = "<SENDFLOW_API_BASE_URL>"; // Configure the official API base, including /api.
+    JavaScript: `const apiBaseUrl = "https://merchent.business.sendflow.africa/api";
 // session is the response from your server-side create-direct request.
 const response = await fetch(
   \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}/attempts\`,
@@ -567,7 +567,7 @@ suspend fun startDirectAttempt(
   --header "X-SendFlow-Public-Key: $SENDFLOW_PUBLIC_KEY" \\
   --header "X-SendFlow-Client-Token: $SENDFLOW_CLIENT_TOKEN" \\
   --header "X-LinkFlow-Attempt-Token: $SENDFLOW_POLL_TOKEN"`,
-    JavaScript: `const apiBaseUrl = "<SENDFLOW_API_BASE_URL>"; // Configure the official API base, including /api.
+    JavaScript: `const apiBaseUrl = "https://merchent.business.sendflow.africa/api";
 // session and attempt are the responses from the previous direct-flow steps.
 const response = await fetch(
   \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}/attempts/\${attempt.attemptId}\`,

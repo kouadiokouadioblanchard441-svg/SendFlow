@@ -11,6 +11,20 @@ Le projet utilise pnpm et deux services Node : site React/Vite et API Express.
 Le serveur du site applique la défense IP avant les fichiers publics : un dépôt de
 fichiers statiques seul ne remplace pas ce service.
 
+## Domaines publics de production
+
+- Site principal SendFlow : `https://sendflow.africa`
+- Application marchande et API : `https://merchent.business.sendflow.africa`,
+  avec l'API sous `https://merchent.business.sendflow.africa/api`
+- Documentation : `https://apis.docs.sendflow.africa`
+- Paiement hébergé et liens LinkFlow : `https://payin.merchant.command.sendflow.africa`
+
+L'application et les exemples utilisent des origines distinctes : `SENDFLOW_API_BASE_URL`
+doit viser l'URL API sur le domaine marchand, tandis que `SENDFLOW_CHECKOUT_ORIGIN`
+doit viser le sous-domaine `payin`. Le domaine principal sert les liens SendFlow publics
+et ne remplace ni l'API ni la page de paiement. DNS, certificats HTTPS et routage Plesk
+doivent être vérifiés séparément sur le serveur.
+
 ## Construction reproductible
 
 Le workflow GitHub Actions `.github/workflows/plesk-build.yml` construit et publie les
@@ -162,8 +176,10 @@ sur le serveur ; le chemin relatif `dist/public` est celui à utiliser depuis le
 - Configurer `TRUST_PROXY_HOPS` selon la chaîne réellement observée, et
   `CORS_ALLOWED_ORIGINS` avec les origines HTTPS exactes. Ne pas reprendre les
   variables de prévisualisation Replit.
-  Ajouter `https://payin.merchant.command.sendflow.africa` aux origines autorisées
-  si les appels navigateur à l'API sont envoyés depuis cette page de paiement.
+  Autoriser les origines exactes qui appellent l'API depuis le navigateur, notamment
+  `https://merchent.business.sendflow.africa`,
+  `https://apis.docs.sendflow.africa` et
+  `https://payin.merchant.command.sendflow.africa` si ces interfaces utilisent l'API.
 - Préserver la vérification TLS de PostgreSQL, les sessions sécurisées, les contrôles OTP/PIN,
   les rôles et les protections financières. Ce build n'autorise aucun paiement.
 - Le Document Root du site est `dist/public` ; il ne doit pas exposer le bundle serveur,
