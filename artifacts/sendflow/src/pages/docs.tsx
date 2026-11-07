@@ -77,7 +77,7 @@ const localized: Record<Language, Translation> = {
   fr: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
     search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
-    sectionPageIntro: 'Cette rubrique détaille le contrat SendFlow correspondant. Les exemples restent illustratifs et les blocages de disponibilité sont signalés.',
+    sectionPageIntro: 'Cette rubrique détaille le contrat SendFlow correspondant. Les exemples utilisent des données d’exemple et les blocages de disponibilité sont signalés.',
     integrations: 'Méthodes d’intégration', sharedMethods: 'Commun aux deux',
     apiReferenceGroup: 'Référence API',
     reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
@@ -108,7 +108,11 @@ const localized: Record<Language, Translation> = {
     capabilityStatus: 'Consulter le statut d’une session et d’une tentative.',
     capabilityWebhook: 'Recevoir les notifications de paiement réussi ou échoué par webhook.',
     baseUrlTitle: 'URL de base API',
-    baseUrlPending: 'En production, configurez SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api : le domaine de l’application expose l’API sous /api. Le site principal est https://sendflow.africa, la documentation https://apis.docs.sendflow.africa et le paiement hébergé https://payin.merchant.command.sendflow.africa ; ces trois domaines ne remplacent pas l’origine API. Dans l’aperçu Replit, utilisez l’hôte temporaire de l’aperçu suivi de /api.',
+    baseUrlPending: 'URLs de production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api pour les appels API ; SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa pour les paiements hébergés. Application marchand : https://merchent.business.sendflow.africa. Site public : https://sendflow.africa. Documentation : https://apis.docs.sendflow.africa. Définissez ces deux variables d’intégration côté serveur marchand.',
+    quickstartCatalogTitle: 'Consulter le catalogue et les limites',
+    quickstartCatalogText: 'Commencez par lire GET /pricing et GET /payment-limits. Ces lectures publiques ne nécessitent pas de clé secrète. Utilisez les données renvoyées pour présenter les options et les seuils ; le serveur reste responsable de valider chaque opération.',
+    quickstartHostedTitle: 'Créer et suivre une session hébergée',
+    quickstartHostedText: 'Créez la session depuis votre backend avec la clé secrète. L’API renvoie checkoutPath : votre serveur le combine avec SENDFLOW_CHECKOUT_ORIGIN et transmet uniquement le lien de paiement au navigateur. Après le retour du payeur, relisez le statut côté serveur ou vérifiez un webhook signé.',
     threeSteps: 'En 3 étapes', stepOne: 'Créez votre compte marchand', stepOneSub: 'Un compte marchand actif et éligible est requis pour utiliser les paiements API.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Créez ou régénérez votre paire dans l’espace Développeurs ; la clé secrète ne s’affiche qu’à sa création.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Créez la session côté serveur et vérifiez le résultat auprès de SendFlow.',
     read: 'Lire le guide', support: 'Besoin d’aide ?', supportSub: 'Contactez l’équipe SendFlow pour toute question liée à votre intégration.', contact: 'Contacter le support',
     disclaimerTitle: 'Confirmation du paiement', disclaimer: 'Ne marquez jamais une commande comme payée sur la seule base d’une redirection ou d’un état affiché dans le navigateur. Vérifiez le statut serveur ou traitez un webhook dont la signature est valide.',
@@ -120,12 +124,12 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Rôle et emplacement de chaque identifiant',
     credentialHeader: 'Identifiant', credentialUseHeader: 'Utilisation', credentialHandlingHeader: 'Protection',
     pollTokenNote: 'Le pollToken est un identifiant d’accès à la tentative. Préférez interroger l’état depuis votre serveur avec la clé secrète ; si le client doit le recevoir pour afficher la progression, gardez-le temporairement en mémoire et excluez-le des journaux, URL et outils analytiques.',
-    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse : utilisez https://merchent.business.sendflow.africa/api comme SENDFLOW_API_BASE_URL en production. Remplacez les variables d’environnement et identifiants d’exemple par ceux de votre compte. Les clés et jetons affichés sont fictifs ; gardez la clé secrète côté serveur.',
+    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse. Production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api ; paiement hébergé : SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Remplacez les identifiants d’exemple par ceux de votre compte et gardez la clé secrète côté serveur.',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec https://payin.merchant.command.sendflow.africa et redirigez le client.',
     apiAvailabilityTitle: 'Disponibilité actuelle',
     apiAvailabilityText: 'Dans le code inspecté, la création d’une session et le démarrage d’une tentative renvoient HTTP 503 lorsque le contrôle technique de preuve de règlement est fermé (LINKFLOW_SETTLEMENT_PROOF_READY=false). L’URL API documentée en production est https://merchent.business.sendflow.africa/api, mais ce code ne prouve pas que le domaine et le proxy Plesk sont actuellement joignables ou configurés. Les exemples décrivent le contrat, pas une activation en production ; 503 ne confirme ni un succès ni un échec final. Voir « Disponibilité du service ».',
-    hostedOriginText: 'checkoutPath reste un chemin relatif pour préserver le contrat API. Pour un paiement hébergé ou un lien LinkFlow en production, utilisez l’origine https://payin.merchant.command.sendflow.africa ; configurez SENDFLOW_CHECKOUT_ORIGIN avec cette valeur côté serveur marchand. Dans l’aperçu Replit, utilisez l’origine de l’aperçu.',
+    hostedOriginText: 'checkoutPath reste un chemin relatif pour préserver le contrat API. Pour un paiement hébergé ou un lien LinkFlow en production, utilisez https://payin.merchant.command.sendflow.africa et définissez SENDFLOW_CHECKOUT_ORIGIN avec cette valeur côté serveur marchand.',
     hostedFallbackText: 'Après une confirmation succeeded, la page redirige vers returnUrl si elle a été fournie ; sinon, le code actuel utilise https://sendflow.africa. La page ne redirige pas vers returnUrl après un échec confirmé. Une redirection reste une indication d’interface, jamais une preuve de paiement.',
     webhookSharedNote: 'Les webhooks s’appliquent aux deux parcours, API directe et Hosted Checkout. Ils sont envoyés après un résultat final confirmé ; consultez le guide Webhooks pour vérifier la signature et dédupliquer les livraisons.',
     webhookGuideLink: 'Ouvrir le guide Webhooks',
@@ -185,7 +189,7 @@ const localized: Record<Language, Translation> = {
     rateLimits: 'Limites de requêtes', rateLimitsText: 'Par clé API et par fenêtre d’une minute : 30 créations de session, 120 lectures, 5 tentatives directes et 60 vérifications de statut. La création de session a aussi une limite de 10 par minute au niveau du compte marchand. Par adresse IP, les lectures publiques de session sont limitées à 120 par minute, les tentatives à 5 et les vérifications à 60. Les quotas de clé, de compte et d’adresse IP peuvent s’appliquer ensemble. En cas de limitation, l’API renvoie 429 et Retry-After: 60 ; attendez ce délai avant de reprendre.',
     statesTitle: 'États d’un paiement', statesText: 'Les états de session et de tentative décrivent l’avancement du paiement ; seul un état final confirmé peut déclencher la validation de votre commande.',
     serviceAvailability: 'Disponibilité du service', serviceAvailabilityText: 'Dans le code inspecté, le contrôle technique LINKFLOW_SETTLEMENT_PROOF_READY vaut false : après authentification, la création d’une session et le démarrage d’une tentative renvoient HTTP 503 avant la validation du corps tant que ce contrôle reste fermé. Ce contrôle n’est pas une option métier du marchand. L’URL API documentée est https://merchent.business.sendflow.africa/api, mais cela ne confirme pas la joignabilité du backend déployé. La preuve de règlement authentifiée exigée doit lier référence, montant, devise, marchand, canal et type d’opération attendu avec une signature vérifiée ; le résultat de statut actuellement consulté ne fournit pas toutes ces garanties. Les lectures de statut ne créent pas de paiement et 503 ne confirme ni succès ni échec final.',
-    environmentNote: 'En production, SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api. Le site principal est https://sendflow.africa ; la documentation est sur https://apis.docs.sendflow.africa et le paiement hébergé sur https://payin.merchant.command.sendflow.africa. Dans l’aperçu Replit, utilisez son hôte temporaire suivi de /api.',
+    environmentNote: 'URLs de production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api ; SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa ; application marchand https://merchent.business.sendflow.africa ; site public https://sendflow.africa ; documentation https://apis.docs.sendflow.africa.',
     troubleshootingTitle: 'Diagnostic rapide',
     hostedFlow: 'Parcours de redirection', directFlow: 'Parcours API directe', returnUrlText: 'returnUrl est facultative, doit être une URL HTTPS et concerne le parcours hosted : la page de paiement ne redirige vers cette URL qu’après confirmation succeeded. En mode direct, la réponse de statut API ne fournit pas cette redirection ; votre application gère son propre écran après vérification serveur.',
     language: 'Langue', copyright: 'SendFlow · Documentation API', lastUpdated: 'Référence API v1',
@@ -194,7 +198,7 @@ const localized: Record<Language, Translation> = {
   en: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
     search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
-    sectionPageIntro: 'This section details the matching SendFlow contract. Examples are illustrative and current availability blocks are stated clearly.',
+    sectionPageIntro: 'This section details the matching SendFlow contract. Examples use sample data, and current availability blocks are stated clearly.',
     integrations: 'Integration methods', sharedMethods: 'Shared',
     apiReferenceGroup: 'API reference',
     reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
@@ -225,7 +229,11 @@ const localized: Record<Language, Translation> = {
     capabilityStatus: 'Read the status of a session and payment attempt.',
     capabilityWebhook: 'Receive successful or failed payment notifications by webhook.',
     baseUrlTitle: 'API base URL',
-    baseUrlPending: 'In production, set SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; the application domain exposes the API under /api. The main site is https://sendflow.africa, documentation is https://apis.docs.sendflow.africa, and hosted payments use https://payin.merchant.command.sendflow.africa. These are separate origins and must not be substituted for the API base. In Replit preview, use the temporary preview host followed by /api.',
+    baseUrlPending: 'Production URLs: set SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api for API requests and SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa for hosted payments. Merchant app: https://merchent.business.sendflow.africa. Public site: https://sendflow.africa. Documentation: https://apis.docs.sendflow.africa. Set both integration variables on your merchant server.',
+    quickstartCatalogTitle: 'Read the catalog and limits',
+    quickstartCatalogText: 'Start by reading GET /pricing and GET /payment-limits. These public reads do not require a secret key. Use the returned data to show options and thresholds; the server still validates every operation.',
+    quickstartHostedTitle: 'Create and track a hosted session',
+    quickstartHostedText: 'Create the session from your backend with the secret key. The API returns checkoutPath; your server combines it with SENDFLOW_CHECKOUT_ORIGIN and sends only the payment link to the browser. After the payer returns, read the status server-side or verify a signed webhook.',
     threeSteps: 'In 3 steps', stepOne: 'Create your merchant account', stepOneSub: 'An active, eligible merchant account is required to use API payments.', stepTwo: 'Configure your API keys', stepTwoSub: 'Create or regenerate your key pair in the Developers area; the secret key is shown only when created.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Create sessions server-side and verify results with SendFlow.',
     read: 'Read the guide', support: 'Need help?', supportSub: 'Contact the SendFlow team with questions about your integration.', contact: 'Contact support',
     disclaimerTitle: 'Payment confirmation', disclaimer: 'Never mark an order as paid based only on a redirect or a browser-side state. Verify the server status or process a webhook whose signature is valid.',
@@ -237,12 +245,12 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Role and handling of each credential',
     credentialHeader: 'Credential', credentialUseHeader: 'Used for', credentialHandlingHeader: 'Handling',
     pollTokenNote: 'pollToken grants access to an attempt. Prefer checking status from your server with the secret key; if the client needs it to show progress, keep it in memory temporarily and exclude it from logs, URLs, and analytics.',
-    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'For production, set SENDFLOW_API_BASE_URL to https://merchent.business.sendflow.africa/api. Replace sample environment variables and identifiers with your account values. Displayed keys and tokens are fictitious; keep the secret key server-side.',
+    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Production: SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; hosted payments: SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Replace sample identifiers with your account values and keep the secret key server-side.',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with https://payin.merchant.command.sendflow.africa and redirect the customer.',
     apiAvailabilityTitle: 'Current availability',
     apiAvailabilityText: 'In the inspected code, session creation and attempt start return HTTP 503 when the technical settlement-proof control is closed (LINKFLOW_SETTLEMENT_PROOF_READY=false). The documented production API URL is https://merchent.business.sendflow.africa/api, but this code does not prove the domain or Plesk proxy is currently reachable or configured. Examples describe the contract, not production activation; 503 confirms neither success nor final failure. See “Service availability”.',
-    hostedOriginText: 'checkoutPath remains a relative path to preserve the API contract. For hosted payments and LinkFlow links in production, use https://payin.merchant.command.sendflow.africa as the origin; set SENDFLOW_CHECKOUT_ORIGIN to this value on the merchant server. In the Replit preview, use the preview origin.',
+    hostedOriginText: 'checkoutPath remains a relative path to preserve the API contract. For hosted payments and LinkFlow links in production, use https://payin.merchant.command.sendflow.africa as the origin and set SENDFLOW_CHECKOUT_ORIGIN to this value on the merchant server.',
     hostedFallbackText: 'After succeeded is confirmed, the page redirects to returnUrl if provided; otherwise the current code uses https://sendflow.africa. The page does not redirect to returnUrl after a confirmed failure. A redirect is a user-interface signal, never proof of payment.',
     webhookSharedNote: 'Webhooks apply to both Direct API and Hosted Checkout. They are sent after a confirmed final result; see the Webhooks guide to verify signatures and deduplicate deliveries.',
     webhookGuideLink: 'Open the Webhooks guide',
@@ -302,7 +310,7 @@ const localized: Record<Language, Translation> = {
     rateLimits: 'Request limits', rateLimitsText: 'Per API key per one-minute window: 30 session creations, 120 reads, 5 direct attempts, and 60 status checks. Session creation also has a merchant-account limit of 10 per minute. Per client IP, public session reads are limited to 120 per minute, attempts to 5, and status checks to 60. Key, account, and IP quotas can apply together. A rate-limited response includes 429 and Retry-After: 60; wait before resuming.',
     statesTitle: 'Payment states', statesText: 'Session and attempt states describe payment progress; only a confirmed final state should trigger your order decision.',
     serviceAvailability: 'Service availability', serviceAvailabilityText: 'In the inspected code, the technical LINKFLOW_SETTLEMENT_PROOF_READY control is false: after authentication, session creation and attempt start return HTTP 503 before body validation while it remains closed. This is not a merchant business setting. The documented API URL is https://merchent.business.sendflow.africa/api, but this does not confirm that the deployed backend is reachable. Authenticated settlement evidence must bind the reference, amount, currency, merchant, channel, and expected operation type with a verified signature; the status result currently consulted does not provide all these guarantees. Status reads do not create payments, and 503 confirms neither success nor final failure.',
-    environmentNote: 'In production, set SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api. The main site is https://sendflow.africa; documentation is https://apis.docs.sendflow.africa; hosted payments use https://payin.merchant.command.sendflow.africa. In the Replit preview, use its temporary host followed by /api.',
+    environmentNote: 'Production URLs: SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa; merchant app https://merchent.business.sendflow.africa; public site https://sendflow.africa; documentation https://apis.docs.sendflow.africa.',
     troubleshootingTitle: 'Quick troubleshooting',
     hostedFlow: 'Hosted redirect flow', directFlow: 'Direct API flow', returnUrlText: 'returnUrl is optional, must be an HTTPS URL, and applies to hosted mode: the payment page redirects to it only after a succeeded confirmation. In direct mode, the API status response does not provide this redirect; your application handles its own result screen after server verification.',
     language: 'Language', copyright: 'SendFlow · API documentation', lastUpdated: 'API reference v1',
@@ -649,8 +657,8 @@ const apiEndpointInventory = [
     codesEn: 'HTTP: 200, 503.',
     errorsFr: '503 : catalogue ou configuration tarifaire momentanément indisponible. Les taux affichés ne garantissent pas qu’un opérateur soit proposé dans une session ni qu’un paiement puisse être exécuté.',
     errorsEn: '503: catalog or fee configuration temporarily unavailable. Published rates do not guarantee that an operator will be offered in a session or that a payment can be executed.',
-    requirementsFr: 'Aucun en-tête d’authentification. fees.linkflow est un taux décimal (0,025 signifie 2,5 %). Les taux non configurés sont omis ; les valeurs de l’exemple sont illustratives.',
-    requirementsEn: 'No authentication header. fees.linkflow is a decimal rate (0.025 means 2.5%). Unconfigured rates are omitted; example values are illustrative.',
+    requirementsFr: 'Aucun en-tête d’authentification. fees.linkflow est un taux décimal (0,025 signifie 2,5 %). Les taux non configurés sont omis ; les valeurs présentées sont des données d’exemple.',
+    requirementsEn: 'No authentication header. fees.linkflow is a decimal rate (0.025 means 2.5%). Unconfigured rates are omitted; displayed values are sample data.',
     response: `{
   "categories": [{
     "id": "linkflow",
@@ -799,7 +807,7 @@ function ResponsePanel({ language, label, response, caption }: { language: Langu
         </div>
       </div>
       <pre><code>{renderHighlightedCode(shownResponse)}</code></pre>
-      <div className="sf-docs-code-note">{caption ?? (language === 'fr' ? 'JSON · valeurs illustratives' : 'JSON · illustrative values')}</div>
+      <div className="sf-docs-code-note">{caption ?? (language === 'fr' ? 'JSON · données d’exemple' : 'JSON · sample data')}</div>
     </div>
   );
 }
@@ -1012,8 +1020,19 @@ export default function DocsPage() {
           </section>
           <section className="sf-docs-section"><h2>{t.prerequisites}</h2><ul className="sf-docs-list"><li>{t.notDocumentedText}</li><li>{t.noCredentials}</li><li>{t.baseUrlPending}</li></ul>
             <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+          </section>
+          <section className="sf-docs-section">
+            <h2>{t.quickstartCatalogTitle}</h2>
+            <p>{t.quickstartCatalogText}</p>
+            <CodePanel language={language} label="GET /pricing" example="pricing" />
+            <CodePanel language={language} label="GET /payment-limits" example="payment-limits" />
+          </section>
+          <section className="sf-docs-section">
+            <h2>{t.quickstartHostedTitle}</h2>
+            <p>{t.quickstartHostedText}</p>
             <CodePanel language={language} label={language === 'fr' ? 'Créer une session Hosted Checkout' : 'Create a Hosted Checkout session'} example="create-hosted" />
-            <ResponsePanel language={language} label={language === 'fr' ? 'Réponse de session illustrative' : 'Illustrative session response'} response={hostedSessionResponse} />
+            <ResponsePanel language={language} label={language === 'fr' ? 'Réponse de session d’exemple' : 'Sample session response'} response={hostedSessionResponse} />
+            <CodePanel language={language} label={language === 'fr' ? 'Vérifier le statut côté serveur' : 'Check status server-side'} example="read-session" />
           </section>
         </>}
         {pageKey === 'auth' && <>
