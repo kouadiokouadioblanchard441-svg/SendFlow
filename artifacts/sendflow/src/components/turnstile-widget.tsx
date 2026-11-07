@@ -152,13 +152,11 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
       ? 'La vérification de sécurité n’est pas configurée. Réessayez plus tard.'
       : state === 'loading'
         ? 'Chargement de la vérification de sécurité…'
-        : state === 'verified'
-          ? 'Vérification réussie.'
-          : state === 'expired'
-            ? 'La vérification a expiré. Validez à nouveau.'
-            : state === 'error'
-              ? 'La vérification ne peut pas être chargée. Réessayez.'
-              : 'Validez la vérification pour continuer.';
+        : state === 'expired'
+          ? 'La vérification a expiré. Validez à nouveau.'
+          : state === 'error'
+            ? 'La vérification ne peut pas être chargée. Réessayez.'
+            : null;
 
     return (
       <div className="sendflow-turnstile" data-state={state}>
@@ -167,9 +165,11 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
           className="sendflow-turnstile-widget"
           aria-label="Vérification de sécurité"
         />
-        <p className="sendflow-turnstile-status" role={state === 'error' ? 'alert' : 'status'} aria-live="polite">
-          {message}
-        </p>
+        {message && (
+          <p className="sendflow-turnstile-status" role={state === 'error' ? 'alert' : 'status'} aria-live="polite">
+            {message}
+          </p>
+        )}
         {state === 'error' && siteKey && (
           <button
             type="button"
