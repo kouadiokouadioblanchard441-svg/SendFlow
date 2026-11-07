@@ -6,6 +6,13 @@ import { feexpayChannels } from '../../../api-server/src/providers/feexpay/catal
 
 const apiBase = 'https://merchent.business.sendflow.africa/api';
 const docsCopy = await readFile(new URL('./docs.tsx', import.meta.url), 'utf8');
+const docsStyles = await readFile(new URL('./docs.css', import.meta.url), 'utf8');
+
+test('long documentation URLs wrap inside callouts and code notes', () => {
+  assert.match(docsStyles, /\.sf-docs-callout\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  assert.match(docsStyles, /\.sf-docs-code-note\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  assert.match(docsStyles, /\.sf-docs-base-url\s+span\s*\{[^}]*overflow-wrap:\s*anywhere/);
+});
 
 test('browser direct-payment examples use the production API base URL', () => {
   for (const example of ['read-public-session', 'start-attempt', 'poll-attempt']) {

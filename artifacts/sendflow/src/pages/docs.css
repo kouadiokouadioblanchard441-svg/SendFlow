@@ -161,16 +161,16 @@
 .sf-docs-token-option { color: #6c3daf; font-weight: 700; }
 .sf-docs-token-variable { color: #8049bb; }
 .sf-docs-token-number { color: #a05c15; }
-.sf-docs-code-note { border-top: 1px solid #e8dcf9; padding: 9px 12px; color: #55515f; font-size: 10px; line-height: 1.5; }
+.sf-docs-code-note { overflow-wrap: anywhere; border-top: 1px solid #e8dcf9; padding: 9px 12px; color: #55515f; font-size: 10px; line-height: 1.5; }
 .sf-docs-code + .sf-docs-code { margin-top: 18px; }
 .sf-docs-inline-code { border: 1px solid #e8dcf9; border-radius: 6px; background: #fbf8ff; padding: 3px 6px; color: #7736b5; font: 11px ui-monospace, monospace; }
 .sf-docs-list { display: grid; gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
 .sf-docs-list li { display: flex; gap: 10px; color: #292a30; font-size: 13px; line-height: 1.65; }
 .sf-docs-list li::before { width: 6px; height: 6px; flex: 0 0 6px; margin-top: 7px; border-radius: 50%; background: #8b4cc8; content: ''; }
-.sf-docs-callout { margin-top: 18px; border: 1.5px solid #e8dcf9; border-left: 4px solid #8b4cc8; border-radius: 12px; background: #fbf8ff; padding: 14px 16px; color: #292a30; font-size: 12px; line-height: 1.65; }
+.sf-docs-callout { min-width: 0; overflow-wrap: anywhere; margin-top: 18px; border: 1.5px solid #e8dcf9; border-left: 4px solid #8b4cc8; border-radius: 12px; background: #fbf8ff; padding: 14px 16px; color: #292a30; font-size: 12px; line-height: 1.65; }
 .sf-docs-base-url { display: grid; gap: 4px; }
 .sf-docs-base-url strong { color: #17181d; font-size: 13px; }
-.sf-docs-base-url span { color: #292a30; font-size: 12px; line-height: 1.6; }
+.sf-docs-base-url span { overflow-wrap: anywhere; color: #292a30; font-size: 12px; line-height: 1.6; }
 .sf-docs-reference-table { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 10px; }
 .sf-docs-reference-table th { border-bottom: 1.5px solid #e8dcf9; padding: 11px 10px; color: #55515f; font-size: 10px; letter-spacing: .07em; text-align: left; text-transform: uppercase; }
 .sf-docs-reference-table td { border-bottom: 1px solid #e8dcf9; padding: 13px 10px; color: #292a30; vertical-align: top; }
