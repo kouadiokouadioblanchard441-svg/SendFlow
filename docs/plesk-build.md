@@ -177,6 +177,7 @@ sur le serveur ; le chemin relatif `dist/public` est celui à utiliser depuis le
   `CORS_ALLOWED_ORIGINS` avec les origines HTTPS exactes. Ne pas reprendre les
   variables de prévisualisation Replit.
   Autoriser les origines exactes qui appellent l'API depuis le navigateur, notamment
+  `https://sendflow.africa`,
   `https://merchent.business.sendflow.africa`,
   `https://apis.docs.sendflow.africa` et
   `https://payin.merchant.command.sendflow.africa` si ces interfaces utilisent l'API.
