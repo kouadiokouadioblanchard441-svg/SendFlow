@@ -50,3 +50,4 @@
 - [Plesk auto-deployment](plesk-auto-deployment.md) — GitHub Actions builds and tracks only Plesk production packages; keep Plesk's restricted post-Pull check shell-only.
 - [Plesk pnpm build approvals](plesk-pnpm-build-approvals.md) — Keep only reviewed lifecycle scripts allowed in both pnpm build-approval formats for Plesk compatibility.
 - [Frontend asset tracking](ci-asset-tracking.md) — Move imported production assets out of globally ignored uploads into tracked artifact source directories.
+- [Replit Node patch versions](replit-node-patch-version.md) — The managed Node 24 module offers 24.22.1, not the Plesk-required 24.22.2; custom PATH setup can affect the Run command.
