@@ -1,23 +1,48 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { Home, SearchX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import sendflowMark from '@/assets/sendflow-mark-original.png';
+import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
+import { getNotFoundHomeHref } from '@/lib/not-found-route';
+import { useSeo } from '@/lib/seo';
 
 export default function NotFound() {
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">
-              404 Page Not Found
-            </h1>
-          </div>
+  const hostname = typeof window === 'undefined' ? '' : window.location.hostname;
+  const homeHref = getNotFoundHomeHref(hostname);
 
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+  useSeo({
+    path: '/404',
+    locale: 'fr',
+    title: 'Page introuvable · SendFlow',
+    description: 'La page demandée est introuvable.',
+    robots: 'noindex,nofollow',
+  });
+
+  return (
+    <main className="sf-not-found-page">
+      <div className="sf-not-found-glow sf-not-found-glow-top" aria-hidden="true" />
+      <div className="sf-not-found-glow sf-not-found-glow-bottom" aria-hidden="true" />
+      <section className="sf-not-found-card" aria-labelledby="sf-not-found-title">
+        <div className="sf-not-found-brand" aria-label="SendFlow">
+          <img className="sf-not-found-mark" src={sendflowMark} alt="" />
+          <img className="sf-not-found-wordmark" src={sendflowWordmark} alt="SendFlow" />
+        </div>
+
+        <div className="sf-not-found-icon" aria-hidden="true">
+          <SearchX size={29} strokeWidth={1.8} />
+        </div>
+        <p className="sf-not-found-code">ERREUR 404</p>
+        <h1 id="sf-not-found-title">Cette page n’existe pas</h1>
+        <p className="sf-not-found-description">
+          L’adresse demandée est introuvable ou n’est plus disponible. Vérifie le lien ou retourne sur SendFlow.
+        </p>
+        <Button asChild className="sf-not-found-home">
+          <a href={homeHref}>
+            <Home size={17} aria-hidden="true" />
+            Retour à SendFlow
+          </a>
+        </Button>
+      </section>
+      <p className="sf-not-found-footer">SendFlow · Votre argent, en mouvement</p>
+    </main>
   );
 }

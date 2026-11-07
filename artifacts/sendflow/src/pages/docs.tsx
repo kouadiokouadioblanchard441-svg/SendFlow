@@ -11,7 +11,9 @@ import apiIntegrationIllustration from '../assets/docs-api-integration-3d.webp';
 import hostedCheckoutIllustration from '../assets/docs-hosted-checkout-3d.webp';
 import { useSeo } from '@/lib/seo';
 import { usePaymentLimits } from '@/hooks/use-payment-limits';
+import { getDocumentationPageKey } from '@/lib/documentation-host';
 import { getDocsCodeExample, getDocsCodeFormats, type DocsCodeFormat, type DocsExampleId } from './docs-code-examples';
+import NotFound from './not-found';
 import './docs.css';
 
 type Language = 'fr' | 'en';
@@ -441,12 +443,6 @@ const localizedLists: Record<Language, TranslationLists> = {
   },
 };
 
-const pageKeys: Record<string, string> = {
-  '/docs': 'home', '/docs/getting-started': 'start', '/docs/authentication': 'auth',
-  '/docs/integrations/direct': 'direct', '/docs/integrations/hosted': 'hosted',
-  '/docs/api-reference': 'api', '/docs/webhooks': 'webhooks', '/docs/reference': 'ref',
-};
-
 const apiEndpointInventory = [
   {
     method: 'POST', path: '/api/v1/payment-sessions', description: 'endpointCreate', access: 'accessServerSecret', example: 'create-hosted',
@@ -851,10 +847,11 @@ export default function DocsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedDocSection, setSelectedDocSection] = useState<{ path: string; section: string } | null>(null);
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set([...docGroups.map((group) => group.id), 'resources']));
-  const pageKey = pageKeys[path] ?? 'home';
+  const resolvedPageKey = getDocumentationPageKey(path);
+  const pageKey = resolvedPageKey ?? 'home';
   const activeDocSection = selectedDocSection?.path === path ? selectedDocSection.section : '';
   const t = localized[language];
-  const paymentLimitsQuery = usePaymentLimits();
+  const paymentLimitsQuery = usePaymentLimits(resolvedPageKey !== null);
   const filteredItems = useMemo(() => docsItems.filter((item) =>
     `${localized[language][item.key] ?? item.label} ${item.label} ${item.search ?? docSearchTerms[item.path] ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   ), [language, query]);
@@ -909,10 +906,12 @@ export default function DocsPage() {
   useSeo({
     path,
     locale: language,
-    title: `${title} · SendFlow`,
-    description,
-    robots: 'index,follow',
+    title: resolvedPageKey ? `${title} · SendFlow` : 'Page introuvable · SendFlow',
+    description: resolvedPageKey ? description : 'La page de documentation demandée est introuvable.',
+    robots: resolvedPageKey ? 'index,follow' : 'noindex,nofollow',
   });
+
+  if (!resolvedPageKey) return <NotFound />;
 
   const sidebarGroups = docGroups.map((group) => ({
     key: group.labelKey,

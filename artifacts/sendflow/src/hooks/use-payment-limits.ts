@@ -3,10 +3,11 @@ import {
   useGetPublicPaymentLimits,
 } from "@workspace/api-client-react";
 
-export function usePaymentLimits() {
+export function usePaymentLimits(enabled = true) {
   return useGetPublicPaymentLimits({
     query: {
       queryKey: getGetPublicPaymentLimitsQueryKey(),
+      enabled,
       retry: false,
       staleTime: 0,
       refetchOnWindowFocus: true,

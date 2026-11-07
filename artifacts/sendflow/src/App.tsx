@@ -190,13 +190,6 @@ function PublicLegalRoute({
 }
 
 function NotFoundRoute() {
-  useSeo({
-    path: '/404',
-    locale: 'fr',
-    title: 'Page introuvable · SendFlow',
-    description: 'La page demandée est introuvable.',
-    robots: 'noindex,nofollow',
-  });
   return <NotFound />;
 }
 
