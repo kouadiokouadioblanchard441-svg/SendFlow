@@ -11599,6 +11599,97 @@ async function checkPortalRouteAccess(request, options = {}) {
   }
 }
 
+// src/lib/documentation-host.ts
+var SENDFLOW_DOCUMENTATION_HOST = "apis.docs.sendflow.africa";
+var DOCUMENTATION_PAGE_KEYS = {
+  "/docs": "home",
+  "/docs/getting-started": "start",
+  "/docs/authentication": "auth",
+  "/docs/integrations/direct": "direct",
+  "/docs/integrations/hosted": "hosted",
+  "/docs/api-reference": "api",
+  "/docs/webhooks": "webhooks",
+  "/docs/reference": "ref"
+};
+function isSendFlowDocumentationHost(hostname) {
+  return hostname.toLowerCase() === SENDFLOW_DOCUMENTATION_HOST;
+}
+function getDocumentationPageKey(pathname) {
+  const normalizedPath = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  if (normalizedPath === "/") return "home";
+  return Object.prototype.hasOwnProperty.call(DOCUMENTATION_PAGE_KEYS, normalizedPath) ? DOCUMENTATION_PAGE_KEYS[normalizedPath] : null;
+}
+
+// src/lib/payment-host.ts
+var SENDFLOW_PAYMENT_HOST = "payin.merchant.command.sendflow.africa";
+var SENDFLOW_PAYMENT_ORIGIN = `https://${SENDFLOW_PAYMENT_HOST}`;
+function isSendFlowPaymentHost(hostname) {
+  return hostname.toLowerCase() === SENDFLOW_PAYMENT_HOST;
+}
+
+// server/site-route-matcher.ts
+var exactApplicationPaths = /* @__PURE__ */ new Set([
+  "/",
+  "/create-pin",
+  "/pin",
+  "/biometric",
+  "/change-pin",
+  "/change-pin-success",
+  "/pricing",
+  "/forgot-password",
+  "/forgot-pin",
+  "/account",
+  "/account-info",
+  "/email-unsubscribe",
+  "/account-limit",
+  "/identity-verification",
+  "/linkflow",
+  "/linkflow/new",
+  "/developers",
+  "/customer-service",
+  "/deposit",
+  "/international-transfer",
+  "/inter-transfer",
+  "/history",
+  "/notifications",
+  "/confidentialite",
+  "/mentions-legales"
+]);
+var applicationPathPatterns = [
+  /^\/sign-in(?:\/.*)?$/,
+  /^\/sign-up(?:\/.*)?$/,
+  /^\/linkflow\/[^/]+$/,
+  /^\/pay\/[^/]+$/,
+  /^\/transaction\/[^/]+$/,
+  /^\/notifications\/[^/]+$/
+];
+function normalizedHostname(hostname) {
+  const value = hostname.trim().toLowerCase();
+  return value.replace(/:\d+$/, "");
+}
+function normalizedBasePath(basePath) {
+  const segments = basePath.split("/").filter(Boolean);
+  return segments.length ? `/${segments.join("/")}` : "";
+}
+function stripBasePath(pathname, basePath) {
+  const base = normalizedBasePath(basePath);
+  if (!base) return pathname;
+  if (pathname === base) return "/";
+  return pathname.startsWith(`${base}/`) ? pathname.slice(base.length) : pathname;
+}
+function isKnownSitePage(hostname, pathname, basePath = "/") {
+  const host = normalizedHostname(hostname);
+  const routePath = stripBasePath(pathname, basePath);
+  if (isSendFlowDocumentationHost(host)) {
+    return getDocumentationPageKey(routePath) !== null;
+  }
+  if (isSendFlowPaymentHost(host)) {
+    return /^\/pay\/[^/]+$/.test(routePath);
+  }
+  if (isPortalRouteRequest(pathname, basePath)) return true;
+  return exactApplicationPaths.has(routePath) || applicationPathPatterns.some((pattern) => pattern.test(routePath));
+}
+
 // server/site-server.ts
 var mime = {
   ".html": "text/html; charset=utf-8",
@@ -11617,6 +11708,14 @@ var mime = {
   ".mp4": "video/mp4",
   ".pdf": "application/pdf"
 };
+function sendNotFound(req, res) {
+  const body = "404 Not Found";
+  res.statusCode = 404;
+  res.setHeader("Cache-Control", "no-store, private");
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Content-Length", String(Buffer.byteLength(body)));
+  res.end(req.method === "HEAD" ? void 0 : body);
+}
 function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = checkPortalRouteAccess) {
   const root = resolve(rootDirectory);
   const server = createServer(async (req, res) => {
@@ -11625,16 +11724,25 @@ function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = 
       res.setHeader("Cache-Control", "no-store, private");
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Referrer-Policy", "no-referrer");
-      const pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);
+      let pathname;
+      try {
+        pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);
+      } catch {
+        sendNotFound(req, res);
+        return;
+      }
       if (pathname.includes("\0") || pathname.includes("\\") || pathname.split("/").some((p) => p.startsWith("."))) {
-        res.writeHead(404).end();
+        sendNotFound(req, res);
         return;
       }
       if (isPortalRouteRequest(req.url, process.env.BASE_PATH ?? "/")) {
         const access = await portalAccess(req);
         if (access !== "allowed") {
-          res.setHeader("Cache-Control", "no-store, private");
-          res.writeHead(access === "not-found" ? 404 : 503).end();
+          if (access === "not-found") sendNotFound(req, res);
+          else {
+            res.setHeader("Cache-Control", "no-store, private");
+            res.writeHead(503).end();
+          }
           return;
         }
       }
@@ -11645,7 +11753,7 @@ function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = 
       }
       let file = resolve(root, `.${pathname}`);
       if (!file.startsWith(root + sep) && file !== root) {
-        res.writeHead(404).end();
+        sendNotFound(req, res);
         return;
       }
       let info;
@@ -11654,8 +11762,14 @@ function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = 
       } catch {
       }
       if (!info?.isFile()) {
-        if (extname(pathname) || pathname.startsWith("/api/")) {
-          res.writeHead(404).end();
+        const isApiPath = pathname === "/api" || pathname.startsWith("/api/");
+        const isKnownPage = isKnownSitePage(
+          req.headers.host ?? "",
+          pathname,
+          process.env.BASE_PATH ?? "/"
+        );
+        if (extname(pathname) || isApiPath || !isKnownPage) {
+          sendNotFound(req, res);
           return;
         }
         file = resolve(root, "index.html");
@@ -11663,7 +11777,7 @@ function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = 
       }
       const actual = await realpath(file);
       if (!actual.startsWith(root + sep) || file.endsWith(".map")) {
-        res.writeHead(404).end();
+        sendNotFound(req, res);
         return;
       }
       res.setHeader("Content-Type", mime[extname(file)] ?? "application/octet-stream");

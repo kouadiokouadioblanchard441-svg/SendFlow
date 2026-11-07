@@ -2,7 +2,8 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X } from 'lucide-react';
 import { getGetAuthCountriesQueryKey, useGetAuthCountries } from '@workspace/api-client-react';
-import { readSavedAccountCountry } from '@/lib/account-country';
+import { DEFAULT_ACCOUNT_COUNTRY, readSavedAccountCountry } from '@/lib/account-country';
+import { orderCountriesWithDefaultFirst } from '@/lib/country-picker-order';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
 
 export type CountryOption = {
@@ -33,15 +34,18 @@ export function CountryPhoneField({
       staleTime: 0, refetchInterval: 30_000, refetchOnWindowFocus: true,
     },
   });
-  const countries = useMemo<CountryOption[]>(() => (catalog.data?.countries ?? [])
-    .filter((country) => !registrationOnly || country.enabled)
-    .map((country) => ({
-      countryCode: country.countryCode, name: country.countryName,
-      dialCode: country.phonePrefix, flag: country.flag,
-      minPhoneDigits: country.minPhoneDigits, maxPhoneDigits: country.maxPhoneDigits,
-    })), [catalog.data, registrationOnly]);
+  const countries = useMemo<CountryOption[]>(() => orderCountriesWithDefaultFirst(
+    (catalog.data?.countries ?? [])
+      .filter((country) => !registrationOnly || country.enabled)
+      .map((country) => ({
+        countryCode: country.countryCode, name: country.countryName,
+        dialCode: country.phonePrefix, flag: country.flag,
+        minPhoneDigits: country.minPhoneDigits, maxPhoneDigits: country.maxPhoneDigits,
+      })),
+    DEFAULT_ACCOUNT_COUNTRY.countryCode ?? 'ci',
+  ), [catalog.data, registrationOnly]);
   const [selectedCode, setSelectedCode] = useState<string | null>(
-    () => readSavedAccountCountry()?.countryCode ?? null,
+    () => readSavedAccountCountry()?.countryCode ?? DEFAULT_ACCOUNT_COUNTRY.countryCode ?? null,
   );
   const selectedCountry = countries.find((country) => country.countryCode === selectedCode);
   const [isOpen, setIsOpen] = useState(false);
@@ -52,6 +56,13 @@ export function CountryPhoneField({
   callbackRef.current = onCountryChange;
   const inputId = useId();
   const selectedIdentity = selectedCountry ? `${selectedCountry.countryCode}:${selectedCountry.dialCode}` : '';
+  useEffect(() => {
+    if (!catalog.data || selectedCountry) return;
+    const defaultCountry = countries.find(
+      (country) => country.countryCode === DEFAULT_ACCOUNT_COUNTRY.countryCode,
+    );
+    if (defaultCountry) setSelectedCode(defaultCountry.countryCode);
+  }, [catalog.data, countries, selectedCountry]);
   useEffect(() => {
     if (selectedCountry) callbackRef.current?.(selectedCountry);
   }, [selectedIdentity]);
@@ -147,7 +158,7 @@ export function CountryPhoneField({
             aria-label={selectedCountry
               ? `Pays sélectionné : ${selectedCountry.name}, ${selectedCountry.dialCode}. Ouvrir la liste`
               : 'Sélectionner un pays'}>
-            <span aria-hidden="true">{selectedCountry?.flag ?? '🌍'}</span>
+            {selectedCountry?.flag && <span aria-hidden="true">{selectedCountry.flag}</span>}
             <span>{selectedCountry?.dialCode ?? 'Pays'}</span>
           </button>
           <input id={inputId} type="tel" value={value}
