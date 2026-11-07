@@ -125,7 +125,7 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Rôle et emplacement de chaque identifiant',
     credentialHeader: 'Identifiant', credentialUseHeader: 'Utilisation', credentialHandlingHeader: 'Protection',
     pollTokenNote: 'Le pollToken est un identifiant d’accès à la tentative. Préférez interroger l’état depuis votre serveur avec la clé secrète ; si le client doit le recevoir pour afficher la progression, gardez-le temporairement en mémoire et excluez-le des journaux, URL et outils analytiques.',
-    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à adapter à votre serveur ou à votre caisse. Production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api ; paiement hébergé : SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Les exemples PHP demandent PHP 7.3+ et cURL ; les exemples Python avec requests demandent la bibliothèque requests. Le JavaScript utilisant process.env est côté serveur (Node.js 18+) ; les appels directs n’utilisent que les identifiants publics. Remplacez les valeurs d’exemple et gardez la clé secrète côté serveur.',
+    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse. Production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api ; paiement hébergé : SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Remplacez les identifiants d’exemple par ceux de votre compte et gardez la clé secrète côté serveur. Les exemples PHP demandent PHP 7.3+ et cURL ; les exemples Python avec requests demandent la bibliothèque requests. Le JavaScript utilisant process.env est côté serveur (Node.js 18+) ; les appels directs n’utilisent que les identifiants publics.',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec https://payin.merchant.command.sendflow.africa et redirigez le client.',
     apiAvailabilityTitle: 'Disponibilité actuelle',
@@ -254,7 +254,7 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Role and handling of each credential',
     credentialHeader: 'Credential', credentialUseHeader: 'Used for', credentialHandlingHeader: 'Handling',
     pollTokenNote: 'pollToken grants access to an attempt. Prefer checking status from your server with the secret key; if the client needs it to show progress, keep it in memory temporarily and exclude it from logs, URLs, and analytics.',
-    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Adapt each snippet to your server or checkout. Production: SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; hosted payments: SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. PHP examples require PHP 7.3+ and cURL; Python examples using requests require the requests package. JavaScript using process.env runs server-side with Node.js 18+; direct checkout calls use only public session credentials. Replace sample values and keep the secret key server-side.',
+    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Integrate this snippet into your server or checkout. Production: SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; hosted payments: SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Replace sample credentials with those from your account and keep the secret key server-side. PHP examples require PHP 7.3+ and cURL; Python examples using requests require the requests package. JavaScript using process.env runs server-side with Node.js 18+; direct checkout calls use only public session credentials.',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with https://payin.merchant.command.sendflow.africa and redirect the customer.',
     apiAvailabilityTitle: 'Current availability',
@@ -874,7 +874,7 @@ function CodePanel({ language, label, example }: { language: Language; label: st
         </div>
       </div>
       <pre><code>{renderHighlightedCode(copyText)}</code></pre>
-      <div className="sf-docs-code-note">{localized[language].codeNote} · {format}</div>
+      <div className="sf-docs-code-note">{localized[language].codeNote} · {format}.</div>
     </div>
   );
 }
