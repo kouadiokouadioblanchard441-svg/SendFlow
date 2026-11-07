@@ -1,8 +1,20 @@
+import { SENDFLOW_PAYMENT_ORIGIN } from './payment-host.ts';
+
 export interface LinkFlowShareTargets {
   url: string;
   whatsappUrl: string;
   telegramUrl: string;
   facebookUrl: string;
+}
+
+export function getLinkFlowShareOrigin(currentOrigin: string, isProduction: boolean): string {
+  if (isProduction) return SENDFLOW_PAYMENT_ORIGIN;
+
+  const currentUrl = new URL(currentOrigin);
+  if (!['http:', 'https:'].includes(currentUrl.protocol) || currentUrl.username || currentUrl.password) {
+    throw new TypeError('Invalid payment-link origin');
+  }
+  return currentUrl.origin;
 }
 
 export function buildLinkFlowShareTargets({
@@ -17,6 +29,9 @@ export function buildLinkFlowShareTargets({
   title: string;
 }): LinkFlowShareTargets {
   const trustedOrigin = new URL(origin);
+  if (!['http:', 'https:'].includes(trustedOrigin.protocol) || trustedOrigin.username || trustedOrigin.password) {
+    throw new TypeError('Invalid payment-link origin');
+  }
   if (!sharePath.startsWith('/') || sharePath.startsWith('//') || sharePath.includes('\\') || /[?#\u0000-\u001f]/.test(sharePath)) {
     throw new TypeError('Invalid payment-link path');
   }

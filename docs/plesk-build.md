@@ -114,10 +114,13 @@ Pour l'API, choisir le Document Root privé vide
 `artifacts/plesk-empty-document-root`. Ne jamais choisir `dist` au complet,
 `artifacts` ou `artifacts/api-server` : ils contiennent également des bundles serveur
 et des manifestes.
-Le domaine `apis.docs.sendflow.africa` sert la page documentaire dans le même
-processus site (`index.cjs`) ; il n'y a pas de troisième serveur Docs à démarrer.
-Il doit router le site vers ce processus et ses chemins `/api` vers l'API, comme le
-domaine marchand. Le sélecteur d'hôte ne décide d'aucune autorisation ou règle financière.
+Le domaine `apis.docs.sendflow.africa` sert la page documentaire dans le processus
+site (`index.cjs`). Le domaine `payin.merchant.command.sendflow.africa` sert les routes
+de paiement `/pay/:token` du même site ; les liens LinkFlow et les intégrations Hosted
+Checkout doivent utiliser cette origine en production. L'application limite ce domaine
+aux routes publiques de paiement. Pour chacun de ces domaines, router les pages vers le
+service site et `/api` vers le service API, en conservant les chemins. Le sélecteur
+d'hôte ne décide d'aucune autorisation ou règle financière.
 
 Le dossier `dist/public` contient uniquement le site public. Le `index.cjs` racine est
 un adaptateur généré qui importe `dist/server/index.mjs`, lequel sert ce contenu après
@@ -159,6 +162,8 @@ sur le serveur ; le chemin relatif `dist/public` est celui à utiliser depuis le
 - Configurer `TRUST_PROXY_HOPS` selon la chaîne réellement observée, et
   `CORS_ALLOWED_ORIGINS` avec les origines HTTPS exactes. Ne pas reprendre les
   variables de prévisualisation Replit.
+  Ajouter `https://payin.merchant.command.sendflow.africa` aux origines autorisées
+  si les appels navigateur à l'API sont envoyés depuis cette page de paiement.
 - Préserver la vérification TLS de PostgreSQL, les sessions sécurisées, les contrôles OTP/PIN,
   les rôles et les protections financières. Ce build n'autorise aucun paiement.
 - Le Document Root du site est `dist/public` ; il ne doit pas exposer le bundle serveur,

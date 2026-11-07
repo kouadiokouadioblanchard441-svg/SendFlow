@@ -6,7 +6,11 @@ import { SiFacebook, SiTelegram, SiWhatsapp } from 'react-icons/si';
 import { getGetCustomerPaymentLinksQueryKey, useGetCustomerPaymentLinks } from '@workspace/api-client-react';
 import type { CustomerPaymentLink } from '@workspace/api-client-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { buildLinkFlowShareTargets, type LinkFlowShareTargets } from '@/lib/linkflow-share';
+import {
+  buildLinkFlowShareTargets,
+  getLinkFlowShareOrigin,
+  type LinkFlowShareTargets,
+} from '@/lib/linkflow-share';
 import { useSeo } from '@/lib/seo';
 import linkflowListIllustration from '@assets/generated_images/sendflow-linkflow-history-3d.webp';
 
@@ -57,7 +61,7 @@ export default function LinkFlowPage() {
     try {
       const title = linkTitle(link);
       const targets = buildLinkFlowShareTargets({
-        origin: window.location.origin,
+        origin: getLinkFlowShareOrigin(window.location.origin, import.meta.env.PROD),
         basePath: import.meta.env.BASE_URL,
         sharePath: link.sharePath,
         title,

@@ -26,6 +26,7 @@ import { GlobalErrorDialog } from '@/components/global-error-dialog';
 import { reportGlobalApiError } from '@/lib/global-api-errors';
 import { shouldShowGlobalQueryError } from '@/lib/safe-api-error';
 import { isSendFlowDocumentationHost } from '@/lib/documentation-host';
+import { isSendFlowPaymentHost } from '@/lib/payment-host';
 
 const LegalMentionsPage = lazy(() =>
   import('@/pages/legal').then((module) => ({ default: module.LegalMentionsPage })),
@@ -295,6 +296,28 @@ function App() {
           <TooltipProvider>
             <Suspense fallback={<PageLoadingScreen />}>
               <DocsPage />
+            </Suspense>
+            <Toaster />
+            <GlobalErrorDialog />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </WouterRouter>
+    );
+  }
+
+  if (
+    typeof window !== 'undefined' &&
+    isSendFlowPaymentHost(window.location.hostname)
+  ) {
+    return (
+      <WouterRouter base={basePath}>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Suspense fallback={<PageLoadingScreen />}>
+              <Switch>
+                <Route path="/pay/:token" component={PublicPaymentLinkPage} />
+                <Route component={NotFound} />
+              </Switch>
             </Suspense>
             <Toaster />
             <GlobalErrorDialog />

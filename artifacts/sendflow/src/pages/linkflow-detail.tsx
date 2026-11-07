@@ -17,7 +17,7 @@ import {
   useGetCustomerPaymentLink,
   useUpdateCustomerPaymentLink,
 } from '@workspace/api-client-react';
-import { buildLinkFlowShareTargets } from '@/lib/linkflow-share';
+import { buildLinkFlowShareTargets, getLinkFlowShareOrigin } from '@/lib/linkflow-share';
 import { useSeo } from '@/lib/seo';
 import linkflowListIllustration from '@assets/generated_images/sendflow-linkflow-history-3d.webp';
 
@@ -217,7 +217,7 @@ export default function LinkFlowDetailPage() {
   try {
     if (typeof window !== 'undefined') {
       publicUrl = buildLinkFlowShareTargets({
-        origin: window.location.origin,
+        origin: getLinkFlowShareOrigin(window.location.origin, import.meta.env.PROD),
         basePath: import.meta.env.BASE_URL,
         sharePath: link.sharePath,
         title: link.linkName?.trim() || link.description,

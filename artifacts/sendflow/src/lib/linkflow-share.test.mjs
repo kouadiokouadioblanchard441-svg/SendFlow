@@ -1,6 +1,24 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildLinkFlowShareTargets } from './linkflow-share.ts';
+import { buildLinkFlowShareTargets, getLinkFlowShareOrigin } from './linkflow-share.ts';
+
+test('uses the configured SendFlow payment domain for production links', () => {
+  const targets = buildLinkFlowShareTargets({
+    origin: getLinkFlowShareOrigin('https://merchent.business.sendflow.africa', true),
+    basePath: '/',
+    sharePath: '/pay/abc_DEF-123',
+    title: 'Paiement facture',
+  });
+
+  assert.equal(targets.url, 'https://payin.merchant.command.sendflow.africa/pay/abc_DEF-123');
+});
+
+test('keeps development links on the current preview origin', () => {
+  assert.equal(
+    getLinkFlowShareOrigin('https://preview.example.test/path', false),
+    'https://preview.example.test',
+  );
+});
 
 test('builds the public link beneath the configured artifact base path', () => {
   const targets = buildLinkFlowShareTargets({
