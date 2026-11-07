@@ -1,0 +1,162 @@
+[
+  {
+    "key": "ashtechpay-introduction",
+    "title": "AshTech Pay — Introduction",
+    "url": "https://doc.ashtechpay.com/docs/introduction",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/ashtechpay-introduction.md"
+  },
+  {
+    "key": "ashtechpay-quickstart",
+    "title": "AshTech Pay — Démarrage rapide",
+    "url": "https://doc.ashtechpay.com/docs/quickstart",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/ashtechpay-quickstart.md"
+  },
+  {
+    "key": "ashtechpay-authentication",
+    "title": "AshTech Pay — Authentification",
+    "url": "https://doc.ashtechpay.com/docs/authentication",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/ashtechpay-authentication.md"
+  },
+  {
+    "key": "ashtechpay-hosted-checkout",
+    "title": "AshTech Pay — Hosted Checkout par redirection",
+    "url": "https://doc.ashtechpay.com/docs/embedded-checkout",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/ashtechpay-hosted-checkout.md"
+  },
+  {
+    "key": "ashtechpay-mobile-money",
+    "title": "AshTech Pay — Mobile Money",
+    "url": "https://doc.ashtechpay.com/docs/direct-api/mobile-money",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/ashtechpay-mobile-money.md"
+  },
+  {
+    "key": "ashtechpay-webhooks",
+    "title": "AshTech Pay — Webhooks",
+    "url": "https://doc.ashtechpay.com/docs/direct-api/webhooks",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/ashtechpay-webhooks.md"
+  },
+  {
+    "key": "ashtechpay-errors",
+    "title": "AshTech Pay — Erreurs et statuts HTTP",
+    "url": "https://doc.ashtechpay.com/docs/errors",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/ashtechpay-errors.md"
+  },
+  {
+    "key": "ashtechpay-sandbox",
+    "title": "AshTech Pay — Sandbox et tests",
+    "url": "https://doc.ashtechpay.com/docs/sandbox",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/ashtechpay-sandbox.md"
+  },
+  {
+    "key": "stripe-accept-payment",
+    "title": "Stripe — Accept a payment",
+    "url": "https://docs.stripe.com/payments/accept-a-payment",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/stripe-accept-payment.md"
+  },
+  {
+    "key": "stripe-checkout-quickstart",
+    "title": "Stripe — Build a Stripe-hosted checkout page",
+    "url": "https://docs.stripe.com/checkout/quickstart",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/stripe-checkout-quickstart.md"
+  },
+  {
+    "key": "stripe-idempotency",
+    "title": "Stripe API — Idempotent requests",
+    "url": "https://docs.stripe.com/api/idempotent_requests",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/stripe-idempotency.md"
+  },
+  {
+    "key": "stripe-webhooks",
+    "title": "Stripe — Receive Stripe events in your webhook endpoint",
+    "url": "https://docs.stripe.com/webhooks",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/stripe-webhooks.md"
+  },
+  {
+    "key": "stripe-testing",
+    "title": "Stripe — Testing",
+    "url": "https://docs.stripe.com/testing",
+    "publishedDate": null,
+    "tier": 3,
+    "savedEvidence": "research/sources/stripe-testing.md"
+  },
+  {
+    "key": "flutterwave-quickstart",
+    "title": "Flutterwave — Quickstart",
+    "url": "https://developer.flutterwave.com/docs/quickstart",
+    "publishedDate": "2026-10-19",
+    "tier": 3,
+    "savedEvidence": "research/sources/flutterwave-quickstart.md"
+  },
+  {
+    "key": "flutterwave-authentication",
+    "title": "Flutterwave — Authentication",
+    "url": "https://developer.flutterwave.com/docs/authentication",
+    "publishedDate": "2026-10-26",
+    "tier": 3,
+    "savedEvidence": "research/sources/flutterwave-authentication.md"
+  },
+  {
+    "key": "flutterwave-standard-checkout",
+    "title": "Flutterwave — Standard checkout",
+    "url": "https://developer.flutterwave.com/docs/flutterwave-standard-1",
+    "publishedDate": "2026-10-19",
+    "tier": 3,
+    "savedEvidence": "research/sources/flutterwave-standard-checkout.md"
+  },
+  {
+    "key": "flutterwave-transaction-verification",
+    "title": "Flutterwave — Transaction verification",
+    "url": "https://developer.flutterwave.com/docs/transaction-verification",
+    "publishedDate": "2026-10-19",
+    "tier": 3,
+    "savedEvidence": "research/sources/flutterwave-transaction-verification.md"
+  },
+  {
+    "key": "flutterwave-webhooks",
+    "title": "Flutterwave — Webhooks",
+    "url": "https://developer.flutterwave.com/docs/webhooks",
+    "publishedDate": "2026-10-19",
+    "tier": 3,
+    "savedEvidence": "research/sources/flutterwave-webhooks.md"
+  },
+  {
+    "key": "flutterwave-testing",
+    "title": "Flutterwave — Testing",
+    "url": "https://developer.flutterwave.com/docs/testing",
+    "publishedDate": "2026-10-19",
+    "tier": 3,
+    "savedEvidence": "research/sources/flutterwave-testing.md"
+  },
+  {
+    "key": "paystack-access-limitation",
+    "title": "Paystack public documentation access check",
+    "url": "https://paystack.com/docs/payments/accept-payments/",
+    "publishedDate": "2026-11-07",
+    "tier": 3,
+    "savedEvidence": "research/sources/paystack-access-limitation.md"
+  }
+]

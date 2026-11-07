@@ -1,0 +1,146 @@
+---
+title: AshTech Pay — Sandbox
+url: https://doc.ashtechpay.com/docs/sandbox.md
+retrieved: 2026-11-07
+http_status: 200
+source: official public vendor documentation
+---
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://doc.ashtechpay.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Sandbox et tests
+
+> Validez votre intégration avant de passer en production.
+
+## Stratégie de test
+
+Testez au minimum :
+
+* une réponse `200` sur `/v1/countries` et `/v1/fees` ;
+* un paiement Mobile Money `pending`, `completed` et `failed` ;
+* la réception d'un webhook ;
+* la déduplication d'un même webhook ;
+* un timeout après lequel vous vérifiez le statut au lieu de créer un second paiement ;
+* les erreurs `400`, `401`, `403` et `429`.
+
+## Environnement de démonstration
+
+Le dashboard AshTech Pay contient des outils de test pour les parcours de paiement. N'utilisez jamais de vraies clés dans des captures d'écran, des logs ou un dépôt Git.
+
+> [!NOTE]
+>
+> Les numéros ci-dessous sont fictifs. Ils ne correspondent à aucun abonné et ne doivent jamais être utilisés avec un autre service de paiement. Ils simulent uniquement les dépôts Mobile Money via `POST /v1/collect` : ils ne simulent pas les retraits et ne doivent pas être utilisés avec `POST /v1/payouts/mobile-money`.
+
+## Numéros Mobile Money simulés
+
+Les numéros de test fonctionnent avec **chaque opérateur actif du pays sélectionné**. Le pays, l'opérateur et la devise doivent tout de même être valides dans `GET /v1/countries`.
+
+Le même numéro local est utilisable avec tous les opérateurs du pays. Vous pouvez envoyer le numéro au format international indiqué ou uniquement sa partie locale.
+
+| Pays | Opérateurs du catalogue | Indicatif | Numéro succès | Numéro en attente | Numéro échoué | Numéro OTP | Numéro annulé |
+| - | - | - | - | - | - | - | - |
+| Cameroun (CM) | MTN Mobile Money, Orange Money | `+237` | `+237000000001` | `+237000000002` | `+237000000003` | `+237000000004` | `+237000000005` |
+| Tchad (TD) | Airtel Money, Moov Money | `+235` | `+235000000001` | `+235000000002` | `+235000000003` | `+235000000004` | `+235000000005` |
+| Centrafrique (CF) | Orange Money | `+236` | `+236000000001` | `+236000000002` | `+236000000003` | `+236000000004` | `+236000000005` |
+| Congo (CG) | MTN Mobile Money, Airtel Money | `+242` | `+242000000001` | `+242000000002` | `+242000000003` | `+242000000004` | `+242000000005` |
+| Gabon (GA) | Airtel Money, Moov Money | `+241` | `+241000000001` | `+241000000002` | `+241000000003` | `+241000000004` | `+241000000005` |
+| Guinée équatoriale (GQ) | Orange Money | `+240` | `+240000000001` | `+240000000002` | `+240000000003` | `+240000000004` | `+240000000005` |
+| Sénégal (SN) | Orange Money, Wave, Free Money | `+221` | `+221000000001` | `+221000000002` | `+221000000003` | `+221000000004` | `+221000000005` |
+| Côte d'Ivoire (CI) | Orange Money, MTN Mobile Money, Moov Money, Wave | `+225` | `+225000000001` | `+225000000002` | `+225000000003` | `+225000000004` | `+225000000005` |
+| Mali (ML) | Orange Money, Moov Money | `+223` | `+223000000001` | `+223000000002` | `+223000000003` | `+223000000004` | `+223000000005` |
+| Burkina Faso (BF) | Orange Money, Moov Money | `+226` | `+226000000001` | `+226000000002` | `+226000000003` | `+226000000004` | `+226000000005` |
+| Niger (NE) | Airtel Money, Orange Money | `+227` | `+227000000001` | `+227000000002` | `+227000000003` | `+227000000004` | `+227000000005` |
+| Togo (TG) | Flooz (Moov), Mixx By Yas | `+228` | `+228000000001` | `+228000000002` | `+228000000003` | `+228000000004` | `+228000000005` |
+| Bénin (BJ) | MTN Mobile Money, Moov Money | `+229` | `+229000000001` | `+229000000002` | `+229000000003` | `+229000000004` | `+229000000005` |
+| Guinée-Bissau (GW) | Orange Money | `+245` | `+245000000001` | `+245000000002` | `+245000000003` | `+245000000004` | `+245000000005` |
+| RD Congo (CD) | Vodacom M-Pesa, Airtel Money, Orange Money | `+243` | `+243000000001` | `+243000000002` | `+243000000003` | `+243000000004` | `+243000000005` |
+| Nigeria (NG) | OPay, PalmPay, Paga | `+234` | `+234000000001` | `+234000000002` | `+234000000003` | `+234000000004` | `+234000000005` |
+| Ghana (GH) | MTN Mobile Money, Vodafone Cash, AirtelTigo Money | `+233` | `+233000000001` | `+233000000002` | `+233000000003` | `+233000000004` | `+233000000005` |
+| Kenya (KE) | M-Pesa, Airtel Money | `+254` | `+254000000001` | `+254000000002` | `+254000000003` | `+254000000004` | `+254000000005` |
+| Gambie (GM) | Non indiqué | `+220` | `+220000000001` | `+220000000002` | `+220000000003` | `+220000000004` | `+220000000005` |
+| Guinée Conakry (GN) | Non indiqué | `+224` | `+224000000001` | `+224000000002` | `+224000000003` | `+224000000004` | `+224000000005` |
+
+### Réponses simulées
+
+| Numéro utilisé | Réponse |
+| - | - |
+| `...000000001` | HTTP `200`, `status: "success"` |
+| `...000000002` | HTTP `202`, `status: "pending"` |
+| `...000000003` | HTTP `200`, `status: "failed"` |
+| `...000000004` | HTTP `400`, `error: "otp_required"` ; relancez avec `otp: "000000"` pour obtenir `status: "pending"` |
+| `...000000005` | HTTP `200`, `status: "cancelled"` |
+
+Toutes ces réponses contiennent `sandbox: true` et `simulation: true`. Après un scénario accepté, une ligne apparaît dans l'historique AshTech Pay sous **Sandbox test** avec le statut `sandbox_test`. Cette ligne sert uniquement à consulter le test : aucun solde n'est modifié, aucun webhook n'est envoyé et aucune requête externe n'est effectuée. Les montants `credited_amount` et `fee_amount` sont simulés; `wallet_credited_amount` reste à `0`. La demande OTP initiale et un OTP invalide ne créent pas de ligne; le test est enregistré après la saisie de l'OTP correct.
+
+### OTP fictif
+
+Pour tous les opérateurs dont le vrai parcours demande un OTP, utilisez :
+
+```json theme={null}
+{
+  "otp": "000000"
+}
+```
+
+Le premier appel avec un numéro `...000000004` répond :
+
+```json theme={null}
+{
+  "error": "otp_required",
+  "sandbox": true,
+  "simulation": true,
+  "ussd_code": "#SANDBOX#",
+  "message": "OTP de démonstration requis. Utilisez 000000 avec la même requête."
+}
+```
+
+Renvoyez ensuite exactement la même requête avec `otp: "000000"`. La réponse sera `HTTP 202` avec `status: "pending"` et une ligne **Sandbox test** sera ajoutée à l'historique. Aucun SMS, code USSD réel, dépôt, crédit du wallet, webhook ni appel réel n'est déclenché. Tout autre OTP retourne `error: "invalid_otp"` sans créer de ligne d'historique.
+
+### Exemple
+
+```bash theme={null}
+curl -X POST https://www.ashtechpay.com/v1/collect \
+  -H "Authorization: Bearer $ASHTECH_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 1000,
+    "currency": "XAF",
+    "country_code": "CM",
+    "operator": "MTN Money",
+    "phone": "+237000000001",
+    "reference": "sandbox-success-001"
+  }'
+```
+
+Réponse :
+
+```json theme={null}
+{
+  "sandbox": true,
+  "simulation": true,
+  "transaction_id": "ID_DE_LA_TRACE_SANDBOX",
+  "history_status": "sandbox_test",
+  "reference": "sandbox_cm_success_UUID",
+  "merchant_reference": "sandbox-success-001",
+  "status": "success",
+  "amount": 1000,
+  "credited_amount": 950,
+  "wallet_credited_amount": 0,
+  "wallet_updated": false,
+  "webhook_sent": false,
+  "fee_amount": 50,
+  "currency": "XAF",
+  "country_code": "CM",
+  "operator": "MTN Money",
+  "phone": "+237000000001",
+  "message": "Paiement confirmé immédiatement",
+  "note": "Résultat simulé; aucun solde n'a été modifié."
+}
+```
+
+`transaction_id` identifie la trace affichée dans l'historique. Le scénario `pending` reste simulé : son statut d'historique demeure `sandbox_test`, sans confirmation réelle ultérieure ni interrogation externe.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

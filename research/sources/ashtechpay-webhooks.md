@@ -1,0 +1,87 @@
+---
+title: AshTech Pay — Webhooks
+url: https://doc.ashtechpay.com/docs/direct-api/webhooks.md
+retrieved: 2026-11-07
+http_status: 200
+source: official public vendor documentation
+---
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://doc.ashtechpay.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Webhooks
+
+> Synchronisez vos commandes avec les événements AshTech Pay.
+
+Configurez un `notify_url` HTTPS public lors de la création de votre paiement ou dans la configuration Hosted Checkout. Utilisez une URL stable, sans localhost, adresse privée ou destination interne : ces destinations sont bloquées au moment de la livraison.
+
+## Où trouver le secret webhook ?
+
+Dans votre tableau de bord, ouvrez **Clé API → Direct API → Secret webhook**, puis cliquez sur **Afficher ou générer le secret**. S'il n'existe pas encore, il est créé à ce moment-là. Cette section nécessite un compte KYC validé et l'accès Direct API activé.
+
+Copiez la valeur `whsec_...` dans la variable d'environnement `ASHTECH_WEBHOOK_SECRET` de votre serveur. Ne l'envoyez pas à votre agent dans un message et ne l'ajoutez jamais au code navigateur ou à Git. Si vous le régénérez, l'ancien secret est immédiatement invalide : mettez à jour la variable sur votre serveur avant de traiter les prochaines notifications.
+
+AshTech Pay envoie les notifications avec ces headers :
+
+```http theme={null}
+X-Ashtech-Event-Id: id-de-livraison
+X-Ashtech-Timestamp: 1735643554
+X-Ashtech-Signature: sha256=...
+```
+
+Les notifications sont mises en file avant livraison, dédupliquées par transaction et événement, et signées avec votre secret webhook `whsec_...`. Si aucun secret webhook n'est configuré, la livraison n'est pas envoyée : elle reste en attente et réessaie périodiquement jusqu'à la configuration du secret.
+
+```text theme={null}
+HMAC-SHA256(webhook_secret, timestamp + "." + raw_request_body)
+```
+
+La vérification doit utiliser le corps brut avant le parsing JSON. Refusez les timestamps trop anciens et dédupliquez avec `X-Ashtech-Event-Id` ou `transaction_id`.
+
+## Bon traitement d'un webhook
+
+1. Répondez rapidement avec un statut HTTP `2xx`.
+2. Vérifiez toujours la signature avec votre secret configuré.
+3. Rendez le traitement idempotent avec l'identifiant de transaction et votre référence.
+4. Rechargez le statut côté serveur avant de créditer ou livrer.
+5. Traitez les événements en double sans créer deux commandes.
+
+Exemple Express :
+
+```javascript theme={null}
+app.post("/webhooks/ashtechpay", express.raw({ type: "application/json" }), async (req, res) => {
+  const rawBody = req.body.toString("utf8");
+  const timestamp = req.header("X-Ashtech-Timestamp") || "";
+  const signature = req.header("X-Ashtech-Signature") || "";
+
+  // Vérifier HMAC-SHA256(secret, timestamp + "." + rawBody)
+  if (!isValidAshtechSignature(rawBody, timestamp, signature, process.env.ASHTECH_WEBHOOK_SECRET)) {
+    return res.sendStatus(401);
+  }
+
+  const event = JSON.parse(rawBody);
+
+  // Accuser réception rapidement.
+  res.sendStatus(200);
+
+  if (event.status !== "completed") {
+    return;
+  }
+
+  // Vérifier l'événement puis traiter votre commande une seule fois.
+  await fulfillOrderOnce(event.reference, event.transaction_id);
+});
+```
+
+## Ne faites pas confiance au navigateur
+
+Une page de succès peut être fermée, rejouée ou modifiée. Utilisez le webhook ou une vérification serveur de `GET /v1/transaction/:id?user_id=VOTRE_USER_ID` pour confirmer le paiement.
+
+Les erreurs HTTP, les erreurs réseau et les réponses non-`2xx` sont réessayées avec un délai croissant, jusqu'à huit tentatives avant l'échec permanent. Les notifications restent dédupliquées : rendez votre traitement idempotent.
+
+> [!NOTE]
+>
+> Conservez les payloads reçus et les réponses de votre traitement pendant la durée nécessaire à votre support et à vos rapprochements comptables.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

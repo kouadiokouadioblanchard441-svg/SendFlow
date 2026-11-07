@@ -420,3 +420,31 @@ mtime_ms = 1792985746415
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/32e68772-1773-4c75-b4f3-dd1a70d823eb/bcd7ad1f-b7d5-4fe0-ae24-97cc6b16613e"
 storage_version_token = "1792986260559062"
 content_type = "image/png"
+
+[[outputs]]
+id = "R_TrN04gUFVOS_TU4YX_Q"
+uri = "file://research/notes.md"
+type = "text"
+title = "Plan de comparaison des documentations de paiement"
+description = "Périmètre, critères et sources à vérifier pour comparer les guides publics à SendFlow."
+logical_id = "256006bd-8727-4f63-b88c-116ca2c77781"
+content_hash = "sha256:fdde00532a75f28acbf489f9bb430d2adc0f4fd113b1725cc3c4c269c1468893"
+size = 2822
+mtime_ms = 1794069079233
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/256006bd-8727-4f63-b88c-116ca2c77781/e8c86faa-1efe-49d1-b9da-ea2ebbed8033"
+storage_version_token = "1794069114146187"
+content_type = "text/markdown"
+
+[[outputs]]
+id = "oGV6U5mktbqK_vgfAGRS6"
+uri = "file://research/architecture-comparison.md"
+type = "text"
+title = "Comparaison des docs API SendFlow"
+description = "Rapport sourcé comparant les parcours publics SendFlow, AshTechPay, Stripe et Flutterwave, avec limites et recommandations."
+logical_id = "7b2cada6-dbc6-4727-862a-07b31728be41"
+content_hash = "sha256:872dcae934f8305ba1ce32f63f201369d910a2d2684e396489ce44637fa78556"
+size = 18759
+mtime_ms = 1794069525978
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/7b2cada6-dbc6-4727-862a-07b31728be41/d67736fe-ec2e-4327-96b8-d7c1d32e63e4"
+storage_version_token = "1794069526526669"
+content_type = "text/markdown"

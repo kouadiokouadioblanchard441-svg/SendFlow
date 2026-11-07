@@ -1,0 +1,402 @@
+---
+title: AshTech Pay — Hosted Checkout
+url: https://doc.ashtechpay.com/docs/embedded-checkout.md
+retrieved: 2026-11-07
+http_status: 200
+source: official public vendor documentation
+---
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://doc.ashtechpay.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Hosted Checkout par redirection
+
+> Créez un lien de paiement et redirigez votre client vers la page AshTech Pay.
+
+Hosted Checkout permet de faire payer un client sur une page AshTech Pay hébergée. Votre serveur crée le lien, puis votre site redirige le navigateur vers ce lien. Aucun popup, iframe ou script JavaScript AshTech Pay n'est nécessaire.
+
+## Clés nécessaires
+
+Pour ce flux :
+
+* `hp_live_...` est la **clé Checkout**. Elle reste sur votre serveur et authentifie la création du lien ainsi que la consultation de son statut.
+* `ak_...` est la **clé Direct API**. Elle est nécessaire uniquement pour les endpoints `/v1/*`, comme `/v1/collect` ou `/v1/crypto/collect`.
+* `whsec_...` est le **secret webhook**. Ce n'est pas une clé API : il sert à vérifier les notifications envoyées à votre serveur.
+
+Pour une simple redirection vers une page Hosted Checkout, **seule `hp_live_...` est nécessaire**. Le navigateur reçoit uniquement le `payment_link`, jamais une clé secrète.
+
+Pour recevoir et vérifier les webhooks, trouvez le secret dans le tableau de bord : **Clé API → Direct API → Secret webhook → Afficher ou générer le secret**. L'accès nécessite un KYC validé et Direct API activée. Stockez-le sur votre serveur sous `ASHTECH_WEBHOOK_SECRET`, jamais dans le navigateur. Sa régénération invalide l'ancienne valeur.
+
+La clé `hp_live_...` doit appartenir à un compte existant, vérifié et non suspendu. Une clé absente, inconnue, révoquée ou mal formée renvoie `401`; un compte non vérifié ou suspendu renvoie `403`. La clé Checkout est indépendante de la clé Direct API.
+
+## Flux complet
+
+1. Votre backend crée un lien avec `hp_live_...`.
+2. AshTech Pay renvoie un `payment_link` valable 30 minutes.
+3. Votre site redirige le client vers ce lien.
+4. Le client remplit le formulaire et confirme son paiement sur AshTech Pay.
+5. AshTech Pay attend la confirmation du paiement et crédite le wallet marchand uniquement après validation.
+6. AshTech Pay envoie un webhook signé à votre backend.
+7. La page AshTech Pay redirige le navigateur vers votre URL de succès ou d'annulation.
+
+La redirection du navigateur sert à informer le client. Le webhook reste la source de vérité pour livrer une commande ou modifier son état côté serveur.
+
+## Créer un lien de paiement
+
+Endpoint :
+
+```http theme={null}
+POST https://www.ashtechpay.com/api/v1/hosted-payment/create
+```
+
+Cet endpoint accepte uniquement `Authorization: Bearer hp_live_...` (pas l'authentification Basic) et est limité à **20 demandes par minute et par adresse IP**, en plus de la limite partagée de **120 demandes par minute et par clé**. La consultation de statut exige elle aussi une clé Checkout valide et partage la limite de 120 demandes par minute par clé, sans la limite spécifique de création.
+
+La requête doit être faite depuis votre backend :
+
+> [tab] Node.js
+>
+> ```javascript theme={null}
+> const orderId = "12345";
+>
+> const response = await fetch(
+>   "https://www.ashtechpay.com/api/v1/hosted-payment/create",
+>   {
+>     method: "POST",
+>     headers: {
+>       Authorization: `Bearer ${process.env.HP_LIVE_KEY}`,
+>       "Idempotency-Key": `order-${orderId}`,
+>       "Content-Type": "application/json",
+>     },
+>     body: JSON.stringify({
+>       amount: 10000,
+>       currency: "XAF",
+>       description: `Commande #${orderId}`,
+>       is_fixed_amount: true,
+>       allowed_countries: ["CM"],
+>       notify_url: "https://merchant.example/webhooks/ashtechpay",
+>     }),
+>   },
+> );
+>
+> if (!response.ok) {
+>   throw new Error(`AshTech Pay error: ${response.status}`);
+> }
+>
+> const link = await response.json();
+> // link.payment_link est la seule valeur à transmettre au navigateur.
+> ```
+
+> [tab] Python
+>
+> ```python theme={null}
+> import os
+> import requests
+>
+> response = requests.post(
+>     "https://www.ashtechpay.com/api/v1/hosted-payment/create",
+>     headers={
+>         "Authorization": f"Bearer {os.environ['HP_LIVE_KEY']}",
+>         "Idempotency-Key": "order-12345",
+>         "Content-Type": "application/json",
+>     },
+>     json={
+>         "amount": 10000,
+>         "currency": "XAF",
+>         "description": "Commande #12345",
+>         "is_fixed_amount": True,
+>         "allowed_countries": ["CM"],
+>         "notify_url": "https://merchant.example/webhooks/ashtechpay",
+>     },
+> )
+> response.raise_for_status()
+> link = response.json()
+> ```
+
+> [tab] cURL
+>
+> ```bash theme={null}
+> curl -X POST https://www.ashtechpay.com/api/v1/hosted-payment/create \
+>   -H "Authorization: Bearer $HP_LIVE_KEY" \
+>   -H "Idempotency-Key: order-12345" \
+>   -H "Content-Type: application/json" \
+>   -d '{
+>     "amount": 10000,
+>     "currency": "XAF",
+>     "description": "Commande #12345",
+>     "is_fixed_amount": true,
+>     "allowed_countries": ["CM"],
+>     "notify_url": "https://merchant.example/webhooks/ashtechpay"
+>   }'
+> ```
+
+> [tab] PHP / Laravel
+>
+> ```php theme={null}
+> <?php
+>
+> $payload = [
+>     "amount" => 10000,
+>     "currency" => "XAF",
+>     "description" => "Commande #12345",
+>     "is_fixed_amount" => true,
+>     "allowed_countries" => ["CM"],
+>     "notify_url" => "https://merchant.example/webhooks/ashtechpay",
+> ];
+>
+> $ch = curl_init("https://www.ashtechpay.com/api/v1/hosted-payment/create");
+> curl_setopt_array($ch, [
+>     CURLOPT_POST => true,
+>     CURLOPT_RETURNTRANSFER => true,
+>     CURLOPT_HTTPHEADER => [
+>         "Authorization: Bearer " . getenv("HP_LIVE_KEY"),
+>         "Idempotency-Key: order-12345",
+>         "Content-Type: application/json",
+>     ],
+>     CURLOPT_POSTFIELDS => json_encode($payload),
+> ]);
+>
+> $link = json_decode(curl_exec($ch), true);
+> curl_close($ch);
+> ```
+
+### Réponse
+
+```json theme={null}
+{
+  "status": "success",
+  "payment_link": "https://www.ashtechpay.com/pay/hp-abc123",
+  "payment_id": "uuid-du-lien",
+  "slug": "hp-abc123",
+  "is_fixed_amount": true,
+  "amount": 10000,
+  "currency": "XAF",
+  "allowed_countries": ["CM"],
+  "expires_at": "2026-12-31T10:30:00.000Z",
+  "reused": false,
+  "idempotency_key": "order-12345"
+}
+```
+
+## Rediriger le client
+
+Votre backend doit transmettre `payment_link` à votre propre page de commande. Il ne doit pas transmettre `hp_live_...`.
+
+Exemple avec un lien HTML rendu par votre serveur :
+
+```html theme={null}
+<a href="{{ payment_link_from_your_backend }}">
+  Payer la commande
+</a>
+```
+
+Exemple avec un bouton :
+
+```html theme={null}
+<button id="pay-button" type="button">Payer la commande</button>
+
+<script>
+  const paymentLink = "{{ payment_link_from_your_backend }}";
+
+  document.getElementById("pay-button").addEventListener("click", () => {
+    window.location.assign(paymentLink);
+  });
+</script>
+```
+
+Le lien peut aussi être ouvert depuis votre backend avec une redirection HTTP `302`. Dans tous les cas, le client arrive sur :
+
+```text theme={null}
+https://www.ashtechpay.com/pay/hp-...
+```
+
+Il n'y a plus de fichier `ashtechpay-checkout.js`, d'iframe, de popup ou de communication `postMessage` dans ce flux.
+
+## Éviter les liens en double
+
+Utilisez une clé `Idempotency-Key` stable pour une commande. Elle doit rester la même lorsque votre serveur réessaie la création après un timeout ou une erreur réseau.
+
+* Première requête : le lien est créé avec `reused: false`.
+* Requête répétée avec le même marchand et la même clé : le même lien est retourné avec `reused: true`.
+* Nouvelle commande : utilisez une nouvelle clé.
+* Ne générez pas une clé aléatoire à chaque tentative.
+
+L'ouverture du lien ne crée pas un nouveau lien. Le lien doit toujours être créé par votre backend avant la redirection.
+
+## Montant et pays
+
+* `is_fixed_amount: true` : `amount` est obligatoire et le client paie ce montant.
+* `is_fixed_amount: false` : le client peut saisir le montant sur la page AshTech Pay.
+* `currency` accepte actuellement `XAF`, `XOF` ou `CDF`.
+* `allowed_countries` est optionnel et contient des codes pays actifs comme `CM`.
+* Un lien Hosted Checkout expire 30 minutes après sa création.
+* Un lien expiré renvoie `410` et ne peut plus lancer un paiement.
+
+Pour un lien à montant variable, `amount` reste `null` avant confirmation. Après confirmation, il correspond au **montant brut facturé au client**, et non au montant net crédité après frais.
+
+## URLs de succès et d'annulation
+
+Les URLs de retour sont configurées dans la configuration de la clé Checkout :
+
+* `successUrl` reçoit les paiements confirmés ;
+* `cancelUrl` reçoit les paiements échoués ou annulés ;
+* `notifyUrl` reçoit les événements serveur-à-serveur.
+
+Pour une clé Checkout nommée, les URLs sont liées à cette clé. Pour l'ancienne configuration Hosted Page, les URLs du compte restent utilisées pour compatibilité.
+
+Après un résultat final, AshTech Pay ajoute :
+
+```text theme={null}
+?reference=REFERENCE&status=success
+```
+
+à l'URL de succès, ou :
+
+```text theme={null}
+?reference=REFERENCE&status=failed
+```
+
+à l'URL d'annulation. Votre page de retour ne doit pas livrer la commande uniquement à partir de ces paramètres.
+
+## Vérifier le statut
+
+Endpoint :
+
+```http theme={null}
+GET https://www.ashtechpay.com/api/v1/hosted-payment/{payment_id}
+Authorization: Bearer hp_live_...
+```
+
+Réponse :
+
+```json theme={null}
+{
+  "payment_id": "uuid-du-lien",
+  "slug": "hp-abc123",
+  "is_fixed_amount": true,
+  "amount": 10000,
+  "currency": "XAF",
+  "description": "Commande #12345",
+  "allowed_countries": ["CM"],
+  "status": "success",
+  "paid_at": "2026-12-31T10:12:34.000Z",
+  "created_at": "2026-12-31T10:00:00.000Z",
+  "expires_at": "2026-12-31T10:30:00.000Z"
+}
+```
+
+Les statuts possibles sont :
+
+* `pending` : aucun paiement confirmé ;
+* `processing` : le client a commencé le paiement ;
+* `success` : le paiement est confirmé et le wallet marchand est crédité ;
+* `failed` : le paiement a échoué ;
+* `expired` : le lien a expiré sans paiement confirmé.
+
+Le webhook est recommandé pour déclencher votre logique métier. La consultation de statut sert de contrôle ou de récupération si votre serveur a manqué une notification.
+
+`paid_at` correspond à l'heure de confirmation du paiement, et non à l'heure de création du lien. Pour un montant variable, `amount` correspond au brut payé par le client.
+
+## Webhooks
+
+### Configuration
+
+Passez `notify_url` lors de la création du lien pour définir l'URL de ce lien. Cette valeur explicite est prioritaire. Si elle n'est pas fournie, la configuration `notifyUrl` de la clé Checkout sélectionnée est utilisée ; pour la clé historique, la configuration Hosted Page du compte reste utilisée pour compatibilité. Sans URL effective, aucun webhook marchand ne peut être livré.
+
+L'URL doit être une URL HTTPS publique. Les URLs localhost, loopback, réseau privé, link-local et autres adresses internes sont bloquées lors de la livraison ; la destination est revalidée à chaque tentative. Utilisez donc une URL valide dès la création.
+
+### Événements
+
+Les événements Hosted Checkout sont :
+
+```text theme={null}
+payment.completed
+payment.failed
+```
+
+Exemple de payload :
+
+```json theme={null}
+{
+  "event": "payment.completed",
+  "transaction_id": "uuid-de-la-transaction",
+  "reference": "HP-123456",
+  "merchant_reference": null,
+  "status": "completed",
+  "amount": 9500,
+  "total_amount": 10000,
+  "currency": "XAF",
+  "type": "payment_link",
+  "phone": "656123456",
+  "payment_link_id": "uuid-du-lien",
+  "timestamp": "2026-12-31T10:12:34.000Z",
+  "fee_amount": 500
+}
+```
+
+`amount` correspond au montant net de la transaction et `total_amount` au montant brut payé par le client. Utilisez `transaction_id`, `reference` et votre propre référence de commande pour empêcher un double traitement.
+
+### Vérifier la signature
+
+AshTech Pay envoie :
+
+```http theme={null}
+X-Ashtech-Event-Id: id-de-livraison
+X-Ashtech-Timestamp: 1735643554
+X-Ashtech-Signature: sha256=...
+```
+
+La signature est :
+
+```text theme={null}
+HMAC-SHA256(webhook_secret, timestamp + "." + raw_request_body)
+```
+
+Exemple Node.js :
+
+```javascript theme={null}
+import crypto from "node:crypto";
+
+function isValidAshtechSignature(rawBody, timestamp, header, secret) {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest("hex");
+
+  const received = header.replace(/^sha256=/, "");
+  return crypto.timingSafeEqual(
+    Buffer.from(received, "hex"),
+    Buffer.from(expected, "hex"),
+  );
+}
+```
+
+Conservez le corps brut avant le parsing JSON. Refusez les timestamps trop anciens, enregistrez `X-Ashtech-Event-Id` pour la déduplication et répondez rapidement en `2xx`. Le traitement métier peut ensuite être exécuté de manière asynchrone.
+
+AshTech Pay met les notifications en file, empêche les doublons par transaction et événement, puis réessaie les erreurs temporaires. Si votre serveur ne répond pas en `2xx`, la notification peut être envoyée à nouveau.
+
+### Exemple de traitement
+
+```javascript theme={null}
+app.post("/webhooks/ashtechpay", express.raw({ type: "application/json" }), async (req, res) => {
+  const rawBody = req.body.toString("utf8");
+  const timestamp = req.header("X-Ashtech-Timestamp") || "";
+  const signature = req.header("X-Ashtech-Signature") || "";
+
+  if (!isValidAshtechSignature(rawBody, timestamp, signature, process.env.WHSEC)) {
+    return res.sendStatus(401);
+  }
+
+  const event = JSON.parse(rawBody);
+  res.sendStatus(200);
+
+  if (event.event === "payment.completed") {
+    await fulfillOrderOnce(event.reference, event.transaction_id);
+  }
+});
+```
+
+Ne créditez pas une commande à partir de la redirection du navigateur uniquement. Vérifiez le webhook ou le statut serveur avant de livrer.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

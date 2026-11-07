@@ -1,0 +1,289 @@
+---
+title: AshTech Pay — Démarrage rapide
+url: https://doc.ashtechpay.com/docs/quickstart.md
+retrieved: 2026-11-07
+http_status: 200
+source: official public vendor documentation
+---
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://doc.ashtechpay.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Démarrage rapide
+
+> Votre premier appel authentifié à l'API AshTech Pay.
+
+## Prérequis
+
+Vous avez besoin de :
+
+1. Un compte marchand AshTech Pay vérifié.
+2. Un accès API activé par AshTech Pay.
+3. Une clé API conservée dans les variables d'environnement de votre serveur.
+
+```bash theme={null}
+export ASHTECH_API_KEY="YOUR_API_KEY"
+```
+
+## Vérifier les pays disponibles
+
+Commencez par charger le catalogue actif. Les opérateurs peuvent changer : ne codez pas la liste en dur dans votre application.
+
+> [tab] Node.js
+>
+> ```javascript theme={null}
+> const response = await fetch("https://www.ashtechpay.com/v1/countries", {
+>   headers: {
+>     Authorization: `Bearer ${process.env.ASHTECH_API_KEY}`,
+>   },
+> });
+> const countries = await response.json();
+> ```
+
+> [tab] Python
+>
+> ```python theme={null}
+> import os
+> import requests
+>
+> response = requests.get(
+>     "https://www.ashtechpay.com/v1/countries",
+>     headers={"Authorization": f"Bearer {os.environ['ASHTECH_API_KEY']}"},
+> )
+> countries = response.json()
+> ```
+
+> [tab] cURL
+>
+> ```bash theme={null}
+> curl https://www.ashtechpay.com/v1/countries \
+>   -H "Authorization: Bearer $ASHTECH_API_KEY"
+> ```
+
+> [tab] PHP / Laravel
+>
+> ```php theme={null}
+> <?php
+>
+> $ch = curl_init("https://www.ashtechpay.com/v1/countries");
+> curl_setopt_array($ch, [
+>     CURLOPT_RETURNTRANSFER => true,
+>     CURLOPT_HTTPHEADER => [
+>         "Authorization: Bearer " . getenv("ASHTECH_API_KEY"),
+>     ],
+> ]);
+> $countries = json_decode(curl_exec($ch), true);
+> curl_close($ch);
+> ```
+
+## Vérifier les frais
+
+> [tab] Node.js
+>
+> ```javascript theme={null}
+> const response = await fetch("https://www.ashtechpay.com/v1/fees", {
+>   headers: {
+>     Authorization: `Bearer ${process.env.ASHTECH_API_KEY}`,
+>   },
+> });
+> const fees = await response.json();
+> ```
+
+> [tab] Python
+>
+> ```python theme={null}
+> import os
+> import requests
+>
+> response = requests.get(
+>     "https://www.ashtechpay.com/v1/fees",
+>     headers={"Authorization": f"Bearer {os.environ['ASHTECH_API_KEY']}"},
+> )
+> fees = response.json()
+> ```
+
+> [tab] cURL
+>
+> ```bash theme={null}
+> curl https://www.ashtechpay.com/v1/fees \
+>   -H "Authorization: Bearer $ASHTECH_API_KEY"
+> ```
+
+> [tab] PHP / Laravel
+>
+> ```php theme={null}
+> <?php
+>
+> $ch = curl_init("https://www.ashtechpay.com/v1/fees");
+> curl_setopt_array($ch, [
+>     CURLOPT_RETURNTRANSFER => true,
+>     CURLOPT_HTTPHEADER => [
+>         "Authorization: Bearer " . getenv("ASHTECH_API_KEY"),
+>     ],
+> ]);
+> $fees = json_decode(curl_exec($ch), true);
+> curl_close($ch);
+> ```
+
+## Créer une collecte Mobile Money
+
+L'exemple ci-dessous utilise le Cameroun. Utilisez toujours un `reference` unique généré par votre serveur.
+
+> [tab] Node.js
+>
+> ```javascript theme={null}
+> const response = await fetch("https://www.ashtechpay.com/v1/collect", {
+>   method: "POST",
+>   headers: {
+>     Authorization: `Bearer ${process.env.ASHTECH_API_KEY}`,
+>     "Content-Type": "application/json",
+>   },
+>   body: JSON.stringify({
+>     user_id: "VOTRE_USER_ID",
+>     amount: 1000,
+>     currency: "XAF",
+>     country_code: "CM",
+>     operator: "MTN",
+>     phone: "2376XXXXXXXX",
+>     reference: "order_12345",
+>     notify_url: "https://example.com/webhooks/ashtechpay",
+>   }),
+> });
+> const payment = await response.json();
+> ```
+
+> [tab] Python
+>
+> ```python theme={null}
+> import os
+> import requests
+>
+> response = requests.post(
+>     "https://www.ashtechpay.com/v1/collect",
+>     headers={
+>         "Authorization": f"Bearer {os.environ['ASHTECH_API_KEY']}",
+>         "Content-Type": "application/json",
+>     },
+>     json={
+>         "user_id": "VOTRE_USER_ID",
+>         "amount": 1000,
+>         "currency": "XAF",
+>         "country_code": "CM",
+>         "operator": "MTN",
+>         "phone": "2376XXXXXXXX",
+>         "reference": "order_12345",
+>         "notify_url": "https://example.com/webhooks/ashtechpay",
+>     },
+> )
+> payment = response.json()
+> ```
+
+> [tab] cURL
+>
+> ```bash theme={null}
+> curl -X POST https://www.ashtechpay.com/v1/collect \
+>   -H "Authorization: Bearer $ASHTECH_API_KEY" \
+>   -H "Content-Type: application/json" \
+>   -d '{
+>     "user_id": "VOTRE_USER_ID",
+>     "amount": 1000,
+>     "currency": "XAF",
+>     "country_code": "CM",
+>     "operator": "MTN",
+>     "phone": "2376XXXXXXXX",
+>     "reference": "order_12345",
+>     "notify_url": "https://example.com/webhooks/ashtechpay"
+>   }'
+> ```
+
+> [tab] PHP / Laravel
+>
+> ```php theme={null}
+> <?php
+>
+> $payload = [
+>     "user_id" => "VOTRE_USER_ID",
+>     "amount" => 1000,
+>     "currency" => "XAF",
+>     "country_code" => "CM",
+>     "operator" => "MTN",
+>     "phone" => "2376XXXXXXXX",
+>     "reference" => "order_12345",
+>     "notify_url" => "https://example.com/webhooks/ashtechpay",
+> ];
+>
+> $ch = curl_init("https://www.ashtechpay.com/v1/collect");
+> curl_setopt_array($ch, [
+>     CURLOPT_POST => true,
+>     CURLOPT_RETURNTRANSFER => true,
+>     CURLOPT_HTTPHEADER => [
+>         "Authorization: Bearer " . getenv("ASHTECH_API_KEY"),
+>         "Content-Type: application/json",
+>     ],
+>     CURLOPT_POSTFIELDS => json_encode($payload),
+> ]);
+> $payment = json_decode(curl_exec($ch), true);
+> curl_close($ch);
+> ```
+
+> [!WARNING]
+>
+> Les noms d'opérateurs et leurs codes sont gérés par le catalogue AshTech Pay. Chargez `/v1/countries` avant d'afficher votre formulaire.
+
+## Vérifier le statut
+
+Utilisez l'identifiant de transaction renvoyé par la création de collecte :
+
+> [tab] Node.js
+>
+> ```javascript theme={null}
+> const response = await fetch(
+>   "https://www.ashtechpay.com/v1/transaction/TRANSACTION_ID?user_id=VOTRE_USER_ID",
+>   {
+>     headers: {
+>       Authorization: `Bearer ${process.env.ASHTECH_API_KEY}`,
+>     },
+>   },
+> );
+> const transaction = await response.json();
+> ```
+
+> [tab] Python
+>
+> ```python theme={null}
+> import os
+> import requests
+>
+> response = requests.get(
+>     "https://www.ashtechpay.com/v1/transaction/TRANSACTION_ID?user_id=VOTRE_USER_ID",
+>     headers={"Authorization": f"Bearer {os.environ['ASHTECH_API_KEY']}"},
+> )
+> transaction = response.json()
+> ```
+
+> [tab] cURL
+>
+> ```bash theme={null}
+> curl "https://www.ashtechpay.com/v1/transaction/TRANSACTION_ID?user_id=VOTRE_USER_ID" \
+>   -H "Authorization: Bearer $ASHTECH_API_KEY"
+> ```
+
+> [tab] PHP / Laravel
+>
+> ```php theme={null}
+> <?php
+>
+> $ch = curl_init("https://www.ashtechpay.com/v1/transaction/TRANSACTION_ID?user_id=VOTRE_USER_ID");
+> curl_setopt_array($ch, [
+>     CURLOPT_RETURNTRANSFER => true,
+>     CURLOPT_HTTPHEADER => [
+>         "Authorization: Bearer " . getenv("ASHTECH_API_KEY"),
+>     ],
+> ]);
+> $transaction = json_decode(curl_exec($ch), true);
+> curl_close($ch);
+> ```
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.
