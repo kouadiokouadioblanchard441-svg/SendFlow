@@ -58,3 +58,9 @@ For OTP documentation, distinguish the database-backed operator `requiresOtp` po
 **Why:** these values come from separate sources and answer different questions; confusing them can make documentation claim an unsupported payment flow or publish an unverified operator instruction.
 
 **How to apply:** In merchant docs, label the technical checkout restrictions separately from operator policies, never ask merchants to collect payer OTPs/PINs, and report production catalog status as unverified when the live API cannot be reached.
+
+Public merchant documentation should describe the customer-facing API contract, not internal rollout flags, database provisioning state, source-inspection notes, or local host addresses. Use clearly synthetic placeholders instead of plausible customer names or phone numbers; keep only verified public production URLs and contacts.
+
+**Why:** the user wants integrator documentation without internal hosting/configuration details or potentially sensitive sample data.
+
+**How to apply:** Audit French and English copy plus every code example for platform/vendor references, internal flags, local addresses, credentials, and personal-looking values before publication.

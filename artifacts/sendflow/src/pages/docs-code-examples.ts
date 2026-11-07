@@ -400,11 +400,11 @@ suspend fun readDirectSession(
   --header "Idempotency-Key: payer-order-2026-0042" \\
   --header "Content-Type: application/json" \\
   --data '{
-    "firstName": "Awa",
-    "lastName": "Kone",
+    "firstName": "<first-name>",
+    "lastName": "<last-name>",
     "countryCode": "CI",
     "operatorId": "<operator-id-from-session>",
-    "phoneNumber": "+2250700000000"
+    "phoneNumber": "<international-phone-number>"
   }'
 # The response includes ussdCode when configured; it may be null. Never invent one.`,
     JavaScript: `const apiBaseUrl = "https://merchent.business.sendflow.africa/api";
@@ -420,11 +420,11 @@ const response = await fetch(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      firstName: "Awa",
-      lastName: "Kone",
+      firstName: "<first-name>",
+      lastName: "<last-name>",
       countryCode: "CI",
       operatorId: "<operator-id-from-session>",
-      phoneNumber: "+2250700000000",
+      phoneNumber: "<international-phone-number>",
     }),
   },
 );
@@ -453,11 +453,11 @@ const response = await fetch(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      firstName: "Awa",
-      lastName: "Kone",
+      firstName: "<first-name>",
+      lastName: "<last-name>",
       countryCode: "CI",
       operatorId: "<operator-id-from-session>",
-      phoneNumber: "+2250700000000",
+      phoneNumber: "<international-phone-number>",
     }),
   },
 );
@@ -467,11 +467,11 @@ const customerInstruction = { state: attempt.state, ussdCode: attempt.ussdCode ?
 // Return this instruction to the checkout UI. Do not return pollToken or a merchant secret.
 // Keep attempt.pollToken private; this response is not proof of payment.`,
     PHP: `$body = [
-    "firstName" => "Awa",
-    "lastName" => "Kone",
+    "firstName" => "<first-name>",
+    "lastName" => "<last-name>",
     "countryCode" => "CI",
     "operatorId" => "<operator-id-from-session>",
-    "phoneNumber" => "+2250700000000",
+    "phoneNumber" => "<international-phone-number>",
 ];
 $url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/public/payment-sessions/" . rawurlencode($sessionId) . "/attempts";
 $ch = curl_init($url);
@@ -512,11 +512,11 @@ response = requests.post(
         "Idempotency-Key": "payer-order-2026-0042",
     },
     json={
-        "firstName": "Awa",
-        "lastName": "Kone",
+        "firstName": "<first-name>",
+        "lastName": "<last-name>",
         "countryCode": "CI",
         "operatorId": "<operator-id-from-session>",
-        "phoneNumber": "+2250700000000",
+        "phoneNumber": "<international-phone-number>",
     },
     timeout=15,
 )
@@ -889,10 +889,11 @@ try {
   },
   webhook: {
     cURL: `# Local receiver test only. Never send this synthetic event to production.
+# MERCHANT_WEBHOOK_RECEIVER_URL is your own webhook receiver URL.
 timestamp=$(date +%s)
 body='{"id":"9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644","type":"payment.succeeded","createdAt":"2026-01-01T12:00:00.000Z","data":{"sessionId":"00000000-0000-4000-8000-000000000001","merchantReference":"ORDER-2026-0042","attemptId":"00000000-0000-4000-8000-000000000002","transactionId":"00000000-0000-4000-8000-000000000003","amountMinor":12500,"currency":"XOF","status":"succeeded"}}'
 signature=$(printf '%s' "$timestamp.$body" | openssl dgst -sha256 -hmac "$SEND_FLOW_WEBHOOK_SECRET" | awk '{print $NF}')
-curl --request POST "http://127.0.0.1:3000/webhooks/sendflow" \\
+curl --request POST "$MERCHANT_WEBHOOK_RECEIVER_URL" \\
   --header "Content-Type: application/json" \\
   --header "sendflow-event: payment.succeeded" \\
   --header "sendflow-delivery: 9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644" \\

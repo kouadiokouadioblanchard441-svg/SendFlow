@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { getDocsCodeExample, getDocsCodeFormats } from './docs-code-examples.ts';
-import { feexpayChannels } from '../../../api-server/src/providers/feexpay/catalog.ts';
 
 const apiBase = 'https://merchent.business.sendflow.africa/api';
 const docsCopy = await readFile(new URL('./docs.tsx', import.meta.url), 'utf8');
@@ -57,40 +56,11 @@ test('getting-started guide presents the production flow in executable steps', (
   assert.deepEqual(examplePanels, [...examplePanels].sort((a, b) => a - b));
 });
 
-test('OTP-required merchant channels are all disclosed with their actual unsupported status', () => {
-  const countryNames = {
-    BJ: { fr: 'Bénin', en: 'Benin' },
-    BF: { fr: 'Burkina Faso', en: 'Burkina Faso' },
-    SN: { fr: 'Sénégal', en: 'Senegal' },
-  };
-  const requiredChannels = feexpayChannels.filter((channel) => channel.requiresOtp);
-  assert.deepEqual(requiredChannels.map((channel) => channel.id), [
-    'coris-bj',
-    'orange-bf',
-    'wave-bf',
-    'orange-sn',
-  ]);
-
-  const frenchStart = docsCopy.indexOf('mobileMoneyCards: [');
-  const frenchEnd = docsCopy.indexOf('troubleshooting:', frenchStart);
-  const englishStart = docsCopy.indexOf('mobileMoneyCards: [', frenchEnd);
-  const englishEnd = docsCopy.indexOf('troubleshooting:', englishStart);
-  assert.ok(frenchStart >= 0 && frenchEnd > frenchStart && englishEnd > englishStart);
-  const frenchCards = docsCopy.slice(frenchStart, frenchEnd);
-  const englishCards = docsCopy.slice(englishStart, englishEnd);
-
-  for (const channel of requiredChannels) {
-    const labels = countryNames[channel.countryCode];
-    assert.ok(labels, `Missing country labels for ${channel.countryCode}`);
-    const frenchCard = frenchCards.split('\n').find((line) =>
-      line.includes(`title: '${labels.fr} · ${channel.operator}`));
-    const englishCard = englishCards.split('\n').find((line) =>
-      line.includes(`title: '${labels.en} · ${channel.operator}`));
-    assert.ok(frenchCard, `Missing French OTP card for ${channel.id}`);
-    assert.ok(englishCard, `Missing English OTP card for ${channel.id}`);
-    assert.match(frenchCard, /OTP requis · non pris en charge/);
-    assert.match(englishCard, /OTP required · unsupported/);
-  }
+test('public OTP guidance follows the merchant API contract', () => {
+  assert.match(docsCopy, /L’API de paiement marchand n’accepte aucun champ OTP ou PIN/);
+  assert.match(docsCopy, /The merchant payments API accepts no OTP or PIN fields/);
+  assert.match(docsCopy, /attempt\.ussdCode ou null/);
+  assert.match(docsCopy, /attempt\.ussdCode or null/);
 });
 
 test('attempt examples never send an OTP or PIN to the merchant API', () => {
@@ -99,7 +69,7 @@ test('attempt examples never send an OTP or PIN to the merchant API', () => {
     assert.doesNotMatch(example, /["'](?:otp|pin)["']\s*:/i, `${format} must not send an OTP or PIN`);
     assert.match(example, /ussdCode/i, `${format} must use only the USSD instruction returned by SendFlow`);
   }
-  assert.match(docsCopy, /Réponse attempt\.ussdCode ou null/);
+  assert.match(docsCopy, /attempt\.ussdCode ou null/);
   assert.match(docsCopy, /attempt\.ussdCode or null/);
   assert.doesNotMatch(docsCopy, /#144\*82#/i, 'Unverified operator menu text must not be published as an OTP');
 });
