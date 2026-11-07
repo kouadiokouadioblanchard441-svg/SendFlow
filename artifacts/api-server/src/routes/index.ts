@@ -36,6 +36,8 @@ import transferQuoteRouter from "./transfer-quote";
 import paymentLinksRouter from "./payment-links";
 import publicPaymentLinksRouter from "./public-payment-links";
 import developerRouter from "./developer";
+import developerPayoutsRouter from "./developer-payouts";
+import adminPayoutsRouter from "./admin-payouts";
 import { ADMIN_ROUTE_PREFIX } from "../lib/admin-route-prefix";
 import { loadAdminSession } from "../lib/admin-session";
 
@@ -68,6 +70,7 @@ router.use(transferQuoteRouter);
 router.use(paymentLinksRouter);
 router.use(publicPaymentLinksRouter);
 router.use(developerRouter);
+router.use(developerPayoutsRouter);
 router.use(emailCampaignWebhookRouter);
 router.use(accountLimitRouter);
 router.use(identityVerificationRouter);
@@ -95,6 +98,7 @@ adminHandlers.use(adminPaymentLimitsRoutes);
 adminHandlers.use(adminCountryRoutes);
 adminHandlers.use(emailCampaignRoutes);
 adminHandlers.use(adminIdentityVerificationRoutes);
+adminHandlers.use(adminPayoutsRouter);
 
 adminSurface.use(loadAdminSession);
 adminSurface.use(adminAccessRouter);

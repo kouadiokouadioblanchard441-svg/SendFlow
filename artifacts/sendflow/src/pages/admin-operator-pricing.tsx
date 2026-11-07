@@ -228,6 +228,8 @@ export default function AdminOperatorPricingPage() {
             ? !operatorToToggle.interNetworkEnabled : operatorToToggle.interNetworkEnabled,
           internationalEnabled: operationToToggle === 'international'
             ? !operatorToToggle.internationalEnabled : operatorToToggle.internationalEnabled,
+          payoutEnabled: operationToToggle === 'payout'
+            ? !operatorToToggle.payoutEnabled : operatorToToggle.payoutEnabled,
           expectedVersion: operatorToToggle.version,
           reason: toggleReason.trim(),
         },
@@ -270,6 +272,7 @@ export default function AdminOperatorPricingPage() {
           depositEnabled: editTarget.depositEnabled,
           interNetworkEnabled: editTarget.interNetworkEnabled,
           internationalEnabled: editTarget.internationalEnabled,
+          payoutEnabled: editTarget.payoutEnabled,
           expectedVersion: editTarget.version,
           reason: editReason.trim(),
         },
@@ -524,6 +527,7 @@ export default function AdminOperatorPricingPage() {
                     <TableRow>
                       <TableHead>Opérateur</TableHead>
                       <TableHead>Disponibilité client</TableHead>
+                      <TableHead>Versements</TableHead>
                       <TableHead>Frais · {category.shortLabel}</TableHead>
                       <TableHead className="text-right">Action</TableHead>
                     </TableRow>
@@ -549,6 +553,15 @@ export default function AdminOperatorPricingPage() {
                               <small className="text-muted-foreground">{operator.operatorId} · {brandLabels[operator.brand]}</small>
                               </span>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={operator.payoutEnabled ? 'sendflow-admin-status-succeeded' : 'sendflow-admin-status-pending'}
+                              data-testid={`status-admin-operator-payout-${operator.operatorId}`}
+                            >
+                              {operator.payoutEnabled ? 'Activé' : 'Désactivé'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -620,10 +633,12 @@ export default function AdminOperatorPricingPage() {
                                   onClick={() => {
                                     setOperationToToggle(categoryId);
                                     setErrorMessage(''); setToggleReason(''); setOperatorToToggle(operator);
-                                  }}>
+                                  }}
+                                  data-testid={`button-toggle-operator-operation-${operator.operatorId}-${categoryId}`}>
                                   {(categoryId === 'deposit' ? operator.depositEnabled
                                     : categoryId === 'inter-network' ? operator.interNetworkEnabled
-                                      : operator.internationalEnabled) ? 'Désactiver' : 'Activer'} {category?.shortLabel}
+                                      : categoryId === 'payout' ? operator.payoutEnabled
+                                        : operator.internationalEnabled) ? 'Désactiver' : 'Activer'} {category?.shortLabel}
                                 </Button>
                               )}
                             </div>

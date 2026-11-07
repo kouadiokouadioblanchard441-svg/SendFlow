@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ArrowLeftRight,
+  Banknote,
   Check,
   ChevronDown,
   ChevronRight,
@@ -28,6 +29,7 @@ function CategoryIcon({ categoryId }: { categoryId: PricingCategoryId }) {
   if (categoryId === 'deposit') return <Store size={19} strokeWidth={2.1} />;
   if (categoryId === 'inter-network') return <ArrowLeftRight size={19} strokeWidth={2.1} />;
   if (categoryId === 'linkflow') return <Link2 size={19} strokeWidth={2.1} />;
+  if (categoryId === 'payout') return <Banknote size={19} strokeWidth={2.1} />;
   return <Globe2 size={19} strokeWidth={2.1} />;
 }
 
@@ -48,7 +50,9 @@ export default function PricingPage() {
     ? 'interNetwork'
     : categoryId === 'international'
       ? 'international'
-      : 'deposit';
+      : categoryId === 'payout'
+        ? 'payout'
+        : 'deposit';
   const listedOperators = useMemo(
     () => pricingQuery.data?.operators.filter((operator) => operator.countryId === country?.id
       && operator.operations[operation]) ?? [],

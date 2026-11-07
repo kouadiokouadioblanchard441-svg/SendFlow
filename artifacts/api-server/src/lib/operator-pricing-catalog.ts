@@ -29,9 +29,17 @@ export const pricingCategories = [
     shortLabel: "LinkFlow",
     description: "Paiement via un lien LinkFlow",
   },
+  {
+    id: "payout",
+    label: "Versement marchand",
+    shortLabel: "Payout",
+    description: "Décaissement API vers un bénéficiaire",
+  },
 ] as const;
 
-export const paymentOperationIds = ["deposit", "inter-network", "international"] as const;
+// Payout is a separate merchant API operation; it does not add a fourth
+// customer transfer type to the SendFlow customer flow.
+export const paymentOperationIds = ["deposit", "inter-network", "international", "payout"] as const;
 
 export type PricingCategoryId = (typeof pricingCategories)[number]["id"];
 export type OperatorBrand = "orange" | "wave" | "mtn" | "moov" | "generic";
@@ -59,6 +67,7 @@ export async function getPricingCountryCatalog() {
       deposit: country.depositEnabled,
       interNetwork: country.interNetworkEnabled,
       international: country.internationalEnabled,
+      payout: country.payoutEnabled,
     },
     initials: country.countryCode.toUpperCase(),
     flag: flagFromCountryCode(country.countryCode),

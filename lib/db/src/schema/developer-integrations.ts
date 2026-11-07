@@ -1,17 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  bigint,
-  check,
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uniqueIndex,
-  uuid,
-  varchar,
+  bigint, check, index, pgTable, text, timestamp, unique, uuid, varchar,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { usersTable } from "./users";
@@ -92,39 +81,17 @@ export const developerWebhookEndpointsTable = pgTable("sf_developer_webhook_endp
 }, (table) => ({
   ownerCreatedIndex: index("sf_developer_webhook_endpoints_owner_created_idx").on(table.userId, table.createdAt),
   urlCipherCheck: check("sf_developer_webhook_endpoints_url_cipher_check", sql`${table.urlEncrypted} ~ '^sfenc-v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'`),
-  eventsCheck: check("sf_developer_webhook_endpoints_events_check", sql`cardinality(${table.events}) between 1 and 2 and ${table.events} <@ ARRAY['payment.succeeded','payment.failed']::text[]`),
+  eventsCheck: check("sf_developer_webhook_endpoints_events_check", sql`
+    cardinality(${table.events}) between 1 and 7
+    and ${table.events} <@ ARRAY[
+      'payment.succeeded','payment.failed',
+      'payout.created','payout.processing','payout.succeeded','payout.failed','payout.uncertain'
+    ]::text[]
+  `),
   secretCipherCheck: check("sf_developer_webhook_endpoints_secret_cipher_check", sql`${table.signingSecretEncrypted} ~ '^sfenc-v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'`),
   statusCheck: check("sf_developer_webhook_endpoints_status_check", sql`${table.status} in ('active','revoked')`),
   revokePairCheck: check("sf_developer_webhook_endpoints_revoke_pair_check", sql`(${table.status}='active' and ${table.revokedAt} is null) or (${table.status}='revoked' and ${table.revokedAt} is not null)`),
   labelCheck: check("sf_developer_webhook_endpoints_label_check", sql`length(btrim(${table.label})) between 1 and 80`),
-}));
-
-export const developerWebhookDeliveriesTable = pgTable("sf_developer_webhook_deliveries", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  endpointId: uuid("endpoint_id").notNull()
-    .references(() => developerWebhookEndpointsTable.id, { onDelete: "restrict" }),
-  paymentSessionId: uuid("payment_session_id").notNull()
-    .references(() => developerPaymentSessionsTable.id, { onDelete: "restrict" }),
-  eventType: varchar("event_type", { length: 40 }).notNull(),
-  payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
-  status: varchar("status", { length: 12 }).notNull().default("pending"),
-  attempts: integer("attempts").notNull().default(0),
-  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
-  lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
-  lastHttpStatus: varchar("last_http_status", { length: 3 }),
-  lastErrorClass: varchar("last_error_class", { length: 40 }),
-  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({
-  endpointSessionEventUnique: unique("sf_developer_webhook_deliveries_event_uq")
-    .on(table.endpointId, table.paymentSessionId, table.eventType),
-  dueIndex: index("sf_developer_webhook_deliveries_due_idx")
-    .on(table.status, table.nextAttemptAt, table.createdAt),
-  payloadSizeCheck: check("sf_developer_webhook_deliveries_payload_check", sql`octet_length(${table.payload}::text) <= 16384`),
-  eventCheck: check("sf_developer_webhook_deliveries_event_check", sql`${table.eventType} in ('payment.succeeded','payment.failed')`),
-  statusCheck: check("sf_developer_webhook_deliveries_status_check", sql`${table.status} in ('pending','delivering','delivered','failed')`),
-  attemptsCheck: check("sf_developer_webhook_deliveries_attempts_check", sql`${table.attempts} between 0 and 100`),
 }));
 
 export const insertDeveloperApiKeySchema = createInsertSchema(developerApiKeysTable).omit({
@@ -141,13 +108,7 @@ export const insertDeveloperWebhookEndpointSchema = createInsertSchema(developer
   createdAt: true,
   updatedAt: true,
 });
-export const insertDeveloperWebhookDeliverySchema = createInsertSchema(developerWebhookDeliveriesTable).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
 
 export type DeveloperApiKey = typeof developerApiKeysTable.$inferSelect;
 export type DeveloperPaymentSession = typeof developerPaymentSessionsTable.$inferSelect;
 export type DeveloperWebhookEndpoint = typeof developerWebhookEndpointsTable.$inferSelect;
-export type DeveloperWebhookDelivery = typeof developerWebhookDeliveriesTable.$inferSelect;

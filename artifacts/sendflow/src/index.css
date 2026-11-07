@@ -28,45 +28,45 @@
 }
 
 :root {
-  --background: 264 42% 97%;
-  --foreground: 258 28% 16%;
-  --border: 260 22% 87%;
-  --input: 260 22% 87%;
-  --ring: 267 74% 50%;
-  --card: 0 0% 100%;
-  --card-foreground: 258 28% 16%;
-  --primary: 267 74% 50%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 45 94% 63%;
-  --secondary-foreground: 258 28% 16%;
-  --muted: 264 24% 92%;
-  --muted-foreground: 258 12% 44%;
-  --accent: 271 83% 95%;
-  --accent-foreground: 267 58% 34%;
-  --destructive: 5 70% 49%;
-  --destructive-foreground: 0 0% 100%;
+  --background: 160 22% 96%;
+  --foreground: 164 25% 16%;
+  --border: 158 15% 84%;
+  --input: 158 15% 84%;
+  --ring: 163 57% 34%;
+  --card: 42 35% 99%;
+  --card-foreground: 164 25% 16%;
+  --primary: 163 57% 34%;
+  --primary-foreground: 42 35% 99%;
+  --secondary: 39 78% 72%;
+  --secondary-foreground: 164 25% 16%;
+  --muted: 156 17% 91%;
+  --muted-foreground: 164 11% 42%;
+  --accent: 155 31% 89%;
+  --accent-foreground: 163 57% 25%;
+  --destructive: 3 57% 45%;
+  --destructive-foreground: 42 35% 99%;
   --app-font-sans: 'DM Sans', ui-sans-serif, sans-serif;
   --radius: 1rem;
 }
 
 .dark {
-  --background: 258 28% 12%;
-  --foreground: 264 24% 96%;
-  --border: 258 18% 28%;
-  --input: 258 18% 28%;
-  --ring: 267 74% 68%;
-  --card: 258 24% 16%;
-  --card-foreground: 264 24% 96%;
-  --primary: 267 74% 68%;
-  --primary-foreground: 258 28% 12%;
-  --secondary: 45 94% 63%;
-  --secondary-foreground: 258 28% 12%;
-  --muted: 258 20% 23%;
-  --muted-foreground: 264 12% 72%;
-  --accent: 267 28% 26%;
-  --accent-foreground: 267 74% 84%;
-  --destructive: 5 70% 62%;
-  --destructive-foreground: 258 28% 12%;
+  --background: 164 24% 11%;
+  --foreground: 155 18% 93%;
+  --border: 163 16% 27%;
+  --input: 163 16% 27%;
+  --ring: 156 52% 58%;
+  --card: 164 22% 15%;
+  --card-foreground: 155 18% 93%;
+  --primary: 156 52% 58%;
+  --primary-foreground: 164 24% 11%;
+  --secondary: 39 69% 62%;
+  --secondary-foreground: 164 24% 11%;
+  --muted: 164 18% 21%;
+  --muted-foreground: 155 12% 70%;
+  --accent: 160 24% 24%;
+  --accent-foreground: 156 52% 78%;
+  --destructive: 3 55% 59%;
+  --destructive-foreground: 164 24% 11%;
 }
 
 @layer base {
@@ -1116,6 +1116,411 @@
   font-size: 10px;
   line-height: 1.55;
   padding: 15px 18px 20px;
+}
+
+.sendflow-payout-page {
+  display: grid;
+  gap: 20px;
+  padding-bottom: 28px;
+  animation: sendflow-payout-enter .28s ease-out both;
+}
+
+.sendflow-payout-intro {
+  align-items: center;
+}
+
+.sendflow-payout-blocked-alert {
+  border-color: #e3c18a;
+  background: #fff8e9;
+  color: #684719;
+}
+
+.sendflow-payout-blocked-alert > svg {
+  color: #a66a1b;
+}
+
+.sendflow-payout-list-card {
+  overflow: hidden;
+  border-color: #e3e8e3;
+  background: #fffefa;
+  box-shadow: 0 8px 28px rgba(29, 61, 49, .045);
+}
+
+.sendflow-payout-list-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sendflow-payout-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sendflow-payout-search {
+  display: flex;
+  width: min(100%, 410px);
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #dce4dd;
+  border-radius: 9px;
+  background: #fbfcf8;
+  color: #758279;
+  padding: 0 11px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.sendflow-payout-search:focus-within {
+  border-color: #4b8b70;
+  box-shadow: 0 0 0 3px rgba(53, 117, 88, .1);
+}
+
+.sendflow-payout-search input {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sendflow-payout-search input:focus-visible {
+  box-shadow: none;
+}
+
+.sendflow-payout-status-filter {
+  width: 190px;
+  background: #fbfcf8;
+}
+
+.sendflow-payout-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.sendflow-payout-table {
+  min-width: 870px;
+}
+
+.sendflow-payout-table thead th {
+  height: 40px;
+  color: #7a837b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .085em;
+  text-transform: uppercase;
+}
+
+.sendflow-payout-table tbody tr {
+  transition: background-color .14s ease;
+}
+
+.sendflow-payout-table tbody tr:hover {
+  background: #f6f9f4;
+}
+
+.sendflow-payout-reference,
+.sendflow-payout-merchant,
+.sendflow-payout-amount {
+  display: grid;
+  gap: 3px;
+  min-width: 140px;
+}
+
+.sendflow-payout-reference strong,
+.sendflow-payout-merchant strong,
+.sendflow-payout-amount strong {
+  color: #24382f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sendflow-payout-reference > span,
+.sendflow-payout-merchant > span,
+.sendflow-payout-amount > span,
+.sendflow-payout-reference small {
+  color: #78827a;
+  font-size: 11px;
+}
+
+.sendflow-payout-merchant > span {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+.sendflow-payout-date {
+  min-width: 120px;
+  color: #647269;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.sendflow-payout-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.sendflow-payout-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.sendflow-payout-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.sendflow-admin-status-neutral {
+  border-color: #dce4dd;
+  background: #f5f7f2;
+  color: #53655b;
+}
+
+.sendflow-payout-empty {
+  display: grid;
+  min-height: 200px;
+  align-content: center;
+  justify-items: center;
+  border: 1px dashed #d7e1d8;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fafbf7, #f5f8f3);
+  padding: 24px;
+  text-align: center;
+}
+
+.sendflow-payout-empty-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  margin-bottom: 12px;
+  border: 1px solid #dae6dc;
+  border-radius: 12px;
+  background: #eff5ee;
+  color: #39765a;
+}
+
+.sendflow-payout-empty strong {
+  color: #30443a;
+  font-size: 13px;
+}
+
+.sendflow-payout-empty p {
+  max-width: 340px;
+  margin: 5px 0 0;
+  color: #7b857d;
+  font-size: 12px;
+}
+
+.sendflow-payout-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #edf0eb;
+  padding-top: 14px;
+  color: #737e76;
+  font-size: 11px;
+}
+
+.sendflow-payout-pager > div {
+  display: flex;
+  gap: 7px;
+}
+
+.sendflow-payout-detail-dialog {
+  max-height: min(88dvh, 900px);
+  overflow-y: auto;
+  background: #fffefa;
+}
+
+.sendflow-payout-detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #e3e9e1;
+  border-radius: 13px;
+  background: linear-gradient(110deg, #f2f7ef 0%, #fffefa 78%);
+  padding: 16px;
+}
+
+.sendflow-payout-detail-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  border-radius: 12px;
+  background: #dfeee2;
+  color: #347254;
+}
+
+.sendflow-payout-detail-hero h3 {
+  margin: 7px 0 0;
+  color: #263a30;
+  font-size: 23px;
+  font-weight: 750;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sendflow-payout-detail-hero p {
+  margin: 2px 0 0;
+  color: #778179;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+.sendflow-payout-detail-section {
+  display: grid;
+  gap: 12px;
+}
+
+.sendflow-payout-detail-section h4 {
+  margin: 0;
+  color: #47564d;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.sendflow-payout-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sendflow-payout-detail-value {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  border: 1px solid #e8ede6;
+  border-radius: 9px;
+  background: #fcfcf8;
+  padding: 10px 11px;
+}
+
+.sendflow-payout-detail-value span {
+  color: #7a857c;
+  font-size: 10px;
+}
+
+.sendflow-payout-detail-value strong {
+  overflow-wrap: anywhere;
+  color: #34483d;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.sendflow-payout-timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sendflow-payout-timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 10px;
+  padding-bottom: 16px;
+}
+
+.sendflow-payout-timeline li:not(:last-child)::after {
+  position: absolute;
+  top: 24px;
+  bottom: 1px;
+  left: 12px;
+  width: 1px;
+  background: #dce7dc;
+  content: "";
+}
+
+.sendflow-payout-timeline-marker {
+  z-index: 1;
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border: 1px solid #dce7dc;
+  border-radius: 50%;
+  background: #f2f7f1;
+  color: #4b8060;
+}
+
+.sendflow-payout-timeline li > div {
+  display: grid;
+  gap: 2px;
+}
+
+.sendflow-payout-timeline strong {
+  color: #35483d;
+  font-size: 12px;
+}
+
+.sendflow-payout-timeline p,
+.sendflow-payout-timeline small,
+.sendflow-payout-timeline time {
+  margin: 0;
+  color: #7b857d;
+  font-size: 10px;
+}
+
+.sendflow-payout-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+  border-top: 1px solid #e9eee8;
+  padding-top: 12px;
+  color: #7b857d;
+  font-size: 10px;
+}
+
+@keyframes sendflow-payout-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+  .sendflow-payout-list-header {
+    align-items: flex-start;
+  }
+
+  .sendflow-payout-filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sendflow-payout-search,
+  .sendflow-payout-status-filter {
+    width: 100%;
+  }
+
+  .sendflow-payout-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sendflow-payout-pager {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sendflow-payout-page { animation: none; }
 }
 
 /* LinkFlow settlement confirmation — a focused, server-fed success surface. */

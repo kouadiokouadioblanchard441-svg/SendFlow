@@ -120,6 +120,7 @@ router.get("/payment-routing", async (req, res): Promise<void> => {
             operatorId: operator.operatorId,
             operatorName: operator.name,
             operatorEnabled: operator.enabled,
+            payoutEnabled: operator.payoutEnabled,
             ussdCodeOverride: operator.ussdCodeOverride,
             ussdVersion: operator.version,
             aggregatorCode,

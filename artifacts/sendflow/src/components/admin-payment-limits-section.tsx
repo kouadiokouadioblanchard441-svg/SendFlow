@@ -16,35 +16,50 @@ import { Textarea } from "@/components/ui/textarea";
 type LimitField =
   | "minimumDepositMinor"
   | "minimumPayoutMinor"
+  | "maximumPayoutDailyMinor"
   | "minimumInterNetworkMinor"
   | "maximumTransferMinor"
   | "maximumPayinMinor";
 
 type LimitDraft = Record<LimitField, string>;
+type LimitValues = Omit<Record<LimitField, number>, "maximumPayoutDailyMinor"> & {
+  maximumPayoutDailyMinor: number | null;
+};
 
-const limitFields: Array<{ key: LimitField; label: string; help: string }> = [
+const limitFields: Array<{ key: LimitField; label: string; help: string; nullable?: boolean }> = [
   { key: "minimumDepositMinor", label: "Dépôt minimum", help: "Pay-in et dépôts client, en FCFA entiers." },
   { key: "minimumPayoutMinor", label: "Payout minimum", help: "Retrait international du produit SendFlow ; ce réglage ne crée pas d’API payout marchand." },
+  { key: "maximumPayoutDailyMinor", label: "Maximum payout quotidien", help: "Plafond quotidien du compte, en FCFA. Vide signifie sans plafond configuré.", nullable: true },
   { key: "minimumInterNetworkMinor", label: "Transfert inter-réseaux minimum", help: "Seuil du transfert inter-réseaux, en FCFA entiers." },
   { key: "maximumTransferMinor", label: "Maximum transfert", help: "Plafond technique actuel : 10 000 000 FCFA." },
   { key: "maximumPayinMinor", label: "Maximum pay-in", help: "Plafond technique actuel : 2 000 000 FCFA." },
 ];
 
-function toDraft(values: Record<LimitField, number>): LimitDraft {
+function toDraft(values: LimitValues): LimitDraft {
   return {
     minimumDepositMinor: String(values.minimumDepositMinor),
     minimumPayoutMinor: String(values.minimumPayoutMinor),
     minimumInterNetworkMinor: String(values.minimumInterNetworkMinor),
+    maximumPayoutDailyMinor: values.maximumPayoutDailyMinor === null ? "" : String(values.maximumPayoutDailyMinor),
     maximumTransferMinor: String(values.maximumTransferMinor),
     maximumPayinMinor: String(values.maximumPayinMinor),
   };
 }
 
-function parseDraft(draft: LimitDraft): Record<LimitField, number> | null {
-  const parsed = Object.fromEntries(
-    Object.entries(draft).map(([key, value]) => [key, /^\d+$/.test(value.trim()) ? Number(value) : NaN]),
-  ) as Record<LimitField, number>;
-  return Object.values(parsed).every(Number.isSafeInteger) ? parsed : null;
+function parseDraft(draft: LimitDraft): LimitValues | null {
+  const parsed: Partial<LimitValues> = {};
+  for (const [key, value] of Object.entries(draft) as Array<[LimitField, string]>) {
+    if (key === "maximumPayoutDailyMinor" && value.trim() === "") {
+      parsed[key] = null;
+    } else {
+      const numberValue = /^\d+$/.test(value.trim()) ? Number(value) : NaN;
+      parsed[key] = numberValue as never;
+    }
+  }
+  if (!Object.entries(parsed).every(([key, value]) =>
+    key === "maximumPayoutDailyMinor" && value === null || Number.isSafeInteger(value),
+  )) return null;
+  return parsed as LimitValues;
 }
 
 function formatFcfa(value: number) {
@@ -70,6 +85,7 @@ export function AdminPaymentLimitsSection() {
       && values.minimumPayoutMinor >= 200
       && values.minimumPayoutMinor <= 2_000_000
       && values.minimumPayoutMinor <= values.maximumTransferMinor
+      && (values.maximumPayoutDailyMinor === null || values.maximumPayoutDailyMinor >= values.minimumPayoutMinor)
       && values.minimumInterNetworkMinor >= 1
       && values.minimumInterNetworkMinor <= values.maximumTransferMinor
       && values.maximumTransferMinor <= 10_000_000
@@ -172,6 +188,7 @@ export function AdminPaymentLimitsSection() {
                     min={key === "minimumInterNetworkMinor" ? 1 : 200}
                     step={1}
                     value={draft[key]}
+                    placeholder={key === "maximumPayoutDailyMinor" ? "Sans plafond" : undefined}
                     onChange={(event) => {
                       setDraft((current) => current ? { ...current, [key]: event.target.value } : current);
                       setFeedback("");
@@ -180,7 +197,15 @@ export function AdminPaymentLimitsSection() {
                     data-testid={`input-payment-limit-${key}`}
                   />
                   <p className="text-sm text-muted-foreground" id={`payment-limit-help-${key}`}>{help}</p>
-                  {values && <p className="text-xs text-muted-foreground">Actif : {formatFcfa(values[key])}</p>}
+                  {values && (
+                    <p className="text-xs text-muted-foreground">
+                      Actif : {key === "maximumPayoutDailyMinor"
+                        ? values.maximumPayoutDailyMinor === null
+                          ? "Sans plafond"
+                          : formatFcfa(values.maximumPayoutDailyMinor)
+                        : formatFcfa(values[key])}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

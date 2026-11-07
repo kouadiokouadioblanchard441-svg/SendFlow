@@ -17,6 +17,10 @@ import {
   decryptDeveloperWebhookPayload,
   DeveloperWebhookPayloadError,
 } from "../lib/developer-webhook-payload";
+import {
+  decryptPayoutWebhookPayload,
+  PayoutWebhookPayloadError,
+} from "../lib/payout-webhook-payload";
 import { resolvePublicWebhookTarget } from "./developer-api-security";
 
 const MAX_ATTEMPTS = 8;
@@ -205,13 +209,19 @@ export async function processNextDeveloperWebhookDelivery(runtime: WorkerRuntime
   try {
     const url = decryptSensitiveData(endpoint.urlEncrypted, "developer-webhook-url");
     const signingSecret = decryptSensitiveData(endpoint.signingSecretEncrypted, "developer-webhook-secret");
-    const payload = decryptDeveloperWebhookPayload(delivery.payload, {
-      deliveryId: delivery.id,
-      eventType: delivery.eventType as "payment.succeeded" | "payment.failed",
-    });
+    const payload = delivery.eventType.startsWith("payout.")
+      ? decryptPayoutWebhookPayload(delivery.payload, {
+        deliveryId: delivery.id,
+        eventType: delivery.eventType as
+          | "payout.created" | "payout.processing" | "payout.succeeded" | "payout.failed" | "payout.uncertain",
+      })
+      : decryptDeveloperWebhookPayload(delivery.payload, {
+        deliveryId: delivery.id,
+        eventType: delivery.eventType as "payment.succeeded" | "payment.failed",
+      });
     result = await postWebhook(url, signingSecret, payload, runtime);
   } catch (error) {
-    if (error instanceof DeveloperWebhookPayloadError) {
+    if (error instanceof DeveloperWebhookPayloadError || error instanceof PayoutWebhookPayloadError) {
       await db.update(developerWebhookDeliveriesTable).set({
         status: "failed",
         lastHttpStatus: null,

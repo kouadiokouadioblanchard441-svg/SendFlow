@@ -18,6 +18,7 @@ export interface OperatorUpdate {
   depositEnabled: boolean;
   interNetworkEnabled: boolean;
   internationalEnabled: boolean;
+  payoutEnabled: boolean;
   /** @minimum 1 */
   expectedVersion: number;
   /**

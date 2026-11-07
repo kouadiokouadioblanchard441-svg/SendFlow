@@ -28,6 +28,7 @@ export interface ManagedOperator {
   depositEnabled: boolean;
   interNetworkEnabled: boolean;
   internationalEnabled: boolean;
+  payoutEnabled: boolean;
   /** @minimum 1 */
   version: number;
   /** @nullable */

@@ -46,6 +46,7 @@ import { AdminPaymentLimitsSection } from '@/components/admin-payment-limits-sec
 import { AdminCustomerServiceSettingsSection } from '@/components/admin-customer-service-settings';
 import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
+import AdminPayoutsPage from '@/pages/admin-payouts';
 import { AdminCountriesSection } from '@/components/admin-countries-section';
 import { EmailCampaignsSection } from '@/components/email-campaigns-section';
 import AdminIpBlocklist from '@/components/admin-ip-blocklist';
@@ -169,7 +170,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings' | 'identity-verifications';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'payouts' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings' | 'identity-verifications';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -180,6 +181,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   deposits: { title: 'Dépôts', eyebrow: 'Flux entrants' },
   international: { title: 'Transferts internationaux', eyebrow: 'Flux sortants' },
   transfers: { title: 'Transferts', eyebrow: 'Flux sortants' },
+  payouts: { title: 'Versements marchands', eyebrow: 'Flux sortants · Contrôle' },
   'login-activity': { title: 'Connexions', eyebrow: 'Sécurité' },
   'otp-activity': { title: 'Activité OTP', eyebrow: 'Sécurité' },
   banners: { title: 'Bannières', eyebrow: 'Contenu client' },
@@ -208,6 +210,7 @@ const navGroups: Array<{
       { href: adminRoute('/deposits'), label: 'Dépôts', section: 'deposits', icon: ArrowDownToLine },
       { href: adminRoute('/international'), label: 'International', section: 'international', icon: Globe2 },
       { href: adminRoute('/transfers'), label: 'Transferts inter-réseaux', section: 'transfers', icon: ArrowLeftRight },
+      { href: adminRoute('/payouts'), label: 'Versements marchands', section: 'payouts', icon: Banknote },
       { href: adminRoute('/login-activity'), label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
       { href: adminRoute('/otp-activity'), label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
       { href: adminRoute('/identity-verifications'), label: 'Vérification d’identité', section: 'identity-verifications', icon: FileSearch },
@@ -2482,7 +2485,9 @@ function AggregatorsPage() {
               ))}
             </div>
             <div className="grid gap-4 xl:grid-cols-2" data-testid="list-admin-aggregator-routes">
-              {data.countries.filter((country) => country.operation === routingOperation).map((country) => {
+              {data.countries.filter((country): country is typeof country & { operation: PaymentOperation } =>
+                country.operation !== 'payout' && country.operation === routingOperation,
+              ).map((country) => {
                 const countryAggregatorName = country.defaultAggregatorCode
                   ? aggregatorByCode.get(country.defaultAggregatorCode)?.name ?? country.defaultAggregatorCode
                   : 'Aucun service sélectionné';
@@ -3136,6 +3141,7 @@ export function AdminRouter() {
   const [isDeposits] = useRoute(adminRoute('/deposits'));
   const [isInternational] = useRoute(adminRoute('/international'));
   const [isTransfers] = useRoute(adminRoute('/transfers'));
+  const [isPayouts] = useRoute(adminRoute('/payouts'));
   const [isLoginActivity] = useRoute(adminRoute('/login-activity'));
   const [isOtpActivity] = useRoute(adminRoute('/otp-activity'));
   const [isBanners] = useRoute(adminRoute('/banners'));
@@ -3157,6 +3163,7 @@ export function AdminRouter() {
   if (isDeposits) return <TransactionsPage section="deposits" />;
   if (isInternational) return <TransactionsPage section="international" />;
   if (isTransfers) return <TransactionsPage section="transfers" />;
+  if (isPayouts) return <AdminShell section="payouts"><AdminPayoutsPage /></AdminShell>;
   if (isLoginActivity) return <LoginActivityPage />;
   if (isOtpActivity) return <OtpActivityPage />;
   if (isBanners) return <BannersPage />;

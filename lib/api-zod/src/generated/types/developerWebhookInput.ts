@@ -15,6 +15,9 @@ export interface DeveloperWebhookInput {
   label: string;
   /** @maxLength 2048 */
   url: string;
-  /** @minItems 1 */
+  /**
+     * @minItems 1
+     * @maxItems 7
+     */
   events: DeveloperWebhookInputEventsItem[];
 }

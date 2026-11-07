@@ -59,12 +59,12 @@ test("countries: validated creation, public visibility, version conflict and ato
   assert.equal((await call("/secure-catalog/countries", "POST", { ...countryInput("zz"), maxPhoneDigits: 15 })).status, 400);
   const created = await call("/secure-catalog/countries", "POST", countryInput("zz"));
   assert.equal(created.status, 201);
-  assert.deepEqual(created.data.operations, { deposit: false, interNetwork: false, international: false });
+  assert.deepEqual(created.data.operations, { deposit: false, interNetwork: false, international: false, payout: false });
   assert.equal((await call("/secure-catalog/countries", "POST", countryInput("zz"))).status, 409);
   assert.equal((await call("/secure-catalog/countries", "POST", countryInput("yy"))).status, 201);
   const changes = {
     countryName: "Fixture ZZ updated", phonePrefix: "+991", minPhoneDigits: 8, maxPhoneDigits: 8,
-    enabled: true, operations: { deposit: true, interNetwork: false, international: true },
+    enabled: true, operations: { deposit: true, interNetwork: false, international: true, payout: false },
     expectedVersion: created.data.version, reason: "Enable selected isolated operations",
   };
   assert.equal((await call("/secure-catalog/countries/zz", "PATCH", changes)).status, 200);
@@ -72,7 +72,7 @@ test("countries: validated creation, public visibility, version conflict and ato
   const countries = (await call("/public/auth/countries")).data.countries;
   assert.equal(countries.find((country) => country.countryCode === "zz").countryName, changes.countryName);
   assert.deepEqual(countries.find((country) => country.countryCode === "yy").operations,
-    { deposit: false, interNetwork: false, international: false });
+    { deposit: false, interNetwork: false, international: false, payout: false });
   const audits = await pool.query(`SELECT action FROM sf_admin_audit_logs
     WHERE resource_type='country' AND resource_id='zz'`);
   assert.ok(audits.rows.some((row) => row.action === "create_country"));
@@ -196,7 +196,7 @@ test("public availability is server-computed per country and per operation", asy
   const response = await call("/public/pricing");
   assert.equal(response.status, 200);
   const zz = response.data.operators.find((operator) => operator.id === "catalog-operator-zz");
-  assert.deepEqual(zz.operations, { deposit: true, interNetwork: false, international: false });
+  assert.deepEqual(zz.operations, { deposit: true, interNetwork: false, international: false, payout: false });
   const yy = response.data.operators.find((operator) => operator.id === "catalog-operator-yy");
-  assert.deepEqual(yy.operations, { deposit: false, interNetwork: false, international: false });
+  assert.deepEqual(yy.operations, { deposit: false, interNetwork: false, international: false, payout: false });
 });

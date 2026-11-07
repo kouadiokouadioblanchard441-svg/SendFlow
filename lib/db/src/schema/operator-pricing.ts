@@ -33,6 +33,7 @@ export const operatorCatalogTable = pgTable(
     depositEnabled: boolean("deposit_enabled").notNull().default(false),
     interNetworkEnabled: boolean("inter_network_enabled").notNull().default(false),
     internationalEnabled: boolean("international_enabled").notNull().default(false),
+    payoutEnabled: boolean("payout_enabled").notNull().default(false),
     ussdCodeOverride: varchar("ussd_code_override", { length: 32 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
@@ -105,7 +106,7 @@ export const insertOperatorCatalogSchema = z.object({
 export const insertOperatorPricingRateSchema = z.object({
   operatorId: z.string().min(2).max(60),
   countryCode: z.string().length(2),
-  categoryId: z.enum(["deposit", "inter-network", "international", "linkflow"]),
+  categoryId: z.enum(["deposit", "inter-network", "international", "linkflow", "payout"]),
   feePercent: z.number().min(0).max(100).nullable(),
   createdBy: z.string().min(1).max(255),
   updatedBy: z.string().min(1).max(255),

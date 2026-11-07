@@ -6,6 +6,8 @@ const LIMITS = {
   session_read: 120,
   direct_attempt: 5,
   direct_poll: 60,
+  payout_read: 120,
+  payout_create: 5,
 } as const;
 
 export type DeveloperApiOperation = keyof typeof LIMITS;

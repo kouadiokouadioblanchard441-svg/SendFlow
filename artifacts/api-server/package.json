@@ -23,6 +23,7 @@
     "test:admin-access:isolated": "node tests/security/run-isolated-admin-access.mjs",
     "test:sensitive-data-crypto": "node --experimental-strip-types --test src/lib/sensitive-data-crypto.test.mjs src/lib/developer-webhook-payload.test.mjs",
     "test:transfer-quote": "node --experimental-strip-types --test src/lib/transfer-quote-policy.test.mjs",
+    "test:payout-policy": "node scripts/test-payout-policy.mjs",
     "test:feexpay": "node --experimental-strip-types --test src/providers/feexpay/client.test.mjs",
     "test:feexpay-configuration": "node tests/security/run-isolated-finance.mjs --feexpay-configuration-only",
     "test:payment-structures": "node tests/security/run-isolated-finance.mjs --payment-structures-only",

@@ -357,7 +357,8 @@ export const GetAuthCountriesResponse = zod.object({
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
-  "international": zod.boolean()
+  "international": zod.boolean(),
+  "payout": zod.boolean()
 })
 }))
 })
@@ -1502,7 +1503,7 @@ export const ListDeveloperWebhooksResponse = zod.object({
   "id": zod.uuid(),
   "label": zod.string(),
   "url": zod.url(),
-  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed'])),
+  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed', 'payout.created', 'payout.processing', 'payout.succeeded', 'payout.failed', 'payout.uncertain'])),
   "status": zod.enum(['active', 'revoked']),
   "createdAt": zod.coerce.date(),
   "revokedAt": zod.coerce.date().nullable()
@@ -1517,13 +1518,14 @@ export const createDeveloperWebhookBodyLabelMax = 80;
 
 export const createDeveloperWebhookBodyUrlMax = 2048;
 
+export const createDeveloperWebhookBodyEventsMax = 7;
 
 
 
 export const CreateDeveloperWebhookBody = zod.object({
   "label": zod.string().min(1).max(createDeveloperWebhookBodyLabelMax),
   "url": zod.url().max(createDeveloperWebhookBodyUrlMax),
-  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed'])).min(1)
+  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed', 'payout.created', 'payout.processing', 'payout.succeeded', 'payout.failed', 'payout.uncertain'])).min(1).max(createDeveloperWebhookBodyEventsMax)
 })
 
 export const CreateDeveloperWebhookResponse = zod.object({
@@ -1531,7 +1533,7 @@ export const CreateDeveloperWebhookResponse = zod.object({
   "id": zod.uuid(),
   "label": zod.string(),
   "url": zod.url(),
-  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed'])),
+  "events": zod.array(zod.enum(['payment.succeeded', 'payment.failed', 'payout.created', 'payout.processing', 'payout.succeeded', 'payout.failed', 'payout.uncertain'])),
   "status": zod.enum(['active', 'revoked']),
   "createdAt": zod.coerce.date(),
   "revokedAt": zod.coerce.date().nullable()
@@ -1570,6 +1572,424 @@ export const ListDeveloperWebhookDeliveriesResponse = zod.object({
   "deliveredAt": zod.coerce.date().nullable()
 }))
 })
+
+
+/**
+ * Read-only. The server loads the configured payout rate and limits. No funds are reserved and no provider is contacted.
+ * @summary Calculate a server-side payout quote
+ */
+export const createDeveloperPayoutQuoteBodyAmountMinorMax = 9007199254740991;
+
+export const createDeveloperPayoutQuoteBodyCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const createDeveloperPayoutQuoteBodyOperatorIdMin = 2;
+export const createDeveloperPayoutQuoteBodyOperatorIdMax = 60;
+
+
+export const createDeveloperPayoutQuoteBodyOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+
+
+export const CreateDeveloperPayoutQuoteBody = zod.object({
+  "amountMinor": zod.int().min(1).max(createDeveloperPayoutQuoteBodyAmountMinorMax),
+  "currency": zod.enum(['XOF']),
+  "countryCode": zod.string().regex(createDeveloperPayoutQuoteBodyCountryCodeRegExp),
+  "operatorId": zod.string().min(createDeveloperPayoutQuoteBodyOperatorIdMin).max(createDeveloperPayoutQuoteBodyOperatorIdMax).regex(createDeveloperPayoutQuoteBodyOperatorIdRegExp),
+  "feePayer": zod.enum(['merchant', 'beneficiary'])
+})
+
+export const createDeveloperPayoutQuoteResponseFeeMinorMin = 0;
+
+export const createDeveloperPayoutQuoteResponseProviderFeeMinorMin = 0;
+
+
+
+export const createDeveloperPayoutQuoteResponseMinimumPayoutMinorMin = 200;
+
+export const createDeveloperPayoutQuoteResponseMaximumPayoutDailyMinorMin = 200;
+
+
+
+
+export const CreateDeveloperPayoutQuoteResponse = zod.object({
+  "currency": zod.enum(['XOF']),
+  "amountMinor": zod.int(),
+  "feeMinor": zod.int().min(createDeveloperPayoutQuoteResponseFeeMinorMin),
+  "providerFeeMinor": zod.int().min(createDeveloperPayoutQuoteResponseProviderFeeMinorMin).nullable(),
+  "totalDebitMinor": zod.int().min(1),
+  "beneficiaryAmountMinor": zod.int().min(1),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "minimumPayoutMinor": zod.int().min(createDeveloperPayoutQuoteResponseMinimumPayoutMinorMin),
+  "maximumPayoutDailyMinor": zod.int().min(createDeveloperPayoutQuoteResponseMaximumPayoutDailyMinorMin).nullable(),
+  "pricingVersion": zod.int().min(1),
+  "quoteExpiresAt": zod.coerce.date(),
+  "executionReady": zod.boolean(),
+  "executionBlockReason": zod.union([zod.literal('provider_proof_not_verified'),zod.literal(null)]).nullable()
+})
+
+
+/**
+ * @summary List payouts owned by the authenticated merchant
+ */
+export const listDeveloperPayoutsQueryLimitDefault = 25;
+export const listDeveloperPayoutsQueryLimitMax = 100;
+
+
+
+export const ListDeveloperPayoutsQueryParams = zod.object({
+  "limit": zod.coerce.number().int().min(1).max(listDeveloperPayoutsQueryLimitMax).default(listDeveloperPayoutsQueryLimitDefault),
+  "cursor": zod.uuid().optional(),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']).optional()
+})
+
+export const listDeveloperPayoutsResponseItemsItemReferenceRegExp = new RegExp('^SFPO[A-F0-9]{16}$');
+export const listDeveloperPayoutsResponseItemsItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const listDeveloperPayoutsResponseItemsItemBeneficiaryPhoneLast4RegExp = new RegExp('^[0-9]{4}$');
+
+
+export const ListDeveloperPayoutsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.uuid(),
+  "reference": zod.string().regex(listDeveloperPayoutsResponseItemsItemReferenceRegExp),
+  "merchantReference": zod.string().nullable(),
+  "countryCode": zod.string().regex(listDeveloperPayoutsResponseItemsItemCountryCodeRegExp),
+  "operatorId": zod.string(),
+  "beneficiary": zod.object({
+  "phoneLast4": zod.string().regex(listDeveloperPayoutsResponseItemsItemBeneficiaryPhoneLast4RegExp),
+  "name": zod.string().nullable()
+}),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "feeMinor": zod.int(),
+  "providerFeeMinor": zod.int().nullable(),
+  "totalDebitMinor": zod.int(),
+  "beneficiaryAmountMinor": zod.int(),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "failureCode": zod.string().nullable()
+})),
+  "nextCursor": zod.uuid().nullable()
+})
+
+
+/**
+ * Requires an eligible merchant, active wallet, enabled XOF country/operator route, configured fee and daily limit, and Idempotency-Key. The server recalculates all amounts. Dispatch remains locked until provider settlement evidence is verified; a locked request does not reserve funds.
+ * @summary Create and reserve a merchant payout
+ */
+export const createDeveloperPayoutHeaderIdempotencyKeyMin = 8;
+export const createDeveloperPayoutHeaderIdempotencyKeyMax = 128;
+
+
+
+export const CreateDeveloperPayoutHeader = zod.object({
+  "Idempotency-Key": zod.string().min(createDeveloperPayoutHeaderIdempotencyKeyMin).max(createDeveloperPayoutHeaderIdempotencyKeyMax)
+})
+
+export const createDeveloperPayoutBodyAmountMinorMax = 9007199254740991;
+
+export const createDeveloperPayoutBodyCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const createDeveloperPayoutBodyOperatorIdMin = 2;
+export const createDeveloperPayoutBodyOperatorIdMax = 60;
+
+
+export const createDeveloperPayoutBodyOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+export const createDeveloperPayoutBodyMerchantReferenceMax = 128;
+
+export const createDeveloperPayoutBodyBeneficiaryPhoneNumberMin = 9;
+export const createDeveloperPayoutBodyBeneficiaryPhoneNumberMax = 16;
+
+
+export const createDeveloperPayoutBodyBeneficiaryPhoneNumberRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const createDeveloperPayoutBodyBeneficiaryNameMin = 2;
+export const createDeveloperPayoutBodyBeneficiaryNameMax = 120;
+
+
+
+export const CreateDeveloperPayoutBody = zod.object({
+  "amountMinor": zod.int().min(1).max(createDeveloperPayoutBodyAmountMinorMax),
+  "currency": zod.enum(['XOF']),
+  "countryCode": zod.string().regex(createDeveloperPayoutBodyCountryCodeRegExp),
+  "operatorId": zod.string().min(createDeveloperPayoutBodyOperatorIdMin).max(createDeveloperPayoutBodyOperatorIdMax).regex(createDeveloperPayoutBodyOperatorIdRegExp),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "merchantReference": zod.string().min(1).max(createDeveloperPayoutBodyMerchantReferenceMax).nullish(),
+  "beneficiary": zod.object({
+  "phoneNumber": zod.string().min(createDeveloperPayoutBodyBeneficiaryPhoneNumberMin).max(createDeveloperPayoutBodyBeneficiaryPhoneNumberMax).regex(createDeveloperPayoutBodyBeneficiaryPhoneNumberRegExp),
+  "name": zod.string().min(createDeveloperPayoutBodyBeneficiaryNameMin).max(createDeveloperPayoutBodyBeneficiaryNameMax).nullish()
+})
+})
+
+export const createDeveloperPayoutResponseReferenceRegExp = new RegExp('^SFPO[A-F0-9]{16}$');
+export const createDeveloperPayoutResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const createDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp = new RegExp('^[0-9]{4}$');
+
+
+export const CreateDeveloperPayoutResponse = zod.object({
+  "id": zod.uuid(),
+  "reference": zod.string().regex(createDeveloperPayoutResponseReferenceRegExp),
+  "merchantReference": zod.string().nullable(),
+  "countryCode": zod.string().regex(createDeveloperPayoutResponseCountryCodeRegExp),
+  "operatorId": zod.string(),
+  "beneficiary": zod.object({
+  "phoneLast4": zod.string().regex(createDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp),
+  "name": zod.string().nullable()
+}),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "feeMinor": zod.int(),
+  "providerFeeMinor": zod.int().nullable(),
+  "totalDebitMinor": zod.int(),
+  "beneficiaryAmountMinor": zod.int(),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "failureCode": zod.string().nullable()
+})
+
+
+/**
+ * @summary Read one payout owned by the authenticated merchant
+ */
+export const GetDeveloperPayoutParams = zod.object({
+  "payoutId": zod.uuid()
+})
+
+export const getDeveloperPayoutResponseReferenceRegExp = new RegExp('^SFPO[A-F0-9]{16}$');
+export const getDeveloperPayoutResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const getDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp = new RegExp('^[0-9]{4}$');
+
+
+export const GetDeveloperPayoutResponse = zod.object({
+  "id": zod.uuid(),
+  "reference": zod.string().regex(getDeveloperPayoutResponseReferenceRegExp),
+  "merchantReference": zod.string().nullable(),
+  "countryCode": zod.string().regex(getDeveloperPayoutResponseCountryCodeRegExp),
+  "operatorId": zod.string(),
+  "beneficiary": zod.object({
+  "phoneLast4": zod.string().regex(getDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp),
+  "name": zod.string().nullable()
+}),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "feeMinor": zod.int(),
+  "providerFeeMinor": zod.int().nullable(),
+  "totalDebitMinor": zod.int(),
+  "beneficiaryAmountMinor": zod.int(),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "failureCode": zod.string().nullable()
+})
+
+
+/**
+ * Only an undispatched payout may be cancelled. No provider cancellation is offered because the provider contract does not document one.
+ * @summary Cancel an undispatched payout and release its reservation
+ */
+export const CancelDeveloperPayoutParams = zod.object({
+  "payoutId": zod.uuid()
+})
+
+export const cancelDeveloperPayoutResponseReferenceRegExp = new RegExp('^SFPO[A-F0-9]{16}$');
+export const cancelDeveloperPayoutResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const cancelDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp = new RegExp('^[0-9]{4}$');
+
+
+export const CancelDeveloperPayoutResponse = zod.object({
+  "id": zod.uuid(),
+  "reference": zod.string().regex(cancelDeveloperPayoutResponseReferenceRegExp),
+  "merchantReference": zod.string().nullable(),
+  "countryCode": zod.string().regex(cancelDeveloperPayoutResponseCountryCodeRegExp),
+  "operatorId": zod.string(),
+  "beneficiary": zod.object({
+  "phoneLast4": zod.string().regex(cancelDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp),
+  "name": zod.string().nullable()
+}),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "feeMinor": zod.int(),
+  "providerFeeMinor": zod.int().nullable(),
+  "totalDebitMinor": zod.int(),
+  "beneficiaryAmountMinor": zod.int(),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "failureCode": zod.string().nullable()
+})
+
+
+/**
+ * @summary Review payout requests and uncertain operations
+ */
+export const listAdminPayoutsQueryLimitDefault = 25;
+export const listAdminPayoutsQueryLimitMax = 100;
+
+
+
+export const ListAdminPayoutsQueryParams = zod.object({
+  "limit": zod.coerce.number().int().min(1).max(listAdminPayoutsQueryLimitMax).default(listAdminPayoutsQueryLimitDefault),
+  "cursor": zod.uuid().optional(),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']).optional()
+})
+
+export const listAdminPayoutsResponseItemsItemOneReferenceRegExp = new RegExp('^SFPO[A-F0-9]{16}$');
+export const listAdminPayoutsResponseItemsItemOneCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const listAdminPayoutsResponseItemsItemOneBeneficiaryPhoneLast4RegExp = new RegExp('^[0-9]{4}$');
+
+
+export const ListAdminPayoutsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.uuid(),
+  "reference": zod.string().regex(listAdminPayoutsResponseItemsItemOneReferenceRegExp),
+  "merchantReference": zod.string().nullable(),
+  "countryCode": zod.string().regex(listAdminPayoutsResponseItemsItemOneCountryCodeRegExp),
+  "operatorId": zod.string(),
+  "beneficiary": zod.object({
+  "phoneLast4": zod.string().regex(listAdminPayoutsResponseItemsItemOneBeneficiaryPhoneLast4RegExp),
+  "name": zod.string().nullable()
+}),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "feeMinor": zod.int(),
+  "providerFeeMinor": zod.int().nullable(),
+  "totalDebitMinor": zod.int(),
+  "beneficiaryAmountMinor": zod.int(),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "failureCode": zod.string().nullable()
+}).and(zod.object({
+  "merchantUserId": zod.string(),
+  "reservationState": zod.enum(['none', 'active', 'consumed', 'released']),
+  "timeline": zod.array(zod.object({
+  "fromStatus": zod.string().nullable(),
+  "toStatus": zod.string(),
+  "actorType": zod.enum(['merchant', 'admin', 'system', 'provider']),
+  "reasonCode": zod.string(),
+  "createdAt": zod.coerce.date()
+}))
+}))),
+  "nextCursor": zod.uuid().nullable()
+})
+
+
+/**
+ * @summary Review one payout with its immutable state timeline
+ */
+export const GetAdminPayoutParams = zod.object({
+  "payoutId": zod.uuid()
+})
+
+export const getAdminPayoutResponseOneReferenceRegExp = new RegExp('^SFPO[A-F0-9]{16}$');
+export const getAdminPayoutResponseOneCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const getAdminPayoutResponseOneBeneficiaryPhoneLast4RegExp = new RegExp('^[0-9]{4}$');
+
+
+export const GetAdminPayoutResponse = zod.object({
+  "id": zod.uuid(),
+  "reference": zod.string().regex(getAdminPayoutResponseOneReferenceRegExp),
+  "merchantReference": zod.string().nullable(),
+  "countryCode": zod.string().regex(getAdminPayoutResponseOneCountryCodeRegExp),
+  "operatorId": zod.string(),
+  "beneficiary": zod.object({
+  "phoneLast4": zod.string().regex(getAdminPayoutResponseOneBeneficiaryPhoneLast4RegExp),
+  "name": zod.string().nullable()
+}),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "feeMinor": zod.int(),
+  "providerFeeMinor": zod.int().nullable(),
+  "totalDebitMinor": zod.int(),
+  "beneficiaryAmountMinor": zod.int(),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "failureCode": zod.string().nullable()
+}).and(zod.object({
+  "merchantUserId": zod.string(),
+  "reservationState": zod.enum(['none', 'active', 'consumed', 'released']),
+  "timeline": zod.array(zod.object({
+  "fromStatus": zod.string().nullable(),
+  "toStatus": zod.string(),
+  "actorType": zod.enum(['merchant', 'admin', 'system', 'provider']),
+  "reasonCode": zod.string(),
+  "createdAt": zod.coerce.date()
+}))
+}))
+
+
+/**
+ * This audited action cannot mark a payout successful, and cannot release funds after provider dispatch.
+ * @summary Reject and release only a payout never dispatched
+ */
+export const RejectAdminPayoutParams = zod.object({
+  "payoutId": zod.uuid()
+})
+
+export const rejectAdminPayoutBodyReasonMin = 3;
+export const rejectAdminPayoutBodyReasonMax = 500;
+
+
+
+export const RejectAdminPayoutBody = zod.object({
+  "reason": zod.string().min(rejectAdminPayoutBodyReasonMin).max(rejectAdminPayoutBodyReasonMax)
+})
+
+export const rejectAdminPayoutResponseOneReferenceRegExp = new RegExp('^SFPO[A-F0-9]{16}$');
+export const rejectAdminPayoutResponseOneCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const rejectAdminPayoutResponseOneBeneficiaryPhoneLast4RegExp = new RegExp('^[0-9]{4}$');
+
+
+export const RejectAdminPayoutResponse = zod.object({
+  "id": zod.uuid(),
+  "reference": zod.string().regex(rejectAdminPayoutResponseOneReferenceRegExp),
+  "merchantReference": zod.string().nullable(),
+  "countryCode": zod.string().regex(rejectAdminPayoutResponseOneCountryCodeRegExp),
+  "operatorId": zod.string(),
+  "beneficiary": zod.object({
+  "phoneLast4": zod.string().regex(rejectAdminPayoutResponseOneBeneficiaryPhoneLast4RegExp),
+  "name": zod.string().nullable()
+}),
+  "amountMinor": zod.int(),
+  "currency": zod.enum(['XOF']),
+  "feeMinor": zod.int(),
+  "providerFeeMinor": zod.int().nullable(),
+  "totalDebitMinor": zod.int(),
+  "beneficiaryAmountMinor": zod.int(),
+  "feePayer": zod.enum(['merchant', 'beneficiary']),
+  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "failureCode": zod.string().nullable()
+}).and(zod.object({
+  "merchantUserId": zod.string(),
+  "reservationState": zod.enum(['none', 'active', 'consumed', 'released']),
+  "timeline": zod.array(zod.object({
+  "fromStatus": zod.string().nullable(),
+  "toStatus": zod.string(),
+  "actorType": zod.enum(['merchant', 'admin', 'system', 'provider']),
+  "reasonCode": zod.string(),
+  "createdAt": zod.coerce.date()
+}))
+}))
 
 
 /**
@@ -2130,11 +2550,14 @@ export const getPublicPricingResponseOperatorsItemFeesInternationalMax = 1;
 export const getPublicPricingResponseOperatorsItemFeesLinkflowMin = 0;
 export const getPublicPricingResponseOperatorsItemFeesLinkflowMax = 1;
 
+export const getPublicPricingResponseOperatorsItemFeesPayoutMin = 0;
+export const getPublicPricingResponseOperatorsItemFeesPayoutMax = 1;
+
 
 
 export const GetPublicPricingResponse = zod.object({
   "categories": zod.array(zod.object({
-  "id": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
+  "id": zod.enum(['deposit', 'inter-network', 'international', 'linkflow', 'payout']),
   "label": zod.string(),
   "shortLabel": zod.string(),
   "description": zod.string()
@@ -2151,7 +2574,8 @@ export const GetPublicPricingResponse = zod.object({
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
-  "international": zod.boolean()
+  "international": zod.boolean(),
+  "payout": zod.boolean()
 })
 })),
   "operators": zod.array(zod.object({
@@ -2167,13 +2591,15 @@ export const GetPublicPricingResponse = zod.object({
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
-  "international": zod.boolean()
+  "international": zod.boolean(),
+  "payout": zod.boolean()
 }),
   "fees": zod.object({
   "deposit": zod.number().min(getPublicPricingResponseOperatorsItemFeesDepositMin).max(getPublicPricingResponseOperatorsItemFeesDepositMax).optional(),
   "inter-network": zod.number().min(getPublicPricingResponseOperatorsItemFeesInterNetworkMin).max(getPublicPricingResponseOperatorsItemFeesInterNetworkMax).optional(),
   "international": zod.number().min(getPublicPricingResponseOperatorsItemFeesInternationalMin).max(getPublicPricingResponseOperatorsItemFeesInternationalMax).optional(),
-  "linkflow": zod.number().min(getPublicPricingResponseOperatorsItemFeesLinkflowMin).max(getPublicPricingResponseOperatorsItemFeesLinkflowMax).optional()
+  "linkflow": zod.number().min(getPublicPricingResponseOperatorsItemFeesLinkflowMin).max(getPublicPricingResponseOperatorsItemFeesLinkflowMax).optional(),
+  "payout": zod.number().min(getPublicPricingResponseOperatorsItemFeesPayoutMin).max(getPublicPricingResponseOperatorsItemFeesPayoutMax).optional()
 })
 }))
 })
@@ -2308,7 +2734,8 @@ export const GetAdminCountriesResponse = zod.object({
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
-  "international": zod.boolean()
+  "international": zod.boolean(),
+  "payout": zod.boolean()
 })
 }).and(zod.object({
   "version": zod.int().min(1),
@@ -2376,7 +2803,8 @@ export const CreateAdminCountryResponse = zod.object({
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
-  "international": zod.boolean()
+  "international": zod.boolean(),
+  "payout": zod.boolean()
 })
 }).and(zod.object({
   "version": zod.int().min(1),
@@ -2419,7 +2847,8 @@ export const UpdateAdminCountryBody = zod.object({
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
-  "international": zod.boolean()
+  "international": zod.boolean(),
+  "payout": zod.boolean()
 }),
   "expectedVersion": zod.int().min(1),
   "reason": zod.string().min(updateAdminCountryBodyReasonMin).max(updateAdminCountryBodyReasonMax)
@@ -2446,7 +2875,8 @@ export const UpdateAdminCountryResponse = zod.object({
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
-  "international": zod.boolean()
+  "international": zod.boolean(),
+  "payout": zod.boolean()
 })
 }).and(zod.object({
   "version": zod.int().min(1),
@@ -2556,7 +2986,7 @@ export const GetAdminPaymentRoutingResponse = zod.object({
 })),
   "countries": zod.array(zod.object({
   "countryCode": zod.string().regex(getAdminPaymentRoutingResponseCountriesItemCountryCodeRegExp),
-  "operation": zod.enum(['deposit', 'inter-network', 'international']),
+  "operation": zod.enum(['deposit', 'inter-network', 'international', 'payout']),
   "countryName": zod.string(),
   "phonePrefix": zod.string(),
   "ussdCode": zod.string().max(getAdminPaymentRoutingResponseCountriesItemUssdCodeMax).nullable(),
@@ -2568,6 +2998,7 @@ export const GetAdminPaymentRoutingResponse = zod.object({
   "operatorId": zod.string(),
   "operatorName": zod.string(),
   "operatorEnabled": zod.boolean(),
+  "payoutEnabled": zod.boolean(),
   "aggregatorCode": zod.string().nullable(),
   "effectiveAggregatorCode": zod.string().nullable(),
   "inheritsCountryDefault": zod.boolean(),
@@ -2728,7 +3159,7 @@ export const getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesIt
 
 export const GetAdminOperatorPricingResponse = zod.object({
   "categories": zod.array(zod.object({
-  "id": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
+  "id": zod.enum(['deposit', 'inter-network', 'international', 'linkflow', 'payout']),
   "label": zod.string(),
   "shortLabel": zod.string(),
   "description": zod.string()
@@ -2743,7 +3174,8 @@ export const GetAdminOperatorPricingResponse = zod.object({
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
-  "international": zod.boolean()
+  "international": zod.boolean(),
+  "payout": zod.boolean()
 }),
   "operators": zod.array(zod.object({
   "operatorId": zod.string().min(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMin).max(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMax),
@@ -2757,11 +3189,12 @@ export const GetAdminOperatorPricingResponse = zod.object({
   "depositEnabled": zod.boolean(),
   "interNetworkEnabled": zod.boolean(),
   "internationalEnabled": zod.boolean(),
+  "payoutEnabled": zod.boolean(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 }).and(zod.object({
   "rates": zod.array(zod.object({
-  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow', 'payout']),
   "feePercent": zod.number().min(getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMin).max(getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMax).nullable(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
@@ -2811,6 +3244,7 @@ export const CreateAdminOperatorResponse = zod.object({
   "depositEnabled": zod.boolean(),
   "interNetworkEnabled": zod.boolean(),
   "internationalEnabled": zod.boolean(),
+  "payoutEnabled": zod.boolean(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -2846,6 +3280,7 @@ export const UpdateAdminOperatorBody = zod.object({
   "depositEnabled": zod.boolean(),
   "interNetworkEnabled": zod.boolean(),
   "internationalEnabled": zod.boolean(),
+  "payoutEnabled": zod.boolean(),
   "expectedVersion": zod.int().min(1),
   "reason": zod.string().min(updateAdminOperatorBodyReasonMin).max(updateAdminOperatorBodyReasonMax)
 })
@@ -2871,6 +3306,7 @@ export const UpdateAdminOperatorResponse = zod.object({
   "depositEnabled": zod.boolean(),
   "interNetworkEnabled": zod.boolean(),
   "internationalEnabled": zod.boolean(),
+  "payoutEnabled": zod.boolean(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -2942,6 +3378,7 @@ export const UploadAdminOperatorLogoResponse = zod.object({
   "depositEnabled": zod.boolean(),
   "interNetworkEnabled": zod.boolean(),
   "internationalEnabled": zod.boolean(),
+  "payoutEnabled": zod.boolean(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -2984,6 +3421,7 @@ export const DeleteAdminOperatorLogoResponse = zod.object({
   "depositEnabled": zod.boolean(),
   "interNetworkEnabled": zod.boolean(),
   "internationalEnabled": zod.boolean(),
+  "payoutEnabled": zod.boolean(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date().nullable()
 })
@@ -3012,7 +3450,7 @@ export const updateAdminOperatorPricingBodyReasonMax = 500;
 
 export const UpdateAdminOperatorPricingBody = zod.object({
   "countryCode": zod.string().regex(updateAdminOperatorPricingBodyCountryCodeRegExp),
-  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow', 'payout']),
   "updates": zod.array(zod.object({
   "operatorId": zod.string().min(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMin).max(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMax).regex(updateAdminOperatorPricingBodyUpdatesItemOperatorIdRegExp),
   "feePercent": zod.number().min(updateAdminOperatorPricingBodyUpdatesItemFeePercentMin).max(updateAdminOperatorPricingBodyUpdatesItemFeePercentMax).nullable(),
@@ -3027,7 +3465,7 @@ export const UpdateAdminOperatorPricingBody = zod.object({
 export const UpdateAdminOperatorPricingResponse = zod.object({
   "items": zod.array(zod.object({
   "operatorId": zod.string(),
-  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow']),
+  "categoryId": zod.enum(['deposit', 'inter-network', 'international', 'linkflow', 'payout']),
   "feePercent": zod.number().nullable(),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date()
@@ -4534,6 +4972,9 @@ export const getPublicPaymentLimitsResponseMinimumDepositMinorMax = 2000000;
 export const getPublicPaymentLimitsResponseMinimumPayoutMinorMin = 200;
 export const getPublicPaymentLimitsResponseMinimumPayoutMinorMax = 2000000;
 
+export const getPublicPaymentLimitsResponseMaximumPayoutDailyMinorMin = 200;
+export const getPublicPaymentLimitsResponseMaximumPayoutDailyMinorMax = 9007199254740991;
+
 export const getPublicPaymentLimitsResponseMinimumInterNetworkMinorMax = 10000000;
 
 export const getPublicPaymentLimitsResponseMaximumTransferMinorMax = 10000000;
@@ -4547,6 +4988,7 @@ export const GetPublicPaymentLimitsResponse = zod.object({
   "currency": zod.enum(['XOF']),
   "minimumDepositMinor": zod.int().min(getPublicPaymentLimitsResponseMinimumDepositMinorMin).max(getPublicPaymentLimitsResponseMinimumDepositMinorMax),
   "minimumPayoutMinor": zod.int().min(getPublicPaymentLimitsResponseMinimumPayoutMinorMin).max(getPublicPaymentLimitsResponseMinimumPayoutMinorMax),
+  "maximumPayoutDailyMinor": zod.int().min(getPublicPaymentLimitsResponseMaximumPayoutDailyMinorMin).max(getPublicPaymentLimitsResponseMaximumPayoutDailyMinorMax).nullable(),
   "minimumInterNetworkMinor": zod.int().min(1).max(getPublicPaymentLimitsResponseMinimumInterNetworkMinorMax),
   "maximumTransferMinor": zod.int().min(1).max(getPublicPaymentLimitsResponseMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(getPublicPaymentLimitsResponseMaximumPayinMinorMin).max(getPublicPaymentLimitsResponseMaximumPayinMinorMax)
@@ -4562,6 +5004,9 @@ export const getAdminPaymentLimitsResponseOneMinimumDepositMinorMax = 2000000;
 export const getAdminPaymentLimitsResponseOneMinimumPayoutMinorMin = 200;
 export const getAdminPaymentLimitsResponseOneMinimumPayoutMinorMax = 2000000;
 
+export const getAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMin = 200;
+export const getAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMax = 9007199254740991;
+
 export const getAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax = 10000000;
 
 export const getAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 10000000;
@@ -4576,6 +5021,7 @@ export const GetAdminPaymentLimitsResponse = zod.object({
   "currency": zod.enum(['XOF']),
   "minimumDepositMinor": zod.int().min(getAdminPaymentLimitsResponseOneMinimumDepositMinorMin).max(getAdminPaymentLimitsResponseOneMinimumDepositMinorMax),
   "minimumPayoutMinor": zod.int().min(getAdminPaymentLimitsResponseOneMinimumPayoutMinorMin).max(getAdminPaymentLimitsResponseOneMinimumPayoutMinorMax),
+  "maximumPayoutDailyMinor": zod.int().min(getAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMin).max(getAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMax).nullable(),
   "minimumInterNetworkMinor": zod.int().min(1).max(getAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax),
   "maximumTransferMinor": zod.int().min(1).max(getAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(getAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(getAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
@@ -4594,6 +5040,9 @@ export const updateAdminPaymentLimitsBodyMinimumDepositMinorMax = 2000000;
 export const updateAdminPaymentLimitsBodyMinimumPayoutMinorMin = 200;
 export const updateAdminPaymentLimitsBodyMinimumPayoutMinorMax = 2000000;
 
+export const updateAdminPaymentLimitsBodyMaximumPayoutDailyMinorMin = 200;
+export const updateAdminPaymentLimitsBodyMaximumPayoutDailyMinorMax = 9007199254740991;
+
 export const updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax = 10000000;
 
 export const updateAdminPaymentLimitsBodyMaximumTransferMinorMax = 10000000;
@@ -4610,6 +5059,7 @@ export const updateAdminPaymentLimitsBodyReasonMax = 500;
 export const UpdateAdminPaymentLimitsBody = zod.object({
   "minimumDepositMinor": zod.int().min(updateAdminPaymentLimitsBodyMinimumDepositMinorMin).max(updateAdminPaymentLimitsBodyMinimumDepositMinorMax),
   "minimumPayoutMinor": zod.int().min(updateAdminPaymentLimitsBodyMinimumPayoutMinorMin).max(updateAdminPaymentLimitsBodyMinimumPayoutMinorMax),
+  "maximumPayoutDailyMinor": zod.int().min(updateAdminPaymentLimitsBodyMaximumPayoutDailyMinorMin).max(updateAdminPaymentLimitsBodyMaximumPayoutDailyMinorMax).nullable(),
   "minimumInterNetworkMinor": zod.int().min(1).max(updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax),
   "maximumTransferMinor": zod.int().min(1).max(updateAdminPaymentLimitsBodyMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(updateAdminPaymentLimitsBodyMaximumPayinMinorMin).max(updateAdminPaymentLimitsBodyMaximumPayinMinorMax),
@@ -4622,6 +5072,9 @@ export const updateAdminPaymentLimitsResponseOneMinimumDepositMinorMax = 2000000
 
 export const updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMin = 200;
 export const updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMax = 2000000;
+
+export const updateAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMin = 200;
+export const updateAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMax = 9007199254740991;
 
 export const updateAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax = 10000000;
 
@@ -4637,6 +5090,7 @@ export const UpdateAdminPaymentLimitsResponse = zod.object({
   "currency": zod.enum(['XOF']),
   "minimumDepositMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMinimumDepositMinorMin).max(updateAdminPaymentLimitsResponseOneMinimumDepositMinorMax),
   "minimumPayoutMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMin).max(updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMax),
+  "maximumPayoutDailyMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMin).max(updateAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMax).nullable(),
   "minimumInterNetworkMinor": zod.int().min(1).max(updateAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax),
   "maximumTransferMinor": zod.int().min(1).max(updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax)

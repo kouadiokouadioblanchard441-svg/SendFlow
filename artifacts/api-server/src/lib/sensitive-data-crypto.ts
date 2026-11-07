@@ -37,7 +37,11 @@ export type SensitiveDataPurpose =
   | "developer-webhook-payload"
   | "developer-client-token"
   | "developer-webhook-url"
-  | "developer-payment-metadata";
+  | "developer-payment-metadata"
+  | "payout-beneficiary-phone"
+  | "payout-beneficiary-name"
+  | "payout-provider-reference"
+  | "payout-confirmation-evidence";
 
 function activeKeyId() {
   const keyId = process.env.CUSTOMER_PII_ENCRYPTION_KEY_ID?.trim() || "primary";

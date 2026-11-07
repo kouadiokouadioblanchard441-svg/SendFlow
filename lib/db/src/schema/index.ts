@@ -36,3 +36,5 @@ export * from "./replit-payment-test-access";
 export * from "./email-campaigns";
 export * from "./email-marketing";
 export * from "./customer-service-settings";
+export * from "./payouts";
+export * from "./webhook-deliveries";

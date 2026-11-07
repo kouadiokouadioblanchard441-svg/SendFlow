@@ -20,6 +20,12 @@ export interface PublicPaymentLimits {
      */
   minimumPayoutMinor: number;
   /**
+     * @minimum 200
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  maximumPayoutDailyMinor: number | null;
+  /**
      * @minimum 1
      * @maximum 10000000
      */

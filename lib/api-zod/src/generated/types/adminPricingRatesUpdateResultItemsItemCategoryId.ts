@@ -14,4 +14,5 @@ export const AdminPricingRatesUpdateResultItemsItemCategoryId = {
   'inter-network': 'inter-network',
   international: 'international',
   linkflow: 'linkflow',
+  payout: 'payout',
 } as const;

@@ -50,6 +50,9 @@ import type {
   AdminPaymentAggregatorRouteUpdate,
   AdminPaymentLimits,
   AdminPaymentRouting,
+  AdminPayoutListResponse,
+  AdminPayoutRejectInput,
+  AdminPayoutRequest,
   AdminPinInput,
   AdminPinUnlockResponse,
   AdminPricingRatesUpdateResult,
@@ -135,9 +138,11 @@ import type {
   ListAdminIpBlocksParams,
   ListAdminLoginActivityParams,
   ListAdminOtpActivityParams,
+  ListAdminPayoutsParams,
   ListAdminTransactionsParams,
   ListAdminUserDeveloperWebhooksParams,
   ListAdminUsersParams,
+  ListDeveloperPayoutsParams,
   ManagedOperator,
   NetworkDefenseStatus,
   NetworkException,
@@ -145,6 +150,11 @@ import type {
   OperatorUpdate,
   OtpRateLimitError,
   PaymentLimitsUpdate,
+  PayoutCreateInput,
+  PayoutListResponse,
+  PayoutQuoteInput,
+  PayoutQuoteResponse,
+  PayoutResponse,
   PricingRatesUpdate,
   PublicBannerList,
   PublicCustomerServiceSettings,
@@ -4913,6 +4923,671 @@ export function useListDeveloperWebhookDeliveries<TData = Awaited<ReturnType<typ
 
 
 
+
+export const getCreateDeveloperPayoutQuoteUrl = () => {
+
+
+
+
+  return `/api/v1/payout-quote`
+}
+
+/**
+ * Read-only. The server loads the configured payout rate and limits. No funds are reserved and no provider is contacted.
+ * @summary Calculate a server-side payout quote
+ */
+export const createDeveloperPayoutQuote = async (payoutQuoteInput: PayoutQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<PayoutQuoteResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PayoutQuoteResponse>(getCreateDeveloperPayoutQuoteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(payoutQuoteInput)
+  }
+);}
+
+
+
+
+
+export const getCreateDeveloperPayoutQuoteMutationKey = () => ['createDeveloperPayoutQuote'] as const;
+
+export const getCreateDeveloperPayoutQuoteMutationOptions = <TError = ErrorType<ErrorEnvelope | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPayoutQuote>>, TError,CreateDeveloperPayoutQuoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPayoutQuote>>, TError,CreateDeveloperPayoutQuoteMutationVariables, TContext> => {
+
+const mutationKey = getCreateDeveloperPayoutQuoteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDeveloperPayoutQuote>>, CreateDeveloperPayoutQuoteMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDeveloperPayoutQuote(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDeveloperPayoutQuoteMutationResult = NonNullable<Awaited<ReturnType<typeof createDeveloperPayoutQuote>>>
+    export type CreateDeveloperPayoutQuoteMutationBody = BodyType<PayoutQuoteInput>
+    export type CreateDeveloperPayoutQuoteMutationError = ErrorType<ErrorEnvelope | void>
+    export type CreateDeveloperPayoutQuoteMutationVariables = {data: BodyType<PayoutQuoteInput>}
+
+    /**
+ * @summary Calculate a server-side payout quote
+ */
+export const useCreateDeveloperPayoutQuote = <TError = ErrorType<ErrorEnvelope | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPayoutQuote>>, TError,CreateDeveloperPayoutQuoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDeveloperPayoutQuote>>,
+        TError,
+        CreateDeveloperPayoutQuoteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateDeveloperPayoutQuoteMutationOptions(options));
+    }
+
+export const getListDeveloperPayoutsUrl = (params?: ListDeveloperPayoutsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/payouts?${stringifiedParams}` : `/api/v1/payouts`
+}
+
+/**
+ * @summary List payouts owned by the authenticated merchant
+ */
+export const listDeveloperPayouts = async (params?: ListDeveloperPayoutsParams, options?: Parameters<typeof customFetch>[1]): Promise<PayoutListResponse> => {
+
+  return customFetch<PayoutListResponse>(getListDeveloperPayoutsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDeveloperPayoutsQueryKey = (params?: ListDeveloperPayoutsParams,) => {
+    return [
+    `/api/v1/payouts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListDeveloperPayoutsQueryOptions = <TData = Awaited<ReturnType<typeof listDeveloperPayouts>>, TError = ErrorType<void>>(params?: ListDeveloperPayoutsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDeveloperPayouts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDeveloperPayoutsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDeveloperPayouts>>> = ({ signal }) => listDeveloperPayouts(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDeveloperPayouts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDeveloperPayoutsQueryResult = NonNullable<Awaited<ReturnType<typeof listDeveloperPayouts>>>
+export type ListDeveloperPayoutsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List payouts owned by the authenticated merchant
+ */
+
+export function useListDeveloperPayouts<TData = Awaited<ReturnType<typeof listDeveloperPayouts>>, TError = ErrorType<void>>(
+ params?: ListDeveloperPayoutsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDeveloperPayouts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDeveloperPayoutsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateDeveloperPayoutUrl = () => {
+
+
+
+
+  return `/api/v1/payouts`
+}
+
+/**
+ * Requires an eligible merchant, active wallet, enabled XOF country/operator route, configured fee and daily limit, and Idempotency-Key. The server recalculates all amounts. Dispatch remains locked until provider settlement evidence is verified; a locked request does not reserve funds.
+ * @summary Create and reserve a merchant payout
+ */
+export const createDeveloperPayout = async (payoutCreateInput: PayoutCreateInput, options?: Parameters<typeof customFetch>[1]): Promise<PayoutResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PayoutResponse>(getCreateDeveloperPayoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(payoutCreateInput)
+  }
+);}
+
+
+
+
+
+export const getCreateDeveloperPayoutMutationKey = () => ['createDeveloperPayout'] as const;
+
+export const getCreateDeveloperPayoutMutationOptions = <TError = ErrorType<ErrorEnvelope | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPayout>>, TError,CreateDeveloperPayoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPayout>>, TError,CreateDeveloperPayoutMutationVariables, TContext> => {
+
+const mutationKey = getCreateDeveloperPayoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDeveloperPayout>>, CreateDeveloperPayoutMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDeveloperPayout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDeveloperPayoutMutationResult = NonNullable<Awaited<ReturnType<typeof createDeveloperPayout>>>
+    export type CreateDeveloperPayoutMutationBody = BodyType<PayoutCreateInput>
+    export type CreateDeveloperPayoutMutationError = ErrorType<ErrorEnvelope | void>
+    export type CreateDeveloperPayoutMutationVariables = {data: BodyType<PayoutCreateInput>}
+
+    /**
+ * @summary Create and reserve a merchant payout
+ */
+export const useCreateDeveloperPayout = <TError = ErrorType<ErrorEnvelope | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDeveloperPayout>>, TError,CreateDeveloperPayoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDeveloperPayout>>,
+        TError,
+        CreateDeveloperPayoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateDeveloperPayoutMutationOptions(options));
+    }
+
+export const getGetDeveloperPayoutUrl = (payoutId: string,) => {
+
+
+
+
+  return `/api/v1/payouts/${payoutId}`
+}
+
+/**
+ * @summary Read one payout owned by the authenticated merchant
+ */
+export const getDeveloperPayout = async (payoutId: string, options?: Parameters<typeof customFetch>[1]): Promise<PayoutResponse> => {
+
+  return customFetch<PayoutResponse>(getGetDeveloperPayoutUrl(payoutId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDeveloperPayoutQueryKey = (payoutId: string,) => {
+    return [
+    `/api/v1/payouts/${payoutId}`
+    ] as const;
+    }
+
+
+export const getGetDeveloperPayoutQueryOptions = <TData = Awaited<ReturnType<typeof getDeveloperPayout>>, TError = ErrorType<void>>(payoutId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPayout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDeveloperPayoutQueryKey(payoutId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDeveloperPayout>>> = ({ signal }) => getDeveloperPayout(payoutId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: payoutId !== null && payoutId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPayout>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDeveloperPayoutQueryResult = NonNullable<Awaited<ReturnType<typeof getDeveloperPayout>>>
+export type GetDeveloperPayoutQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read one payout owned by the authenticated merchant
+ */
+
+export function useGetDeveloperPayout<TData = Awaited<ReturnType<typeof getDeveloperPayout>>, TError = ErrorType<void>>(
+ payoutId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeveloperPayout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDeveloperPayoutQueryOptions(payoutId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCancelDeveloperPayoutUrl = (payoutId: string,) => {
+
+
+
+
+  return `/api/v1/payouts/${payoutId}/cancel`
+}
+
+/**
+ * Only an undispatched payout may be cancelled. No provider cancellation is offered because the provider contract does not document one.
+ * @summary Cancel an undispatched payout and release its reservation
+ */
+export const cancelDeveloperPayout = async (payoutId: string, options?: Parameters<typeof customFetch>[1]): Promise<PayoutResponse> => {
+
+  return customFetch<PayoutResponse>(getCancelDeveloperPayoutUrl(payoutId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCancelDeveloperPayoutMutationKey = () => ['cancelDeveloperPayout'] as const;
+
+export const getCancelDeveloperPayoutMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelDeveloperPayout>>, TError,CancelDeveloperPayoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelDeveloperPayout>>, TError,CancelDeveloperPayoutMutationVariables, TContext> => {
+
+const mutationKey = getCancelDeveloperPayoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelDeveloperPayout>>, CancelDeveloperPayoutMutationVariables> = (props) => {
+          const {payoutId} = props ?? {};
+
+          return  cancelDeveloperPayout(payoutId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelDeveloperPayoutMutationResult = NonNullable<Awaited<ReturnType<typeof cancelDeveloperPayout>>>
+
+    export type CancelDeveloperPayoutMutationError = ErrorType<void>
+    export type CancelDeveloperPayoutMutationVariables = {payoutId: string}
+
+    /**
+ * @summary Cancel an undispatched payout and release its reservation
+ */
+export const useCancelDeveloperPayout = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelDeveloperPayout>>, TError,CancelDeveloperPayoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof cancelDeveloperPayout>>,
+        TError,
+        CancelDeveloperPayoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCancelDeveloperPayoutMutationOptions(options));
+    }
+
+export const getListAdminPayoutsUrl = (params?: ListAdminPayoutsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts`
+}
+
+/**
+ * @summary Review payout requests and uncertain operations
+ */
+export const listAdminPayouts = async (params?: ListAdminPayoutsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminPayoutListResponse> => {
+
+  return customFetch<AdminPayoutListResponse>(getListAdminPayoutsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminPayoutsQueryKey = (params?: ListAdminPayoutsParams,) => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminPayoutsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminPayouts>>, TError = ErrorType<void>>(params?: ListAdminPayoutsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminPayouts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminPayoutsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminPayouts>>> = ({ signal }) => listAdminPayouts(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminPayouts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminPayoutsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminPayouts>>>
+export type ListAdminPayoutsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Review payout requests and uncertain operations
+ */
+
+export function useListAdminPayouts<TData = Awaited<ReturnType<typeof listAdminPayouts>>, TError = ErrorType<void>>(
+ params?: ListAdminPayoutsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminPayouts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminPayoutsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminPayoutUrl = (payoutId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts/${payoutId}`
+}
+
+/**
+ * @summary Review one payout with its immutable state timeline
+ */
+export const getAdminPayout = async (payoutId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminPayoutRequest> => {
+
+  return customFetch<AdminPayoutRequest>(getGetAdminPayoutUrl(payoutId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminPayoutQueryKey = (payoutId: string,) => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts/${payoutId}`
+    ] as const;
+    }
+
+
+export const getGetAdminPayoutQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPayout>>, TError = ErrorType<void>>(payoutId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPayout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPayoutQueryKey(payoutId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPayout>>> = ({ signal }) => getAdminPayout(payoutId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: payoutId !== null && payoutId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPayout>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminPayoutQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPayout>>>
+export type GetAdminPayoutQueryError = ErrorType<void>
+
+
+/**
+ * @summary Review one payout with its immutable state timeline
+ */
+
+export function useGetAdminPayout<TData = Awaited<ReturnType<typeof getAdminPayout>>, TError = ErrorType<void>>(
+ payoutId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPayout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminPayoutQueryOptions(payoutId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRejectAdminPayoutUrl = (payoutId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts/${payoutId}/reject`
+}
+
+/**
+ * This audited action cannot mark a payout successful, and cannot release funds after provider dispatch.
+ * @summary Reject and release only a payout never dispatched
+ */
+export const rejectAdminPayout = async (payoutId: string,
+    adminPayoutRejectInput: AdminPayoutRejectInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminPayoutRequest> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminPayoutRequest>(getRejectAdminPayoutUrl(payoutId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminPayoutRejectInput)
+  }
+);}
+
+
+
+
+
+export const getRejectAdminPayoutMutationKey = () => ['rejectAdminPayout'] as const;
+
+export const getRejectAdminPayoutMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAdminPayout>>, TError,RejectAdminPayoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectAdminPayout>>, TError,RejectAdminPayoutMutationVariables, TContext> => {
+
+const mutationKey = getRejectAdminPayoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectAdminPayout>>, RejectAdminPayoutMutationVariables> = (props) => {
+          const {payoutId,data} = props ?? {};
+
+          return  rejectAdminPayout(payoutId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RejectAdminPayoutMutationResult = NonNullable<Awaited<ReturnType<typeof rejectAdminPayout>>>
+    export type RejectAdminPayoutMutationBody = BodyType<AdminPayoutRejectInput>
+    export type RejectAdminPayoutMutationError = ErrorType<void>
+    export type RejectAdminPayoutMutationVariables = {payoutId: string;data: BodyType<AdminPayoutRejectInput>}
+
+    /**
+ * @summary Reject and release only a payout never dispatched
+ */
+export const useRejectAdminPayout = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAdminPayout>>, TError,RejectAdminPayoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof rejectAdminPayout>>,
+        TError,
+        RejectAdminPayoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRejectAdminPayoutMutationOptions(options));
+    }
 
 export const getCreateDeveloperPaymentSessionUrl = () => {
 

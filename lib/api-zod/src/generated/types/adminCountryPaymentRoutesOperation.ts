@@ -13,4 +13,5 @@ export const AdminCountryPaymentRoutesOperation = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  payout: 'payout',
 } as const;

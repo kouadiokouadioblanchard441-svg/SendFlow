@@ -21,6 +21,7 @@ export const countriesTable = pgTable(
     depositEnabled: boolean("deposit_enabled").notNull().default(false),
     interNetworkEnabled: boolean("inter_network_enabled").notNull().default(false),
     internationalEnabled: boolean("international_enabled").notNull().default(false),
+    payoutEnabled: boolean("payout_enabled").notNull().default(false),
     ussdCode: varchar("ussd_code", { length: 32 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
@@ -58,6 +59,7 @@ export const insertCountrySchema = z.object({
   depositEnabled: z.boolean().default(false),
   interNetworkEnabled: z.boolean().default(false),
   internationalEnabled: z.boolean().default(false),
+  payoutEnabled: z.boolean().default(false),
   createdBy: z.string().min(1).max(255),
   updatedBy: z.string().min(1).max(255),
 }).refine((country) => country.minPhoneDigits <= country.maxPhoneDigits, {

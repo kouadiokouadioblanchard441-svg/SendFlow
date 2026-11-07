@@ -11,6 +11,7 @@ export async function loadPaymentLimits(): Promise<PaymentLimitValues> {
   return {
     minimumDepositMinor: record.minimumDepositMinor,
     minimumPayoutMinor: record.minimumPayoutMinor,
+    maximumPayoutDailyMinor: record.maximumPayoutDailyMinor,
     minimumInterNetworkMinor: record.minimumInterNetworkMinor,
     maximumTransferMinor: record.maximumTransferMinor,
     maximumPayinMinor: record.maximumPayinMinor,

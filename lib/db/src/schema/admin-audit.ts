@@ -84,6 +84,9 @@ export type AdminAuditAction =
   | "update_customer_service_settings"
   | "view_developer_webhooks"
   | "view_identity_verification"
+  | "view_payout_queue"
+  | "view_payout"
+  | "reject_undispatched_payout"
   | "download_identity_verification"
   | "decide_identity_verification";
 export type AdminAuditResourceType =
@@ -108,4 +111,5 @@ export type AdminAuditResourceType =
   | "email_campaign"
   | "customer_service_settings"
   | "developer_webhook"
-  | "identity_verification";
+  | "identity_verification"
+  | "payout";

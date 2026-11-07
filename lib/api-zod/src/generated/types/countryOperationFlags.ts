@@ -10,4 +10,5 @@ export interface CountryOperationFlags {
   deposit: boolean;
   interNetwork: boolean;
   international: boolean;
+  payout: boolean;
 }

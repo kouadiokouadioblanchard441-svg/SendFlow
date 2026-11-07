@@ -52,6 +52,7 @@ function toCountry(country: typeof countriesTable.$inferSelect) {
       deposit: country.depositEnabled,
       interNetwork: country.interNetworkEnabled,
       international: country.internationalEnabled,
+      payout: country.payoutEnabled,
     },
     version: country.version,
     updatedAt: country.updatedAt?.toISOString() ?? null,
@@ -142,6 +143,7 @@ adminRoutes.post("/countries", async (req, res): Promise<void> => {
           depositEnabled: false,
           interNetworkEnabled: false,
           internationalEnabled: false,
+          payoutEnabled: false,
           version: 1,
           createdBy: adminUserId,
           updatedBy: adminUserId,
@@ -165,6 +167,7 @@ adminRoutes.post("/countries", async (req, res): Promise<void> => {
             depositEnabled: false,
             interNetworkEnabled: false,
             internationalEnabled: false,
+            payoutEnabled: false,
             version: 1,
             createdBy: adminUserId,
             updatedBy: adminUserId,
@@ -245,6 +248,7 @@ adminRoutes.patch("/countries/:countryCode", async (req, res): Promise<void> => 
           depositEnabled: body.data.operations.deposit,
           interNetworkEnabled: body.data.operations.interNetwork,
           internationalEnabled: body.data.operations.international,
+          payoutEnabled: body.data.operations.payout,
           version: body.data.expectedVersion + 1,
           updatedBy: adminUserId,
           updatedAt: new Date(),
@@ -304,6 +308,7 @@ adminRoutes.delete("/countries/:countryCode", async (req, res): Promise<void> =>
         country.depositEnabled ||
         country.interNetworkEnabled ||
         country.internationalEnabled
+        || country.payoutEnabled
       ) {
         return "referenced" as const;
       }

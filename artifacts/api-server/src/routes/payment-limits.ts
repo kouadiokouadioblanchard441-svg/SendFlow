@@ -20,6 +20,7 @@ function presentPublic(record: typeof paymentLimitsTable.$inferSelect) {
     currency: "XOF" as const,
     minimumDepositMinor: record.minimumDepositMinor,
     minimumPayoutMinor: record.minimumPayoutMinor,
+    maximumPayoutDailyMinor: record.maximumPayoutDailyMinor,
     minimumInterNetworkMinor: record.minimumInterNetworkMinor,
     maximumTransferMinor: record.maximumTransferMinor,
     maximumPayinMinor: record.maximumPayinMinor,
@@ -76,6 +77,7 @@ adminRoutes.patch("/payment-limits", async (req, res): Promise<void> => {
     || !isValidPaymentLimitValues({
       minimumDepositMinor: parsed.data.minimumDepositMinor,
       minimumPayoutMinor: parsed.data.minimumPayoutMinor,
+      maximumPayoutDailyMinor: parsed.data.maximumPayoutDailyMinor,
       minimumInterNetworkMinor: parsed.data.minimumInterNetworkMinor,
       maximumTransferMinor: parsed.data.maximumTransferMinor,
       maximumPayinMinor: parsed.data.maximumPayinMinor,
@@ -92,6 +94,7 @@ adminRoutes.patch("/payment-limits", async (req, res): Promise<void> => {
       const [setting] = await tx.update(paymentLimitsTable).set({
         minimumDepositMinor: parsed.data.minimumDepositMinor,
         minimumPayoutMinor: parsed.data.minimumPayoutMinor,
+        maximumPayoutDailyMinor: parsed.data.maximumPayoutDailyMinor,
         minimumInterNetworkMinor: parsed.data.minimumInterNetworkMinor,
         maximumTransferMinor: parsed.data.maximumTransferMinor,
         maximumPayinMinor: parsed.data.maximumPayinMinor,

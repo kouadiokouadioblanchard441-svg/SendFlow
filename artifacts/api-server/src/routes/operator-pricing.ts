@@ -51,6 +51,7 @@ const operatorMetadataColumns = {
   depositEnabled: operatorCatalogTable.depositEnabled,
   interNetworkEnabled: operatorCatalogTable.interNetworkEnabled,
   internationalEnabled: operatorCatalogTable.internationalEnabled,
+  payoutEnabled: operatorCatalogTable.payoutEnabled,
   version: operatorCatalogTable.version,
   updatedAt: operatorCatalogTable.updatedAt,
   hasLogo: sql<boolean>`${operatorCatalogTable.logoData} IS NOT NULL`,
@@ -59,7 +60,7 @@ const operatorMetadataColumns = {
 type OperatorMetadataRecord = Pick<
   typeof operatorCatalogTable.$inferSelect,
   "operatorId" | "countryCode" | "name" | "shortName" | "initials" | "brand" | "enabled" |
-  "depositEnabled" | "interNetworkEnabled" | "internationalEnabled" | "version" | "updatedAt"
+  "depositEnabled" | "interNetworkEnabled" | "internationalEnabled" | "payoutEnabled" | "version" | "updatedAt"
 > & {
   hasLogo?: boolean;
   logoData?: typeof operatorCatalogTable.$inferSelect.logoData;
@@ -82,6 +83,7 @@ function toManagedOperator(
     depositEnabled: operator.depositEnabled,
     interNetworkEnabled: operator.interNetworkEnabled,
     internationalEnabled: operator.internationalEnabled,
+    payoutEnabled: operator.payoutEnabled,
     version: operator.version,
     updatedAt: operator.updatedAt?.toISOString() ?? null,
     ...(rates.length > 0
@@ -176,6 +178,8 @@ router.get("/pricing", async (req, res): Promise<void> => {
               && country.enabled && country.operations.interNetwork)) && operator.interNetworkEnabled,
             international: Boolean(countries.find((country) => country.id === operator.countryCode
               && country.enabled && country.operations.international)) && operator.internationalEnabled,
+            payout: Boolean(countries.find((country) => country.id === operator.countryCode
+              && country.enabled && country.operations.payout)) && operator.payoutEnabled,
           },
           fees,
         };
@@ -302,6 +306,7 @@ adminRoutes.post("/operators", async (req, res): Promise<void> => {
           depositEnabled: false,
           interNetworkEnabled: false,
           internationalEnabled: false,
+          payoutEnabled: false,
           version: 1,
           createdBy: adminUserId,
           updatedBy: adminUserId,
@@ -383,6 +388,7 @@ adminRoutes.patch("/operators/:operatorId", async (req, res): Promise<void> => {
           depositEnabled: body.data.depositEnabled,
           interNetworkEnabled: body.data.interNetworkEnabled,
           internationalEnabled: body.data.internationalEnabled,
+          payoutEnabled: body.data.payoutEnabled,
           version: body.data.expectedVersion + 1,
           updatedBy: adminUserId,
           updatedAt: new Date(),
@@ -448,6 +454,7 @@ adminRoutes.delete("/operators/:operatorId", async (req, res): Promise<void> => 
         operator.depositEnabled ||
         operator.interNetworkEnabled ||
         operator.internationalEnabled
+        || operator.payoutEnabled
       ) {
         return "referenced" as const;
       }

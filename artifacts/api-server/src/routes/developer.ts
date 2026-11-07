@@ -169,7 +169,11 @@ async function hasPaymentTestAccess(userId: string) {
   return Boolean(row);
 }
 
-async function requireSecretApiKey(req: Request, res: Response) {
+export async function requireSecretApiKey(
+  req: Request,
+  res: Response,
+  operation: "session_read" | "session_create" | "direct_attempt" | "direct_poll" | "payout_read" | "payout_create" = "session_read",
+) {
   const rawKey = parseAuthorization(req);
   if (!rawKey || !secretKeyPattern.test(rawKey)) {
     res.status(401).json({ error: "La clé API secrète est invalide ou désactivée." });
@@ -204,7 +208,7 @@ async function requireSecretApiKey(req: Request, res: Response) {
     res.status(403).json({ error: "La création de paiements API n’est pas disponible pour ce compte d’essai." });
     return null;
   }
-  if (!await consumeDeveloperApiQuota(row.id, "session_read")) {
+  if (!await consumeDeveloperApiQuota(row.id, operation)) {
     res.setHeader("Retry-After", "60");
     res.status(429).json({ error: "Trop de requêtes API. Réessayez dans une minute." });
     return null;

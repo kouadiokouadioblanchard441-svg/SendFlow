@@ -42,6 +42,7 @@ try {
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
   await owner.query(`DROP TABLE sf_developer_webhook_deliveries;
+    DROP TABLE sf_payout_confirmations, sf_payout_state_events, sf_payout_attempts, sf_payout_requests;
     DROP TABLE sf_developer_payment_sessions;
     DROP TABLE sf_developer_webhook_endpoints;
     DROP TABLE sf_developer_api_keys`);
@@ -194,6 +195,9 @@ try {
       { applied: false, alreadyApplied: true },
     );
   } finally { migrationClient.release(); }
+  const payoutMigration = readFileSync(join(root, "lib/db/migrations/2026-11-08-payout-module.sql"), "utf8");
+  await owner.query(payoutMigration);
+  await owner.query(payoutMigration);
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app`);

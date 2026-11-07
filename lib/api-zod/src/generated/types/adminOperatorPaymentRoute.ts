@@ -10,6 +10,7 @@ export interface AdminOperatorPaymentRoute {
   operatorId: string;
   operatorName: string;
   operatorEnabled: boolean;
+  payoutEnabled: boolean;
   /** @nullable */
   aggregatorCode: string | null;
   /** @nullable */

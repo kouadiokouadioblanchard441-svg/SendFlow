@@ -295,6 +295,12 @@ export interface PublicPaymentLimits {
      */
   minimumPayoutMinor: number;
   /**
+     * @minimum 200
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  maximumPayoutDailyMinor: number | null;
+  /**
      * @minimum 1
      * @maximum 10000000
      */
@@ -328,6 +334,12 @@ export interface PaymentLimitsUpdate {
      * @maximum 2000000
      */
   minimumPayoutMinor: number;
+  /**
+     * @minimum 200
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  maximumPayoutDailyMinor: number | null;
   /**
      * @minimum 1
      * @maximum 10000000
@@ -1791,6 +1803,7 @@ export interface CountryOperationFlags {
   deposit: boolean;
   interNetwork: boolean;
   international: boolean;
+  payout: boolean;
 }
 
 export interface CountryCatalogItem {
@@ -1921,6 +1934,7 @@ export interface AdminOperatorPaymentRoute {
   operatorId: string;
   operatorName: string;
   operatorEnabled: boolean;
+  payoutEnabled: boolean;
   /** @nullable */
   aggregatorCode: string | null;
   /** @nullable */
@@ -1946,6 +1960,7 @@ export const AdminCountryPaymentRoutesOperation = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  payout: 'payout',
 } as const;
 
 export interface AdminCountryPaymentRoutes {
@@ -1983,6 +1998,7 @@ export const PublicPricingCategoryId = {
   'inter-network': 'inter-network',
   international: 'international',
   linkflow: 'linkflow',
+  payout: 'payout',
 } as const;
 
 export interface PublicPricingCategory {
@@ -2045,6 +2061,11 @@ export type PublicPricingOperatorFees = {
      * @maximum 1
      */
   linkflow?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  payout?: number;
 };
 
 export interface PublicPricingOperator {
@@ -2085,6 +2106,7 @@ export const AdminOperatorPricingRateCategoryId = {
   'inter-network': 'inter-network',
   international: 'international',
   linkflow: 'linkflow',
+  payout: 'payout',
 } as const;
 
 export interface AdminOperatorPricingRate {
@@ -2133,6 +2155,7 @@ export interface ManagedOperator {
   depositEnabled: boolean;
   interNetworkEnabled: boolean;
   internationalEnabled: boolean;
+  payoutEnabled: boolean;
   /** @minimum 1 */
   version: number;
   /** @nullable */
@@ -2209,6 +2232,7 @@ export interface OperatorUpdate {
   depositEnabled: boolean;
   interNetworkEnabled: boolean;
   internationalEnabled: boolean;
+  payoutEnabled: boolean;
   /** @minimum 1 */
   expectedVersion: number;
   /**
@@ -2253,6 +2277,7 @@ export const PricingRatesUpdateCategoryId = {
   'inter-network': 'inter-network',
   international: 'international',
   linkflow: 'linkflow',
+  payout: 'payout',
 } as const;
 
 export interface PricingRatesUpdate {
@@ -2279,6 +2304,7 @@ export const AdminPricingRatesUpdateResultItemsItemCategoryId = {
   'inter-network': 'inter-network',
   international: 'international',
   linkflow: 'linkflow',
+  payout: 'payout',
 } as const;
 
 export type AdminPricingRatesUpdateResultItemsItem = {
@@ -3075,6 +3101,11 @@ export type DeveloperWebhookInputEventsItem = typeof DeveloperWebhookInputEvents
 export const DeveloperWebhookInputEventsItem = {
   paymentsucceeded: 'payment.succeeded',
   paymentfailed: 'payment.failed',
+  payoutcreated: 'payout.created',
+  payoutprocessing: 'payout.processing',
+  payoutsucceeded: 'payout.succeeded',
+  payoutfailed: 'payout.failed',
+  payoutuncertain: 'payout.uncertain',
 } as const;
 
 export interface DeveloperWebhookInput {
@@ -3085,7 +3116,10 @@ export interface DeveloperWebhookInput {
   label: string;
   /** @maxLength 2048 */
   url: string;
-  /** @minItems 1 */
+  /**
+     * @minItems 1
+     * @maxItems 7
+     */
   events: DeveloperWebhookInputEventsItem[];
 }
 
@@ -3095,6 +3129,11 @@ export type DeveloperWebhookEndpointEventsItem = typeof DeveloperWebhookEndpoint
 export const DeveloperWebhookEndpointEventsItem = {
   paymentsucceeded: 'payment.succeeded',
   paymentfailed: 'payment.failed',
+  payoutcreated: 'payout.created',
+  payoutprocessing: 'payout.processing',
+  payoutsucceeded: 'payout.succeeded',
+  payoutfailed: 'payout.failed',
+  payoutuncertain: 'payout.uncertain',
 } as const;
 
 export type DeveloperWebhookEndpointStatus = typeof DeveloperWebhookEndpointStatus[keyof typeof DeveloperWebhookEndpointStatus];
@@ -3713,6 +3752,247 @@ export interface AdminEmailCampaignRetryResponse {
   replayed: boolean;
 }
 
+export type PayoutStatus = typeof PayoutStatus[keyof typeof PayoutStatus];
+
+
+export const PayoutStatus = {
+  created: 'created',
+  validated: 'validated',
+  funds_reserved: 'funds_reserved',
+  submitted: 'submitted',
+  processing: 'processing',
+  succeeded: 'succeeded',
+  rejected: 'rejected',
+  failed: 'failed',
+  uncertain: 'uncertain',
+  cancelled: 'cancelled',
+} as const;
+
+export type PayoutFeePayer = typeof PayoutFeePayer[keyof typeof PayoutFeePayer];
+
+
+export const PayoutFeePayer = {
+  merchant: 'merchant',
+  beneficiary: 'beneficiary',
+} as const;
+
+export type PayoutQuoteInputCurrency = typeof PayoutQuoteInputCurrency[keyof typeof PayoutQuoteInputCurrency];
+
+
+export const PayoutQuoteInputCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface PayoutQuoteInput {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  currency: PayoutQuoteInputCurrency;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  /**
+     * @minLength 2
+     * @maxLength 60
+     * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+     */
+  operatorId: string;
+  feePayer: PayoutFeePayer;
+}
+
+export type PayoutQuoteResponseCurrency = typeof PayoutQuoteResponseCurrency[keyof typeof PayoutQuoteResponseCurrency];
+
+
+export const PayoutQuoteResponseCurrency = {
+  XOF: 'XOF',
+} as const;
+
+/**
+ * @nullable
+ */
+export type PayoutQuoteResponseExecutionBlockReason = typeof PayoutQuoteResponseExecutionBlockReason[keyof typeof PayoutQuoteResponseExecutionBlockReason] | null;
+
+
+export const PayoutQuoteResponseExecutionBlockReason = {
+  provider_proof_not_verified: 'provider_proof_not_verified',
+} as const;
+
+export interface PayoutQuoteResponse {
+  currency: PayoutQuoteResponseCurrency;
+  amountMinor: number;
+  /** @minimum 0 */
+  feeMinor: number;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  providerFeeMinor: number | null;
+  /** @minimum 1 */
+  totalDebitMinor: number;
+  /** @minimum 1 */
+  beneficiaryAmountMinor: number;
+  feePayer: PayoutFeePayer;
+  /** @minimum 200 */
+  minimumPayoutMinor: number;
+  /**
+     * @minimum 200
+     * @nullable
+     */
+  maximumPayoutDailyMinor: number | null;
+  /** @minimum 1 */
+  pricingVersion: number;
+  quoteExpiresAt: string;
+  executionReady: boolean;
+  /** @nullable */
+  executionBlockReason: PayoutQuoteResponseExecutionBlockReason;
+}
+
+export interface PayoutBeneficiaryInput {
+  /**
+     * @minLength 9
+     * @maxLength 16
+     * @pattern ^\+[1-9][0-9]{7,14}$
+     */
+  phoneNumber: string;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     * @nullable
+     */
+  name?: string | null;
+}
+
+export type PayoutCreateInputCurrency = typeof PayoutCreateInputCurrency[keyof typeof PayoutCreateInputCurrency];
+
+
+export const PayoutCreateInputCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface PayoutCreateInput {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  currency: PayoutCreateInputCurrency;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  /**
+     * @minLength 2
+     * @maxLength 60
+     * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+     */
+  operatorId: string;
+  feePayer: PayoutFeePayer;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     * @nullable
+     */
+  merchantReference?: string | null;
+  beneficiary: PayoutBeneficiaryInput;
+}
+
+export interface PayoutBeneficiarySummary {
+  /** @pattern ^[0-9]{4}$ */
+  phoneLast4: string;
+  /** @nullable */
+  name: string | null;
+}
+
+export type PayoutResponseCurrency = typeof PayoutResponseCurrency[keyof typeof PayoutResponseCurrency];
+
+
+export const PayoutResponseCurrency = {
+  XOF: 'XOF',
+} as const;
+
+export interface PayoutResponse {
+  id: string;
+  /** @pattern ^SFPO[A-F0-9]{16}$ */
+  reference: string;
+  /** @nullable */
+  merchantReference: string | null;
+  /** @pattern ^[a-z]{2}$ */
+  countryCode: string;
+  operatorId: string;
+  beneficiary: PayoutBeneficiarySummary;
+  amountMinor: number;
+  currency: PayoutResponseCurrency;
+  feeMinor: number;
+  /** @nullable */
+  providerFeeMinor: number | null;
+  totalDebitMinor: number;
+  beneficiaryAmountMinor: number;
+  feePayer: PayoutFeePayer;
+  status: PayoutStatus;
+  createdAt: string;
+  updatedAt: string;
+  /** @nullable */
+  submittedAt: string | null;
+  /** @nullable */
+  completedAt: string | null;
+  /** @nullable */
+  failureCode: string | null;
+}
+
+export interface PayoutListResponse {
+  items: PayoutResponse[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type AdminPayoutRequestReservationState = typeof AdminPayoutRequestReservationState[keyof typeof AdminPayoutRequestReservationState];
+
+
+export const AdminPayoutRequestReservationState = {
+  none: 'none',
+  active: 'active',
+  consumed: 'consumed',
+  released: 'released',
+} as const;
+
+export type AdminPayoutRequestTimelineItemActorType = typeof AdminPayoutRequestTimelineItemActorType[keyof typeof AdminPayoutRequestTimelineItemActorType];
+
+
+export const AdminPayoutRequestTimelineItemActorType = {
+  merchant: 'merchant',
+  admin: 'admin',
+  system: 'system',
+  provider: 'provider',
+} as const;
+
+export type AdminPayoutRequestTimelineItem = {
+  /** @nullable */
+  fromStatus: string | null;
+  toStatus: string;
+  actorType: AdminPayoutRequestTimelineItemActorType;
+  reasonCode: string;
+  createdAt: string;
+};
+
+export type AdminPayoutRequest = PayoutResponse & {
+  merchantUserId: string;
+  reservationState: AdminPayoutRequestReservationState;
+  timeline: AdminPayoutRequestTimelineItem[];
+};
+
+export interface AdminPayoutListResponse {
+  items: AdminPayoutRequest[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export interface AdminPayoutRejectInput {
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
 /**
  * Inclusive UTC calendar date.
  */
@@ -3748,6 +4028,26 @@ cursor?: string;
  * @maximum 50
  */
 limit?: number;
+};
+
+export type ListDeveloperPayoutsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+cursor?: string;
+status?: PayoutStatus;
+};
+
+export type ListAdminPayoutsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+cursor?: string;
+status?: PayoutStatus;
 };
 
 export type GetCustomerTransactionsParams = {

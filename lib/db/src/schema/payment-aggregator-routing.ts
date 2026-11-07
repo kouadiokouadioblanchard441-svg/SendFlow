@@ -44,7 +44,7 @@ export const paymentAggregatorRoutesTable = pgTable(
     countryIndex: index("sf_operation_aggregator_routes_country_idx").on(table.countryCode),
     operationCheck: check(
       "sf_operation_aggregator_routes_operation_check",
-      sql`${table.operation} IN ('deposit', 'inter-network', 'international')`,
+      sql`${table.operation} IN ('deposit', 'inter-network', 'international', 'payout')`,
     ),
   }),
 );

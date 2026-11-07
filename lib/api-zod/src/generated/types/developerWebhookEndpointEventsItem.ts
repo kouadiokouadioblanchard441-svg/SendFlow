@@ -12,4 +12,9 @@ export type DeveloperWebhookEndpointEventsItem = typeof DeveloperWebhookEndpoint
 export const DeveloperWebhookEndpointEventsItem = {
   paymentsucceeded: 'payment.succeeded',
   paymentfailed: 'payment.failed',
+  payoutcreated: 'payout.created',
+  payoutprocessing: 'payout.processing',
+  payoutsucceeded: 'payout.succeeded',
+  payoutfailed: 'payout.failed',
+  payoutuncertain: 'payout.uncertain',
 } as const;

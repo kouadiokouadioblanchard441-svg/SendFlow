@@ -27,4 +27,9 @@ export type PublicPricingOperatorFees = {
      * @maximum 1
      */
   linkflow?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  payout?: number;
 };

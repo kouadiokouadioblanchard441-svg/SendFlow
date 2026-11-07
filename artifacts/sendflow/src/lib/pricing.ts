@@ -1,4 +1,4 @@
-export type PricingCategoryId = 'deposit' | 'inter-network' | 'international' | 'linkflow';
+export type PricingCategoryId = 'deposit' | 'inter-network' | 'international' | 'linkflow' | 'payout';
 
 export type PricingCategory = {
   id: PricingCategoryId;
@@ -16,7 +16,7 @@ export type PricingCountry = {
   enabled: boolean;
   minPhoneDigits: number;
   maxPhoneDigits: number;
-  operations: { deposit: boolean; interNetwork: boolean; international: boolean };
+  operations: { deposit: boolean; interNetwork: boolean; international: boolean; payout: boolean };
 };
 
 export type PricingFeeMap = Partial<Record<PricingCategoryId, number>>;
@@ -32,7 +32,7 @@ export type PricingOperator = {
   requiresOtp: boolean;
   otpCommand: string | null;
   fees: PricingFeeMap;
-  operations: { deposit: boolean; interNetwork: boolean; international: boolean };
+  operations: { deposit: boolean; interNetwork: boolean; international: boolean; payout: boolean };
 };
 
 export type PricingOperatorRate = PricingOperator & {
@@ -51,8 +51,9 @@ export function getVisiblePricingCountries(
   countries: PricingCountry[],
   categoryId: PricingCategoryId,
 ): PricingCountry[] {
-  if (categoryId !== 'linkflow') return countries;
-  return countries.filter((country) => country.enabled && country.operations.deposit);
+  if (categoryId === 'linkflow') return countries.filter((country) => country.enabled && country.operations.deposit);
+  if (categoryId === 'payout') return countries.filter((country) => country.enabled && country.operations.payout);
+  return countries;
 }
 
 export function formatPricingFeeRate(rate: number): string {
