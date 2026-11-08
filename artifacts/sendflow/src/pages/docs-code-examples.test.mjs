@@ -57,6 +57,17 @@ test('documentation rendering does not depend on live payment-limit API data', (
   assert.doesNotMatch(docsCopy, /usePaymentLimits|paymentLimitsQuery/);
 });
 
+test('code examples have no repeated generic footer and retain one production integration note', () => {
+  const codePanelStart = docsCopy.indexOf('function CodePanel');
+  const docsPageStart = docsCopy.indexOf('export default function DocsPage()', codePanelStart);
+  const codePanel = docsCopy.slice(codePanelStart, docsPageStart);
+
+  assert.ok(codePanelStart >= 0 && docsPageStart > codePanelStart);
+  assert.doesNotMatch(codePanel, /sf-docs-code-note|formatNote|codeNote/);
+  assert.match(docsCopy, /quickstartIntegrationNote: 'Extrait à intégrer à votre serveur ou à votre caisse\./);
+  assert.match(docsCopy, /quickstartIntegrationNote: 'Example code for your server or checkout\./);
+});
+
 test('getting-started guide presents the production quickstart with SendFlow examples', () => {
   const startPageStart = docsCopy.indexOf("{pageKey === 'start' && <>");
   const authPageStart = docsCopy.indexOf("{pageKey === 'auth' && <>", startPageStart);

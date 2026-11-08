@@ -111,6 +111,7 @@ const localized: Record<Language, Translation> = {
     quickstartAttemptText: 'Après le choix du payeur, envoyez les informations requises par l’API. Le montant reste celui de la session ; n’envoyez jamais de code OTP ou de PIN.',
     quickstartStatusTitle: 'Vérifier le statut',
     quickstartStatusText: 'Relisez la session depuis votre serveur avec la clé secrète ou vérifiez le webhook après validation de sa signature. Ne confirmez la commande qu’après un état succeeded.',
+    quickstartIntegrationNote: 'Extrait à intégrer à votre serveur ou à votre caisse. Production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api ; paiement hébergé : SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Remplacez les valeurs d’exemple par celles de votre compte et gardez la clé secrète côté serveur.',
     threeSteps: 'Parcours recommandé', stepOne: 'Créez votre compte marchand', stepOneSub: 'Un compte marchand actif et éligible est requis pour utiliser les paiements API.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Créez ou régénérez votre paire dans l’espace Développeurs ; la clé secrète ne s’affiche qu’à sa création.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Créez la session côté serveur et vérifiez le résultat auprès de SendFlow.',
     read: 'Lire le guide', support: 'Besoin d’aide ?', supportSub: 'Contactez l’équipe SendFlow pour toute question liée à votre intégration.', contact: 'Contacter le support',
     disclaimerTitle: 'Confirmation du paiement', disclaimer: 'Ne marquez jamais une commande comme payée sur la seule base d’une redirection ou d’un état affiché dans le navigateur. Vérifiez le statut serveur ou traitez un webhook dont la signature est valide.',
@@ -123,7 +124,7 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Rôle et emplacement de chaque identifiant',
     credentialHeader: 'Identifiant', credentialUseHeader: 'Utilisation', credentialHandlingHeader: 'Protection',
     pollTokenNote: 'Le pollToken est un identifiant d’accès à la tentative. Préférez interroger l’état depuis votre serveur avec la clé secrète ; si le client doit le recevoir pour afficher la progression, gardez-le temporairement en mémoire et excluez-le des journaux, URL et outils analytiques.',
-    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Remplacez les valeurs d’exemple par celles de votre intégration. La clé secrète reste exclusivement sur votre serveur.',
+    codeLabel: 'Exemple de requête', placeholder: 'Requête API',
     endpointGroupNote: 'Les endpoints sont regroupés par étape et par contexte d’exécution.',
     directExamplesTitle: 'Exemples dans l’ordre du parcours',
     directStepCreate: 'Étape 1 · Créer la session sur votre serveur',
@@ -133,12 +134,6 @@ const localized: Record<Language, Translation> = {
     hostedExamplesTitle: 'Exemples dans l’ordre du parcours',
     hostedStepCreate: 'Étape 1 · Créer la session et préparer le lien',
     hostedStepStatus: 'Étape 2 · Vérifier le statut côté serveur',
-    formatNoteCurl: 'cURL · définissez les variables SENDFLOW_API_BASE_URL et SENDFLOW_SECRET_KEY dans votre environnement.',
-    formatNoteJavaScript: 'JavaScript · suivez le contexte indiqué au-dessus de cet exemple ; les clés secrètes ne vont jamais dans le navigateur.',
-    formatNoteNode: 'Node.js · exécutez côté serveur et fournissez les variables SendFlow dans l’environnement.',
-    formatNotePhp: 'PHP · nécessite PHP 7.3+ et l’extension cURL.',
-    formatNotePython: 'Python · nécessite la bibliothèque requests.',
-    formatNoteKotlin: 'Kotlin · exemple REST Android, non SDK.',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec https://payin.merchant.command.sendflow.africa et redirigez le client.',
     apiAvailabilityTitle: 'Adresses de production',
@@ -274,6 +269,7 @@ const localized: Record<Language, Translation> = {
     quickstartAttemptText: 'After the payer chooses an option, send the fields required by the API. The amount remains fixed by the session; never send an OTP or PIN.',
     quickstartStatusTitle: 'Check the status',
     quickstartStatusText: 'Read the session from your server with the secret key, or verify the webhook signature. Confirm the order only after a succeeded state.',
+    quickstartIntegrationNote: 'Example code for your server or checkout. Production: SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; hosted payment: SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Replace sample values with your account values and keep the secret key on your server.',
     threeSteps: 'Recommended flow', stepOne: 'Create your merchant account', stepOneSub: 'An active, eligible merchant account is required to use API payments.', stepTwo: 'Configure your API keys', stepTwoSub: 'Create or regenerate your key pair in the Developers area; the secret key is shown only when created.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Create sessions server-side and verify results with SendFlow.',
     read: 'Read the guide', support: 'Need help?', supportSub: 'Contact the SendFlow team with questions about your integration.', contact: 'Contact support',
     disclaimerTitle: 'Payment confirmation', disclaimer: 'Never mark an order as paid based only on a redirect or a browser-side state. Verify the server status or process a webhook whose signature is valid.',
@@ -286,7 +282,7 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Role and handling of each credential',
     credentialHeader: 'Credential', credentialUseHeader: 'Used for', credentialHandlingHeader: 'Handling',
     pollTokenNote: 'pollToken grants access to an attempt. Prefer checking status from your server with the secret key; if the client needs it to show progress, keep it in memory temporarily and exclude it from logs, URLs, and analytics.',
-    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Replace sample values with your integration values. Keep the secret key exclusively on your server.',
+    codeLabel: 'Request example', placeholder: 'API request',
     endpointGroupNote: 'Endpoints are grouped by integration step and execution context.',
     directExamplesTitle: 'Examples in payment-flow order',
     directStepCreate: 'Step 1 · Create the session on your server',
@@ -296,12 +292,6 @@ const localized: Record<Language, Translation> = {
     hostedExamplesTitle: 'Examples in payment-flow order',
     hostedStepCreate: 'Step 1 · Create the session and prepare the link',
     hostedStepStatus: 'Step 2 · Check status on your server',
-    formatNoteCurl: 'cURL · set SENDFLOW_API_BASE_URL and SENDFLOW_SECRET_KEY in your shell environment.',
-    formatNoteJavaScript: 'JavaScript · follow the execution context stated above; never put secret keys in a browser.',
-    formatNoteNode: 'Node.js · run server-side and provide SendFlow variables through the environment.',
-    formatNotePhp: 'PHP · requires PHP 7.3+ and the cURL extension.',
-    formatNotePython: 'Python · requires the requests library.',
-    formatNoteKotlin: 'Kotlin · Android REST example, not an SDK.',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with https://payin.merchant.command.sendflow.africa and redirect the customer.',
     apiAvailabilityTitle: 'Production URLs',
@@ -821,18 +811,6 @@ function renderHighlightedCode(source: string) {
   });
 }
 
-function getCodeFormatNote(language: Language, format: DocsCodeFormat) {
-  const keyByFormat: Record<DocsCodeFormat, string> = {
-    cURL: 'formatNoteCurl',
-    JavaScript: 'formatNoteJavaScript',
-    'Node.js': 'formatNoteNode',
-    PHP: 'formatNotePhp',
-    Python: 'formatNotePython',
-    Kotlin: 'formatNoteKotlin',
-  };
-  return localized[language][keyByFormat[format]] ?? localized[language].codeNote;
-}
-
 const hostedSessionResponse = `{
   "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
   "merchantReference": "ORDER-2026-0042",
@@ -929,10 +907,6 @@ function CodePanel({ language, label, example }: { language: Language; label: st
         </div>
       </div>
       <pre><code>{renderHighlightedCode(copyText)}</code></pre>
-      <div className="sf-docs-code-note">
-        <span>{getCodeFormatNote(language, format)}</span>
-        <span>{localized[language].codeNote}</span>
-      </div>
     </div>
   );
 }
@@ -1232,6 +1206,7 @@ export default function DocsPage() {
             <h3>{t.quickstartPrereqTitle}</h3>
             <p>{t.quickstartPrereqText}</p>
             <div className="sf-docs-callout">{t.serverOnly}</div>
+            <div className="sf-docs-callout">{t.quickstartIntegrationNote}</div>
 
             <h3>{t.quickstartCatalogTitle}</h3>
             <p>{t.quickstartCatalogText}</p>
