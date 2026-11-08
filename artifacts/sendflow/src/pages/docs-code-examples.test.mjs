@@ -56,6 +56,48 @@ test('getting-started guide presents the production flow in executable steps', (
   assert.deepEqual(examplePanels, [...examplePanels].sort((a, b) => a - b));
 });
 
+test('API endpoints are grouped by session, checkout, and public catalog flow', () => {
+  const groupsStart = docsCopy.indexOf('const apiEndpointGroups');
+  const groupsEnd = docsCopy.indexOf('const docSearchTerms', groupsStart);
+  assert.ok(groupsStart >= 0 && groupsEnd > groupsStart);
+  const groups = docsCopy.slice(groupsStart, groupsEnd);
+  const groupKeys = [
+    'endpointGroupSessions',
+    'endpointGroupDirect',
+    'endpointGroupCatalog',
+  ].map((key) => groups.indexOf(key));
+
+  assert.ok(groupKeys.every((position) => position >= 0));
+  assert.deepEqual(groupKeys, [...groupKeys].sort((a, b) => a - b));
+  assert.match(docsCopy, /endpointGroupSessions: '1\. Sessions serveur'/);
+  assert.match(docsCopy, /endpointGroupSessions: '1\. Server sessions'/);
+});
+
+test('direct and hosted examples follow their documented integration steps', () => {
+  const directStart = docsCopy.indexOf("{pageKey === 'direct' && <>");
+  const hostedStart = docsCopy.indexOf("{pageKey === 'hosted' && <>", directStart);
+  const apiStart = docsCopy.indexOf("{pageKey === 'api' && <>", hostedStart);
+  assert.ok(directStart >= 0 && hostedStart > directStart && apiStart > hostedStart);
+
+  const directPage = docsCopy.slice(directStart, hostedStart);
+  const directExamples = [
+    'example="create-direct"',
+    'example="read-public-session"',
+    'example="start-attempt"',
+    'example="poll-attempt"',
+  ].map((example) => directPage.indexOf(example));
+  assert.ok(directExamples.every((position) => position >= 0));
+  assert.deepEqual(directExamples, [...directExamples].sort((a, b) => a - b));
+
+  const hostedPage = docsCopy.slice(hostedStart, apiStart);
+  const hostedExamples = [
+    'example="create-hosted"',
+    'example="read-session"',
+  ].map((example) => hostedPage.indexOf(example));
+  assert.ok(hostedExamples.every((position) => position >= 0));
+  assert.deepEqual(hostedExamples, [...hostedExamples].sort((a, b) => a - b));
+});
+
 test('public OTP guidance follows the merchant API contract', () => {
   assert.match(docsCopy, /L’API de paiement marchand n’accepte aucun champ OTP ou PIN/);
   assert.match(docsCopy, /The merchant payments API accepts no OTP or PIN fields/);

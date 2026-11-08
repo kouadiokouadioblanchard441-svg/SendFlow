@@ -17,7 +17,7 @@ import { getDocsCodeExample, getDocsCodeFormats, type DocsCodeFormat, type DocsE
 import './docs.css';
 
 type Language = 'fr' | 'en';
-type DocGroup = 'start' | 'integration' | 'shared' | 'apiReference' | 'reference';
+type DocGroup = 'start' | 'integration' | 'apiReference' | 'webhooks' | 'reliability';
 type DocItem = { path: string; key: string; label: string; group: DocGroup; icon: typeof BookOpen; section?: string; search?: string };
 type Translation = Record<string, string>;
 type TranslationLists = {
@@ -52,26 +52,26 @@ const docsItems: DocItem[] = [
   { path: '/docs/api-reference', section: 'pricing-catalog', key: 'endpointPricing', label: 'Countries, operators & fees', group: 'apiReference', icon: FileCode2, search: 'countries operators fees requiresOtp otpCommand' },
   { path: '/docs/api-reference', section: 'payment-limits', key: 'endpointLimits', label: 'Payment limits', group: 'apiReference', icon: FileCode2, search: 'limits minimum deposit payout payin XOF maximum' },
   { path: '/docs/api-reference', section: 'payout-api', key: 'endpointPayout', label: 'Payout API availability', group: 'apiReference', icon: FileCode2, search: 'payout withdrawal merchant API not available' },
-  { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'shared', icon: Webhook },
-  { path: '/docs/webhooks', section: 'webhook-events', key: 'webhookEvents', label: 'Webhook events', group: 'shared', icon: Webhook, search: 'payment.succeeded payment.failed events notifications' },
-  { path: '/docs/webhooks', section: 'webhook-signature', key: 'delivery', label: 'Webhook signatures', group: 'shared', icon: Webhook, search: 'HMAC SHA-256 raw body sendflow-signature' },
-  { path: '/docs/webhooks', section: 'webhook-retries', key: 'webhookRetries', label: 'Retries & deduplication', group: 'shared', icon: Webhook, search: 'retries delivery deduplicate timeout attempts' },
-  { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'reference', icon: ShieldCheck },
-  { path: '/docs/reference', section: 'payment-states', key: 'statesTitle', label: 'Payment states', group: 'reference', icon: ShieldCheck, search: 'created waiting uncertain succeeded failed' },
-  { path: '/docs/reference', section: 'http-errors', key: 'errors', label: 'HTTP errors', group: 'reference', icon: ShieldCheck, search: '400 401 403 404 409 429 503 Retry-After error message troubleshooting' },
-  { path: '/docs/reference', section: 'idempotency', key: 'idempotency', label: 'Idempotency', group: 'reference', icon: ShieldCheck, search: 'Idempotency-Key duplicate merchantReference retry' },
-  { path: '/docs/reference', section: 'expiration', key: 'expiration', label: 'Expiration & amounts', group: 'reference', icon: ShieldCheck, search: 'expiresAt one hour XOF amountMinor minimum maximum' },
-  { path: '/docs/reference', section: 'rate-limits', key: 'rateLimits', label: 'Rate limits', group: 'reference', icon: ShieldCheck, search: 'quota 429 Retry-After per minute' },
-  { path: '/docs/reference', section: 'service-availability', key: 'serviceAvailability', label: 'Service availability', group: 'reference', icon: ShieldCheck, search: '503 service indisponible disponibilité API production URL' },
-  { path: '/docs/reference', section: 'security', key: 'security', label: 'Security', group: 'reference', icon: ShieldCheck, search: 'secret public key HMAC HTTPS tokens' },
+  { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'webhooks', icon: Webhook },
+  { path: '/docs/webhooks', section: 'webhook-events', key: 'webhookEvents', label: 'Webhook events', group: 'webhooks', icon: Webhook, search: 'payment.succeeded payment.failed events notifications' },
+  { path: '/docs/webhooks', section: 'webhook-signature', key: 'delivery', label: 'Webhook signatures', group: 'webhooks', icon: Webhook, search: 'HMAC SHA-256 raw body sendflow-signature' },
+  { path: '/docs/webhooks', section: 'webhook-retries', key: 'webhookRetries', label: 'Retries & deduplication', group: 'webhooks', icon: Webhook, search: 'retries delivery deduplicate timeout attempts' },
+  { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'reliability', icon: ShieldCheck },
+  { path: '/docs/reference', section: 'payment-states', key: 'statesTitle', label: 'Payment states', group: 'reliability', icon: ShieldCheck, search: 'created waiting uncertain succeeded failed' },
+  { path: '/docs/reference', section: 'http-errors', key: 'errors', label: 'HTTP errors', group: 'reliability', icon: ShieldCheck, search: '400 401 403 404 409 429 503 Retry-After error message troubleshooting' },
+  { path: '/docs/reference', section: 'idempotency', key: 'idempotency', label: 'Idempotency', group: 'reliability', icon: ShieldCheck, search: 'Idempotency-Key duplicate merchantReference retry' },
+  { path: '/docs/reference', section: 'expiration', key: 'expiration', label: 'Expiration & amounts', group: 'reliability', icon: ShieldCheck, search: 'expiresAt one hour XOF amountMinor minimum maximum' },
+  { path: '/docs/reference', section: 'rate-limits', key: 'rateLimits', label: 'Rate limits', group: 'reliability', icon: ShieldCheck, search: 'quota 429 Retry-After per minute' },
+  { path: '/docs/reference', section: 'service-availability', key: 'serviceAvailability', label: 'Service availability', group: 'reliability', icon: ShieldCheck, search: '503 service indisponible disponibilité API production URL' },
+  { path: '/docs/reference', section: 'security', key: 'security', label: 'Security', group: 'reliability', icon: ShieldCheck, search: 'secret public key HMAC HTTPS tokens' },
 ];
 
 const docGroups: { id: DocGroup; labelKey: string; icon: typeof BookOpen }[] = [
   { id: 'start', labelKey: 'startGroup', icon: BookOpen },
   { id: 'integration', labelKey: 'integrations', icon: Code2 },
-  { id: 'shared', labelKey: 'sharedMethods', icon: Webhook },
   { id: 'apiReference', labelKey: 'apiReferenceGroup', icon: FileCode2 },
-  { id: 'reference', labelKey: 'reference', icon: ShieldCheck },
+  { id: 'webhooks', labelKey: 'webhooksGroup', icon: Webhook },
+  { id: 'reliability', labelKey: 'reliabilityGroup', icon: ShieldCheck },
 ];
 
 const localized: Record<Language, Translation> = {
@@ -79,8 +79,11 @@ const localized: Record<Language, Translation> = {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
     search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
     sectionPageIntro: 'Cette rubrique détaille le contrat SendFlow correspondant. Les exemples utilisent des données d’exemple et les blocages de disponibilité sont signalés.',
-    integrations: 'Méthodes d’intégration', sharedMethods: 'Commun aux deux',
-    apiReferenceGroup: 'Référence API',
+    integrations: 'Parcours de paiement', webhooksGroup: 'Webhooks',
+    apiReferenceGroup: 'Endpoints API', reliabilityGroup: 'États, erreurs et sécurité',
+    endpointGroupSessions: '1. Sessions serveur',
+    endpointGroupDirect: '2. Caisse API directe',
+    endpointGroupCatalog: '3. Catalogue public et limites',
     reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
     webhookRetries: 'Relances et déduplication',
     home: 'Documentation', start: 'Bien démarrer', auth: 'Authentification', direct: 'API directe',
@@ -125,7 +128,22 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Rôle et emplacement de chaque identifiant',
     credentialHeader: 'Identifiant', credentialUseHeader: 'Utilisation', credentialHandlingHeader: 'Protection',
     pollTokenNote: 'Le pollToken est un identifiant d’accès à la tentative. Préférez interroger l’état depuis votre serveur avec la clé secrète ; si le client doit le recevoir pour afficher la progression, gardez-le temporairement en mémoire et excluez-le des journaux, URL et outils analytiques.',
-    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Extrait à intégrer à votre serveur ou à votre caisse. Production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api ; paiement hébergé : SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Remplacez les identifiants d’exemple par ceux de votre compte, les valeurs entre chevrons et returnUrl par vos propres données ; gardez la clé secrète côté serveur. Les exemples PHP demandent PHP 7.3+ et cURL ; les exemples Python avec requests demandent la bibliothèque requests. Les exemples JavaScript qui lisent les variables d’environnement s’exécutent côté serveur (Node.js 18+) ; les appels directs n’utilisent que les identifiants publics.',
+    codeLabel: 'Exemple de requête', placeholder: 'Requête API', codeNote: 'Remplacez les valeurs d’exemple par celles de votre intégration. La clé secrète reste exclusivement sur votre serveur.',
+    endpointGroupNote: 'Les endpoints sont regroupés par étape et par contexte d’exécution.',
+    directExamplesTitle: 'Exemples dans l’ordre du parcours',
+    directStepCreate: 'Étape 1 · Créer la session sur votre serveur',
+    directStepRead: 'Étape 2 · Charger les choix dans la caisse',
+    directStepAttempt: 'Étape 3 · Démarrer la tentative dans la caisse',
+    directStepPoll: 'Étape 4 · Vérifier le résultat',
+    hostedExamplesTitle: 'Exemples dans l’ordre du parcours',
+    hostedStepCreate: 'Étape 1 · Créer la session et préparer le lien',
+    hostedStepStatus: 'Étape 2 · Vérifier le statut côté serveur',
+    formatNoteCurl: 'cURL · définissez les variables SENDFLOW_API_BASE_URL et SENDFLOW_SECRET_KEY dans votre environnement.',
+    formatNoteJavaScript: 'JavaScript · suivez le contexte indiqué au-dessus de cet exemple ; les clés secrètes ne vont jamais dans le navigateur.',
+    formatNoteNode: 'Node.js · exécutez côté serveur et fournissez les variables SendFlow dans l’environnement.',
+    formatNotePhp: 'PHP · nécessite PHP 7.3+ et l’extension cURL.',
+    formatNotePython: 'Python · nécessite la bibliothèque requests.',
+    formatNoteKotlin: 'Kotlin · exemple REST Android, non SDK.',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec https://payin.merchant.command.sendflow.africa et redirigez le client.',
     apiAvailabilityTitle: 'Disponibilité actuelle',
@@ -208,8 +226,11 @@ const localized: Record<Language, Translation> = {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
     search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
     sectionPageIntro: 'This section details the matching SendFlow contract. Examples use sample data, and current availability blocks are stated clearly.',
-    integrations: 'Integration methods', sharedMethods: 'Shared',
-    apiReferenceGroup: 'API reference',
+    integrations: 'Payment flows', webhooksGroup: 'Webhooks',
+    apiReferenceGroup: 'API endpoints', reliabilityGroup: 'States, errors & security',
+    endpointGroupSessions: '1. Server sessions',
+    endpointGroupDirect: '2. Direct checkout',
+    endpointGroupCatalog: '3. Public catalog & limits',
     reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
     webhookRetries: 'Retries & deduplication',
     home: 'Documentation', start: 'Getting started', auth: 'Authentication', direct: 'Direct API',
@@ -254,7 +275,22 @@ const localized: Record<Language, Translation> = {
     credentialRolesTitle: 'Role and handling of each credential',
     credentialHeader: 'Credential', credentialUseHeader: 'Used for', credentialHandlingHeader: 'Handling',
     pollTokenNote: 'pollToken grants access to an attempt. Prefer checking status from your server with the secret key; if the client needs it to show progress, keep it in memory temporarily and exclude it from logs, URLs, and analytics.',
-    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Integrate this snippet into your server or checkout. Production: SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; hosted payments: SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Replace sample credentials with your account credentials, bracketed placeholders and returnUrl with your own values; keep the secret key server-side. PHP examples require PHP 7.3+ and cURL; Python examples using requests require the requests package. JavaScript examples that read environment variables run server-side with Node.js 18+; direct checkout calls use only public session credentials.',
+    codeLabel: 'Request example', placeholder: 'API request', codeNote: 'Replace sample values with your integration values. Keep the secret key exclusively on your server.',
+    endpointGroupNote: 'Endpoints are grouped by integration step and execution context.',
+    directExamplesTitle: 'Examples in payment-flow order',
+    directStepCreate: 'Step 1 · Create the session on your server',
+    directStepRead: 'Step 2 · Load choices in checkout',
+    directStepAttempt: 'Step 3 · Start the attempt in checkout',
+    directStepPoll: 'Step 4 · Verify the result',
+    hostedExamplesTitle: 'Examples in payment-flow order',
+    hostedStepCreate: 'Step 1 · Create the session and prepare the link',
+    hostedStepStatus: 'Step 2 · Check status on your server',
+    formatNoteCurl: 'cURL · set SENDFLOW_API_BASE_URL and SENDFLOW_SECRET_KEY in your shell environment.',
+    formatNoteJavaScript: 'JavaScript · follow the execution context stated above; never put secret keys in a browser.',
+    formatNoteNode: 'Node.js · run server-side and provide SendFlow variables through the environment.',
+    formatNotePhp: 'PHP · requires PHP 7.3+ and the cURL extension.',
+    formatNotePython: 'Python · requires the requests library.',
+    formatNoteKotlin: 'Kotlin · Android REST example, not an SDK.',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with https://payin.merchant.command.sendflow.africa and redirect the customer.',
     apiAvailabilityTitle: 'Current availability',
@@ -735,6 +771,12 @@ const apiEndpointInventory = [
   },
 ] as const;
 
+const apiEndpointGroups: { key: string; anchors: string[] }[] = [
+  { key: 'endpointGroupSessions', anchors: ['create-session', 'read-session'] },
+  { key: 'endpointGroupDirect', anchors: ['direct-choices', 'create-attempt', 'read-attempt'] },
+  { key: 'endpointGroupCatalog', anchors: ['pricing-catalog', 'payment-limits'] },
+];
+
 const docSearchTerms: Record<string, string> = {
   '/docs': 'accueil home intégration paiements payment',
   '/docs/getting-started': 'prérequis compte marchand étapes getting started',
@@ -759,6 +801,18 @@ function renderHighlightedCode(source: string) {
     else if (/^(curl|const|let|var|await|async|function|if|throw|import|from|def|return|new|true|false|null|None)$/.test(part)) tokenClass = 'sf-docs-token-keyword';
     return tokenClass ? <span className={tokenClass} key={index}>{part}</span> : part;
   });
+}
+
+function getCodeFormatNote(language: Language, format: DocsCodeFormat) {
+  const keyByFormat: Record<DocsCodeFormat, string> = {
+    cURL: 'formatNoteCurl',
+    JavaScript: 'formatNoteJavaScript',
+    'Node.js': 'formatNoteNode',
+    PHP: 'formatNotePhp',
+    Python: 'formatNotePython',
+    Kotlin: 'formatNoteKotlin',
+  };
+  return localized[language][keyByFormat[format]] ?? localized[language].codeNote;
 }
 
 const hostedSessionResponse = `{
@@ -862,7 +916,10 @@ function CodePanel({ language, label, example }: { language: Language; label: st
         </div>
       </div>
       <pre><code>{renderHighlightedCode(copyText)}</code></pre>
-      <div className="sf-docs-code-note">{localized[language].codeNote} · {format}.</div>
+      <div className="sf-docs-code-note">
+        <span>{getCodeFormatNote(language, format)}</span>
+        <span>{localized[language].codeNote}</span>
+      </div>
     </div>
   );
 }
@@ -927,6 +984,9 @@ export default function DocsPage() {
   };
   const titleKey = `${pageKey}Title`;
   const activeDocItem = docsItems.find((item) => item.path === path && item.section === activeDocSection);
+  const activeDocGroup = docGroups.find((group) =>
+    docsItems.some((item) => item.path === path && item.group === group.id),
+  );
   const description = activeDocItem ? t.sectionPageIntro : (t[`${pageKey}Sub`] ?? t.homeSub);
   const title = activeDocItem ? (t[activeDocItem.key] ?? activeDocItem.label) : (t[titleKey] ?? t.homeTitle);
 
@@ -1073,17 +1133,32 @@ export default function DocsPage() {
             <div className="sf-docs-steps">
               {localizedLists[language].directFlowTitles.map((heading, index) => <div className="sf-docs-step" key={heading}><span className="sf-docs-step-index">0{index + 1}</span><div><strong>{heading}</strong><p>{localizedLists[language].directFlowTexts[index]}</p></div></div>)}
             </div>
-            <CodePanel language={language} label={t.codeLabel} example="create-direct" />
-            <ResponsePanel language={language} label={t.responseExample} response={directSessionResponse} />
-            <CodePanel language={language} label={t.codeLabel} example="read-public-session" />
-            <div className="sf-docs-callout">{t.androidDirectNote}</div>
-            <div className="sf-docs-callout">{t.directInputText}</div>
-            <div className="sf-docs-callout">{t.directCorsNote}</div>
-            <CodePanel language={language} label={t.codeLabel} example="start-attempt" />
-            <ResponsePanel language={language} label={t.responseExample} response={directAttemptResponse} />
-            <div className="sf-docs-callout">{t.pollTokenNote}</div>
-            <CodePanel language={language} label={t.codeLabel} example="poll-attempt" />
-            <div className="sf-docs-callout"><strong>{t.mobileMoneyTitle}.</strong> {t.mobileMoneyText}</div>
+            <h3>{t.directExamplesTitle}</h3>
+            <div className="sf-docs-code-steps">
+              <section className="sf-docs-code-step">
+                <h4>{t.directStepCreate}</h4>
+                <CodePanel language={language} label={t.codeLabel} example="create-direct" />
+                <ResponsePanel language={language} label={t.responseExample} response={directSessionResponse} />
+              </section>
+              <section className="sf-docs-code-step">
+                <h4>{t.directStepRead}</h4>
+                <div className="sf-docs-callout">{t.directCorsNote}</div>
+                <CodePanel language={language} label={t.codeLabel} example="read-public-session" />
+              </section>
+              <section className="sf-docs-code-step">
+                <h4>{t.directStepAttempt}</h4>
+                <div className="sf-docs-callout">{t.androidDirectNote}</div>
+                <div className="sf-docs-callout">{t.directInputText}</div>
+                <CodePanel language={language} label={t.codeLabel} example="start-attempt" />
+                <ResponsePanel language={language} label={t.responseExample} response={directAttemptResponse} />
+                <div className="sf-docs-callout"><strong>{t.mobileMoneyTitle}.</strong> {t.mobileMoneyText}</div>
+              </section>
+              <section className="sf-docs-code-step">
+                <h4>{t.directStepPoll}</h4>
+                <div className="sf-docs-callout">{t.pollTokenNote}</div>
+                <CodePanel language={language} label={t.codeLabel} example="poll-attempt" />
+              </section>
+            </div>
             <h3>{t.mobileMoneyFlowsTitle}</h3>
             <table className="sf-docs-reference-table">
               <thead><tr><th>{t.mobileMoneyFlowHeader}</th><th>{t.mobileMoneyResponseHeader}</th><th>{t.mobileMoneyActionHeader}</th></tr></thead>
@@ -1131,9 +1206,18 @@ export default function DocsPage() {
             <div className="sf-docs-steps">
               {localizedLists[language].hostedFlowTitles.map((heading, index) => <div className="sf-docs-step" key={heading}><span className="sf-docs-step-index">0{index + 1}</span><div><strong>{heading}</strong><p>{localizedLists[language].hostedFlowTexts[index]}</p></div></div>)}
             </div>
-            <CodePanel language={language} label={t.codeLabel} example="create-hosted" />
-            <ResponsePanel language={language} label={t.responseExample} response={hostedSessionResponse} />
-            <CodePanel language={language} label={t.codeLabel} example="read-session" />
+            <h3>{t.hostedExamplesTitle}</h3>
+            <div className="sf-docs-code-steps">
+              <section className="sf-docs-code-step">
+                <h4>{t.hostedStepCreate}</h4>
+                <CodePanel language={language} label={t.codeLabel} example="create-hosted" />
+                <ResponsePanel language={language} label={t.responseExample} response={hostedSessionResponse} />
+              </section>
+              <section className="sf-docs-code-step">
+                <h4>{t.hostedStepStatus}</h4>
+                <CodePanel language={language} label={t.codeLabel} example="read-session" />
+              </section>
+            </div>
             <div className="sf-docs-callout">
               <p>{t.hostedOriginText}</p>
               <p>{t.returnUrlText}</p>
@@ -1148,8 +1232,17 @@ export default function DocsPage() {
         {pageKey === 'api' && <>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <section className="sf-docs-section"><h2>{t.reference}</h2><p>{t.referenceIntro}</p><div className="sf-docs-callout">{t.globalHttpErrors}</div>
-            <div className="sf-docs-endpoints">
-              {apiEndpointInventory.filter((endpoint) => !activeDocSection || endpoint.anchor === activeDocSection).map((endpoint) => (
+            {apiEndpointGroups.map((group) => {
+              const endpoints = apiEndpointInventory.filter((endpoint) =>
+                group.anchors.includes(endpoint.anchor)
+                && (!activeDocSection || endpoint.anchor === activeDocSection),
+              );
+              if (endpoints.length === 0) return null;
+              return (
+                <section className="sf-docs-endpoint-group" key={group.key}>
+                  <h3>{t[group.key]}</h3>
+                  <div className="sf-docs-endpoints">
+                    {endpoints.map((endpoint) => (
                 <article className="sf-docs-endpoint" key={endpoint.path} data-testid={`endpoint-card-${endpoint.method.toLowerCase()}-${endpoint.path.split('/').at(-1)}`}>
                   <div className="sf-docs-endpoint-head">
                     <span className={`sf-docs-method-badge is-${endpoint.method.toLowerCase()}`}>{endpoint.method}</span>
@@ -1188,8 +1281,11 @@ export default function DocsPage() {
                     />
                   </details>
                 </article>
-              ))}
-            </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
             <p className="sf-docs-endpoint-note">{t.availableChoicesNote}</p>
             {showReferenceSection('payout-api') && (
               <section className="sf-docs-section sf-docs-section--nested">
@@ -1268,9 +1364,31 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
           </section> : null}
         </>}
         {pageKey === 'ref' && <>
-          {showReferenceSection('security') && <section className="sf-docs-section"><h2>{t.security}</h2><p>{t.securityText}</p>
-            <CodePanel language={language} label={t.codeLabel} example="read-session" />
-            <CodePanel language={language} label={t.codeLabel} example="webhook" />
+          {showReferenceSection('payment-states') && <section className="sf-docs-section"><h2>{t.statesTitle}</h2><p>{t.statesText}</p>
+            <table className="sf-docs-reference-table">
+              <thead><tr><th>{language === 'fr' ? 'État' : 'State'}</th><th>{language === 'fr' ? 'Signification' : 'Meaning'}</th><th>{language === 'fr' ? 'Action marchande' : 'Merchant action'}</th></tr></thead>
+              <tbody>{localizedLists[language].paymentStateRows.map((row) => <tr key={row.state}><td data-label={language === 'fr' ? 'État' : 'State'}><code className="sf-docs-inline-code">{row.state}</code></td><td data-label={language === 'fr' ? 'Signification' : 'Meaning'}>{row.meaning}</td><td data-label={language === 'fr' ? 'Action marchande' : 'Merchant action'}>{row.action}</td></tr>)}</tbody>
+            </table>
+            <CodePanel language={language} label={language === 'fr' ? 'Lire le statut de session' : 'Read session status'} example="read-session" />
+            <CodePanel language={language} label={language === 'fr' ? 'Lire le statut d’une tentative directe' : 'Read direct attempt status'} example="poll-attempt" />
+            <ResponsePanel language={language} label={language === 'fr' ? 'Réponse de tentative · failed' : 'Attempt response · failed'} response={`{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+  "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
+  "state": "failed",
+  "amountMinor": 12500,
+  "currency": "XOF",
+  "ussdCode": null,
+  "pollToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "merchantReference": "ORDER-2026-0043"
+}`} />
+          </section>}
+          {showReferenceSection('idempotency') && <section className="sf-docs-section"><h2>{t.idempotency}</h2><p>{t.idempotencyText}</p><CodePanel language={language} label={t.codeLabel} example="create-hosted" /></section>}
+          {showReferenceSection('expiration') && <section className="sf-docs-section"><h2>{t.expiration}</h2><p>{t.expirationText}</p><CodePanel language={language} label={t.codeLabel} example="read-session" /></section>}
+          {showReferenceSection('rate-limits') && <section className="sf-docs-section"><h2>{t.rateLimits}</h2><p>{t.rateLimitsText}</p></section>}
+          {showReferenceSection('service-availability') && <section className="sf-docs-section">
+            <h2>{t.serviceAvailability}</h2>
+            <div className="sf-docs-callout">{t.environmentNote}</div>
+            <p>{t.serviceAvailabilityText}</p>
           </section>}
           {showReferenceSection('http-errors') && <section className="sf-docs-section"><h2>{t.errors}</h2><p>{t.errorsText}</p><div className="sf-docs-callout">{t.globalHttpErrors}</div>
             <h3>{t.httpErrorTableTitle}</h3>
@@ -1293,29 +1411,7 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
               ))}
             </div>
           </section>}
-          {showReferenceSection('payment-states') && <section className="sf-docs-section"><h2>{t.statesTitle}</h2><p>{t.statesText}</p>
-            <table className="sf-docs-reference-table">
-              <thead><tr><th>{language === 'fr' ? 'État' : 'State'}</th><th>{language === 'fr' ? 'Signification' : 'Meaning'}</th><th>{language === 'fr' ? 'Action marchande' : 'Merchant action'}</th></tr></thead>
-              <tbody>{localizedLists[language].paymentStateRows.map((row) => <tr key={row.state}><td data-label={language === 'fr' ? 'État' : 'State'}><code className="sf-docs-inline-code">{row.state}</code></td><td data-label={language === 'fr' ? 'Signification' : 'Meaning'}>{row.meaning}</td><td data-label={language === 'fr' ? 'Action marchande' : 'Merchant action'}>{row.action}</td></tr>)}</tbody>
-            </table>
-            <CodePanel language={language} label={language === 'fr' ? 'Lire le statut de session' : 'Read session status'} example="read-session" />
-            <CodePanel language={language} label={language === 'fr' ? 'Lire le statut d’une tentative directe' : 'Read direct attempt status'} example="poll-attempt" />
-            <ResponsePanel language={language} label={language === 'fr' ? 'Réponse de tentative · failed' : 'Attempt response · failed'} response={`{
-  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
-  "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
-  "state": "failed",
-  "amountMinor": 12500,
-  "currency": "XOF",
-  "ussdCode": null,
-  "pollToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "merchantReference": "ORDER-2026-0043"
-}`} />
-          </section>}
-          {showReferenceSection('idempotency') && <section className="sf-docs-section"><h2>{t.idempotency}</h2><p>{t.idempotencyText}</p><CodePanel language={language} label={t.codeLabel} example="create-hosted" /></section>}
-          {showReferenceSection('expiration') && <section className="sf-docs-section"><h2>{t.expiration}</h2><p>{t.expirationText}</p><CodePanel language={language} label={t.codeLabel} example="read-session" /></section>}
-          {showReferenceSection('rate-limits') && <section className="sf-docs-section"><h2>{t.rateLimits}</h2><p>{t.rateLimitsText}</p><CodePanel language={language} label={t.codeLabel} example="handle-http-errors" /></section>}
-          {showReferenceSection('service-availability') && <><div className="sf-docs-callout">{t.environmentNote}</div>
-          <div className="sf-docs-callout"><strong>{t.serviceAvailability}.</strong> {t.serviceAvailabilityText}</div><CodePanel language={language} label={t.codeLabel} example="handle-http-errors" /></>}
+          {showReferenceSection('security') && <section className="sf-docs-section"><h2>{t.security}</h2><p>{t.securityText}</p></section>}
         </>}
       </>
     );
@@ -1343,7 +1439,7 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
         <button type="button" className="sf-docs-mobile-crumb-menu" onClick={() => setSidebarOpen((open) => !open)} aria-expanded={sidebarOpen} aria-label={sidebarOpen ? t.menuClose : t.contents} data-testid="button-docs-mobile-crumb-menu">
           {sidebarOpen ? <X size={17} /> : <Menu size={17} />}
         </button>
-        <span>{t.startGroup}</span><ChevronRight size={15} aria-hidden="true" />
+          <span>{t[activeDocGroup?.labelKey ?? 'startGroup']}</span><ChevronRight size={15} aria-hidden="true" />
          <span className="sf-docs-mobile-crumb-current">{activeDocItem ? (t[activeDocItem.key] ?? activeDocItem.label) : (t[pageKey] ?? t.home)}</span>
       </div>
       <div className="sf-docs-shell">

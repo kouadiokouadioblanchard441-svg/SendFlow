@@ -602,8 +602,43 @@
 }
 
 .sf-docs-code-note {
+  display: grid;
+  gap: 3px;
   border-top-color: #343b46;
   color: #aab4c0;
+}
+
+.sf-docs-code-steps {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.sf-docs-code-step {
+  min-width: 0;
+  border: 1px solid #d7dce2;
+  border-radius: 14px;
+  background: #fff;
+  padding: 15px;
+}
+
+.sf-docs-code-step h4 {
+  margin: 0 0 10px;
+  color: #22262d;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.sf-docs-endpoint-group {
+  margin-top: 26px;
+}
+
+.sf-docs-endpoint-group > h3 {
+  margin: 0 0 10px;
+  color: #22262d;
+  font-size: 17px;
+  font-weight: 700;
 }
 
 .sf-docs-token-comment {
