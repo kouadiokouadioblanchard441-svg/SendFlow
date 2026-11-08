@@ -13,6 +13,12 @@ With node-postgres, a connection URL containing `sslmode` can override an explic
 
 **How to apply:** Keep database access server-side and preserve TLS verification. Before fixing a database-backed 5xx, inspect exact columns and required singleton/configuration rows, then apply only an explicitly reviewed additive migration. Never use a broad Drizzle push to repair external production drift. Verify the Plesk target separately; never expose connection strings.
 
+A full schema-readiness check must also compare migration-defined indexes, constraints, functions, and triggers. Matching table and column names, or a successful `SELECT 1`, does not prove the financial safeguards were installed.
+
+**Why:** The shared Supabase database contained every modeled table while several raw-SQL financial guard functions and triggers from the migration sources were absent.
+
+**How to apply:** Compare the expected PostgreSQL objects in Drizzle and raw SQL migration files with `pg_catalog` before considering the shared database ready for financial operations.
+
 For an authorized external schema change, keep the read-only preflight and DDL on one verified-TLS database session. If a later handshake fails with a certificate-chain error, stop and verify the trusted CA; do not disable certificate checks or assume an earlier connection makes the write safe. The Supabase Root 2021 CA certificate supplied for the OTP instruction migration was accepted with hostname verification enabled.
 
 **Why:** A metadata-only connection succeeded, but a later connection for the approved additive migration failed with `SELF_SIGNED_CERT_IN_CHAIN`.
