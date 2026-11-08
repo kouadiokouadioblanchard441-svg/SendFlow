@@ -1394,7 +1394,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorEnvelope"
+                  - $ref: "#/components/schemas/DeveloperOtpRequiredError"
         "404":
           description: The payment link is unavailable.
           content:
@@ -1446,6 +1448,56 @@ paths:
           description: Public payment-status rate limit exceeded.
         "503":
           description: The status could not be verified; no final result is inferred.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /public/payment-link-attempts/{attemptId}/otp:
+    post:
+      operationId: confirmPublicPaymentLinkAttemptOtp
+      tags: [payment-links]
+      summary: Submit an operator OTP for a public payment-link attempt
+      description: Confirms the operator challenge using the attempt-scoped bearer token. The OTP is not stored in the browser after submission and does not itself confirm settlement.
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-LinkFlow-Attempt-Token
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-f0-9]{64}$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicPaymentLinkOtpConfirmationInput"
+      responses:
+        "200":
+          description: Current server-owned attempt status after OTP submission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicPaymentLinkAttemptStatus"
+        "400":
+          description: Invalid OTP or the attempt is not awaiting an OTP.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: The attempt or its bearer token is invalid.
+        "409":
+          description: Another confirmation is already in progress or the attempt is no longer waiting.
+        "429":
+          description: OTP confirmation rate limit exceeded.
+        "503":
+          description: The OTP result or attempt status could not be verified.
           content:
             application/json:
               schema:
@@ -6117,7 +6169,26 @@ components:
           minLength: 1
           maxLength: 24
           pattern: "^[0-9]+(\\.[0-9]+)?$"
+        otp:
+          type: string
+          minLength: 4
+          maxLength: 12
+          pattern: "^[0-9]{4,12}$"
       required: [countryCode, operatorId, phoneNumber, firstName, lastName, idempotencyKey]
+      additionalProperties: false
+    PublicPaymentLinkOtpConfirmationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        reference:
+          type: string
+          format: uuid
+        otp:
+          type: string
+          minLength: 4
+          maxLength: 12
+          pattern: "^[0-9]{4,12}$"
+      required: [reference, otp]
     CustomerPaymentLinkSimulationInput:
       type: object
       additionalProperties: false
@@ -6158,7 +6229,9 @@ components:
           type: ["string", "null"]
           format: uri
           maxLength: 2048
-      required: [attemptId, state, merchantName, amountMinor, currency, currencyDecimals, ussdCode, returnUrl]
+        flow:
+          $ref: "#/components/schemas/DeveloperDirectPaymentFlow"
+      required: [attemptId, state, merchantName, amountMinor, currency, currencyDecimals, ussdCode, returnUrl, flow]
     PublicPaymentLinkAttemptCreated:
       allOf:
         - $ref: "#/components/schemas/PublicPaymentLinkAttemptStatus"

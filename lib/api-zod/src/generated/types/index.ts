@@ -335,6 +335,7 @@ export * from './publicPaymentLinkCountry';
 export * from './publicPaymentLinkCurrency';
 export * from './publicPaymentLinkCurrencyDecimals';
 export * from './publicPaymentLinkOperator';
+export * from './publicPaymentLinkOtpConfirmationInput';
 export * from './publicPaymentLinkQuote';
 export * from './publicPaymentLinkQuoteCurrency';
 export * from './publicPaymentLinkQuoteInput';

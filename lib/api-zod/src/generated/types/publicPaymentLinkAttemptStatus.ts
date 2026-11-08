@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { DeveloperDirectPaymentFlow } from './developerDirectPaymentFlow';
 import type { PublicPaymentLinkAttemptStatusState } from './publicPaymentLinkAttemptStatusState';
 
 export interface PublicPaymentLinkAttemptStatus {
@@ -33,4 +34,5 @@ export interface PublicPaymentLinkAttemptStatus {
      * @nullable
      */
   returnUrl: string | null;
+  flow: DeveloperDirectPaymentFlow;
 }

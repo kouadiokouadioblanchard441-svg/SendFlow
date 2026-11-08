@@ -1242,6 +1242,11 @@ export const startPublicPaymentLinkAttemptBodyAmountMax = 24;
 
 
 export const startPublicPaymentLinkAttemptBodyAmountRegExp = new RegExp('^[0-9]+(\\.[0-9]+)?$');
+export const startPublicPaymentLinkAttemptBodyOtpMin = 4;
+export const startPublicPaymentLinkAttemptBodyOtpMax = 12;
+
+
+export const startPublicPaymentLinkAttemptBodyOtpRegExp = new RegExp('^[0-9]{4,12}$');
 
 
 export const StartPublicPaymentLinkAttemptBody = zod.object({
@@ -1251,7 +1256,8 @@ export const StartPublicPaymentLinkAttemptBody = zod.object({
   "firstName": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyFirstNameMax),
   "lastName": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyLastNameMax),
   "idempotencyKey": zod.uuid(),
-  "amount": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyAmountMax).regex(startPublicPaymentLinkAttemptBodyAmountRegExp).optional()
+  "amount": zod.string().min(1).max(startPublicPaymentLinkAttemptBodyAmountMax).regex(startPublicPaymentLinkAttemptBodyAmountRegExp).optional(),
+  "otp": zod.string().min(startPublicPaymentLinkAttemptBodyOtpMin).max(startPublicPaymentLinkAttemptBodyOtpMax).regex(startPublicPaymentLinkAttemptBodyOtpRegExp).optional()
 })
 
 export const startPublicPaymentLinkAttemptResponseOneMerchantNameMax = 120;
@@ -1275,7 +1281,14 @@ export const StartPublicPaymentLinkAttemptResponse = zod.object({
   "currency": zod.literal("XOF"),
   "currencyDecimals": zod.literal(0),
   "ussdCode": zod.string().max(startPublicPaymentLinkAttemptResponseOneUssdCodeMax).regex(startPublicPaymentLinkAttemptResponseOneUssdCodeRegExp).nullable(),
-  "returnUrl": zod.url().max(startPublicPaymentLinkAttemptResponseOneReturnUrlMax).nullable()
+  "returnUrl": zod.url().max(startPublicPaymentLinkAttemptResponseOneReturnUrlMax).nullable(),
+  "flow": zod.object({
+  "action": zod.enum(['approve_on_phone', 'dial_ussd', 'enter_otp', 'open_redirect', 'wait', 'none']),
+  "reference": zod.uuid().nullable(),
+  "otpMethod": zod.union([zod.literal('sms'),zod.literal('ussd'),zod.literal('app'),zod.literal(null)]).nullable(),
+  "otpCommand": zod.string().nullable().describe('Server-configured instruction to dial; never the payer\'s OTP.'),
+  "redirectUrl": zod.url().nullable().describe('Provider-generated redirect URL when the selected flow requires one.')
+})
 }).and(zod.object({
   "pollToken": zod.string().regex(startPublicPaymentLinkAttemptResponseTwoPollTokenRegExp)
 }))
@@ -1315,7 +1328,72 @@ export const GetPublicPaymentLinkAttemptStatusResponse = zod.object({
   "currency": zod.literal("XOF"),
   "currencyDecimals": zod.literal(0),
   "ussdCode": zod.string().max(getPublicPaymentLinkAttemptStatusResponseUssdCodeMax).regex(getPublicPaymentLinkAttemptStatusResponseUssdCodeRegExp).nullable(),
-  "returnUrl": zod.url().max(getPublicPaymentLinkAttemptStatusResponseReturnUrlMax).nullable()
+  "returnUrl": zod.url().max(getPublicPaymentLinkAttemptStatusResponseReturnUrlMax).nullable(),
+  "flow": zod.object({
+  "action": zod.enum(['approve_on_phone', 'dial_ussd', 'enter_otp', 'open_redirect', 'wait', 'none']),
+  "reference": zod.uuid().nullable(),
+  "otpMethod": zod.union([zod.literal('sms'),zod.literal('ussd'),zod.literal('app'),zod.literal(null)]).nullable(),
+  "otpCommand": zod.string().nullable().describe('Server-configured instruction to dial; never the payer\'s OTP.'),
+  "redirectUrl": zod.url().nullable().describe('Provider-generated redirect URL when the selected flow requires one.')
+})
+})
+
+
+/**
+ * Confirms the operator challenge using the attempt-scoped bearer token. The OTP is not stored in the browser after submission and does not itself confirm settlement.
+ * @summary Submit an operator OTP for a public payment-link attempt
+ */
+export const ConfirmPublicPaymentLinkAttemptOtpParams = zod.object({
+  "attemptId": zod.uuid()
+})
+
+export const confirmPublicPaymentLinkAttemptOtpHeaderXLinkFlowAttemptTokenRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const ConfirmPublicPaymentLinkAttemptOtpHeader = zod.object({
+  "X-LinkFlow-Attempt-Token": zod.string().regex(confirmPublicPaymentLinkAttemptOtpHeaderXLinkFlowAttemptTokenRegExp)
+})
+
+export const confirmPublicPaymentLinkAttemptOtpBodyOtpMin = 4;
+export const confirmPublicPaymentLinkAttemptOtpBodyOtpMax = 12;
+
+
+export const confirmPublicPaymentLinkAttemptOtpBodyOtpRegExp = new RegExp('^[0-9]{4,12}$');
+
+
+export const ConfirmPublicPaymentLinkAttemptOtpBody = zod.object({
+  "reference": zod.uuid(),
+  "otp": zod.string().min(confirmPublicPaymentLinkAttemptOtpBodyOtpMin).max(confirmPublicPaymentLinkAttemptOtpBodyOtpMax).regex(confirmPublicPaymentLinkAttemptOtpBodyOtpRegExp)
+})
+
+export const confirmPublicPaymentLinkAttemptOtpResponseMerchantNameMax = 120;
+
+export const confirmPublicPaymentLinkAttemptOtpResponseAmountMinorMax = 9007199254740991;
+
+export const confirmPublicPaymentLinkAttemptOtpResponseUssdCodeMax = 32;
+
+
+export const confirmPublicPaymentLinkAttemptOtpResponseUssdCodeRegExp = new RegExp('^[*][0-9]+([*][0-9]+)*#$');
+export const confirmPublicPaymentLinkAttemptOtpResponseReturnUrlMax = 2048;
+
+
+
+export const ConfirmPublicPaymentLinkAttemptOtpResponse = zod.object({
+  "attemptId": zod.uuid(),
+  "state": zod.enum(['waiting', 'uncertain', 'succeeded', 'failed']),
+  "merchantName": zod.string().min(1).max(confirmPublicPaymentLinkAttemptOtpResponseMerchantNameMax),
+  "amountMinor": zod.int().min(1).max(confirmPublicPaymentLinkAttemptOtpResponseAmountMinorMax),
+  "currency": zod.literal("XOF"),
+  "currencyDecimals": zod.literal(0),
+  "ussdCode": zod.string().max(confirmPublicPaymentLinkAttemptOtpResponseUssdCodeMax).regex(confirmPublicPaymentLinkAttemptOtpResponseUssdCodeRegExp).nullable(),
+  "returnUrl": zod.url().max(confirmPublicPaymentLinkAttemptOtpResponseReturnUrlMax).nullable(),
+  "flow": zod.object({
+  "action": zod.enum(['approve_on_phone', 'dial_ussd', 'enter_otp', 'open_redirect', 'wait', 'none']),
+  "reference": zod.uuid().nullable(),
+  "otpMethod": zod.union([zod.literal('sms'),zod.literal('ussd'),zod.literal('app'),zod.literal(null)]).nullable(),
+  "otpCommand": zod.string().nullable().describe('Server-configured instruction to dial; never the payer\'s OTP.'),
+  "redirectUrl": zod.url().nullable().describe('Provider-generated redirect URL when the selected flow requires one.')
+})
 })
 
 

@@ -466,6 +466,11 @@ test("payout reservations serialize against one SendFlow wallet and cannot excee
   assert.equal(Number(wallet.balance_minor), 100);
   assert.equal(Number(wallet.payout_reserved), 80);
   assert.ok(Number(wallet.balance_minor) - Number(wallet.payout_reserved) >= 0);
+  const reservationTotal = (await owner.query(`SELECT reserved_minor
+    FROM sf_wallet_reservation_totals r
+    JOIN sf_wallets w ON w.id=r.wallet_id
+    WHERE w.user_id=$1`, [merchantUserId])).rows[0];
+  assert.equal(Number(reservationTotal.reserved_minor), 80);
   const activePayout = (await owner.query(`SELECT id FROM sf_payout_requests
     WHERE merchant_user_id=$1 AND reservation_state='active'`, [merchantUserId])).rows[0];
   await assert.rejects(owner.query(`UPDATE sf_payout_requests
@@ -473,6 +478,14 @@ test("payout reservations serialize against one SendFlow wallet and cannot excee
   (error) => error.code === "23514");
   await assert.rejects(owner.query(`UPDATE sf_wallets SET balance_minor=79
     WHERE user_id=$1`, [merchantUserId]), (error) => error.code === "23514");
+  await owner.query(`UPDATE sf_payout_requests
+    SET status='cancelled',reservation_state='released',updated_at=now()
+    WHERE id=$1`, [activePayout.id]);
+  const releasedTotal = (await owner.query(`SELECT reserved_minor
+    FROM sf_wallet_reservation_totals r
+    JOIN sf_wallets w ON w.id=r.wallet_id
+    WHERE w.user_id=$1`, [merchantUserId])).rows[0];
+  assert.equal(Number(releasedTotal.reserved_minor), 0);
 });
 test("SQL idempotency and audit are atomic, including altered replays and rollback", async () => {
   const input = adjustment({ expectedBalanceMinor: 99, amountMinor: 2 });

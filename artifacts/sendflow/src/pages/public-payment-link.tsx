@@ -2,16 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'wouter';
 import { ShieldCheck } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getPublicPaymentLinkAttemptStatus,
   getGetPublicPaymentLinkQueryKey,
   useGetPublicPaymentLink,
+  useConfirmPublicPaymentLinkAttemptOtp,
   useStartPublicPaymentLinkAttempt,
   useSimulateCustomerPaymentLink,
 } from '@workspace/api-client-react';
 import type {
+  PublicPaymentLinkAttemptInput,
   PublicPaymentLinkAttemptCreated,
+  PublicPaymentLinkAttemptStatus,
   SimulatedPaymentLinkSuccess,
 } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
@@ -84,8 +87,30 @@ function PaymentSelectIndicator() {
 const MIN_LINK_LOADING_MS = 1000;
 
 type ActivePaymentAttempt = Pick<PublicPaymentLinkAttemptCreated, 'attemptId' | 'pollToken'>
-  & Partial<Pick<PublicPaymentLinkAttemptCreated, 'merchantName' | 'amountMinor' | 'currency' | 'currencyDecimals' | 'ussdCode'>>
+  & Partial<Pick<PublicPaymentLinkAttemptCreated, 'merchantName' | 'amountMinor' | 'currency' | 'currencyDecimals' | 'ussdCode' | 'flow'>>
   & { token: string; expiresAt: number };
+
+type OtpChallenge = Pick<PublicPaymentLinkAttemptStatus['flow'], 'otpMethod' | 'otpCommand'>
+  & { reference: string | null };
+
+function getPreAcquiredOtpChallenge(error: unknown): OtpChallenge | null {
+  if (!error || typeof error !== 'object' || !('data' in error)) return null;
+  const body = (error as { data?: unknown }).data;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  const payload = body as Record<string, unknown>;
+  if (payload.error !== 'otp_required' || !payload.flow ||
+    typeof payload.flow !== 'object' || Array.isArray(payload.flow)) return null;
+  const flow = payload.flow as Record<string, unknown>;
+  if (flow.action !== 'enter_otp' || flow.reference !== null) return null;
+  const otpMethod = flow.otpMethod === 'sms' || flow.otpMethod === 'ussd' || flow.otpMethod === 'app'
+    ? flow.otpMethod
+    : null;
+  return {
+    otpMethod,
+    otpCommand: typeof flow.otpCommand === 'string' ? flow.otpCommand : null,
+    reference: null,
+  };
+}
 
 export default function PublicPaymentLinkPage() {
   const { token = '' } = useParams<{ token: string }>();
@@ -102,7 +127,8 @@ export default function PublicPaymentLinkPage() {
       refetchOnWindowFocus: false,
     },
   });
-  const paymentLimitsQuery = usePaymentLimits();
+  const queryClient = useQueryClient();
+  const paymentLimitsQuery = usePaymentLimits(!isExpiredLinkPreview);
   const paymentLimits = paymentLimitsQuery.data;
   const [linkLoadCycle, setLinkLoadCycle] = useState(0);
   const [minimumLoadTimeElapsed, setMinimumLoadTimeElapsed] = useState(false);
@@ -131,12 +157,16 @@ export default function PublicPaymentLinkPage() {
   const [simulationOutcome, setSimulationOutcome] = useState<'succeeded' | 'failed' | null>(null);
   const [simulationPhase, setSimulationPhase] = useState<'waiting' | 'result' | null>(null);
   const [realAttempt, setRealAttempt] = useState<ActivePaymentAttempt | null>(null);
+  const [preAcquiredOtpChallenge, setPreAcquiredOtpChallenge] = useState<OtpChallenge | null>(null);
+  const [preAcquiredOtpError, setPreAcquiredOtpError] = useState<string | null>(null);
+  const [attemptOtpError, setAttemptOtpError] = useState<string | null>(null);
   const [countdownNow, setCountdownNow] = useState(() => Date.now());
   const [paymentRequestKey, setPaymentRequestKey] = useState('');
   const [storageHydratedToken, setStorageHydratedToken] = useState('');
   const [paymentRecoveryAvailable, setPaymentRecoveryAvailable] = useState(true);
   const simulateMutation = useSimulateCustomerPaymentLink();
   const startPaymentMutation = useStartPublicPaymentLinkAttempt();
+  const pendingStartInputRef = useRef<PublicPaymentLinkAttemptInput | null>(null);
   const activeTokenRef = useRef(token);
   activeTokenRef.current = token;
 
@@ -224,11 +254,19 @@ export default function PublicPaymentLinkPage() {
   const activeRealAttempt = storageHydratedToken === token && realAttempt?.token === token
     ? realAttempt
     : null;
+  const paymentStatusQueryKey = ['public-linkflow-attempt-status', activeRealAttempt?.attemptId] as const;
+  const confirmOtpMutation = useConfirmPublicPaymentLinkAttemptOtp({
+    request: {
+      headers: {
+        'X-LinkFlow-Attempt-Token': activeRealAttempt?.pollToken ?? '',
+      },
+    },
+  });
   const countdownSeconds = activeRealAttempt
     ? getLinkFlowCountdownSeconds(activeRealAttempt.expiresAt, countdownNow)
     : null;
   const paymentStatusQuery = useQuery({
-    queryKey: ['public-linkflow-attempt-status', activeRealAttempt?.attemptId],
+    queryKey: paymentStatusQueryKey,
     queryFn: ({ signal }) => getPublicPaymentLinkAttemptStatus(activeRealAttempt!.attemptId, {
       signal,
       headers: { 'X-LinkFlow-Attempt-Token': activeRealAttempt!.pollToken },
@@ -254,7 +292,12 @@ export default function PublicPaymentLinkPage() {
   useEffect(() => {
     startPaymentMutation.reset();
     simulateMutation.reset();
+    confirmOtpMutation.reset();
     setRealAttempt(null);
+    setPreAcquiredOtpChallenge(null);
+    setPreAcquiredOtpError(null);
+    setAttemptOtpError(null);
+    pendingStartInputRef.current = null;
     setPaymentRequestKey('');
     setCountryCode('');
     setOperatorId('');
@@ -332,6 +375,40 @@ export default function PublicPaymentLinkPage() {
       window.sessionStorage.removeItem(paymentStorageKey(token, 'idempotency'));
     } catch { /* session storage is optional; idempotency remains enforced by the server */ }
   };
+  const persistStartedAttempt = (attempt: PublicPaymentLinkAttemptCreated, attemptToken: string) => {
+    const expiresAt = Date.now() + LINKFLOW_PAYMENT_TIMEOUT_MS;
+    const activeAttempt = {
+      attemptId: attempt.attemptId,
+      pollToken: attempt.pollToken,
+      expiresAt,
+      token: attemptToken,
+      merchantName: attempt.merchantName,
+      amountMinor: attempt.amountMinor,
+      currency: attempt.currency,
+      currencyDecimals: attempt.currencyDecimals,
+      ussdCode: attempt.ussdCode,
+      flow: attempt.flow,
+    };
+    try {
+      const attemptStorageKey = paymentStorageKey(attemptToken, 'attempt');
+      const serializedAttempt = JSON.stringify({
+        attemptId: attempt.attemptId,
+        pollToken: attempt.pollToken,
+        expiresAt,
+      });
+      window.sessionStorage.setItem(attemptStorageKey, serializedAttempt);
+      if (window.sessionStorage.getItem(attemptStorageKey) !== serializedAttempt) {
+        throw new Error('Could not persist the payment attempt');
+      }
+    } catch {
+      if (activeTokenRef.current === attemptToken) setPaymentRecoveryAvailable(false);
+    }
+    if (activeTokenRef.current !== attemptToken) return;
+    pendingStartInputRef.current = null;
+    setPreAcquiredOtpChallenge(null);
+    setPreAcquiredOtpError(null);
+    setRealAttempt(activeAttempt);
+  };
   const selectCountry = (nextCountryCode: string) => {
     setCountryCode(nextCountryCode);
     setOperatorId('');
@@ -367,49 +444,63 @@ export default function PublicPaymentLinkPage() {
       return;
     }
     setPaymentRequestKey(idempotencyKey);
-    startPaymentMutation.mutate({
-      token,
-      data: {
-        ...(variableAmount ? { amount: payerAmount.trim() } : {}),
-        countryCode: country.code.toLowerCase(),
-        operatorId: operator.id,
-        phoneNumber: `${country.phonePrefix}${nationalPhone}`,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        idempotencyKey,
-      },
-    }, {
-      onSuccess: (attempt) => {
-        const expiresAt = Date.now() + LINKFLOW_PAYMENT_TIMEOUT_MS;
-        const activeAttempt = {
-          attemptId: attempt.attemptId,
-          pollToken: attempt.pollToken,
-          expiresAt,
-          token,
-          merchantName: attempt.merchantName,
-          amountMinor: attempt.amountMinor,
-          currency: attempt.currency,
-          currencyDecimals: attempt.currencyDecimals,
-          ussdCode: attempt.ussdCode,
-        };
-        try {
-          const attemptStorageKey = paymentStorageKey(token, 'attempt');
-          const serializedAttempt = JSON.stringify({
-            attemptId: attempt.attemptId,
-            pollToken: attempt.pollToken,
-            expiresAt,
-          });
-          window.sessionStorage.setItem(attemptStorageKey, serializedAttempt);
-          if (window.sessionStorage.getItem(attemptStorageKey) !== serializedAttempt) {
-            throw new Error('Could not persist the payment attempt');
-          }
-        } catch {
-          if (activeTokenRef.current === token) setPaymentRecoveryAvailable(false);
-        }
-        if (activeTokenRef.current !== token) return;
-        setRealAttempt(activeAttempt);
+    const data: PublicPaymentLinkAttemptInput = {
+      ...(variableAmount ? { amount: payerAmount.trim() } : {}),
+      countryCode: country.code.toLowerCase(),
+      operatorId: operator.id,
+      phoneNumber: `${country.phonePrefix}${nationalPhone}`,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      idempotencyKey,
+    };
+    pendingStartInputRef.current = data;
+    setPreAcquiredOtpError(null);
+    setPreAcquiredOtpChallenge(null);
+    startPaymentMutation.mutate({ token, data }, {
+      onSuccess: (attempt) => persistStartedAttempt(attempt, token),
+      onError: (error) => {
+        const challenge = getPreAcquiredOtpChallenge(error);
+        if (challenge && activeTokenRef.current === token) setPreAcquiredOtpChallenge(challenge);
       },
     });
+  };
+  const submitPreAcquiredOtp = async (otp: string) => {
+    const pendingRequest = pendingStartInputRef.current;
+    if (!pendingRequest) return false;
+    setPreAcquiredOtpError(null);
+    startPaymentMutation.reset();
+    try {
+      const attempt = await startPaymentMutation.mutateAsync({
+        token,
+        data: { ...pendingRequest, otp },
+      });
+      persistStartedAttempt(attempt, token);
+      return true;
+    } catch (error) {
+      setPreAcquiredOtpError(getSafeApiErrorCopy(error).message);
+      return false;
+    }
+  };
+
+  const activeAttemptFlow = confirmedStatus?.flow ?? activeRealAttempt?.flow;
+  const attemptOtpChallenge = activeAttemptFlow?.action === 'enter_otp'
+    ? activeAttemptFlow
+    : null;
+  const submitAttemptOtp = async (otp: string) => {
+    if (!activeRealAttempt || !attemptOtpChallenge?.reference) return false;
+    confirmOtpMutation.reset();
+    setAttemptOtpError(null);
+    try {
+      const status = await confirmOtpMutation.mutateAsync({
+        attemptId: activeRealAttempt.attemptId,
+        data: { reference: attemptOtpChallenge.reference, otp },
+      });
+      queryClient.setQueryData(paymentStatusQueryKey, status);
+      return true;
+    } catch (error) {
+      setAttemptOtpError(getSafeApiErrorCopy(error).message);
+      return false;
+    }
   };
 
   if (simulationPhase === 'waiting' && link) {
@@ -448,6 +539,23 @@ export default function PublicPaymentLinkPage() {
             setSimulationOutcome(null);
             setSimulationPhase(null);
           }}
+        />
+      </>
+    );
+  }
+  if (preAcquiredOtpChallenge && link) {
+    return (
+      <>
+        {backgroundArt}
+        <LinkFlowPaymentWaiting
+          merchantName={link.merchantName}
+          amountLabel={formatMoney(requestedAmountMinor ?? link.amountMinor, link.currency, link.currencyDecimals)}
+          ussdCode={preAcquiredOtpChallenge.otpCommand}
+          state="waiting"
+          otpChallenge={preAcquiredOtpChallenge}
+          onSubmitOtp={submitPreAcquiredOtp}
+          otpSubmitting={startPaymentMutation.isPending}
+          otpError={preAcquiredOtpError}
         />
       </>
     );
@@ -518,6 +626,10 @@ export default function PublicPaymentLinkPage() {
             : link ? formatMoney(link.amountMinor, link.currency, link.currencyDecimals) : '—'}
           ussdCode={waitingDisplay.ussdCode ?? null}
           state={paymentStatusQuery.isError || !paymentRecoveryAvailable || confirmedStatus?.state === 'uncertain' ? 'uncertain' : 'waiting'}
+          otpChallenge={attemptOtpChallenge?.reference ? attemptOtpChallenge : undefined}
+          onSubmitOtp={attemptOtpChallenge?.reference ? submitAttemptOtp : undefined}
+          otpSubmitting={confirmOtpMutation.isPending}
+          otpError={attemptOtpError}
           countdownSeconds={countdownSeconds ?? undefined}
           onRefresh={() => void paymentStatusQuery.refetch()}
           refreshing={paymentStatusQuery.isFetching}

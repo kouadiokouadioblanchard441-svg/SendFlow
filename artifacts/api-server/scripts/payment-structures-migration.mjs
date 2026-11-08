@@ -29,12 +29,15 @@ export class PaymentMigrationError extends Error {
 }
 
 export async function paymentStructureCatalog(client) {
+  // These are independently tracked additive extensions. Keep the original
+  // payment-structure migration fingerprint stable without hiding other drift.
   const relations = (await client.query(`SELECT c.relname,
     EXISTS(SELECT 1 FROM aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a WHERE a.grantee=0) AS public_access,
     (SELECT jsonb_agg(jsonb_build_array(a.attname,format_type(a.atttypid,a.atttypmod),
       a.attnotnull,pg_get_expr(d.adbin,d.adrelid)) ORDER BY a.attnum)
      FROM pg_attribute a LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
-     WHERE a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped) AS columns,
+     WHERE a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
+       AND NOT (c.relname='sf_payment_attempts' AND a.attname='otp_confirmed_at')) AS columns,
     (SELECT jsonb_agg(jsonb_build_array(k.conname,pg_get_constraintdef(k.oid)) ORDER BY k.conname)
      FROM pg_constraint k WHERE k.conrelid=c.oid) AS constraints,
     (SELECT jsonb_agg(pg_get_indexdef(i.indexrelid) ORDER BY pg_get_indexdef(i.indexrelid))
@@ -48,7 +51,8 @@ export async function paymentStructureCatalog(client) {
   const triggers = (await client.query(`SELECT c.relname,t.tgname,t.tgenabled,pg_get_triggerdef(t.oid) AS definition
     FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace
     WHERE n.nspname='public' AND NOT t.tgisinternal AND (c.relname=ANY($1::text[])
-      OR t.tgname IN ('sf_payment_wallet_reserved_floor','sf_payment_transaction_snapshot_guard'))
+       OR t.tgname IN ('sf_payment_wallet_reserved_floor','sf_payment_transaction_snapshot_guard'))
+       AND t.tgname <> 'sf_z_payment_reservation_total'
     ORDER BY c.relname,t.tgname`, [tables])).rows;
   return { relations, routines, triggers };
 }

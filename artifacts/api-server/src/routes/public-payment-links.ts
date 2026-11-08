@@ -12,6 +12,10 @@ import {
   paymentAggregatorsTable,
 } from "@workspace/db";
 import {
+  ConfirmPublicPaymentLinkAttemptOtpBody,
+  ConfirmPublicPaymentLinkAttemptOtpHeader,
+  ConfirmPublicPaymentLinkAttemptOtpParams,
+  ConfirmPublicPaymentLinkAttemptOtpResponse,
   GetPublicPaymentLinkParams,
   GetPublicPaymentLinkResponse,
   GetPublicPaymentLinkAttemptStatusHeader,
@@ -42,6 +46,7 @@ import { getAggregatorRouteScopeKey } from "./aggregator-catalog";
 import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
 import { isLinkFlowPaymentExecutionEnabled } from "../services/linkflow-payment-policy";
 import {
+  confirmPublicLinkFlowPaymentOtp,
   getLinkFlowPaymentAttemptStatus,
   LinkFlowPaymentError,
   startLinkFlowPaymentAttempt,
@@ -367,7 +372,7 @@ router.post("/public/payment-links/:token/attempts", async (req, res): Promise<v
     res.json(StartPublicPaymentLinkAttemptResponse.parse(result));
   } catch (error) {
     if (error instanceof LinkFlowPaymentError) {
-      res.status(error.statusCode).json({ error: error.message });
+      res.status(error.statusCode).json(error.responseBody ?? { error: error.message });
       return;
     }
     req.log.error({ err: error }, "Public LinkFlow payment attempt could not be started");
@@ -403,6 +408,40 @@ router.get("/public/payment-link-attempts/:attemptId", async (req, res): Promise
     }
     req.log.error({ err: error }, "Public LinkFlow payment status could not be refreshed");
     res.status(503).json({ error: "La vérification est momentanément indisponible. Réessayez sans relancer le paiement." });
+  }
+});
+
+router.post("/public/payment-link-attempts/:attemptId/otp", async (req, res): Promise<void> => {
+  res.setHeader("Cache-Control", "no-store, private");
+  const parsedParams = ConfirmPublicPaymentLinkAttemptOtpParams.safeParse(req.params);
+  const parsedHeader = ConfirmPublicPaymentLinkAttemptOtpHeader.safeParse({
+    "X-LinkFlow-Attempt-Token": req.get("X-LinkFlow-Attempt-Token"),
+  });
+  const parsedBody = ConfirmPublicPaymentLinkAttemptOtpBody.safeParse(req.body);
+  if (!parsedParams.success || !parsedHeader.success || !parsedBody.success) {
+    res.status(400).json({ error: "Les informations de confirmation OTP sont invalides." });
+    return;
+  }
+  try {
+    if (!await consumePublicPaymentLinkQuota(clientAddress(req), "otp")) {
+      res.setHeader("Retry-After", "60");
+      res.status(429).json({ error: "Trop de confirmations OTP. Réessayez dans une minute." });
+      return;
+    }
+    const result = await confirmPublicLinkFlowPaymentOtp(
+      parsedParams.data.attemptId,
+      parsedHeader.data["X-LinkFlow-Attempt-Token"],
+      parsedBody.data.reference,
+      parsedBody.data.otp,
+    );
+    res.json(ConfirmPublicPaymentLinkAttemptOtpResponse.parse(result));
+  } catch (error) {
+    if (error instanceof LinkFlowPaymentError) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
+    req.log.error({ err: error }, "Public LinkFlow OTP confirmation could not be completed");
+    res.status(503).json({ error: "La confirmation OTP est momentanément indisponible. Vérifiez l’état avant de réessayer." });
   }
 });
 

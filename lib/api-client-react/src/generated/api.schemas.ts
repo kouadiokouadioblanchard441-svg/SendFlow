@@ -992,6 +992,22 @@ export interface PublicPaymentLinkAttemptInput {
      * @pattern ^[0-9]+(\.[0-9]+)?$
      */
   amount?: string;
+  /**
+     * @minLength 4
+     * @maxLength 12
+     * @pattern ^[0-9]{4,12}$
+     */
+  otp?: string;
+}
+
+export interface PublicPaymentLinkOtpConfirmationInput {
+  reference: string;
+  /**
+     * @minLength 4
+     * @maxLength 12
+     * @pattern ^[0-9]{4,12}$
+     */
+  otp: string;
 }
 
 export interface CustomerPaymentLinkSimulationInput {
@@ -1012,6 +1028,48 @@ export const PublicPaymentLinkAttemptStatusState = {
   succeeded: 'succeeded',
   failed: 'failed',
 } as const;
+
+export type DeveloperDirectPaymentFlowAction = typeof DeveloperDirectPaymentFlowAction[keyof typeof DeveloperDirectPaymentFlowAction];
+
+
+export const DeveloperDirectPaymentFlowAction = {
+  approve_on_phone: 'approve_on_phone',
+  dial_ussd: 'dial_ussd',
+  enter_otp: 'enter_otp',
+  open_redirect: 'open_redirect',
+  wait: 'wait',
+  none: 'none',
+} as const;
+
+/**
+ * @nullable
+ */
+export type DeveloperDirectPaymentFlowOtpMethod = typeof DeveloperDirectPaymentFlowOtpMethod[keyof typeof DeveloperDirectPaymentFlowOtpMethod] | null;
+
+
+export const DeveloperDirectPaymentFlowOtpMethod = {
+  sms: 'sms',
+  ussd: 'ussd',
+  app: 'app',
+} as const;
+
+export interface DeveloperDirectPaymentFlow {
+  action: DeveloperDirectPaymentFlowAction;
+  /** @nullable */
+  reference: string | null;
+  /** @nullable */
+  otpMethod: DeveloperDirectPaymentFlowOtpMethod;
+  /**
+     * Server-configured instruction to dial; never the payer's OTP.
+     * @nullable
+     */
+  otpCommand: string | null;
+  /**
+     * Provider-generated redirect URL when the selected flow requires one.
+     * @nullable
+     */
+  redirectUrl: string | null;
+}
 
 export interface PublicPaymentLinkAttemptStatus {
   attemptId: string;
@@ -1039,6 +1097,7 @@ export interface PublicPaymentLinkAttemptStatus {
      * @nullable
      */
   returnUrl: string | null;
+  flow: DeveloperDirectPaymentFlow;
 }
 
 export type PublicPaymentLinkAttemptCreated = PublicPaymentLinkAttemptStatus & {
@@ -3447,48 +3506,6 @@ export interface DeveloperDirectPaymentInput {
   otp?: string;
   /** Attempt reference returned when the provider requires a second OTP step. */
   reference?: string;
-}
-
-export type DeveloperDirectPaymentFlowAction = typeof DeveloperDirectPaymentFlowAction[keyof typeof DeveloperDirectPaymentFlowAction];
-
-
-export const DeveloperDirectPaymentFlowAction = {
-  approve_on_phone: 'approve_on_phone',
-  dial_ussd: 'dial_ussd',
-  enter_otp: 'enter_otp',
-  open_redirect: 'open_redirect',
-  wait: 'wait',
-  none: 'none',
-} as const;
-
-/**
- * @nullable
- */
-export type DeveloperDirectPaymentFlowOtpMethod = typeof DeveloperDirectPaymentFlowOtpMethod[keyof typeof DeveloperDirectPaymentFlowOtpMethod] | null;
-
-
-export const DeveloperDirectPaymentFlowOtpMethod = {
-  sms: 'sms',
-  ussd: 'ussd',
-  app: 'app',
-} as const;
-
-export interface DeveloperDirectPaymentFlow {
-  action: DeveloperDirectPaymentFlowAction;
-  /** @nullable */
-  reference: string | null;
-  /** @nullable */
-  otpMethod: DeveloperDirectPaymentFlowOtpMethod;
-  /**
-     * Server-configured instruction to dial; never the payer's OTP.
-     * @nullable
-     */
-  otpCommand: string | null;
-  /**
-     * Provider-generated redirect URL when the selected flow requires one.
-     * @nullable
-     */
-  redirectUrl: string | null;
 }
 
 export type DeveloperOtpRequiredErrorError = typeof DeveloperOtpRequiredErrorError[keyof typeof DeveloperOtpRequiredErrorError];

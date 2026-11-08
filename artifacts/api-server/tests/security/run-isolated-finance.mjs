@@ -41,6 +41,7 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  await owner.query("DROP TABLE IF EXISTS sf_wallet_reservation_totals");
   await owner.query(`ALTER TABLE sf_countries DROP COLUMN payout_enabled;
     ALTER TABLE sf_operator_catalog DROP COLUMN payout_enabled;
     ALTER TABLE sf_payment_limits DROP CONSTRAINT sf_payment_limits_daily_payout_check;
@@ -198,10 +199,19 @@ try {
       await applyLinkFlowPaymentAssociation(migrationClient, linkFlowRepeat.fingerprint),
       { applied: false, alreadyApplied: true },
     );
+    await migrationClient.query("ALTER TABLE public.sf_payment_attempts DROP COLUMN IF EXISTS otp_confirmed_at");
+    const otpColumnMigration = readFileSync(join(root,
+      "lib/db/migrations/2026-11-09-linkflow-otp-confirmed-at.sql"), "utf8");
+    await migrationClient.query(`BEGIN;\n${otpColumnMigration}\nCOMMIT;`);
+    await migrationClient.query(`BEGIN;\n${otpColumnMigration}\nCOMMIT;`);
   } finally { migrationClient.release(); }
   const payoutMigration = readFileSync(join(root, "lib/db/migrations/2026-11-08-payout-schema-additive.sql"), "utf8");
   await owner.query(payoutMigration);
   await owner.query(payoutMigration);
+  const reservationTotalsMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-11-09-wallet-reservation-totals.sql"), "utf8");
+  await owner.query(reservationTotalsMigration);
+  await owner.query(reservationTotalsMigration);
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app`);

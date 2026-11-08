@@ -566,6 +566,24 @@ async function confirmLinkFlowPaymentOtp(
   });
 }
 
+export async function confirmPublicLinkFlowPaymentOtp(
+  attemptId: string,
+  pollToken: string,
+  reference: string,
+  otp: string,
+): Promise<PublicLinkFlowPaymentStatus> {
+  if (!/^[a-f0-9]{64}$/.test(pollToken)) {
+    throw new LinkFlowPaymentError(404, "Cette demande de confirmation n’est pas disponible.");
+  }
+  await confirmLinkFlowPaymentOtp(
+    attemptId,
+    hashLinkFlowPollToken(pollToken),
+    reference,
+    otp,
+  );
+  return getLinkFlowPaymentAttemptStatus(attemptId, pollToken);
+}
+
 export async function startLinkFlowPaymentAttempt(
   publicToken: string,
   input: StartLinkFlowPaymentInput,

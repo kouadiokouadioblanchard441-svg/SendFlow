@@ -164,6 +164,7 @@ import type {
   PublicPaymentLinkAttemptCreated,
   PublicPaymentLinkAttemptInput,
   PublicPaymentLinkAttemptStatus,
+  PublicPaymentLinkOtpConfirmationInput,
   PublicPaymentLinkQuote,
   PublicPaymentLinkQuoteInput,
   PublicPricingCatalog,
@@ -3901,7 +3902,7 @@ return customFetch<PublicPaymentLinkAttemptCreated>(getStartPublicPaymentLinkAtt
 
 export const getStartPublicPaymentLinkAttemptMutationKey = () => ['startPublicPaymentLinkAttempt'] as const;
 
-export const getStartPublicPaymentLinkAttemptMutationOptions = <TError = ErrorType<ErrorEnvelope | void>,
+export const getStartPublicPaymentLinkAttemptMutationOptions = <TError = ErrorType<ErrorEnvelope | DeveloperOtpRequiredError | void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>, TError,StartPublicPaymentLinkAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>, TError,StartPublicPaymentLinkAttemptMutationVariables, TContext> => {
 
@@ -3930,13 +3931,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type StartPublicPaymentLinkAttemptMutationResult = NonNullable<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>>
     export type StartPublicPaymentLinkAttemptMutationBody = BodyType<PublicPaymentLinkAttemptInput>
-    export type StartPublicPaymentLinkAttemptMutationError = ErrorType<ErrorEnvelope | void>
+    export type StartPublicPaymentLinkAttemptMutationError = ErrorType<ErrorEnvelope | DeveloperOtpRequiredError | void>
     export type StartPublicPaymentLinkAttemptMutationVariables = {token: string;data: BodyType<PublicPaymentLinkAttemptInput>}
 
     /**
  * @summary Start a server-owned FeexPay payment attempt for an active public link
  */
-export const useStartPublicPaymentLinkAttempt = <TError = ErrorType<ErrorEnvelope | void>,
+export const useStartPublicPaymentLinkAttempt = <TError = ErrorType<ErrorEnvelope | DeveloperOtpRequiredError | void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>, TError,StartPublicPaymentLinkAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>,
@@ -4023,6 +4024,96 @@ export function useGetPublicPaymentLinkAttemptStatus<TData = Awaited<ReturnType<
 
 
 
+
+export const getConfirmPublicPaymentLinkAttemptOtpUrl = (attemptId: string,) => {
+
+
+
+
+  return `/api/public/payment-link-attempts/${attemptId}/otp`
+}
+
+/**
+ * Confirms the operator challenge using the attempt-scoped bearer token. The OTP is not stored in the browser after submission and does not itself confirm settlement.
+ * @summary Submit an operator OTP for a public payment-link attempt
+ */
+export const confirmPublicPaymentLinkAttemptOtp = async (attemptId: string,
+    publicPaymentLinkOtpConfirmationInput: PublicPaymentLinkOtpConfirmationInput, options?: Parameters<typeof customFetch>[1]): Promise<PublicPaymentLinkAttemptStatus> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PublicPaymentLinkAttemptStatus>(getConfirmPublicPaymentLinkAttemptOtpUrl(attemptId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(publicPaymentLinkOtpConfirmationInput)
+  }
+);}
+
+
+
+
+
+export const getConfirmPublicPaymentLinkAttemptOtpMutationKey = () => ['confirmPublicPaymentLinkAttemptOtp'] as const;
+
+export const getConfirmPublicPaymentLinkAttemptOtpMutationOptions = <TError = ErrorType<ErrorEnvelope | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPublicPaymentLinkAttemptOtp>>, TError,ConfirmPublicPaymentLinkAttemptOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmPublicPaymentLinkAttemptOtp>>, TError,ConfirmPublicPaymentLinkAttemptOtpMutationVariables, TContext> => {
+
+const mutationKey = getConfirmPublicPaymentLinkAttemptOtpMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmPublicPaymentLinkAttemptOtp>>, ConfirmPublicPaymentLinkAttemptOtpMutationVariables> = (props) => {
+          const {attemptId,data} = props ?? {};
+
+          return  confirmPublicPaymentLinkAttemptOtp(attemptId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmPublicPaymentLinkAttemptOtpMutationResult = NonNullable<Awaited<ReturnType<typeof confirmPublicPaymentLinkAttemptOtp>>>
+    export type ConfirmPublicPaymentLinkAttemptOtpMutationBody = BodyType<PublicPaymentLinkOtpConfirmationInput>
+    export type ConfirmPublicPaymentLinkAttemptOtpMutationError = ErrorType<ErrorEnvelope | void>
+    export type ConfirmPublicPaymentLinkAttemptOtpMutationVariables = {attemptId: string;data: BodyType<PublicPaymentLinkOtpConfirmationInput>}
+
+    /**
+ * @summary Submit an operator OTP for a public payment-link attempt
+ */
+export const useConfirmPublicPaymentLinkAttemptOtp = <TError = ErrorType<ErrorEnvelope | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPublicPaymentLinkAttemptOtp>>, TError,ConfirmPublicPaymentLinkAttemptOtpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof confirmPublicPaymentLinkAttemptOtp>>,
+        TError,
+        ConfirmPublicPaymentLinkAttemptOtpMutationVariables,
+        TContext
+      > => {
+      return useMutation(getConfirmPublicPaymentLinkAttemptOtpMutationOptions(options));
+    }
 
 export const getGetPublicPaymentLinkQuoteUrl = (token: string,
     countryCode: string,

@@ -4,12 +4,20 @@ import {
   formatLinkFlowCountdown,
   LINKFLOW_PAYMENT_TIMEOUT_SECONDS,
 } from '@/lib/linkflow-attempt-storage';
+import LinkFlowOtpChallengeForm from '@/components/linkflow-otp-challenge-form';
 
 export interface LinkFlowPaymentWaitingProps {
   merchantName: string;
   amountLabel: string;
   ussdCode: string | null;
   state: 'waiting' | 'uncertain';
+  otpChallenge?: {
+    otpMethod: 'sms' | 'ussd' | 'app' | null;
+    otpCommand: string | null;
+  };
+  onSubmitOtp?: (otp: string) => Promise<boolean>;
+  otpSubmitting?: boolean;
+  otpError?: string | null;
   onRefresh?: () => void;
   refreshing?: boolean;
   simulation?: boolean;
@@ -21,12 +29,20 @@ export default function LinkFlowPaymentWaiting({
   amountLabel,
   ussdCode,
   state,
+  otpChallenge,
+  onSubmitOtp,
+  otpSubmitting = false,
+  otpError = null,
   onRefresh,
   refreshing = false,
   simulation = false,
   countdownSeconds,
 }: LinkFlowPaymentWaitingProps) {
   const uncertain = state === 'uncertain';
+  const awaitingOtp = Boolean(otpChallenge && onSubmitOtp && !uncertain);
+  const displayedUssdCode = otpChallenge?.otpMethod === 'ussd'
+    ? otpChallenge.otpCommand
+    : awaitingOtp ? null : ussdCode;
   const countdownProgress = countdownSeconds === undefined
     ? 0
     : Math.min(100, Math.max(0, (countdownSeconds / LINKFLOW_PAYMENT_TIMEOUT_SECONDS) * 100));
@@ -51,16 +67,18 @@ export default function LinkFlowPaymentWaiting({
         </div>
         <p className={`sendflow-linkflow-flow-status${uncertain ? ' is-uncertain' : ''}`} role="status" aria-live="polite">
           <LoaderCircle className="sendflow-linkflow-flow-spinner" size={15} />
-          {simulation ? 'Aperçu de l’attente' : uncertain ? 'Vérification en cours…' : 'En attente de confirmation…'}
+          {simulation ? 'Aperçu de l’attente' : uncertain ? 'Vérification en cours…' : awaitingOtp ? 'Code opérateur requis' : 'En attente de confirmation…'}
         </p>
         <h1 id="linkflow-waiting-title">
-          {simulation ? 'Aperçu du paiement' : uncertain ? 'Nous vérifions votre paiement' : 'Confirmez sur votre téléphone'}
+          {simulation ? 'Aperçu du paiement' : uncertain ? 'Nous vérifions votre paiement' : awaitingOtp ? 'Saisissez votre code OTP' : 'Confirmez sur votre téléphone'}
         </h1>
         <p className="sendflow-linkflow-flow-copy">
           {simulation
             ? 'Cette simulation n’envoie ni paiement ni code USSD à l’opérateur.'
             : uncertain
             ? 'La réponse du réseau prend plus de temps. Ne relancez pas le paiement et gardez cette page ouverte.'
+            : awaitingOtp
+            ? 'Le réseau demande une confirmation supplémentaire. Utilisez exactement la consigne affichée et saisissez le code reçu.'
             : 'Autorisez le paiement depuis votre téléphone, puis suivez les instructions de votre opérateur.'}
         </p>
 
@@ -72,26 +90,33 @@ export default function LinkFlowPaymentWaiting({
           <div className="sendflow-linkflow-simulation-note" role="status">
             Écran d’aperçu uniquement. Aucun paiement n’est en cours.
           </div>
-        ) : ussdCode ? (
+        ) : displayedUssdCode ? (
           <a
             className="sendflow-linkflow-ussd-code"
-            href={`tel:${encodeURIComponent(ussdCode)}`}
-            aria-label={`Composer le code USSD ${ussdCode}`}
+            href={`tel:${encodeURIComponent(displayedUssdCode)}`}
+            aria-label={`Composer le code USSD ${displayedUssdCode}`}
           >
             <span className="sendflow-linkflow-ussd-call"><PhoneCall size={20} /></span>
-            <strong>{ussdCode}</strong>
+            <strong>{displayedUssdCode}</strong>
             <span className="sendflow-linkflow-ussd-arrow" aria-hidden="true">→</span>
           </a>
-        ) : (
+        ) : !awaitingOtp && (
           <div className="sendflow-linkflow-ussd-unconfigured" role="status">
             Aucune instruction USSD n’est configurée pour ce réseau. Vérifiez la notification de paiement de votre opérateur.
           </div>
         )}
-        {!simulation && ussdCode && <p className="sendflow-linkflow-ussd-hint">Touchez le code pour l’ouvrir dans le composeur de votre téléphone.</p>}
+        {!simulation && displayedUssdCode && <p className="sendflow-linkflow-ussd-hint">Touchez le code pour l’ouvrir dans le composeur de votre téléphone.</p>}
 
-        {!simulation && (
+        {awaitingOtp && otpChallenge && onSubmitOtp ? (
+          <LinkFlowOtpChallengeForm
+            otpMethod={otpChallenge.otpMethod}
+            submitting={otpSubmitting}
+            error={otpError}
+            onSubmit={onSubmitOtp}
+          />
+        ) : !simulation && !awaitingOtp && (
           <ol className="sendflow-linkflow-steps">
-            <li><span>1</span><p>{ussdCode ? `Composez ${ussdCode}.` : 'Ouvrez la notification de paiement de votre opérateur.'}</p></li>
+            <li><span>1</span><p>{displayedUssdCode ? `Composez ${displayedUssdCode}.` : 'Ouvrez la notification de paiement de votre opérateur.'}</p></li>
             <li><span>2</span><p>Suivez les instructions affichées par votre opérateur.</p></li>
             <li><span>3</span><p>Vérifiez le montant, puis confirmez sur votre téléphone.</p></li>
             <li><span>4</span><p>Gardez cette page ouverte pendant la vérification.</p></li>

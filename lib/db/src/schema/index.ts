@@ -24,6 +24,7 @@ export * from "./transactions";
 export * from "./users";
 export * from "./preview-access";
 export * from "./wallets";
+export * from "./wallet-reservation-totals";
 export * from "./wallet-ledger";
 export * from "./payment-intents";
 export * from "./payment-attempts";

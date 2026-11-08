@@ -33,4 +33,10 @@ export interface PublicPaymentLinkAttemptInput {
      * @pattern ^[0-9]+(\.[0-9]+)?$
      */
   amount?: string;
+  /**
+     * @minLength 4
+     * @maxLength 12
+     * @pattern ^[0-9]{4,12}$
+     */
+  otp?: string;
 }

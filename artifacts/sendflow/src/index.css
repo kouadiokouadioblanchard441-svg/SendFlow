@@ -11574,6 +11574,60 @@ body:has(.sendflow-linkflow-failure-shell) { background: #fff; }
   font-size: 14px;
   line-height: 1.5;
 }
+.sendflow-linkflow-otp-form {
+  display: grid;
+  width: min(100%, 390px);
+  gap: 13px;
+  margin: 20px auto 0;
+  text-align: left;
+}
+.sendflow-linkflow-otp-instruction {
+  margin: 0;
+  color: #4c515a;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+.sendflow-linkflow-otp-form label {
+  color: #282b31;
+  font-size: 14px;
+  font-weight: 650;
+}
+.sendflow-linkflow-otp-form input {
+  min-height: 52px;
+  border: 1px solid #d8dbe1;
+  border-radius: 12px;
+  background: #fff;
+  color: #17191e;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .12em;
+  text-align: center;
+}
+.sendflow-linkflow-otp-error {
+  margin: 0;
+  color: #a32132;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.sendflow-linkflow-otp-submit {
+  min-height: 50px;
+  border-radius: 12px;
+  background: #6536c5;
+  color: #fff;
+  font-weight: 700;
+}
+.sendflow-linkflow-otp-submit:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+.sendflow-linkflow-otp-privacy {
+  margin: 0;
+  color: #6a6e77;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
 .sendflow-linkflow-expiry-countdown {
   display: flex;
   flex-direction: column;
