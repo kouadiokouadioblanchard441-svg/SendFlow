@@ -1076,6 +1076,7 @@ export default function DocsPage() {
       <div className="sf-docs-eyebrow">SENDFLOW / API</div>
       <h1 className="sf-docs-title">{t.homeTitle}</h1>
       <p className="sf-docs-lede">{t.homeSub}</p>
+      <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
       <section className="sf-docs-section sf-docs-home-methods">
         <h2>{t.methods}</h2><p>{t.methodsSub}</p>
         <div className="sf-docs-cards">

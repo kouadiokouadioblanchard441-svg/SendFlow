@@ -167,6 +167,18 @@ test('getting-started guide presents the production quickstart with SendFlow exa
   assert.match(getDocsCodeExample('read-session', 'Node.js'), /\/v1\/payment-sessions\//);
 });
 
+test('home introduction places the copyable production API base before integration choices', () => {
+  const homeStart = docsCopy.indexOf('const renderHome = () => (');
+  const apiUrlBlock = docsCopy.indexOf(
+    '<CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />',
+    homeStart,
+  );
+  const methodsSection = docsCopy.indexOf('<section className="sf-docs-section sf-docs-home-methods">', homeStart);
+
+  assert.ok(homeStart >= 0 && apiUrlBlock > homeStart && methodsSection > apiUrlBlock);
+  assert.match(productionUrlSource, /apiBaseUrl: 'https:\/\/merchent\.business\.sendflow\.africa\/api'/);
+});
+
 test('production addresses are individually copyable and wrap on mobile', () => {
   assert.match(docsCopy, /function CopyableUrlBlock/);
   assert.match(docsCopy, /navigator\.clipboard\.writeText\(value\)/);
