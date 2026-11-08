@@ -1,4 +1,4 @@
-import { decryptSensitiveData, encryptSensitiveData } from "./sensitive-data-crypto";
+import { decryptSensitiveData, encryptSensitiveData } from "./sensitive-data-crypto.ts";
 
 const EVENT_TYPES = new Set([
   "payout.created",

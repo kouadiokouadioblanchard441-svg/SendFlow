@@ -88,7 +88,9 @@ test("isolated webhook outbox-to-worker delivery preserves the public contract",
       CREATE TABLE sf_developer_webhook_deliveries (
         id uuid PRIMARY KEY,
         endpoint_id uuid NOT NULL,
-        payment_session_id uuid NOT NULL,
+        payment_session_id uuid,
+        payout_request_id uuid,
+        payout_state_event_id uuid,
         event_type varchar(40) NOT NULL,
         payload jsonb NOT NULL,
         status varchar(12) NOT NULL DEFAULT 'pending',
@@ -100,12 +102,25 @@ test("isolated webhook outbox-to-worker delivery preserves the public contract",
         delivered_at timestamptz,
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now(),
-        UNIQUE(endpoint_id,payment_session_id,event_type),
         CHECK (octet_length(payload::text) <= 16384),
-        CHECK (event_type IN ('payment.succeeded','payment.failed')),
+        CHECK (
+          (payment_session_id IS NOT NULL AND payout_request_id IS NULL AND payout_state_event_id IS NULL)
+          OR
+          (payment_session_id IS NULL AND payout_request_id IS NOT NULL AND payout_state_event_id IS NOT NULL)
+        ),
+        CHECK (event_type IN (
+          'payment.succeeded','payment.failed',
+          'payout.created','payout.processing','payout.succeeded','payout.failed','payout.uncertain'
+        )),
         CHECK (status IN ('pending','delivering','delivered','failed')),
         CHECK (attempts BETWEEN 0 AND 100)
       );
+      CREATE UNIQUE INDEX sf_developer_webhook_deliveries_payment_event_uq
+        ON sf_developer_webhook_deliveries(endpoint_id,payment_session_id,event_type)
+        WHERE payment_session_id IS NOT NULL;
+      CREATE UNIQUE INDEX sf_developer_webhook_deliveries_payout_event_uq
+        ON sf_developer_webhook_deliveries(endpoint_id,payout_request_id,payout_state_event_id)
+        WHERE payout_request_id IS NOT NULL;
     `);
 
     server = createServer((request, response) => {

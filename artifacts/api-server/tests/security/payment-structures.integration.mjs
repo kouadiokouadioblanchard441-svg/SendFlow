@@ -99,12 +99,16 @@ async function postLedger(client, p, direction, amount) {
   return { entry, after };
 }
 
-test("migration is versioned, repeatable and does not grant PUBLIC access", async () => {
+test("the payout-aware reservation guard is detected as schema drift and never replayed", async () => {
   const client = await owner.connect();
   try {
     const plan = await planPaymentStructures(client);
-    assert.equal(plan.alreadyApplied, true);
-    assert.deepEqual(await applyPaymentStructures(client, plan.fingerprint), { applied: false, alreadyApplied: true });
+    assert.equal(plan.alreadyApplied, false);
+    assert.deepEqual(plan.conflicts, ["EXISTING_PAYMENT_SCHEMA_DRIFT"]);
+    await assert.rejects(applyPaymentStructures(client, plan.fingerprint), {
+      code: "EXISTING_PAYMENT_SCHEMA_DRIFT",
+    });
+    assert.deepEqual((await planPaymentStructures(client)).conflicts, ["EXISTING_PAYMENT_SCHEMA_DRIFT"]);
     const catalog = await paymentStructureCatalog(client);
     assert.equal(catalog.relations.length, 5);
     assert.equal(catalog.relations.some((r) => r.public_access), false);
@@ -117,17 +121,23 @@ test("migration is versioned, repeatable and does not grant PUBLIC access", asyn
 test("stale migration plans fail without touching the database", async () => {
   const client = await owner.connect();
   try {
+    const before = await planPaymentStructures(client);
     await assert.rejects(applyPaymentStructures(client, "0".repeat(64)), { code: "STALE_PAYMENT_MIGRATION_PLAN" });
-    assert.equal((await planPaymentStructures(client)).alreadyApplied, true);
+    const after = await planPaymentStructures(client);
+    assert.equal(after.fingerprint, before.fingerprint);
+    assert.deepEqual(after.conflicts, ["EXISTING_PAYMENT_SCHEMA_DRIFT"]);
   } finally { client.release(); }
 });
 
 test("disabled guards are detected as schema drift, not silently repaired", async () => {
   const client = await owner.connect();
   try {
+    const before = await planPaymentStructures(client);
     await client.query("BEGIN");
     await client.query("ALTER TABLE sf_wallets DISABLE TRIGGER sf_payment_wallet_reserved_floor");
-    assert.deepEqual((await planPaymentStructures(client)).conflicts, ["EXISTING_PAYMENT_SCHEMA_DRIFT"]);
+    const disabled = await planPaymentStructures(client);
+    assert.deepEqual(disabled.conflicts, ["EXISTING_PAYMENT_SCHEMA_DRIFT"]);
+    assert.notEqual(disabled.fingerprint, before.fingerprint);
   } finally { await client.query("ROLLBACK"); client.release(); }
 });
 

@@ -36,3 +36,9 @@ If the payment migration registry is absent while raw payment tables or routines
 **Why:** The shared database already held part of the raw payment schema but lacked its migration registry and safeguards; blindly replaying the migration could have overwritten the payout-aware reservation guard.
 
 **How to apply:** Reconcile the partial state in one verified-TLS transaction, verify protected data remains unchanged, then confirm the migration plans against the recorded fingerprints before committing.
+
+The payment schema-version registry rejects updates and deletes. A reviewed payout change can intentionally alter an object covered by the base schema fingerprint; never rewrite an immutable record to hide that drift. An isolated fixture that retains only the base record should expect a fail-closed drift conflict, while a shared final schema should be fingerprinted only after its complete approved catalog is verified.
+
+**Why:** The payout migration deliberately extends a payment guard, so its catalog no longer matches the earlier migration's fingerprint; tests must not bypass the immutable registry to force a green result.
+
+**How to apply:** Keep version records immutable. Verify the final catalog and protected data before registering its fingerprint; test partial migration states for safe refusal rather than silently replaying the base migration.
