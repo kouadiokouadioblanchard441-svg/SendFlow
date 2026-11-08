@@ -24,6 +24,17 @@ customer selections from server data, rather than require a new hardcoded countr
 separate server-managed configuration. Do not assume that creating a country
 activates payment integrations, fees or operators.
 
+All transfer configuration must remain editable in the administrator panel at
+country and country-specific operator scope: operation availability, pricing,
+aggregator routing and OTP/USSD instructions.
+
+**Why:** The user explicitly requires configuring every country and operator from
+the administrator panel rather than sending configuration lists to the agent.
+
+**How to apply:** Keep country defaults separate from operator overrides, preserve
+per-operation controls, and do not open customer flows until the administrator
+has entered validated values and the server confirms the required configuration.
+
 FeexPay is the first payment partner requested by the user. They describe the
 integration as « en SDK, c'est-à-dire l'API directe dans notre application ».
 Use direct provider calls from the server, not a browser SDK that exposes credentials.

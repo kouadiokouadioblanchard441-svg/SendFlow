@@ -93,3 +93,69 @@ test("invalid amounts, foreign numbers, unsupported operators and exceeded limit
   await assert.rejects(calculateCustomerTransferQuote("", input(), dependencies()));
   await assert.rejects(calculateCustomerTransferQuote("server-customer", input(), { ...dependencies(), rates: [] }));
 });
+
+test("each transfer type requires its own country and operator activation", async () => {
+  const cases = [
+    {
+      kind: "deposit",
+      input: {
+        kind: "deposit", amountMinor: 10_000, senderPaysFees: true,
+        sourceOperatorId: "source", senderPhone: "+2250000000000",
+      },
+      countryFlag: "depositEnabled",
+      operatorFlag: "depositEnabled",
+      ratedOperatorId: "source",
+      categoryId: "deposit",
+    },
+    {
+      kind: "inter-network",
+      input: input(),
+      countryFlag: "interNetworkEnabled",
+      operatorFlag: "interNetworkEnabled",
+      ratedOperatorId: "source",
+      categoryId: "inter-network",
+    },
+    {
+      kind: "international",
+      input: {
+        kind: "international", amountMinor: 10_000, senderPaysFees: true,
+        destinationOperatorId: "destination", destinationCountryCode: "CI",
+        recipientPhone: "+2250000000001",
+      },
+      countryFlag: "internationalEnabled",
+      operatorFlag: "internationalEnabled",
+      ratedOperatorId: "destination",
+      categoryId: "international",
+    },
+  ];
+
+  for (const transfer of cases) {
+    const base = dependencies();
+    base.rates = [{
+      operatorId: transfer.ratedOperatorId,
+      categoryId: transfer.categoryId,
+      feePercent: 1,
+      version: 1,
+    }];
+    await calculateCustomerTransferQuote("server-customer", transfer.input, base);
+
+    const disabledCountry = dependencies();
+    disabledCountry.rates = base.rates;
+    disabledCountry.countries[0][transfer.countryFlag] = false;
+    await assert.rejects(
+      calculateCustomerTransferQuote("server-customer", transfer.input, disabledCountry),
+      /non compatible/,
+      `${transfer.kind} must remain blocked when its country operation is disabled`,
+    );
+
+    const disabledOperator = dependencies();
+    disabledOperator.rates = base.rates;
+    const targetOperatorId = transfer.kind === "international" ? "destination" : "source";
+    disabledOperator.operators.find((operator) => operator.operatorId === targetOperatorId)[transfer.operatorFlag] = false;
+    await assert.rejects(
+      calculateCustomerTransferQuote("server-customer", transfer.input, disabledOperator),
+      /non compatible/,
+      `${transfer.kind} must remain blocked when its operator operation is disabled`,
+    );
+  }
+});

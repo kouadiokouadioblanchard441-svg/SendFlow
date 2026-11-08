@@ -185,7 +185,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'login-activity': { title: 'Connexions', eyebrow: 'Sécurité' },
   'otp-activity': { title: 'Activité OTP', eyebrow: 'Sécurité' },
   banners: { title: 'Bannières', eyebrow: 'Contenu client' },
-  'otp-policies': { title: 'Politiques OTP', eyebrow: 'Orange Money' },
+  'otp-policies': { title: 'Politiques OTP', eyebrow: 'Par pays et opérateur' },
   aggregators: { title: 'Partenaires de paiement', eyebrow: 'Routage multi-agrégateurs' },
   'operator-pricing': { title: 'Opérateurs et tarifs', eyebrow: 'Catalogue client' },
   'registration-settings': { title: 'Inscription', eyebrow: 'Sécurité des comptes' },
