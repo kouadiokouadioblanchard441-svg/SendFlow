@@ -375,6 +375,20 @@ test('Mobile Money guide distinguishes catalog metadata from supported attempt f
   assert.doesNotMatch(directSessionSchema, /otpCommand/);
 });
 
+test('Direct API has a dedicated OTP section with dynamic country instructions', () => {
+  assert.match(docsCopy, /mobileMoneyOtpTitle: 'Parcours OTP et codes USSD'/);
+  assert.match(docsCopy, /mobileMoneyOtpTitle: 'OTP flows and USSD codes'/);
+  assert.match(docsCopy, /aucune liste statique de codes par pays/);
+  assert.match(docsCopy, /does not guarantee a static country\/operator\/code list/);
+  assert.match(docsCopy, /Codes par pays.*Aucune matrice fixe pays\/opérateur\/code n’est garantie/);
+  assert.match(docsCopy, /Country-specific codes.*does not guarantee a fixed country\/operator\/code matrix/);
+
+  const otpSection = docsCopy.indexOf('<h3 id="direct-otp-guide">{t.mobileMoneyOtpTitle}</h3>');
+  const flowSection = docsCopy.indexOf('<h3>{t.mobileMoneyFlowsTitle}</h3>', otpSection);
+  assert.ok(otpSection >= 0 && flowSection > otpSection);
+  assert.match(docsCopy.slice(otpSection, flowSection), /mobileMoneyOtpRows\.map/);
+});
+
 test('LinkFlow shows only the server instruction for an available selected operator', async () => {
   const paymentPage = await readFile(new URL('./public-payment-link.tsx', import.meta.url), 'utf8');
   assert.match(paymentPage, /\(link\.paymentAvailable \|\| previewSimulationAvailable\) && operator\?\.otpCommand/);
