@@ -39,7 +39,7 @@
 - [LinkFlow image storage](linkflow-image-storage.md) — LinkFlow images remain database-backed; the new database has no historical image rows until data migration is approved.
 - [LinkFlow payment integrity](linkflow-pending-state-integrity.md) — Keep the payer total fixed; soft-delete links while retaining history, and show payment stats only after real payments.
 - [LinkFlow fee availability](linkflow-fee-availability.md) — Configure rates independently per operator; new operators start unconfigured, and disabled countries stay out of customer pricing.
-- [Payout business rules](payout-business-rules.md) — Payout fees are admin-configured per operator; the integrator chooses who pays, and provider-confirmed execution stays locked until proof is verified.
+- [Payout business rules](payout-business-rules.md) — Use the authenticated SendFlow wallet and keep payout routing partners invisible in code and public API docs.
 - [Payment minimum](payment-minimum.md) — Keep the 200 FCFA floor server-side for CFA links and XOF deposits; initialize configurable XOF payout minimum at 200.
 - [LinkFlow USSD configuration](linkflow-ussd-configuration.md) — Administrators configure USSD codes by country and operator; the provider does not supply them.
 - [SendFlow visual contrast](sendflow-visual-contrast.md) — Match provided LinkFlow mockups; keep artwork fixed, white surfaces, violet accents, and solid red deletes.

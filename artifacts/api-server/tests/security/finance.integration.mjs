@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { before, after, test } from "node:test";
 import { createRequire } from "node:module";
-import { randomBytes, randomUUID, randomInt } from "node:crypto";
+import { createHash, randomBytes, randomUUID, randomInt } from "node:crypto";
 import http from "node:http";
 import pg from "pg";
 import "./ip-blocklist.integration.mjs";
@@ -388,6 +388,88 @@ test("SQL row locks reject concurrent stale balances without a second debit", as
   assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
   for (const r of results.filter((r) => r.status === "rejected")) assert.equal(r.reason.statusCode, 409);
   assert.equal(Number((await owner.query("SELECT balance_minor FROM sf_wallets WHERE user_id='fixture-wallet'")).rows[0].balance_minor), 99);
+});
+test("payout reservations serialize against one SendFlow wallet and cannot exceed its balance", async () => {
+  const merchantUserId = "fixture-payout";
+  await owner.query("INSERT INTO sf_users(id,status,phone_verified_at) VALUES($1,'active',now())", [merchantUserId]);
+  await owner.query("INSERT INTO sf_wallets(user_id,balance_minor,currency) VALUES($1,100,'XOF')", [merchantUserId]);
+  await owner.query("UPDATE sf_countries SET payout_enabled=true WHERE country_code='ci'");
+  await owner.query("UPDATE sf_operator_catalog SET payout_enabled=true WHERE operator_id='fixture-source'");
+
+  const publicKey = `sfpk_test_${randomBytes(32).toString("base64url")}`;
+  const secretKey = `sfsk_test_${randomBytes(32).toString("base64url")}`;
+  const [apiKey] = (await owner.query(`INSERT INTO sf_developer_api_keys
+    (user_id,label,public_key,public_key_prefix,public_key_hash,secret_key_prefix,secret_key_hash)
+    VALUES($1,'isolated payout fixture',$2,'sfpk_test_fixture1',$3,'sfsk_test_fixture1',$4)
+    RETURNING id`, [
+    merchantUserId,
+    publicKey,
+    createHash("sha256").update(publicKey).digest("hex"),
+    createHash("sha256").update(secretKey).digest("hex"),
+  ])).rows;
+  const encryptedPhone = "sfenc-v2.primary.AAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAA.AA";
+  const phoneHash = createHash("sha256").update("+2250102030405").digest("hex");
+  const requestIds = [];
+  for (let index = 0; index < 2; index += 1) {
+    const id = randomUUID();
+    requestIds.push(id);
+    const reference = `SFPO${randomBytes(8).toString("hex").toUpperCase()}`;
+    const requestHash = createHash("sha256").update(`payout-fixture-${index}`).digest("hex");
+    await owner.query(`INSERT INTO sf_payout_requests (
+      id,reference,merchant_user_id,api_key_id,wallet_id,idempotency_key,request_hash,
+      country_code,operator_id,beneficiary_phone_encrypted,beneficiary_phone_hash,
+      amount_minor,currency,fee_rate_units,fee_payer,fee_minor,total_debit_minor,
+      beneficiary_amount_minor,pricing_version,status,reservation_state
+    ) SELECT $1,$2,$3,$4,w.id,$5,$6,'ci','fixture-source',$7,$8,80,'XOF',0,'merchant',0,80,80,1,'created','none'
+      FROM sf_wallets AS w WHERE w.user_id=$3`, [
+      id,
+      reference,
+      merchantUserId,
+      apiKey.id,
+      randomUUID(),
+      requestHash,
+      encryptedPhone,
+      phoneHash,
+    ]);
+  }
+  await owner.query(`UPDATE sf_payout_requests SET status='validated',updated_at=now()
+    WHERE merchant_user_id=$1`, [merchantUserId]);
+
+  async function reserve(requestId) {
+    const client = await owner.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(`UPDATE sf_payout_requests
+        SET status='funds_reserved',reservation_state='active',reserved_at=now(),updated_at=now()
+        WHERE id=$1`, [requestId]);
+      await client.query("COMMIT");
+      return true;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      if (error?.code === "23514") return false;
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  const outcomes = await Promise.all(requestIds.map((id) => reserve(id)));
+  assert.equal(outcomes.filter(Boolean).length, 1);
+  assert.equal(outcomes.filter((accepted) => !accepted).length, 1);
+  const wallet = (await owner.query(`SELECT w.balance_minor,
+    (SELECT coalesce(sum(p.total_debit_minor),0) FROM sf_payout_requests p
+      WHERE p.wallet_id=w.id AND p.reservation_state='active') AS payout_reserved
+    FROM sf_wallets w WHERE w.user_id=$1`, [merchantUserId])).rows[0];
+  assert.equal(Number(wallet.balance_minor), 100);
+  assert.equal(Number(wallet.payout_reserved), 80);
+  assert.ok(Number(wallet.balance_minor) - Number(wallet.payout_reserved) >= 0);
+  const activePayout = (await owner.query(`SELECT id FROM sf_payout_requests
+    WHERE merchant_user_id=$1 AND reservation_state='active'`, [merchantUserId])).rows[0];
+  await assert.rejects(owner.query(`UPDATE sf_payout_requests
+    SET status='succeeded',reservation_state='consumed' WHERE id=$1`, [activePayout.id]),
+  (error) => error.code === "23514");
+  await assert.rejects(owner.query(`UPDATE sf_wallets SET balance_minor=79
+    WHERE user_id=$1`, [merchantUserId]), (error) => error.code === "23514");
 });
 test("SQL idempotency and audit are atomic, including altered replays and rollback", async () => {
   const input = adjustment({ expectedBalanceMinor: 99, amountMinor: 2 });

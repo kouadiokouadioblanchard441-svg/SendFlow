@@ -10,7 +10,7 @@ const EVENT_TYPES = new Set([
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEYS = [
   "amountMinor", "beneficiaryAmountMinor", "countryCode", "currency", "feeMinor",
-  "feePayer", "merchantReference", "operatorId", "payoutId", "providerFeeMinor",
+  "feePayer", "merchantReference", "operatorId", "payoutId",
   "reference", "status", "totalDebitMinor",
 ];
 const ENVELOPE_KEY = "__sendflow_encrypted_payload";
@@ -35,7 +35,6 @@ export type PayoutWebhookPayload = {
     merchantReference: string | null;
     operatorId: string;
     payoutId: string;
-    providerFeeMinor: number | null;
     reference: string;
     status: "funds_reserved" | "submitted" | "processing" | "succeeded" | "failed" | "rejected" | "cancelled" | "uncertain";
     totalDebitMinor: number;
@@ -78,21 +77,19 @@ export function normalizePayoutWebhookPayload(value: unknown): PayoutWebhookPayl
   }
   const {
     amountMinor, beneficiaryAmountMinor, countryCode, currency, feeMinor, feePayer,
-    merchantReference, operatorId, payoutId, providerFeeMinor, reference, status, totalDebitMinor,
+    merchantReference, operatorId, payoutId, reference, status, totalDebitMinor,
   } = data;
   const statuses: Record<string, string[]> = {
     "payout.created": ["funds_reserved"],
     "payout.processing": ["submitted", "processing"],
     "payout.succeeded": ["succeeded"],
-      "payout.failed": ["failed", "rejected", "cancelled"],
+    "payout.failed": ["failed", "rejected", "cancelled"],
     "payout.uncertain": ["uncertain"],
   };
   const integers = [amountMinor, beneficiaryAmountMinor, feeMinor, totalDebitMinor];
   if (!integers.every((item) => Number.isSafeInteger(item))
     || (amountMinor as number) < 1 || (beneficiaryAmountMinor as number) < 1
     || (feeMinor as number) < 0 || (totalDebitMinor as number) < 1
-    || (providerFeeMinor !== null
-      && (!Number.isSafeInteger(providerFeeMinor) || (providerFeeMinor as number) < 0))
     || (feePayer !== "merchant" && feePayer !== "beneficiary")
     || currency !== "XOF"
     || typeof countryCode !== "string" || !/^[a-z]{2}$/.test(countryCode)
@@ -127,7 +124,6 @@ export function normalizePayoutWebhookPayload(value: unknown): PayoutWebhookPayl
       merchantReference: merchantReference as string | null,
       operatorId,
       payoutId,
-      providerFeeMinor: providerFeeMinor as number | null,
       reference,
       status: status as PayoutWebhookPayload["data"]["status"],
       totalDebitMinor: totalDebitMinor as number,

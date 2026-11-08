@@ -44,7 +44,6 @@ test("payout quotes calculate fee and debit from the selected fee payer", () => 
   assert.equal(merchantPays.feeMinor, 200);
   assert.equal(merchantPays.totalDebitMinor, 10_200);
   assert.equal(merchantPays.beneficiaryAmountMinor, 10_000);
-  assert.equal("providerFeeMinor" in merchantPays, false);
   assert.equal("executionBlockReason" in merchantPays, false);
 
   const beneficiaryPays = calculatePayoutQuote(input("beneficiary"), configuration);
@@ -69,47 +68,47 @@ test("payout quote fails closed for unconfigured limits, routing, country, or fe
   );
 });
 
-test("only a fully correlated final provider proof matches a payout", () => {
+test("only fully correlated final settlement evidence matches a payout", () => {
   const payout = {
-    providerReferenceHash: "d".repeat(64),
+    executionReferenceHash: "d".repeat(64),
     beneficiaryAmountMinor: 9_800,
     currency: "XOF",
     countryCode: "ci",
     operatorId: "orange-ci",
     beneficiaryPhoneHash: "a".repeat(64),
-    expectedShopIdHash: "b".repeat(64),
-    expectedChannelId: "orange-ci",
+    expectedExecutionAccountHash: "b".repeat(64),
+    expectedExecutionChannelId: "orange-ci",
   };
   const evidence = {
-    providerReferenceHash: payout.providerReferenceHash,
-    status: "SUCCESSFUL",
+    executionReferenceHash: payout.executionReferenceHash,
+    executionStatus: "SUCCEEDED",
     amountMinor: payout.beneficiaryAmountMinor,
     currency: payout.currency,
     countryCode: payout.countryCode,
     operatorId: payout.operatorId,
     beneficiaryPhoneHash: payout.beneficiaryPhoneHash,
-    shopIdHash: payout.expectedShopIdHash,
-    channelId: payout.expectedChannelId,
+    executionAccountHash: payout.expectedExecutionAccountHash,
+    executionChannelId: payout.expectedExecutionChannelId,
     operation: "payout",
-    evidenceVerified: true,
+    verificationPassed: true,
   };
   assert.equal(isMatchingPayoutSettlementEvidence(payout, evidence, "SUCCEEDED"), true);
   assert.equal(
-    isMatchingPayoutSettlementEvidence(payout, { ...evidence, status: "FAILED" }, "SUCCEEDED"),
+    isMatchingPayoutSettlementEvidence(payout, { ...evidence, executionStatus: "FAILED" }, "SUCCEEDED"),
     false,
   );
-  assert.equal(isMatchingPayoutSettlementEvidence(payout, { ...evidence, status: "FAILED" }, "FAILED"), true);
+  assert.equal(isMatchingPayoutSettlementEvidence(payout, { ...evidence, executionStatus: "FAILED" }, "FAILED"), true);
   for (const change of [
     { amountMinor: 1 },
     { currency: "XAF" },
     { countryCode: "sn" },
     { operatorId: "wave-ci" },
     { beneficiaryPhoneHash: "c".repeat(64) },
-    { providerReferenceHash: "e".repeat(64) },
-    { shopIdHash: "c".repeat(64) },
-    { channelId: "mtn-ci" },
+    { executionReferenceHash: "e".repeat(64) },
+    { executionAccountHash: "c".repeat(64) },
+    { executionChannelId: "mtn-ci" },
     { operation: "payin" },
-    { evidenceVerified: false },
+    { verificationPassed: false },
   ]) {
     assert.equal(
       isMatchingPayoutSettlementEvidence(payout, { ...evidence, ...change }, "SUCCEEDED"),

@@ -309,7 +309,6 @@ export * from './payoutQuoteInput';
 export * from './payoutQuoteInputCurrency';
 export * from './payoutQuoteResponse';
 export * from './payoutQuoteResponseCurrency';
-export * from './payoutQuoteResponseExecutionBlockReason';
 export * from './payoutResponse';
 export * from './payoutResponseCurrency';
 export * from './payoutStatus';

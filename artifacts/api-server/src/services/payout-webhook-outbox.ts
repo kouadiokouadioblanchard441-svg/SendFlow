@@ -68,7 +68,6 @@ export async function enqueuePayoutWebhookEvent(
         merchantReference: input.payout.merchantReference,
         operatorId: input.payout.operatorId,
         payoutId: input.payout.id,
-        providerFeeMinor: input.payout.providerFeeMinor,
         reference: input.payout.reference,
         status: status as PayoutWebhookPayload["data"]["status"],
         totalDebitMinor: input.payout.totalDebitMinor,

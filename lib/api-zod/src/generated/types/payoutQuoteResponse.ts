@@ -7,22 +7,18 @@
  */
 import type { PayoutFeePayer } from './payoutFeePayer';
 import type { PayoutQuoteResponseCurrency } from './payoutQuoteResponseCurrency';
-import type { PayoutQuoteResponseExecutionBlockReason } from './payoutQuoteResponseExecutionBlockReason';
 
 export interface PayoutQuoteResponse {
   currency: PayoutQuoteResponseCurrency;
   amountMinor: number;
   /** @minimum 0 */
   feeMinor: number;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  providerFeeMinor: number | null;
   /** @minimum 1 */
   totalDebitMinor: number;
   /** @minimum 1 */
   beneficiaryAmountMinor: number;
+  /** @minimum 0 */
+  availableBalanceMinor: number;
   feePayer: PayoutFeePayer;
   /** @minimum 200 */
   minimumPayoutMinor: number;
@@ -34,7 +30,4 @@ export interface PayoutQuoteResponse {
   /** @minimum 1 */
   pricingVersion: number;
   quoteExpiresAt: Date;
-  executionReady: boolean;
-  /** @nullable */
-  executionBlockReason: PayoutQuoteResponseExecutionBlockReason;
 }

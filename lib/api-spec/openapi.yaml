@@ -1984,7 +1984,7 @@ paths:
       operationId: createDeveloperPayout
       tags: [developer]
       summary: Create and reserve a merchant payout
-      description: Requires an active merchant, an enabled SendFlow payout route, configured SendFlow fee and daily limit, an active XOF wallet with sufficient available balance, and Idempotency-Key. The server calculates amounts and subtracts active wallet reservations. The current SendFlow payout service is disabled and returns HTTP 503 without creating or reserving a request.
+      description: Requires an active account, an enabled SendFlow payout route, configured SendFlow fee and daily limit, an active XOF wallet with sufficient available balance, and Idempotency-Key. The server calculates amounts and subtracts active wallet reservations. The current SendFlow payout service is disabled and returns HTTP 503 without creating or reserving a request.
       security:
         - sendFlowApiSecret: []
       parameters:
@@ -2006,11 +2006,9 @@ paths:
         "401":
           description: Secret API key is invalid or revoked.
         "403":
-          description: Merchant, wallet, KYC, country or operator is not eligible.
-        "409":
-          description: Idempotency key or merchant reference conflicts with a different request.
+          description: Account, wallet, country or operator is not eligible.
         "422":
-          description: Insufficient available funds or daily payout limit exceeded.
+          description: The authenticated merchant's available SendFlow wallet balance is insufficient.
         "429":
           description: Merchant API rate limit reached.
         "503":

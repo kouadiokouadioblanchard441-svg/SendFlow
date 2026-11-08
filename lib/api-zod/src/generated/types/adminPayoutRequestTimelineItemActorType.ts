@@ -13,5 +13,4 @@ export const AdminPayoutRequestTimelineItemActorType = {
   merchant: 'merchant',
   admin: 'admin',
   system: 'system',
-  provider: 'provider',
 } as const;

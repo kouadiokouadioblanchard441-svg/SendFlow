@@ -3808,30 +3808,17 @@ export const PayoutQuoteResponseCurrency = {
   XOF: 'XOF',
 } as const;
 
-/**
- * @nullable
- */
-export type PayoutQuoteResponseExecutionBlockReason = typeof PayoutQuoteResponseExecutionBlockReason[keyof typeof PayoutQuoteResponseExecutionBlockReason] | null;
-
-
-export const PayoutQuoteResponseExecutionBlockReason = {
-  provider_proof_not_verified: 'provider_proof_not_verified',
-} as const;
-
 export interface PayoutQuoteResponse {
   currency: PayoutQuoteResponseCurrency;
   amountMinor: number;
   /** @minimum 0 */
   feeMinor: number;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  providerFeeMinor: number | null;
   /** @minimum 1 */
   totalDebitMinor: number;
   /** @minimum 1 */
   beneficiaryAmountMinor: number;
+  /** @minimum 0 */
+  availableBalanceMinor: number;
   feePayer: PayoutFeePayer;
   /** @minimum 200 */
   minimumPayoutMinor: number;
@@ -3843,9 +3830,6 @@ export interface PayoutQuoteResponse {
   /** @minimum 1 */
   pricingVersion: number;
   quoteExpiresAt: string;
-  executionReady: boolean;
-  /** @nullable */
-  executionBlockReason: PayoutQuoteResponseExecutionBlockReason;
 }
 
 export interface PayoutBeneficiaryInput {
@@ -3922,8 +3906,6 @@ export interface PayoutResponse {
   amountMinor: number;
   currency: PayoutResponseCurrency;
   feeMinor: number;
-  /** @nullable */
-  providerFeeMinor: number | null;
   totalDebitMinor: number;
   beneficiaryAmountMinor: number;
   feePayer: PayoutFeePayer;
@@ -3961,7 +3943,6 @@ export const AdminPayoutRequestTimelineItemActorType = {
   merchant: 'merchant',
   admin: 'admin',
   system: 'system',
-  provider: 'provider',
 } as const;
 
 export type AdminPayoutRequestTimelineItem = {

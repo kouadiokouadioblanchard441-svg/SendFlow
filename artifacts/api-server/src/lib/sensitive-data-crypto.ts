@@ -40,7 +40,7 @@ export type SensitiveDataPurpose =
   | "developer-payment-metadata"
   | "payout-beneficiary-phone"
   | "payout-beneficiary-name"
-  | "payout-provider-reference"
+  | "payout-execution-reference"
   | "payout-confirmation-evidence";
 
 function activeKeyId() {

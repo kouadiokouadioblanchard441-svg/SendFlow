@@ -169,7 +169,7 @@ export const payoutConfirmationsTable = pgTable("sf_payout_confirmations", {
   operation: varchar("operation", { length: 8 }).notNull().default("payout"),
   countryCode: varchar("country_code", { length: 2 }).notNull(),
   operatorId: varchar("operator_id", { length: 60 }).notNull(),
-  beneficiaryPhoneHash: varchar("beneficiary_phone_hash", { length: 64 }),
+  beneficiaryPhoneHash: varchar("beneficiary_phone_hash", { length: 64 }).notNull(),
   verificationPassed: boolean("verification_passed").notNull().default(false),
   evidenceEncrypted: text("evidence_encrypted").notNull(),
   verifiedAt: timestamp("verified_at", { withTimezone: true }).notNull(),

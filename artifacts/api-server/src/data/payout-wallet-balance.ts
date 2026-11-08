@@ -1,12 +1,8 @@
 import {
-  and,
   db,
   eq,
-  payoutRequestsTable,
   sql,
-  userAccountStatusEnum,
   usersTable,
-  walletPaymentReservationsTable,
   walletsTable,
 } from "@workspace/db";
 import { PayoutPolicyError } from "../services/payout-policy";
@@ -27,46 +23,41 @@ function parseMinorTotal(value: string | null | undefined): number {
 }
 
 export async function loadMerchantPayoutWallet(userId: string): Promise<PayoutWalletSnapshot> {
-  const [account] = await db.select({ status: usersTable.status })
-    .from(usersTable)
-    .where(eq(usersTable.id, userId))
-    .limit(1);
-  if (!account || account.status !== userAccountStatusEnum.enumValues[0]) {
-    throw new PayoutPolicyError(403, "Le compte SendFlow n’est pas actif.");
-  }
-
   const [wallet] = await db.select({
     id: walletsTable.id,
     balanceMinor: walletsTable.balanceMinor,
     currency: walletsTable.currency,
     status: walletsTable.status,
-  }).from(walletsTable)
-    .where(eq(walletsTable.userId, userId))
+    accountStatus: usersTable.status,
+    paymentReservedMinor: sql<string>`coalesce((
+      SELECT sum(r.amount_minor)
+      FROM public.sf_wallet_payment_reservations AS r
+      WHERE r.wallet_id = ${walletsTable.id}
+        AND r.state = 'active'
+        AND r.currency = 'XOF'
+    ), 0)::text`,
+    payoutReservedMinor: sql<string>`coalesce((
+      SELECT sum(p.total_debit_minor)
+      FROM public.sf_payout_requests AS p
+      WHERE p.wallet_id = ${walletsTable.id}
+        AND p.reservation_state = 'active'
+        AND p.currency = 'XOF'
+    ), 0)::text`,
+  }).from(usersTable)
+    .innerJoin(walletsTable, eq(walletsTable.userId, usersTable.id))
+    .where(eq(usersTable.id, userId))
     .limit(1);
-  if (!wallet || wallet.status !== "active" || wallet.currency !== "XOF") {
+  if (!wallet || wallet.accountStatus !== "active") {
+    throw new PayoutPolicyError(403, "Le compte SendFlow n’est pas actif.");
+  }
+  if (wallet.status !== "active" || wallet.currency !== "XOF") {
     throw new PayoutPolicyError(403, "Le portefeuille SendFlow n’est pas disponible pour ce versement.");
   }
 
-  const [paymentReservations] = await db.select({
-    amountMinor: sql<string>`coalesce(sum(${walletPaymentReservationsTable.amountMinor}), 0)::text`,
-  }).from(walletPaymentReservationsTable)
-    .where(and(
-      eq(walletPaymentReservationsTable.walletId, wallet.id),
-      eq(walletPaymentReservationsTable.state, "active"),
-      eq(walletPaymentReservationsTable.currency, "XOF"),
-    ));
-  const [payoutReservations] = await db.select({
-    amountMinor: sql<string>`coalesce(sum(${payoutRequestsTable.totalDebitMinor}), 0)::text`,
-  }).from(payoutRequestsTable)
-    .where(and(
-      eq(payoutRequestsTable.walletId, wallet.id),
-      eq(payoutRequestsTable.reservationState, "active"),
-      eq(payoutRequestsTable.currency, "XOF"),
-    ));
-
   const balanceMinor = wallet.balanceMinor;
-  const reservedMinor = parseMinorTotal(paymentReservations?.amountMinor)
-    + parseMinorTotal(payoutReservations?.amountMinor);
+  const paymentReservedMinor = parseMinorTotal(wallet.paymentReservedMinor);
+  const payoutReservedMinor = parseMinorTotal(wallet.payoutReservedMinor);
+  const reservedMinor = paymentReservedMinor + payoutReservedMinor;
   if (!Number.isSafeInteger(balanceMinor) || balanceMinor < 0
     || !Number.isSafeInteger(reservedMinor) || reservedMinor > balanceMinor) {
     throw new PayoutPolicyError(503, "Le solde disponible SendFlow est momentanément indisponible.");

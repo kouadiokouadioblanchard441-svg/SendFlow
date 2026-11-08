@@ -19,7 +19,6 @@ const payload = (overrides = {}) => ({
     merchantReference: "invoice-45",
     operatorId: "orange-ci",
     payoutId: "c43c9b3a-3a7c-4a98-a8d3-80172b6a4bbf",
-    providerFeeMinor: null,
     reference: "SFPO0123456789ABCDEF",
     status: "failed",
     totalDebitMinor: 10_000,

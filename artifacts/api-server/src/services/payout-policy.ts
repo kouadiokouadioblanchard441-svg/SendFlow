@@ -138,7 +138,7 @@ export function isMatchingPayoutSettlementEvidence(
   },
   evidence: {
     executionReferenceHash: string;
-    status: "SUCCEEDED" | "FAILED";
+    executionStatus: "SUCCEEDED" | "FAILED";
     amountMinor: number;
     currency: string;
     countryCode: string;
@@ -152,7 +152,7 @@ export function isMatchingPayoutSettlementEvidence(
   expectedStatus: "SUCCEEDED" | "FAILED",
 ) {
   return evidence.verificationPassed
-    && evidence.status === expectedStatus
+    && evidence.executionStatus === expectedStatus
     && evidence.executionReferenceHash === payout.executionReferenceHash
     && evidence.amountMinor === payout.beneficiaryAmountMinor
     && evidence.currency === payout.currency

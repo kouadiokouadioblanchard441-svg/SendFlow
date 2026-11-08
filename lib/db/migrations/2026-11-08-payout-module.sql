@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS public.sf_payout_confirmations (
   country_code varchar(2) NOT NULL,
   operator_id varchar(60) NOT NULL,
   beneficiary_phone_hash varchar(64) NOT NULL,
-  verification_passed boolean NOT NULL,
+  verification_passed boolean NOT NULL DEFAULT false,
   evidence_encrypted text NOT NULL,
   verified_at timestamptz NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -266,36 +266,48 @@ END $$;
 
 CREATE OR REPLACE FUNCTION public.sf_payouts_guard_request() RETURNS trigger
 LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
-DECLARE wallet public.sf_wallets%ROWTYPE; account_status text; user_id text;
+DECLARE wallet public.sf_wallets%ROWTYPE; account_status text; account_phone_verified boolean;
   held numeric; attempt public.sf_payout_attempts%ROWTYPE;
   proof public.sf_payout_confirmations%ROWTYPE; entry public.sf_wallet_ledger%ROWTYPE;
   operator_country text; country_enabled boolean; operator_enabled boolean;
+  country_payout_enabled boolean; operator_payout_enabled boolean;
 BEGIN
   IF TG_OP='INSERT' THEN
     IF NEW.status<>'created' OR NEW.reservation_state<>'none'
-      OR NEW.ledger_entry_id IS NOT NULL OR NEW.final_confirmation_id IS NOT NULL THEN
+       OR NEW.ledger_entry_id IS NOT NULL OR NEW.final_confirmation_id IS NOT NULL
+       OR NEW.execution_reference_encrypted IS NOT NULL OR NEW.execution_reference_hash IS NOT NULL THEN
       RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout must start in the created state';
     END IF;
-    SELECT status::text INTO account_status FROM public.sf_users WHERE id=NEW.merchant_user_id FOR UPDATE;
+    SELECT status::text,phone_verified_at IS NOT NULL INTO account_status,account_phone_verified
+      FROM public.sf_users WHERE id=NEW.merchant_user_id FOR UPDATE;
     SELECT * INTO wallet FROM public.sf_wallets WHERE id=NEW.wallet_id FOR UPDATE;
-    SELECT country_code,enabled INTO operator_country,operator_enabled
+    SELECT country_code,enabled,payout_enabled INTO operator_country,operator_enabled,operator_payout_enabled
       FROM public.sf_operator_catalog WHERE operator_id=NEW.operator_id;
-    SELECT enabled INTO country_enabled FROM public.sf_countries WHERE country_code=NEW.country_code;
-    IF account_status IS DISTINCT FROM 'active' OR wallet.user_id<>NEW.merchant_user_id
+    SELECT enabled,payout_enabled INTO country_enabled,country_payout_enabled
+      FROM public.sf_countries WHERE country_code=NEW.country_code;
+    IF account_status IS DISTINCT FROM 'active' OR account_phone_verified IS DISTINCT FROM true
+      OR wallet.user_id<>NEW.merchant_user_id
       OR wallet.status::text<>'active' OR wallet.currency<>NEW.currency
       OR operator_country IS DISTINCT FROM NEW.country_code OR operator_enabled IS DISTINCT FROM true
-      OR country_enabled IS DISTINCT FROM true THEN
+      OR operator_payout_enabled IS DISTINCT FROM true
+      OR country_enabled IS DISTINCT FROM true OR country_payout_enabled IS DISTINCT FROM true THEN
       RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout owner, wallet or catalog eligibility mismatch';
     END IF;
     RETURN NEW;
   END IF;
-  IF (to_jsonb(NEW)-ARRAY['status','reservation_state','failure_code','provider_reference_encrypted',
-      'provider_reference_hash','ledger_entry_id','final_confirmation_id','updated_at','reserved_at',
+  IF (to_jsonb(NEW)-ARRAY['status','reservation_state','failure_code','execution_reference_encrypted',
+      'execution_reference_hash','ledger_entry_id','final_confirmation_id','updated_at','reserved_at',
       'submitted_at','completed_at'])
-    IS DISTINCT FROM (to_jsonb(OLD)-ARRAY['status','reservation_state','failure_code','provider_reference_encrypted',
-      'provider_reference_hash','ledger_entry_id','final_confirmation_id','updated_at','reserved_at',
+    IS DISTINCT FROM (to_jsonb(OLD)-ARRAY['status','reservation_state','failure_code','execution_reference_encrypted',
+      'execution_reference_hash','ledger_entry_id','final_confirmation_id','updated_at','reserved_at',
       'submitted_at','completed_at']) THEN
     RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout financial snapshot is immutable';
+  END IF;
+  IF OLD.execution_reference_hash IS NOT NULL AND (
+    NEW.execution_reference_hash IS DISTINCT FROM OLD.execution_reference_hash
+    OR NEW.execution_reference_encrypted IS DISTINCT FROM OLD.execution_reference_encrypted
+  ) THEN
+    RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout execution reference is immutable once recorded';
   END IF;
   IF OLD.status IN ('succeeded','rejected','failed','cancelled')
     OR (OLD.status='uncertain' AND NEW.status NOT IN ('uncertain','processing','succeeded','failed'))
@@ -312,9 +324,11 @@ BEGIN
     RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout reservation cannot be reopened';
   END IF;
   SELECT * INTO wallet FROM public.sf_wallets WHERE id=NEW.wallet_id FOR UPDATE;
-  SELECT status::text INTO account_status FROM public.sf_users WHERE id=NEW.merchant_user_id FOR UPDATE;
+  SELECT status::text,phone_verified_at IS NOT NULL INTO account_status,account_phone_verified
+    FROM public.sf_users WHERE id=NEW.merchant_user_id FOR UPDATE;
   IF NEW.reservation_state='active' AND OLD.reservation_state='none' THEN
-    IF NEW.status<>'funds_reserved' OR account_status<>'active' OR wallet.status::text<>'active'
+    IF NEW.status<>'funds_reserved' OR account_status<>'active'
+      OR account_phone_verified IS DISTINCT FROM true OR wallet.status::text<>'active'
       OR wallet.currency<>NEW.currency THEN
       RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout reservation requires an active account and wallet';
     END IF;
@@ -333,7 +347,7 @@ BEGIN
   IF NEW.status IN ('submitted','processing','uncertain') THEN
     SELECT * INTO attempt FROM public.sf_payout_attempts WHERE payout_request_id=NEW.id;
     IF NOT FOUND OR attempt.dispatched_at IS NULL THEN
-      RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout dispatch requires a persisted provider attempt';
+      RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout dispatch requires a persisted execution attempt';
     END IF;
   END IF;
   IF NEW.status IN ('rejected','cancelled') OR
@@ -341,28 +355,28 @@ BEGIN
       NOT EXISTS(SELECT 1 FROM public.sf_payout_attempts a WHERE a.payout_request_id=NEW.id AND a.dispatched_at IS NOT NULL)) THEN
     IF NEW.reservation_state<>'released' OR NEW.final_confirmation_id IS NOT NULL
       OR EXISTS(SELECT 1 FROM public.sf_payout_attempts a WHERE a.payout_request_id=NEW.id AND a.dispatched_at IS NOT NULL) THEN
-      RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Only undispatched payouts can be released without provider proof';
+      RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Only undispatched payouts can be released without final settlement evidence';
     END IF;
     RETURN NEW;
   END IF;
   IF NEW.status IN ('succeeded','failed') THEN
     SELECT * INTO attempt FROM public.sf_payout_attempts WHERE payout_request_id=NEW.id;
     SELECT * INTO proof FROM public.sf_payout_confirmations WHERE id=NEW.final_confirmation_id;
-    IF NOT FOUND OR proof.payout_request_id<>NEW.id OR proof.attempt_id<>attempt.id
-      OR proof.evidence_verified IS NOT TRUE OR proof.operation<>'payout'
+    IF attempt.id IS NULL OR proof.id IS NULL OR proof.payout_request_id<>NEW.id OR proof.attempt_id<>attempt.id
+      OR proof.verification_passed IS NOT TRUE OR proof.operation<>'payout'
       OR proof.country_code<>NEW.country_code OR proof.operator_id<>NEW.operator_id
       OR proof.amount_minor<>NEW.beneficiary_amount_minor OR proof.currency<>NEW.currency
-      OR proof.reference_hash IS DISTINCT FROM attempt.provider_reference_hash
+      OR proof.execution_reference_hash IS DISTINCT FROM attempt.execution_reference_hash
       OR proof.beneficiary_phone_hash IS DISTINCT FROM NEW.beneficiary_phone_hash
-      OR proof.shop_id_hash IS DISTINCT FROM attempt.expected_shop_id_hash
-      OR proof.channel_id IS DISTINCT FROM attempt.expected_channel_id
-      OR NEW.provider_reference_hash IS DISTINCT FROM attempt.provider_reference_hash
-      OR NEW.provider_reference_encrypted IS DISTINCT FROM attempt.provider_reference_encrypted THEN
-      RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout final state requires matching verified provider evidence';
+      OR proof.execution_account_hash IS DISTINCT FROM attempt.expected_execution_account_hash
+      OR proof.execution_channel_id IS DISTINCT FROM attempt.expected_execution_channel_id
+      OR NEW.execution_reference_hash IS DISTINCT FROM attempt.execution_reference_hash
+      OR NEW.execution_reference_encrypted IS DISTINCT FROM attempt.execution_reference_encrypted THEN
+      RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout final state requires matching verified settlement evidence';
     END IF;
     IF NEW.status='succeeded' THEN
       SELECT * INTO entry FROM public.sf_wallet_ledger WHERE id=NEW.ledger_entry_id;
-      IF NEW.reservation_state<>'consumed' OR proof.provider_status<>'SUCCESSFUL'
+      IF NEW.reservation_state<>'consumed' OR proof.execution_status<>'SUCCEEDED'
         OR attempt.status<>'succeeded' OR attempt.final_confirmation_id<>proof.id
         OR entry.wallet_id<>NEW.wallet_id OR entry.user_id<>NEW.merchant_user_id
         OR entry.direction::text<>'debit' OR entry.currency<>NEW.currency
@@ -370,7 +384,7 @@ BEGIN
         OR entry.idempotency_key<>'payout:'||NEW.id::text||':debit' THEN
         RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Successful payout requires verified evidence and one matching debit';
       END IF;
-    ELSIF NEW.reservation_state<>'released' OR proof.provider_status<>'FAILED'
+    ELSIF NEW.reservation_state<>'released' OR proof.execution_status<>'FAILED'
       OR attempt.status<>'failed' OR attempt.final_confirmation_id<>proof.id
       OR NEW.ledger_entry_id IS NOT NULL THEN
       RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Failed payout requires verified final failure and released reservation';
@@ -385,20 +399,20 @@ DECLARE payout public.sf_payout_requests%ROWTYPE; proof public.sf_payout_confirm
 BEGIN
   IF TG_OP='INSERT' THEN
     IF NEW.status<>'prepared' OR NEW.dispatched_at IS NOT NULL
-      OR NEW.provider_reference_hash IS NOT NULL OR NEW.provider_reference_encrypted IS NOT NULL
+      OR NEW.execution_reference_hash IS NOT NULL OR NEW.execution_reference_encrypted IS NOT NULL
       OR NEW.final_confirmation_id IS NOT NULL THEN
       RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout attempt must start prepared and undispatched';
     END IF;
     RETURN NEW;
   END IF;
-  IF (to_jsonb(NEW)-ARRAY['status','provider_reference_encrypted','provider_reference_hash',
+  IF (to_jsonb(NEW)-ARRAY['status','execution_reference_encrypted','execution_reference_hash',
       'final_confirmation_id','dispatched_at','updated_at'])
-    IS DISTINCT FROM (to_jsonb(OLD)-ARRAY['status','provider_reference_encrypted','provider_reference_hash',
+    IS DISTINCT FROM (to_jsonb(OLD)-ARRAY['status','execution_reference_encrypted','execution_reference_hash',
       'final_confirmation_id','dispatched_at','updated_at'])
     OR (OLD.dispatched_at IS NOT NULL AND NEW.dispatched_at IS DISTINCT FROM OLD.dispatched_at)
-    OR (OLD.provider_reference_hash IS NOT NULL AND (
-      NEW.provider_reference_hash IS DISTINCT FROM OLD.provider_reference_hash
-      OR NEW.provider_reference_encrypted IS DISTINCT FROM OLD.provider_reference_encrypted
+    OR (OLD.execution_reference_hash IS NOT NULL AND (
+      NEW.execution_reference_hash IS DISTINCT FROM OLD.execution_reference_hash
+      OR NEW.execution_reference_encrypted IS DISTINCT FROM OLD.execution_reference_encrypted
     )) THEN
     RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Payout attempt identity is immutable';
   END IF;
@@ -417,18 +431,18 @@ BEGIN
   IF NEW.status IN ('succeeded','failed') THEN
     SELECT * INTO proof FROM public.sf_payout_confirmations WHERE id=NEW.final_confirmation_id;
     SELECT * INTO payout FROM public.sf_payout_requests WHERE id=NEW.payout_request_id;
-    IF NOT FOUND OR proof.attempt_id<>NEW.id OR proof.payout_request_id<>payout.id
-      OR proof.evidence_verified IS NOT TRUE
-      OR proof.provider_status<>(CASE WHEN NEW.status='succeeded' THEN 'SUCCESSFUL' ELSE 'FAILED' END)
-      OR proof.reference_hash IS DISTINCT FROM NEW.provider_reference_hash
+    IF proof.id IS NULL OR payout.id IS NULL OR proof.attempt_id<>NEW.id OR proof.payout_request_id<>payout.id
+      OR proof.verification_passed IS NOT TRUE
+      OR proof.execution_status<>(CASE WHEN NEW.status='succeeded' THEN 'SUCCEEDED' ELSE 'FAILED' END)
+      OR proof.execution_reference_hash IS DISTINCT FROM NEW.execution_reference_hash
       OR proof.amount_minor<>payout.beneficiary_amount_minor
       OR proof.currency<>payout.currency
       OR proof.country_code<>payout.country_code
       OR proof.operator_id<>payout.operator_id
       OR proof.beneficiary_phone_hash IS DISTINCT FROM payout.beneficiary_phone_hash
-      OR proof.shop_id_hash IS DISTINCT FROM NEW.expected_shop_id_hash
-      OR proof.channel_id IS DISTINCT FROM NEW.expected_channel_id THEN
-      RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Final payout attempt requires matching verified provider evidence';
+      OR proof.execution_account_hash IS DISTINCT FROM NEW.expected_execution_account_hash
+      OR proof.execution_channel_id IS DISTINCT FROM NEW.expected_execution_channel_id THEN
+      RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Final payout attempt requires matching verified settlement evidence';
     END IF;
   ELSIF NEW.final_confirmation_id IS NOT NULL THEN
     RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Non-final payout attempt cannot bind final evidence';
@@ -445,15 +459,15 @@ BEGIN
   END IF;
   SELECT * INTO payout FROM public.sf_payout_requests WHERE id=NEW.payout_request_id;
   SELECT * INTO attempt FROM public.sf_payout_attempts WHERE id=NEW.attempt_id;
-  IF NOT FOUND OR attempt.payout_request_id<>payout.id
-    OR NEW.evidence_verified IS NOT TRUE OR NEW.operation<>'payout'
-    OR NEW.reference_hash IS DISTINCT FROM attempt.provider_reference_hash
+  IF payout.id IS NULL OR attempt.id IS NULL OR attempt.payout_request_id<>payout.id
+    OR NEW.verification_passed IS NOT TRUE OR NEW.operation<>'payout'
+    OR NEW.execution_reference_hash IS DISTINCT FROM attempt.execution_reference_hash
     OR NEW.amount_minor<>payout.beneficiary_amount_minor OR NEW.currency<>payout.currency
     OR NEW.country_code<>payout.country_code OR NEW.operator_id<>payout.operator_id
     OR NEW.beneficiary_phone_hash IS DISTINCT FROM payout.beneficiary_phone_hash
-    OR NEW.channel_id IS DISTINCT FROM attempt.expected_channel_id
-    OR NEW.shop_id_hash IS DISTINCT FROM attempt.expected_shop_id_hash THEN
-    RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Provider evidence does not match the payout request';
+    OR NEW.execution_account_hash IS DISTINCT FROM attempt.expected_execution_account_hash
+    OR NEW.execution_channel_id IS DISTINCT FROM attempt.expected_execution_channel_id THEN
+    RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Settlement evidence does not match the payout request';
   END IF;
   RETURN NEW;
 END $$;
@@ -532,7 +546,7 @@ BEGIN
   SELECT * INTO proof FROM public.sf_payment_confirmations WHERE id=NEW.confirmation_id;
   IF NOT FOUND OR proof.attempt_id IS DISTINCT FROM leg.id OR leg.final_confirmation_id IS DISTINCT FROM proof.id
     OR leg.status<>(CASE WHEN NEW.state='consumed' THEN 'succeeded' ELSE 'failed' END)
-    OR proof.provider_status<>leg.status THEN
+  OR proof.provider_status<>leg.status THEN
     RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='Uncertain funds cannot be released or consumed';
   END IF;
   IF NEW.state='consumed' THEN

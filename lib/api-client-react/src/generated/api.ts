@@ -4933,7 +4933,7 @@ export const getCreateDeveloperPayoutQuoteUrl = () => {
 }
 
 /**
- * Read-only. The server loads the configured payout rate and limits. No funds are reserved and no provider is contacted.
+ * Read-only. The server loads SendFlow pricing and limits, then checks the authenticated merchant's active XOF wallet after subtracting active reservations. No funds are reserved.
  * @summary Calculate a server-side payout quote
  */
 export const createDeveloperPayoutQuote = async (payoutQuoteInput: PayoutQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<PayoutQuoteResponse> => {
@@ -5106,10 +5106,10 @@ export const getCreateDeveloperPayoutUrl = () => {
 }
 
 /**
- * Requires an eligible merchant, active wallet, enabled XOF country/operator route, configured fee and daily limit, and Idempotency-Key. The server recalculates all amounts. Dispatch remains locked until provider settlement evidence is verified; a locked request does not reserve funds.
+ * Requires an active account, an enabled SendFlow payout route, configured SendFlow fee and daily limit, an active XOF wallet with sufficient available balance, and Idempotency-Key. The server calculates amounts and subtracts active wallet reservations. The current SendFlow payout service is disabled and returns HTTP 503 without creating or reserving a request.
  * @summary Create and reserve a merchant payout
  */
-export const createDeveloperPayout = async (payoutCreateInput: PayoutCreateInput, options?: Parameters<typeof customFetch>[1]): Promise<PayoutResponse> => {
+export const createDeveloperPayout = async (payoutCreateInput: PayoutCreateInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -5125,7 +5125,7 @@ export const createDeveloperPayout = async (payoutCreateInput: PayoutCreateInput
     }
     return headers;
   };
-return customFetch<PayoutResponse>(getCreateDeveloperPayoutUrl(),
+return customFetch<unknown>(getCreateDeveloperPayoutUrl(),
   {
     ...options,
     method: 'POST',
@@ -5272,7 +5272,7 @@ export const getCancelDeveloperPayoutUrl = (payoutId: string,) => {
 }
 
 /**
- * Only an undispatched payout may be cancelled. No provider cancellation is offered because the provider contract does not document one.
+ * Cancellation is available only for a request that remains reserved and has not begun SendFlow execution.
  * @summary Cancel an undispatched payout and release its reservation
  */
 export const cancelDeveloperPayout = async (payoutId: string, options?: Parameters<typeof customFetch>[1]): Promise<PayoutResponse> => {
@@ -5508,7 +5508,7 @@ export const getRejectAdminPayoutUrl = (payoutId: string,) => {
 }
 
 /**
- * This audited action cannot mark a payout successful, and cannot release funds after provider dispatch.
+ * This audited action cannot mark a payout successful or release funds after SendFlow execution begins.
  * @summary Reject and release only a payout never dispatched
  */
 export const rejectAdminPayout = async (payoutId: string,

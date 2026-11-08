@@ -1575,7 +1575,7 @@ export const ListDeveloperWebhookDeliveriesResponse = zod.object({
 
 
 /**
- * Read-only. The server loads the configured payout rate and limits. No funds are reserved and no provider is contacted.
+ * Read-only. The server loads SendFlow pricing and limits, then checks the authenticated merchant's active XOF wallet after subtracting active reservations. No funds are reserved.
  * @summary Calculate a server-side payout quote
  */
 export const createDeveloperPayoutQuoteBodyAmountMinorMax = 9007199254740991;
@@ -1598,9 +1598,9 @@ export const CreateDeveloperPayoutQuoteBody = zod.object({
 
 export const createDeveloperPayoutQuoteResponseFeeMinorMin = 0;
 
-export const createDeveloperPayoutQuoteResponseProviderFeeMinorMin = 0;
 
 
+export const createDeveloperPayoutQuoteResponseAvailableBalanceMinorMin = 0;
 
 export const createDeveloperPayoutQuoteResponseMinimumPayoutMinorMin = 200;
 
@@ -1613,16 +1613,14 @@ export const CreateDeveloperPayoutQuoteResponse = zod.object({
   "currency": zod.enum(['XOF']),
   "amountMinor": zod.int(),
   "feeMinor": zod.int().min(createDeveloperPayoutQuoteResponseFeeMinorMin),
-  "providerFeeMinor": zod.int().min(createDeveloperPayoutQuoteResponseProviderFeeMinorMin).nullable(),
   "totalDebitMinor": zod.int().min(1),
   "beneficiaryAmountMinor": zod.int().min(1),
+  "availableBalanceMinor": zod.int().min(createDeveloperPayoutQuoteResponseAvailableBalanceMinorMin),
   "feePayer": zod.enum(['merchant', 'beneficiary']),
   "minimumPayoutMinor": zod.int().min(createDeveloperPayoutQuoteResponseMinimumPayoutMinorMin),
   "maximumPayoutDailyMinor": zod.int().min(createDeveloperPayoutQuoteResponseMaximumPayoutDailyMinorMin).nullable(),
   "pricingVersion": zod.int().min(1),
-  "quoteExpiresAt": zod.coerce.date(),
-  "executionReady": zod.boolean(),
-  "executionBlockReason": zod.union([zod.literal('provider_proof_not_verified'),zod.literal(null)]).nullable()
+  "quoteExpiresAt": zod.coerce.date()
 })
 
 
@@ -1659,7 +1657,6 @@ export const ListDeveloperPayoutsResponse = zod.object({
   "amountMinor": zod.int(),
   "currency": zod.enum(['XOF']),
   "feeMinor": zod.int(),
-  "providerFeeMinor": zod.int().nullable(),
   "totalDebitMinor": zod.int(),
   "beneficiaryAmountMinor": zod.int(),
   "feePayer": zod.enum(['merchant', 'beneficiary']),
@@ -1675,7 +1672,7 @@ export const ListDeveloperPayoutsResponse = zod.object({
 
 
 /**
- * Requires an eligible merchant, active wallet, enabled XOF country/operator route, configured fee and daily limit, and Idempotency-Key. The server recalculates all amounts. Dispatch remains locked until provider settlement evidence is verified; a locked request does not reserve funds.
+ * Requires an active account, an enabled SendFlow payout route, configured SendFlow fee and daily limit, an active XOF wallet with sufficient available balance, and Idempotency-Key. The server calculates amounts and subtracts active wallet reservations. The current SendFlow payout service is disabled and returns HTTP 503 without creating or reserving a request.
  * @summary Create and reserve a merchant payout
  */
 export const createDeveloperPayoutHeaderIdempotencyKeyMin = 8;
@@ -1720,35 +1717,7 @@ export const CreateDeveloperPayoutBody = zod.object({
 })
 })
 
-export const createDeveloperPayoutResponseReferenceRegExp = new RegExp('^SFPO[A-F0-9]{16}$');
-export const createDeveloperPayoutResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
-export const createDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp = new RegExp('^[0-9]{4}$');
-
-
-export const CreateDeveloperPayoutResponse = zod.object({
-  "id": zod.uuid(),
-  "reference": zod.string().regex(createDeveloperPayoutResponseReferenceRegExp),
-  "merchantReference": zod.string().nullable(),
-  "countryCode": zod.string().regex(createDeveloperPayoutResponseCountryCodeRegExp),
-  "operatorId": zod.string(),
-  "beneficiary": zod.object({
-  "phoneLast4": zod.string().regex(createDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp),
-  "name": zod.string().nullable()
-}),
-  "amountMinor": zod.int(),
-  "currency": zod.enum(['XOF']),
-  "feeMinor": zod.int(),
-  "providerFeeMinor": zod.int().nullable(),
-  "totalDebitMinor": zod.int(),
-  "beneficiaryAmountMinor": zod.int(),
-  "feePayer": zod.enum(['merchant', 'beneficiary']),
-  "status": zod.enum(['created', 'validated', 'funds_reserved', 'submitted', 'processing', 'succeeded', 'rejected', 'failed', 'uncertain', 'cancelled']),
-  "createdAt": zod.coerce.date(),
-  "updatedAt": zod.coerce.date(),
-  "submittedAt": zod.coerce.date().nullable(),
-  "completedAt": zod.coerce.date().nullable(),
-  "failureCode": zod.string().nullable()
-})
+export const CreateDeveloperPayoutResponse = zod.void()
 
 
 /**
@@ -1776,7 +1745,6 @@ export const GetDeveloperPayoutResponse = zod.object({
   "amountMinor": zod.int(),
   "currency": zod.enum(['XOF']),
   "feeMinor": zod.int(),
-  "providerFeeMinor": zod.int().nullable(),
   "totalDebitMinor": zod.int(),
   "beneficiaryAmountMinor": zod.int(),
   "feePayer": zod.enum(['merchant', 'beneficiary']),
@@ -1790,7 +1758,7 @@ export const GetDeveloperPayoutResponse = zod.object({
 
 
 /**
- * Only an undispatched payout may be cancelled. No provider cancellation is offered because the provider contract does not document one.
+ * Cancellation is available only for a request that remains reserved and has not begun SendFlow execution.
  * @summary Cancel an undispatched payout and release its reservation
  */
 export const CancelDeveloperPayoutParams = zod.object({
@@ -1815,7 +1783,6 @@ export const CancelDeveloperPayoutResponse = zod.object({
   "amountMinor": zod.int(),
   "currency": zod.enum(['XOF']),
   "feeMinor": zod.int(),
-  "providerFeeMinor": zod.int().nullable(),
   "totalDebitMinor": zod.int(),
   "beneficiaryAmountMinor": zod.int(),
   "feePayer": zod.enum(['merchant', 'beneficiary']),
@@ -1861,7 +1828,6 @@ export const ListAdminPayoutsResponse = zod.object({
   "amountMinor": zod.int(),
   "currency": zod.enum(['XOF']),
   "feeMinor": zod.int(),
-  "providerFeeMinor": zod.int().nullable(),
   "totalDebitMinor": zod.int(),
   "beneficiaryAmountMinor": zod.int(),
   "feePayer": zod.enum(['merchant', 'beneficiary']),
@@ -1877,7 +1843,7 @@ export const ListAdminPayoutsResponse = zod.object({
   "timeline": zod.array(zod.object({
   "fromStatus": zod.string().nullable(),
   "toStatus": zod.string(),
-  "actorType": zod.enum(['merchant', 'admin', 'system', 'provider']),
+  "actorType": zod.enum(['merchant', 'admin', 'system']),
   "reasonCode": zod.string(),
   "createdAt": zod.coerce.date()
 }))
@@ -1911,7 +1877,6 @@ export const GetAdminPayoutResponse = zod.object({
   "amountMinor": zod.int(),
   "currency": zod.enum(['XOF']),
   "feeMinor": zod.int(),
-  "providerFeeMinor": zod.int().nullable(),
   "totalDebitMinor": zod.int(),
   "beneficiaryAmountMinor": zod.int(),
   "feePayer": zod.enum(['merchant', 'beneficiary']),
@@ -1927,7 +1892,7 @@ export const GetAdminPayoutResponse = zod.object({
   "timeline": zod.array(zod.object({
   "fromStatus": zod.string().nullable(),
   "toStatus": zod.string(),
-  "actorType": zod.enum(['merchant', 'admin', 'system', 'provider']),
+  "actorType": zod.enum(['merchant', 'admin', 'system']),
   "reasonCode": zod.string(),
   "createdAt": zod.coerce.date()
 }))
@@ -1935,7 +1900,7 @@ export const GetAdminPayoutResponse = zod.object({
 
 
 /**
- * This audited action cannot mark a payout successful, and cannot release funds after provider dispatch.
+ * This audited action cannot mark a payout successful or release funds after SendFlow execution begins.
  * @summary Reject and release only a payout never dispatched
  */
 export const RejectAdminPayoutParams = zod.object({
@@ -1969,7 +1934,6 @@ export const RejectAdminPayoutResponse = zod.object({
   "amountMinor": zod.int(),
   "currency": zod.enum(['XOF']),
   "feeMinor": zod.int(),
-  "providerFeeMinor": zod.int().nullable(),
   "totalDebitMinor": zod.int(),
   "beneficiaryAmountMinor": zod.int(),
   "feePayer": zod.enum(['merchant', 'beneficiary']),
@@ -1985,7 +1949,7 @@ export const RejectAdminPayoutResponse = zod.object({
   "timeline": zod.array(zod.object({
   "fromStatus": zod.string().nullable(),
   "toStatus": zod.string(),
-  "actorType": zod.enum(['merchant', 'admin', 'system', 'provider']),
+  "actorType": zod.enum(['merchant', 'admin', 'system']),
   "reasonCode": zod.string(),
   "createdAt": zod.coerce.date()
 }))

@@ -23,8 +23,6 @@ export interface PayoutResponse {
   amountMinor: number;
   currency: PayoutResponseCurrency;
   feeMinor: number;
-  /** @nullable */
-  providerFeeMinor: number | null;
   totalDebitMinor: number;
   beneficiaryAmountMinor: number;
   feePayer: PayoutFeePayer;
