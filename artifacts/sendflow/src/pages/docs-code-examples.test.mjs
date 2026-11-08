@@ -84,15 +84,20 @@ test('every API request example uses the centralized production API base', () =>
   }
 });
 
-test('production URL notes do not expose internal payment-readiness switches', () => {
-  assert.match(docsCopy, /apiAvailabilityTitle: 'URL de production et statut des opérations'/);
-  assert.match(docsCopy, /apiAvailabilityText: 'Toutes les requêtes utilisent l’adresse API de production du bloc copiable/);
-  assert.match(docsCopy, /apiAvailabilityTitle: 'Production API URL and operation status'/);
-  assert.match(docsCopy, /apiAvailabilityText: 'All requests use the production API address in the copyable/);
-  assert.match(docsCopy, /serviceAvailability: 'Adresses de production et suivi'/);
+test('URL labels use neutral wording and do not expose internal payment-readiness switches', () => {
+  assert.match(docsCopy, /baseUrlTitle: 'Adresses'/);
+  assert.match(docsCopy, /baseUrlTitle: 'Addresses'/);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'URL de l’API et statut des opérations'/);
+  assert.match(docsCopy, /apiAvailabilityText: 'Toutes les requêtes utilisent l’adresse indiquée dans le bloc copiable/);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'API URL and operation status'/);
+  assert.match(docsCopy, /apiAvailabilityText: 'All requests use the address shown in the copyable/);
+  assert.match(docsCopy, /serviceAvailability: 'Adresses et suivi'/);
   assert.match(docsCopy, /serviceAvailabilityText: 'Consultez le statut ou le webhook signé uniquement/);
-  assert.match(docsCopy, /serviceAvailability: 'Production URLs and status checks'/);
+  assert.match(docsCopy, /serviceAvailability: 'Addresses and status checks'/);
   assert.match(docsCopy, /serviceAvailabilityText: 'Read the status or signed webhook only/);
+  assert.match(docsCopy, /quickstartIntegrationNote: 'Copiez les adresses dans les blocs ci-dessus/);
+  assert.match(docsCopy, /quickstartIntegrationNote: 'Copy the addresses from the blocks above/);
+  assert.doesNotMatch(docsCopy, /(?:Adresses|Addresses|URL) de production|Production URLs|production API address/i);
   assert.doesNotMatch(docsCopy, /LINKFLOW_SETTLEMENT_PROOF_READY/);
   assert.match(docsCopy, /apiAvailabilityText:.*HTTP 503/);
   assert.match(docsCopy, /aucun fonds n’est réservé/);
@@ -132,8 +137,8 @@ test('code examples have no repeated generic footer and retain one production in
 
   assert.ok(codePanelStart >= 0 && docsPageStart > codePanelStart);
   assert.doesNotMatch(codePanel, /sf-docs-code-note|formatNote|codeNote/);
-  assert.match(docsCopy, /quickstartIntegrationNote: 'Les adresses de production sont copiables/);
-  assert.match(docsCopy, /quickstartIntegrationNote: 'Production addresses can be copied/);
+  assert.match(docsCopy, /quickstartIntegrationNote: 'Copiez les adresses dans les blocs ci-dessus/);
+  assert.match(docsCopy, /quickstartIntegrationNote: 'Copy the addresses from the blocks above/);
 });
 
 test('getting-started guide presents the production quickstart with SendFlow examples', () => {

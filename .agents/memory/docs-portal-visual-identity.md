@@ -17,6 +17,12 @@ Give each exposed merchant API operation examples that match its route and schem
 
 Show each production URL in its own copyable block, styled like a code panel; keep prose free of raw URL strings. Wrap long URLs on narrow screens without changing the copied value.
 
+Label public URL sections simply as “Adresses” / “Addresses”; do not call them production addresses or URLs. Keep truthful operation-status notices separate from URL labels and preserve their meaning.
+
+**Why:** the user wants the published service addresses presented directly, without suggesting that the documentation also lists development addresses.
+
+**How to apply:** Use neutral URL headings and copy instructions in every documentation language. Do not remove or weaken an accurate HTTP 503 or availability notice while changing URL labels.
+
 Merchant API code examples must also resolve to the actual production API base, not only refer to an unset environment variable. Hosted Checkout examples must show the production checkout origin when composing the payer URL. Keep URL definitions centralized and keep secret keys environment-only.
 
 **Why:** the user wants external references to guide typography while preserving SendFlow's identity, with guide content organized for scrolling rather than a crowded menu of endpoint and subsection entries.
