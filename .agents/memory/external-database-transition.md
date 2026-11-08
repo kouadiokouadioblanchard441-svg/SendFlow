@@ -3,7 +3,7 @@ name: Shared database transition
 description: Current external PostgreSQL schema state and the guardrails required before enabling SendFlow operations.
 ---
 
-The Replit preview uses a shared external PostgreSQL target through a server-side secret and CA certificate. The runtime connects with certificate and hostname verification. Some live tables or required singleton rows may still lag behind the Drizzle schema.
+The Replit preview uses a shared external PostgreSQL target. Keep the connection URL private; the public provider CA certificate is a trust anchor used with certificate and hostname verification. Some live tables or required singleton rows may still lag behind the Drizzle schema.
 
 The user states that the Supabase connection stored in Replit Secrets is the production database intended for Plesk. The code still separates Replit's `SUPABASE_DATABASE_URL` shared-external target from Plesk's `DATABASE_URL` production target; verify that Plesk points to the same database before claiming production data is live.
 
@@ -19,8 +19,8 @@ For an authorized external schema change, keep the read-only preflight and DDL o
 
 **How to apply:** Validate the current CA/endpoint configuration before retrying; only execute DDL after the same session confirms the target schema. Use the provider CA bundle for the exact database endpoint; never disable certificate verification.
 
-Re-adding or confirming `DATABASE_CA_CERT` did not by itself resolve the chain error; a subsequent verified connection still failed before opening a transaction. The supplied CA file succeeded when used directly by the one-time migration process, but this did not update the stored Replit secret.
+If a secret confirmation is followed by the same TLS chain error, it does not prove the running services loaded the intended CA. The verified public provider CA can be stored as a shared environment variable under `DATABASE_CA_CERT`; restart the API and web workflows afterward. Keep private URLs and credentials in Secrets.
 
-**Why:** The approved OTP-instruction migration remained unapplied after the user confirmed the secret request, and the next attempt returned the same TLS error.
+**Why:** The live app continued failing closed after the CA was re-confirmed through the secret flow, while a read-only connection using the supplied public CA succeeded. Setting that CA as a shared environment value and restarting restored the health routes and preview without changing database data or schema.
 
-**How to apply:** Do not repeat a migration attempt against the same unresolved secret. If future Replit-side DB access is needed, update `DATABASE_CA_CERT` securely with the verified provider certificate. Plesk needs its own private CA configuration.
+**How to apply:** Validate the provider CA certificate and use the environment-variable flow for this public trust anchor; never print connection URLs, expose credentials, or disable TLS verification. Verify with a read-only query and restart all workflows that import the database client. Plesk needs its own private CA configuration.
