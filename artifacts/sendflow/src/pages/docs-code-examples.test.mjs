@@ -346,28 +346,33 @@ test('the former API reference URL now resolves to the single direct API guide',
 test('Mobile Money guidance describes operator USSD confirmation in both languages', () => {
   assert.match(docsCopy, /l’opérateur adresse au payeur une demande de confirmation USSD qu’il valide sur son téléphone/);
   assert.match(docsCopy, /operator sends the payer a USSD confirmation request to approve on their phone/);
-  assert.match(docsCopy, /operator\.otpCommand ou null/);
-  assert.match(docsCopy, /operator\.otpCommand or null/);
-  assert.match(docsCopy, /si ussdCode est présent/);
-  assert.match(docsCopy, /if ussdCode is present/);
+  assert.match(docsCopy, /son contrat n’inclut pas operator\.otpCommand/);
+  assert.match(docsCopy, /response schema does not include operator\.otpCommand/);
+  assert.match(docsCopy, /réponse de tentative contient ussdCode/);
+  assert.match(docsCopy, /attempt response contains ussdCode/);
   assert.doesNotMatch(docsCopy, /n’envoyez jamais de code OTP ou de PIN|never send an OTP or PIN/i);
 });
 
 test('Mobile Money guide distinguishes catalog metadata from supported attempt fields', () => {
   assert.match(docsCopy, /Confirmation sur téléphone \(USSD Push\).*HTTP 201 avec state waiting ou uncertain/);
   assert.match(docsCopy, /Phone confirmation \(USSD Push\).*HTTP 201 with state waiting or uncertain/);
-  assert.match(docsCopy, /session peut aussi renvoyer otpCommand, une consigne de composition configurée côté serveur/);
-  assert.match(docsCopy, /otpCommand ou null/);
+  assert.match(docsCopy, /Le catalogue public GET \/api\/pricing peut exposer requiresOtp et otpCommand/);
+  assert.match(docsCopy, /public GET \/api\/pricing catalog may expose requiresOtp and otpCommand/);
   assert.match(docsCopy, /OTP reçu par SMS/);
   assert.match(docsCopy, /OTP obtenu après un code USSD/);
   assert.match(docsCopy, /Wave et ouverture d’application/);
-  assert.match(docsCopy, /la réponse de tentative ne fournit pas de lien pour ouvrir l’application/);
-  assert.match(docsCopy, /payment-link session may also return otpCommand, a server-configured dialing instruction/);
+  assert.match(docsCopy, /contrat API direct ne renvoie pas d’URL d’application Wave/);
   assert.match(docsCopy, /SMS OTP/);
   assert.match(docsCopy, /OTP after dialing a USSD code/);
   assert.match(docsCopy, /Wave app handoff/);
-  assert.match(docsCopy, /the attempt response does not provide a link to open the app/);
+  assert.match(docsCopy, /Direct API contract does not return a Wave app URL/);
   assert.doesNotMatch(docsCopy, /wave_url|otp_required/i);
+
+  const sessionSchemaStart = generatedApiSchemas.indexOf('export const GetDeveloperPublicPaymentSessionResponse =');
+  const sessionSchemaEnd = generatedApiSchemas.indexOf('export const StartDeveloperDirectPaymentParams =', sessionSchemaStart);
+  const directSessionSchema = generatedApiSchemas.slice(sessionSchemaStart, sessionSchemaEnd);
+  assert.ok(sessionSchemaStart >= 0 && sessionSchemaEnd > sessionSchemaStart);
+  assert.doesNotMatch(directSessionSchema, /otpCommand/);
 });
 
 test('LinkFlow shows only the server instruction for an available selected operator', async () => {
@@ -393,8 +398,8 @@ test('attempt examples keep operator confirmation outside the merchant API reque
   }
   assert.doesNotMatch(requestSchema, /"(?:otp|pin)"/i);
   assert.match(generatedApiSchemas.slice(requestSchemaEnd, requestSchemaEnd + 500), /"ussdCode": zod\.string\(\)\.nullable\(\)/);
-  assert.match(docsCopy, /operator\.otpCommand ou null/);
-  assert.match(docsCopy, /operator\.otpCommand or null/);
+  assert.match(docsCopy, /Le catalogue public GET \/api\/pricing peut exposer requiresOtp et otpCommand/);
+  assert.match(docsCopy, /public GET \/api\/pricing catalog may expose requiresOtp and otpCommand/);
   assert.doesNotMatch(docsCopy, /#144\*82#/i, 'Unverified operator menu text must not be published as an OTP');
 });
 
