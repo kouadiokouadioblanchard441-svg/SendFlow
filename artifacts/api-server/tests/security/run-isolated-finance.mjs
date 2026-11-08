@@ -41,6 +41,10 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  await owner.query(`ALTER TABLE sf_countries DROP COLUMN payout_enabled;
+    ALTER TABLE sf_operator_catalog DROP COLUMN payout_enabled;
+    ALTER TABLE sf_payment_limits DROP CONSTRAINT sf_payment_limits_daily_payout_check;
+    ALTER TABLE sf_payment_limits DROP COLUMN maximum_payout_daily_minor`);
   await owner.query(`DROP TABLE sf_developer_webhook_deliveries;
     DROP TABLE sf_payout_confirmations, sf_payout_state_events, sf_payout_attempts, sf_payout_requests;
     DROP TABLE sf_developer_payment_sessions;
@@ -195,7 +199,7 @@ try {
       { applied: false, alreadyApplied: true },
     );
   } finally { migrationClient.release(); }
-  const payoutMigration = readFileSync(join(root, "lib/db/migrations/2026-11-08-payout-module.sql"), "utf8");
+  const payoutMigration = readFileSync(join(root, "lib/db/migrations/2026-11-08-payout-schema-additive.sql"), "utf8");
   await owner.query(payoutMigration);
   await owner.query(payoutMigration);
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;

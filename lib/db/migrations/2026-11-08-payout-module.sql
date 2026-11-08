@@ -1,5 +1,9 @@
--- Additive payout foundation. This file is intentionally not applied by this
--- change; target databases must use the reviewed migration process.
+-- LEGACY MIXED CANDIDATE — DO NOT APPLY.
+-- This combines schema creation with existing-constraint replacements,
+-- webhook/payment compatibility changes, and replacement payment guards.
+-- Use 2026-11-08-payout-schema-additive.sql only for isolated schema rehearsal.
+-- Any shared/production application requires an explicitly confirmed target,
+-- separate review of the excluded changes, and approval of the rollout plan.
 BEGIN;
 
 ALTER TABLE public.sf_countries
