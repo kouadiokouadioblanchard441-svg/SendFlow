@@ -860,13 +860,13 @@ var require_depd = __commonJS({
       if (!funcName) {
         funcName = "<anonymous@" + formatLocation(site) + ">";
       }
-      var context = callSite.getThis();
-      var typeName = context && callSite.getTypeName();
+      var context2 = callSite.getThis();
+      var typeName = context2 && callSite.getTypeName();
       if (typeName === "Object") {
         typeName = void 0;
       }
       if (typeName === "Function") {
-        typeName = context.name || typeName;
+        typeName = context2.name || typeName;
       }
       return typeName && callSite.getMethodName() ? typeName + "." + funcName : funcName;
     }
@@ -15192,7 +15192,7 @@ var require_mimeScore = __commonJS({
 var require_mime_types = __commonJS({
   "../../node_modules/.pnpm/mime-types@3.0.2/node_modules/mime-types/index.js"(exports) {
     "use strict";
-    var db2 = require_mime_db();
+    var db3 = require_mime_db();
     var extname = __require("path").extname;
     var mimeScore = require_mimeScore();
     var EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/;
@@ -15211,7 +15211,7 @@ var require_mime_types = __commonJS({
         return false;
       }
       var match = EXTRACT_TYPE_REGEXP.exec(type);
-      var mime = match && db2[match[1].toLowerCase()];
+      var mime = match && db3[match[1].toLowerCase()];
       if (mime && mime.charset) {
         return mime.charset;
       }
@@ -15256,8 +15256,8 @@ var require_mime_types = __commonJS({
       return exports.types[extension2] || false;
     }
     function populateMaps(extensions, types3) {
-      Object.keys(db2).forEach(function forEachMimeType(type) {
-        var mime = db2[type];
+      Object.keys(db3).forEach(function forEachMimeType(type) {
+        var mime = db3[type];
         var exts = mime.extensions;
         if (!exts || !exts.length) {
           return;
@@ -15278,14 +15278,14 @@ var require_mime_types = __commonJS({
       });
     }
     function _preferredType(ext, type0, type1) {
-      var score0 = type0 ? mimeScore(type0, db2[type0].source) : 0;
-      var score1 = type1 ? mimeScore(type1, db2[type1].source) : 0;
+      var score0 = type0 ? mimeScore(type0, db3[type0].source) : 0;
+      var score1 = type1 ? mimeScore(type1, db3[type1].source) : 0;
       return score0 > score1 ? type0 : type1;
     }
     function _preferredTypeLegacy(ext, type0, type1) {
       var SOURCE_RANK = ["nginx", "apache", void 0, "iana"];
-      var score0 = type0 ? SOURCE_RANK.indexOf(db2[type0].source) : 0;
-      var score1 = type1 ? SOURCE_RANK.indexOf(db2[type1].source) : 0;
+      var score0 = type0 ? SOURCE_RANK.indexOf(db3[type0].source) : 0;
+      var score1 = type1 ? SOURCE_RANK.indexOf(db3[type1].source) : 0;
       if (exports.types[extension] !== "application/octet-stream" && (score0 > score1 || score0 === score1 && exports.types[extension]?.slice(0, 12) === "application/")) {
         return type0;
       }
@@ -21090,27 +21090,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router33;
+    module.exports = Router35;
     module.exports.Route = Route;
-    function Router33(options) {
-      if (!(this instanceof Router33)) {
-        return new Router33(options);
+    function Router35(options) {
+      if (!(this instanceof Router35)) {
+        return new Router35(options);
       }
       const opts = options || {};
-      function router27(req, res, next) {
-        router27.handle(req, res, next);
+      function router29(req, res, next) {
+        router29.handle(req, res, next);
       }
-      Object.setPrototypeOf(router27, this);
-      router27.caseSensitive = opts.caseSensitive;
-      router27.mergeParams = opts.mergeParams;
-      router27.params = {};
-      router27.strict = opts.strict;
-      router27.stack = [];
-      return router27;
+      Object.setPrototypeOf(router29, this);
+      router29.caseSensitive = opts.caseSensitive;
+      router29.mergeParams = opts.mergeParams;
+      router29.params = {};
+      router29.strict = opts.strict;
+      router29.stack = [];
+      return router29;
     }
-    Router33.prototype = function() {
+    Router35.prototype = function() {
     };
-    Router33.prototype.param = function param(name, fn) {
+    Router35.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -21130,7 +21130,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router33.prototype.handle = function handle(req, res, callback) {
+    Router35.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -21257,7 +21257,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router33.prototype.use = function use(handler) {
+    Router35.prototype.use = function use(handler) {
       let offset = 0;
       let path = "/";
       if (typeof handler !== "function") {
@@ -21290,7 +21290,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router33.prototype.route = function route(path) {
+    Router35.prototype.route = function route(path) {
       const route2 = new Route(path);
       const layer = new Layer(path, {
         sensitive: this.caseSensitive,
@@ -21305,7 +21305,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router33.prototype[method] = function(path) {
+      Router35.prototype[method] = function(path) {
         const route = this.route(path);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -21488,13 +21488,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router33 = require_router();
+    var Router35 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router27 = null;
+      var router29 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -21503,13 +21503,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router27 === null) {
-            router27 = new Router33({
+          if (router29 === null) {
+            router29 = new Router35({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router27;
+          return router29;
         }
       });
     };
@@ -21580,15 +21580,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router27 = this.router;
+      var router29 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router27.use(path, fn2);
+          return router29.use(path, fn2);
         }
         debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router27.use(path, function mounted_app(req, res, next) {
+        router29.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -24173,7 +24173,7 @@ var require_express = __commonJS({
     var EventEmitter2 = __require("node:events").EventEmitter;
     var mixin2 = require_merge_descriptors();
     var proto = require_application();
-    var Router33 = require_router();
+    var Router35 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -24195,8 +24195,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router33.Route;
-    exports.Router = Router33;
+    exports.Route = Router35.Route;
+    exports.Router = Router35;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -27014,8 +27014,8 @@ var require_transport = __commonJS({
         let fixTarget2;
         for (const filePath of callers) {
           try {
-            const context = filePath === "node:repl" ? process.cwd() + sep : filePath;
-            fixTarget2 = createRequire3(context).resolve(origin);
+            const context2 = filePath === "node:repl" ? process.cwd() + sep : filePath;
+            fixTarget2 = createRequire3(context2).resolve(origin);
             break;
           } catch (err) {
             continue;
@@ -33505,9 +33505,9 @@ var require_pg_pool = __commonJS({
           clearTimeout(removed.timeoutId);
         }
         this._clients = this._clients.filter((c) => c !== client);
-        const context = this;
+        const context2 = this;
         client.end(() => {
-          context.emit("remove", client);
+          context2.emit("remove", client);
           if (typeof callback === "function") {
             callback();
           }
@@ -34407,14 +34407,14 @@ function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, e
   var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
   var _, done = false;
   for (var i = decorators.length - 1; i >= 0; i--) {
-    var context = {};
-    for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
-    for (var p in contextIn.access) context.access[p] = contextIn.access[p];
-    context.addInitializer = function(f) {
+    var context2 = {};
+    for (var p in contextIn) context2[p] = p === "access" ? {} : contextIn[p];
+    for (var p in contextIn.access) context2.access[p] = contextIn.access[p];
+    context2.addInitializer = function(f) {
       if (done) throw new TypeError("Cannot add initializers after decoration has completed");
       extraInitializers.push(accept(f || null));
     };
-    var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+    var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context2);
     if (kind === "accessor") {
       if (result === void 0) continue;
       if (result === null || typeof result !== "object") throw new TypeError("Object expected");
@@ -36402,8 +36402,8 @@ var require_build2 = __commonJS({
         this.lenBlock = new LocalLengthBlock(parameters2);
         this.valueBlock = valueBlockType ? new valueBlockType(parameters2) : new ValueBlock(parameters2);
       }
-      fromBER(inputBuffer, inputOffset, inputLength, context) {
-        const resultOffset = this.valueBlock.fromBER(inputBuffer, inputOffset, this.lenBlock.isIndefiniteForm ? inputLength : this.lenBlock.length, context);
+      fromBER(inputBuffer, inputOffset, inputLength, context2) {
+        const resultOffset = this.valueBlock.fromBER(inputBuffer, inputOffset, this.lenBlock.isIndefiniteForm ? inputLength : this.lenBlock.length, context2);
         if (resultOffset === -1) {
           this.error = this.valueBlock.error;
           return resultOffset;
@@ -36557,10 +36557,10 @@ var require_build2 = __commonJS({
         Sequence: constructors.Sequence
       };
     }
-    function fastParserContext(context) {
-      const nodes = Object.getOwnPropertyDescriptor(context, "nodesCount");
-      const maxNodes = Object.getOwnPropertyDescriptor(context, "maxNodes");
-      const maxContentLength = Object.getOwnPropertyDescriptor(context, "maxContentLength");
+    function fastParserContext(context2) {
+      const nodes = Object.getOwnPropertyDescriptor(context2, "nodesCount");
+      const maxNodes = Object.getOwnPropertyDescriptor(context2, "maxNodes");
+      const maxContentLength = Object.getOwnPropertyDescriptor(context2, "maxContentLength");
       if (!nodes || !("value" in nodes) || nodes.writable !== true)
         return false;
       if (!maxNodes || !("value" in maxNodes) || !maxContentLength || !("value" in maxContentLength))
@@ -36571,7 +36571,7 @@ var require_build2 = __commonJS({
       const descriptor = Object.getOwnPropertyDescriptor(store, name);
       return !!descriptor && "value" in descriptor && descriptor.value === value;
     }
-    function tryFastFromBER(inputBuffer, inputOffset, inputLength, context) {
+    function tryFastFromBER(inputBuffer, inputOffset, inputLength, context2) {
       const registry2 = fastParserRegistry;
       if (!registry2)
         return void 0;
@@ -36593,9 +36593,9 @@ var require_build2 = __commonJS({
           return void 0;
         if (tag === 5 && length !== 0)
           return void 0;
-        if (!fastParserContext(context))
+        if (!fastParserContext(context2))
           return void 0;
-        if (length > Object.getOwnPropertyDescriptor(context, "maxContentLength").value) {
+        if (length > Object.getOwnPropertyDescriptor(context2, "maxContentLength").value) {
           return void 0;
         }
         const constructorName = tag === 2 ? "Integer" : tag === 5 ? "Null" : "Sequence";
@@ -36621,8 +36621,8 @@ var require_build2 = __commonJS({
       result.lenBlock.longFormUsed = false;
       result.lenBlock.length = length;
       result.lenBlock.blockLength = 1;
-      context.nodesCount += 1;
-      const resultOffset = result.fromBER(inputBuffer, inputOffset + 2, length, context);
+      context2.nodesCount += 1;
+      const resultOffset = result.fromBER(inputBuffer, inputOffset + 2, length, context2);
       result.valueBeforeDecodeView = inputBuffer.subarray(inputOffset, inputOffset + result.blockLength);
       return { offset: resultOffset, result };
     }
@@ -36651,29 +36651,29 @@ var require_build2 = __commonJS({
         result
       };
     }
-    function checkNodesLimit(context) {
-      context.nodesCount += 1;
-      if (context.nodesCount > context.maxNodes) {
+    function checkNodesLimit(context2) {
+      context2.nodesCount += 1;
+      if (context2.nodesCount > context2.maxNodes) {
         return MAX_NODES_EXCEEDED_ERROR;
       }
       return void 0;
     }
-    function checkContentLengthLimit(inputLength, context) {
-      if (inputLength > context.maxContentLength) {
+    function checkContentLengthLimit(inputLength, context2) {
+      if (inputLength > context2.maxContentLength) {
         return MAX_CONTENT_LENGTH_EXCEEDED_ERROR;
       }
       return void 0;
     }
-    function localFromBERWithChildContext(inputBuffer, inputOffset, inputLength, context) {
-      const childDepth = context.depth + 1;
-      if (childDepth > context.maxDepth) {
+    function localFromBERWithChildContext(inputBuffer, inputOffset, inputLength, context2) {
+      const childDepth = context2.depth + 1;
+      if (childDepth > context2.maxDepth) {
         return createErrorResult(MAX_DEPTH_EXCEEDED_ERROR);
       }
-      context.depth = childDepth;
+      context2.depth = childDepth;
       try {
-        return localFromBER(inputBuffer, inputOffset, inputLength, context);
+        return localFromBER(inputBuffer, inputOffset, inputLength, context2);
       } finally {
-        context.depth -= 1;
+        context2.depth -= 1;
       }
     }
     function localChangeType(inputObject, newType) {
@@ -36687,8 +36687,8 @@ var require_build2 = __commonJS({
       newObject.valueBeforeDecodeView = inputObject.valueBeforeDecodeView;
       return newObject;
     }
-    function localFromBER(inputBuffer, inputOffset = 0, inputLength = inputBuffer.length, context = createFromBerContext()) {
-      const fastResult = tryFastFromBER(inputBuffer, inputOffset, inputLength, context);
+    function localFromBER(inputBuffer, inputOffset = 0, inputLength = inputBuffer.length, context2 = createFromBerContext()) {
+      const fastResult = tryFastFromBER(inputBuffer, inputOffset, inputLength, context2);
       if (fastResult)
         return fastResult;
       const incomingOffset = inputOffset;
@@ -36707,7 +36707,7 @@ var require_build2 = __commonJS({
           result: returnObject
         };
       }
-      const nodesLimitError = checkNodesLimit(context);
+      const nodesLimitError = checkNodesLimit(context2);
       if (nodesLimitError) {
         returnObject.error = nodesLimitError;
         return {
@@ -36742,7 +36742,7 @@ var require_build2 = __commonJS({
       inputOffset = resultOffset;
       inputLength -= returnObject.lenBlock.blockLength;
       const valueLength = returnObject.lenBlock.isIndefiniteForm ? inputLength : returnObject.lenBlock.length;
-      const contentLengthError = checkContentLengthLimit(valueLength, context);
+      const contentLengthError = checkContentLengthLimit(valueLength, context2);
       if (contentLengthError) {
         returnObject.error = contentLengthError;
         return {
@@ -36888,7 +36888,7 @@ var require_build2 = __commonJS({
         }
       }
       returnObject = localChangeType(returnObject, newASN1Type);
-      resultOffset = returnObject.fromBER(inputBuffer, inputOffset, valueLength, context);
+      resultOffset = returnObject.fromBER(inputBuffer, inputOffset, valueLength, context2);
       returnObject.valueBeforeDecodeView = inputBuffer.subarray(incomingOffset, incomingOffset + returnObject.blockLength);
       return {
         offset: resultOffset,
@@ -36920,9 +36920,9 @@ var require_build2 = __commonJS({
         this.value = value;
         this.isIndefiniteForm = isIndefiniteForm;
       }
-      fromBER(inputBuffer, inputOffset, inputLength, context) {
+      fromBER(inputBuffer, inputOffset, inputLength, context2) {
         const view = pvtsutils__namespace.BufferSourceConverter.toUint8Array(inputBuffer);
-        const parseContext = context !== null && context !== void 0 ? context : createFromBerContext();
+        const parseContext = context2 !== null && context2 !== void 0 ? context2 : createFromBerContext();
         if (!checkBufferParams(this, view, inputOffset, inputLength)) {
           return -1;
         }
@@ -36986,9 +36986,9 @@ var require_build2 = __commonJS({
         super(parameters2, LocalConstructedValueBlock);
         this.idBlock.isConstructed = true;
       }
-      fromBER(inputBuffer, inputOffset, inputLength, context) {
+      fromBER(inputBuffer, inputOffset, inputLength, context2) {
         this.valueBlock.isIndefiniteForm = this.lenBlock.isIndefiniteForm;
-        const resultOffset = this.valueBlock.fromBER(inputBuffer, inputOffset, this.lenBlock.isIndefiniteForm ? inputLength : this.lenBlock.length, context);
+        const resultOffset = this.valueBlock.fromBER(inputBuffer, inputOffset, this.lenBlock.isIndefiniteForm ? inputLength : this.lenBlock.length, context2);
         if (resultOffset === -1) {
           this.error = this.valueBlock.error;
           return resultOffset;
@@ -37154,11 +37154,11 @@ ${values.join("\n")}` : `${blockName} :`;
         super(parameters2);
         this.isConstructed = isConstructed2;
       }
-      fromBER(inputBuffer, inputOffset, inputLength, context) {
+      fromBER(inputBuffer, inputOffset, inputLength, context2) {
         let resultOffset = 0;
         if (this.isConstructed) {
           this.isHexOnly = false;
-          resultOffset = LocalConstructedValueBlock.prototype.fromBER.call(this, inputBuffer, inputOffset, inputLength, context);
+          resultOffset = LocalConstructedValueBlock.prototype.fromBER.call(this, inputBuffer, inputOffset, inputLength, context2);
           if (resultOffset === -1)
             return resultOffset;
           for (let i = 0; i < this.value.length; i++) {
@@ -37216,7 +37216,7 @@ ${values.join("\n")}` : `${blockName} :`;
         this.idBlock.tagClass = 1;
         this.idBlock.tagNumber = 4;
       }
-      fromBER(inputBuffer, inputOffset, inputLength, context) {
+      fromBER(inputBuffer, inputOffset, inputLength, context2) {
         this.valueBlock.isConstructed = this.idBlock.isConstructed;
         this.valueBlock.isIndefiniteForm = this.lenBlock.isIndefiniteForm;
         if (inputLength === 0) {
@@ -37226,12 +37226,12 @@ ${values.join("\n")}` : `${blockName} :`;
             this.blockLength += this.lenBlock.blockLength;
           return inputOffset;
         }
-        if (!this.valueBlock.isConstructed && (context === null || context === void 0 ? void 0 : context.parseEmbedded) !== false) {
+        if (!this.valueBlock.isConstructed && (context2 === null || context2 === void 0 ? void 0 : context2.parseEmbedded) !== false) {
           const view = inputBuffer instanceof ArrayBuffer ? new Uint8Array(inputBuffer) : inputBuffer;
           const buf = view.subarray(inputOffset, inputOffset + inputLength);
           try {
             if (buf.byteLength) {
-              const parseContext = context !== null && context !== void 0 ? context : createFromBerContext();
+              const parseContext = context2 !== null && context2 !== void 0 ? context2 : createFromBerContext();
               const asn = localFromBERWithChildContext(buf, 0, buf.byteLength, parseContext);
               if (asn.offset !== -1 && asn.offset === inputLength) {
                 this.valueBlock.value = [asn.result];
@@ -37240,7 +37240,7 @@ ${values.join("\n")}` : `${blockName} :`;
           } catch {
           }
         }
-        return super.fromBER(inputBuffer, inputOffset, inputLength, context);
+        return super.fromBER(inputBuffer, inputOffset, inputLength, context2);
       }
       onAsciiEncoding() {
         if (this.valueBlock.isConstructed || this.valueBlock.value && this.valueBlock.value.length) {
@@ -37275,13 +37275,13 @@ ${values.join("\n")}` : `${blockName} :`;
         this.isConstructed = isConstructed2;
         this.blockLength = this.valueHexView.byteLength;
       }
-      fromBER(inputBuffer, inputOffset, inputLength, context) {
+      fromBER(inputBuffer, inputOffset, inputLength, context2) {
         if (!inputLength) {
           return inputOffset;
         }
         let resultOffset = -1;
         if (this.isConstructed) {
-          resultOffset = LocalConstructedValueBlock.prototype.fromBER.call(this, inputBuffer, inputOffset, inputLength, context);
+          resultOffset = LocalConstructedValueBlock.prototype.fromBER.call(this, inputBuffer, inputOffset, inputLength, context2);
           if (resultOffset === -1)
             return resultOffset;
           for (const value of this.value) {
@@ -37317,11 +37317,11 @@ ${values.join("\n")}` : `${blockName} :`;
           this.error = "Unused bits for BitString must be in range 0-7";
           return -1;
         }
-        if (!this.unusedBits && (context === null || context === void 0 ? void 0 : context.parseEmbedded) !== false) {
+        if (!this.unusedBits && (context2 === null || context2 === void 0 ? void 0 : context2.parseEmbedded) !== false) {
           const buf = intBuffer.subarray(1);
           try {
             if (buf.byteLength) {
-              const parseContext = context !== null && context !== void 0 ? context : createFromBerContext();
+              const parseContext = context2 !== null && context2 !== void 0 ? context2 : createFromBerContext();
               const asn = localFromBERWithChildContext(buf, 0, buf.byteLength, parseContext);
               if (asn.offset !== -1 && asn.offset === inputLength - 1) {
                 this.value = [asn.result];
@@ -37380,10 +37380,10 @@ ${values.join("\n")}` : `${blockName} :`;
         this.idBlock.tagClass = 1;
         this.idBlock.tagNumber = 3;
       }
-      fromBER(inputBuffer, inputOffset, inputLength, context) {
+      fromBER(inputBuffer, inputOffset, inputLength, context2) {
         this.valueBlock.isConstructed = this.idBlock.isConstructed;
         this.valueBlock.isIndefiniteForm = this.lenBlock.isIndefiniteForm;
-        return super.fromBER(inputBuffer, inputOffset, inputLength, context);
+        return super.fromBER(inputBuffer, inputOffset, inputLength, context2);
       }
       onAsciiEncoding() {
         if (this.valueBlock.isConstructed || this.valueBlock.value && this.valueBlock.value.length) {
@@ -48725,7 +48725,7 @@ var require_dependency_container = __commonJS({
           useClass
         }, { lifecycle: lifecycle_1.default.Singleton });
       }
-      resolve(token, context = new resolution_context_1.default(), isOptional = false) {
+      resolve(token, context2 = new resolution_context_1.default(), isOptional = false) {
         this.ensureNotDisposed();
         const registration = this.getRegistration(token);
         if (!registration && providers_1.isNormalToken(token)) {
@@ -48736,12 +48736,12 @@ var require_dependency_container = __commonJS({
         }
         this.executePreResolutionInterceptor(token, "Single");
         if (registration) {
-          const result = this.resolveRegistration(registration, context);
+          const result = this.resolveRegistration(registration, context2);
           this.executePostResolutionInterceptor(token, result, "Single");
           return result;
         }
         if (injection_token_1.isConstructorToken(token)) {
-          const result = this.construct(token, context);
+          const result = this.construct(token, context2);
           this.executePostResolutionInterceptor(token, result, "Single");
           return result;
         }
@@ -48771,10 +48771,10 @@ var require_dependency_container = __commonJS({
           this.interceptors.postResolution.setAll(token, remainingInterceptors);
         }
       }
-      resolveRegistration(registration, context) {
+      resolveRegistration(registration, context2) {
         this.ensureNotDisposed();
-        if (registration.options.lifecycle === lifecycle_1.default.ResolutionScoped && context.scopedResolutions.has(registration)) {
-          return context.scopedResolutions.get(registration);
+        if (registration.options.lifecycle === lifecycle_1.default.ResolutionScoped && context2.scopedResolutions.has(registration)) {
+          return context2.scopedResolutions.get(registration);
         }
         const isSingleton = registration.options.lifecycle === lifecycle_1.default.Singleton;
         const isContainerScoped = registration.options.lifecycle === lifecycle_1.default.ContainerScoped;
@@ -48783,20 +48783,20 @@ var require_dependency_container = __commonJS({
         if (providers_1.isValueProvider(registration.provider)) {
           resolved = registration.provider.useValue;
         } else if (providers_1.isTokenProvider(registration.provider)) {
-          resolved = returnInstance ? registration.instance || (registration.instance = this.resolve(registration.provider.useToken, context)) : this.resolve(registration.provider.useToken, context);
+          resolved = returnInstance ? registration.instance || (registration.instance = this.resolve(registration.provider.useToken, context2)) : this.resolve(registration.provider.useToken, context2);
         } else if (providers_1.isClassProvider(registration.provider)) {
-          resolved = returnInstance ? registration.instance || (registration.instance = this.construct(registration.provider.useClass, context)) : this.construct(registration.provider.useClass, context);
+          resolved = returnInstance ? registration.instance || (registration.instance = this.construct(registration.provider.useClass, context2)) : this.construct(registration.provider.useClass, context2);
         } else if (providers_1.isFactoryProvider(registration.provider)) {
           resolved = registration.provider.useFactory(this);
         } else {
-          resolved = this.construct(registration.provider, context);
+          resolved = this.construct(registration.provider, context2);
         }
         if (registration.options.lifecycle === lifecycle_1.default.ResolutionScoped) {
-          context.scopedResolutions.set(registration, resolved);
+          context2.scopedResolutions.set(registration, resolved);
         }
         return resolved;
       }
-      resolveAll(token, context = new resolution_context_1.default(), isOptional = false) {
+      resolveAll(token, context2 = new resolution_context_1.default(), isOptional = false) {
         this.ensureNotDisposed();
         const registrations = this.getAllRegistrations(token);
         if (!registrations && providers_1.isNormalToken(token)) {
@@ -48807,11 +48807,11 @@ var require_dependency_container = __commonJS({
         }
         this.executePreResolutionInterceptor(token, "All");
         if (registrations) {
-          const result2 = registrations.map((item) => this.resolveRegistration(item, context));
+          const result2 = registrations.map((item) => this.resolveRegistration(item, context2));
           this.executePostResolutionInterceptor(token, result2, "All");
           return result2;
         }
-        const result = [this.construct(token, context)];
+        const result = [this.construct(token, context2)];
         this.executePostResolutionInterceptor(token, result, "All");
         return result;
       }
@@ -48895,9 +48895,9 @@ var require_dependency_container = __commonJS({
         }
         return null;
       }
-      construct(ctor, context) {
+      construct(ctor, context2) {
         if (ctor instanceof lazy_helpers_1.DelayedConstructor) {
-          return ctor.createProxy((target) => this.resolve(target, context));
+          return ctor.createProxy((target) => this.resolve(target, context2));
         }
         const instance = (() => {
           const paramInfo = exports.typeInfo.get(ctor);
@@ -48908,7 +48908,7 @@ var require_dependency_container = __commonJS({
               throw new Error(`TypeInfo not known for "${ctor.name}"`);
             }
           }
-          const params = paramInfo.map(this.resolveParams(context, ctor));
+          const params = paramInfo.map(this.resolveParams(context2, ctor));
           return new ctor(...params);
         })();
         if (disposable_1.isDisposable(instance)) {
@@ -48916,19 +48916,19 @@ var require_dependency_container = __commonJS({
         }
         return instance;
       }
-      resolveParams(context, ctor) {
+      resolveParams(context2, ctor) {
         return (param, idx) => {
           try {
             if (injection_token_1.isTokenDescriptor(param)) {
               if (injection_token_1.isTransformDescriptor(param)) {
-                return param.multiple ? this.resolve(param.transform).transform(this.resolveAll(param.token, new resolution_context_1.default(), param.isOptional), ...param.transformArgs) : this.resolve(param.transform).transform(this.resolve(param.token, context, param.isOptional), ...param.transformArgs);
+                return param.multiple ? this.resolve(param.transform).transform(this.resolveAll(param.token, new resolution_context_1.default(), param.isOptional), ...param.transformArgs) : this.resolve(param.transform).transform(this.resolve(param.token, context2, param.isOptional), ...param.transformArgs);
               } else {
-                return param.multiple ? this.resolveAll(param.token, new resolution_context_1.default(), param.isOptional) : this.resolve(param.token, context, param.isOptional);
+                return param.multiple ? this.resolveAll(param.token, new resolution_context_1.default(), param.isOptional) : this.resolve(param.token, context2, param.isOptional);
               }
             } else if (injection_token_1.isTransformDescriptor(param)) {
-              return this.resolve(param.transform, context).transform(this.resolve(param.token, context), ...param.transformArgs);
+              return this.resolve(param.transform, context2).transform(this.resolve(param.token, context2), ...param.transformArgs);
             }
-            return this.resolve(param, context);
+            return this.resolve(param, context2);
           } catch (e) {
             throw new Error(error_helpers_1.formatErrorCtor(ctor, idx, e));
           }
@@ -182029,7 +182029,7 @@ var require_decode = __commonJS({
           var copy_length;
           var distance_code;
           var distance;
-          var context;
+          var context2;
           var j;
           var copy_dst;
           br.readMoreInput();
@@ -182080,8 +182080,8 @@ var require_decode = __commonJS({
               context_lookup_offset1 = Context.lookupOffsets[context_mode];
               context_lookup_offset2 = Context.lookupOffsets[context_mode + 1];
             }
-            context = Context.lookup[context_lookup_offset1 + prev_byte1] | Context.lookup[context_lookup_offset2 + prev_byte2];
-            literal_htree_index = context_map[context_map_slice + context];
+            context2 = Context.lookup[context_lookup_offset1 + prev_byte1] | Context.lookup[context_lookup_offset2 + prev_byte2];
+            literal_htree_index = context_map[context_map_slice + context2];
             --block_length[0];
             prev_byte2 = prev_byte1;
             prev_byte1 = ReadSymbol(hgroup[0].codes, hgroup[0].htrees[literal_htree_index], br);
@@ -182094,7 +182094,7 @@ var require_decode = __commonJS({
           meta_block_remaining_len -= insert_length;
           if (meta_block_remaining_len <= 0) break;
           if (distance_code < 0) {
-            var context;
+            var context2;
             br.readMoreInput();
             if (block_length[2] === 0) {
               DecodeBlockType(
@@ -182111,8 +182111,8 @@ var require_decode = __commonJS({
               dist_context_map_slice = dist_context_offset;
             }
             --block_length[2];
-            context = (copy_length > 4 ? 3 : copy_length - 2) & 255;
-            dist_htree_index = dist_context_map[dist_context_map_slice + context];
+            context2 = (copy_length > 4 ? 3 : copy_length - 2) & 255;
+            dist_htree_index = dist_context_map[dist_context_map_slice + context2];
             distance_code = ReadSymbol(hgroup[2].codes, hgroup[2].htrees[dist_htree_index], br);
             if (distance_code >= num_direct_distance_codes) {
               var nbits;
@@ -182291,7 +182291,7 @@ var require_b64 = __commonJS({
 });
 
 // src/app.ts
-var import_express33 = __toESM(require_express2(), 1);
+var import_express35 = __toESM(require_express2(), 1);
 var import_cors2 = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
@@ -189496,13 +189496,13 @@ function construct(client, config2 = {}) {
   }
   const driver = new NodePgDriver(client, dialect, { logger: logger2, cache: config2.cache });
   const session = driver.createSession(schema);
-  const db2 = new NodePgDatabase(dialect, session, schema);
-  db2.$client = client;
-  db2.$cache = config2.cache;
-  if (db2.$cache) {
-    db2.$cache["invalidate"] = config2.cache?.onMutate;
+  const db3 = new NodePgDatabase(dialect, session, schema);
+  db3.$client = client;
+  db3.$cache = config2.cache;
+  if (db3.$cache) {
+    db3.$cache["invalidate"] = config2.cache?.onMutate;
   }
-  return db2;
+  return db3;
 }
 function drizzle(...params) {
   if (typeof params[0] === "string") {
@@ -209836,6 +209836,7 @@ var countriesTable = pgTable(
     depositEnabled: boolean("deposit_enabled").notNull().default(false),
     interNetworkEnabled: boolean("inter_network_enabled").notNull().default(false),
     internationalEnabled: boolean("international_enabled").notNull().default(false),
+    payoutEnabled: boolean("payout_enabled").notNull().default(false),
     ussdCode: varchar("ussd_code", { length: 32 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
@@ -209872,6 +209873,7 @@ var insertCountrySchema = external_exports.object({
   depositEnabled: external_exports.boolean().default(false),
   interNetworkEnabled: external_exports.boolean().default(false),
   internationalEnabled: external_exports.boolean().default(false),
+  payoutEnabled: external_exports.boolean().default(false),
   createdBy: external_exports.string().min(1).max(255),
   updatedBy: external_exports.string().min(1).max(255)
 }).refine((country) => country.minPhoneDigits <= country.maxPhoneDigits, {
@@ -210177,6 +210179,7 @@ var operatorCatalogTable = pgTable(
     depositEnabled: boolean("deposit_enabled").notNull().default(false),
     interNetworkEnabled: boolean("inter_network_enabled").notNull().default(false),
     internationalEnabled: boolean("international_enabled").notNull().default(false),
+    payoutEnabled: boolean("payout_enabled").notNull().default(false),
     ussdCodeOverride: varchar("ussd_code_override", { length: 32 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
@@ -210244,7 +210247,7 @@ var insertOperatorCatalogSchema = external_exports.object({
 var insertOperatorPricingRateSchema = external_exports.object({
   operatorId: external_exports.string().min(2).max(60),
   countryCode: external_exports.string().length(2),
-  categoryId: external_exports.enum(["deposit", "inter-network", "international", "linkflow"]),
+  categoryId: external_exports.enum(["deposit", "inter-network", "international", "linkflow", "payout"]),
   feePercent: external_exports.number().min(0).max(100).nullable(),
   createdBy: external_exports.string().min(1).max(255),
   updatedBy: external_exports.string().min(1).max(255)
@@ -210439,7 +210442,7 @@ var paymentAggregatorRoutesTable = pgTable(
     countryIndex: index("sf_operation_aggregator_routes_country_idx").on(table.countryCode),
     operationCheck: check(
       "sf_operation_aggregator_routes_operation_check",
-      sql`${table.operation} IN ('deposit', 'inter-network', 'international')`
+      sql`${table.operation} IN ('deposit', 'inter-network', 'international', 'payout')`
     )
   })
 );
@@ -210488,6 +210491,7 @@ var paymentLimitsTable = pgTable("sf_payment_limits", {
   id: varchar("id", { length: 16 }).primaryKey(),
   minimumDepositMinor: integer("minimum_deposit_minor").notNull().default(200),
   minimumPayoutMinor: integer("minimum_payout_minor").notNull().default(200),
+  maximumPayoutDailyMinor: bigint("maximum_payout_daily_minor", { mode: "number" }),
   minimumInterNetworkMinor: integer("minimum_inter_network_minor").notNull().default(1),
   maximumTransferMinor: integer("maximum_transfer_minor").notNull().default(1e7),
   maximumPayinMinor: integer("maximum_payin_minor").notNull().default(2e6),
@@ -210498,6 +210502,10 @@ var paymentLimitsTable = pgTable("sf_payment_limits", {
   singletonCheck: check("sf_payment_limits_singleton_check", sql`${table.id} = 'global'`),
   depositCheck: check("sf_payment_limits_deposit_check", sql`${table.minimumDepositMinor} BETWEEN 200 AND 2000000`),
   payoutCheck: check("sf_payment_limits_payout_check", sql`${table.minimumPayoutMinor} BETWEEN 200 AND 2000000`),
+  payoutDailyCheck: check(
+    "sf_payment_limits_daily_payout_check",
+    sql`${table.maximumPayoutDailyMinor} IS NULL OR ${table.maximumPayoutDailyMinor} BETWEEN ${table.minimumPayoutMinor} AND 9007199254740991`
+  ),
   interNetworkCheck: check("sf_payment_limits_inter_network_check", sql`${table.minimumInterNetworkMinor} BETWEEN 1 AND 10000000`),
   transferMaximumCheck: check("sf_payment_limits_transfer_max_check", sql`${table.maximumTransferMinor} BETWEEN 1 AND 10000000`),
   payinMaximumCheck: check("sf_payment_limits_payin_max_check", sql`${table.maximumPayinMinor} BETWEEN 200 AND 2000000`),
@@ -210998,34 +211006,17 @@ var developerWebhookEndpointsTable = pgTable("sf_developer_webhook_endpoints", {
 }, (table) => ({
   ownerCreatedIndex: index("sf_developer_webhook_endpoints_owner_created_idx").on(table.userId, table.createdAt),
   urlCipherCheck: check("sf_developer_webhook_endpoints_url_cipher_check", sql`${table.urlEncrypted} ~ '^sfenc-v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'`),
-  eventsCheck: check("sf_developer_webhook_endpoints_events_check", sql`cardinality(${table.events}) between 1 and 2 and ${table.events} <@ ARRAY['payment.succeeded','payment.failed']::text[]`),
+  eventsCheck: check("sf_developer_webhook_endpoints_events_check", sql`
+    cardinality(${table.events}) between 1 and 7
+    and ${table.events} <@ ARRAY[
+      'payment.succeeded','payment.failed',
+      'payout.created','payout.processing','payout.succeeded','payout.failed','payout.uncertain'
+    ]::text[]
+  `),
   secretCipherCheck: check("sf_developer_webhook_endpoints_secret_cipher_check", sql`${table.signingSecretEncrypted} ~ '^sfenc-v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'`),
   statusCheck: check("sf_developer_webhook_endpoints_status_check", sql`${table.status} in ('active','revoked')`),
   revokePairCheck: check("sf_developer_webhook_endpoints_revoke_pair_check", sql`(${table.status}='active' and ${table.revokedAt} is null) or (${table.status}='revoked' and ${table.revokedAt} is not null)`),
   labelCheck: check("sf_developer_webhook_endpoints_label_check", sql`length(btrim(${table.label})) between 1 and 80`)
-}));
-var developerWebhookDeliveriesTable = pgTable("sf_developer_webhook_deliveries", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  endpointId: uuid("endpoint_id").notNull().references(() => developerWebhookEndpointsTable.id, { onDelete: "restrict" }),
-  paymentSessionId: uuid("payment_session_id").notNull().references(() => developerPaymentSessionsTable.id, { onDelete: "restrict" }),
-  eventType: varchar("event_type", { length: 40 }).notNull(),
-  payload: jsonb("payload").$type().notNull(),
-  status: varchar("status", { length: 12 }).notNull().default("pending"),
-  attempts: integer("attempts").notNull().default(0),
-  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
-  lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
-  lastHttpStatus: varchar("last_http_status", { length: 3 }),
-  lastErrorClass: varchar("last_error_class", { length: 40 }),
-  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
-}, (table) => ({
-  endpointSessionEventUnique: unique("sf_developer_webhook_deliveries_event_uq").on(table.endpointId, table.paymentSessionId, table.eventType),
-  dueIndex: index("sf_developer_webhook_deliveries_due_idx").on(table.status, table.nextAttemptAt, table.createdAt),
-  payloadSizeCheck: check("sf_developer_webhook_deliveries_payload_check", sql`octet_length(${table.payload}::text) <= 16384`),
-  eventCheck: check("sf_developer_webhook_deliveries_event_check", sql`${table.eventType} in ('payment.succeeded','payment.failed')`),
-  statusCheck: check("sf_developer_webhook_deliveries_status_check", sql`${table.status} in ('pending','delivering','delivered','failed')`),
-  attemptsCheck: check("sf_developer_webhook_deliveries_attempts_check", sql`${table.attempts} between 0 and 100`)
 }));
 var insertDeveloperApiKeySchema = createInsertSchema(developerApiKeysTable).omit({
   id: true,
@@ -211037,11 +211028,6 @@ var insertDeveloperPaymentSessionSchema = createInsertSchema(developerPaymentSes
   createdAt: true
 });
 var insertDeveloperWebhookEndpointSchema = createInsertSchema(developerWebhookEndpointsTable).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-var insertDeveloperWebhookDeliverySchema = createInsertSchema(developerWebhookDeliveriesTable).omit({
   id: true,
   createdAt: true,
   updatedAt: true
@@ -211257,6 +211243,233 @@ var customerServiceSettingsTable = pgTable(
   })
 );
 var insertCustomerServiceSettingsSchema = createInsertSchema(customerServiceSettingsTable);
+
+// ../../lib/db/src/schema/payouts.ts
+var payoutRequestsTable = pgTable("sf_payout_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  reference: varchar("reference", { length: 30 }).notNull().unique(),
+  merchantUserId: text("merchant_user_id").notNull().references(() => usersTable.id, { onDelete: "restrict" }),
+  apiKeyId: uuid("api_key_id").notNull().references(() => developerApiKeysTable.id, { onDelete: "restrict" }),
+  walletId: uuid("wallet_id").notNull().references(() => walletsTable.id, { onDelete: "restrict" }),
+  idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
+  requestHash: varchar("request_hash", { length: 64 }).notNull(),
+  merchantReference: varchar("merchant_reference", { length: 128 }),
+  countryCode: varchar("country_code", { length: 2 }).notNull().references(() => countriesTable.countryCode, { onDelete: "restrict" }),
+  operatorId: varchar("operator_id", { length: 60 }).notNull().references(() => operatorCatalogTable.operatorId, { onDelete: "restrict" }),
+  beneficiaryPhoneEncrypted: text("beneficiary_phone_encrypted").notNull(),
+  beneficiaryPhoneHash: varchar("beneficiary_phone_hash", { length: 64 }).notNull(),
+  beneficiaryNameEncrypted: text("beneficiary_name_encrypted"),
+  amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("XOF"),
+  feeRateUnits: integer("fee_rate_units").notNull(),
+  feePayer: varchar("fee_payer", { length: 12 }).notNull(),
+  feeMinor: bigint("fee_minor", { mode: "number" }).notNull(),
+  totalDebitMinor: bigint("total_debit_minor", { mode: "number" }).notNull(),
+  beneficiaryAmountMinor: bigint("beneficiary_amount_minor", { mode: "number" }).notNull(),
+  pricingVersion: integer("pricing_version").notNull(),
+  status: varchar("status", { length: 24 }).notNull().default("created"),
+  reservationState: varchar("reservation_state", { length: 12 }).notNull().default("none"),
+  failureCode: varchar("failure_code", { length: 48 }),
+  executionReferenceEncrypted: text("execution_reference_encrypted"),
+  executionReferenceHash: varchar("execution_reference_hash", { length: 64 }),
+  ledgerEntryId: uuid("ledger_entry_id").unique().references(() => walletLedgerTable.id, { onDelete: "restrict" }),
+  finalConfirmationId: uuid("final_confirmation_id").references(
+    () => payoutConfirmationsTable.id,
+    { onDelete: "restrict" }
+  ),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  reservedAt: timestamp("reserved_at", { withTimezone: true }),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true })
+}, (table) => ({
+  merchantIdempotencyUnique: unique("sf_payout_requests_merchant_idempotency_uq").on(table.merchantUserId, table.idempotencyKey),
+  merchantReferenceUnique: uniqueIndex("sf_payout_requests_merchant_reference_uq").on(table.merchantUserId, table.merchantReference).where(sql`${table.merchantReference} IS NOT NULL`),
+  merchantCreatedIndex: index("sf_payout_requests_merchant_created_idx").on(table.merchantUserId, table.createdAt, table.id),
+  statusCreatedIndex: index("sf_payout_requests_status_created_idx").on(table.status, table.createdAt),
+  activeReservationIndex: index("sf_payout_requests_wallet_reservation_idx").on(table.walletId).where(sql`${table.reservationState} = 'active'`),
+  executionReferenceHashUnique: uniqueIndex("sf_payout_requests_execution_reference_hash_uq").on(table.executionReferenceHash).where(sql`${table.executionReferenceHash} IS NOT NULL`),
+  referenceFormatCheck: check("sf_payout_requests_reference_format_check", sql`${table.reference} ~ '^SFPO[A-F0-9]{16}$'`),
+  idempotencyCheck: check("sf_payout_requests_idempotency_check", sql`length(btrim(${table.idempotencyKey})) BETWEEN 8 AND 128`),
+  requestHashCheck: check("sf_payout_requests_request_hash_check", sql`${table.requestHash} ~ '^[a-f0-9]{64}$'`),
+  merchantReferenceCheck: check(
+    "sf_payout_requests_merchant_reference_check",
+    sql`${table.merchantReference} IS NULL OR (length(btrim(${table.merchantReference})) BETWEEN 1 AND 128 AND ${table.merchantReference} !~ '[[:cntrl:]]')`
+  ),
+  beneficiaryPhoneCipherCheck: check(
+    "sf_payout_requests_phone_cipher_check",
+    sql`${table.beneficiaryPhoneEncrypted} ~ '^sfenc-v2\\.[A-Za-z0-9_-]{1,32}\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'`
+  ),
+  beneficiaryPhoneHashCheck: check(
+    "sf_payout_requests_phone_hash_check",
+    sql`${table.beneficiaryPhoneHash} ~ '^[a-f0-9]{64}$'`
+  ),
+  beneficiaryNameCipherCheck: check(
+    "sf_payout_requests_name_cipher_check",
+    sql`${table.beneficiaryNameEncrypted} IS NULL OR ${table.beneficiaryNameEncrypted} ~ '^sfenc-v2\\.[A-Za-z0-9_-]{1,32}\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'`
+  ),
+  amountCheck: check("sf_payout_requests_amount_check", sql`${table.amountMinor} BETWEEN 1 AND 9007199254740991`),
+  currencyCheck: check("sf_payout_requests_currency_check", sql`${table.currency} = 'XOF'`),
+  feeRateCheck: check("sf_payout_requests_fee_rate_check", sql`${table.feeRateUnits} BETWEEN 0 AND 1000000`),
+  feePayerCheck: check("sf_payout_requests_fee_payer_check", sql`${table.feePayer} IN ('merchant','beneficiary')`),
+  feeCheck: check("sf_payout_requests_fee_check", sql`${table.feeMinor} BETWEEN 0 AND 9007199254740991`),
+  totalDebitCheck: check("sf_payout_requests_total_debit_check", sql`${table.totalDebitMinor} BETWEEN 1 AND 9007199254740991`),
+  beneficiaryAmountCheck: check("sf_payout_requests_beneficiary_amount_check", sql`${table.beneficiaryAmountMinor} BETWEEN 1 AND 9007199254740991`),
+  feeMathCheck: check("sf_payout_requests_fee_math_check", sql`
+    (${table.feePayer} = 'merchant'
+      AND ${table.totalDebitMinor} = ${table.amountMinor} + ${table.feeMinor}
+      AND ${table.beneficiaryAmountMinor} = ${table.amountMinor})
+    OR
+    (${table.feePayer} = 'beneficiary'
+      AND ${table.totalDebitMinor} = ${table.amountMinor}
+      AND ${table.beneficiaryAmountMinor} = ${table.amountMinor} - ${table.feeMinor})
+  `),
+  pricingVersionCheck: check("sf_payout_requests_pricing_version_check", sql`${table.pricingVersion} >= 1`),
+  statusCheck: check("sf_payout_requests_status_check", sql`${table.status} IN ('created','validated','funds_reserved','submitted','processing','succeeded','rejected','failed','uncertain','cancelled')`),
+  reservationStateCheck: check("sf_payout_requests_reservation_state_check", sql`${table.reservationState} IN ('none','active','consumed','released')`),
+  reservationStatusCheck: check("sf_payout_requests_reservation_status_check", sql`
+    (${table.reservationState} = 'none' AND ${table.status} IN ('created','validated'))
+    OR (${table.reservationState} = 'active' AND ${table.status} IN ('funds_reserved','submitted','processing','uncertain'))
+    OR (${table.reservationState} = 'consumed' AND ${table.status} = 'succeeded')
+    OR (${table.reservationState} = 'released' AND ${table.status} IN ('rejected','failed','cancelled'))
+  `),
+  failureCodeCheck: check("sf_payout_requests_failure_code_check", sql`${table.failureCode} IS NULL OR ${table.failureCode} IN ('merchant_rejected','admin_rejected','execution_rejected','execution_failed','insufficient_funds','daily_limit_exceeded','execution_unavailable')`),
+  executionReferencePairCheck: check("sf_payout_requests_execution_reference_pair_check", sql`
+    (${table.executionReferenceEncrypted} IS NULL AND ${table.executionReferenceHash} IS NULL)
+    OR (${table.executionReferenceEncrypted} ~ '^sfenc-v2\\.[A-Za-z0-9_-]{1,32}\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'
+      AND ${table.executionReferenceHash} ~ '^[a-f0-9]{64}$')
+  `),
+  ledgerSuccessCheck: check("sf_payout_requests_ledger_success_check", sql`
+    (${table.status} = 'succeeded' AND ${table.ledgerEntryId} IS NOT NULL AND ${table.finalConfirmationId} IS NOT NULL)
+    OR (${table.status} <> 'succeeded' AND ${table.ledgerEntryId} IS NULL)
+  `)
+}));
+var payoutAttemptsTable = pgTable("sf_payout_attempts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  payoutRequestId: uuid("payout_request_id").notNull().unique().references(() => payoutRequestsTable.id, { onDelete: "restrict" }),
+  operationReference: varchar("operation_reference", { length: 30 }).notNull().unique(),
+  status: varchar("status", { length: 16 }).notNull().default("prepared"),
+  expectedExecutionAccountHash: varchar("expected_execution_account_hash", { length: 64 }).notNull(),
+  expectedExecutionChannelId: varchar("expected_execution_channel_id", { length: 80 }).notNull(),
+  executionReferenceEncrypted: text("execution_reference_encrypted"),
+  executionReferenceHash: varchar("execution_reference_hash", { length: 64 }),
+  finalConfirmationId: uuid("final_confirmation_id").references(
+    () => payoutConfirmationsTable.id,
+    { onDelete: "restrict" }
+  ),
+  dispatchedAt: timestamp("dispatched_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => ({
+  statusIndex: index("sf_payout_attempts_status_idx").on(table.status, table.updatedAt),
+  operationReferenceCheck: check("sf_payout_attempts_operation_reference_check", sql`${table.operationReference} ~ '^SFPO[A-F0-9]{16}$'`),
+  statusCheck: check("sf_payout_attempts_status_check", sql`${table.status} IN ('prepared','dispatching','pending','uncertain','succeeded','failed')`),
+  expectedExecutionAccountHashCheck: check(
+    "sf_payout_attempts_expected_execution_account_hash_check",
+    sql`${table.expectedExecutionAccountHash} ~ '^[a-f0-9]{64}$'`
+  ),
+  expectedExecutionChannelCheck: check(
+    "sf_payout_attempts_expected_execution_channel_check",
+    sql`length(btrim(${table.expectedExecutionChannelId})) BETWEEN 1 AND 80`
+  ),
+  executionReferencePairCheck: check("sf_payout_attempts_execution_reference_pair_check", sql`
+    (${table.executionReferenceEncrypted} IS NULL AND ${table.executionReferenceHash} IS NULL)
+    OR (${table.executionReferenceEncrypted} ~ '^sfenc-v2\\.[A-Za-z0-9_-]{1,32}\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'
+      AND ${table.executionReferenceHash} ~ '^[a-f0-9]{64}$')
+  `)
+}));
+var payoutConfirmationsTable = pgTable("sf_payout_confirmations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  payoutRequestId: uuid("payout_request_id").notNull().references(() => payoutRequestsTable.id, { onDelete: "restrict" }),
+  attemptId: uuid("attempt_id").notNull().unique().references(() => payoutAttemptsTable.id, { onDelete: "restrict" }),
+  verificationSource: varchar("verification_source", { length: 24 }).notNull(),
+  executionStatus: varchar("execution_status", { length: 16 }).notNull(),
+  executionReferenceHash: varchar("execution_reference_hash", { length: 64 }).notNull(),
+  amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull(),
+  executionAccountHash: varchar("execution_account_hash", { length: 64 }).notNull(),
+  executionChannelId: varchar("execution_channel_id", { length: 80 }).notNull(),
+  operation: varchar("operation", { length: 8 }).notNull().default("payout"),
+  countryCode: varchar("country_code", { length: 2 }).notNull(),
+  operatorId: varchar("operator_id", { length: 60 }).notNull(),
+  beneficiaryPhoneHash: varchar("beneficiary_phone_hash", { length: 64 }).notNull(),
+  verificationPassed: boolean("verification_passed").notNull().default(false),
+  evidenceEncrypted: text("evidence_encrypted").notNull(),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => ({
+  payoutConfirmationUnique: unique("sf_payout_confirmations_request_uq").on(table.payoutRequestId),
+  amountCheck: check("sf_payout_confirmations_amount_check", sql`${table.amountMinor} BETWEEN 1 AND 9007199254740991`),
+  currencyCheck: check("sf_payout_confirmations_currency_check", sql`${table.currency} = 'XOF'`),
+  executionReferenceHashCheck: check("sf_payout_confirmations_execution_reference_hash_check", sql`${table.executionReferenceHash} ~ '^[a-f0-9]{64}$'`),
+  executionAccountHashCheck: check("sf_payout_confirmations_execution_account_hash_check", sql`${table.executionAccountHash} ~ '^[a-f0-9]{64}$'`),
+  executionChannelIdCheck: check("sf_payout_confirmations_execution_channel_check", sql`length(btrim(${table.executionChannelId})) BETWEEN 1 AND 80`),
+  operationCheck: check("sf_payout_confirmations_operation_check", sql`${table.operation} = 'payout'`),
+  beneficiaryHashCheck: check("sf_payout_confirmations_beneficiary_hash_check", sql`${table.beneficiaryPhoneHash} ~ '^[a-f0-9]{64}$'`),
+  verificationCheck: check("sf_payout_confirmations_verification_check", sql`${table.verificationPassed} = true`),
+  executionStatusCheck: check("sf_payout_confirmations_execution_status_check", sql`${table.executionStatus} IN ('SUCCEEDED','FAILED')`),
+  verificationSourceCheck: check("sf_payout_confirmations_source_check", sql`${table.verificationSource} IN ('status_check','signed_event')`),
+  evidenceCipherCheck: check(
+    "sf_payout_confirmations_evidence_cipher_check",
+    sql`${table.evidenceEncrypted} ~ '^sfenc-v2\\.[A-Za-z0-9_-]{1,32}\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'`
+  )
+}));
+var payoutStateEventsTable = pgTable("sf_payout_state_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  payoutRequestId: uuid("payout_request_id").notNull().references(() => payoutRequestsTable.id, { onDelete: "restrict" }),
+  fromStatus: varchar("from_status", { length: 24 }),
+  toStatus: varchar("to_status", { length: 24 }).notNull(),
+  actorType: varchar("actor_type", { length: 16 }).notNull(),
+  actorId: varchar("actor_id", { length: 255 }),
+  reasonCode: varchar("reason_code", { length: 48 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => ({
+  payoutCreatedIndex: index("sf_payout_state_events_payout_created_idx").on(table.payoutRequestId, table.createdAt, table.id),
+  actorCheck: check("sf_payout_state_events_actor_check", sql`${table.actorType} IN ('merchant','admin','system')`),
+  reasonCheck: check("sf_payout_state_events_reason_check", sql`${table.reasonCode} ~ '^[a-z0-9_:-]{1,48}$'`)
+}));
+var insertPayoutRequestSchema = createInsertSchema(payoutRequestsTable);
+
+// ../../lib/db/src/schema/webhook-deliveries.ts
+var developerWebhookDeliveriesTable = pgTable("sf_developer_webhook_deliveries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  endpointId: uuid("endpoint_id").notNull().references(() => developerWebhookEndpointsTable.id, { onDelete: "restrict" }),
+  paymentSessionId: uuid("payment_session_id").references(() => developerPaymentSessionsTable.id, { onDelete: "restrict" }),
+  payoutRequestId: uuid("payout_request_id").references(() => payoutRequestsTable.id, { onDelete: "restrict" }),
+  payoutStateEventId: uuid("payout_state_event_id").references(() => payoutStateEventsTable.id, { onDelete: "restrict" }),
+  eventType: varchar("event_type", { length: 40 }).notNull(),
+  payload: jsonb("payload").$type().notNull(),
+  status: varchar("status", { length: 12 }).notNull().default("pending"),
+  attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+  lastHttpStatus: varchar("last_http_status", { length: 3 }),
+  lastErrorClass: varchar("last_error_class", { length: 40 }),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => ({
+  endpointSessionEventUnique: uniqueIndex("sf_developer_webhook_deliveries_payment_event_uq").on(table.endpointId, table.paymentSessionId, table.eventType).where(sql`${table.paymentSessionId} IS NOT NULL`),
+  endpointPayoutEventUnique: uniqueIndex("sf_developer_webhook_deliveries_payout_event_uq").on(table.endpointId, table.payoutRequestId, table.payoutStateEventId).where(sql`${table.payoutRequestId} IS NOT NULL`),
+  dueIndex: index("sf_developer_webhook_deliveries_due_idx").on(table.status, table.nextAttemptAt, table.createdAt),
+  payloadSizeCheck: check("sf_developer_webhook_deliveries_payload_check", sql`octet_length(${table.payload}::text) <= 16384`),
+  entityCheck: check("sf_developer_webhook_deliveries_entity_check", sql`
+    (${table.paymentSessionId} IS NOT NULL AND ${table.payoutRequestId} IS NULL AND ${table.payoutStateEventId} IS NULL)
+    OR
+    (${table.paymentSessionId} IS NULL AND ${table.payoutRequestId} IS NOT NULL AND ${table.payoutStateEventId} IS NOT NULL)
+  `),
+  eventCheck: check("sf_developer_webhook_deliveries_event_check", sql`${table.eventType} IN (
+    'payment.succeeded','payment.failed',
+    'payout.created','payout.processing','payout.succeeded','payout.failed','payout.uncertain'
+  )`),
+  statusCheck: check("sf_developer_webhook_deliveries_status_check", sql`${table.status} IN ('pending','delivering','delivered','failed')`),
+  attemptsCheck: check("sf_developer_webhook_deliveries_attempts_check", sql`${table.attempts} BETWEEN 0 AND 100`)
+}));
+var insertDeveloperWebhookDeliverySchema = createInsertSchema(developerWebhookDeliveriesTable).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
 
 // src/lib/customer-auth-crypto.ts
 import {
@@ -211831,7 +212044,7 @@ function parseTrustProxyHops(value, nodeEnvironment = "development") {
 }
 
 // src/routes/index.ts
-var import_express32 = __toESM(require_express2(), 1);
+var import_express34 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -212064,7 +212277,8 @@ var GetAuthCountriesResponse = object({
     "operations": object({
       "deposit": boolean3(),
       "interNetwork": boolean3(),
-      "international": boolean3()
+      "international": boolean3(),
+      "payout": boolean3()
     })
   }))
 });
@@ -212735,7 +212949,7 @@ var ListDeveloperWebhooksResponse = object({
     "id": uuid3(),
     "label": string2(),
     "url": url(),
-    "events": array(_enum2(["payment.succeeded", "payment.failed"])),
+    "events": array(_enum2(["payment.succeeded", "payment.failed", "payout.created", "payout.processing", "payout.succeeded", "payout.failed", "payout.uncertain"])),
     "status": _enum2(["active", "revoked"]),
     "createdAt": coerce_exports.date(),
     "revokedAt": coerce_exports.date().nullable()
@@ -212743,17 +212957,18 @@ var ListDeveloperWebhooksResponse = object({
 });
 var createDeveloperWebhookBodyLabelMax = 80;
 var createDeveloperWebhookBodyUrlMax = 2048;
+var createDeveloperWebhookBodyEventsMax = 7;
 var CreateDeveloperWebhookBody = object({
   "label": string2().min(1).max(createDeveloperWebhookBodyLabelMax),
   "url": url().max(createDeveloperWebhookBodyUrlMax),
-  "events": array(_enum2(["payment.succeeded", "payment.failed"])).min(1)
+  "events": array(_enum2(["payment.succeeded", "payment.failed", "payout.created", "payout.processing", "payout.succeeded", "payout.failed", "payout.uncertain"])).min(1).max(createDeveloperWebhookBodyEventsMax)
 });
 var CreateDeveloperWebhookResponse = object({
   "endpoint": object({
     "id": uuid3(),
     "label": string2(),
     "url": url(),
-    "events": array(_enum2(["payment.succeeded", "payment.failed"])),
+    "events": array(_enum2(["payment.succeeded", "payment.failed", "payout.created", "payout.processing", "payout.succeeded", "payout.failed", "payout.uncertain"])),
     "status": _enum2(["active", "revoked"]),
     "createdAt": coerce_exports.date(),
     "revokedAt": coerce_exports.date().nullable()
@@ -212780,6 +212995,287 @@ var ListDeveloperWebhookDeliveriesResponse = object({
     "deliveredAt": coerce_exports.date().nullable()
   }))
 });
+var createDeveloperPayoutQuoteBodyAmountMinorMax = 9007199254740991;
+var createDeveloperPayoutQuoteBodyCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var createDeveloperPayoutQuoteBodyOperatorIdMin = 2;
+var createDeveloperPayoutQuoteBodyOperatorIdMax = 60;
+var createDeveloperPayoutQuoteBodyOperatorIdRegExp = new RegExp("^[a-z0-9]+(?:-[a-z0-9]+)*$");
+var CreateDeveloperPayoutQuoteBody = object({
+  "amountMinor": int().min(1).max(createDeveloperPayoutQuoteBodyAmountMinorMax),
+  "currency": _enum2(["XOF"]),
+  "countryCode": string2().regex(createDeveloperPayoutQuoteBodyCountryCodeRegExp),
+  "operatorId": string2().min(createDeveloperPayoutQuoteBodyOperatorIdMin).max(createDeveloperPayoutQuoteBodyOperatorIdMax).regex(createDeveloperPayoutQuoteBodyOperatorIdRegExp),
+  "feePayer": _enum2(["merchant", "beneficiary"])
+});
+var createDeveloperPayoutQuoteResponseFeeMinorMin = 0;
+var createDeveloperPayoutQuoteResponseAvailableBalanceMinorMin = 0;
+var createDeveloperPayoutQuoteResponseMinimumPayoutMinorMin = 200;
+var createDeveloperPayoutQuoteResponseMaximumPayoutDailyMinorMin = 200;
+var CreateDeveloperPayoutQuoteResponse = object({
+  "currency": _enum2(["XOF"]),
+  "amountMinor": int(),
+  "feeMinor": int().min(createDeveloperPayoutQuoteResponseFeeMinorMin),
+  "totalDebitMinor": int().min(1),
+  "beneficiaryAmountMinor": int().min(1),
+  "availableBalanceMinor": int().min(createDeveloperPayoutQuoteResponseAvailableBalanceMinorMin),
+  "feePayer": _enum2(["merchant", "beneficiary"]),
+  "minimumPayoutMinor": int().min(createDeveloperPayoutQuoteResponseMinimumPayoutMinorMin),
+  "maximumPayoutDailyMinor": int().min(createDeveloperPayoutQuoteResponseMaximumPayoutDailyMinorMin).nullable(),
+  "pricingVersion": int().min(1),
+  "quoteExpiresAt": coerce_exports.date()
+});
+var listDeveloperPayoutsQueryLimitDefault = 25;
+var listDeveloperPayoutsQueryLimitMax = 100;
+var ListDeveloperPayoutsQueryParams = object({
+  "limit": coerce_exports.number().int().min(1).max(listDeveloperPayoutsQueryLimitMax).default(listDeveloperPayoutsQueryLimitDefault),
+  "cursor": uuid3().optional(),
+  "status": _enum2(["created", "validated", "funds_reserved", "submitted", "processing", "succeeded", "rejected", "failed", "uncertain", "cancelled"]).optional()
+});
+var listDeveloperPayoutsResponseItemsItemReferenceRegExp = new RegExp("^SFPO[A-F0-9]{16}$");
+var listDeveloperPayoutsResponseItemsItemCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var listDeveloperPayoutsResponseItemsItemBeneficiaryPhoneLast4RegExp = new RegExp("^[0-9]{4}$");
+var ListDeveloperPayoutsResponse = object({
+  "items": array(object({
+    "id": uuid3(),
+    "reference": string2().regex(listDeveloperPayoutsResponseItemsItemReferenceRegExp),
+    "merchantReference": string2().nullable(),
+    "countryCode": string2().regex(listDeveloperPayoutsResponseItemsItemCountryCodeRegExp),
+    "operatorId": string2(),
+    "beneficiary": object({
+      "phoneLast4": string2().regex(listDeveloperPayoutsResponseItemsItemBeneficiaryPhoneLast4RegExp),
+      "name": string2().nullable()
+    }),
+    "amountMinor": int(),
+    "currency": _enum2(["XOF"]),
+    "feeMinor": int(),
+    "totalDebitMinor": int(),
+    "beneficiaryAmountMinor": int(),
+    "feePayer": _enum2(["merchant", "beneficiary"]),
+    "status": _enum2(["created", "validated", "funds_reserved", "submitted", "processing", "succeeded", "rejected", "failed", "uncertain", "cancelled"]),
+    "createdAt": coerce_exports.date(),
+    "updatedAt": coerce_exports.date(),
+    "submittedAt": coerce_exports.date().nullable(),
+    "completedAt": coerce_exports.date().nullable(),
+    "failureCode": string2().nullable()
+  })),
+  "nextCursor": uuid3().nullable()
+});
+var createDeveloperPayoutHeaderIdempotencyKeyMin = 8;
+var createDeveloperPayoutHeaderIdempotencyKeyMax = 128;
+var CreateDeveloperPayoutHeader = object({
+  "Idempotency-Key": string2().min(createDeveloperPayoutHeaderIdempotencyKeyMin).max(createDeveloperPayoutHeaderIdempotencyKeyMax)
+});
+var createDeveloperPayoutBodyAmountMinorMax = 9007199254740991;
+var createDeveloperPayoutBodyCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var createDeveloperPayoutBodyOperatorIdMin = 2;
+var createDeveloperPayoutBodyOperatorIdMax = 60;
+var createDeveloperPayoutBodyOperatorIdRegExp = new RegExp("^[a-z0-9]+(?:-[a-z0-9]+)*$");
+var createDeveloperPayoutBodyMerchantReferenceMax = 128;
+var createDeveloperPayoutBodyBeneficiaryPhoneNumberMin = 9;
+var createDeveloperPayoutBodyBeneficiaryPhoneNumberMax = 16;
+var createDeveloperPayoutBodyBeneficiaryPhoneNumberRegExp = new RegExp("^\\+[1-9][0-9]{7,14}$");
+var createDeveloperPayoutBodyBeneficiaryNameMin = 2;
+var createDeveloperPayoutBodyBeneficiaryNameMax = 120;
+var CreateDeveloperPayoutBody = object({
+  "amountMinor": int().min(1).max(createDeveloperPayoutBodyAmountMinorMax),
+  "currency": _enum2(["XOF"]),
+  "countryCode": string2().regex(createDeveloperPayoutBodyCountryCodeRegExp),
+  "operatorId": string2().min(createDeveloperPayoutBodyOperatorIdMin).max(createDeveloperPayoutBodyOperatorIdMax).regex(createDeveloperPayoutBodyOperatorIdRegExp),
+  "feePayer": _enum2(["merchant", "beneficiary"]),
+  "merchantReference": string2().min(1).max(createDeveloperPayoutBodyMerchantReferenceMax).nullish(),
+  "beneficiary": object({
+    "phoneNumber": string2().min(createDeveloperPayoutBodyBeneficiaryPhoneNumberMin).max(createDeveloperPayoutBodyBeneficiaryPhoneNumberMax).regex(createDeveloperPayoutBodyBeneficiaryPhoneNumberRegExp),
+    "name": string2().min(createDeveloperPayoutBodyBeneficiaryNameMin).max(createDeveloperPayoutBodyBeneficiaryNameMax).nullish()
+  })
+});
+var CreateDeveloperPayoutResponse = _void2();
+var GetDeveloperPayoutParams = object({
+  "payoutId": uuid3()
+});
+var getDeveloperPayoutResponseReferenceRegExp = new RegExp("^SFPO[A-F0-9]{16}$");
+var getDeveloperPayoutResponseCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var getDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp = new RegExp("^[0-9]{4}$");
+var GetDeveloperPayoutResponse = object({
+  "id": uuid3(),
+  "reference": string2().regex(getDeveloperPayoutResponseReferenceRegExp),
+  "merchantReference": string2().nullable(),
+  "countryCode": string2().regex(getDeveloperPayoutResponseCountryCodeRegExp),
+  "operatorId": string2(),
+  "beneficiary": object({
+    "phoneLast4": string2().regex(getDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp),
+    "name": string2().nullable()
+  }),
+  "amountMinor": int(),
+  "currency": _enum2(["XOF"]),
+  "feeMinor": int(),
+  "totalDebitMinor": int(),
+  "beneficiaryAmountMinor": int(),
+  "feePayer": _enum2(["merchant", "beneficiary"]),
+  "status": _enum2(["created", "validated", "funds_reserved", "submitted", "processing", "succeeded", "rejected", "failed", "uncertain", "cancelled"]),
+  "createdAt": coerce_exports.date(),
+  "updatedAt": coerce_exports.date(),
+  "submittedAt": coerce_exports.date().nullable(),
+  "completedAt": coerce_exports.date().nullable(),
+  "failureCode": string2().nullable()
+});
+var CancelDeveloperPayoutParams = object({
+  "payoutId": uuid3()
+});
+var cancelDeveloperPayoutResponseReferenceRegExp = new RegExp("^SFPO[A-F0-9]{16}$");
+var cancelDeveloperPayoutResponseCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var cancelDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp = new RegExp("^[0-9]{4}$");
+var CancelDeveloperPayoutResponse = object({
+  "id": uuid3(),
+  "reference": string2().regex(cancelDeveloperPayoutResponseReferenceRegExp),
+  "merchantReference": string2().nullable(),
+  "countryCode": string2().regex(cancelDeveloperPayoutResponseCountryCodeRegExp),
+  "operatorId": string2(),
+  "beneficiary": object({
+    "phoneLast4": string2().regex(cancelDeveloperPayoutResponseBeneficiaryPhoneLast4RegExp),
+    "name": string2().nullable()
+  }),
+  "amountMinor": int(),
+  "currency": _enum2(["XOF"]),
+  "feeMinor": int(),
+  "totalDebitMinor": int(),
+  "beneficiaryAmountMinor": int(),
+  "feePayer": _enum2(["merchant", "beneficiary"]),
+  "status": _enum2(["created", "validated", "funds_reserved", "submitted", "processing", "succeeded", "rejected", "failed", "uncertain", "cancelled"]),
+  "createdAt": coerce_exports.date(),
+  "updatedAt": coerce_exports.date(),
+  "submittedAt": coerce_exports.date().nullable(),
+  "completedAt": coerce_exports.date().nullable(),
+  "failureCode": string2().nullable()
+});
+var listAdminPayoutsQueryLimitDefault = 25;
+var listAdminPayoutsQueryLimitMax = 100;
+var ListAdminPayoutsQueryParams = object({
+  "limit": coerce_exports.number().int().min(1).max(listAdminPayoutsQueryLimitMax).default(listAdminPayoutsQueryLimitDefault),
+  "cursor": uuid3().optional(),
+  "status": _enum2(["created", "validated", "funds_reserved", "submitted", "processing", "succeeded", "rejected", "failed", "uncertain", "cancelled"]).optional()
+});
+var listAdminPayoutsResponseItemsItemOneReferenceRegExp = new RegExp("^SFPO[A-F0-9]{16}$");
+var listAdminPayoutsResponseItemsItemOneCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var listAdminPayoutsResponseItemsItemOneBeneficiaryPhoneLast4RegExp = new RegExp("^[0-9]{4}$");
+var ListAdminPayoutsResponse = object({
+  "items": array(object({
+    "id": uuid3(),
+    "reference": string2().regex(listAdminPayoutsResponseItemsItemOneReferenceRegExp),
+    "merchantReference": string2().nullable(),
+    "countryCode": string2().regex(listAdminPayoutsResponseItemsItemOneCountryCodeRegExp),
+    "operatorId": string2(),
+    "beneficiary": object({
+      "phoneLast4": string2().regex(listAdminPayoutsResponseItemsItemOneBeneficiaryPhoneLast4RegExp),
+      "name": string2().nullable()
+    }),
+    "amountMinor": int(),
+    "currency": _enum2(["XOF"]),
+    "feeMinor": int(),
+    "totalDebitMinor": int(),
+    "beneficiaryAmountMinor": int(),
+    "feePayer": _enum2(["merchant", "beneficiary"]),
+    "status": _enum2(["created", "validated", "funds_reserved", "submitted", "processing", "succeeded", "rejected", "failed", "uncertain", "cancelled"]),
+    "createdAt": coerce_exports.date(),
+    "updatedAt": coerce_exports.date(),
+    "submittedAt": coerce_exports.date().nullable(),
+    "completedAt": coerce_exports.date().nullable(),
+    "failureCode": string2().nullable()
+  }).and(object({
+    "merchantUserId": string2(),
+    "reservationState": _enum2(["none", "active", "consumed", "released"]),
+    "timeline": array(object({
+      "fromStatus": string2().nullable(),
+      "toStatus": string2(),
+      "actorType": _enum2(["merchant", "admin", "system"]),
+      "reasonCode": string2(),
+      "createdAt": coerce_exports.date()
+    }))
+  }))),
+  "nextCursor": uuid3().nullable()
+});
+var GetAdminPayoutParams = object({
+  "payoutId": uuid3()
+});
+var getAdminPayoutResponseOneReferenceRegExp = new RegExp("^SFPO[A-F0-9]{16}$");
+var getAdminPayoutResponseOneCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var getAdminPayoutResponseOneBeneficiaryPhoneLast4RegExp = new RegExp("^[0-9]{4}$");
+var GetAdminPayoutResponse = object({
+  "id": uuid3(),
+  "reference": string2().regex(getAdminPayoutResponseOneReferenceRegExp),
+  "merchantReference": string2().nullable(),
+  "countryCode": string2().regex(getAdminPayoutResponseOneCountryCodeRegExp),
+  "operatorId": string2(),
+  "beneficiary": object({
+    "phoneLast4": string2().regex(getAdminPayoutResponseOneBeneficiaryPhoneLast4RegExp),
+    "name": string2().nullable()
+  }),
+  "amountMinor": int(),
+  "currency": _enum2(["XOF"]),
+  "feeMinor": int(),
+  "totalDebitMinor": int(),
+  "beneficiaryAmountMinor": int(),
+  "feePayer": _enum2(["merchant", "beneficiary"]),
+  "status": _enum2(["created", "validated", "funds_reserved", "submitted", "processing", "succeeded", "rejected", "failed", "uncertain", "cancelled"]),
+  "createdAt": coerce_exports.date(),
+  "updatedAt": coerce_exports.date(),
+  "submittedAt": coerce_exports.date().nullable(),
+  "completedAt": coerce_exports.date().nullable(),
+  "failureCode": string2().nullable()
+}).and(object({
+  "merchantUserId": string2(),
+  "reservationState": _enum2(["none", "active", "consumed", "released"]),
+  "timeline": array(object({
+    "fromStatus": string2().nullable(),
+    "toStatus": string2(),
+    "actorType": _enum2(["merchant", "admin", "system"]),
+    "reasonCode": string2(),
+    "createdAt": coerce_exports.date()
+  }))
+}));
+var RejectAdminPayoutParams = object({
+  "payoutId": uuid3()
+});
+var rejectAdminPayoutBodyReasonMin = 3;
+var rejectAdminPayoutBodyReasonMax = 500;
+var RejectAdminPayoutBody = object({
+  "reason": string2().min(rejectAdminPayoutBodyReasonMin).max(rejectAdminPayoutBodyReasonMax)
+});
+var rejectAdminPayoutResponseOneReferenceRegExp = new RegExp("^SFPO[A-F0-9]{16}$");
+var rejectAdminPayoutResponseOneCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var rejectAdminPayoutResponseOneBeneficiaryPhoneLast4RegExp = new RegExp("^[0-9]{4}$");
+var RejectAdminPayoutResponse = object({
+  "id": uuid3(),
+  "reference": string2().regex(rejectAdminPayoutResponseOneReferenceRegExp),
+  "merchantReference": string2().nullable(),
+  "countryCode": string2().regex(rejectAdminPayoutResponseOneCountryCodeRegExp),
+  "operatorId": string2(),
+  "beneficiary": object({
+    "phoneLast4": string2().regex(rejectAdminPayoutResponseOneBeneficiaryPhoneLast4RegExp),
+    "name": string2().nullable()
+  }),
+  "amountMinor": int(),
+  "currency": _enum2(["XOF"]),
+  "feeMinor": int(),
+  "totalDebitMinor": int(),
+  "beneficiaryAmountMinor": int(),
+  "feePayer": _enum2(["merchant", "beneficiary"]),
+  "status": _enum2(["created", "validated", "funds_reserved", "submitted", "processing", "succeeded", "rejected", "failed", "uncertain", "cancelled"]),
+  "createdAt": coerce_exports.date(),
+  "updatedAt": coerce_exports.date(),
+  "submittedAt": coerce_exports.date().nullable(),
+  "completedAt": coerce_exports.date().nullable(),
+  "failureCode": string2().nullable()
+}).and(object({
+  "merchantUserId": string2(),
+  "reservationState": _enum2(["none", "active", "consumed", "released"]),
+  "timeline": array(object({
+    "fromStatus": string2().nullable(),
+    "toStatus": string2(),
+    "actorType": _enum2(["merchant", "admin", "system"]),
+    "reasonCode": string2(),
+    "createdAt": coerce_exports.date()
+  }))
+}));
 var createDeveloperPaymentSessionHeaderIdempotencyKeyMin = 8;
 var createDeveloperPaymentSessionHeaderIdempotencyKeyMax = 128;
 var CreateDeveloperPaymentSessionHeader = object({
@@ -213131,9 +213627,11 @@ var getPublicPricingResponseOperatorsItemFeesInternationalMin = 0;
 var getPublicPricingResponseOperatorsItemFeesInternationalMax = 1;
 var getPublicPricingResponseOperatorsItemFeesLinkflowMin = 0;
 var getPublicPricingResponseOperatorsItemFeesLinkflowMax = 1;
+var getPublicPricingResponseOperatorsItemFeesPayoutMin = 0;
+var getPublicPricingResponseOperatorsItemFeesPayoutMax = 1;
 var GetPublicPricingResponse = object({
   "categories": array(object({
-    "id": _enum2(["deposit", "inter-network", "international", "linkflow"]),
+    "id": _enum2(["deposit", "inter-network", "international", "linkflow", "payout"]),
     "label": string2(),
     "shortLabel": string2(),
     "description": string2()
@@ -213150,7 +213648,8 @@ var GetPublicPricingResponse = object({
     "operations": object({
       "deposit": boolean3(),
       "interNetwork": boolean3(),
-      "international": boolean3()
+      "international": boolean3(),
+      "payout": boolean3()
     })
   })),
   "operators": array(object({
@@ -213166,13 +213665,15 @@ var GetPublicPricingResponse = object({
     "operations": object({
       "deposit": boolean3(),
       "interNetwork": boolean3(),
-      "international": boolean3()
+      "international": boolean3(),
+      "payout": boolean3()
     }),
     "fees": object({
       "deposit": number2().min(getPublicPricingResponseOperatorsItemFeesDepositMin).max(getPublicPricingResponseOperatorsItemFeesDepositMax).optional(),
       "inter-network": number2().min(getPublicPricingResponseOperatorsItemFeesInterNetworkMin).max(getPublicPricingResponseOperatorsItemFeesInterNetworkMax).optional(),
       "international": number2().min(getPublicPricingResponseOperatorsItemFeesInternationalMin).max(getPublicPricingResponseOperatorsItemFeesInternationalMax).optional(),
-      "linkflow": number2().min(getPublicPricingResponseOperatorsItemFeesLinkflowMin).max(getPublicPricingResponseOperatorsItemFeesLinkflowMax).optional()
+      "linkflow": number2().min(getPublicPricingResponseOperatorsItemFeesLinkflowMin).max(getPublicPricingResponseOperatorsItemFeesLinkflowMax).optional(),
+      "payout": number2().min(getPublicPricingResponseOperatorsItemFeesPayoutMin).max(getPublicPricingResponseOperatorsItemFeesPayoutMax).optional()
     })
   }))
 });
@@ -213264,7 +213765,8 @@ var GetAdminCountriesResponse = object({
     "operations": object({
       "deposit": boolean3(),
       "interNetwork": boolean3(),
-      "international": boolean3()
+      "international": boolean3(),
+      "payout": boolean3()
     })
   }).and(object({
     "version": int().min(1),
@@ -213313,7 +213815,8 @@ var CreateAdminCountryResponse = object({
   "operations": object({
     "deposit": boolean3(),
     "interNetwork": boolean3(),
-    "international": boolean3()
+    "international": boolean3(),
+    "payout": boolean3()
   })
 }).and(object({
   "version": int().min(1),
@@ -213341,7 +213844,8 @@ var UpdateAdminCountryBody = object({
   "operations": object({
     "deposit": boolean3(),
     "interNetwork": boolean3(),
-    "international": boolean3()
+    "international": boolean3(),
+    "payout": boolean3()
   }),
   "expectedVersion": int().min(1),
   "reason": string2().min(updateAdminCountryBodyReasonMin).max(updateAdminCountryBodyReasonMax)
@@ -213362,7 +213866,8 @@ var UpdateAdminCountryResponse = object({
   "operations": object({
     "deposit": boolean3(),
     "interNetwork": boolean3(),
-    "international": boolean3()
+    "international": boolean3(),
+    "payout": boolean3()
   })
 }).and(object({
   "version": int().min(1),
@@ -213428,7 +213933,7 @@ var GetAdminPaymentRoutingResponse = object({
   })),
   "countries": array(object({
     "countryCode": string2().regex(getAdminPaymentRoutingResponseCountriesItemCountryCodeRegExp),
-    "operation": _enum2(["deposit", "inter-network", "international"]),
+    "operation": _enum2(["deposit", "inter-network", "international", "payout"]),
     "countryName": string2(),
     "phonePrefix": string2(),
     "ussdCode": string2().max(getAdminPaymentRoutingResponseCountriesItemUssdCodeMax).nullable(),
@@ -213440,6 +213945,7 @@ var GetAdminPaymentRoutingResponse = object({
       "operatorId": string2(),
       "operatorName": string2(),
       "operatorEnabled": boolean3(),
+      "payoutEnabled": boolean3(),
       "aggregatorCode": string2().nullable(),
       "effectiveAggregatorCode": string2().nullable(),
       "inheritsCountryDefault": boolean3(),
@@ -213544,7 +214050,7 @@ var getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePerc
 var getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMax = 100;
 var GetAdminOperatorPricingResponse = object({
   "categories": array(object({
-    "id": _enum2(["deposit", "inter-network", "international", "linkflow"]),
+    "id": _enum2(["deposit", "inter-network", "international", "linkflow", "payout"]),
     "label": string2(),
     "shortLabel": string2(),
     "description": string2()
@@ -213559,7 +214065,8 @@ var GetAdminOperatorPricingResponse = object({
     "operations": object({
       "deposit": boolean3(),
       "interNetwork": boolean3(),
-      "international": boolean3()
+      "international": boolean3(),
+      "payout": boolean3()
     }),
     "operators": array(object({
       "operatorId": string2().min(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMin).max(getAdminOperatorPricingResponseCountriesItemOperatorsItemOneOperatorIdMax),
@@ -213573,11 +214080,12 @@ var GetAdminOperatorPricingResponse = object({
       "depositEnabled": boolean3(),
       "interNetworkEnabled": boolean3(),
       "internationalEnabled": boolean3(),
+      "payoutEnabled": boolean3(),
       "version": int().min(1),
       "updatedAt": coerce_exports.date().nullable()
     }).and(object({
       "rates": array(object({
-        "categoryId": _enum2(["deposit", "inter-network", "international", "linkflow"]),
+        "categoryId": _enum2(["deposit", "inter-network", "international", "linkflow", "payout"]),
         "feePercent": number2().min(getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMin).max(getAdminOperatorPricingResponseCountriesItemOperatorsItemTwoRatesItemFeePercentMax).nullable(),
         "version": int().min(1),
         "updatedAt": coerce_exports.date().nullable()
@@ -213612,6 +214120,7 @@ var CreateAdminOperatorResponse = object({
   "depositEnabled": boolean3(),
   "interNetworkEnabled": boolean3(),
   "internationalEnabled": boolean3(),
+  "payoutEnabled": boolean3(),
   "version": int().min(1),
   "updatedAt": coerce_exports.date().nullable()
 });
@@ -213632,6 +214141,7 @@ var UpdateAdminOperatorBody = object({
   "depositEnabled": boolean3(),
   "interNetworkEnabled": boolean3(),
   "internationalEnabled": boolean3(),
+  "payoutEnabled": boolean3(),
   "expectedVersion": int().min(1),
   "reason": string2().min(updateAdminOperatorBodyReasonMin).max(updateAdminOperatorBodyReasonMax)
 });
@@ -213651,6 +214161,7 @@ var UpdateAdminOperatorResponse = object({
   "depositEnabled": boolean3(),
   "interNetworkEnabled": boolean3(),
   "internationalEnabled": boolean3(),
+  "payoutEnabled": boolean3(),
   "version": int().min(1),
   "updatedAt": coerce_exports.date().nullable()
 });
@@ -213690,6 +214201,7 @@ var UploadAdminOperatorLogoResponse = object({
   "depositEnabled": boolean3(),
   "interNetworkEnabled": boolean3(),
   "internationalEnabled": boolean3(),
+  "payoutEnabled": boolean3(),
   "version": int().min(1),
   "updatedAt": coerce_exports.date().nullable()
 });
@@ -213716,6 +214228,7 @@ var DeleteAdminOperatorLogoResponse = object({
   "depositEnabled": boolean3(),
   "interNetworkEnabled": boolean3(),
   "internationalEnabled": boolean3(),
+  "payoutEnabled": boolean3(),
   "version": int().min(1),
   "updatedAt": coerce_exports.date().nullable()
 });
@@ -213730,7 +214243,7 @@ var updateAdminOperatorPricingBodyReasonMin = 3;
 var updateAdminOperatorPricingBodyReasonMax = 500;
 var UpdateAdminOperatorPricingBody = object({
   "countryCode": string2().regex(updateAdminOperatorPricingBodyCountryCodeRegExp),
-  "categoryId": _enum2(["deposit", "inter-network", "international", "linkflow"]),
+  "categoryId": _enum2(["deposit", "inter-network", "international", "linkflow", "payout"]),
   "updates": array(object({
     "operatorId": string2().min(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMin).max(updateAdminOperatorPricingBodyUpdatesItemOperatorIdMax).regex(updateAdminOperatorPricingBodyUpdatesItemOperatorIdRegExp),
     "feePercent": number2().min(updateAdminOperatorPricingBodyUpdatesItemFeePercentMin).max(updateAdminOperatorPricingBodyUpdatesItemFeePercentMax).nullable(),
@@ -213741,7 +214254,7 @@ var UpdateAdminOperatorPricingBody = object({
 var UpdateAdminOperatorPricingResponse = object({
   "items": array(object({
     "operatorId": string2(),
-    "categoryId": _enum2(["deposit", "inter-network", "international", "linkflow"]),
+    "categoryId": _enum2(["deposit", "inter-network", "international", "linkflow", "payout"]),
     "feePercent": number2().nullable(),
     "version": int().min(1),
     "updatedAt": coerce_exports.date()
@@ -214720,6 +215233,8 @@ var getPublicPaymentLimitsResponseMinimumDepositMinorMin = 200;
 var getPublicPaymentLimitsResponseMinimumDepositMinorMax = 2e6;
 var getPublicPaymentLimitsResponseMinimumPayoutMinorMin = 200;
 var getPublicPaymentLimitsResponseMinimumPayoutMinorMax = 2e6;
+var getPublicPaymentLimitsResponseMaximumPayoutDailyMinorMin = 200;
+var getPublicPaymentLimitsResponseMaximumPayoutDailyMinorMax = 9007199254740991;
 var getPublicPaymentLimitsResponseMinimumInterNetworkMinorMax = 1e7;
 var getPublicPaymentLimitsResponseMaximumTransferMinorMax = 1e7;
 var getPublicPaymentLimitsResponseMaximumPayinMinorMin = 200;
@@ -214728,6 +215243,7 @@ var GetPublicPaymentLimitsResponse = object({
   "currency": _enum2(["XOF"]),
   "minimumDepositMinor": int().min(getPublicPaymentLimitsResponseMinimumDepositMinorMin).max(getPublicPaymentLimitsResponseMinimumDepositMinorMax),
   "minimumPayoutMinor": int().min(getPublicPaymentLimitsResponseMinimumPayoutMinorMin).max(getPublicPaymentLimitsResponseMinimumPayoutMinorMax),
+  "maximumPayoutDailyMinor": int().min(getPublicPaymentLimitsResponseMaximumPayoutDailyMinorMin).max(getPublicPaymentLimitsResponseMaximumPayoutDailyMinorMax).nullable(),
   "minimumInterNetworkMinor": int().min(1).max(getPublicPaymentLimitsResponseMinimumInterNetworkMinorMax),
   "maximumTransferMinor": int().min(1).max(getPublicPaymentLimitsResponseMaximumTransferMinorMax),
   "maximumPayinMinor": int().min(getPublicPaymentLimitsResponseMaximumPayinMinorMin).max(getPublicPaymentLimitsResponseMaximumPayinMinorMax)
@@ -214736,6 +215252,8 @@ var getAdminPaymentLimitsResponseOneMinimumDepositMinorMin = 200;
 var getAdminPaymentLimitsResponseOneMinimumDepositMinorMax = 2e6;
 var getAdminPaymentLimitsResponseOneMinimumPayoutMinorMin = 200;
 var getAdminPaymentLimitsResponseOneMinimumPayoutMinorMax = 2e6;
+var getAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMin = 200;
+var getAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMax = 9007199254740991;
 var getAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax = 1e7;
 var getAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 1e7;
 var getAdminPaymentLimitsResponseOneMaximumPayinMinorMin = 200;
@@ -214744,6 +215262,7 @@ var GetAdminPaymentLimitsResponse = object({
   "currency": _enum2(["XOF"]),
   "minimumDepositMinor": int().min(getAdminPaymentLimitsResponseOneMinimumDepositMinorMin).max(getAdminPaymentLimitsResponseOneMinimumDepositMinorMax),
   "minimumPayoutMinor": int().min(getAdminPaymentLimitsResponseOneMinimumPayoutMinorMin).max(getAdminPaymentLimitsResponseOneMinimumPayoutMinorMax),
+  "maximumPayoutDailyMinor": int().min(getAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMin).max(getAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMax).nullable(),
   "minimumInterNetworkMinor": int().min(1).max(getAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax),
   "maximumTransferMinor": int().min(1).max(getAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": int().min(getAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(getAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
@@ -214755,6 +215274,8 @@ var updateAdminPaymentLimitsBodyMinimumDepositMinorMin = 200;
 var updateAdminPaymentLimitsBodyMinimumDepositMinorMax = 2e6;
 var updateAdminPaymentLimitsBodyMinimumPayoutMinorMin = 200;
 var updateAdminPaymentLimitsBodyMinimumPayoutMinorMax = 2e6;
+var updateAdminPaymentLimitsBodyMaximumPayoutDailyMinorMin = 200;
+var updateAdminPaymentLimitsBodyMaximumPayoutDailyMinorMax = 9007199254740991;
 var updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax = 1e7;
 var updateAdminPaymentLimitsBodyMaximumTransferMinorMax = 1e7;
 var updateAdminPaymentLimitsBodyMaximumPayinMinorMin = 200;
@@ -214764,6 +215285,7 @@ var updateAdminPaymentLimitsBodyReasonMax = 500;
 var UpdateAdminPaymentLimitsBody = object({
   "minimumDepositMinor": int().min(updateAdminPaymentLimitsBodyMinimumDepositMinorMin).max(updateAdminPaymentLimitsBodyMinimumDepositMinorMax),
   "minimumPayoutMinor": int().min(updateAdminPaymentLimitsBodyMinimumPayoutMinorMin).max(updateAdminPaymentLimitsBodyMinimumPayoutMinorMax),
+  "maximumPayoutDailyMinor": int().min(updateAdminPaymentLimitsBodyMaximumPayoutDailyMinorMin).max(updateAdminPaymentLimitsBodyMaximumPayoutDailyMinorMax).nullable(),
   "minimumInterNetworkMinor": int().min(1).max(updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax),
   "maximumTransferMinor": int().min(1).max(updateAdminPaymentLimitsBodyMaximumTransferMinorMax),
   "maximumPayinMinor": int().min(updateAdminPaymentLimitsBodyMaximumPayinMinorMin).max(updateAdminPaymentLimitsBodyMaximumPayinMinorMax),
@@ -214774,6 +215296,8 @@ var updateAdminPaymentLimitsResponseOneMinimumDepositMinorMin = 200;
 var updateAdminPaymentLimitsResponseOneMinimumDepositMinorMax = 2e6;
 var updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMin = 200;
 var updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMax = 2e6;
+var updateAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMin = 200;
+var updateAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMax = 9007199254740991;
 var updateAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax = 1e7;
 var updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 1e7;
 var updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin = 200;
@@ -214782,6 +215306,7 @@ var UpdateAdminPaymentLimitsResponse = object({
   "currency": _enum2(["XOF"]),
   "minimumDepositMinor": int().min(updateAdminPaymentLimitsResponseOneMinimumDepositMinorMin).max(updateAdminPaymentLimitsResponseOneMinimumDepositMinorMax),
   "minimumPayoutMinor": int().min(updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMin).max(updateAdminPaymentLimitsResponseOneMinimumPayoutMinorMax),
+  "maximumPayoutDailyMinor": int().min(updateAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMin).max(updateAdminPaymentLimitsResponseOneMaximumPayoutDailyMinorMax).nullable(),
   "minimumInterNetworkMinor": int().min(1).max(updateAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax),
   "maximumTransferMinor": int().min(1).max(updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": int().min(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
@@ -215757,12 +216282,12 @@ function fail(req, res, error62) {
   res.status(503).json({ error: "La protection r\xE9seau est momentan\xE9ment indisponible." });
 }
 function createAdminIpBlocklistRouter(authorize = respondAdminIdentityError) {
-  const router27 = (0, import_express3.Router)();
-  router27.use((_req, res, next) => {
+  const router29 = (0, import_express3.Router)();
+  router29.use((_req, res, next) => {
     res.setHeader("Cache-Control", "no-store, private");
     next();
   });
-  router27.get("/ip-blocklist", async (req, res) => {
+  router29.get("/ip-blocklist", async (req, res) => {
     const actor = authorize(req, res, "read");
     if (!actor) return;
     const parsed = ListAdminIpBlocksQueryParams.safeParse(req.query);
@@ -215778,7 +216303,7 @@ function createAdminIpBlocklistRouter(authorize = respondAdminIdentityError) {
       fail(req, res, error62);
     }
   });
-  router27.post("/ip-blocklist", async (req, res) => {
+  router29.post("/ip-blocklist", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -215794,7 +216319,7 @@ function createAdminIpBlocklistRouter(authorize = respondAdminIdentityError) {
       fail(req, res, error62);
     }
   });
-  router27.post("/ip-blocklist/:id/revoke", async (req, res) => {
+  router29.post("/ip-blocklist/:id/revoke", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -215811,7 +216336,7 @@ function createAdminIpBlocklistRouter(authorize = respondAdminIdentityError) {
       fail(req, res, error62);
     }
   });
-  return router27;
+  return router29;
 }
 var admin_ip_blocklist_default = createAdminIpBlocklistRouter();
 
@@ -216054,12 +216579,12 @@ function fail2(req, res, error62) {
   res.status(503).json({ error: "La protection r\xE9seau est momentan\xE9ment indisponible." });
 }
 function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) {
-  const router27 = (0, import_express4.Router)();
-  router27.use((_req, res, next) => {
+  const router29 = (0, import_express4.Router)();
+  router29.use((_req, res, next) => {
     res.setHeader("Cache-Control", "no-store, private");
     next();
   });
-  router27.get("/network-defense", async (req, res) => {
+  router29.get("/network-defense", async (req, res) => {
     const actor = authorize(req, res, "read");
     if (!actor) return;
     try {
@@ -216070,7 +216595,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  router27.post("/network-defense/exceptions", async (req, res) => {
+  router29.post("/network-defense/exceptions", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -216085,7 +216610,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  router27.post("/network-defense/authorize-and-release", async (req, res) => {
+  router29.post("/network-defense/authorize-and-release", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -216102,7 +216627,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  router27.post("/network-defense/exceptions/:id/revoke", async (req, res) => {
+  router29.post("/network-defense/exceptions/:id/revoke", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -216117,7 +216642,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  router27.post("/network-defense/blocks/:id/release", async (req, res) => {
+  router29.post("/network-defense/blocks/:id/release", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -216132,7 +216657,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  return router27;
+  return router29;
 }
 var admin_network_defense_default = createAdminNetworkDefenseRouter();
 
@@ -217100,15 +217625,15 @@ router7.post("/pin/unlock", async (req, res) => {
     res.status(403).json({ error: "Origine non autoris\xE9e." });
     return;
   }
-  const context = adminSessionContext(req);
-  if (!context) {
+  const context2 = adminSessionContext(req);
+  if (!context2) {
     res.status(401).json({ error: "Connexion administrateur requise." });
     return;
   }
   const parsed = UnlockAdminPinBody.safeParse(req.body);
   try {
     const buckets = [
-      fingerprint(`admin-pin-user:${context.userId}`),
+      fingerprint(`admin-pin-user:${context2.userId}`),
       fingerprint(`admin-pin-requester:${requesterAddress(req)}`)
     ];
     const result = await withAuthAttemptLock(buckets, async (tx) => {
@@ -217122,7 +217647,7 @@ router7.post("/pin/unlock", async (req, res) => {
         eq(adminGrantsTable.userId, adminSessionsTable.userId),
         eq(adminGrantsTable.authorizationVersion, adminSessionsTable.authorizationVersion)
       )).innerJoin(usersTable, eq(usersTable.id, adminGrantsTable.userId)).where(and(
-        eq(adminSessionsTable.id, context.sessionId),
+        eq(adminSessionsTable.id, context2.sessionId),
         gt(adminSessionsTable.expiresAt, now),
         isNull(adminGrantsTable.revokedAt),
         isNull(adminSessionsTable.revokedAt),
@@ -217132,20 +217657,20 @@ router7.post("/pin/unlock", async (req, res) => {
       if (!parsed.success || !await verifyCustomerSecret(parsed.data.pin, session.pinHash)) {
         await recordAuthFailure(buckets, now, tx);
         await recordAdminAudit({
-          adminUserId: context.userId,
+          adminUserId: context2.userId,
           action: "admin_pin_failure",
           resourceType: "admin_access",
-          resourceId: context.sessionId
+          resourceId: context2.sessionId
         }, tx);
         return { status: 403 };
       }
       const expiresAt = new Date(Math.min(session.expiresAt.getTime(), Date.now() + ADMIN_PIN_TTL_MS));
-      await tx.update(adminSessionsTable).set({ pinVerifiedUntil: expiresAt }).where(eq(adminSessionsTable.id, context.sessionId));
+      await tx.update(adminSessionsTable).set({ pinVerifiedUntil: expiresAt }).where(eq(adminSessionsTable.id, context2.sessionId));
       await recordAdminAudit({
-        adminUserId: context.userId,
+        adminUserId: context2.userId,
         action: "admin_pin_unlock",
         resourceType: "admin_access",
-        resourceId: context.sessionId
+        resourceId: context2.sessionId
       }, tx);
       await clearAuthFailures(buckets.slice(0, 1), tx);
       return { status: 200, expiresAt };
@@ -217846,9 +218371,15 @@ var pricingCategories = [
     label: "Paiement par lien LinkFlow",
     shortLabel: "LinkFlow",
     description: "Paiement via un lien LinkFlow"
+  },
+  {
+    id: "payout",
+    label: "Versement marchand",
+    shortLabel: "Payout",
+    description: "D\xE9caissement API vers un b\xE9n\xE9ficiaire"
   }
 ];
-var paymentOperationIds = ["deposit", "inter-network", "international"];
+var paymentOperationIds = ["deposit", "inter-network", "international", "payout"];
 function flagFromCountryCode(countryCode) {
   if (!/^[a-z]{2}$/.test(countryCode)) return "";
   return String.fromCodePoint(
@@ -217870,7 +218401,8 @@ async function getPricingCountryCatalog() {
     operations: {
       deposit: country.depositEnabled,
       interNetwork: country.interNetworkEnabled,
-      international: country.internationalEnabled
+      international: country.internationalEnabled,
+      payout: country.payoutEnabled
     },
     initials: country.countryCode.toUpperCase(),
     flag: flagFromCountryCode(country.countryCode)
@@ -217980,8 +218512,8 @@ async function findAggregator(code) {
   return stored;
 }
 function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
-  const router27 = (0, import_express14.Router)();
-  router27.get("/payment-routing", async (req, res) => {
+  const router29 = (0, import_express14.Router)();
+  router29.get("/payment-routing", async (req, res) => {
     const adminUserId = authorize(req, res);
     if (!adminUserId) return;
     try {
@@ -218019,6 +218551,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
               operatorId: operator.operatorId,
               operatorName: operator.name,
               operatorEnabled: operator.enabled,
+              payoutEnabled: operator.payoutEnabled,
               ussdCodeOverride: operator.ussdCodeOverride,
               ussdVersion: operator.version,
               aggregatorCode,
@@ -218043,7 +218576,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  router27.put("/ussd-instructions", async (req, res) => {
+  router29.put("/ussd-instructions", async (req, res) => {
     const adminUserId = authorize(req, res, "mutate");
     if (!adminUserId) return;
     const body = UpdateAdminUssdInstructionBody.safeParse(req.body);
@@ -218136,7 +218669,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  router27.post("/payment-aggregators", async (req, res) => {
+  router29.post("/payment-aggregators", async (req, res) => {
     const adminUserId = authorize(req, res, "mutate");
     if (!adminUserId) return;
     const body = CreateAdminAggregatorBody.safeParse(req.body);
@@ -218180,7 +218713,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  router27.patch("/payment-aggregators", async (req, res) => {
+  router29.patch("/payment-aggregators", async (req, res) => {
     const adminUserId = authorize(req, res, "mutate");
     if (!adminUserId) return;
     const body = UpdateAdminAggregatorBody.safeParse(req.body);
@@ -218239,7 +218772,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  router27.put("/payment-aggregator-routes", async (req, res) => {
+  router29.put("/payment-aggregator-routes", async (req, res) => {
     const adminUserId = authorize(req, res, "mutate");
     if (!adminUserId) return;
     const body = UpdateAdminAggregatorRouteBody.safeParse(req.body);
@@ -218330,7 +218863,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  return router27;
+  return router29;
 }
 var admin_aggregators_default = createAdminAggregatorRoutes();
 
@@ -218552,6 +219085,7 @@ var operatorMetadataColumns = {
   depositEnabled: operatorCatalogTable.depositEnabled,
   interNetworkEnabled: operatorCatalogTable.interNetworkEnabled,
   internationalEnabled: operatorCatalogTable.internationalEnabled,
+  payoutEnabled: operatorCatalogTable.payoutEnabled,
   version: operatorCatalogTable.version,
   updatedAt: operatorCatalogTable.updatedAt,
   hasLogo: sql`${operatorCatalogTable.logoData} IS NOT NULL`
@@ -218570,6 +219104,7 @@ function toManagedOperator(operator, rates = []) {
     depositEnabled: operator.depositEnabled,
     interNetworkEnabled: operator.interNetworkEnabled,
     internationalEnabled: operator.internationalEnabled,
+    payoutEnabled: operator.payoutEnabled,
     version: operator.version,
     updatedAt: operator.updatedAt?.toISOString() ?? null,
     ...rates.length > 0 ? {
@@ -218649,7 +219184,8 @@ router12.get("/pricing", async (req, res) => {
         operations: {
           deposit: Boolean(countries.find((country) => country.id === operator.countryCode && country.enabled && country.operations.deposit)) && operator.depositEnabled,
           interNetwork: Boolean(countries.find((country) => country.id === operator.countryCode && country.enabled && country.operations.interNetwork)) && operator.interNetworkEnabled,
-          international: Boolean(countries.find((country) => country.id === operator.countryCode && country.enabled && country.operations.international)) && operator.internationalEnabled
+          international: Boolean(countries.find((country) => country.id === operator.countryCode && country.enabled && country.operations.international)) && operator.internationalEnabled,
+          payout: Boolean(countries.find((country) => country.id === operator.countryCode && country.enabled && country.operations.payout)) && operator.payoutEnabled
         },
         fees
       };
@@ -218749,6 +219285,7 @@ adminRoutes.post("/operators", async (req, res) => {
         depositEnabled: false,
         interNetworkEnabled: false,
         internationalEnabled: false,
+        payoutEnabled: false,
         version: 1,
         createdBy: adminUserId,
         updatedBy: adminUserId
@@ -218814,6 +219351,7 @@ adminRoutes.patch("/operators/:operatorId", async (req, res) => {
         depositEnabled: body.data.depositEnabled,
         interNetworkEnabled: body.data.interNetworkEnabled,
         internationalEnabled: body.data.internationalEnabled,
+        payoutEnabled: body.data.payoutEnabled,
         version: body.data.expectedVersion + 1,
         updatedBy: adminUserId,
         updatedAt: /* @__PURE__ */ new Date()
@@ -218860,7 +219398,7 @@ adminRoutes.delete("/operators/:operatorId", async (req, res) => {
       const [operator] = await tx.select().from(operatorCatalogTable).where(eq(operatorCatalogTable.operatorId, operatorId)).for("update").limit(1);
       if (!operator) return "missing";
       if (operator.version !== body.data.expectedVersion) return "changed";
-      if (operator.enabled || operator.depositEnabled || operator.interNetworkEnabled || operator.internationalEnabled) {
+      if (operator.enabled || operator.depositEnabled || operator.interNetworkEnabled || operator.internationalEnabled || operator.payoutEnabled) {
         return "referenced";
       }
       const routeReferences = await Promise.all([
@@ -219011,9 +219549,9 @@ function respondLogoError(req, res, error62) {
   res.status(503).json({ error: "Le logo n\u2019a pas pu \xEAtre enregistr\xE9." });
 }
 function createAdminOperatorLogoRoutes(authorize = respondAdminAuthError) {
-  const router27 = (0, import_express16.Router)();
+  const router29 = (0, import_express16.Router)();
   const authorizeMutation = authorizeAndLimit(authorize);
-  router27.put(
+  router29.put(
     "/operators/:operatorId/logo/:expectedVersion",
     authorizeMutation,
     import_express16.default.raw({ type: supportedImageTypes, limit: "512kb" }),
@@ -219052,7 +219590,7 @@ function createAdminOperatorLogoRoutes(authorize = respondAdminAuthError) {
       }
     }
   );
-  router27.delete(
+  router29.delete(
     "/operators/:operatorId/logo/:expectedVersion",
     authorizeMutation,
     async (req, res) => {
@@ -219079,7 +219617,7 @@ function createAdminOperatorLogoRoutes(authorize = respondAdminAuthError) {
       }
     }
   );
-  return router27;
+  return router29;
 }
 var adminOperatorLogoRoutes = createAdminOperatorLogoRoutes();
 
@@ -225641,13 +226179,21 @@ var import_express23 = __toESM(require_express2(), 1);
 var DEFAULT_PAYMENT_LIMITS = Object.freeze({
   minimumDepositMinor: 200,
   minimumPayoutMinor: 200,
+  maximumPayoutDailyMinor: null,
   minimumInterNetworkMinor: 1,
   maximumTransferMinor: 1e7,
   maximumPayinMinor: 2e6
 });
 function isValidPaymentLimitValues(values) {
-  const amounts = Object.values(values);
+  const amounts = [
+    values.minimumDepositMinor,
+    values.minimumPayoutMinor,
+    values.minimumInterNetworkMinor,
+    values.maximumTransferMinor,
+    values.maximumPayinMinor
+  ];
   if (!amounts.every((amount) => Number.isSafeInteger(amount) && amount > 0)) return false;
+  if (values.maximumPayoutDailyMinor !== null && (!Number.isSafeInteger(values.maximumPayoutDailyMinor) || values.maximumPayoutDailyMinor < values.minimumPayoutMinor)) return false;
   return values.minimumDepositMinor >= 200 && values.minimumDepositMinor <= values.maximumTransferMinor && values.minimumDepositMinor <= values.maximumPayinMinor && values.minimumPayoutMinor >= 200 && values.minimumPayoutMinor <= 2e6 && values.minimumPayoutMinor <= values.maximumTransferMinor && values.minimumInterNetworkMinor <= values.maximumTransferMinor && values.maximumTransferMinor <= 1e7 && values.maximumPayinMinor >= 200 && values.maximumPayinMinor <= 2e6;
 }
 function getMinimumForTransfer(kind, limits) {
@@ -225664,6 +226210,7 @@ async function loadPaymentLimits() {
   return {
     minimumDepositMinor: record2.minimumDepositMinor,
     minimumPayoutMinor: record2.minimumPayoutMinor,
+    maximumPayoutDailyMinor: record2.maximumPayoutDailyMinor,
     minimumInterNetworkMinor: record2.minimumInterNetworkMinor,
     maximumTransferMinor: record2.maximumTransferMinor,
     maximumPayinMinor: record2.maximumPayinMinor
@@ -225678,6 +226225,7 @@ function presentPublic(record2) {
     currency: "XOF",
     minimumDepositMinor: record2.minimumDepositMinor,
     minimumPayoutMinor: record2.minimumPayoutMinor,
+    maximumPayoutDailyMinor: record2.maximumPayoutDailyMinor,
     minimumInterNetworkMinor: record2.minimumInterNetworkMinor,
     maximumTransferMinor: record2.maximumTransferMinor,
     maximumPayinMinor: record2.maximumPayinMinor
@@ -225726,6 +226274,7 @@ adminRoutes5.patch("/payment-limits", async (req, res) => {
   if (!parsed.success || parsed.data.reason.trim().length < 3 || !isValidPaymentLimitValues({
     minimumDepositMinor: parsed.data.minimumDepositMinor,
     minimumPayoutMinor: parsed.data.minimumPayoutMinor,
+    maximumPayoutDailyMinor: parsed.data.maximumPayoutDailyMinor,
     minimumInterNetworkMinor: parsed.data.minimumInterNetworkMinor,
     maximumTransferMinor: parsed.data.maximumTransferMinor,
     maximumPayinMinor: parsed.data.maximumPayinMinor
@@ -225740,6 +226289,7 @@ adminRoutes5.patch("/payment-limits", async (req, res) => {
       const [setting] = await tx.update(paymentLimitsTable).set({
         minimumDepositMinor: parsed.data.minimumDepositMinor,
         minimumPayoutMinor: parsed.data.minimumPayoutMinor,
+        maximumPayoutDailyMinor: parsed.data.maximumPayoutDailyMinor,
         minimumInterNetworkMinor: parsed.data.minimumInterNetworkMinor,
         maximumTransferMinor: parsed.data.maximumTransferMinor,
         maximumPayinMinor: parsed.data.maximumPayinMinor,
@@ -225794,7 +226344,8 @@ function toCountry(country) {
     operations: {
       deposit: country.depositEnabled,
       interNetwork: country.interNetworkEnabled,
-      international: country.internationalEnabled
+      international: country.internationalEnabled,
+      payout: country.payoutEnabled
     },
     version: country.version,
     updatedAt: country.updatedAt?.toISOString() ?? null
@@ -225864,6 +226415,7 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
           depositEnabled: false,
           interNetworkEnabled: false,
           internationalEnabled: false,
+          payoutEnabled: false,
           version: 1,
           createdBy: adminUserId,
           updatedBy: adminUserId
@@ -225882,6 +226434,7 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
             depositEnabled: false,
             interNetworkEnabled: false,
             internationalEnabled: false,
+            payoutEnabled: false,
             version: 1,
             createdBy: adminUserId,
             updatedBy: adminUserId
@@ -225949,6 +226502,7 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
           depositEnabled: body.data.operations.deposit,
           interNetworkEnabled: body.data.operations.interNetwork,
           internationalEnabled: body.data.operations.international,
+          payoutEnabled: body.data.operations.payout,
           version: body.data.expectedVersion + 1,
           updatedBy: adminUserId,
           updatedAt: /* @__PURE__ */ new Date()
@@ -225990,7 +226544,7 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
         const [country] = await tx.select().from(countriesTable).where(eq(countriesTable.countryCode, params.data.countryCode)).for("update").limit(1);
         if (!country) return "missing";
         if (country.version !== body.data.expectedVersion) return "changed";
-        if (country.enabled || country.depositEnabled || country.interNetworkEnabled || country.internationalEnabled) {
+        if (country.enabled || country.depositEnabled || country.interNetworkEnabled || country.internationalEnabled || country.payoutEnabled) {
           return "referenced";
         }
         const references = await Promise.all([
@@ -226187,15 +226741,15 @@ var campaignInput = external_exports.object({
   bodyText: external_exports.string().trim().min(1).max(2e4),
   audienceMode: external_exports.enum(["all", "selected"]),
   userIds: external_exports.array(external_exports.string().trim().min(1).max(80)).max(5e3)
-}).strict().superRefine((value, context) => {
+}).strict().superRefine((value, context2) => {
   if (new Set(value.userIds).size !== value.userIds.length) {
-    context.addIssue({ code: "custom", path: ["userIds"], message: "Recipient list contains duplicates" });
+    context2.addIssue({ code: "custom", path: ["userIds"], message: "Recipient list contains duplicates" });
   }
   if (value.audienceMode === "selected" && value.userIds.length === 0) {
-    context.addIssue({ code: "custom", path: ["userIds"], message: "Select at least one recipient" });
+    context2.addIssue({ code: "custom", path: ["userIds"], message: "Select at least one recipient" });
   }
   if (value.audienceMode === "all" && value.userIds.length !== 0) {
-    context.addIssue({ code: "custom", path: ["userIds"], message: "The all-users audience must not include explicit IDs" });
+    context2.addIssue({ code: "custom", path: ["userIds"], message: "The all-users audience must not include explicit IDs" });
   }
 });
 function dispatchEnabled() {
@@ -251423,6 +251977,10 @@ function parseLinkFlowPayerAmount(amount, linkAmountMinor, currency, limits = DE
   }
   return linkAmountMinor;
 }
+function canChangePaymentLinkTerms(input2) {
+  const termsChanged = input2.amountChanged || input2.descriptionChanged;
+  return !termsChanged || input2.usageCount === 0 && input2.activeReservationCount === 0;
+}
 function normalizeReturnUrl(value) {
   if (value === null) return null;
   if (value.length > 2048) throw new PaymentLinkInputError("L\u2019adresse de retour est trop longue.");
@@ -251678,28 +252236,31 @@ router23.patch("/me/payment-links/:linkId", async (req, res) => {
       if (maximumUses !== null && maximumUses < link.usageCount) {
         throw new PaymentLinkInputError("La limite ne peut pas \xEAtre inf\xE9rieure aux utilisations d\xE9j\xE0 enregistr\xE9es.");
       }
-      if (maximumUses !== null) {
-        const activeReservations = await tx.select({ id: customerPaymentLinkAttemptsTable.id }).from(customerPaymentLinkAttemptsTable).innerJoin(paymentIntentsTable, eq(paymentIntentsTable.id, customerPaymentLinkAttemptsTable.intentId)).innerJoin(paymentAttemptsTable, and(
-          eq(paymentAttemptsTable.intentId, paymentIntentsTable.id),
-          eq(paymentAttemptsTable.direction, "payin")
-        )).where(and(
-          eq(customerPaymentLinkAttemptsTable.paymentLinkId, link.id),
-          inArray(paymentAttemptsTable.status, activeLinkPaymentAttemptStates),
-          inArray(paymentIntentsTable.state, activeLinkPaymentIntentStates)
-        ));
-        if (maximumUses < link.usageCount + activeReservations.length) {
-          return {
-            kind: "conflict",
-            message: "La limite ne peut pas \xEAtre inf\xE9rieure aux paiements d\xE9j\xE0 en cours."
-          };
-        }
+      const activeReservations = await tx.select({ id: customerPaymentLinkAttemptsTable.id }).from(customerPaymentLinkAttemptsTable).innerJoin(paymentIntentsTable, eq(paymentIntentsTable.id, customerPaymentLinkAttemptsTable.intentId)).innerJoin(paymentAttemptsTable, and(
+        eq(paymentAttemptsTable.intentId, paymentIntentsTable.id),
+        eq(paymentAttemptsTable.direction, "payin")
+      )).where(and(
+        eq(customerPaymentLinkAttemptsTable.paymentLinkId, link.id),
+        inArray(paymentAttemptsTable.status, activeLinkPaymentAttemptStates),
+        inArray(paymentIntentsTable.state, activeLinkPaymentIntentStates)
+      ));
+      if (maximumUses !== null && maximumUses < link.usageCount + activeReservations.length) {
+        return {
+          kind: "conflict",
+          message: "La limite ne peut pas \xEAtre inf\xE9rieure aux paiements d\xE9j\xE0 en cours."
+        };
       }
       const amountChanged = amountMinor !== link.amountMinor;
       const descriptionChanged = description !== link.description;
-      if (link.usageCount > 0 && (amountChanged || descriptionChanged)) {
+      if (!canChangePaymentLinkTerms({
+        usageCount: link.usageCount,
+        activeReservationCount: activeReservations.length,
+        amountChanged,
+        descriptionChanged
+      })) {
         return {
           kind: "conflict",
-          message: "Le montant et la description ne peuvent plus changer apr\xE8s une utilisation."
+          message: "Le montant et la description ne peuvent plus changer apr\xE8s une utilisation ou pendant un paiement en cours."
         };
       }
       const [updated] = await tx.update(customerPaymentLinksTable).set({
@@ -252299,8 +252860,8 @@ function hasExactKeys(value, expected) {
   const orderedExpected = [...expected].sort();
   return actual.length === orderedExpected.length && actual.every((key, index2) => key === orderedExpected[index2]);
 }
-function authenticatedContext(context) {
-  return JSON.stringify([context.deliveryId, context.eventType]);
+function authenticatedContext(context2) {
+  return JSON.stringify([context2.deliveryId, context2.eventType]);
 }
 function normalizeDeveloperWebhookPayload(value) {
   if (!isRecord(value) || !hasExactKeys(value, TOP_LEVEL_KEYS) || !isRecord(value.data) || !hasExactKeys(value.data, DATA_KEYS)) {
@@ -252334,9 +252895,9 @@ function normalizeDeveloperWebhookPayload(value) {
     }
   };
 }
-function encryptDeveloperWebhookPayload(payload, context) {
+function encryptDeveloperWebhookPayload(payload, context2) {
   const canonical = normalizeDeveloperWebhookPayload(payload);
-  if (!UUID_PATTERN2.test(context.deliveryId) || canonical.id !== context.deliveryId || canonical.type !== context.eventType) {
+  if (!UUID_PATTERN2.test(context2.deliveryId) || canonical.id !== context2.deliveryId || canonical.type !== context2.eventType) {
     throw new DeveloperWebhookPayloadError();
   }
   const serialized = JSON.stringify(canonical);
@@ -252347,12 +252908,12 @@ function encryptDeveloperWebhookPayload(payload, context) {
     [ENCRYPTED_PAYLOAD_KEY]: encryptSensitiveData(
       serialized,
       "developer-webhook-payload",
-      { authenticatedContext: authenticatedContext(context) }
+      { authenticatedContext: authenticatedContext(context2) }
     )
   };
 }
-function decryptDeveloperWebhookPayload(value, context) {
-  if (!UUID_PATTERN2.test(context.deliveryId) || !ALLOWED_EVENT_TYPES.has(context.eventType)) {
+function decryptDeveloperWebhookPayload(value, context2) {
+  if (!UUID_PATTERN2.test(context2.deliveryId) || !ALLOWED_EVENT_TYPES.has(context2.eventType)) {
     throw new DeveloperWebhookPayloadError();
   }
   let payload = value;
@@ -252363,7 +252924,7 @@ function decryptDeveloperWebhookPayload(value, context) {
         payload = JSON.parse(decryptSensitiveData(
           encrypted,
           "developer-webhook-payload",
-          { authenticatedContext: authenticatedContext(context) }
+          { authenticatedContext: authenticatedContext(context2) }
         ));
       } else if (encrypted.startsWith(V1_CIPHERTEXT_PREFIX)) {
         payload = JSON.parse(decryptSensitiveData(encrypted, "developer-webhook-payload"));
@@ -252378,7 +252939,7 @@ function decryptDeveloperWebhookPayload(value, context) {
   }
   try {
     const canonical = normalizeDeveloperWebhookPayload(payload);
-    if (canonical.id !== context.deliveryId || canonical.type !== context.eventType || Buffer.byteLength(JSON.stringify(canonical), "utf8") > MAX_PLAINTEXT_BYTES) {
+    if (canonical.id !== context2.deliveryId || canonical.type !== context2.eventType || Buffer.byteLength(JSON.stringify(canonical), "utf8") > MAX_PLAINTEXT_BYTES) {
       throw new DeveloperWebhookPayloadError();
     }
     return canonical;
@@ -253495,7 +254056,9 @@ var LIMITS = {
   session_create: 30,
   session_read: 120,
   direct_attempt: 5,
-  direct_poll: 60
+  direct_poll: 60,
+  payout_read: 120,
+  payout_create: 5
 };
 async function consumeDeveloperApiQuota(identity, operation) {
   if (!identity) throw new Error("Developer API quota identity is required");
@@ -253596,7 +254159,7 @@ async function hasPaymentTestAccess(userId) {
   )).limit(1);
   return Boolean(row);
 }
-async function requireSecretApiKey(req, res) {
+async function requireSecretApiKey(req, res, operation = "session_read") {
   const rawKey = parseAuthorization(req);
   if (!rawKey || !secretKeyPattern.test(rawKey)) {
     res.status(401).json({ error: "La cl\xE9 API secr\xE8te est invalide ou d\xE9sactiv\xE9e." });
@@ -253627,7 +254190,7 @@ async function requireSecretApiKey(req, res) {
     res.status(403).json({ error: "La cr\xE9ation de paiements API n\u2019est pas disponible pour ce compte d\u2019essai." });
     return null;
   }
-  if (!await consumeDeveloperApiQuota(row.id, "session_read")) {
+  if (!await consumeDeveloperApiQuota(row.id, operation)) {
     res.setHeader("Retry-After", "60");
     res.status(429).json({ error: "Trop de requ\xEAtes API. R\xE9essayez dans une minute." });
     return null;
@@ -254388,13 +254951,817 @@ router25.get("/v1/public/payment-sessions/:sessionId/attempts/:attemptId", async
 });
 var developer_default = router25;
 
+// src/routes/developer-payouts.ts
+var import_express32 = __toESM(require_express2(), 1);
+
+// src/data/payout-configuration.ts
+async function loadPayoutQuoteConfiguration(countryCode, operatorId) {
+  const normalizedCountry = countryCode.toLowerCase();
+  const [country] = await db.select().from(countriesTable).where(eq(countriesTable.countryCode, normalizedCountry)).limit(1);
+  const [operator] = await db.select().from(operatorCatalogTable).where(and(
+    eq(operatorCatalogTable.operatorId, operatorId),
+    eq(operatorCatalogTable.countryCode, normalizedCountry)
+  )).limit(1);
+  const [rate] = await db.select().from(operatorPricingRatesTable).where(and(
+    eq(operatorPricingRatesTable.operatorId, operatorId),
+    eq(operatorPricingRatesTable.countryCode, normalizedCountry),
+    eq(operatorPricingRatesTable.categoryId, "payout")
+  )).limit(1);
+  const [limits] = await db.select().from(paymentLimitsTable).where(eq(paymentLimitsTable.id, "global")).limit(1);
+  const routes = await db.select().from(paymentAggregatorRoutesTable).where(and(
+    eq(paymentAggregatorRoutesTable.countryCode, normalizedCountry),
+    eq(paymentAggregatorRoutesTable.operation, "payout")
+  ));
+  const countryRoute = routes.find(
+    (route) => route.scopeType === "country" && route.scopeKey === normalizedCountry
+  );
+  const operatorScopeKey = getAggregatorRouteScopeKey("operator", normalizedCountry, operatorId);
+  const operatorRoute = routes.find(
+    (route) => route.scopeType === "operator" && route.scopeKey === operatorScopeKey
+  );
+  const routedAggregatorCode = operatorRoute?.aggregatorCode ?? countryRoute?.aggregatorCode ?? null;
+  const [aggregator] = routedAggregatorCode ? await db.select({ enabled: paymentAggregatorsTable.enabled }).from(paymentAggregatorsTable).where(eq(paymentAggregatorsTable.code, routedAggregatorCode)).limit(1) : [];
+  return {
+    country: country ? {
+      countryCode: country.countryCode,
+      phonePrefix: country.phonePrefix,
+      minPhoneDigits: country.minPhoneDigits,
+      maxPhoneDigits: country.maxPhoneDigits,
+      enabled: country.enabled,
+      payoutEnabled: country.payoutEnabled
+    } : null,
+    operator: operator ? {
+      operatorId: operator.operatorId,
+      countryCode: operator.countryCode,
+      enabled: operator.enabled,
+      payoutEnabled: operator.payoutEnabled
+    } : null,
+    feePercent: rate?.feePercent ?? null,
+    pricingVersion: rate?.version ?? null,
+    minimumPayoutMinor: limits?.minimumPayoutMinor ?? 200,
+    maximumTransferMinor: limits?.maximumTransferMinor ?? 0,
+    maximumPayoutDailyMinor: limits?.maximumPayoutDailyMinor ?? null,
+    executionRouteEnabled: Boolean(routedAggregatorCode && aggregator?.enabled)
+  };
+}
+
+// src/services/payout-policy.ts
+var PAYOUT_EXECUTION_ENABLED = false;
+var PayoutPolicyError = class extends Error {
+  statusCode;
+  constructor(statusCode, message) {
+    super(message);
+    this.name = "PayoutPolicyError";
+    this.statusCode = statusCode;
+  }
+};
+function assertPayoutWalletCanCover(availableBalanceMinor, totalDebitMinor) {
+  if (!Number.isSafeInteger(totalDebitMinor) || totalDebitMinor <= 0) {
+    throw new PayoutPolicyError(400, "Le montant total du versement est invalide.");
+  }
+  if (!Number.isSafeInteger(availableBalanceMinor) || availableBalanceMinor < totalDebitMinor) {
+    throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
+  }
+}
+function calculatePayoutQuote(input2, configuration) {
+  if (!Number.isSafeInteger(input2.amountMinor) || input2.amountMinor <= 0 || input2.currency !== "XOF") {
+    throw new PayoutPolicyError(400, "Montant ou devise invalide.");
+  }
+  if (!configuration.country?.enabled || !configuration.country.payoutEnabled || !configuration.operator?.enabled || !configuration.operator.payoutEnabled || configuration.operator.countryCode !== configuration.country.countryCode) {
+    throw new PayoutPolicyError(403, "Ce pays ou cet op\xE9rateur n\u2019est pas autoris\xE9 pour les payouts.");
+  }
+  if (!configuration.executionRouteEnabled) {
+    throw new PayoutPolicyError(503, "Le canal de versement SendFlow n\u2019est pas disponible.");
+  }
+  if (configuration.feePercent === null || configuration.pricingVersion === null || !Number.isFinite(configuration.feePercent) || configuration.feePercent < 0 || configuration.feePercent > 100) {
+    throw new PayoutPolicyError(503, "Le tarif payout de cet op\xE9rateur n\u2019est pas configur\xE9.");
+  }
+  if (!Number.isSafeInteger(configuration.maximumPayoutDailyMinor) || (configuration.maximumPayoutDailyMinor ?? 0) < configuration.minimumPayoutMinor) {
+    throw new PayoutPolicyError(503, "Le plafond payout journalier n\u2019est pas configur\xE9.");
+  }
+  if (input2.amountMinor < configuration.minimumPayoutMinor || input2.amountMinor > configuration.maximumTransferMinor) {
+    throw new PayoutPolicyError(400, "Le montant est en dehors des limites payout configur\xE9es.");
+  }
+  const amounts = calculateTransferQuoteAmounts(
+    input2.amountMinor,
+    configuration.feePercent,
+    input2.feePayer === "merchant"
+  );
+  if (!amounts) throw new PayoutPolicyError(400, "Le calcul du payout d\xE9passe les montants autoris\xE9s.");
+  if (amounts.totalDebitMinor > configuration.maximumTransferMinor) {
+    throw new PayoutPolicyError(400, "Le d\xE9bit total d\xE9passe la limite configur\xE9e.");
+  }
+  if (configuration.maximumPayoutDailyMinor !== null && amounts.totalDebitMinor > configuration.maximumPayoutDailyMinor) {
+    throw new PayoutPolicyError(400, "Le d\xE9bit total d\xE9passe le plafond payout journalier.");
+  }
+  return {
+    currency: "XOF",
+    amountMinor: input2.amountMinor,
+    feeMinor: amounts.feeMinor,
+    totalDebitMinor: amounts.totalDebitMinor,
+    beneficiaryAmountMinor: amounts.recipientAmountMinor,
+    feePayer: input2.feePayer,
+    minimumPayoutMinor: configuration.minimumPayoutMinor,
+    maximumPayoutDailyMinor: configuration.maximumPayoutDailyMinor,
+    pricingVersion: configuration.pricingVersion,
+    quoteExpiresAt: new Date(Date.now() + 12e4).toISOString()
+  };
+}
+
+// src/data/payout-wallet-balance.ts
+function parseMinorTotal(value) {
+  const parsed = Number(value ?? "0");
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new PayoutPolicyError(503, "Le solde SendFlow est momentan\xE9ment indisponible.");
+  }
+  return parsed;
+}
+async function loadMerchantPayoutWallet(userId) {
+  const [wallet] = await db.select({
+    id: walletsTable.id,
+    balanceMinor: walletsTable.balanceMinor,
+    currency: walletsTable.currency,
+    status: walletsTable.status,
+    accountStatus: usersTable.status,
+    paymentReservedMinor: sql`coalesce((
+      SELECT sum(r.amount_minor)
+      FROM public.sf_wallet_payment_reservations AS r
+      WHERE r.wallet_id = ${walletsTable.id}
+        AND r.state = 'active'
+        AND r.currency = 'XOF'
+    ), 0)::text`,
+    payoutReservedMinor: sql`coalesce((
+      SELECT sum(p.total_debit_minor)
+      FROM public.sf_payout_requests AS p
+      WHERE p.wallet_id = ${walletsTable.id}
+        AND p.reservation_state = 'active'
+        AND p.currency = 'XOF'
+    ), 0)::text`
+  }).from(usersTable).innerJoin(walletsTable, eq(walletsTable.userId, usersTable.id)).where(eq(usersTable.id, userId)).limit(1);
+  if (!wallet || wallet.accountStatus !== "active") {
+    throw new PayoutPolicyError(403, "Le compte SendFlow n\u2019est pas actif.");
+  }
+  if (wallet.status !== "active" || wallet.currency !== "XOF") {
+    throw new PayoutPolicyError(403, "Le portefeuille SendFlow n\u2019est pas disponible pour ce versement.");
+  }
+  const balanceMinor = wallet.balanceMinor;
+  const paymentReservedMinor = parseMinorTotal(wallet.paymentReservedMinor);
+  const payoutReservedMinor = parseMinorTotal(wallet.payoutReservedMinor);
+  const reservedMinor = paymentReservedMinor + payoutReservedMinor;
+  if (!Number.isSafeInteger(balanceMinor) || balanceMinor < 0 || !Number.isSafeInteger(reservedMinor) || reservedMinor > balanceMinor) {
+    throw new PayoutPolicyError(503, "Le solde disponible SendFlow est momentan\xE9ment indisponible.");
+  }
+  return {
+    walletId: wallet.id,
+    balanceMinor,
+    reservedMinor,
+    availableMinor: balanceMinor - reservedMinor
+  };
+}
+
+// src/services/payout-webhook-outbox.ts
+import { randomUUID as randomUUID8 } from "node:crypto";
+
+// src/lib/payout-webhook-payload.ts
+var EVENT_TYPES = /* @__PURE__ */ new Set([
+  "payout.created",
+  "payout.processing",
+  "payout.succeeded",
+  "payout.failed",
+  "payout.uncertain"
+]);
+var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+var KEYS = [
+  "amountMinor",
+  "beneficiaryAmountMinor",
+  "countryCode",
+  "currency",
+  "feeMinor",
+  "feePayer",
+  "merchantReference",
+  "operatorId",
+  "payoutId",
+  "reference",
+  "status",
+  "totalDebitMinor"
+];
+var ENVELOPE_KEY = "__sendflow_encrypted_payload";
+var PayoutWebhookPayloadError = class extends Error {
+  constructor() {
+    super("Payout webhook payload is invalid");
+    this.name = "PayoutWebhookPayloadError";
+  }
+};
+function isRecord2(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function exactKeys(value, keys) {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, i) => key === expected[i]);
+}
+function context(deliveryId, eventType) {
+  return JSON.stringify([deliveryId, eventType]);
+}
+function normalizePayoutWebhookPayload(value) {
+  if (!isRecord2(value) || !exactKeys(value, ["createdAt", "data", "id", "type"]) || !isRecord2(value.data) || !exactKeys(value.data, KEYS)) {
+    throw new PayoutWebhookPayloadError();
+  }
+  const { createdAt, id, type, data } = value;
+  if (typeof id !== "string" || !UUID.test(id) || typeof type !== "string" || !EVENT_TYPES.has(type) || typeof createdAt !== "string") throw new PayoutWebhookPayloadError();
+  const parsedDate = new Date(createdAt);
+  if (Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString() !== createdAt) {
+    throw new PayoutWebhookPayloadError();
+  }
+  const {
+    amountMinor,
+    beneficiaryAmountMinor,
+    countryCode,
+    currency,
+    feeMinor,
+    feePayer,
+    merchantReference,
+    operatorId,
+    payoutId,
+    reference,
+    status,
+    totalDebitMinor
+  } = data;
+  const statuses = {
+    "payout.created": ["funds_reserved"],
+    "payout.processing": ["submitted", "processing"],
+    "payout.succeeded": ["succeeded"],
+    "payout.failed": ["failed", "rejected", "cancelled"],
+    "payout.uncertain": ["uncertain"]
+  };
+  const integers = [amountMinor, beneficiaryAmountMinor, feeMinor, totalDebitMinor];
+  if (!integers.every((item) => Number.isSafeInteger(item)) || amountMinor < 1 || beneficiaryAmountMinor < 1 || feeMinor < 0 || totalDebitMinor < 1 || feePayer !== "merchant" && feePayer !== "beneficiary" || currency !== "XOF" || typeof countryCode !== "string" || !/^[a-z]{2}$/.test(countryCode) || typeof operatorId !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(operatorId) || typeof payoutId !== "string" || !UUID.test(payoutId) || typeof reference !== "string" || !/^SFPO[A-F0-9]{16}$/.test(reference) || merchantReference !== null && (typeof merchantReference !== "string" || merchantReference.trim().length < 1 || merchantReference.length > 128 || /[\u0000-\u001f\u007f]/.test(merchantReference)) || !statuses[type]?.includes(String(status)) || feePayer === "merchant" && (totalDebitMinor !== amountMinor + feeMinor || beneficiaryAmountMinor !== amountMinor) || feePayer === "beneficiary" && (totalDebitMinor !== amountMinor || beneficiaryAmountMinor !== amountMinor - feeMinor)) {
+    throw new PayoutWebhookPayloadError();
+  }
+  return {
+    id,
+    type,
+    createdAt,
+    data: {
+      amountMinor,
+      beneficiaryAmountMinor,
+      countryCode,
+      currency: "XOF",
+      feeMinor,
+      feePayer,
+      merchantReference,
+      operatorId,
+      payoutId,
+      reference,
+      status,
+      totalDebitMinor
+    }
+  };
+}
+function encryptPayoutWebhookPayload(payload, deliveryId) {
+  const normalized = normalizePayoutWebhookPayload(payload);
+  if (!UUID.test(deliveryId) || normalized.id !== deliveryId) throw new PayoutWebhookPayloadError();
+  const serialized = JSON.stringify(normalized);
+  if (Buffer.byteLength(serialized, "utf8") > 8192) throw new PayoutWebhookPayloadError();
+  return {
+    [ENVELOPE_KEY]: encryptSensitiveData(serialized, "developer-webhook-payload", {
+      authenticatedContext: context(deliveryId, normalized.type)
+    })
+  };
+}
+function decryptPayoutWebhookPayload(value, contextValue) {
+  if (!UUID.test(contextValue.deliveryId) || !EVENT_TYPES.has(contextValue.eventType) || !isRecord2(value) || !exactKeys(value, [ENVELOPE_KEY]) || typeof value[ENVELOPE_KEY] !== "string") {
+    throw new PayoutWebhookPayloadError();
+  }
+  try {
+    const parsed = JSON.parse(decryptSensitiveData(
+      value[ENVELOPE_KEY],
+      "developer-webhook-payload",
+      { authenticatedContext: context(contextValue.deliveryId, contextValue.eventType) }
+    ));
+    const normalized = normalizePayoutWebhookPayload(parsed);
+    if (normalized.id !== contextValue.deliveryId || normalized.type !== contextValue.eventType) {
+      throw new PayoutWebhookPayloadError();
+    }
+    return normalized;
+  } catch {
+    throw new PayoutWebhookPayloadError();
+  }
+}
+
+// src/services/payout-webhook-outbox.ts
+var EVENT_FOR_STATUS = {
+  funds_reserved: "payout.created",
+  submitted: "payout.processing",
+  processing: "payout.processing",
+  succeeded: "payout.succeeded",
+  failed: "payout.failed",
+  rejected: "payout.failed",
+  cancelled: "payout.failed",
+  uncertain: "payout.uncertain"
+};
+async function enqueuePayoutWebhookEvent(tx, input2) {
+  const eventType = EVENT_FOR_STATUS[input2.payout.status];
+  if (!eventType) return;
+  const feePayer = input2.payout.feePayer === "merchant" || input2.payout.feePayer === "beneficiary" ? input2.payout.feePayer : null;
+  const status = input2.payout.status;
+  if (!feePayer || ![
+    "funds_reserved",
+    "submitted",
+    "processing",
+    "succeeded",
+    "failed",
+    "rejected",
+    "cancelled",
+    "uncertain"
+  ].includes(status)) {
+    throw new Error("Payout webhook state is outside the supported event contract");
+  }
+  const endpoints = await tx.select({
+    id: developerWebhookEndpointsTable.id,
+    events: developerWebhookEndpointsTable.events
+  }).from(developerWebhookEndpointsTable).where(and(
+    eq(developerWebhookEndpointsTable.userId, input2.payout.merchantUserId),
+    eq(developerWebhookEndpointsTable.status, "active")
+  ));
+  for (const endpoint of endpoints) {
+    if (!endpoint.events.includes(eventType)) continue;
+    const deliveryId = randomUUID8();
+    const payload = {
+      id: deliveryId,
+      type: eventType,
+      createdAt: input2.occurredAt.toISOString(),
+      data: {
+        amountMinor: input2.payout.amountMinor,
+        beneficiaryAmountMinor: input2.payout.beneficiaryAmountMinor,
+        countryCode: input2.payout.countryCode,
+        currency: "XOF",
+        feeMinor: input2.payout.feeMinor,
+        feePayer,
+        merchantReference: input2.payout.merchantReference,
+        operatorId: input2.payout.operatorId,
+        payoutId: input2.payout.id,
+        reference: input2.payout.reference,
+        status,
+        totalDebitMinor: input2.payout.totalDebitMinor
+      }
+    };
+    await tx.insert(developerWebhookDeliveriesTable).values({
+      id: deliveryId,
+      endpointId: endpoint.id,
+      payoutRequestId: input2.payout.id,
+      payoutStateEventId: input2.stateEventId,
+      eventType,
+      payload: encryptPayoutWebhookPayload(payload, deliveryId),
+      status: "pending"
+    }).onConflictDoNothing();
+  }
+}
+
+// src/routes/developer-payouts.ts
+var router26 = (0, import_express32.Router)();
+function presentPayout(row) {
+  const phone = decryptSensitiveData(row.beneficiaryPhoneEncrypted, "payout-beneficiary-phone", {
+    authenticatedContext: row.id
+  });
+  const name = row.beneficiaryNameEncrypted ? decryptSensitiveData(row.beneficiaryNameEncrypted, "payout-beneficiary-name", {
+    authenticatedContext: row.id
+  }) : null;
+  return {
+    id: row.id,
+    reference: row.reference,
+    merchantReference: row.merchantReference,
+    countryCode: row.countryCode,
+    operatorId: row.operatorId,
+    beneficiary: { phoneLast4: phone.slice(-4), name },
+    amountMinor: row.amountMinor,
+    currency: row.currency,
+    feeMinor: row.feeMinor,
+    totalDebitMinor: row.totalDebitMinor,
+    beneficiaryAmountMinor: row.beneficiaryAmountMinor,
+    feePayer: row.feePayer,
+    status: row.status,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    submittedAt: row.submittedAt?.toISOString() ?? null,
+    completedAt: row.completedAt?.toISOString() ?? null,
+    failureCode: row.failureCode
+  };
+}
+function sendPayoutError(req, res, error62) {
+  if (error62 instanceof PayoutPolicyError) {
+    res.status(error62.statusCode).json({ error: error62.message });
+    return;
+  }
+  req.log.error({ err: error62 }, "Payout API request failed");
+  res.status(503).json({ error: "Le service payout est momentan\xE9ment indisponible." });
+}
+router26.post("/v1/payout-quote", async (req, res) => {
+  const key = await requireSecretApiKey(req, res, "payout_read");
+  if (!key) return;
+  const parsed = CreateDeveloperPayoutQuoteBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "La demande de devis payout est invalide." });
+    return;
+  }
+  try {
+    const wallet = await loadMerchantPayoutWallet(key.userId);
+    if (wallet.availableMinor <= 0) {
+      throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
+    }
+    const configuration = await loadPayoutQuoteConfiguration(
+      parsed.data.countryCode,
+      parsed.data.operatorId
+    );
+    const quote = calculatePayoutQuote(parsed.data, configuration);
+    assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
+    res.setHeader("Cache-Control", "no-store");
+    res.json(CreateDeveloperPayoutQuoteResponse.parse(
+      { ...quote, availableBalanceMinor: wallet.availableMinor }
+    ));
+  } catch (error62) {
+    sendPayoutError(req, res, error62);
+  }
+});
+router26.post("/v1/payouts", async (req, res) => {
+  const key = await requireSecretApiKey(req, res, "payout_create");
+  if (!key) return;
+  const validHeader = CreateDeveloperPayoutHeader.safeParse({
+    "Idempotency-Key": req.get("Idempotency-Key")
+  });
+  const parsedBody = CreateDeveloperPayoutBody.safeParse(req.body);
+  if (!validHeader.success || !parsedBody.success) {
+    res.status(400).json({ error: "La demande de payout ou sa cl\xE9 d\u2019idempotence est invalide." });
+    return;
+  }
+  try {
+    const wallet = await loadMerchantPayoutWallet(key.userId);
+    if (wallet.availableMinor <= 0) {
+      throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
+    }
+    const configuration = await loadPayoutQuoteConfiguration(
+      parsedBody.data.countryCode,
+      parsedBody.data.operatorId
+    );
+    const quote = calculatePayoutQuote(parsedBody.data, configuration);
+    assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
+    if (!PAYOUT_EXECUTION_ENABLED) {
+      res.status(503).json({
+        error: "Le service de versement SendFlow est momentan\xE9ment indisponible.",
+        code: "payout_unavailable"
+      });
+      return;
+    }
+    res.status(503).json({ error: "Le service de versement SendFlow est momentan\xE9ment indisponible." });
+  } catch (error62) {
+    sendPayoutError(req, res, error62);
+  }
+});
+router26.get("/v1/payouts", async (req, res) => {
+  const key = await requireSecretApiKey(req, res, "payout_read");
+  if (!key) return;
+  const parsed = ListDeveloperPayoutsQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Les filtres de consultation payout sont invalides." });
+    return;
+  }
+  try {
+    const limit = parsed.data.limit;
+    const conditions = [eq(payoutRequestsTable.merchantUserId, key.userId)];
+    if (parsed.data.status) conditions.push(eq(payoutRequestsTable.status, parsed.data.status));
+    if (parsed.data.cursor) {
+      const [cursorRow] = await db.select({
+        id: payoutRequestsTable.id,
+        createdAt: payoutRequestsTable.createdAt
+      }).from(payoutRequestsTable).where(and(
+        eq(payoutRequestsTable.id, parsed.data.cursor),
+        eq(payoutRequestsTable.merchantUserId, key.userId)
+      )).limit(1);
+      if (!cursorRow) {
+        res.status(400).json({ error: "Le curseur payout est invalide." });
+        return;
+      }
+      conditions.push(or(
+        lt(payoutRequestsTable.createdAt, cursorRow.createdAt),
+        and(
+          eq(payoutRequestsTable.createdAt, cursorRow.createdAt),
+          lt(payoutRequestsTable.id, cursorRow.id)
+        )
+      ));
+    }
+    const rows = await db.select().from(payoutRequestsTable).where(and(...conditions)).orderBy(desc(payoutRequestsTable.createdAt), desc(payoutRequestsTable.id)).limit(limit + 1);
+    const hasMore = rows.length > limit;
+    const items = rows.slice(0, limit);
+    res.setHeader("Cache-Control", "no-store");
+    res.json(ListDeveloperPayoutsResponse.parse({
+      items: items.map(presentPayout),
+      nextCursor: hasMore ? items.at(-1)?.id ?? null : null
+    }));
+  } catch (error62) {
+    sendPayoutError(req, res, error62);
+  }
+});
+router26.get("/v1/payouts/:payoutId", async (req, res) => {
+  const key = await requireSecretApiKey(req, res, "payout_read");
+  if (!key) return;
+  const params = GetDeveloperPayoutParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(404).json({ error: "Payout introuvable." });
+    return;
+  }
+  try {
+    const [row] = await db.select().from(payoutRequestsTable).where(and(
+      eq(payoutRequestsTable.id, params.data.payoutId),
+      eq(payoutRequestsTable.merchantUserId, key.userId)
+    )).limit(1);
+    if (!row) {
+      res.status(404).json({ error: "Payout introuvable." });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    res.json(GetDeveloperPayoutResponse.parse(presentPayout(row)));
+  } catch (error62) {
+    sendPayoutError(req, res, error62);
+  }
+});
+router26.post("/v1/payouts/:payoutId/cancel", async (req, res) => {
+  const key = await requireSecretApiKey(req, res, "payout_create");
+  if (!key) return;
+  const params = CancelDeveloperPayoutParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(404).json({ error: "Payout introuvable." });
+    return;
+  }
+  try {
+    const result = await db.transaction(async (tx) => {
+      const [snapshot] = await tx.select().from(payoutRequestsTable).where(and(
+        eq(payoutRequestsTable.id, params.data.payoutId),
+        eq(payoutRequestsTable.merchantUserId, key.userId)
+      )).limit(1);
+      if (!snapshot) return { kind: "missing" };
+      await tx.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, key.userId)).for("update");
+      await tx.select({ id: walletsTable.id }).from(walletsTable).where(eq(walletsTable.id, snapshot.walletId)).for("update");
+      const [row] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, snapshot.id)).for("update");
+      const [attempt] = await tx.select().from(payoutAttemptsTable).where(eq(payoutAttemptsTable.payoutRequestId, snapshot.id)).for("update");
+      if (!row || row.reservationState !== "active" || row.status !== "funds_reserved" || !attempt || attempt.dispatchedAt !== null || attempt.status !== "prepared") {
+        return { kind: "conflict" };
+      }
+      const now = /* @__PURE__ */ new Date();
+      const [updated] = await tx.update(payoutRequestsTable).set({
+        status: "cancelled",
+        reservationState: "released",
+        failureCode: "merchant_rejected",
+        completedAt: now,
+        updatedAt: now
+      }).where(and(
+        eq(payoutRequestsTable.id, row.id),
+        eq(payoutRequestsTable.status, "funds_reserved"),
+        eq(payoutRequestsTable.reservationState, "active")
+      )).returning();
+      if (!updated) return { kind: "conflict" };
+      const [stateEvent] = await tx.insert(payoutStateEventsTable).values({
+        payoutRequestId: row.id,
+        fromStatus: row.status,
+        toStatus: "cancelled",
+        actorType: "merchant",
+        actorId: key.userId,
+        reasonCode: "merchant_cancelled"
+      }).returning({ id: payoutStateEventsTable.id });
+      if (!stateEvent) throw new Error("Payout cancellation event was not recorded");
+      await enqueuePayoutWebhookEvent(tx, {
+        payout: updated,
+        stateEventId: stateEvent.id,
+        occurredAt: now
+      });
+      return { kind: "updated", row: updated };
+    });
+    if (result.kind === "missing") {
+      res.status(404).json({ error: "Payout introuvable." });
+      return;
+    }
+    if (result.kind === "conflict") {
+      res.status(409).json({ error: "Ce payout a d\xE9j\xE0 \xE9t\xE9 envoy\xE9 ou ne peut plus \xEAtre annul\xE9." });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    res.json(CancelDeveloperPayoutResponse.parse(presentPayout(result.row)));
+  } catch (error62) {
+    sendPayoutError(req, res, error62);
+  }
+});
+var developer_payouts_default = router26;
+
+// src/routes/admin-payouts.ts
+var import_express33 = __toESM(require_express2(), 1);
+var router27 = (0, import_express33.Router)();
+function presentAdminPayout(row, timeline) {
+  const phone = decryptSensitiveData(row.beneficiaryPhoneEncrypted, "payout-beneficiary-phone", {
+    authenticatedContext: row.id
+  });
+  return {
+    id: row.id,
+    reference: row.reference,
+    merchantReference: row.merchantReference,
+    countryCode: row.countryCode,
+    operatorId: row.operatorId,
+    beneficiary: { phoneLast4: phone.slice(-4), name: null },
+    amountMinor: row.amountMinor,
+    currency: row.currency,
+    feeMinor: row.feeMinor,
+    totalDebitMinor: row.totalDebitMinor,
+    beneficiaryAmountMinor: row.beneficiaryAmountMinor,
+    feePayer: row.feePayer,
+    status: row.status,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    submittedAt: row.submittedAt?.toISOString() ?? null,
+    completedAt: row.completedAt?.toISOString() ?? null,
+    failureCode: row.failureCode,
+    merchantUserId: row.merchantUserId,
+    reservationState: row.reservationState,
+    timeline: timeline.map((event) => ({
+      fromStatus: event.fromStatus,
+      toStatus: event.toStatus,
+      actorType: event.actorType,
+      reasonCode: event.reasonCode,
+      createdAt: event.createdAt.toISOString()
+    }))
+  };
+}
+async function readTimeline(ids) {
+  if (ids.length === 0) return /* @__PURE__ */ new Map();
+  const rows = await db.select().from(payoutStateEventsTable).where(inArray(payoutStateEventsTable.payoutRequestId, ids)).orderBy(payoutStateEventsTable.createdAt, payoutStateEventsTable.id);
+  const grouped = /* @__PURE__ */ new Map();
+  for (const row of rows) {
+    const events = grouped.get(row.payoutRequestId) ?? [];
+    events.push(row);
+    grouped.set(row.payoutRequestId, events);
+  }
+  return grouped;
+}
+router27.get("/payouts", async (req, res) => {
+  const adminUserId = respondAdminAuthError(req, res);
+  if (!adminUserId) return;
+  const parsed = ListAdminPayoutsQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Filtres payout invalides." });
+    return;
+  }
+  try {
+    const conditions = [];
+    if (parsed.data.status) conditions.push(eq(payoutRequestsTable.status, parsed.data.status));
+    if (parsed.data.cursor) {
+      const [cursor] = await db.select({
+        id: payoutRequestsTable.id,
+        createdAt: payoutRequestsTable.createdAt
+      }).from(payoutRequestsTable).where(eq(payoutRequestsTable.id, parsed.data.cursor)).limit(1);
+      if (!cursor) {
+        res.status(400).json({ error: "Curseur payout invalide." });
+        return;
+      }
+      conditions.push(or(
+        lt(payoutRequestsTable.createdAt, cursor.createdAt),
+        and(
+          eq(payoutRequestsTable.createdAt, cursor.createdAt),
+          lt(payoutRequestsTable.id, cursor.id)
+        )
+      ));
+    }
+    const rows = await db.select().from(payoutRequestsTable).where(conditions.length ? and(...conditions) : void 0).orderBy(desc(payoutRequestsTable.createdAt), desc(payoutRequestsTable.id)).limit(parsed.data.limit + 1);
+    const hasMore = rows.length > parsed.data.limit;
+    const items = rows.slice(0, parsed.data.limit);
+    const timeline = await readTimeline(items.map((row) => row.id));
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_payout_queue",
+      resourceType: "payout",
+      resourceId: "queue"
+    });
+    res.setHeader("Cache-Control", "no-store");
+    res.json(ListAdminPayoutsResponse.parse({
+      items: items.map((row) => presentAdminPayout(row, timeline.get(row.id) ?? [])),
+      nextCursor: hasMore ? items.at(-1)?.id ?? null : null
+    }));
+  } catch (error62) {
+    req.log.error({ err: error62 }, "Admin payout queue lookup failed");
+    res.status(503).json({ error: "La file payout est momentan\xE9ment indisponible." });
+  }
+});
+router27.get("/payouts/:payoutId", async (req, res) => {
+  const adminUserId = respondAdminAuthError(req, res);
+  if (!adminUserId) return;
+  const params = GetAdminPayoutParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(404).json({ error: "Payout introuvable." });
+    return;
+  }
+  try {
+    const [row] = await db.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, params.data.payoutId)).limit(1);
+    if (!row) {
+      res.status(404).json({ error: "Payout introuvable." });
+      return;
+    }
+    const timeline = await readTimeline([row.id]);
+    await recordAdminAudit({
+      adminUserId,
+      action: "view_payout",
+      resourceType: "payout",
+      resourceId: row.id
+    });
+    res.setHeader("Cache-Control", "no-store");
+    res.json(GetAdminPayoutResponse.parse(presentAdminPayout(row, timeline.get(row.id) ?? [])));
+  } catch (error62) {
+    req.log.error({ err: error62 }, "Admin payout lookup failed");
+    res.status(503).json({ error: "Le payout est momentan\xE9ment indisponible." });
+  }
+});
+router27.post("/payouts/:payoutId/reject", async (req, res) => {
+  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  if (!adminUserId) return;
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine de la requ\xEAte non autoris\xE9e." });
+    return;
+  }
+  const params = RejectAdminPayoutParams.safeParse(req.params);
+  const body = RejectAdminPayoutBody.safeParse(req.body);
+  if (!params.success || !body.success || body.data.reason.trim().length < 3) {
+    res.status(400).json({ error: "Motif de rejet invalide." });
+    return;
+  }
+  try {
+    const result = await db.transaction(async (tx) => {
+      const [snapshot] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, params.data.payoutId)).limit(1);
+      if (!snapshot) return { kind: "missing" };
+      await tx.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, snapshot.merchantUserId)).for("update");
+      await tx.select({ id: walletsTable.id }).from(walletsTable).where(eq(walletsTable.id, snapshot.walletId)).for("update");
+      const [row] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, snapshot.id)).for("update");
+      const [attempt] = await tx.select().from(payoutAttemptsTable).where(eq(payoutAttemptsTable.payoutRequestId, snapshot.id)).for("update");
+      if (!row || row.status !== "funds_reserved" || row.reservationState !== "active" || !attempt || attempt.status !== "prepared" || attempt.dispatchedAt !== null) {
+        return { kind: "conflict" };
+      }
+      const now = /* @__PURE__ */ new Date();
+      const [updated] = await tx.update(payoutRequestsTable).set({
+        status: "rejected",
+        reservationState: "released",
+        failureCode: "admin_rejected",
+        completedAt: now,
+        updatedAt: now
+      }).where(and(
+        eq(payoutRequestsTable.id, row.id),
+        eq(payoutRequestsTable.status, "funds_reserved"),
+        eq(payoutRequestsTable.reservationState, "active")
+      )).returning();
+      if (!updated) return { kind: "conflict" };
+      const [event] = await tx.insert(payoutStateEventsTable).values({
+        payoutRequestId: row.id,
+        fromStatus: row.status,
+        toStatus: "rejected",
+        actorType: "admin",
+        actorId: adminUserId,
+        reasonCode: "admin_rejected"
+      }).returning({ id: payoutStateEventsTable.id });
+      if (!event) throw new Error("Payout rejection event was not recorded");
+      await enqueuePayoutWebhookEvent(tx, {
+        payout: updated,
+        stateEventId: event.id,
+        occurredAt: now
+      });
+      await recordAdminAudit({
+        adminUserId,
+        action: "reject_undispatched_payout",
+        resourceType: "payout",
+        resourceId: row.id,
+        reason: body.data.reason.trim()
+      }, tx);
+      return { kind: "updated", row: updated, event };
+    });
+    if (result.kind === "missing") {
+      res.status(404).json({ error: "Payout introuvable." });
+      return;
+    }
+    if (result.kind === "conflict") {
+      res.status(409).json({ error: "Un payout d\xE9j\xE0 envoy\xE9 ne peut pas \xEAtre rejet\xE9 ni lib\xE9r\xE9 manuellement." });
+      return;
+    }
+    const timeline = await readTimeline([result.row.id]);
+    res.setHeader("Cache-Control", "no-store");
+    res.json(RejectAdminPayoutResponse.parse(
+      presentAdminPayout(result.row, timeline.get(result.row.id) ?? [])
+    ));
+  } catch (error62) {
+    req.log.error({ err: error62 }, "Admin payout rejection failed");
+    res.status(503).json({ error: "Le payout n\u2019a pas pu \xEAtre mis \xE0 jour." });
+  }
+});
+var admin_payouts_default = router27;
+
 // src/lib/admin-route-prefix.ts
 var ADMIN_ROUTE_PREFIX = "/DMgrgmt-1np5g23g12bGFtMwh";
 
 // src/routes/index.ts
-var router26 = (0, import_express32.Router)();
-var adminHandlers = (0, import_express32.Router)();
-var adminSurface = (0, import_express32.Router)();
+var router28 = (0, import_express34.Router)();
+var adminHandlers = (0, import_express34.Router)();
+var adminSurface = (0, import_express34.Router)();
 adminHandlers.use((req, res, next) => {
   if (req.method === "GET" && /^\/(?:users(?:\/[^/]+)?|developer-webhooks)\/?$/.test(req.path)) {
     if (respondAdminUserReadAuthError(req, res)) next();
@@ -254407,23 +255774,24 @@ adminHandlers.use((req, res, next) => {
   const permission = ["GET", "HEAD", "OPTIONS"].includes(req.method) ? "read" : "mutate";
   if (respondAdminAuthError(req, res, permission)) next();
 });
-router26.use(health_default);
-router26.use(storage_default);
-router26.use(database_default);
-router26.use(account_default);
-router26.use(transfer_quote_default);
-router26.use(payment_links_default);
-router26.use(public_payment_links_default);
-router26.use(developer_default);
-router26.use(email_campaign_webhook_default);
-router26.use(account_limit_default);
-router26.use(identity_verification_default);
-router26.use(operator_pricing_default);
-router26.use(banners_default);
-router26.use(registration_settings_default);
-router26.use(customer_service_settings_default);
-router26.use(payment_limits_default);
-router26.use(country_management_default);
+router28.use(health_default);
+router28.use(storage_default);
+router28.use(database_default);
+router28.use(account_default);
+router28.use(transfer_quote_default);
+router28.use(payment_links_default);
+router28.use(public_payment_links_default);
+router28.use(developer_default);
+router28.use(developer_payouts_default);
+router28.use(email_campaign_webhook_default);
+router28.use(account_limit_default);
+router28.use(identity_verification_default);
+router28.use(operator_pricing_default);
+router28.use(banners_default);
+router28.use(registration_settings_default);
+router28.use(customer_service_settings_default);
+router28.use(payment_limits_default);
+router28.use(country_management_default);
 adminHandlers.use(admin_default);
 adminHandlers.use(admin_ip_blocklist_default);
 adminHandlers.use(admin_network_defense_default);
@@ -254441,14 +255809,15 @@ adminHandlers.use(adminRoutes5);
 adminHandlers.use(adminRoutes6);
 adminHandlers.use(email_campaigns_default);
 adminHandlers.use(adminRoutes8);
+adminHandlers.use(admin_payouts_default);
 adminSurface.use(loadAdminSession);
 adminSurface.use(admin_access_default);
 adminSurface.use(adminHandlers);
-router26.use(ADMIN_ROUTE_PREFIX, adminSurface);
-router26.use(customer_auth_default);
-router26.use(customer_recovery_default);
-router26.use(auth_otp_default);
-var routes_default = router26;
+router28.use(ADMIN_ROUTE_PREFIX, adminSurface);
+router28.use(customer_auth_default);
+router28.use(customer_recovery_default);
+router28.use(auth_otp_default);
+var routes_default = router28;
 
 // src/lib/logger.ts
 var import_pino = __toESM(require_pino(), 1);
@@ -254833,7 +256202,7 @@ function captureRawResendWebhookBody(request, body) {
 }
 
 // src/app.ts
-var app = (0, import_express33.default)();
+var app = (0, import_express35.default)();
 app.disable("x-powered-by");
 app.set(
   "trust proxy",
@@ -254846,6 +256215,9 @@ app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader("X-Frame-Options", "DENY");
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000");
+  }
   next();
 });
 app.use(
@@ -254903,14 +256275,14 @@ app.use("/api", (req, res, next) => {
     error: "Les op\xE9rations sur les comptes ne sont pas disponibles dans cet aper\xE7u."
   });
 });
-app.use(import_express33.default.json({
+app.use(import_express35.default.json({
   limit: "100kb",
   strict: true,
   verify: (request, _response, buffer) => {
     captureRawResendWebhookBody(request, buffer);
   }
 }));
-app.use(import_express33.default.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
+app.use(import_express35.default.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
 app.use("/api", enforcePreviewAccountAccess);
 app.use("/api/me", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store, private");
@@ -255080,13 +256452,16 @@ async function processNextDeveloperWebhookDelivery(runtime = {}) {
   try {
     const url2 = decryptSensitiveData(endpoint.urlEncrypted, "developer-webhook-url");
     const signingSecret = decryptSensitiveData(endpoint.signingSecretEncrypted, "developer-webhook-secret");
-    const payload = decryptDeveloperWebhookPayload(delivery.payload, {
+    const payload = delivery.eventType.startsWith("payout.") ? decryptPayoutWebhookPayload(delivery.payload, {
+      deliveryId: delivery.id,
+      eventType: delivery.eventType
+    }) : decryptDeveloperWebhookPayload(delivery.payload, {
       deliveryId: delivery.id,
       eventType: delivery.eventType
     });
     result = await postWebhook(url2, signingSecret, payload, runtime);
   } catch (error62) {
-    if (error62 instanceof DeveloperWebhookPayloadError) {
+    if (error62 instanceof DeveloperWebhookPayloadError || error62 instanceof PayoutWebhookPayloadError) {
       await db.update(developerWebhookDeliveriesTable).set({
         status: "failed",
         lastHttpStatus: null,
@@ -255150,7 +256525,7 @@ function startDeveloperWebhookWorker(logger2) {
 }
 
 // src/services/email-campaign-worker.ts
-import { randomUUID as randomUUID8 } from "node:crypto";
+import { randomUUID as randomUUID9 } from "node:crypto";
 
 // src/lib/email-campaign-template.ts
 var FONT_STACK2 = "'DM Sans',Roboto,'Helvetica Neue',Arial,sans-serif";
@@ -255359,7 +256734,7 @@ async function claimNextRecipient() {
         }
         const [attemptCount] = await transaction.select({ value: count() }).from(emailCampaignAttemptsTable).where(eq(emailCampaignAttemptsTable.recipientId, recipient.id));
         const attemptNumber = Number(attemptCount?.value ?? 0) + 1;
-        const attemptId2 = randomUUID8();
+        const attemptId2 = randomUUID9();
         const idempotencyKey2 = campaignProviderIdempotencyKey(recipient.id, recipient.manualRetries);
         await transaction.insert(emailCampaignAttemptsTable).values({
           id: attemptId2,
@@ -255474,7 +256849,7 @@ async function claimNextRecipient() {
     let idempotencyKey = latestAttempt?.idempotencyKey;
     if (!latestAttempt) {
       const [attemptCount] = await transaction.select({ value: count() }).from(emailCampaignAttemptsTable).where(eq(emailCampaignAttemptsTable.recipientId, stale.id));
-      attemptId = randomUUID8();
+      attemptId = randomUUID9();
       idempotencyKey = campaignProviderIdempotencyKey(stale.id, stale.manualRetries);
       await transaction.insert(emailCampaignAttemptsTable).values({
         id: attemptId,

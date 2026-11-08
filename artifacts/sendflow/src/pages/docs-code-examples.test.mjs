@@ -81,15 +81,22 @@ test('every API request example uses the centralized production API base', () =>
 });
 
 test('production URL notes do not expose internal payment-readiness switches', () => {
-  assert.match(docsCopy, /apiAvailabilityTitle: 'Adresses de production'/);
-  assert.match(docsCopy, /apiAvailabilityText: 'Configurez SENDFLOW_API_BASE_URL/);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'Disponibilité et adresses de production'/);
+  assert.match(docsCopy, /apiAvailabilityText: 'Les blocs copiables indiquent les adresses de production/);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'Production availability and URLs'/);
+  assert.match(docsCopy, /apiAvailabilityText: 'The copyable blocks show the production addresses/);
   assert.match(docsCopy, /serviceAvailability: 'Adresses de production et suivi'/);
-  assert.match(docsCopy, /serviceAvailabilityText: 'Pour connaître le résultat d’un paiement/);
-  assert.match(docsCopy, /apiAvailabilityTitle: 'Production URLs'/);
+  assert.match(docsCopy, /serviceAvailabilityText: 'Consultez le statut ou le webhook signé uniquement/);
   assert.match(docsCopy, /serviceAvailability: 'Production URLs and status checks'/);
+  assert.match(docsCopy, /serviceAvailabilityText: 'Read the status or signed webhook only/);
   assert.doesNotMatch(docsCopy, /LINKFLOW_SETTLEMENT_PROOF_READY/);
-  assert.doesNotMatch(docsCopy, /apiAvailabilityText: '[^']*HTTP 503/);
-  assert.doesNotMatch(docsCopy, /serviceAvailabilityText: '[^']*HTTP 503/);
+  assert.match(docsCopy, /apiAvailabilityText:.*HTTP 503/);
+  assert.match(docsCopy, /apiScopeTitle: 'Sens des flux et disponibilité réelle'/);
+  assert.match(docsCopy, /apiScopeTitle: 'Flow direction and actual availability'/);
+  assert.match(docsCopy, /PAYIN : le client paie par Mobile Money/);
+  assert.match(docsCopy, /PAYIN: the customer pays by Mobile Money/);
+  assert.match(docsCopy, /PAYOUT : le marchand demande un transfert sortant/);
+  assert.match(docsCopy, /PAYOUT: the merchant requests an outgoing transfer/);
 });
 
 test('documentation rendering does not depend on live payment-limit API data', () => {
@@ -123,6 +130,7 @@ test('getting-started guide presents the production quickstart with SendFlow exa
     't.threeSteps',
     't.quickstartTitle',
     't.quickstartPrereqTitle',
+    't.apiAvailabilityTitle',
     'example="pricing"',
     'example="payment-limits"',
     'example="create-direct"',

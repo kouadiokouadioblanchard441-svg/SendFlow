@@ -11607,12 +11607,18 @@ var DOCUMENTATION_PAGE_KEYS = {
   "/docs/authentication": "auth",
   "/docs/integrations/direct": "direct",
   "/docs/integrations/hosted": "hosted",
-  "/docs/api-reference": "api",
+  "/docs/api-reference": "direct",
   "/docs/webhooks": "webhooks",
   "/docs/reference": "ref"
 };
 function isSendFlowDocumentationHost(hostname) {
   return hostname.toLowerCase() === SENDFLOW_DOCUMENTATION_HOST;
+}
+function isSendFlowDocumentationPreviewRoute(hostname, pathname) {
+  const normalizedHostname2 = hostname.trim().toLowerCase().replace(/:\d+$/, "");
+  const normalizedPath = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  const isPreviewHost = normalizedHostname2 === "localhost" || normalizedHostname2 === "127.0.0.1" || normalizedHostname2.endsWith(".replit.dev");
+  return isPreviewHost && (normalizedPath === "/docs" || normalizedPath.startsWith("/docs/")) && getDocumentationPageKey(normalizedPath) !== null;
 }
 function getDocumentationPageKey(pathname) {
   const normalizedPath = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
@@ -11683,6 +11689,7 @@ function isKnownSitePage(hostname, pathname, basePath = "/") {
   if (isSendFlowDocumentationHost(host)) {
     return getDocumentationPageKey(routePath) !== null;
   }
+  if (isSendFlowDocumentationPreviewRoute(host, routePath)) return true;
   if (isSendFlowPaymentHost(host)) {
     return /^\/pay\/[^/]+$/.test(routePath);
   }
@@ -11724,6 +11731,9 @@ function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = 
       res.setHeader("Cache-Control", "no-store, private");
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Referrer-Policy", "no-referrer");
+      if (process.env.NODE_ENV === "production") {
+        res.setHeader("Strict-Transport-Security", "max-age=31536000");
+      }
       let pathname;
       try {
         pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);
