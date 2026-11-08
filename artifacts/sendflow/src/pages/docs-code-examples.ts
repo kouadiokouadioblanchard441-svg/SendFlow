@@ -791,25 +791,45 @@ session = response.json()`,
 const response = await fetch(\`\${env.SENDFLOW_API_BASE_URL}/pricing\`);
 if (!response.ok) throw new Error("Pricing catalog unavailable");
 const catalog = await response.json();
-const linkFlowOperators = catalog.operators.filter(
-  (operator) => operator.fees.linkflow !== undefined,
-);`,
+console.log("Countries:", catalog.countries);
+console.log("Operators and configured fees:", catalog.operators.map((operator) => ({
+  countryId: operator.countryId,
+  id: operator.id,
+  name: operator.name,
+  operations: operator.operations,
+  fees: operator.fees,
+})));`,
     'Node.js': `// Public pricing catalog; no merchant key is required.
 const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
 if (!apiBaseUrl) throw new Error("Configure SENDFLOW_API_BASE_URL");
 const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/pricing");
 const catalog = await response.json().catch(() => ({}));
 if (!response.ok) throw new Error(catalog.error ?? "Pricing catalog unavailable");
-const linkFlowOperators = catalog.operators.filter(
-  (operator) => operator.fees.linkflow !== undefined,
-);`,
+console.log("Countries:", catalog.countries);
+console.log("Operators and configured fees:", catalog.operators.map((operator) => ({
+  countryId: operator.countryId,
+  id: operator.id,
+  name: operator.name,
+  operations: operator.operations,
+  fees: operator.fees,
+})));`,
     PHP: `$ch = curl_init(rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/pricing");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
 if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
     throw new RuntimeException("Pricing catalog unavailable");
 }
-$catalog = json_decode($response, true, 512, JSON_THROW_ON_ERROR);`,
+$catalog = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+print_r($catalog["countries"]);
+foreach ($catalog["operators"] as $operator) {
+    print_r([
+        "countryId" => $operator["countryId"],
+        "id" => $operator["id"],
+        "name" => $operator["name"],
+        "operations" => $operator["operations"],
+        "fees" => $operator["fees"],
+    ]);
+}`,
     Python: `import os
 import requests
 
@@ -819,10 +839,17 @@ response = requests.get(
 )
 response.raise_for_status()
 catalog = response.json()
-linkflow = [
-    operator for operator in catalog["operators"]
-    if operator["fees"].get("linkflow") is not None
-]`,
+print("Countries:", catalog["countries"])
+print("Operators and configured fees:", [
+    {
+        "countryId": operator["countryId"],
+        "id": operator["id"],
+        "name": operator["name"],
+        "operations": operator["operations"],
+        "fees": operator["fees"],
+    }
+    for operator in catalog["operators"]
+])`,
   },
   'payment-limits': {
     cURL: `curl --request GET "$SENDFLOW_API_BASE_URL/payment-limits" \\
@@ -833,8 +860,12 @@ linkflow = [
 );
 if (!response.ok) throw new Error(\`SendFlow limits returned HTTP \${response.status}\`);
 const limits = await response.json();
-console.log("Minimum pay-in:", limits.minimumDepositMinor, limits.currency);
-console.log("Minimum payout rule:", limits.minimumPayoutMinor, limits.currency);`,
+console.log(
+  "Pay-in limits:",
+  limits.minimumDepositMinor,
+  limits.maximumPayinMinor,
+  limits.currency,
+);`,
     'Node.js': `// Public read; the server still enforces configured limits on every payment.
 const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
 if (!apiBaseUrl) throw new Error("Configure SENDFLOW_API_BASE_URL");
@@ -843,8 +874,12 @@ const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/payment-limits",
 });
 const limits = await response.json().catch(() => ({}));
 if (!response.ok) throw new Error(limits.error ?? \`Limits returned HTTP \${response.status}\`);
-console.log("Minimum pay-in:", limits.minimumDepositMinor, limits.currency);
-console.log("Minimum payout rule:", limits.minimumPayoutMinor, limits.currency);`,
+console.log(
+  "Pay-in limits:",
+  limits.minimumDepositMinor,
+  limits.maximumPayinMinor,
+  limits.currency,
+);`,
     PHP: `$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/payment-limits";
 $curl = curl_init($url);
 curl_setopt_array($curl, [
@@ -858,7 +893,8 @@ if ($body === false || $status < 200 || $status >= 300) {
     throw new RuntimeException("SendFlow limits request failed: HTTP " . $status);
 }
 $limits = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-echo $limits["minimumDepositMinor"] . " " . $limits["currency"];`,
+echo "Pay-in limits: " . $limits["minimumDepositMinor"] . "–"
+    . $limits["maximumPayinMinor"] . " " . $limits["currency"];`,
     Python: `import json
 import os
 from urllib.request import Request, urlopen
@@ -868,8 +904,12 @@ request = Request(base_url + "/payment-limits", headers={"Accept": "application/
 with urlopen(request, timeout=10) as response:
     limits = json.load(response)
 
-print("Minimum pay-in:", limits["minimumDepositMinor"], limits["currency"])
-print("Minimum payout rule:", limits["minimumPayoutMinor"], limits["currency"])`,
+print(
+    "Pay-in limits:",
+    limits["minimumDepositMinor"],
+    limits["maximumPayinMinor"],
+    limits["currency"],
+)`,
     Kotlin: `val url = URL("\${BuildConfig.SENDFLOW_API_BASE_URL}/payment-limits")
 val connection = (url.openConnection() as HttpURLConnection).apply {
     requestMethod = "GET"

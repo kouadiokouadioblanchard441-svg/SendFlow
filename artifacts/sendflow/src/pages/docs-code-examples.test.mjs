@@ -53,20 +53,52 @@ test('production URL notes do not expose internal payment-readiness switches', (
   assert.doesNotMatch(docsCopy, /serviceAvailabilityText: '[^']*HTTP 503/);
 });
 
-test('getting-started guide presents the production flow in executable steps', () => {
+test('getting-started guide presents the production quickstart with SendFlow examples', () => {
   const startPageStart = docsCopy.indexOf("{pageKey === 'start' && <>");
   const authPageStart = docsCopy.indexOf("{pageKey === 'auth' && <>", startPageStart);
   assert.ok(startPageStart >= 0 && authPageStart > startPageStart);
   const startPage = docsCopy.slice(startPageStart, authPageStart);
-  const examplePanels = [
+  const quickstartSections = [
+    't.whatIs',
+    't.methods',
+    'href="/docs/integrations/hosted"',
+    'href="/docs/integrations/direct"',
+    't.capabilitiesTitle',
+    'SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api',
+    'SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa',
+    't.threeSteps',
+    't.quickstartTitle',
+    't.quickstartPrereqTitle',
     'example="pricing"',
     'example="payment-limits"',
-    'example="create-hosted"',
+    'example="create-direct"',
+    'example="read-public-session"',
+    'example="start-attempt"',
     'example="read-session"',
-  ].map((panel) => startPage.indexOf(panel));
+  ].map((section) => startPage.indexOf(section));
 
-  assert.ok(examplePanels.every((position) => position >= 0));
-  assert.deepEqual(examplePanels, [...examplePanels].sort((a, b) => a - b));
+  assert.ok(quickstartSections.every((position) => position >= 0));
+  assert.deepEqual(quickstartSections, [...quickstartSections].sort((a, b) => a - b));
+  assert.match(docsCopy, /startWelcomeTitle: 'Bienvenue sur SendFlow'/);
+  assert.match(docsCopy, /startWelcomeTitle: 'Welcome to SendFlow'/);
+  assert.match(docsCopy, /quickstartTitle: 'Démarrage rapide'/);
+  assert.match(docsCopy, /quickstartTitle: 'Quickstart'/);
+  assert.doesNotMatch(startPage, /ashtechpay|ASHTECH_API_KEY|\/v1\/collect/i);
+
+  for (const example of ['pricing', 'payment-limits', 'create-direct', 'read-public-session', 'start-attempt', 'read-session']) {
+    const formats = getDocsCodeFormats(example);
+    for (const format of ['Node.js', 'Python', 'cURL', 'PHP']) {
+      assert.ok(formats.includes(format), `${example} must include ${format}`);
+    }
+  }
+  assert.match(getDocsCodeExample('pricing', 'Node.js'), /\/pricing/);
+  assert.match(getDocsCodeExample('pricing', 'Node.js'), /operator\.fees/);
+  assert.doesNotMatch(getDocsCodeExample('pricing', 'Node.js'), /\/fees|\/countries/);
+  assert.match(getDocsCodeExample('payment-limits', 'Node.js'), /\/payment-limits/);
+  assert.match(getDocsCodeExample('create-direct', 'Node.js'), /\/v1\/payment-sessions/);
+  assert.match(getDocsCodeExample('read-public-session', 'Node.js'), /\/v1\/public\/payment-sessions/);
+  assert.match(getDocsCodeExample('start-attempt', 'Node.js'), /\/attempts/);
+  assert.match(getDocsCodeExample('read-session', 'Node.js'), /\/v1\/payment-sessions\//);
 });
 
 test('API endpoints are grouped by session, checkout, and public catalog flow', () => {

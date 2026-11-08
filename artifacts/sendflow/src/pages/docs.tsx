@@ -71,7 +71,8 @@ const localized: Record<Language, Translation> = {
     badge: 'API REST · JSON', prod: 'Documentation API SendFlow',
     homeTitle: 'Intégrez SendFlow à votre plateforme',
     homeSub: 'Découvrez les outils et les API nécessaires pour accepter les paiements avec SendFlow.',
-    startTitle: 'Bien démarrer', startSub: 'Préparez vos accès, choisissez votre parcours et vérifiez chaque paiement depuis votre serveur.',
+    startTitle: 'Démarrer', startWelcomeTitle: 'Bienvenue sur SendFlow',
+    startSub: 'Intégrez les paiements Mobile Money de SendFlow à votre application avec un parcours hébergé ou une API directe.',
     authTitle: 'Authentification', authSub: 'Utilisez la clé secrète pour les appels serveur et la clé publique uniquement dans le parcours de caisse.',
     directTitle: 'Intégration API directe', directSub: 'Créez une session côté serveur, affichez les choix disponibles, puis suivez le statut confirmé par SendFlow.',
     hostedTitle: 'Paiement par redirection', hostedSub: 'Créez une session hébergée et redirigez le payeur vers le chemin de paiement SendFlow retourné par l’API.',
@@ -86,21 +87,36 @@ const localized: Record<Language, Translation> = {
     restApi: 'API REST', sessionRedirect: 'Création de session puis redirection',
     authContract: 'Clé secrète côté serveur', returnToConfirm: 'Retour navigateur non probant',
     directGuide: 'Voir le guide API directe', hostedGuide: 'Voir le guide de redirection',
-    capabilitiesTitle: 'Ce que l’intégration SendFlow prévoit',
+    capabilitiesTitle: 'Ce que vous pouvez faire',
     capabilitySession: 'Créer une session de paiement depuis votre serveur marchand.',
     capabilityCheckout: 'Présenter un parcours hébergé SendFlow au payeur.',
+    capabilityDirect: 'Intégrer directement la caisse dans votre application.',
     capabilityStatus: 'Consulter le statut d’une session et d’une tentative.',
     capabilityWebhook: 'Recevoir les notifications de paiement réussi ou échoué par webhook.',
-    baseUrlTitle: 'URL de base API',
-    baseUrlPending: 'URLs de production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api pour les appels API ; SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa pour les paiements hébergés. Application marchand : https://merchent.business.sendflow.africa. Site public : https://sendflow.africa. Documentation : https://apis.docs.sendflow.africa. Définissez ces deux variables d’intégration côté serveur marchand.',
-    quickstartCatalogTitle: 'Consulter le catalogue et les limites',
-    quickstartCatalogText: 'Commencez par lire GET /pricing et GET /payment-limits. Ces lectures publiques ne nécessitent pas de clé secrète. Utilisez les données renvoyées pour présenter les options et les seuils ; le serveur reste responsable de valider chaque opération.',
-    quickstartHostedTitle: 'Créer et suivre une session hébergée',
-    quickstartHostedText: 'Créez la session depuis votre backend avec la clé secrète. L’API renvoie checkoutPath : votre serveur le combine avec SENDFLOW_CHECKOUT_ORIGIN et transmet uniquement le lien de paiement au navigateur. Après le retour du payeur, relisez le statut côté serveur ou vérifiez un webhook signé.',
-    threeSteps: 'En 3 étapes', stepOne: 'Créez votre compte marchand', stepOneSub: 'Un compte marchand actif et éligible est requis pour utiliser les paiements API.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Créez ou régénérez votre paire dans l’espace Développeurs ; la clé secrète ne s’affiche qu’à sa création.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Créez la session côté serveur et vérifiez le résultat auprès de SendFlow.',
+    baseUrlTitle: 'URL de production',
+    apiBaseUrlLabel: 'API SendFlow',
+    checkoutOriginLabel: 'Paiement hébergé',
+    baseUrlPending: 'Définissez ces deux variables sur votre serveur marchand. Ne placez jamais votre clé secrète dans le navigateur.',
+    quickstartTitle: 'Démarrage rapide',
+    quickstartPrereqTitle: 'Prérequis',
+    quickstartPrereqText: 'Un compte marchand avec accès à l’API et une paire de clés SendFlow. Configurez SENDFLOW_API_BASE_URL et SENDFLOW_SECRET_KEY dans l’environnement de votre serveur. SENDFLOW_CHECKOUT_ORIGIN est nécessaire uniquement pour Hosted Checkout.',
+    quickstartCatalogTitle: 'Vérifier les pays, opérateurs et frais',
+    quickstartCatalogText: 'GET /pricing renvoie le catalogue public et les taux configurés. Cette lecture ne nécessite pas de clé secrète. Les choix proposés pour un paiement direct doivent ensuite être lus depuis sa session.',
+    quickstartLimitsTitle: 'Vérifier les limites de paiement',
+    quickstartLimitsText: 'GET /payment-limits renvoie les limites actuellement configurées. Le serveur valide toujours le montant au moment de créer la session.',
+    quickstartDirectTitle: 'Créer une session de paiement directe',
+    quickstartDirectText: 'Créez la session depuis votre serveur marchand avec un montant fixe en XOF et une clé Idempotency-Key unique pour cette opération. Le montant ne peut pas être modifié par le payeur.',
+    quickstartChoicesTitle: 'Charger les choix de paiement',
+    quickstartChoicesText: 'Utilisez l’identifiant, la clé publique et le jeton de la session créée. Affichez uniquement les pays et opérateurs renvoyés par cette session.',
+    quickstartAttemptTitle: 'Démarrer une tentative Mobile Money',
+    quickstartAttemptText: 'Après le choix du payeur, envoyez les informations requises par l’API. Le montant reste celui de la session ; n’envoyez jamais de code OTP ou de PIN.',
+    quickstartStatusTitle: 'Vérifier le statut',
+    quickstartStatusText: 'Relisez la session depuis votre serveur avec la clé secrète ou vérifiez le webhook après validation de sa signature. Ne confirmez la commande qu’après un état succeeded.',
+    threeSteps: 'Parcours recommandé', stepOne: 'Créez votre compte marchand', stepOneSub: 'Un compte marchand actif et éligible est requis pour utiliser les paiements API.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Créez ou régénérez votre paire dans l’espace Développeurs ; la clé secrète ne s’affiche qu’à sa création.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Créez la session côté serveur et vérifiez le résultat auprès de SendFlow.',
     read: 'Lire le guide', support: 'Besoin d’aide ?', supportSub: 'Contactez l’équipe SendFlow pour toute question liée à votre intégration.', contact: 'Contacter le support',
     disclaimerTitle: 'Confirmation du paiement', disclaimer: 'Ne marquez jamais une commande comme payée sur la seule base d’une redirection ou d’un état affiché dans le navigateur. Vérifiez le statut serveur ou traitez un webhook dont la signature est valide.',
-    whatIs: 'Fonctionnement', whatIsText: 'SendFlow crée une session de paiement fixe en XOF, renvoie les informations nécessaires au parcours choisi, puis expose un statut de paiement vérifié côté serveur.',
+    whatIs: 'Paiements SendFlow pour les marchands',
+    whatIsText: 'SendFlow propose une API de paiement pour intégrer un parcours hébergé ou une caisse directe, puis vérifier les opérations côté serveur.',
     prerequisites: 'Prérequis', noCredentials: 'Ne placez jamais la clé secrète dans le navigateur, une application mobile distribuée, un dépôt public ou des journaux.',
     notDocumented: 'Gestion des clés API', notDocumentedText: 'Créez ou régénérez la paire de clés dans l’espace Développeurs ; elle n’est pas créée automatiquement à l’ouverture du compte. Une nouvelle paire révoque l’ancienne. La clé secrète est réservée aux appels serveur ; la clé publique sert aux appels de caisse prévus par le parcours direct.',
     rotationText: 'La clé secrète complète est affichée lors de sa création. Enregistrez-la dans un gestionnaire de secrets. La régénération désactive immédiatement l’ancienne paire de clés.',
@@ -218,7 +234,8 @@ const localized: Record<Language, Translation> = {
     badge: 'REST API · JSON', prod: 'SendFlow API documentation',
     homeTitle: 'Integrate SendFlow with your platform',
     homeSub: 'Discover the tools and APIs you need to accept payments with SendFlow.',
-    startTitle: 'Getting started', startSub: 'Set up your access, choose a payment flow, and verify each payment from your server.',
+    startTitle: 'Get started', startWelcomeTitle: 'Welcome to SendFlow',
+    startSub: 'Integrate SendFlow Mobile Money payments into your app with hosted checkout or a direct API flow.',
     authTitle: 'Authentication', authSub: 'Use the secret key for server requests and the public key only in the checkout flow.',
     directTitle: 'Direct API integration', directSub: 'Create a session server-side, display available choices, and follow the status confirmed by SendFlow.',
     hostedTitle: 'Hosted payment redirect', hostedSub: 'Create a hosted session and redirect the payer to the SendFlow payment path returned by the API.',
@@ -233,21 +250,36 @@ const localized: Record<Language, Translation> = {
     restApi: 'REST API', sessionRedirect: 'Create a session, then redirect',
     authContract: 'Server-side secret key', returnToConfirm: 'Browser redirect is not proof',
     directGuide: 'View the direct API guide', hostedGuide: 'View the redirect guide',
-    capabilitiesTitle: 'What SendFlow integration covers',
+    capabilitiesTitle: 'What you can do',
     capabilitySession: 'Create a payment session from your merchant server.',
     capabilityCheckout: 'Present a SendFlow-hosted payment flow to the payer.',
+    capabilityDirect: 'Integrate checkout directly into your application.',
     capabilityStatus: 'Read the status of a session and payment attempt.',
     capabilityWebhook: 'Receive successful or failed payment notifications by webhook.',
-    baseUrlTitle: 'API base URL',
-    baseUrlPending: 'Production URLs: set SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api for API requests and SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa for hosted payments. Merchant app: https://merchent.business.sendflow.africa. Public site: https://sendflow.africa. Documentation: https://apis.docs.sendflow.africa. Set both integration variables on your merchant server.',
-    quickstartCatalogTitle: 'Read the catalog and limits',
-    quickstartCatalogText: 'Start by reading GET /pricing and GET /payment-limits. These public reads do not require a secret key. Use the returned data to show options and thresholds; the server still validates every operation.',
-    quickstartHostedTitle: 'Create and track a hosted session',
-    quickstartHostedText: 'Create the session from your backend with the secret key. The API returns checkoutPath; your server combines it with SENDFLOW_CHECKOUT_ORIGIN and sends only the payment link to the browser. After the payer returns, read the status server-side or verify a signed webhook.',
-    threeSteps: 'In 3 steps', stepOne: 'Create your merchant account', stepOneSub: 'An active, eligible merchant account is required to use API payments.', stepTwo: 'Configure your API keys', stepTwoSub: 'Create or regenerate your key pair in the Developers area; the secret key is shown only when created.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Create sessions server-side and verify results with SendFlow.',
+    baseUrlTitle: 'Production URLs',
+    apiBaseUrlLabel: 'SendFlow API',
+    checkoutOriginLabel: 'Hosted payment',
+    baseUrlPending: 'Set these two variables on your merchant server. Never put your secret key in the browser.',
+    quickstartTitle: 'Quickstart',
+    quickstartPrereqTitle: 'Prerequisites',
+    quickstartPrereqText: 'A merchant account with API access and a SendFlow key pair. Set SENDFLOW_API_BASE_URL and SENDFLOW_SECRET_KEY in your server environment. SENDFLOW_CHECKOUT_ORIGIN is required only for Hosted Checkout.',
+    quickstartCatalogTitle: 'Check countries, operators, and fees',
+    quickstartCatalogText: 'GET /pricing returns the public catalog and configured rates. This read does not require a secret key. For direct payments, read the choices from the specific payment session.',
+    quickstartLimitsTitle: 'Check payment limits',
+    quickstartLimitsText: 'GET /payment-limits returns the currently configured limits. The server validates the amount again when creating a session.',
+    quickstartDirectTitle: 'Create a direct payment session',
+    quickstartDirectText: 'Create the session from your merchant server with a fixed XOF amount and a unique Idempotency-Key for this operation. The payer cannot change the amount.',
+    quickstartChoicesTitle: 'Load payment choices',
+    quickstartChoicesText: 'Use the ID, public key, and token from the created session. Display only the countries and operators returned for that session.',
+    quickstartAttemptTitle: 'Start a Mobile Money attempt',
+    quickstartAttemptText: 'After the payer chooses an option, send the fields required by the API. The amount remains fixed by the session; never send an OTP or PIN.',
+    quickstartStatusTitle: 'Check the status',
+    quickstartStatusText: 'Read the session from your server with the secret key, or verify the webhook signature. Confirm the order only after a succeeded state.',
+    threeSteps: 'Recommended flow', stepOne: 'Create your merchant account', stepOneSub: 'An active, eligible merchant account is required to use API payments.', stepTwo: 'Configure your API keys', stepTwoSub: 'Create or regenerate your key pair in the Developers area; the secret key is shown only when created.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Create sessions server-side and verify results with SendFlow.',
     read: 'Read the guide', support: 'Need help?', supportSub: 'Contact the SendFlow team with questions about your integration.', contact: 'Contact support',
     disclaimerTitle: 'Payment confirmation', disclaimer: 'Never mark an order as paid based only on a redirect or a browser-side state. Verify the server status or process a webhook whose signature is valid.',
-    whatIs: 'How it works', whatIsText: 'SendFlow creates a fixed XOF payment session, returns the information for the selected flow, and exposes a server-verified payment status.',
+    whatIs: 'SendFlow payments for merchants',
+    whatIsText: 'SendFlow provides a payment API for integrating hosted checkout or a direct checkout, with payment operations verified server-side.',
     prerequisites: 'Prerequisites', noCredentials: 'Never place the secret key in a browser, distributed mobile app, public repository, or client-side logs.',
     notDocumented: 'API key management', notDocumentedText: 'Create or regenerate the key pair in the Developers area; it is not created automatically when an account is opened. Creating a new pair revokes the previous pair. The secret key is for server requests; the public key is used for checkout requests in the direct flow.',
     rotationText: 'The full secret key is shown when it is created. Store it in a secret manager. Regenerating the pair immediately disables the previous keys.',
@@ -353,8 +385,12 @@ const localized: Record<Language, Translation> = {
 
 const localizedLists: Record<Language, TranslationLists> = {
   fr: {
-    stepTitles: ['Créez votre compte marchand', 'Configurez vos clés API', 'Intégrez SendFlow à votre application'],
-    stepTexts: ['Créez votre compte marchand SendFlow.', 'Créez ou régénérez votre paire dans l’espace Développeurs ; la clé secrète ne s’affiche qu’à sa création.', 'Créez les sessions côté serveur et vérifiez chaque résultat auprès de SendFlow.'],
+    stepTitles: ['Obtenez vos accès API', 'Choisissez votre intégration', 'Vérifiez chaque paiement'],
+    stepTexts: [
+      'Créez votre paire de clés dans l’espace Développeurs et gardez la clé secrète sur votre serveur.',
+      'Choisissez Hosted Checkout pour rediriger le payeur, ou l’API directe pour garder votre propre caisse.',
+      'Consultez le catalogue, créez les sessions côté serveur et vérifiez le résultat par statut ou webhook signé.',
+    ],
     responsibilitiesText: ['Gardez la clé secrète sur votre serveur ; le navigateur utilise uniquement les identifiants publics de session.', 'Traitez les événements de webhook de façon idempotente et validez leur signature HMAC.', 'Ne confirmez une commande qu’après un statut succeeded renvoyé par l’API ou un webhook authentique.'],
     directFlowTitles: ['Créer la session', 'Charger les choix disponibles', 'Démarrer le paiement', 'Vérifier le résultat'],
     directFlowTexts: [
@@ -419,8 +455,12 @@ const localizedLists: Record<Language, TranslationLists> = {
     ],
   },
   en: {
-    stepTitles: ['Create your merchant account', 'Configure your API keys', 'Integrate SendFlow into your app'],
-    stepTexts: ['Create your SendFlow merchant account.', 'Create or regenerate your key pair in the Developers area; the secret key is shown only when created.', 'Create sessions server-side and verify each result with SendFlow.'],
+    stepTitles: ['Get your API access', 'Choose your integration', 'Verify every payment'],
+    stepTexts: [
+      'Create your key pair in the Developers area and keep the secret key on your server.',
+      'Choose Hosted Checkout to redirect the payer, or the Direct API to keep your own checkout.',
+      'Read the catalog, create sessions server-side, and verify results through status checks or signed webhooks.',
+    ],
     responsibilitiesText: ['Keep the secret key on your server; the browser uses only public session credentials.', 'Process webhook events idempotently and verify their HMAC signature.', 'Confirm an order only after the API returns succeeded or an authentic webhook is received.'],
     directFlowTitles: ['Create the session', 'Load available choices', 'Start the payment', 'Verify the result'],
     directFlowTexts: [
@@ -969,8 +1009,16 @@ export default function DocsPage() {
   const activeDocGroup = docGroups.find((group) =>
     docsItems.some((item) => item.path === path && item.group === group.id),
   );
-  const description = activeDocItem ? t.sectionPageIntro : (t[`${pageKey}Sub`] ?? t.homeSub);
-  const title = activeDocItem ? (t[activeDocItem.key] ?? activeDocItem.label) : (t[titleKey] ?? t.homeTitle);
+  const description = pageKey === 'start'
+    ? t.startSub
+    : activeDocItem
+      ? t.sectionPageIntro
+      : (t[`${pageKey}Sub`] ?? t.homeSub);
+  const title = pageKey === 'start'
+    ? t.startWelcomeTitle
+    : activeDocItem
+      ? (t[activeDocItem.key] ?? activeDocItem.label)
+      : (t[titleKey] ?? t.homeTitle);
 
   useSeo({
     path,
@@ -1137,26 +1185,87 @@ export default function DocsPage() {
         <p className="sf-docs-lede">{description}</p>
         <div className="sf-docs-meta"><span className="sf-docs-status"><i className="sf-docs-status-dot" />{t.endpointStatus}</span></div>
         {pageKey === 'start' && <>
-          <section className="sf-docs-section"><h2>{t.whatIs}</h2><p>{t.whatIsText}</p>
-            <div className="sf-docs-steps">
-              {localizedLists[language].stepTitles.map((heading, index) => <div className="sf-docs-step" key={heading}><span className="sf-docs-step-index">0{index + 1}</span><div><strong>{heading}</strong><p>{localizedLists[language].stepTexts[index]}</p></div></div>)}
+          <section className="sf-docs-section">
+            <h2>{t.whatIs}</h2>
+            <p>{t.whatIsText}</p>
+          </section>
+          <section className="sf-docs-section">
+            <h2>{t.methods}</h2>
+            <p>{t.methodsSub}</p>
+            <div className="sf-docs-cards">
+              <Link href="/docs/integrations/hosted" className="sf-docs-card sf-docs-card-link">
+                <div className="sf-docs-card-top"><span className="sf-docs-card-icon"><Globe2 size={19} /></span><ArrowRight className="sf-docs-card-arrow" size={16} /></div>
+                <h3>Hosted Checkout</h3>
+                <p>{t.hostedCardSub}</p>
+                <span className="sf-docs-card-cta">{t.hostedGuide}<ArrowRight size={13} /></span>
+              </Link>
+              <Link href="/docs/integrations/direct" className="sf-docs-card sf-docs-card-link">
+                <div className="sf-docs-card-top"><span className="sf-docs-card-icon"><Code2 size={19} /></span><ArrowRight className="sf-docs-card-arrow" size={16} /></div>
+                <h3>{t.directCard}</h3>
+                <p>{t.directCardSub}</p>
+                <span className="sf-docs-card-cta">{t.directGuide}<ArrowRight size={13} /></span>
+              </Link>
             </div>
           </section>
-          <section className="sf-docs-section"><h2>{t.prerequisites}</h2><ul className="sf-docs-list"><li>{t.notDocumentedText}</li><li>{t.noCredentials}</li><li>{t.baseUrlPending}</li></ul>
-            <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+          <section className="sf-docs-section">
+            <h2>{t.capabilitiesTitle}</h2>
+            <ul className="sf-docs-list">
+              <li>{t.capabilitySession}</li>
+              <li>{t.capabilityCheckout}</li>
+              <li>{t.capabilityDirect}</li>
+              <li>{t.capabilityStatus}</li>
+              <li>{t.capabilityWebhook}</li>
+            </ul>
           </section>
           <section className="sf-docs-section">
-            <h2>{t.quickstartCatalogTitle}</h2>
+            <h2>{t.baseUrlTitle}</h2>
+            <div className="sf-docs-callout sf-docs-base-url">
+              <div><strong>{t.apiBaseUrlLabel}</strong><code>SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api</code></div>
+              <div><strong>{t.checkoutOriginLabel}</strong><code>SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa</code></div>
+              <span>{t.baseUrlPending}</span>
+            </div>
+          </section>
+          <section className="sf-docs-section">
+            <h2>{t.threeSteps}</h2>
+            <div className="sf-docs-steps">
+              {localizedLists[language].stepTitles.map((heading, index) => (
+                <div className="sf-docs-step" key={heading}>
+                  <span className="sf-docs-step-index">0{index + 1}</span>
+                  <div><strong>{heading}</strong><p>{localizedLists[language].stepTexts[index]}</p></div>
+                </div>
+              ))}
+            </div>
+          </section>
+          <section className="sf-docs-section">
+            <h2>{t.quickstartTitle}</h2>
+            <h3>{t.quickstartPrereqTitle}</h3>
+            <p>{t.quickstartPrereqText}</p>
+            <div className="sf-docs-callout">{t.serverOnly}</div>
+
+            <h3>{t.quickstartCatalogTitle}</h3>
             <p>{t.quickstartCatalogText}</p>
-            <CodePanel language={language} label="GET /pricing" example="pricing" />
-            <CodePanel language={language} label="GET /payment-limits" example="payment-limits" />
-          </section>
-          <section className="sf-docs-section">
-            <h2>{t.quickstartHostedTitle}</h2>
-            <p>{t.quickstartHostedText}</p>
-            <CodePanel language={language} label={language === 'fr' ? 'Créer une session Hosted Checkout' : 'Create a Hosted Checkout session'} example="create-hosted" />
-            <ResponsePanel language={language} label={language === 'fr' ? 'Réponse de session d’exemple' : 'Sample session response'} response={hostedSessionResponse} />
-            <CodePanel language={language} label={language === 'fr' ? 'Vérifier le statut côté serveur' : 'Check status server-side'} example="read-session" />
+            <CodePanel language={language} label="GET /api/pricing" example="pricing" />
+
+            <h3>{t.quickstartLimitsTitle}</h3>
+            <p>{t.quickstartLimitsText}</p>
+            <CodePanel language={language} label="GET /api/payment-limits" example="payment-limits" />
+
+            <h3>{t.quickstartDirectTitle}</h3>
+            <p>{t.quickstartDirectText}</p>
+            <CodePanel language={language} label="POST /api/v1/payment-sessions" example="create-direct" />
+            <ResponsePanel language={language} label={t.responseExample} response={directSessionResponse} />
+
+            <h3>{t.quickstartChoicesTitle}</h3>
+            <p>{t.quickstartChoicesText}</p>
+            <CodePanel language={language} label="GET /api/v1/public/payment-sessions/{sessionId}" example="read-public-session" />
+
+            <h3>{t.quickstartAttemptTitle}</h3>
+            <p>{t.quickstartAttemptText}</p>
+            <CodePanel language={language} label="POST /api/v1/public/payment-sessions/{sessionId}/attempts" example="start-attempt" />
+
+            <h3>{t.quickstartStatusTitle}</h3>
+            <p>{t.quickstartStatusText}</p>
+            <CodePanel language={language} label="GET /api/v1/payment-sessions/{sessionId}" example="read-session" />
           </section>
         </>}
         {pageKey === 'auth' && <>

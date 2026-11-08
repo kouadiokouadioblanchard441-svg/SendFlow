@@ -171,6 +171,8 @@
 .sf-docs-base-url { display: grid; gap: 4px; }
 .sf-docs-base-url strong { color: #17181d; font-size: 13px; }
 .sf-docs-base-url span { overflow-wrap: anywhere; color: #292a30; font-size: 12px; line-height: 1.6; }
+.sf-docs-base-url code { display: block; overflow-wrap: anywhere; color: #292a30; font-size: 12px; line-height: 1.6; }
+.sf-docs-base-url > div { display: grid; gap: 3px; }
 .sf-docs-reference-table { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 10px; }
 .sf-docs-reference-table th { border-bottom: 1.5px solid #e8dcf9; padding: 11px 10px; color: #55515f; font-size: 10px; letter-spacing: .07em; text-align: left; text-transform: uppercase; }
 .sf-docs-reference-table td { border-bottom: 1px solid #e8dcf9; padding: 13px 10px; color: #292a30; vertical-align: top; }
