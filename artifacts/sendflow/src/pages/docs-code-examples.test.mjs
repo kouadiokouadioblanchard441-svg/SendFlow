@@ -71,13 +71,21 @@ test('API endpoints are grouped by session, checkout, and public catalog flow', 
   assert.deepEqual(groupKeys, [...groupKeys].sort((a, b) => a - b));
   assert.match(docsCopy, /endpointGroupSessions: '1\. Sessions serveur'/);
   assert.match(docsCopy, /endpointGroupSessions: '1\. Server sessions'/);
+
+  const navStart = docsCopy.indexOf('const docsItems');
+  const navEnd = docsCopy.indexOf('const docGroups', navStart);
+  const navItems = docsCopy.slice(navStart, navEnd);
+  for (const anchor of ['create-session', 'read-session', 'direct-choices', 'create-attempt', 'read-attempt', 'pricing-catalog', 'payment-limits']) {
+    assert.doesNotMatch(navItems, new RegExp(`section:\\s*'${anchor}'`), `${anchor} should not take a separate menu entry`);
+  }
+  assert.doesNotMatch(navItems, /apiReference/);
 });
 
 test('direct and hosted examples follow their documented integration steps', () => {
   const directStart = docsCopy.indexOf("{pageKey === 'direct' && <>");
   const hostedStart = docsCopy.indexOf("{pageKey === 'hosted' && <>", directStart);
-  const apiStart = docsCopy.indexOf("{pageKey === 'api' && <>", hostedStart);
-  assert.ok(directStart >= 0 && hostedStart > directStart && apiStart > hostedStart);
+  const webhooksStart = docsCopy.indexOf("{pageKey === 'webhooks' && <>", hostedStart);
+  assert.ok(directStart >= 0 && hostedStart > directStart && webhooksStart > hostedStart);
 
   const directPage = docsCopy.slice(directStart, hostedStart);
   const directExamples = [
@@ -89,13 +97,33 @@ test('direct and hosted examples follow their documented integration steps', () 
   assert.ok(directExamples.every((position) => position >= 0));
   assert.deepEqual(directExamples, [...directExamples].sort((a, b) => a - b));
 
-  const hostedPage = docsCopy.slice(hostedStart, apiStart);
+  const hostedPage = docsCopy.slice(hostedStart, webhooksStart);
   const hostedExamples = [
     'example="create-hosted"',
     'example="read-session"',
   ].map((example) => hostedPage.indexOf(example));
   assert.ok(hostedExamples.every((position) => position >= 0));
   assert.deepEqual(hostedExamples, [...hostedExamples].sort((a, b) => a - b));
+});
+
+test('the direct API page includes the full endpoint reference below its integration steps', () => {
+  const directStart = docsCopy.indexOf("{pageKey === 'direct' && <>");
+  const hostedStart = docsCopy.indexOf("{pageKey === 'hosted' && <>", directStart);
+  const directPage = docsCopy.slice(directStart, hostedStart);
+  const referenceRendererStart = docsCopy.indexOf('const renderApiReference = () =>');
+  const referenceRendererEnd = docsCopy.indexOf('\n    return (\n      <>', referenceRendererStart);
+  const referenceRenderer = docsCopy.slice(referenceRendererStart, referenceRendererEnd);
+
+  assert.match(directPage, /\{renderApiReference\(\)\}/);
+  assert.match(referenceRenderer, /apiEndpointGroups\.map/);
+  assert.match(referenceRenderer, /endpoint\.method/);
+  assert.match(referenceRenderer, /endpoint\.path/);
+  assert.match(docsCopy, /path: '\/api\/v1\/public\/payment-sessions\/\{sessionId\}\/attempts'/);
+});
+
+test('the former API reference URL now resolves to the single direct API guide', async () => {
+  assert.match(docsCopy, /if \(path === '\/docs\/api-reference'\) setLocation\('\/docs\/integrations\/direct', \{ replace: true \}\)/);
+  assert.match(await readFile(new URL('../lib/documentation-host.ts', import.meta.url), 'utf8'), /'\/docs\/api-reference': 'direct'/);
 });
 
 test('public OTP guidance follows the merchant API contract', () => {

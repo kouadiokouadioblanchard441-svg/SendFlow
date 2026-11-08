@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   ArrowRight, BookOpen, Check, ChevronRight,
-  Code2, Copy, FileCode2, Globe2, LifeBuoy, LockKeyhole, Menu, Search, ShieldCheck,
+  Code2, Copy, Globe2, LifeBuoy, LockKeyhole, Menu, Search, ShieldCheck,
   Webhook, X,
 } from 'lucide-react';
 import sendflowMark from '@/assets/sendflow-mark-original.png';
@@ -17,7 +17,7 @@ import { getDocsCodeExample, getDocsCodeFormats, type DocsCodeFormat, type DocsE
 import './docs.css';
 
 type Language = 'fr' | 'en';
-type DocGroup = 'start' | 'integration' | 'apiReference' | 'webhooks' | 'reliability';
+type DocGroup = 'start' | 'integration' | 'webhooks' | 'reliability';
 type DocItem = { path: string; key: string; label: string; group: DocGroup; icon: typeof BookOpen; section?: string; search?: string };
 type Translation = Record<string, string>;
 type TranslationLists = {
@@ -43,15 +43,6 @@ const docsItems: DocItem[] = [
   { path: '/docs/authentication', key: 'auth', label: 'Authentication', group: 'start', icon: LockKeyhole },
   { path: '/docs/integrations/direct', key: 'direct', label: 'Direct API', group: 'integration', icon: Code2 },
   { path: '/docs/integrations/hosted', key: 'hosted', label: 'Hosted Checkout', group: 'integration', icon: Globe2 },
-  { path: '/docs/api-reference', key: 'api', label: 'API reference', group: 'apiReference', icon: FileCode2 },
-  { path: '/docs/api-reference', section: 'create-session', key: 'endpointCreate', label: 'Create a session', group: 'apiReference', icon: FileCode2, search: 'merchantReference amountMinor currency mode description returnUrl metadata idempotency' },
-  { path: '/docs/api-reference', section: 'read-session', key: 'endpointRead', label: 'Read a session', group: 'apiReference', icon: FileCode2, search: 'sessionId state status Authorization Bearer' },
-  { path: '/docs/api-reference', section: 'direct-choices', key: 'endpointChoices', label: 'Direct checkout choices', group: 'apiReference', icon: FileCode2, search: 'countries operators phonePrefix countryCode publicKey clientToken' },
-  { path: '/docs/api-reference', section: 'create-attempt', key: 'endpointAttempt', label: 'Start a payment attempt', group: 'apiReference', icon: FileCode2, search: 'firstName lastName countryCode operatorId phoneNumber ussdCode otp pin' },
-  { path: '/docs/api-reference', section: 'read-attempt', key: 'endpointAttemptRead', label: 'Read attempt status', group: 'apiReference', icon: FileCode2, search: 'attemptId pollToken state status' },
-  { path: '/docs/api-reference', section: 'pricing-catalog', key: 'endpointPricing', label: 'Countries, operators & fees', group: 'apiReference', icon: FileCode2, search: 'countries operators fees requiresOtp otpCommand' },
-  { path: '/docs/api-reference', section: 'payment-limits', key: 'endpointLimits', label: 'Payment limits', group: 'apiReference', icon: FileCode2, search: 'limits minimum deposit payout payin XOF maximum' },
-  { path: '/docs/api-reference', section: 'payout-api', key: 'endpointPayout', label: 'Payout API availability', group: 'apiReference', icon: FileCode2, search: 'payout withdrawal merchant API not available' },
   { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'webhooks', icon: Webhook },
   { path: '/docs/webhooks', section: 'webhook-events', key: 'webhookEvents', label: 'Webhook events', group: 'webhooks', icon: Webhook, search: 'payment.succeeded payment.failed events notifications' },
   { path: '/docs/webhooks', section: 'webhook-signature', key: 'delivery', label: 'Webhook signatures', group: 'webhooks', icon: Webhook, search: 'HMAC SHA-256 raw body sendflow-signature' },
@@ -69,25 +60,24 @@ const docsItems: DocItem[] = [
 const docGroups: { id: DocGroup; labelKey: string; icon: typeof BookOpen }[] = [
   { id: 'start', labelKey: 'startGroup', icon: BookOpen },
   { id: 'integration', labelKey: 'integrations', icon: Code2 },
-  { id: 'apiReference', labelKey: 'apiReferenceGroup', icon: FileCode2 },
   { id: 'webhooks', labelKey: 'webhooksGroup', icon: Webhook },
   { id: 'reliability', labelKey: 'reliabilityGroup', icon: ShieldCheck },
 ];
 
 const localized: Record<Language, Translation> = {
   fr: {
-    navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Référence API', navWebhooks: 'Webhooks',
+    navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API directe', navWebhooks: 'Webhooks',
     search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
     sectionPageIntro: 'Cette rubrique détaille le contrat SendFlow correspondant. Les exemples utilisent des données d’exemple et les blocages de disponibilité sont signalés.',
     integrations: 'Parcours de paiement', webhooksGroup: 'Webhooks',
-    apiReferenceGroup: 'Endpoints API', reliabilityGroup: 'États, erreurs et sécurité',
+    reliabilityGroup: 'États, erreurs et sécurité',
     endpointGroupSessions: '1. Sessions serveur',
     endpointGroupDirect: '2. Caisse API directe',
     endpointGroupCatalog: '3. Catalogue public et limites',
     reference: 'Référence', resources: 'Ressources', noResults: 'Aucun document ne correspond à cette recherche.',
     webhookRetries: 'Relances et déduplication',
     home: 'Documentation', start: 'Bien démarrer', auth: 'Authentification', direct: 'API directe',
-    hosted: 'Paiement hébergé', api: 'Référence API', webhooks: 'Webhooks', ref: 'Erreurs et sécurité',
+    hosted: 'Paiement hébergé', webhooks: 'Webhooks', ref: 'Erreurs et sécurité',
     badge: 'API REST · JSON', prod: 'Documentation API SendFlow',
     homeTitle: 'Intégrez SendFlow à votre plateforme',
     homeSub: 'Découvrez les outils et les API nécessaires pour accepter les paiements avec SendFlow.',
@@ -223,18 +213,18 @@ const localized: Record<Language, Translation> = {
     contents: 'Sommaire',
   },
   en: {
-    navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API reference', navWebhooks: 'Webhooks',
+    navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Direct API', navWebhooks: 'Webhooks',
     search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
     sectionPageIntro: 'This section details the matching SendFlow contract. Examples use sample data, and current availability blocks are stated clearly.',
     integrations: 'Payment flows', webhooksGroup: 'Webhooks',
-    apiReferenceGroup: 'API endpoints', reliabilityGroup: 'States, errors & security',
+    reliabilityGroup: 'States, errors & security',
     endpointGroupSessions: '1. Server sessions',
     endpointGroupDirect: '2. Direct checkout',
     endpointGroupCatalog: '3. Public catalog & limits',
     reference: 'Reference', resources: 'Resources', noResults: 'No documents match your search.',
     webhookRetries: 'Retries & deduplication',
     home: 'Documentation', start: 'Getting started', auth: 'Authentication', direct: 'Direct API',
-    hosted: 'Hosted Checkout', api: 'API reference', webhooks: 'Webhooks', ref: 'Errors & security',
+    hosted: 'Hosted Checkout', webhooks: 'Webhooks', ref: 'Errors & security',
     badge: 'REST API · JSON', prod: 'SendFlow API documentation',
     homeTitle: 'Integrate SendFlow with your platform',
     homeSub: 'Discover the tools and APIs you need to accept payments with SendFlow.',
@@ -781,9 +771,8 @@ const docSearchTerms: Record<string, string> = {
   '/docs': 'accueil home intégration paiements payment',
   '/docs/getting-started': 'prérequis compte marchand étapes getting started',
   '/docs/authentication': 'clé api publique secrète bearer authentification credentials',
-  '/docs/integrations/direct': 'api directe session tentative paiement mobile money pays opérateurs montant statut countryCode operatorId phoneNumber ussdCode OTP USSD Kotlin Côte d’Ivoire Burkina Faso Orange Money',
+  '/docs/integrations/direct': `api directe session tentative paiement mobile money pays opérateurs montant statut countryCode operatorId phoneNumber ussdCode OTP USSD Kotlin Côte d’Ivoire Burkina Faso Orange Money ${apiEndpointInventory.map((endpoint) => `${endpoint.method} ${endpoint.path} ${endpoint.description}`).join(' ')} frais limites idempotence`,
   '/docs/integrations/hosted': 'redirection hébergée checkout page payment link checkoutPath returnUrl compte à rebours client paiement Hosted Checkout',
-  '/docs/api-reference': `${apiEndpointInventory.map((endpoint) => `${endpoint.method} ${endpoint.path} ${endpoint.description}`).join(' ')} frais LinkFlow pays opérateurs session tentative statut idempotence`,
   '/docs/webhooks': 'webhook événements notifications signature retries livraisons payment.succeeded payment.failed HMAC',
   '/docs/reference': 'erreurs idempotence expiration sécurité limites 400 401 403 404 409 429 503 Retry-After environnement XOF uncertain',
 };
@@ -925,7 +914,7 @@ function CodePanel({ language, label, example }: { language: Language; label: st
 }
 
 export default function DocsPage() {
-  const [path] = useLocation();
+  const [path, setLocation] = useLocation();
   const [language, setLanguage] = useState<Language>('fr');
   const [query, setQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -939,6 +928,9 @@ export default function DocsPage() {
   const filteredItems = useMemo(() => docsItems.filter((item) =>
     `${localized[language][item.key] ?? item.label} ${item.label} ${item.search ?? docSearchTerms[item.path] ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   ), [language, query]);
+  useEffect(() => {
+    if (path === '/docs/api-reference') setLocation('/docs/integrations/direct', { replace: true });
+  }, [path, setLocation]);
   useEffect(() => {
     if (!sidebarOpen) return;
     const previousOverflow = document.body.style.overflow;
@@ -1084,6 +1076,69 @@ export default function DocsPage() {
 
   const renderDocument = () => {
     const showReferenceSection = (section: string) => !activeDocSection || activeDocSection === section;
+    const renderApiReference = () => (
+      <section className="sf-docs-section">
+        <h2>{t.reference}</h2>
+        <p>{t.referenceIntro}</p>
+        <div className="sf-docs-callout">{t.globalHttpErrors}</div>
+        {apiEndpointGroups.map((group) => {
+          const endpoints = apiEndpointInventory.filter((endpoint) => group.anchors.includes(endpoint.anchor));
+          return (
+            <section className="sf-docs-endpoint-group" key={group.key}>
+              <h3>{t[group.key]}</h3>
+              <div className="sf-docs-endpoints">
+                {endpoints.map((endpoint) => (
+                  <article id={endpoint.anchor} className="sf-docs-endpoint" key={endpoint.path} data-testid={`endpoint-card-${endpoint.method.toLowerCase()}-${endpoint.path.split('/').at(-1)}`}>
+                    <div className="sf-docs-endpoint-head">
+                      <span className={`sf-docs-method-badge is-${endpoint.method.toLowerCase()}`}>{endpoint.method}</span>
+                      <code>{endpoint.path}</code>
+                      <span className="sf-docs-endpoint-pending">{t.endpointStatus}</span>
+                    </div>
+                    <p>{t[endpoint.description]}</p>
+                    <div className="sf-docs-endpoint-access"><span>{t.endpointAccess}</span><strong>{t[endpoint.access]}</strong></div>
+                    <p className="sf-docs-endpoint-requirements">{language === 'fr' ? endpoint.requirementsFr : endpoint.requirementsEn}</p>
+                    <h3>{t.parametersTitle}</h3>
+                    <table className="sf-docs-reference-table">
+                      <thead><tr><th>{t.parameterFieldHeader}</th><th>{t.parameterTypeHeader}</th><th>{t.parameterRequirementHeader}</th><th>{t.parameterDescriptionHeader}</th></tr></thead>
+                      <tbody>{(language === 'fr' ? endpoint.fieldsFr : endpoint.fieldsEn).map((field) => (
+                        <tr key={field.field}>
+                          <td data-label={t.parameterFieldHeader}><code className="sf-docs-inline-code">{field.field}</code></td>
+                          <td data-label={t.parameterTypeHeader}>{field.type}</td>
+                          <td data-label={t.parameterRequirementHeader}>{field.requirement}</td>
+                          <td data-label={t.parameterDescriptionHeader}>{field.description}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                    <p className="sf-docs-endpoint-codes">{language === 'fr' ? endpoint.codesFr : endpoint.codesEn}</p>
+                    <p className="sf-docs-endpoint-requirements"><strong>{language === 'fr' ? 'Erreurs et cas métier : ' : 'Errors and business cases: '}</strong>{language === 'fr' ? endpoint.errorsFr : endpoint.errorsEn}</p>
+                    <details className="sf-docs-endpoint-example">
+                      <summary>{t.requestExample}</summary>
+                      <CodePanel language={language} label={`${endpoint.method} ${endpoint.path}`} example={endpoint.example} />
+                    </details>
+                    <details className="sf-docs-endpoint-example">
+                      <summary>{t.responseExample}</summary>
+                      <ResponsePanel
+                        language={language}
+                        label={`${t.responseExample} · JSON`}
+                        response={endpoint.anchor === 'payment-limits' && paymentLimitsQuery.data
+                          ? JSON.stringify(paymentLimitsQuery.data, null, 2)
+                          : endpoint.response}
+                      />
+                    </details>
+                  </article>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+        <p className="sf-docs-endpoint-note">{t.availableChoicesNote}</p>
+        <section className="sf-docs-section sf-docs-section--nested">
+          <h2>{t.payoutApiTitle}</h2>
+          <p>{t.payoutApiText}</p>
+        </section>
+        <div className="sf-docs-callout"><strong>{t.apiScopeTitle}.</strong> {t.apiScopeText}</div>
+      </section>
+    );
     return (
       <>
         <div className="sf-docs-breadcrumb"><Link href="/docs" onClick={() => setSelectedDocSection(null)}>{t.breadcrumb}</Link><ChevronRight size={12} /><span>{activeDocItem ? (t[activeDocItem.key] ?? activeDocItem.label) : (t[pageKey] ?? t.home)}</span></div>
@@ -1195,6 +1250,7 @@ export default function DocsPage() {
               ))}</tbody>
             </table>
           </section>
+          {renderApiReference()}
           <div className="sf-docs-callout"><strong>{t.webhookSharedNote}</strong> <Link href="/docs/webhooks">{t.webhookGuideLink}</Link></div>
           <section className="sf-docs-section"><h2>{t.responsibilities}</h2><ul className="sf-docs-list">{localizedLists[language].responsibilitiesText.map((line) => <li key={line}>{line}</li>)}</ul></section>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
@@ -1228,73 +1284,6 @@ export default function DocsPage() {
           <div className="sf-docs-callout"><strong>{t.webhookSharedNote}</strong> <Link href="/docs/webhooks">{t.webhookGuideLink}</Link></div>
           <section className="sf-docs-section"><h2>{t.responsibilities}</h2><ul className="sf-docs-list">{localizedLists[language].responsibilitiesText.map((line) => <li key={line}>{line}</li>)}</ul></section>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
-        </>}
-        {pageKey === 'api' && <>
-          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
-          <section className="sf-docs-section"><h2>{t.reference}</h2><p>{t.referenceIntro}</p><div className="sf-docs-callout">{t.globalHttpErrors}</div>
-            {apiEndpointGroups.map((group) => {
-              const endpoints = apiEndpointInventory.filter((endpoint) =>
-                group.anchors.includes(endpoint.anchor)
-                && (!activeDocSection || endpoint.anchor === activeDocSection),
-              );
-              if (endpoints.length === 0) return null;
-              return (
-                <section className="sf-docs-endpoint-group" key={group.key}>
-                  <h3>{t[group.key]}</h3>
-                  <div className="sf-docs-endpoints">
-                    {endpoints.map((endpoint) => (
-                <article className="sf-docs-endpoint" key={endpoint.path} data-testid={`endpoint-card-${endpoint.method.toLowerCase()}-${endpoint.path.split('/').at(-1)}`}>
-                  <div className="sf-docs-endpoint-head">
-                    <span className={`sf-docs-method-badge is-${endpoint.method.toLowerCase()}`}>{endpoint.method}</span>
-                    <code>{endpoint.path}</code>
-                    <span className="sf-docs-endpoint-pending">{t.endpointStatus}</span>
-                  </div>
-                  <p>{t[endpoint.description]}</p>
-                  <div className="sf-docs-endpoint-access"><span>{t.endpointAccess}</span><strong>{t[endpoint.access]}</strong></div>
-                  <p className="sf-docs-endpoint-requirements">{language === 'fr' ? endpoint.requirementsFr : endpoint.requirementsEn}</p>
-                  <h3>{t.parametersTitle}</h3>
-                  <table className="sf-docs-reference-table">
-                    <thead><tr><th>{t.parameterFieldHeader}</th><th>{t.parameterTypeHeader}</th><th>{t.parameterRequirementHeader}</th><th>{t.parameterDescriptionHeader}</th></tr></thead>
-                    <tbody>{(language === 'fr' ? endpoint.fieldsFr : endpoint.fieldsEn).map((field) => (
-                      <tr key={field.field}>
-                        <td data-label={t.parameterFieldHeader}><code className="sf-docs-inline-code">{field.field}</code></td>
-                        <td data-label={t.parameterTypeHeader}>{field.type}</td>
-                        <td data-label={t.parameterRequirementHeader}>{field.requirement}</td>
-                        <td data-label={t.parameterDescriptionHeader}>{field.description}</td>
-                      </tr>
-                    ))}</tbody>
-                  </table>
-                  <p className="sf-docs-endpoint-codes">{language === 'fr' ? endpoint.codesFr : endpoint.codesEn}</p>
-                  <p className="sf-docs-endpoint-requirements"><strong>{language === 'fr' ? 'Erreurs et cas métier : ' : 'Errors and business cases: '}</strong>{language === 'fr' ? endpoint.errorsFr : endpoint.errorsEn}</p>
-                  <details className="sf-docs-endpoint-example">
-                    <summary>{t.requestExample}</summary>
-                    <CodePanel language={language} label={`${endpoint.method} ${endpoint.path}`} example={endpoint.example} />
-                  </details>
-                  <details className="sf-docs-endpoint-example">
-                    <summary>{t.responseExample}</summary>
-                    <ResponsePanel
-                      language={language}
-                      label={`${t.responseExample} · JSON`}
-                      response={endpoint.anchor === 'payment-limits' && paymentLimitsQuery.data
-                        ? JSON.stringify(paymentLimitsQuery.data, null, 2)
-                        : endpoint.response}
-                    />
-                  </details>
-                </article>
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
-            <p className="sf-docs-endpoint-note">{t.availableChoicesNote}</p>
-            {showReferenceSection('payout-api') && (
-              <section className="sf-docs-section sf-docs-section--nested">
-                <h2>{t.payoutApiTitle}</h2>
-                <p>{t.payoutApiText}</p>
-              </section>
-            )}
-            <div className="sf-docs-callout"><strong>{t.apiScopeTitle}.</strong> {t.apiScopeText}</div>
-          </section>
         </>}
         {pageKey === 'webhooks' && <>
           {showReferenceSection('webhook-events') && <section className="sf-docs-section"><h2>{t.webhookEvents}</h2><p>{t.webhookEventsSub}</p>
@@ -1427,7 +1416,7 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
         <nav className="sf-docs-nav" aria-label="Main navigation">
           <Link href="/docs" className={path === '/docs' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-home">{t.navDocs}</Link>
           <Link href="/docs/getting-started" className={path === '/docs/getting-started' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-guides">{t.navGuides}</Link>
-          <Link href="/docs/api-reference" className={path === '/docs/api-reference' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-api">{t.navApi}</Link>
+          <Link href="/docs/integrations/direct" className={path === '/docs/integrations/direct' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-api">{t.navApi}</Link>
           <Link href="/docs/webhooks" className={path === '/docs/webhooks' ? 'is-active' : ''} onClick={() => setSelectedDocSection(null)} data-testid="link-docs-top-webhooks">{t.navWebhooks}</Link>
         </nav>
         <div className="sf-docs-header-tools">

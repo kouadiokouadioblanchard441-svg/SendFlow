@@ -6,7 +6,7 @@ const DOCUMENTATION_PAGE_KEYS: Readonly<Record<string, string>> = {
   '/docs/authentication': 'auth',
   '/docs/integrations/direct': 'direct',
   '/docs/integrations/hosted': 'hosted',
-  '/docs/api-reference': 'api',
+  '/docs/api-reference': 'direct',
   '/docs/webhooks': 'webhooks',
   '/docs/reference': 'ref',
 };
