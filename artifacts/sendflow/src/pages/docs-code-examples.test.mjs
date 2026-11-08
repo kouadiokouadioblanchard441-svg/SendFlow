@@ -304,11 +304,15 @@ test('Mobile Money guidance describes operator USSD confirmation in both languag
 
 test('Mobile Money guide distinguishes catalog metadata from supported attempt fields', () => {
   assert.match(docsCopy, /GET \/pricing peut exposer requiresOtp et otpCommand comme métadonnées opérateur/);
-  assert.match(docsCopy, /La requête de tentative n’accepte pas de champ otp et le contrat ne prévoit pas de deuxième appel/);
+  assert.match(docsCopy, /OTP reçu par SMS/);
+  assert.match(docsCopy, /OTP obtenu après un code USSD/);
+  assert.match(docsCopy, /Wave et ouverture d’application/);
+  assert.match(docsCopy, /la réponse de tentative ne fournit pas de lien pour ouvrir l’application/);
   assert.match(docsCopy, /GET \/pricing may expose requiresOtp and otpCommand as operator metadata/);
-  assert.match(docsCopy, /the contract does not define a second call to submit a code/);
-  assert.match(docsCopy, /ni champ otp, ni deuxième requête de confirmation, ni URL de redirection opérateur/);
-  assert.match(docsCopy, /no otp field, second confirmation request, or operator redirect URL/);
+  assert.match(docsCopy, /SMS OTP/);
+  assert.match(docsCopy, /OTP after dialing a USSD code/);
+  assert.match(docsCopy, /Wave app handoff/);
+  assert.match(docsCopy, /the attempt response does not provide a link to open the app/);
   assert.doesNotMatch(docsCopy, /wave_url|otp_required/i);
 });
 
