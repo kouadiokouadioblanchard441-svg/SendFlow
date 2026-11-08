@@ -9,12 +9,15 @@ export type DocsExampleId =
   | 'handle-http-errors'
   | 'pricing'
   | 'payment-limits'
+  | 'payout-quote'
+  | 'payout-create'
+  | 'payout-list'
+  | 'payout-read'
+  | 'payout-cancel'
   | 'webhook';
 
-type ExampleSet = Record<Exclude<DocsCodeFormat, 'Kotlin' | 'Node.js'>, string> & {
-  'Node.js'?: string;
-  Kotlin?: string;
-};
+type ExampleSet = Pick<Record<DocsCodeFormat, string>, 'cURL' | 'PHP' | 'Python'>
+  & Partial<Record<DocsCodeFormat, string>>;
 
 const examples: Record<DocsExampleId, ExampleSet> = {
   'create-hosted': {
@@ -926,6 +929,359 @@ try {
 } finally {
     connection.disconnect()
 }`,
+  },
+  'payout-quote': {
+    'Node.js': `// Read-only quote; no payout is created and no funds are reserved.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+const operatorId = process.env.PAYOUT_OPERATOR_ID;
+if (!apiBaseUrl || !secretKey || !operatorId) {
+  throw new Error("Configure the SendFlow server key and payout operator ID");
+}
+
+const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/v1/payout-quote", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer " + secretKey,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    amountMinor: 12500,
+    currency: "XOF",
+    countryCode: "ci",
+    operatorId,
+    feePayer: "merchant",
+  }),
+});
+const quote = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(quote.error ?? \`Quote returned HTTP \${response.status}\`);
+console.log(quote);`,
+    Python: `import os
+import requests
+
+api_base_url = os.environ["SENDFLOW_API_BASE_URL"].rstrip("/")
+secret_key = os.environ["SENDFLOW_SECRET_KEY"]
+operator_id = os.environ["PAYOUT_OPERATOR_ID"]
+response = requests.post(
+    api_base_url + "/v1/payout-quote",
+    headers={"Authorization": f"Bearer {secret_key}"},
+    json={
+        "amountMinor": 12500,
+        "currency": "XOF",
+        "countryCode": "ci",
+        "operatorId": operator_id,
+        "feePayer": "merchant",
+    },
+    timeout=15,
+)
+response.raise_for_status()
+print(response.json())`,
+    cURL: `curl --request POST "$SENDFLOW_API_BASE_URL/v1/payout-quote" \\
+  --header "Authorization: Bearer $SENDFLOW_SECRET_KEY" \\
+  --header "Content-Type: application/json" \\
+  --data '{
+    "amountMinor": 12500,
+    "currency": "XOF",
+    "countryCode": "ci",
+    "operatorId": "'"$PAYOUT_OPERATOR_ID"'",
+    "feePayer": "merchant"
+  }'`,
+    PHP: `$apiBaseUrl = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/");
+$secretKey = getenv("SENDFLOW_SECRET_KEY");
+$operatorId = getenv("PAYOUT_OPERATOR_ID");
+if (!$apiBaseUrl || !$secretKey || !$operatorId) {
+    throw new RuntimeException("Configure the SendFlow server key and payout operator ID");
+}
+$ch = curl_init($apiBaseUrl . "/v1/payout-quote");
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        "Authorization: Bearer " . $secretKey,
+        "Content-Type: application/json",
+    ],
+    CURLOPT_POSTFIELDS => json_encode([
+        "amountMinor" => 12500,
+        "currency" => "XOF",
+        "countryCode" => "ci",
+        "operatorId" => $operatorId,
+        "feePayer" => "merchant",
+    ], JSON_THROW_ON_ERROR),
+]);
+$body = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+if ($body === false || $status < 200 || $status >= 300) {
+    throw new RuntimeException("SendFlow quote failed: HTTP " . $status);
+}
+echo $body;`,
+  },
+  'payout-create': {
+    'Node.js': `// This endpoint currently returns 503 with payout_unavailable.
+// No payout is created and no funds are reserved in that state.
+const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+const operatorId = process.env.PAYOUT_OPERATOR_ID;
+const beneficiaryPhone = process.env.PAYOUT_BENEFICIARY_PHONE_E164;
+const idempotencyKey = process.env.PAYOUT_IDEMPOTENCY_KEY;
+if (!apiBaseUrl || !secretKey || !operatorId || !beneficiaryPhone || !idempotencyKey) {
+  throw new Error("Configure the payout request values in your server environment");
+}
+
+const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/v1/payouts", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer " + secretKey,
+    "Idempotency-Key": idempotencyKey,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    amountMinor: 12500,
+    currency: "XOF",
+    countryCode: "ci",
+    operatorId,
+    feePayer: "merchant",
+    merchantReference: "ORDER-PAYOUT-2026-001",
+    beneficiary: { phoneNumber: beneficiaryPhone },
+  }),
+});
+const result = await response.json().catch(() => ({}));
+if (response.status === 503 && result.code === "payout_unavailable") {
+  console.log("No payout was created; no funds were reserved.");
+} else if (!response.ok) {
+  throw new Error(result.error ?? \`Payout request returned HTTP \${response.status}\`);
+} else {
+  console.log(result);
+}`,
+    Python: `import os
+import requests
+
+api_base_url = os.environ["SENDFLOW_API_BASE_URL"].rstrip("/")
+secret_key = os.environ["SENDFLOW_SECRET_KEY"]
+operator_id = os.environ["PAYOUT_OPERATOR_ID"]
+beneficiary_phone = os.environ["PAYOUT_BENEFICIARY_PHONE_E164"]
+idempotency_key = os.environ["PAYOUT_IDEMPOTENCY_KEY"]
+response = requests.post(
+    api_base_url + "/v1/payouts",
+    headers={
+        "Authorization": f"Bearer {secret_key}",
+        "Idempotency-Key": idempotency_key,
+    },
+    json={
+        "amountMinor": 12500,
+        "currency": "XOF",
+        "countryCode": "ci",
+        "operatorId": operator_id,
+        "feePayer": "merchant",
+        "merchantReference": "ORDER-PAYOUT-2026-001",
+        "beneficiary": {"phoneNumber": beneficiary_phone},
+    },
+    timeout=15,
+)
+result = response.json()
+if response.status_code == 503 and result.get("code") == "payout_unavailable":
+    print("No payout was created; no funds were reserved.")
+else:
+    response.raise_for_status()
+    print(result)`,
+    cURL: `curl --request POST "$SENDFLOW_API_BASE_URL/v1/payouts" \\
+  --header "Authorization: Bearer $SENDFLOW_SECRET_KEY" \\
+  --header "Idempotency-Key: $PAYOUT_IDEMPOTENCY_KEY" \\
+  --header "Content-Type: application/json" \\
+  --data-binary @- <<JSON
+{
+  "amountMinor": 12500,
+  "currency": "XOF",
+  "countryCode": "ci",
+  "operatorId": "$PAYOUT_OPERATOR_ID",
+  "feePayer": "merchant",
+  "merchantReference": "ORDER-PAYOUT-2026-001",
+  "beneficiary": {
+    "phoneNumber": "$PAYOUT_BENEFICIARY_PHONE_E164"
+  }
+}
+JSON`,
+    PHP: `$apiBaseUrl = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/");
+$secretKey = getenv("SENDFLOW_SECRET_KEY");
+$operatorId = getenv("PAYOUT_OPERATOR_ID");
+$beneficiaryPhone = getenv("PAYOUT_BENEFICIARY_PHONE_E164");
+$idempotencyKey = getenv("PAYOUT_IDEMPOTENCY_KEY");
+if (!$apiBaseUrl || !$secretKey || !$operatorId || !$beneficiaryPhone || !$idempotencyKey) {
+    throw new RuntimeException("Configure payout request values in your server environment");
+}
+$ch = curl_init($apiBaseUrl . "/v1/payouts");
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        "Authorization: Bearer " . $secretKey,
+        "Idempotency-Key: " . $idempotencyKey,
+        "Content-Type: application/json",
+    ],
+    CURLOPT_POSTFIELDS => json_encode([
+        "amountMinor" => 12500,
+        "currency" => "XOF",
+        "countryCode" => "ci",
+        "operatorId" => $operatorId,
+        "feePayer" => "merchant",
+        "merchantReference" => "ORDER-PAYOUT-2026-001",
+        "beneficiary" => ["phoneNumber" => $beneficiaryPhone],
+    ], JSON_THROW_ON_ERROR),
+]);
+$body = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+$result = json_decode($body ?: "{}", true);
+if ($status === 503 && ($result["code"] ?? null) === "payout_unavailable") {
+    echo "No payout was created; no funds were reserved.";
+} elseif ($body === false || $status < 200 || $status >= 300) {
+    throw new RuntimeException("Payout request returned HTTP " . $status);
+} else {
+    echo $body;
+}`,
+  },
+  'payout-list': {
+    'Node.js': `const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+if (!apiBaseUrl || !secretKey) throw new Error("Configure the SendFlow server key");
+
+const url = new URL(apiBaseUrl.replace(/\\/$/, "") + "/v1/payouts");
+url.searchParams.set("limit", "25");
+url.searchParams.set("status", "processing");
+const response = await fetch(url, {
+  headers: { Authorization: "Bearer " + secretKey },
+});
+const result = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(result.error ?? \`Payout list returned HTTP \${response.status}\`);
+console.log(result.items, "nextCursor:", result.nextCursor);`,
+    Python: `import os
+import requests
+
+response = requests.get(
+    os.environ["SENDFLOW_API_BASE_URL"].rstrip("/") + "/v1/payouts",
+    headers={"Authorization": f"Bearer {os.environ['SENDFLOW_SECRET_KEY']}"},
+    params={"limit": 25, "status": "processing"},
+    timeout=15,
+)
+response.raise_for_status()
+result = response.json()
+print(result["items"])
+print("nextCursor:", result["nextCursor"])`,
+    cURL: `curl --get "$SENDFLOW_API_BASE_URL/v1/payouts" \\
+  --header "Authorization: Bearer $SENDFLOW_SECRET_KEY" \\
+  --data-urlencode "limit=25" \\
+  --data-urlencode "status=processing"`,
+    PHP: `$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/payouts?limit=25&status=processing";
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => ["Authorization: Bearer " . getenv("SENDFLOW_SECRET_KEY")],
+]);
+$body = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+if ($body === false || $status < 200 || $status >= 300) {
+    throw new RuntimeException("Payout list returned HTTP " . $status);
+}
+$result = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+print_r($result["items"]);
+echo "nextCursor: " . ($result["nextCursor"] ?? "none");`,
+  },
+  'payout-read': {
+    'Node.js': `const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+const payoutId = process.env.SENDFLOW_PAYOUT_ID;
+if (!apiBaseUrl || !secretKey || !payoutId) throw new Error("Configure the payout ID and server key");
+
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/payouts/" + encodeURIComponent(payoutId),
+  { headers: { Authorization: "Bearer " + secretKey } },
+);
+const payout = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(payout.error ?? \`Payout read returned HTTP \${response.status}\`);
+console.log(payout);`,
+    Python: `import os
+import requests
+
+payout_id = os.environ["SENDFLOW_PAYOUT_ID"]
+response = requests.get(
+    os.environ["SENDFLOW_API_BASE_URL"].rstrip("/") + "/v1/payouts/" + payout_id,
+    headers={"Authorization": f"Bearer {os.environ['SENDFLOW_SECRET_KEY']}"},
+    timeout=15,
+)
+response.raise_for_status()
+print(response.json())`,
+    cURL: `curl --request GET "$SENDFLOW_API_BASE_URL/v1/payouts/$SENDFLOW_PAYOUT_ID" \\
+  --header "Authorization: Bearer $SENDFLOW_SECRET_KEY" \\
+  --header "Accept: application/json"`,
+    PHP: `$payoutId = getenv("SENDFLOW_PAYOUT_ID");
+$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/payouts/" . rawurlencode($payoutId);
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => ["Authorization: Bearer " . getenv("SENDFLOW_SECRET_KEY")],
+]);
+$body = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+if ($body === false || $status < 200 || $status >= 300) {
+    throw new RuntimeException("Payout read returned HTTP " . $status);
+}
+echo $body;`,
+  },
+  'payout-cancel': {
+    'Node.js': `const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
+const secretKey = process.env.SENDFLOW_SECRET_KEY;
+const payoutId = process.env.SENDFLOW_PAYOUT_ID;
+if (!apiBaseUrl || !secretKey || !payoutId) throw new Error("Configure the payout ID and server key");
+
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/payouts/" + encodeURIComponent(payoutId) + "/cancel",
+  {
+    method: "POST",
+    headers: { Authorization: "Bearer " + secretKey },
+  },
+);
+const result = await response.json().catch(() => ({}));
+if (response.status === 409) {
+  throw new Error("This payout can no longer be cancelled safely");
+}
+if (!response.ok) throw new Error(result.error ?? \`Payout cancel returned HTTP \${response.status}\`);
+console.log(result);`,
+    Python: `import os
+import requests
+
+payout_id = os.environ["SENDFLOW_PAYOUT_ID"]
+response = requests.post(
+    os.environ["SENDFLOW_API_BASE_URL"].rstrip("/") + "/v1/payouts/" + payout_id + "/cancel",
+    headers={"Authorization": f"Bearer {os.environ['SENDFLOW_SECRET_KEY']}"},
+    timeout=15,
+)
+if response.status_code == 409:
+    raise RuntimeError("This payout can no longer be cancelled safely")
+response.raise_for_status()
+print(response.json())`,
+    cURL: `curl --request POST "$SENDFLOW_API_BASE_URL/v1/payouts/$SENDFLOW_PAYOUT_ID/cancel" \\
+  --header "Authorization: Bearer $SENDFLOW_SECRET_KEY" \\
+  --header "Accept: application/json"`,
+    PHP: `$payoutId = getenv("SENDFLOW_PAYOUT_ID");
+$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/payouts/" . rawurlencode($payoutId) . "/cancel";
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => ["Authorization: Bearer " . getenv("SENDFLOW_SECRET_KEY")],
+]);
+$body = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+if ($status === 409) {
+    throw new RuntimeException("This payout can no longer be cancelled safely");
+}
+if ($body === false || $status < 200 || $status >= 300) {
+    throw new RuntimeException("Payout cancel returned HTTP " . $status);
+}
+echo $body;`,
   },
   webhook: {
     cURL: `# Local receiver test only. Never send this synthetic event to production.

@@ -6,6 +6,10 @@ import { getDocsCodeExample, getDocsCodeFormats } from './docs-code-examples.ts'
 const apiBase = 'https://merchent.business.sendflow.africa/api';
 const docsCopy = await readFile(new URL('./docs.tsx', import.meta.url), 'utf8');
 const docsStyles = await readFile(new URL('./docs.css', import.meta.url), 'utf8');
+const payoutRoutes = await readFile(
+  new URL('../../../api-server/src/routes/developer-payouts.ts', import.meta.url),
+  'utf8',
+);
 
 test('long documentation URLs wrap inside callouts and code notes', () => {
   assert.match(docsStyles, /\.sf-docs-callout\s*\{[^}]*overflow-wrap:\s*anywhere/);
@@ -212,4 +216,59 @@ test('attempt examples never send an OTP or PIN to the merchant API', () => {
   assert.match(docsCopy, /attempt\.ussdCode ou null/);
   assert.match(docsCopy, /attempt\.ussdCode or null/);
   assert.doesNotMatch(docsCopy, /#144\*82#/i, 'Unverified operator menu text must not be published as an OTP');
+});
+
+test('merchant payout examples cover every implemented API route and keep creation fail-closed', () => {
+  const payoutExamples = [
+    ['payout-quote', '/v1/payout-quote'],
+    ['payout-create', '/v1/payouts'],
+    ['payout-list', '/v1/payouts'],
+    ['payout-read', '/v1/payouts/'],
+    ['payout-cancel', '/v1/payouts/'],
+  ];
+  const payoutSectionStart = docsCopy.indexOf('<h2>{t.payoutApiTitle}</h2>');
+  assert.ok(payoutSectionStart >= 0);
+  const payoutSection = docsCopy.slice(payoutSectionStart);
+
+  for (const [example, route] of payoutExamples) {
+    assert.ok(payoutSection.includes(`example="${example}"`), `${example} must appear in the payout guide`);
+    for (const format of ['Node.js', 'Python', 'cURL', 'PHP']) {
+      const code = getDocsCodeExample(example, format);
+      assert.ok(code.includes(route), `${example} ${format} must call ${route}`);
+    }
+  }
+
+  const createExamples = ['Node.js', 'Python', 'cURL', 'PHP'].map((format) =>
+    getDocsCodeExample('payout-create', format),
+  );
+  for (const code of createExamples) {
+    assert.match(code, /Idempotency-Key/);
+    assert.match(code, /PAYOUT_BENEFICIARY_PHONE_E164/);
+    assert.match(code, /feePayer/);
+    assert.doesNotMatch(code, /feexpay|ashtechpay/i);
+  }
+  const payoutWebhookStart = docsCopy.indexOf('label={`${t.responseExample} · payout.created`}');
+  assert.ok(payoutWebhookStart >= 0, 'the webhook guide must show the payout event payload');
+  const payoutWebhookExample = docsCopy.slice(payoutWebhookStart, docsCopy.indexOf('</section>', payoutWebhookStart));
+  for (const field of [
+    '"amountMinor": 12500',
+    '"beneficiaryAmountMinor": 12500',
+    '"feePayer": "merchant"',
+    '"status": "funds_reserved"',
+    '"totalDebitMinor": 12750',
+  ]) {
+    assert.ok(payoutWebhookExample.includes(field), `payout webhook payload must include ${field}`);
+  }
+  assert.doesNotMatch(payoutWebhookExample, /beneficiaryPhone|phoneNumber/);
+  for (const category of ['deposit', 'inter-network', 'international', 'linkflow', 'payout']) {
+    assert.ok(docsCopy.includes(`"id": "${category}"`), `the public pricing example must include ${category}`);
+  }
+  assert.match(payoutRoutes, /router\.post\("\/v1\/payout-quote"/);
+  assert.match(payoutRoutes, /router\.post\("\/v1\/payouts"/);
+  assert.match(payoutRoutes, /router\.get\("\/v1\/payouts"/);
+  assert.match(payoutRoutes, /router\.get\("\/v1\/payouts\/:payoutId"/);
+  assert.match(payoutRoutes, /router\.post\("\/v1\/payouts\/:payoutId\/cancel"/);
+  assert.match(payoutRoutes, /if \(!PAYOUT_EXECUTION_ENABLED\)/);
+  assert.match(docsCopy, /HTTP 503 avec payout_unavailable : aucune demande n’est créée et aucun fonds n’est réservé/);
+  assert.match(docsCopy, /HTTP 503 with payout_unavailable: no request is created and no funds are reserved/);
 });

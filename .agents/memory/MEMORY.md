@@ -43,7 +43,7 @@
 - [Payment minimum](payment-minimum.md) — Keep the 200 FCFA floor server-side for CFA links and XOF deposits; initialize configurable XOF payout minimum at 200.
 - [LinkFlow USSD configuration](linkflow-ussd-configuration.md) — Administrators configure USSD codes by country and operator; the provider does not supply them.
 - [SendFlow visual contrast](sendflow-visual-contrast.md) — Match provided LinkFlow mockups; keep artwork fixed, white surfaces, violet accents, and solid red deletes.
-- [Documentation portal visual identity](docs-portal-visual-identity.md) — Use the reference's Inter typography while preserving white surfaces, SendFlow violet, and clear card borders.
+- [SendFlow documentation rules](docs-portal-visual-identity.md) — Keep one guide per section and verify every public API example against SendFlow routes; never expose partner names or internal endpoints.
 - [SendFlow page loader](sendflow-page-loader.md) — Keep the shared LinkFlow-style four-dot violet animation for full-page waits and route transitions.
 - [Merchant developer API](developer-integrations.md) — Keep direct and SendFlow-hosted API checkout on the same LinkFlow routing and settlement path.
 - [Campaign contact details](campaign-contact-settings.md) — Campaign email contact details must come from the active admin settings; never bake support numbers into templates.
