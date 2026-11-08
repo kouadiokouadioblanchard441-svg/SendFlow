@@ -12,4 +12,7 @@ export type DeveloperPublicPaymentSessionCountriesItemOperatorsItem = {
   initials: string;
   /** @nullable */
   logoUrl: string | null;
+  requiresOtp: boolean;
+  /** @nullable */
+  otpCommand: string | null;
 };

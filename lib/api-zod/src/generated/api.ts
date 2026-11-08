@@ -2071,14 +2071,16 @@ export const GetDeveloperPublicPaymentSessionResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "initials": zod.string(),
-  "logoUrl": zod.string().nullable()
+  "logoUrl": zod.string().nullable(),
+  "requiresOtp": zod.boolean(),
+  "otpCommand": zod.string().nullable()
 }))
 }))
 })
 
 
 /**
- * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged.
+ * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
  * @summary Start a direct Mobile Money payment attempt
  */
 export const StartDeveloperDirectPaymentParams = zod.object({
@@ -2112,6 +2114,7 @@ export const startDeveloperDirectPaymentBodyOperatorIdMax = 80;
 export const startDeveloperDirectPaymentBodyPhoneNumberMin = 6;
 export const startDeveloperDirectPaymentBodyPhoneNumberMax = 20;
 
+export const startDeveloperDirectPaymentBodyOtpRegExp = new RegExp('^[0-9]{4,12}$');
 
 
 export const StartDeveloperDirectPaymentBody = zod.object({
@@ -2119,7 +2122,9 @@ export const StartDeveloperDirectPaymentBody = zod.object({
   "lastName": zod.string().min(1).max(startDeveloperDirectPaymentBodyLastNameMax),
   "countryCode": zod.string().regex(startDeveloperDirectPaymentBodyCountryCodeRegExp),
   "operatorId": zod.string().min(1).max(startDeveloperDirectPaymentBodyOperatorIdMax),
-  "phoneNumber": zod.string().min(startDeveloperDirectPaymentBodyPhoneNumberMin).max(startDeveloperDirectPaymentBodyPhoneNumberMax)
+  "phoneNumber": zod.string().min(startDeveloperDirectPaymentBodyPhoneNumberMin).max(startDeveloperDirectPaymentBodyPhoneNumberMax),
+  "otp": zod.string().regex(startDeveloperDirectPaymentBodyOtpRegExp).optional().describe('Payer-provided OTP. The API never stores it.'),
+  "reference": zod.uuid().optional().describe('Attempt reference returned when the provider requires a second OTP step.')
 })
 
 export const StartDeveloperDirectPaymentResponse = zod.object({
@@ -2130,7 +2135,14 @@ export const StartDeveloperDirectPaymentResponse = zod.object({
   "currency": zod.enum(['XOF']),
   "ussdCode": zod.string().nullable(),
   "pollToken": zod.string(),
-  "merchantReference": zod.string()
+  "merchantReference": zod.string(),
+  "flow": zod.object({
+  "action": zod.enum(['approve_on_phone', 'dial_ussd', 'enter_otp', 'open_redirect', 'wait', 'none']),
+  "reference": zod.uuid().nullable(),
+  "otpMethod": zod.union([zod.literal('sms'),zod.literal('ussd'),zod.literal('app'),zod.literal(null)]).nullable(),
+  "otpCommand": zod.string().nullable().describe('Server-configured instruction to dial; never the payer\'s OTP.'),
+  "redirectUrl": zod.url().nullable().describe('Provider-generated redirect URL when the selected flow requires one.')
+})
 })
 
 
@@ -2167,7 +2179,14 @@ export const GetDeveloperDirectPaymentStatusResponse = zod.object({
   "currency": zod.enum(['XOF']),
   "ussdCode": zod.string().nullable(),
   "pollToken": zod.string(),
-  "merchantReference": zod.string()
+  "merchantReference": zod.string(),
+  "flow": zod.object({
+  "action": zod.enum(['approve_on_phone', 'dial_ussd', 'enter_otp', 'open_redirect', 'wait', 'none']),
+  "reference": zod.uuid().nullable(),
+  "otpMethod": zod.union([zod.literal('sms'),zod.literal('ussd'),zod.literal('app'),zod.literal(null)]).nullable(),
+  "otpCommand": zod.string().nullable().describe('Server-configured instruction to dial; never the payer\'s OTP.'),
+  "redirectUrl": zod.url().nullable().describe('Provider-generated redirect URL when the selected flow requires one.')
+})
 })
 
 

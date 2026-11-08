@@ -29,4 +29,11 @@ export interface DeveloperDirectPaymentInput {
      * @maxLength 20
      */
   phoneNumber: string;
+  /**
+     * Payer-provided OTP. The API never stores it.
+     * @pattern ^[0-9]{4,12}$
+     */
+  otp?: string;
+  /** Attempt reference returned when the provider requires a second OTP step. */
+  reference?: string;
 }

@@ -20,6 +20,7 @@ export const paymentAttemptsTable = pgTable("sf_payment_attempts", {
   providerReferenceHash: varchar("provider_reference_hash", { length: 64 }).unique(),
   finalConfirmationId: uuid("final_confirmation_id").references((): AnyPgColumn => paymentConfirmationsTable.id, { onDelete: "restrict" }),
   dispatchedAt: timestamp("dispatched_at", { withTimezone: true }),
+  otpConfirmedAt: timestamp("otp_confirmed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({

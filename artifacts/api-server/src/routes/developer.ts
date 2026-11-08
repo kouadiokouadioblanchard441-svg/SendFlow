@@ -990,10 +990,12 @@ router.post("/v1/public/payment-sessions/:sessionId/attempts", async (req, res):
       ussdCode: result.ussdCode,
       pollToken: result.pollToken,
       merchantReference: session.merchantReference,
+      flow: result.flow,
     }));
   } catch (error) {
     if (error instanceof LinkFlowPaymentError) {
-      res.status(error.statusCode).json({ error: error.message });
+      const responseBody = error.responseBody ?? { error: error.message };
+      res.status(error.statusCode).json(responseBody);
       return;
     }
     req.log.error({ path: req.path }, "Developer direct payment attempt could not be started");
@@ -1049,6 +1051,7 @@ router.get("/v1/public/payment-sessions/:sessionId/attempts/:attemptId", async (
       ussdCode: result.ussdCode,
       pollToken: headers.data["X-LinkFlow-Attempt-Token"],
       merchantReference: session.merchantReference,
+      flow: result.flow,
     }));
   } catch (error) {
     if (error instanceof LinkFlowPaymentError) {

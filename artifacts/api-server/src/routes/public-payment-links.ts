@@ -168,7 +168,7 @@ async function loadAvailableChoices(link: PublicLinkRow) {
       if (operator.countryCode.toLowerCase() !== countryCode ||
         !operator.enabled || !operator.depositEnabled) return [];
       const channel = feexpayChannelForOperator(countryCode, operator.operatorId);
-      if (!channel || channel.requiresOtp) return [];
+      if (!channel) return [];
       const operatorScope = getAggregatorRouteScopeKey("operator", countryCode, operator.operatorId);
       const operatorAggregator = routeByScope.get(`operator:${operatorScope}`) ?? null;
       const effectiveAggregator = operatorAggregator ?? countryAggregator;
@@ -186,6 +186,7 @@ async function loadAvailableChoices(link: PublicLinkRow) {
         name: operator.name,
         initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
         logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+        requiresOtp: Boolean(channel.requiresOtp || otpPolicy?.requiresOtp),
         otpCommand: getConfiguredOtpCommand(otpPolicy),
       }];
     }).sort((left, right) => left.name.localeCompare(right.name, "fr"));
@@ -246,6 +247,10 @@ async function loadPreviewCatalogChoices(link: PublicLinkRow) {
           name: operator.name,
           initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
           logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+          requiresOtp: Boolean(
+            feexpayChannelForOperator(countryCode, operator.operatorId)?.requiresOtp ||
+            otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`)?.requiresOtp,
+          ),
           otpCommand: getConfiguredOtpCommand(
             otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`),
           ),

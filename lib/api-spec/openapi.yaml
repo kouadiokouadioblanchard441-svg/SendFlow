@@ -2299,7 +2299,7 @@ paths:
       operationId: startDeveloperDirectPayment
       tags: [developer]
       summary: Start a direct Mobile Money payment attempt
-      description: Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged.
+      description: Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
       parameters:
         - name: sessionId
           in: path
@@ -2329,10 +2329,13 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/DeveloperDirectPaymentResponse" }
         "400":
-          description: Payer or operator data is invalid.
+          description: Payer/operator data is invalid, or an OTP is required.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/ErrorEnvelope" }
+                  - { $ref: "#/components/schemas/DeveloperOtpRequiredError" }
         "404":
           description: Public key, session or client token not found.
           content:
@@ -8450,7 +8453,9 @@ components:
                     name: { type: string }
                     initials: { type: string }
                     logoUrl: { type: ["string", "null"] }
-                  required: [id, name, initials, logoUrl]
+                    requiresOtp: { type: boolean }
+                    otpCommand: { type: ["string", "null"] }
+                  required: [id, name, initials, logoUrl, requiresOtp, otpCommand]
             required: [code, name, flag, phonePrefix, minPhoneDigits, maxPhoneDigits, operators]
       required: [id, merchantName, description, mode, state, amountMinor, currency, expiresAt, countries]
     DeveloperDirectPaymentInput:
@@ -8461,7 +8466,26 @@ components:
         countryCode: { type: string, pattern: "^[A-Z]{2}$" }
         operatorId: { type: string, minLength: 1, maxLength: 80 }
         phoneNumber: { type: string, minLength: 6, maxLength: 20 }
+        otp: { type: string, pattern: "^[0-9]{4,12}$", description: "Payer-provided OTP. The API never stores it." }
+        reference: { type: string, format: uuid, description: "Attempt reference returned when the provider requires a second OTP step." }
       required: [firstName, lastName, countryCode, operatorId, phoneNumber]
+    DeveloperDirectPaymentFlow:
+      type: object
+      properties:
+        action: { type: string, enum: [approve_on_phone, dial_ussd, enter_otp, open_redirect, wait, none] }
+        reference: { type: ["string", "null"], format: uuid }
+        otpMethod: { type: ["string", "null"], enum: [sms, ussd, app, null] }
+        otpCommand: { type: ["string", "null"], description: "Server-configured instruction to dial; never the payer's OTP." }
+        redirectUrl: { type: ["string", "null"], format: uri, description: "Provider-generated redirect URL when the selected flow requires one." }
+      required: [action, reference, otpMethod, otpCommand, redirectUrl]
+    DeveloperOtpRequiredError:
+      type: object
+      properties:
+        error: { type: string, enum: [otp_required] }
+        message: { type: string }
+        reference: { type: ["string", "null"], format: uuid }
+        flow: { $ref: "#/components/schemas/DeveloperDirectPaymentFlow" }
+      required: [error, message, reference, flow]
     DeveloperDirectPaymentResponse:
       type: object
       properties:
@@ -8473,7 +8497,8 @@ components:
         ussdCode: { type: ["string", "null"] }
         pollToken: { type: string }
         merchantReference: { type: string }
-      required: [id, attemptId, state, amountMinor, currency, ussdCode, pollToken, merchantReference]
+        flow: { $ref: "#/components/schemas/DeveloperDirectPaymentFlow" }
+      required: [id, attemptId, state, amountMinor, currency, ussdCode, pollToken, merchantReference, flow]
     AdminEmailCampaignRecipient:
       type: object
       required: [userId, displayName, email, accountStatus, emailVerifiedAt]

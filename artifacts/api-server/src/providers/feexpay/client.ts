@@ -148,14 +148,17 @@ export class FeexpayClient {
       typeof input.phoneNumber !== "string" || !/^[0-9]{8,15}$/.test(input.phoneNumber) ||
       !input.phoneNumber.startsWith(country.phonePrefix) ||
       typeof input.operationReference !== "string" || !/^[A-Z0-9]{12,30}$/.test(input.operationReference)) return fail("INVALID_INPUT");
-    if (operation === "payin" && channel.requiresOtp && !input.otp) return fail("INVALID_INPUT");
-    if (input.otp !== undefined && !/^[0-9]{4,12}$/.test(input.otp)) return fail("INVALID_INPUT");
+    if (operation === "payin" && channel.requiresOtp &&
+      input.otp === undefined && channel.otpFlow !== "provider_challenge") return fail("INVALID_INPUT");
+    if (input.otp !== undefined &&
+      !(input.otp === "" && channel.otpFlow === "provider_challenge") &&
+      !/^[0-9]{4,12}$/.test(input.otp)) return fail("INVALID_INPUT");
     const body: Record<string, unknown> = {
       shop: config.shop, amount: input.amountMinor, phoneNumber: input.phoneNumber,
       callback_info: input.operationReference,
       ...(operation === "payin" ? {
         description: input.operationReference,
-        ...(input.otp ? { otp: input.otp } : {}),
+        ...(input.otp !== undefined ? { otp: input.otp } : {}),
       } : {
         motif: input.operationReference,
         ...(channel.payoutNetwork ? { network: channel.payoutNetwork } : {}),

@@ -110,6 +110,7 @@ import type {
   DeveloperApiKeysResponse,
   DeveloperDirectPaymentInput,
   DeveloperDirectPaymentResponse,
+  DeveloperOtpRequiredError,
   DeveloperPaymentSessionCreatedResponse,
   DeveloperPaymentSessionInput,
   DeveloperPaymentSessionStatus,
@@ -5842,7 +5843,7 @@ export const getStartDeveloperDirectPaymentUrl = (sessionId: string,) => {
 }
 
 /**
- * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged.
+ * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
  * @summary Start a direct Mobile Money payment attempt
  */
 export const startDeveloperDirectPayment = async (sessionId: string,
@@ -5877,7 +5878,7 @@ return customFetch<DeveloperDirectPaymentResponse>(getStartDeveloperDirectPaymen
 
 export const getStartDeveloperDirectPaymentMutationKey = () => ['startDeveloperDirectPayment'] as const;
 
-export const getStartDeveloperDirectPaymentMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+export const getStartDeveloperDirectPaymentMutationOptions = <TError = ErrorType<ErrorEnvelope | DeveloperOtpRequiredError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startDeveloperDirectPayment>>, TError,StartDeveloperDirectPaymentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof startDeveloperDirectPayment>>, TError,StartDeveloperDirectPaymentMutationVariables, TContext> => {
 
@@ -5906,13 +5907,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type StartDeveloperDirectPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof startDeveloperDirectPayment>>>
     export type StartDeveloperDirectPaymentMutationBody = BodyType<DeveloperDirectPaymentInput>
-    export type StartDeveloperDirectPaymentMutationError = ErrorType<ErrorEnvelope>
+    export type StartDeveloperDirectPaymentMutationError = ErrorType<ErrorEnvelope | DeveloperOtpRequiredError>
     export type StartDeveloperDirectPaymentMutationVariables = {sessionId: string;data: BodyType<DeveloperDirectPaymentInput>}
 
     /**
  * @summary Start a direct Mobile Money payment attempt
  */
-export const useStartDeveloperDirectPayment = <TError = ErrorType<ErrorEnvelope>,
+export const useStartDeveloperDirectPayment = <TError = ErrorType<ErrorEnvelope | DeveloperOtpRequiredError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startDeveloperDirectPayment>>, TError,StartDeveloperDirectPaymentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof startDeveloperDirectPayment>>,

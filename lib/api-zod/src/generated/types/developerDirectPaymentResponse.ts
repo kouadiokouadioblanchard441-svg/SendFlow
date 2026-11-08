@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { DeveloperDirectPaymentFlow } from './developerDirectPaymentFlow';
 import type { DeveloperDirectPaymentResponseCurrency } from './developerDirectPaymentResponseCurrency';
 import type { DeveloperDirectPaymentResponseState } from './developerDirectPaymentResponseState';
 
@@ -18,4 +19,5 @@ export interface DeveloperDirectPaymentResponse {
   ussdCode: string | null;
   pollToken: string;
   merchantReference: string;
+  flow: DeveloperDirectPaymentFlow;
 }

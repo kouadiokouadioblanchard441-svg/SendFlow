@@ -3376,6 +3376,9 @@ export type DeveloperPublicPaymentSessionCountriesItemOperatorsItem = {
   initials: string;
   /** @nullable */
   logoUrl: string | null;
+  requiresOtp: boolean;
+  /** @nullable */
+  otpCommand: string | null;
 };
 
 export type DeveloperPublicPaymentSessionCountriesItem = {
@@ -3423,6 +3426,70 @@ export interface DeveloperDirectPaymentInput {
      * @maxLength 20
      */
   phoneNumber: string;
+  /**
+     * Payer-provided OTP. The API never stores it.
+     * @pattern ^[0-9]{4,12}$
+     */
+  otp?: string;
+  /** Attempt reference returned when the provider requires a second OTP step. */
+  reference?: string;
+}
+
+export type DeveloperDirectPaymentFlowAction = typeof DeveloperDirectPaymentFlowAction[keyof typeof DeveloperDirectPaymentFlowAction];
+
+
+export const DeveloperDirectPaymentFlowAction = {
+  approve_on_phone: 'approve_on_phone',
+  dial_ussd: 'dial_ussd',
+  enter_otp: 'enter_otp',
+  open_redirect: 'open_redirect',
+  wait: 'wait',
+  none: 'none',
+} as const;
+
+/**
+ * @nullable
+ */
+export type DeveloperDirectPaymentFlowOtpMethod = typeof DeveloperDirectPaymentFlowOtpMethod[keyof typeof DeveloperDirectPaymentFlowOtpMethod] | null;
+
+
+export const DeveloperDirectPaymentFlowOtpMethod = {
+  sms: 'sms',
+  ussd: 'ussd',
+  app: 'app',
+} as const;
+
+export interface DeveloperDirectPaymentFlow {
+  action: DeveloperDirectPaymentFlowAction;
+  /** @nullable */
+  reference: string | null;
+  /** @nullable */
+  otpMethod: DeveloperDirectPaymentFlowOtpMethod;
+  /**
+     * Server-configured instruction to dial; never the payer's OTP.
+     * @nullable
+     */
+  otpCommand: string | null;
+  /**
+     * Provider-generated redirect URL when the selected flow requires one.
+     * @nullable
+     */
+  redirectUrl: string | null;
+}
+
+export type DeveloperOtpRequiredErrorError = typeof DeveloperOtpRequiredErrorError[keyof typeof DeveloperOtpRequiredErrorError];
+
+
+export const DeveloperOtpRequiredErrorError = {
+  otp_required: 'otp_required',
+} as const;
+
+export interface DeveloperOtpRequiredError {
+  error: DeveloperOtpRequiredErrorError;
+  message: string;
+  /** @nullable */
+  reference: string | null;
+  flow: DeveloperDirectPaymentFlow;
 }
 
 export type DeveloperDirectPaymentResponseState = typeof DeveloperDirectPaymentResponseState[keyof typeof DeveloperDirectPaymentResponseState];
@@ -3452,6 +3519,7 @@ export interface DeveloperDirectPaymentResponse {
   ussdCode: string | null;
   pollToken: string;
   merchantReference: string;
+  flow: DeveloperDirectPaymentFlow;
 }
 
 export type AdminEmailCampaignRecipientAccountStatus = typeof AdminEmailCampaignRecipientAccountStatus[keyof typeof AdminEmailCampaignRecipientAccountStatus];

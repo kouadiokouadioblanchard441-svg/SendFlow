@@ -6,6 +6,7 @@
  */
 export type FeexpayCountryCode = "BJ" | "BF" | "CI" | "SN" | "TG" | "CG";
 export type FeexpayCurrency = "XOF" | "XAF";
+export type FeexpayOtpFlow = "provider_challenge" | "pre_acquired";
 export interface FeexpayChannel {
   id: string;
   countryCode: FeexpayCountryCode;
@@ -14,6 +15,8 @@ export interface FeexpayChannel {
   payoutPath: string | null;
   payoutNetwork?: string;
   requiresOtp?: boolean;
+  otpFlow?: FeexpayOtpFlow;
+  otpMethod?: "sms" | "ussd" | "app";
   sandbox: boolean;
 }
 
@@ -32,15 +35,15 @@ export const feexpayChannels: readonly FeexpayChannel[] = [
   { id: "mtn-bj", countryCode: "BJ", operator: "MTN", payinPath: `${payin}mtn`, payoutPath: `${payout}transfer/global`, payoutNetwork: "MTN", sandbox: true },
   { id: "moov-bj", countryCode: "BJ", operator: "Moov", payinPath: `${payin}moov`, payoutPath: `${payout}transfer/global`, payoutNetwork: "MOOV", sandbox: true },
   { id: "celtiis-bj", countryCode: "BJ", operator: "Celtiis", payinPath: `${payin}celtiis_bj`, payoutPath: `${payout}celtiis_bj`, payoutNetwork: "CELTIIS BJ", sandbox: true },
-  { id: "coris-bj", countryCode: "BJ", operator: "Coris", payinPath: `${payin}coris`, payoutPath: null, requiresOtp: true, sandbox: false },
+  { id: "coris-bj", countryCode: "BJ", operator: "Coris", payinPath: `${payin}coris`, payoutPath: null, requiresOtp: true, otpFlow: "provider_challenge", otpMethod: "sms", sandbox: false },
   { id: "moov-bf", countryCode: "BF", operator: "Moov", payinPath: `${payin}moov_bf`, payoutPath: `${payout}moov_bf`, sandbox: false },
-  { id: "orange-bf", countryCode: "BF", operator: "Orange", payinPath: `${payin}orange_bf`, payoutPath: `${payout}orange_bf`, requiresOtp: true, sandbox: false },
-  { id: "wave-bf", countryCode: "BF", operator: "Wave", payinPath: `${payin}wave_bf`, payoutPath: `${payout}wave_bf`, requiresOtp: true, sandbox: false },
+  { id: "orange-bf", countryCode: "BF", operator: "Orange", payinPath: `${payin}orange_bf`, payoutPath: `${payout}orange_bf`, requiresOtp: true, otpFlow: "pre_acquired", otpMethod: "ussd", sandbox: false },
+  { id: "wave-bf", countryCode: "BF", operator: "Wave", payinPath: `${payin}wave_bf`, payoutPath: `${payout}wave_bf`, requiresOtp: true, otpFlow: "pre_acquired", otpMethod: "app", sandbox: false },
   { id: "mtn-ci", countryCode: "CI", operator: "MTN", payinPath: `${payin}mtn_ci`, payoutPath: `${payout}mtn_ci`, sandbox: true },
   { id: "moov-ci", countryCode: "CI", operator: "Moov", payinPath: `${payin}moov_ci`, payoutPath: `${payout}moov_ci`, sandbox: true },
   { id: "orange-ci", countryCode: "CI", operator: "Orange", payinPath: `${payin}orange_ci`, payoutPath: `${payout}orange_ci`, sandbox: true },
   { id: "wave-ci", countryCode: "CI", operator: "Wave", payinPath: `${payin}wave_ci`, payoutPath: `${payout}wave_ci`, sandbox: true },
-  { id: "orange-sn", countryCode: "SN", operator: "Orange", payinPath: `${payin}orange_sn`, payoutPath: `${payout}orange_sn`, requiresOtp: true, sandbox: true },
+  { id: "orange-sn", countryCode: "SN", operator: "Orange", payinPath: `${payin}orange_sn`, payoutPath: `${payout}orange_sn`, requiresOtp: true, otpFlow: "pre_acquired", otpMethod: "ussd", sandbox: true },
   { id: "free-sn", countryCode: "SN", operator: "Free", payinPath: `${payin}free_sn`, payoutPath: `${payout}free_sn`, sandbox: true },
   { id: "wave-sn", countryCode: "SN", operator: "Wave", payinPath: `${payin}wave_sn`, payoutPath: `${payout}wave_sn`, sandbox: true },
   { id: "togocom-tg", countryCode: "TG", operator: "Togocom", payinPath: `${payin}togocom_tg`, payoutPath: `${payout}togo`, payoutNetwork: "TOGOCOM TG", sandbox: true },

@@ -9,6 +9,7 @@ import {
   inArray,
   isNull,
   operatorCatalogTable,
+  operatorOtpPoliciesTable,
   operatorPricingRatesTable,
   paymentAggregatorRoutesTable,
   paymentAggregatorsTable,
@@ -22,6 +23,7 @@ import {
   walletsTable,
   walletLedgerTable,
 } from "@workspace/db";
+import type { DeveloperOtpRequiredError } from "@workspace/api-zod";
 import {
   createSensitiveDataLookupIndex,
   decryptSensitiveData,
@@ -31,7 +33,7 @@ import {
 import { isSharedDatabasePreview } from "../lib/shared-database-preview-guard";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { FeexpayClient, type FeexpayReceipt } from "../providers/feexpay/client";
-import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
+import { feexpayChannelForOperator, feexpayChannels, feexpayCountries } from "../providers/feexpay/catalog";
 import { getAggregatorRouteScopeKey } from "../routes/aggregator-catalog";
 import { parseLinkFlowPayerAmount } from "./payment-links";
 import { enqueueDeveloperPaymentEvent } from "./developer-webhook-outbox";
@@ -48,10 +50,16 @@ import {
 
 export class LinkFlowPaymentError extends Error {
   readonly statusCode: 400 | 404 | 409 | 429 | 503;
-  constructor(statusCode: 400 | 404 | 409 | 429 | 503, message: string) {
+  readonly responseBody?: DeveloperOtpRequiredError;
+  constructor(
+    statusCode: 400 | 404 | 409 | 429 | 503,
+    message: string,
+    responseBody?: DeveloperOtpRequiredError,
+  ) {
     super(message);
     this.name = "LinkFlowPaymentError";
     this.statusCode = statusCode;
+    this.responseBody = responseBody;
   }
 }
 
@@ -63,6 +71,8 @@ export type StartLinkFlowPaymentInput = {
   firstName: string;
   lastName: string;
   idempotencyKey: string;
+  otp?: string;
+  reference?: string;
 };
 
 export type PublicLinkFlowPaymentStatus = {
@@ -74,6 +84,13 @@ export type PublicLinkFlowPaymentStatus = {
   currencyDecimals: 0;
   ussdCode: string | null;
   returnUrl: string | null;
+  flow: {
+    action: "approve_on_phone" | "dial_ussd" | "enter_otp" | "open_redirect" | "wait" | "none";
+    reference: string | null;
+    otpMethod: "sms" | "ussd" | "app" | null;
+    otpCommand: string | null;
+    redirectUrl: string | null;
+  };
 };
 
 export type PublicLinkFlowPaymentCreated = PublicLinkFlowPaymentStatus & {
@@ -130,6 +147,20 @@ function publicState(intentState: string, attemptStatus: string): LinkFlowPublic
 
 function asPublicStatus(bundle: AttemptBundle): PublicLinkFlowPaymentStatus {
   const state = publicState(bundle.intent.state, bundle.attempt.status);
+  const channel = feexpayChannels.find((candidate) => candidate.id === bundle.attempt.channelId);
+  const awaitingProviderOtp = state === "waiting" &&
+    channel?.requiresOtp === true &&
+    bundle.attempt.otpConfirmedAt === null &&
+    bundle.attempt.status === "pending";
+  const action = state === "succeeded" || state === "failed"
+    ? "none"
+    : state === "uncertain"
+      ? "wait"
+    : awaitingProviderOtp
+      ? "enter_otp"
+      : state === "waiting"
+        ? "approve_on_phone"
+        : "wait";
   return {
     attemptId: bundle.mapping.id,
     state,
@@ -139,6 +170,13 @@ function asPublicStatus(bundle: AttemptBundle): PublicLinkFlowPaymentStatus {
     currencyDecimals: 0,
     ussdCode: bundle.mapping.ussdCode,
     returnUrl: safeReturnUrl(bundle.returnUrl, state),
+    flow: {
+      action,
+      reference: awaitingProviderOtp ? bundle.mapping.id : null,
+      otpMethod: awaitingProviderOtp ? channel?.otpMethod ?? "ussd" : null,
+      otpCommand: awaitingProviderOtp ? bundle.mapping.ussdCode : null,
+      redirectUrl: null,
+    },
   };
 }
 
@@ -191,8 +229,39 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   const providerCountry = feexpayCountries.find((item) =>
     item.countryCode.toLowerCase() === countryCode && item.currency === "XOF");
   const channel = feexpayChannelForOperator(countryCode, input.operatorId);
-  if (!providerCountry || !channel || channel.requiresOtp) {
+  if (!providerCountry || !channel) {
     throw new LinkFlowPaymentError(400, "Ce réseau ne permet pas ce paiement LinkFlow.");
+  }
+  const [otpPolicy] = await tx.select().from(operatorOtpPoliciesTable).where(and(
+    eq(operatorOtpPoliciesTable.countryCode, countryCode),
+    eq(operatorOtpPoliciesTable.operatorId, input.operatorId),
+  )).limit(1);
+  const requiresOtp = Boolean(channel.requiresOtp || otpPolicy?.requiresOtp);
+  const otpFlow = channel.otpFlow ?? "pre_acquired";
+  const otpCommand = otpPolicy?.otpCommand ?? operator.ussdCodeOverride ?? country.ussdCode ?? null;
+  if (requiresOtp && otpFlow === "provider_challenge" &&
+    Boolean(input.reference) !== Boolean(input.otp)) {
+    throw new LinkFlowPaymentError(400, "Pour confirmer le code OTP, renvoyez la référence de la tentative et le code reçu.");
+  }
+  if (requiresOtp && otpFlow !== "provider_challenge" && !input.otp) {
+    throw new LinkFlowPaymentError(400, "Un code OTP est requis pour ce réseau.", {
+      error: "otp_required",
+      message: "Obtenez le code demandé par l’opérateur, puis relancez la même requête avec le champ otp.",
+      reference: null,
+      flow: {
+        action: "enter_otp",
+        reference: null,
+        otpMethod: channel.otpMethod ?? "ussd",
+        otpCommand,
+        redirectUrl: null,
+      },
+    });
+  }
+  if (!requiresOtp && (input.otp !== undefined || input.reference !== undefined)) {
+    throw new LinkFlowPaymentError(400, "Ce réseau ne demande pas de confirmation OTP.");
+  }
+  if (requiresOtp && otpFlow === "provider_challenge" && input.otp && !input.reference) {
+    throw new LinkFlowPaymentError(400, "La référence de la tentative est requise pour confirmer le code OTP.");
   }
   const [operatorRoute] = await tx.select().from(paymentAggregatorRoutesTable).where(and(
     eq(paymentAggregatorRoutesTable.operation, "deposit"),
@@ -234,6 +303,10 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
     country,
     operator,
     channel,
+    requiresOtp,
+    otpFlow,
+    otpMethod: channel.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null),
+    otpCommand,
     amountMinor,
     amounts,
     normalizedPhone,
@@ -311,7 +384,7 @@ async function setDispatchUncertain(attemptId: string, intentId: string) {
   });
 }
 
-async function dispatchPreparedAttempt(attemptId: string) {
+async function dispatchPreparedAttempt(attemptId: string, otp?: string) {
   const prepared = await db.transaction(async (tx) => {
     const [attempt] = await tx.select().from(paymentAttemptsTable)
       .where(eq(paymentAttemptsTable.id, attemptId)).for("update").limit(1);
@@ -355,6 +428,7 @@ async function dispatchPreparedAttempt(attemptId: string) {
       currency: "XOF",
       phoneNumber: toProviderPhoneNumber(phone),
       operationReference: prepared.attempt.operationReference,
+      ...(otp !== undefined ? { otp } : {}),
     });
   } catch {
     await setDispatchUncertain(prepared.attempt.id, prepared.intent.id);
@@ -382,12 +456,104 @@ async function dispatchPreparedAttempt(attemptId: string) {
     await tx.update(paymentAttemptsTable).set({
       providerReference: encryptedProviderReference,
       providerReferenceHash,
+      ...(otp && otp.length > 0 ? { otpConfirmedAt: new Date() } : {}),
       status: "pending",
       updatedAt: new Date(),
     }).where(eq(paymentAttemptsTable.id, attempt.id));
   });
   // The POST acknowledgement itself is never used to mark success or failure.
   resolveInitialProviderState(receipt);
+}
+
+async function confirmLinkFlowPaymentOtp(
+  mappingId: string,
+  tokenHash: string,
+  reference: string,
+  otp: string,
+) {
+  if (!isLinkFlowPaymentExecutionEnabled()) {
+    throw new LinkFlowPaymentError(503, "Le paiement en ligne est momentanément indisponible.");
+  }
+  if (!uuidPattern.test(mappingId) || reference !== mappingId || !/^[0-9]{4,12}$/.test(otp)) {
+    throw new LinkFlowPaymentError(404, "Cette demande de confirmation n’est pas disponible.");
+  }
+  const current = await loadAttemptBundle(mappingId, tokenHash);
+  if (!current) throw new LinkFlowPaymentError(404, "Cette demande de confirmation n’est pas disponible.");
+  const channel = feexpayChannels.find((candidate) => candidate.id === current.attempt.channelId);
+  if (channel?.otpFlow !== "provider_challenge") {
+    throw new LinkFlowPaymentError(400, "Cette tentative n’attend pas de code OTP.");
+  }
+  if (current.attempt.otpConfirmedAt) return;
+
+  const claimed = await db.transaction(async (tx) => {
+    const [mapping] = await tx.select().from(customerPaymentLinkAttemptsTable).where(and(
+      eq(customerPaymentLinkAttemptsTable.id, mappingId),
+      eq(customerPaymentLinkAttemptsTable.pollTokenHash, tokenHash),
+    )).for("update").limit(1);
+    if (!mapping) return undefined;
+    const [attempt] = await tx.select().from(paymentAttemptsTable).where(and(
+      eq(paymentAttemptsTable.intentId, mapping.intentId),
+      eq(paymentAttemptsTable.direction, "payin"),
+    )).for("update").limit(1);
+    const [intent] = await tx.select().from(paymentIntentsTable)
+      .where(eq(paymentIntentsTable.id, mapping.intentId)).for("update").limit(1);
+    if (!attempt || !intent) return undefined;
+    if (attempt.otpConfirmedAt) return { kind: "already_confirmed" as const };
+    if (attempt.status !== "pending" || intent.state !== "collecting") {
+      throw new LinkFlowPaymentError(409, "Cette tentative n’attend plus de code OTP.");
+    }
+    const [updated] = await tx.update(paymentAttemptsTable).set({
+      status: "dispatching",
+      updatedAt: new Date(),
+    }).where(and(
+      eq(paymentAttemptsTable.id, attempt.id),
+      eq(paymentAttemptsTable.status, "pending"),
+    )).returning();
+    return updated ? { kind: "claimed" as const, attempt: updated, intent } : undefined;
+  });
+  if (!claimed || claimed.kind === "already_confirmed") return;
+
+  let receipt: FeexpayReceipt;
+  try {
+    const phone = decryptSensitiveData(current.transaction.senderPhone, "transaction-sender-phone");
+    receipt = await new FeexpayClient().initiate("payin", {
+      channelId: claimed.attempt.channelId,
+      amountMinor: claimed.attempt.amountMinor,
+      currency: "XOF",
+      phoneNumber: toProviderPhoneNumber(phone),
+      operationReference: claimed.attempt.operationReference,
+      otp,
+    });
+  } catch {
+    await setDispatchUncertain(claimed.attempt.id, claimed.intent.id);
+    return;
+  }
+  if (!receipt.reference || !referencePattern.test(claimed.attempt.operationReference)) {
+    await setDispatchUncertain(claimed.attempt.id, claimed.intent.id);
+    return;
+  }
+  const providerReferenceHash = createSensitiveDataLookupIndex(receipt.reference, "provider-reference");
+  const encryptedProviderReference = encryptSensitiveData(receipt.reference, "provider-reference");
+  await db.transaction(async (tx) => {
+    const [attempt] = await tx.select().from(paymentAttemptsTable)
+      .where(eq(paymentAttemptsTable.id, claimed.attempt.id)).for("update").limit(1);
+    if (!attempt || attempt.status !== "dispatching") return;
+    const [transaction] = await tx.select().from(transactionsTable)
+      .where(eq(transactionsTable.id, claimed.intent.transactionId)).for("update").limit(1);
+    if (!transaction) throw new Error("Payment transaction is missing");
+    await tx.update(transactionsTable).set({
+      providerReference: encryptedProviderReference,
+      providerReferenceLookupHash: providerReferenceHash,
+      updatedAt: new Date(),
+    }).where(eq(transactionsTable.id, transaction.id));
+    await tx.update(paymentAttemptsTable).set({
+      providerReference: encryptedProviderReference,
+      providerReferenceHash,
+      otpConfirmedAt: new Date(),
+      status: "pending",
+      updatedAt: new Date(),
+    }).where(eq(paymentAttemptsTable.id, attempt.id));
+  });
 }
 
 export async function startLinkFlowPaymentAttempt(
@@ -451,6 +617,7 @@ export async function startLinkFlowPaymentAttempt(
         mappingId: existing.id,
         intentId: existing.intentId,
         requestKey: existing.idempotencyKey,
+        otpFlow: channelContext.otpFlow,
       };
     }
 
@@ -586,6 +753,7 @@ export async function startLinkFlowPaymentAttempt(
       attemptId: attempt.id,
       requestKey,
       pollToken,
+      otpFlow: channelContext.otpFlow,
     };
   });
 
@@ -598,12 +766,18 @@ export async function startLinkFlowPaymentAttempt(
     pollToken = deriveLinkFlowPollToken(link.id, requestKey);
     const existing = await loadAttemptBundle(mappingId, hashLinkFlowPollToken(pollToken));
     if (!existing) throw new LinkFlowPaymentError(503, "La demande de paiement est momentanément indisponible.");
-    if (existing.attempt.status === "prepared") await dispatchPreparedAttempt(existing.attempt.id);
+    if (input.reference && input.otp) {
+      await confirmLinkFlowPaymentOtp(mappingId, hashLinkFlowPollToken(pollToken), input.reference, input.otp);
+    } else if (existing.attempt.status === "prepared") {
+      const initialOtp = prepared.otpFlow === "provider_challenge" ? "" : input.otp;
+      await dispatchPreparedAttempt(existing.attempt.id, initialOtp);
+    }
   } else {
     mappingId = prepared.mappingId;
     requestKey = prepared.requestKey;
     pollToken = prepared.pollToken;
-    await dispatchPreparedAttempt(prepared.attemptId);
+    const initialOtp = prepared.otpFlow === "provider_challenge" ? "" : input.otp;
+    await dispatchPreparedAttempt(prepared.attemptId, initialOtp);
   }
   const bundle = await loadAttemptBundle(mappingId, hashLinkFlowPollToken(pollToken));
   if (!bundle) throw new LinkFlowPaymentError(503, "La demande de paiement est momentanément indisponible.");
