@@ -275,13 +275,29 @@ test('direct and hosted examples follow their documented integration steps', () 
 
   const directPage = docsCopy.slice(directStart, hostedStart);
   const directExamples = [
+    'example="pricing"',
+    'example="payment-limits"',
     'example="create-direct"',
     'example="read-public-session"',
     'example="start-attempt"',
     'example="poll-attempt"',
+    'example="read-session"',
+    'example="webhook"',
+    'example="handle-http-errors"',
   ].map((example) => directPage.indexOf(example));
   assert.ok(directExamples.every((position) => position >= 0));
   assert.deepEqual(directExamples, [...directExamples].sort((a, b) => a - b));
+  assert.match(directPage, /t\.directPrerequisitesTitle/);
+  assert.match(directPage, /localizedLists\[language\]\.credentialRows/);
+  assert.match(directPage, /t\.directWebhookSetupTitle/);
+  assert.match(directPage, /t\.directReliabilityTitle/);
+  assert.match(docsCopy, /directCatalogText: '.*otpCommand.*ne codez pas de consigne par pays/);
+  assert.match(docsCopy, /directCatalogText: '.*otpCommand.*do not hard-code country instructions/);
+  for (const example of ['pricing', 'payment-limits', 'create-direct', 'read-public-session', 'start-attempt', 'poll-attempt', 'read-session', 'webhook', 'handle-http-errors']) {
+    for (const format of ['Node.js', 'Python', 'cURL', 'PHP']) {
+      assert.ok(getDocsCodeFormats(example).includes(format), `${example} must include ${format}`);
+    }
+  }
 
   const hostedPage = docsCopy.slice(hostedStart, webhooksStart);
   const hostedExamples = [

@@ -74,7 +74,13 @@ const localized: Record<Language, Translation> = {
     startTitle: 'Démarrer', startWelcomeTitle: 'Bienvenue sur SendFlow',
     startSub: 'Intégrez les paiements Mobile Money de SendFlow à votre application avec un parcours hébergé ou une API directe.',
     authTitle: 'Authentification', authSub: 'Utilisez la clé secrète pour les appels serveur et la clé publique uniquement dans le parcours de caisse.',
-    directTitle: 'Intégration API directe', directSub: 'Créez une session côté serveur, affichez les choix disponibles, puis suivez le statut confirmé par SendFlow.',
+    directTitle: 'Intégration API directe', directSub: 'Un guide complet : accès, catalogue, session, tentative Mobile Money, confirmation serveur et webhooks.',
+    directPrerequisitesTitle: 'Avant de commencer',
+    directPrerequisitesText: 'Préparez un compte marchand actif et éligible, une paire de clés API SendFlow et un serveur capable d’appeler l’API en HTTPS. Créez la session avec la clé secrète côté serveur. Transmettez à la caisse uniquement la clé publique et les jetons limités à cette session ou tentative. Les exemples ci-dessous montrent les routes et le contrat SendFlow ; la disponibilité actuelle est indiquée séparément.',
+    directCredentialsTitle: 'Identifiants requis pour chaque étape',
+    directCatalogTitle: 'Étape 1 · Préparer le montant et les choix',
+    directCatalogText: 'GET /api/pricing est une lecture publique du catalogue, des opérateurs et des frais configurés ; elle ne garantit pas qu’un opérateur sera proposé dans une session. GET /api/payment-limits donne les bornes configurées. Le montant doit être un entier XOF et sera revérifié côté serveur. Le catalogue peut inclure requiresOtp et otpCommand, mais la réponse de session directe n’expose actuellement pas ces champs : ne codez pas de consigne par pays et ne les déduisez pas d’un catalogue global.',
+    directSessionReturnNote: 'En mode direct, votre application conserve son propre écran et son propre retour de parcours. returnUrl sert au parcours Hosted Checkout, pas à confirmer une session directe. Quelle que soit l’interface, une redirection ou un état navigateur ne prouve pas le paiement.',
     hostedTitle: 'Paiement par redirection', hostedSub: 'Créez une session hébergée et redirigez le payeur vers le chemin de paiement SendFlow retourné par l’API.',
     apiTitle: 'Référence API', apiSub: 'Endpoints REST disponibles, paramètres, authentification, limites et réponses du contrat SendFlow.',
     webhooksTitle: 'Webhooks', webhooksSub: 'Configurez les notifications de paiement, vérifiez leur signature et traitez les livraisons répétées sans doublon.',
@@ -130,11 +136,17 @@ const localized: Record<Language, Translation> = {
     pollTokenNote: 'Le pollToken est un identifiant d’accès à la tentative. Préférez interroger l’état depuis votre serveur avec la clé secrète ; si le client doit le recevoir pour afficher la progression, gardez-le temporairement en mémoire et excluez-le des journaux, URL et outils analytiques.',
     codeLabel: 'Exemple de requête', placeholder: 'Requête API',
     endpointGroupNote: 'Les endpoints sont regroupés par étape et par contexte d’exécution.',
-    directExamplesTitle: 'Exemples dans l’ordre du parcours',
-    directStepCreate: 'Étape 1 · Créer la session sur votre serveur',
-    directStepRead: 'Étape 2 · Charger les choix dans la caisse',
-    directStepAttempt: 'Étape 3 · Démarrer la tentative dans la caisse',
-    directStepPoll: 'Étape 4 · Vérifier le résultat',
+    directExamplesTitle: 'Étapes d’intégration',
+    directStepCatalog: 'Étape 1 · Lire le catalogue et les limites',
+    directStepCreate: 'Étape 2 · Créer la session sur votre serveur',
+    directStepRead: 'Étape 3 · Charger les choix de la session',
+    directStepAttempt: 'Étape 4 · Démarrer la tentative dans la caisse',
+    directStepPoll: 'Étape 5 · Suivre puis confirmer côté serveur',
+    directWebhookSetupTitle: 'Configurer les notifications de paiement',
+    directWebhookSetupText: 'Dans votre espace Développeurs, ajoutez l’URL HTTPS publique de votre propre serveur, sélectionnez les événements utiles et conservez le secret de signature affiché à la création. Cette configuration se fait dans l’espace marchand ; ce n’est pas un endpoint de création webhook de l’API de paiement. SendFlow accepte jusqu’à cinq endpoints actifs par compte.',
+    directWebhookDeliveryText: 'Vérifiez la signature sur les octets bruts et l’horodatage avant de parser l’événement. Enregistrez-le de façon idempotente avant de répondre 2xx ; l’ordre des livraisons n’est pas garanti.',
+    directReliabilityTitle: 'Idempotence, états et erreurs',
+    directReliabilityText: 'Réutilisez la même Idempotency-Key uniquement pour reprendre exactement la même opération. Une session expire une heure après sa création. created, waiting et uncertain ne sont pas des confirmations finales. Sur une création qui répond 503 avant de renvoyer un identifiant, aucune session ou demande n’a été créée ; sur une lecture 503 d’une ressource existante, le résultat reste à vérifier.',
     hostedExamplesTitle: 'Exemples dans l’ordre du parcours',
     hostedStepCreate: 'Étape 1 · Créer la session et préparer le lien',
     hostedStepStatus: 'Étape 2 · Vérifier le statut côté serveur',
@@ -245,7 +257,13 @@ const localized: Record<Language, Translation> = {
     startTitle: 'Get started', startWelcomeTitle: 'Welcome to SendFlow',
     startSub: 'Integrate SendFlow Mobile Money payments into your app with hosted checkout or a direct API flow.',
     authTitle: 'Authentication', authSub: 'Use the secret key for server requests and the public key only in the checkout flow.',
-    directTitle: 'Direct API integration', directSub: 'Create a session server-side, display available choices, and follow the status confirmed by SendFlow.',
+    directTitle: 'Direct API integration', directSub: 'A complete guide to access, catalog, session, Mobile Money attempt, server confirmation, and webhooks.',
+    directPrerequisitesTitle: 'Before you start',
+    directPrerequisitesText: 'Prepare an active, eligible merchant account, a SendFlow API key pair, and a server that can call the API over HTTPS. Create sessions with the secret key on your server. Pass only the public key and session- or attempt-scoped tokens to checkout. The examples show the SendFlow routes and contract; current availability is stated separately.',
+    directCredentialsTitle: 'Credentials required at each step',
+    directCatalogTitle: 'Step 1 · Prepare the amount and payment choices',
+    directCatalogText: 'GET /api/pricing is a public read of the catalog, operators, and configured fees; it does not guarantee that an operator will be offered in a session. GET /api/payment-limits returns configured thresholds. Amounts are whole XOF units and are validated again server-side. The catalog may include requiresOtp and otpCommand, but the direct-session response does not currently expose those fields; do not hard-code country instructions or infer them from a global catalog.',
+    directSessionReturnNote: 'In direct mode, your application keeps its own screens and return flow. returnUrl is for Hosted Checkout, not for confirming a direct session. A redirect or browser state never proves payment.',
     hostedTitle: 'Hosted payment redirect', hostedSub: 'Create a hosted session and redirect the payer to the SendFlow payment path returned by the API.',
     apiTitle: 'API reference', apiSub: 'Available REST endpoints, parameters, authentication, limits, and SendFlow contract responses.',
     webhooksTitle: 'Webhooks', webhooksSub: 'Configure payment notifications, verify their signatures, and safely process repeated deliveries.',
@@ -301,11 +319,17 @@ const localized: Record<Language, Translation> = {
     pollTokenNote: 'pollToken grants access to an attempt. Prefer checking status from your server with the secret key; if the client needs it to show progress, keep it in memory temporarily and exclude it from logs, URLs, and analytics.',
     codeLabel: 'Request example', placeholder: 'API request',
     endpointGroupNote: 'Endpoints are grouped by integration step and execution context.',
-    directExamplesTitle: 'Examples in payment-flow order',
-    directStepCreate: 'Step 1 · Create the session on your server',
-    directStepRead: 'Step 2 · Load choices in checkout',
-    directStepAttempt: 'Step 3 · Start the attempt in checkout',
-    directStepPoll: 'Step 4 · Verify the result',
+    directExamplesTitle: 'Integration steps',
+    directStepCatalog: 'Step 1 · Read the catalog and limits',
+    directStepCreate: 'Step 2 · Create the session on your server',
+    directStepRead: 'Step 3 · Load choices for the session',
+    directStepAttempt: 'Step 4 · Start the attempt in checkout',
+    directStepPoll: 'Step 5 · Track progress, then verify server-side',
+    directWebhookSetupTitle: 'Configure payment notifications',
+    directWebhookSetupText: 'In your Developers area, add your own public HTTPS endpoint, choose the events you need, and save the signing secret shown at creation. Configure this in the merchant account; this is not a webhook-creation endpoint in the payment API. SendFlow allows up to five active endpoints per account.',
+    directWebhookDeliveryText: 'Verify the signature over the raw bytes and the timestamp before parsing the event. Persist it idempotently before returning 2xx; delivery order is not guaranteed.',
+    directReliabilityTitle: 'Idempotency, states, and errors',
+    directReliabilityText: 'Reuse an Idempotency-Key only to retry the exact same operation. A session expires one hour after creation. created, waiting, and uncertain are not final confirmations. A create request that returns 503 before an identifier is issued creates no session or request; a 503 while reading an existing resource means its result still needs checking.',
     hostedExamplesTitle: 'Examples in payment-flow order',
     hostedStepCreate: 'Step 1 · Create the session and prepare the link',
     hostedStepStatus: 'Step 2 · Check status on your server',
@@ -416,12 +440,13 @@ const localizedLists: Record<Language, TranslationLists> = {
       'Respectez Retry-After après un 429, évitez les vérifications en boucle et utilisez les webhooks configurés. Un 503 de création sans identifiant ne crée aucune session ; ne concluez ni à un paiement réussi ni à un échec final sur ce seul statut.',
       'N’insérez pas de données personnelles dans merchantReference ou metadata. Limitez les données conservées dans vos journaux et ne journalisez jamais les secrets.',
     ],
-    directFlowTitles: ['Créer la session', 'Charger les choix disponibles', 'Démarrer le paiement', 'Vérifier le résultat'],
+    directFlowTitles: ['Préparer la commande et consulter les options', 'Créer la session', 'Afficher les choix de la session', 'Démarrer la tentative', 'Confirmer le résultat côté serveur'],
     directFlowTexts: [
-      'Marchand — depuis votre backend, créez une session en mode direct avec un montant XOF fixe et une clé Idempotency-Key stable. La clé secrète reste sur le serveur.',
-      'Votre application de caisse lit la session publique avec publicKey et clientToken, puis affiche uniquement les pays et opérateurs renvoyés pour cette session.',
-      'Le payeur choisit l’opérateur et saisit son numéro. La caisse envoie les champs prévus ; l’opérateur adresse ensuite une demande de confirmation USSD au payeur. L’API renvoie l’état et peut renvoyer ussdCode ; le montant fixé par la session ne change pas.',
-      'Le marchand suit la tentative avec pollToken ou lit la session avec sa clé secrète. Après un succeeded final confirmé, le montant net est crédité au portefeuille SendFlow du marchand. waiting et uncertain ne déclenchent aucun crédit.',
+      'Depuis votre serveur, consultez GET /api/pricing et GET /api/payment-limits. Ils aident à préparer la caisse, mais la session directe reste la source de vérité pour les moyens réellement proposés.',
+      'Votre backend crée une session mode=direct avec un montant entier XOF, une merchantReference unique et une Idempotency-Key stable. Gardez la clé secrète hors du navigateur et de l’application mobile.',
+      'La caisse appelle la lecture publique avec la clé publique et le clientToken de cette session. Présentez uniquement les pays et opérateurs retournés. La réponse de session directe ne renvoie actuellement pas otpCommand ; ne codez pas de consigne par pays.',
+      'Le payeur choisit un opérateur et saisit son numéro. Envoyez les champs exacts de la tentative ; le montant reste celui de la session. L’opérateur peut lui demander de valider une notification sur son téléphone.',
+      'Vous pouvez afficher la progression de tentative avec pollToken. Votre backend doit relire la session avec la clé secrète et ne traiter la commande comme payée qu’après succeeded. waiting et uncertain restent non finaux.',
     ],
     hostedFlowTitles: ['Créer une session hébergée', 'Rediriger le client', 'Laisser le client payer', 'Confirmer côté serveur'],
     hostedFlowTexts: [
@@ -498,12 +523,13 @@ const localizedLists: Record<Language, TranslationLists> = {
       'Respect Retry-After after 429, avoid tight polling, and use configured webhooks. A create-time 503 without an identifier creates no session; that status alone proves neither payment success nor final failure.',
       'Keep personal data out of merchantReference and metadata. Minimize retained log data and never log secrets.',
     ],
-    directFlowTitles: ['Create the session', 'Load available choices', 'Start the payment', 'Verify the result'],
+    directFlowTitles: ['Prepare the order and review options', 'Create the session', 'Display session choices', 'Start the attempt', 'Verify the result server-side'],
     directFlowTexts: [
-      'Merchant — create a direct-mode session on your backend with a fixed XOF amount and stable Idempotency-Key. Keep the secret key on the server.',
-      'Your checkout reads the public session with publicKey and clientToken, then displays only the countries and operators returned for that session.',
-      'The payer chooses an operator and enters a phone number. Checkout sends the contract fields; the operator then sends a USSD confirmation request to the payer. The API returns the state and may return ussdCode; the session amount stays fixed.',
-      'The merchant polls the attempt with pollToken or reads the session with the secret key. After a final confirmed succeeded state, the net amount is credited to the merchant’s SendFlow wallet. waiting and uncertain do not trigger a credit.',
+      'From your server, read GET /api/pricing and GET /api/payment-limits. These help prepare checkout, but the direct session is the source of truth for payment methods actually offered.',
+      'Your backend creates a mode=direct session with a whole XOF amount, unique merchantReference, and stable Idempotency-Key. Keep the secret key out of the browser and mobile app.',
+      'Checkout reads the public session using its public key and clientToken. Display only the countries and operators returned for that session. The direct-session response does not currently return otpCommand; do not hard-code country instructions.',
+      'The payer chooses an operator and enters a phone number. Send the exact attempt fields; the amount remains fixed by the session. The operator may ask the payer to approve a notification on their phone.',
+      'You may show attempt progress using pollToken. Your backend should read the session with the secret key and treat the order as paid only after succeeded. waiting and uncertain are non-final.',
     ],
     hostedFlowTitles: ['Create a hosted session', 'Redirect the customer', 'Let the customer pay', 'Verify server-side'],
     hostedFlowTexts: [
@@ -1350,13 +1376,36 @@ export default function DocsPage() {
         {pageKey === 'direct' && <>
           <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+          <section className="sf-docs-section">
+            <h2>{t.directPrerequisitesTitle}</h2>
+            <p>{t.directPrerequisitesText}</p>
+            <h3>{t.directCredentialsTitle}</h3>
+            <table className="sf-docs-reference-table">
+              <thead><tr><th>{t.credentialHeader}</th><th>{t.credentialUseHeader}</th><th>{t.credentialHandlingHeader}</th></tr></thead>
+              <tbody>{localizedLists[language].credentialRows.map((row) => (
+                <tr key={row.credential}>
+                  <td data-label={t.credentialHeader}>{row.credential}</td>
+                  <td data-label={t.credentialUseHeader}>{row.usedFor}</td>
+                  <td data-label={t.credentialHandlingHeader}>{row.handling}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+            <div className="sf-docs-callout">{t.serverOnly}</div>
+          </section>
           <section className="sf-docs-section"><h2>{t.model}</h2><p>{t.modelTextDirect}</p>
+            <div className="sf-docs-callout">{t.directSessionReturnNote}</div>
             <h3>{t.directFlow}</h3>
             <div className="sf-docs-steps">
               {localizedLists[language].directFlowTitles.map((heading, index) => <div className="sf-docs-step" key={heading}><span className="sf-docs-step-index">0{index + 1}</span><div><strong>{heading}</strong><p>{localizedLists[language].directFlowTexts[index]}</p></div></div>)}
             </div>
             <h3>{t.directExamplesTitle}</h3>
             <div className="sf-docs-code-steps">
+              <section className="sf-docs-code-step">
+                <h4>{t.directStepCatalog}</h4>
+                <p>{t.directCatalogText}</p>
+                <CodePanel language={language} label="GET /api/pricing" example="pricing" />
+                <CodePanel language={language} label="GET /api/payment-limits" example="payment-limits" />
+              </section>
               <section className="sf-docs-code-step">
                 <h4>{t.directStepCreate}</h4>
                 <CodePanel language={language} label={t.codeLabel} example="create-direct" />
@@ -1379,6 +1428,8 @@ export default function DocsPage() {
                 <h4>{t.directStepPoll}</h4>
                 <div className="sf-docs-callout">{t.pollTokenNote}</div>
                 <CodePanel language={language} label={t.codeLabel} example="poll-attempt" />
+                <p>{t.quickstartStatusText}</p>
+                <CodePanel language={language} label="GET /api/v1/payment-sessions/{sessionId}" example="read-session" />
               </section>
             </div>
             <h3>{t.mobileMoneyFlowsTitle}</h3>
@@ -1418,7 +1469,55 @@ export default function DocsPage() {
             </table>
           </section>
           {renderApiReference()}
-          <div className="sf-docs-callout"><strong>{t.webhookSharedNote}</strong> <Link href="/docs/webhooks">{t.webhookGuideLink}</Link></div>
+          <section className="sf-docs-section">
+            <h2>{t.directWebhookSetupTitle}</h2>
+            <p>{t.directWebhookSetupText}</p>
+            <h3>{t.webhookEvents}</h3>
+            <p>{t.webhookEventsSub}</p>
+            <p>{t.directWebhookDeliveryText}</p>
+            <p>{t.deliveryText}</p>
+            <p>{t.webhookPayloadNote}</p>
+            <div className="sf-docs-callout">
+              <strong>{t.webhookHeadersTitle}</strong>
+              <p>{t.webhookHeadersText}</p>
+              <pre className="sf-docs-response"><code>{`sendflow-event: payment.succeeded
+sendflow-delivery: 9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644
+sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
+            </div>
+            <ResponsePanel language={language} label={`${t.responseExample} · payment.succeeded`} response={`{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28644",
+  "type": "payment.succeeded",
+  "createdAt": "2026-10-29T10:31:00.000Z",
+  "data": {
+    "sessionId": "00000000-0000-4000-8000-000000000001",
+    "merchantReference": "ORDER-2026-0042",
+    "attemptId": "00000000-0000-4000-8000-000000000002",
+    "transactionId": "00000000-0000-4000-8000-000000000003",
+    "amountMinor": 12500,
+    "currency": "XOF",
+    "status": "succeeded"
+  }
+}`} />
+            <CodePanel language={language} label={t.codeLabel} example="webhook" />
+            <div className="sf-docs-callout"><strong>{t.webhookSharedNote}</strong> <Link href="/docs/webhooks">{t.webhookGuideLink}</Link></div>
+          </section>
+          <section className="sf-docs-section">
+            <h2>{t.directReliabilityTitle}</h2>
+            <p>{t.idempotencyText}</p>
+            <p>{t.expirationText}</p>
+            <p>{t.directReliabilityText}</p>
+            <table className="sf-docs-reference-table">
+              <thead><tr><th>{t.errorStatusHeader}</th><th>{t.errorMeaningHeader}</th><th>{t.errorActionHeader}</th></tr></thead>
+              <tbody>{localizedLists[language].httpErrorRows.map((row) => (
+                <tr key={row.status}>
+                  <td data-label={t.errorStatusHeader}><code className="sf-docs-inline-code">{row.status}</code></td>
+                  <td data-label={t.errorMeaningHeader}>{row.meaning}</td>
+                  <td data-label={t.errorActionHeader}>{row.action}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+            <CodePanel language={language} label={t.codeLabel} example="handle-http-errors" />
+          </section>
           <section className="sf-docs-section"><h2>{t.responsibilities}</h2><ul className="sf-docs-list">{localizedLists[language].responsibilitiesText.map((line) => <li key={line}>{line}</li>)}</ul></section>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
         </>}
