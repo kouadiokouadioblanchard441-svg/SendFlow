@@ -40,6 +40,19 @@ test('public documentation lists production URL settings and domains', () => {
   assert.doesNotMatch(docsCopy, /illustratif|illustrative/i);
 });
 
+test('production URL notes do not expose internal payment-readiness switches', () => {
+  assert.match(docsCopy, /apiAvailabilityTitle: 'Adresses de production'/);
+  assert.match(docsCopy, /apiAvailabilityText: 'API SendFlow : https:\/\/merchent\.business\.sendflow\.africa\/api\./);
+  assert.match(docsCopy, /apiAvailabilityText: '.*https:\/\/payin\.merchant\.command\.sendflow\.africa/);
+  assert.match(docsCopy, /serviceAvailability: 'Adresses de production et suivi'/);
+  assert.match(docsCopy, /serviceAvailabilityText: 'Base de l’API SendFlow : https:\/\/merchent\.business\.sendflow\.africa\/api\./);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'Production URLs'/);
+  assert.match(docsCopy, /serviceAvailability: 'Production URLs and status checks'/);
+  assert.doesNotMatch(docsCopy, /LINKFLOW_SETTLEMENT_PROOF_READY/);
+  assert.doesNotMatch(docsCopy, /apiAvailabilityText: '[^']*HTTP 503/);
+  assert.doesNotMatch(docsCopy, /serviceAvailabilityText: '[^']*HTTP 503/);
+});
+
 test('getting-started guide presents the production flow in executable steps', () => {
   const startPageStart = docsCopy.indexOf("{pageKey === 'start' && <>");
   const authPageStart = docsCopy.indexOf("{pageKey === 'auth' && <>", startPageStart);
