@@ -870,7 +870,7 @@ export interface PublicPaymentLinkOperator {
      * @minLength 3
      * @maxLength 40
      * @nullable
-     * @pattern ^[*#][0-9*#]{1,38}#$
+     * @pattern ^[*#](?:[0-9*#]{1,38}|[0-9*#]*\{amount\}[0-9*#]*)#$
      */
   otpCommand: string | null;
 }
@@ -1761,7 +1761,7 @@ export interface AdminOtpPolicy {
      * @minLength 3
      * @maxLength 40
      * @nullable
-     * @pattern ^[*#][0-9*#]{1,38}#$
+     * @pattern ^[*#](?:[0-9*#]{1,38}|[0-9*#]*\{amount\}[0-9*#]*)#$
      */
   otpCommand: string | null;
   /** The official operator API is not connected, so OTPs cannot be verified yet. */
@@ -2492,7 +2492,7 @@ export interface AdminOtpPolicyUpdate {
      * @minLength 3
      * @maxLength 40
      * @nullable
-     * @pattern ^[*#][0-9*#]{1,38}#$
+     * @pattern ^[*#](?:[0-9*#]{1,38}|[0-9*#]*\{amount\}[0-9*#]*)#$
      */
   otpCommand: string | null;
   /** @minimum 0 */
@@ -3370,6 +3370,18 @@ export const DeveloperPublicPaymentSessionCurrency = {
   XOF: 'XOF',
 } as const;
 
+/**
+ * @nullable
+ */
+export type DeveloperPublicPaymentSessionCountriesItemOperatorsItemOtpMethod = typeof DeveloperPublicPaymentSessionCountriesItemOperatorsItemOtpMethod[keyof typeof DeveloperPublicPaymentSessionCountriesItemOperatorsItemOtpMethod] | null;
+
+
+export const DeveloperPublicPaymentSessionCountriesItemOperatorsItemOtpMethod = {
+  sms: 'sms',
+  ussd: 'ussd',
+  app: 'app',
+} as const;
+
 export type DeveloperPublicPaymentSessionCountriesItemOperatorsItem = {
   id: string;
   name: string;
@@ -3377,6 +3389,8 @@ export type DeveloperPublicPaymentSessionCountriesItemOperatorsItem = {
   /** @nullable */
   logoUrl: string | null;
   requiresOtp: boolean;
+  /** @nullable */
+  otpMethod: DeveloperPublicPaymentSessionCountriesItemOperatorsItemOtpMethod;
   /** @nullable */
   otpCommand: string | null;
 };

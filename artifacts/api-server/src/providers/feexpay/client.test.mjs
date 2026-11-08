@@ -263,14 +263,22 @@ test("amount manipulation, incompatible country, invalid reference/OTP and redir
   ]) await assert.rejects(client.initiate("payin", payment(extra)), hasCode("INVALID_INPUT"));
 });
 
-test("mandatory OTP is bounded and forwarded only for payins", async () => {
+test("provider OTP challenge supports an empty start and requires OTP before other configured flows", async () => {
   const client = new FeexpayClient(live(), async (_url, init) => {
-    assert.equal(JSON.parse(init.body).otp, "0".repeat(6));
+    const body = JSON.parse(init.body);
+    assert.equal(body.otp === "" || body.otp === "0".repeat(6), true);
     return response();
   });
   const input = payment({ channelId: "coris-bj", phoneNumber: `229${"0".repeat(10)}` });
-  await assert.rejects(client.initiate("payin", input), hasCode("INVALID_INPUT"));
+  await client.initiate("payin", { ...input, otp: "" });
   await client.initiate("payin", { ...input, otp: "0".repeat(6) });
+
+  const orangeBurkina = payment({
+    channelId: "orange-bf",
+    phoneNumber: `226${"0".repeat(8)}`,
+  });
+  await assert.rejects(client.initiate("payin", orangeBurkina), hasCode("INVALID_INPUT"));
+  await client.initiate("payin", { ...orangeBurkina, otp: "0".repeat(6) });
 });
 
 test("timeout, HTTP failures and malformed POST responses are uncertain, sanitized, and never retried", async () => {

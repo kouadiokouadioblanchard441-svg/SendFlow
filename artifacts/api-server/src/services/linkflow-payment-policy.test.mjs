@@ -88,6 +88,15 @@ test("request fingerprints and poll tokens are stable without storing raw payer 
   assert.notEqual(buildLinkFlowRequestHash(input), buildLinkFlowRequestHash({
     ...input, amountMinor: 2600,
   }));
+  const challengeStart = { ...input, otpFlow: "provider_challenge" };
+  assert.equal(
+    buildLinkFlowRequestHash({ ...challengeStart, otp: undefined }),
+    buildLinkFlowRequestHash({ ...challengeStart, otp: "123456" }),
+  );
+  const preAcquiredOtp = { ...input, otpFlow: "pre_acquired" };
+  const otpHash = buildLinkFlowRequestHash({ ...preAcquiredOtp, otp: "123456" });
+  assert.notEqual(otpHash, buildLinkFlowRequestHash({ ...preAcquiredOtp, otp: "654321" }));
+  assert.equal(otpHash.includes("123456"), false);
   const token = deriveLinkFlowPollToken(input.linkId, input.idempotencyKey);
   assert.equal(token, deriveLinkFlowPollToken(input.linkId, input.idempotencyKey));
   assert.notEqual(hashLinkFlowPollToken(token), token);

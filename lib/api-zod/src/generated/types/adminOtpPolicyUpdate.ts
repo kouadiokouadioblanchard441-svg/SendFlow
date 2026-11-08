@@ -12,7 +12,7 @@ export interface AdminOtpPolicyUpdate {
      * @minLength 3
      * @maxLength 40
      * @nullable
-     * @pattern ^[*#][0-9*#]{1,38}#$
+     * @pattern ^[*#](?:[0-9*#]{1,38}|[0-9*#]*\{amount\}[0-9*#]*)#$
      */
   otpCommand: string | null;
   /** @minimum 0 */

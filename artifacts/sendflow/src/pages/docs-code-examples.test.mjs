@@ -202,7 +202,7 @@ test('getting-started guide presents the production quickstart with SendFlow exa
   assert.match(docsCopy, /otpCommand is an instruction or code to dial, not the payer’s personal OTP/);
   assert.match(docsCopy, /#144\*82#/i, 'The reference matrix includes the supplied Côte d’Ivoire example');
   assert.match(docsCopy, /#144#391#|#144#77#|\*144\*4\*6\*montant#/i);
-  assert.match(docsCopy, /not a verified SendFlow configuration|not confirmed in active SendFlow configuration/i);
+  assert.match(docsCopy, /Example command: display configured otpCommand|Exemple de commande : affichez la valeur otpCommand/i);
   assert.doesNotMatch(getDocsCodeExample('pricing', 'Node.js'), /#144|#144#391#|\*144\*4\*6/i);
   assert.match(getDocsCodeExample('payment-limits', 'Node.js'), /\/payment-limits/);
   assert.match(getDocsCodeExample('create-direct', 'Node.js'), /\/v1\/payment-sessions/);
@@ -309,9 +309,9 @@ test('direct and hosted examples follow their documented integration steps', () 
   assert.match(directPage, /localizedLists\[language\]\.credentialRows/);
   assert.match(directPage, /t\.directWebhookSetupTitle/);
   assert.match(directPage, /t\.directReliabilityTitle/);
-  assert.match(docsCopy, /directCatalogText: '.*otpCommand.*ne codez pas de consigne par pays/);
-  assert.match(docsCopy, /directCatalogText: '.*otpCommand.*do not hard-code country instructions/);
-  for (const example of ['pricing', 'payment-limits', 'create-direct', 'read-public-session', 'start-attempt', 'poll-attempt', 'read-session', 'webhook', 'handle-http-errors']) {
+  assert.match(docsCopy, /directCatalogText: '.*source de vérité des opérateurs disponibles.*requiresOtp et otpCommand/);
+  assert.match(docsCopy, /directCatalogText: '.*source of truth for available operators.*requiresOtp and otpCommand/);
+  for (const example of ['pricing', 'payment-limits', 'create-direct', 'read-public-session', 'start-attempt', 'submit-otp', 'confirm-otp', 'handle-flow-action', 'poll-attempt', 'read-session', 'webhook', 'handle-http-errors']) {
     for (const format of ['Node.js', 'Python', 'cURL', 'PHP']) {
       assert.ok(getDocsCodeFormats(example).includes(format), `${example} must include ${format}`);
     }
@@ -346,50 +346,47 @@ test('the former API reference URL now resolves to the single direct API guide',
   assert.match(await readFile(new URL('../lib/documentation-host.ts', import.meta.url), 'utf8'), /'\/docs\/api-reference': 'direct'/);
 });
 
-test('Mobile Money guidance describes operator USSD confirmation in both languages', () => {
-  assert.match(docsCopy, /l’opérateur adresse au payeur une demande de confirmation USSD qu’il valide sur son téléphone/);
+test('Mobile Money guidance documents OTP and redirect actions in both languages', () => {
+  assert.match(docsCopy, /Après le démarrage, le payeur reçoit une demande USSD de son opérateur et la valide sur son téléphone/);
   assert.match(docsCopy, /operator sends the payer a USSD confirmation request to approve on their phone/);
-  assert.match(docsCopy, /son contrat n’inclut pas operator\.otpCommand/);
-  assert.match(docsCopy, /response schema does not include operator\.otpCommand/);
-  assert.match(docsCopy, /réponse de tentative contient ussdCode/);
-  assert.match(docsCopy, /attempt response contains ussdCode/);
+  assert.match(docsCopy, /requiresOtp et otpCommand viennent de cette même réponse/);
+  assert.match(docsCopy, /requiresOtp and otpCommand come from this same response/);
+  assert.match(docsCopy, /flow\.action = "enter_otp"/);
+  assert.match(docsCopy, /flow\.reference/);
+  assert.match(docsCopy, /flow\.redirectUrl/);
   assert.doesNotMatch(docsCopy, /n’envoyez jamais de code OTP ou de PIN|never send an OTP or PIN/i);
 });
 
-test('Mobile Money guide distinguishes catalog metadata from supported attempt fields', () => {
+test('Mobile Money guide exposes a provider-neutral attempt contract', () => {
   assert.match(docsCopy, /Confirmation sur téléphone \(USSD Push\).*HTTP 201 avec state waiting ou uncertain/);
   assert.match(docsCopy, /Phone confirmation \(USSD Push\).*HTTP 201 with state waiting or uncertain/);
-  assert.match(docsCopy, /Le catalogue public GET \/api\/pricing peut exposer requiresOtp et otpCommand/);
-  assert.match(docsCopy, /public GET \/api\/pricing catalog may expose requiresOtp and otpCommand/);
-  assert.match(docsCopy, /OTP reçu par SMS/);
-  assert.match(docsCopy, /OTP obtenu après un code USSD/);
+  assert.match(docsCopy, /OTP obtenu avant la tentative/);
+  assert.match(docsCopy, /Défi OTP par l’opérateur/);
   assert.match(docsCopy, /Wave et ouverture d’application/);
-  assert.match(docsCopy, /contrat API direct ne renvoie pas d’URL d’application Wave/);
-  assert.match(docsCopy, /SMS OTP/);
-  assert.match(docsCopy, /OTP after dialing a USSD code/);
+  assert.match(docsCopy, /Operator OTP challenge/);
   assert.match(docsCopy, /Wave app handoff/);
-  assert.match(docsCopy, /Direct API contract does not return a Wave app URL/);
-  assert.doesNotMatch(docsCopy, /wave_url|otp_required/i);
+  assert.match(docsCopy, /flow\.action = open_redirect/);
+  assert.match(docsCopy, /otp_required/);
 
   const sessionSchemaStart = generatedApiSchemas.indexOf('export const GetDeveloperPublicPaymentSessionResponse =');
   const sessionSchemaEnd = generatedApiSchemas.indexOf('export const StartDeveloperDirectPaymentParams =', sessionSchemaStart);
   const directSessionSchema = generatedApiSchemas.slice(sessionSchemaStart, sessionSchemaEnd);
   assert.ok(sessionSchemaStart >= 0 && sessionSchemaEnd > sessionSchemaStart);
-  assert.doesNotMatch(directSessionSchema, /otpCommand/);
+  assert.match(directSessionSchema, /requiresOtp/);
+  assert.match(directSessionSchema, /otpMethod/);
+  assert.match(directSessionSchema, /otpCommand/);
 });
 
-test('Direct API OTP section includes reference codes and real SendFlow examples', () => {
+test('Direct API OTP section includes country commands, OTP example, and Wave handoff', () => {
   assert.match(docsCopy, /mobileMoneyOtpTitle: 'Parcours OTP et codes USSD'/);
   assert.match(docsCopy, /mobileMoneyOtpTitle: 'OTP flows and USSD codes'/);
-  assert.match(docsCopy, /valeurs de référence, pas une configuration SendFlow vérifiée/);
-  assert.match(docsCopy, /reference values, not verified SendFlow configuration/);
   for (const code of ['#144*82#', '#144#391#', '#144#77#', '*144*4*6*montant#']) {
     assert.ok(docsCopy.includes(code), `The reference matrix must include ${code}`);
   }
   assert.match(docsCopy, /Côte d’Ivoire · Wave/);
   assert.match(docsCopy, /Senegal · Wave/);
-  assert.match(docsCopy, /aucun exemple de redirection Wave exécutable/i);
-  assert.match(docsCopy, /no Wave URL.*executable Wave redirect example/s);
+  assert.match(docsCopy, /flow\.redirectUrl/);
+  assert.match(docsCopy, /directOtpRequiredResponse/);
 
   const otpSection = docsCopy.indexOf('<h3 id="direct-otp-guide">{t.mobileMoneyOtpTitle}</h3>');
   const countrySection = docsCopy.indexOf('<h3>{t.mobileMoneyCountryTitle}</h3>', otpSection);
@@ -398,6 +395,9 @@ test('Direct API OTP section includes reference codes and real SendFlow examples
   assert.match(otpSectionMarkup, /mobileMoneyOtpRows\.map/);
   assert.match(otpSectionMarkup, /example="pricing"/);
   assert.match(otpSectionMarkup, /example="start-attempt"/);
+  assert.match(otpSectionMarkup, /example="submit-otp"/);
+  assert.match(otpSectionMarkup, /example="confirm-otp"/);
+  assert.match(otpSectionMarkup, /example="handle-flow-action"/);
 });
 
 test('LinkFlow shows only the server instruction for an available selected operator', async () => {
@@ -408,11 +408,21 @@ test('LinkFlow shows only the server instruction for an available selected opera
   assert.doesNotMatch(paymentPage, /otp:\s*operator\.otpCommand|setOtp/);
 });
 
-test('attempt examples keep operator confirmation outside the merchant API request', () => {
+test('basic attempt examples and OTP confirmation examples match the API schema', () => {
   for (const format of getDocsCodeFormats('start-attempt')) {
     const example = getDocsCodeExample('start-attempt', format);
-    assert.doesNotMatch(example, /["'](?:otp|pin)["']\s*:/i, `${format} must not add operator confirmation fields`);
     assert.match(example, /ussdCode/i, `${format} must use only the USSD instruction returned by SendFlow`);
+  }
+  for (const format of getDocsCodeFormats('confirm-otp')) {
+    const example = getDocsCodeExample('confirm-otp', format);
+    assert.match(example, /otp/i, `${format} must send the payer-provided OTP`);
+    assert.match(example, /reference/i, `${format} must use the returned challenge reference`);
+    assert.match(example, /payer-order-2026-0042/, `${format} must reuse the attempt idempotency key`);
+  }
+  for (const format of getDocsCodeFormats('submit-otp')) {
+    const example = getDocsCodeExample('submit-otp', format);
+    assert.match(example, /otp/i, `${format} must submit the previously obtained OTP`);
+    assert.doesNotMatch(example, /["']reference["']\s*:/i, `${format} must not invent a challenge reference`);
   }
   const requestSchemaStart = generatedApiSchemas.indexOf('export const StartDeveloperDirectPaymentBody =');
   const requestSchemaEnd = generatedApiSchemas.indexOf('export const StartDeveloperDirectPaymentResponse =', requestSchemaStart);
@@ -421,11 +431,11 @@ test('attempt examples keep operator confirmation outside the merchant API reque
   for (const field of ['firstName', 'lastName', 'countryCode', 'operatorId', 'phoneNumber']) {
     assert.match(requestSchema, new RegExp(`"${field}"`));
   }
-  assert.doesNotMatch(requestSchema, /"(?:otp|pin)"/i);
-  assert.match(generatedApiSchemas.slice(requestSchemaEnd, requestSchemaEnd + 500), /"ussdCode": zod\.string\(\)\.nullable\(\)/);
-  assert.match(docsCopy, /Le catalogue public GET \/api\/pricing peut exposer requiresOtp et otpCommand/);
-  assert.match(docsCopy, /public GET \/api\/pricing catalog may expose requiresOtp and otpCommand/);
-  assert.match(docsCopy, /Code de référence fourni ; non confirmé dans la configuration SendFlow active/);
+  assert.match(requestSchema, /"otp"/);
+  assert.match(requestSchema, /"reference"/);
+  const responseSchema = generatedApiSchemas.slice(requestSchemaEnd, requestSchemaEnd + 1200);
+  assert.match(responseSchema, /"flow"/);
+  assert.match(responseSchema, /"ussdCode": zod\.string\(\)\.nullable\(\)/);
   assert.doesNotMatch(getDocsCodeExample('start-attempt', 'Node.js'), /#144|#144#391#|\*144\*4\*6/i,
     'Code samples must use the SendFlow-returned instruction, not hard-code a reference value');
 });

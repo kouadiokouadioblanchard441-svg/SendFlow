@@ -30,6 +30,7 @@ import {
   decryptSensitiveDataIfEncrypted,
   encryptSensitiveData,
 } from "../lib/sensitive-data-crypto";
+import { getConfiguredOtpCommand } from "../lib/operator-otp-instruction";
 import { isSharedDatabasePreview } from "../lib/shared-database-preview-guard";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { FeexpayClient, type FeexpayReceipt } from "../providers/feexpay/client";
@@ -174,7 +175,9 @@ function asPublicStatus(bundle: AttemptBundle): PublicLinkFlowPaymentStatus {
       action,
       reference: awaitingProviderOtp ? bundle.mapping.id : null,
       otpMethod: awaitingProviderOtp ? channel?.otpMethod ?? "ussd" : null,
-      otpCommand: awaitingProviderOtp ? bundle.mapping.ussdCode : null,
+      otpCommand: awaitingProviderOtp && (channel?.otpMethod ?? "ussd") === "ussd"
+        ? bundle.mapping.ussdCode
+        : null,
       redirectUrl: null,
     },
   };
@@ -238,7 +241,11 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   )).limit(1);
   const requiresOtp = Boolean(channel.requiresOtp || otpPolicy?.requiresOtp);
   const otpFlow = channel.otpFlow ?? "pre_acquired";
-  const otpCommand = otpPolicy?.otpCommand ?? operator.ussdCodeOverride ?? country.ussdCode ?? null;
+  const otpMethod = channel.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null);
+  const otpCommand = requiresOtp && otpMethod === "ussd"
+    ? getConfiguredOtpCommand(otpPolicy, amountMinor) ??
+      operator.ussdCodeOverride ?? country.ussdCode ?? null
+    : null;
   if (requiresOtp && otpFlow === "provider_challenge" &&
     Boolean(input.reference) !== Boolean(input.otp)) {
     throw new LinkFlowPaymentError(400, "Pour confirmer le code OTP, renvoyez la référence de la tentative et le code reçu.");
@@ -259,6 +266,9 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   }
   if (!requiresOtp && (input.otp !== undefined || input.reference !== undefined)) {
     throw new LinkFlowPaymentError(400, "Ce réseau ne demande pas de confirmation OTP.");
+  }
+  if (requiresOtp && otpFlow !== "provider_challenge" && input.reference !== undefined) {
+    throw new LinkFlowPaymentError(400, "Ce parcours OTP n’utilise pas de référence de confirmation.");
   }
   if (requiresOtp && otpFlow === "provider_challenge" && input.otp && !input.reference) {
     throw new LinkFlowPaymentError(400, "La référence de la tentative est requise pour confirmer le code OTP.");
@@ -305,12 +315,12 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
     channel,
     requiresOtp,
     otpFlow,
-    otpMethod: channel.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null),
+    otpMethod,
     otpCommand,
     amountMinor,
     amounts,
     normalizedPhone,
-    ussdCode: operator.ussdCodeOverride ?? country.ussdCode ?? null,
+    ussdCode: requiresOtp ? otpCommand : operator.ussdCodeOverride ?? country.ussdCode ?? null,
   };
 }
 
@@ -599,10 +609,16 @@ export async function startLinkFlowPaymentAttempt(
     }
     const channelContext = await resolveChannel(tx, lockedLink, input);
     const requestHash = buildLinkFlowRequestHash({
-      ...input,
       linkId: lockedLink.id,
+      countryCode: input.countryCode,
+      operatorId: input.operatorId,
       phoneNumber: channelContext.normalizedPhone,
+      firstName: input.firstName,
+      lastName: input.lastName,
       amountMinor: channelContext.amountMinor,
+      idempotencyKey: input.idempotencyKey,
+      otp: input.otp,
+      otpFlow: channelContext.otpFlow,
     });
     const [existing] = await tx.select().from(customerPaymentLinkAttemptsTable).where(and(
       eq(customerPaymentLinkAttemptsTable.paymentLinkId, lockedLink.id),

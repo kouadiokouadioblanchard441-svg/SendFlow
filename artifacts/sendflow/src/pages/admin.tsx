@@ -2843,7 +2843,8 @@ function OtpPoliciesPage() {
   };
 
   const otpCommand = draftOtpCommand.trim();
-  const otpCommandValid = !otpCommand || /^[*#][0-9*#]{1,38}#$/.test(otpCommand);
+  const otpCommandValid = !otpCommand ||
+    /^[*#](?:[0-9*#]{1,38}|[0-9*#]*\{amount\}[0-9*#]*)#$/.test(otpCommand);
 
   const savePolicy = () => {
     if (!editing || reason.trim().length < 3 || !otpCommandValid) return;
@@ -2974,7 +2975,7 @@ function OtpPoliciesPage() {
                data-testid="input-otp-policy-command"
              />
              <p id="otp-policy-command-help" className="text-xs text-muted-foreground">
-               Utilisez uniquement *, # et des chiffres, avec # à la fin. Laissez vide si aucun code n’est configuré.
+               Commencez par * ou # et terminez par #. Pour un code lié au montant, utilisez {'{amount}'}. Laissez vide si aucun code n’est configuré.
              </p>
              {!otpCommandValid && (
                <p className="text-sm text-destructive" role="alert">Saisissez un code USSD valide.</p>

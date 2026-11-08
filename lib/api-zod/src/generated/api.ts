@@ -1185,7 +1185,7 @@ export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMin
 export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMax = 40;
 
 
-export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandRegExp = new RegExp('^[*#][0-9*#]{1,38}#$');
+export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandRegExp = new RegExp('^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$');
 
 
 export const GetPublicPaymentLinkResponse = zod.object({
@@ -2073,6 +2073,7 @@ export const GetDeveloperPublicPaymentSessionResponse = zod.object({
   "initials": zod.string(),
   "logoUrl": zod.string().nullable(),
   "requiresOtp": zod.boolean(),
+  "otpMethod": zod.union([zod.literal('sms'),zod.literal('ussd'),zod.literal('app'),zod.literal(null)]).nullable(),
   "otpCommand": zod.string().nullable()
 }))
 }))
@@ -4196,7 +4197,7 @@ export const listAdminOtpPoliciesResponseItemsItemOtpCommandMin = 3;
 export const listAdminOtpPoliciesResponseItemsItemOtpCommandMax = 40;
 
 
-export const listAdminOtpPoliciesResponseItemsItemOtpCommandRegExp = new RegExp('^[*#][0-9*#]{1,38}#$');
+export const listAdminOtpPoliciesResponseItemsItemOtpCommandRegExp = new RegExp('^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$');
 export const listAdminOtpPoliciesResponseItemsItemVersionMin = 0;
 
 
@@ -4241,7 +4242,7 @@ export const updateAdminOtpPolicyBodyOtpCommandMin = 3;
 export const updateAdminOtpPolicyBodyOtpCommandMax = 40;
 
 
-export const updateAdminOtpPolicyBodyOtpCommandRegExp = new RegExp('^[*#][0-9*#]{1,38}#$');
+export const updateAdminOtpPolicyBodyOtpCommandRegExp = new RegExp('^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$');
 export const updateAdminOtpPolicyBodyExpectedVersionMin = 0;
 
 export const updateAdminOtpPolicyBodyReasonMin = 3;
@@ -4262,7 +4263,7 @@ export const updateAdminOtpPolicyResponseOtpCommandMin = 3;
 export const updateAdminOtpPolicyResponseOtpCommandMax = 40;
 
 
-export const updateAdminOtpPolicyResponseOtpCommandRegExp = new RegExp('^[*#][0-9*#]{1,38}#$');
+export const updateAdminOtpPolicyResponseOtpCommandRegExp = new RegExp('^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$');
 export const updateAdminOtpPolicyResponseVersionMin = 0;
 
 

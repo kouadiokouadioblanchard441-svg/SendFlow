@@ -181,13 +181,21 @@ async function loadAvailableChoices(link: PublicLinkRow) {
         !Number.isFinite(rate.feePercent) || rate.feePercent < 0 || rate.feePercent > 100) return [];
        if (link.amountMinor > 0 && !calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false)) return [];
       const otpPolicy = otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`);
+      const requiresOtp = Boolean(channel.requiresOtp || otpPolicy?.requiresOtp);
+      const otpMethod = channel.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null);
+      const amountCommandPending = otpPolicy?.otpCommand?.includes("{amount}") && link.amountMinor < 1;
+      const otpCommand = !requiresOtp || otpMethod !== "ussd" || amountCommandPending
+        ? null
+        : getConfiguredOtpCommand(otpPolicy, link.amountMinor) ??
+          operator.ussdCodeOverride ?? country.ussdCode ?? null;
       return [{
         id: operator.operatorId,
         name: operator.name,
         initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
         logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
-        requiresOtp: Boolean(channel.requiresOtp || otpPolicy?.requiresOtp),
-        otpCommand: getConfiguredOtpCommand(otpPolicy),
+        requiresOtp,
+        otpMethod: requiresOtp ? otpMethod : null,
+        otpCommand,
       }];
     }).sort((left, right) => left.name.localeCompare(right.name, "fr"));
 
@@ -242,19 +250,28 @@ async function loadPreviewCatalogChoices(link: PublicLinkRow) {
       minPhoneDigits: country.minPhoneDigits,
       maxPhoneDigits: country.maxPhoneDigits,
       operators: catalogOperators
-        .map((operator) => ({
-          id: operator.operatorId,
-          name: operator.name,
-          initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
-          logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
-          requiresOtp: Boolean(
-            feexpayChannelForOperator(countryCode, operator.operatorId)?.requiresOtp ||
-            otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`)?.requiresOtp,
-          ),
-          otpCommand: getConfiguredOtpCommand(
-            otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`),
-          ),
-        }))
+        .map((operator) => {
+          const channel = feexpayChannelForOperator(countryCode, operator.operatorId);
+          const otpPolicy = otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`);
+          const requiresOtp = Boolean(
+            channel?.requiresOtp || otpPolicy?.requiresOtp,
+          );
+          const otpMethod = channel?.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null);
+          const amountCommandPending = otpPolicy?.otpCommand?.includes("{amount}") && link.amountMinor < 1;
+          const otpCommand = !requiresOtp || otpMethod !== "ussd" || amountCommandPending
+            ? null
+            : getConfiguredOtpCommand(otpPolicy, link.amountMinor) ??
+              operator.ussdCodeOverride ?? country.ussdCode ?? null;
+          return {
+            id: operator.operatorId,
+            name: operator.name,
+            initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
+            logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+            requiresOtp,
+            otpMethod: requiresOtp ? otpMethod : null,
+            otpCommand,
+          };
+        })
         .sort((left, right) => left.name.localeCompare(right.name, "fr")),
     };
   }).sort((left, right) => left.name.localeCompare(right.name, "fr"));

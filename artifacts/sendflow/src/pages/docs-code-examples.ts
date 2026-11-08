@@ -7,6 +7,9 @@ export type DocsExampleId =
   | 'read-session'
   | 'read-public-session'
   | 'start-attempt'
+  | 'submit-otp'
+  | 'confirm-otp'
+  | 'handle-flow-action'
   | 'poll-attempt'
   | 'handle-http-errors'
   | 'pricing'
@@ -587,6 +590,257 @@ suspend fun startDirectAttempt(
         connection.disconnect()
     }
 }`,
+  },
+  'submit-otp': {
+    cURL: `curl --request POST "$SENDFLOW_API_BASE_URL/v1/public/payment-sessions/$SESSION_ID/attempts" \\
+  --header "X-SendFlow-Public-Key: $SENDFLOW_PUBLIC_KEY" \\
+  --header "X-SendFlow-Client-Token: $SENDFLOW_CLIENT_TOKEN" \\
+  --header "Idempotency-Key: payer-order-2026-0042" \\
+  --header "Content-Type: application/json" \\
+  --data @- <<JSON
+{
+  "firstName": "<first-name>",
+  "lastName": "<last-name>",
+  "countryCode": "CI",
+  "operatorId": "<operator-id-from-session>",
+  "phoneNumber": "<international-phone-number>",
+  "otp": "$PAYER_OTP"
+}
+JSON
+# Use this form when the payer obtained the OTP before starting the attempt.`,
+    JavaScript: `// Use when the payer has already obtained the code from the operator.
+// Keep otp short-lived; never log or persist it.
+const response = await fetch(
+  \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}/attempts\`,
+  {
+    method: "POST",
+    headers: {
+      "X-SendFlow-Public-Key": session.publicKey,
+      "X-SendFlow-Client-Token": session.clientToken,
+      "Idempotency-Key": "payer-order-2026-0042",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...attemptRequest, otp }),
+  },
+);
+const attempt = await response.json();
+if (!response.ok) throw new Error(attempt.error ?? "Payment attempt failed");`,
+    'Node.js': `// Submit an OTP obtained before the attempt; no challenge reference is needed.
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/public/payment-sessions/" +
+    encodeURIComponent(session.id) + "/attempts",
+  {
+    method: "POST",
+    headers: {
+      "X-SendFlow-Public-Key": session.publicKey,
+      "X-SendFlow-Client-Token": session.clientToken,
+      "Idempotency-Key": "payer-order-2026-0042",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...attemptRequest, otp }),
+  },
+);
+const attempt = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(attempt.error ?? "Payment attempt failed");`,
+    PHP: `$body = [
+    "firstName" => "<first-name>",
+    "lastName" => "<last-name>",
+    "countryCode" => "CI",
+    "operatorId" => "<operator-id-from-session>",
+    "phoneNumber" => "<international-phone-number>",
+    "otp" => $payerEnteredOtp,
+];
+$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/public/payment-sessions/" . rawurlencode($sessionId) . "/attempts";
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        "X-SendFlow-Public-Key: " . $publicKey,
+        "X-SendFlow-Client-Token: " . $clientToken,
+        "Idempotency-Key: payer-order-2026-0042",
+        "Content-Type: application/json",
+    ],
+    CURLOPT_POSTFIELDS => json_encode($body, JSON_THROW_ON_ERROR),
+]);
+$response = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+if ($response === false || $status >= 400) {
+    throw new RuntimeException("Payment attempt failed");
+}
+$attempt = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+curl_close($ch);`,
+    Python: `# Submit an OTP obtained before the attempt; no challenge reference is needed.
+# Never log or persist the payer's OTP.
+attempt_body = {
+    **attempt_request,
+    "otp": payer_entered_otp,
+}
+response = requests.post(
+    f"{api_base_url}/v1/public/payment-sessions/{session_id}/attempts",
+    headers={
+        "X-SendFlow-Public-Key": public_key,
+        "X-SendFlow-Client-Token": client_token,
+        "Idempotency-Key": "payer-order-2026-0042",
+    },
+    json=attempt_body,
+    timeout=15,
+)
+response.raise_for_status()
+attempt = response.json()`,
+  },
+  'confirm-otp': {
+    cURL: `curl --request POST "$SENDFLOW_API_BASE_URL/v1/public/payment-sessions/$SESSION_ID/attempts" \\
+  --header "X-SendFlow-Public-Key: $SENDFLOW_PUBLIC_KEY" \\
+  --header "X-SendFlow-Client-Token: $SENDFLOW_CLIENT_TOKEN" \\
+  --header "Idempotency-Key: payer-order-2026-0042" \\
+  --header "Content-Type: application/json" \\
+  --data @- <<JSON
+{
+  "firstName": "<first-name>",
+  "lastName": "<last-name>",
+  "countryCode": "CI",
+  "operatorId": "<operator-id-from-session>",
+  "phoneNumber": "<international-phone-number>",
+  "reference": "$ATTEMPT_REFERENCE",
+  "otp": "$PAYER_OTP"
+}
+JSON`,
+    JavaScript: `// Use after the first response has flow.action === "enter_otp".
+// otp is the short-lived value entered by the payer; never log or persist it.
+const confirmResponse = await fetch(
+  \`\${apiBaseUrl}/v1/public/payment-sessions/\${session.id}/attempts\`,
+  {
+    method: "POST",
+    headers: {
+      "X-SendFlow-Public-Key": session.publicKey,
+      "X-SendFlow-Client-Token": session.clientToken,
+      "Idempotency-Key": "payer-order-2026-0042",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ...attemptRequest,
+      reference: attempt.flow.reference,
+      otp,
+    }),
+  },
+);
+const confirmedAttempt = await confirmResponse.json();
+if (!confirmResponse.ok) throw new Error(confirmedAttempt.error ?? "OTP confirmation failed");`,
+    'Node.js': `// Reuse the exact initial attempt body and idempotency key.
+// otp comes from the payer and must never be logged or stored durably.
+if (attempt.flow.action !== "enter_otp" || !attempt.flow.reference) {
+  throw new Error("No OTP challenge is waiting for confirmation");
+}
+const response = await fetch(
+  apiBaseUrl.replace(/\\/$/, "") + "/v1/public/payment-sessions/" +
+    encodeURIComponent(session.id) + "/attempts",
+  {
+    method: "POST",
+    headers: {
+      "X-SendFlow-Public-Key": session.publicKey,
+      "X-SendFlow-Client-Token": session.clientToken,
+      "Idempotency-Key": "payer-order-2026-0042",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ...attemptRequest,
+      reference: attempt.flow.reference,
+      otp,
+    }),
+  },
+);
+const confirmedAttempt = await response.json().catch(() => ({}));
+if (!response.ok) throw new Error(confirmedAttempt.error ?? "OTP confirmation failed");`,
+    PHP: `$body = [
+    "firstName" => "<first-name>",
+    "lastName" => "<last-name>",
+    "countryCode" => "CI",
+    "operatorId" => "<operator-id-from-session>",
+    "phoneNumber" => "<international-phone-number>",
+    "reference" => $attempt["flow"]["reference"],
+    "otp" => $payerEnteredOtp,
+];
+$url = rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/v1/public/payment-sessions/" . rawurlencode($sessionId) . "/attempts";
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        "X-SendFlow-Public-Key: " . $publicKey,
+        "X-SendFlow-Client-Token: " . $clientToken,
+        "Idempotency-Key: payer-order-2026-0042",
+        "Content-Type: application/json",
+    ],
+    CURLOPT_POSTFIELDS => json_encode($body, JSON_THROW_ON_ERROR),
+]);
+$response = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+if ($response === false || $status >= 400) {
+    throw new RuntimeException("OTP confirmation failed");
+}
+$confirmedAttempt = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+curl_close($ch);`,
+    Python: `# Reuse the initial request body and Idempotency-Key.
+# otp is short-lived: never log or persist it.
+if attempt["flow"]["action"] != "enter_otp" or not attempt["flow"]["reference"]:
+    raise RuntimeError("No OTP challenge is waiting for confirmation")
+
+confirmation_body = {
+    **attempt_request,
+    "reference": attempt["flow"]["reference"],
+    "otp": payer_entered_otp,
+}
+response = requests.post(
+    f"{api_base_url}/v1/public/payment-sessions/{session_id}/attempts",
+    headers={
+        "X-SendFlow-Public-Key": public_key,
+        "X-SendFlow-Client-Token": client_token,
+        "Idempotency-Key": "payer-order-2026-0042",
+    },
+    json=confirmation_body,
+    timeout=15,
+)
+response.raise_for_status()
+confirmed_attempt = response.json()`,
+  },
+  'handle-flow-action': {
+    cURL: `# If you saved the attempt response as attempt.json:
+jq -r 'if .flow.action == "open_redirect" then .flow.redirectUrl // empty else empty end' attempt.json
+# Open only the exact URL returned by the API; do not construct one.`,
+    JavaScript: `// Run in the payer's browser after receiving the attempt response.
+const { action, redirectUrl } = attempt.flow ?? {};
+if (action === "open_redirect" && typeof redirectUrl === "string") {
+  window.location.assign(redirectUrl);
+} else if (action === "enter_otp") {
+  const instruction = document.querySelector("[data-sendflow-instruction]");
+  if (instruction) instruction.textContent = attempt.flow.otpCommand ?? "Enter the code from your operator";
+} else if (action === "approve_on_phone") {
+  const instruction = document.querySelector("[data-sendflow-instruction]");
+  if (instruction) instruction.textContent = "Approve the payment request on your phone";
+}`,
+    'Node.js': `// Return only the server-generated redirect URL to the checkout client.
+const flow = attempt.flow ?? {};
+const checkoutAction = flow.action === "open_redirect" && flow.redirectUrl
+  ? { action: "open_redirect", redirectUrl: flow.redirectUrl }
+  : { action: flow.action };
+// Never substitute merchant returnUrl for redirectUrl.`,
+    PHP: `$flow = $attempt["flow"] ?? [];
+$checkoutAction = [
+    "action" => $flow["action"] ?? "wait",
+    "redirectUrl" => ($flow["action"] ?? null) === "open_redirect"
+        ? ($flow["redirectUrl"] ?? null)
+        : null,
+];
+// Return the exact API-provided URL; never build a provider URL locally.`,
+    Python: `flow = attempt.get("flow", {})
+if flow.get("action") == "open_redirect" and flow.get("redirectUrl"):
+    checkout_action = {
+        "action": "open_redirect",
+        "redirectUrl": flow["redirectUrl"],
+    }  # Open this exact server-returned URL in the payer's client.
+else:
+    checkout_action = {"action": flow.get("action", "wait")}`,
   },
   'poll-attempt': {
     cURL: `curl "$SENDFLOW_API_BASE_URL/v1/public/payment-sessions/$SESSION_ID/attempts/$ATTEMPT_ID" \\

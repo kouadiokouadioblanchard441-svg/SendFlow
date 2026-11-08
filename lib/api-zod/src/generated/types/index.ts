@@ -241,6 +241,7 @@ export * from './developerPaymentSessionStatusState';
 export * from './developerPublicPaymentSession';
 export * from './developerPublicPaymentSessionCountriesItem';
 export * from './developerPublicPaymentSessionCountriesItemOperatorsItem';
+export * from './developerPublicPaymentSessionCountriesItemOperatorsItemOtpMethod';
 export * from './developerPublicPaymentSessionCurrency';
 export * from './developerPublicPaymentSessionMode';
 export * from './developerPublicPaymentSessionState';

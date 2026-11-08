@@ -35,8 +35,13 @@ export function buildLinkFlowRequestHash(input: {
   lastName: string;
   amountMinor: number;
   idempotencyKey: string;
+  otp?: string;
+  otpFlow?: "provider_challenge" | "pre_acquired";
 }) {
   const phoneHash = createSensitiveDataLookupIndex(input.phoneNumber, "transaction-sender-phone");
+  const otpFingerprint = input.otpFlow === "provider_challenge" || !input.otp
+    ? null
+    : createSensitiveDataLookupIndex(input.otp, "linkflow-request-otp");
   return createSensitiveDataLookupIndex(JSON.stringify({
     linkId: input.linkId,
     countryCode: input.countryCode.toLowerCase(),
@@ -46,6 +51,8 @@ export function buildLinkFlowRequestHash(input: {
     lastName: input.lastName.trim().normalize("NFKC"),
     amountMinor: input.amountMinor,
     idempotencyKey: input.idempotencyKey,
+    otpFlow: input.otpFlow ?? null,
+    otpFingerprint,
   }), "linkflow-request-fingerprint");
 }
 

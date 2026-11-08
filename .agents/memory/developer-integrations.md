@@ -59,6 +59,12 @@ For OTP documentation, distinguish the database-backed operator `requiresOtp` po
 
 **How to apply:** In merchant docs, label the technical checkout restrictions separately from operator policies, never ask merchants to collect payer OTPs/PINs, and report production catalog status as unverified when the live API cannot be reached.
 
+The Direct API uses one provider-neutral OTP flow contract: operator choices expose `requiresOtp`, `otpMethod`, and `otpCommand`; attempt responses expose the next `flow.action`, optional challenge reference, and provider-generated redirect URL. Never persist or log the payer’s OTP. For provider-started challenges, keep the same attempt and idempotency key while excluding OTP/reference from its stable identity; for pre-acquired OTPs, include only a one-way OTP fingerprint so a retry cannot silently replace the code. Amount-dependent USSD commands use the `{amount}` template token, which the server replaces with the exact XOF amount. `returnUrl` is never a provider redirect.
+
+**Why:** providers can add SMS, USSD, app, or redirect steps, and incorrect idempotency or client-built instructions can create duplicate financial attempts or misdirect payers.
+
+**How to apply:** Keep merchant contracts provider-neutral, preserve the OTP fingerprint distinction between provider challenges and pre-acquired codes, never expose payer OTPs in logs or durable storage, and open only the exact provider-generated redirect URL returned by the API.
+
 Public merchant documentation should describe the customer-facing API contract, not internal rollout flags, database provisioning state, source-inspection notes, or local host addresses. Use clearly synthetic placeholders instead of plausible customer names or phone numbers; keep only verified public production URLs and contacts.
 
 **Why:** the user wants integrator documentation without internal hosting/configuration details or potentially sensitive sample data.

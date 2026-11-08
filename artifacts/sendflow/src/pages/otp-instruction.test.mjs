@@ -20,4 +20,5 @@ test('admin manages each operator instruction without collecting the payer OTP',
   assert.match(adminSource, /expectedVersion: editing\.version/);
   assert.match(adminSource, /data-testid="input-otp-policy-reason"/);
   assert.match(adminSource, /pas l’OTP personnel ni une confirmation de paiement/);
+  assert.match(adminSource, /\{amount\}/);
 });

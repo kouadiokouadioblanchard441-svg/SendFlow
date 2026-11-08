@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { DeveloperPublicPaymentSessionCountriesItemOperatorsItemOtpMethod } from './developerPublicPaymentSessionCountriesItemOperatorsItemOtpMethod';
 
 export type DeveloperPublicPaymentSessionCountriesItemOperatorsItem = {
   id: string;
@@ -13,6 +14,8 @@ export type DeveloperPublicPaymentSessionCountriesItemOperatorsItem = {
   /** @nullable */
   logoUrl: string | null;
   requiresOtp: boolean;
+  /** @nullable */
+  otpMethod: DeveloperPublicPaymentSessionCountriesItemOperatorsItemOtpMethod;
   /** @nullable */
   otpCommand: string | null;
 };

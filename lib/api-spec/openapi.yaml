@@ -6014,7 +6014,7 @@ components:
           type: ["string", "null"]
           minLength: 3
           maxLength: 40
-          pattern: "^[*#][0-9*#]{1,38}#$"
+          pattern: '^[*#](?:[0-9*#]{1,38}|[0-9*#]*\{amount\}[0-9*#]*)#$'
           description: Server-configured instruction to dial for an OTP; not the OTP itself or payment confirmation.
       required: [id, name, initials, logoUrl, otpCommand]
     PublicPaymentLinkCountry:
@@ -6963,7 +6963,7 @@ components:
           type: ["string", "null"]
           minLength: 3
           maxLength: 40
-          pattern: "^[*#][0-9*#]{1,38}#$"
+          pattern: '^[*#](?:[0-9*#]{1,38}|[0-9*#]*\{amount\}[0-9*#]*)#$'
         providerStatus:
           type: string
           enum: [not_configured]
@@ -7714,7 +7714,7 @@ components:
           type: ["string", "null"]
           minLength: 3
           maxLength: 40
-          pattern: "^[*#][0-9*#]{1,38}#$"
+          pattern: '^[*#](?:[0-9*#]{1,38}|[0-9*#]*\{amount\}[0-9*#]*)#$'
         expectedVersion:
           type: integer
           minimum: 0
@@ -8454,8 +8454,9 @@ components:
                     initials: { type: string }
                     logoUrl: { type: ["string", "null"] }
                     requiresOtp: { type: boolean }
+                    otpMethod: { type: ["string", "null"], enum: [sms, ussd, app, null] }
                     otpCommand: { type: ["string", "null"] }
-                  required: [id, name, initials, logoUrl, requiresOtp, otpCommand]
+                  required: [id, name, initials, logoUrl, requiresOtp, otpMethod, otpCommand]
             required: [code, name, flag, phonePrefix, minPhoneDigits, maxPhoneDigits, operators]
       required: [id, merchantName, description, mode, state, amountMinor, currency, expiresAt, countries]
     DeveloperDirectPaymentInput:
