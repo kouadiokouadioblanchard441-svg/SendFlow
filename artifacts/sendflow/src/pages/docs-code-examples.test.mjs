@@ -354,6 +354,8 @@ test('Mobile Money guidance describes operator USSD confirmation in both languag
 });
 
 test('Mobile Money guide distinguishes catalog metadata from supported attempt fields', () => {
+  assert.match(docsCopy, /Confirmation sur téléphone \(USSD Push\).*HTTP 201 avec state waiting ou uncertain/);
+  assert.match(docsCopy, /Phone confirmation \(USSD Push\).*HTTP 201 with state waiting or uncertain/);
   assert.match(docsCopy, /session peut aussi renvoyer otpCommand, une consigne de composition configurée côté serveur/);
   assert.match(docsCopy, /otpCommand ou null/);
   assert.match(docsCopy, /OTP reçu par SMS/);
