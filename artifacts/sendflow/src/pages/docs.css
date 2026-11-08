@@ -155,6 +155,11 @@
 .sf-docs-copy { border-color: #8b4cc8; background: #fff; color: #7736b5; }
 .sf-docs-copy:hover { border-color: #7736b5; background: #fbf8ff; color: #7736b5; }
 .sf-docs-code pre { max-width: 100%; overflow-x: auto; margin: 0; padding: 16px; color: #292a30; font: 12px/1.75 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
+.sf-docs-url-block .sf-docs-url-value { overflow-x: hidden; overflow-wrap: anywhere; white-space: pre-wrap; word-break: break-word; font-size: 11px; line-height: 1.6; }
+.sf-docs-production-urls { display: grid; gap: 12px; min-width: 0; }
+.sf-docs-production-urls .sf-docs-code { margin-top: 0; }
+.sf-docs-production-url-section > strong { color: #17181d; font-size: 13px; }
+.sf-docs-production-url-section > span { color: #292a30; font-size: 12px; line-height: 1.6; }
 .sf-docs-code-comment, .sf-docs-token-comment { color: #77717e; }
 .sf-docs-token-string { color: #5e3890; }
 .sf-docs-token-keyword { color: #22202a; font-weight: 800; }

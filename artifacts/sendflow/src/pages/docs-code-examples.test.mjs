@@ -5,6 +5,7 @@ import { getDocsCodeExample, getDocsCodeFormats } from './docs-code-examples.ts'
 
 const apiBase = 'https://merchent.business.sendflow.africa/api';
 const docsCopy = await readFile(new URL('./docs.tsx', import.meta.url), 'utf8');
+const productionUrlSource = await readFile(new URL('./docs-production-urls.ts', import.meta.url), 'utf8');
 const docsStyles = await readFile(new URL('./docs.css', import.meta.url), 'utf8');
 const payoutRoutes = await readFile(
   new URL('../../../api-server/src/routes/developer-payouts.ts', import.meta.url),
@@ -27,29 +28,63 @@ test('hosted checkout examples keep the payment origin separate from the API bas
   const nodeExample = getDocsCodeExample('create-hosted', 'Node.js');
   assert.match(nodeExample, /process\.env\.SENDFLOW_API_BASE_URL/);
   assert.match(nodeExample, /process\.env\.SENDFLOW_CHECKOUT_ORIGIN/);
-  assert.doesNotMatch(nodeExample, /payin\.merchant\.command\.sendflow\.africa/);
+  assert.match(nodeExample, /https:\/\/merchent\.business\.sendflow\.africa\/api/);
+  assert.match(nodeExample, /https:\/\/payin\.merchant\.command\.sendflow\.africa/);
 });
 
 test('public documentation lists production URL settings and domains', () => {
-  assert.match(docsCopy, /SENDFLOW_API_BASE_URL=https:\/\/merchent\.business\.sendflow\.africa\/api/);
-  assert.match(docsCopy, /SENDFLOW_CHECKOUT_ORIGIN=https:\/\/payin\.merchant\.command\.sendflow\.africa/);
   for (const host of [
+    'https://merchent.business.sendflow.africa/api',
+    'https://payin.merchant.command.sendflow.africa',
     'https://merchent.business.sendflow.africa',
     'https://sendflow.africa',
     'https://apis.docs.sendflow.africa',
-    'https://payin.merchant.command.sendflow.africa',
   ]) {
-    assert.ok(docsCopy.includes(host), `Missing production URL: ${host}`);
+    assert.ok(productionUrlSource.includes(host), `Missing production URL: ${host}`);
   }
+  assert.match(docsCopy, /apiBaseUrlLabel: 'API SendFlow · SENDFLOW_API_BASE_URL'/);
+  assert.match(docsCopy, /checkoutOriginLabel: 'Paiement hébergé · SENDFLOW_CHECKOUT_ORIGIN'/);
+  assert.match(docsCopy, /data-testid="button-copy-url"/);
   assert.doesNotMatch(docsCopy, /illustratif|illustrative/i);
+});
+
+test('every API request example uses the centralized production API base', () => {
+  const examples = [
+    'create-hosted',
+    'create-direct',
+    'read-session',
+    'read-public-session',
+    'start-attempt',
+    'poll-attempt',
+    'handle-http-errors',
+    'pricing',
+    'payment-limits',
+    'payout-quote',
+    'payout-create',
+    'payout-list',
+    'payout-read',
+    'payout-cancel',
+  ];
+
+  for (const example of examples) {
+    for (const format of getDocsCodeFormats(example)) {
+      const code = getDocsCodeExample(example, format);
+      assert.ok(code.includes(apiBase), `${example} / ${format} must include the production API URL`);
+      if (example === 'create-hosted') {
+        assert.ok(
+          code.includes('https://payin.merchant.command.sendflow.africa'),
+          `${format} hosted checkout example must include the production checkout origin`,
+        );
+      }
+    }
+  }
 });
 
 test('production URL notes do not expose internal payment-readiness switches', () => {
   assert.match(docsCopy, /apiAvailabilityTitle: 'Adresses de production'/);
-  assert.match(docsCopy, /apiAvailabilityText: 'API SendFlow : https:\/\/merchent\.business\.sendflow\.africa\/api\./);
-  assert.match(docsCopy, /apiAvailabilityText: '.*https:\/\/payin\.merchant\.command\.sendflow\.africa/);
+  assert.match(docsCopy, /apiAvailabilityText: 'Configurez SENDFLOW_API_BASE_URL/);
   assert.match(docsCopy, /serviceAvailability: 'Adresses de production et suivi'/);
-  assert.match(docsCopy, /serviceAvailabilityText: 'Base de l’API SendFlow : https:\/\/merchent\.business\.sendflow\.africa\/api\./);
+  assert.match(docsCopy, /serviceAvailabilityText: 'Pour connaître le résultat d’un paiement/);
   assert.match(docsCopy, /apiAvailabilityTitle: 'Production URLs'/);
   assert.match(docsCopy, /serviceAvailability: 'Production URLs and status checks'/);
   assert.doesNotMatch(docsCopy, /LINKFLOW_SETTLEMENT_PROOF_READY/);
@@ -68,8 +103,8 @@ test('code examples have no repeated generic footer and retain one production in
 
   assert.ok(codePanelStart >= 0 && docsPageStart > codePanelStart);
   assert.doesNotMatch(codePanel, /sf-docs-code-note|formatNote|codeNote/);
-  assert.match(docsCopy, /quickstartIntegrationNote: 'Extrait à intégrer à votre serveur ou à votre caisse\./);
-  assert.match(docsCopy, /quickstartIntegrationNote: 'Example code for your server or checkout\./);
+  assert.match(docsCopy, /quickstartIntegrationNote: 'Les adresses de production sont copiables/);
+  assert.match(docsCopy, /quickstartIntegrationNote: 'Production addresses can be copied/);
 });
 
 test('getting-started guide presents the production quickstart with SendFlow examples', () => {
@@ -83,8 +118,8 @@ test('getting-started guide presents the production quickstart with SendFlow exa
     'href="/docs/integrations/hosted"',
     'href="/docs/integrations/direct"',
     't.capabilitiesTitle',
-    'SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api',
-    'SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa',
+    'value={productionUrls.apiBaseUrl}',
+    'value={productionUrls.checkoutOrigin}',
     't.threeSteps',
     't.quickstartTitle',
     't.quickstartPrereqTitle',
@@ -118,6 +153,23 @@ test('getting-started guide presents the production quickstart with SendFlow exa
   assert.match(getDocsCodeExample('read-public-session', 'Node.js'), /\/v1\/public\/payment-sessions/);
   assert.match(getDocsCodeExample('start-attempt', 'Node.js'), /\/attempts/);
   assert.match(getDocsCodeExample('read-session', 'Node.js'), /\/v1\/payment-sessions\//);
+});
+
+test('production addresses are individually copyable and wrap on mobile', () => {
+  assert.match(docsCopy, /function CopyableUrlBlock/);
+  assert.match(docsCopy, /navigator\.clipboard\.writeText\(value\)/);
+  assert.match(docsCopy, /data-testid="button-copy-url"/);
+  for (const urlKey of ['apiBaseUrl', 'checkoutOrigin', 'merchantApp', 'publicSite', 'documentation']) {
+    assert.match(docsCopy, new RegExp(`value=\\{productionUrls\\.${urlKey}\\}`));
+  }
+  assert.match(docsStyles, /\.sf-docs-url-block \.sf-docs-url-value \{[^}]*overflow-wrap: anywhere/);
+  assert.match(docsStyles, /\.sf-docs-url-block \.sf-docs-url-value \{[^}]*white-space: pre-wrap/);
+  assert.match(docsStyles, /\.sf-docs-url-block \.sf-docs-url-value \{[^}]*font-size: 11px/);
+
+  const translationsStart = docsCopy.indexOf('const localized:');
+  const translationsEnd = docsCopy.indexOf('const localizedLists', translationsStart);
+  assert.ok(translationsStart >= 0 && translationsEnd > translationsStart);
+  assert.doesNotMatch(docsCopy.slice(translationsStart, translationsEnd), /https?:\/\/|merchent\.business|payin\.merchant|sendflow\.africa|apis\.docs/i);
 });
 
 test('API endpoints are grouped by session, checkout, and public catalog flow', () => {

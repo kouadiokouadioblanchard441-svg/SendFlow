@@ -12,6 +12,7 @@ import hostedCheckoutIllustration from '../assets/docs-hosted-checkout-3d.webp';
 import { useSeo } from '@/lib/seo';
 import { getDocumentationPageKey } from '@/lib/documentation-host';
 import ServerNotFoundNavigation from '@/components/server-not-found-navigation';
+import { productionUrls } from './docs-production-urls.ts';
 import { getDocsCodeExample, getDocsCodeFormats, type DocsCodeFormat, type DocsExampleId } from './docs-code-examples';
 import './docs.css';
 
@@ -80,7 +81,7 @@ const localized: Record<Language, Translation> = {
     refTitle: 'Erreurs, idempotence et sécurité', refSub: 'Réponses HTTP, durées, plafonds de requêtes et règles essentielles pour intégrer les paiements de façon fiable.',
     breadcrumb: 'Documentation API', methods: 'Choisissez votre méthode', methodsSub: 'Les deux parcours utilisent des sessions SendFlow et la même confirmation serveur du paiement.',
     directCard: 'API directe', directCardSub: 'Votre serveur contrôle le parcours et orchestre l’expérience dans votre application.',
-    hostedCard: 'Paiement hébergé', hostedCardSub: 'Votre serveur crée la session, puis redirige le client vers SendFlow sur payin.merchant.command.sendflow.africa.',
+    hostedCard: 'Paiement hébergé', hostedCardSub: 'Votre serveur crée la session, puis redirige le client vers la page de paiement hébergée SendFlow.',
     methodLevel: 'Niveau', methodControl: 'Contrôle du parcours', methodIntegration: 'Intégration', methodAuth: 'Authentification', methodReturn: 'Retour du paiement',
     developerLevel: 'Développeur', simpleLevel: 'Simple', highControl: 'Élevé', hostedControl: 'Limité à la page hébergée',
     restApi: 'API REST', sessionRedirect: 'Création de session puis redirection',
@@ -92,10 +93,13 @@ const localized: Record<Language, Translation> = {
     capabilityDirect: 'Intégrer directement la caisse dans votre application.',
     capabilityStatus: 'Consulter le statut d’une session et d’une tentative.',
     capabilityWebhook: 'Recevoir les notifications de paiement réussi ou échoué par webhook.',
-    baseUrlTitle: 'URL de production',
-    apiBaseUrlLabel: 'API SendFlow',
-    checkoutOriginLabel: 'Paiement hébergé',
-    baseUrlPending: 'Définissez ces deux variables sur votre serveur marchand. Ne placez jamais votre clé secrète dans le navigateur.',
+    baseUrlTitle: 'Adresses de production',
+    apiBaseUrlLabel: 'API SendFlow · SENDFLOW_API_BASE_URL',
+    checkoutOriginLabel: 'Paiement hébergé · SENDFLOW_CHECKOUT_ORIGIN',
+    merchantAppLabel: 'Application marchand',
+    publicSiteLabel: 'Site public SendFlow',
+    documentationUrlLabel: 'Documentation API',
+    baseUrlPending: 'Copiez chaque adresse depuis son bloc. Configurez les variables nécessaires sur votre serveur marchand et ne placez jamais la clé secrète dans le navigateur.',
     quickstartTitle: 'Démarrage rapide',
     quickstartPrereqTitle: 'Prérequis',
     quickstartPrereqText: 'Un compte marchand avec accès à l’API et une paire de clés SendFlow. Configurez SENDFLOW_API_BASE_URL et SENDFLOW_SECRET_KEY dans l’environnement de votre serveur. SENDFLOW_CHECKOUT_ORIGIN est nécessaire uniquement pour Hosted Checkout.',
@@ -111,7 +115,7 @@ const localized: Record<Language, Translation> = {
     quickstartAttemptText: 'Après le choix du payeur, envoyez les informations requises par l’API. Le montant reste celui de la session ; n’envoyez jamais de code OTP ou de PIN.',
     quickstartStatusTitle: 'Vérifier le statut',
     quickstartStatusText: 'Relisez la session depuis votre serveur avec la clé secrète ou vérifiez le webhook après validation de sa signature. Ne confirmez la commande qu’après un état succeeded.',
-    quickstartIntegrationNote: 'Extrait à intégrer à votre serveur ou à votre caisse. Production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api ; paiement hébergé : SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Remplacez les valeurs d’exemple par celles de votre compte et gardez la clé secrète côté serveur.',
+    quickstartIntegrationNote: 'Les adresses de production sont copiables dans les blocs ci-dessus. Remplacez les valeurs d’exemple par celles de votre compte et gardez la clé secrète côté serveur.',
     threeSteps: 'Parcours recommandé', stepOne: 'Créez votre compte marchand', stepOneSub: 'Un compte marchand actif et éligible est requis pour utiliser les paiements API.', stepTwo: 'Configurez vos clés API', stepTwoSub: 'Créez ou régénérez votre paire dans l’espace Développeurs ; la clé secrète ne s’affiche qu’à sa création.', stepThree: 'Intégrez SendFlow à votre application', stepThreeSub: 'Créez la session côté serveur et vérifiez le résultat auprès de SendFlow.',
     read: 'Lire le guide', support: 'Besoin d’aide ?', supportSub: 'Contactez l’équipe SendFlow pour toute question liée à votre intégration.', contact: 'Contacter le support',
     disclaimerTitle: 'Confirmation du paiement', disclaimer: 'Ne marquez jamais une commande comme payée sur la seule base d’une redirection ou d’un état affiché dans le navigateur. Vérifiez le statut serveur ou traitez un webhook dont la signature est valide.',
@@ -135,11 +139,11 @@ const localized: Record<Language, Translation> = {
     hostedStepCreate: 'Étape 1 · Créer la session et préparer le lien',
     hostedStepStatus: 'Étape 2 · Vérifier le statut côté serveur',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
-    modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec https://payin.merchant.command.sendflow.africa et redirigez le client.',
+    modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec la valeur SENDFLOW_CHECKOUT_ORIGIN copiée dans le bloc de production, puis redirigez le client.',
     apiAvailabilityTitle: 'Adresses de production',
-    apiAvailabilityText: 'API SendFlow : https://merchent.business.sendflow.africa/api. Paiement hébergé : https://payin.merchant.command.sendflow.africa. Configurez ces adresses dans votre environnement serveur avec SENDFLOW_API_BASE_URL et SENDFLOW_CHECKOUT_ORIGIN.',
-    hostedOriginText: 'checkoutPath reste un chemin relatif pour préserver le contrat API. Pour un paiement hébergé ou un lien LinkFlow en production, utilisez https://payin.merchant.command.sendflow.africa et définissez SENDFLOW_CHECKOUT_ORIGIN avec cette valeur côté serveur marchand.',
-    hostedFallbackText: 'Après une confirmation succeeded, la page redirige vers returnUrl si elle a été fournie ; sinon, elle redirige vers https://sendflow.africa. La page ne redirige pas vers returnUrl après un échec confirmé. Une redirection reste une indication d’interface, jamais une preuve de paiement.',
+    apiAvailabilityText: 'Configurez SENDFLOW_API_BASE_URL et, pour Hosted Checkout, SENDFLOW_CHECKOUT_ORIGIN avec les valeurs copiables affichées dans cette page.',
+    hostedOriginText: 'checkoutPath reste un chemin relatif pour préserver le contrat API. Pour un paiement hébergé ou un lien LinkFlow, combinez-le avec la valeur copiée dans SENDFLOW_CHECKOUT_ORIGIN sur votre serveur marchand.',
+    hostedFallbackText: 'Après une confirmation succeeded, la page redirige vers returnUrl si elle a été fournie ; sinon, elle revient vers le site public SendFlow. La page ne redirige pas vers returnUrl après un échec confirmé. Une redirection reste une indication d’interface, jamais une preuve de paiement.',
     webhookSharedNote: 'Les webhooks reflètent les événements enregistrés côté serveur. payout.succeeded n’est émis qu’après une confirmation finale vérifiée ; consultez le guide Webhooks pour vérifier la signature et dédupliquer les livraisons.',
     webhookGuideLink: 'Ouvrir le guide Webhooks',
     mobileMoneyTitle: 'Mobile Money, USSD et OTP',
@@ -215,8 +219,8 @@ const localized: Record<Language, Translation> = {
     expirationText: 'Les sessions expirent une heure après leur création. Après expiration, les choix publics et le démarrage d’une tentative ne sont plus disponibles. La lecture serveur de la session et la vérification d’une tentative déjà créée restent possibles avec des identifiants valides. Le montant est fixe en XOF et doit respecter les limites actuellement renvoyées par GET /api/payment-limits ; le payeur ne peut pas le modifier.',
     rateLimits: 'Limites de requêtes', rateLimitsText: 'Par clé API et par fenêtre d’une minute : 30 créations de session, 120 lectures, 5 tentatives directes et 60 vérifications de statut. La création de session a aussi une limite de 10 par minute au niveau du compte marchand. Par adresse IP, les lectures publiques de session sont limitées à 120 par minute, les tentatives à 5 et les vérifications à 60. Les quotas de clé, de compte et d’adresse IP peuvent s’appliquer ensemble. En cas de limitation, l’API renvoie 429 et Retry-After: 60 ; attendez ce délai avant de reprendre.',
     statesTitle: 'États d’un paiement', statesText: 'Les états de session et de tentative décrivent l’avancement du paiement ; seul un état final confirmé peut déclencher la validation de votre commande.',
-    serviceAvailability: 'Adresses de production et suivi', serviceAvailabilityText: 'Base de l’API SendFlow : https://merchent.business.sendflow.africa/api. Origine du paiement hébergé : https://payin.merchant.command.sendflow.africa. Pour connaître le résultat d’un paiement, consultez l’état de sa session ou traitez le webhook après validation de sa signature ; une redirection du navigateur ne constitue pas une confirmation.',
-    environmentNote: 'URLs de production : SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api ; SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa ; application marchand https://merchent.business.sendflow.africa ; site public https://sendflow.africa ; documentation https://apis.docs.sendflow.africa.',
+    serviceAvailability: 'Adresses de production et suivi', serviceAvailabilityText: 'Pour connaître le résultat d’un paiement, consultez l’état de sa session ou traitez le webhook après validation de sa signature ; une redirection du navigateur ne constitue pas une confirmation.',
+    environmentNote: 'Les adresses de production sont présentées individuellement dans des blocs copiables.',
     troubleshootingTitle: 'Diagnostic rapide',
     hostedFlow: 'Parcours de redirection', directFlow: 'Parcours API directe', returnUrlText: 'returnUrl est facultative, doit être une URL HTTPS et concerne le parcours hosted : la page de paiement ne redirige vers cette URL qu’après confirmation succeeded. En mode direct, la réponse de statut API ne fournit pas cette redirection ; votre application gère son propre écran après vérification serveur.',
     language: 'Langue', copyright: 'SendFlow · Documentation API', lastUpdated: 'Référence API v1',
@@ -248,7 +252,7 @@ const localized: Record<Language, Translation> = {
     refTitle: 'Errors, idempotency & security', refSub: 'HTTP responses, session lifetimes, request limits, and essential rules for reliable payment integrations.',
     breadcrumb: 'API documentation', methods: 'Choose your integration method', methodsSub: 'Both flows use SendFlow sessions and the same server-confirmed payment status.',
     directCard: 'Direct API', directCardSub: 'Your server controls the flow and orchestrates the experience in your application.',
-    hostedCard: 'Hosted payment', hostedCardSub: 'Your server creates a session, then redirects the customer to SendFlow at payin.merchant.command.sendflow.africa.',
+    hostedCard: 'Hosted payment', hostedCardSub: 'Your server creates the session, then redirects the customer to the SendFlow hosted payment page.',
     methodLevel: 'Level', methodControl: 'Flow control', methodIntegration: 'Integration', methodAuth: 'Authentication', methodReturn: 'Payment return',
     developerLevel: 'Developer', simpleLevel: 'Simple', highControl: 'High', hostedControl: 'Limited to hosted page',
     restApi: 'REST API', sessionRedirect: 'Create a session, then redirect',
@@ -261,9 +265,12 @@ const localized: Record<Language, Translation> = {
     capabilityStatus: 'Read the status of a session and payment attempt.',
     capabilityWebhook: 'Receive successful or failed payment notifications by webhook.',
     baseUrlTitle: 'Production URLs',
-    apiBaseUrlLabel: 'SendFlow API',
-    checkoutOriginLabel: 'Hosted payment',
-    baseUrlPending: 'Set these two variables on your merchant server. Never put your secret key in the browser.',
+    apiBaseUrlLabel: 'SendFlow API · SENDFLOW_API_BASE_URL',
+    checkoutOriginLabel: 'Hosted payment · SENDFLOW_CHECKOUT_ORIGIN',
+    merchantAppLabel: 'Merchant application',
+    publicSiteLabel: 'SendFlow public site',
+    documentationUrlLabel: 'API documentation',
+    baseUrlPending: 'Copy each address from its block. Set the required variables on your merchant server and never put your secret key in the browser.',
     quickstartTitle: 'Quickstart',
     quickstartPrereqTitle: 'Prerequisites',
     quickstartPrereqText: 'A merchant account with API access and a SendFlow key pair. Set SENDFLOW_API_BASE_URL and SENDFLOW_SECRET_KEY in your server environment. SENDFLOW_CHECKOUT_ORIGIN is required only for Hosted Checkout.',
@@ -279,7 +286,7 @@ const localized: Record<Language, Translation> = {
     quickstartAttemptText: 'After the payer chooses an option, send the fields required by the API. The amount remains fixed by the session; never send an OTP or PIN.',
     quickstartStatusTitle: 'Check the status',
     quickstartStatusText: 'Read the session from your server with the secret key, or verify the webhook signature. Confirm the order only after a succeeded state.',
-    quickstartIntegrationNote: 'Example code for your server or checkout. Production: SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; hosted payment: SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa. Replace sample values with your account values and keep the secret key on your server.',
+    quickstartIntegrationNote: 'Production addresses can be copied from the blocks above. Replace sample values with your account values and keep the secret key on your server.',
     threeSteps: 'Recommended flow', stepOne: 'Create your merchant account', stepOneSub: 'An active, eligible merchant account is required to use API payments.', stepTwo: 'Configure your API keys', stepTwoSub: 'Create or regenerate your key pair in the Developers area; the secret key is shown only when created.', stepThree: 'Integrate SendFlow into your app', stepThreeSub: 'Create sessions server-side and verify results with SendFlow.',
     read: 'Read the guide', support: 'Need help?', supportSub: 'Contact the SendFlow team with questions about your integration.', contact: 'Contact support',
     disclaimerTitle: 'Payment confirmation', disclaimer: 'Never mark an order as paid based only on a redirect or a browser-side state. Verify the server status or process a webhook whose signature is valid.',
@@ -303,11 +310,11 @@ const localized: Record<Language, Translation> = {
     hostedStepCreate: 'Step 1 · Create the session and prepare the link',
     hostedStepStatus: 'Step 2 · Check status on your server',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
-    modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with https://payin.merchant.command.sendflow.africa and redirect the customer.',
+    modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with the copied SENDFLOW_CHECKOUT_ORIGIN value, then redirect the customer.',
     apiAvailabilityTitle: 'Production URLs',
-    apiAvailabilityText: 'SendFlow API: https://merchent.business.sendflow.africa/api. Hosted payment: https://payin.merchant.command.sendflow.africa. Configure these URLs in your server environment with SENDFLOW_API_BASE_URL and SENDFLOW_CHECKOUT_ORIGIN.',
-    hostedOriginText: 'checkoutPath remains a relative path to preserve the API contract. For hosted payments and LinkFlow links in production, use https://payin.merchant.command.sendflow.africa as the origin and set SENDFLOW_CHECKOUT_ORIGIN to this value on the merchant server.',
-    hostedFallbackText: 'After succeeded is confirmed, the page redirects to returnUrl if provided; otherwise, it redirects to https://sendflow.africa. The page does not redirect to returnUrl after a confirmed failure. A redirect is a user-interface signal, never proof of payment.',
+    apiAvailabilityText: 'Set SENDFLOW_API_BASE_URL and, for Hosted Checkout, SENDFLOW_CHECKOUT_ORIGIN using the copyable values shown on this page.',
+    hostedOriginText: 'checkoutPath remains a relative path to preserve the API contract. For hosted payments and LinkFlow links, combine it with the SENDFLOW_CHECKOUT_ORIGIN value copied on your merchant server.',
+    hostedFallbackText: 'After succeeded is confirmed, the page redirects to returnUrl if provided; otherwise, it returns to the SendFlow public site. The page does not redirect to returnUrl after a confirmed failure. A redirect is a user-interface signal, never proof of payment.',
     webhookSharedNote: 'Webhooks reflect server-recorded events. payout.succeeded is emitted only after verified final confirmation; see the Webhooks guide to verify signatures and deduplicate deliveries.',
     webhookGuideLink: 'Open the Webhooks guide',
     mobileMoneyTitle: 'Mobile Money, USSD, and OTP',
@@ -383,8 +390,8 @@ const localized: Record<Language, Translation> = {
     expirationText: 'Sessions expire one hour after creation. After expiry, public choices and starting an attempt are unavailable. The server-side session read and status check for an already-created attempt remain possible with valid credentials. The amount is fixed in XOF and must follow the current limits returned by GET /api/payment-limits; the payer cannot change it.',
     rateLimits: 'Request limits', rateLimitsText: 'Per API key per one-minute window: 30 session creations, 120 reads, 5 direct attempts, and 60 status checks. Session creation also has a merchant-account limit of 10 per minute. Per client IP, public session reads are limited to 120 per minute, attempts to 5, and status checks to 60. Key, account, and IP quotas can apply together. A rate-limited response includes 429 and Retry-After: 60; wait before resuming.',
     statesTitle: 'Payment states', statesText: 'Session and attempt states describe payment progress; only a confirmed final state should trigger your order decision.',
-    serviceAvailability: 'Production URLs and status checks', serviceAvailabilityText: 'SendFlow API base: https://merchent.business.sendflow.africa/api. Hosted payment origin: https://payin.merchant.command.sendflow.africa. To determine a payment result, read its session status or process the webhook after verifying its signature; a browser redirect is not confirmation.',
-    environmentNote: 'Production URLs: SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api; SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa; merchant app https://merchent.business.sendflow.africa; public site https://sendflow.africa; documentation https://apis.docs.sendflow.africa.',
+    serviceAvailability: 'Production URLs and status checks', serviceAvailabilityText: 'To determine a payment result, read its session status or process the webhook after verifying its signature; a browser redirect is not confirmation.',
+    environmentNote: 'Production addresses are shown individually in copyable blocks below.',
     troubleshootingTitle: 'Quick troubleshooting',
     hostedFlow: 'Hosted redirect flow', directFlow: 'Direct API flow', returnUrlText: 'returnUrl is optional, must be an HTTPS URL, and applies to hosted mode: the payment page redirects to it only after a succeeded confirmation. In direct mode, the API status response does not provide this redirect; your application handles its own result screen after server verification.',
     language: 'Language', copyright: 'SendFlow · API documentation', lastUpdated: 'API reference v1',
@@ -411,7 +418,7 @@ const localizedLists: Record<Language, TranslationLists> = {
     hostedFlowTitles: ['Créer une session hébergée', 'Rediriger le client', 'Laisser le client payer', 'Confirmer côté serveur'],
     hostedFlowTexts: [
       'Marchand — votre backend crée la session avec mode=hosted, un montant fixe en XOF et une clé d’idempotence. Il reçoit checkoutPath.',
-      'Votre serveur combine checkoutPath avec https://payin.merchant.command.sendflow.africa, puis transmet l’URL complète au navigateur ou à l’application.',
+      'Votre serveur combine checkoutPath avec la valeur copiée dans SENDFLOW_CHECKOUT_ORIGIN, puis transmet l’URL complète au navigateur ou à l’application.',
       'Le payeur choisit un moyen proposé sur la page SendFlow et suit les instructions affichées par l’opérateur. Le retour navigateur ne confirme pas le paiement.',
       'Le serveur marchand relit la session et traite les webhooks communs aux deux modes. La page redirige vers returnUrl après succeeded ; seule la confirmation serveur valide la commande.',
     ],
@@ -481,7 +488,7 @@ const localizedLists: Record<Language, TranslationLists> = {
     hostedFlowTitles: ['Create a hosted session', 'Redirect the customer', 'Let the customer pay', 'Verify server-side'],
     hostedFlowTexts: [
       'Merchant — your backend creates the session with mode=hosted, a fixed XOF amount, and an idempotency key. It receives checkoutPath.',
-      'Your server combines checkoutPath with https://payin.merchant.command.sendflow.africa, then passes the complete URL to the browser or app.',
+      'Your server combines checkoutPath with the copied SENDFLOW_CHECKOUT_ORIGIN value, then passes the complete URL to the browser or app.',
       'The payer chooses a method on the SendFlow page and follows the operator instructions. A browser return does not confirm payment.',
       'The merchant server reads the session and processes webhooks shared by both modes. The page redirects to returnUrl after succeeded; only server confirmation completes the order.',
     ],
@@ -898,6 +905,31 @@ function ResponsePanel({ language, label, response, caption }: { language: Langu
   );
 }
 
+function CopyableUrlBlock({ language, label, value }: { language: Language; label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="sf-docs-code sf-docs-url-block" data-testid="panel-copyable-url">
+      <div className="sf-docs-code-head">
+        <span className="sf-docs-code-label">{label}</span>
+        <button type="button" className="sf-docs-copy" onClick={() => void copy()} data-testid="button-copy-url">
+          {copied ? <Check size={13} /> : <Copy size={13} />}{copied ? (language === 'fr' ? 'Copié' : 'Copied') : (language === 'fr' ? 'Copier' : 'Copy')}
+        </button>
+      </div>
+      <pre className="sf-docs-url-value"><code>{value}</code></pre>
+    </div>
+  );
+}
+
 function CodePanel({ language, label, example }: { language: Language; label: string; example: DocsExampleId }) {
   const formats = getDocsCodeFormats(example);
   const [format, setFormat] = useState<DocsCodeFormat>(() => formats[0] ?? 'cURL');
@@ -1080,9 +1112,11 @@ export default function DocsPage() {
           <li>{t.capabilityStatus}</li>
           <li>{t.capabilityWebhook}</li>
         </ul>
-        <div className="sf-docs-callout sf-docs-base-url">
+        <div className="sf-docs-production-urls sf-docs-production-url-section">
           <strong>{t.baseUrlTitle}</strong>
           <span>{t.baseUrlPending}</span>
+          <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
+          <CopyableUrlBlock language={language} label={t.checkoutOriginLabel} value={productionUrls.checkoutOrigin} />
         </div>
       </section>
       <section className="sf-docs-section">
@@ -1225,10 +1259,10 @@ export default function DocsPage() {
           </section>
           <section className="sf-docs-section">
             <h2>{t.baseUrlTitle}</h2>
-            <div className="sf-docs-callout sf-docs-base-url">
-              <div><strong>{t.apiBaseUrlLabel}</strong><code>SENDFLOW_API_BASE_URL=https://merchent.business.sendflow.africa/api</code></div>
-              <div><strong>{t.checkoutOriginLabel}</strong><code>SENDFLOW_CHECKOUT_ORIGIN=https://payin.merchant.command.sendflow.africa</code></div>
+            <div className="sf-docs-production-urls sf-docs-production-url-section">
               <span>{t.baseUrlPending}</span>
+              <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
+              <CopyableUrlBlock language={language} label={t.checkoutOriginLabel} value={productionUrls.checkoutOrigin} />
             </div>
           </section>
           <section className="sf-docs-section">
@@ -1289,6 +1323,7 @@ export default function DocsPage() {
         </>}
         {pageKey === 'direct' && <>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+          <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
           <section className="sf-docs-section"><h2>{t.model}</h2><p>{t.modelTextDirect}</p>
             <h3>{t.directFlow}</h3>
             <div className="sf-docs-steps">
@@ -1363,6 +1398,10 @@ export default function DocsPage() {
         </>}
         {pageKey === 'hosted' && <>
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+          <div className="sf-docs-production-urls">
+            <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
+            <CopyableUrlBlock language={language} label={t.checkoutOriginLabel} value={productionUrls.checkoutOrigin} />
+          </div>
           <section className="sf-docs-section"><h2>{t.model}</h2><p>{t.modelTextHosted}</p>
             <h3>{t.hostedFlow}</h3>
             <div className="sf-docs-steps">
@@ -1502,6 +1541,13 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
           {showReferenceSection('service-availability') && <section className="sf-docs-section">
             <h2>{t.serviceAvailability}</h2>
             <div className="sf-docs-callout">{t.environmentNote}</div>
+            <div className="sf-docs-production-urls">
+              <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
+              <CopyableUrlBlock language={language} label={t.checkoutOriginLabel} value={productionUrls.checkoutOrigin} />
+              <CopyableUrlBlock language={language} label={t.merchantAppLabel} value={productionUrls.merchantApp} />
+              <CopyableUrlBlock language={language} label={t.publicSiteLabel} value={productionUrls.publicSite} />
+              <CopyableUrlBlock language={language} label={t.documentationUrlLabel} value={productionUrls.documentation} />
+            </div>
             <p>{t.serviceAvailabilityText}</p>
           </section>}
           {showReferenceSection('http-errors') && <section className="sf-docs-section"><h2>{t.errors}</h2><p>{t.errorsText}</p><div className="sf-docs-callout">{t.globalHttpErrors}</div>

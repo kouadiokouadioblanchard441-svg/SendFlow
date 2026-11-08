@@ -1,3 +1,5 @@
+import { productionUrls } from './docs-production-urls.ts';
+
 export type DocsCodeFormat = 'cURL' | 'JavaScript' | 'Node.js' | 'PHP' | 'Python' | 'Kotlin';
 export type DocsExampleId =
   | 'create-hosted'
@@ -1368,9 +1370,127 @@ def verify_sendflow_webhook(raw_body: bytes, signature_header: str, secret: str)
   },
 };
 
+function addProductionUrlDefaults(code: string, example: DocsExampleId, format: DocsCodeFormat) {
+  let result = code;
+  const apiBaseUrl = productionUrls.apiBaseUrl;
+  const checkoutOrigin = productionUrls.checkoutOrigin;
+
+  if (format === 'cURL') {
+    const shellConfig = [];
+    if (result.includes('$SENDFLOW_API_BASE_URL')) {
+      shellConfig.push(`SENDFLOW_API_BASE_URL="${apiBaseUrl}"`);
+    }
+    if (example === 'create-hosted') {
+      shellConfig.push(`SENDFLOW_CHECKOUT_ORIGIN="${checkoutOrigin}"`);
+    }
+    if (shellConfig.length) result = `${shellConfig.join('\n')}\n${result}`;
+    if (example === 'create-hosted') {
+      result += '\n# Resolve the returned checkoutPath against "$SENDFLOW_CHECKOUT_ORIGIN" before redirecting.';
+    }
+  }
+
+  if (format === 'JavaScript') {
+    result = result.replaceAll('${env.SENDFLOW_API_BASE_URL}', apiBaseUrl);
+    result = result.replaceAll(
+      'env.SENDFLOW_CHECKOUT_ORIGIN',
+      `"${checkoutOrigin}"`,
+    );
+    result = result.replace(/^if \(!checkoutOrigin\) throw new Error\([^\n]+\);\n/gm, '');
+    result = result.replaceAll('${process.env.SENDFLOW_API_BASE_URL}', apiBaseUrl);
+    result = result.replaceAll('process.env.SENDFLOW_API_BASE_URL', `"${apiBaseUrl}"`);
+  }
+
+  if (format === 'Node.js') {
+    result = result.replaceAll('${process.env.SENDFLOW_API_BASE_URL}', apiBaseUrl);
+    result = result.replaceAll(
+      'process.env.SENDFLOW_API_BASE_URL',
+      `process.env.SENDFLOW_API_BASE_URL || "${apiBaseUrl}"`,
+    );
+    result = result.replaceAll(
+      'process.env.SENDFLOW_CHECKOUT_ORIGIN',
+      `process.env.SENDFLOW_CHECKOUT_ORIGIN || "${checkoutOrigin}"`,
+    );
+    result = result.replace(/^if \(!apiBaseUrl\) throw new Error\([^\n]+\);\n/gm, '');
+    result = result.replace(/^if \(!checkoutOrigin\) throw new Error\([^\n]+\);\n/gm, '');
+    result = result.replaceAll('!apiBaseUrl || ', '');
+  }
+
+  if (format === 'PHP') {
+    result = result.replaceAll(
+      'getenv("SENDFLOW_API_BASE_URL")',
+      `getenv("SENDFLOW_API_BASE_URL") ?: "${apiBaseUrl}"`,
+    );
+    result = result.replaceAll(
+      'getenv("SENDFLOW_CHECKOUT_ORIGIN")',
+      `getenv("SENDFLOW_CHECKOUT_ORIGIN") ?: "${checkoutOrigin}"`,
+    );
+    result = result.replace(
+      /\nif \(!\$checkoutOrigin\) \{\n\s+throw new RuntimeException\("Set the official SendFlow checkout origin first"\);\n\}/,
+      '',
+    );
+  }
+
+  if (format === 'Python') {
+    const usesApiBaseUrl = result.includes('SENDFLOW_API_BASE_URL');
+    result = result.replaceAll(
+      'os.environ["SENDFLOW_API_BASE_URL"]',
+      'API_BASE_URL',
+    );
+    result = result.replaceAll(
+      "os.environ['SENDFLOW_API_BASE_URL']",
+      'API_BASE_URL',
+    );
+    result = result.replaceAll(
+      'os.environ.get("SENDFLOW_CHECKOUT_ORIGIN")',
+      'CHECKOUT_ORIGIN',
+    );
+    result = result.replace(
+      /\nif not checkout_origin:\n\s+raise RuntimeError\("Set the official SendFlow checkout origin first"\)/,
+      '',
+    );
+    if (usesApiBaseUrl || example === 'create-hosted') {
+      const lines = result.split('\n');
+      let importEnd = 0;
+      let hasOsImport = false;
+      while (importEnd < lines.length) {
+        const line = lines[importEnd].trim();
+        if (!line || line.startsWith('#') || line.startsWith('import ') || line.startsWith('from ')) {
+          if (line === 'import os') hasOsImport = true;
+          importEnd += 1;
+          continue;
+        }
+        break;
+      }
+      if (!hasOsImport) {
+        lines.splice(importEnd, 0, 'import os');
+        importEnd += 1;
+      }
+      const pythonConfig = [
+        `API_BASE_URL = os.environ.get("SENDFLOW_API_BASE_URL", "${apiBaseUrl}").rstrip("/")`,
+        ...(example === 'create-hosted'
+          ? [`CHECKOUT_ORIGIN = os.environ.get("SENDFLOW_CHECKOUT_ORIGIN", "${checkoutOrigin}")`]
+          : []),
+      ];
+      lines.splice(importEnd, 0, '', ...pythonConfig, '');
+      result = lines.join('\n');
+    }
+  }
+
+  if (format === 'Kotlin') {
+    result = result.replaceAll('${BuildConfig.SENDFLOW_API_BASE_URL}', apiBaseUrl);
+    result = result.replaceAll(
+      'apiBaseUrl: String,',
+      `apiBaseUrl: String = "${apiBaseUrl}",`,
+    );
+  }
+
+  return result;
+}
+
 export function getDocsCodeExample(example: DocsExampleId, format: DocsCodeFormat, amountMinor = 12_500) {
-  const code = examples[example][format];
-  if (!code) throw new Error(`No ${format} example is available for ${example}`);
+  const rawCode = examples[example][format];
+  if (!rawCode) throw new Error(`No ${format} example is available for ${example}`);
+  const code = addProductionUrlDefaults(rawCode, example, format);
   if (example === 'create-hosted' || example === 'create-direct') {
     return code.replaceAll('12500', String(amountMinor));
   }
