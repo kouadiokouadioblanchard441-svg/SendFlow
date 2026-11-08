@@ -17,7 +17,7 @@ import { getDocsCodeExample, getDocsCodeFormats, type DocsCodeFormat, type DocsE
 import './docs.css';
 
 type Language = 'fr' | 'en';
-type DocGroup = 'start' | 'integration' | 'webhooks' | 'reliability';
+type DocGroup = 'start' | 'hosted' | 'integration' | 'webhooks' | 'reliability';
 type DocItem = { path: string; key: string; label: string; group: DocGroup; icon: typeof BookOpen; section?: string; search?: string };
 type Translation = Record<string, string>;
 type TranslationLists = {
@@ -42,14 +42,15 @@ const docsItems: DocItem[] = [
   { path: '/docs/getting-started', key: 'start', label: 'Getting started', group: 'start', icon: ArrowRight },
   { path: '/docs/authentication', key: 'auth', label: 'Authentication', group: 'start', icon: LockKeyhole },
   { path: '/docs/integrations/direct', key: 'direct', label: 'Direct API', group: 'integration', icon: Code2 },
-  { path: '/docs/integrations/hosted', key: 'hosted', label: 'Hosted Checkout', group: 'integration', icon: Globe2 },
+  { path: '/docs/integrations/hosted', key: 'hosted', label: 'Hosted Checkout', group: 'hosted', icon: Globe2 },
   { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'webhooks', icon: Webhook },
   { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'reliability', icon: ShieldCheck },
 ];
 
 const docGroups: { id: DocGroup; labelKey: string; icon: typeof BookOpen }[] = [
   { id: 'start', labelKey: 'startGroup', icon: BookOpen },
-  { id: 'integration', labelKey: 'integrations', icon: Code2 },
+  { id: 'hosted', labelKey: 'hostedGroup', icon: Globe2 },
+  { id: 'integration', labelKey: 'integrationGroup', icon: Code2 },
   { id: 'webhooks', labelKey: 'webhooksGroup', icon: Webhook },
   { id: 'reliability', labelKey: 'reliabilityGroup', icon: ShieldCheck },
 ];
@@ -59,7 +60,8 @@ const localized: Record<Language, Translation> = {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API directe', navWebhooks: 'Webhooks',
     search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
     sectionPageIntro: 'Cette rubrique détaille le contrat SendFlow correspondant. Les exemples utilisent des données d’exemple et les blocages de disponibilité sont signalés.',
-    integrations: 'Parcours de paiement', webhooksGroup: 'Webhooks',
+    integrations: 'Parcours de paiement', integrationGroup: 'Intégration API',
+    hostedGroup: 'Paiement hébergé', webhooksGroup: 'Webhooks',
     reliabilityGroup: 'États, erreurs et sécurité',
     endpointGroupSessions: '1. Sessions serveur',
     endpointGroupDirect: '2. Caisse API directe',
@@ -242,7 +244,8 @@ const localized: Record<Language, Translation> = {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Direct API', navWebhooks: 'Webhooks',
     search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
     sectionPageIntro: 'This section details the matching SendFlow contract. Examples use sample data, and current availability blocks are stated clearly.',
-    integrations: 'Payment flows', webhooksGroup: 'Webhooks',
+    integrations: 'Payment flows', integrationGroup: 'API integration',
+    hostedGroup: 'Hosted Checkout', webhooksGroup: 'Webhooks',
     reliabilityGroup: 'States, errors & security',
     endpointGroupSessions: '1. Server sessions',
     endpointGroupDirect: '2. Direct checkout',
@@ -868,10 +871,10 @@ const docSearchTerms: Record<string, string> = {
   '/docs': 'accueil home intégration paiements payment',
   '/docs/getting-started': 'prérequis compte marchand étapes getting started',
   '/docs/authentication': 'clé api publique secrète bearer authentification credentials',
-  '/docs/integrations/direct': `api directe session tentative paiement mobile money pays opérateurs montant statut countryCode operatorId phoneNumber ussdCode OTP USSD Kotlin Côte d’Ivoire Burkina Faso Orange Money ${apiEndpointInventory.map((endpoint) => `${endpoint.method} ${endpoint.path} ${endpoint.description}`).join(' ')} frais limites idempotence`,
+  '/docs/integrations/direct': `api directe session tentative paiement mobile money pays opérateurs montant statut countryCode operatorId phoneNumber ussdCode OTP USSD Kotlin Côte d’Ivoire Burkina Faso Orange Money payout payout-quote payout-create payout-list payout-read payout-cancel retrait versement sortant ${apiEndpointInventory.map((endpoint) => `${endpoint.method} ${endpoint.path} ${endpoint.description}`).join(' ')} frais limites idempotence`,
   '/docs/integrations/hosted': 'redirection hébergée checkout page payment link checkoutPath returnUrl compte à rebours client paiement Hosted Checkout',
-  '/docs/webhooks': 'webhook événements notifications signature retries livraisons payment.succeeded payment.failed HMAC',
-  '/docs/reference': 'erreurs idempotence expiration sécurité limites 400 401 403 404 409 429 503 Retry-After environnement XOF uncertain',
+  '/docs/webhooks': 'webhook événements notifications signature retries livraisons payment.succeeded payment.failed payout.created payout.processing payout.succeeded payout.failed payout.uncertain HMAC',
+  '/docs/reference': 'erreurs idempotence expiration sécurité limites payout retrait 400 401 403 404 409 429 503 Retry-After environnement XOF uncertain',
 };
 
 function renderHighlightedCode(source: string) {

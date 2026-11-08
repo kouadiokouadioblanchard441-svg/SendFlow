@@ -272,6 +272,16 @@ test('sidebar keeps one entry per guide instead of listing every subsection', ()
   assert.match(navItems, /path: '\/docs\/reference', key: 'reference'/);
 });
 
+test('sidebar separates hosted checkout and indexes payout documentation', () => {
+  assert.match(docsCopy, /path: '\/docs\/integrations\/hosted', key: 'hosted', label: 'Hosted Checkout', group: 'hosted'/);
+  assert.match(docsCopy, /id: 'hosted', labelKey: 'hostedGroup'/);
+  assert.match(docsCopy, /id: 'integration', labelKey: 'integrationGroup'/);
+  assert.match(docsCopy, /hostedGroup: 'Paiement hébergé'/);
+  assert.match(docsCopy, /hostedGroup: 'Hosted Checkout'/);
+  assert.match(docsCopy, /payout-quote payout-create payout-list payout-read payout-cancel retrait versement sortant/);
+  assert.match(docsCopy, /payout\.created payout\.processing payout\.succeeded payout\.failed payout\.uncertain/);
+});
+
 test('direct and hosted examples follow their documented integration steps', () => {
   const directStart = docsCopy.indexOf("{pageKey === 'direct' && <>");
   const hostedStart = docsCopy.indexOf("{pageKey === 'hosted' && <>", directStart);
