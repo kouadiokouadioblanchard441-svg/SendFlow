@@ -26,7 +26,10 @@ import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 import { GlobalErrorDialog } from '@/components/global-error-dialog';
 import { reportGlobalApiError } from '@/lib/global-api-errors';
 import { shouldShowGlobalQueryError } from '@/lib/safe-api-error';
-import { isSendFlowDocumentationHost } from '@/lib/documentation-host';
+import {
+  isSendFlowDocumentationHost,
+  isSendFlowDocumentationPreviewRoute,
+} from '@/lib/documentation-host';
 import { isSendFlowPaymentHost } from '@/lib/payment-host';
 
 const LegalMentionsPage = lazy(() =>
@@ -281,7 +284,10 @@ function App() {
 
   if (
     typeof window !== 'undefined' &&
-    isSendFlowDocumentationHost(window.location.hostname)
+    (
+      isSendFlowDocumentationHost(window.location.hostname)
+      || isSendFlowDocumentationPreviewRoute(window.location.hostname, window.location.pathname)
+    )
   ) {
     return (
       <WouterRouter base={basePath}>

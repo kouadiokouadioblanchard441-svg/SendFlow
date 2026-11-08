@@ -1,4 +1,8 @@
-import { getDocumentationPageKey, isSendFlowDocumentationHost } from "../src/lib/documentation-host.ts";
+import {
+  getDocumentationPageKey,
+  isSendFlowDocumentationHost,
+  isSendFlowDocumentationPreviewRoute,
+} from "../src/lib/documentation-host.ts";
 import { isSendFlowPaymentHost } from "../src/lib/payment-host.ts";
 import { isPortalRouteRequest } from "./portal-route-path.ts";
 
@@ -67,6 +71,8 @@ export function isKnownSitePage(
   if (isSendFlowDocumentationHost(host)) {
     return getDocumentationPageKey(routePath) !== null;
   }
+
+  if (isSendFlowDocumentationPreviewRoute(host, routePath)) return true;
 
   if (isSendFlowPaymentHost(host)) {
     return /^\/pay\/[^/]+$/.test(routePath);
