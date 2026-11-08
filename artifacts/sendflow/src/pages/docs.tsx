@@ -44,17 +44,7 @@ const docsItems: DocItem[] = [
   { path: '/docs/integrations/direct', key: 'direct', label: 'Direct API', group: 'integration', icon: Code2 },
   { path: '/docs/integrations/hosted', key: 'hosted', label: 'Hosted Checkout', group: 'integration', icon: Globe2 },
   { path: '/docs/webhooks', key: 'webhooks', label: 'Webhooks', group: 'webhooks', icon: Webhook },
-  { path: '/docs/webhooks', section: 'webhook-events', key: 'webhookEvents', label: 'Webhook events', group: 'webhooks', icon: Webhook, search: 'payment.succeeded payment.failed events notifications' },
-  { path: '/docs/webhooks', section: 'webhook-signature', key: 'delivery', label: 'Webhook signatures', group: 'webhooks', icon: Webhook, search: 'HMAC SHA-256 raw body sendflow-signature' },
-  { path: '/docs/webhooks', section: 'webhook-retries', key: 'webhookRetries', label: 'Retries & deduplication', group: 'webhooks', icon: Webhook, search: 'retries delivery deduplicate timeout attempts' },
   { path: '/docs/reference', key: 'reference', label: 'Errors & security', group: 'reliability', icon: ShieldCheck },
-  { path: '/docs/reference', section: 'payment-states', key: 'statesTitle', label: 'Payment states', group: 'reliability', icon: ShieldCheck, search: 'created waiting uncertain succeeded failed' },
-  { path: '/docs/reference', section: 'http-errors', key: 'errors', label: 'HTTP errors', group: 'reliability', icon: ShieldCheck, search: '400 401 403 404 409 429 503 Retry-After error message troubleshooting' },
-  { path: '/docs/reference', section: 'idempotency', key: 'idempotency', label: 'Idempotency', group: 'reliability', icon: ShieldCheck, search: 'Idempotency-Key duplicate merchantReference retry' },
-  { path: '/docs/reference', section: 'expiration', key: 'expiration', label: 'Expiration & amounts', group: 'reliability', icon: ShieldCheck, search: 'expiresAt one hour XOF amountMinor minimum maximum' },
-  { path: '/docs/reference', section: 'rate-limits', key: 'rateLimits', label: 'Rate limits', group: 'reliability', icon: ShieldCheck, search: 'quota 429 Retry-After per minute' },
-  { path: '/docs/reference', section: 'service-availability', key: 'serviceAvailability', label: 'Service availability', group: 'reliability', icon: ShieldCheck, search: '503 service indisponible disponibilité API production URL' },
-  { path: '/docs/reference', section: 'security', key: 'security', label: 'Security', group: 'reliability', icon: ShieldCheck, search: 'secret public key HMAC HTTPS tokens' },
 ];
 
 const docGroups: { id: DocGroup; labelKey: string; icon: typeof BookOpen }[] = [

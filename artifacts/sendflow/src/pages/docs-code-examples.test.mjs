@@ -81,6 +81,16 @@ test('API endpoints are grouped by session, checkout, and public catalog flow', 
   assert.doesNotMatch(navItems, /apiReference/);
 });
 
+test('sidebar keeps one entry per guide instead of listing every subsection', () => {
+  const navStart = docsCopy.indexOf('const docsItems');
+  const navEnd = docsCopy.indexOf('const docGroups', navStart);
+  const navItems = docsCopy.slice(navStart, navEnd);
+
+  assert.doesNotMatch(navItems, /section:/);
+  assert.match(navItems, /path: '\/docs\/webhooks', key: 'webhooks'/);
+  assert.match(navItems, /path: '\/docs\/reference', key: 'reference'/);
+});
+
 test('direct and hosted examples follow their documented integration steps', () => {
   const directStart = docsCopy.indexOf("{pageKey === 'direct' && <>");
   const hostedStart = docsCopy.indexOf("{pageKey === 'hosted' && <>", directStart);
