@@ -178,6 +178,24 @@ test('getting-started guide presents the production quickstart with SendFlow exa
   assert.match(getDocsCodeExample('pricing', 'Node.js'), /\/pricing/);
   assert.match(getDocsCodeExample('pricing', 'Node.js'), /operator\.fees/);
   assert.doesNotMatch(getDocsCodeExample('pricing', 'Node.js'), /\/fees|\/countries/);
+  for (const format of ['JavaScript', 'Node.js', 'PHP', 'Python']) {
+    const example = getDocsCodeExample('pricing', format);
+    assert.match(example, /requiresOtp/, `${format} must read the operator OTP policy`);
+    assert.match(example, /otpCommand/, `${format} must read the operator instruction`);
+    assert.match(example, /operatorId/, `${format} must identify the operator`);
+    const countryLookup = {
+      JavaScript: /catalog\.countries\.find/,
+      'Node.js': /catalog\.countries\.find/,
+      PHP: /array_column\(\$catalog\["countries"\]/,
+      Python: /country\["name"\].*country\["id"\]/s,
+    }[format];
+    assert.match(example, countryLookup, `${format} must resolve the country name dynamically`);
+  }
+  assert.match(docsCopy, /GET \/pricing renvoie le catalogue des pays et opérateurs avec requiresOtp et otpCommand/);
+  assert.match(docsCopy, /otpCommand, s’il est présent, est un code ou une consigne à composer, pas l’OTP personnel du payeur/);
+  assert.match(docsCopy, /GET \/pricing returns the country and operator catalog, including requiresOtp and otpCommand/);
+  assert.match(docsCopy, /otpCommand is an instruction or code to dial, not the payer’s personal OTP/);
+  assert.doesNotMatch(docsCopy, /#144\*82#/i, 'The documentation must not hard-code an operator dialing code');
   assert.match(getDocsCodeExample('payment-limits', 'Node.js'), /\/payment-limits/);
   assert.match(getDocsCodeExample('create-direct', 'Node.js'), /\/v1\/payment-sessions/);
   assert.match(getDocsCodeExample('read-public-session', 'Node.js'), /\/v1\/public\/payment-sessions/);

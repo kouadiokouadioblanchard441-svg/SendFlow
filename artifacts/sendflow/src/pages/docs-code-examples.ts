@@ -803,7 +803,18 @@ console.log("Operators and configured fees:", catalog.operators.map((operator) =
   name: operator.name,
   operations: operator.operations,
   fees: operator.fees,
-})));`,
+ })));
+// Catalog policy metadata does not enable an OTP payment flow.
+console.log("Operators with OTP policy metadata:", catalog.operators
+  .filter((operator) => operator.requiresOtp)
+  .map((operator) => ({
+    countryId: operator.countryId,
+    operatorId: operator.id,
+    country: catalog.countries.find((country) => country.id === operator.countryId)?.name ?? operator.countryId,
+    name: operator.name,
+    requiresOtp: operator.requiresOtp,
+    otpCommand: operator.otpCommand,
+  })));`,
     'Node.js': `// Public pricing catalog; no merchant key is required.
 const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
 if (!apiBaseUrl) throw new Error("Configure SENDFLOW_API_BASE_URL");
@@ -817,7 +828,18 @@ console.log("Operators and configured fees:", catalog.operators.map((operator) =
   name: operator.name,
   operations: operator.operations,
   fees: operator.fees,
-})));`,
+ })));
+// Catalog policy metadata does not enable an OTP payment flow.
+console.log("Operators with OTP policy metadata:", catalog.operators
+  .filter((operator) => operator.requiresOtp)
+  .map((operator) => ({
+    countryId: operator.countryId,
+    operatorId: operator.id,
+    country: catalog.countries.find((country) => country.id === operator.countryId)?.name ?? operator.countryId,
+    name: operator.name,
+    requiresOtp: operator.requiresOtp,
+    otpCommand: operator.otpCommand,
+  })));`,
     PHP: `$ch = curl_init(rtrim(getenv("SENDFLOW_API_BASE_URL"), "/") . "/pricing");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
@@ -826,6 +848,7 @@ if ($response === false || curl_getinfo($ch, CURLINFO_RESPONSE_CODE) >= 400) {
 }
 $catalog = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
 print_r($catalog["countries"]);
+$countryNames = array_column($catalog["countries"], "name", "id");
 foreach ($catalog["operators"] as $operator) {
     print_r([
         "countryId" => $operator["countryId"],
@@ -834,6 +857,17 @@ foreach ($catalog["operators"] as $operator) {
         "operations" => $operator["operations"],
         "fees" => $operator["fees"],
     ]);
+    if (!empty($operator["requiresOtp"])) {
+        // Catalog policy metadata does not enable an OTP payment flow.
+        print_r([
+            "countryId" => $operator["countryId"],
+            "operatorId" => $operator["id"],
+            "country" => $countryNames[$operator["countryId"]] ?? $operator["countryId"],
+            "name" => $operator["name"],
+            "requiresOtp" => true,
+            "otpCommand" => $operator["otpCommand"] ?? null,
+        ]);
+    }
 }`,
     Python: `import os
 import requests
@@ -854,6 +888,22 @@ print("Operators and configured fees:", [
         "fees": operator["fees"],
     }
     for operator in catalog["operators"]
+])
+# Catalog policy metadata does not enable an OTP payment flow.
+print("Operators with OTP policy metadata:", [
+    {
+        "countryId": operator["countryId"],
+        "operatorId": operator["id"],
+        "country": next(
+            (country["name"] for country in catalog["countries"] if country["id"] == operator["countryId"]),
+            operator["countryId"],
+        ),
+        "name": operator["name"],
+        "requiresOtp": operator["requiresOtp"],
+        "otpCommand": operator["otpCommand"],
+    }
+    for operator in catalog["operators"]
+    if operator["requiresOtp"]
 ])`,
   },
   'payment-limits': {
