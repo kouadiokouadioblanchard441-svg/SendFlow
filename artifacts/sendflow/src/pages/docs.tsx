@@ -164,17 +164,21 @@ const localized: Record<Language, Translation> = {
     mobileMoneyTitle: 'Mobile Money et confirmation USSD',
     mobileMoneyText: 'La session directe renvoie les choix de pays et d’opérateurs, mais son contrat n’inclut pas operator.otpCommand. Après le démarrage d’une tentative autorisée, l’opérateur adresse au payeur une demande de confirmation USSD qu’il valide sur son téléphone. Le catalogue public GET /api/pricing peut exposer requiresOtp et otpCommand comme métadonnées configurées par opérateur ; elles ne garantissent ni que l’opérateur soit proposé dans cette session ni qu’une confirmation OTP soit prise en charge. otpCommand est une consigne à composer, pas l’OTP personnel. La tentative directe n’accepte aucun champ otp ni seconde requête de confirmation. Si la réponse de tentative contient ussdCode, affichez exactement cette instruction ; elle peut être nulle et ne prouve pas le paiement. Pour Wave, le contrat API direct ne renvoie pas d’URL d’application ; returnUrl est uniquement le retour marchand après confirmation. N’inventez pas de code ou de lien et vérifiez le statut serveur ou le webhook signé.',
     mobileMoneyOtpTitle: 'Parcours OTP et codes USSD',
-    mobileMoneyOtpText: 'Les codes et opérateurs varient selon la configuration active. Utilisez les métadonnées du catalogue et les instructions réellement renvoyées par SendFlow ; aucune liste statique de codes par pays ne fait partie du contrat Direct API. Le parcours actuel ne prend pas en charge la saisie d’un OTP SMS ni une seconde requête de confirmation OTP.',
+    mobileMoneyOtpText: 'Le tableau ci-dessous reprend les pays, opérateurs et codes de la référence fournie. Ce sont des valeurs de référence, pas une configuration SendFlow vérifiée ni une liste de moyens actuellement actifs. Pour une tentative réelle, sélectionnez uniquement un opérateur renvoyé par la session et affichez exactement ussdCode si l’API le renvoie. Les exemples de requête utilisent les champs Direct API SendFlow et n’envoient pas de champ otp.',
+    mobileMoneyOtpExampleTitle: 'Exemple de tentative avec le contrat SendFlow',
+    mobileMoneyOtpExampleNote: 'Le corps SendFlow utilise countryCode, operatorId et phoneNumber. Il n’accepte pas otp ; ussdCode est une instruction renvoyée par la tentative et peut être null. L’exemple ne confirme pas un paiement : vérifiez le statut serveur ou le webhook signé.',
+    mobileMoneyWaveTitle: 'Wave et ouverture d’application',
+    mobileMoneyWaveText: 'Le tableau reprend le parcours Wave de la référence, mais la réponse Direct API SendFlow actuelle ne contient pas d’URL Wave. Aucun exemple de redirection Wave exécutable ne peut donc être fourni avec le contrat actuel. N’utilisez pas returnUrl comme lien Wave et ne construisez pas une URL d’application.',
     mobileMoneyFlowsTitle: 'Résumé des parcours',
     mobileMoneyFlowHeader: 'Parcours',
     mobileMoneyResponseHeader: 'Réponse SendFlow',
     mobileMoneyActionHeader: 'Action correcte',
     mobileMoneyActorsTitle: 'Qui fait quoi dans le parcours Mobile Money ?',
-    mobileMoneyCountryTitle: 'Sources des codes et instructions',
-    mobileMoneyCountryHeader: 'Source',
-    mobileMoneyStatusHeader: 'Disponibilité',
-    mobileMoneyCodeHeader: 'Instruction',
-    mobileMoneyDetailsHeader: 'À respecter',
+    mobileMoneyCountryTitle: 'Codes et parcours par pays — références à confirmer',
+    mobileMoneyCountryHeader: 'Pays · opérateur',
+    mobileMoneyStatusHeader: 'Parcours de référence',
+    mobileMoneyCodeHeader: 'Code / redirection',
+    mobileMoneyDetailsHeader: 'Règle SendFlow actuelle',
     androidDirectNote: 'L’exemple Kotlin ci-dessous utilise les routes publiques de session directe depuis Android. Il s’agit d’un exemple REST, pas d’un SDK officiel ; il suppose kotlinx-coroutines-android. Créez la session sur votre serveur et transmettez seulement la clé publique et les jetons de session nécessaires.',
     directInputText: 'Attention au format : la session peut renvoyer un code pays en minuscules (par exemple ci), mais la création de tentative exige deux lettres majuscules (CI). Convertissez-le en majuscules. phoneNumber doit inclure l’indicatif international renvoyé par la session (par exemple +225 suivi du numéro national). Utilisez operatorId directement depuis la réponse de session.',
     directCorsNote: 'Les routes /api/v1/public/* ont leur propre configuration CORS : les appels navigateur sont autorisés sans cookies, en GET/POST/OPTIONS, avec Content-Type, X-SendFlow-Public-Key, X-SendFlow-Client-Token, X-LinkFlow-Attempt-Token et Idempotency-Key. La création et la lecture privée d’une session avec Authorization: Bearer restent côté serveur. N’exposez jamais la clé secrète dans le navigateur.',
@@ -350,17 +354,21 @@ const localized: Record<Language, Translation> = {
     mobileMoneyTitle: 'Mobile Money and USSD confirmation',
     mobileMoneyText: 'The direct session returns its available countries and operators, but its response schema does not include operator.otpCommand. After an authorized attempt starts, the operator sends the payer a USSD confirmation request to approve on their phone. The public GET /api/pricing catalog may expose requiresOtp and otpCommand as operator configuration metadata; these fields do not guarantee that an operator is offered in this session or that OTP confirmation is supported. otpCommand is a dialing instruction, not the payer’s personal OTP. A direct attempt accepts no otp field or second confirmation request. If an attempt response contains ussdCode, display that exact instruction; it may be null and does not prove payment. The Direct API contract does not return a Wave app URL; returnUrl is only the merchant return after confirmation. Do not invent codes or links; verify the server status or signed webhook.',
     mobileMoneyOtpTitle: 'OTP flows and USSD codes',
-    mobileMoneyOtpText: 'Codes and operators vary with the active configuration. Use catalog metadata and instructions actually returned by SendFlow; the Direct API contract does not guarantee a static country/operator/code list. The current flow does not support SMS OTP entry or a second OTP confirmation request.',
+    mobileMoneyOtpText: 'The table below reproduces the countries, operators, and codes from the supplied reference. These are reference values, not verified SendFlow configuration or a list of currently active methods. For a real attempt, select only an operator returned by the session and display the exact ussdCode if the API returns one. The request examples use SendFlow Direct API fields and do not send an otp field.',
+    mobileMoneyOtpExampleTitle: 'Attempt example using the SendFlow contract',
+    mobileMoneyOtpExampleNote: 'The SendFlow body uses countryCode, operatorId, and phoneNumber. It does not accept otp; ussdCode is an instruction returned by the attempt and may be null. The example does not confirm payment: verify the server status or signed webhook.',
+    mobileMoneyWaveTitle: 'Wave and app handoff',
+    mobileMoneyWaveText: 'The table reproduces the Wave flow from the reference, but the current SendFlow Direct API response contains no Wave URL. Therefore, an executable Wave redirect example cannot be provided under the current contract. Do not use returnUrl as a Wave link or construct an app URL.',
     mobileMoneyFlowsTitle: 'Flow summary',
     mobileMoneyFlowHeader: 'Flow',
     mobileMoneyResponseHeader: 'SendFlow response',
     mobileMoneyActionHeader: 'Correct action',
     mobileMoneyActorsTitle: 'Who does what in a Mobile Money payment?',
-    mobileMoneyCountryTitle: 'Sources for codes and instructions',
-    mobileMoneyCountryHeader: 'Source',
-    mobileMoneyStatusHeader: 'Availability',
-    mobileMoneyCodeHeader: 'Instruction',
-    mobileMoneyDetailsHeader: 'Guidance',
+    mobileMoneyCountryTitle: 'Country flows and codes — reference values to confirm',
+    mobileMoneyCountryHeader: 'Country · operator',
+    mobileMoneyStatusHeader: 'Reference flow',
+    mobileMoneyCodeHeader: 'Code / redirect',
+    mobileMoneyDetailsHeader: 'Current SendFlow rule',
     androidDirectNote: 'The Kotlin example below uses public direct-session routes from Android. It is a REST example, not an official SDK; it assumes kotlinx-coroutines-android. Create the session on your server and pass only the public key and required session tokens to the app.',
     directInputText: 'Mind the format: the session may return a lowercase country code (for example ci), while creating an attempt requires two uppercase letters (CI). Convert it to uppercase. phoneNumber must include the international prefix returned by the session (for example +225 followed by the national number). Use operatorId directly from the session response.',
     directCorsNote: 'The /api/v1/public/* routes have their own CORS configuration: browser calls are allowed without cookies, using GET/POST/OPTIONS and Content-Type, X-SendFlow-Public-Key, X-SendFlow-Client-Token, X-LinkFlow-Attempt-Token, and Idempotency-Key. Creating a session and reading a private session with Authorization: Bearer remain server-side. Never expose the secret key in a browser.',
@@ -474,7 +482,7 @@ const localizedLists: Record<Language, TranslationLists> = {
       { flow: 'Instruction USSD de la tentative', response: 'La réponse de tentative peut inclure ussdCode ; cette valeur peut être null et le schéma ne précise pas de type de parcours OTP.', action: 'Affichez exactement ussdCode si la réponse le contient. N’inventez pas de code par pays et ne traitez pas cette instruction comme une preuve de paiement.' },
       { flow: 'OTP reçu par SMS', response: 'Le corps de tentative n’accepte pas de champ otp et aucune référence de confirmation OTP n’est renvoyée.', action: 'Ne demandez pas au payeur de saisir ou de transmettre son OTP SMS via cette API.' },
       { flow: 'OTP obtenu après un code USSD', response: 'Le contrat ne définit pas de seconde requête avec otp et référence de session.', action: 'Le code USSD renvoyé est une instruction à composer, pas l’OTP du payeur. Ne créez pas de confirmation OTP côté marchand.' },
-      { flow: 'Codes par pays', response: 'Aucune matrice fixe pays/opérateur/code n’est garantie par le contrat ; les paramètres configurés peuvent évoluer.', action: 'Lisez les valeurs retournées par SendFlow et n’importez pas des codes issus d’une autre intégration comme s’ils étaient actifs ici.' },
+      { flow: 'Codes par pays', response: 'La matrice qui suit reprend des valeurs de référence et ne représente pas le catalogue actif SendFlow.', action: 'Pour une tentative réelle, utilisez uniquement le pays, l’opérateur et ussdCode renvoyés par SendFlow.' },
     ],
     mobileMoneyFlowRows: [
       { flow: 'Confirmation sur téléphone (USSD Push)', response: 'Lorsque le démarrage est disponible, POST /api/v1/public/payment-sessions/{sessionId}/attempts répond HTTP 201 avec state waiting ou uncertain. ussdCode peut être null ; cette réponse ne confirme pas le paiement.', action: 'Le payeur valide la demande USSD dans le parcours de son opérateur. Vérifiez ensuite le statut côté serveur ou le webhook signé.' },
@@ -482,8 +490,19 @@ const localizedLists: Record<Language, TranslationLists> = {
       { flow: 'Statut du paiement', response: 'waiting et uncertain ne sont pas des états finaux.', action: 'Ne confirmez pas la commande à la réception de la demande USSD ; vérifiez le statut serveur ou le webhook signé.' },
     ],
     mobileMoneyCards: [
-      { title: 'Catalogue public', status: 'Métadonnées par opérateur', code: 'requiresOtp · otpCommand', body: 'GET /api/pricing peut renvoyer la politique et la consigne configurées par opérateur. Ce catalogue global ne remplace pas les choix filtrés de la session directe et ne garantit pas qu’un flux OTP soit pris en charge.' },
-      { title: 'Tentative directe', status: 'Instruction si renvoyée', code: 'ussdCode ou null', body: 'La réponse de tentative peut contenir ussdCode. Affichez uniquement cette valeur si elle est renvoyée ; elle peut être nulle, ce n’est pas l’OTP personnel et elle ne confirme pas le paiement.' },
+      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', status: 'OTP obtenu par USSD (référence)', code: '#144*82#', body: 'Code de référence fourni ; non confirmé dans la configuration SendFlow active. Le contrat actuel n’accepte pas de seconde confirmation OTP.' },
+      { title: 'Côte d’Ivoire · Wave', countryCode: 'CI', status: 'Redirection Wave (référence)', code: 'URL Wave renvoyée par le serveur', body: 'Le contrat Direct API actuel ne renvoie pas d’URL Wave. returnUrl reste le retour marchand.' },
+      { title: 'Côte d’Ivoire · MTN / Moov', countryCode: 'CI', status: 'USSD Push (référence)', code: 'Pas de code fixe', body: 'Le payeur valide la demande de l’opérateur sur son téléphone ; vérifiez le statut final côté serveur.' },
+      { title: 'Sénégal · Orange', countryCode: 'SN', status: 'OTP obtenu par USSD (référence)', code: '#144#391#', body: 'Code de référence fourni ; non confirmé dans la configuration SendFlow active. Le contrat actuel n’accepte pas de seconde confirmation OTP.' },
+      { title: 'Sénégal · Wave', countryCode: 'SN', status: 'Redirection Wave (référence)', code: 'URL Wave renvoyée par le serveur', body: 'Le contrat Direct API actuel ne renvoie pas d’URL Wave. returnUrl reste le retour marchand.' },
+      { title: 'Sénégal · Free / E-money', countryCode: 'SN', status: 'USSD Push (référence)', code: 'Pas de code fixe', body: 'Le payeur valide la demande de l’opérateur sur son téléphone ; vérifiez le statut final côté serveur.' },
+      { title: 'Mali · Orange', countryCode: 'ML', status: 'OTP obtenu par USSD (référence)', code: '#144#77#', body: 'Code de référence fourni ; non confirmé dans la configuration SendFlow active. Le contrat actuel n’accepte pas de seconde confirmation OTP.' },
+      { title: 'Mali · Moov', countryCode: 'ML', status: 'USSD Push (référence)', code: 'Pas de code fixe', body: 'Le payeur valide la demande de l’opérateur sur son téléphone ; vérifiez le statut final côté serveur.' },
+      { title: 'Burkina Faso · Orange', countryCode: 'BF', status: 'OTP USSD avec montant (référence)', code: '*144*4*6*montant#', body: 'Le montant peut faire partie du code de référence. Ne le construisez pas côté marchand ; utilisez uniquement l’instruction renvoyée par SendFlow.' },
+      { title: 'Burkina Faso · Moov / Flooz', countryCode: 'BF', status: 'USSD Push (référence)', code: 'Pas de code fixe', body: 'Le payeur valide la demande de l’opérateur sur son téléphone ; vérifiez le statut final côté serveur.' },
+      { title: 'Cameroun · MTN / Orange', countryCode: 'CM', status: 'USSD Push (référence)', code: 'Pas de code fixe', body: 'Le payeur valide la demande de l’opérateur sur son téléphone ; vérifiez le statut final côté serveur.' },
+      { title: 'Congo RDC · Orange / Airtel / M-Pesa / Afrimoney', countryCode: 'CD', status: 'USSD Push (référence)', code: 'Pas de code fixe', body: 'Le payeur valide la demande de l’opérateur sur son téléphone ; vérifiez le statut final côté serveur.' },
+      { title: 'Autres pays et opérateurs', status: 'Selon la configuration active', code: 'Catalogue / réponse de tentative', body: 'Cette matrice n’est pas exhaustive. Utilisez les pays et opérateurs de la session puis l’instruction réellement renvoyée par SendFlow.' },
     ],
     troubleshooting: [
       { symptom: 'Aucun pays ou opérateur ne s’affiche', action: 'Vérifiez la réponse de la session directe. Le catalogue global de frais ne garantit pas qu’un opérateur soit admissible pour cette session.' },
@@ -562,7 +581,7 @@ const localizedLists: Record<Language, TranslationLists> = {
       { flow: 'USSD instruction from an attempt', response: 'An attempt response may include ussdCode; it may be null, and the schema does not identify an OTP flow type.', action: 'Display ussdCode exactly when present. Do not invent country-specific codes or treat the instruction as proof of payment.' },
       { flow: 'OTP received by SMS', response: 'The attempt body does not accept an otp field, and no OTP confirmation reference is returned.', action: 'Do not ask the payer to enter or send their SMS OTP through this API.' },
       { flow: 'OTP after dialing a USSD code', response: 'The contract defines no second request with otp and a session reference.', action: 'The returned USSD code is an instruction to dial, not the payer’s OTP. Do not create a merchant-side OTP confirmation.' },
-      { flow: 'Country-specific codes', response: 'The contract does not guarantee a fixed country/operator/code matrix; configured values can change.', action: 'Read values returned by SendFlow and do not import codes from another integration as if they were active here.' },
+      { flow: 'Country-specific codes', response: 'The following matrix reproduces reference values and does not represent the active SendFlow catalog.', action: 'For a real attempt, use only the country, operator, and ussdCode returned by SendFlow.' },
     ],
     mobileMoneyFlowRows: [
       { flow: 'Phone confirmation (USSD Push)', response: 'When attempt startup is available, POST /api/v1/public/payment-sessions/{sessionId}/attempts returns HTTP 201 with state waiting or uncertain. ussdCode may be null; this response does not confirm payment.', action: 'The payer approves the operator USSD request on their phone. Then verify the server status or signed webhook.' },
@@ -570,8 +589,19 @@ const localizedLists: Record<Language, TranslationLists> = {
       { flow: 'Payment status', response: 'waiting and uncertain are non-final states.', action: 'Do not confirm an order when the USSD request is received; verify server status or the signed webhook.' },
     ],
     mobileMoneyCards: [
-      { title: 'Public catalog', status: 'Operator metadata', code: 'requiresOtp · otpCommand', body: 'GET /api/pricing may return the operator policy and configured instruction. This global catalog does not replace the direct session’s filtered choices or guarantee that an OTP flow is supported.' },
-      { title: 'Direct attempt', status: 'Instruction if returned', code: 'ussdCode or null', body: 'The attempt response may contain ussdCode. Display only that value when present; it may be null, is not the payer’s personal OTP, and does not confirm payment.' },
+      { title: 'Côte d’Ivoire · Orange Money', countryCode: 'CI', status: 'OTP via USSD (reference)', code: '#144*82#', body: 'Reference code supplied; not confirmed in active SendFlow configuration. The current contract accepts no second OTP confirmation.' },
+      { title: 'Côte d’Ivoire · Wave', countryCode: 'CI', status: 'Wave redirect (reference)', code: 'Wave URL returned by server', body: 'The current Direct API contract returns no Wave URL. returnUrl remains the merchant return.' },
+      { title: 'Côte d’Ivoire · MTN / Moov', countryCode: 'CI', status: 'USSD Push (reference)', code: 'No fixed code', body: 'The payer approves the operator request on their phone; verify the final status server-side.' },
+      { title: 'Senegal · Orange', countryCode: 'SN', status: 'OTP via USSD (reference)', code: '#144#391#', body: 'Reference code supplied; not confirmed in active SendFlow configuration. The current contract accepts no second OTP confirmation.' },
+      { title: 'Senegal · Wave', countryCode: 'SN', status: 'Wave redirect (reference)', code: 'Wave URL returned by server', body: 'The current Direct API contract returns no Wave URL. returnUrl remains the merchant return.' },
+      { title: 'Senegal · Free / E-money', countryCode: 'SN', status: 'USSD Push (reference)', code: 'No fixed code', body: 'The payer approves the operator request on their phone; verify the final status server-side.' },
+      { title: 'Mali · Orange', countryCode: 'ML', status: 'OTP via USSD (reference)', code: '#144#77#', body: 'Reference code supplied; not confirmed in active SendFlow configuration. The current contract accepts no second OTP confirmation.' },
+      { title: 'Mali · Moov', countryCode: 'ML', status: 'USSD Push (reference)', code: 'No fixed code', body: 'The payer approves the operator request on their phone; verify the final status server-side.' },
+      { title: 'Burkina Faso · Orange', countryCode: 'BF', status: 'OTP USSD with amount (reference)', code: '*144*4*6*amount#', body: 'The amount may be embedded in the reference code. Do not construct it in the merchant app; use only an instruction returned by SendFlow.' },
+      { title: 'Burkina Faso · Moov / Flooz', countryCode: 'BF', status: 'USSD Push (reference)', code: 'No fixed code', body: 'The payer approves the operator request on their phone; verify the final status server-side.' },
+      { title: 'Cameroon · MTN / Orange', countryCode: 'CM', status: 'USSD Push (reference)', code: 'No fixed code', body: 'The payer approves the operator request on their phone; verify the final status server-side.' },
+      { title: 'DR Congo · Orange / Airtel / M-Pesa / Afrimoney', countryCode: 'CD', status: 'USSD Push (reference)', code: 'No fixed code', body: 'The payer approves the operator request on their phone; verify the final status server-side.' },
+      { title: 'Other countries and operators', status: 'Depends on active configuration', code: 'Catalog / attempt response', body: 'This matrix is not exhaustive. Use the countries and operators from the session and the instruction actually returned by SendFlow.' },
     ],
     troubleshooting: [
       { symptom: 'No country or operator is displayed', action: 'Check the direct session response. The global fee catalog does not guarantee that a method is eligible for this session.' },
@@ -1462,6 +1492,13 @@ export default function DocsPage() {
                 </tr>
               ))}</tbody>
             </table>
+            <section className="sf-docs-code-step">
+              <h4>Catalogue OTP — GET /api/pricing</h4>
+              <CodePanel language={language} label="GET /api/pricing · requiresOtp / otpCommand" example="pricing" />
+              <h4>{t.mobileMoneyOtpExampleTitle}</h4>
+              <CodePanel language={language} label={t.codeLabel} example="start-attempt" />
+              <div className="sf-docs-callout">{t.mobileMoneyOtpExampleNote}</div>
+            </section>
             <h3>{t.mobileMoneyFlowsTitle}</h3>
             <table className="sf-docs-reference-table">
               <thead><tr><th>{t.mobileMoneyFlowHeader}</th><th>{t.mobileMoneyResponseHeader}</th><th>{t.mobileMoneyActionHeader}</th></tr></thead>
@@ -1473,6 +1510,7 @@ export default function DocsPage() {
                 </tr>
               ))}</tbody>
             </table>
+            <div className="sf-docs-callout"><strong>{t.mobileMoneyWaveTitle}.</strong> {t.mobileMoneyWaveText}</div>
             <h3>{t.mobileMoneyActorsTitle}</h3>
             <div className="sf-docs-endpoints">
               {localizedLists[language].mobileMoneyActors.map((actor) => (
