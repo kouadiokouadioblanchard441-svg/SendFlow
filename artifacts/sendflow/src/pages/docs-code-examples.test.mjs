@@ -11,6 +11,10 @@ const payoutRoutes = await readFile(
   new URL('../../../api-server/src/routes/developer-payouts.ts', import.meta.url),
   'utf8',
 );
+const generatedApiSchemas = await readFile(
+  new URL('../../../../lib/api-zod/src/generated/api.ts', import.meta.url),
+  'utf8',
+);
 
 test('long documentation URLs wrap inside callouts and code notes', () => {
   assert.match(docsStyles, /\.sf-docs-callout\s*\{[^}]*overflow-wrap:\s*anywhere/);
@@ -260,22 +264,51 @@ test('the former API reference URL now resolves to the single direct API guide',
   assert.match(await readFile(new URL('../lib/documentation-host.ts', import.meta.url), 'utf8'), /'\/docs\/api-reference': 'direct'/);
 });
 
-test('public OTP guidance follows the merchant API contract', () => {
-  assert.match(docsCopy, /L’API de paiement marchand n’accepte aucun champ OTP ou PIN/);
-  assert.match(docsCopy, /The merchant payments API accepts no OTP or PIN fields/);
+test('Mobile Money guidance describes operator USSD confirmation in both languages', () => {
+  assert.match(docsCopy, /l’opérateur adresse au payeur une demande de confirmation USSD qu’il valide sur son téléphone/);
+  assert.match(docsCopy, /the operator sends a USSD confirmation request to the payer, who approves it on their phone/);
   assert.match(docsCopy, /attempt\.ussdCode ou null/);
   assert.match(docsCopy, /attempt\.ussdCode or null/);
+  assert.match(docsCopy, /Ne reproduisez pas l’écran USSD/);
+  assert.match(docsCopy, /Do not recreate the USSD screen/);
+  assert.doesNotMatch(docsCopy, /n’envoyez jamais de code OTP ou de PIN|never send an OTP or PIN/i);
 });
 
-test('attempt examples never send an OTP or PIN to the merchant API', () => {
+test('attempt examples keep operator confirmation outside the merchant API request', () => {
   for (const format of getDocsCodeFormats('start-attempt')) {
     const example = getDocsCodeExample('start-attempt', format);
-    assert.doesNotMatch(example, /["'](?:otp|pin)["']\s*:/i, `${format} must not send an OTP or PIN`);
+    assert.doesNotMatch(example, /["'](?:otp|pin)["']\s*:/i, `${format} must not add operator confirmation fields`);
     assert.match(example, /ussdCode/i, `${format} must use only the USSD instruction returned by SendFlow`);
   }
+  const requestSchemaStart = generatedApiSchemas.indexOf('export const StartDeveloperDirectPaymentBody =');
+  const requestSchemaEnd = generatedApiSchemas.indexOf('export const StartDeveloperDirectPaymentResponse =', requestSchemaStart);
+  const requestSchema = generatedApiSchemas.slice(requestSchemaStart, requestSchemaEnd);
+  assert.ok(requestSchemaStart >= 0 && requestSchemaEnd > requestSchemaStart);
+  for (const field of ['firstName', 'lastName', 'countryCode', 'operatorId', 'phoneNumber']) {
+    assert.match(requestSchema, new RegExp(`"${field}"`));
+  }
+  assert.doesNotMatch(requestSchema, /"(?:otp|pin)"/i);
+  assert.match(generatedApiSchemas.slice(requestSchemaEnd, requestSchemaEnd + 500), /"ussdCode": zod\.string\(\)\.nullable\(\)/);
   assert.match(docsCopy, /attempt\.ussdCode ou null/);
   assert.match(docsCopy, /attempt\.ussdCode or null/);
   assert.doesNotMatch(docsCopy, /#144\*82#/i, 'Unverified operator menu text must not be published as an OTP');
+});
+
+test('production integration practices cover correlation, confirmation, delivery, and retries', () => {
+  for (const guidance of [
+    'merchantReference unique',
+    'même clé avec le même corps',
+    'sessionId, attemptId et merchantReference',
+    'HMAC sur le corps brut',
+    'sendflow-delivery',
+    'Respectez Retry-After',
+    'personal data out of merchantReference and metadata',
+    'Persist sessionId, attemptId, and merchantReference',
+    'Verify webhook HMAC using the raw body and timestamp',
+    'Respect Retry-After after 429',
+  ]) {
+    assert.ok(docsCopy.includes(guidance), `missing production integration guidance: ${guidance}`);
+  }
 });
 
 test('merchant payout examples cover every implemented API route and keep creation fail-closed', () => {
