@@ -140,8 +140,8 @@ const localized: Record<Language, Translation> = {
     hostedStepStatus: 'Étape 2 · Vérifier le statut côté serveur',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec la valeur SENDFLOW_CHECKOUT_ORIGIN copiée dans le bloc de production, puis redirigez le client.',
-    apiAvailabilityTitle: 'Disponibilité et adresses de production',
-    apiAvailabilityText: 'Les blocs copiables indiquent les adresses de production. État actuel : POST /api/v1/payment-sessions et le démarrage d’une tentative PAYIN répondent HTTP 503 avant création ; aucun paiement n’est lancé et aucun portefeuille marchand n’est crédité. POST /api/v1/payouts répond aussi HTTP 503 ; aucune demande n’est créée et aucun fonds n’est réservé. Le devis payout, lorsqu’il est disponible avec la configuration active, reste une lecture seule. Les exemples décrivent le contrat SendFlow, pas des opérations actuellement ouvertes.',
+    apiAvailabilityTitle: 'URL de production et statut des opérations',
+    apiAvailabilityText: 'Toutes les requêtes utilisent l’adresse API de production du bloc copiable « API SendFlow ». Statut actuel : la création d’une session PAYIN (POST /api/v1/payment-sessions) et le démarrage d’une tentative renvoient HTTP 503 avant toute création ; aucun paiement n’est lancé. La création PAYOUT (POST /api/v1/payouts) renvoie également HTTP 503 ; aucune demande n’est créée et aucun fonds n’est réservé. Le devis PAYOUT, lorsqu’il est disponible, reste une lecture seule. Les exemples décrivent le contrat SendFlow et ne signifient pas que ces opérations sont activées.',
     hostedOriginText: 'checkoutPath reste un chemin relatif pour préserver le contrat API. Pour un paiement hébergé ou un lien LinkFlow, combinez-le avec la valeur copiée dans SENDFLOW_CHECKOUT_ORIGIN sur votre serveur marchand.',
     hostedFallbackText: 'Après une confirmation succeeded, la page redirige vers returnUrl si elle a été fournie ; sinon, elle revient vers le site public SendFlow. La page ne redirige pas vers returnUrl après un échec confirmé. Une redirection reste une indication d’interface, jamais une preuve de paiement.',
     webhookSharedNote: 'Les webhooks reflètent les événements enregistrés côté serveur. payout.succeeded n’est émis qu’après une confirmation finale vérifiée ; consultez le guide Webhooks pour vérifier la signature et dédupliquer les livraisons.',
@@ -311,8 +311,8 @@ const localized: Record<Language, Translation> = {
     hostedStepStatus: 'Step 2 · Check status on your server',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with the copied SENDFLOW_CHECKOUT_ORIGIN value, then redirect the customer.',
-    apiAvailabilityTitle: 'Production availability and URLs',
-    apiAvailabilityText: 'The copyable blocks show the production addresses. Current status: POST /api/v1/payment-sessions and starting a PAYIN attempt return HTTP 503 before creation; no payment starts and no merchant wallet is credited. POST /api/v1/payouts also returns HTTP 503; no request is created and no funds are reserved. A payout quote, when active configuration allows it, is read-only. The examples describe the SendFlow contract; they do not mean these operations are currently open in production.',
+    apiAvailabilityTitle: 'Production API URL and operation status',
+    apiAvailabilityText: 'All requests use the production API address in the copyable “SendFlow API” block. Current status: PAYIN session creation (POST /api/v1/payment-sessions) and attempt startup return HTTP 503 before anything is created; no payment is initiated. PAYOUT creation (POST /api/v1/payouts) also returns HTTP 503; no request is created and no funds are reserved. A PAYOUT quote, when available, is read-only. The examples describe the SendFlow API contract and do not mean these operations are enabled.',
     hostedOriginText: 'checkoutPath remains a relative path to preserve the API contract. For hosted payments and LinkFlow links, combine it with the SENDFLOW_CHECKOUT_ORIGIN value copied on your merchant server.',
     hostedFallbackText: 'After succeeded is confirmed, the page redirects to returnUrl if provided; otherwise, it returns to the SendFlow public site. The page does not redirect to returnUrl after a confirmed failure. A redirect is a user-interface signal, never proof of payment.',
     webhookSharedNote: 'Webhooks reflect server-recorded events. payout.succeeded is emitted only after verified final confirmation; see the Webhooks guide to verify signatures and deduplicate deliveries.',
@@ -1340,8 +1340,8 @@ export default function DocsPage() {
           <section className="sf-docs-section"><h2>{t.prerequisites}</h2><ul className="sf-docs-list"><li>{t.noCredentials}</li><li>{t.idempotencyText}</li></ul></section>
         </>}
         {pageKey === 'direct' && <>
-          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
+          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <section className="sf-docs-section"><h2>{t.model}</h2><p>{t.modelTextDirect}</p>
             <h3>{t.directFlow}</h3>
             <div className="sf-docs-steps">
@@ -1415,11 +1415,11 @@ export default function DocsPage() {
           <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
         </>}
         {pageKey === 'hosted' && <>
-          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <div className="sf-docs-production-urls">
             <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
             <CopyableUrlBlock language={language} label={t.checkoutOriginLabel} value={productionUrls.checkoutOrigin} />
           </div>
+          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
           <section className="sf-docs-section"><h2>{t.model}</h2><p>{t.modelTextHosted}</p>
             <h3>{t.hostedFlow}</h3>
             <div className="sf-docs-steps">

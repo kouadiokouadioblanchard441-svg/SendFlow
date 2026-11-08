@@ -85,22 +85,40 @@ test('every API request example uses the centralized production API base', () =>
 });
 
 test('production URL notes do not expose internal payment-readiness switches', () => {
-  assert.match(docsCopy, /apiAvailabilityTitle: 'Disponibilité et adresses de production'/);
-  assert.match(docsCopy, /apiAvailabilityText: 'Les blocs copiables indiquent les adresses de production/);
-  assert.match(docsCopy, /apiAvailabilityTitle: 'Production availability and URLs'/);
-  assert.match(docsCopy, /apiAvailabilityText: 'The copyable blocks show the production addresses/);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'URL de production et statut des opérations'/);
+  assert.match(docsCopy, /apiAvailabilityText: 'Toutes les requêtes utilisent l’adresse API de production du bloc copiable/);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'Production API URL and operation status'/);
+  assert.match(docsCopy, /apiAvailabilityText: 'All requests use the production API address in the copyable/);
   assert.match(docsCopy, /serviceAvailability: 'Adresses de production et suivi'/);
   assert.match(docsCopy, /serviceAvailabilityText: 'Consultez le statut ou le webhook signé uniquement/);
   assert.match(docsCopy, /serviceAvailability: 'Production URLs and status checks'/);
   assert.match(docsCopy, /serviceAvailabilityText: 'Read the status or signed webhook only/);
   assert.doesNotMatch(docsCopy, /LINKFLOW_SETTLEMENT_PROOF_READY/);
   assert.match(docsCopy, /apiAvailabilityText:.*HTTP 503/);
+  assert.match(docsCopy, /aucun fonds n’est réservé/);
+  assert.match(docsCopy, /no funds are reserved/);
   assert.match(docsCopy, /apiScopeTitle: 'Sens des flux et disponibilité réelle'/);
   assert.match(docsCopy, /apiScopeTitle: 'Flow direction and actual availability'/);
   assert.match(docsCopy, /PAYIN : le client paie par Mobile Money/);
   assert.match(docsCopy, /PAYIN: the customer pays by Mobile Money/);
   assert.match(docsCopy, /PAYOUT : le marchand demande un transfert sortant/);
   assert.match(docsCopy, /PAYOUT: the merchant requests an outgoing transfer/);
+});
+
+test('production addresses appear before the status note on payment guides', () => {
+  const startPageStart = docsCopy.indexOf("{pageKey === 'start' && <>");
+  const directPageStart = docsCopy.indexOf("{pageKey === 'direct' && <>");
+  const hostedPageStart = docsCopy.indexOf("{pageKey === 'hosted' && <>");
+  const startUrlBlock = docsCopy.indexOf('value={productionUrls.apiBaseUrl}', startPageStart);
+  const startStatus = docsCopy.indexOf('t.apiAvailabilityTitle', startPageStart);
+  const directUrlBlock = docsCopy.indexOf('value={productionUrls.apiBaseUrl}', directPageStart);
+  const directStatus = docsCopy.indexOf('t.apiAvailabilityTitle', directPageStart);
+  const hostedUrlBlock = docsCopy.indexOf('value={productionUrls.apiBaseUrl}', hostedPageStart);
+  const hostedStatus = docsCopy.indexOf('t.apiAvailabilityTitle', hostedPageStart);
+
+  assert.ok(startPageStart >= 0 && startUrlBlock > startPageStart && startUrlBlock < startStatus);
+  assert.ok(directPageStart >= 0 && directUrlBlock > directPageStart && directUrlBlock < directStatus);
+  assert.ok(hostedPageStart >= 0 && hostedUrlBlock > hostedPageStart && hostedUrlBlock < hostedStatus);
 });
 
 test('documentation rendering does not depend on live payment-limit API data', () => {
