@@ -28,6 +28,7 @@ packages = ["jdk21"]
 
 [userenv.shared]
 VITE_TURNSTILE_SITE_KEY = "0x4AAAAAAFwM4y2TRTrwsOyP"
+SENDFLOW_DATABASE_TARGET = "shared-external"
 
 [userenv.development]
 TRUST_PROXY_HOPS = "1"
