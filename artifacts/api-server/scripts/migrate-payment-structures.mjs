@@ -1,5 +1,5 @@
 import pg from "pg";
-import { resolveRuntimeDatabaseUrl } from "../../../lib/db/src/connection-config.ts";
+import { resolveRuntimeDatabaseConnectionOptions } from "../../../lib/db/src/connection-config.ts";
 import { applyPaymentStructures, planPaymentStructures } from "./payment-structures-migration.mjs";
 
 const args = process.argv.slice(2);
@@ -12,7 +12,7 @@ if (process.env.SENDFLOW_DATABASE_TARGET !== "shared-external" ||
   process.exit(1);
 }
 const client = new pg.Client({
-  connectionString: resolveRuntimeDatabaseUrl(process.env),
+  ...resolveRuntimeDatabaseConnectionOptions(process.env),
   application_name: "sendflow_payment_structure_migration",
   connectionTimeoutMillis: 10_000, query_timeout: 30_000,
 });

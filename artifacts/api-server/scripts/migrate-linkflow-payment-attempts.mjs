@@ -1,5 +1,5 @@
 import pg from "pg";
-import { resolveRuntimeDatabaseUrl } from "../../../lib/db/src/connection-config.ts";
+import { resolveRuntimeDatabaseConnectionOptions } from "../../../lib/db/src/connection-config.ts";
 import {
   applyLinkFlowPaymentAssociation,
   planLinkFlowPaymentAssociation,
@@ -17,7 +17,7 @@ if (process.env.SENDFLOW_DATABASE_TARGET !== "shared-external" ||
 }
 
 const client = new pg.Client({
-  connectionString: resolveRuntimeDatabaseUrl(process.env),
+  ...resolveRuntimeDatabaseConnectionOptions(process.env),
   application_name: "sendflow_linkflow_payment_migration",
   connectionTimeoutMillis: 10_000,
   query_timeout: 30_000,

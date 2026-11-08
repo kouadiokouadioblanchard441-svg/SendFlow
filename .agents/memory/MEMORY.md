@@ -13,7 +13,7 @@
 - [Security test isolation](security-test-isolation.md) — Authentication fixtures must isolate IP quotas as well as account identities; never weaken real rate limiting to make tests pass.
 - [Banner image hosting](banner-image-hosting.md) — Keep HTTPS image URLs supported until persistent storage is provisioned; do not fake uploads or store image bytes in PostgreSQL.
 - [Operator logo storage](operator-logo-storage.md) — Store uploaded operator logos in the database; this exception does not extend to banners or unrelated media.
-- [Shared database transition](external-database-transition.md) — Verify exact columns, singleton settings, TLS and Plesk target; external schema can drift from Drizzle.
+- [Shared database transition](external-database-transition.md) — Verify exact columns and singleton settings; use verified TLS options for every Supabase client and schema check.
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle production schema pushes](drizzle-scoped-pushes.md) — Keep production migrations additive and explicitly targeted; stop on unrelated Drizzle drift.
 - [PostgreSQL metadata arrays](postgres-metadata-arrays.md) — Cast catalog `name` values to `text` before `array_agg` when comparing metadata through node-postgres.
@@ -39,7 +39,7 @@
 - [LinkFlow image storage](linkflow-image-storage.md) — LinkFlow images remain database-backed; the new database has no historical image rows until data migration is approved.
 - [LinkFlow payment integrity](linkflow-pending-state-integrity.md) — Keep the payer total fixed; soft-delete links while retaining history, and show payment stats only after real payments.
 - [LinkFlow fee availability](linkflow-fee-availability.md) — Configure rates independently per operator; new operators start unconfigured, and disabled countries stay out of customer pricing.
-- [Payout business rules](payout-business-rules.md) — Use the authenticated SendFlow wallet and keep payout routing partners invisible in code and public API docs.
+- [Payout business rules](payout-business-rules.md) — Keep payouts closed until settlement evidence and atomic wallet reservation safeguards are verified.
 - [Payment minimum](payment-minimum.md) — Keep the 200 FCFA floor server-side for CFA links and XOF deposits; initialize configurable XOF payout minimum at 200.
 - [LinkFlow USSD configuration](linkflow-ussd-configuration.md) — Administrators configure USSD codes by country and operator; the provider does not supply them.
 - [SendFlow visual contrast](sendflow-visual-contrast.md) — Match provided LinkFlow mockups; keep artwork fixed, white surfaces, violet accents, and solid red deletes.

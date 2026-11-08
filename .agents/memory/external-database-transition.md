@@ -37,6 +37,12 @@ If the payment migration registry is absent while raw payment tables or routines
 
 **How to apply:** Reconcile the partial state in one verified-TLS transaction, verify protected data remains unchanged, then confirm the migration plans against the recorded fingerprints before committing.
 
+Every direct `pg.Client` or `Pool` used by a one-off schema or migration script against shared Supabase must use the same verified-TLS connection-options helper as the application pool, not only the validated URL.
+
+**Why:** PostgreSQL connection-string SSL parameters can override an explicit CA; a read-only schema plan failed certificate validation when its standalone client omitted the CA options.
+
+**How to apply:** Strip SSL query parameters only after confirming `sslmode=verify-full`, then pass the trusted CA, `rejectUnauthorized: true`, and the database hostname as `servername`. Never disable certificate or hostname verification.
+
 The payment schema-version registry rejects updates and deletes. A reviewed payout change can intentionally alter an object covered by the base schema fingerprint; never rewrite an immutable record to hide that drift. An isolated fixture that retains only the base record should expect a fail-closed drift conflict, while a shared final schema should be fingerprinted only after its complete approved catalog is verified.
 
 **Why:** The payout migration deliberately extends a payment guard, so its catalog no longer matches the earlier migration's fingerprint; tests must not bypass the immutable registry to force a green result.

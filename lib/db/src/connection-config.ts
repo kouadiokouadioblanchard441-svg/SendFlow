@@ -111,6 +111,33 @@ export function resolveRuntimeDatabaseUrl(environment: Environment): string {
   );
 }
 
+export function resolveRuntimeDatabaseConnectionOptions(environment: Environment) {
+  const connectionString = resolveRuntimeDatabaseUrl(environment);
+  if (environment.SENDFLOW_DATABASE_TARGET !== "shared-external") {
+    return { connectionString };
+  }
+
+  const ca = environment.DATABASE_CA_CERT?.trim();
+  if (!ca) {
+    throw new Error("DATABASE_CA_CERT is required for the shared external database.");
+  }
+
+  const url = new URL(connectionString);
+  if (url.searchParams.get("sslmode") !== "verify-full") {
+    throw new Error("The shared external database requires verified TLS.");
+  }
+
+  // pg's connection-string SSL parser can replace explicit CA options.
+  url.searchParams.delete("sslmode");
+  url.searchParams.delete("ssl");
+  url.searchParams.delete("uselibpqcompat");
+
+  return {
+    connectionString: url.toString(),
+    ssl: { ca, rejectUnauthorized: true, servername: url.hostname },
+  };
+}
+
 export function resolveDrizzleDatabaseUrl(environment: Environment): string {
   const target = environment.DRIZZLE_DATABASE_TARGET;
 
