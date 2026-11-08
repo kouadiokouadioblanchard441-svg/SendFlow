@@ -332,3 +332,33 @@ test('merchant payout examples cover every implemented API route and keep creati
   assert.match(docsCopy, /HTTP 503 avec payout_unavailable : aucune demande n’est créée et aucun fonds n’est réservé/);
   assert.match(docsCopy, /HTTP 503 with payout_unavailable: no request is created and no funds are reserved/);
 });
+
+test('authentication documentation matches the key lifecycle and credential split', () => {
+  assert.match(docsCopy, /Une paire initiale est créée à l’inscription et incluse dans la réponse de création du compte/);
+  assert.match(docsCopy, /An initial pair is created at signup and included in the account-creation response/);
+  assert.match(docsCopy, /la liste des clés ne montre que son préfixe/);
+  assert.match(docsCopy, /the key list shows only its prefix/);
+  assert.match(docsCopy, /X-SendFlow-Public-Key/);
+  assert.match(docsCopy, /X-SendFlow-Client-Token/);
+  assert.match(docsCopy, /X-LinkFlow-Attempt-Token/);
+  assert.match(docsCopy, /The secret key is for private server requests/);
+  assert.match(docsCopy, /the public key is used only for direct checkout requests/);
+  assert.doesNotMatch(docsCopy, /not created automatically when an account is opened|n’est pas créée automatiquement à l’ouverture du compte|secret key with create permission|clé secrète avec permission de création|Check account eligibility and permissions/i);
+});
+
+test('hosted sessions expose a configurable merchant return URL in every code format', () => {
+  for (const format of ['Node.js', 'Python', 'cURL', 'PHP']) {
+    const hosted = getDocsCodeExample('create-hosted', format);
+    assert.match(hosted, /returnUrl/);
+    assert.match(hosted, /https:\/\/shop\.example\.com\/payment\/return/);
+    assert.doesNotMatch(getDocsCodeExample('create-direct', format), /returnUrl/);
+  }
+
+  assert.match(docsCopy, /returnUrlTitle: 'Configurer le retour après paiement'/);
+  assert.match(docsCopy, /returnUrlTitle: 'Configure the post-payment return'/);
+  assert.match(docsCopy, /Ce champ n’est pas SENDFLOW_CHECKOUT_ORIGIN/);
+  assert.match(docsCopy, /This field is not SENDFLOW_CHECKOUT_ORIGIN/);
+  assert.match(docsCopy, /après un échec, le checkout ne redirige pas vers returnUrl/i);
+  assert.match(docsCopy, /after a confirmed failure, checkout does not redirect to returnUrl/i);
+  assert.match(docsCopy, /<p><strong>{t\.returnUrlTitle}<\/strong><\/p>/);
+});

@@ -122,8 +122,8 @@ const localized: Record<Language, Translation> = {
     whatIs: 'Paiements SendFlow pour les marchands',
     whatIsText: 'SendFlow propose une API de paiement pour intégrer un parcours hébergé ou une caisse directe, puis vérifier les opérations côté serveur.',
     prerequisites: 'Prérequis', noCredentials: 'Ne placez jamais la clé secrète dans le navigateur, une application mobile distribuée, un dépôt public ou des journaux.',
-    notDocumented: 'Gestion des clés API', notDocumentedText: 'Créez ou régénérez la paire de clés dans l’espace Développeurs ; elle n’est pas créée automatiquement à l’ouverture du compte. Une nouvelle paire révoque l’ancienne. La clé secrète est réservée aux appels serveur ; la clé publique sert aux appels de caisse prévus par le parcours direct.',
-    rotationText: 'La clé secrète complète est affichée lors de sa création. Enregistrez-la dans un gestionnaire de secrets. La régénération désactive immédiatement l’ancienne paire de clés.',
+    notDocumented: 'Gestion des clés API', notDocumentedText: 'Une paire initiale est créée à l’inscription et incluse dans la réponse de création du compte. Vous pouvez ensuite créer une nouvelle paire dans l’espace Développeurs ; cette opération révoque immédiatement l’ancienne. Les clés ne portent pas de permissions configurables par clé : SendFlow contrôle l’accès et l’éligibilité côté serveur selon l’opération. La clé secrète sert aux appels privés depuis votre serveur ; la clé publique sert uniquement aux appels de caisse du parcours direct.',
+    rotationText: 'La clé secrète complète est renvoyée uniquement dans la réponse d’inscription ou de création/régénération de la paire ; la liste des clés ne montre que son préfixe. Enregistrez-la dans un gestionnaire de secrets. Si vous l’avez perdue, régénérez la paire : l’ancienne est immédiatement désactivée.',
     serverOnly: 'Envoyez la clé secrète dans l’en-tête Authorization: Bearer depuis votre serveur. Ne la transmettez jamais au client.',
     credentialRolesTitle: 'Rôle et emplacement de chaque identifiant',
     credentialHeader: 'Identifiant', credentialUseHeader: 'Utilisation', credentialHandlingHeader: 'Protection',
@@ -192,7 +192,7 @@ const localized: Record<Language, Translation> = {
     payoutQuoteTitle: '1. Calculer le devis',
     payoutQuoteText: 'POST /api/v1/payout-quote est une lecture sans réservation. Repérez un pays et un opérateur avec operations.payout=true dans /api/pricing, puis envoyez amountMinor en entier XOF, countryCode en minuscules, son operatorId exact et feePayer (merchant ou beneficiary). La réponse inclut les montants calculés, le solde disponible, les limites, la version tarifaire et quoteExpiresAt. Une configuration ou un canal indisponible peut répondre 503.',
     payoutCreateTitle: '2. Envoyer une demande de payout',
-    payoutCreateText: 'POST /api/v1/payouts demande un transfert vers le compte Mobile Money du bénéficiaire. Il exige la clé secrète avec permission de création, Idempotency-Key (8–128 caractères), pays, opérateur, montant, devise, payeur de frais et numéro international correspondant au pays. SendFlow recalcule le tarif et le solde disponible ; le devis n’autorise pas le transfert. La création reste fermée : HTTP 503 payout_unavailable ne crée ni demande ni réservation. Réutilisez la même clé pour une reprise exacte.',
+    payoutCreateText: 'POST /api/v1/payouts demande un transfert vers le compte Mobile Money du bénéficiaire. Il exige la clé secrète active du marchand dans Authorization: Bearer, Idempotency-Key (8–128 caractères), pays, opérateur, montant, devise, payeur de frais et numéro international correspondant au pays. Les clés ne portent pas de permissions configurables par clé : SendFlow vérifie l’état et l’éligibilité du compte côté serveur. SendFlow recalcule le tarif et le solde disponible ; le devis n’autorise pas le transfert. La création reste fermée : HTTP 503 payout_unavailable ne crée ni demande ni réservation. Réutilisez la même clé pour une reprise exacte.',
     payoutListTitle: '3. Lister les demandes',
     payoutListText: 'GET /api/v1/payouts ne retourne que les demandes du marchand authentifié. limit accepte 1–100 (25 par défaut), cursor un UUID et status un état de payout.',
     payoutReadTitle: '4. Consulter une demande',
@@ -222,7 +222,7 @@ const localized: Record<Language, Translation> = {
     serviceAvailability: 'Adresses de production et suivi', serviceAvailabilityText: 'Consultez le statut ou le webhook signé uniquement pour une session ou tentative déjà créée. Si la création répond 503 avant de renvoyer un identifiant, aucune session n’existe à consulter. Une redirection du navigateur ne constitue jamais une confirmation.',
     environmentNote: 'Les adresses de production sont présentées individuellement dans des blocs copiables.',
     troubleshootingTitle: 'Diagnostic rapide',
-    hostedFlow: 'Parcours de redirection', directFlow: 'Parcours API directe', returnUrlText: 'returnUrl est facultative, doit être une URL HTTPS et concerne le parcours hosted : la page de paiement ne redirige vers cette URL qu’après confirmation succeeded. En mode direct, la réponse de statut API ne fournit pas cette redirection ; votre application gère son propre écran après vérification serveur.',
+    hostedFlow: 'Parcours de redirection', directFlow: 'Parcours API directe', returnUrlTitle: 'Configurer le retour après paiement', returnUrlText: 'Pour chaque session hosted, renseignez le champ facultatif returnUrl dans le JSON de POST /api/v1/payment-sessions avec l’URL HTTPS de votre propre page de retour ; la requête copiable ci-dessus montre où la saisir. Ce champ n’est pas SENDFLOW_CHECKOUT_ORIGIN, qui désigne le checkout hébergé SendFlow. L’URL doit faire au plus 2 048 caractères et ne peut pas contenir d’identifiants intégrés. La redirection a lieu uniquement après confirmation succeeded ; après un échec, le checkout ne redirige pas vers returnUrl. Si le champ est omis, le checkout revient vers SendFlow. Vérifiez toujours le statut serveur ou le webhook signé : la redirection n’est pas une preuve de paiement.',
     language: 'Langue', copyright: 'SendFlow · Documentation API', lastUpdated: 'Référence API v1',
     contents: 'Sommaire',
   },
@@ -293,8 +293,8 @@ const localized: Record<Language, Translation> = {
     whatIs: 'SendFlow payments for merchants',
     whatIsText: 'SendFlow provides a payment API for integrating hosted checkout or a direct checkout, with payment operations verified server-side.',
     prerequisites: 'Prerequisites', noCredentials: 'Never place the secret key in a browser, distributed mobile app, public repository, or client-side logs.',
-    notDocumented: 'API key management', notDocumentedText: 'Create or regenerate the key pair in the Developers area; it is not created automatically when an account is opened. Creating a new pair revokes the previous pair. The secret key is for server requests; the public key is used for checkout requests in the direct flow.',
-    rotationText: 'The full secret key is shown when it is created. Store it in a secret manager. Regenerating the pair immediately disables the previous keys.',
+    notDocumented: 'API key management', notDocumentedText: 'An initial pair is created at signup and included in the account-creation response. You can create a new pair later in the Developers area; doing so immediately revokes the previous pair. Keys do not have configurable per-key permissions: SendFlow checks account status and eligibility server-side for each operation. The secret key is for private server requests; the public key is used only for direct checkout requests.',
+    rotationText: 'The full secret key is returned only in the signup or key-pair creation/regeneration response; the key list shows only its prefix. Store it in a secret manager. If you lose it, regenerate the pair; the previous pair is immediately disabled.',
     serverOnly: 'Send the secret key in the Authorization: Bearer header from your server. Never pass it to the client.',
     credentialRolesTitle: 'Role and handling of each credential',
     credentialHeader: 'Credential', credentialUseHeader: 'Used for', credentialHandlingHeader: 'Handling',
@@ -363,7 +363,7 @@ const localized: Record<Language, Translation> = {
     payoutQuoteTitle: '1. Calculate a quote',
     payoutQuoteText: 'POST /api/v1/payout-quote is read-only and does not reserve funds. Find a country and operator with operations.payout=true in /api/pricing, then send amountMinor as a whole XOF amount, lowercase countryCode, its exact operatorId, and feePayer (merchant or beneficiary). The response includes calculated amounts, available balance, limits, pricing version, and quoteExpiresAt. Missing configuration or an unavailable route can return 503.',
     payoutCreateTitle: '2. Submit a payout request',
-    payoutCreateText: 'POST /api/v1/payouts requests a transfer to the beneficiary’s Mobile Money account. It requires a secret key with create permission, an Idempotency-Key (8–128 characters), country, operator, amount, currency, fee payer, and an international phone number matching the country. SendFlow recalculates fees and available balance; a quote does not authorize a transfer. Creation is currently closed: HTTP 503 payout_unavailable creates no request and reserves no funds. Reuse the same key for an exact retry.',
+    payoutCreateText: 'POST /api/v1/payouts requests a transfer to the beneficiary’s Mobile Money account. It requires the merchant’s active secret key in Authorization: Bearer, an Idempotency-Key (8–128 characters), country, operator, amount, currency, fee payer, and an international phone number matching the country. Keys do not have configurable per-key permissions; SendFlow checks account status and eligibility server-side for each operation. SendFlow recalculates fees and available balance; a quote does not authorize a transfer. Creation is currently closed: HTTP 503 payout_unavailable creates no request and reserves no funds. Reuse the same key for an exact retry.',
     payoutListTitle: '3. List requests',
     payoutListText: 'GET /api/v1/payouts returns only requests owned by the authenticated merchant. limit accepts 1–100 (25 by default), cursor is a UUID, and status filters by payout state.',
     payoutReadTitle: '4. Read a request',
@@ -393,7 +393,7 @@ const localized: Record<Language, Translation> = {
     serviceAvailability: 'Production URLs and status checks', serviceAvailabilityText: 'Read the status or signed webhook only for a session or attempt that was created. If creation returns 503 before an identifier is returned, there is no session to query. A browser redirect is never confirmation.',
     environmentNote: 'Production addresses are shown individually in copyable blocks below.',
     troubleshootingTitle: 'Quick troubleshooting',
-    hostedFlow: 'Hosted redirect flow', directFlow: 'Direct API flow', returnUrlText: 'returnUrl is optional, must be an HTTPS URL, and applies to hosted mode: the payment page redirects to it only after a succeeded confirmation. In direct mode, the API status response does not provide this redirect; your application handles its own result screen after server verification.',
+    hostedFlow: 'Hosted redirect flow', directFlow: 'Direct API flow', returnUrlTitle: 'Configure the post-payment return', returnUrlText: 'For each hosted session, set the optional returnUrl field in the POST /api/v1/payment-sessions JSON body to your own HTTPS return page; the copyable request above shows where to set it. This field is not SENDFLOW_CHECKOUT_ORIGIN, which is the SendFlow hosted-checkout origin. The URL can be at most 2,048 characters and cannot contain embedded credentials. Redirect happens only after a succeeded confirmation; after a confirmed failure, checkout does not redirect to returnUrl. If omitted, checkout returns to SendFlow. Always verify the server status or signed webhook: a redirect is not proof of payment.',
     language: 'Language', copyright: 'SendFlow · API documentation', lastUpdated: 'API reference v1',
     contents: 'Contents',
   },
@@ -403,7 +403,7 @@ const localizedLists: Record<Language, TranslationLists> = {
   fr: {
     stepTitles: ['Obtenez vos accès API', 'Choisissez votre intégration', 'Vérifiez chaque paiement'],
     stepTexts: [
-      'Créez votre paire de clés dans l’espace Développeurs et gardez la clé secrète sur votre serveur.',
+      'Une paire initiale est fournie à l’inscription. Gardez la clé secrète sur votre serveur ; si elle a été perdue, régénérez la paire dans l’espace Développeurs.',
       'Choisissez Hosted Checkout pour rediriger le payeur, ou l’API directe pour garder votre propre caisse.',
       'Consultez le catalogue, créez les sessions côté serveur et vérifiez le résultat par statut ou webhook signé.',
     ],
@@ -444,10 +444,10 @@ const localizedLists: Record<Language, TranslationLists> = {
       { symptom: 'Une création renvoie 503', action: 'Pour la création PAYIN actuellement fermée, aucun identifiant n’est renvoyé : aucune session ni tentative n’a été créée et il n’y a rien à consulter. Pour une session déjà créée, une erreur 503 de lecture ne constitue pas un résultat final.' },
     ],
     credentialRows: [
-      { credential: 'Clé secrète', usedFor: 'Authorization: Bearer pour créer et lire une session depuis le backend marchand.', handling: 'Format live : sfsk_live_ suivi de 43 caractères URL-safe. Serveur uniquement ; stockez-la dans un gestionnaire de secrets et ne la journalisez jamais.' },
-      { credential: 'Clé publique', usedFor: 'X-SendFlow-Public-Key pour les appels de caisse du parcours direct.', handling: 'Format live : sfpk_live_ suivi de 43 caractères URL-safe. Peut être transmise au client dans le contexte de sa session ; elle ne remplace jamais la clé secrète.' },
-      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token pour lire la session directe et démarrer une tentative.', handling: '43 caractères URL-safe ; jeton limité à une session. Ne le partagez pas entre commandes et évitez de le conserver dans des journaux.' },
-      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token pour consulter une tentative directe.', handling: '64 caractères hexadécimaux minuscules ; identifiant d’accès à une tentative. Préférez le suivi serveur et ne l’exposez que temporairement si l’interface en a besoin.' },
+      { credential: 'Clé secrète', usedFor: 'Authorization: Bearer pour les endpoints privés, dont la création/lecture de session et les opérations PAYOUT selon leur disponibilité.', handling: 'Format live : sfsk_live_ suivi de 43 caractères URL-safe. Serveur uniquement ; stockez-la dans un gestionnaire de secrets et ne la journalisez jamais.' },
+      { credential: 'Clé publique', usedFor: 'X-SendFlow-Public-Key pour les appels de caisse du parcours direct, avec le clientToken de la session.', handling: 'Format live : sfpk_live_ suivi de 43 caractères URL-safe. Peut être transmise au client ; seule, elle ne suffit pas à accéder à une session et ne remplace jamais la clé secrète.' },
+      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token, associé à la clé publique pour lire une session directe et démarrer une tentative.', handling: '43 caractères URL-safe ; jeton limité à une session. Ne le partagez pas entre commandes et évitez de le conserver dans des journaux.' },
+      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token, avec la clé publique et le clientToken, pour consulter une tentative directe.', handling: '64 caractères hexadécimaux minuscules ; identifiant d’accès limité à une tentative. Préférez le suivi serveur et ne l’exposez que temporairement si l’interface en a besoin.' },
       { credential: 'Secret de signature webhook', usedFor: 'Vérifier les notifications reçues sur votre endpoint.', handling: 'Secret distinct des clés API, affiché une seule fois à la configuration ; conservez-le côté serveur.' },
     ],
     paymentStateRows: [
@@ -473,7 +473,7 @@ const localizedLists: Record<Language, TranslationLists> = {
   en: {
     stepTitles: ['Get your API access', 'Choose your integration', 'Verify every payment'],
     stepTexts: [
-      'Create your key pair in the Developers area and keep the secret key on your server.',
+      'An initial key pair is provided at signup. Keep the secret key on your server; if it is lost, regenerate the pair in the Developers area.',
       'Choose Hosted Checkout to redirect the payer, or the Direct API to keep your own checkout.',
       'Read the catalog, create sessions server-side, and verify results through status checks or signed webhooks.',
     ],
@@ -514,10 +514,10 @@ const localizedLists: Record<Language, TranslationLists> = {
       { symptom: 'A create request returns 503', action: 'For the currently blocked PAYIN creation, no identifier is returned: no session or attempt exists to query. For an already-created session, a 503 status-read error is not a final result.' },
     ],
     credentialRows: [
-      { credential: 'Secret key', usedFor: 'Authorization: Bearer to create and read a session from the merchant backend.', handling: 'Live format: sfsk_live_ followed by 43 URL-safe characters. Server only. Store it in a secrets manager and never log it.' },
-      { credential: 'Public key', usedFor: 'X-SendFlow-Public-Key for direct checkout requests.', handling: 'Live format: sfpk_live_ followed by 43 URL-safe characters. May be sent to the client for its session; it never replaces the secret key.' },
-      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token to read a direct session and start an attempt.', handling: '43 URL-safe characters; session-scoped token. Do not reuse across orders or place it in logs.' },
-      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token to read a direct attempt.', handling: '64 lowercase hexadecimal characters; attempt access credential. Prefer server-side polling; expose it only temporarily if the interface requires it.' },
+      { credential: 'Secret key', usedFor: 'Authorization: Bearer for private endpoints, including session creation/reading and PAYOUT operations subject to availability.', handling: 'Live format: sfsk_live_ followed by 43 URL-safe characters. Server only. Store it in a secrets manager and never log it.' },
+      { credential: 'Public key', usedFor: 'X-SendFlow-Public-Key for direct checkout requests, paired with that session’s clientToken.', handling: 'Live format: sfpk_live_ followed by 43 URL-safe characters. May be sent to the client; by itself it cannot access a session and never replaces the secret key.' },
+      { credential: 'clientToken', usedFor: 'X-SendFlow-Client-Token, paired with the public key to read a direct session and start an attempt.', handling: '43 URL-safe characters; session-scoped token. Do not reuse across orders or place it in logs.' },
+      { credential: 'pollToken', usedFor: 'X-LinkFlow-Attempt-Token, together with the public key and clientToken, to read a direct attempt.', handling: '64 lowercase hexadecimal characters; attempt-scoped access credential. Prefer server-side polling; expose it only temporarily if the interface requires it.' },
       { credential: 'Webhook signing secret', usedFor: 'Verify notifications received by your endpoint.', handling: 'Separate from API keys and shown only once during setup; keep it server-side.' },
     ],
     paymentStateRows: [
@@ -530,7 +530,7 @@ const localizedLists: Record<Language, TranslationLists> = {
     httpErrorRows: [
       { status: '400', meaning: 'Request body, parameter, or header does not match the route contract.', action: 'Correct the fields for the route. The error body does not provide a stable machine-readable code.' },
       { status: '401', meaning: 'Secret key is missing, invalid, or revoked.', action: 'Check the server-side Authorization: Bearer credential and active key. Never expose the secret to the client.' },
-      { status: '403', meaning: 'Merchant account is not authorized or eligible for this API operation.', action: 'Check account eligibility and permissions before retrying.' },
+      { status: '403', meaning: 'Merchant account is not authorized or eligible for this API operation.', action: 'Check merchant account status and eligibility before retrying.' },
       { status: '404', meaning: 'Session, attempt, or public credentials are unknown or unavailable.', action: 'Check UUIDs, mode, and associated tokens; do not assume the resource was deleted.' },
       { status: '409', meaning: 'Merchant reference conflict or an idempotency key reused with a different body.', action: 'For a retry, resend the exact request with the same key; use a new key for a new operation.' },
       { status: '429', meaning: 'Request limit reached.', action: 'Respect Retry-After: 60 and reduce request frequency.' },
@@ -1422,6 +1422,7 @@ export default function DocsPage() {
             </div>
             <div className="sf-docs-callout">
               <p>{t.hostedOriginText}</p>
+              <p><strong>{t.returnUrlTitle}</strong></p>
               <p>{t.returnUrlText}</p>
               <p>{t.hostedFallbackText}</p>
               <p>{t.hostedTimerText}</p>
