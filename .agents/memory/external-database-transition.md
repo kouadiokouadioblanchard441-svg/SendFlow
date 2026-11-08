@@ -5,7 +5,7 @@ description: Current external PostgreSQL schema state and the guardrails require
 
 The Replit preview uses a shared external PostgreSQL target. Keep the connection URL private; the public provider CA certificate is a trust anchor used with certificate and hostname verification. Some live tables or required singleton rows may still lag behind the Drizzle schema.
 
-The user states that the Supabase connection stored in Replit Secrets is the production database intended for Plesk. The code still separates Replit's `SUPABASE_DATABASE_URL` shared-external target from Plesk's `DATABASE_URL` production target; verify that Plesk points to the same database before claiming production data is live.
+The user confirms Supabase is the database to use throughout SendFlow development. Before database-backed work, inspect the project's data model and compare it with the live schema. The code still separates Replit's `SUPABASE_DATABASE_URL` shared-external target from Plesk's `DATABASE_URL` production target; verify that Plesk points to the same database before claiming production data is live.
 
 With node-postgres, a connection URL containing `sslmode` can override an explicit `ssl.ca` option. Validate the URL first, remove SSL query parameters before creating the pool, and pass the trusted CA with `rejectUnauthorized: true` and `servername` set to the database hostname.
 
