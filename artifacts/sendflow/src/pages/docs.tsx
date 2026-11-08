@@ -10,7 +10,6 @@ import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import apiIntegrationIllustration from '../assets/docs-api-integration-3d.webp';
 import hostedCheckoutIllustration from '../assets/docs-hosted-checkout-3d.webp';
 import { useSeo } from '@/lib/seo';
-import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import { getDocumentationPageKey } from '@/lib/documentation-host';
 import ServerNotFoundNavigation from '@/components/server-not-found-navigation';
 import { getDocsCodeExample, getDocsCodeFormats, type DocsCodeFormat, type DocsExampleId } from './docs-code-examples';
@@ -873,11 +872,7 @@ const directAttemptResponse = `{
 
 function ResponsePanel({ language, label, response, caption }: { language: Language; label: string; response: string; caption?: string }) {
   const [copied, setCopied] = useState(false);
-  const paymentLimitsQuery = usePaymentLimits();
-  const shownResponse = response.replaceAll(
-    '12500',
-    String(paymentLimitsQuery.data?.minimumDepositMinor ?? 12_500),
-  );
+  const shownResponse = response;
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(shownResponse);
@@ -907,9 +902,8 @@ function ResponsePanel({ language, label, response, caption }: { language: Langu
 function CodePanel({ language, label, example }: { language: Language; label: string; example: DocsExampleId }) {
   const [format, setFormat] = useState<DocsCodeFormat>('cURL');
   const [copied, setCopied] = useState(false);
-  const paymentLimitsQuery = usePaymentLimits();
   const formats = getDocsCodeFormats(example);
-  const copyText = getDocsCodeExample(example, format, paymentLimitsQuery.data?.minimumDepositMinor ?? 12_500);
+  const copyText = getDocsCodeExample(example, format);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(copyText);
@@ -954,7 +948,6 @@ export default function DocsPage() {
   const pageKey = resolvedPageKey ?? 'home';
   const activeDocSection = selectedDocSection?.path === path ? selectedDocSection.section : '';
   const t = localized[language];
-  const paymentLimitsQuery = usePaymentLimits(resolvedPageKey !== null);
   const filteredItems = useMemo(() => docsItems.filter((item) =>
     `${localized[language][item.key] ?? item.label} ${item.label} ${item.search ?? docSearchTerms[item.path] ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   ), [language, query]);
@@ -1158,9 +1151,7 @@ export default function DocsPage() {
                       <ResponsePanel
                         language={language}
                         label={`${t.responseExample} · JSON`}
-                        response={endpoint.anchor === 'payment-limits' && paymentLimitsQuery.data
-                          ? JSON.stringify(paymentLimitsQuery.data, null, 2)
-                          : endpoint.response}
+                        response={endpoint.response}
                       />
                     </details>
                   </article>

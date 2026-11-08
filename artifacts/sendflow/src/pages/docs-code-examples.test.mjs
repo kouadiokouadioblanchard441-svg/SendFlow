@@ -53,6 +53,10 @@ test('production URL notes do not expose internal payment-readiness switches', (
   assert.doesNotMatch(docsCopy, /serviceAvailabilityText: '[^']*HTTP 503/);
 });
 
+test('documentation rendering does not depend on live payment-limit API data', () => {
+  assert.doesNotMatch(docsCopy, /usePaymentLimits|paymentLimitsQuery/);
+});
+
 test('getting-started guide presents the production quickstart with SendFlow examples', () => {
   const startPageStart = docsCopy.indexOf("{pageKey === 'start' && <>");
   const authPageStart = docsCopy.indexOf("{pageKey === 'auth' && <>", startPageStart);
