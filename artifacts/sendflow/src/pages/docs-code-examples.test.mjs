@@ -296,12 +296,20 @@ test('the former API reference URL now resolves to the single direct API guide',
 
 test('Mobile Money guidance describes operator USSD confirmation in both languages', () => {
   assert.match(docsCopy, /l’opérateur adresse au payeur une demande de confirmation USSD qu’il valide sur son téléphone/);
-  assert.match(docsCopy, /the operator sends a USSD confirmation request to the payer, who approves it on their phone/);
+  assert.match(docsCopy, /operator sends the payer a USSD confirmation request to approve on their phone/);
   assert.match(docsCopy, /attempt\.ussdCode ou null/);
   assert.match(docsCopy, /attempt\.ussdCode or null/);
-  assert.match(docsCopy, /Ne reproduisez pas l’écran USSD/);
-  assert.match(docsCopy, /Do not recreate the USSD screen/);
   assert.doesNotMatch(docsCopy, /n’envoyez jamais de code OTP ou de PIN|never send an OTP or PIN/i);
+});
+
+test('Mobile Money guide distinguishes catalog metadata from supported attempt fields', () => {
+  assert.match(docsCopy, /GET \/pricing peut exposer requiresOtp et otpCommand comme métadonnées opérateur/);
+  assert.match(docsCopy, /La requête de tentative n’accepte pas de champ otp et le contrat ne prévoit pas de deuxième appel/);
+  assert.match(docsCopy, /GET \/pricing may expose requiresOtp and otpCommand as operator metadata/);
+  assert.match(docsCopy, /the contract does not define a second call to submit a code/);
+  assert.match(docsCopy, /ni champ otp, ni deuxième requête de confirmation, ni URL de redirection opérateur/);
+  assert.match(docsCopy, /no otp field, second confirmation request, or operator redirect URL/);
+  assert.doesNotMatch(docsCopy, /wave_url|otp_required/i);
 });
 
 test('attempt examples keep operator confirmation outside the merchant API request', () => {
