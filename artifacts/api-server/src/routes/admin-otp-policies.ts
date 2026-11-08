@@ -39,6 +39,7 @@ function toAdminOtpPolicy(catalogEntry: PolicyCatalogEntry, stored?: typeof oper
     operatorName: catalogEntry.operatorName,
     phonePrefix: catalogEntry.phonePrefix,
     requiresOtp: stored?.requiresOtp ?? true,
+    otpCommand: stored?.otpCommand ?? null,
     providerStatus: "not_configured" as const,
     version: stored?.version ?? 0,
     updatedAt: stored?.updatedAt?.toISOString() ?? null,
@@ -103,6 +104,7 @@ router.patch("/otp-policies/:countryCode/:operatorId", async (req, res): Promise
         .update(operatorOtpPoliciesTable)
         .set({
           requiresOtp: body.data.requiresOtp,
+          otpCommand: body.data.otpCommand,
           version: body.data.expectedVersion + 1,
           updatedBy: adminUserId,
           updatedAt: new Date(),
@@ -117,6 +119,7 @@ router.patch("/otp-policies/:countryCode/:operatorId", async (req, res): Promise
             countryCode,
             operatorId,
             requiresOtp: body.data.requiresOtp,
+            otpCommand: body.data.otpCommand,
             version: 1,
             createdBy: adminUserId,
             updatedBy: adminUserId,

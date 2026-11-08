@@ -6,6 +6,7 @@ import {
   db,
   eq,
   operatorCatalogTable,
+  operatorOtpPoliciesTable,
   operatorPricingRatesTable,
   paymentAggregatorRoutesTable,
   paymentAggregatorsTable,
@@ -35,6 +36,7 @@ import {
   PaymentLinkInputError,
 } from "../services/payment-links";
 import { operatorLogoUrl } from "../services/operator-logo";
+import { getConfiguredOtpCommand } from "../lib/operator-otp-instruction";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { getAggregatorRouteScopeKey } from "./aggregator-catalog";
 import { feexpayChannelForOperator, feexpayCountries } from "../providers/feexpay/catalog";
@@ -133,10 +135,11 @@ async function findUsablePublicLink(token: string): Promise<PublicLinkRow | unde
 async function loadAvailableChoices(link: PublicLinkRow) {
   if (link.currency !== "XOF" || link.paymentMethod === "card") return [];
 
-  const [countries, operators, rates, routes, aggregators] = await Promise.all([
+  const [countries, operators, rates, otpPolicies, routes, aggregators] = await Promise.all([
     db.select().from(countriesTable),
     db.select().from(operatorCatalogTable),
     db.select().from(operatorPricingRatesTable),
+    db.select().from(operatorOtpPoliciesTable),
     db.select().from(paymentAggregatorRoutesTable)
       .where(eq(paymentAggregatorRoutesTable.operation, "deposit")),
     db.select().from(paymentAggregatorsTable),
@@ -148,6 +151,9 @@ async function loadAvailableChoices(link: PublicLinkRow) {
 
   const routeByScope = new Map(
     routes.map((route) => [`${route.scopeType}:${route.scopeKey}`, route.aggregatorCode]),
+  );
+  const otpPolicyByOperator = new Map(
+    otpPolicies.map((policy) => [`${policy.countryCode.toLowerCase()}:${policy.operatorId}`, policy]),
   );
   const choices = countries.flatMap((country) => {
     const countryCode = country.countryCode.toLowerCase();
@@ -174,11 +180,13 @@ async function loadAvailableChoices(link: PublicLinkRow) {
       if (rate?.feePercent === null || rate?.feePercent === undefined ||
         !Number.isFinite(rate.feePercent) || rate.feePercent < 0 || rate.feePercent > 100) return [];
        if (link.amountMinor > 0 && !calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false)) return [];
+      const otpPolicy = otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`);
       return [{
         id: operator.operatorId,
         name: operator.name,
         initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
         logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+        otpCommand: getConfiguredOtpCommand(otpPolicy),
       }];
     }).sort((left, right) => left.name.localeCompare(right.name, "fr"));
 
@@ -206,10 +214,14 @@ async function loadPreviewCatalogChoices(link: PublicLinkRow) {
   // Quotes and payment attempts still use loadAvailableChoices and its live gates.
   if (link.currency !== "XOF" || link.paymentMethod === "card") return [];
 
-  const [countries, operators] = await Promise.all([
+  const [countries, operators, otpPolicies] = await Promise.all([
     db.select().from(countriesTable),
     db.select().from(operatorCatalogTable),
+    db.select().from(operatorOtpPoliciesTable),
   ]);
+  const otpPolicyByOperator = new Map(
+    otpPolicies.map((policy) => [`${policy.countryCode.toLowerCase()}:${policy.operatorId}`, policy]),
+  );
   const operatorsByCountry = new Map<string, typeof operators>();
   for (const operator of operators) {
     const countryCode = operator.countryCode.toLowerCase();
@@ -234,6 +246,9 @@ async function loadPreviewCatalogChoices(link: PublicLinkRow) {
           name: operator.name,
           initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
           logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+          otpCommand: getConfiguredOtpCommand(
+            otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`),
+          ),
         }))
         .sort((left, right) => left.name.localeCompare(right.name, "fr")),
     };

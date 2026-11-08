@@ -1181,6 +1181,11 @@ export const getPublicPaymentLinkResponseCountriesItemOperatorsItemInitialsMax =
 
 export const getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax = 256;
 
+export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMin = 3;
+export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMax = 40;
+
+
+export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandRegExp = new RegExp('^[*#][0-9*#]{1,38}#$');
 
 
 export const GetPublicPaymentLinkResponse = zod.object({
@@ -1204,7 +1209,8 @@ export const GetPublicPaymentLinkResponse = zod.object({
   "id": zod.string().min(getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMin).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMax),
   "name": zod.string().min(1).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemNameMax),
   "initials": zod.string().min(1).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemInitialsMax),
-  "logoUrl": zod.string().max(getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax).nullable()
+  "logoUrl": zod.string().max(getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax).nullable(),
+  "otpCommand": zod.string().min(getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMin).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMax).regex(getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandRegExp).nullable().describe('Server-configured instruction to dial for an OTP; not the OTP itself or payment confirmation.')
 }))
 })),
   "paymentAvailable": zod.boolean(),
@@ -4163,10 +4169,15 @@ export const RetryAdminEmailCampaignRecipientResponse = zod.object({
 
 
 /**
- * @summary List Orange Money OTP policies for supported countries
+ * @summary List OTP requirements and dial instructions by operator
  */
 export const listAdminOtpPoliciesResponseItemsItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const listAdminOtpPoliciesResponseItemsItemOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+export const listAdminOtpPoliciesResponseItemsItemOtpCommandMin = 3;
+export const listAdminOtpPoliciesResponseItemsItemOtpCommandMax = 40;
+
+
+export const listAdminOtpPoliciesResponseItemsItemOtpCommandRegExp = new RegExp('^[*#][0-9*#]{1,38}#$');
 export const listAdminOtpPoliciesResponseItemsItemVersionMin = 0;
 
 
@@ -4179,6 +4190,7 @@ export const ListAdminOtpPoliciesResponse = zod.object({
   "operatorName": zod.string(),
   "phonePrefix": zod.string(),
   "requiresOtp": zod.boolean(),
+  "otpCommand": zod.string().min(listAdminOtpPoliciesResponseItemsItemOtpCommandMin).max(listAdminOtpPoliciesResponseItemsItemOtpCommandMax).regex(listAdminOtpPoliciesResponseItemsItemOtpCommandRegExp).nullable(),
   "providerStatus": zod.enum(['not_configured']).describe('The official operator API is not connected, so OTPs cannot be verified yet.'),
   "version": zod.int().min(listAdminOtpPoliciesResponseItemsItemVersionMin),
   "updatedAt": zod.coerce.date().nullable()
@@ -4187,18 +4199,18 @@ export const ListAdminOtpPoliciesResponse = zod.object({
 
 
 /**
- * @summary Update whether OTP is required for a supported Orange Money operator
+ * @summary Update OTP requirement and dial instruction for an operator
  */
 export const updateAdminOtpPolicyPathCountryCodeMin = 2;
 export const updateAdminOtpPolicyPathCountryCodeMax = 2;
 
 
 export const updateAdminOtpPolicyPathCountryCodeRegExp = new RegExp('^[a-z]{2}$');
-export const updateAdminOtpPolicyPathOperatorIdMin = 9;
-export const updateAdminOtpPolicyPathOperatorIdMax = 9;
+export const updateAdminOtpPolicyPathOperatorIdMin = 2;
+export const updateAdminOtpPolicyPathOperatorIdMax = 40;
 
 
-export const updateAdminOtpPolicyPathOperatorIdRegExp = new RegExp('^orange-[a-z]{2}$');
+export const updateAdminOtpPolicyPathOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
 
 
 export const UpdateAdminOtpPolicyParams = zod.object({
@@ -4206,6 +4218,11 @@ export const UpdateAdminOtpPolicyParams = zod.object({
   "operatorId": zod.coerce.string().min(updateAdminOtpPolicyPathOperatorIdMin).max(updateAdminOtpPolicyPathOperatorIdMax).regex(updateAdminOtpPolicyPathOperatorIdRegExp)
 })
 
+export const updateAdminOtpPolicyBodyOtpCommandMin = 3;
+export const updateAdminOtpPolicyBodyOtpCommandMax = 40;
+
+
+export const updateAdminOtpPolicyBodyOtpCommandRegExp = new RegExp('^[*#][0-9*#]{1,38}#$');
 export const updateAdminOtpPolicyBodyExpectedVersionMin = 0;
 
 export const updateAdminOtpPolicyBodyReasonMin = 3;
@@ -4215,12 +4232,18 @@ export const updateAdminOtpPolicyBodyReasonMax = 500;
 
 export const UpdateAdminOtpPolicyBody = zod.object({
   "requiresOtp": zod.boolean(),
+  "otpCommand": zod.string().min(updateAdminOtpPolicyBodyOtpCommandMin).max(updateAdminOtpPolicyBodyOtpCommandMax).regex(updateAdminOtpPolicyBodyOtpCommandRegExp).nullable(),
   "expectedVersion": zod.int().min(updateAdminOtpPolicyBodyExpectedVersionMin),
   "reason": zod.string().min(updateAdminOtpPolicyBodyReasonMin).max(updateAdminOtpPolicyBodyReasonMax)
 })
 
 export const updateAdminOtpPolicyResponseCountryCodeRegExp = new RegExp('^[a-z]{2}$');
 export const updateAdminOtpPolicyResponseOperatorIdRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+export const updateAdminOtpPolicyResponseOtpCommandMin = 3;
+export const updateAdminOtpPolicyResponseOtpCommandMax = 40;
+
+
+export const updateAdminOtpPolicyResponseOtpCommandRegExp = new RegExp('^[*#][0-9*#]{1,38}#$');
 export const updateAdminOtpPolicyResponseVersionMin = 0;
 
 
@@ -4232,6 +4255,7 @@ export const UpdateAdminOtpPolicyResponse = zod.object({
   "operatorName": zod.string(),
   "phonePrefix": zod.string(),
   "requiresOtp": zod.boolean(),
+  "otpCommand": zod.string().min(updateAdminOtpPolicyResponseOtpCommandMin).max(updateAdminOtpPolicyResponseOtpCommandMax).regex(updateAdminOtpPolicyResponseOtpCommandRegExp).nullable(),
   "providerStatus": zod.enum(['not_configured']).describe('The official operator API is not connected, so OTPs cannot be verified yet.'),
   "version": zod.int().min(updateAdminOtpPolicyResponseVersionMin),
   "updatedAt": zod.coerce.date().nullable()

@@ -16,7 +16,7 @@
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:auth-routing": "node --experimental-strip-types --test src/lib/customer-route-guard.test.mjs src/lib/customer-password-validation.test.mjs src/lib/account-profile.test.mjs src/lib/country-picker-order.test.mjs src/lib/documentation-host.test.mjs src/lib/payment-host.test.mjs src/lib/linkflow-share.test.mjs server/portal-route-access.test.mjs",
-    "test:docs": "node --experimental-strip-types --test src/pages/docs-code-examples.test.mjs",
+    "test:docs": "node --experimental-strip-types --test src/pages/docs-code-examples.test.mjs src/pages/otp-instruction.test.mjs",
     "test:server-routing": "node --experimental-strip-types --test server/site-server.test.mjs"
   },
   "devDependencies": {

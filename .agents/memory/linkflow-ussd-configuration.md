@@ -14,3 +14,9 @@ The user confirms that MTN Côte d’Ivoire uses `*133#` for payment authorizati
 **Why:** The user supplied this code to configure for LinkFlow testing.
 
 **How to apply:** Set it only as the Côte d’Ivoire / MTN operator override through an authenticated administrator action; do not change the country default or other operators.
+
+OTP-generation dialing instructions are a separate per-country/operator server setting from LinkFlow payment-authorization `ussdCode`. Return the configured instruction only for the selected operator; it is not the payer’s OTP and does not confirm a payment.
+
+**Why:** The user chose administrator-managed instructions per country and operator for the LinkFlow payer page.
+
+**How to apply:** Never hard-code the instruction in the browser, never reuse the payment-authorization code field for it, and never ask the payer to submit their personal OTP as part of this display-only instruction.

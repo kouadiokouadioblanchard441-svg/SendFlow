@@ -865,6 +865,14 @@ export interface PublicPaymentLinkOperator {
      * @nullable
      */
   logoUrl: string | null;
+  /**
+     * Server-configured instruction to dial for an OTP; not the OTP itself or payment confirmation.
+     * @minLength 3
+     * @maxLength 40
+     * @nullable
+     * @pattern ^[*#][0-9*#]{1,38}#$
+     */
+  otpCommand: string | null;
 }
 
 export interface PublicPaymentLinkCountry {
@@ -1749,6 +1757,13 @@ export interface AdminOtpPolicy {
   operatorName: string;
   phonePrefix: string;
   requiresOtp: boolean;
+  /**
+     * @minLength 3
+     * @maxLength 40
+     * @nullable
+     * @pattern ^[*#][0-9*#]{1,38}#$
+     */
+  otpCommand: string | null;
   /** The official operator API is not connected, so OTPs cannot be verified yet. */
   providerStatus: AdminOtpPolicyProviderStatus;
   /** @minimum 0 */
@@ -2473,6 +2488,13 @@ export interface AdminOtpPolicyList {
 
 export interface AdminOtpPolicyUpdate {
   requiresOtp: boolean;
+  /**
+     * @minLength 3
+     * @maxLength 40
+     * @nullable
+     * @pattern ^[*#][0-9*#]{1,38}#$
+     */
+  otpCommand: string | null;
   /** @minimum 0 */
   expectedVersion: number;
   /**

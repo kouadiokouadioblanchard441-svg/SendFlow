@@ -4158,7 +4158,7 @@ paths:
     get:
       operationId: listAdminOtpPolicies
       tags: [admin]
-      summary: List Orange Money OTP policies for supported countries
+      summary: List OTP requirements and dial instructions by operator
       security:
         - sendFlowSession: []
       responses:
@@ -4193,7 +4193,7 @@ paths:
     patch:
       operationId: updateAdminOtpPolicy
       tags: [admin]
-      summary: Update whether OTP is required for a supported Orange Money operator
+      summary: Update OTP requirement and dial instruction for an operator
       security:
         - sendFlowSession: []
       requestBody:
@@ -5189,9 +5189,9 @@ components:
       required: true
       schema:
         type: string
-        minLength: 9
-        maxLength: 9
-        pattern: "^orange-[a-z]{2}$"
+        minLength: 2
+        maxLength: 40
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     AdminBannerId:
       name: bannerId
       in: path
@@ -6007,7 +6007,13 @@ components:
         logoUrl:
           type: [string, "null"]
           maxLength: 256
-      required: [id, name, initials, logoUrl]
+        otpCommand:
+          type: ["string", "null"]
+          minLength: 3
+          maxLength: 40
+          pattern: "^[*#][0-9*#]{1,38}#$"
+          description: Server-configured instruction to dial for an OTP; not the OTP itself or payment confirmation.
+      required: [id, name, initials, logoUrl, otpCommand]
     PublicPaymentLinkCountry:
       type: object
       properties:
@@ -6950,6 +6956,11 @@ components:
           type: string
         requiresOtp:
           type: boolean
+        otpCommand:
+          type: ["string", "null"]
+          minLength: 3
+          maxLength: 40
+          pattern: "^[*#][0-9*#]{1,38}#$"
         providerStatus:
           type: string
           enum: [not_configured]
@@ -6960,7 +6971,7 @@ components:
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [countryCode, countryName, operatorId, operatorName, phonePrefix, requiresOtp, providerStatus, version, updatedAt]
+      required: [countryCode, countryName, operatorId, operatorName, phonePrefix, requiresOtp, otpCommand, providerStatus, version, updatedAt]
     AdminPaymentAggregator:
       type: object
       properties:
@@ -7696,6 +7707,11 @@ components:
       properties:
         requiresOtp:
           type: boolean
+        otpCommand:
+          type: ["string", "null"]
+          minLength: 3
+          maxLength: 40
+          pattern: "^[*#][0-9*#]{1,38}#$"
         expectedVersion:
           type: integer
           minimum: 0
@@ -7703,7 +7719,7 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [requiresOtp, expectedVersion, reason]
+      required: [requiresOtp, otpCommand, expectedVersion, reason]
     AdminBanner:
       type: object
       properties:

@@ -10074,6 +10074,44 @@ body:has(.sendflow-public-pay-shell) { background-color: #fff; }
 }
 .sendflow-pay-inline-error { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 9px 0 0; color: #a33d43; font-size: 10px; line-height: 1.45; }
 .sendflow-pay-inline-error button { border: 0; background: transparent; color: #78363c; padding: 3px; font: inherit; font-size: 10px; font-weight: 750; text-decoration: underline; cursor: pointer; }
+.sendflow-pay-otp-instruction {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  margin-top: 12px;
+  border: 1px solid #d9c9f2;
+  border-radius: 9px;
+  background: #f8f5fc;
+  padding: 10px 12px;
+}
+.sendflow-pay-otp-instruction-mark {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8def7;
+  color: #5a2ba8;
+  font-size: 12px;
+  font-weight: 800;
+}
+.sendflow-pay-otp-instruction p {
+  margin: 0;
+  color: #4c435a;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.sendflow-pay-otp-instruction strong {
+  display: inline-block;
+  margin-top: 4px;
+  border-radius: 5px;
+  background: #fff;
+  padding: 3px 7px;
+  color: #39205f;
+  font-size: 13px;
+  letter-spacing: .03em;
+}
 .sendflow-pay-unavailable-note {
   display: flex; align-items: flex-start; gap: 11px; margin-top: 20px; border: 1px solid #d7c9ef;
   border-radius: 10px; background: #f5f1fb; padding: 14px;

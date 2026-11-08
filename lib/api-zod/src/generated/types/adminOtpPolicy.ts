@@ -16,6 +16,13 @@ export interface AdminOtpPolicy {
   operatorName: string;
   phonePrefix: string;
   requiresOtp: boolean;
+  /**
+     * @minLength 3
+     * @maxLength 40
+     * @nullable
+     * @pattern ^[*#][0-9*#]{1,38}#$
+     */
+  otpCommand: string | null;
   /** The official operator API is not connected, so OTPs cannot be verified yet. */
   providerStatus: AdminOtpPolicyProviderStatus;
   /** @minimum 0 */

@@ -2827,26 +2827,34 @@ function OtpPoliciesPage() {
   const query = useListAdminOtpPolicies();
   const mutation = useUpdateAdminOtpPolicy();
   const [editing, setEditing] = useState<AdminOtpPolicy | null>(null);
+  const [draftRequiresOtp, setDraftRequiresOtp] = useState(true);
+  const [draftOtpCommand, setDraftOtpCommand] = useState('');
   const [reason, setReason] = useState('');
   const [feedback, setFeedback] = useState('');
   const [mutationError, setMutationError] = useState('');
 
-  const beginEdit = (policy: AdminOtpPolicy) => {
+  const beginEdit = (policy: AdminOtpPolicy, nextRequiresOtp = policy.requiresOtp) => {
     setEditing(policy);
+    setDraftRequiresOtp(nextRequiresOtp);
+    setDraftOtpCommand(policy.otpCommand ?? '');
     setReason('');
     setFeedback('');
     setMutationError('');
   };
 
+  const otpCommand = draftOtpCommand.trim();
+  const otpCommandValid = !otpCommand || /^[*#][0-9*#]{1,38}#$/.test(otpCommand);
+
   const savePolicy = () => {
-    if (!editing || reason.trim().length < 3) return;
+    if (!editing || reason.trim().length < 3 || !otpCommandValid) return;
     setMutationError('');
     mutation.mutate(
       {
         countryCode: editing.countryCode,
         operatorId: editing.operatorId,
         data: {
-          requiresOtp: !editing.requiresOtp,
+          requiresOtp: draftRequiresOtp,
+          otpCommand: otpCommand || null,
           expectedVersion: editing.version,
           reason: reason.trim(),
         },
@@ -2871,18 +2879,18 @@ function OtpPoliciesPage() {
     <AdminShell section="otp-policies">
       <div className="sendflow-admin-page-intro">
         <div>
-          <p className="sendflow-admin-overline">Orange Money · CI, BF, ML, SN</p>
-          <h2 data-testid="heading-admin-otp-policies">Configuration des codes OTP</h2>
-          <p className="sendflow-admin-subtitle">Définissez, pour chaque pays, si le parcours devra exiger un code OTP.</p>
+          <p className="sendflow-admin-overline">Configuration par opérateur</p>
+          <h2 data-testid="heading-admin-otp-policies">Instructions OTP</h2>
+          <p className="sendflow-admin-subtitle">Configurez la consigne à composer séparément pour chaque pays et réseau.</p>
         </div>
       </div>
 
       <Alert data-testid="notice-otp-provider-unconfigured">
         <CircleAlert className="size-4" />
-        <AlertTitle>API officielle non connectée</AlertTitle>
+        <AlertTitle>Consigne de composition uniquement</AlertTitle>
         <AlertDescription>
-          Les règles sont enregistrées et auditées, mais aucun code n’est vérifié par Orange pour le moment.
-          Cette configuration ne lance pas de transfert et ne permet pas d’annoncer une opération réussie.
+          Le code configuré indique au payeur quoi composer pour obtenir un OTP. SendFlow ne reçoit ni ne vérifie cet OTP ;
+          cette consigne ne lance pas de paiement et ne confirme jamais une opération.
         </AlertDescription>
       </Alert>
 
@@ -2892,13 +2900,13 @@ function OtpPoliciesPage() {
       {!query.isLoading && !query.isError && (
         <div className="grid gap-4 md:grid-cols-2" data-testid="list-admin-otp-policies">
           {items.map((policy) => (
-            <Card key={policy.operatorId} data-testid={`card-otp-policy-${policy.countryCode}`}>
+             <Card key={`${policy.countryCode}:${policy.operatorId}`} data-testid={`card-otp-policy-${policy.countryCode}-${policy.operatorId}`}>
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
                   <CardTitle>{policy.countryName}</CardTitle>
                   <CardDescription>{policy.operatorName} · {policy.phonePrefix}</CardDescription>
                 </div>
-                <Badge variant="outline">API non connectée</Badge>
+                 <Badge variant="outline">{policy.otpCommand ? 'Consigne configurée' : 'Sans consigne'}</Badge>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between gap-4">
@@ -2906,14 +2914,27 @@ function OtpPoliciesPage() {
                     <p className="font-medium">{policy.requiresOtp ? 'Code OTP requis' : 'Code OTP non requis'}</p>
                     <p className="text-sm text-muted-foreground">Version {policy.version} · Modifiée {formatDate(policy.updatedAt)}</p>
                   </div>
-                  <Switch
-                    checked={policy.requiresOtp}
+                   <Switch
+                     checked={policy.requiresOtp}
                     disabled={mutation.isPending}
-                    onCheckedChange={() => beginEdit(policy)}
+                     onCheckedChange={(checked) => beginEdit(policy, checked)}
                     aria-label={`${policy.requiresOtp ? 'Désactiver' : 'Activer'} l’exigence OTP pour ${policy.countryName}`}
-                    data-testid={`switch-otp-policy-${policy.countryCode}`}
+                     data-testid={`switch-otp-policy-${policy.countryCode}-${policy.operatorId}`}
                   />
                 </div>
+                 <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2">
+                   <p className="text-xs font-semibold text-violet-900">Code de composition</p>
+                   <p className="mt-1 break-all text-sm text-slate-700">{policy.otpCommand ?? 'Aucun code configuré'}</p>
+                 </div>
+                 <Button
+                   type="button"
+                   variant="outline"
+                   onClick={() => beginEdit(policy)}
+                   disabled={mutation.isPending}
+                   data-testid={`button-configure-otp-command-${policy.countryCode}-${policy.operatorId}`}
+                 >
+                   Configurer l’instruction
+                 </Button>
               </CardContent>
             </Card>
           ))}
@@ -2923,12 +2944,42 @@ function OtpPoliciesPage() {
       <Dialog open={Boolean(editing)} onOpenChange={(open) => { if (!open && !mutation.isPending) setEditing(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier la règle OTP</DialogTitle>
+             <DialogTitle>Configurer l’instruction OTP</DialogTitle>
             <DialogDescription>
-              {editing && `${editing.countryName} · ${editing.operatorName} : l’OTP sera ${editing.requiresOtp ? 'désactivée' : 'exigée'}.`}
-              {' '}L’API opérateur reste non connectée.
+               {editing && `${editing.countryName} · ${editing.operatorName}.`}
+               {' '}Le code est une instruction de composition, pas l’OTP personnel ni une confirmation de paiement.
             </DialogDescription>
           </DialogHeader>
+           <div className="flex items-center justify-between gap-4 rounded-xl border p-3">
+             <Label htmlFor="otp-policy-required">Cet opérateur demande un OTP</Label>
+             <Switch
+               id="otp-policy-required"
+               checked={draftRequiresOtp}
+               onCheckedChange={setDraftRequiresOtp}
+               disabled={mutation.isPending}
+               data-testid="switch-edit-otp-required"
+             />
+           </div>
+           <div className="space-y-2">
+             <Label htmlFor="otp-policy-command">Code USSD pour obtenir l’OTP</Label>
+             <Input
+               id="otp-policy-command"
+               value={draftOtpCommand}
+               onChange={(event) => setDraftOtpCommand(event.target.value)}
+               maxLength={40}
+               autoComplete="off"
+               placeholder="Code de composition fourni pour cet opérateur"
+               aria-invalid={!otpCommandValid}
+               aria-describedby="otp-policy-command-help"
+               data-testid="input-otp-policy-command"
+             />
+             <p id="otp-policy-command-help" className="text-xs text-muted-foreground">
+               Utilisez uniquement *, # et des chiffres, avec # à la fin. Laissez vide si aucun code n’est configuré.
+             </p>
+             {!otpCommandValid && (
+               <p className="text-sm text-destructive" role="alert">Saisissez un code USSD valide.</p>
+             )}
+           </div>
           <div className="space-y-2">
             <Label htmlFor="otp-policy-reason">Motif de modification</Label>
             <Input
@@ -2943,7 +2994,7 @@ function OtpPoliciesPage() {
           {mutationError && <Alert variant="destructive" data-testid="error-otp-policy-update"><AlertDescription>{mutationError}</AlertDescription></Alert>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)} disabled={mutation.isPending}>Annuler</Button>
-            <Button onClick={savePolicy} disabled={!editing || reason.trim().length < 3 || mutation.isPending} data-testid="button-save-otp-policy">
+             <Button onClick={savePolicy} disabled={!editing || reason.trim().length < 3 || !otpCommandValid || mutation.isPending} data-testid="button-save-otp-policy">
               {mutation.isPending ? 'Enregistrement…' : 'Confirmer'}
             </Button>
           </DialogFooter>

@@ -823,6 +823,20 @@ export default function PublicPaymentLinkPage() {
 
           </div>
 
+          {(link.paymentAvailable || previewSimulationAvailable) && operator?.otpCommand && (
+            <aside
+              className="sendflow-pay-otp-instruction"
+              role="note"
+              data-testid="public-pay-otp-instruction"
+            >
+              <span className="sendflow-pay-otp-instruction-mark" aria-hidden="true">i</span>
+              <div>
+                <p>Pour générer votre code OTP, composez cette instruction :</p>
+                <strong>{operator.otpCommand}</strong>
+              </div>
+            </aside>
+          )}
+
           {previewSimulationAvailable ? (
             <>
               {simulateMutation.isError && (

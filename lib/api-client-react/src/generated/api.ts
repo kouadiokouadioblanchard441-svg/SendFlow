@@ -9808,7 +9808,7 @@ export const getListAdminOtpPoliciesUrl = () => {
 }
 
 /**
- * @summary List Orange Money OTP policies for supported countries
+ * @summary List OTP requirements and dial instructions by operator
  */
 export const listAdminOtpPolicies = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminOtpPolicyList> => {
 
@@ -9855,7 +9855,7 @@ export type ListAdminOtpPoliciesQueryError = ErrorType<ErrorEnvelope>
 
 
 /**
- * @summary List Orange Money OTP policies for supported countries
+ * @summary List OTP requirements and dial instructions by operator
  */
 
 export function useListAdminOtpPolicies<TData = Awaited<ReturnType<typeof listAdminOtpPolicies>>, TError = ErrorType<ErrorEnvelope>>(
@@ -9886,7 +9886,7 @@ export const getUpdateAdminOtpPolicyUrl = (countryCode: string,
 }
 
 /**
- * @summary Update whether OTP is required for a supported Orange Money operator
+ * @summary Update OTP requirement and dial instruction for an operator
  */
 export const updateAdminOtpPolicy = async (countryCode: string,
     operatorId: string,
@@ -9954,7 +9954,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateAdminOtpPolicyMutationVariables = {countryCode: string;operatorId: string;data: BodyType<AdminOtpPolicyUpdate>}
 
     /**
- * @summary Update whether OTP is required for a supported Orange Money operator
+ * @summary Update OTP requirement and dial instruction for an operator
  */
 export const useUpdateAdminOtpPolicy = <TError = ErrorType<ErrorEnvelope>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOtpPolicy>>, TError,UpdateAdminOtpPolicyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}

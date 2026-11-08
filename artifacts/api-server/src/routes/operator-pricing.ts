@@ -25,6 +25,7 @@ import {
 } from "@workspace/api-zod";
 import { recordAdminAudit } from "../lib/admin-audit";
 import { operatorLogoUrl, readOperatorLogo } from "../services/operator-logo";
+import { getConfiguredOtpCommand } from "../lib/operator-otp-instruction";
 import {
   createOperatorDisplayFields,
   isPricingCategoryId,
@@ -36,9 +37,6 @@ import { respondAdminAuthError } from "./admin";
 
 const router: IRouter = Router();
 const adminRoutes: IRouter = Router();
-const otpCommands: Record<string, string> = {
-  "orange-ci": "#144*82# option 2",
-};
 
 const operatorMetadataColumns = {
   operatorId: operatorCatalogTable.operatorId,
@@ -143,7 +141,7 @@ router.get("/pricing", async (req, res): Promise<void> => {
       rateRowsByOperator.set(rate.operatorId, operatorRates);
     }
     const otpByOperator = new Map(
-      otpPolicies.map((policy) => [`${policy.countryCode}:${policy.operatorId}`, policy.requiresOtp]),
+      otpPolicies.map((policy) => [`${policy.countryCode}:${policy.operatorId}`, policy]),
     );
 
     const publicOperators = operators
@@ -153,6 +151,7 @@ router.get("/pricing", async (req, res): Promise<void> => {
         return countryOrder || left.name.localeCompare(right.name, "fr");
       })
       .map((operator) => {
+        const otpPolicy = otpByOperator.get(`${operator.countryCode}:${operator.operatorId}`);
         const fees: Partial<Record<PricingCategoryId, number>> = {};
         for (const rate of rateRowsByOperator.get(operator.operatorId) ?? []) {
           if (isPricingCategoryId(rate.categoryId) && rate.feePercent !== null) {
@@ -169,8 +168,8 @@ router.get("/pricing", async (req, res): Promise<void> => {
           brand: operator.brand,
           logoUrl: operatorLogoUrl(operator.operatorId, operator.version, operator.hasLogo),
           requiresOtp:
-            otpByOperator.get(`${operator.countryCode}:${operator.operatorId}`) ?? true,
-          otpCommand: otpCommands[operator.operatorId] ?? null,
+            otpPolicy?.requiresOtp ?? true,
+          otpCommand: getConfiguredOtpCommand(otpPolicy),
           operations: {
             deposit: Boolean(countries.find((country) => country.id === operator.countryCode
               && country.enabled && country.operations.deposit)) && operator.depositEnabled,

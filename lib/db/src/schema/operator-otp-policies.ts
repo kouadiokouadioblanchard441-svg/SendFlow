@@ -8,6 +8,7 @@ export const operatorOtpPoliciesTable = pgTable(
     countryCode: varchar("country_code", { length: 2 }).notNull(),
     operatorId: varchar("operator_id", { length: 40 }).notNull(),
     requiresOtp: boolean("requires_otp").notNull(),
+    otpCommand: varchar("otp_command", { length: 40 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
     updatedBy: varchar("updated_by", { length: 255 }).notNull(),

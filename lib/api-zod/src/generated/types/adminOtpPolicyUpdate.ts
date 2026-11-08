@@ -8,6 +8,13 @@
 
 export interface AdminOtpPolicyUpdate {
   requiresOtp: boolean;
+  /**
+     * @minLength 3
+     * @maxLength 40
+     * @nullable
+     * @pattern ^[*#][0-9*#]{1,38}#$
+     */
+  otpCommand: string | null;
   /** @minimum 0 */
   expectedVersion: number;
   /**

@@ -27,4 +27,12 @@ export interface PublicPaymentLinkOperator {
      * @nullable
      */
   logoUrl: string | null;
+  /**
+     * Server-configured instruction to dial for an OTP; not the OTP itself or payment confirmation.
+     * @minLength 3
+     * @maxLength 40
+     * @nullable
+     * @pattern ^[*#][0-9*#]{1,38}#$
+     */
+  otpCommand: string | null;
 }
