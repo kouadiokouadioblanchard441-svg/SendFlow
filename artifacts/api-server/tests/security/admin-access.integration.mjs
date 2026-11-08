@@ -636,7 +636,7 @@ test("a newly added operator receives an independent empty rate for every pricin
     [response.body.operatorId],
   );
   assert.deepEqual(rates.rows.map((row) => row.category_id), [
-    "deposit", "inter-network", "international", "linkflow",
+    "deposit", "inter-network", "international", "linkflow", "payout",
   ]);
   assert.ok(rates.rows.every((row) => row.fee_percent === null));
   const catalog = await request("/operator-pricing", { cookie });

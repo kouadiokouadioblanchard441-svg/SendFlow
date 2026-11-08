@@ -10,6 +10,7 @@ test("defaults preserve configured FCFA thresholds and established ceilings", ()
   assert.deepEqual(DEFAULT_PAYMENT_LIMITS, {
     minimumDepositMinor: 200,
     minimumPayoutMinor: 200,
+    maximumPayoutDailyMinor: null,
     minimumInterNetworkMinor: 1,
     maximumTransferMinor: 10_000_000,
     maximumPayinMinor: 2_000_000,

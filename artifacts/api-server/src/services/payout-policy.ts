@@ -1,4 +1,4 @@
-import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
+import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy.ts";
 
 export const PAYOUT_EXECUTION_ENABLED = false;
 

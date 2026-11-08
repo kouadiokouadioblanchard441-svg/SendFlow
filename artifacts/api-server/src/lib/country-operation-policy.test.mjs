@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { calculateCustomerTransferQuote } from "../services/transfer-quote.ts";
+import { DEFAULT_PAYMENT_LIMITS } from "../services/payment-limits-policy.ts";
 
 function fixtures() {
   const countries = ["ci", "cm"].map((countryCode) => ({
@@ -16,6 +17,7 @@ function fixtures() {
     countries, operators,
     rates: operators.flatMap(({ operatorId }) => ["deposit", "inter-network", "international"]
       .map((categoryId) => ({ operatorId, categoryId, feePercent: 1, version: 1 }))),
+    limits: { ...DEFAULT_PAYMENT_LIMITS },
     remainingMonthlyAmount: async () => 1000000,
   };
 }

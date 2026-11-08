@@ -30,3 +30,9 @@ If a secret confirmation is followed by the same TLS chain error, it does not pr
 **Why:** The live app continued failing closed after the CA was re-confirmed through the secret flow, while a read-only connection using the supplied public CA succeeded. Setting that CA as a shared environment value and restarting restored the health routes and preview without changing database data or schema.
 
 **How to apply:** Validate the provider CA certificate and use the environment-variable flow for this public trust anchor; never print connection URLs, expose credentials, or disable TLS verification. Verify with a read-only query and restart all workflows that import the database client. Plesk needs its own private CA configuration.
+
+If the payment migration registry is absent while raw payment tables or routines already exist, the schema is partial and untracked. Do not replay the base migration or create a blank registry just to bypass the migration runner. Compare the live catalog with the source definitions, preserve intentional payout-aware overrides, add only verified missing objects, and record source checksums plus catalog fingerprints only after postconditions pass.
+
+**Why:** The shared database already held part of the raw payment schema but lacked its migration registry and safeguards; blindly replaying the migration could have overwritten the payout-aware reservation guard.
+
+**How to apply:** Reconcile the partial state in one verified-TLS transaction, verify protected data remains unchanged, then confirm the migration plans against the recorded fingerprints before committing.

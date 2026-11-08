@@ -376,8 +376,11 @@ test("direct quotes ignore forged prices, reject limits and locked sessions, the
   assert.equal((await request("/api/me/transfer-quote", { method: "POST", user: "fixture-b", body })).status, 403);
   const attempts = await Promise.all(Array.from({ length: 65 }, () =>
     request("/api/me/transfer-quote", { method: "POST", user: "fixture-a", body })));
-  assert.equal(attempts.filter((r) => r.status === 200).length, 58);
-  assert.equal(attempts.filter((r) => r.status === 429).length, 7);
+  const statusCounts = attempts.reduce((counts, response) => {
+    counts[response.status] = (counts[response.status] ?? 0) + 1;
+    return counts;
+  }, {});
+  assert.deepEqual(statusCounts, { 200: 58, 429: 7 });
   assert.equal(attempts.find((r) => r.status === 429).headers["retry-after"], "60");
   assert.equal((await owner.query("SELECT count(*) FROM sf_transactions")).rows[0].count, "3");
   await owner.query("UPDATE sf_api_request_limits SET window_started_at=now()-interval '2 minutes'");
