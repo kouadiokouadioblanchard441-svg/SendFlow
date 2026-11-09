@@ -73,6 +73,7 @@ export type AdminAuditAction =
   | "update_operator_pricing"
   | "update_registration_settings"
   | "update_payment_limits"
+  | "update_user_monthly_incoming_limit"
   | "view_email_campaign_recipients"
   | "view_email_campaigns"
   | "create_email_campaign"

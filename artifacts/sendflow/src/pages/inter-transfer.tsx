@@ -29,6 +29,7 @@ import {
   formatServerFeePercent as formatPricingFeeRate,
   formatQuoteAmount,
   isIdentityVerificationRequired,
+  isMonthlyIncomingLimitReachedError,
   serverQuoteAmounts,
   serverQuoteErrorMessage,
 } from '@/lib/server-transfer-quote';
@@ -365,6 +366,9 @@ export default function InterNetworkTransferPage() {
                 : undefined;
               if (isIdentityVerificationRequired(error)) {
                 setDialogFailureTitle('Vérification d’identité requise');
+                setDialogFailureCopy(serverQuoteErrorMessage(error));
+              } else if (isMonthlyIncomingLimitReachedError(error)) {
+                setDialogFailureTitle('Plafond mensuel atteint');
                 setDialogFailureCopy(serverQuoteErrorMessage(error));
               } else if (status === 409) {
                 setDialogFailureTitle('Plafond mensuel dépassé');

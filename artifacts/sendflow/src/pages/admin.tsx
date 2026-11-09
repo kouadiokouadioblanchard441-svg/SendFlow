@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { AdminActionDialog } from '@/components/admin-action-dialog';
 import { AdminPaymentLimitsSection } from '@/components/admin-payment-limits-section';
+import { AdminUserMonthlyIncomingLimitSection } from '@/components/admin-user-monthly-incoming-limit';
 import { AdminCustomerServiceSettingsSection } from '@/components/admin-customer-service-settings';
 import { adminRoute } from '@/lib/admin-route';
 import AdminOperatorPricingPage from '@/pages/admin-operator-pricing';
@@ -875,6 +876,11 @@ function UserDetailPage({ userId }: { userId: string }) {
             </Card>
           </div>
 
+          <AdminUserMonthlyIncomingLimitSection
+            userId={userId}
+            policy={detail.monthlyIncomingPolicy}
+            canMutate={canMutate && detail.user.status !== 'deleted'}
+          />
           <AdminUserIdentitySummary userId={userId} />
           <Card className="sendflow-admin-detail-card" data-testid="card-admin-user-webhooks">
             <CardHeader>

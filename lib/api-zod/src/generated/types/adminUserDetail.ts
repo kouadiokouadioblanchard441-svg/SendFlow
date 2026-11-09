@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AdminUserFinancialTotals } from './adminUserFinancialTotals';
+import type { AdminUserMonthlyIncomingPolicy } from './adminUserMonthlyIncomingPolicy';
 import type { AdminUserProfile } from './adminUserProfile';
 import type { AdminUserTransactionSummary } from './adminUserTransactionSummary';
 import type { AdminWalletDetail } from './adminWalletDetail';
@@ -16,4 +17,5 @@ export interface AdminUserDetail {
   wallet: AdminWalletDetail | null;
   transactionSummary: AdminUserTransactionSummary;
   financialTotals: AdminUserFinancialTotals;
+  monthlyIncomingPolicy: AdminUserMonthlyIncomingPolicy;
 }

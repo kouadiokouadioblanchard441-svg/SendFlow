@@ -9,11 +9,17 @@ import type { PublicPaymentLimits } from './publicPaymentLimits';
 
 export type AdminPaymentLimits = PublicPaymentLimits & {
   /**
-     * Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments.
+     * Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only.
      * @minimum 0
      * @maximum 2147483647
      */
   maximumUnverifiedIncomingMinor: number;
+  /**
+     * Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only.
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  maximumVerifiedIncomingMinor: number;
   /** @minimum 1 */
   version: number;
   updatedAt: Date;

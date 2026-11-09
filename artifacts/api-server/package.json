@@ -47,6 +47,7 @@
     "payments:test-account-plan": "node --experimental-strip-types scripts/authorize-replit-payment-test-account.mjs",
     "feexpay:configuration-plan": "node --experimental-strip-types scripts/configure-feexpay.mjs",
     "payment-providers:activation-plan": "node --experimental-strip-types scripts/activate-payment-providers.mjs",
+    "monthly-incoming-limits:schema": "node --experimental-strip-types scripts/migrate-monthly-incoming-limits.mjs",
     "signup-default-country:schema-plan": "node --experimental-strip-types scripts/signup-default-country-migration.mjs",
     "country-signup-visibility:schema-plan": "node --experimental-strip-types scripts/country-signup-visibility-migration.mjs",
     "pii:backfill": "node --experimental-strip-types scripts/backfill-sensitive-data.mjs",

@@ -43,6 +43,11 @@ export interface PaymentLimitsUpdate {
      * @maximum 2147483647
      */
   maximumUnverifiedIncomingMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  maximumVerifiedIncomingMinor: number;
   /** @minimum 1 */
   expectedVersion: number;
   /**

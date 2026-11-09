@@ -10,6 +10,7 @@ export const paymentLimitsTable = pgTable("sf_payment_limits", {
   maximumTransferMinor: integer("maximum_transfer_minor").notNull().default(10_000_000),
   maximumPayinMinor: integer("maximum_payin_minor").notNull().default(2_000_000),
   maximumUnverifiedIncomingMinor: integer("maximum_unverified_incoming_minor").notNull().default(20_000),
+  maximumVerifiedIncomingMinor: integer("maximum_verified_incoming_minor").notNull().default(4_000_000),
   version: integer("version").notNull().default(1),
   updatedBy: text("updated_by"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -27,6 +28,10 @@ export const paymentLimitsTable = pgTable("sf_payment_limits", {
   unverifiedIncomingMaximumCheck: check(
     "sf_payment_limits_unverified_incoming_max_check",
     sql`${table.maximumUnverifiedIncomingMinor} BETWEEN 0 AND 2147483647`,
+  ),
+  verifiedIncomingMaximumCheck: check(
+    "sf_payment_limits_verified_incoming_max_check",
+    sql`${table.maximumVerifiedIncomingMinor} BETWEEN 0 AND 2147483647`,
   ),
   depositTransferOrderCheck: check(
     "sf_payment_limits_deposit_transfer_order_check",

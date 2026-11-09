@@ -16,5 +16,6 @@ export async function loadPaymentLimits(): Promise<PaymentLimitValues> {
     maximumTransferMinor: record.maximumTransferMinor,
     maximumPayinMinor: record.maximumPayinMinor,
     maximumUnverifiedIncomingMinor: record.maximumUnverifiedIncomingMinor,
+    maximumVerifiedIncomingMinor: record.maximumVerifiedIncomingMinor,
   };
 }

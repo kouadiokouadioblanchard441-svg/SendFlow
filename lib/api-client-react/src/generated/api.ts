@@ -63,6 +63,8 @@ import type {
   AdminUserActionRequest,
   AdminUserDetail,
   AdminUserDeveloperWebhookPage,
+  AdminUserMonthlyIncomingLimitUpdate,
+  AdminUserMonthlyIncomingLimitUpdateResponse,
   AdminUserPage,
   AdminUssdInstructionUpdate,
   AdminWalletAdjustmentRequest,
@@ -6261,7 +6263,7 @@ export const getCreateCustomerTransferQuoteUrl = () => {
 }
 
 /**
- * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or when an unverified wallet has reached its configured cumulative incoming-payment threshold. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or the applicable monthly incoming-payment cap. The cap depends on identity status and any administrator-set user override; reaching it blocks outgoing operations only, not incoming payments. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuote = async (transferQuoteInput: TransferQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<TransferQuoteResult> => {
@@ -10650,7 +10652,7 @@ export const getGetAdminUserUrl = (userId: string,) => {
 }
 
 /**
- * Returns the persisted profile, wallet, transaction summary, and successful XOF pay-in and payout totals for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
+ * Returns the persisted profile, wallet, transaction summary, successful XOF pay-in and payout totals, and the server-calculated current-month incoming cap for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
  * @summary Get a SendFlow user detail for administrators
  */
 export const getAdminUser = async (userId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminUserDetail> => {
@@ -10965,6 +10967,96 @@ export function useGetAdminTransaction<TData = Awaited<ReturnType<typeof getAdmi
 
 
 
+
+export const getUpdateAdminUserMonthlyIncomingLimitUrl = (userId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/monthly-incoming-limit`
+}
+
+/**
+ * Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. The cap only blocks outgoing operations; incoming payments remain allowed.
+ * @summary Set or clear a user's monthly incoming limit override
+ */
+export const updateAdminUserMonthlyIncomingLimit = async (userId: string,
+    adminUserMonthlyIncomingLimitUpdate: AdminUserMonthlyIncomingLimitUpdate, options?: Parameters<typeof customFetch>[1]): Promise<AdminUserMonthlyIncomingLimitUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminUserMonthlyIncomingLimitUpdateResponse>(getUpdateAdminUserMonthlyIncomingLimitUrl(userId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminUserMonthlyIncomingLimitUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminUserMonthlyIncomingLimitMutationKey = () => ['updateAdminUserMonthlyIncomingLimit'] as const;
+
+export const getUpdateAdminUserMonthlyIncomingLimitMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminUserMonthlyIncomingLimit>>, TError,UpdateAdminUserMonthlyIncomingLimitMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminUserMonthlyIncomingLimit>>, TError,UpdateAdminUserMonthlyIncomingLimitMutationVariables, TContext> => {
+
+const mutationKey = getUpdateAdminUserMonthlyIncomingLimitMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminUserMonthlyIncomingLimit>>, UpdateAdminUserMonthlyIncomingLimitMutationVariables> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  updateAdminUserMonthlyIncomingLimit(userId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminUserMonthlyIncomingLimitMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminUserMonthlyIncomingLimit>>>
+    export type UpdateAdminUserMonthlyIncomingLimitMutationBody = BodyType<AdminUserMonthlyIncomingLimitUpdate>
+    export type UpdateAdminUserMonthlyIncomingLimitMutationError = ErrorType<ErrorEnvelope>
+    export type UpdateAdminUserMonthlyIncomingLimitMutationVariables = {userId: string;data: BodyType<AdminUserMonthlyIncomingLimitUpdate>}
+
+    /**
+ * @summary Set or clear a user's monthly incoming limit override
+ */
+export const useUpdateAdminUserMonthlyIncomingLimit = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminUserMonthlyIncomingLimit>>, TError,UpdateAdminUserMonthlyIncomingLimitMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminUserMonthlyIncomingLimit>>,
+        TError,
+        UpdateAdminUserMonthlyIncomingLimitMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateAdminUserMonthlyIncomingLimitMutationOptions(options));
+    }
 
 export const getCreateAdminWalletAdjustmentUrl = (userId: string,) => {
 

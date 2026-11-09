@@ -5,8 +5,9 @@ import {
   addUnverifiedIncomingAmount,
   getMinimumForTransfer,
   hasReachedUnverifiedIncomingLimit,
+  isMonthlyIncomingLimitReached,
   isValidPaymentLimitValues,
-  isUnverifiedOutgoingBlocked,
+  resolveMonthlyIncomingLimit,
 } from "./payment-limits-policy.ts";
 
 test("defaults preserve configured FCFA thresholds and established ceilings", () => {
@@ -18,6 +19,7 @@ test("defaults preserve configured FCFA thresholds and established ceilings", ()
     maximumTransferMinor: 10_000_000,
     maximumPayinMinor: 2_000_000,
     maximumUnverifiedIncomingMinor: 20_000,
+    maximumVerifiedIncomingMinor: 4_000_000,
   });
   assert.equal(isValidPaymentLimitValues(DEFAULT_PAYMENT_LIMITS), true);
 });
@@ -36,7 +38,9 @@ test("thresholds must be whole, positive and stay within existing technical ceil
   }), false);
   assert.equal(isValidPaymentLimitValues({ ...DEFAULT_PAYMENT_LIMITS, maximumUnverifiedIncomingMinor: -1 }), false);
   assert.equal(isValidPaymentLimitValues({ ...DEFAULT_PAYMENT_LIMITS, maximumUnverifiedIncomingMinor: 2_147_483_648 }), false);
+  assert.equal(isValidPaymentLimitValues({ ...DEFAULT_PAYMENT_LIMITS, maximumVerifiedIncomingMinor: 2_147_483_648 }), false);
   assert.equal(isValidPaymentLimitValues({ ...DEFAULT_PAYMENT_LIMITS, maximumUnverifiedIncomingMinor: 0 }), true);
+  assert.equal(isValidPaymentLimitValues({ ...DEFAULT_PAYMENT_LIMITS, maximumVerifiedIncomingMinor: 0 }), true);
 });
 
 test("each customer operation selects its own configured minimum", () => {
@@ -45,12 +49,17 @@ test("each customer operation selects its own configured minimum", () => {
   assert.equal(getMinimumForTransfer("inter-network", DEFAULT_PAYMENT_LIMITS), 1);
 });
 
-test("outgoing operations are blocked at the exact unverified receipt threshold only", () => {
+test("monthly receipt caps vary by identity tier, allow user overrides, and block outgoing at the cap", () => {
   assert.equal(hasReachedUnverifiedIncomingLimit(19_999, 20_000), false);
   assert.equal(hasReachedUnverifiedIncomingLimit(20_000, 20_000), true);
-  assert.equal(isUnverifiedOutgoingBlocked(false, 20_000, 20_000), true);
-  assert.equal(isUnverifiedOutgoingBlocked(true, 20_000, 20_000), false);
-  assert.equal(isUnverifiedOutgoingBlocked(false, 0, 0), true);
+  assert.equal(isMonthlyIncomingLimitReached(19_999, 20_000), false);
+  assert.equal(isMonthlyIncomingLimitReached(20_000, 20_000), true);
+  assert.equal(isMonthlyIncomingLimitReached(4_000_000, 4_000_000), true);
+  assert.equal(isMonthlyIncomingLimitReached(0, 0), true);
+  assert.equal(resolveMonthlyIncomingLimit(false, null, 20_000, 4_000_000), 20_000);
+  assert.equal(resolveMonthlyIncomingLimit(true, null, 20_000, 4_000_000), 4_000_000);
+  assert.equal(resolveMonthlyIncomingLimit(false, 75_000, 20_000, 4_000_000), 75_000);
+  assert.equal(resolveMonthlyIncomingLimit(true, 75_000, 20_000, 4_000_000), 75_000);
 });
 
 test("only receipts credited before identity approval increase the unverified total", () => {

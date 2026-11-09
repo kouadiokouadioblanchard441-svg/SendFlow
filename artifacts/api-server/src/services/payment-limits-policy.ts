@@ -6,6 +6,7 @@ export type PaymentLimitValues = {
   maximumTransferMinor: number;
   maximumPayinMinor: number;
   maximumUnverifiedIncomingMinor: number;
+  maximumVerifiedIncomingMinor: number;
 };
 
 export const DEFAULT_PAYMENT_LIMITS: Readonly<PaymentLimitValues> = Object.freeze({
@@ -16,6 +17,7 @@ export const DEFAULT_PAYMENT_LIMITS: Readonly<PaymentLimitValues> = Object.freez
   maximumTransferMinor: 10_000_000,
   maximumPayinMinor: 2_000_000,
   maximumUnverifiedIncomingMinor: 20_000,
+  maximumVerifiedIncomingMinor: 4_000_000,
 });
 
 export function isValidPaymentLimitValues(values: PaymentLimitValues): boolean {
@@ -30,6 +32,9 @@ export function isValidPaymentLimitValues(values: PaymentLimitValues): boolean {
   if (!Number.isSafeInteger(values.maximumUnverifiedIncomingMinor)
     || values.maximumUnverifiedIncomingMinor < 0
     || values.maximumUnverifiedIncomingMinor > 2_147_483_647) return false;
+  if (!Number.isSafeInteger(values.maximumVerifiedIncomingMinor)
+    || values.maximumVerifiedIncomingMinor < 0
+    || values.maximumVerifiedIncomingMinor > 2_147_483_647) return false;
   if (values.maximumPayoutDailyMinor !== null
     && (!Number.isSafeInteger(values.maximumPayoutDailyMinor)
       || values.maximumPayoutDailyMinor < values.minimumPayoutMinor)) return false;
@@ -57,12 +62,28 @@ export function hasReachedUnverifiedIncomingLimit(
   return receivedMinor >= limitMinor;
 }
 
-export function isUnverifiedOutgoingBlocked(
-  identityVerified: boolean,
+export function isMonthlyIncomingLimitReached(
   receivedMinor: number,
   limitMinor: number,
 ): boolean {
-  return !identityVerified && hasReachedUnverifiedIncomingLimit(receivedMinor, limitMinor);
+  return hasReachedUnverifiedIncomingLimit(receivedMinor, limitMinor);
+}
+
+export function resolveMonthlyIncomingLimit(
+  identityVerified: boolean,
+  overrideMinor: number | null,
+  unverifiedLimitMinor: number,
+  verifiedLimitMinor: number,
+): number {
+  if (overrideMinor !== null
+    && (!Number.isSafeInteger(overrideMinor) || overrideMinor < 0 || overrideMinor > 2_147_483_647)) {
+    throw new Error("Invalid user-specific monthly incoming limit");
+  }
+  const tierLimit = identityVerified ? verifiedLimitMinor : unverifiedLimitMinor;
+  if (!Number.isSafeInteger(tierLimit) || tierLimit < 0 || tierLimit > 2_147_483_647) {
+    throw new Error("Invalid global monthly incoming limit");
+  }
+  return overrideMinor ?? tierLimit;
 }
 
 export function addUnverifiedIncomingAmount(

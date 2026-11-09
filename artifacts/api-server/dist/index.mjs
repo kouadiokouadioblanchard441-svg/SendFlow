@@ -27966,8 +27966,8 @@ var require_safe_stable_stringify = __commonJS({
     }
     function configure(options) {
       options = { ...options };
-      const fail4 = getStrictOption(options);
-      if (fail4) {
+      const fail5 = getStrictOption(options);
+      if (fail5) {
         if (options.bigint === void 0) {
           options.bigint = false;
         }
@@ -28078,7 +28078,7 @@ ${originalIndentation}`;
             return `{${res}}`;
           }
           case "number":
-            return isFinite(value) ? String(value) : fail4 ? fail4(value) : "null";
+            return isFinite(value) ? String(value) : fail5 ? fail5(value) : "null";
           case "boolean":
             return value === true ? "true" : "false";
           case "undefined":
@@ -28089,7 +28089,7 @@ ${originalIndentation}`;
             }
           // fallthrough
           default:
-            return fail4 ? fail4(value) : void 0;
+            return fail5 ? fail5(value) : void 0;
         }
       }
       function stringifyArrayReplacer(key, value, stack, replacer, spacer, indentation) {
@@ -28169,7 +28169,7 @@ ${originalIndentation}`;
             return `{${res}}`;
           }
           case "number":
-            return isFinite(value) ? String(value) : fail4 ? fail4(value) : "null";
+            return isFinite(value) ? String(value) : fail5 ? fail5(value) : "null";
           case "boolean":
             return value === true ? "true" : "false";
           case "undefined":
@@ -28180,7 +28180,7 @@ ${originalIndentation}`;
             }
           // fallthrough
           default:
-            return fail4 ? fail4(value) : void 0;
+            return fail5 ? fail5(value) : void 0;
         }
       }
       function stringifyIndent(key, value, stack, spacer, indentation) {
@@ -28281,7 +28281,7 @@ ${originalIndentation}`;
             return `{${res}}`;
           }
           case "number":
-            return isFinite(value) ? String(value) : fail4 ? fail4(value) : "null";
+            return isFinite(value) ? String(value) : fail5 ? fail5(value) : "null";
           case "boolean":
             return value === true ? "true" : "false";
           case "undefined":
@@ -28292,7 +28292,7 @@ ${originalIndentation}`;
             }
           // fallthrough
           default:
-            return fail4 ? fail4(value) : void 0;
+            return fail5 ? fail5(value) : void 0;
         }
       }
       function stringifySimple(key, value, stack) {
@@ -28377,7 +28377,7 @@ ${originalIndentation}`;
             return `{${res}}`;
           }
           case "number":
-            return isFinite(value) ? String(value) : fail4 ? fail4(value) : "null";
+            return isFinite(value) ? String(value) : fail5 ? fail5(value) : "null";
           case "boolean":
             return value === true ? "true" : "false";
           case "undefined":
@@ -28388,7 +28388,7 @@ ${originalIndentation}`;
             }
           // fallthrough
           default:
-            return fail4 ? fail4(value) : void 0;
+            return fail5 ? fail5(value) : void 0;
         }
       }
       function stringify2(value, replacer, space) {
@@ -34733,7 +34733,7 @@ function __addDisposableResource(env, value, async) {
   return value;
 }
 function __disposeResources(env) {
-  function fail4(e) {
+  function fail5(e) {
     env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
     env.hasError = true;
   }
@@ -34745,12 +34745,12 @@ function __disposeResources(env) {
         if (r.dispose) {
           var result = r.dispose.call(r.value);
           if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) {
-            fail4(e);
+            fail5(e);
             return next();
           });
         } else s |= 1;
       } catch (e) {
-        fail4(e);
+        fail5(e);
       }
     }
     if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
@@ -55200,13 +55200,13 @@ var require_timing_safe_equal = __commonJS({
   "../../node_modules/.pnpm/standardwebhooks@1.1.1/node_modules/standardwebhooks/dist/timing_safe_equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.timingSafeEqual = timingSafeEqual5;
+    exports.timingSafeEqual = timingSafeEqual6;
     function assert2(expr, msg = "") {
       if (!expr) {
         throw new Error(msg);
       }
     }
-    function timingSafeEqual5(a, b) {
+    function timingSafeEqual6(a, b) {
       if (a.byteLength !== b.byteLength) {
         return false;
       }
@@ -182307,6 +182307,9 @@ var publicReadPathPrefixes = [
   "/api/public/payment-link-attempts",
   "/api/storage/public-objects"
 ];
+var publicReadExactPaths = [
+  "/api/auth/registration-countries"
+];
 function normalizeRequestPath(requestPath) {
   let pathname = requestPath.split(/[?#]/, 1)[0] || "/";
   try {
@@ -182380,7 +182383,7 @@ function shouldBlockSharedDatabaseApiRequest(method, requestPath, environment = 
   const normalizedMethod = method.toUpperCase();
   if (normalizedMethod === "OPTIONS") return false;
   if (normalizedMethod !== "GET") return true;
-  return !publicReadPathPrefixes.some((prefix) => isPathOrChild(pathname, prefix));
+  return !publicReadExactPaths.includes(pathname) && !publicReadPathPrefixes.some((prefix) => isPathOrChild(pathname, prefix));
 }
 
 // ../../node_modules/.pnpm/pg@8.23.0/node_modules/pg/esm/index.mjs
@@ -182692,6 +182695,17 @@ var ForeignKey = class {
     return name ?? `${chunks.join("_")}_fk`;
   }
 };
+function foreignKey(config2) {
+  function mappedConfig() {
+    const { name, columns, foreignColumns } = config2;
+    return {
+      name,
+      columns,
+      foreignColumns
+    };
+  }
+  return new ForeignKeyBuilder(mappedConfig);
+}
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.23.1_pg@8.23.0/node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
@@ -189613,15 +189627,12 @@ function resolveRuntimeDatabaseUrl(environment) {
     "SENDFLOW_DATABASE_TARGET must explicitly be 'development', 'shared-external', or 'production'."
   );
 }
-
-// ../../lib/db/src/client.ts
-var connectionString = resolveRuntimeDatabaseUrl(process.env);
-var isSharedExternalDatabase = process.env.SENDFLOW_DATABASE_TARGET === "shared-external";
-function getSharedDatabaseConnectionOptions() {
-  if (!isSharedExternalDatabase) {
+function resolveRuntimeDatabaseConnectionOptions(environment) {
+  const connectionString = resolveRuntimeDatabaseUrl(environment);
+  if (environment.SENDFLOW_DATABASE_TARGET !== "shared-external") {
     return { connectionString };
   }
-  const ca = process.env.DATABASE_CA_CERT?.trim();
+  const ca = environment.DATABASE_CA_CERT?.trim();
   if (!ca) {
     throw new Error("DATABASE_CA_CERT is required for the shared external database.");
   }
@@ -189637,8 +189648,10 @@ function getSharedDatabaseConnectionOptions() {
     ssl: { ca, rejectUnauthorized: true, servername: url2.hostname }
   };
 }
+
+// ../../lib/db/src/client.ts
 var pool = new Pool({
-  ...getSharedDatabaseConnectionOptions(),
+  ...resolveRuntimeDatabaseConnectionOptions(process.env),
   max: 5,
   idleTimeoutMillis: 3e4,
   connectionTimeoutMillis: 5e3
@@ -209645,6 +209658,7 @@ var usersTable = pgTable("sf_users", {
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   emailMarketingConsentAt: timestamp("email_marketing_consent_at", { withTimezone: true }),
   emailMarketingUnsubscribedAt: timestamp("email_marketing_unsubscribed_at", { withTimezone: true }),
+  monthlyIncomingLimitOverrideMinor: integer("monthly_incoming_limit_override_minor"),
   displayName: varchar("display_name", { length: 512 }),
   displayNameLookupHash: varchar("display_name_lookup_hash", { length: 64 }),
   countryCode: varchar("country_code", { length: 2 }),
@@ -209662,7 +209676,11 @@ var usersTable = pgTable("sf_users", {
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
 }, (table) => ({
   emailLookupHashUniqueIndex: uniqueIndex("sf_users_email_lookup_hash_uq").on(table.emailLookupHash),
-  displayNameLookupHashIndex: index("sf_users_display_name_lookup_hash_idx").on(table.displayNameLookupHash)
+  displayNameLookupHashIndex: index("sf_users_display_name_lookup_hash_idx").on(table.displayNameLookupHash),
+  monthlyIncomingLimitOverrideCheck: check(
+    "sf_users_monthly_incoming_limit_override_check",
+    sql`${table.monthlyIncomingLimitOverrideMinor} IS NULL OR ${table.monthlyIncomingLimitOverrideMinor} BETWEEN 0 AND 2147483647`
+  )
 }));
 var insertUserSchema = createInsertSchema(usersTable).omit({
   createdAt: true,
@@ -209833,6 +209851,7 @@ var countriesTable = pgTable(
     minPhoneDigits: integer("min_phone_digits").notNull(),
     maxPhoneDigits: integer("max_phone_digits").notNull(),
     enabled: boolean("enabled").notNull().default(true),
+    signupEnabled: boolean("signup_enabled").notNull().default(false),
     depositEnabled: boolean("deposit_enabled").notNull().default(false),
     interNetworkEnabled: boolean("inter_network_enabled").notNull().default(false),
     internationalEnabled: boolean("international_enabled").notNull().default(false),
@@ -209870,6 +209889,7 @@ var insertCountrySchema = external_exports.object({
   minPhoneDigits: external_exports.number().int().min(4).max(15),
   maxPhoneDigits: external_exports.number().int().min(4).max(15),
   enabled: external_exports.boolean().default(true),
+  signupEnabled: external_exports.boolean().default(false),
   depositEnabled: external_exports.boolean().default(false),
   interNetworkEnabled: external_exports.boolean().default(false),
   internationalEnabled: external_exports.boolean().default(false),
@@ -210142,6 +210162,7 @@ var operatorOtpPoliciesTable = pgTable(
     countryCode: varchar("country_code", { length: 2 }).notNull(),
     operatorId: varchar("operator_id", { length: 40 }).notNull(),
     requiresOtp: boolean("requires_otp").notNull(),
+    otpCommand: varchar("otp_command", { length: 40 }),
     version: integer("version").notNull().default(1),
     createdBy: varchar("created_by", { length: 255 }).notNull(),
     updatedBy: varchar("updated_by", { length: 255 }).notNull(),
@@ -210478,12 +210499,19 @@ var insertPaymentAggregatorSchema = external_exports.object({
 var registrationSettingsTable = pgTable("sf_registration_settings", {
   id: varchar("id", { length: 32 }).primaryKey(),
   emailVerificationEnabled: boolean("email_verification_enabled").notNull().default(true),
+  defaultCountryCode: varchar("default_country_code", { length: 2 }).notNull(),
   // Retained for historical database compatibility; signup now uses email verification.
   legacySmsVerificationEnabled: boolean("sms_verification_enabled").notNull().default(true),
   version: integer("version").notNull().default(1),
   updatedBy: varchar("updated_by", { length: 255 }).notNull().default("system"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
-});
+}, (table) => ({
+  defaultCountryForeignKey: foreignKey({
+    name: "sf_registration_settings_default_country_code_fk",
+    columns: [table.defaultCountryCode],
+    foreignColumns: [countriesTable.countryCode]
+  })
+}));
 var insertRegistrationSettingsSchema = createInsertSchema(registrationSettingsTable);
 
 // ../../lib/db/src/schema/payment-limits.ts
@@ -210495,6 +210523,8 @@ var paymentLimitsTable = pgTable("sf_payment_limits", {
   minimumInterNetworkMinor: integer("minimum_inter_network_minor").notNull().default(1),
   maximumTransferMinor: integer("maximum_transfer_minor").notNull().default(1e7),
   maximumPayinMinor: integer("maximum_payin_minor").notNull().default(2e6),
+  maximumUnverifiedIncomingMinor: integer("maximum_unverified_incoming_minor").notNull().default(2e4),
+  maximumVerifiedIncomingMinor: integer("maximum_verified_incoming_minor").notNull().default(4e6),
   version: integer("version").notNull().default(1),
   updatedBy: text("updated_by"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
@@ -210509,6 +210539,14 @@ var paymentLimitsTable = pgTable("sf_payment_limits", {
   interNetworkCheck: check("sf_payment_limits_inter_network_check", sql`${table.minimumInterNetworkMinor} BETWEEN 1 AND 10000000`),
   transferMaximumCheck: check("sf_payment_limits_transfer_max_check", sql`${table.maximumTransferMinor} BETWEEN 1 AND 10000000`),
   payinMaximumCheck: check("sf_payment_limits_payin_max_check", sql`${table.maximumPayinMinor} BETWEEN 200 AND 2000000`),
+  unverifiedIncomingMaximumCheck: check(
+    "sf_payment_limits_unverified_incoming_max_check",
+    sql`${table.maximumUnverifiedIncomingMinor} BETWEEN 0 AND 2147483647`
+  ),
+  verifiedIncomingMaximumCheck: check(
+    "sf_payment_limits_verified_incoming_max_check",
+    sql`${table.maximumVerifiedIncomingMinor} BETWEEN 0 AND 2147483647`
+  ),
   depositTransferOrderCheck: check(
     "sf_payment_limits_deposit_transfer_order_check",
     sql`${table.minimumDepositMinor} <= ${table.maximumTransferMinor}`
@@ -210619,6 +210657,7 @@ var walletsTable = pgTable(
     userId: text("user_id").notNull().unique().references(() => usersTable.id, { onDelete: "cascade" }),
     currency: text("currency").notNull().default("XOF"),
     balanceMinor: bigint("balance_minor", { mode: "number" }).notNull().default(0),
+    unverifiedReceivedMinor: bigint("unverified_received_minor", { mode: "number" }).notNull().default(0),
     status: walletStatusEnum("status").notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
@@ -210631,6 +210670,14 @@ var walletsTable = pgTable(
     balanceSafeIntegerCheck: check(
       "sf_wallets_balance_minor_safe_integer_check",
       sql`${table.balanceMinor} <= 9007199254740991`
+    ),
+    unverifiedReceivedNonnegativeCheck: check(
+      "sf_wallets_unverified_received_minor_nonnegative_check",
+      sql`${table.unverifiedReceivedMinor} >= 0`
+    ),
+    unverifiedReceivedSafeIntegerCheck: check(
+      "sf_wallets_unverified_received_minor_safe_integer_check",
+      sql`${table.unverifiedReceivedMinor} <= 9007199254740991`
     )
   })
 );
@@ -210639,6 +210686,19 @@ var insertWalletSchema = createInsertSchema(walletsTable).omit({
   createdAt: true,
   updatedAt: true
 });
+
+// ../../lib/db/src/schema/wallet-reservation-totals.ts
+var walletReservationTotalsTable = pgTable("sf_wallet_reservation_totals", {
+  walletId: uuid("wallet_id").primaryKey().references(() => walletsTable.id, { onDelete: "restrict" }),
+  reservedMinor: bigint("reserved_minor", { mode: "number" }).notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => ({
+  reservedAmountCheck: check(
+    "sf_wallet_reservation_totals_amount_check",
+    sql`${table.reservedMinor} BETWEEN 0 AND 9007199254740991`
+  )
+}));
 
 // ../../lib/db/src/schema/wallet-ledger.ts
 var walletLedgerDirectionEnum = pgEnum("sf_wallet_ledger_direction", ["credit", "debit"]);
@@ -210755,6 +210815,7 @@ var paymentAttemptsTable = pgTable("sf_payment_attempts", {
   providerReferenceHash: varchar("provider_reference_hash", { length: 64 }).unique(),
   finalConfirmationId: uuid("final_confirmation_id").references(() => paymentConfirmationsTable.id, { onDelete: "restrict" }),
   dispatchedAt: timestamp("dispatched_at", { withTimezone: true }),
+  otpConfirmedAt: timestamp("otp_confirmed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => ({
@@ -210901,6 +210962,7 @@ var customerPaymentLinkAttemptsTable = pgTable("sf_customer_payment_link_payment
   payerFirstNameEncrypted: varchar("payer_first_name_encrypted", { length: 512 }).notNull(),
   payerLastNameEncrypted: varchar("payer_last_name_encrypted", { length: 512 }).notNull(),
   ussdCode: varchar("ussd_code", { length: 32 }),
+  providerRedirectUrlEncrypted: text("provider_redirect_url_encrypted"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 }, (table) => ({
   linkIdempotencyUnique: unique("sf_customer_link_payment_idempotency_uq").on(table.paymentLinkId, table.idempotencyKey),
@@ -210929,6 +210991,10 @@ var customerPaymentLinkAttemptsTable = pgTable("sf_customer_payment_link_payment
   ussdCodeCheck: check(
     "sf_customer_link_payment_ussd_code_check",
     sql`${table.ussdCode} is null or (${table.ussdCode} ~ '^[*][0-9]+([*][0-9]+)*#$' and length(${table.ussdCode}) <= 32)`
+  ),
+  providerRedirectCipherCheck: check(
+    "sf_customer_link_provider_redirect_cipher_check",
+    sql`${table.providerRedirectUrlEncrypted} is null or (${table.providerRedirectUrlEncrypted} ~ '^sfenc-v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$' and octet_length(${table.providerRedirectUrlEncrypted}) <= 4096)`
   )
 }));
 var insertCustomerPaymentLinkAttemptSchema = createInsertSchema(customerPaymentLinkAttemptsTable).omit({
@@ -212273,6 +212339,7 @@ var GetAuthCountriesResponse = object({
     "minPhoneDigits": int().min(getAuthCountriesResponseCountriesItemMinPhoneDigitsMin).max(getAuthCountriesResponseCountriesItemMinPhoneDigitsMax),
     "maxPhoneDigits": int().min(getAuthCountriesResponseCountriesItemMaxPhoneDigitsMin).max(getAuthCountriesResponseCountriesItemMaxPhoneDigitsMax),
     "enabled": boolean3(),
+    "signupEnabled": boolean3(),
     "flag": string2(),
     "operations": object({
       "deposit": boolean3(),
@@ -212282,8 +212349,33 @@ var GetAuthCountriesResponse = object({
     })
   }))
 });
+var getAuthRegistrationCountriesResponseCountriesItemCountryCodeRegExp = new RegExp("^[a-z]{2}$");
+var getAuthRegistrationCountriesResponseCountriesItemMinPhoneDigitsMin = 4;
+var getAuthRegistrationCountriesResponseCountriesItemMinPhoneDigitsMax = 15;
+var getAuthRegistrationCountriesResponseCountriesItemMaxPhoneDigitsMin = 4;
+var getAuthRegistrationCountriesResponseCountriesItemMaxPhoneDigitsMax = 15;
+var GetAuthRegistrationCountriesResponse = object({
+  "countries": array(object({
+    "countryCode": string2().regex(getAuthRegistrationCountriesResponseCountriesItemCountryCodeRegExp),
+    "countryName": string2(),
+    "phonePrefix": string2(),
+    "minPhoneDigits": int().min(getAuthRegistrationCountriesResponseCountriesItemMinPhoneDigitsMin).max(getAuthRegistrationCountriesResponseCountriesItemMinPhoneDigitsMax),
+    "maxPhoneDigits": int().min(getAuthRegistrationCountriesResponseCountriesItemMaxPhoneDigitsMin).max(getAuthRegistrationCountriesResponseCountriesItemMaxPhoneDigitsMax),
+    "enabled": boolean3(),
+    "signupEnabled": boolean3(),
+    "flag": string2(),
+    "operations": object({
+      "deposit": boolean3(),
+      "interNetwork": boolean3(),
+      "international": boolean3(),
+      "payout": boolean3()
+    })
+  }))
+});
+var getRegistrationSettingsResponseDefaultCountryCodeRegExp = new RegExp("^[a-z]{2}$");
 var GetRegistrationSettingsResponse = object({
-  "emailVerificationEnabled": boolean3()
+  "emailVerificationEnabled": boolean3(),
+  "defaultCountryCode": string2().regex(getRegistrationSettingsResponseDefaultCountryCodeRegExp)
 });
 var getCustomerServiceSettingsResponsePhoneNumberMax = 16;
 var getCustomerServiceSettingsResponsePhoneNumberRegExp = new RegExp("^[+][1-9][0-9]{7,14}$");
@@ -212747,6 +212839,9 @@ var getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMax = 60;
 var getPublicPaymentLinkResponseCountriesItemOperatorsItemNameMax = 120;
 var getPublicPaymentLinkResponseCountriesItemOperatorsItemInitialsMax = 12;
 var getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax = 256;
+var getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMin = 3;
+var getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMax = 40;
+var getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandRegExp = new RegExp("^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$");
 var GetPublicPaymentLinkResponse = object({
   "state": _enum2(["active", "expired"]),
   "merchantName": string2().min(1).max(getPublicPaymentLinkResponseMerchantNameMax),
@@ -212768,7 +212863,8 @@ var GetPublicPaymentLinkResponse = object({
       "id": string2().min(getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMin).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemIdMax),
       "name": string2().min(1).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemNameMax),
       "initials": string2().min(1).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemInitialsMax),
-      "logoUrl": string2().max(getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax).nullable()
+      "logoUrl": string2().max(getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax).nullable(),
+      "otpCommand": string2().min(getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMin).max(getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMax).regex(getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandRegExp).nullable().describe("Server-configured instruction to dial for an OTP; not the OTP itself or payment confirmation.")
     }))
   })),
   "paymentAvailable": boolean3(),
@@ -212786,6 +212882,9 @@ var startPublicPaymentLinkAttemptBodyFirstNameMax = 80;
 var startPublicPaymentLinkAttemptBodyLastNameMax = 80;
 var startPublicPaymentLinkAttemptBodyAmountMax = 24;
 var startPublicPaymentLinkAttemptBodyAmountRegExp = new RegExp("^[0-9]+(\\.[0-9]+)?$");
+var startPublicPaymentLinkAttemptBodyOtpMin = 4;
+var startPublicPaymentLinkAttemptBodyOtpMax = 12;
+var startPublicPaymentLinkAttemptBodyOtpRegExp = new RegExp("^[0-9]{4,12}$");
 var StartPublicPaymentLinkAttemptBody = object({
   "countryCode": string2().regex(startPublicPaymentLinkAttemptBodyCountryCodeRegExp),
   "operatorId": string2().min(startPublicPaymentLinkAttemptBodyOperatorIdMin).max(startPublicPaymentLinkAttemptBodyOperatorIdMax),
@@ -212793,7 +212892,8 @@ var StartPublicPaymentLinkAttemptBody = object({
   "firstName": string2().min(1).max(startPublicPaymentLinkAttemptBodyFirstNameMax),
   "lastName": string2().min(1).max(startPublicPaymentLinkAttemptBodyLastNameMax),
   "idempotencyKey": uuid3(),
-  "amount": string2().min(1).max(startPublicPaymentLinkAttemptBodyAmountMax).regex(startPublicPaymentLinkAttemptBodyAmountRegExp).optional()
+  "amount": string2().min(1).max(startPublicPaymentLinkAttemptBodyAmountMax).regex(startPublicPaymentLinkAttemptBodyAmountRegExp).optional(),
+  "otp": string2().min(startPublicPaymentLinkAttemptBodyOtpMin).max(startPublicPaymentLinkAttemptBodyOtpMax).regex(startPublicPaymentLinkAttemptBodyOtpRegExp).optional()
 });
 var startPublicPaymentLinkAttemptResponseOneMerchantNameMax = 120;
 var startPublicPaymentLinkAttemptResponseOneAmountMinorMax = 9007199254740991;
@@ -212809,7 +212909,14 @@ var StartPublicPaymentLinkAttemptResponse = object({
   "currency": literal("XOF"),
   "currencyDecimals": literal(0),
   "ussdCode": string2().max(startPublicPaymentLinkAttemptResponseOneUssdCodeMax).regex(startPublicPaymentLinkAttemptResponseOneUssdCodeRegExp).nullable(),
-  "returnUrl": url().max(startPublicPaymentLinkAttemptResponseOneReturnUrlMax).nullable()
+  "returnUrl": url().max(startPublicPaymentLinkAttemptResponseOneReturnUrlMax).nullable(),
+  "flow": object({
+    "action": _enum2(["approve_on_phone", "dial_ussd", "enter_otp", "open_redirect", "wait", "none"]),
+    "reference": uuid3().nullable(),
+    "otpMethod": union2([literal("sms"), literal("ussd"), literal("app"), literal(null)]).nullable(),
+    "otpCommand": string2().nullable().describe("Server-configured instruction to dial; never the payer's OTP."),
+    "redirectUrl": url().nullable().describe("Provider-generated redirect URL when the selected flow requires one.")
+  })
 }).and(object({
   "pollToken": string2().regex(startPublicPaymentLinkAttemptResponseTwoPollTokenRegExp)
 }));
@@ -212833,7 +212940,50 @@ var GetPublicPaymentLinkAttemptStatusResponse = object({
   "currency": literal("XOF"),
   "currencyDecimals": literal(0),
   "ussdCode": string2().max(getPublicPaymentLinkAttemptStatusResponseUssdCodeMax).regex(getPublicPaymentLinkAttemptStatusResponseUssdCodeRegExp).nullable(),
-  "returnUrl": url().max(getPublicPaymentLinkAttemptStatusResponseReturnUrlMax).nullable()
+  "returnUrl": url().max(getPublicPaymentLinkAttemptStatusResponseReturnUrlMax).nullable(),
+  "flow": object({
+    "action": _enum2(["approve_on_phone", "dial_ussd", "enter_otp", "open_redirect", "wait", "none"]),
+    "reference": uuid3().nullable(),
+    "otpMethod": union2([literal("sms"), literal("ussd"), literal("app"), literal(null)]).nullable(),
+    "otpCommand": string2().nullable().describe("Server-configured instruction to dial; never the payer's OTP."),
+    "redirectUrl": url().nullable().describe("Provider-generated redirect URL when the selected flow requires one.")
+  })
+});
+var ConfirmPublicPaymentLinkAttemptOtpParams = object({
+  "attemptId": uuid3()
+});
+var confirmPublicPaymentLinkAttemptOtpHeaderXLinkFlowAttemptTokenRegExp = new RegExp("^[a-f0-9]{64}$");
+var ConfirmPublicPaymentLinkAttemptOtpHeader = object({
+  "X-LinkFlow-Attempt-Token": string2().regex(confirmPublicPaymentLinkAttemptOtpHeaderXLinkFlowAttemptTokenRegExp)
+});
+var confirmPublicPaymentLinkAttemptOtpBodyOtpMin = 4;
+var confirmPublicPaymentLinkAttemptOtpBodyOtpMax = 12;
+var confirmPublicPaymentLinkAttemptOtpBodyOtpRegExp = new RegExp("^[0-9]{4,12}$");
+var ConfirmPublicPaymentLinkAttemptOtpBody = object({
+  "reference": uuid3(),
+  "otp": string2().min(confirmPublicPaymentLinkAttemptOtpBodyOtpMin).max(confirmPublicPaymentLinkAttemptOtpBodyOtpMax).regex(confirmPublicPaymentLinkAttemptOtpBodyOtpRegExp)
+});
+var confirmPublicPaymentLinkAttemptOtpResponseMerchantNameMax = 120;
+var confirmPublicPaymentLinkAttemptOtpResponseAmountMinorMax = 9007199254740991;
+var confirmPublicPaymentLinkAttemptOtpResponseUssdCodeMax = 32;
+var confirmPublicPaymentLinkAttemptOtpResponseUssdCodeRegExp = new RegExp("^[*][0-9]+([*][0-9]+)*#$");
+var confirmPublicPaymentLinkAttemptOtpResponseReturnUrlMax = 2048;
+var ConfirmPublicPaymentLinkAttemptOtpResponse = object({
+  "attemptId": uuid3(),
+  "state": _enum2(["waiting", "uncertain", "succeeded", "failed"]),
+  "merchantName": string2().min(1).max(confirmPublicPaymentLinkAttemptOtpResponseMerchantNameMax),
+  "amountMinor": int().min(1).max(confirmPublicPaymentLinkAttemptOtpResponseAmountMinorMax),
+  "currency": literal("XOF"),
+  "currencyDecimals": literal(0),
+  "ussdCode": string2().max(confirmPublicPaymentLinkAttemptOtpResponseUssdCodeMax).regex(confirmPublicPaymentLinkAttemptOtpResponseUssdCodeRegExp).nullable(),
+  "returnUrl": url().max(confirmPublicPaymentLinkAttemptOtpResponseReturnUrlMax).nullable(),
+  "flow": object({
+    "action": _enum2(["approve_on_phone", "dial_ussd", "enter_otp", "open_redirect", "wait", "none"]),
+    "reference": uuid3().nullable(),
+    "otpMethod": union2([literal("sms"), literal("ussd"), literal("app"), literal(null)]).nullable(),
+    "otpCommand": string2().nullable().describe("Server-configured instruction to dial; never the payer's OTP."),
+    "redirectUrl": url().nullable().describe("Provider-generated redirect URL when the selected flow requires one.")
+  })
 });
 var getPublicPaymentLinkQuotePathTokenRegExp = new RegExp("^[A-Za-z0-9_-]{43}$");
 var getPublicPaymentLinkQuotePathCountryCodeRegExp = new RegExp("^[a-z]{2}$");
@@ -213352,7 +213502,10 @@ var GetDeveloperPublicPaymentSessionResponse = object({
       "id": string2(),
       "name": string2(),
       "initials": string2(),
-      "logoUrl": string2().nullable()
+      "logoUrl": string2().nullable(),
+      "requiresOtp": boolean3(),
+      "otpMethod": union2([literal("sms"), literal("ussd"), literal("app"), literal(null)]).nullable(),
+      "otpCommand": string2().nullable()
     }))
   }))
 });
@@ -213376,12 +213529,15 @@ var startDeveloperDirectPaymentBodyCountryCodeRegExp = new RegExp("^[A-Z]{2}$");
 var startDeveloperDirectPaymentBodyOperatorIdMax = 80;
 var startDeveloperDirectPaymentBodyPhoneNumberMin = 6;
 var startDeveloperDirectPaymentBodyPhoneNumberMax = 20;
+var startDeveloperDirectPaymentBodyOtpRegExp = new RegExp("^[0-9]{4,12}$");
 var StartDeveloperDirectPaymentBody = object({
   "firstName": string2().min(1).max(startDeveloperDirectPaymentBodyFirstNameMax),
   "lastName": string2().min(1).max(startDeveloperDirectPaymentBodyLastNameMax),
   "countryCode": string2().regex(startDeveloperDirectPaymentBodyCountryCodeRegExp),
   "operatorId": string2().min(1).max(startDeveloperDirectPaymentBodyOperatorIdMax),
-  "phoneNumber": string2().min(startDeveloperDirectPaymentBodyPhoneNumberMin).max(startDeveloperDirectPaymentBodyPhoneNumberMax)
+  "phoneNumber": string2().min(startDeveloperDirectPaymentBodyPhoneNumberMin).max(startDeveloperDirectPaymentBodyPhoneNumberMax),
+  "otp": string2().regex(startDeveloperDirectPaymentBodyOtpRegExp).optional().describe("Payer-provided OTP. The API never stores it."),
+  "reference": uuid3().optional().describe("Attempt reference returned when the provider requires a second OTP step.")
 });
 var StartDeveloperDirectPaymentResponse = object({
   "id": uuid3(),
@@ -213391,7 +213547,14 @@ var StartDeveloperDirectPaymentResponse = object({
   "currency": _enum2(["XOF"]),
   "ussdCode": string2().nullable(),
   "pollToken": string2(),
-  "merchantReference": string2()
+  "merchantReference": string2(),
+  "flow": object({
+    "action": _enum2(["approve_on_phone", "dial_ussd", "enter_otp", "open_redirect", "wait", "none"]),
+    "reference": uuid3().nullable(),
+    "otpMethod": union2([literal("sms"), literal("ussd"), literal("app"), literal(null)]).nullable(),
+    "otpCommand": string2().nullable().describe("Server-configured instruction to dial; never the payer's OTP."),
+    "redirectUrl": url().nullable().describe("Provider-generated redirect URL when the selected flow requires one.")
+  })
 });
 var GetDeveloperDirectPaymentStatusParams = object({
   "sessionId": uuid3(),
@@ -213416,7 +213579,14 @@ var GetDeveloperDirectPaymentStatusResponse = object({
   "currency": _enum2(["XOF"]),
   "ussdCode": string2().nullable(),
   "pollToken": string2(),
-  "merchantReference": string2()
+  "merchantReference": string2(),
+  "flow": object({
+    "action": _enum2(["approve_on_phone", "dial_ussd", "enter_otp", "open_redirect", "wait", "none"]),
+    "reference": uuid3().nullable(),
+    "otpMethod": union2([literal("sms"), literal("ussd"), literal("app"), literal(null)]).nullable(),
+    "otpCommand": string2().nullable().describe("Server-configured instruction to dial; never the payer's OTP."),
+    "redirectUrl": url().nullable().describe("Provider-generated redirect URL when the selected flow requires one.")
+  })
 });
 var getCurrentAccountLimitResponseSentAmountMin = 0;
 var getCurrentAccountLimitResponseRemainingAmountMin = 0;
@@ -213761,6 +213931,7 @@ var GetAdminCountriesResponse = object({
     "minPhoneDigits": int().min(getAdminCountriesResponseCountriesItemOneMinPhoneDigitsMin).max(getAdminCountriesResponseCountriesItemOneMinPhoneDigitsMax),
     "maxPhoneDigits": int().min(getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMin).max(getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMax),
     "enabled": boolean3(),
+    "signupEnabled": boolean3(),
     "flag": string2(),
     "operations": object({
       "deposit": boolean3(),
@@ -213811,6 +213982,7 @@ var CreateAdminCountryResponse = object({
   "minPhoneDigits": int().min(createAdminCountryResponseOneMinPhoneDigitsMin).max(createAdminCountryResponseOneMinPhoneDigitsMax),
   "maxPhoneDigits": int().min(createAdminCountryResponseOneMaxPhoneDigitsMin).max(createAdminCountryResponseOneMaxPhoneDigitsMax),
   "enabled": boolean3(),
+  "signupEnabled": boolean3(),
   "flag": string2(),
   "operations": object({
     "deposit": boolean3(),
@@ -213841,6 +214013,7 @@ var UpdateAdminCountryBody = object({
   "minPhoneDigits": int().min(updateAdminCountryBodyMinPhoneDigitsMin).max(updateAdminCountryBodyMinPhoneDigitsMax),
   "maxPhoneDigits": int().min(updateAdminCountryBodyMaxPhoneDigitsMin).max(updateAdminCountryBodyMaxPhoneDigitsMax),
   "enabled": boolean3(),
+  "signupEnabled": boolean3(),
   "operations": object({
     "deposit": boolean3(),
     "interNetwork": boolean3(),
@@ -213862,6 +214035,7 @@ var UpdateAdminCountryResponse = object({
   "minPhoneDigits": int().min(updateAdminCountryResponseOneMinPhoneDigitsMin).max(updateAdminCountryResponseOneMinPhoneDigitsMax),
   "maxPhoneDigits": int().min(updateAdminCountryResponseOneMaxPhoneDigitsMin).max(updateAdminCountryResponseOneMaxPhoneDigitsMax),
   "enabled": boolean3(),
+  "signupEnabled": boolean3(),
   "flag": string2(),
   "operations": object({
     "deposit": boolean3(),
@@ -214711,6 +214885,9 @@ var RetryAdminEmailCampaignRecipientResponse = object({
 });
 var listAdminOtpPoliciesResponseItemsItemCountryCodeRegExp = new RegExp("^[a-z]{2}$");
 var listAdminOtpPoliciesResponseItemsItemOperatorIdRegExp = new RegExp("^[a-z0-9]+(?:-[a-z0-9]+)*$");
+var listAdminOtpPoliciesResponseItemsItemOtpCommandMin = 3;
+var listAdminOtpPoliciesResponseItemsItemOtpCommandMax = 40;
+var listAdminOtpPoliciesResponseItemsItemOtpCommandRegExp = new RegExp("^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$");
 var listAdminOtpPoliciesResponseItemsItemVersionMin = 0;
 var ListAdminOtpPoliciesResponse = object({
   "items": array(object({
@@ -214720,6 +214897,7 @@ var ListAdminOtpPoliciesResponse = object({
     "operatorName": string2(),
     "phonePrefix": string2(),
     "requiresOtp": boolean3(),
+    "otpCommand": string2().min(listAdminOtpPoliciesResponseItemsItemOtpCommandMin).max(listAdminOtpPoliciesResponseItemsItemOtpCommandMax).regex(listAdminOtpPoliciesResponseItemsItemOtpCommandRegExp).nullable(),
     "providerStatus": _enum2(["not_configured"]).describe("The official operator API is not connected, so OTPs cannot be verified yet."),
     "version": int().min(listAdminOtpPoliciesResponseItemsItemVersionMin),
     "updatedAt": coerce_exports.date().nullable()
@@ -214728,23 +214906,30 @@ var ListAdminOtpPoliciesResponse = object({
 var updateAdminOtpPolicyPathCountryCodeMin = 2;
 var updateAdminOtpPolicyPathCountryCodeMax = 2;
 var updateAdminOtpPolicyPathCountryCodeRegExp = new RegExp("^[a-z]{2}$");
-var updateAdminOtpPolicyPathOperatorIdMin = 9;
-var updateAdminOtpPolicyPathOperatorIdMax = 9;
-var updateAdminOtpPolicyPathOperatorIdRegExp = new RegExp("^orange-[a-z]{2}$");
+var updateAdminOtpPolicyPathOperatorIdMin = 2;
+var updateAdminOtpPolicyPathOperatorIdMax = 40;
+var updateAdminOtpPolicyPathOperatorIdRegExp = new RegExp("^[a-z0-9]+(?:-[a-z0-9]+)*$");
 var UpdateAdminOtpPolicyParams = object({
   "countryCode": coerce_exports.string().min(updateAdminOtpPolicyPathCountryCodeMin).max(updateAdminOtpPolicyPathCountryCodeMax).regex(updateAdminOtpPolicyPathCountryCodeRegExp),
   "operatorId": coerce_exports.string().min(updateAdminOtpPolicyPathOperatorIdMin).max(updateAdminOtpPolicyPathOperatorIdMax).regex(updateAdminOtpPolicyPathOperatorIdRegExp)
 });
+var updateAdminOtpPolicyBodyOtpCommandMin = 3;
+var updateAdminOtpPolicyBodyOtpCommandMax = 40;
+var updateAdminOtpPolicyBodyOtpCommandRegExp = new RegExp("^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$");
 var updateAdminOtpPolicyBodyExpectedVersionMin = 0;
 var updateAdminOtpPolicyBodyReasonMin = 3;
 var updateAdminOtpPolicyBodyReasonMax = 500;
 var UpdateAdminOtpPolicyBody = object({
   "requiresOtp": boolean3(),
+  "otpCommand": string2().min(updateAdminOtpPolicyBodyOtpCommandMin).max(updateAdminOtpPolicyBodyOtpCommandMax).regex(updateAdminOtpPolicyBodyOtpCommandRegExp).nullable(),
   "expectedVersion": int().min(updateAdminOtpPolicyBodyExpectedVersionMin),
   "reason": string2().min(updateAdminOtpPolicyBodyReasonMin).max(updateAdminOtpPolicyBodyReasonMax)
 });
 var updateAdminOtpPolicyResponseCountryCodeRegExp = new RegExp("^[a-z]{2}$");
 var updateAdminOtpPolicyResponseOperatorIdRegExp = new RegExp("^[a-z0-9]+(?:-[a-z0-9]+)*$");
+var updateAdminOtpPolicyResponseOtpCommandMin = 3;
+var updateAdminOtpPolicyResponseOtpCommandMax = 40;
+var updateAdminOtpPolicyResponseOtpCommandRegExp = new RegExp("^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$");
 var updateAdminOtpPolicyResponseVersionMin = 0;
 var UpdateAdminOtpPolicyResponse = object({
   "countryCode": string2().regex(updateAdminOtpPolicyResponseCountryCodeRegExp),
@@ -214753,6 +214938,7 @@ var UpdateAdminOtpPolicyResponse = object({
   "operatorName": string2(),
   "phonePrefix": string2(),
   "requiresOtp": boolean3(),
+  "otpCommand": string2().min(updateAdminOtpPolicyResponseOtpCommandMin).max(updateAdminOtpPolicyResponseOtpCommandMax).regex(updateAdminOtpPolicyResponseOtpCommandRegExp).nullable(),
   "providerStatus": _enum2(["not_configured"]).describe("The official operator API is not connected, so OTPs cannot be verified yet."),
   "version": int().min(updateAdminOtpPolicyResponseVersionMin),
   "updatedAt": coerce_exports.date().nullable()
@@ -214938,6 +215124,16 @@ var getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMin = 0;
 var getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMax = 9007199254740991;
 var getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMin = 0;
 var getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMax = 9007199254740991;
+var getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMax = 9007199254740991;
+var getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMax = 2147483647;
+var getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMax = 2147483647;
+var getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax = 2147483647;
+var getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax = 2147483647;
 var GetAdminUserResponse = object({
   "user": object({
     "id": string2(),
@@ -214977,6 +215173,16 @@ var GetAdminUserResponse = object({
       "interNetworkMinor": int().min(getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMin).max(getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMax),
       "internationalMinor": int().min(getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMin).max(getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMax)
     })
+  }),
+  "monthlyIncomingPolicy": object({
+    "identityVerified": boolean3(),
+    "receivedMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMax),
+    "unverifiedLimitMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMax),
+    "verifiedLimitMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMax),
+    "overrideMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax).nullable(),
+    "effectiveLimitMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax),
+    "periodStart": coerce_exports.date(),
+    "periodEnd": coerce_exports.date()
   })
 });
 var listAdminUserDeveloperWebhooksQueryPageDefault = 1;
@@ -215136,6 +215342,29 @@ var GetAdminTransactionResponse = object({
     }))
   })
 });
+var UpdateAdminUserMonthlyIncomingLimitParams = object({
+  "userId": coerce_exports.string().min(1)
+});
+var updateAdminUserMonthlyIncomingLimitBodyMonthlyIncomingLimitOverrideMinorMin = 0;
+var updateAdminUserMonthlyIncomingLimitBodyMonthlyIncomingLimitOverrideMinorMax = 2147483647;
+var updateAdminUserMonthlyIncomingLimitBodyExpectedMonthlyIncomingLimitOverrideMinorMin = 0;
+var updateAdminUserMonthlyIncomingLimitBodyExpectedMonthlyIncomingLimitOverrideMinorMax = 2147483647;
+var updateAdminUserMonthlyIncomingLimitBodyReasonMin = 10;
+var updateAdminUserMonthlyIncomingLimitBodyReasonMax = 500;
+var updateAdminUserMonthlyIncomingLimitBodyReasonRegExp = new RegExp("^(\\s*\\S){10,}\\s*$");
+var UpdateAdminUserMonthlyIncomingLimitBody = object({
+  "monthlyIncomingLimitOverrideMinor": int().min(updateAdminUserMonthlyIncomingLimitBodyMonthlyIncomingLimitOverrideMinorMin).max(updateAdminUserMonthlyIncomingLimitBodyMonthlyIncomingLimitOverrideMinorMax).nullable(),
+  "expectedMonthlyIncomingLimitOverrideMinor": int().min(updateAdminUserMonthlyIncomingLimitBodyExpectedMonthlyIncomingLimitOverrideMinorMin).max(updateAdminUserMonthlyIncomingLimitBodyExpectedMonthlyIncomingLimitOverrideMinorMax).nullable(),
+  "confirmation": _enum2(["CONFIRMER"]),
+  "reason": string2().min(updateAdminUserMonthlyIncomingLimitBodyReasonMin).max(updateAdminUserMonthlyIncomingLimitBodyReasonMax).regex(updateAdminUserMonthlyIncomingLimitBodyReasonRegExp)
+});
+var updateAdminUserMonthlyIncomingLimitResponseMonthlyIncomingLimitOverrideMinorMin = 0;
+var updateAdminUserMonthlyIncomingLimitResponseMonthlyIncomingLimitOverrideMinorMax = 2147483647;
+var UpdateAdminUserMonthlyIncomingLimitResponse = object({
+  "userId": string2(),
+  "monthlyIncomingLimitOverrideMinor": int().min(updateAdminUserMonthlyIncomingLimitResponseMonthlyIncomingLimitOverrideMinorMin).max(updateAdminUserMonthlyIncomingLimitResponseMonthlyIncomingLimitOverrideMinorMax).nullable(),
+  "updatedAt": coerce_exports.date()
+});
 var CreateAdminWalletAdjustmentParams = object({
   "userId": coerce_exports.string().min(1)
 });
@@ -215258,6 +215487,10 @@ var getAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax = 1e7;
 var getAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 1e7;
 var getAdminPaymentLimitsResponseOneMaximumPayinMinorMin = 200;
 var getAdminPaymentLimitsResponseOneMaximumPayinMinorMax = 2e6;
+var getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin = 0;
+var getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax = 2147483647;
+var getAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMin = 0;
+var getAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMax = 2147483647;
 var GetAdminPaymentLimitsResponse = object({
   "currency": _enum2(["XOF"]),
   "minimumDepositMinor": int().min(getAdminPaymentLimitsResponseOneMinimumDepositMinorMin).max(getAdminPaymentLimitsResponseOneMinimumDepositMinorMax),
@@ -215267,6 +215500,8 @@ var GetAdminPaymentLimitsResponse = object({
   "maximumTransferMinor": int().min(1).max(getAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": int().min(getAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(getAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
 }).and(object({
+  "maximumUnverifiedIncomingMinor": int().min(getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin).max(getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax).describe("Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only."),
+  "maximumVerifiedIncomingMinor": int().min(getAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMin).max(getAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMax).describe("Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only."),
   "version": int().min(1),
   "updatedAt": coerce_exports.date()
 }));
@@ -215280,6 +215515,10 @@ var updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax = 1e7;
 var updateAdminPaymentLimitsBodyMaximumTransferMinorMax = 1e7;
 var updateAdminPaymentLimitsBodyMaximumPayinMinorMin = 200;
 var updateAdminPaymentLimitsBodyMaximumPayinMinorMax = 2e6;
+var updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMin = 0;
+var updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMax = 2147483647;
+var updateAdminPaymentLimitsBodyMaximumVerifiedIncomingMinorMin = 0;
+var updateAdminPaymentLimitsBodyMaximumVerifiedIncomingMinorMax = 2147483647;
 var updateAdminPaymentLimitsBodyReasonMin = 3;
 var updateAdminPaymentLimitsBodyReasonMax = 500;
 var UpdateAdminPaymentLimitsBody = object({
@@ -215289,6 +215528,8 @@ var UpdateAdminPaymentLimitsBody = object({
   "minimumInterNetworkMinor": int().min(1).max(updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax),
   "maximumTransferMinor": int().min(1).max(updateAdminPaymentLimitsBodyMaximumTransferMinorMax),
   "maximumPayinMinor": int().min(updateAdminPaymentLimitsBodyMaximumPayinMinorMin).max(updateAdminPaymentLimitsBodyMaximumPayinMinorMax),
+  "maximumUnverifiedIncomingMinor": int().min(updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMin).max(updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMax),
+  "maximumVerifiedIncomingMinor": int().min(updateAdminPaymentLimitsBodyMaximumVerifiedIncomingMinorMin).max(updateAdminPaymentLimitsBodyMaximumVerifiedIncomingMinorMax),
   "expectedVersion": int().min(1),
   "reason": string2().min(updateAdminPaymentLimitsBodyReasonMin).max(updateAdminPaymentLimitsBodyReasonMax)
 });
@@ -215302,6 +215543,10 @@ var updateAdminPaymentLimitsResponseOneMinimumInterNetworkMinorMax = 1e7;
 var updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 1e7;
 var updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin = 200;
 var updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax = 2e6;
+var updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin = 0;
+var updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax = 2147483647;
+var updateAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMin = 0;
+var updateAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMax = 2147483647;
 var UpdateAdminPaymentLimitsResponse = object({
   "currency": _enum2(["XOF"]),
   "minimumDepositMinor": int().min(updateAdminPaymentLimitsResponseOneMinimumDepositMinorMin).max(updateAdminPaymentLimitsResponseOneMinimumDepositMinorMax),
@@ -215311,6 +215556,8 @@ var UpdateAdminPaymentLimitsResponse = object({
   "maximumTransferMinor": int().min(1).max(updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": int().min(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
 }).and(object({
+  "maximumUnverifiedIncomingMinor": int().min(updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin).max(updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax).describe("Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only."),
+  "maximumVerifiedIncomingMinor": int().min(updateAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMin).max(updateAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMax).describe("Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only."),
   "version": int().min(1),
   "updatedAt": coerce_exports.date()
 }));
@@ -215462,12 +215709,159 @@ async function loadAdminSession(req, res, next) {
   }
 }
 
+// src/services/payment-limits-policy.ts
+var DEFAULT_PAYMENT_LIMITS = Object.freeze({
+  minimumDepositMinor: 200,
+  minimumPayoutMinor: 200,
+  maximumPayoutDailyMinor: null,
+  minimumInterNetworkMinor: 1,
+  maximumTransferMinor: 1e7,
+  maximumPayinMinor: 2e6,
+  maximumUnverifiedIncomingMinor: 2e4,
+  maximumVerifiedIncomingMinor: 4e6
+});
+function isValidPaymentLimitValues(values) {
+  const amounts = [
+    values.minimumDepositMinor,
+    values.minimumPayoutMinor,
+    values.minimumInterNetworkMinor,
+    values.maximumTransferMinor,
+    values.maximumPayinMinor
+  ];
+  if (!amounts.every((amount) => Number.isSafeInteger(amount) && amount > 0)) return false;
+  if (!Number.isSafeInteger(values.maximumUnverifiedIncomingMinor) || values.maximumUnverifiedIncomingMinor < 0 || values.maximumUnverifiedIncomingMinor > 2147483647) return false;
+  if (!Number.isSafeInteger(values.maximumVerifiedIncomingMinor) || values.maximumVerifiedIncomingMinor < 0 || values.maximumVerifiedIncomingMinor > 2147483647) return false;
+  if (values.maximumPayoutDailyMinor !== null && (!Number.isSafeInteger(values.maximumPayoutDailyMinor) || values.maximumPayoutDailyMinor < values.minimumPayoutMinor)) return false;
+  return values.minimumDepositMinor >= 200 && values.minimumDepositMinor <= values.maximumTransferMinor && values.minimumDepositMinor <= values.maximumPayinMinor && values.minimumPayoutMinor >= 200 && values.minimumPayoutMinor <= 2e6 && values.minimumPayoutMinor <= values.maximumTransferMinor && values.minimumInterNetworkMinor <= values.maximumTransferMinor && values.maximumTransferMinor <= 1e7 && values.maximumPayinMinor >= 200 && values.maximumPayinMinor <= 2e6;
+}
+function hasReachedUnverifiedIncomingLimit(receivedMinor, limitMinor) {
+  if (!Number.isSafeInteger(receivedMinor) || receivedMinor < 0 || !Number.isSafeInteger(limitMinor) || limitMinor < 0) {
+    throw new Error("Invalid unverified incoming limit values");
+  }
+  return receivedMinor >= limitMinor;
+}
+function isMonthlyIncomingLimitReached(receivedMinor, limitMinor) {
+  return hasReachedUnverifiedIncomingLimit(receivedMinor, limitMinor);
+}
+function resolveMonthlyIncomingLimit(identityVerified, overrideMinor, unverifiedLimitMinor, verifiedLimitMinor) {
+  if (overrideMinor !== null && (!Number.isSafeInteger(overrideMinor) || overrideMinor < 0 || overrideMinor > 2147483647)) {
+    throw new Error("Invalid user-specific monthly incoming limit");
+  }
+  const tierLimit = identityVerified ? verifiedLimitMinor : unverifiedLimitMinor;
+  if (!Number.isSafeInteger(tierLimit) || tierLimit < 0 || tierLimit > 2147483647) {
+    throw new Error("Invalid global monthly incoming limit");
+  }
+  return overrideMinor ?? tierLimit;
+}
+function addUnverifiedIncomingAmount(currentMinor, creditedMinor, identityVerified) {
+  if (!Number.isSafeInteger(currentMinor) || currentMinor < 0 || !Number.isSafeInteger(creditedMinor) || creditedMinor < 0) {
+    throw new Error("Invalid unverified incoming amount");
+  }
+  if (identityVerified) return currentMinor;
+  return Math.min(Number.MAX_SAFE_INTEGER, currentMinor + creditedMinor);
+}
+function getMinimumForTransfer(kind, limits) {
+  if (kind === "deposit") return limits.minimumDepositMinor;
+  if (kind === "inter-network") return limits.minimumInterNetworkMinor;
+  return limits.minimumPayoutMinor;
+}
+
+// src/lib/account-limit-policy.ts
+function getMonthlyAccountLimit() {
+  return 15e4;
+}
+function getUtcMonthRange(now) {
+  return {
+    periodStart: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+    periodEnd: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
+  };
+}
+
+// src/data/payment-limits.ts
+var PAYMENT_LIMITS_ID = "global";
+async function loadPaymentLimits() {
+  const [record2] = await db.select().from(paymentLimitsTable).where(eq(paymentLimitsTable.id, PAYMENT_LIMITS_ID)).limit(1);
+  if (!record2) throw new Error("Payment limits have not been initialized");
+  return {
+    minimumDepositMinor: record2.minimumDepositMinor,
+    minimumPayoutMinor: record2.minimumPayoutMinor,
+    maximumPayoutDailyMinor: record2.maximumPayoutDailyMinor,
+    minimumInterNetworkMinor: record2.minimumInterNetworkMinor,
+    maximumTransferMinor: record2.maximumTransferMinor,
+    maximumPayinMinor: record2.maximumPayinMinor,
+    maximumUnverifiedIncomingMinor: record2.maximumUnverifiedIncomingMinor,
+    maximumVerifiedIncomingMinor: record2.maximumVerifiedIncomingMinor
+  };
+}
+
+// src/data/unverified-incoming-policy.ts
+async function getMonthlyIncomingPolicy(userId, now = /* @__PURE__ */ new Date()) {
+  if (!userId) throw new Error("Authenticated user is required");
+  const { periodStart, periodEnd } = getUtcMonthRange(now);
+  const [[user], [limits], [approvedIdentity], [receiptTotal]] = await Promise.all([
+    db.select({
+      monthlyIncomingLimitOverrideMinor: usersTable.monthlyIncomingLimitOverrideMinor
+    }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
+    db.select({
+      unverifiedLimitMinor: paymentLimitsTable.maximumUnverifiedIncomingMinor,
+      verifiedLimitMinor: paymentLimitsTable.maximumVerifiedIncomingMinor
+    }).from(paymentLimitsTable).where(eq(paymentLimitsTable.id, PAYMENT_LIMITS_ID)).limit(1),
+    db.select({ id: customerIdentityRequestsTable.id }).from(customerIdentityRequestsTable).where(and(
+      eq(customerIdentityRequestsTable.userId, userId),
+      eq(customerIdentityRequestsTable.status, "approved")
+    )).limit(1),
+    db.select({
+      total: sql`coalesce(sum(${walletLedgerTable.amountMinor}), 0)`
+    }).from(walletLedgerTable).where(and(
+      eq(walletLedgerTable.userId, userId),
+      eq(walletLedgerTable.direction, "credit"),
+      eq(walletLedgerTable.currency, "XOF"),
+      sql`${walletLedgerTable.adminUserId} LIKE 'system:%'`,
+      gte(walletLedgerTable.createdAt, periodStart),
+      lt(walletLedgerTable.createdAt, periodEnd)
+    ))
+  ]);
+  if (!user || !limits) throw new Error("Monthly incoming policy is unavailable");
+  const receivedMinor = Number(receiptTotal?.total ?? 0);
+  if (!Number.isSafeInteger(receivedMinor) || receivedMinor < 0) {
+    throw new Error("Monthly incoming receipts are outside the safe integer range");
+  }
+  const identityVerified = Boolean(approvedIdentity);
+  const overrideMinor = user.monthlyIncomingLimitOverrideMinor;
+  const effectiveLimitMinor = resolveMonthlyIncomingLimit(
+    identityVerified,
+    overrideMinor,
+    limits.unverifiedLimitMinor,
+    limits.verifiedLimitMinor
+  );
+  const outgoingBlocked = isMonthlyIncomingLimitReached(receivedMinor, effectiveLimitMinor);
+  const blockCode = outgoingBlocked ? !identityVerified && overrideMinor === null ? "identity_verification_required" : "monthly_incoming_limit_reached" : null;
+  return {
+    identityVerified,
+    receivedMinor,
+    unverifiedLimitMinor: limits.unverifiedLimitMinor,
+    verifiedLimitMinor: limits.verifiedLimitMinor,
+    overrideMinor,
+    effectiveLimitMinor,
+    outgoingBlocked,
+    blockCode,
+    periodStart,
+    periodEnd
+  };
+}
+function monthlyIncomingOutgoingBlockedMessage(policy) {
+  if (policy.blockCode === "identity_verification_required") {
+    return "Votre plafond mensuel avant validation de votre identit\xE9 est atteint. Faites v\xE9rifier votre identit\xE9 pour b\xE9n\xE9ficier du plafond mensuel valid\xE9. Les encaissements restent possibles. Aucun transfert n\u2019a \xE9t\xE9 lanc\xE9.";
+  }
+  return `Votre plafond mensuel d\u2019encaissements de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les encaissements restent possibles ; les sorties seront de nouveau disponibles au prochain mois. Aucun transfert n\u2019a \xE9t\xE9 lanc\xE9.`;
+}
+
 // src/routes/admin.ts
 var router2 = (0, import_express2.Router)();
 function getAdminUserId(req, permission = "read") {
   const session = adminSessionContext(req);
   if (!session) return { userId: null, status: 401, error: "Administrator authentication required" };
-  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?|identity-verifications(?:\/.*)?|users\/[^/]+\/(?:suspend|restore))\/?$/.test(req.path)) {
+  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?|identity-verifications(?:\/.*)?|users\/[^/]+\/(?:suspend|restore|monthly-incoming-limit))\/?$/.test(req.path)) {
     return { userId: null, status: 403, error: "Administrator permission does not authorize this operation" };
   }
   if (permission === "mutate" && !session.canMutate) {
@@ -215772,6 +216166,7 @@ router2.get("/users/:userId", async (req, res) => {
         }
       }))
     ]);
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(userId);
     await recordAdminAudit({
       adminUserId,
       action: "view_user_detail",
@@ -215790,7 +216185,17 @@ router2.get("/users/:userId", async (req, res) => {
         },
         wallet: wallet ?? null,
         transactionSummary,
-        financialTotals
+        financialTotals,
+        monthlyIncomingPolicy: {
+          identityVerified: monthlyIncomingPolicy.identityVerified,
+          receivedMinor: monthlyIncomingPolicy.receivedMinor,
+          unverifiedLimitMinor: monthlyIncomingPolicy.unverifiedLimitMinor,
+          verifiedLimitMinor: monthlyIncomingPolicy.verifiedLimitMinor,
+          overrideMinor: monthlyIncomingPolicy.overrideMinor,
+          effectiveLimitMinor: monthlyIncomingPolicy.effectiveLimitMinor,
+          periodStart: monthlyIncomingPolicy.periodStart.toISOString(),
+          periodEnd: monthlyIncomingPolicy.periodEnd.toISOString()
+        }
       })
     );
   } catch (error62) {
@@ -217319,17 +217724,6 @@ var account_default = router5;
 // src/routes/account-limit.ts
 var import_express8 = __toESM(require_express2(), 1);
 
-// src/lib/account-limit-policy.ts
-function getMonthlyAccountLimit() {
-  return 15e4;
-}
-function getUtcMonthRange(now) {
-  return {
-    periodStart: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
-    periodEnd: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
-  };
-}
-
 // src/lib/account-limit.ts
 async function getAccountLimitSnapshot(userId, now = /* @__PURE__ */ new Date()) {
   const [latestVerification] = await db.select({ status: customerIdentityRequestsTable.status }).from(customerIdentityRequestsTable).where(eq(customerIdentityRequestsTable.userId, userId)).orderBy(sql`${customerIdentityRequestsTable.submittedAt} desc`).limit(1);
@@ -217845,6 +218239,73 @@ router8.post("/users/:userId/wallet-adjustments", async (req, res) => {
     res.status(503).json({ error: "Administrator action storage unavailable" });
   }
 });
+router8.patch("/users/:userId/monthly-incoming-limit", async (req, res) => {
+  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  if (!adminUserId) return;
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine de la requ\xEAte non autoris\xE9e." });
+    return;
+  }
+  const parsedParams = GetAdminUserParams.safeParse(req.params);
+  const parsedBody = UpdateAdminUserMonthlyIncomingLimitBody.safeParse(req.body);
+  if (!parsedParams.success || !parsedBody.success) {
+    res.status(400).json({ error: "V\xE9rifiez le plafond, la confirmation et le motif." });
+    return;
+  }
+  const { userId } = parsedParams.data;
+  const update = parsedBody.data;
+  const reason = update.reason.trim();
+  if (update.confirmation !== "CONFIRMER" || reason.length < 10) {
+    res.status(400).json({ error: "Une confirmation et un motif d\xE9taill\xE9 sont requis." });
+    return;
+  }
+  try {
+    const changed = await db.transaction(async (tx) => {
+      const [previous] = await tx.select({
+        id: usersTable.id,
+        status: usersTable.status,
+        monthlyIncomingLimitOverrideMinor: usersTable.monthlyIncomingLimitOverrideMinor
+      }).from(usersTable).where(eq(usersTable.id, userId)).for("update").limit(1);
+      if (!previous) throw new AdminActionError(404, "Utilisateur introuvable.");
+      if (previous.status === "deleted") {
+        throw new AdminActionError(409, "Le plafond d\u2019un compte supprim\xE9 ne peut pas \xEAtre modifi\xE9.");
+      }
+      if (previous.monthlyIncomingLimitOverrideMinor !== update.expectedMonthlyIncomingLimitOverrideMinor) {
+        throw new AdminActionError(409, "Le plafond a chang\xE9 dans une autre session. Actualisez la fiche.");
+      }
+      const [updated] = await tx.update(usersTable).set({
+        monthlyIncomingLimitOverrideMinor: update.monthlyIncomingLimitOverrideMinor,
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq(usersTable.id, userId)).returning({
+        id: usersTable.id,
+        monthlyIncomingLimitOverrideMinor: usersTable.monthlyIncomingLimitOverrideMinor,
+        updatedAt: usersTable.updatedAt
+      });
+      if (!updated) throw new AdminActionError(409, "Le plafond n\u2019a pas \xE9t\xE9 enregistr\xE9.");
+      await recordAdminAudit({
+        adminUserId,
+        action: "update_user_monthly_incoming_limit",
+        resourceType: "user",
+        resourceId: userId,
+        reason: `${reason.slice(0, 360)} [plafond mensuel FCFA : ${previous.monthlyIncomingLimitOverrideMinor ?? "global"} \u2192 ${updated.monthlyIncomingLimitOverrideMinor ?? "global"}]`
+      }, tx);
+      return updated;
+    });
+    res.setHeader("Cache-Control", "no-store");
+    res.json(UpdateAdminUserMonthlyIncomingLimitResponse.parse({
+      userId: changed.id,
+      monthlyIncomingLimitOverrideMinor: changed.monthlyIncomingLimitOverrideMinor,
+      updatedAt: changed.updatedAt.toISOString()
+    }));
+  } catch (error62) {
+    if (error62 instanceof AdminActionError) {
+      actionErrorResponse(res, error62);
+      return;
+    }
+    req.log.error({ err: error62, userId }, "Admin monthly incoming limit update failed");
+    res.status(503).json({ error: "Le plafond utilisateur est momentan\xE9ment indisponible." });
+  }
+});
 async function applyUserAction(req, res, action, body) {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
@@ -218243,6 +218704,7 @@ function toAdminOtpPolicy(catalogEntry, stored) {
     operatorName: catalogEntry.operatorName,
     phonePrefix: catalogEntry.phonePrefix,
     requiresOtp: stored?.requiresOtp ?? true,
+    otpCommand: stored?.otpCommand ?? null,
     providerStatus: "not_configured",
     version: stored?.version ?? 0,
     updatedAt: stored?.updatedAt?.toISOString() ?? null
@@ -218298,6 +218760,7 @@ router11.patch("/otp-policies/:countryCode/:operatorId", async (req, res) => {
       );
       let [policy] = await tx.update(operatorOtpPoliciesTable).set({
         requiresOtp: body.data.requiresOtp,
+        otpCommand: body.data.otpCommand,
         version: body.data.expectedVersion + 1,
         updatedBy: adminUserId,
         updatedAt: /* @__PURE__ */ new Date()
@@ -218307,6 +218770,7 @@ router11.patch("/otp-policies/:countryCode/:operatorId", async (req, res) => {
           countryCode,
           operatorId,
           requiresOtp: body.data.requiresOtp,
+          otpCommand: body.data.otpCommand,
           version: 1,
           createdBy: adminUserId,
           updatedBy: adminUserId
@@ -218445,15 +218909,15 @@ var feexpayChannels = [
   { id: "mtn-bj", countryCode: "BJ", operator: "MTN", payinPath: `${payin}mtn`, payoutPath: `${payout}transfer/global`, payoutNetwork: "MTN", sandbox: true },
   { id: "moov-bj", countryCode: "BJ", operator: "Moov", payinPath: `${payin}moov`, payoutPath: `${payout}transfer/global`, payoutNetwork: "MOOV", sandbox: true },
   { id: "celtiis-bj", countryCode: "BJ", operator: "Celtiis", payinPath: `${payin}celtiis_bj`, payoutPath: `${payout}celtiis_bj`, payoutNetwork: "CELTIIS BJ", sandbox: true },
-  { id: "coris-bj", countryCode: "BJ", operator: "Coris", payinPath: `${payin}coris`, payoutPath: null, requiresOtp: true, sandbox: false },
+  { id: "coris-bj", countryCode: "BJ", operator: "Coris", payinPath: `${payin}coris`, payoutPath: null, requiresOtp: true, otpFlow: "provider_challenge", otpMethod: "sms", sandbox: false },
   { id: "moov-bf", countryCode: "BF", operator: "Moov", payinPath: `${payin}moov_bf`, payoutPath: `${payout}moov_bf`, sandbox: false },
-  { id: "orange-bf", countryCode: "BF", operator: "Orange", payinPath: `${payin}orange_bf`, payoutPath: `${payout}orange_bf`, requiresOtp: true, sandbox: false },
-  { id: "wave-bf", countryCode: "BF", operator: "Wave", payinPath: `${payin}wave_bf`, payoutPath: `${payout}wave_bf`, requiresOtp: true, sandbox: false },
+  { id: "orange-bf", countryCode: "BF", operator: "Orange", payinPath: `${payin}orange_bf`, payoutPath: `${payout}orange_bf`, requiresOtp: true, otpFlow: "pre_acquired", otpMethod: "ussd", sandbox: false },
+  { id: "wave-bf", countryCode: "BF", operator: "Wave", payinPath: `${payin}wave_bf`, payoutPath: `${payout}wave_bf`, requiresOtp: true, otpFlow: "pre_acquired", otpMethod: "app", sandbox: false },
   { id: "mtn-ci", countryCode: "CI", operator: "MTN", payinPath: `${payin}mtn_ci`, payoutPath: `${payout}mtn_ci`, sandbox: true },
   { id: "moov-ci", countryCode: "CI", operator: "Moov", payinPath: `${payin}moov_ci`, payoutPath: `${payout}moov_ci`, sandbox: true },
   { id: "orange-ci", countryCode: "CI", operator: "Orange", payinPath: `${payin}orange_ci`, payoutPath: `${payout}orange_ci`, sandbox: true },
   { id: "wave-ci", countryCode: "CI", operator: "Wave", payinPath: `${payin}wave_ci`, payoutPath: `${payout}wave_ci`, sandbox: true },
-  { id: "orange-sn", countryCode: "SN", operator: "Orange", payinPath: `${payin}orange_sn`, payoutPath: `${payout}orange_sn`, requiresOtp: true, sandbox: true },
+  { id: "orange-sn", countryCode: "SN", operator: "Orange", payinPath: `${payin}orange_sn`, payoutPath: `${payout}orange_sn`, requiresOtp: true, otpFlow: "pre_acquired", otpMethod: "ussd", sandbox: true },
   { id: "free-sn", countryCode: "SN", operator: "Free", payinPath: `${payin}free_sn`, payoutPath: `${payout}free_sn`, sandbox: true },
   { id: "wave-sn", countryCode: "SN", operator: "Wave", payinPath: `${payin}wave_sn`, payoutPath: `${payout}wave_sn`, sandbox: true },
   { id: "togocom-tg", countryCode: "TG", operator: "Togocom", payinPath: `${payin}togocom_tg`, payoutPath: `${payout}togo`, payoutNetwork: "TOGOCOM TG", sandbox: true },
@@ -219068,12 +219532,19 @@ async function readOperatorLogo(operatorId) {
   };
 }
 
+// src/lib/operator-otp-instruction.ts
+function getConfiguredOtpCommand(policy, amountMinor) {
+  if (!policy?.requiresOtp || !policy.otpCommand) return null;
+  if (!policy.otpCommand.includes("{amount}")) return policy.otpCommand;
+  if (amountMinor === void 0) return policy.otpCommand;
+  if (!Number.isSafeInteger(amountMinor) || (amountMinor ?? 0) < 1) return null;
+  const resolved = policy.otpCommand.replace("{amount}", String(amountMinor));
+  return /^[*#][0-9*#]{1,38}#$/.test(resolved) ? resolved : null;
+}
+
 // src/routes/operator-pricing.ts
 var router12 = (0, import_express15.Router)();
 var adminRoutes = (0, import_express15.Router)();
-var otpCommands = {
-  "orange-ci": "#144*82# option 2"
-};
 var operatorMetadataColumns = {
   operatorId: operatorCatalogTable.operatorId,
   countryCode: operatorCatalogTable.countryCode,
@@ -219159,12 +219630,13 @@ router12.get("/pricing", async (req, res) => {
       rateRowsByOperator.set(rate.operatorId, operatorRates);
     }
     const otpByOperator = new Map(
-      otpPolicies.map((policy) => [`${policy.countryCode}:${policy.operatorId}`, policy.requiresOtp])
+      otpPolicies.map((policy) => [`${policy.countryCode}:${policy.operatorId}`, policy])
     );
     const publicOperators = operators.filter((operator) => operator.enabled).sort((left, right) => {
       const countryOrder = left.countryCode.localeCompare(right.countryCode);
       return countryOrder || left.name.localeCompare(right.name, "fr");
     }).map((operator) => {
+      const otpPolicy = otpByOperator.get(`${operator.countryCode}:${operator.operatorId}`);
       const fees = {};
       for (const rate of rateRowsByOperator.get(operator.operatorId) ?? []) {
         if (isPricingCategoryId(rate.categoryId) && rate.feePercent !== null) {
@@ -219179,8 +219651,8 @@ router12.get("/pricing", async (req, res) => {
         initials: operator.initials,
         brand: operator.brand,
         logoUrl: operatorLogoUrl(operator.operatorId, operator.version, operator.hasLogo),
-        requiresOtp: otpByOperator.get(`${operator.countryCode}:${operator.operatorId}`) ?? true,
-        otpCommand: otpCommands[operator.operatorId] ?? null,
+        requiresOtp: otpPolicy?.requiresOtp ?? true,
+        otpCommand: getConfiguredOtpCommand(otpPolicy),
         operations: {
           deposit: Boolean(countries.find((country) => country.id === operator.countryCode && country.enabled && country.operations.deposit)) && operator.depositEnabled,
           interNetwork: Boolean(countries.find((country) => country.id === operator.countryCode && country.enabled && country.operations.interNetwork)) && operator.interNetworkEnabled,
@@ -224975,7 +225447,7 @@ router15.post("/auth/register", async (req, res) => {
       if (!profileIsValid) return registerFailure("invalid-profile");
       const requestedCountry = parsed.data.countryCode?.toLowerCase();
       const countries = await tx.select().from(countriesTable).where(and(
-        eq(countriesTable.enabled, true),
+        eq(countriesTable.signupEnabled, true),
         requestedCountry ? eq(countriesTable.countryCode, requestedCountry) : void 0
       )).for("share");
       const candidates = countries.filter((country) => {
@@ -226008,8 +226480,16 @@ router17.get("/auth/registration-settings", async (req, res) => {
   try {
     const [setting] = await db.select().from(registrationSettingsTable).where(eq(registrationSettingsTable.id, SETTING_ID)).limit(1);
     if (!setting) throw new Error("Signup setting is missing");
+    const [defaultCountry] = await db.select({ countryCode: countriesTable.countryCode }).from(countriesTable).where(eq(countriesTable.signupEnabled, true)).orderBy(
+      sql`CASE WHEN ${countriesTable.countryCode} = ${setting.defaultCountryCode} THEN 0 ELSE 1 END`,
+      asc(countriesTable.countryName)
+    ).limit(1);
+    if (!defaultCountry) throw new Error("Configured signup country is unavailable");
     res.setHeader("Cache-Control", "no-store");
-    res.json(GetRegistrationSettingsResponse.parse({ emailVerificationEnabled: setting.emailVerificationEnabled }));
+    res.json(GetRegistrationSettingsResponse.parse({
+      emailVerificationEnabled: setting.emailVerificationEnabled,
+      defaultCountryCode: defaultCountry.countryCode
+    }));
   } catch (error62) {
     req.log.error({ err: error62 }, "Registration settings lookup failed");
     res.status(503).json({ error: "Le r\xE9glage d'inscription est indisponible." });
@@ -226174,50 +226654,6 @@ var customer_service_settings_default = router18;
 
 // src/routes/payment-limits.ts
 var import_express23 = __toESM(require_express2(), 1);
-
-// src/services/payment-limits-policy.ts
-var DEFAULT_PAYMENT_LIMITS = Object.freeze({
-  minimumDepositMinor: 200,
-  minimumPayoutMinor: 200,
-  maximumPayoutDailyMinor: null,
-  minimumInterNetworkMinor: 1,
-  maximumTransferMinor: 1e7,
-  maximumPayinMinor: 2e6
-});
-function isValidPaymentLimitValues(values) {
-  const amounts = [
-    values.minimumDepositMinor,
-    values.minimumPayoutMinor,
-    values.minimumInterNetworkMinor,
-    values.maximumTransferMinor,
-    values.maximumPayinMinor
-  ];
-  if (!amounts.every((amount) => Number.isSafeInteger(amount) && amount > 0)) return false;
-  if (values.maximumPayoutDailyMinor !== null && (!Number.isSafeInteger(values.maximumPayoutDailyMinor) || values.maximumPayoutDailyMinor < values.minimumPayoutMinor)) return false;
-  return values.minimumDepositMinor >= 200 && values.minimumDepositMinor <= values.maximumTransferMinor && values.minimumDepositMinor <= values.maximumPayinMinor && values.minimumPayoutMinor >= 200 && values.minimumPayoutMinor <= 2e6 && values.minimumPayoutMinor <= values.maximumTransferMinor && values.minimumInterNetworkMinor <= values.maximumTransferMinor && values.maximumTransferMinor <= 1e7 && values.maximumPayinMinor >= 200 && values.maximumPayinMinor <= 2e6;
-}
-function getMinimumForTransfer(kind, limits) {
-  if (kind === "deposit") return limits.minimumDepositMinor;
-  if (kind === "inter-network") return limits.minimumInterNetworkMinor;
-  return limits.minimumPayoutMinor;
-}
-
-// src/data/payment-limits.ts
-var PAYMENT_LIMITS_ID = "global";
-async function loadPaymentLimits() {
-  const [record2] = await db.select().from(paymentLimitsTable).where(eq(paymentLimitsTable.id, PAYMENT_LIMITS_ID)).limit(1);
-  if (!record2) throw new Error("Payment limits have not been initialized");
-  return {
-    minimumDepositMinor: record2.minimumDepositMinor,
-    minimumPayoutMinor: record2.minimumPayoutMinor,
-    maximumPayoutDailyMinor: record2.maximumPayoutDailyMinor,
-    minimumInterNetworkMinor: record2.minimumInterNetworkMinor,
-    maximumTransferMinor: record2.maximumTransferMinor,
-    maximumPayinMinor: record2.maximumPayinMinor
-  };
-}
-
-// src/routes/payment-limits.ts
 var router19 = (0, import_express23.Router)();
 var adminRoutes5 = (0, import_express23.Router)();
 function presentPublic(record2) {
@@ -226234,6 +226670,8 @@ function presentPublic(record2) {
 function presentAdmin2(record2) {
   return {
     ...presentPublic(record2),
+    maximumUnverifiedIncomingMinor: record2.maximumUnverifiedIncomingMinor,
+    maximumVerifiedIncomingMinor: record2.maximumVerifiedIncomingMinor,
     version: record2.version,
     updatedAt: record2.updatedAt.toISOString()
   };
@@ -226277,7 +226715,9 @@ adminRoutes5.patch("/payment-limits", async (req, res) => {
     maximumPayoutDailyMinor: parsed.data.maximumPayoutDailyMinor,
     minimumInterNetworkMinor: parsed.data.minimumInterNetworkMinor,
     maximumTransferMinor: parsed.data.maximumTransferMinor,
-    maximumPayinMinor: parsed.data.maximumPayinMinor
+    maximumPayinMinor: parsed.data.maximumPayinMinor,
+    maximumUnverifiedIncomingMinor: parsed.data.maximumUnverifiedIncomingMinor,
+    maximumVerifiedIncomingMinor: parsed.data.maximumVerifiedIncomingMinor
   })) {
     res.status(400).json({ error: "V\xE9rifiez les seuils et leurs plafonds avant l\u2019enregistrement." });
     return;
@@ -226293,6 +226733,8 @@ adminRoutes5.patch("/payment-limits", async (req, res) => {
         minimumInterNetworkMinor: parsed.data.minimumInterNetworkMinor,
         maximumTransferMinor: parsed.data.maximumTransferMinor,
         maximumPayinMinor: parsed.data.maximumPayinMinor,
+        maximumUnverifiedIncomingMinor: parsed.data.maximumUnverifiedIncomingMinor,
+        maximumVerifiedIncomingMinor: parsed.data.maximumVerifiedIncomingMinor,
         version: parsed.data.expectedVersion + 1,
         updatedAt: /* @__PURE__ */ new Date(),
         updatedBy: adminUserId
@@ -226340,6 +226782,7 @@ function toCountry(country) {
     minPhoneDigits: country.minPhoneDigits,
     maxPhoneDigits: country.maxPhoneDigits,
     enabled: country.enabled,
+    signupEnabled: country.signupEnabled,
     flag: flagFromCountryCode2(country.countryCode),
     operations: {
       deposit: country.depositEnabled,
@@ -226365,6 +226808,16 @@ router20.get("/auth/countries", async (req, res) => {
   } catch (error62) {
     req.log.error({ err: error62 }, "Public country catalog lookup failed");
     res.status(503).json({ error: "Country catalog unavailable" });
+  }
+});
+router20.get("/auth/registration-countries", async (req, res) => {
+  try {
+    const rows = await db.select().from(countriesTable).where(eq(countriesTable.signupEnabled, true)).orderBy(asc(countriesTable.countryName));
+    res.setHeader("Cache-Control", "no-store");
+    res.json(GetAuthCountriesResponse.parse({ countries: rows.map(toCountry) }));
+  } catch (error62) {
+    req.log.error({ err: error62 }, "Signup country catalog lookup failed");
+    res.status(503).json({ error: "Signup country catalog unavailable" });
   }
 });
 function createAdminCountryRoutes(authorize = respondAdminAuthError) {
@@ -226493,12 +226946,24 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
     }
     try {
       const updated = await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('sendflow:signup-country-availability'))`);
+        const [current] = await tx.select().from(countriesTable).where(eq(countriesTable.countryCode, params.data.countryCode)).for("update").limit(1);
+        if (!current || current.version !== body.data.expectedVersion) {
+          return { kind: "changed" };
+        }
+        if (current.signupEnabled && !body.data.signupEnabled) {
+          const availableCountries = await tx.select({ countryCode: countriesTable.countryCode }).from(countriesTable).where(eq(countriesTable.signupEnabled, true));
+          if (availableCountries.length <= 1) {
+            return { kind: "last-signup-country" };
+          }
+        }
         const [country] = await tx.update(countriesTable).set({
           countryName: body.data.countryName.trim(),
           phonePrefix: body.data.phonePrefix,
           minPhoneDigits: body.data.minPhoneDigits,
           maxPhoneDigits: body.data.maxPhoneDigits,
           enabled: body.data.enabled,
+          signupEnabled: body.data.signupEnabled,
           depositEnabled: body.data.operations.deposit,
           interNetworkEnabled: body.data.operations.interNetwork,
           internationalEnabled: body.data.operations.international,
@@ -226510,7 +226975,7 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
           eq(countriesTable.countryCode, params.data.countryCode),
           eq(countriesTable.version, body.data.expectedVersion)
         )).returning();
-        if (!country) return void 0;
+        if (!country) return { kind: "changed" };
         await recordAdminAudit({
           adminUserId,
           action: "update_country",
@@ -226518,13 +226983,17 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
           resourceId: country.countryCode,
           reason: body.data.reason.trim()
         }, tx);
-        return country;
+        return { kind: "updated", country };
       });
-      if (!updated) {
+      if (updated.kind === "last-signup-country") {
+        res.status(409).json({ error: "At least one country must remain available for signup." });
+        return;
+      }
+      if (updated.kind !== "updated") {
         res.status(409).json({ error: "Country changed since it was loaded" });
         return;
       }
-      res.json(UpdateAdminCountryResponse.parse(toCountry(updated)));
+      res.json(UpdateAdminCountryResponse.parse(toCountry(updated.country)));
     } catch (error62) {
       req.log.error({ err: error62 }, "Admin country update failed");
       res.status(503).json({ error: "Administrator storage unavailable" });
@@ -226544,7 +227013,7 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
         const [country] = await tx.select().from(countriesTable).where(eq(countriesTable.countryCode, params.data.countryCode)).for("update").limit(1);
         if (!country) return "missing";
         if (country.version !== body.data.expectedVersion) return "changed";
-        if (country.enabled || country.depositEnabled || country.interNetworkEnabled || country.internationalEnabled || country.payoutEnabled) {
+        if (country.signupEnabled || country.enabled || country.depositEnabled || country.interNetworkEnabled || country.internationalEnabled || country.payoutEnabled) {
           return "referenced";
         }
         const references = await Promise.all([
@@ -251747,6 +252216,16 @@ router22.post("/me/transfer-quote", async (req, res) => {
       res.status(400).json({ error: "V\xE9rifiez les informations du transfert." });
       return;
     }
+    if (parsed.data.kind !== "deposit") {
+      const incomingPolicy = await getMonthlyIncomingPolicy(session.userId);
+      if (incomingPolicy.outgoingBlocked) {
+        res.status(403).json({
+          code: incomingPolicy.blockCode,
+          error: monthlyIncomingOutgoingBlockedMessage(incomingPolicy)
+        });
+        return;
+      }
+    }
     const quote = await calculateCustomerTransferQuote(
       session.userId,
       parsed.data,
@@ -251794,7 +252273,7 @@ async function consumePaymentLinkCreationQuota(userId) {
 async function consumePublicPaymentLinkQuota(clientAddress2, operation) {
   if (!clientAddress2) throw new Error("Public payment-link quota identity is required");
   const bucket = fingerprint(`public-payment-link:${operation}:${clientAddress2}`);
-  const limit = operation === "quote" ? PUBLIC_PAYMENT_LINK_QUOTE_LIMIT_PER_MINUTE : operation === "attempt" ? PUBLIC_PAYMENT_LINK_ATTEMPT_LIMIT_PER_MINUTE : operation === "poll" ? PUBLIC_PAYMENT_LINK_POLL_LIMIT_PER_MINUTE : 120;
+  const limit = operation === "quote" ? PUBLIC_PAYMENT_LINK_QUOTE_LIMIT_PER_MINUTE : operation === "attempt" || operation === "otp" ? PUBLIC_PAYMENT_LINK_ATTEMPT_LIMIT_PER_MINUTE : operation === "poll" ? PUBLIC_PAYMENT_LINK_POLL_LIMIT_PER_MINUTE : 120;
   const result = await db.execute(sql`
     INSERT INTO public.sf_api_request_limits (bucket_hash, window_started_at, request_count)
     VALUES (${bucket}, statement_timestamp(), 1)
@@ -252647,16 +253126,254 @@ function isFeexpayLiveExecutionAllowed(environment) {
   }
 }
 
+// src/providers/paydunya/client.ts
+import { createHash as createHash6, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+
+// src/providers/paydunya/catalog.ts
+var operatorChannels = {
+  "BJ:mtn-bj": "mtn-benin",
+  "BJ:moov-bj": "moov-benin",
+  "BJ:celtiis-bj": "celtiis-cash",
+  "BF:orange-bf": "orange-money-burkina",
+  "BF:moov-bf": "moov-burkina-faso",
+  "CI:orange-ci": "orange-money-ci",
+  "CI:wave-ci": "wave-ci",
+  "CI:mtn-ci": "mtn-ci",
+  "CI:moov-ci": "moov-ci",
+  "CI:djamo-ci": "djamo-ci",
+  "SN:orange-sn": "orange-money-senegal",
+  "SN:wave-sn": "wave-senegal",
+  "SN:free-sn": "free-money-senegal",
+  "SN:expresso-sn": "expresso-sn",
+  "SN:wizall-sn": "wizall-senegal",
+  "TG:togocom-tg": "t-money-togo",
+  "TG:moov-tg": "moov-togo",
+  "ML:orange-ml": "orange-money-mali",
+  "ML:moov-ml": "moov-ml"
+};
+function paydunyaChannelForOperator(countryCode, operatorId) {
+  const channel = operatorChannels[`${countryCode.toUpperCase()}:${operatorId.toLowerCase()}`];
+  return channel || null;
+}
+function isPaydunyaChannel(channel) {
+  return Object.values(operatorChannels).some((candidate) => candidate === channel && candidate.length > 0);
+}
+
+// src/providers/paydunya/client.ts
+var PaydunyaError = class extends Error {
+  code;
+  constructor(code) {
+    super(`PayDunya: ${code}`);
+    this.name = "PaydunyaError";
+    this.code = code;
+  }
+};
+var maxResponseBytes = 64 * 1024;
+var tokenPattern = /^[A-Za-z0-9_-]{6,120}$/;
+var channelPattern = /^[a-z0-9-]{2,80}$/;
+var referencePattern = /^[A-Z0-9]{12,30}$/;
+function fail3(code) {
+  throw new PaydunyaError(code);
+}
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+function parseMinorAmount(value) {
+  if (!(typeof value === "number" || typeof value === "string" && /^[0-9]+$/.test(value))) {
+    return null;
+  }
+  const amount = Number(value);
+  return Number.isSafeInteger(amount) && amount > 0 ? amount : null;
+}
+function readJsonObject(value) {
+  if (!isRecord(value)) return fail3("INVALID_RESPONSE");
+  return value;
+}
+async function boundedJson(response) {
+  const reader = response.body?.getReader();
+  if (!reader) return fail3("INVALID_RESPONSE");
+  const chunks = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > maxResponseBytes) {
+        await reader.cancel();
+        return fail3("INVALID_RESPONSE");
+      }
+      chunks.push(value);
+    }
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    return fail3("INVALID_RESPONSE");
+  } finally {
+    reader.releaseLock();
+  }
+}
+function isPaydunyaLiveExecutionAllowed(environment) {
+  if (environment.PAYDUNYA_LIVE_ENABLED !== "true") return false;
+  if (environment.PAYDUNYA_EXECUTION_HOST === "plesk") {
+    return environment.NODE_ENV === "production" && environment.SENDFLOW_DATABASE_TARGET === "production" && !environment.REPL_ID && !environment.REPLIT_DEV_DOMAIN;
+  }
+  return environment.PAYDUNYA_EXECUTION_HOST === "replit" && environment.SENDFLOW_DATABASE_TARGET === "shared-external" && environment.SENDFLOW_REPLIT_LIVE_APPROVED === "true" && environment.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED === "true";
+}
+function verifyMasterKeyHash(hash2, masterKey) {
+  if (typeof hash2 !== "string" || !/^[a-f0-9]{128}$/i.test(hash2)) return false;
+  const expected = Buffer.from(createHash6("sha512").update(masterKey, "utf8").digest("hex"), "hex");
+  const received = Buffer.from(hash2, "hex");
+  return received.length === expected.length && timingSafeEqual4(received, expected);
+}
+var PaydunyaClient = class {
+  #environment;
+  #transport;
+  constructor(environment = process.env, transport = fetch) {
+    this.#environment = { ...environment };
+    this.#transport = transport;
+  }
+  configuration() {
+    const env = this.#environment;
+    if (!isPaydunyaLiveExecutionAllowed(env)) return fail3("LIVE_DISABLED");
+    const masterKey = env.PAYDUNYA_MASTER_KEY;
+    const privateKey = env.PAYDUNYA_PRIVATE_KEY;
+    const token = env.PAYDUNYA_TOKEN;
+    if (!masterKey || !privateKey || !token || /[\r\n]/.test(masterKey) || /[\r\n]/.test(privateKey) || /[\r\n]/.test(token)) {
+      return fail3("CONFIGURATION_REQUIRED");
+    }
+    return {
+      masterKey,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "PAYDUNYA-MASTER-KEY": masterKey,
+        "PAYDUNYA-PRIVATE-KEY": privateKey,
+        "PAYDUNYA-TOKEN": token
+      },
+      origin: "https://app.paydunya.com/api/v1"
+    };
+  }
+  async request(path, method, body) {
+    const config2 = this.configuration();
+    try {
+      const response = await this.#transport(`${config2.origin}${path}`, {
+        method,
+        redirect: "error",
+        signal: AbortSignal.timeout(15e3),
+        headers: config2.headers,
+        ...body ? { body: JSON.stringify(body) } : {}
+      });
+      if (!response.ok) {
+        await response.body?.cancel();
+        return fail3(method === "POST" ? "OUTCOME_UNKNOWN" : "PROVIDER_UNAVAILABLE");
+      }
+      return await boundedJson(response);
+    } catch (error62) {
+      if (error62 instanceof PaydunyaError) throw error62;
+      return fail3(method === "POST" ? "OUTCOME_UNKNOWN" : "PROVIDER_UNAVAILABLE");
+    }
+  }
+  async createInvoice(input2) {
+    this.configuration();
+    if (!Number.isSafeInteger(input2.amountMinor) || input2.amountMinor < 100 || input2.amountMinor > 2e6 || !referencePattern.test(input2.operationReference) || !channelPattern.test(input2.channel) || !isPaydunyaChannel(input2.channel) || !/^[0-9]{6,15}$/.test(input2.phoneNumber) || input2.customerName !== void 0 && (!input2.customerName.trim() || input2.customerName.trim().length > 120) || input2.returnUrl !== void 0 && input2.returnUrl !== null && !isSafeHttpsUrl(input2.returnUrl)) {
+      return fail3("INVALID_INPUT");
+    }
+    const raw = await this.request("/checkout-invoice/create", "POST", {
+      invoice: {
+        total_amount: input2.amountMinor,
+        description: `Paiement SendFlow ${input2.operationReference}`,
+        channels: [input2.channel],
+        customer: {
+          phone: input2.phoneNumber,
+          ...input2.customerName ? { name: input2.customerName.trim() } : {}
+        }
+      },
+      store: { name: "SendFlow" },
+      custom_data: { sendflow_reference: input2.operationReference },
+      ...input2.returnUrl ? { actions: { return_url: input2.returnUrl } } : {}
+    });
+    const result = readJsonObject(raw);
+    if (result.response_code !== "00" || typeof result.token !== "string" || !tokenPattern.test(result.token) || typeof result.response_text !== "string") {
+      return fail3("OUTCOME_UNKNOWN");
+    }
+    let redirect;
+    try {
+      redirect = new URL(result.response_text);
+    } catch {
+      return fail3("INVALID_RESPONSE");
+    }
+    const checkoutPath = redirect.pathname.match(/^\/checkout\/invoice\/([A-Za-z0-9_-]{6,120})$/);
+    if (redirect.protocol !== "https:" || redirect.hostname !== "app.paydunya.com" || redirect.port || redirect.username || redirect.password || checkoutPath?.[1] !== result.token) {
+      return fail3("INVALID_RESPONSE");
+    }
+    return { token: result.token, redirectUrl: redirect.toString() };
+  }
+  async getVerifiedInvoiceStatus(input2) {
+    const config2 = this.configuration();
+    if (!tokenPattern.test(input2.token) || !Number.isSafeInteger(input2.expectedAmountMinor) || input2.expectedAmountMinor <= 0 || !referencePattern.test(input2.expectedReference) || !/^[0-9]{6,15}$/.test(input2.expectedPhoneNumber)) {
+      return fail3("INVALID_INPUT");
+    }
+    const raw = await this.request(
+      `/checkout-invoice/confirm/${encodeURIComponent(input2.token)}`,
+      "GET"
+    );
+    const result = readJsonObject(raw);
+    const invoice = readJsonObject(result.invoice);
+    const customData = isRecord(result.custom_data) ? result.custom_data : null;
+    const amountMinor = parseMinorAmount(invoice.total_amount);
+    const status = typeof result.status === "string" ? result.status.toLowerCase() : "";
+    const customer = isRecord(result.customer) ? result.customer : null;
+    const phoneNumber = typeof customer?.phone === "string" ? customer.phone.replace(/\D/g, "") : null;
+    const responseCodeMatches = result.response_code === "00";
+    const tokenMatches = invoice.token === input2.token;
+    const amountMatches = amountMinor === input2.expectedAmountMinor;
+    const referenceMatches = customData?.sendflow_reference === input2.expectedReference;
+    const phoneMatches = phoneNumber === input2.expectedPhoneNumber;
+    const hashMatches = verifyMasterKeyHash(result.hash, config2.masterKey);
+    if (!responseCodeMatches || !tokenMatches || !amountMatches || !referenceMatches || !phoneMatches || !hashMatches) {
+      return fail3("UNVERIFIED_STATUS");
+    }
+    if (status !== "pending" && status !== "completed" && status !== "failed" && status !== "cancelled") {
+      return fail3("INVALID_RESPONSE");
+    }
+    return {
+      token: input2.token,
+      status: status === "cancelled" ? "failed" : status,
+      amountMinor,
+      currency: "XOF",
+      sendflowReference: input2.expectedReference,
+      phoneNumber
+    };
+  }
+};
+function isSafeHttpsUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && !parsed.username && !parsed.password;
+  } catch {
+    return false;
+  }
+}
+
 // src/services/linkflow-payment-policy.ts
-var LINKFLOW_SETTLEMENT_PROOF_READY = false;
+function isLinkFlowProviderExecutionEnabled(providerCode, environment = process.env) {
+  if (providerCode === "feexpay") {
+    return environment.FEEXPAY_LINKFLOW_ENABLED === "true" && environment.FEEXPAY_MODE === "live" && environment.FEEXPAY_EXECUTION_HOST === "plesk" && environment.SENDFLOW_DATABASE_TARGET === "production" && Boolean(environment.FEEXPAY_API_KEY) && Boolean(environment.FEEXPAY_SHOP_ID) && isFeexpayLiveExecutionAllowed(environment);
+  }
+  if (providerCode === "paydunya") {
+    return environment.PAYDUNYA_LINKFLOW_ENABLED === "true" && environment.PAYDUNYA_MODE === "live" && environment.PAYDUNYA_EXECUTION_HOST === "plesk" && environment.SENDFLOW_DATABASE_TARGET === "production" && Boolean(environment.PAYDUNYA_MASTER_KEY) && Boolean(environment.PAYDUNYA_PRIVATE_KEY) && Boolean(environment.PAYDUNYA_TOKEN) && isPaydunyaLiveExecutionAllowed(environment);
+  }
+  return false;
+}
 function isLinkFlowPaymentExecutionEnabled(environment = process.env) {
-  return environment.FEEXPAY_LINKFLOW_ENABLED === "true" && environment.FEEXPAY_MODE === "live" && environment.FEEXPAY_EXECUTION_HOST === "plesk" && environment.SENDFLOW_DATABASE_TARGET === "production" && Boolean(environment.FEEXPAY_API_KEY) && Boolean(environment.FEEXPAY_SHOP_ID) && LINKFLOW_SETTLEMENT_PROOF_READY && isFeexpayLiveExecutionAllowed(environment);
+  return isLinkFlowProviderExecutionEnabled("feexpay", environment) || isLinkFlowProviderExecutionEnabled("paydunya", environment);
 }
 function toProviderPhoneNumber(value) {
   return value.replace(/\D/g, "");
 }
 function buildLinkFlowRequestHash(input2) {
   const phoneHash = createSensitiveDataLookupIndex(input2.phoneNumber, "transaction-sender-phone");
+  const otpFingerprint = input2.otpFlow === "provider_challenge" || !input2.otp ? null : createSensitiveDataLookupIndex(input2.otp, "linkflow-request-otp");
   return createSensitiveDataLookupIndex(JSON.stringify({
     linkId: input2.linkId,
     countryCode: input2.countryCode.toLowerCase(),
@@ -252665,7 +253382,9 @@ function buildLinkFlowRequestHash(input2) {
     firstName: input2.firstName.trim().normalize("NFKC"),
     lastName: input2.lastName.trim().normalize("NFKC"),
     amountMinor: input2.amountMinor,
-    idempotencyKey: input2.idempotencyKey
+    idempotencyKey: input2.idempotencyKey,
+    otpFlow: input2.otpFlow ?? null,
+    otpFingerprint
   }), "linkflow-request-fingerprint");
 }
 function deriveLinkFlowPollToken(linkId, idempotencyKey) {
@@ -252683,17 +253402,29 @@ function resolveInitialProviderState(receipt) {
 function resolveVerifiedProviderState(receipt, expected) {
   if (receipt.reference !== expected.reference) return "uncertain";
   if (receipt.status === "PENDING") return "waiting";
-  if (receipt.merchantShopId !== expected.shopId || receipt.channelId !== expected.channelId || receipt.operation !== "payin" || receipt.signatureVerified !== true) return "uncertain";
-  if (receipt.amountMinor !== expected.amountMinor || receipt.currency !== expected.currency) {
+  const channel = feexpayChannels.find((candidate) => candidate.id === expected.channelId);
+  const country = channel && feexpayCountries.find((candidate) => candidate.countryCode === channel.countryCode);
+  const expectedPhone = expected.phoneNumber.replace(/\D/g, "");
+  if (receipt.verifiedStatusOperation !== "payin" || !channel || country?.currency !== expected.currency || receipt.phoneNumber !== expectedPhone) return "uncertain";
+  if (receipt.amountMinor !== expected.amountMinor || receipt.currency !== void 0 && receipt.currency !== expected.currency) {
     return "uncertain";
   }
   if (receipt.status === "SUCCESSFUL") return "succeeded";
   if (receipt.status === "FAILED") return "failed";
   return "uncertain";
 }
+function resolveVerifiedPaydunyaState(receipt, expected) {
+  if (receipt.token !== expected.token || receipt.sendflowReference !== expected.operationReference || receipt.amountMinor !== expected.amountMinor || receipt.currency !== expected.currency || receipt.phoneNumber !== expected.phoneNumber.replace(/\D/g, "")) {
+    return "uncertain";
+  }
+  if (receipt.status === "pending") return "waiting";
+  if (receipt.status === "completed") return "succeeded";
+  if (receipt.status === "failed") return "failed";
+  return "uncertain";
+}
 
 // src/services/linkflow-payment-execution.ts
-import { createHash as createHash6, randomBytes as randomBytes6 } from "node:crypto";
+import { createHash as createHash7, randomBytes as randomBytes6 } from "node:crypto";
 
 // src/providers/feexpay/client.ts
 var FeexpayError = class extends Error {
@@ -252704,14 +253435,14 @@ var FeexpayError = class extends Error {
     this.code = code;
   }
 };
-var referencePattern = /^[a-zA-Z0-9_-]{8,120}$/;
-var maxResponseBytes = 64 * 1024;
-function fail3(code) {
+var referencePattern2 = /^[a-zA-Z0-9_-]{8,120}$/;
+var maxResponseBytes2 = 64 * 1024;
+function fail4(code) {
   throw new FeexpayError(code);
 }
-async function boundedJson(response) {
+async function boundedJson2(response) {
   const reader = response.body?.getReader();
-  if (!reader) return fail3("INVALID_RESPONSE");
+  if (!reader) return fail4("INVALID_RESPONSE");
   const parts = [];
   let size = 0;
   try {
@@ -252719,9 +253450,9 @@ async function boundedJson(response) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > maxResponseBytes) {
+      if (size > maxResponseBytes2) {
         await reader.cancel();
-        return fail3("INVALID_RESPONSE");
+        return fail4("INVALID_RESPONSE");
       }
       parts.push(value);
     }
@@ -252731,21 +253462,29 @@ async function boundedJson(response) {
   }
 }
 function parseReceipt(raw, expectedReference) {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return fail3("INVALID_RESPONSE");
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return fail4("INVALID_RESPONSE");
   const data = raw;
-  if (typeof data.reference !== "string" || !referencePattern.test(data.reference) || expectedReference !== void 0 && expectedReference !== data.reference) return fail3("INVALID_RESPONSE");
+  if (typeof data.reference !== "string" || !referencePattern2.test(data.reference) || expectedReference !== void 0 && expectedReference !== data.reference) return fail4("INVALID_RESPONSE");
   const status = data.status === "IN PENDING STATE" ? "PENDING" : data.status;
-  if (status !== "PENDING" && status !== "SUCCESSFUL" && status !== "FAILED") return fail3("INVALID_RESPONSE");
+  if (status !== "PENDING" && status !== "SUCCESSFUL" && status !== "FAILED") return fail4("INVALID_RESPONSE");
   const receipt = { reference: data.reference, status };
   if (data.amount !== void 0) {
-    if (!(typeof data.amount === "number" || typeof data.amount === "string" && /^[0-9]+$/.test(data.amount))) return fail3("INVALID_RESPONSE");
+    if (!(typeof data.amount === "number" || typeof data.amount === "string" && /^[0-9]+$/.test(data.amount))) return fail4("INVALID_RESPONSE");
     const amount = Number(data.amount);
-    if (!Number.isSafeInteger(amount) || amount <= 0) return fail3("INVALID_RESPONSE");
+    if (!Number.isSafeInteger(amount) || amount <= 0) return fail4("INVALID_RESPONSE");
     receipt.amountMinor = amount;
   }
   if (data.currency !== void 0) {
-    if (data.currency !== "XOF" && data.currency !== "XAF") return fail3("INVALID_RESPONSE");
+    if (data.currency !== "XOF" && data.currency !== "XAF") return fail4("INVALID_RESPONSE");
     receipt.currency = data.currency;
+  }
+  if (data.phoneNumber !== void 0) {
+    if (!(typeof data.phoneNumber === "string" || typeof data.phoneNumber === "number")) {
+      return fail4("INVALID_RESPONSE");
+    }
+    const phoneNumber = String(data.phoneNumber).replace(/\D/g, "");
+    if (!/^[0-9]{8,15}$/.test(phoneNumber)) return fail4("INVALID_RESPONSE");
+    receipt.phoneNumber = phoneNumber;
   }
   return receipt;
 }
@@ -252759,11 +253498,11 @@ var FeexpayClient = class {
   configuration() {
     const env = this.#environment;
     const mode = env.FEEXPAY_MODE;
-    if (mode !== "live" && mode !== "sandbox") return fail3("CONFIGURATION_REQUIRED");
-    if (mode === "live" && !isFeexpayLiveExecutionAllowed(env)) return fail3("LIVE_DISABLED");
+    if (mode !== "live" && mode !== "sandbox") return fail4("CONFIGURATION_REQUIRED");
+    if (mode === "live" && !isFeexpayLiveExecutionAllowed(env)) return fail4("LIVE_DISABLED");
     const key = mode === "sandbox" ? env.FEEXPAY_SANDBOX_API_KEY : env.FEEXPAY_API_KEY;
     const shop = mode === "sandbox" ? env.FEEXPAY_SANDBOX_SHOP_ID : env.FEEXPAY_SHOP_ID;
-    if (!key || !shop || /[\r\n]/.test(key) || !/^[a-zA-Z0-9_-]{3,120}$/.test(shop) || mode === "sandbox" && !key.startsWith("test_key_")) return fail3("CONFIGURATION_REQUIRED");
+    if (!key || !shop || /[\r\n]/.test(key) || !/^[a-zA-Z0-9_-]{3,120}$/.test(shop) || mode === "sandbox" && !key.startsWith("test_key_")) return fail4("CONFIGURATION_REQUIRED");
     return { mode, key, shop, origin: mode === "sandbox" ? "https://sandbox-api.feexpay.me" : "https://api-v2.feexpay.me" };
   }
   async request(path, body) {
@@ -252778,24 +253517,24 @@ var FeexpayClient = class {
       });
       if (!response.ok) {
         await response.body?.cancel();
-        return fail3(body ? "OUTCOME_UNKNOWN" : "PROVIDER_UNAVAILABLE");
+        return fail4(body ? "OUTCOME_UNKNOWN" : "PROVIDER_UNAVAILABLE");
       }
-      return await boundedJson(response);
+      return await boundedJson2(response);
     } catch {
-      return fail3(body ? "OUTCOME_UNKNOWN" : "PROVIDER_UNAVAILABLE");
+      return fail4(body ? "OUTCOME_UNKNOWN" : "PROVIDER_UNAVAILABLE");
     }
   }
   async initiate(operation, input2) {
     const config2 = this.configuration();
-    if (operation !== "payin" && operation !== "payout") return fail3("INVALID_INPUT");
-    if ("returnUrl" in input2 || "cancelUrl" in input2) return fail3("INVALID_INPUT");
+    if (operation !== "payin" && operation !== "payout") return fail4("INVALID_INPUT");
+    if ("returnUrl" in input2 || "cancelUrl" in input2) return fail4("INVALID_INPUT");
     const channel = feexpayChannels.find((candidate) => candidate.id === input2.channelId);
-    if (!channel || config2.mode === "sandbox" && !channel.sandbox || operation === "payout" && !channel.payoutPath) return fail3("CHANNEL_UNAVAILABLE");
+    if (!channel || config2.mode === "sandbox" && !channel.sandbox || operation === "payout" && !channel.payoutPath) return fail4("CHANNEL_UNAVAILABLE");
     const country = feexpayCountries.find((candidate) => candidate.countryCode === channel.countryCode);
-    if (input2.currency !== "XOF" || country.currency !== input2.currency) return fail3("CURRENCY_UNAVAILABLE");
-    if (!Number.isSafeInteger(input2.amountMinor) || input2.amountMinor < 100 || input2.amountMinor > 2e6 || typeof input2.phoneNumber !== "string" || !/^[0-9]{8,15}$/.test(input2.phoneNumber) || !input2.phoneNumber.startsWith(country.phonePrefix) || typeof input2.operationReference !== "string" || !/^[A-Z0-9]{12,30}$/.test(input2.operationReference)) return fail3("INVALID_INPUT");
-    if (operation === "payin" && channel.requiresOtp && !input2.otp) return fail3("INVALID_INPUT");
-    if (input2.otp !== void 0 && !/^[0-9]{4,12}$/.test(input2.otp)) return fail3("INVALID_INPUT");
+    if (input2.currency !== "XOF" || country.currency !== input2.currency) return fail4("CURRENCY_UNAVAILABLE");
+    if (!Number.isSafeInteger(input2.amountMinor) || input2.amountMinor < 100 || input2.amountMinor > 2e6 || typeof input2.phoneNumber !== "string" || !/^[0-9]{8,15}$/.test(input2.phoneNumber) || !input2.phoneNumber.startsWith(country.phonePrefix) || typeof input2.operationReference !== "string" || !/^[A-Z0-9]{12,30}$/.test(input2.operationReference)) return fail4("INVALID_INPUT");
+    if (operation === "payin" && channel.requiresOtp && input2.otp === void 0 && channel.otpFlow !== "provider_challenge") return fail4("INVALID_INPUT");
+    if (input2.otp !== void 0 && !(input2.otp === "" && channel.otpFlow === "provider_challenge") && !/^[0-9]{4,12}$/.test(input2.otp)) return fail4("INVALID_INPUT");
     const body = {
       shop: config2.shop,
       amount: input2.amountMinor,
@@ -252803,7 +253542,7 @@ var FeexpayClient = class {
       callback_info: input2.operationReference,
       ...operation === "payin" ? {
         description: input2.operationReference,
-        ...input2.otp ? { otp: input2.otp } : {}
+        ...input2.otp !== void 0 ? { otp: input2.otp } : {}
       } : {
         motif: input2.operationReference,
         ...channel.payoutNetwork ? { network: channel.payoutNetwork } : {}
@@ -252812,16 +253551,20 @@ var FeexpayClient = class {
     const raw = await this.request(operation === "payin" ? channel.payinPath : channel.payoutPath, body);
     try {
       const receipt = parseReceipt(raw);
-      if (receipt.amountMinor !== void 0 && receipt.amountMinor !== input2.amountMinor || receipt.currency !== void 0 && receipt.currency !== input2.currency) return fail3("INVALID_RESPONSE");
+      if (receipt.amountMinor !== void 0 && receipt.amountMinor !== input2.amountMinor || receipt.currency !== void 0 && receipt.currency !== input2.currency) return fail4("INVALID_RESPONSE");
       return receipt;
     } catch {
-      return fail3("OUTCOME_UNKNOWN");
+      return fail4("OUTCOME_UNKNOWN");
     }
   }
   async getStatus(operation, reference) {
-    if (operation !== "payin" && operation !== "payout" || typeof reference !== "string" || !referencePattern.test(reference)) return fail3("INVALID_INPUT");
+    if (operation !== "payin" && operation !== "payout" || typeof reference !== "string" || !referencePattern2.test(reference)) return fail4("INVALID_INPUT");
     const prefix = operation === "payin" ? "/api/transactions/public/single/status/" : "/api/payouts/status/public/";
-    return parseReceipt(await this.request(`${prefix}${encodeURIComponent(reference)}`), reference);
+    const receipt = parseReceipt(
+      await this.request(`${prefix}${encodeURIComponent(reference)}`),
+      reference
+    );
+    return { ...receipt, verifiedStatusOperation: operation };
   }
 };
 
@@ -252852,7 +253595,7 @@ var DeveloperWebhookPayloadError = class extends Error {
     this.name = "DeveloperWebhookPayloadError";
   }
 };
-function isRecord(value) {
+function isRecord2(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function hasExactKeys(value, expected) {
@@ -252864,7 +253607,7 @@ function authenticatedContext(context2) {
   return JSON.stringify([context2.deliveryId, context2.eventType]);
 }
 function normalizeDeveloperWebhookPayload(value) {
-  if (!isRecord(value) || !hasExactKeys(value, TOP_LEVEL_KEYS) || !isRecord(value.data) || !hasExactKeys(value.data, DATA_KEYS)) {
+  if (!isRecord2(value) || !hasExactKeys(value, TOP_LEVEL_KEYS) || !isRecord2(value.data) || !hasExactKeys(value.data, DATA_KEYS)) {
     throw new DeveloperWebhookPayloadError();
   }
   const { id, type, createdAt, data } = value;
@@ -252917,7 +253660,7 @@ function decryptDeveloperWebhookPayload(value, context2) {
     throw new DeveloperWebhookPayloadError();
   }
   let payload = value;
-  if (isRecord(value) && hasExactKeys(value, [ENCRYPTED_PAYLOAD_KEY]) && typeof value[ENCRYPTED_PAYLOAD_KEY] === "string") {
+  if (isRecord2(value) && hasExactKeys(value, [ENCRYPTED_PAYLOAD_KEY]) && typeof value[ENCRYPTED_PAYLOAD_KEY] === "string") {
     const encrypted = value[ENCRYPTED_PAYLOAD_KEY];
     try {
       if (encrypted.startsWith(V2_CIPHERTEXT_PREFIX)) {
@@ -252998,21 +253741,32 @@ async function enqueueDeveloperPaymentEvent(tx, input2) {
 // src/services/linkflow-payment-execution.ts
 var LinkFlowPaymentError = class extends Error {
   statusCode;
-  constructor(statusCode, message) {
+  responseBody;
+  constructor(statusCode, message, responseBody) {
     super(message);
     this.name = "LinkFlowPaymentError";
     this.statusCode = statusCode;
+    this.responseBody = responseBody;
   }
 };
 var activeAttemptStates = ["prepared", "dispatching", "pending", "uncertain", "succeeded"];
 var activeIntentStates = ["created", "collecting", "uncertain"];
-var referencePattern2 = /^[A-Z0-9]{12,30}$/;
+var referencePattern3 = /^[A-Z0-9]{12,30}$/;
 var uuidPattern2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function safeReturnUrl(value, state) {
   if (state !== "succeeded" || !value) return null;
   try {
     const parsed = new URL(value);
     return parsed.protocol === "https:" && !parsed.username && !parsed.password ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+function safePaydunyaRedirectUrl(value, state) {
+  if (state !== "waiting" || !value) return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && parsed.hostname === "app.paydunya.com" && !parsed.username && !parsed.password && /^\/checkout\/invoice\/[A-Za-z0-9_-]{6,120}$/.test(parsed.pathname) ? parsed.toString() : null;
   } catch {
     return null;
   }
@@ -253025,6 +253779,16 @@ function publicState(intentState, attemptStatus) {
 }
 function asPublicStatus(bundle) {
   const state = publicState(bundle.intent.state, bundle.attempt.status);
+  const channel = feexpayChannels.find((candidate) => candidate.id === bundle.attempt.channelId);
+  const providerRedirectUrl = bundle.intent.providerCode === "paydunya" ? safePaydunyaRedirectUrl(
+    bundle.mapping.providerRedirectUrlEncrypted ? decryptSensitiveData(
+      bundle.mapping.providerRedirectUrlEncrypted,
+      "provider-redirect-url"
+    ) : null,
+    state
+  ) : null;
+  const awaitingProviderOtp = state === "waiting" && channel?.requiresOtp === true && bundle.attempt.otpConfirmedAt === null && bundle.attempt.status === "pending";
+  const action = state === "succeeded" || state === "failed" ? "none" : providerRedirectUrl ? "open_redirect" : state === "uncertain" ? "wait" : awaitingProviderOtp ? "enter_otp" : state === "waiting" && bundle.intent.providerCode === "feexpay" ? "approve_on_phone" : "wait";
   return {
     attemptId: bundle.mapping.id,
     state,
@@ -253033,7 +253797,14 @@ function asPublicStatus(bundle) {
     currency: "XOF",
     currencyDecimals: 0,
     ussdCode: bundle.mapping.ussdCode,
-    returnUrl: safeReturnUrl(bundle.returnUrl, state)
+    returnUrl: safeReturnUrl(bundle.returnUrl, state),
+    flow: {
+      action,
+      reference: awaitingProviderOtp ? bundle.mapping.id : null,
+      otpMethod: awaitingProviderOtp ? channel?.otpMethod ?? "ussd" : null,
+      otpCommand: awaitingProviderOtp && (channel?.otpMethod ?? "ussd") === "ussd" ? bundle.mapping.ussdCode : null,
+      redirectUrl: providerRedirectUrl
+    }
   };
 }
 async function findLinkForPayment(token) {
@@ -253079,11 +253850,6 @@ async function resolveChannel(tx, link, input2) {
   if (!country?.enabled || !country.depositEnabled || !operator?.enabled || !operator.depositEnabled) {
     throw new LinkFlowPaymentError(400, "Ce pays ou ce r\xE9seau n\u2019est pas disponible pour ce lien.");
   }
-  const providerCountry = feexpayCountries.find((item) => item.countryCode.toLowerCase() === countryCode && item.currency === "XOF");
-  const channel = feexpayChannelForOperator(countryCode, input2.operatorId);
-  if (!providerCountry || !channel || channel.requiresOtp) {
-    throw new LinkFlowPaymentError(400, "Ce r\xE9seau ne permet pas ce paiement LinkFlow.");
-  }
   const [operatorRoute] = await tx.select().from(paymentAggregatorRoutesTable).where(and(
     eq(paymentAggregatorRoutesTable.operation, "deposit"),
     eq(paymentAggregatorRoutesTable.scopeType, "operator"),
@@ -253094,9 +253860,57 @@ async function resolveChannel(tx, link, input2) {
     eq(paymentAggregatorRoutesTable.scopeType, "country"),
     eq(paymentAggregatorRoutesTable.scopeKey, getAggregatorRouteScopeKey("country", countryCode, null))
   )).limit(1);
-  const [aggregator] = await tx.select().from(paymentAggregatorsTable).where(eq(paymentAggregatorsTable.code, operatorRoute?.aggregatorCode ?? countryRoute?.aggregatorCode ?? "")).limit(1);
-  if (!aggregator?.enabled || aggregator.code !== "feexpay") {
+  const providerCode = operatorRoute?.aggregatorCode ?? countryRoute?.aggregatorCode ?? "";
+  const [aggregator] = await tx.select().from(paymentAggregatorsTable).where(eq(paymentAggregatorsTable.code, providerCode)).limit(1);
+  if (!aggregator?.enabled || aggregator.code !== "feexpay" && aggregator.code !== "paydunya") {
     throw new LinkFlowPaymentError(400, "Ce r\xE9seau n\u2019est pas disponible pour ce lien.");
+  }
+  if (!isLinkFlowProviderExecutionEnabled(aggregator.code)) {
+    throw new LinkFlowPaymentError(503, "Le paiement en ligne est momentan\xE9ment indisponible.");
+  }
+  const feexpayCountry = feexpayCountries.find((item) => item.countryCode.toLowerCase() === countryCode && item.currency === "XOF");
+  const feexpayChannel = aggregator.code === "feexpay" ? feexpayChannelForOperator(countryCode, input2.operatorId) : null;
+  const paydunyaChannel = aggregator.code === "paydunya" ? paydunyaChannelForOperator(countryCode, input2.operatorId) : null;
+  if (aggregator.code === "feexpay" && (!feexpayCountry || !feexpayChannel) || aggregator.code === "paydunya" && !paydunyaChannel) {
+    throw new LinkFlowPaymentError(400, "Ce r\xE9seau ne permet pas ce paiement LinkFlow.");
+  }
+  const providerChannelId = aggregator.code === "feexpay" ? feexpayChannel.id : paydunyaChannel;
+  const [otpPolicy] = await tx.select().from(operatorOtpPoliciesTable).where(and(
+    eq(operatorOtpPoliciesTable.countryCode, countryCode),
+    eq(operatorOtpPoliciesTable.operatorId, input2.operatorId)
+  )).limit(1);
+  const requiresOtp = aggregator.code === "feexpay" && Boolean(feexpayChannel?.requiresOtp || otpPolicy?.requiresOtp);
+  const otpFlow = feexpayChannel?.otpFlow ?? "pre_acquired";
+  const otpMethod = feexpayChannel?.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null);
+  const otpCommand = requiresOtp && otpMethod === "ussd" ? getConfiguredOtpCommand(otpPolicy, amountMinor) ?? operator.ussdCodeOverride ?? country.ussdCode ?? null : null;
+  if (aggregator.code === "paydunya" && (input2.otp !== void 0 || input2.reference !== void 0)) {
+    throw new LinkFlowPaymentError(400, "Le code OTP est saisi dans la page s\xE9curis\xE9e du fournisseur.");
+  }
+  if (requiresOtp && otpFlow === "provider_challenge" && Boolean(input2.reference) !== Boolean(input2.otp)) {
+    throw new LinkFlowPaymentError(400, "Pour confirmer le code OTP, renvoyez la r\xE9f\xE9rence de la tentative et le code re\xE7u.");
+  }
+  if (requiresOtp && otpFlow !== "provider_challenge" && !input2.otp) {
+    throw new LinkFlowPaymentError(400, "Un code OTP est requis pour ce r\xE9seau.", {
+      error: "otp_required",
+      message: "Obtenez le code demand\xE9 par l\u2019op\xE9rateur, puis relancez la m\xEAme requ\xEAte avec le champ otp.",
+      reference: null,
+      flow: {
+        action: "enter_otp",
+        reference: null,
+        otpMethod: feexpayChannel?.otpMethod ?? "ussd",
+        otpCommand,
+        redirectUrl: null
+      }
+    });
+  }
+  if (!requiresOtp && (input2.otp !== void 0 || input2.reference !== void 0)) {
+    throw new LinkFlowPaymentError(400, "Ce r\xE9seau ne demande pas de confirmation OTP.");
+  }
+  if (requiresOtp && otpFlow !== "provider_challenge" && input2.reference !== void 0) {
+    throw new LinkFlowPaymentError(400, "Ce parcours OTP n\u2019utilise pas de r\xE9f\xE9rence de confirmation.");
+  }
+  if (requiresOtp && otpFlow === "provider_challenge" && input2.otp && !input2.reference) {
+    throw new LinkFlowPaymentError(400, "La r\xE9f\xE9rence de la tentative est requise pour confirmer le code OTP.");
   }
   const [rate] = await tx.select().from(operatorPricingRatesTable).where(and(
     eq(operatorPricingRatesTable.operatorId, operator.operatorId),
@@ -253116,11 +253930,17 @@ async function resolveChannel(tx, link, input2) {
   return {
     country,
     operator,
-    channel,
+    channel: feexpayChannel,
+    providerCode: aggregator.code,
+    providerChannelId,
+    requiresOtp,
+    otpFlow,
+    otpMethod,
+    otpCommand,
     amountMinor,
     amounts,
     normalizedPhone,
-    ussdCode: operator.ussdCodeOverride ?? country.ussdCode ?? null
+    ussdCode: aggregator.code === "paydunya" ? null : requiresOtp ? otpCommand : operator.ussdCodeOverride ?? country.ussdCode ?? null
   };
 }
 async function loadAttemptBundle(attemptId, pollTokenHash, lock = false) {
@@ -253180,7 +254000,7 @@ async function setDispatchUncertain(attemptId, intentId) {
     }
   });
 }
-async function dispatchPreparedAttempt(attemptId) {
+async function dispatchPreparedAttempt(attemptId, otp) {
   const prepared = await db.transaction(async (tx) => {
     const [attempt] = await tx.select().from(paymentAttemptsTable).where(eq(paymentAttemptsTable.id, attemptId)).for("update").limit(1);
     if (!attempt) return void 0;
@@ -253202,38 +254022,153 @@ async function dispatchPreparedAttempt(attemptId) {
     if (!claimed) return { kind: "already_dispatched" };
     const [transaction] = await tx.select().from(transactionsTable).where(eq(transactionsTable.id, intent.transactionId)).limit(1);
     if (!transaction) throw new Error("Payment transaction is missing");
+    const [mapping] = await tx.select().from(customerPaymentLinkAttemptsTable).where(eq(customerPaymentLinkAttemptsTable.intentId, intent.id)).for("update").limit(1);
+    if (!mapping) throw new Error("Payment link mapping is missing");
+    const [paymentLink] = await tx.select({ returnUrl: customerPaymentLinksTable.returnUrl }).from(customerPaymentLinksTable).where(eq(customerPaymentLinksTable.id, mapping.paymentLinkId)).limit(1);
+    const [country] = await tx.select({ phonePrefix: countriesTable.phonePrefix }).from(countriesTable).where(eq(countriesTable.countryCode, attempt.countryCode)).limit(1);
+    if (!country) throw new Error("Payment country is missing");
     return {
       kind: "claimed",
       attempt: claimed,
       intent,
-      transaction
+      transaction,
+      mapping,
+      phonePrefix: country.phonePrefix.replace(/\D/g, ""),
+      returnUrl: paymentLink?.returnUrl ?? null
     };
   });
   if (!prepared || prepared.kind !== "claimed") return;
-  let receipt = null;
+  let providerReference = null;
+  let providerRedirectUrl = null;
+  let feexpayReceipt = null;
   try {
     const phone = decryptSensitiveData(prepared.transaction.senderPhone, "transaction-sender-phone");
-    receipt = await new FeexpayClient().initiate("payin", {
-      channelId: prepared.attempt.channelId,
-      amountMinor: prepared.attempt.amountMinor,
-      currency: "XOF",
-      phoneNumber: toProviderPhoneNumber(phone),
-      operationReference: prepared.attempt.operationReference
-    });
+    const phoneDigits = toProviderPhoneNumber(phone);
+    if (prepared.intent.providerCode === "feexpay") {
+      feexpayReceipt = await new FeexpayClient().initiate("payin", {
+        channelId: prepared.attempt.channelId,
+        amountMinor: prepared.attempt.amountMinor,
+        currency: "XOF",
+        phoneNumber: phoneDigits,
+        operationReference: prepared.attempt.operationReference,
+        ...otp !== void 0 ? { otp } : {}
+      });
+      providerReference = feexpayReceipt.reference;
+    } else if (prepared.intent.providerCode === "paydunya") {
+      if (!phoneDigits.startsWith(prepared.phonePrefix)) throw new Error("Invalid payer country prefix");
+      const nationalPhone = phoneDigits.slice(prepared.phonePrefix.length);
+      const invoice = await new PaydunyaClient().createInvoice({
+        amountMinor: prepared.attempt.amountMinor,
+        operationReference: prepared.attempt.operationReference,
+        channel: prepared.attempt.channelId.replace(/^paydunya:/, ""),
+        phoneNumber: nationalPhone,
+        returnUrl: prepared.returnUrl
+      });
+      providerReference = invoice.token;
+      providerRedirectUrl = invoice.redirectUrl;
+    } else {
+      throw new Error("Unsupported payment provider");
+    }
   } catch {
     await setDispatchUncertain(prepared.attempt.id, prepared.intent.id);
     return;
   }
-  if (!receipt.reference || !referencePattern2.test(prepared.attempt.operationReference)) {
+  if (!providerReference || !referencePattern3.test(prepared.attempt.operationReference)) {
     await setDispatchUncertain(prepared.attempt.id, prepared.intent.id);
+    return;
+  }
+  const providerReferenceHash = createSensitiveDataLookupIndex(providerReference, "provider-reference");
+  const encryptedProviderReference = encryptSensitiveData(providerReference, "provider-reference");
+  await db.transaction(async (tx) => {
+    const [attempt] = await tx.select().from(paymentAttemptsTable).where(eq(paymentAttemptsTable.id, prepared.attempt.id)).for("update").limit(1);
+    if (!attempt || attempt.status !== "dispatching") return;
+    const [transaction] = await tx.select().from(transactionsTable).where(eq(transactionsTable.id, prepared.intent.transactionId)).for("update").limit(1);
+    if (!transaction) throw new Error("Payment transaction is missing");
+    const [mapping] = await tx.select().from(customerPaymentLinkAttemptsTable).where(eq(customerPaymentLinkAttemptsTable.id, prepared.mapping.id)).for("update").limit(1);
+    if (!mapping) throw new Error("Payment link mapping is missing");
+    await tx.update(transactionsTable).set({
+      providerReference: encryptedProviderReference,
+      providerReferenceLookupHash: providerReferenceHash,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(transactionsTable.id, transaction.id));
+    await tx.update(paymentAttemptsTable).set({
+      providerReference: encryptedProviderReference,
+      providerReferenceHash,
+      ...otp && otp.length > 0 ? { otpConfirmedAt: /* @__PURE__ */ new Date() } : {},
+      status: "pending",
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(paymentAttemptsTable.id, attempt.id));
+    await tx.update(customerPaymentLinkAttemptsTable).set({
+      providerRedirectUrlEncrypted: providerRedirectUrl ? encryptSensitiveData(providerRedirectUrl, "provider-redirect-url") : null
+    }).where(eq(customerPaymentLinkAttemptsTable.id, mapping.id));
+  });
+  if (feexpayReceipt) resolveInitialProviderState(feexpayReceipt);
+}
+async function confirmLinkFlowPaymentOtp(mappingId, tokenHash2, reference, otp) {
+  if (!isLinkFlowPaymentExecutionEnabled()) {
+    throw new LinkFlowPaymentError(503, "Le paiement en ligne est momentan\xE9ment indisponible.");
+  }
+  if (!uuidPattern2.test(mappingId) || reference !== mappingId || !/^[0-9]{4,12}$/.test(otp)) {
+    throw new LinkFlowPaymentError(404, "Cette demande de confirmation n\u2019est pas disponible.");
+  }
+  const current = await loadAttemptBundle(mappingId, tokenHash2);
+  if (!current) throw new LinkFlowPaymentError(404, "Cette demande de confirmation n\u2019est pas disponible.");
+  const channel = feexpayChannels.find((candidate) => candidate.id === current.attempt.channelId);
+  if (channel?.otpFlow !== "provider_challenge") {
+    throw new LinkFlowPaymentError(400, "Cette tentative n\u2019attend pas de code OTP.");
+  }
+  if (current.attempt.otpConfirmedAt) return;
+  const claimed = await db.transaction(async (tx) => {
+    const [mapping] = await tx.select().from(customerPaymentLinkAttemptsTable).where(and(
+      eq(customerPaymentLinkAttemptsTable.id, mappingId),
+      eq(customerPaymentLinkAttemptsTable.pollTokenHash, tokenHash2)
+    )).for("update").limit(1);
+    if (!mapping) return void 0;
+    const [attempt] = await tx.select().from(paymentAttemptsTable).where(and(
+      eq(paymentAttemptsTable.intentId, mapping.intentId),
+      eq(paymentAttemptsTable.direction, "payin")
+    )).for("update").limit(1);
+    const [intent] = await tx.select().from(paymentIntentsTable).where(eq(paymentIntentsTable.id, mapping.intentId)).for("update").limit(1);
+    if (!attempt || !intent) return void 0;
+    if (attempt.otpConfirmedAt) return { kind: "already_confirmed" };
+    if (attempt.status !== "pending" || intent.state !== "collecting") {
+      throw new LinkFlowPaymentError(409, "Cette tentative n\u2019attend plus de code OTP.");
+    }
+    const [updated] = await tx.update(paymentAttemptsTable).set({
+      status: "dispatching",
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(and(
+      eq(paymentAttemptsTable.id, attempt.id),
+      eq(paymentAttemptsTable.status, "pending")
+    )).returning();
+    return updated ? { kind: "claimed", attempt: updated, intent } : void 0;
+  });
+  if (!claimed || claimed.kind === "already_confirmed") return;
+  let receipt;
+  try {
+    const phone = decryptSensitiveData(current.transaction.senderPhone, "transaction-sender-phone");
+    receipt = await new FeexpayClient().initiate("payin", {
+      channelId: claimed.attempt.channelId,
+      amountMinor: claimed.attempt.amountMinor,
+      currency: "XOF",
+      phoneNumber: toProviderPhoneNumber(phone),
+      operationReference: claimed.attempt.operationReference,
+      otp
+    });
+  } catch {
+    await setDispatchUncertain(claimed.attempt.id, claimed.intent.id);
+    return;
+  }
+  if (!receipt.reference || !referencePattern3.test(claimed.attempt.operationReference)) {
+    await setDispatchUncertain(claimed.attempt.id, claimed.intent.id);
     return;
   }
   const providerReferenceHash = createSensitiveDataLookupIndex(receipt.reference, "provider-reference");
   const encryptedProviderReference = encryptSensitiveData(receipt.reference, "provider-reference");
   await db.transaction(async (tx) => {
-    const [attempt] = await tx.select().from(paymentAttemptsTable).where(eq(paymentAttemptsTable.id, prepared.attempt.id)).for("update").limit(1);
+    const [attempt] = await tx.select().from(paymentAttemptsTable).where(eq(paymentAttemptsTable.id, claimed.attempt.id)).for("update").limit(1);
     if (!attempt || attempt.status !== "dispatching") return;
-    const [transaction] = await tx.select().from(transactionsTable).where(eq(transactionsTable.id, prepared.intent.transactionId)).for("update").limit(1);
+    const [transaction] = await tx.select().from(transactionsTable).where(eq(transactionsTable.id, claimed.intent.transactionId)).for("update").limit(1);
     if (!transaction) throw new Error("Payment transaction is missing");
     await tx.update(transactionsTable).set({
       providerReference: encryptedProviderReference,
@@ -253243,11 +254178,23 @@ async function dispatchPreparedAttempt(attemptId) {
     await tx.update(paymentAttemptsTable).set({
       providerReference: encryptedProviderReference,
       providerReferenceHash,
+      otpConfirmedAt: /* @__PURE__ */ new Date(),
       status: "pending",
       updatedAt: /* @__PURE__ */ new Date()
     }).where(eq(paymentAttemptsTable.id, attempt.id));
   });
-  resolveInitialProviderState(receipt);
+}
+async function confirmPublicLinkFlowPaymentOtp(attemptId, pollToken, reference, otp) {
+  if (!/^[a-f0-9]{64}$/.test(pollToken)) {
+    throw new LinkFlowPaymentError(404, "Cette demande de confirmation n\u2019est pas disponible.");
+  }
+  await confirmLinkFlowPaymentOtp(
+    attemptId,
+    hashLinkFlowPollToken(pollToken),
+    reference,
+    otp
+  );
+  return getLinkFlowPaymentAttemptStatus(attemptId, pollToken);
 }
 async function startLinkFlowPaymentAttempt(publicToken, input2) {
   if (!isLinkFlowPaymentExecutionEnabled()) {
@@ -253285,10 +254232,16 @@ async function startLinkFlowPaymentAttempt(publicToken, input2) {
     }
     const channelContext = await resolveChannel(tx, lockedLink, input2);
     const requestHash = buildLinkFlowRequestHash({
-      ...input2,
       linkId: lockedLink.id,
+      countryCode: input2.countryCode,
+      operatorId: input2.operatorId,
       phoneNumber: channelContext.normalizedPhone,
-      amountMinor: channelContext.amountMinor
+      firstName: input2.firstName,
+      lastName: input2.lastName,
+      amountMinor: channelContext.amountMinor,
+      idempotencyKey: input2.idempotencyKey,
+      otp: input2.otp,
+      otpFlow: channelContext.otpFlow
     });
     const [existing] = await tx.select().from(customerPaymentLinkAttemptsTable).where(and(
       eq(customerPaymentLinkAttemptsTable.paymentLinkId, lockedLink.id),
@@ -253302,7 +254255,8 @@ async function startLinkFlowPaymentAttempt(publicToken, input2) {
         kind: "existing",
         mappingId: existing.id,
         intentId: existing.intentId,
-        requestKey: existing.idempotencyKey
+        requestKey: existing.idempotencyKey,
+        otpFlow: channelContext.otpFlow
       };
     }
     const payerPhoneHash = createSensitiveDataLookupIndex(channelContext.normalizedPhone, "transaction-sender-phone");
@@ -253369,7 +254323,7 @@ async function startLinkFlowPaymentAttempt(publicToken, input2) {
     if (!transaction) throw new Error("LinkFlow transaction was not created");
     const [intent] = await tx.insert(paymentIntentsTable).values({
       transactionId: transaction.id,
-      providerCode: "feexpay",
+      providerCode: channelContext.providerCode,
       requestHash,
       kind: "deposit",
       currency: "XOF",
@@ -253398,7 +254352,7 @@ async function startLinkFlowPaymentAttempt(publicToken, input2) {
       intentId: intent.id,
       direction: "payin",
       countryCode: input2.countryCode.toLowerCase(),
-      channelId: channelContext.channel.id,
+      channelId: channelContext.providerCode === "paydunya" ? `paydunya:${channelContext.providerChannelId}` : channelContext.providerChannelId,
       operationReference,
       amountMinor: channelContext.amountMinor,
       currency: "XOF",
@@ -253415,7 +254369,8 @@ async function startLinkFlowPaymentAttempt(publicToken, input2) {
       intentId: intent.id,
       attemptId: attempt.id,
       requestKey: requestKey2,
-      pollToken: pollToken2
+      pollToken: pollToken2,
+      otpFlow: channelContext.otpFlow
     };
   });
   let mappingId;
@@ -253427,12 +254382,18 @@ async function startLinkFlowPaymentAttempt(publicToken, input2) {
     pollToken = deriveLinkFlowPollToken(link.id, requestKey);
     const existing = await loadAttemptBundle(mappingId, hashLinkFlowPollToken(pollToken));
     if (!existing) throw new LinkFlowPaymentError(503, "La demande de paiement est momentan\xE9ment indisponible.");
-    if (existing.attempt.status === "prepared") await dispatchPreparedAttempt(existing.attempt.id);
+    if (input2.reference && input2.otp) {
+      await confirmLinkFlowPaymentOtp(mappingId, hashLinkFlowPollToken(pollToken), input2.reference, input2.otp);
+    } else if (existing.attempt.status === "prepared") {
+      const initialOtp = prepared.otpFlow === "provider_challenge" ? "" : input2.otp;
+      await dispatchPreparedAttempt(existing.attempt.id, initialOtp);
+    }
   } else {
     mappingId = prepared.mappingId;
     requestKey = prepared.requestKey;
     pollToken = prepared.pollToken;
-    await dispatchPreparedAttempt(prepared.attemptId);
+    const initialOtp = prepared.otpFlow === "provider_challenge" ? "" : input2.otp;
+    await dispatchPreparedAttempt(prepared.attemptId, initialOtp);
   }
   const bundle = await loadAttemptBundle(mappingId, hashLinkFlowPollToken(pollToken));
   if (!bundle) throw new LinkFlowPaymentError(503, "La demande de paiement est momentan\xE9ment indisponible.");
@@ -253499,6 +254460,15 @@ async function retryWalletSettlement(bundle) {
       }
       return false;
     }
+    const [approvedIdentity] = await tx.select({ id: customerIdentityRequestsTable.id }).from(customerIdentityRequestsTable).where(and(
+      eq(customerIdentityRequestsTable.userId, transaction.userId),
+      eq(customerIdentityRequestsTable.status, "approved")
+    )).limit(1);
+    const unverifiedReceivedAfterMinor = addUnverifiedIncomingAmount(
+      wallet.unverifiedReceivedMinor,
+      intent.recipientTotalMinor,
+      Boolean(approvedIdentity)
+    );
     const [ledgerEntry] = await tx.insert(walletLedgerTable).values({
       walletId: wallet.id,
       userId: transaction.userId,
@@ -253512,7 +254482,11 @@ async function retryWalletSettlement(bundle) {
       idempotencyKey: `payment:${intent.id}:credit`
     }).returning();
     if (!ledgerEntry) throw new Error("LinkFlow wallet credit was not recorded");
-    await tx.update(walletsTable).set({ balanceMinor: balanceAfterMinor, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.id, wallet.id));
+    await tx.update(walletsTable).set({
+      balanceMinor: balanceAfterMinor,
+      unverifiedReceivedMinor: unverifiedReceivedAfterMinor,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(walletsTable.id, wallet.id));
     await tx.update(paymentIntentsTable).set({
       state: "succeeded",
       ledgerEntryId: ledgerEntry.id,
@@ -253542,12 +254516,35 @@ async function retryWalletSettlement(bundle) {
   });
 }
 async function finalizeVerifiedStatus(bundle, receipt) {
-  const outcome = resolveVerifiedProviderState(receipt, {
-    reference: bundle.attempt.providerReference ? decryptSensitiveData(bundle.attempt.providerReference, "provider-reference") : "",
+  const isPaydunyaReceipt = "token" in receipt;
+  if (isPaydunyaReceipt !== (bundle.intent.providerCode === "paydunya")) {
+    await updateNonFinalAttempt(bundle, "uncertain");
+    return;
+  }
+  const expectedPhoneFull = toProviderPhoneNumber(
+    decryptSensitiveData(bundle.transaction.senderPhone, "transaction-sender-phone")
+  );
+  const [country] = await db.select({ phonePrefix: countriesTable.phonePrefix }).from(countriesTable).where(eq(countriesTable.countryCode, bundle.attempt.countryCode)).limit(1);
+  const countryPrefix = country?.phonePrefix.replace(/\D/g, "") ?? "";
+  const expectedProviderPhone = isPaydunyaReceipt ? expectedPhoneFull.startsWith(countryPrefix) && countryPrefix ? expectedPhoneFull.slice(countryPrefix.length) : "" : expectedPhoneFull;
+  const expectedReference = bundle.attempt.providerReference ? decryptSensitiveData(bundle.attempt.providerReference, "provider-reference") : "";
+  const receiptReference = isPaydunyaReceipt ? receipt.token : receipt.reference;
+  const receiptStatus = isPaydunyaReceipt ? receipt.status === "completed" ? "SUCCESSFUL" : receipt.status === "failed" ? "FAILED" : "PENDING" : receipt.status;
+  const receiptAmount = receipt.amountMinor;
+  const receiptCurrency = receipt.currency;
+  const receiptPhone = receipt.phoneNumber;
+  const outcome = isPaydunyaReceipt ? resolveVerifiedPaydunyaState(receipt, {
+    token: expectedReference,
+    operationReference: bundle.attempt.operationReference,
     amountMinor: bundle.attempt.amountMinor,
     currency: "XOF",
-    shopId: process.env.FEEXPAY_SHOP_ID ?? "",
-    channelId: bundle.attempt.channelId
+    phoneNumber: expectedProviderPhone
+  }) : resolveVerifiedProviderState(receipt, {
+    reference: expectedReference,
+    amountMinor: bundle.attempt.amountMinor,
+    currency: "XOF",
+    channelId: bundle.attempt.channelId,
+    phoneNumber: expectedPhoneFull
   });
   if (outcome === "waiting" || outcome === "uncertain") {
     await updateNonFinalAttempt(bundle, outcome);
@@ -253565,7 +254562,7 @@ async function finalizeVerifiedStatus(bundle, receipt) {
     const [transaction] = await tx.select().from(transactionsTable).where(eq(transactionsTable.id, intent.transactionId)).for("update").limit(1);
     if (!attempt || !transaction || !attempt.providerReferenceHash || !attempt.providerReference || attempt.status === "succeeded" || attempt.status === "failed") return;
     const providerReference = decryptSensitiveData(attempt.providerReference, "provider-reference");
-    if (providerReference !== receipt.reference || receipt.amountMinor !== attempt.amountMinor || receipt.currency !== attempt.currency) {
+    if (providerReference !== receiptReference || receiptAmount !== attempt.amountMinor || receiptPhone !== expectedProviderPhone || receiptCurrency !== void 0 && receiptCurrency !== attempt.currency) {
       if (attempt.status !== "uncertain") {
         await tx.update(paymentAttemptsTable).set({ status: "uncertain", updatedAt: /* @__PURE__ */ new Date() }).where(eq(paymentAttemptsTable.id, attempt.id));
       }
@@ -253575,21 +254572,23 @@ async function finalizeVerifiedStatus(bundle, receipt) {
       return;
     }
     const providerStatus = outcome === "succeeded" ? "succeeded" : "failed";
-    const eventFingerprint = createHash6("sha256").update([
+    const eventFingerprint = createHash7("sha256").update([
       attempt.id,
       providerStatus,
       attempt.providerReferenceHash,
-      String(receipt.amountMinor),
-      receipt.currency
+      String(receiptAmount),
+      receiptCurrency ?? attempt.currency
     ].join(":")).digest("hex");
     const now = /* @__PURE__ */ new Date();
     const encryptedPayload = encryptSensitiveData(JSON.stringify({
-      provider: "feexpay",
+      provider: bundle.intent.providerCode,
       direction: "payin",
-      reference: receipt.reference,
-      status: receipt.status,
-      amountMinor: receipt.amountMinor,
-      currency: receipt.currency,
+      reference: receiptReference,
+      status: receiptStatus,
+      amountMinor: receiptAmount,
+      providerCurrency: receiptCurrency ?? null,
+      currency: attempt.currency,
+      currencySource: receiptCurrency ? "provider_status" : "verified_attempt_channel",
       observedAt: now.toISOString()
     }), "payment-confirmation-payload");
     const [confirmation] = await tx.insert(paymentConfirmationsTable).values({
@@ -253598,8 +254597,8 @@ async function finalizeVerifiedStatus(bundle, receipt) {
       source: "provider_status",
       providerStatus,
       providerReferenceHash: attempt.providerReferenceHash,
-      amountMinor: receipt.amountMinor,
-      currency: receipt.currency,
+      amountMinor: receiptAmount,
+      currency: attempt.currency,
       encryptedPayload,
       verifiedAt: now
     }).returning();
@@ -253658,7 +254657,24 @@ async function refreshLinkFlowPaymentAttemptStatus(attemptId, tokenHash2) {
   let receipt;
   try {
     const reference = decryptSensitiveData(bundle.attempt.providerReference, "provider-reference");
-    receipt = await new FeexpayClient().getStatus("payin", reference);
+    if (bundle.intent.providerCode === "feexpay") {
+      receipt = await new FeexpayClient().getStatus("payin", reference);
+    } else if (bundle.intent.providerCode === "paydunya") {
+      const [country] = await db.select({ phonePrefix: countriesTable.phonePrefix }).from(countriesTable).where(eq(countriesTable.countryCode, bundle.attempt.countryCode)).limit(1);
+      const prefix = country?.phonePrefix.replace(/\D/g, "") ?? "";
+      const fullPhone = toProviderPhoneNumber(
+        decryptSensitiveData(bundle.transaction.senderPhone, "transaction-sender-phone")
+      );
+      if (!prefix || !fullPhone.startsWith(prefix)) return asPublicStatus(bundle);
+      receipt = await new PaydunyaClient().getVerifiedInvoiceStatus({
+        token: reference,
+        expectedAmountMinor: bundle.attempt.amountMinor,
+        expectedReference: bundle.attempt.operationReference,
+        expectedPhoneNumber: fullPhone.slice(prefix.length)
+      });
+    } else {
+      return asPublicStatus(bundle);
+    }
   } catch {
     return asPublicStatus(bundle);
   }
@@ -253687,10 +254703,10 @@ async function getLinkFlowPaymentAttemptStatusByMappingId(attemptId) {
 
 // src/routes/public-payment-links.ts
 var router24 = (0, import_express30.Router)();
-var tokenPattern = /^[A-Za-z0-9_-]{43}$/;
+var tokenPattern2 = /^[A-Za-z0-9_-]{43}$/;
 var errorUnavailable = { error: "Ce lien de paiement est indisponible." };
 async function findPublicLink(token, options = {}) {
-  if (!tokenPattern.test(token)) return void 0;
+  if (!tokenPattern2.test(token)) return void 0;
   const [link] = await db.select({
     id: customerPaymentLinksTable.id,
     userId: customerPaymentLinksTable.userId,
@@ -253741,10 +254757,11 @@ async function findUsablePublicLink(token) {
 }
 async function loadAvailableChoices(link) {
   if (link.currency !== "XOF" || link.paymentMethod === "card") return [];
-  const [countries, operators, rates, routes, aggregators] = await Promise.all([
+  const [countries, operators, rates, otpPolicies, routes, aggregators] = await Promise.all([
     db.select().from(countriesTable),
     db.select().from(operatorCatalogTable),
     db.select().from(operatorPricingRatesTable),
+    db.select().from(operatorOtpPoliciesTable),
     db.select().from(paymentAggregatorRoutesTable).where(eq(paymentAggregatorRoutesTable.operation, "deposit")),
     db.select().from(paymentAggregatorsTable)
   ]);
@@ -253754,6 +254771,9 @@ async function loadAvailableChoices(link) {
   if (!enabledAggregators.has("feexpay")) return [];
   const routeByScope = new Map(
     routes.map((route) => [`${route.scopeType}:${route.scopeKey}`, route.aggregatorCode])
+  );
+  const otpPolicyByOperator = new Map(
+    otpPolicies.map((policy) => [`${policy.countryCode.toLowerCase()}:${policy.operatorId}`, policy])
   );
   const choices = countries.flatMap((country) => {
     const countryCode = country.countryCode.toLowerCase();
@@ -253766,7 +254786,7 @@ async function loadAvailableChoices(link) {
     const availableOperators = operators.flatMap((operator) => {
       if (operator.countryCode.toLowerCase() !== countryCode || !operator.enabled || !operator.depositEnabled) return [];
       const channel = feexpayChannelForOperator(countryCode, operator.operatorId);
-      if (!channel || channel.requiresOtp) return [];
+      if (!channel) return [];
       const operatorScope = getAggregatorRouteScopeKey("operator", countryCode, operator.operatorId);
       const operatorAggregator = routeByScope.get(`operator:${operatorScope}`) ?? null;
       const effectiveAggregator = operatorAggregator ?? countryAggregator;
@@ -253776,11 +254796,19 @@ async function loadAvailableChoices(link) {
       );
       if (rate?.feePercent === null || rate?.feePercent === void 0 || !Number.isFinite(rate.feePercent) || rate.feePercent < 0 || rate.feePercent > 100) return [];
       if (link.amountMinor > 0 && !calculateTransferQuoteAmounts(link.amountMinor, rate.feePercent, false)) return [];
+      const otpPolicy = otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`);
+      const requiresOtp = Boolean(channel.requiresOtp || otpPolicy?.requiresOtp);
+      const otpMethod = channel.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null);
+      const amountCommandPending = otpPolicy?.otpCommand?.includes("{amount}") && link.amountMinor < 1;
+      const otpCommand = !requiresOtp || otpMethod !== "ussd" || amountCommandPending ? null : getConfiguredOtpCommand(otpPolicy, link.amountMinor) ?? operator.ussdCodeOverride ?? country.ussdCode ?? null;
       return [{
         id: operator.operatorId,
         name: operator.name,
         initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
-        logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData))
+        logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+        requiresOtp,
+        otpMethod: requiresOtp ? otpMethod : null,
+        otpCommand
       }];
     }).sort((left, right) => left.name.localeCompare(right.name, "fr"));
     return availableOperators.length ? [{
@@ -253802,10 +254830,14 @@ async function getPublicPaymentLinkChoices(publicToken) {
 }
 async function loadPreviewCatalogChoices(link) {
   if (link.currency !== "XOF" || link.paymentMethod === "card") return [];
-  const [countries, operators] = await Promise.all([
+  const [countries, operators, otpPolicies] = await Promise.all([
     db.select().from(countriesTable),
-    db.select().from(operatorCatalogTable)
+    db.select().from(operatorCatalogTable),
+    db.select().from(operatorOtpPoliciesTable)
   ]);
+  const otpPolicyByOperator = new Map(
+    otpPolicies.map((policy) => [`${policy.countryCode.toLowerCase()}:${policy.operatorId}`, policy])
+  );
   const operatorsByCountry = /* @__PURE__ */ new Map();
   for (const operator of operators) {
     const countryCode = operator.countryCode.toLowerCase();
@@ -253823,12 +254855,25 @@ async function loadPreviewCatalogChoices(link) {
       phonePrefix: country.phonePrefix,
       minPhoneDigits: country.minPhoneDigits,
       maxPhoneDigits: country.maxPhoneDigits,
-      operators: catalogOperators.map((operator) => ({
-        id: operator.operatorId,
-        name: operator.name,
-        initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
-        logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData))
-      })).sort((left, right) => left.name.localeCompare(right.name, "fr"))
+      operators: catalogOperators.map((operator) => {
+        const channel = feexpayChannelForOperator(countryCode, operator.operatorId);
+        const otpPolicy = otpPolicyByOperator.get(`${countryCode}:${operator.operatorId}`);
+        const requiresOtp = Boolean(
+          channel?.requiresOtp || otpPolicy?.requiresOtp
+        );
+        const otpMethod = channel?.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null);
+        const amountCommandPending = otpPolicy?.otpCommand?.includes("{amount}") && link.amountMinor < 1;
+        const otpCommand = !requiresOtp || otpMethod !== "ussd" || amountCommandPending ? null : getConfiguredOtpCommand(otpPolicy, link.amountMinor) ?? operator.ussdCodeOverride ?? country.ussdCode ?? null;
+        return {
+          id: operator.operatorId,
+          name: operator.name,
+          initials: operator.initials.trim().slice(0, 12) || operator.name.trim().slice(0, 12) || "OP",
+          logoUrl: operatorLogoUrl(operator.operatorId, operator.version, Boolean(operator.logoData)),
+          requiresOtp,
+          otpMethod: requiresOtp ? otpMethod : null,
+          otpCommand
+        };
+      }).sort((left, right) => left.name.localeCompare(right.name, "fr"))
     };
   }).sort((left, right) => left.name.localeCompare(right.name, "fr"));
 }
@@ -253913,7 +254958,7 @@ router24.post("/public/payment-links/:token/attempts", async (req, res) => {
     res.json(StartPublicPaymentLinkAttemptResponse.parse(result));
   } catch (error62) {
     if (error62 instanceof LinkFlowPaymentError) {
-      res.status(error62.statusCode).json({ error: error62.message });
+      res.status(error62.statusCode).json(error62.responseBody ?? { error: error62.message });
       return;
     }
     req.log.error({ err: error62 }, "Public LinkFlow payment attempt could not be started");
@@ -253948,6 +254993,39 @@ router24.get("/public/payment-link-attempts/:attemptId", async (req, res) => {
     }
     req.log.error({ err: error62 }, "Public LinkFlow payment status could not be refreshed");
     res.status(503).json({ error: "La v\xE9rification est momentan\xE9ment indisponible. R\xE9essayez sans relancer le paiement." });
+  }
+});
+router24.post("/public/payment-link-attempts/:attemptId/otp", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  const parsedParams = ConfirmPublicPaymentLinkAttemptOtpParams.safeParse(req.params);
+  const parsedHeader = ConfirmPublicPaymentLinkAttemptOtpHeader.safeParse({
+    "X-LinkFlow-Attempt-Token": req.get("X-LinkFlow-Attempt-Token")
+  });
+  const parsedBody = ConfirmPublicPaymentLinkAttemptOtpBody.safeParse(req.body);
+  if (!parsedParams.success || !parsedHeader.success || !parsedBody.success) {
+    res.status(400).json({ error: "Les informations de confirmation OTP sont invalides." });
+    return;
+  }
+  try {
+    if (!await consumePublicPaymentLinkQuota(clientAddress(req), "otp")) {
+      res.setHeader("Retry-After", "60");
+      res.status(429).json({ error: "Trop de confirmations OTP. R\xE9essayez dans une minute." });
+      return;
+    }
+    const result = await confirmPublicLinkFlowPaymentOtp(
+      parsedParams.data.attemptId,
+      parsedHeader.data["X-LinkFlow-Attempt-Token"],
+      parsedBody.data.reference,
+      parsedBody.data.otp
+    );
+    res.json(ConfirmPublicPaymentLinkAttemptOtpResponse.parse(result));
+  } catch (error62) {
+    if (error62 instanceof LinkFlowPaymentError) {
+      res.status(error62.statusCode).json({ error: error62.message });
+      return;
+    }
+    req.log.error({ err: error62 }, "Public LinkFlow OTP confirmation could not be completed");
+    res.status(503).json({ error: "La confirmation OTP est momentan\xE9ment indisponible. V\xE9rifiez l\u2019\xE9tat avant de r\xE9essayer." });
   }
 });
 var handlePublicPaymentLinkQuote = async (req, res) => {
@@ -254023,7 +255101,7 @@ router24.post("/public/payment-links/:token/quote/:countryCode/:operatorId", han
 router24.get("/public/payment-links/:token/image", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   res.setHeader("X-Content-Type-Options", "nosniff");
-  if (!tokenPattern.test(req.params.token)) {
+  if (!tokenPattern2.test(req.params.token)) {
     res.status(404).end();
     return;
   }
@@ -254888,11 +255966,13 @@ router25.post("/v1/public/payment-sessions/:sessionId/attempts", async (req, res
       currency: result.currency,
       ussdCode: result.ussdCode,
       pollToken: result.pollToken,
-      merchantReference: session.merchantReference
+      merchantReference: session.merchantReference,
+      flow: result.flow
     }));
   } catch (error62) {
     if (error62 instanceof LinkFlowPaymentError) {
-      res.status(error62.statusCode).json({ error: error62.message });
+      const responseBody = error62.responseBody ?? { error: error62.message };
+      res.status(error62.statusCode).json(responseBody);
       return;
     }
     req.log.error({ path: req.path }, "Developer direct payment attempt could not be started");
@@ -254939,7 +256019,8 @@ router25.get("/v1/public/payment-sessions/:sessionId/attempts/:attemptId", async
       currency: result.currency,
       ussdCode: result.ussdCode,
       pollToken: headers.data["X-LinkFlow-Attempt-Token"],
-      merchantReference: session.merchantReference
+      merchantReference: session.merchantReference,
+      flow: result.flow
     }));
   } catch (error62) {
     if (error62 instanceof LinkFlowPaymentError) {
@@ -255152,7 +256233,7 @@ var PayoutWebhookPayloadError = class extends Error {
     this.name = "PayoutWebhookPayloadError";
   }
 };
-function isRecord2(value) {
+function isRecord3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function exactKeys(value, keys) {
@@ -255164,7 +256245,7 @@ function context(deliveryId, eventType) {
   return JSON.stringify([deliveryId, eventType]);
 }
 function normalizePayoutWebhookPayload(value) {
-  if (!isRecord2(value) || !exactKeys(value, ["createdAt", "data", "id", "type"]) || !isRecord2(value.data) || !exactKeys(value.data, KEYS)) {
+  if (!isRecord3(value) || !exactKeys(value, ["createdAt", "data", "id", "type"]) || !isRecord3(value.data) || !exactKeys(value.data, KEYS)) {
     throw new PayoutWebhookPayloadError();
   }
   const { createdAt, id, type, data } = value;
@@ -255230,7 +256311,7 @@ function encryptPayoutWebhookPayload(payload, deliveryId) {
   };
 }
 function decryptPayoutWebhookPayload(value, contextValue) {
-  if (!UUID.test(contextValue.deliveryId) || !EVENT_TYPES.has(contextValue.eventType) || !isRecord2(value) || !exactKeys(value, [ENVELOPE_KEY]) || typeof value[ENVELOPE_KEY] !== "string") {
+  if (!UUID.test(contextValue.deliveryId) || !EVENT_TYPES.has(contextValue.eventType) || !isRecord3(value) || !exactKeys(value, [ENVELOPE_KEY]) || typeof value[ENVELOPE_KEY] !== "string") {
     throw new PayoutWebhookPayloadError();
   }
   try {
@@ -255365,6 +256446,10 @@ router26.post("/v1/payout-quote", async (req, res) => {
     return;
   }
   try {
+    const incomingPolicy = await getMonthlyIncomingPolicy(key.userId);
+    if (incomingPolicy.outgoingBlocked) {
+      throw new PayoutPolicyError(403, monthlyIncomingOutgoingBlockedMessage(incomingPolicy));
+    }
     const wallet = await loadMerchantPayoutWallet(key.userId);
     if (wallet.availableMinor <= 0) {
       throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
@@ -255395,6 +256480,10 @@ router26.post("/v1/payouts", async (req, res) => {
     return;
   }
   try {
+    const incomingPolicy = await getMonthlyIncomingPolicy(key.userId);
+    if (incomingPolicy.outgoingBlocked) {
+      throw new PayoutPolicyError(403, monthlyIncomingOutgoingBlockedMessage(incomingPolicy));
+    }
     const wallet = await loadMerchantPayoutWallet(key.userId);
     if (wallet.availableMinor <= 0) {
       throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
@@ -255987,10 +257076,10 @@ async function enforceIpAccess(req, res, lookup3 = isIpBlocked, hops = trustedPr
 
 // src/lib/csrf-protection.ts
 import {
-  createHash as createHash8,
+  createHash as createHash9,
   createHmac as createHmac4,
   randomBytes as randomBytes8,
-  timingSafeEqual as timingSafeEqual4
+  timingSafeEqual as timingSafeEqual5
 } from "node:crypto";
 var CSRF_HEADER_NAME = "X-CSRF-Token";
 var CSRF_TOKEN_TTL_MS = 10 * 60 * 1e3;
@@ -256050,7 +257139,7 @@ function readAnonymousCsrfCookie(cookieHeader, now = Date.now()) {
   }
   const expectedBytes = Buffer.from(expectedSignature, "base64url");
   const providedBytes = Buffer.from(providedSignature, "base64url");
-  if (expectedBytes.length !== providedBytes.length || !timingSafeEqual4(expectedBytes, providedBytes)) {
+  if (expectedBytes.length !== providedBytes.length || !timingSafeEqual5(expectedBytes, providedBytes)) {
     return null;
   }
   return {
@@ -256073,7 +257162,7 @@ function signingKey() {
   return createHmac4("sha256", secret).update("sendflow:csrf-signing-key:v1").digest();
 }
 function bindingDigest(binding) {
-  return createHash8("sha256").update(binding).digest("base64url");
+  return createHash9("sha256").update(binding).digest("base64url");
 }
 function sign(encodedPayload) {
   return createHmac4("sha256", signingKey()).update(`sendflow:csrf-token:v1:${encodedPayload}`).digest("base64url");
@@ -256102,7 +257191,7 @@ function verifyCsrfToken(token, binding, now = Date.now(), expiresAtLimit = Numb
   }
   const expectedSignatureBytes = Buffer.from(expectedSignature, "base64url");
   const providedSignatureBytes = Buffer.from(providedSignature, "base64url");
-  if (providedSignatureBytes.length !== expectedSignatureBytes.length || !timingSafeEqual4(providedSignatureBytes, expectedSignatureBytes)) {
+  if (providedSignatureBytes.length !== expectedSignatureBytes.length || !timingSafeEqual5(providedSignatureBytes, expectedSignatureBytes)) {
     return false;
   }
   try {
@@ -256112,7 +257201,7 @@ function verifyCsrfToken(token, binding, now = Date.now(), expiresAtLimit = Numb
     const expectedBinding = bindingDigest(binding);
     const payloadBindingBytes = Buffer.from(payload.binding ?? "", "base64url");
     const expectedBindingBytes = Buffer.from(expectedBinding, "base64url");
-    return payload.version === 1 && Number.isSafeInteger(payload.expiresAt) && payload.expiresAt > now && payload.expiresAt <= now + CSRF_TOKEN_TTL_MS + 3e4 && payload.expiresAt <= expiresAtLimit && typeof payload.nonce === "string" && /^[A-Za-z0-9_-]{22}$/.test(payload.nonce) && payloadBindingBytes.length === expectedBindingBytes.length && timingSafeEqual4(payloadBindingBytes, expectedBindingBytes);
+    return payload.version === 1 && Number.isSafeInteger(payload.expiresAt) && payload.expiresAt > now && payload.expiresAt <= now + CSRF_TOKEN_TTL_MS + 3e4 && payload.expiresAt <= expiresAtLimit && typeof payload.nonce === "string" && /^[A-Za-z0-9_-]{22}$/.test(payload.nonce) && payloadBindingBytes.length === expectedBindingBytes.length && timingSafeEqual5(payloadBindingBytes, expectedBindingBytes);
   } catch {
     return false;
   }

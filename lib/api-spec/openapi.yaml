@@ -2505,7 +2505,7 @@ paths:
       operationId: createCustomerTransferQuote
       tags: [account]
       summary: Validate a transfer and calculate its server-side quote
-      description: Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or when an unverified wallet has reached its configured cumulative incoming-payment threshold. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+      description: Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or the applicable monthly incoming-payment cap. The cap depends on identity status and any administrator-set user override; reaching it blocks outgoing operations only, not incoming payments. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
       security:
         - sendFlowSession: []
       requestBody:
@@ -2534,7 +2534,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "403":
-          description: PIN verification is required, or identity verification is required before an outgoing operation. The latter uses code identity_verification_required for wallet-to-Mobile-Money transfers or identity_verification_required_for_transfer for inter-network transfers.
+          description: PIN verification is required, or the applicable monthly incoming-payment cap blocks outgoing operations. Incoming payments remain allowed.
           content:
             application/json:
               schema:
@@ -4594,7 +4594,7 @@ paths:
       operationId: getAdminUser
       tags: [admin]
       summary: Get a SendFlow user detail for administrators
-      description: Returns the persisted profile, wallet, transaction summary, and successful XOF pay-in and payout totals for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
+      description: Returns the persisted profile, wallet, transaction summary, successful XOF pay-in and payout totals, and the server-calculated current-month incoming cap for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
       security:
         - sendFlowSession: []
       parameters:
@@ -4814,6 +4814,65 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "503":
           description: Administrator access is not configured or storage is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/monthly-incoming-limit:
+    patch:
+      operationId: updateAdminUserMonthlyIncomingLimit
+      tags: [admin]
+      summary: Set or clear a user's monthly incoming limit override
+      description: Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. The cap only blocks outgoing operations; incoming payments remain allowed.
+      security:
+        - sendFlowSession: []
+      parameters:
+        - $ref: "#/components/parameters/AdminUserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserMonthlyIncomingLimitUpdate"
+      responses:
+        "200":
+          description: Updated user-specific cap.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserMonthlyIncomingLimitUpdateResponse"
+        "400":
+          description: Invalid amount, confirmation, or audit reason.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Financial administrator access is denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: User-specific cap changed in another session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Administrator storage is unavailable.
           content:
             application/json:
               schema:
@@ -5579,10 +5638,11 @@ components:
         - $ref: "#/components/schemas/PublicPaymentLimits"
         - type: object
           properties:
-            maximumUnverifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647, description: "Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments." }
+            maximumUnverifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647, description: "Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only." }
+            maximumVerifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647, description: "Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only." }
             version: { type: integer, minimum: 1 }
             updatedAt: { type: string, format: date-time }
-          required: [maximumUnverifiedIncomingMinor, version, updatedAt]
+          required: [maximumUnverifiedIncomingMinor, maximumVerifiedIncomingMinor, version, updatedAt]
     PaymentLimitsUpdate:
       type: object
       properties:
@@ -5593,9 +5653,37 @@ components:
         maximumTransferMinor: { type: integer, minimum: 1, maximum: 10000000 }
         maximumPayinMinor: { type: integer, minimum: 200, maximum: 2000000 }
         maximumUnverifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647 }
+        maximumVerifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647 }
         expectedVersion: { type: integer, minimum: 1 }
         reason: { type: string, minLength: 3, maxLength: 500 }
-      required: [minimumDepositMinor, minimumPayoutMinor, maximumPayoutDailyMinor, minimumInterNetworkMinor, maximumTransferMinor, maximumPayinMinor, maximumUnverifiedIncomingMinor, expectedVersion, reason]
+      required: [minimumDepositMinor, minimumPayoutMinor, maximumPayoutDailyMinor, minimumInterNetworkMinor, maximumTransferMinor, maximumPayinMinor, maximumUnverifiedIncomingMinor, maximumVerifiedIncomingMinor, expectedVersion, reason]
+    AdminUserMonthlyIncomingPolicy:
+      type: object
+      properties:
+        identityVerified: { type: boolean }
+        receivedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        unverifiedLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
+        verifiedLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
+        overrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
+        effectiveLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
+        periodStart: { type: string, format: date-time }
+        periodEnd: { type: string, format: date-time }
+      required: [identityVerified, receivedMinor, unverifiedLimitMinor, verifiedLimitMinor, overrideMinor, effectiveLimitMinor, periodStart, periodEnd]
+    AdminUserMonthlyIncomingLimitUpdate:
+      type: object
+      properties:
+        monthlyIncomingLimitOverrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
+        expectedMonthlyIncomingLimitOverrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
+        confirmation: { type: string, enum: [CONFIRMER] }
+        reason: { type: string, minLength: 10, maxLength: 500, pattern: '^(\s*\S){10,}\s*$' }
+      required: [monthlyIncomingLimitOverrideMinor, expectedMonthlyIncomingLimitOverrideMinor, confirmation, reason]
+    AdminUserMonthlyIncomingLimitUpdateResponse:
+      type: object
+      properties:
+        userId: { type: string }
+        monthlyIncomingLimitOverrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
+        updatedAt: { type: string, format: date-time }
+      required: [userId, monthlyIncomingLimitOverrideMinor, updatedAt]
     RegistrationSettingsUpdate:
       type: object
       properties:
@@ -8239,7 +8327,9 @@ components:
           $ref: "#/components/schemas/AdminUserTransactionSummary"
         financialTotals:
           $ref: "#/components/schemas/AdminUserFinancialTotals"
-      required: [user, wallet, transactionSummary, financialTotals]
+        monthlyIncomingPolicy:
+          $ref: "#/components/schemas/AdminUserMonthlyIncomingPolicy"
+      required: [user, wallet, transactionSummary, financialTotals, monthlyIncomingPolicy]
     AdminWalletAdjustmentRequest:
       type: object
       properties:

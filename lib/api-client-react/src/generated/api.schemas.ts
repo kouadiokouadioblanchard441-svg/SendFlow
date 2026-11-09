@@ -323,11 +323,17 @@ export interface PublicPaymentLimits {
 
 export type AdminPaymentLimits = PublicPaymentLimits & {
   /**
-     * Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments.
+     * Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only.
      * @minimum 0
      * @maximum 2147483647
      */
   maximumUnverifiedIncomingMinor: number;
+  /**
+     * Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only.
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  maximumVerifiedIncomingMinor: number;
   /** @minimum 1 */
   version: number;
   updatedAt: string;
@@ -370,6 +376,11 @@ export interface PaymentLimitsUpdate {
      * @maximum 2147483647
      */
   maximumUnverifiedIncomingMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  maximumVerifiedIncomingMinor: number;
   /** @minimum 1 */
   expectedVersion: number;
   /**
@@ -377,6 +388,78 @@ export interface PaymentLimitsUpdate {
      * @maxLength 500
      */
   reason: string;
+}
+
+export interface AdminUserMonthlyIncomingPolicy {
+  identityVerified: boolean;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  receivedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  unverifiedLimitMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  verifiedLimitMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     * @nullable
+     */
+  overrideMinor: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  effectiveLimitMinor: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+export type AdminUserMonthlyIncomingLimitUpdateConfirmation = typeof AdminUserMonthlyIncomingLimitUpdateConfirmation[keyof typeof AdminUserMonthlyIncomingLimitUpdateConfirmation];
+
+
+export const AdminUserMonthlyIncomingLimitUpdateConfirmation = {
+  CONFIRMER: 'CONFIRMER',
+} as const;
+
+export interface AdminUserMonthlyIncomingLimitUpdate {
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     * @nullable
+     */
+  monthlyIncomingLimitOverrideMinor: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     * @nullable
+     */
+  expectedMonthlyIncomingLimitOverrideMinor: number | null;
+  confirmation: AdminUserMonthlyIncomingLimitUpdateConfirmation;
+  /**
+     * @minLength 10
+     * @maxLength 500
+     * @pattern ^(\s*\S){10,}\s*$
+     */
+  reason: string;
+}
+
+export interface AdminUserMonthlyIncomingLimitUpdateResponse {
+  userId: string;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     * @nullable
+     */
+  monthlyIncomingLimitOverrideMinor: number | null;
+  updatedAt: string;
 }
 
 export interface RegistrationSettingsUpdate {
@@ -2975,6 +3058,7 @@ export interface AdminUserDetail {
   wallet: AdminWalletDetail | null;
   transactionSummary: AdminUserTransactionSummary;
   financialTotals: AdminUserFinancialTotals;
+  monthlyIncomingPolicy: AdminUserMonthlyIncomingPolicy;
 }
 
 export type AdminWalletAdjustmentRequestDirection = typeof AdminWalletAdjustmentRequestDirection[keyof typeof AdminWalletAdjustmentRequestDirection];

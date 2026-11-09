@@ -6,8 +6,8 @@ import {
 import { calculateCustomerTransferQuote, TransferQuoteError } from "../services/transfer-quote";
 import { loadTransferQuoteDependencies } from "../data/transfer-quote";
 import {
-  getUnverifiedIncomingPolicy,
-  unverifiedOutgoingBlockedMessage,
+  getMonthlyIncomingPolicy,
+  monthlyIncomingOutgoingBlockedMessage,
 } from "../data/unverified-incoming-policy";
 import { consumeTransferQuoteQuota } from "../data/transfer-quote-quota";
 import { requireCustomerSession } from "../lib/customer-session";
@@ -31,16 +31,11 @@ router.post("/me/transfer-quote", async (req, res): Promise<void> => {
       return;
     }
     if (parsed.data.kind !== "deposit") {
-      const identityLimit = await getUnverifiedIncomingPolicy(session.userId);
-      if (identityLimit.outgoingBlocked) {
-        const isWalletToMobileMoney = parsed.data.kind === "international";
+      const incomingPolicy = await getMonthlyIncomingPolicy(session.userId);
+      if (incomingPolicy.outgoingBlocked) {
         res.status(403).json({
-          code: isWalletToMobileMoney
-            ? "identity_verification_required"
-            : "identity_verification_required_for_transfer",
-          error: unverifiedOutgoingBlockedMessage(
-            isWalletToMobileMoney ? "international" : "inter-network",
-          ),
+          code: incomingPolicy.blockCode,
+          error: monthlyIncomingOutgoingBlockedMessage(incomingPolicy),
         });
         return;
       }

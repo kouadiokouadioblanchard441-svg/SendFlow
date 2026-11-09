@@ -18,8 +18,11 @@ import {
   ArchiveAdminTransactionBody,
   RestoreAdminUserBody,
   SuspendAdminUserBody,
+  UpdateAdminUserMonthlyIncomingLimitBody,
+  UpdateAdminUserMonthlyIncomingLimitResponse,
 } from "@workspace/api-zod";
 import { recordAdminAudit } from "../lib/admin-audit";
+import { isTrustedOrigin } from "../lib/request-security";
 import { respondAdminAuthError } from "./admin";
 import { executeAdminWalletAdjustment, WalletAdjustmentError } from "../services/wallet-adjustment";
 
@@ -95,6 +98,80 @@ router.post("/users/:userId/wallet-adjustments", async (req, res): Promise<void>
 
     req.log.error({ err: error, userId }, "Admin wallet adjustment failed");
     res.status(503).json({ error: "Administrator action storage unavailable" });
+  }
+});
+
+router.patch("/users/:userId/monthly-incoming-limit", async (req, res): Promise<void> => {
+  const adminUserId = respondAdminAuthError(req, res, "mutate");
+  if (!adminUserId) return;
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine de la requête non autorisée." });
+    return;
+  }
+
+  const parsedParams = GetAdminUserParams.safeParse(req.params);
+  const parsedBody = UpdateAdminUserMonthlyIncomingLimitBody.safeParse(req.body);
+  if (!parsedParams.success || !parsedBody.success) {
+    res.status(400).json({ error: "Vérifiez le plafond, la confirmation et le motif." });
+    return;
+  }
+
+  const { userId } = parsedParams.data;
+  const update = parsedBody.data;
+  const reason = update.reason.trim();
+  if (update.confirmation !== "CONFIRMER" || reason.length < 10) {
+    res.status(400).json({ error: "Une confirmation et un motif détaillé sont requis." });
+    return;
+  }
+
+  try {
+    const changed = await db.transaction(async (tx) => {
+      const [previous] = await tx.select({
+        id: usersTable.id,
+        status: usersTable.status,
+        monthlyIncomingLimitOverrideMinor: usersTable.monthlyIncomingLimitOverrideMinor,
+      }).from(usersTable).where(eq(usersTable.id, userId)).for("update").limit(1);
+      if (!previous) throw new AdminActionError(404, "Utilisateur introuvable.");
+      if (previous.status === "deleted") {
+        throw new AdminActionError(409, "Le plafond d’un compte supprimé ne peut pas être modifié.");
+      }
+      if (previous.monthlyIncomingLimitOverrideMinor !== update.expectedMonthlyIncomingLimitOverrideMinor) {
+        throw new AdminActionError(409, "Le plafond a changé dans une autre session. Actualisez la fiche.");
+      }
+
+      const [updated] = await tx.update(usersTable).set({
+        monthlyIncomingLimitOverrideMinor: update.monthlyIncomingLimitOverrideMinor,
+        updatedAt: new Date(),
+      }).where(eq(usersTable.id, userId)).returning({
+        id: usersTable.id,
+        monthlyIncomingLimitOverrideMinor: usersTable.monthlyIncomingLimitOverrideMinor,
+        updatedAt: usersTable.updatedAt,
+      });
+      if (!updated) throw new AdminActionError(409, "Le plafond n’a pas été enregistré.");
+
+      await recordAdminAudit({
+        adminUserId,
+        action: "update_user_monthly_incoming_limit",
+        resourceType: "user",
+        resourceId: userId,
+        reason: `${reason.slice(0, 360)} [plafond mensuel FCFA : ${previous.monthlyIncomingLimitOverrideMinor ?? "global"} → ${updated.monthlyIncomingLimitOverrideMinor ?? "global"}]`,
+      }, tx);
+      return updated;
+    });
+
+    res.setHeader("Cache-Control", "no-store");
+    res.json(UpdateAdminUserMonthlyIncomingLimitResponse.parse({
+      userId: changed.id,
+      monthlyIncomingLimitOverrideMinor: changed.monthlyIncomingLimitOverrideMinor,
+      updatedAt: changed.updatedAt.toISOString(),
+    }));
+  } catch (error) {
+    if (error instanceof AdminActionError) {
+      actionErrorResponse(res, error);
+      return;
+    }
+    req.log.error({ err: error, userId }, "Admin monthly incoming limit update failed");
+    res.status(503).json({ error: "Le plafond utilisateur est momentanément indisponible." });
   }
 });
 

@@ -31,6 +31,7 @@ function presentAdmin(record: typeof paymentLimitsTable.$inferSelect) {
   return {
     ...presentPublic(record),
     maximumUnverifiedIncomingMinor: record.maximumUnverifiedIncomingMinor,
+    maximumVerifiedIncomingMinor: record.maximumVerifiedIncomingMinor,
     version: record.version,
     updatedAt: record.updatedAt.toISOString(),
   };
@@ -83,6 +84,7 @@ adminRoutes.patch("/payment-limits", async (req, res): Promise<void> => {
       maximumTransferMinor: parsed.data.maximumTransferMinor,
       maximumPayinMinor: parsed.data.maximumPayinMinor,
       maximumUnverifiedIncomingMinor: parsed.data.maximumUnverifiedIncomingMinor,
+      maximumVerifiedIncomingMinor: parsed.data.maximumVerifiedIncomingMinor,
     })) {
     res.status(400).json({ error: "Vérifiez les seuils et leurs plafonds avant l’enregistrement." });
     return;
@@ -101,6 +103,7 @@ adminRoutes.patch("/payment-limits", async (req, res): Promise<void> => {
         maximumTransferMinor: parsed.data.maximumTransferMinor,
         maximumPayinMinor: parsed.data.maximumPayinMinor,
         maximumUnverifiedIncomingMinor: parsed.data.maximumUnverifiedIncomingMinor,
+        maximumVerifiedIncomingMinor: parsed.data.maximumVerifiedIncomingMinor,
         version: parsed.data.expectedVersion + 1,
         updatedAt: new Date(),
         updatedBy: adminUserId,

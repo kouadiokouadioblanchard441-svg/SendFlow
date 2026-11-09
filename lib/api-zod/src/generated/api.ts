@@ -2329,7 +2329,7 @@ export const GetCurrentAccountLimitResponse = zod.object({
 
 
 /**
- * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or when an unverified wallet has reached its configured cumulative incoming-payment threshold. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or the applicable monthly incoming-payment cap. The cap depends on identity status and any administrator-set user override; reaching it blocks outgoing operations only, not incoming payments. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuoteBodySourceOperatorIdMin = 2;
@@ -4633,7 +4633,7 @@ export const ListAdminUsersResponse = zod.object({
 
 
 /**
- * Returns the persisted profile, wallet, transaction summary, and successful XOF pay-in and payout totals for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
+ * Returns the persisted profile, wallet, transaction summary, successful XOF pay-in and payout totals, and the server-calculated current-month incoming cap for an authorized administrator. Use the administrator transaction list with userId to retrieve the paginated operations.
  * @summary Get a SendFlow user detail for administrators
  */
 
@@ -4665,6 +4665,21 @@ export const getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMax =
 
 export const getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMin = 0;
 export const getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMax = 9007199254740991;
+
+export const getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMax = 9007199254740991;
+
+export const getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMax = 2147483647;
+
+export const getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMax = 2147483647;
+
+export const getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax = 2147483647;
+
+export const getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax = 2147483647;
 
 
 
@@ -4707,6 +4722,16 @@ export const GetAdminUserResponse = zod.object({
   "interNetworkMinor": zod.int().min(getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMin).max(getAdminUserResponseFinancialTotalsFeesByKindInterNetworkMinorMax),
   "internationalMinor": zod.int().min(getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMin).max(getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMax)
 })
+}),
+  "monthlyIncomingPolicy": zod.object({
+  "identityVerified": zod.boolean(),
+  "receivedMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMax),
+  "unverifiedLimitMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMax),
+  "verifiedLimitMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMax),
+  "overrideMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax).nullable(),
+  "effectiveLimitMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax),
+  "periodStart": zod.coerce.date(),
+  "periodEnd": zod.coerce.date()
 })
 })
 
@@ -4916,6 +4941,49 @@ export const GetAdminTransactionResponse = zod.object({
 })).describe('Safe confirmation metadata ordered by verification and persistence time. Encrypted payloads, hashes, and signatures are never returned.')
 }))
 })
+})
+
+
+/**
+ * Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. The cap only blocks outgoing operations; incoming payments remain allowed.
+ * @summary Set or clear a user's monthly incoming limit override
+ */
+
+
+
+export const UpdateAdminUserMonthlyIncomingLimitParams = zod.object({
+  "userId": zod.coerce.string().min(1)
+})
+
+export const updateAdminUserMonthlyIncomingLimitBodyMonthlyIncomingLimitOverrideMinorMin = 0;
+export const updateAdminUserMonthlyIncomingLimitBodyMonthlyIncomingLimitOverrideMinorMax = 2147483647;
+
+export const updateAdminUserMonthlyIncomingLimitBodyExpectedMonthlyIncomingLimitOverrideMinorMin = 0;
+export const updateAdminUserMonthlyIncomingLimitBodyExpectedMonthlyIncomingLimitOverrideMinorMax = 2147483647;
+
+export const updateAdminUserMonthlyIncomingLimitBodyReasonMin = 10;
+export const updateAdminUserMonthlyIncomingLimitBodyReasonMax = 500;
+
+
+export const updateAdminUserMonthlyIncomingLimitBodyReasonRegExp = new RegExp('^(\\s*\\S){10,}\\s*$');
+
+
+export const UpdateAdminUserMonthlyIncomingLimitBody = zod.object({
+  "monthlyIncomingLimitOverrideMinor": zod.int().min(updateAdminUserMonthlyIncomingLimitBodyMonthlyIncomingLimitOverrideMinorMin).max(updateAdminUserMonthlyIncomingLimitBodyMonthlyIncomingLimitOverrideMinorMax).nullable(),
+  "expectedMonthlyIncomingLimitOverrideMinor": zod.int().min(updateAdminUserMonthlyIncomingLimitBodyExpectedMonthlyIncomingLimitOverrideMinorMin).max(updateAdminUserMonthlyIncomingLimitBodyExpectedMonthlyIncomingLimitOverrideMinorMax).nullable(),
+  "confirmation": zod.enum(['CONFIRMER']),
+  "reason": zod.string().min(updateAdminUserMonthlyIncomingLimitBodyReasonMin).max(updateAdminUserMonthlyIncomingLimitBodyReasonMax).regex(updateAdminUserMonthlyIncomingLimitBodyReasonRegExp)
+})
+
+export const updateAdminUserMonthlyIncomingLimitResponseMonthlyIncomingLimitOverrideMinorMin = 0;
+export const updateAdminUserMonthlyIncomingLimitResponseMonthlyIncomingLimitOverrideMinorMax = 2147483647;
+
+
+
+export const UpdateAdminUserMonthlyIncomingLimitResponse = zod.object({
+  "userId": zod.string(),
+  "monthlyIncomingLimitOverrideMinor": zod.int().min(updateAdminUserMonthlyIncomingLimitResponseMonthlyIncomingLimitOverrideMinorMin).max(updateAdminUserMonthlyIncomingLimitResponseMonthlyIncomingLimitOverrideMinorMax).nullable(),
+  "updatedAt": zod.coerce.date()
 })
 
 
@@ -5144,6 +5212,9 @@ export const getAdminPaymentLimitsResponseOneMaximumPayinMinorMax = 2000000;
 export const getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin = 0;
 export const getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax = 2147483647;
 
+export const getAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMin = 0;
+export const getAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMax = 2147483647;
+
 
 
 
@@ -5156,7 +5227,8 @@ export const GetAdminPaymentLimitsResponse = zod.object({
   "maximumTransferMinor": zod.int().min(1).max(getAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(getAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(getAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
 }).and(zod.object({
-  "maximumUnverifiedIncomingMinor": zod.int().min(getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin).max(getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax).describe('Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments.'),
+  "maximumUnverifiedIncomingMinor": zod.int().min(getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin).max(getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax).describe('Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only.'),
+  "maximumVerifiedIncomingMinor": zod.int().min(getAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMin).max(getAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMax).describe('Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only.'),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date()
 }))
@@ -5184,6 +5256,9 @@ export const updateAdminPaymentLimitsBodyMaximumPayinMinorMax = 2000000;
 export const updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMin = 0;
 export const updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMax = 2147483647;
 
+export const updateAdminPaymentLimitsBodyMaximumVerifiedIncomingMinorMin = 0;
+export const updateAdminPaymentLimitsBodyMaximumVerifiedIncomingMinorMax = 2147483647;
+
 
 export const updateAdminPaymentLimitsBodyReasonMin = 3;
 export const updateAdminPaymentLimitsBodyReasonMax = 500;
@@ -5198,6 +5273,7 @@ export const UpdateAdminPaymentLimitsBody = zod.object({
   "maximumTransferMinor": zod.int().min(1).max(updateAdminPaymentLimitsBodyMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(updateAdminPaymentLimitsBodyMaximumPayinMinorMin).max(updateAdminPaymentLimitsBodyMaximumPayinMinorMax),
   "maximumUnverifiedIncomingMinor": zod.int().min(updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMin).max(updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMax),
+  "maximumVerifiedIncomingMinor": zod.int().min(updateAdminPaymentLimitsBodyMaximumVerifiedIncomingMinorMin).max(updateAdminPaymentLimitsBodyMaximumVerifiedIncomingMinorMax),
   "expectedVersion": zod.int().min(1),
   "reason": zod.string().min(updateAdminPaymentLimitsBodyReasonMin).max(updateAdminPaymentLimitsBodyReasonMax)
 })
@@ -5221,6 +5297,9 @@ export const updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax = 2000000;
 export const updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin = 0;
 export const updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax = 2147483647;
 
+export const updateAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMin = 0;
+export const updateAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMax = 2147483647;
+
 
 
 
@@ -5233,7 +5312,8 @@ export const UpdateAdminPaymentLimitsResponse = zod.object({
   "maximumTransferMinor": zod.int().min(1).max(updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
 }).and(zod.object({
-  "maximumUnverifiedIncomingMinor": zod.int().min(updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin).max(updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax).describe('Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments.'),
+  "maximumUnverifiedIncomingMinor": zod.int().min(updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin).max(updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax).describe('Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only.'),
+  "maximumVerifiedIncomingMinor": zod.int().min(updateAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMin).max(updateAdminPaymentLimitsResponseTwoMaximumVerifiedIncomingMinorMax).describe('Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only.'),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date()
 }))

@@ -1,5 +1,6 @@
 import { createInsertSchema } from "drizzle-zod";
-import { date, index, pgEnum, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { check, date, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 import { z } from "zod/v4";
 
 export const userAccountStatusEnum = pgEnum("sf_user_account_status", ["active", "suspended", "deleted"]);
@@ -14,6 +15,7 @@ export const usersTable = pgTable("sf_users", {
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   emailMarketingConsentAt: timestamp("email_marketing_consent_at", { withTimezone: true }),
   emailMarketingUnsubscribedAt: timestamp("email_marketing_unsubscribed_at", { withTimezone: true }),
+  monthlyIncomingLimitOverrideMinor: integer("monthly_incoming_limit_override_minor"),
   displayName: varchar("display_name", { length: 512 }),
   displayNameLookupHash: varchar("display_name_lookup_hash", { length: 64 }),
   countryCode: varchar("country_code", { length: 2 }),
@@ -32,6 +34,10 @@ export const usersTable = pgTable("sf_users", {
 }, (table) => ({
   emailLookupHashUniqueIndex: uniqueIndex("sf_users_email_lookup_hash_uq").on(table.emailLookupHash),
   displayNameLookupHashIndex: index("sf_users_display_name_lookup_hash_idx").on(table.displayNameLookupHash),
+  monthlyIncomingLimitOverrideCheck: check(
+    "sf_users_monthly_incoming_limit_override_check",
+    sql`${table.monthlyIncomingLimitOverrideMinor} IS NULL OR ${table.monthlyIncomingLimitOverrideMinor} BETWEEN 0 AND 2147483647`,
+  ),
 }));
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({

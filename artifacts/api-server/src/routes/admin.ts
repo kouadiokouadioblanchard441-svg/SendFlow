@@ -8,6 +8,7 @@ import {
   normalizeSensitiveNameForLookup,
 } from "../lib/sensitive-data-crypto";
 import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
+import { getMonthlyIncomingPolicy } from "../data/unverified-incoming-policy";
 import {
   GetAdminTransactionParams,
   GetAdminTransactionResponse,
@@ -65,7 +66,7 @@ export function getAdminUserId(req: Request, permission: AdminPermission = "read
   // Keep mutation access narrow: catalogue/campaign operations plus explicit
   // account block/unblock actions. Financial operations and account deletion
   // remain outside this authorization scope.
-  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?|identity-verifications(?:\/.*)?|users\/[^/]+\/(?:suspend|restore))\/?$/.test(req.path)) {
+  if (!/^\/(?:operator-pricing|operator-pricing-rates|operators(?:\/[^/]+(?:\/logo\/[^/]+)?)?|payment-limits|email-campaigns(?:\/.*)?|identity-verifications(?:\/.*)?|users\/[^/]+\/(?:suspend|restore|monthly-incoming-limit))\/?$/.test(req.path)) {
     return { userId: null, status: 403, error: "Administrator permission does not authorize this operation" };
   }
   if (permission === "mutate" && !session.canMutate) {
@@ -452,6 +453,8 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
       })),
     ]);
 
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(userId);
+
     await recordAdminAudit({
       adminUserId,
       action: "view_user_detail",
@@ -472,6 +475,16 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
         wallet: wallet ?? null,
         transactionSummary,
         financialTotals,
+        monthlyIncomingPolicy: {
+          identityVerified: monthlyIncomingPolicy.identityVerified,
+          receivedMinor: monthlyIncomingPolicy.receivedMinor,
+          unverifiedLimitMinor: monthlyIncomingPolicy.unverifiedLimitMinor,
+          verifiedLimitMinor: monthlyIncomingPolicy.verifiedLimitMinor,
+          overrideMinor: monthlyIncomingPolicy.overrideMinor,
+          effectiveLimitMinor: monthlyIncomingPolicy.effectiveLimitMinor,
+          periodStart: monthlyIncomingPolicy.periodStart.toISOString(),
+          periodEnd: monthlyIncomingPolicy.periodEnd.toISOString(),
+        },
       }),
     );
   } catch (error) {
