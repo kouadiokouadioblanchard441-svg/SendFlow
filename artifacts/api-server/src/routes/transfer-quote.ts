@@ -5,10 +5,6 @@ import {
 } from "@workspace/api-zod";
 import { calculateCustomerTransferQuote, TransferQuoteError } from "../services/transfer-quote";
 import { loadTransferQuoteDependencies } from "../data/transfer-quote";
-import {
-  getMonthlyIncomingPolicy,
-  monthlyIncomingOutgoingBlockedMessage,
-} from "../data/unverified-incoming-policy";
 import { consumeTransferQuoteQuota } from "../data/transfer-quote-quota";
 import { requireCustomerSession } from "../lib/customer-session";
 
@@ -29,16 +25,6 @@ router.post("/me/transfer-quote", async (req, res): Promise<void> => {
     if (!parsed.success) {
       res.status(400).json({ error: "Vérifiez les informations du transfert." });
       return;
-    }
-    if (parsed.data.kind !== "deposit") {
-      const incomingPolicy = await getMonthlyIncomingPolicy(session.userId);
-      if (incomingPolicy.outgoingBlocked) {
-        res.status(403).json({
-          code: incomingPolicy.blockCode,
-          error: monthlyIncomingOutgoingBlockedMessage(incomingPolicy),
-        });
-        return;
-      }
     }
     const quote = await calculateCustomerTransferQuote(
       session.userId, parsed.data, await loadTransferQuoteDependencies(),

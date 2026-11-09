@@ -9,7 +9,7 @@ import { requireCustomerSession } from "../lib/customer-session";
 import { isTrustedOrigin } from "../lib/request-security";
 import {
   getMonthlyIncomingPolicy,
-  monthlyIncomingOutgoingBlockedMessage,
+  monthlyIncomingLimitReachedMessage,
 } from "../data/unverified-incoming-policy";
 
 const router: IRouter = Router();
@@ -58,7 +58,7 @@ router.get("/me/monthly-incoming-policy", async (req, res): Promise<void> => {
       pendingReservedMinor: policy.pendingReservedMinor,
       effectiveLimitMinor: policy.effectiveLimitMinor,
       limitReached: policy.limitReached,
-      message: policy.limitReached ? monthlyIncomingOutgoingBlockedMessage(policy) : null,
+      message: policy.limitReached ? monthlyIncomingLimitReachedMessage(policy) : null,
       periodStart: policy.periodStart.toISOString(),
       periodEnd: policy.periodEnd.toISOString(),
     }));

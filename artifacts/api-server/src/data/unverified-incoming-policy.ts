@@ -107,7 +107,6 @@ export async function getMonthlyIncomingPolicy(
     overrideMinor,
     effectiveLimitMinor,
     incomingBlocked,
-    outgoingBlocked: incomingBlocked,
     limitReached: incomingBlocked,
     blockCode,
     periodStart,
@@ -115,14 +114,14 @@ export async function getMonthlyIncomingPolicy(
   };
 }
 
-export function monthlyIncomingOutgoingBlockedMessage(
+export function monthlyIncomingLimitReachedMessage(
   policy: Pick<Awaited<ReturnType<typeof getMonthlyIncomingPolicy>>, "blockCode" | "effectiveLimitMinor">,
 ): string {
   if (policy.blockCode === "identity_verification_required") {
-    return "Votre plafond mensuel sans identité approuvée est atteint. Les nouveaux encaissements et les sorties sont suspendus. Faites vérifier votre identité pour accéder au plafond supérieur.";
+    return "Votre plafond mensuel d’encaissement sans vérification d’identité est atteint. Les nouveaux encaissements sont suspendus. Vous pouvez retirer les fonds disponibles, sous réserve des contrôles habituels du compte. Une identité approuvée permet d’accéder au plafond supérieur.";
   }
 
-  return `Votre plafond mensuel de paiements de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements et les sorties sont suspendus jusqu’au renouvellement du mois ou à une modification autorisée.`;
+  return `Votre plafond mensuel d’encaissement de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements sont suspendus jusqu’au renouvellement du mois ou à une modification autorisée. Les fonds disponibles restent retirables, sous réserve des contrôles habituels du compte.`;
 }
 
 export function merchantMonthlyLimitReachedMessage() {

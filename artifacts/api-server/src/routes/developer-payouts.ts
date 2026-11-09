@@ -26,10 +26,6 @@ import {
 } from "@workspace/api-zod";
 import { requireSecretApiKey } from "./developer";
 import { loadPayoutQuoteConfiguration } from "../data/payout-configuration";
-import {
-  getMonthlyIncomingPolicy,
-  monthlyIncomingOutgoingBlockedMessage,
-} from "../data/unverified-incoming-policy";
 import { loadMerchantPayoutWallet } from "../data/payout-wallet-balance";
 import {
   assertPayoutWalletCanCover,
@@ -91,10 +87,6 @@ router.post("/v1/payout-quote", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const incomingPolicy = await getMonthlyIncomingPolicy(key.userId);
-    if (incomingPolicy.outgoingBlocked) {
-      throw new PayoutPolicyError(403, monthlyIncomingOutgoingBlockedMessage(incomingPolicy));
-    }
     const wallet = await loadMerchantPayoutWallet(key.userId);
     if (wallet.availableMinor <= 0) {
       throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
@@ -126,10 +118,6 @@ router.post("/v1/payouts", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const incomingPolicy = await getMonthlyIncomingPolicy(key.userId);
-    if (incomingPolicy.outgoingBlocked) {
-      throw new PayoutPolicyError(403, monthlyIncomingOutgoingBlockedMessage(incomingPolicy));
-    }
     const wallet = await loadMerchantPayoutWallet(key.userId);
     if (wallet.availableMinor <= 0) {
       throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
