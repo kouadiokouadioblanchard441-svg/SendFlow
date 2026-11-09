@@ -35,6 +35,8 @@ import { isSharedDatabasePreview } from "../lib/shared-database-preview-guard";
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy";
 import { FeexpayClient, type FeexpayReceipt } from "../providers/feexpay/client";
 import { feexpayChannelForOperator, feexpayChannels, feexpayCountries } from "../providers/feexpay/catalog";
+import { PaydunyaClient, type PaydunyaVerifiedStatus } from "../providers/paydunya/client";
+import { paydunyaChannelForOperator } from "../providers/paydunya/catalog";
 import { getAggregatorRouteScopeKey } from "../routes/aggregator-catalog";
 import { parseLinkFlowPayerAmount } from "./payment-links";
 import { enqueueDeveloperPaymentEvent } from "./developer-webhook-outbox";
@@ -43,6 +45,7 @@ import {
   deriveLinkFlowPollToken,
   hashLinkFlowPollToken,
   isLinkFlowPaymentExecutionEnabled,
+  isLinkFlowProviderExecutionEnabled,
   resolveInitialProviderState,
   resolveVerifiedProviderState,
   toProviderPhoneNumber,
@@ -139,6 +142,20 @@ function safeReturnUrl(value: string | null, state: LinkFlowPublicState): string
   }
 }
 
+function safePaydunyaRedirectUrl(value: string | null, state: LinkFlowPublicState): string | null {
+  if (state !== "waiting" || !value) return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && parsed.hostname === "app.paydunya.com" &&
+      !parsed.username && !parsed.password &&
+      /^\/checkout\/invoice\/[A-Za-z0-9_-]{6,120}$/.test(parsed.pathname)
+      ? parsed.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function publicState(intentState: string, attemptStatus: string): LinkFlowPublicState {
   if (intentState === "succeeded") return "succeeded";
   if (intentState === "failed") return "failed";
@@ -149,17 +166,30 @@ function publicState(intentState: string, attemptStatus: string): LinkFlowPublic
 function asPublicStatus(bundle: AttemptBundle): PublicLinkFlowPaymentStatus {
   const state = publicState(bundle.intent.state, bundle.attempt.status);
   const channel = feexpayChannels.find((candidate) => candidate.id === bundle.attempt.channelId);
+  const providerRedirectUrl = bundle.intent.providerCode === "paydunya"
+    ? safePaydunyaRedirectUrl(
+      bundle.mapping.providerRedirectUrlEncrypted
+        ? decryptSensitiveData(
+          bundle.mapping.providerRedirectUrlEncrypted,
+          "provider-redirect-url",
+        )
+        : null,
+      state,
+    )
+    : null;
   const awaitingProviderOtp = state === "waiting" &&
     channel?.requiresOtp === true &&
     bundle.attempt.otpConfirmedAt === null &&
     bundle.attempt.status === "pending";
   const action = state === "succeeded" || state === "failed"
     ? "none"
-    : state === "uncertain"
+    : providerRedirectUrl
+      ? "open_redirect"
+      : state === "uncertain"
       ? "wait"
     : awaitingProviderOtp
       ? "enter_otp"
-      : state === "waiting"
+      : state === "waiting" && bundle.intent.providerCode === "feexpay"
         ? "approve_on_phone"
         : "wait";
   return {
@@ -178,7 +208,7 @@ function asPublicStatus(bundle: AttemptBundle): PublicLinkFlowPaymentStatus {
       otpCommand: awaitingProviderOtp && (channel?.otpMethod ?? "ussd") === "ussd"
         ? bundle.mapping.ussdCode
         : null,
-      redirectUrl: null,
+      redirectUrl: providerRedirectUrl,
     },
   };
 }
@@ -229,23 +259,56 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   if (!country?.enabled || !country.depositEnabled || !operator?.enabled || !operator.depositEnabled) {
     throw new LinkFlowPaymentError(400, "Ce pays ou ce réseau n’est pas disponible pour ce lien.");
   }
-  const providerCountry = feexpayCountries.find((item) =>
+  const [operatorRoute] = await tx.select().from(paymentAggregatorRoutesTable).where(and(
+    eq(paymentAggregatorRoutesTable.operation, "deposit"),
+    eq(paymentAggregatorRoutesTable.scopeType, "operator"),
+    eq(paymentAggregatorRoutesTable.scopeKey, getAggregatorRouteScopeKey("operator", countryCode, input.operatorId)),
+  )).limit(1);
+  const [countryRoute] = await tx.select().from(paymentAggregatorRoutesTable).where(and(
+    eq(paymentAggregatorRoutesTable.operation, "deposit"),
+    eq(paymentAggregatorRoutesTable.scopeType, "country"),
+    eq(paymentAggregatorRoutesTable.scopeKey, getAggregatorRouteScopeKey("country", countryCode, null)),
+  )).limit(1);
+  const providerCode = operatorRoute?.aggregatorCode ?? countryRoute?.aggregatorCode ?? "";
+  const [aggregator] = await tx.select().from(paymentAggregatorsTable)
+    .where(eq(paymentAggregatorsTable.code, providerCode))
+    .limit(1);
+  if (!aggregator?.enabled || (aggregator.code !== "feexpay" && aggregator.code !== "paydunya")) {
+    throw new LinkFlowPaymentError(400, "Ce réseau n’est pas disponible pour ce lien.");
+  }
+  if (!isLinkFlowProviderExecutionEnabled(aggregator.code)) {
+    throw new LinkFlowPaymentError(503, "Le paiement en ligne est momentanément indisponible.");
+  }
+  const feexpayCountry = feexpayCountries.find((item) =>
     item.countryCode.toLowerCase() === countryCode && item.currency === "XOF");
-  const channel = feexpayChannelForOperator(countryCode, input.operatorId);
-  if (!providerCountry || !channel) {
+  const feexpayChannel = aggregator.code === "feexpay"
+    ? feexpayChannelForOperator(countryCode, input.operatorId)
+    : null;
+  const paydunyaChannel = aggregator.code === "paydunya"
+    ? paydunyaChannelForOperator(countryCode, input.operatorId)
+    : null;
+  if ((aggregator.code === "feexpay" && (!feexpayCountry || !feexpayChannel)) ||
+    (aggregator.code === "paydunya" && !paydunyaChannel)) {
     throw new LinkFlowPaymentError(400, "Ce réseau ne permet pas ce paiement LinkFlow.");
   }
+  const providerChannelId = aggregator.code === "feexpay"
+    ? feexpayChannel!.id
+    : paydunyaChannel!;
   const [otpPolicy] = await tx.select().from(operatorOtpPoliciesTable).where(and(
     eq(operatorOtpPoliciesTable.countryCode, countryCode),
     eq(operatorOtpPoliciesTable.operatorId, input.operatorId),
   )).limit(1);
-  const requiresOtp = Boolean(channel.requiresOtp || otpPolicy?.requiresOtp);
-  const otpFlow = channel.otpFlow ?? "pre_acquired";
-  const otpMethod = channel.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null);
+  const requiresOtp = aggregator.code === "feexpay" &&
+    Boolean(feexpayChannel?.requiresOtp || otpPolicy?.requiresOtp);
+  const otpFlow = feexpayChannel?.otpFlow ?? "pre_acquired";
+  const otpMethod = feexpayChannel?.otpMethod ?? (otpPolicy?.requiresOtp ? "ussd" : null);
   const otpCommand = requiresOtp && otpMethod === "ussd"
     ? getConfiguredOtpCommand(otpPolicy, amountMinor) ??
       operator.ussdCodeOverride ?? country.ussdCode ?? null
     : null;
+  if (aggregator.code === "paydunya" && (input.otp !== undefined || input.reference !== undefined)) {
+    throw new LinkFlowPaymentError(400, "Le code OTP est saisi dans la page sécurisée du fournisseur.");
+  }
   if (requiresOtp && otpFlow === "provider_challenge" &&
     Boolean(input.reference) !== Boolean(input.otp)) {
     throw new LinkFlowPaymentError(400, "Pour confirmer le code OTP, renvoyez la référence de la tentative et le code reçu.");
@@ -258,7 +321,7 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
       flow: {
         action: "enter_otp",
         reference: null,
-        otpMethod: channel.otpMethod ?? "ussd",
+        otpMethod: feexpayChannel?.otpMethod ?? "ussd",
         otpCommand,
         redirectUrl: null,
       },
@@ -272,22 +335,6 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   }
   if (requiresOtp && otpFlow === "provider_challenge" && input.otp && !input.reference) {
     throw new LinkFlowPaymentError(400, "La référence de la tentative est requise pour confirmer le code OTP.");
-  }
-  const [operatorRoute] = await tx.select().from(paymentAggregatorRoutesTable).where(and(
-    eq(paymentAggregatorRoutesTable.operation, "deposit"),
-    eq(paymentAggregatorRoutesTable.scopeType, "operator"),
-    eq(paymentAggregatorRoutesTable.scopeKey, getAggregatorRouteScopeKey("operator", countryCode, input.operatorId)),
-  )).limit(1);
-  const [countryRoute] = await tx.select().from(paymentAggregatorRoutesTable).where(and(
-    eq(paymentAggregatorRoutesTable.operation, "deposit"),
-    eq(paymentAggregatorRoutesTable.scopeType, "country"),
-    eq(paymentAggregatorRoutesTable.scopeKey, getAggregatorRouteScopeKey("country", countryCode, null)),
-  )).limit(1);
-  const [aggregator] = await tx.select().from(paymentAggregatorsTable)
-    .where(eq(paymentAggregatorsTable.code, operatorRoute?.aggregatorCode ?? countryRoute?.aggregatorCode ?? ""))
-    .limit(1);
-  if (!aggregator?.enabled || aggregator.code !== "feexpay") {
-    throw new LinkFlowPaymentError(400, "Ce réseau n’est pas disponible pour ce lien.");
   }
   const [rate] = await tx.select().from(operatorPricingRatesTable).where(and(
     eq(operatorPricingRatesTable.operatorId, operator.operatorId),
@@ -312,7 +359,9 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
   return {
     country,
     operator,
-    channel,
+    channel: feexpayChannel,
+    providerCode: aggregator.code,
+    providerChannelId,
     requiresOtp,
     otpFlow,
     otpMethod,
@@ -320,7 +369,9 @@ async function resolveChannel(tx: Parameters<Parameters<typeof db.transaction>[0
     amountMinor,
     amounts,
     normalizedPhone,
-    ussdCode: requiresOtp ? otpCommand : operator.ussdCodeOverride ?? country.ussdCode ?? null,
+    ussdCode: aggregator.code === "paydunya"
+      ? null
+      : requiresOtp ? otpCommand : operator.ussdCodeOverride ?? country.ussdCode ?? null,
   };
 }
 
@@ -947,14 +998,17 @@ async function retryWalletSettlement(bundle: AttemptBundle) {
 }
 
 async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayReceipt) {
+  const expectedPhone = toProviderPhoneNumber(
+    decryptSensitiveData(bundle.transaction.senderPhone, "transaction-sender-phone"),
+  );
   const outcome = resolveVerifiedProviderState(receipt, {
     reference: bundle.attempt.providerReference
       ? decryptSensitiveData(bundle.attempt.providerReference, "provider-reference")
       : "",
     amountMinor: bundle.attempt.amountMinor,
     currency: "XOF",
-    shopId: process.env.FEEXPAY_SHOP_ID ?? "",
     channelId: bundle.attempt.channelId,
+    phoneNumber: expectedPhone,
   });
   if (outcome === "waiting" || outcome === "uncertain") {
     await updateNonFinalAttempt(bundle, outcome);
@@ -978,7 +1032,9 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
       !attempt.providerReference || attempt.status === "succeeded" || attempt.status === "failed") return;
     const providerReference = decryptSensitiveData(attempt.providerReference, "provider-reference");
     if (providerReference !== receipt.reference ||
-      receipt.amountMinor !== attempt.amountMinor || receipt.currency !== attempt.currency) {
+      receipt.amountMinor !== attempt.amountMinor ||
+      receipt.phoneNumber !== expectedPhone ||
+      (receipt.currency !== undefined && receipt.currency !== attempt.currency)) {
       if (attempt.status !== "uncertain") {
         await tx.update(paymentAttemptsTable).set({ status: "uncertain", updatedAt: new Date() })
           .where(eq(paymentAttemptsTable.id, attempt.id));
@@ -993,7 +1049,7 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
     const providerStatus = outcome === "succeeded" ? "succeeded" : "failed";
     const eventFingerprint = createHash("sha256").update([
       attempt.id, providerStatus, attempt.providerReferenceHash,
-      String(receipt.amountMinor), receipt.currency,
+      String(receipt.amountMinor), receipt.currency ?? attempt.currency,
     ].join(":")).digest("hex");
     const now = new Date();
     const encryptedPayload = encryptSensitiveData(JSON.stringify({
@@ -1002,7 +1058,9 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
       reference: receipt.reference,
       status: receipt.status,
       amountMinor: receipt.amountMinor,
-      currency: receipt.currency,
+      providerCurrency: receipt.currency ?? null,
+      currency: attempt.currency,
+      currencySource: receipt.currency ? "provider_status" : "verified_attempt_channel",
       observedAt: now.toISOString(),
     }), "payment-confirmation-payload");
     const [confirmation] = await tx.insert(paymentConfirmationsTable).values({
@@ -1012,7 +1070,7 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
       providerStatus,
       providerReferenceHash: attempt.providerReferenceHash,
       amountMinor: receipt.amountMinor!,
-      currency: receipt.currency!,
+      currency: attempt.currency,
       encryptedPayload,
       verifiedAt: now,
     }).returning();

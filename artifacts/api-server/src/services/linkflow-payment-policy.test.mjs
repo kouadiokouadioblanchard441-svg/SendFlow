@@ -5,6 +5,7 @@ import {
   deriveLinkFlowPollToken,
   hashLinkFlowPollToken,
   isLinkFlowPaymentExecutionEnabled,
+  isLinkFlowProviderExecutionEnabled,
   resolveInitialProviderState,
   resolveVerifiedProviderState,
 } from "./linkflow-payment-policy.ts";
@@ -14,7 +15,7 @@ process.env.CUSTOMER_PII_ENCRYPTION_KEY = "a".repeat(64);
 
 test("live LinkFlow is disabled unless the explicitly approved production Plesk configuration is complete", () => {
   assert.equal(isLinkFlowPaymentExecutionEnabled({}), false);
-  assert.equal(isLinkFlowPaymentExecutionEnabled({
+  const feexpayEnvironment = {
     FEEXPAY_LINKFLOW_ENABLED: "true",
     FEEXPAY_MODE: "live",
     FEEXPAY_EXECUTION_HOST: "plesk",
@@ -24,6 +25,29 @@ test("live LinkFlow is disabled unless the explicitly approved production Plesk 
     FEEXPAY_API_KEY: "synthetic",
     FEEXPAY_SHOP_ID: "synthetic_shop",
     FEEXPAY_LIVE_APPROVED: "true",
+  };
+  assert.equal(isLinkFlowProviderExecutionEnabled("feexpay", feexpayEnvironment), true);
+  assert.equal(isLinkFlowPaymentExecutionEnabled(feexpayEnvironment), true);
+  assert.equal(isLinkFlowProviderExecutionEnabled("paydunya", {
+    PAYDUNYA_LINKFLOW_ENABLED: "true",
+    PAYDUNYA_MODE: "live",
+    PAYDUNYA_EXECUTION_HOST: "plesk",
+    SENDFLOW_DATABASE_TARGET: "production",
+    PAYDUNYA_LIVE_ENABLED: "true",
+    NODE_ENV: "production",
+    PAYDUNYA_MASTER_KEY: "synthetic-master-key",
+    PAYDUNYA_PRIVATE_KEY: "synthetic-private-key",
+    PAYDUNYA_TOKEN: "synthetic-token",
+  }), true);
+  assert.equal(isLinkFlowProviderExecutionEnabled("paydunya", {
+    PAYDUNYA_LINKFLOW_ENABLED: "true",
+    PAYDUNYA_MODE: "live",
+    PAYDUNYA_EXECUTION_HOST: "plesk",
+    SENDFLOW_DATABASE_TARGET: "production",
+    PAYDUNYA_LIVE_ENABLED: "true",
+    NODE_ENV: "production",
+    PAYDUNYA_MASTER_KEY: "synthetic-master-key",
+    PAYDUNYA_PRIVATE_KEY: "synthetic-private-key",
   }), false);
 });
 
@@ -37,29 +61,25 @@ test("the provider's initial POST response never becomes a final payer state", (
   assert.equal(resolveInitialProviderState(null), "uncertain");
 });
 
-test("final status requires exact reference, amount, currency, merchant, channel and verified signature", () => {
+test("final status requires authenticated provider status, exact reference, amount, phone and XOF channel", () => {
   const expected = {
     reference: "PAYREF123456", amountMinor: 2000, currency: "XOF",
-    shopId: "test_shop", channelId: "mtn_ci",
+    channelId: "mtn-ci", phoneNumber: "22501020304",
   };
   assert.equal(resolveVerifiedProviderState({
     reference: expected.reference, status: "PENDING", amountMinor: 2000, currency: "XOF",
   }, expected), "waiting");
   assert.equal(resolveVerifiedProviderState({
     reference: expected.reference, status: "SUCCESSFUL", amountMinor: 2000, currency: "XOF",
+    phoneNumber: expected.phoneNumber, verifiedStatusOperation: "payin",
   }, expected), "uncertain");
-  const verified = {
-    merchantShopId: expected.shopId,
-    channelId: expected.channelId,
-    operation: "payin",
-    signatureVerified: true,
-  };
+  const verified = { phoneNumber: expected.phoneNumber, verifiedStatusOperation: "payin" };
   assert.equal(resolveVerifiedProviderState({
     reference: expected.reference, status: "SUCCESSFUL", amountMinor: 2000, currency: "XOF",
     ...verified,
   }, expected), "succeeded");
   assert.equal(resolveVerifiedProviderState({
-    reference: expected.reference, status: "FAILED", amountMinor: 2000, currency: "XOF",
+    reference: expected.reference, status: "FAILED", amountMinor: 2000,
     ...verified,
   }, expected), "failed");
   assert.equal(resolveVerifiedProviderState({
@@ -67,6 +87,10 @@ test("final status requires exact reference, amount, currency, merchant, channel
   }, expected), "uncertain");
   assert.equal(resolveVerifiedProviderState({
     reference: expected.reference, status: "FAILED", amountMinor: 1999, currency: "XOF", ...verified,
+  }, expected), "uncertain");
+  assert.equal(resolveVerifiedProviderState({
+    reference: expected.reference, status: "SUCCESSFUL", amountMinor: 2000,
+    phoneNumber: "22501020305", verifiedStatusOperation: "payin",
   }, expected), "uncertain");
 });
 

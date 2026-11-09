@@ -322,13 +322,22 @@ test("payin and payout status URLs are separate; references cannot escape the pa
   }
 });
 
-test("status rejects a mismatched reference, unknown status or invalid amount and removes personal fields", async () => {
+test("status rejects mismatched or invalid data, binds its operation, and ignores callback metadata", async () => {
   for (const extra of [
     { reference: randomUUID() }, { status: "PAID" }, { amount: -1 }, { amount: "1e3" }, { currency: "EUR" },
   ]) {
     const client = new FeexpayClient(sandbox(), async () => response(extra));
     await assert.rejects(client.getStatus("payin", receiptReference), hasCode("INVALID_RESPONSE"));
   }
-  const client = new FeexpayClient(sandbox(), async () => response({ status: "SUCCESSFUL", phoneNumber: "private", callback_info: "private" }));
-  assert.deepEqual(await client.getStatus("payin", receiptReference), { reference: receiptReference, status: "SUCCESSFUL", amountMinor: 1000 });
+  const client = new FeexpayClient(sandbox(), async () => response({
+    status: "SUCCESSFUL", phoneNumber: "22501020304", callback_info: "private",
+    first_name: "private", email: "private@example.invalid",
+  }));
+  assert.deepEqual(await client.getStatus("payin", receiptReference), {
+    reference: receiptReference,
+    status: "SUCCESSFUL",
+    amountMinor: 1000,
+    phoneNumber: "22501020304",
+    verifiedStatusOperation: "payin",
+  });
 });

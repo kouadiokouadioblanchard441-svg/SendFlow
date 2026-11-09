@@ -2,24 +2,42 @@ import { createHash } from "node:crypto";
 import { createSensitiveDataLookupIndex } from "../lib/sensitive-data-crypto.ts";
 import { isFeexpayLiveExecutionAllowed } from "../providers/feexpay/live-runtime.ts";
 import type { FeexpayReceipt } from "../providers/feexpay/client.ts";
+import { feexpayChannels, feexpayCountries } from "../providers/feexpay/catalog.ts";
+import { isPaydunyaLiveExecutionAllowed } from "../providers/paydunya/client.ts";
 
 export type LinkFlowPublicState = "waiting" | "uncertain" | "succeeded" | "failed";
 
 type Environment = Record<string, string | undefined>;
-// The reviewed public status response omits currency and does not bind the
-// result to a verified shop/channel signature. Keep payment initiation closed
-// until a documented authenticated settlement-evidence path is implemented.
-const LINKFLOW_SETTLEMENT_PROOF_READY = false;
+
+export function isLinkFlowProviderExecutionEnabled(
+  providerCode: string,
+  environment: Environment = process.env,
+) {
+  if (providerCode === "feexpay") {
+    return environment.FEEXPAY_LINKFLOW_ENABLED === "true"
+      && environment.FEEXPAY_MODE === "live"
+      && environment.FEEXPAY_EXECUTION_HOST === "plesk"
+      && environment.SENDFLOW_DATABASE_TARGET === "production"
+      && Boolean(environment.FEEXPAY_API_KEY)
+      && Boolean(environment.FEEXPAY_SHOP_ID)
+      && isFeexpayLiveExecutionAllowed(environment);
+  }
+  if (providerCode === "paydunya") {
+    return environment.PAYDUNYA_LINKFLOW_ENABLED === "true"
+      && environment.PAYDUNYA_MODE === "live"
+      && environment.PAYDUNYA_EXECUTION_HOST === "plesk"
+      && environment.SENDFLOW_DATABASE_TARGET === "production"
+      && Boolean(environment.PAYDUNYA_MASTER_KEY)
+      && Boolean(environment.PAYDUNYA_PRIVATE_KEY)
+      && Boolean(environment.PAYDUNYA_TOKEN)
+      && isPaydunyaLiveExecutionAllowed(environment);
+  }
+  return false;
+}
 
 export function isLinkFlowPaymentExecutionEnabled(environment: Environment = process.env) {
-  return environment.FEEXPAY_LINKFLOW_ENABLED === "true"
-    && environment.FEEXPAY_MODE === "live"
-    && environment.FEEXPAY_EXECUTION_HOST === "plesk"
-    && environment.SENDFLOW_DATABASE_TARGET === "production"
-    && Boolean(environment.FEEXPAY_API_KEY)
-    && Boolean(environment.FEEXPAY_SHOP_ID)
-    && LINKFLOW_SETTLEMENT_PROOF_READY
-    && isFeexpayLiveExecutionAllowed(environment);
+  return isLinkFlowProviderExecutionEnabled("feexpay", environment)
+    || isLinkFlowProviderExecutionEnabled("paydunya", environment);
 }
 
 export function toProviderPhoneNumber(value: string) {
@@ -74,15 +92,28 @@ export function resolveInitialProviderState(receipt: FeexpayReceipt | null): Lin
 
 export function resolveVerifiedProviderState(
   receipt: FeexpayReceipt,
-  expected: { reference: string; amountMinor: number; currency: "XOF"; shopId: string; channelId: string },
+  expected: {
+    reference: string;
+    amountMinor: number;
+    currency: "XOF";
+    channelId: string;
+    phoneNumber: string;
+  },
 ): LinkFlowPublicState {
   if (receipt.reference !== expected.reference) return "uncertain";
   if (receipt.status === "PENDING") return "waiting";
-  if (receipt.merchantShopId !== expected.shopId ||
-    receipt.channelId !== expected.channelId ||
-    receipt.operation !== "payin" ||
-    receipt.signatureVerified !== true) return "uncertain";
-  if (receipt.amountMinor !== expected.amountMinor || receipt.currency !== expected.currency) {
+  const channel = feexpayChannels.find((candidate) => candidate.id === expected.channelId);
+  const country = channel && feexpayCountries.find((candidate) =>
+    candidate.countryCode === channel.countryCode);
+  const expectedPhone = expected.phoneNumber.replace(/\D/g, "");
+  if (receipt.verifiedStatusOperation !== "payin" ||
+    !channel || country?.currency !== expected.currency ||
+    receipt.phoneNumber !== expectedPhone) return "uncertain";
+  // FeexPay's documented v2 status response omits currency. Do not synthesize
+  // a provider currency; bind an absent value only to the XOF channel and
+  // currency that SendFlow used to create this exact attempt.
+  if (receipt.amountMinor !== expected.amountMinor ||
+    (receipt.currency !== undefined && receipt.currency !== expected.currency)) {
     return "uncertain";
   }
   if (receipt.status === "SUCCESSFUL") return "succeeded";

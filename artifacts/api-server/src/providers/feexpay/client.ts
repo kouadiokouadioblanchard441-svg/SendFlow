@@ -32,11 +32,9 @@ export interface FeexpayReceipt {
   status: FeexpayStatus;
   amountMinor?: number;
   currency?: "XOF" | "XAF";
-  /** Must only be populated by a verified, documented settlement source. */
-  merchantShopId?: string;
-  channelId?: string;
-  operation?: Operation;
-  signatureVerified?: boolean;
+  phoneNumber?: string;
+  /** Set only after a successful authenticated status lookup, never from a POST or webhook. */
+  verifiedStatusOperation?: Operation;
 }
 
 const referencePattern = /^[a-zA-Z0-9_-]{8,120}$/;
@@ -81,6 +79,14 @@ function parseReceipt(raw: unknown, expectedReference?: string): FeexpayReceipt 
   if (data.currency !== undefined) {
     if (data.currency !== "XOF" && data.currency !== "XAF") return fail("INVALID_RESPONSE");
     receipt.currency = data.currency;
+  }
+  if (data.phoneNumber !== undefined) {
+    if (!(typeof data.phoneNumber === "string" || typeof data.phoneNumber === "number")) {
+      return fail("INVALID_RESPONSE");
+    }
+    const phoneNumber = String(data.phoneNumber).replace(/\D/g, "");
+    if (!/^[0-9]{8,15}$/.test(phoneNumber)) return fail("INVALID_RESPONSE");
+    receipt.phoneNumber = phoneNumber;
   }
   return receipt;
 }
@@ -177,6 +183,10 @@ export class FeexpayClient {
     if ((operation !== "payin" && operation !== "payout") ||
       typeof reference !== "string" || !referencePattern.test(reference)) return fail("INVALID_INPUT");
     const prefix = operation === "payin" ? "/api/transactions/public/single/status/" : "/api/payouts/status/public/";
-    return parseReceipt(await this.request(`${prefix}${encodeURIComponent(reference)}`), reference);
+    const receipt = parseReceipt(
+      await this.request(`${prefix}${encodeURIComponent(reference)}`),
+      reference,
+    );
+    return { ...receipt, verifiedStatusOperation: operation };
   }
 }

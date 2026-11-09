@@ -4,6 +4,7 @@ import {
   index,
   pgTable,
   timestamp,
+  text,
   unique,
   uuid,
   varchar,
@@ -29,6 +30,7 @@ export const customerPaymentLinkAttemptsTable = pgTable("sf_customer_payment_lin
   payerFirstNameEncrypted: varchar("payer_first_name_encrypted", { length: 512 }).notNull(),
   payerLastNameEncrypted: varchar("payer_last_name_encrypted", { length: 512 }).notNull(),
   ussdCode: varchar("ussd_code", { length: 32 }),
+  providerRedirectUrlEncrypted: text("provider_redirect_url_encrypted"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   linkIdempotencyUnique: unique("sf_customer_link_payment_idempotency_uq")
@@ -59,6 +61,10 @@ export const customerPaymentLinkAttemptsTable = pgTable("sf_customer_payment_lin
   ussdCodeCheck: check(
     "sf_customer_link_payment_ussd_code_check",
     sql`${table.ussdCode} is null or (${table.ussdCode} ~ '^[*][0-9]+([*][0-9]+)*#$' and length(${table.ussdCode}) <= 32)`,
+  ),
+  providerRedirectCipherCheck: check(
+    "sf_customer_link_provider_redirect_cipher_check",
+    sql`${table.providerRedirectUrlEncrypted} is null or (${table.providerRedirectUrlEncrypted} ~ '^sfenc-v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$' and octet_length(${table.providerRedirectUrlEncrypted}) <= 4096)`,
   ),
 }));
 
