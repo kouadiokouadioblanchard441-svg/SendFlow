@@ -10,7 +10,12 @@ ALTER TABLE public.sf_registration_settings
 
 -- Preserve any existing setting; create the singleton only when it is absent.
 INSERT INTO public.sf_registration_settings (id, email_verification_enabled)
-VALUES ('signup', true)
+SELECT 'signup', true
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM public.sf_registration_settings
+  WHERE id = 'signup'
+)
 ON CONFLICT (id) DO NOTHING;
 
 COMMIT;

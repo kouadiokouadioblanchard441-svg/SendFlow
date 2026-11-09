@@ -20,6 +20,7 @@
     "test:routes:isolated": "node --experimental-strip-types --test src/lib/api-request-security.test.mjs src/lib/public-object-response-policy.test.mjs && node tests/security/run-isolated-finance.mjs --routes-security-only",
     "test:wallet-integrity": "node --test tests/security/test_concurrency_wallet_integrity.mjs",
     "test:finance:isolated": "node tests/security/run-isolated-finance.mjs",
+    "test:customer-auth-email:isolated": "node tests/security/run-isolated-finance.mjs --customer-auth-email-only",
     "test:admin-auth-schema:isolated": "node tests/security/test-admin-auth-schema.mjs",
     "admin:bootstrap-super-admin": "node --experimental-strip-types scripts/bootstrap-super-admin.mjs",
     "admin:recover-super-admin-mfa": "node --experimental-strip-types scripts/reset-super-admin-mfa.mjs",

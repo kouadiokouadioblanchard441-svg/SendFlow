@@ -17,6 +17,7 @@
 - [Node native TypeScript tests](node-native-typescript-tests.md) — Node 24 strip-only mode rejects TypeScript parameter properties in imported service modules.
 - [Drizzle production schema pushes](drizzle-scoped-pushes.md) — Keep production migrations additive and explicitly targeted; stop on unrelated Drizzle drift.
 - [PostgreSQL metadata arrays](postgres-metadata-arrays.md) — Cast catalog `name` values to `text` before `array_agg` when comparing metadata through node-postgres.
+- [Idempotent migration inserts](idempotent-migration-inserts.md) — Do not rely on `ON CONFLICT` to bypass NOT NULL checks for attempted inserts.
 - [eSMS Verify balance requirement](esms-verify-balance.md) — Test-prefixed keys still need available Verify credit; a start request can fail with HTTP 402.
 - [Unverified signup accounts](unverified-signup-accounts.md) — SMS-free signup allows viewing, not phone ownership; future financial operations need OTP verification.
 - [SendFlow PIN keypad](pin-keypad-behavior.md) — User explicitly wants digits to reshuffle after every PIN entry, including confirmation; fix mismatches without freezing it.

@@ -27,6 +27,7 @@ const temp = mkdtempSync(join(tmpdir(), "sendflow-isolated-finance-"));
 const data = join(temp, "data"), socket = join(temp, "socket");
 mkdirSync(socket, { mode: 0o700 });
 const baseEnv = { PATH: process.env.PATH, HOME: temp, LANG: "C.UTF-8" };
+const customerAuthEmailOnly = process.argv.includes("--customer-auth-email-only");
 let started = false, owner;
 let exitCode = 1;
 try {
@@ -41,6 +42,24 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  if (customerAuthEmailOnly) {
+    await owner.query(`INSERT INTO sf_countries
+      (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,enabled,signup_enabled,created_by,updated_by)
+      VALUES ('ci','Fixture Country','+225',8,10,true,true,'fixture','fixture')`);
+    await owner.query(`INSERT INTO sf_registration_settings (id,default_country_code,updated_by)
+      VALUES ('signup','ci','fixture')`);
+    await owner.query("ALTER TABLE sf_registration_settings DROP COLUMN email_verification_enabled");
+    const emailVerificationRepair = readFileSync(join(root,
+      "lib/db/migrations/2026-11-07-registration-email-verification-repair.sql"), "utf8");
+    await owner.query(emailVerificationRepair);
+    await owner.query(emailVerificationRepair);
+    const repairedSetting = (await owner.query(`SELECT email_verification_enabled, sms_verification_enabled
+      FROM sf_registration_settings WHERE id='signup'`)).rows[0];
+    assert.deepEqual(repairedSetting, {
+      email_verification_enabled: true,
+      sms_verification_enabled: true,
+    });
+  }
   await owner.query(`ALTER TABLE sf_payment_limits
       DROP CONSTRAINT IF EXISTS sf_payment_limits_unverified_incoming_max_check,
       DROP COLUMN IF EXISTS maximum_unverified_incoming_minor;
@@ -365,7 +384,9 @@ try {
   databaseUrl.searchParams.set("user", "sf_fixture_app");
   const turnstileOnly = process.argv.includes("--turnstile-only");
   const catalogOnly = process.argv.includes("--catalog-only");
-  const testFiles = turnstileOnly
+  const testFiles = customerAuthEmailOnly
+    ? [join(apiDir, "tests/security/customer-auth-email.integration.mjs")]
+    : turnstileOnly
     ? [join(apiDir, "tests/security/finance.integration.mjs")]
     : process.argv.includes("--routes-security-only")
     ? [join(apiDir, "tests/security/routes-security.integration.mjs")]
@@ -383,16 +404,21 @@ try {
   if (turnstileOnly) testArgs.push("--test-name-pattern=Turnstile");
   // Link-flow tests temporarily switch the isolated app to its Replit preview
   // policy; keep those process-environment changes from racing sibling tests.
-  if (process.argv.includes("--payment-links-only")) testArgs.push("--test-concurrency=1");
+  if (process.argv.includes("--payment-links-only") || customerAuthEmailOnly) {
+    testArgs.push("--test-concurrency=1");
+  }
   testArgs.push(...testFiles);
   const result = spawnSync(process.execPath, testArgs, {
     cwd: root, stdio: "inherit", env: {
       ...baseEnv, NODE_PATH: join(apiDir, "node_modules"),
-      NODE_ENV: "development", SENDFLOW_DATABASE_TARGET: "development",
+      NODE_ENV: customerAuthEmailOnly ? "production" : "development",
+      SENDFLOW_DATABASE_TARGET: customerAuthEmailOnly ? "production" : "development",
       DATABASE_URL: databaseUrl.toString(), SENDFLOW_ISOLATED_RUNTIME: runtime,
       SENDFLOW_FIXTURE_SOCKET: socket, SESSION_SECRET: randomBytes(32).toString("hex"),
       CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
       TURNSTILE_SECRET_KEY: "isolated-test-turnstile-secret",
+      RESEND_API_KEY: customerAuthEmailOnly ? "isolated-test-resend-key" : undefined,
+      RESEND_FROM_EMAIL: customerAuthEmailOnly ? "SendFlow Test <test@sendflow.invalid>" : undefined,
        CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", TRUST_PROXY_HOPS: "1",
       TRUST_PROXY_HOPS: "1", LOG_LEVEL: process.env.SENDFLOW_TEST_LOG_LEVEL ?? "silent",
     },
