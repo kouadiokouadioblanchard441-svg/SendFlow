@@ -214,7 +214,7 @@ export const getGetAdminNetworkDefenseUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense`
+  return `/api/admin/network-defense`
 }
 
 /**
@@ -237,7 +237,7 @@ export const getAdminNetworkDefense = async ( options?: Parameters<typeof custom
 
 export const getGetAdminNetworkDefenseQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense`
+    `/api/admin/network-defense`
     ] as const;
     }
 
@@ -291,7 +291,7 @@ export const getCreateAdminNetworkExceptionUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions`
+  return `/api/admin/network-defense/exceptions`
 }
 
 /**
@@ -379,7 +379,7 @@ export const getAuthorizeAndReleaseNetworkIpUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense/authorize-and-release`
+  return `/api/admin/network-defense/authorize-and-release`
 }
 
 /**
@@ -467,7 +467,7 @@ export const getRevokeAdminNetworkExceptionUrl = (id: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions/${id}/revoke`
+  return `/api/admin/network-defense/exceptions/${id}/revoke`
 }
 
 /**
@@ -556,7 +556,7 @@ export const getReleaseAdminAutomaticBlockUrl = (id: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/network-defense/blocks/${id}/release`
+  return `/api/admin/network-defense/blocks/${id}/release`
 }
 
 /**
@@ -652,7 +652,7 @@ export const getListAdminIpBlocksUrl = (params?: ListAdminIpBlocksParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist`
+  return stringifiedParams.length > 0 ? `/api/admin/ip-blocklist?${stringifiedParams}` : `/api/admin/ip-blocklist`
 }
 
 /**
@@ -675,7 +675,7 @@ export const listAdminIpBlocks = async (params?: ListAdminIpBlocksParams, option
 
 export const getListAdminIpBlocksQueryKey = (params?: ListAdminIpBlocksParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist`, ...(params ? [params] : [])
+    `/api/admin/ip-blocklist`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -729,7 +729,7 @@ export const getCreateAdminIpBlockUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist`
+  return `/api/admin/ip-blocklist`
 }
 
 /**
@@ -817,7 +817,7 @@ export const getRevokeAdminIpBlockUrl = (id: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist/${id}/revoke`
+  return `/api/admin/ip-blocklist/${id}/revoke`
 }
 
 /**
@@ -5445,7 +5445,7 @@ export const getListAdminPayoutsUrl = (params?: ListAdminPayoutsParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts`
+  return stringifiedParams.length > 0 ? `/api/admin/payouts?${stringifiedParams}` : `/api/admin/payouts`
 }
 
 /**
@@ -5468,7 +5468,7 @@ export const listAdminPayouts = async (params?: ListAdminPayoutsParams, options?
 
 export const getListAdminPayoutsQueryKey = (params?: ListAdminPayoutsParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts`, ...(params ? [params] : [])
+    `/api/admin/payouts`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -5522,7 +5522,7 @@ export const getGetAdminPayoutUrl = (payoutId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts/${payoutId}`
+  return `/api/admin/payouts/${payoutId}`
 }
 
 /**
@@ -5545,7 +5545,7 @@ export const getAdminPayout = async (payoutId: string, options?: Parameters<type
 
 export const getGetAdminPayoutQueryKey = (payoutId: string,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts/${payoutId}`
+    `/api/admin/payouts/${payoutId}`
     ] as const;
     }
 
@@ -5599,7 +5599,7 @@ export const getRejectAdminPayoutUrl = (payoutId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payouts/${payoutId}/reject`
+  return `/api/admin/payouts/${payoutId}/reject`
 }
 
 /**
@@ -6589,7 +6589,7 @@ export const getSignInAdminUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sign-in`
+  return `/api/admin/sign-in`
 }
 
 /**
@@ -6677,7 +6677,7 @@ export const getSignOutAdminUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sign-out`
+  return `/api/admin/sign-out`
 }
 
 /**
@@ -6751,7 +6751,7 @@ export const getGetAdminAccessStatusUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/access`
+  return `/api/admin/access`
 }
 
 /**
@@ -6775,7 +6775,7 @@ export const getAdminAccessStatus = async ( options?: Parameters<typeof customFe
 
 export const getGetAdminAccessStatusQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/access`
+    `/api/admin/access`
     ] as const;
     }
 
@@ -6829,7 +6829,7 @@ export const getRefreshAdminSessionUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/refresh`
+  return `/api/admin/refresh`
 }
 
 /**
@@ -6903,7 +6903,7 @@ export const getRecordAdminActivityUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/activity`
+  return `/api/admin/activity`
 }
 
 /**
@@ -6977,7 +6977,7 @@ export const getConfirmAdminSensitiveActionUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/step-up`
+  return `/api/admin/step-up`
 }
 
 /**
@@ -7065,7 +7065,7 @@ export const getListAdminSessionsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sessions`
+  return `/api/admin/sessions`
 }
 
 /**
@@ -7088,7 +7088,7 @@ export const listAdminSessions = async ( options?: Parameters<typeof customFetch
 
 export const getListAdminSessionsQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/sessions`
+    `/api/admin/sessions`
     ] as const;
     }
 
@@ -7142,7 +7142,7 @@ export const getRevokeAdminSessionUrl = (sessionId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sessions/${sessionId}/revoke`
+  return `/api/admin/sessions/${sessionId}/revoke`
 }
 
 /**
@@ -7216,7 +7216,7 @@ export const getRevokeAllAdminSessionsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sessions/revoke-all`
+  return `/api/admin/sessions/revoke-all`
 }
 
 /**
@@ -7297,7 +7297,7 @@ export const getGetAdminOverviewUrl = (params?: GetAdminOverviewParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/overview?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/overview`
+  return stringifiedParams.length > 0 ? `/api/admin/overview?${stringifiedParams}` : `/api/admin/overview`
 }
 
 /**
@@ -7321,7 +7321,7 @@ export const getAdminOverview = async (params?: GetAdminOverviewParams, options?
 
 export const getGetAdminOverviewQueryKey = (params?: GetAdminOverviewParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/overview`, ...(params ? [params] : [])
+    `/api/admin/overview`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -7608,7 +7608,7 @@ export const getListAdminBannersUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners`
+  return `/api/admin/banners`
 }
 
 /**
@@ -7631,7 +7631,7 @@ export const listAdminBanners = async ( options?: Parameters<typeof customFetch>
 
 export const getListAdminBannersQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/banners`
+    `/api/admin/banners`
     ] as const;
     }
 
@@ -7685,7 +7685,7 @@ export const getCreateAdminBannerUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners`
+  return `/api/admin/banners`
 }
 
 /**
@@ -7773,7 +7773,7 @@ export const getGetAdminCountriesUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/countries`
+  return `/api/admin/countries`
 }
 
 /**
@@ -7796,7 +7796,7 @@ export const getAdminCountries = async ( options?: Parameters<typeof customFetch
 
 export const getGetAdminCountriesQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/countries`
+    `/api/admin/countries`
     ] as const;
     }
 
@@ -7850,7 +7850,7 @@ export const getCreateAdminCountryUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/countries`
+  return `/api/admin/countries`
 }
 
 /**
@@ -7938,7 +7938,7 @@ export const getUpdateAdminCountryUrl = (countryCode: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/countries/${countryCode}`
+  return `/api/admin/countries/${countryCode}`
 }
 
 /**
@@ -8027,7 +8027,7 @@ export const getDeleteAdminCountryUrl = (countryCode: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/countries/${countryCode}`
+  return `/api/admin/countries/${countryCode}`
 }
 
 /**
@@ -8116,7 +8116,7 @@ export const getUpdateAdminUssdInstructionUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/ussd-instructions`
+  return `/api/admin/ussd-instructions`
 }
 
 /**
@@ -8204,7 +8204,7 @@ export const getGetAdminPaymentRoutingUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-routing`
+  return `/api/admin/payment-routing`
 }
 
 /**
@@ -8227,7 +8227,7 @@ export const getAdminPaymentRouting = async ( options?: Parameters<typeof custom
 
 export const getGetAdminPaymentRoutingQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-routing`
+    `/api/admin/payment-routing`
     ] as const;
     }
 
@@ -8281,7 +8281,7 @@ export const getCreateAdminAggregatorUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-aggregators`
+  return `/api/admin/payment-aggregators`
 }
 
 /**
@@ -8369,7 +8369,7 @@ export const getUpdateAdminAggregatorUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-aggregators`
+  return `/api/admin/payment-aggregators`
 }
 
 /**
@@ -8457,7 +8457,7 @@ export const getUpdateAdminAggregatorRouteUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/payment-aggregator-routes`
+  return `/api/admin/payment-aggregator-routes`
 }
 
 /**
@@ -8545,7 +8545,7 @@ export const getGetAdminOperatorPricingUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operator-pricing`
+  return `/api/admin/operator-pricing`
 }
 
 /**
@@ -8568,7 +8568,7 @@ export const getAdminOperatorPricing = async ( options?: Parameters<typeof custo
 
 export const getGetAdminOperatorPricingQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/operator-pricing`
+    `/api/admin/operator-pricing`
     ] as const;
     }
 
@@ -8622,7 +8622,7 @@ export const getCreateAdminOperatorUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators`
+  return `/api/admin/operators`
 }
 
 /**
@@ -8710,7 +8710,7 @@ export const getUpdateAdminOperatorUrl = (operatorId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators/${operatorId}`
+  return `/api/admin/operators/${operatorId}`
 }
 
 /**
@@ -8799,7 +8799,7 @@ export const getDeleteAdminOperatorUrl = (operatorId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators/${operatorId}`
+  return `/api/admin/operators/${operatorId}`
 }
 
 /**
@@ -8889,7 +8889,7 @@ export const getUploadAdminOperatorLogoUrl = (operatorId: string,
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators/${operatorId}/logo/${expectedVersion}`
+  return `/api/admin/operators/${operatorId}/logo/${expectedVersion}`
 }
 
 /**
@@ -8981,7 +8981,7 @@ export const getDeleteAdminOperatorLogoUrl = (operatorId: string,
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operators/${operatorId}/logo/${expectedVersion}`
+  return `/api/admin/operators/${operatorId}/logo/${expectedVersion}`
 }
 
 /**
@@ -9056,7 +9056,7 @@ export const getUpdateAdminOperatorPricingUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/operator-pricing-rates`
+  return `/api/admin/operator-pricing-rates`
 }
 
 /**
@@ -9145,7 +9145,7 @@ export const getGetAdminRegistrationSettingsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/registration-settings`
+  return `/api/admin/registration-settings`
 }
 
 /**
@@ -9168,7 +9168,7 @@ export const getAdminRegistrationSettings = async ( options?: Parameters<typeof 
 
 export const getGetAdminRegistrationSettingsQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/registration-settings`
+    `/api/admin/registration-settings`
     ] as const;
     }
 
@@ -9222,7 +9222,7 @@ export const getUpdateAdminRegistrationSettingsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/registration-settings`
+  return `/api/admin/registration-settings`
 }
 
 /**
@@ -9310,7 +9310,7 @@ export const getGetAdminCustomerServiceSettingsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/customer-service-settings`
+  return `/api/admin/customer-service-settings`
 }
 
 /**
@@ -9333,7 +9333,7 @@ export const getAdminCustomerServiceSettings = async ( options?: Parameters<type
 
 export const getGetAdminCustomerServiceSettingsQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/customer-service-settings`
+    `/api/admin/customer-service-settings`
     ] as const;
     }
 
@@ -9387,7 +9387,7 @@ export const getUpdateAdminCustomerServiceSettingsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/customer-service-settings`
+  return `/api/admin/customer-service-settings`
 }
 
 /**
@@ -9475,7 +9475,7 @@ export const getListAdminEmailCampaignsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns`
+  return `/api/admin/email-campaigns`
 }
 
 /**
@@ -9498,7 +9498,7 @@ export const listAdminEmailCampaigns = async ( options?: Parameters<typeof custo
 
 export const getListAdminEmailCampaignsQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns`
+    `/api/admin/email-campaigns`
     ] as const;
     }
 
@@ -9552,7 +9552,7 @@ export const getCreateAdminEmailCampaignUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns`
+  return `/api/admin/email-campaigns`
 }
 
 /**
@@ -9647,7 +9647,7 @@ export const getListAdminEmailCampaignRecipientsUrl = (params?: ListAdminEmailCa
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/recipients?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/recipients`
+  return stringifiedParams.length > 0 ? `/api/admin/email-campaigns/recipients?${stringifiedParams}` : `/api/admin/email-campaigns/recipients`
 }
 
 /**
@@ -9670,7 +9670,7 @@ export const listAdminEmailCampaignRecipients = async (params?: ListAdminEmailCa
 
 export const getListAdminEmailCampaignRecipientsQueryKey = (params?: ListAdminEmailCampaignRecipientsParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/recipients`, ...(params ? [params] : [])
+    `/api/admin/email-campaigns/recipients`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -9731,7 +9731,7 @@ export const getListAdminEmailCampaignHistoryUrl = (params?: ListAdminEmailCampa
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/history?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/history`
+  return stringifiedParams.length > 0 ? `/api/admin/email-campaigns/history?${stringifiedParams}` : `/api/admin/email-campaigns/history`
 }
 
 /**
@@ -9754,7 +9754,7 @@ export const listAdminEmailCampaignHistory = async (params?: ListAdminEmailCampa
 
 export const getListAdminEmailCampaignHistoryQueryKey = (params?: ListAdminEmailCampaignHistoryParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/history`, ...(params ? [params] : [])
+    `/api/admin/email-campaigns/history`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -9808,7 +9808,7 @@ export const getGetAdminEmailCampaignUrl = (campaignId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}`
+  return `/api/admin/email-campaigns/${campaignId}`
 }
 
 /**
@@ -9831,7 +9831,7 @@ export const getAdminEmailCampaign = async (campaignId: string, options?: Parame
 
 export const getGetAdminEmailCampaignQueryKey = (campaignId: string,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}`
+    `/api/admin/email-campaigns/${campaignId}`
     ] as const;
     }
 
@@ -9885,7 +9885,7 @@ export const getUpdateAdminEmailCampaignUrl = (campaignId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}`
+  return `/api/admin/email-campaigns/${campaignId}`
 }
 
 /**
@@ -9974,7 +9974,7 @@ export const getDeleteAdminEmailCampaignUrl = (campaignId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}`
+  return `/api/admin/email-campaigns/${campaignId}`
 }
 
 /**
@@ -10048,7 +10048,7 @@ export const getGetAdminEmailCampaignSettingsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/settings`
+  return `/api/admin/email-campaigns/settings`
 }
 
 /**
@@ -10071,7 +10071,7 @@ export const getAdminEmailCampaignSettings = async ( options?: Parameters<typeof
 
 export const getGetAdminEmailCampaignSettingsQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/settings`
+    `/api/admin/email-campaigns/settings`
     ] as const;
     }
 
@@ -10125,7 +10125,7 @@ export const getQueueAdminEmailCampaignUrl = (campaignId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}/send`
+  return `/api/admin/email-campaigns/${campaignId}/send`
 }
 
 /**
@@ -10199,7 +10199,7 @@ export const getCancelAdminEmailCampaignUrl = (campaignId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}/cancel`
+  return `/api/admin/email-campaigns/${campaignId}/cancel`
 }
 
 /**
@@ -10274,7 +10274,7 @@ export const getRetryAdminEmailCampaignRecipientUrl = (campaignId: string,
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/${campaignId}/recipients/${recipientId}/retry`
+  return `/api/admin/email-campaigns/${campaignId}/recipients/${recipientId}/retry`
 }
 
 /**
@@ -10350,7 +10350,7 @@ export const getListAdminOtpPoliciesUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-policies`
+  return `/api/admin/otp-policies`
 }
 
 /**
@@ -10373,7 +10373,7 @@ export const listAdminOtpPolicies = async ( options?: Parameters<typeof customFe
 
 export const getListAdminOtpPoliciesQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-policies`
+    `/api/admin/otp-policies`
     ] as const;
     }
 
@@ -10428,7 +10428,7 @@ export const getUpdateAdminOtpPolicyUrl = (countryCode: string,
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-policies/${countryCode}/${operatorId}`
+  return `/api/admin/otp-policies/${countryCode}/${operatorId}`
 }
 
 /**
@@ -10518,7 +10518,7 @@ export const getReorderAdminBannersUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners/reorder`
+  return `/api/admin/banners/reorder`
 }
 
 /**
@@ -10606,7 +10606,7 @@ export const getUpdateAdminBannerUrl = (bannerId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners/${bannerId}`
+  return `/api/admin/banners/${bannerId}`
 }
 
 /**
@@ -10695,7 +10695,7 @@ export const getDeleteAdminBannerUrl = (bannerId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/banners/${bannerId}`
+  return `/api/admin/banners/${bannerId}`
 }
 
 /**
@@ -10776,7 +10776,7 @@ export const getListAdminLoginActivityUrl = (params?: ListAdminLoginActivityPara
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/login-activity?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/login-activity`
+  return stringifiedParams.length > 0 ? `/api/admin/login-activity?${stringifiedParams}` : `/api/admin/login-activity`
 }
 
 /**
@@ -10800,7 +10800,7 @@ export const listAdminLoginActivity = async (params?: ListAdminLoginActivityPara
 
 export const getListAdminLoginActivityQueryKey = (params?: ListAdminLoginActivityParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/login-activity`, ...(params ? [params] : [])
+    `/api/admin/login-activity`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -10861,7 +10861,7 @@ export const getListAdminOtpActivityUrl = (params?: ListAdminOtpActivityParams,)
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-activity?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-activity`
+  return stringifiedParams.length > 0 ? `/api/admin/otp-activity?${stringifiedParams}` : `/api/admin/otp-activity`
 }
 
 /**
@@ -10885,7 +10885,7 @@ export const listAdminOtpActivity = async (params?: ListAdminOtpActivityParams, 
 
 export const getListAdminOtpActivityQueryKey = (params?: ListAdminOtpActivityParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/otp-activity`, ...(params ? [params] : [])
+    `/api/admin/otp-activity`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -10946,7 +10946,7 @@ export const getListAdminUsersUrl = (params?: ListAdminUsersParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/users?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/users`
+  return stringifiedParams.length > 0 ? `/api/admin/users?${stringifiedParams}` : `/api/admin/users`
 }
 
 /**
@@ -10969,7 +10969,7 @@ export const listAdminUsers = async (params?: ListAdminUsersParams, options?: Pa
 
 export const getListAdminUsersQueryKey = (params?: ListAdminUsersParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/users`, ...(params ? [params] : [])
+    `/api/admin/users`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -11023,7 +11023,7 @@ export const getGetAdminUserUrl = (userId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}`
+  return `/api/admin/users/${userId}`
 }
 
 /**
@@ -11047,7 +11047,7 @@ export const getAdminUser = async (userId: string, options?: Parameters<typeof c
 
 export const getGetAdminUserQueryKey = (userId: string,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}`
+    `/api/admin/users/${userId}`
     ] as const;
     }
 
@@ -11108,7 +11108,7 @@ export const getListAdminUserDeveloperWebhooksUrl = (params: ListAdminUserDevelo
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/developer-webhooks?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/developer-webhooks`
+  return stringifiedParams.length > 0 ? `/api/admin/developer-webhooks?${stringifiedParams}` : `/api/admin/developer-webhooks`
 }
 
 /**
@@ -11132,7 +11132,7 @@ export const listAdminUserDeveloperWebhooks = async (params: ListAdminUserDevelo
 
 export const getListAdminUserDeveloperWebhooksQueryKey = (params?: ListAdminUserDeveloperWebhooksParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/developer-webhooks`, ...(params ? [params] : [])
+    `/api/admin/developer-webhooks`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -11193,7 +11193,7 @@ export const getListAdminTransactionsUrl = (params?: ListAdminTransactionsParams
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions?${stringifiedParams}` : `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions`
+  return stringifiedParams.length > 0 ? `/api/admin/transactions?${stringifiedParams}` : `/api/admin/transactions`
 }
 
 /**
@@ -11216,7 +11216,7 @@ export const listAdminTransactions = async (params?: ListAdminTransactionsParams
 
 export const getListAdminTransactionsQueryKey = (params?: ListAdminTransactionsParams,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions`, ...(params ? [params] : [])
+    `/api/admin/transactions`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -11270,7 +11270,7 @@ export const getGetAdminTransactionUrl = (transactionId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions/${transactionId}`
+  return `/api/admin/transactions/${transactionId}`
 }
 
 /**
@@ -11294,7 +11294,7 @@ export const getAdminTransaction = async (transactionId: string, options?: Param
 
 export const getGetAdminTransactionQueryKey = (transactionId: string,) => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions/${transactionId}`
+    `/api/admin/transactions/${transactionId}`
     ] as const;
     }
 
@@ -11348,7 +11348,7 @@ export const getUpdateAdminUserMonthlyIncomingLimitUrl = (userId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/monthly-incoming-limit`
+  return `/api/admin/users/${userId}/monthly-incoming-limit`
 }
 
 /**
@@ -11438,7 +11438,7 @@ export const getCreateAdminWalletAdjustmentUrl = (userId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/wallet-adjustments`
+  return `/api/admin/users/${userId}/wallet-adjustments`
 }
 
 /**
@@ -11528,7 +11528,7 @@ export const getSuspendAdminUserUrl = (userId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/suspend`
+  return `/api/admin/users/${userId}/suspend`
 }
 
 /**
@@ -11617,7 +11617,7 @@ export const getRestoreAdminUserUrl = (userId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/restore`
+  return `/api/admin/users/${userId}/restore`
 }
 
 /**
@@ -11706,7 +11706,7 @@ export const getDeleteAdminUserUrl = (userId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/users/${userId}/delete`
+  return `/api/admin/users/${userId}/delete`
 }
 
 /**
@@ -11796,7 +11796,7 @@ export const getArchiveAdminTransactionUrl = (transactionId: string,) => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/transactions/${transactionId}/archive`
+  return `/api/admin/transactions/${transactionId}/archive`
 }
 
 /**
@@ -11963,7 +11963,7 @@ export const getGetAdminPaymentLimitsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMWh/payment-limits`
+  return `/api/admin/payment-limits`
 }
 
 /**
@@ -11986,7 +11986,7 @@ export const getAdminPaymentLimits = async ( options?: Parameters<typeof customF
 
 export const getGetAdminPaymentLimitsQueryKey = () => {
     return [
-    `/api/DMgrgmt-1np5g23g12bGFtMWh/payment-limits`
+    `/api/admin/payment-limits`
     ] as const;
     }
 
@@ -12040,7 +12040,7 @@ export const getUpdateAdminPaymentLimitsUrl = () => {
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMWh/payment-limits`
+  return `/api/admin/payment-limits`
 }
 
 /**

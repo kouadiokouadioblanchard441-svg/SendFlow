@@ -189685,6 +189685,209 @@ var adminAuditLogsTable = pgTable(
   })
 );
 
+// ../../lib/db/src/schema/admin-auth.ts
+var superAdminCredentialsTable = pgTable(
+  "sf_super_admin_credentials",
+  {
+    id: smallint("id").primaryKey().default(1),
+    emailNormalized: varchar("email_normalized", { length: 254 }).notNull(),
+    passwordHash: text("password_hash").notNull(),
+    totpCiphertext: text("totp_ciphertext").notNull(),
+    totpNonce: varchar("totp_nonce", { length: 24 }).notNull(),
+    totpAuthTag: varchar("totp_auth_tag", { length: 32 }).notNull(),
+    lastTotpStep: bigint("last_totp_step", { mode: "number" }),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    passwordChangedAt: timestamp("password_changed_at", { withTimezone: true })
+  },
+  (table) => ({
+    singletonCheck: check("sf_super_admin_singleton_check", sql`${table.id} = 1`),
+    normalizedEmailCheck: check(
+      "sf_super_admin_email_normalized_check",
+      sql`${table.emailNormalized} = lower(btrim(${table.emailNormalized}))`
+    ),
+    emailUnique: uniqueIndex("sf_super_admin_email_uq").on(table.emailNormalized)
+  })
+);
+var superAdminRecoveryCodesTable = pgTable(
+  "sf_super_admin_recovery_codes",
+  {
+    credentialId: smallint("credential_id").notNull().default(1).references(() => superAdminCredentialsTable.id, { onDelete: "cascade" }),
+    codeHash: varchar("code_hash", { length: 64 }).primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    usedAt: timestamp("used_at", { withTimezone: true })
+  },
+  (table) => ({
+    singletonCheck: check("sf_super_admin_recovery_credential_check", sql`${table.credentialId} = 1`),
+    hashFormatCheck: check(
+      "sf_super_admin_recovery_hash_check",
+      sql`${table.codeHash} ~ '^[0-9a-f]{64}$'`
+    )
+  })
+);
+var superAdminSessionsTable = pgTable(
+  "sf_super_admin_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    refreshTokenHash: varchar("refresh_token_hash", { length: 64 }).notNull(),
+    refreshFamilyId: uuid("refresh_family_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
+    idleExpiresAt: timestamp("idle_expires_at", { withTimezone: true }).notNull(),
+    absoluteExpiresAt: timestamp("absolute_expires_at", { withTimezone: true }).notNull(),
+    ipHash: varchar("ip_hash", { length: 64 }),
+    userAgentHash: varchar("user_agent_hash", { length: 64 }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revocationReason: varchar("revocation_reason", { length: 80 })
+  },
+  (table) => ({
+    refreshTokenUnique: uniqueIndex("sf_super_admin_sessions_refresh_uq").on(table.refreshTokenHash),
+    familyIndex: index("sf_super_admin_sessions_family_idx").on(table.refreshFamilyId),
+    expiryIndex: index("sf_super_admin_sessions_expiry_idx").on(
+      table.idleExpiresAt,
+      table.absoluteExpiresAt
+    ),
+    expiryCheck: check(
+      "sf_super_admin_sessions_expiry_check",
+      sql`${table.createdAt} < ${table.idleExpiresAt}
+        and ${table.idleExpiresAt} <= ${table.absoluteExpiresAt}
+        and ${table.createdAt} < ${table.absoluteExpiresAt}`
+    ),
+    hashFormatCheck: check(
+      "sf_super_admin_sessions_refresh_hash_check",
+      sql`${table.refreshTokenHash} ~ '^[0-9a-f]{64}$'`
+    )
+  })
+);
+var superAdminRefreshTokensTable = pgTable(
+  "sf_super_admin_refresh_tokens",
+  {
+    tokenHash: varchar("token_hash", { length: 64 }).primaryKey(),
+    sessionId: uuid("session_id").notNull().references(() => superAdminSessionsTable.id, { onDelete: "cascade" }),
+    familyId: uuid("family_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    replacedByHash: varchar("replaced_by_hash", { length: 64 }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true })
+  },
+  (table) => ({
+    familyIndex: index("sf_super_admin_refresh_family_idx").on(table.familyId, table.createdAt),
+    sessionIndex: index("sf_super_admin_refresh_session_idx").on(table.sessionId, table.createdAt),
+    tokenHashCheck: check(
+      "sf_super_admin_refresh_hash_check",
+      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`
+    ),
+    replacementHashCheck: check(
+      "sf_super_admin_refresh_replacement_hash_check",
+      sql`${table.replacedByHash} IS NULL OR ${table.replacedByHash} ~ '^[0-9a-f]{64}$'`
+    )
+  })
+);
+var superAdminStepUpTokensTable = pgTable(
+  "sf_super_admin_step_up_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id").notNull().references(() => superAdminSessionsTable.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    actionKey: varchar("action_key", { length: 128 }).notNull(),
+    payloadHash: varchar("payload_hash", { length: 64 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true })
+  },
+  (table) => ({
+    tokenUnique: uniqueIndex("sf_super_admin_step_up_token_uq").on(table.tokenHash),
+    sessionExpiryIndex: index("sf_super_admin_step_up_session_expiry_idx").on(
+      table.sessionId,
+      table.expiresAt
+    ),
+    tokenHashCheck: check(
+      "sf_super_admin_step_up_token_hash_check",
+      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`
+    ),
+    payloadHashCheck: check(
+      "sf_super_admin_step_up_payload_hash_check",
+      sql`${table.payloadHash} ~ '^[0-9a-f]{64}$'`
+    ),
+    expiryCheck: check("sf_super_admin_step_up_expiry_check", sql`${table.expiresAt} > ${table.createdAt}`)
+  })
+);
+
+// ../../lib/db/src/schema/ip-blocklist.ts
+var ipBlocklistTable = pgTable("sf_ip_blocklist", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull().unique(),
+  reason: varchar("reason", { length: 500 }).notNull(),
+  blockedBy: text("blocked_by").notNull(),
+  blockedAt: timestamp("blocked_at", { withTimezone: true }).notNull().defaultNow(),
+  revokedBy: text("revoked_by"),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  version: integer("version").notNull().default(1)
+}, (t) => [
+  check("sf_ip_blocklist_positive_version", sql`${t.version} > 0`),
+  check("sf_ip_blocklist_revocation_pair", sql`(${t.revokedAt} IS NULL) = (${t.revokedBy} IS NULL)`),
+  check("sf_ip_blocklist_host", sql`${t.ipAddress} = host(${t.ipAddress}::inet) AND masklen(${t.ipAddress}::inet) = CASE family(${t.ipAddress}::inet) WHEN 4 THEN 32 ELSE 128 END`)
+]);
+
+// ../../lib/db/src/schema/network-defense.ts
+var networkDefenseTable = pgTable("sf_network_defense", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull().unique(),
+  requestWindowAt: timestamp("request_window_at", { withTimezone: true }).notNull().defaultNow(),
+  requestCount: integer("request_count").notNull().default(0),
+  probeWindowAt: timestamp("probe_window_at", { withTimezone: true }).notNull().defaultNow(),
+  probeCount: integer("probe_count").notNull().default(0),
+  blockedUntil: timestamp("blocked_until", { withTimezone: true }),
+  blockedAt: timestamp("blocked_at", { withTimezone: true }),
+  banCount: integer("ban_count").notNull().default(0),
+  rule: varchar("rule", { length: 32 }),
+  version: integer("version").notNull().default(1),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  index("sf_network_defense_expiry_idx").on(t.updatedAt),
+  check("sf_network_defense_request_count_check", sql`${t.requestCount}>=0`),
+  check("sf_network_defense_probe_count_check", sql`${t.probeCount}>=0`),
+  check("sf_network_defense_ban_count_check", sql`${t.banCount}>=0`),
+  check("sf_network_defense_version_check", sql`${t.version}>0`),
+  check("sf_network_defense_ip_address_check", sql`${t.ipAddress}=host(${t.ipAddress}::inet)`)
+]);
+var networkDefenseAllowlistTable = pgTable("sf_network_defense_allowlist", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull().unique(),
+  reason: varchar("reason", { length: 500 }).notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  revokedBy: text("revoked_by"),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  version: integer("version").notNull().default(1)
+}, (t) => [
+  check("sf_network_defense_allowlist_reason_check", sql`length(trim(${t.reason})) BETWEEN 3 AND 500`),
+  check("sf_network_defense_allowlist_version_check", sql`${t.version}>0`),
+  check("sf_network_defense_allowlist_check", sql`(${t.revokedAt} IS NULL)=(${t.revokedBy} IS NULL)`),
+  check("sf_network_defense_allowlist_ip_address_check", sql`${t.ipAddress}=host(${t.ipAddress}::inet)`)
+]);
+var networkDefenseEventsTable = pgTable("sf_network_defense_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  action: varchar("action", { length: 32 }).notNull(),
+  rule: varchar("rule", { length: 32 }).notNull(),
+  blockedUntil: timestamp("blocked_until", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  index("sf_network_defense_events_created_idx").on(t.createdAt),
+  check("sf_network_defense_events_action_check", sql`${t.action} IN ('automatic_block','admin_release')`)
+]);
+
+// ../../lib/db/src/schema/api-request-limits.ts
+var apiRequestLimitsTable = pgTable("sf_api_request_limits", {
+  bucketHash: varchar("bucket_hash", { length: 64 }).primaryKey(),
+  windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull(),
+  requestCount: integer("request_count").notNull()
+}, (table) => ({
+  countCheck: check("sf_api_request_limits_count_check", sql`${table.requestCount} between 1 and 60`)
+}));
+
 // ../../node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/classic/external.js
 var external_exports = {};
 __export(external_exports, {
@@ -209649,6 +209852,38 @@ var createInsertSchema = (entity, refine2) => {
   return handleColumns(columns, refine2 ?? {}, insertConditions);
 };
 
+// ../../lib/db/src/schema/banners.ts
+var bannersTable = pgTable(
+  "sf_banners",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    title: varchar("title", { length: 120 }).notNull(),
+    description: text("description"),
+    imageUrl: text("image_url").notNull(),
+    mobileImageUrl: text("mobile_image_url"),
+    imageAlt: varchar("image_alt", { length: 180 }).notNull(),
+    ctaLabel: varchar("cta_label", { length: 48 }),
+    targetUrl: text("target_url"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(false),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    createdBy: varchar("created_by", { length: 255 }).notNull(),
+    updatedBy: varchar("updated_by", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    activeOrderIndex: index("sf_banners_active_order_idx").on(table.isActive, table.sortOrder),
+    scheduleIndex: index("sf_banners_schedule_idx").on(table.startsAt, table.endsAt)
+  })
+);
+var insertBannerSchema = createInsertSchema(bannersTable).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // ../../lib/db/src/schema/users.ts
 var userAccountStatusEnum = pgEnum("sf_user_account_status", ["active", "suspended", "deleted"]);
 var usersTable = pgTable("sf_users", {
@@ -209689,265 +209924,6 @@ var insertUserSchema = createInsertSchema(usersTable).omit({
   createdAt: true,
   updatedAt: true,
   lastSeenAt: true
-});
-
-// ../../lib/db/src/schema/admin-access.ts
-var adminGrantsTable = pgTable("sf_admin_grants", {
-  userId: text("user_id").primaryKey().references(() => usersTable.id, { onDelete: "cascade" }),
-  canMutate: boolean("can_mutate").notNull().default(false),
-  pinHash: text("pin_hash").notNull(),
-  authorizationVersion: uuid("authorization_version").notNull().defaultRandom(),
-  revokedAt: timestamp("revoked_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
-});
-var adminSessionsTable = pgTable("sf_admin_sessions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id").notNull().references(() => adminGrantsTable.userId, { onDelete: "cascade" }),
-  authorizationVersion: uuid("authorization_version").notNull(),
-  tokenHash: varchar("token_hash", { length: 64 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  pinVerifiedUntil: timestamp("pin_verified_until", { withTimezone: true }),
-  revokedAt: timestamp("revoked_at", { withTimezone: true })
-}, (table) => ({
-  tokenIndex: uniqueIndex("sf_admin_sessions_token_uq").on(table.tokenHash),
-  expiryIndex: index("sf_admin_sessions_user_expiry_idx").on(table.userId, table.expiresAt),
-  expiryCheck: check("sf_admin_sessions_expiry_check", sql`${table.expiresAt} > ${table.createdAt}`)
-}));
-
-// ../../lib/db/src/schema/admin-auth.ts
-var superAdminCredentialsTable = pgTable(
-  "sf_super_admin_credentials",
-  {
-    id: smallint("id").primaryKey().default(1),
-    emailNormalized: varchar("email_normalized", { length: 254 }).notNull(),
-    passwordHash: text("password_hash").notNull(),
-    totpCiphertext: text("totp_ciphertext").notNull(),
-    totpNonce: varchar("totp_nonce", { length: 24 }).notNull(),
-    totpAuthTag: varchar("totp_auth_tag", { length: 32 }).notNull(),
-    lastTotpStep: bigint("last_totp_step", { mode: "number" }),
-    active: boolean("active").notNull().default(true),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-    passwordChangedAt: timestamp("password_changed_at", { withTimezone: true })
-  },
-  (table) => ({
-    singletonCheck: check("sf_super_admin_singleton_check", sql`${table.id} = 1`),
-    normalizedEmailCheck: check(
-      "sf_super_admin_email_normalized_check",
-      sql`${table.emailNormalized} = lower(btrim(${table.emailNormalized}))`
-    ),
-    emailUnique: uniqueIndex("sf_super_admin_email_uq").on(table.emailNormalized)
-  })
-);
-var superAdminRecoveryCodesTable = pgTable(
-  "sf_super_admin_recovery_codes",
-  {
-    credentialId: smallint("credential_id").notNull().default(1).references(() => superAdminCredentialsTable.id, { onDelete: "cascade" }),
-    codeHash: varchar("code_hash", { length: 64 }).primaryKey(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    usedAt: timestamp("used_at", { withTimezone: true })
-  },
-  (table) => ({
-    singletonCheck: check("sf_super_admin_recovery_credential_check", sql`${table.credentialId} = 1`),
-    hashFormatCheck: check(
-      "sf_super_admin_recovery_hash_check",
-      sql`${table.codeHash} ~ '^[0-9a-f]{64}$'`
-    )
-  })
-);
-var superAdminSessionsTable = pgTable(
-  "sf_super_admin_sessions",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    refreshTokenHash: varchar("refresh_token_hash", { length: 64 }).notNull(),
-    refreshFamilyId: uuid("refresh_family_id").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
-    idleExpiresAt: timestamp("idle_expires_at", { withTimezone: true }).notNull(),
-    absoluteExpiresAt: timestamp("absolute_expires_at", { withTimezone: true }).notNull(),
-    ipHash: varchar("ip_hash", { length: 64 }),
-    userAgentHash: varchar("user_agent_hash", { length: 64 }),
-    revokedAt: timestamp("revoked_at", { withTimezone: true }),
-    revocationReason: varchar("revocation_reason", { length: 80 })
-  },
-  (table) => ({
-    refreshTokenUnique: uniqueIndex("sf_super_admin_sessions_refresh_uq").on(table.refreshTokenHash),
-    familyIndex: index("sf_super_admin_sessions_family_idx").on(table.refreshFamilyId),
-    expiryIndex: index("sf_super_admin_sessions_expiry_idx").on(
-      table.idleExpiresAt,
-      table.absoluteExpiresAt
-    ),
-    expiryCheck: check(
-      "sf_super_admin_sessions_expiry_check",
-      sql`${table.createdAt} < ${table.idleExpiresAt}
-        and ${table.idleExpiresAt} <= ${table.absoluteExpiresAt}
-        and ${table.createdAt} < ${table.absoluteExpiresAt}`
-    ),
-    hashFormatCheck: check(
-      "sf_super_admin_sessions_refresh_hash_check",
-      sql`${table.refreshTokenHash} ~ '^[0-9a-f]{64}$'`
-    )
-  })
-);
-var superAdminRefreshTokensTable = pgTable(
-  "sf_super_admin_refresh_tokens",
-  {
-    tokenHash: varchar("token_hash", { length: 64 }).primaryKey(),
-    sessionId: uuid("session_id").notNull().references(() => superAdminSessionsTable.id, { onDelete: "cascade" }),
-    familyId: uuid("family_id").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    consumedAt: timestamp("consumed_at", { withTimezone: true }),
-    replacedByHash: varchar("replaced_by_hash", { length: 64 }),
-    revokedAt: timestamp("revoked_at", { withTimezone: true })
-  },
-  (table) => ({
-    familyIndex: index("sf_super_admin_refresh_family_idx").on(table.familyId, table.createdAt),
-    sessionIndex: index("sf_super_admin_refresh_session_idx").on(table.sessionId, table.createdAt),
-    tokenHashCheck: check(
-      "sf_super_admin_refresh_hash_check",
-      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`
-    ),
-    replacementHashCheck: check(
-      "sf_super_admin_refresh_replacement_hash_check",
-      sql`${table.replacedByHash} IS NULL OR ${table.replacedByHash} ~ '^[0-9a-f]{64}$'`
-    )
-  })
-);
-var superAdminStepUpTokensTable = pgTable(
-  "sf_super_admin_step_up_tokens",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    sessionId: uuid("session_id").notNull().references(() => superAdminSessionsTable.id, { onDelete: "cascade" }),
-    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
-    actionKey: varchar("action_key", { length: 128 }).notNull(),
-    payloadHash: varchar("payload_hash", { length: 64 }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-    consumedAt: timestamp("consumed_at", { withTimezone: true })
-  },
-  (table) => ({
-    tokenUnique: uniqueIndex("sf_super_admin_step_up_token_uq").on(table.tokenHash),
-    sessionExpiryIndex: index("sf_super_admin_step_up_session_expiry_idx").on(
-      table.sessionId,
-      table.expiresAt
-    ),
-    tokenHashCheck: check(
-      "sf_super_admin_step_up_token_hash_check",
-      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`
-    ),
-    payloadHashCheck: check(
-      "sf_super_admin_step_up_payload_hash_check",
-      sql`${table.payloadHash} ~ '^[0-9a-f]{64}$'`
-    ),
-    expiryCheck: check("sf_super_admin_step_up_expiry_check", sql`${table.expiresAt} > ${table.createdAt}`)
-  })
-);
-
-// ../../lib/db/src/schema/ip-blocklist.ts
-var ipBlocklistTable = pgTable("sf_ip_blocklist", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  ipAddress: varchar("ip_address", { length: 45 }).notNull().unique(),
-  reason: varchar("reason", { length: 500 }).notNull(),
-  blockedBy: text("blocked_by").notNull(),
-  blockedAt: timestamp("blocked_at", { withTimezone: true }).notNull().defaultNow(),
-  revokedBy: text("revoked_by"),
-  revokedAt: timestamp("revoked_at", { withTimezone: true }),
-  version: integer("version").notNull().default(1)
-}, (t) => [
-  check("sf_ip_blocklist_positive_version", sql`${t.version} > 0`),
-  check("sf_ip_blocklist_revocation_pair", sql`(${t.revokedAt} IS NULL) = (${t.revokedBy} IS NULL)`),
-  check("sf_ip_blocklist_host", sql`${t.ipAddress} = host(${t.ipAddress}::inet) AND masklen(${t.ipAddress}::inet) = CASE family(${t.ipAddress}::inet) WHEN 4 THEN 32 ELSE 128 END`)
-]);
-
-// ../../lib/db/src/schema/network-defense.ts
-var networkDefenseTable = pgTable("sf_network_defense", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  ipAddress: varchar("ip_address", { length: 45 }).notNull().unique(),
-  requestWindowAt: timestamp("request_window_at", { withTimezone: true }).notNull().defaultNow(),
-  requestCount: integer("request_count").notNull().default(0),
-  probeWindowAt: timestamp("probe_window_at", { withTimezone: true }).notNull().defaultNow(),
-  probeCount: integer("probe_count").notNull().default(0),
-  blockedUntil: timestamp("blocked_until", { withTimezone: true }),
-  blockedAt: timestamp("blocked_at", { withTimezone: true }),
-  banCount: integer("ban_count").notNull().default(0),
-  rule: varchar("rule", { length: 32 }),
-  version: integer("version").notNull().default(1),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
-}, (t) => [
-  index("sf_network_defense_expiry_idx").on(t.updatedAt),
-  check("sf_network_defense_request_count_check", sql`${t.requestCount}>=0`),
-  check("sf_network_defense_probe_count_check", sql`${t.probeCount}>=0`),
-  check("sf_network_defense_ban_count_check", sql`${t.banCount}>=0`),
-  check("sf_network_defense_version_check", sql`${t.version}>0`),
-  check("sf_network_defense_ip_address_check", sql`${t.ipAddress}=host(${t.ipAddress}::inet)`)
-]);
-var networkDefenseAllowlistTable = pgTable("sf_network_defense_allowlist", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  ipAddress: varchar("ip_address", { length: 45 }).notNull().unique(),
-  reason: varchar("reason", { length: 500 }).notNull(),
-  createdBy: text("created_by").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  revokedBy: text("revoked_by"),
-  revokedAt: timestamp("revoked_at", { withTimezone: true }),
-  version: integer("version").notNull().default(1)
-}, (t) => [
-  check("sf_network_defense_allowlist_reason_check", sql`length(trim(${t.reason})) BETWEEN 3 AND 500`),
-  check("sf_network_defense_allowlist_version_check", sql`${t.version}>0`),
-  check("sf_network_defense_allowlist_check", sql`(${t.revokedAt} IS NULL)=(${t.revokedBy} IS NULL)`),
-  check("sf_network_defense_allowlist_ip_address_check", sql`${t.ipAddress}=host(${t.ipAddress}::inet)`)
-]);
-var networkDefenseEventsTable = pgTable("sf_network_defense_events", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
-  action: varchar("action", { length: 32 }).notNull(),
-  rule: varchar("rule", { length: 32 }).notNull(),
-  blockedUntil: timestamp("blocked_until", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
-}, (t) => [
-  index("sf_network_defense_events_created_idx").on(t.createdAt),
-  check("sf_network_defense_events_action_check", sql`${t.action} IN ('automatic_block','admin_release')`)
-]);
-
-// ../../lib/db/src/schema/api-request-limits.ts
-var apiRequestLimitsTable = pgTable("sf_api_request_limits", {
-  bucketHash: varchar("bucket_hash", { length: 64 }).primaryKey(),
-  windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull(),
-  requestCount: integer("request_count").notNull()
-}, (table) => ({
-  countCheck: check("sf_api_request_limits_count_check", sql`${table.requestCount} between 1 and 60`)
-}));
-
-// ../../lib/db/src/schema/banners.ts
-var bannersTable = pgTable(
-  "sf_banners",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    title: varchar("title", { length: 120 }).notNull(),
-    description: text("description"),
-    imageUrl: text("image_url").notNull(),
-    mobileImageUrl: text("mobile_image_url"),
-    imageAlt: varchar("image_alt", { length: 180 }).notNull(),
-    ctaLabel: varchar("cta_label", { length: 48 }),
-    targetUrl: text("target_url"),
-    sortOrder: integer("sort_order").notNull().default(0),
-    isActive: boolean("is_active").notNull().default(false),
-    startsAt: timestamp("starts_at", { withTimezone: true }),
-    endsAt: timestamp("ends_at", { withTimezone: true }),
-    createdBy: varchar("created_by", { length: 255 }).notNull(),
-    updatedBy: varchar("updated_by", { length: 255 }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
-  },
-  (table) => ({
-    activeOrderIndex: index("sf_banners_active_order_idx").on(table.isActive, table.sortOrder),
-    scheduleIndex: index("sf_banners_schedule_idx").on(table.startsAt, table.endsAt)
-  })
-);
-var insertBannerSchema = createInsertSchema(bannersTable).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
 });
 
 // ../../lib/db/src/schema/contacts.ts
@@ -210466,7 +210442,7 @@ var phoneOtpChallengesTable = pgTable(
     ),
     purposeConstraint: check(
       "sf_phone_otp_purpose_check",
-      sql`${table.purpose} in ('signup', 'password_reset', 'pin_reset', 'admin_login')`
+      sql`${table.purpose} in ('signup', 'password_reset', 'pin_reset')`
     ),
     attemptsConstraint: check(
       "sf_phone_otp_attempts_check",
@@ -258478,7 +258454,7 @@ router28.post("/payouts/:payoutId/reject", async (req, res) => {
 var admin_payouts_default = router28;
 
 // src/lib/admin-route-prefix.ts
-var ADMIN_ROUTE_PREFIX = "/DMgrgmt-1np5g23g12bGFtMwh";
+var ADMIN_ROUTE_PREFIX = "/admin";
 
 // src/lib/admin-step-up.ts
 import { createHash as createHash11 } from "node:crypto";

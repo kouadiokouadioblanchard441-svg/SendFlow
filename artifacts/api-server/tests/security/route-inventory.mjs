@@ -47,7 +47,7 @@ export function frontendPaths() {
   const source = ts.createSourceFile("App.tsx",
     readFileSync(join(apiRoot, "../sendflow/src/App.tsx"), "utf8"),
     ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const paths = new Set(["/", adminPrefix, `${adminPrefix}/sign-in`]);
+  const paths = new Set(["/"]);
   function visit(node) {
     if (ts.isJsxAttribute(node) && node.name.getText(source) === "path"
       && node.initializer && ts.isStringLiteral(node.initializer)) {

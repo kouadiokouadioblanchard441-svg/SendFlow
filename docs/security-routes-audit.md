@@ -46,10 +46,13 @@ node --input-type=module -e \
  'import {routeInventory} from "./artifacts/api-server/tests/security/route-inventory.mjs"; console.table(routeInventory())'
 ```
 
-Les routes d'accès administrateur `/access`, `/sign-in`, `/pin/unlock` et
-`/sign-out` restent en dehors du groupe métier protégé, mais conservent leurs
-contrôles propres. Le préfixe administratif n'est pas considéré comme un secret
-ou une protection d'accès.
+L'authentification administrateur passe par les endpoints API sous `/api/admin`
+(`/access`, `/sign-in`, `/sign-out`, `refresh` et `step-up`). Les routes métier
+restent protégées par la session Super Admin côté serveur. L'ancien endpoint
+PIN et les anciennes pages navigateur `/admin` et `/admin/sign-in` ne sont plus
+des chemins d'accès; les tests isolés confirment qu'ils sont refusés sur l'hôte
+public. Le préfixe API n'est pas considéré comme un secret ou une protection
+d'accès.
 
 ## Constats et corrections
 

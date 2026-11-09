@@ -84,7 +84,7 @@ before(async () => {
       ('fixture-destination','ci','international',1.8,3,'fixture','fixture')`);
   const logoApp = runtime.express();
   logoApp.use("/api", runtime.operatorPricingRouter);
-  logoApp.use("/api/DMgrgmt-1np5g23g12bGFtMwh", runtime.createAdminOperatorLogoRoutes((req, res) => {
+  logoApp.use("/api/admin", runtime.createAdminOperatorLogoRoutes((req, res) => {
     if (req.get("x-fixture-admin") === "authorized") return "fixture-admin";
     res.status(403).json({ error: "Fixture administrator required" });
     return null;
@@ -233,7 +233,7 @@ test("operator logos validate, store bytes in the database, use version checks, 
     "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000b49444154789c636000020000050001a5f645400000000049454e44ae426082",
     "hex",
   );
-  const adminPrefix = "/api/DMgrgmt-1np5g23g12bGFtMwh/operators/fixture-source/logo";
+  const adminPrefix = "/api/admin/operators/fixture-source/logo";
   const response = await logoRequest(`${adminPrefix}/1`, {
     method: "PUT",
     body: png,
@@ -350,8 +350,8 @@ test("direct private API access requires server authentication; foreign transact
 });
 test("browser flags cannot unlock the administrator or forge a payment status", async () => {
   const before = await owner.query("SELECT status FROM sf_transactions WHERE id=$1", [transactions["fixture-a"]]);
-  assert.equal((await request("/api/DMgrgmt-1np5g23g12bGFtMwh/overview", { user: "fixture-a" })).status, 401);
-  assert.equal((await request(`/api/DMgrgmt-1np5g23g12bGFtMwh/users/fixture-a/wallet-adjustments`, {
+  assert.equal((await request("/api/admin/overview", { user: "fixture-a" })).status, 401);
+  assert.equal((await request("/api/admin/users/fixture-a/wallet-adjustments", {
     user: "fixture-a", method: "POST", body: { isAdmin: true, ...adjustment() },
     headers: { Origin: "https://sendflow-test.invalid" },
   })).status, 401);
@@ -871,7 +871,7 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     assert.equal((await request("/api/me/identity-verification", {
       method: "POST", headers, body: {},
     })).status, 503);
-    assert.equal((await request("/api/DMgrgmt-1np5g23g12bGFtMwh/overview", { headers })).status, 503);
+    assert.equal((await request("/api/admin/overview", { headers })).status, 503);
     assert.equal((await request("/api/me/future-route", { headers })).status, 503);
     // Neither the password nor the preview session works in the production realm.
     process.env.SENDFLOW_DATABASE_TARGET = "development";

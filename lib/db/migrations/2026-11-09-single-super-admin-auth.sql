@@ -2,6 +2,13 @@ BEGIN;
 SET LOCAL lock_timeout = '5s';
 SET LOCAL statement_timeout = '30s';
 
+-- Keep historical challenge rows, but prevent new administrator SMS OTP challenges.
+ALTER TABLE sf_phone_otp_challenges
+  DROP CONSTRAINT IF EXISTS sf_phone_otp_purpose_check;
+ALTER TABLE sf_phone_otp_challenges
+  ADD CONSTRAINT sf_phone_otp_purpose_check
+  CHECK (purpose IN ('signup', 'password_reset', 'pin_reset')) NOT VALID;
+
 CREATE TABLE IF NOT EXISTS sf_super_admin_credentials (
   id smallint PRIMARY KEY DEFAULT 1,
   email_normalized varchar(254) NOT NULL,

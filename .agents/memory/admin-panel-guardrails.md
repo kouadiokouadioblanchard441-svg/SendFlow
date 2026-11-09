@@ -3,29 +3,29 @@ name: SendFlow admin panel guardrails
 description: Security and data-integrity decisions for the SendFlow back office.
 ---
 
-The SendFlow back office is deny-by-default: reads use the read-admin allowlist, while sensitive mutations require a separate server-side mutation allowlist, an audit record, and real database-backed state. Never use a client-only route check or demo financial values.
+SendFlow has exactly one Super Admin, authenticated by administrator email, password, and TOTP. Do not add public registration, invitations, extra administrator accounts, legacy grants, or PIN-based administrator access. All administrator API handlers fail closed and check the server-owned session; sensitive actions require a fresh, action-bound TOTP step-up and an audit record.
 
-**Why:** SendFlow handles financial data, and the existing customer PIN/session flag is not an authorization boundary. Read access and write access must be independently revocable.
+**Why:** The user explicitly replaced the former multi-grant/PIN model with one Super Admin and mandatory MFA. Customer PIN state and browser role claims are not administrator authorization.
 
-**How to apply:** Keep admin API routes deny-by-default and enforce authorization on the server. Use a separate mutation administrator allowlist for financial/account actions. Add new metrics only when their source exists in the database and label unsupported operations explicitly instead of inventing them.
+**How to apply:** Bootstrap the singleton account through the controlled, non-public server procedure. Verify identity, password, TOTP, session, and step-up on the backend. Never trust roles or permissions sent by the client.
 
-The customer-profile Admin shortcut must appear only after the server confirms an active administrator grant for the authenticated account. Hide it for non-admin accounts and whenever eligibility cannot be verified; the shortcut itself is never an authorization control.
+The admin interface is selected by a server-only allowlist of configured hostnames. Keep the private host value out of source, documentation, tests, logs, and frontend assets; read it only from deployment environment configuration. A visible API path is not an access control.
 
-**Why:** The user explicitly requires non-administrator accounts to see no Admin label or button.
+**Why:** The user requires the admin address to remain confidential and explicitly rejects obscurity as a replacement for authentication.
 
-**How to apply:** Derive visibility from a no-store server check bound to the current session and active grant, while independently enforcing OTP, PIN, and route authorization on the server.
+**How to apply:** Resolve allowed hosts from server environment configuration only. Treat Cloudflare Access, origin restrictions, and Plesk settings as unverified until configured and tested outside the repository.
 
-Keep administrative route paths and generated JavaScript chunk URLs free of the literal word `admin`; use opaque route values and hash-based chunk names. This is only discoverability hygiene and never replaces server authorization.
+The old browser paths `/admin` and `/admin/sign-in` are retired. The API may use a conventional `/api/admin` prefix because route obscurity is not part of the security boundary.
 
-**Why:** The user explicitly requires that no application URL reveal the administrator designation.
+**Why:** The user asked to remove the previous panel route and move access to a separately configured domain, while requiring real backend authentication.
 
-**How to apply:** Check API contracts, route constants, generated clients, Vite output names, and synced mobile assets whenever routes or chunks change; preserve all server-side access checks.
+**How to apply:** Do not restore a browser path gate or opaque API prefix as authentication. Test that retired public browser paths return 404 and that every API handler still rejects unauthenticated requests.
 
-An account without a verified active grant must receive HTTP 404 before the protected portal's SPA shell is served; client-side navigation must independently fail closed before mounting any protected page.
+Historical grant/session tables and migrations are retained for data and migration history; they are not active administrator authorization and must not be dropped as part of route cleanup.
 
-**Why:** The user clarified that an unauthorized account must not merely have a hidden button; the route itself must appear unavailable.
+**Why:** The user requires one active administrator model while preserving the existing financial database and its history.
 
-**How to apply:** Gate direct Web and Vite requests with the server-owned session/grant check, and gate SPA transitions with the same API decision. Never trust a browser-supplied role or let a hidden link stand in for authorization.
+**How to apply:** Never authorize from legacy grants or sessions. Keep cleanup additive and non-destructive; production database changes require explicit authorization and verification.
 
 The user detail view uses server data, while transaction history is retrieved through a server-side user filter with bounded pagination. Wallet changes must be signed as immutable ledger entries with before/after balances, idempotency keys, expected-balance checks, a reason, and an audit record.
 
@@ -45,11 +45,11 @@ Account deletion and transaction deletion are logical state changes, not physica
 
 **How to apply:** Mark users deleted and transactions archived with the administrator, timestamp, and mandatory reason. Require explicit confirmation text for sensitive actions, and never use a customer PIN or an improvised administrator password.
 
-Configured administrator accounts cannot be suspended or logically deleted through ordinary user-management actions.
+The singleton Super Admin cannot be suspended or logically deleted through ordinary customer-management actions.
 
-**Why:** The administrator allowlists are configuration-backed, so changing a user row does not reliably revoke access and could leave a privileged account in a confusing partial state.
+**Why:** The Super Admin credential is a separate singleton security identity, not an ordinary customer account.
 
-**How to apply:** Check both read and mutation administrator allowlists before allowing account suspension or deletion. Change administrator access through the dedicated access configuration process instead.
+**How to apply:** Change its identity, password, or MFA only through the controlled security procedure, with reauthentication and immediate session revocation.
 
 Successful reads that expose user, transaction, session, or financial data—including overview, lists, and details—are fail-closed on audit persistence: if the server cannot append the access record, it must not return the data.
 
@@ -93,23 +93,23 @@ The admin console must use real icon components or approved image assets for fin
 
 **How to apply:** Prefer Lucide icons for generic concepts, use only approved operator assets when available, and use a clearly generic icon for operators without an approved logo.
 
-Administrator catalogue access is not permission to enable financial or customer administration. Keep unrelated APIs deny-by-default; the administrator PIN remains a separate step-up check. Do not redirect administrator routes through the customer `/pin` screen.
+All administrator catalog, customer, and financial APIs require the Super Admin session. Sensitive mutations require a recent, one-time, action-bound TOTP step-up; never reuse the customer PIN flow.
 
-**Why:** The requested restoration concerns logos and tariffs only. Customer UI session flags and demo credentials are not an administrator authorization boundary, and the user chose to keep authentication and authorization inside SendFlow rather than use an external identity service.
+**Why:** The user requires one mandatory MFA-protected administrator identity, independent from customer authentication.
 
-**How to apply:** Do not re-enable administrator routes until the server verifies an OTP-authenticated SendFlow session and its database role, then separately enforces PIN verification. Customer sign-in and PIN state alone must never grant panel access.
+**How to apply:** Keep authentication and authorization server-side. Never infer admin rights from customer sessions, customer PIN state, UI visibility, or client-supplied roles.
 
 Administrative transaction reads must be allowed by both the route-specific read guard and the central admin-handler middleware; changing only one layer still leaves the endpoint denied.
 
 **Why:** The admin router has defense-in-depth checks at the mount and route levels, so an otherwise correct handler-level permission change can be unreachable behind the global allowlist.
 
-**How to apply:** When adding a protected admin GET endpoint, update and test both exact-path allowlists while preserving the admin session and PIN requirements; keep mutations on their separate authorization path.
+**How to apply:** When adding an admin endpoint, update and test the central and route-specific checks, preserve the Super Admin session requirement, and require step-up for sensitive mutations.
 
-Customer-account blocking and unblocking are limited to an authenticated administrator with mutation permission and a verified administrator PIN. Only the explicit suspend/restore actions are in scope; this does not authorize account deletion.
+Customer-account blocking and unblocking require the authenticated Super Admin session and a fresh TOTP step-up. Only the explicit suspend/restore actions are in scope; this does not authorize account deletion.
 
-**Why:** The user confirmed that these actions belong only to the administrator panel, and the existing administrator grant must not expose customer controls to read-only administrators.
+**Why:** The user requires one administrator identity and mandatory reauthentication for sensitive account actions.
 
-**How to apply:** Keep suspend/restore on the exact server-side allowlist, audit each change with its reason, revoke customer sessions on blocking, hide the controls from read-only administrators, and leave deletion separately authorized.
+**How to apply:** Enforce each action on the server, audit its reason, revoke customer sessions when blocking, and keep deletion separately controlled.
 
 The login-activity view must derive its identity and session data from the server-validated SendFlow session, not client-supplied account identifiers. It stores server-observed network and device metadata, but leaves location blank until a proxy contract is verified.
 

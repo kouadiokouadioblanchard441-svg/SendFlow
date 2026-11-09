@@ -5313,7 +5313,7 @@ var require_lib2 = __commonJS({
 // server/site-server.ts
 import { createServer } from "node:http";
 import { createReadStream } from "node:fs";
-import { realpath, stat } from "node:fs/promises";
+import { readFile, realpath, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11317,15 +11317,12 @@ function resolveRuntimeDatabaseUrl(environment) {
     "SENDFLOW_DATABASE_TARGET must explicitly be 'development', 'shared-external', or 'production'."
   );
 }
-
-// ../../lib/db/src/client.ts
-var connectionString = resolveRuntimeDatabaseUrl(process.env);
-var isSharedExternalDatabase = process.env.SENDFLOW_DATABASE_TARGET === "shared-external";
-function getSharedDatabaseConnectionOptions() {
-  if (!isSharedExternalDatabase) {
+function resolveRuntimeDatabaseConnectionOptions(environment) {
+  const connectionString = resolveRuntimeDatabaseUrl(environment);
+  if (environment.SENDFLOW_DATABASE_TARGET !== "shared-external") {
     return { connectionString };
   }
-  const ca = process.env.DATABASE_CA_CERT?.trim();
+  const ca = environment.DATABASE_CA_CERT?.trim();
   if (!ca) {
     throw new Error("DATABASE_CA_CERT is required for the shared external database.");
   }
@@ -11341,8 +11338,10 @@ function getSharedDatabaseConnectionOptions() {
     ssl: { ca, rejectUnauthorized: true, servername: url.hostname }
   };
 }
+
+// ../../lib/db/src/client.ts
 var pool = new Pool({
-  ...getSharedDatabaseConnectionOptions(),
+  ...resolveRuntimeDatabaseConnectionOptions(process.env),
   max: 5,
   idleTimeoutMillis: 3e4,
   connectionTimeoutMillis: 5e3
@@ -11533,70 +11532,24 @@ async function enforceIpAccess(req, res, lookup = isIpBlocked, hops = trustedPro
   }
 }
 
-// server/portal-route-path.ts
-var PORTAL_ROUTE_PATH = "/DMgrgmt-1np5g23g12bGFtMwh";
-var PORTAL_ELIGIBILITY_API_PATH = "/api/me/portal-eligibility";
-function normalizeBasePath(basePath) {
-  const segments = basePath.split("/").filter(Boolean);
-  return segments.length ? `/${segments.join("/")}` : "";
-}
-function isPortalRouteRequest(requestUrl, basePath = "/") {
+// server/admin-host-policy.ts
+function normalizeHost(value) {
+  const candidate = value.trim();
+  if (!candidate || candidate.includes("*") || candidate.includes("/") || candidate.includes("@")) return null;
   try {
-    const pathname = decodeURIComponent(
-      new URL(requestUrl ?? "/", "http://sendflow.invalid").pathname
-    );
-    const base = normalizeBasePath(basePath);
-    const relativePath = base && (pathname === base || pathname.startsWith(`${base}/`)) ? pathname.slice(base.length) || "/" : pathname;
-    return relativePath === PORTAL_ROUTE_PATH || relativePath.startsWith(`${PORTAL_ROUTE_PATH}/`);
-  } catch {
-    return false;
-  }
-}
-
-// server/portal-route-access.ts
-function resolveInternalApiOrigin(environment = process.env) {
-  const configured = environment.SENDFLOW_INTERNAL_API_ORIGIN?.trim();
-  const value = configured || (environment.NODE_ENV === "production" ? "" : "http://127.0.0.1:8080");
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== "http:" && url.protocol !== "https:" || url.username || url.password || url.pathname !== "/" || url.search || url.hash) return null;
-    return url.origin;
+    const parsed = new URL(`https://${candidate}`);
+    if (parsed.username || parsed.password || parsed.pathname !== "/" || parsed.search || parsed.hash) return null;
+    return parsed.host.toLowerCase();
   } catch {
     return null;
   }
 }
-async function checkPortalRouteAccess(request, options = {}) {
-  const cookieHeader = request.headers.cookie;
-  const cookie = Array.isArray(cookieHeader) ? cookieHeader.join("; ") : cookieHeader;
-  if (!cookie) return "not-found";
-  const origin = resolveInternalApiOrigin(options.environment);
-  if (!origin) return "unavailable";
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 2e3);
-  try {
-    const response = await (options.fetcher ?? fetch)(
-      new URL(PORTAL_ELIGIBILITY_API_PATH, origin),
-      {
-        method: "GET",
-        headers: { cookie },
-        cache: "no-store",
-        redirect: "manual",
-        signal: controller.signal
-      }
-    );
-    if ([401, 403, 404].includes(response.status)) return "not-found";
-    if (!response.ok) return "unavailable";
-    if (!response.headers.get("content-type")?.toLowerCase().includes("application/json")) {
-      return "unavailable";
-    }
-    const payload = await response.json();
-    return payload && typeof payload === "object" && "isAuthorized" in payload && payload.isAuthorized === true ? "allowed" : "not-found";
-  } catch {
-    return "unavailable";
-  } finally {
-    clearTimeout(timeout);
-  }
+function isAdminHostAllowed(hostHeader, environment = process.env) {
+  const configured = environment.SENDFLOW_ADMIN_ALLOWED_HOSTS;
+  if (!configured) return false;
+  const entries = configured.split(",").map(normalizeHost);
+  const requested = normalizeHost(hostHeader);
+  return Boolean(requested && entries.length && entries.every(Boolean) && entries.includes(requested));
 }
 
 // src/lib/documentation-host.ts
@@ -11693,7 +11646,7 @@ function isKnownSitePage(hostname, pathname, basePath = "/") {
   if (isSendFlowPaymentHost(host)) {
     return /^\/pay\/[^/]+$/.test(routePath);
   }
-  if (isPortalRouteRequest(pathname, basePath)) return true;
+  if (isAdminHostAllowed(hostname)) return !routePath.startsWith("/api/");
   return exactApplicationPaths.has(routePath) || applicationPathPatterns.some((pattern) => pattern.test(routePath));
 }
 
@@ -11723,7 +11676,7 @@ function sendNotFound(req, res) {
   res.setHeader("Content-Length", String(Buffer.byteLength(body)));
   res.end(req.method === "HEAD" ? void 0 : body);
 }
-function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = checkPortalRouteAccess) {
+function createSiteServer(rootDirectory, gate = enforceIpAccess) {
   const root = resolve(rootDirectory);
   const server = createServer(async (req, res) => {
     try {
@@ -11733,6 +11686,14 @@ function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = 
       res.setHeader("Referrer-Policy", "no-referrer");
       if (process.env.NODE_ENV === "production") {
         res.setHeader("Strict-Transport-Security", "max-age=31536000");
+      }
+      const adminHost = isAdminHostAllowed(req.headers.host ?? "");
+      if (adminHost) {
+        const connectSources = (process.env.SENDFLOW_ADMIN_CSP_CONNECT_SRC ?? "").split(/\s+/u).filter((source) => /^https:\/\/[A-Za-z0-9.-]+(?::\d{1,5})?$/u.test(source)).join(" ");
+        res.setHeader(
+          "Content-Security-Policy",
+          `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ${connectSources}`.trim()
+        );
       }
       let pathname;
       try {
@@ -11744,17 +11705,6 @@ function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = 
       if (pathname.includes("\0") || pathname.includes("\\") || pathname.split("/").some((p) => p.startsWith("."))) {
         sendNotFound(req, res);
         return;
-      }
-      if (isPortalRouteRequest(req.url, process.env.BASE_PATH ?? "/")) {
-        const access = await portalAccess(req);
-        if (access !== "allowed") {
-          if (access === "not-found") sendNotFound(req, res);
-          else {
-            res.setHeader("Cache-Control", "no-store, private");
-            res.writeHead(503).end();
-          }
-          return;
-        }
       }
       if (req.method !== "GET" && req.method !== "HEAD") {
         res.setHeader("Allow", "GET, HEAD");
@@ -11791,12 +11741,22 @@ function createSiteServer(rootDirectory, gate = enforceIpAccess, portalAccess = 
         return;
       }
       res.setHeader("Content-Type", mime[extname(file)] ?? "application/octet-stream");
-      res.setHeader("Content-Length", info.size);
       res.statusCode = 200;
       if (req.method === "HEAD") {
         res.end();
         return;
       }
+      if (adminHost && file.endsWith("index.html")) {
+        const html = await readFile(actual, "utf8");
+        const protectedHtml = html.replace(
+          /<\/head>/iu,
+          '<meta name="sendflow-app-surface" content="admin"></head>'
+        );
+        res.setHeader("Content-Length", String(Buffer.byteLength(protectedHtml)));
+        res.end(protectedHtml);
+        return;
+      }
+      res.setHeader("Content-Length", info.size);
       const stream = createReadStream(actual);
       stream.on("error", () => res.destroy());
       stream.pipe(res);

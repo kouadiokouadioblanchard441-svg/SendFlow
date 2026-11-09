@@ -20,9 +20,7 @@ const {
   app,
   pool,
   createSiteServer,
-  hashAdminSessionToken,
   hashCustomerSessionToken,
-  ADMIN_SESSION_COOKIE,
   hashCustomerSecret,
   createSensitiveDataLookupIndex,
   encryptSensitiveData,
@@ -46,6 +44,14 @@ function createTurnstileTestToken(action) {
   const token = `isolated-route-${randomUUID()}`;
   turnstileTokens.set(token, action);
   return token;
+}
+
+function legacyAdminHeaders(extra = {}) {
+  return {
+    Cookie: `__Host-sendflow_admin=${adminToken}; __Host-sendflow-admin-pin=${readOnlyAdminToken}`,
+    "x-admin-role": "owner",
+    ...extra,
+  };
 }
 
 globalThis.fetch = async (input, init) => {
@@ -79,19 +85,6 @@ before(async () => {
     "INSERT INTO sf_customer_service_settings(id) VALUES('global') ON CONFLICT (id) DO NOTHING",
   );
   await owner.query("INSERT INTO sf_users(id,status) VALUES('audit-admin','active')");
-  await owner.query("INSERT INTO sf_admin_grants(user_id,can_mutate,pin_hash) VALUES('audit-admin',true,$1)",
-    [await hashCustomerSecret(randomBytes(16).toString("hex"))]);
-  await owner.query("INSERT INTO sf_users(id,status) VALUES('audit-readonly-admin','active')");
-  await owner.query("INSERT INTO sf_admin_grants(user_id,can_mutate,pin_hash) VALUES('audit-readonly-admin',false,$1)",
-    [await hashCustomerSecret(randomBytes(16).toString("hex"))]);
-  await owner.query(`INSERT INTO sf_admin_sessions(user_id,authorization_version,token_hash,expires_at,pin_verified_until)
-    SELECT user_id,authorization_version,$1,now()+interval '1 hour',now()+interval '10 minutes'
-    FROM sf_admin_grants WHERE user_id='audit-admin'`,
-  [hashAdminSessionToken(adminToken)]);
-  await owner.query(`INSERT INTO sf_admin_sessions(user_id,authorization_version,token_hash,expires_at,pin_verified_until)
-    SELECT user_id,authorization_version,$1,now()+interval '1 hour',now()+interval '10 minutes'
-    FROM sf_admin_grants WHERE user_id='audit-readonly-admin'`,
-  [hashAdminSessionToken(readOnlyAdminToken)]);
   await owner.query("INSERT INTO sf_users(id,status,display_name) VALUES('audit-webhook-owner','active','Webhook owner')");
   await owner.query(`INSERT INTO sf_users(id,status,email_encrypted,email_lookup_hash)
     VALUES($1,'active',$2,$3)`,
@@ -243,7 +236,7 @@ test("inventory covers mounted customer, administrative, auth, webhook and publi
 
 for (const route of routes.filter((r) => ["admin", "customer"].includes(r.category))) {
   const isAccessEndpoint = route.category === "admin"
-    && ["/access", "/sign-in", "/sign-out", "/pin/unlock"].some((p) => route.path === `/api${adminPrefix}${p}`);
+    && ["/access", "/sign-in", "/sign-out"].some((p) => route.path === `/api${adminPrefix}${p}`);
   test(`${route.method} ${route.path} refuses anonymous sensitive access`, async () => {
     const response = await request(route.path, { method: route.method });
     if (isAccessEndpoint) {
@@ -252,7 +245,7 @@ for (const route of routes.filter((r) => ["admin", "customer"].includes(r.catego
       if (response.status === 200) {
         const body = JSON.parse(response.text);
         assert.equal(body.isAdmin, false);
-        assert.equal(body.canMutate, false);
+        assert.equal(body.sessionAuthenticated, false);
       }
     } else {
       assert.equal(response.status, route.method === "GET" ? 401 : 403, response.text);
@@ -344,158 +337,58 @@ test("valid CSRF tokens pass the global guard while customer and admin routes st
   assert.equal(after.rows[0].n, before.rows[0].n);
 });
 
-test("administrator can block and unblock an account and blocked sign-in directs valid credentials to support", async () => {
-  const readOnlyCsrfBootstrap = await request("/api/auth/session", {
-    headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${readOnlyAdminToken}` },
-  });
-  assert.ok(readOnlyCsrfBootstrap.headers["x-csrf-token"]);
-  const readOnlyMutation = await request(`/api${adminPrefix}/users/${blockedAccountId}/suspend`, {
-    method: "POST",
-    headers: {
-      Cookie: `${ADMIN_SESSION_COOKIE}=${readOnlyAdminToken}`,
-      "X-CSRF-Token": readOnlyCsrfBootstrap.headers["x-csrf-token"],
-    },
-    rawBody: JSON.stringify({
-      reason: "Tentative non autorisée de test.",
-      confirmation: "CONFIRMER",
-    }),
-  });
-  assert.equal(readOnlyMutation.status, 403, readOnlyMutation.text);
-  assert.equal((await owner.query("SELECT status FROM sf_users WHERE id=$1", [blockedAccountId])).rows[0].status, "active");
-
-  const csrfBootstrap = await request("/api/auth/session", {
-    headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` },
-  });
-  assert.ok(csrfBootstrap.headers["x-csrf-token"]);
-  const adminMutationHeaders = {
-    Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}`,
-    "X-CSRF-Token": csrfBootstrap.headers["x-csrf-token"],
-  };
-  const block = await request(`/api${adminPrefix}/users/${blockedAccountId}/suspend`, {
-    method: "POST",
-    headers: adminMutationHeaders,
-    rawBody: JSON.stringify({
-      reason: "Motif de blocage de test isolé.",
-      confirmation: "CONFIRMER",
-    }),
-  });
-  assert.equal(block.status, 200, block.text);
-  assert.equal(JSON.parse(block.text).status, "suspended");
-  const storedBlocked = await owner.query(
-    "SELECT status,suspension_reason FROM sf_users WHERE id=$1",
-    [blockedAccountId],
-  );
-  assert.equal(storedBlocked.rows[0].status, "suspended");
-  assert.equal(storedBlocked.rows[0].suspension_reason, "Motif de blocage de test isolé.");
-  const revokedSession = await owner.query(
-    "SELECT revoked_at FROM sf_customer_sessions WHERE user_id=$1",
-    [blockedAccountId],
-  );
-  assert.ok(revokedSession.rows[0].revoked_at);
-
-  const customerCsrfBootstrap = await request("/api/auth/session");
-  const customerCsrfCookie = customerCsrfBootstrap.headers["set-cookie"]
+test("client role claims cannot suspend customer accounts", async () => {
+  const csrfBootstrap = await request("/api/auth/session");
+  const csrfCookie = csrfBootstrap.headers["set-cookie"]
     ?.find((cookie) => cookie.startsWith("__Host-sendflow_csrf="))
     ?.split(";")[0];
-  assert.ok(customerCsrfCookie);
-  assert.ok(customerCsrfBootstrap.headers["x-csrf-token"]);
-  const customerSignInHeaders = {
-    Cookie: customerCsrfCookie,
-    "X-CSRF-Token": customerCsrfBootstrap.headers["x-csrf-token"],
-  };
-  const blockedLogin = await request("/api/auth/sign-in", {
+  assert.ok(csrfCookie);
+  assert.ok(csrfBootstrap.headers["x-csrf-token"]);
+  const response = await request(`/api${adminPrefix}/users/${blockedAccountId}/suspend`, {
     method: "POST",
-    headers: customerSignInHeaders,
-    rawBody: JSON.stringify({
-      email: blockedAccountEmail,
-      password: blockedAccountPassword,
-      turnstileToken: createTurnstileTestToken("login"),
-    }),
+    headers: {
+      Cookie: csrfCookie,
+      "X-CSRF-Token": csrfBootstrap.headers["x-csrf-token"],
+      "x-admin-role": "owner",
+    },
+    rawBody: JSON.stringify({ reason: "Legacy access denial fixture.", confirmation: "CONFIRMER" }),
   });
-  assert.equal(blockedLogin.status, 423, blockedLogin.text);
-  assert.match(blockedLogin.text, /compte est bloqué.*contacter le support SendFlow/i);
-  const invalidBlockedLogin = await request("/api/auth/sign-in", {
-    method: "POST",
-    headers: customerSignInHeaders,
-    rawBody: JSON.stringify({
-      email: blockedAccountEmail,
-      password: "wrong-password-for-test",
-      turnstileToken: createTurnstileTestToken("login"),
-    }),
-  });
-  assert.equal(invalidBlockedLogin.status, 401, invalidBlockedLogin.text);
-  assert.doesNotMatch(invalidBlockedLogin.text, /compte est bloqué/i);
-
-  const restore = await request(`/api${adminPrefix}/users/${blockedAccountId}/restore`, {
-    method: "POST",
-    headers: adminMutationHeaders,
-    rawBody: JSON.stringify({
-      reason: "Fin du blocage de test isolé.",
-      confirmation: "CONFIRMER",
-    }),
-  });
-  assert.equal(restore.status, 200, restore.text);
-  assert.equal(JSON.parse(restore.text).status, "active");
-  const storedRestored = await owner.query(
-    "SELECT status,suspended_at,suspended_by,suspension_reason FROM sf_users WHERE id=$1",
-    [blockedAccountId],
+  assert.equal(response.status, 401, response.text);
+  assert.equal(
+    (await owner.query("SELECT status FROM sf_users WHERE id=$1", [blockedAccountId])).rows[0].status,
+    "active",
   );
-  assert.deepEqual(storedRestored.rows[0], {
-    status: "active",
-    suspended_at: null,
-    suspended_by: null,
-    suspension_reason: null,
-  });
-  const unblockedLogin = await request("/api/auth/sign-in", {
+  const customerCsrf = await request("/api/auth/session");
+  const customerCookie = customerCsrf.headers["set-cookie"]
+    ?.find((cookie) => cookie.startsWith("__Host-sendflow_csrf="))
+    ?.split(";")[0];
+  const login = await request("/api/auth/sign-in", {
     method: "POST",
-    headers: customerSignInHeaders,
+    headers: { Cookie: customerCookie, "X-CSRF-Token": customerCsrf.headers["x-csrf-token"] },
     rawBody: JSON.stringify({
       email: blockedAccountEmail,
       password: blockedAccountPassword,
       turnstileToken: createTurnstileTestToken("login"),
     }),
   });
-  assert.equal(unblockedLogin.status, 200, unblockedLogin.text);
+  assert.equal(login.status, 200, login.text);
 });
 
-test("admin transaction detail returns persisted payment trace without link secrets", async () => {
+test("legacy administrator cookies cannot read transaction payment traces", async () => {
   const response = await request(`/api${adminPrefix}/transactions/${traceTransactionId}`, {
-    headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` },
+    headers: legacyAdminHeaders(),
   });
-  assert.equal(response.status, 200, response.text);
-  const detail = JSON.parse(response.text);
-  assert.equal(detail.kind, "deposit");
-  assert.equal(detail.paymentTrace.intent.kind, "deposit");
-  assert.equal(detail.paymentTrace.paymentLink.source, "api");
-  assert.equal(detail.paymentTrace.paymentLink.paymentMethod, "mobile_money");
-  assert.equal(detail.paymentTrace.integrationSession.mode, "hosted");
-  assert.equal(detail.paymentTrace.integrationSession.merchantReference, "TRACE-ORDER-001");
-  assert.equal(detail.paymentTrace.attempts.length, 1);
-  assert.equal(detail.paymentTrace.attempts[0].countryCode, "ci");
-  assert.equal(typeof detail.paymentTrace.attempts[0].countryName, "string");
-  assert.ok(detail.paymentTrace.attempts[0].countryName.length > 0);
-  assert.equal(detail.paymentTrace.attempts[0].channelId, "mobile-money-ci");
-  assert.equal(detail.paymentTrace.attempts[0].status, "pending");
-  assert.equal(detail.paymentTrace.attempts[0].confirmations.length, 1);
-  assert.equal(detail.paymentTrace.attempts[0].confirmations[0].source, "provider_status");
-  assert.equal(detail.paymentTrace.attempts[0].confirmations[0].providerStatus, "pending");
-  assert.equal(detail.paymentTrace.attempts[0].confirmations[0].amountMinor, 2500);
-  assert.equal("encryptedPayload" in detail.paymentTrace.attempts[0].confirmations[0], false);
-  assert.equal("eventFingerprint" in detail.paymentTrace.attempts[0].confirmations[0], false);
-  assert.equal("providerReferenceHash" in detail.paymentTrace.attempts[0].confirmations[0], false);
-  assert.doesNotMatch(response.text, /public_token|pollTokenHash|idempotencyKey|clientToken|sfenc-v1\./i);
+  assert.equal(response.status, 401, response.text);
+  assert.doesNotMatch(response.text, /TRACE-ORDER-001|public_token|pollTokenHash|idempotencyKey|clientToken/i);
 });
 
-test("admin transaction filters apply country, channel, source and integration mode before pagination", async () => {
+test("legacy administrator cookies cannot enumerate transaction filters", async () => {
   const response = await request(
     `/api${adminPrefix}/transactions?countryCode=ci&channelId=mobile-money-ci&paymentSource=api&integrationMode=hosted&page=1&pageSize=1`,
-    { headers: { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` } },
+    { headers: legacyAdminHeaders() },
   );
-  assert.equal(response.status, 200, response.text);
-  const page = JSON.parse(response.text);
-  assert.equal(page.total, 1);
-  assert.equal(page.items.length, 1);
-  assert.equal(page.items[0].id, traceTransactionId);
+  assert.equal(response.status, 401, response.text);
+  assert.doesNotMatch(response.text, /TRACE-ORDER-001|fixture-recipient/i);
 });
 
 test("CORS preflight permits the CSRF header only for an allowed origin", async () => {
@@ -558,8 +451,15 @@ for (const path of frontendPaths()) {
   });
 }
 
-test("frontend origin refuses hidden files, source maps, API fallbacks and mutation methods", async () => {
-  for (const path of ["/.env", "/assets/private.js.map", "/api/not-a-page", "/%2eenv"]) {
+test("frontend origin refuses hidden files, old panel paths, source maps, API fallbacks and mutations", async () => {
+  for (const path of [
+    "/.env",
+    "/assets/private.js.map",
+    "/api/not-a-page",
+    "/%2eenv",
+    "/admin",
+    "/admin/sign-in",
+  ]) {
     const response = await request(path, { target: site });
     assert.ok([403, 404].includes(response.status), `${path}: ${response.status}`);
   }
@@ -585,90 +485,52 @@ test("unknown API and lookalike webhook paths fail closed without sensitive diag
   }
 });
 
-test("full mounted admin router allows read-only user profiles and rejects unrelated scope escalation", async () => {
-  const headers = { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` };
-  const allowed = await request(`/api${adminPrefix}/operator-pricing`, { headers });
-  assert.equal(allowed.status, 200, allowed.text);
-  for (const path of ["/overview", "/network-defense", "/ip-blocklist"]) {
-    const blocked = await request(`/api${adminPrefix}${path}`, { headers });
-    assert.equal(blocked.status, 403, blocked.text);
+test("legacy admin cookies and client role claims cannot access protected profile or pricing routes", async () => {
+  for (const path of [
+    `/api${adminPrefix}/operator-pricing`,
+    `/api${adminPrefix}/users`,
+    `/api${adminPrefix}/users/audit-webhook-owner`,
+    `/api${adminPrefix}/developer-webhooks?userId=audit-webhook-owner`,
+  ]) {
+    const response = await request(path, { headers: legacyAdminHeaders() });
+    assert.equal(response.status, 401, response.text);
+    assert.doesNotMatch(response.text, /financialTotals|signingSecret|fixture-signing-secret/i);
   }
-  assert.equal((await request(`/api${adminPrefix}/users`, { headers })).status, 200);
-  assert.equal((await request(`/api${adminPrefix}/users/audit-webhook-owner`, { headers })).status, 200);
-  await owner.query("UPDATE sf_admin_grants SET can_mutate=false WHERE user_id='audit-admin'");
-  assert.equal((await request(`/api${adminPrefix}/users/audit-webhook-owner`, { headers })).status, 200);
-  await owner.query("UPDATE sf_admin_grants SET can_mutate=true WHERE user_id='audit-admin'");
-  const forged = await request(`/api${adminPrefix}/operator-pricing`, {
-    headers: { Cookie: `__Host-sendflow_session=${adminToken}`, "x-admin-role": "owner" },
-  });
-  assert.equal(forged.status, 401);
 });
 
-test("admin user profile shows financial totals and every paginated webhook without signing secrets", async () => {
-  const headers = { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` };
-  const profileResponse = await request(`/api${adminPrefix}/users/audit-webhook-owner`, { headers });
-  assert.equal(profileResponse.status, 200, profileResponse.text);
-  const profile = JSON.parse(profileResponse.text);
-  assert.equal(profile.financialTotals.currency, "XOF");
-  assert.equal(profile.financialTotals.depositsMinor, 10000);
-  assert.equal(profile.financialTotals.internationalPayoutsMinor, 5500);
-  assert.deepEqual(profile.financialTotals.feesByKind, {
-    depositMinor: 300,
-    interNetworkMinor: 175,
-    internationalMinor: 250,
-  });
-
-  const pageOne = await request(`/api${adminPrefix}/developer-webhooks?userId=audit-webhook-owner&page=1&pageSize=1`, { headers });
-  const pageTwo = await request(`/api${adminPrefix}/developer-webhooks?userId=audit-webhook-owner&page=2&pageSize=1`, { headers });
-  assert.equal(pageOne.status, 200, pageOne.text);
-  assert.equal(pageTwo.status, 200, pageTwo.text);
-  const firstPage = JSON.parse(pageOne.text);
-  const secondPage = JSON.parse(pageTwo.text);
-  assert.equal(firstPage.total, 2);
-  assert.equal(firstPage.items.length, 1);
-  assert.equal(secondPage.items.length, 1);
-  assert.deepEqual(
-    new Set([...firstPage.items, ...secondPage.items].map(({ status }) => status)),
-    new Set(["active", "revoked"]),
-  );
-  const serializedEndpoints = JSON.stringify([firstPage, secondPage]);
-  assert.match(serializedEndpoints, /https:\/\/(?:merchant|archive)\.example\/hooks\/sendflow/);
-  assert.doesNotMatch(serializedEndpoints, /fixture-signing-secret|signingSecretEncrypted|signingSecret/);
-
-  const audit = await pool.query(`SELECT count(*)::int AS n FROM sf_admin_audit_logs
-    WHERE admin_user_id='audit-admin' AND action='view_developer_webhooks'
-      AND resource_type='developer_webhook' AND resource_id='audit-webhook-owner'`);
-  assert.equal(audit.rows[0].n, 2);
-});
-
-test("an authorized admin mutation with a valid CSRF token reaches validation without changing data", async () => {
-  const cookie = `${ADMIN_SESSION_COOKIE}=${adminToken}`;
-  const bootstrap = await request("/api/auth/session", { headers: { Cookie: cookie } });
+test("valid CSRF alone cannot authorize an administrative mutation", async () => {
+  const bootstrap = await request("/api/auth/session");
   assert.ok(bootstrap.headers["x-csrf-token"]);
+  const csrfCookie = bootstrap.headers["set-cookie"]
+    ?.find((cookie) => cookie.startsWith("__Host-sendflow_csrf="))
+    ?.split(";")[0];
+  assert.ok(csrfCookie);
   const before = await pool.query("SELECT count(*)::int AS n FROM sf_admin_audit_logs");
   const response = await request(`/api${adminPrefix}/operator-pricing-rates`, {
     method: "PUT",
     headers: {
-      Cookie: cookie,
+      Cookie: csrfCookie,
       "X-CSRF-Token": bootstrap.headers["x-csrf-token"],
     },
   });
-  assert.equal(response.status, 400, response.text);
-  assert.notEqual(JSON.parse(response.text).code, "csrf_token_invalid");
+  assert.equal(response.status, 401, response.text);
   const after = await pool.query("SELECT count(*)::int AS n FROM sf_admin_audit_logs");
   assert.equal(after.rows[0].n, before.rows[0].n);
 });
 
-test("full mounted admin router enforces current mutation rights and PIN before catalogue handlers", async () => {
-  const headers = { Cookie: `${ADMIN_SESSION_COOKIE}=${adminToken}` };
-  await owner.query("UPDATE sf_admin_sessions SET pin_verified_until=NULL WHERE user_id='audit-admin'");
-  assert.equal((await request(`/api${adminPrefix}/operator-pricing`, { headers })).status, 403);
-  assert.equal((await request(`/api${adminPrefix}/users/audit-webhook-owner`, { headers })).status, 403);
-  await owner.query("UPDATE sf_admin_sessions SET pin_verified_until=now()+interval '10 minutes' WHERE user_id='audit-admin'");
-  await owner.query("UPDATE sf_admin_grants SET can_mutate=false WHERE user_id='audit-admin'");
-  // Grant mutations may revoke this session; neither rejection may reach a handler.
-  const denied = await request(`/api${adminPrefix}/operator-pricing-rates`, {
-    method: "PUT", headers,
+test("client role flags do not authorize administrative mutations", async () => {
+  const bootstrap = await request("/api/auth/session");
+  const csrfCookie = bootstrap.headers["set-cookie"]
+    ?.find((cookie) => cookie.startsWith("__Host-sendflow_csrf="))
+    ?.split(";")[0];
+  assert.ok(csrfCookie);
+  const response = await request(`/api${adminPrefix}/operator-pricing-rates`, {
+    method: "PUT",
+    headers: {
+      Cookie: csrfCookie,
+      "X-CSRF-Token": bootstrap.headers["x-csrf-token"],
+      "x-admin-role": "super-admin",
+    },
   });
-  assert.ok([401, 403].includes(denied.status), denied.text);
+  assert.equal(response.status, 401, response.text);
 });

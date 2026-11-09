@@ -81,9 +81,9 @@ test("Production admin routes cannot be opened with client-supplied role headers
   const server=http.createServer(runtime.app);await listen(server);
   try {
     for(const [path,method] of [
-      ["/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist","GET"],
-      ["/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist","POST"],
-      ["/api/DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist/11111111-1111-4111-8111-111111111111/revoke","POST"],
+      ["/api/admin/ip-blocklist","GET"],
+      ["/api/admin/ip-blocklist","POST"],
+      ["/api/admin/ip-blocklist/11111111-1111-4111-8111-111111111111/revoke","POST"],
     ]) {
       const r=await request(server,path,{method,origin:"https://sendflow-test.invalid",
         body:method==="POST"?{ipAddress:"198.51.100.48",reason:"Fake admin"}:undefined,

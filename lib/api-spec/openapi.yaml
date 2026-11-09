@@ -29,7 +29,7 @@ tags:
   - name: developer
     description: Merchant API credentials, payment sessions and webhook endpoints.
 paths:
-  /DMgrgmt-1np5g23g12bGFtMwh/network-defense:
+  /admin/network-defense:
     get:
       operationId: getAdminNetworkDefense
       tags: [admin]
@@ -43,7 +43,7 @@ paths:
                 $ref: "#/components/schemas/NetworkDefenseStatus"
         "503":
           description: Administrator access or storage unavailable
-  /DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions:
+  /admin/network-defense/exceptions:
     post:
       operationId: createAdminNetworkException
       tags: [admin]
@@ -63,7 +63,7 @@ paths:
                 $ref: "#/components/schemas/NetworkException"
         "409":
           description: Already trusted or manually blocked
-  /DMgrgmt-1np5g23g12bGFtMwh/network-defense/authorize-and-release:
+  /admin/network-defense/authorize-and-release:
     post:
       operationId: authorizeAndReleaseNetworkIp
       tags: [admin]
@@ -85,7 +85,7 @@ paths:
           description: Invalid public IPv4/IPv6 address or reason
         "409":
           description: IP cannot be authorized or release operation conflicted
-  /DMgrgmt-1np5g23g12bGFtMwh/network-defense/exceptions/{id}/revoke:
+  /admin/network-defense/exceptions/{id}/revoke:
     post:
       operationId: revokeAdminNetworkException
       tags: [admin]
@@ -110,7 +110,7 @@ paths:
                 $ref: "#/components/schemas/NetworkException"
         "409":
           description: Stale version or already revoked
-  /DMgrgmt-1np5g23g12bGFtMwh/network-defense/blocks/{id}/release:
+  /admin/network-defense/blocks/{id}/release:
     post:
       operationId: releaseAdminAutomaticBlock
       tags: [admin]
@@ -135,7 +135,7 @@ paths:
                 $ref: "#/components/schemas/AutomaticIpBlock"
         "409":
           description: Stale version or no active block
-  /DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist:
+  /admin/ip-blocklist:
     get:
       operationId: listAdminIpBlocks
       tags: [admin]
@@ -176,7 +176,7 @@ paths:
           description: Already blocked or self-block rejected
         "503":
           description: Administrator access or storage unavailable
-  /DMgrgmt-1np5g23g12bGFtMwh/ip-blocklist/{id}/revoke:
+  /admin/ip-blocklist/{id}/revoke:
     post:
       operationId: revokeAdminIpBlock
       tags: [admin]
@@ -2132,7 +2132,7 @@ paths:
           description: Merchant API rate limit reached.
         "503":
           description: Payout service is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/payouts:
+  /admin/payouts:
     get:
       operationId: listAdminPayouts
       tags: [admin]
@@ -2164,7 +2164,7 @@ paths:
           description: Authorized administrator access is required.
         "503":
           description: Payout records are unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/payouts/{payoutId}:
+  /admin/payouts/{payoutId}:
     get:
       operationId: getAdminPayout
       tags: [admin]
@@ -2190,7 +2190,7 @@ paths:
           description: Payout not found.
         "503":
           description: Payout record is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/payouts/{payoutId}/reject:
+  /admin/payouts/{payoutId}/reject:
     post:
       operationId: rejectAdminPayout
       tags: [admin]
@@ -2717,7 +2717,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/sign-in:
+  /admin/sign-in:
     post:
       operationId: signInAdmin
       tags: [admin]
@@ -2743,7 +2743,7 @@ paths:
           description: Too many attempts
         "503":
           description: Authentication unavailable or shared-database preview blocked
-  /DMgrgmt-1np5g23g12bGFtMwh/sign-out:
+  /admin/sign-out:
     post:
       operationId: signOutAdmin
       tags: [admin]
@@ -2755,7 +2755,7 @@ paths:
           description: Invalid origin
         "503":
           description: Authentication storage unavailable
-  /DMgrgmt-1np5g23g12bGFtMwh/access:
+  /admin/access:
     get:
       operationId: getAdminAccessStatus
       tags: [admin]
@@ -2768,7 +2768,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminAccessStatus"
-  /DMgrgmt-1np5g23g12bGFtMwh/refresh:
+  /admin/refresh:
     post:
       operationId: refreshAdminSession
       tags: [admin]
@@ -2804,7 +2804,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/activity:
+  /admin/activity:
     post:
       operationId: recordAdminActivity
       tags: [admin]
@@ -2816,7 +2816,7 @@ paths:
           description: Administrator session expired or revoked.
         "403":
           description: Origin or CSRF verification failed.
-  /DMgrgmt-1np5g23g12bGFtMwh/step-up:
+  /admin/step-up:
     post:
       operationId: confirmAdminSensitiveAction
       tags: [admin]
@@ -2844,7 +2844,7 @@ paths:
           description: Too many TOTP attempts.
         "503":
           description: Session storage is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/sessions:
+  /admin/sessions:
     get:
       operationId: listAdminSessions
       tags: [admin]
@@ -2862,7 +2862,7 @@ paths:
           description: Administrator session expired or revoked.
         "503":
           description: Session storage is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/sessions/{sessionId}/revoke:
+  /admin/sessions/{sessionId}/revoke:
     post:
       operationId: revokeAdminSession
       tags: [admin]
@@ -2883,7 +2883,7 @@ paths:
           description: Fresh action-bound TOTP or CSRF verification is required.
         "404":
           description: Active session not found.
-  /DMgrgmt-1np5g23g12bGFtMwh/sessions/revoke-all:
+  /admin/sessions/revoke-all:
     post:
       operationId: revokeAllAdminSessions
       tags: [admin]
@@ -2895,7 +2895,7 @@ paths:
           description: Administrator session expired or revoked.
         "403":
           description: Fresh action-bound TOTP or CSRF verification is required.
-  /DMgrgmt-1np5g23g12bGFtMwh/overview:
+  /admin/overview:
     get:
       operationId: getAdminOverview
       tags: [admin]
@@ -3004,7 +3004,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/banners:
+  /admin/banners:
     get:
       operationId: listAdminBanners
       tags: [admin]
@@ -3079,7 +3079,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/countries:
+  /admin/countries:
     get:
       operationId: getAdminCountries
       tags: [admin]
@@ -3160,7 +3160,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/countries/{countryCode}:
+  /admin/countries/{countryCode}:
     patch:
       operationId: updateAdminCountry
       tags: [admin]
@@ -3281,7 +3281,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/ussd-instructions:
+  /admin/ussd-instructions:
     put:
       operationId: updateAdminUssdInstruction
       tags: [admin]
@@ -3337,7 +3337,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/payment-routing:
+  /admin/payment-routing:
     get:
       operationId: getAdminPaymentRouting
       tags: [admin]
@@ -3369,7 +3369,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/payment-aggregators:
+  /admin/payment-aggregators:
     post:
       operationId: createAdminAggregator
       tags: [admin]
@@ -3474,7 +3474,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/payment-aggregator-routes:
+  /admin/payment-aggregator-routes:
     put:
       operationId: updateAdminAggregatorRoute
       tags: [admin]
@@ -3530,7 +3530,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/operator-pricing:
+  /admin/operator-pricing:
     get:
       operationId: getAdminOperatorPricing
       tags: [admin]
@@ -3562,7 +3562,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/operators:
+  /admin/operators:
     post:
       operationId: createAdminOperator
       tags: [admin]
@@ -3612,7 +3612,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/operators/{operatorId}:
+  /admin/operators/{operatorId}:
     parameters:
       - $ref: "#/components/parameters/AdminOperatorId"
     patch:
@@ -3721,7 +3721,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/operators/{operatorId}/logo/{expectedVersion}:
+  /admin/operators/{operatorId}/logo/{expectedVersion}:
     parameters:
       - $ref: "#/components/parameters/AdminOperatorId"
       - $ref: "#/components/parameters/AdminOperatorLogoVersion"
@@ -3854,7 +3854,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/operator-pricing-rates:
+  /admin/operator-pricing-rates:
     put:
       operationId: updateAdminOperatorPricing
       tags: [admin]
@@ -3911,7 +3911,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/registration-settings:
+  /admin/registration-settings:
     get:
       operationId: getAdminRegistrationSettings
       tags: [admin]
@@ -3960,7 +3960,7 @@ paths:
           description: Setting was modified by another administrator.
         "503":
           description: Setting unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/customer-service-settings:
+  /admin/customer-service-settings:
     get:
       operationId: getAdminCustomerServiceSettings
       tags: [admin]
@@ -4009,7 +4009,7 @@ paths:
           description: Settings changed in another administrator session.
         "503":
           description: Contact settings are unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns:
+  /admin/email-campaigns:
     get:
       operationId: listAdminEmailCampaigns
       tags: [admin]
@@ -4056,7 +4056,7 @@ paths:
           description: Administrator mutation access is required.
         "503":
           description: Campaign storage is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/recipients:
+  /admin/email-campaigns/recipients:
     get:
       operationId: listAdminEmailCampaignRecipients
       tags: [admin]
@@ -4085,7 +4085,7 @@ paths:
           description: Administrator mutation access is required to view recipient addresses.
         "503":
           description: Recipient storage is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/history:
+  /admin/email-campaigns/history:
     get:
       operationId: listAdminEmailCampaignHistory
       tags: [admin]
@@ -4127,7 +4127,7 @@ paths:
           description: One or more filters are invalid.
         "503":
           description: Delivery history is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/{campaignId}:
+  /admin/email-campaigns/{campaignId}:
     parameters:
       - name: campaignId
         in: path
@@ -4208,7 +4208,7 @@ paths:
           description: Only an unsent draft can be deleted.
         "503":
           description: Campaign storage is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/settings:
+  /admin/email-campaigns/settings:
     get:
       operationId: getAdminEmailCampaignSettings
       tags: [admin]
@@ -4228,7 +4228,7 @@ paths:
           description: Administrator read access is required.
         "503":
           description: Campaign settings are unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/{campaignId}/send:
+  /admin/email-campaigns/{campaignId}/send:
     parameters:
       - name: campaignId
         in: path
@@ -4259,7 +4259,7 @@ paths:
           description: Campaign delivery is disabled or not configured.
         "429":
           description: Administrator campaign queue limit reached.
-  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/{campaignId}/cancel:
+  /admin/email-campaigns/{campaignId}/cancel:
     parameters:
       - name: campaignId
         in: path
@@ -4288,7 +4288,7 @@ paths:
           description: Campaign delivery has already started or completed.
         "503":
           description: Campaign storage is unavailable.
-  /DMgrgmt-1np5g23g12bGFtMwh/email-campaigns/{campaignId}/recipients/{recipientId}/retry:
+  /admin/email-campaigns/{campaignId}/recipients/{recipientId}/retry:
     parameters:
       - name: campaignId
         in: path
@@ -4329,7 +4329,7 @@ paths:
           description: Retry could not be recorded.
         "429":
           description: Administrator retry limit reached.
-  /DMgrgmt-1np5g23g12bGFtMwh/otp-policies:
+  /admin/otp-policies:
     get:
       operationId: listAdminOtpPolicies
       tags: [admin]
@@ -4361,7 +4361,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/otp-policies/{countryCode}/{operatorId}:
+  /admin/otp-policies/{countryCode}/{operatorId}:
     parameters:
       - $ref: "#/components/parameters/AdminOtpPolicyCountryCode"
       - $ref: "#/components/parameters/AdminOtpPolicyOperatorId"
@@ -4420,7 +4420,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/banners/reorder:
+  /admin/banners/reorder:
     patch:
       operationId: reorderAdminBanners
       tags: [admin]
@@ -4470,7 +4470,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/banners/{bannerId}:
+  /admin/banners/{bannerId}:
     parameters:
       - $ref: "#/components/parameters/AdminBannerId"
     patch:
@@ -4559,7 +4559,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/login-activity:
+  /admin/login-activity:
     get:
       operationId: listAdminLoginActivity
       tags: [admin]
@@ -4599,7 +4599,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/otp-activity:
+  /admin/otp-activity:
     get:
       operationId: listAdminOtpActivity
       tags: [admin]
@@ -4655,7 +4655,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/users:
+  /admin/users:
     get:
       operationId: listAdminUsers
       tags: [admin]
@@ -4691,7 +4691,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}:
+  /admin/users/{userId}:
     get:
       operationId: getAdminUser
       tags: [admin]
@@ -4738,7 +4738,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/developer-webhooks:
+  /admin/developer-webhooks:
     get:
       operationId: listAdminUserDeveloperWebhooks
       tags: [admin]
@@ -4787,7 +4787,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/transactions:
+  /admin/transactions:
     get:
       operationId: listAdminTransactions
       tags: [admin]
@@ -4873,7 +4873,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/transactions/{transactionId}:
+  /admin/transactions/{transactionId}:
     get:
       operationId: getAdminTransaction
       tags: [admin]
@@ -4920,7 +4920,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/monthly-incoming-limit:
+  /admin/users/{userId}/monthly-incoming-limit:
     patch:
       operationId: updateAdminUserMonthlyIncomingLimit
       tags: [admin]
@@ -4979,7 +4979,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/wallet-adjustments:
+  /admin/users/{userId}/wallet-adjustments:
     post:
       operationId: createAdminWalletAdjustment
       tags: [admin]
@@ -5044,7 +5044,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/suspend:
+  /admin/users/{userId}/suspend:
     post:
       operationId: suspendAdminUser
       tags: [admin]
@@ -5096,7 +5096,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/restore:
+  /admin/users/{userId}/restore:
     post:
       operationId: restoreAdminUser
       tags: [admin]
@@ -5148,7 +5148,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/users/{userId}/delete:
+  /admin/users/{userId}/delete:
     post:
       operationId: deleteAdminUser
       tags: [admin]
@@ -5201,7 +5201,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMwh/transactions/{transactionId}/archive:
+  /admin/transactions/{transactionId}/archive:
     post:
       operationId: archiveAdminTransaction
       tags: [admin]
@@ -5272,7 +5272,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /DMgrgmt-1np5g23g12bGFtMWh/payment-limits:
+  /admin/payment-limits:
     get:
       operationId: getAdminPaymentLimits
       tags: [admin]

@@ -70,7 +70,7 @@ export const phoneOtpChallengesTable = pgTable(
     ),
     purposeConstraint: check(
       "sf_phone_otp_purpose_check",
-      sql`${table.purpose} in ('signup', 'password_reset', 'pin_reset', 'admin_login')`,
+      sql`${table.purpose} in ('signup', 'password_reset', 'pin_reset')`,
     ),
     attemptsConstraint: check(
       "sf_phone_otp_attempts_check",
