@@ -3,7 +3,7 @@ name: Merchant developer API
 description: Product decisions for merchant API credentials, payment sessions, and webhooks.
 ---
 
-The merchant-space “Développeurs” area supports both direct API checkout and SendFlow-hosted checkout. Both payment modes must reuse LinkFlow’s configured country/operator fees and aggregator routing; do not hard-code a provider in the developer API. Webhooks may be emitted only for verified final payment results, after the existing settlement path credits the merchant wallet.
+The merchant-space “Développeurs” area supports both direct API checkout and SendFlow-hosted checkout. Both payment modes must reuse LinkFlow’s configured country/operator fees and aggregator routing; do not hard-code a provider in the developer API. FeexPay is one connector, not the sole provider; preserve a provider-neutral contract for current and future integrations. Webhooks may be emitted only for verified final payment results, after the existing settlement path credits the merchant wallet.
 
 Public developer documentation must not reveal third-party processor or aggregator names. Describe routing limits generically; name an operator only when needed for payer instructions and only with verified details.
 

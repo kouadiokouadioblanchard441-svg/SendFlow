@@ -87,9 +87,9 @@ test('every API request example uses the centralized production API base', () =>
 test('URL labels use neutral wording and do not expose internal payment-readiness switches', () => {
   assert.match(docsCopy, /baseUrlTitle: 'Adresses'/);
   assert.match(docsCopy, /baseUrlTitle: 'Addresses'/);
-  assert.match(docsCopy, /apiAvailabilityTitle: 'URL de l’API et statut des opérations'/);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'Adresse de l’API'/);
   assert.match(docsCopy, /apiAvailabilityText: 'Toutes les requêtes utilisent l’adresse indiquée dans le bloc copiable/);
-  assert.match(docsCopy, /apiAvailabilityTitle: 'API URL and operation status'/);
+  assert.match(docsCopy, /apiAvailabilityTitle: 'API address'/);
   assert.match(docsCopy, /apiAvailabilityText: 'All requests use the address shown in the copyable/);
   assert.match(docsCopy, /serviceAvailability: 'Adresses et suivi'/);
   assert.match(docsCopy, /serviceAvailabilityText: 'Consultez le statut ou le webhook signé uniquement/);
@@ -99,11 +99,13 @@ test('URL labels use neutral wording and do not expose internal payment-readines
   assert.match(docsCopy, /quickstartIntegrationNote: 'Copy the addresses from the blocks above/);
   assert.doesNotMatch(docsCopy, /(?:Adresses|Addresses|URL) de production|Production URLs|production API address/i);
   assert.doesNotMatch(docsCopy, /LINKFLOW_SETTLEMENT_PROOF_READY/);
-  assert.match(docsCopy, /apiAvailabilityText:.*HTTP 503/);
-  assert.match(docsCopy, /aucun fonds n’est réservé/);
-  assert.match(docsCopy, /no funds are reserved/);
-  assert.match(docsCopy, /apiScopeTitle: 'Sens des flux et disponibilité réelle'/);
-  assert.match(docsCopy, /apiScopeTitle: 'Flow direction and actual availability'/);
+  assert.match(docsCopy, /Cette page décrit le contrat de l’API ; elle ne mesure pas sa disponibilité en temps réel/);
+  assert.match(docsCopy, /This page describes the API contract; it does not measure live availability/);
+  assert.doesNotMatch(docsCopy, /Statut actuel:.*HTTP 503|Current status:.*HTTP 503/);
+  assert.doesNotMatch(docsCopy, /Actuellement, la création répond HTTP 503|Creation currently returns HTTP 503/);
+  assert.doesNotMatch(docsCopy, /La création reste fermée: HTTP 503|Creation is currently closed: HTTP 503/);
+  assert.match(docsCopy, /apiScopeTitle: 'Flux PAYIN et PAYOUT'/);
+  assert.match(docsCopy, /apiScopeTitle: 'PAYIN and PAYOUT flows'/);
   assert.match(docsCopy, /PAYIN : le client paie par Mobile Money/);
   assert.match(docsCopy, /PAYIN: the customer pays by Mobile Money/);
   assert.match(docsCopy, /PAYOUT : le marchand demande un transfert sortant/);
@@ -508,8 +510,9 @@ test('merchant payout examples cover every implemented API route and keep creati
   assert.match(payoutRoutes, /router\.get\("\/v1\/payouts\/:payoutId"/);
   assert.match(payoutRoutes, /router\.post\("\/v1\/payouts\/:payoutId\/cancel"/);
   assert.match(payoutRoutes, /if \(!PAYOUT_EXECUTION_ENABLED\)/);
-  assert.match(docsCopy, /HTTP 503 avec payout_unavailable : aucune demande n’est créée et aucun fonds n’est réservé/);
-  assert.match(docsCopy, /HTTP 503 with payout_unavailable: no request is created and no funds are reserved/);
+  assert.match(docsCopy, /En cas de 503 ou de délai d’attente, vérifiez l’état de la demande/);
+  assert.match(docsCopy, /If a request returns 503 or times out, check its server-side status/);
+  assert.doesNotMatch(docsCopy, /currently returns 503 with payout_unavailable|currently closed: HTTP 503 payout_unavailable/i);
 });
 
 test('authentication documentation matches the key lifecycle and credential split', () => {

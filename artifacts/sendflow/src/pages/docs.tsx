@@ -60,7 +60,7 @@ const localized: Record<Language, Translation> = {
   fr: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'API directe', navWebhooks: 'Webhooks',
     search: 'Rechercher dans la documentation…', menuClose: 'Fermer le menu', startGroup: 'Démarrer',
-    sectionPageIntro: 'Cette rubrique détaille le contrat SendFlow correspondant. Les exemples utilisent des données d’exemple et les blocages de disponibilité sont signalés.',
+    sectionPageIntro: 'Cette rubrique détaille le contrat SendFlow correspondant. Les exemples utilisent des données d’exemple ; les parcours disponibles dépendent de la réponse de l’API.',
     integrations: 'Parcours de paiement', integrationGroup: 'Intégration API',
     hostedGroup: 'Paiement hébergé', webhooksGroup: 'Webhooks',
     reliabilityGroup: 'États, erreurs et sécurité',
@@ -79,7 +79,7 @@ const localized: Record<Language, Translation> = {
     authTitle: 'Authentification', authSub: 'Utilisez la clé secrète pour les appels serveur et la clé publique uniquement dans le parcours de caisse.',
     directTitle: 'Intégration API directe', directSub: 'Un guide complet : accès, catalogue, session, tentative Mobile Money, confirmation serveur et webhooks.',
     directPrerequisitesTitle: 'Avant de commencer',
-    directPrerequisitesText: 'Préparez un compte marchand actif et éligible, une paire de clés API SendFlow et un serveur capable d’appeler l’API en HTTPS. Créez la session avec la clé secrète côté serveur. Transmettez à la caisse uniquement la clé publique et les jetons limités à cette session ou tentative. Les exemples ci-dessous montrent les routes et le contrat SendFlow ; la disponibilité actuelle est indiquée séparément.',
+    directPrerequisitesText: 'Préparez un compte marchand actif et éligible, une paire de clés API SendFlow et un serveur capable d’appeler l’API en HTTPS. Créez la session avec la clé secrète côté serveur. Transmettez à la caisse uniquement la clé publique et les jetons limités à cette session ou tentative. Les exemples ci-dessous montrent les routes et le contrat SendFlow ; utilisez la réponse de la session pour connaître les parcours proposés.',
     directCredentialsTitle: 'Identifiants requis pour chaque étape',
     directCatalogTitle: 'Étape 1 · Préparer le montant et les choix',
     directCatalogText: 'GET /api/pricing est une lecture publique du catalogue et des frais configurés ; la session directe reste la source de vérité des opérateurs disponibles. Sa réponse fournit requiresOtp et otpCommand quand ils sont configurés. GET /api/payment-limits donne les bornes ; le montant entier en XOF est revérifié côté serveur. Pour une commande contenant le montant, utilisez le modèle configuré et l’instruction exacte renvoyée par SendFlow.',
@@ -155,8 +155,8 @@ const localized: Record<Language, Translation> = {
     hostedStepStatus: 'Étape 2 · Vérifier le statut côté serveur',
     model: 'Parcours de paiement', modelTextDirect: 'Créez la session avec mode direct depuis votre serveur. Le client lit ensuite la session publique, affiche les pays et opérateurs disponibles, lance une tentative pour le montant fixe, puis suit le statut.',
     modelTextHosted: 'Créez la session avec mode hosted depuis votre serveur. L’API renvoie checkoutPath ; combinez-le avec la valeur SENDFLOW_CHECKOUT_ORIGIN copiée dans le bloc correspondant, puis redirigez le client.',
-    apiAvailabilityTitle: 'URL de l’API et statut des opérations',
-    apiAvailabilityText: 'Toutes les requêtes utilisent l’adresse indiquée dans le bloc copiable « API SendFlow ». Statut actuel : la création d’une session PAYIN (POST /api/v1/payment-sessions) et le démarrage d’une tentative renvoient HTTP 503 avant toute création ; aucun paiement n’est lancé. La création PAYOUT (POST /api/v1/payouts) renvoie également HTTP 503 ; aucune demande n’est créée et aucun fonds n’est réservé. Le devis PAYOUT, lorsqu’il est disponible, reste une lecture seule. Les exemples décrivent le contrat SendFlow et ne signifient pas que ces opérations sont actuellement disponibles.',
+    apiAvailabilityTitle: 'Adresse de l’API',
+    apiAvailabilityText: 'Toutes les requêtes utilisent l’adresse indiquée dans le bloc copiable « API SendFlow ». Cette page décrit le contrat de l’API ; elle ne mesure pas sa disponibilité en temps réel. La prise en charge dépend du mode choisi, du pays, de l’opérateur et des choix renvoyés par la session.',
     hostedOriginText: 'checkoutPath reste un chemin relatif pour préserver le contrat API. Pour un paiement hébergé ou un lien LinkFlow, combinez-le avec la valeur copiée dans SENDFLOW_CHECKOUT_ORIGIN sur votre serveur marchand.',
     hostedFallbackText: 'Après une confirmation succeeded, la page redirige vers returnUrl si elle a été fournie ; sinon, elle revient vers le site public SendFlow. La page ne redirige pas vers returnUrl après un échec confirmé. Une redirection reste une indication d’interface, jamais une preuve de paiement.',
     webhookSharedNote: 'Les webhooks reflètent les événements enregistrés côté serveur. payout.succeeded n’est émis qu’après une confirmation finale vérifiée ; consultez le guide Webhooks pour vérifier la signature et dédupliquer les livraisons.',
@@ -200,20 +200,20 @@ const localized: Record<Language, Translation> = {
     referenceIntro: 'Les exemples ci-dessous correspondent aux routes et schémas présents dans l’API SendFlow.',
     requestExample: 'Exemple de requête',
     responseExample: 'Exemple de réponse',
-    webhookEvents: 'Événements webhook', webhookEventsSub: 'Les événements disponibles sont payment.succeeded, payment.failed, payout.created, payout.processing, payout.succeeded, payout.failed et payout.uncertain. Les événements payout ne sont émis que pour les transitions enregistrées côté serveur ; payout.succeeded exige une confirmation finale vérifiée. La création payout reste bloquée tant que cette preuve n’est pas disponible.',
+    webhookEvents: 'Événements webhook', webhookEventsSub: 'Les événements disponibles sont payment.succeeded, payment.failed, payout.created, payout.processing, payout.succeeded, payout.failed et payout.uncertain. Les événements payout ne sont émis que pour les transitions enregistrées côté serveur ; payout.succeeded exige une confirmation finale vérifiée.',
     webhookPayloadNote: 'Les payloads paiement contiennent les identifiants de session, tentative et transaction. Les payloads payout contiennent la référence, les montants, les frais, le pays, l’opérateur et le statut, sans numéro de bénéficiaire. Le champ id correspond à l’UUID sendflow-delivery et reste stable lors des reprises. Le même contrôle de signature s’applique aux deux familles d’événements. N’insérez aucune donnée personnelle dans merchantReference.',
     eventNames: 'Événements disponibles', delivery: 'Signature et livraisons', deliveryText: 'La signature HMAC-SHA256 est calculée sur la chaîne <horodatage>.<corps JSON brut>. Répondez en HTTP 2xx pour acquitter la livraison ; toute réponse non-2xx, erreur réseau ou expiration du délai sera retentée. Le délai de requête est de 8 secondes et le corps de réponse est limité à 8 Ko. SendFlow effectue 8 tentatives au total au maximum : l’envoi initial puis jusqu’à 7 reprises, espacées de 10 s, 30 s, 2 min, 10 min, 30 min, 2 h et 12 h. L’identifiant sendflow-delivery reste stable entre les reprises : utilisez-le pour dédupliquer.',
     webhookHeadersTitle: 'En-têtes envoyés', webhookHeadersText: 'sendflow-event identifie le type d’événement. sendflow-delivery contient le même UUID que payload.id et reste identique lors des reprises. sendflow-signature suit le format t=<horodatage Unix>,v1=<signature hexadécimale>. La signature est calculée sur les octets exacts du corps reçu. L’exemple de vérification choisit une fenêtre de fraîcheur de 300 secondes à titre de politique marchande ; SendFlow ne fixe pas cette valeur.',
-    apiScopeTitle: 'Sens des flux et disponibilité réelle', apiScopeText: 'PAYIN : le client paie par Mobile Money ; après confirmation finale vérifiée côté serveur, le montant net est crédité au portefeuille SendFlow du marchand. PAYOUT : le marchand demande un transfert sortant depuis le solde disponible de son portefeuille vers le compte Mobile Money d’un bénéficiaire. SendFlow calcule les montants, frais et réservations côté serveur. État actuel : la création d’une session ou d’une tentative PAYIN répond HTTP 503 avant démarrage ; la création d’un PAYOUT répond HTTP 503 sans demande ni réservation. Les exemples documentent le contrat, mais ne signifient pas que ces créations sont actuellement disponibles.',
+    apiScopeTitle: 'Flux PAYIN et PAYOUT', apiScopeText: 'PAYIN : le client paie par Mobile Money ; après confirmation finale vérifiée côté serveur, le montant net est crédité au portefeuille SendFlow du marchand. PAYOUT : le marchand demande un transfert sortant depuis le solde disponible de son portefeuille vers le compte Mobile Money d’un bénéficiaire. SendFlow calcule les montants, frais et réservations côté serveur. Le catalogue et le devis ne déclenchent pas un transfert ; vérifiez le statut côté serveur et ne traitez le paiement comme final qu’après confirmation vérifiée.',
     endpointLimits: 'Limites de paiement',
     endpointLimitsDesc: 'Renvoie les seuils FCFA actuellement configurés. Cette lecture publique ne remplace jamais la validation serveur.',
-    endpointPayout: 'Disponibilité API payout',
+    endpointPayout: 'API de retrait',
     payoutApiTitle: 'Payout marchand via API',
-    payoutApiText: 'Le PAYOUT est un transfert sortant du portefeuille SendFlow du marchand authentifié vers le compte Mobile Money d’un bénéficiaire. Le solde utilisable est calculé après déduction des réservations actives ; les frais et montants sont validés côté serveur. Le devis ne réserve aucun fonds. operations.payout=true dans /api/pricing indique une configuration de catalogue, pas une disponibilité garantie. Actuellement, la création répond HTTP 503 avec payout_unavailable : aucune demande n’est créée et aucun fonds n’est réservé.',
+    payoutApiText: 'Le PAYOUT est un transfert sortant du portefeuille SendFlow du marchand authentifié vers le compte Mobile Money d’un bénéficiaire. Le solde utilisable est calculé après déduction des réservations actives ; les frais et montants sont validés côté serveur. Le devis ne réserve aucun fonds. operations.payout=true dans /api/pricing indique une configuration de catalogue, pas une disponibilité garantie : l’éligibilité du compte, le routage, le tarif, les limites et le solde sont vérifiés pour la demande.',
     payoutQuoteTitle: '1. Calculer le devis',
     payoutQuoteText: 'POST /api/v1/payout-quote est une lecture sans réservation. Repérez un pays et un opérateur avec operations.payout=true dans /api/pricing, puis envoyez amountMinor en entier XOF, countryCode en minuscules, son operatorId exact et feePayer (merchant ou beneficiary). La réponse inclut les montants calculés, le solde disponible, les limites, la version tarifaire et quoteExpiresAt. Une configuration ou un canal indisponible peut répondre 503.',
     payoutCreateTitle: '2. Envoyer une demande de payout',
-    payoutCreateText: 'POST /api/v1/payouts demande un transfert vers le compte Mobile Money du bénéficiaire. Il exige la clé secrète active du marchand dans Authorization: Bearer, Idempotency-Key (8–128 caractères), pays, opérateur, montant, devise, payeur de frais et numéro international correspondant au pays. Les clés ne portent pas de permissions configurables par clé : SendFlow vérifie l’état et l’éligibilité du compte côté serveur. SendFlow recalcule le tarif et le solde disponible ; le devis n’autorise pas le transfert. La création reste fermée : HTTP 503 payout_unavailable ne crée ni demande ni réservation. Réutilisez la même clé pour une reprise exacte.',
+    payoutCreateText: 'POST /api/v1/payouts demande un transfert vers le compte Mobile Money du bénéficiaire. Il exige la clé secrète active du marchand dans Authorization: Bearer, Idempotency-Key (8–128 caractères), pays, opérateur, montant, devise, payeur de frais et numéro international correspondant au pays. Les clés ne portent pas de permissions configurables par clé : SendFlow vérifie l’état et l’éligibilité du compte côté serveur. SendFlow recalcule le tarif et le solde disponible ; le devis n’autorise pas le transfert. Réutilisez la même clé pour une reprise exacte. En cas de 503 ou de délai d’attente, vérifiez l’état de la demande avant toute nouvelle tentative.',
     payoutListTitle: '3. Lister les demandes',
     payoutListText: 'GET /api/v1/payouts ne retourne que les demandes du marchand authentifié. limit accepte 1–100 (25 par défaut), cursor un UUID et status un état de payout.',
     payoutReadTitle: '4. Consulter une demande',
@@ -221,7 +221,7 @@ const localized: Record<Language, Translation> = {
     payoutCancelTitle: '5. Annuler avant envoi',
     payoutCancelText: 'POST /api/v1/payouts/{payoutId}/cancel ne fonctionne que si les fonds sont réservés et que l’exécution SendFlow n’a pas commencé. Après envoi ou si l’état ne permet plus l’annulation, l’API renvoie 409.',
     security: 'Sécurité et fiabilité', errors: 'Erreurs HTTP', idempotency: 'Idempotence', expiration: 'Expiration et montants', securityText: 'Utilisez HTTPS. Stockez la clé secrète et le secret webhook (affiché une seule fois à sa création) dans un coffre sécurisé. Comparez la signature en temps constant, vérifiez la fraîcheur de l’horodatage et ne traitez l’événement qu’après validation.',
-    errorsText: 'Les routes documentées renvoient une erreur JSON sous la forme { "error": "…" }. Le contrat ne définit pas de code d’erreur machine stable : basez votre traitement sur le statut HTTP et vos propres règles, pas sur le texte du message. Pour la création PAYIN actuellement fermée, HTTP 503 arrive avant la création : aucun sessionId n’est renvoyé et aucun paiement n’est lancé ; il n’y a donc pas de session à consulter. Pour un paiement déjà créé, une erreur 503 de lecture ne prouve ni succès ni échec final : relisez le statut ou vérifiez le webhook. La création PAYOUT 503 ne crée aucune demande et ne réserve aucun fonds. Une redirection ou un état navigateur ne confirme jamais un paiement.',
+    errorsText: 'Les routes documentées renvoient une erreur JSON sous la forme { "error": "…" }. Le contrat ne définit pas de code d’erreur machine stable : basez votre traitement sur le statut HTTP et vos propres règles, pas sur le texte du message. Un HTTP 503 signifie que la route ne peut pas traiter la demande à cet instant ; il ne prouve ni succès ni échec final. Pour une ressource déjà créée, relisez son statut ou vérifiez le webhook signé avant toute décision. Une redirection ou un état navigateur ne confirme jamais un paiement.',
     globalHttpErrors: 'Une requête peut renvoyer 413 si son corps dépasse 100 Ko ou 415 si son encodage n’est pas pris en charge. Une erreur serveur inattendue peut renvoyer 500. Les réponses conservent le format JSON { "error": "…" } ; en cas de 500/503, ne déduisez jamais le résultat du paiement.',
     errorEnvelopeTitle: 'Format d’erreur',
     httpErrorTableTitle: 'Réponses HTTP et conduite à tenir',
@@ -250,7 +250,7 @@ const localized: Record<Language, Translation> = {
   en: {
     navDocs: 'Documentation', navGuides: 'Guides', navApi: 'Direct API', navWebhooks: 'Webhooks',
     search: 'Search documentation…', menuClose: 'Close menu', startGroup: 'Start here',
-    sectionPageIntro: 'This section details the matching SendFlow contract. Examples use sample data, and current availability blocks are stated clearly.',
+    sectionPageIntro: 'This section details the matching SendFlow contract. Examples use sample data; available flows depend on the API response.',
     integrations: 'Payment flows', integrationGroup: 'API integration',
     hostedGroup: 'Hosted Checkout', webhooksGroup: 'Webhooks',
     reliabilityGroup: 'States, errors & security',
@@ -269,7 +269,7 @@ const localized: Record<Language, Translation> = {
     authTitle: 'Authentication', authSub: 'Use the secret key for server requests and the public key only in the checkout flow.',
     directTitle: 'Direct API integration', directSub: 'A complete guide to access, catalog, session, Mobile Money attempt, server confirmation, and webhooks.',
     directPrerequisitesTitle: 'Before you start',
-    directPrerequisitesText: 'Prepare an active, eligible merchant account, a SendFlow API key pair, and a server that can call the API over HTTPS. Create sessions with the secret key on your server. Pass only the public key and session- or attempt-scoped tokens to checkout. The examples show the SendFlow routes and contract; current availability is stated separately.',
+    directPrerequisitesText: 'Prepare an active, eligible merchant account, a SendFlow API key pair, and a server that can call the API over HTTPS. Create sessions with the secret key on your server. Pass only the public key and session- or attempt-scoped tokens to checkout. The examples show the SendFlow routes and contract; use the session response to determine the offered flows.',
     directCredentialsTitle: 'Credentials required at each step',
     directCatalogTitle: 'Step 1 · Prepare the amount and payment choices',
     directCatalogText: 'GET /api/pricing is a public read of the catalog and configured fees; the direct session remains the source of truth for available operators. Its response includes requiresOtp and otpCommand when configured. GET /api/payment-limits returns configured thresholds; whole XOF amounts are validated again server-side. For commands containing the amount, use the configured template and the exact instruction returned by SendFlow.',
@@ -345,8 +345,8 @@ const localized: Record<Language, Translation> = {
     hostedStepStatus: 'Step 2 · Check status on your server',
     model: 'Payment flow', modelTextDirect: 'Create the session with mode direct from your server. The client then reads the public session, displays available countries and operators, starts an attempt for the fixed amount, and polls its status.',
     modelTextHosted: 'Create the session with mode hosted from your server. The API returns checkoutPath; combine it with the copied SENDFLOW_CHECKOUT_ORIGIN value, then redirect the customer.',
-    apiAvailabilityTitle: 'API URL and operation status',
-    apiAvailabilityText: 'All requests use the address shown in the copyable “SendFlow API” block. Current status: PAYIN session creation (POST /api/v1/payment-sessions) and attempt startup return HTTP 503 before anything is created; no payment is initiated. PAYOUT creation (POST /api/v1/payouts) also returns HTTP 503; no request is created and no funds are reserved. A PAYOUT quote, when available, is read-only. The examples describe the SendFlow API contract and do not mean these operations are currently available.',
+    apiAvailabilityTitle: 'API address',
+    apiAvailabilityText: 'All requests use the address shown in the copyable “SendFlow API” block. This page describes the API contract; it does not measure live availability. Supported flows depend on the selected mode, country, operator, and choices returned by the session.',
     hostedOriginText: 'checkoutPath remains a relative path to preserve the API contract. For hosted payments and LinkFlow links, combine it with the SENDFLOW_CHECKOUT_ORIGIN value copied on your merchant server.',
     hostedFallbackText: 'After succeeded is confirmed, the page redirects to returnUrl if provided; otherwise, it returns to the SendFlow public site. The page does not redirect to returnUrl after a confirmed failure. A redirect is a user-interface signal, never proof of payment.',
     webhookSharedNote: 'Webhooks reflect server-recorded events. payout.succeeded is emitted only after verified final confirmation; see the Webhooks guide to verify signatures and deduplicate deliveries.',
@@ -390,20 +390,20 @@ const localized: Record<Language, Translation> = {
     referenceIntro: 'The examples below match routes and schemas present in the SendFlow API.',
     requestExample: 'Request example',
     responseExample: 'Response example',
-    webhookEvents: 'Webhook events', webhookEventsSub: 'Available events are payment.succeeded, payment.failed, payout.created, payout.processing, payout.succeeded, payout.failed, and payout.uncertain. Payout events are emitted only for server-recorded transitions; payout.succeeded requires verified final confirmation. Payout creation remains blocked until that evidence is available.',
+    webhookEvents: 'Webhook events', webhookEventsSub: 'Available events are payment.succeeded, payment.failed, payout.created, payout.processing, payout.succeeded, payout.failed, and payout.uncertain. Payout events are emitted only for server-recorded transitions; payout.succeeded requires verified final confirmation.',
     webhookPayloadNote: 'Payment payloads include session, attempt, and transaction identifiers. Payout payloads include the reference, amounts, fees, country, operator, and status, but no beneficiary phone number. The id matches the sendflow-delivery UUID and stays stable across retries. The same signature verification applies to both event families. Do not put personal data in merchantReference.',
     eventNames: 'Available events', delivery: 'Signatures and delivery', deliveryText: 'The HMAC-SHA256 signature is computed over the string <timestamp>.<raw JSON body>. Return HTTP 2xx to acknowledge delivery; non-2xx responses, network errors, and timeouts are retried. The request timeout is 8 seconds and response bodies are limited to 8 KB. SendFlow makes at most 8 attempts total: the initial delivery plus up to 7 retries, spaced 10 s, 30 s, 2 min, 10 min, 30 min, 2 h, and 12 h apart. The sendflow-delivery ID stays stable across retries; use it for deduplication.',
     webhookHeadersTitle: 'Request headers', webhookHeadersText: 'sendflow-event identifies the event type. sendflow-delivery contains the same UUID as payload.id and remains unchanged on retries. sendflow-signature follows t=<Unix timestamp>,v1=<hex signature>. The signature is computed over the exact received body bytes. The verification example chooses a 300-second freshness window as merchant policy; SendFlow does not set this value.',
-    apiScopeTitle: 'Flow direction and actual availability', apiScopeText: 'PAYIN: the customer pays by Mobile Money; after verified final server confirmation, the net amount is credited to the merchant’s SendFlow wallet. PAYOUT: the merchant requests an outgoing transfer from the available SendFlow wallet balance to a beneficiary’s Mobile Money account. SendFlow calculates amounts, fees, and reservations server-side. Current status: creating a PAYIN session or attempt returns HTTP 503 before it starts; creating a PAYOUT returns HTTP 503 with no request or reservation. The examples document the contract, but do not mean these operations are currently available.',
+    apiScopeTitle: 'PAYIN and PAYOUT flows', apiScopeText: 'PAYIN: the customer pays by Mobile Money; after verified final server confirmation, the net amount is credited to the merchant’s SendFlow wallet. PAYOUT: the merchant requests an outgoing transfer from the available SendFlow wallet balance to a beneficiary’s Mobile Money account. SendFlow calculates amounts, fees, and reservations server-side. The catalog and quote do not initiate a transfer; check server status and treat a payment as final only after verified confirmation.',
     endpointLimits: 'Payment limits',
     endpointLimitsDesc: 'Returns the currently configured FCFA thresholds. This public read never replaces server-side validation.',
-    endpointPayout: 'Payout API availability',
+    endpointPayout: 'PAYOUT API',
     payoutApiTitle: 'Merchant payout API',
-    payoutApiText: 'A PAYOUT is an outgoing transfer from the authenticated merchant’s SendFlow wallet to a beneficiary’s Mobile Money account. Available balance is calculated after active reservations; amounts and fees are validated server-side. A quote does not reserve funds. operations.payout=true in /api/pricing describes catalog configuration, not guaranteed availability. Creation currently returns HTTP 503 with payout_unavailable: no request is created and no funds are reserved.',
+    payoutApiText: 'A PAYOUT is an outgoing transfer from the authenticated merchant’s SendFlow wallet to a beneficiary’s Mobile Money account. Available balance is calculated after active reservations; amounts and fees are validated server-side. A quote does not reserve funds. operations.payout=true in /api/pricing describes catalog configuration, not guaranteed availability: account eligibility, routing, pricing, limits, and balance are checked for each request.',
     payoutQuoteTitle: '1. Calculate a quote',
     payoutQuoteText: 'POST /api/v1/payout-quote is read-only and does not reserve funds. Find a country and operator with operations.payout=true in /api/pricing, then send amountMinor as a whole XOF amount, lowercase countryCode, its exact operatorId, and feePayer (merchant or beneficiary). The response includes calculated amounts, available balance, limits, pricing version, and quoteExpiresAt. Missing configuration or an unavailable route can return 503.',
     payoutCreateTitle: '2. Submit a payout request',
-    payoutCreateText: 'POST /api/v1/payouts requests a transfer to the beneficiary’s Mobile Money account. It requires the merchant’s active secret key in Authorization: Bearer, an Idempotency-Key (8–128 characters), country, operator, amount, currency, fee payer, and an international phone number matching the country. Keys do not have configurable per-key permissions; SendFlow checks account status and eligibility server-side for each operation. SendFlow recalculates fees and available balance; a quote does not authorize a transfer. Creation is currently closed: HTTP 503 payout_unavailable creates no request and reserves no funds. Reuse the same key for an exact retry.',
+    payoutCreateText: 'POST /api/v1/payouts requests a transfer to the beneficiary’s Mobile Money account. It requires the merchant’s active secret key in Authorization: Bearer, an Idempotency-Key (8–128 characters), country, operator, amount, currency, fee payer, and an international phone number matching the country. Keys do not have configurable per-key permissions; SendFlow checks account status and eligibility server-side for each operation. SendFlow recalculates fees and available balance; a quote does not authorize a transfer. Reuse the same key for an exact retry. If a request returns 503 or times out, check its server-side status before trying again.',
     payoutListTitle: '3. List requests',
     payoutListText: 'GET /api/v1/payouts returns only requests owned by the authenticated merchant. limit accepts 1–100 (25 by default), cursor is a UUID, and status filters by payout state.',
     payoutReadTitle: '4. Read a request',
@@ -411,7 +411,7 @@ const localized: Record<Language, Translation> = {
     payoutCancelTitle: '5. Cancel before dispatch',
     payoutCancelText: 'POST /api/v1/payouts/{payoutId}/cancel is available only while funds are reserved and SendFlow execution has not started. After dispatch, or when the state no longer permits cancellation, the API returns 409.',
     security: 'Security & reliability', errors: 'HTTP errors', idempotency: 'Idempotency', expiration: 'Expiration and amounts', securityText: 'Use HTTPS. Store the secret key and webhook secret (shown once at creation) in a secure vault. Compare signatures in constant time, check timestamp freshness, and process events only after verification.',
-    errorsText: 'The documented routes return JSON errors in the form { "error": "…" }. The contract defines no stable machine-readable error code: handle HTTP status and your own business rules, not message text. For the currently blocked PAYIN creation, HTTP 503 occurs before creation: no sessionId is returned, no payment starts, and there is no session to query. For an already-created payment, a 503 on a status read proves neither success nor final failure; read the status again or verify the webhook. A 503 from payout creation creates no request and reserves no funds. A redirect or browser state never confirms payment.',
+    errorsText: 'The documented routes return JSON errors in the form { "error": "…" }. The contract defines no stable machine-readable error code: handle HTTP status and your own business rules, not message text. HTTP 503 means the route cannot process the request at that time; it proves neither success nor final failure. For an existing resource, read its status again or verify the signed webhook before making a decision. A redirect or browser state never confirms payment.',
     globalHttpErrors: 'A request may also return 413 when its body exceeds 100 KB, or 415 for an unsupported encoding. An unexpected server error may return 500. Responses keep the JSON shape { "error": "…" }; never infer a payment result from a 500/503 response.',
     errorEnvelopeTitle: 'Error format',
     httpErrorTableTitle: 'HTTP responses and recommended handling',
@@ -510,7 +510,7 @@ const localizedLists: Record<Language, TranslationLists> = {
       { symptom: 'Aucun code USSD n’est renvoyé', action: 'ussdCode peut être null. N’inventez pas de code ; le payeur suit la demande de son opérateur, puis vous attendez la confirmation serveur.' },
       { symptom: 'Le client revient sans webhook', action: 'La redirection du navigateur n’est pas une confirmation. Lisez le statut serveur et consultez l’historique des livraisons webhook dans l’espace Développeurs.' },
       { symptom: 'Le compte à rebours hébergé expire', action: 'L’écran d’échec après 10 minutes n’est pas un état final serveur. Vérifiez la session et traitez uncertain comme non final.' },
-      { symptom: 'Une création renvoie 503', action: 'Pour la création PAYIN actuellement fermée, aucun identifiant n’est renvoyé : aucune session ni tentative n’a été créée et il n’y a rien à consulter. Pour une session déjà créée, une erreur 503 de lecture ne constitue pas un résultat final.' },
+      { symptom: 'Une création renvoie 503', action: 'Ne déduisez pas le résultat du seul statut HTTP. Réutilisez la même Idempotency-Key et vérifiez l’état côté serveur avant toute nouvelle tentative.' },
     ],
     credentialRows: [
       { credential: 'Clé secrète', usedFor: 'Authorization: Bearer pour les endpoints privés, dont la création/lecture de session et les opérations PAYOUT selon leur disponibilité.', handling: 'Format live : sfsk_live_ suivi de 43 caractères URL-safe. Serveur uniquement ; stockez-la dans un gestionnaire de secrets et ne la journalisez jamais.' },
@@ -609,7 +609,7 @@ const localizedLists: Record<Language, TranslationLists> = {
       { symptom: 'No USSD code is returned', action: 'ussdCode may be null. Do not invent one; the payer follows the operator request, and your app waits for server confirmation.' },
       { symptom: 'The customer returns but no webhook arrives', action: 'A browser redirect is not confirmation. Read the server status and check webhook delivery history in the Developers area.' },
       { symptom: 'The hosted countdown expires', action: 'The failure screen after 10 minutes is not a final server state. Check the session and treat uncertain as non-final.' },
-      { symptom: 'A create request returns 503', action: 'For the currently blocked PAYIN creation, no identifier is returned: no session or attempt exists to query. For an already-created session, a 503 status-read error is not a final result.' },
+      { symptom: 'A create request returns 503', action: 'Do not infer the result from the HTTP status alone. Reuse the same Idempotency-Key and check server status before trying again.' },
     ],
     credentialRows: [
       { credential: 'Secret key', usedFor: 'Authorization: Bearer for private endpoints, including session creation/reading and PAYOUT operations subject to availability.', handling: 'Live format: sfsk_live_ followed by 43 URL-safe characters. Server only. Store it in a secrets manager and never log it.' },
@@ -1243,7 +1243,7 @@ export default function DocsPage() {
       </section>
       <div className="sf-docs-meta"><span className="sf-docs-status"><i className="sf-docs-status-dot" />{t.badge}</span><span>{t.prod}</span></div>
     <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.disclaimerTitle}</strong>{t.disclaimer}</div></div>
-    <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+    <div className="sf-docs-callout" role="note"><strong>{t.apiAvailabilityTitle}.</strong> {t.apiAvailabilityText}</div>
       <section className="sf-docs-section">
         <h2>{t.capabilitiesTitle}</h2>
         <ul className="sf-docs-list">
@@ -1422,7 +1422,7 @@ export default function DocsPage() {
             <p>{t.quickstartPrereqText}</p>
             <div className="sf-docs-callout">{t.serverOnly}</div>
             <div className="sf-docs-callout">{t.quickstartIntegrationNote}</div>
-             <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+             <div className="sf-docs-callout" role="note"><strong>{t.apiAvailabilityTitle}.</strong> {t.apiAvailabilityText}</div>
 
             <h3>{t.quickstartCatalogTitle}</h3>
             <p>{t.quickstartCatalogText}</p>
@@ -1464,7 +1464,7 @@ export default function DocsPage() {
         </>}
         {pageKey === 'direct' && <>
           <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
-          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+          <div className="sf-docs-callout" role="note"><strong>{t.apiAvailabilityTitle}.</strong> {t.apiAvailabilityText}</div>
           <section className="sf-docs-section">
             <h2>{t.directPrerequisitesTitle}</h2>
             <p>{t.directPrerequisitesText}</p>
@@ -1641,7 +1641,7 @@ sendflow-signature: t=<unix-timestamp>,v1=<hex-signature>`}</code></pre>
             <CopyableUrlBlock language={language} label={t.apiBaseUrlLabel} value={productionUrls.apiBaseUrl} />
             <CopyableUrlBlock language={language} label={t.checkoutOriginLabel} value={productionUrls.checkoutOrigin} />
           </div>
-          <div className="sf-docs-warning" role="note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>{t.apiAvailabilityTitle}</strong>{t.apiAvailabilityText}</div></div>
+          <div className="sf-docs-callout" role="note"><strong>{t.apiAvailabilityTitle}.</strong> {t.apiAvailabilityText}</div>
           <section className="sf-docs-section"><h2>{t.model}</h2><p>{t.modelTextHosted}</p>
             <h3>{t.hostedFlow}</h3>
             <div className="sf-docs-steps">

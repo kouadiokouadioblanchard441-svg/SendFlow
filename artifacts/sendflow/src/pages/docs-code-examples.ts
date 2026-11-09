@@ -1323,8 +1323,7 @@ if ($body === false || $status < 200 || $status >= 300) {
 echo $body;`,
   },
   'payout-create': {
-    'Node.js': `// This endpoint currently returns 503 with payout_unavailable.
-// No payout is created and no funds are reserved in that state.
+    'Node.js': `// A 503 is an unavailable response; verify the request status before retrying.
 const apiBaseUrl = process.env.SENDFLOW_API_BASE_URL;
 const secretKey = process.env.SENDFLOW_SECRET_KEY;
 const operatorId = process.env.PAYOUT_OPERATOR_ID;
@@ -1352,8 +1351,8 @@ const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/v1/payouts", {
   }),
 });
 const result = await response.json().catch(() => ({}));
-if (response.status === 503 && result.code === "payout_unavailable") {
-  console.log("No payout was created; no funds were reserved.");
+if (response.status === 503) {
+  console.log("Payout unavailable; verify server status before retrying.");
 } else if (!response.ok) {
   throw new Error(result.error ?? \`Payout request returned HTTP \${response.status}\`);
 } else {
@@ -1385,8 +1384,8 @@ response = requests.post(
     timeout=15,
 )
 result = response.json()
-if response.status_code == 503 and result.get("code") == "payout_unavailable":
-    print("No payout was created; no funds were reserved.")
+if response.status_code == 503:
+    print("Payout unavailable; verify server status before retrying.")
 else:
     response.raise_for_status()
     print(result)`,
@@ -1438,8 +1437,8 @@ $body = curl_exec($ch);
 $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 $result = json_decode($body ?: "{}", true);
-if ($status === 503 && ($result["code"] ?? null) === "payout_unavailable") {
-    echo "No payout was created; no funds were reserved.";
+if ($status === 503) {
+    echo "Payout unavailable; verify server status before retrying.";
 } elseif ($body === false || $status < 200 || $status >= 300) {
     throw new RuntimeException("Payout request returned HTTP " . $status);
 } else {
