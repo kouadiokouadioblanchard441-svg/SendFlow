@@ -61,6 +61,20 @@ function requestPath(req: Connect.IncomingMessage) {
   };
 }
 
+function normalizedRequestPath(pathname: string) {
+  let normalized = pathname;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const decoded = decodeURIComponent(normalized);
+      if (decoded === normalized) break;
+      normalized = decoded;
+    } catch {
+      break;
+    }
+  }
+  return normalized.replaceAll("\\", "/").replace(/\/{2,}/gu, "/");
+}
+
 function failureKey(req: Connect.IncomingMessage) {
   // Development Vite is not an authority for production client IPs. Never
   // trust caller-supplied forwarding headers for this local rate-limit bucket.
@@ -117,24 +131,30 @@ function protectAdminDevRoutes(basePath: string): Connect.NextHandleFunction {
   return (req, res, next) => {
     const configuration = getAdminGateConfiguration(process.env);
     const { pathname, hasQuery } = requestPath(req);
-    const isAdminEntry = pathname === PRIVATE_DEV_ENTRY
-      || pathname === "/src/admin-main.tsx"
-      || pathname === "/src/admin-app.tsx"
-      || /^\/src\/pages\/admin(?:[-.]|\/)/u.test(pathname)
-      || /^\/src\/components\/admin-/u.test(pathname)
-      || /^\/src\/lib\/admin-/u.test(pathname);
-
-    if (isAdminEntry && !hasValidAdminGateCookie(req.headers.cookie, process.env)) {
-      sendNotFound(req, res);
-      return;
-    }
-
+    const normalizedPath = normalizedRequestPath(pathname);
     const exactGatePath = Boolean(
       configuration
       && !hasQuery
       && !isKnownSitePage(req.headers.host ?? "", configuration.path, basePath)
       && constantTimeSecretMatch(pathname, configuration.path),
     );
+    const isAdminEntry = normalizedPath === PRIVATE_DEV_ENTRY
+      || normalizedPath === "/src/admin-main.tsx"
+      || normalizedPath === "/src/admin-app.tsx"
+      || /^\/src\/pages\/admin(?:[-.]|\/)/u.test(normalizedPath)
+      || /^\/src\/components\/admin-/u.test(normalizedPath)
+      || /^\/src\/lib\/admin-/u.test(normalizedPath);
+
+    if (isAdminEntry && !hasValidAdminGateCookie(req.headers.cookie, process.env)) {
+      sendNotFound(req, res);
+      return;
+    }
+
+    if (/^\/admin(?:\/|$)/iu.test(normalizedPath) && !exactGatePath) {
+      sendNotFound(req, res);
+      return;
+    }
+
     if (!exactGatePath || !configuration) {
       next();
       return;

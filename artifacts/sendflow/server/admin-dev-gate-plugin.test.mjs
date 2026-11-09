@@ -83,7 +83,16 @@ function request(server, path, { method = "GET", body = "", cookie } = {}) {
 
 test("Vite development cannot expose the login entry through alternate paths", async (t) => {
   const server = await startDevGate(t);
-  for (const path of ["/admin.html", "/src/admin-main.tsx", "/src/admin-app.tsx"]) {
+  for (const path of [
+    "/admin",
+    "/admin/sign-in",
+    "/ADMIN",
+    "/%61dmin/sign-in",
+    "/admin.html",
+    "/%61dmin.html",
+    "/src/admin-main.tsx",
+    "/src/admin-app.tsx",
+  ]) {
     const response = await request(server, path);
     assert.equal(response.status, 404, path);
     assert.equal(response.body, "404 Not Found", path);
