@@ -1223,6 +1223,8 @@ export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMax
 
 
 export const getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandRegExp = new RegExp('^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$');
+export const getPublicPaymentLinkResponseMonthlyLimitMessageMax = 300;
+
 
 
 export const GetPublicPaymentLinkResponse = zod.object({
@@ -1251,13 +1253,15 @@ export const GetPublicPaymentLinkResponse = zod.object({
 }))
 })),
   "paymentAvailable": zod.boolean(),
-  "simulationAvailable": zod.boolean()
+  "simulationAvailable": zod.boolean(),
+  "monthlyLimitReached": zod.boolean(),
+  "monthlyLimitMessage": zod.string().max(getPublicPaymentLinkResponseMonthlyLimitMessageMax).nullable()
 })
 
 
 /**
- * Starts only when LinkFlow payment execution is explicitly enabled by the server. The provider dispatch is persisted before the external request; browser data cannot set a final state.
- * @summary Start a server-owned FeexPay payment attempt for an active public link
+ * Starts only when LinkFlow payment execution is explicitly enabled by the server and the merchant's monthly cap has enough remaining capacity. The provider dispatch is persisted before the external request; browser data cannot set a final state.
+ * @summary Start a server-owned payment attempt for an active public link
  */
 export const startPublicPaymentLinkAttemptPathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
 
@@ -1435,7 +1439,7 @@ export const ConfirmPublicPaymentLinkAttemptOtpResponse = zod.object({
 
 
 /**
- * @summary Calculate a fixed-link payer total using server-owned operator rates
+ * @summary Calculate a fixed-link payer total and validate the merchant's remaining monthly cap
  */
 export const getPublicPaymentLinkQuotePathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
 export const getPublicPaymentLinkQuotePathCountryCodeRegExp = new RegExp('^[a-z]{2}$');
@@ -1468,7 +1472,7 @@ export const GetPublicPaymentLinkQuoteResponse = zod.object({
 
 
 /**
- * @summary Calculate the payer's total using server-owned payment-link and operator rates
+ * @summary Calculate the payer total and validate the merchant's remaining monthly cap
  */
 export const quotePublicPaymentLinkPathTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
 export const quotePublicPaymentLinkPathCountryCodeRegExp = new RegExp('^[a-z]{2}$');
@@ -2166,6 +2170,10 @@ export const GetDeveloperPublicPaymentSessionHeader = zod.object({
   "X-SendFlow-Client-Token": zod.string().min(getDeveloperPublicPaymentSessionHeaderXSendFlowClientTokenMin).max(getDeveloperPublicPaymentSessionHeaderXSendFlowClientTokenMax)
 })
 
+export const getDeveloperPublicPaymentSessionResponseMonthlyLimitMessageMax = 300;
+
+
+
 export const GetDeveloperPublicPaymentSessionResponse = zod.object({
   "id": zod.uuid(),
   "merchantName": zod.string(),
@@ -2175,6 +2183,8 @@ export const GetDeveloperPublicPaymentSessionResponse = zod.object({
   "amountMinor": zod.int(),
   "currency": zod.enum(['XOF']),
   "expiresAt": zod.coerce.date(),
+  "monthlyLimitReached": zod.boolean(),
+  "monthlyLimitMessage": zod.string().max(getDeveloperPublicPaymentSessionResponseMonthlyLimitMessageMax).nullable(),
   "countries": zod.array(zod.object({
   "code": zod.string(),
   "name": zod.string(),
@@ -2196,7 +2206,7 @@ export const GetDeveloperPublicPaymentSessionResponse = zod.object({
 
 
 /**
- * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
+ * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged, and its net wallet credit must fit within the merchant's monthly cap. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
  * @summary Start a direct Mobile Money payment attempt
  */
 export const StartDeveloperDirectPaymentParams = zod.object({
@@ -2329,7 +2339,36 @@ export const GetCurrentAccountLimitResponse = zod.object({
 
 
 /**
- * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or the applicable monthly incoming-payment cap. The cap depends on identity status and any administrator-set user override; reaching it blocks outgoing operations only, not incoming payments. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * Returns server-calculated credited receipts, pending payment reservations, the applicable cap, and whether new payments and outgoing operations are blocked. The client does not calculate cap eligibility.
+ * @summary Read the authenticated account's monthly payment cap status
+ */
+export const getCurrentMonthlyIncomingPolicyResponseReceivedMinorMin = 0;
+export const getCurrentMonthlyIncomingPolicyResponseReceivedMinorMax = 9007199254740991;
+
+export const getCurrentMonthlyIncomingPolicyResponsePendingReservedMinorMin = 0;
+export const getCurrentMonthlyIncomingPolicyResponsePendingReservedMinorMax = 9007199254740991;
+
+export const getCurrentMonthlyIncomingPolicyResponseEffectiveLimitMinorMin = 0;
+export const getCurrentMonthlyIncomingPolicyResponseEffectiveLimitMinorMax = 2147483647;
+
+export const getCurrentMonthlyIncomingPolicyResponseMessageMax = 300;
+
+
+
+export const GetCurrentMonthlyIncomingPolicyResponse = zod.object({
+  "identityVerified": zod.boolean(),
+  "receivedMinor": zod.int().min(getCurrentMonthlyIncomingPolicyResponseReceivedMinorMin).max(getCurrentMonthlyIncomingPolicyResponseReceivedMinorMax),
+  "pendingReservedMinor": zod.int().min(getCurrentMonthlyIncomingPolicyResponsePendingReservedMinorMin).max(getCurrentMonthlyIncomingPolicyResponsePendingReservedMinorMax),
+  "effectiveLimitMinor": zod.int().min(getCurrentMonthlyIncomingPolicyResponseEffectiveLimitMinorMin).max(getCurrentMonthlyIncomingPolicyResponseEffectiveLimitMinorMax),
+  "limitReached": zod.boolean(),
+  "message": zod.string().max(getCurrentMonthlyIncomingPolicyResponseMessageMax).nullable(),
+  "periodStart": zod.coerce.date(),
+  "periodEnd": zod.coerce.date()
+})
+
+
+/**
+ * Requires an authenticated session with a recently verified PIN. Rejects outgoing quotes when the account's monthly payment cap is reached. The cap depends on identity status and any administrator-set user override; reaching it blocks new incoming payments and outgoing operations. A quote does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuoteBodySourceOperatorIdMin = 2;
@@ -4669,6 +4708,9 @@ export const getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMax 
 export const getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMin = 0;
 export const getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMax = 9007199254740991;
 
+export const getAdminUserResponseMonthlyIncomingPolicyPendingReservedMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyPendingReservedMinorMax = 9007199254740991;
+
 export const getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMin = 0;
 export const getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMax = 2147483647;
 
@@ -4726,10 +4768,12 @@ export const GetAdminUserResponse = zod.object({
   "monthlyIncomingPolicy": zod.object({
   "identityVerified": zod.boolean(),
   "receivedMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMax),
+  "pendingReservedMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyPendingReservedMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyPendingReservedMinorMax),
   "unverifiedLimitMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMax),
   "verifiedLimitMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMax),
   "overrideMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax).nullable(),
   "effectiveLimitMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax),
+  "limitReached": zod.boolean(),
   "periodStart": zod.coerce.date(),
   "periodEnd": zod.coerce.date()
 })
@@ -4945,7 +4989,7 @@ export const GetAdminTransactionResponse = zod.object({
 
 
 /**
- * Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. The cap only blocks outgoing operations; incoming payments remain allowed.
+ * Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payments and outgoing operations; pending provider attempts already started can still reach their verified final result.
  * @summary Set or clear a user's monthly incoming limit override
  */
 

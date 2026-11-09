@@ -4,6 +4,15 @@ import { useParams } from 'wouter';
 import { ShieldCheck } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   getPublicPaymentLinkAttemptStatus,
   getGetPublicPaymentLinkQueryKey,
   useGetPublicPaymentLink,
@@ -46,6 +55,14 @@ function formatMoney(minor: number, currency: string, decimals: number) {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(minor / (10 ** decimals));
+}
+
+function monthlyLimitPopupCopy(error: unknown): string | null {
+  if (typeof error !== 'object' || error === null || !('data' in error)) return null;
+  const data = (error as { data?: unknown }).data;
+  if (typeof data !== 'object' || data === null || !('code' in data)
+    || data.code !== 'merchant_monthly_limit_reached') return null;
+  return 'Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.';
 }
 
 function parseAmountInputMinor(value: string, decimals: number): number | null {
@@ -160,6 +177,7 @@ export default function PublicPaymentLinkPage() {
   const [preAcquiredOtpChallenge, setPreAcquiredOtpChallenge] = useState<OtpChallenge | null>(null);
   const [preAcquiredOtpError, setPreAcquiredOtpError] = useState<string | null>(null);
   const [attemptOtpError, setAttemptOtpError] = useState<string | null>(null);
+  const [monthlyLimitPopup, setMonthlyLimitPopup] = useState<string | null>(null);
   const [countdownNow, setCountdownNow] = useState(() => Date.now());
   const [paymentRequestKey, setPaymentRequestKey] = useState('');
   const [storageHydratedToken, setStorageHydratedToken] = useState('');
@@ -171,6 +189,11 @@ export default function PublicPaymentLinkPage() {
   activeTokenRef.current = token;
 
   const link = linkQuery.data;
+  useEffect(() => {
+    if (link?.monthlyLimitReached && link.monthlyLimitMessage) {
+      setMonthlyLimitPopup(link.monthlyLimitMessage);
+    }
+  }, [link?.monthlyLimitMessage, link?.monthlyLimitReached]);
   const expiredLinkForDisplay = link?.state === 'expired'
     ? link
     : isExpiredLinkPreview
@@ -430,7 +453,7 @@ export default function PublicPaymentLinkPage() {
     });
   };
   const startRealPayment = () => {
-    if (!link || !country || !operator || !payerFormValid || !link.paymentAvailable || !paymentRecoveryAvailable || !requestedAmountValid) return;
+    if (!link || link.monthlyLimitReached || !country || !operator || !payerFormValid || !link.paymentAvailable || !paymentRecoveryAvailable || !requestedAmountValid) return;
     const idempotencyKey = paymentRequestKey || window.crypto.randomUUID();
     try {
       const requestStorageKey = paymentStorageKey(token, 'idempotency');
@@ -459,6 +482,11 @@ export default function PublicPaymentLinkPage() {
     startPaymentMutation.mutate({ token, data }, {
       onSuccess: (attempt) => persistStartedAttempt(attempt, token),
       onError: (error) => {
+        const monthlyLimitMessage = monthlyLimitPopupCopy(error);
+        if (monthlyLimitMessage) {
+          setMonthlyLimitPopup(monthlyLimitMessage);
+          return;
+        }
         const challenge = getPreAcquiredOtpChallenge(error);
         if (challenge && activeTokenRef.current === token) setPreAcquiredOtpChallenge(challenge);
       },
@@ -477,6 +505,11 @@ export default function PublicPaymentLinkPage() {
       persistStartedAttempt(attempt, token);
       return true;
     } catch (error) {
+      const monthlyLimitMessage = monthlyLimitPopupCopy(error);
+      if (monthlyLimitMessage) {
+        setMonthlyLimitPopup(monthlyLimitMessage);
+        return false;
+      }
       setPreAcquiredOtpError(getSafeApiErrorCopy(error).message);
       return false;
     }
@@ -727,6 +760,20 @@ export default function PublicPaymentLinkPage() {
 
   return (
     <main className="sendflow-public-pay-shell">
+      <AlertDialog
+        open={Boolean(monthlyLimitPopup)}
+        onOpenChange={(open) => { if (!open) setMonthlyLimitPopup(null); }}
+      >
+        <AlertDialogContent data-testid="dialog-merchant-monthly-limit">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limite mensuelle du marchand atteinte</AlertDialogTitle>
+            <AlertDialogDescription>{monthlyLimitPopup}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction data-testid="button-dismiss-merchant-monthly-limit">Compris</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="sendflow-public-pay-layout">
         <header className="sendflow-pay-brand">
           <img className="sendflow-pay-wordmark" src={sendflowWordmark} alt="SendFlow" />
@@ -949,7 +996,17 @@ export default function PublicPaymentLinkPage() {
             </aside>
           )}
 
-          {previewSimulationAvailable ? (
+          {link.monthlyLimitReached && !previewSimulationAvailable ? (
+            <>
+              <div className="sendflow-pay-unavailable-note" role="alert" data-testid="status-merchant-monthly-limit-reached">
+                <span><ShieldCheck size={18} /></span>
+                <p><strong>{link.monthlyLimitMessage ?? 'Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.'}</strong></p>
+              </div>
+              <button type="button" className="sendflow-pay-submit" disabled aria-disabled="true" data-testid="button-pay-monthly-limit-reached">
+                Paiement indisponible
+              </button>
+            </>
+          ) : previewSimulationAvailable ? (
             <>
               {simulateMutation.isError && (
                 <div className="sendflow-pay-inline-error" role="alert">
@@ -967,7 +1024,7 @@ export default function PublicPaymentLinkPage() {
                 {simulateMutation.isPending ? 'Préparation…' : 'Tester le parcours de paiement'}
               </button>
             </>
-          ) : link.paymentAvailable ? (
+          ) : link.paymentAvailable && !link.monthlyLimitReached ? (
             <>
               {startPaymentMutation.isError && (
                 <div className="sendflow-pay-inline-error" role="alert">
@@ -996,7 +1053,11 @@ export default function PublicPaymentLinkPage() {
               <div className="sendflow-pay-unavailable-note" role="status" data-testid="status-payment-unavailable">
                 <span><ShieldCheck size={18} /></span>
                 <p>
-                  <strong>{link.paymentAvailable ? 'La confirmation de paiement n’est pas encore activée.' : 'Le paiement en ligne est momentanément indisponible.'}</strong>
+                  <strong>{link.monthlyLimitReached
+                    ? link.monthlyLimitMessage ?? 'Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.'
+                    : link.paymentAvailable
+                      ? 'La confirmation de paiement n’est pas encore activée.'
+                      : 'Le paiement en ligne est momentanément indisponible.'}</strong>
                 </p>
               </div>
               <button type="button" className="sendflow-pay-submit" disabled aria-disabled="true" data-testid="button-pay-unavailable">

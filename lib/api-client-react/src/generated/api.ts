@@ -76,6 +76,7 @@ import type {
   CreateAdminCountryRequest,
   CreatePaymentAggregatorRequest,
   CurrentAccount,
+  CurrentMonthlyIncomingPolicy,
   CustomerAuthResult,
   CustomerBiometricOptions,
   CustomerBiometricStatus,
@@ -3946,8 +3947,8 @@ export const getStartPublicPaymentLinkAttemptUrl = (token: string,) => {
 }
 
 /**
- * Starts only when LinkFlow payment execution is explicitly enabled by the server. The provider dispatch is persisted before the external request; browser data cannot set a final state.
- * @summary Start a server-owned FeexPay payment attempt for an active public link
+ * Starts only when LinkFlow payment execution is explicitly enabled by the server and the merchant's monthly cap has enough remaining capacity. The provider dispatch is persisted before the external request; browser data cannot set a final state.
+ * @summary Start a server-owned payment attempt for an active public link
  */
 export const startPublicPaymentLinkAttempt = async (token: string,
     publicPaymentLinkAttemptInput: PublicPaymentLinkAttemptInput, options?: Parameters<typeof customFetch>[1]): Promise<PublicPaymentLinkAttemptCreated> => {
@@ -4014,7 +4015,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type StartPublicPaymentLinkAttemptMutationVariables = {token: string;data: BodyType<PublicPaymentLinkAttemptInput>}
 
     /**
- * @summary Start a server-owned FeexPay payment attempt for an active public link
+ * @summary Start a server-owned payment attempt for an active public link
  */
 export const useStartPublicPaymentLinkAttempt = <TError = ErrorType<ErrorEnvelope | DeveloperOtpRequiredError | void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startPublicPaymentLinkAttempt>>, TError,StartPublicPaymentLinkAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -4205,7 +4206,7 @@ export const getGetPublicPaymentLinkQuoteUrl = (token: string,
 }
 
 /**
- * @summary Calculate a fixed-link payer total using server-owned operator rates
+ * @summary Calculate a fixed-link payer total and validate the merchant's remaining monthly cap
  */
 export const getPublicPaymentLinkQuote = async (token: string,
     countryCode: string,
@@ -4233,7 +4234,7 @@ export const getGetPublicPaymentLinkQuoteQueryKey = (token: string,
     }
 
 
-export const getGetPublicPaymentLinkQuoteQueryOptions = <TData = Awaited<ReturnType<typeof getPublicPaymentLinkQuote>>, TError = ErrorType<void>>(token: string,
+export const getGetPublicPaymentLinkQuoteQueryOptions = <TData = Awaited<ReturnType<typeof getPublicPaymentLinkQuote>>, TError = ErrorType<void | ErrorEnvelope>>(token: string,
     countryCode: string,
     operatorId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicPaymentLinkQuote>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
@@ -4254,14 +4255,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPublicPaymentLinkQuoteQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicPaymentLinkQuote>>>
-export type GetPublicPaymentLinkQuoteQueryError = ErrorType<void>
+export type GetPublicPaymentLinkQuoteQueryError = ErrorType<void | ErrorEnvelope>
 
 
 /**
- * @summary Calculate a fixed-link payer total using server-owned operator rates
+ * @summary Calculate a fixed-link payer total and validate the merchant's remaining monthly cap
  */
 
-export function useGetPublicPaymentLinkQuote<TData = Awaited<ReturnType<typeof getPublicPaymentLinkQuote>>, TError = ErrorType<void>>(
+export function useGetPublicPaymentLinkQuote<TData = Awaited<ReturnType<typeof getPublicPaymentLinkQuote>>, TError = ErrorType<void | ErrorEnvelope>>(
  token: string,
     countryCode: string,
     operatorId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicPaymentLinkQuote>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
@@ -4292,7 +4293,7 @@ export const getQuotePublicPaymentLinkUrl = (token: string,
 }
 
 /**
- * @summary Calculate the payer's total using server-owned payment-link and operator rates
+ * @summary Calculate the payer total and validate the merchant's remaining monthly cap
  */
 export const quotePublicPaymentLink = async (token: string,
     countryCode: string,
@@ -4361,7 +4362,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type QuotePublicPaymentLinkMutationVariables = {token: string;countryCode: string;operatorId: string;data: BodyType<PublicPaymentLinkQuoteInput>}
 
     /**
- * @summary Calculate the payer's total using server-owned payment-link and operator rates
+ * @summary Calculate the payer total and validate the merchant's remaining monthly cap
  */
 export const useQuotePublicPaymentLink = <TError = ErrorType<ErrorEnvelope>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quotePublicPaymentLink>>, TError,QuotePublicPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -6013,7 +6014,7 @@ export const getStartDeveloperDirectPaymentUrl = (sessionId: string,) => {
 }
 
 /**
- * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
+ * Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged, and its net wallet credit must fit within the merchant's monthly cap. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
  * @summary Start a direct Mobile Money payment attempt
  */
 export const startDeveloperDirectPayment = async (sessionId: string,
@@ -6254,6 +6255,84 @@ export function useGetCurrentAccountLimit<TData = Awaited<ReturnType<typeof getC
 
 
 
+export const getGetCurrentMonthlyIncomingPolicyUrl = () => {
+
+
+
+
+  return `/api/me/monthly-incoming-policy`
+}
+
+/**
+ * Returns server-calculated credited receipts, pending payment reservations, the applicable cap, and whether new payments and outgoing operations are blocked. The client does not calculate cap eligibility.
+ * @summary Read the authenticated account's monthly payment cap status
+ */
+export const getCurrentMonthlyIncomingPolicy = async ( options?: Parameters<typeof customFetch>[1]): Promise<CurrentMonthlyIncomingPolicy> => {
+
+  return customFetch<CurrentMonthlyIncomingPolicy>(getGetCurrentMonthlyIncomingPolicyUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentMonthlyIncomingPolicyQueryKey = () => {
+    return [
+    `/api/me/monthly-incoming-policy`
+    ] as const;
+    }
+
+
+export const getGetCurrentMonthlyIncomingPolicyQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentMonthlyIncomingPolicy>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentMonthlyIncomingPolicy>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentMonthlyIncomingPolicyQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentMonthlyIncomingPolicy>>> = ({ signal }) => getCurrentMonthlyIncomingPolicy({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentMonthlyIncomingPolicy>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentMonthlyIncomingPolicyQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentMonthlyIncomingPolicy>>>
+export type GetCurrentMonthlyIncomingPolicyQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Read the authenticated account's monthly payment cap status
+ */
+
+export function useGetCurrentMonthlyIncomingPolicy<TData = Awaited<ReturnType<typeof getCurrentMonthlyIncomingPolicy>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentMonthlyIncomingPolicy>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentMonthlyIncomingPolicyQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getCreateCustomerTransferQuoteUrl = () => {
 
 
@@ -6263,7 +6342,7 @@ export const getCreateCustomerTransferQuoteUrl = () => {
 }
 
 /**
- * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or the applicable monthly incoming-payment cap. The cap depends on identity status and any administrator-set user override; reaching it blocks outgoing operations only, not incoming payments. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. Rejects outgoing quotes when the account's monthly payment cap is reached. The cap depends on identity status and any administrator-set user override; reaching it blocks new incoming payments and outgoing operations. A quote does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuote = async (transferQuoteInput: TransferQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<TransferQuoteResult> => {
@@ -10977,7 +11056,7 @@ export const getUpdateAdminUserMonthlyIncomingLimitUrl = (userId: string,) => {
 }
 
 /**
- * Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. The cap only blocks outgoing operations; incoming payments remain allowed.
+ * Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payments and outgoing operations; pending provider attempts already started can still reach their verified final result.
  * @summary Set or clear a user's monthly incoming limit override
  */
 export const updateAdminUserMonthlyIncomingLimit = async (userId: string,

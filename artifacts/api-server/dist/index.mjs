@@ -212842,6 +212842,7 @@ var getPublicPaymentLinkResponseCountriesItemOperatorsItemLogoUrlMax = 256;
 var getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMin = 3;
 var getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandMax = 40;
 var getPublicPaymentLinkResponseCountriesItemOperatorsItemOtpCommandRegExp = new RegExp("^[*#](?:[0-9*#]{1,38}|[0-9*#]*\\{amount\\}[0-9*#]*)#$");
+var getPublicPaymentLinkResponseMonthlyLimitMessageMax = 300;
 var GetPublicPaymentLinkResponse = object({
   "state": _enum2(["active", "expired"]),
   "merchantName": string2().min(1).max(getPublicPaymentLinkResponseMerchantNameMax),
@@ -212868,7 +212869,9 @@ var GetPublicPaymentLinkResponse = object({
     }))
   })),
   "paymentAvailable": boolean3(),
-  "simulationAvailable": boolean3()
+  "simulationAvailable": boolean3(),
+  "monthlyLimitReached": boolean3(),
+  "monthlyLimitMessage": string2().max(getPublicPaymentLinkResponseMonthlyLimitMessageMax).nullable()
 });
 var startPublicPaymentLinkAttemptPathTokenRegExp = new RegExp("^[A-Za-z0-9_-]{43}$");
 var StartPublicPaymentLinkAttemptParams = object({
@@ -213482,6 +213485,7 @@ var GetDeveloperPublicPaymentSessionHeader = object({
   "X-SendFlow-Public-Key": string2().min(getDeveloperPublicPaymentSessionHeaderXSendFlowPublicKeyMin).max(getDeveloperPublicPaymentSessionHeaderXSendFlowPublicKeyMax),
   "X-SendFlow-Client-Token": string2().min(getDeveloperPublicPaymentSessionHeaderXSendFlowClientTokenMin).max(getDeveloperPublicPaymentSessionHeaderXSendFlowClientTokenMax)
 });
+var getDeveloperPublicPaymentSessionResponseMonthlyLimitMessageMax = 300;
 var GetDeveloperPublicPaymentSessionResponse = object({
   "id": uuid3(),
   "merchantName": string2(),
@@ -213491,6 +213495,8 @@ var GetDeveloperPublicPaymentSessionResponse = object({
   "amountMinor": int(),
   "currency": _enum2(["XOF"]),
   "expiresAt": coerce_exports.date(),
+  "monthlyLimitReached": boolean3(),
+  "monthlyLimitMessage": string2().max(getDeveloperPublicPaymentSessionResponseMonthlyLimitMessageMax).nullable(),
   "countries": array(object({
     "code": string2(),
     "name": string2(),
@@ -213596,6 +213602,23 @@ var GetCurrentAccountLimitResponse = object({
   "monthlyLimit": int().min(1),
   "sentAmount": int().min(getCurrentAccountLimitResponseSentAmountMin),
   "remainingAmount": int().min(getCurrentAccountLimitResponseRemainingAmountMin),
+  "periodStart": coerce_exports.date(),
+  "periodEnd": coerce_exports.date()
+});
+var getCurrentMonthlyIncomingPolicyResponseReceivedMinorMin = 0;
+var getCurrentMonthlyIncomingPolicyResponseReceivedMinorMax = 9007199254740991;
+var getCurrentMonthlyIncomingPolicyResponsePendingReservedMinorMin = 0;
+var getCurrentMonthlyIncomingPolicyResponsePendingReservedMinorMax = 9007199254740991;
+var getCurrentMonthlyIncomingPolicyResponseEffectiveLimitMinorMin = 0;
+var getCurrentMonthlyIncomingPolicyResponseEffectiveLimitMinorMax = 2147483647;
+var getCurrentMonthlyIncomingPolicyResponseMessageMax = 300;
+var GetCurrentMonthlyIncomingPolicyResponse = object({
+  "identityVerified": boolean3(),
+  "receivedMinor": int().min(getCurrentMonthlyIncomingPolicyResponseReceivedMinorMin).max(getCurrentMonthlyIncomingPolicyResponseReceivedMinorMax),
+  "pendingReservedMinor": int().min(getCurrentMonthlyIncomingPolicyResponsePendingReservedMinorMin).max(getCurrentMonthlyIncomingPolicyResponsePendingReservedMinorMax),
+  "effectiveLimitMinor": int().min(getCurrentMonthlyIncomingPolicyResponseEffectiveLimitMinorMin).max(getCurrentMonthlyIncomingPolicyResponseEffectiveLimitMinorMax),
+  "limitReached": boolean3(),
+  "message": string2().max(getCurrentMonthlyIncomingPolicyResponseMessageMax).nullable(),
   "periodStart": coerce_exports.date(),
   "periodEnd": coerce_exports.date()
 });
@@ -215126,6 +215149,8 @@ var getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMin = 0;
 var getAdminUserResponseFinancialTotalsFeesByKindInternationalMinorMax = 9007199254740991;
 var getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMin = 0;
 var getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMax = 9007199254740991;
+var getAdminUserResponseMonthlyIncomingPolicyPendingReservedMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyPendingReservedMinorMax = 9007199254740991;
 var getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMin = 0;
 var getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMax = 2147483647;
 var getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMin = 0;
@@ -215177,10 +215202,12 @@ var GetAdminUserResponse = object({
   "monthlyIncomingPolicy": object({
     "identityVerified": boolean3(),
     "receivedMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyReceivedMinorMax),
+    "pendingReservedMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyPendingReservedMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyPendingReservedMinorMax),
     "unverifiedLimitMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyUnverifiedLimitMinorMax),
     "verifiedLimitMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyVerifiedLimitMinorMax),
     "overrideMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax).nullable(),
     "effectiveLimitMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax),
+    "limitReached": boolean3(),
     "periodStart": coerce_exports.date(),
     "periodEnd": coerce_exports.date()
   })
@@ -215743,6 +215770,9 @@ function hasReachedUnverifiedIncomingLimit(receivedMinor, limitMinor) {
 function isMonthlyIncomingLimitReached(receivedMinor, limitMinor) {
   return hasReachedUnverifiedIncomingLimit(receivedMinor, limitMinor);
 }
+function isMonthlyIncomingAmountAllowed(committedMinor, amountMinor, limitMinor) {
+  return Number.isSafeInteger(committedMinor) && committedMinor >= 0 && Number.isSafeInteger(amountMinor) && amountMinor > 0 && Number.isSafeInteger(limitMinor) && limitMinor >= 0 && committedMinor < limitMinor && amountMinor <= limitMinor - committedMinor;
+}
 function resolveMonthlyIncomingLimit(identityVerified, overrideMinor, unverifiedLimitMinor, verifiedLimitMinor) {
   if (overrideMinor !== null && (!Number.isSafeInteger(overrideMinor) || overrideMinor < 0 || overrideMinor > 2147483647)) {
     throw new Error("Invalid user-specific monthly incoming limit");
@@ -215795,22 +215825,23 @@ async function loadPaymentLimits() {
 }
 
 // src/data/unverified-incoming-policy.ts
-async function getMonthlyIncomingPolicy(userId, now = /* @__PURE__ */ new Date()) {
+var pendingIncomingIntentStates = ["created", "collecting", "uncertain", "succeeded"];
+async function getMonthlyIncomingPolicy(userId, now = /* @__PURE__ */ new Date(), reader = db) {
   if (!userId) throw new Error("Authenticated user is required");
   const { periodStart, periodEnd } = getUtcMonthRange(now);
-  const [[user], [limits], [approvedIdentity], [receiptTotal]] = await Promise.all([
-    db.select({
+  const [[user], [limits], [approvedIdentity], [receiptTotal], [pendingTotal]] = await Promise.all([
+    reader.select({
       monthlyIncomingLimitOverrideMinor: usersTable.monthlyIncomingLimitOverrideMinor
     }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
-    db.select({
+    reader.select({
       unverifiedLimitMinor: paymentLimitsTable.maximumUnverifiedIncomingMinor,
       verifiedLimitMinor: paymentLimitsTable.maximumVerifiedIncomingMinor
     }).from(paymentLimitsTable).where(eq(paymentLimitsTable.id, PAYMENT_LIMITS_ID)).limit(1),
-    db.select({ id: customerIdentityRequestsTable.id }).from(customerIdentityRequestsTable).where(and(
+    reader.select({ id: customerIdentityRequestsTable.id }).from(customerIdentityRequestsTable).where(and(
       eq(customerIdentityRequestsTable.userId, userId),
       eq(customerIdentityRequestsTable.status, "approved")
     )).limit(1),
-    db.select({
+    reader.select({
       total: sql`coalesce(sum(${walletLedgerTable.amountMinor}), 0)`
     }).from(walletLedgerTable).where(and(
       eq(walletLedgerTable.userId, userId),
@@ -215819,11 +215850,24 @@ async function getMonthlyIncomingPolicy(userId, now = /* @__PURE__ */ new Date()
       sql`${walletLedgerTable.adminUserId} LIKE 'system:%'`,
       gte(walletLedgerTable.createdAt, periodStart),
       lt(walletLedgerTable.createdAt, periodEnd)
+    )),
+    reader.select({
+      total: sql`coalesce(sum(${paymentIntentsTable.recipientTotalMinor}), 0)`
+    }).from(paymentIntentsTable).innerJoin(transactionsTable, eq(paymentIntentsTable.transactionId, transactionsTable.id)).where(and(
+      eq(transactionsTable.userId, userId),
+      eq(transactionsTable.kind, "deposit"),
+      eq(transactionsTable.status, "pending"),
+      eq(paymentIntentsTable.kind, "deposit"),
+      eq(paymentIntentsTable.currency, "XOF"),
+      inArray(paymentIntentsTable.state, pendingIncomingIntentStates),
+      isNull(paymentIntentsTable.ledgerEntryId)
     ))
   ]);
   if (!user || !limits) throw new Error("Monthly incoming policy is unavailable");
   const receivedMinor = Number(receiptTotal?.total ?? 0);
-  if (!Number.isSafeInteger(receivedMinor) || receivedMinor < 0) {
+  const pendingReservedMinor = Number(pendingTotal?.total ?? 0);
+  const committedMinor = receivedMinor + pendingReservedMinor;
+  if (!Number.isSafeInteger(receivedMinor) || receivedMinor < 0 || !Number.isSafeInteger(pendingReservedMinor) || pendingReservedMinor < 0 || !Number.isSafeInteger(committedMinor)) {
     throw new Error("Monthly incoming receipts are outside the safe integer range");
   }
   const identityVerified = Boolean(approvedIdentity);
@@ -215834,16 +215878,20 @@ async function getMonthlyIncomingPolicy(userId, now = /* @__PURE__ */ new Date()
     limits.unverifiedLimitMinor,
     limits.verifiedLimitMinor
   );
-  const outgoingBlocked = isMonthlyIncomingLimitReached(receivedMinor, effectiveLimitMinor);
-  const blockCode = outgoingBlocked ? !identityVerified && overrideMinor === null ? "identity_verification_required" : "monthly_incoming_limit_reached" : null;
+  const incomingBlocked = isMonthlyIncomingLimitReached(committedMinor, effectiveLimitMinor);
+  const blockCode = incomingBlocked ? !identityVerified && overrideMinor === null ? "identity_verification_required" : "monthly_incoming_limit_reached" : null;
   return {
     identityVerified,
     receivedMinor,
+    pendingReservedMinor,
+    committedMinor,
     unverifiedLimitMinor: limits.unverifiedLimitMinor,
     verifiedLimitMinor: limits.verifiedLimitMinor,
     overrideMinor,
     effectiveLimitMinor,
-    outgoingBlocked,
+    incomingBlocked,
+    outgoingBlocked: incomingBlocked,
+    limitReached: incomingBlocked,
     blockCode,
     periodStart,
     periodEnd
@@ -215851,9 +215899,12 @@ async function getMonthlyIncomingPolicy(userId, now = /* @__PURE__ */ new Date()
 }
 function monthlyIncomingOutgoingBlockedMessage(policy) {
   if (policy.blockCode === "identity_verification_required") {
-    return "Votre plafond mensuel avant validation de votre identit\xE9 est atteint. Faites v\xE9rifier votre identit\xE9 pour b\xE9n\xE9ficier du plafond mensuel valid\xE9. Les encaissements restent possibles. Aucun transfert n\u2019a \xE9t\xE9 lanc\xE9.";
+    return "Votre plafond mensuel sans identit\xE9 approuv\xE9e est atteint. Les nouveaux encaissements et les sorties sont suspendus. Faites v\xE9rifier votre identit\xE9 pour acc\xE9der au plafond sup\xE9rieur.";
   }
-  return `Votre plafond mensuel d\u2019encaissements de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les encaissements restent possibles ; les sorties seront de nouveau disponibles au prochain mois. Aucun transfert n\u2019a \xE9t\xE9 lanc\xE9.`;
+  return `Votre plafond mensuel de paiements de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements et les sorties sont suspendus jusqu\u2019au renouvellement du mois ou \xE0 une modification autoris\xE9e.`;
+}
+function merchantMonthlyLimitReachedMessage() {
+  return "Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.";
 }
 
 // src/routes/admin.ts
@@ -216189,10 +216240,12 @@ router2.get("/users/:userId", async (req, res) => {
         monthlyIncomingPolicy: {
           identityVerified: monthlyIncomingPolicy.identityVerified,
           receivedMinor: monthlyIncomingPolicy.receivedMinor,
+          pendingReservedMinor: monthlyIncomingPolicy.pendingReservedMinor,
           unverifiedLimitMinor: monthlyIncomingPolicy.unverifiedLimitMinor,
           verifiedLimitMinor: monthlyIncomingPolicy.verifiedLimitMinor,
           overrideMinor: monthlyIncomingPolicy.overrideMinor,
           effectiveLimitMinor: monthlyIncomingPolicy.effectiveLimitMinor,
+          limitReached: monthlyIncomingPolicy.limitReached,
           periodStart: monthlyIncomingPolicy.periodStart.toISOString(),
           periodEnd: monthlyIncomingPolicy.periodEnd.toISOString()
         }
@@ -217780,6 +217833,28 @@ router6.get("/me/account-limit", async (req, res) => {
   } catch (error62) {
     req.log.error({ err: error62, userId }, "Account limit lookup failed");
     res.status(503).json({ error: "Account limit data unavailable" });
+  }
+});
+router6.get("/me/monthly-incoming-policy", async (req, res) => {
+  const session = await requireCustomerSession(req, res, true);
+  if (!session) return;
+  const { userId } = session;
+  res.setHeader("Cache-Control", "no-store, private");
+  try {
+    const policy = await getMonthlyIncomingPolicy(userId);
+    res.json(GetCurrentMonthlyIncomingPolicyResponse.parse({
+      identityVerified: policy.identityVerified,
+      receivedMinor: policy.receivedMinor,
+      pendingReservedMinor: policy.pendingReservedMinor,
+      effectiveLimitMinor: policy.effectiveLimitMinor,
+      limitReached: policy.limitReached,
+      message: policy.limitReached ? monthlyIncomingOutgoingBlockedMessage(policy) : null,
+      periodStart: policy.periodStart.toISOString(),
+      periodEnd: policy.periodEnd.toISOString()
+    }));
+  } catch (error62) {
+    req.log.error({ err: error62, userId }, "Monthly incoming policy lookup failed");
+    res.status(503).json({ error: "Les informations de votre limite mensuelle sont momentan\xE9ment indisponibles." });
   }
 });
 var account_limit_default = router6;
@@ -254293,6 +254368,22 @@ async function startLinkFlowPaymentAttempt(publicToken, input2) {
     if (!merchant || merchant.status !== "active" || !merchant.phoneVerifiedAt || !merchant.phone || !wallet || wallet.status !== "active" || wallet.currency !== "XOF") {
       throw new LinkFlowPaymentError(503, "Le portefeuille du marchand n\u2019est pas pr\xEAt \xE0 recevoir ce paiement.");
     }
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(
+      lockedLink.userId,
+      /* @__PURE__ */ new Date(),
+      tx
+    );
+    if (!isMonthlyIncomingAmountAllowed(
+      monthlyIncomingPolicy.committedMinor,
+      channelContext.amounts.recipientAmountMinor,
+      monthlyIncomingPolicy.effectiveLimitMinor
+    )) {
+      const message = merchantMonthlyLimitReachedMessage();
+      throw new LinkFlowPaymentError(409, message, {
+        code: "merchant_monthly_limit_reached",
+        error: message
+      });
+    }
     const merchantPhone = merchant.phone ? decryptSensitiveDataIfEncrypted(merchant.phone, "user-phone") : null;
     if (!merchantPhone || !/^\+[1-9][0-9]{7,14}$/.test(merchantPhone)) {
       throw new LinkFlowPaymentError(503, "Le compte du marchand ne peut pas recevoir ce paiement.");
@@ -254744,7 +254835,9 @@ function expiredPublicPaymentLinkResponse(link) {
     imagePath: null,
     countries: [],
     paymentAvailable: false,
-    simulationAvailable: false
+    simulationAvailable: false,
+    monthlyLimitReached: false,
+    monthlyLimitMessage: null
   });
 }
 function hasPublicLinkReachedUseLimit(link) {
@@ -254918,6 +255011,8 @@ router24.get("/public/payment-links/:token", async (req, res) => {
       );
     }
     const countries = simulationAvailable ? await loadPreviewCatalogChoices(link) : await loadAvailableChoices(link);
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(link.userId);
+    const monthlyLimitReached = monthlyIncomingPolicy.limitReached;
     const response = {
       state: "active",
       merchantName: link.linkName?.trim() || "SendFlow",
@@ -254932,7 +255027,9 @@ router24.get("/public/payment-links/:token", async (req, res) => {
       // Explicitly disabled by default and restricted to the production Plesk
       // runtime. Replit's shared-database viewer stays simulation-only.
       paymentAvailable: isLinkFlowPaymentExecutionEnabled(),
-      simulationAvailable
+      simulationAvailable,
+      monthlyLimitReached,
+      monthlyLimitMessage: monthlyLimitReached ? merchantMonthlyLimitReachedMessage() : null
     };
     res.json(GetPublicPaymentLinkResponse.parse(response));
   } catch (error62) {
@@ -254953,6 +255050,27 @@ router24.post("/public/payment-links/:token/attempts", async (req, res) => {
       res.setHeader("Retry-After", "60");
       res.status(429).json({ error: "Trop de demandes de paiement. R\xE9essayez dans une minute." });
       return;
+    }
+    const link = await findUsablePublicLink(parsedParams.data.token);
+    if (!link) {
+      res.status(404).json(errorUnavailable);
+      return;
+    }
+    const [existingAttempt] = await db.select({
+      id: customerPaymentLinkAttemptsTable.id
+    }).from(customerPaymentLinkAttemptsTable).where(and(
+      eq(customerPaymentLinkAttemptsTable.paymentLinkId, link.id),
+      eq(customerPaymentLinkAttemptsTable.idempotencyKey, parsedBody.data.idempotencyKey)
+    )).limit(1);
+    if (!existingAttempt) {
+      const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(link.userId);
+      if (monthlyIncomingPolicy.limitReached) {
+        res.status(409).json({
+          code: "merchant_monthly_limit_reached",
+          error: merchantMonthlyLimitReachedMessage()
+        });
+        return;
+      }
     }
     const result = await startLinkFlowPaymentAttempt(parsedParams.data.token, parsedBody.data);
     res.json(StartPublicPaymentLinkAttemptResponse.parse(result));
@@ -255083,6 +255201,18 @@ var handlePublicPaymentLinkQuote = async (req, res) => {
     const amounts = calculateTransferQuoteAmounts(amountMinor, rate.feePercent, false);
     if (!amounts) {
       res.status(400).json({ error: "Le tarif de ce r\xE9seau n\u2019est pas disponible." });
+      return;
+    }
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(link.userId);
+    if (!isMonthlyIncomingAmountAllowed(
+      monthlyIncomingPolicy.committedMinor,
+      amounts.recipientAmountMinor,
+      monthlyIncomingPolicy.effectiveLimitMinor
+    )) {
+      res.status(409).json({
+        code: "merchant_monthly_limit_reached",
+        error: merchantMonthlyLimitReachedMessage()
+      });
       return;
     }
     res.json(QuotePublicPaymentLinkResponse.parse({
@@ -255638,12 +255768,6 @@ router25.get("/me/developer/webhooks/:endpointId/deliveries", async (req, res) =
 router25.post("/v1/payment-sessions", async (req, res) => {
   const key = await requireSecretApiKey(req, res);
   if (!key) return;
-  if (!isLinkFlowPaymentExecutionEnabled()) {
-    res.status(503).json({
-      error: "La cr\xE9ation des paiements API reste d\xE9sactiv\xE9e jusqu\u2019\xE0 l\u2019activation de la confirmation serveur du prestataire."
-    });
-    return;
-  }
   const parsedHeader = CreateDeveloperPaymentSessionHeader.safeParse({
     "Idempotency-Key": req.get("Idempotency-Key")
   });
@@ -255733,6 +255857,20 @@ router25.post("/v1/payment-sessions", async (req, res) => {
         publicKey: key.publicKey,
         expiresAt: existing.expiresAt
       }));
+      return;
+    }
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(key.userId);
+    if (monthlyIncomingPolicy.limitReached) {
+      res.status(409).json({
+        code: "merchant_monthly_limit_reached",
+        error: merchantMonthlyLimitReachedMessage()
+      });
+      return;
+    }
+    if (!isLinkFlowPaymentExecutionEnabled()) {
+      res.status(503).json({
+        error: "La cr\xE9ation des paiements API reste d\xE9sactiv\xE9e jusqu\u2019\xE0 l\u2019activation de la confirmation serveur du prestataire."
+      });
       return;
     }
     const [merchant] = await db.select({
@@ -255906,7 +256044,10 @@ router25.get("/v1/public/payment-sessions/:sessionId", async (req, res) => {
     }
     const latest = await latestLinkFlowAttempt(session.paymentLinkId);
     const state = sessionStateFromAttempt(latest);
-    const countries = state === "succeeded" ? [] : await getPublicPaymentLinkChoices(session.publicToken);
+    const monthlyIncomingPolicy = state === "succeeded" ? null : await getMonthlyIncomingPolicy(session.userId);
+    const inFlightAttempt = state === "waiting" || state === "uncertain";
+    const monthlyLimitReached = Boolean(monthlyIncomingPolicy?.limitReached && !inFlightAttempt);
+    const countries = state === "succeeded" || monthlyLimitReached ? [] : await getPublicPaymentLinkChoices(session.publicToken);
     if (!countries) {
       res.status(404).json({ error: "Cette session de paiement n\u2019est pas disponible." });
       return;
@@ -255920,6 +256061,8 @@ router25.get("/v1/public/payment-sessions/:sessionId", async (req, res) => {
       amountMinor: session.amountMinor,
       currency: session.currency,
       expiresAt: session.expiresAt,
+      monthlyLimitReached,
+      monthlyLimitMessage: monthlyLimitReached ? merchantMonthlyLimitReachedMessage() : null,
       countries
     }));
   } catch {
@@ -255953,10 +256096,30 @@ router25.post("/v1/public/payment-sessions/:sessionId/attempts", async (req, res
       res.status(429).json({ error: "Trop de demandes de paiement. R\xE9essayez dans une minute." });
       return;
     }
+    const attemptIdempotencyKey = deriveDeveloperAttemptIdempotencyKey(
+      params.data.sessionId,
+      headers.data["Idempotency-Key"]
+    );
+    const [existingAttempt] = await db.select({
+      id: customerPaymentLinkAttemptsTable.id
+    }).from(customerPaymentLinkAttemptsTable).where(and(
+      eq(customerPaymentLinkAttemptsTable.paymentLinkId, session.paymentLinkId),
+      eq(customerPaymentLinkAttemptsTable.idempotencyKey, attemptIdempotencyKey)
+    )).limit(1);
+    if (!existingAttempt) {
+      const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(session.userId);
+      if (monthlyIncomingPolicy.limitReached) {
+        res.status(409).json({
+          code: "merchant_monthly_limit_reached",
+          error: merchantMonthlyLimitReachedMessage()
+        });
+        return;
+      }
+    }
     const result = await startLinkFlowPaymentAttempt(session.publicToken, {
       ...body.data,
       amount: String(session.amountMinor),
-      idempotencyKey: deriveDeveloperAttemptIdempotencyKey(params.data.sessionId, headers.data["Idempotency-Key"])
+      idempotencyKey: attemptIdempotencyKey
     });
     res.status(201).json(StartDeveloperDirectPaymentResponse.parse({
       id: params.data.sessionId,

@@ -26,6 +26,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useGetCurrentAccount,
   getGetCurrentAccountQueryKey,
+  useGetCurrentMonthlyIncomingPolicy,
+  getGetCurrentMonthlyIncomingPolicyQueryKey,
   useListPublishedBanners,
   getListPublishedBannersQueryKey,
   useSignOutCustomer,
@@ -85,6 +87,15 @@ export default function AccountPage() {
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
   const accountQuery = useGetCurrentAccount({
     query: { queryKey: getGetCurrentAccountQueryKey(), enabled: isUnlocked },
+  });
+  const monthlyIncomingPolicyQuery = useGetCurrentMonthlyIncomingPolicy({
+    query: {
+      queryKey: getGetCurrentMonthlyIncomingPolicyQueryKey(),
+      enabled: isUnlocked,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: true,
+      refetchInterval: 30_000,
+    },
   });
   const accountProfile = splitFullName(accountQuery.data?.displayName ?? '');
   const accountProfileLabel = [accountProfile.firstName, accountProfile.lastName].filter(Boolean).join(' ') || 'Profil';
@@ -263,6 +274,19 @@ export default function AccountPage() {
               </span>
             </div>
           </section>
+
+          {monthlyIncomingPolicyQuery.data?.limitReached && (
+            <section
+              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-950"
+              role="alert"
+              data-testid="alert-monthly-payment-limit-reached"
+            >
+              <h2 className="text-base font-bold">Limite mensuelle atteinte</h2>
+              <p className="mt-1 text-sm leading-6">
+                {monthlyIncomingPolicyQuery.data.message}
+              </p>
+            </section>
+          )}
 
           <nav className="sendflow-action-grid" aria-label="Actions principales">
             <ActionTile icon={<Globe2 size={44} strokeWidth={2.2} />} label="Transfert international" onClick={() => { setMenuOpen(false); setSheet(null); setLocation('/international-transfer'); }} testId="button-transfer-international" />

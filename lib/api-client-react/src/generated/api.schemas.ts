@@ -399,6 +399,11 @@ export interface AdminUserMonthlyIncomingPolicy {
   receivedMinor: number;
   /**
      * @minimum 0
+     * @maximum 9007199254740991
+     */
+  pendingReservedMinor: number;
+  /**
+     * @minimum 0
      * @maximum 2147483647
      */
   unverifiedLimitMinor: number;
@@ -418,6 +423,7 @@ export interface AdminUserMonthlyIncomingPolicy {
      * @maximum 2147483647
      */
   effectiveLimitMinor: number;
+  limitReached: boolean;
   periodStart: string;
   periodEnd: string;
 }
@@ -689,6 +695,33 @@ export interface CurrentAccount {
   /** @nullable */
   countryCode?: string | null;
   wallet: WalletSummary;
+}
+
+export interface CurrentMonthlyIncomingPolicy {
+  identityVerified: boolean;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  receivedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  pendingReservedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  effectiveLimitMinor: number;
+  limitReached: boolean;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  message: string | null;
+  periodStart: string;
+  periodEnd: string;
 }
 
 export interface CustomerProfile {
@@ -1061,6 +1094,12 @@ export interface PublicPaymentLink {
   countries: PublicPaymentLinkCountry[];
   paymentAvailable: boolean;
   simulationAvailable: boolean;
+  monthlyLimitReached: boolean;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  monthlyLimitMessage: string | null;
 }
 
 export interface PublicPaymentLinkAttemptInput {
@@ -3574,6 +3613,12 @@ export interface DeveloperPublicPaymentSession {
   amountMinor: number;
   currency: DeveloperPublicPaymentSessionCurrency;
   expiresAt: string;
+  monthlyLimitReached: boolean;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  monthlyLimitMessage: string | null;
   countries: DeveloperPublicPaymentSessionCountriesItem[];
 }
 

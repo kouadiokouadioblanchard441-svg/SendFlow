@@ -41,7 +41,14 @@ import { paydunyaChannelForOperator } from "../providers/paydunya/catalog";
 import { getAggregatorRouteScopeKey } from "../routes/aggregator-catalog";
 import { parseLinkFlowPayerAmount } from "./payment-links";
 import { enqueueDeveloperPaymentEvent } from "./developer-webhook-outbox";
-import { addUnverifiedIncomingAmount } from "./payment-limits-policy";
+import {
+  addUnverifiedIncomingAmount,
+  isMonthlyIncomingAmountAllowed,
+} from "./payment-limits-policy";
+import {
+  getMonthlyIncomingPolicy,
+  merchantMonthlyLimitReachedMessage,
+} from "../data/unverified-incoming-policy";
 import {
   buildLinkFlowRequestHash,
   deriveLinkFlowPollToken,
@@ -56,12 +63,12 @@ import {
 } from "./linkflow-payment-policy";
 
 export class LinkFlowPaymentError extends Error {
-  readonly statusCode: 400 | 404 | 409 | 429 | 503;
-  readonly responseBody?: DeveloperOtpRequiredError;
+  readonly statusCode: 400 | 403 | 404 | 409 | 429 | 503;
+  readonly responseBody?: DeveloperOtpRequiredError | { error: string; code: string };
   constructor(
-    statusCode: 400 | 404 | 409 | 429 | 503,
+    statusCode: 400 | 403 | 404 | 409 | 429 | 503,
     message: string,
-    responseBody?: DeveloperOtpRequiredError,
+    responseBody?: DeveloperOtpRequiredError | { error: string; code: string },
   ) {
     super(message);
     this.name = "LinkFlowPaymentError";
@@ -799,6 +806,22 @@ export async function startLinkFlowPaymentAttempt(
     if (!merchant || merchant.status !== "active" || !merchant.phoneVerifiedAt || !merchant.phone ||
       !wallet || wallet.status !== "active" || wallet.currency !== "XOF") {
       throw new LinkFlowPaymentError(503, "Le portefeuille du marchand n’est pas prêt à recevoir ce paiement.");
+    }
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(
+      lockedLink.userId,
+      new Date(),
+      tx,
+    );
+    if (!isMonthlyIncomingAmountAllowed(
+      monthlyIncomingPolicy.committedMinor,
+      channelContext.amounts.recipientAmountMinor,
+      monthlyIncomingPolicy.effectiveLimitMinor,
+    )) {
+      const message = merchantMonthlyLimitReachedMessage();
+      throw new LinkFlowPaymentError(409, message, {
+        code: "merchant_monthly_limit_reached",
+        error: message,
+      });
     }
     const merchantPhone = merchant.phone
       ? decryptSensitiveDataIfEncrypted(merchant.phone, "user-phone")

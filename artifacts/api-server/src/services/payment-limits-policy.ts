@@ -69,6 +69,21 @@ export function isMonthlyIncomingLimitReached(
   return hasReachedUnverifiedIncomingLimit(receivedMinor, limitMinor);
 }
 
+export function isMonthlyIncomingAmountAllowed(
+  committedMinor: number,
+  amountMinor: number,
+  limitMinor: number,
+): boolean {
+  return Number.isSafeInteger(committedMinor)
+    && committedMinor >= 0
+    && Number.isSafeInteger(amountMinor)
+    && amountMinor > 0
+    && Number.isSafeInteger(limitMinor)
+    && limitMinor >= 0
+    && committedMinor < limitMinor
+    && amountMinor <= limitMinor - committedMinor;
+}
+
 export function resolveMonthlyIncomingLimit(
   identityVerified: boolean,
   overrideMinor: number | null,

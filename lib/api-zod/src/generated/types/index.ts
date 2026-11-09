@@ -165,6 +165,7 @@ export * from './countryOperationFlags';
 export * from './createAdminCountryRequest';
 export * from './createPaymentAggregatorRequest';
 export * from './currentAccount';
+export * from './currentMonthlyIncomingPolicy';
 export * from './customerAuthResult';
 export * from './customerAuthResultDeveloperApiKeyPair';
 export * from './customerBiometricOptions';

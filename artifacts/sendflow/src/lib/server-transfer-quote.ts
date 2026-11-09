@@ -42,11 +42,11 @@ export function serverQuoteErrorMessage(error: unknown): string {
     const data = (error as { data?: unknown }).data;
     if (typeof data === 'object' && data !== null && 'code' in data
       && data.code === 'monthly_incoming_limit_reached') {
-      return 'Votre plafond mensuel d’encaissements est atteint. Les encaissements restent possibles ; les sorties seront de nouveau disponibles au prochain mois. Aucun transfert n’a été lancé.';
+      return 'Votre plafond mensuel de paiements est atteint. Les nouveaux encaissements et les sorties sont suspendus jusqu’au renouvellement du mois ou à une modification autorisée. Aucun transfert n’a été lancé.';
     }
   }
   if (isIdentityVerificationRequired(error)) {
-    return 'Votre plafond mensuel sans identité approuvée est atteint. Vérifiez votre identité pour bénéficier du plafond après validation. Les encaissements restent possibles. Aucun transfert n’a été lancé.';
+    return 'Votre plafond mensuel sans identité approuvée est atteint. Les nouveaux encaissements et les sorties sont suspendus. Faites vérifier votre identité pour accéder au plafond après validation. Aucun transfert n’a été lancé.';
   }
   const status = typeof error === 'object' && error !== null && 'status' in error
     ? (error as { status?: unknown }).status

@@ -41,4 +41,10 @@ export interface PublicPaymentLink {
   countries: PublicPaymentLinkCountry[];
   paymentAvailable: boolean;
   simulationAvailable: boolean;
+  monthlyLimitReached: boolean;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  monthlyLimitMessage: string | null;
 }

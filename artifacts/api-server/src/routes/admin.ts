@@ -478,10 +478,12 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
         monthlyIncomingPolicy: {
           identityVerified: monthlyIncomingPolicy.identityVerified,
           receivedMinor: monthlyIncomingPolicy.receivedMinor,
+          pendingReservedMinor: monthlyIncomingPolicy.pendingReservedMinor,
           unverifiedLimitMinor: monthlyIncomingPolicy.unverifiedLimitMinor,
           verifiedLimitMinor: monthlyIncomingPolicy.verifiedLimitMinor,
           overrideMinor: monthlyIncomingPolicy.overrideMinor,
           effectiveLimitMinor: monthlyIncomingPolicy.effectiveLimitMinor,
+          limitReached: monthlyIncomingPolicy.limitReached,
           periodStart: monthlyIncomingPolicy.periodStart.toISOString(),
           periodEnd: monthlyIncomingPolicy.periodEnd.toISOString(),
         },

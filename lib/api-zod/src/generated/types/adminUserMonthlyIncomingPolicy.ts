@@ -15,6 +15,11 @@ export interface AdminUserMonthlyIncomingPolicy {
   receivedMinor: number;
   /**
      * @minimum 0
+     * @maximum 9007199254740991
+     */
+  pendingReservedMinor: number;
+  /**
+     * @minimum 0
      * @maximum 2147483647
      */
   unverifiedLimitMinor: number;
@@ -34,6 +39,7 @@ export interface AdminUserMonthlyIncomingPolicy {
      * @maximum 2147483647
      */
   effectiveLimitMinor: number;
+  limitReached: boolean;
   periodStart: Date;
   periodEnd: Date;
 }

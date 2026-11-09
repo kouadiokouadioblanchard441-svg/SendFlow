@@ -5,6 +5,7 @@ import {
   addUnverifiedIncomingAmount,
   getMinimumForTransfer,
   hasReachedUnverifiedIncomingLimit,
+  isMonthlyIncomingAmountAllowed,
   isMonthlyIncomingLimitReached,
   isValidPaymentLimitValues,
   resolveMonthlyIncomingLimit,
@@ -49,7 +50,7 @@ test("each customer operation selects its own configured minimum", () => {
   assert.equal(getMinimumForTransfer("inter-network", DEFAULT_PAYMENT_LIMITS), 1);
 });
 
-test("monthly receipt caps vary by identity tier, allow user overrides, and block outgoing at the cap", () => {
+test("monthly payment caps vary by identity tier and allow user overrides", () => {
   assert.equal(hasReachedUnverifiedIncomingLimit(19_999, 20_000), false);
   assert.equal(hasReachedUnverifiedIncomingLimit(20_000, 20_000), true);
   assert.equal(isMonthlyIncomingLimitReached(19_999, 20_000), false);
@@ -60,6 +61,14 @@ test("monthly receipt caps vary by identity tier, allow user overrides, and bloc
   assert.equal(resolveMonthlyIncomingLimit(true, null, 20_000, 4_000_000), 4_000_000);
   assert.equal(resolveMonthlyIncomingLimit(false, 75_000, 20_000, 4_000_000), 75_000);
   assert.equal(resolveMonthlyIncomingLimit(true, 75_000, 20_000, 4_000_000), 75_000);
+});
+
+test("incoming payment attempts cannot reach beyond the remaining monthly cap", () => {
+  assert.equal(isMonthlyIncomingAmountAllowed(15_000, 5_000, 20_000), true);
+  assert.equal(isMonthlyIncomingAmountAllowed(15_000, 5_001, 20_000), false);
+  assert.equal(isMonthlyIncomingAmountAllowed(20_000, 1, 20_000), false);
+  assert.equal(isMonthlyIncomingAmountAllowed(19_000, 0, 20_000), false);
+  assert.equal(isMonthlyIncomingAmountAllowed(19_000, 1, 0), false);
 });
 
 test("only receipts credited before identity approval increase the unverified total", () => {

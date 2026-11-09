@@ -1364,7 +1364,7 @@ paths:
             pattern: "^[A-Za-z0-9_-]{43}$"
       responses:
         "200":
-          description: Active link details or the safe expired-link page for a link that expired or was deleted.
+          description: Active link details, including whether the merchant can still receive payments, or the safe expired-link page.
           content:
             application/json:
               schema:
@@ -1385,8 +1385,8 @@ paths:
     post:
       operationId: startPublicPaymentLinkAttempt
       tags: [payment-links]
-      summary: Start a server-owned FeexPay payment attempt for an active public link
-      description: Starts only when LinkFlow payment execution is explicitly enabled by the server. The provider dispatch is persisted before the external request; browser data cannot set a final state.
+      summary: Start a server-owned payment attempt for an active public link
+      description: Starts only when LinkFlow payment execution is explicitly enabled by the server and the merchant's monthly cap has enough remaining capacity. The provider dispatch is persisted before the external request; browser data cannot set a final state.
       parameters:
         - name: token
           in: path
@@ -1422,7 +1422,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "409":
-          description: The idempotency key conflicts or another payment is unresolved.
+          description: The idempotency key conflicts, another payment is unresolved, or the payment would reach or exceed the merchant's monthly cap.
           content:
             application/json:
               schema:
@@ -1524,7 +1524,7 @@ paths:
     get:
       operationId: getPublicPaymentLinkQuote
       tags: [payment-links]
-      summary: Calculate a fixed-link payer total using server-owned operator rates
+      summary: Calculate a fixed-link payer total and validate the merchant's remaining monthly cap
       parameters:
         - name: token
           in: path
@@ -1556,6 +1556,12 @@ paths:
           description: The selected country, operator, or link amount is invalid.
         "404":
           description: The link is unavailable, inactive, expired, or exhausted.
+        "409":
+          description: The payment would exceed the merchant's remaining monthly cap.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
         "429":
           description: Public quote rate limit exceeded.
         "503":
@@ -1563,7 +1569,7 @@ paths:
     post:
       operationId: quotePublicPaymentLink
       tags: [payment-links]
-      summary: Calculate the payer's total using server-owned payment-link and operator rates
+      summary: Calculate the payer total and validate the merchant's remaining monthly cap
       parameters:
         - name: token
           in: path
@@ -1605,6 +1611,12 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "404":
           description: The link is unavailable, inactive, expired, or exhausted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The payment would exceed the merchant's remaining monthly cap.
           content:
             application/json:
               schema:
@@ -2267,12 +2279,12 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "403":
-          description: Merchant account or payment access is not eligible.
+          description: Merchant account or payment access is not eligible, or the monthly payment cap has been reached.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "409":
-          description: Idempotency key was reused for a different request.
+          description: Idempotency key conflict or merchant monthly payment cap reached.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
@@ -2345,7 +2357,7 @@ paths:
           schema: { type: string, minLength: 32, maxLength: 64 }
       responses:
         "200":
-          description: Public payment details and currently available countries/operators.
+          description: Public payment details, available countries/operators, and the merchant's monthly payment availability.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DeveloperPublicPaymentSession" }
@@ -2369,7 +2381,7 @@ paths:
       operationId: startDeveloperDirectPayment
       tags: [developer]
       summary: Start a direct Mobile Money payment attempt
-      description: Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
+      description: Requires the public key and session client token returned by session creation. Only the fixed session amount can be charged, and its net wallet credit must fit within the merchant's monthly cap. If a provider challenge is returned, repeat this request with the same Idempotency-Key, the returned attemptId as reference, and otp.
       parameters:
         - name: sessionId
           in: path
@@ -2412,7 +2424,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "409":
-          description: Request conflicts with an existing attempt.
+          description: Request conflicts with an existing attempt or would exceed the merchant's monthly cap.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorEnvelope" }
@@ -2500,12 +2512,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /me/monthly-incoming-policy:
+    get:
+      operationId: getCurrentMonthlyIncomingPolicy
+      tags: [account]
+      summary: Read the authenticated account's monthly payment cap status
+      description: Returns server-calculated credited receipts, pending payment reservations, the applicable cap, and whether new payments and outgoing operations are blocked. The client does not calculate cap eligibility.
+      security:
+        - sendFlowSession: []
+      responses:
+        "200":
+          description: Current monthly payment-cap status for the signed-in account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentMonthlyIncomingPolicy"
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Customer PIN verification is required or the account is inactive.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Monthly payment-cap data is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /me/transfer-quote:
     post:
       operationId: createCustomerTransferQuote
       tags: [account]
       summary: Validate a transfer and calculate its server-side quote
-      description: Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or the applicable monthly incoming-payment cap. The cap depends on identity status and any administrator-set user override; reaching it blocks outgoing operations only, not incoming payments. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+      description: Requires an authenticated session with a recently verified PIN. Rejects outgoing quotes when the account's monthly payment cap is reached. The cap depends on identity status and any administrator-set user override; reaching it blocks new incoming payments and outgoing operations. A quote does not create a transaction, debit a wallet, or contact an operator.
       security:
         - sendFlowSession: []
       requestBody:
@@ -4823,7 +4868,7 @@ paths:
       operationId: updateAdminUserMonthlyIncomingLimit
       tags: [admin]
       summary: Set or clear a user's monthly incoming limit override
-      description: Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. The cap only blocks outgoing operations; incoming payments remain allowed.
+      description: Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payments and outgoing operations; pending provider attempts already started can still reach their verified final result.
       security:
         - sendFlowSession: []
       parameters:
@@ -5662,13 +5707,15 @@ components:
       properties:
         identityVerified: { type: boolean }
         receivedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        pendingReservedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
         unverifiedLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
         verifiedLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
         overrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
         effectiveLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
+        limitReached: { type: boolean }
         periodStart: { type: string, format: date-time }
         periodEnd: { type: string, format: date-time }
-      required: [identityVerified, receivedMinor, unverifiedLimitMinor, verifiedLimitMinor, overrideMinor, effectiveLimitMinor, periodStart, periodEnd]
+      required: [identityVerified, receivedMinor, pendingReservedMinor, unverifiedLimitMinor, verifiedLimitMinor, overrideMinor, effectiveLimitMinor, limitReached, periodStart, periodEnd]
     AdminUserMonthlyIncomingLimitUpdate:
       type: object
       properties:
@@ -5948,6 +5995,18 @@ components:
       required:
         - userId
         - wallet
+    CurrentMonthlyIncomingPolicy:
+      type: object
+      properties:
+        identityVerified: { type: boolean }
+        receivedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        pendingReservedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        effectiveLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
+        limitReached: { type: boolean }
+        message: { type: ["string", "null"], maxLength: 300 }
+        periodStart: { type: string, format: date-time }
+        periodEnd: { type: string, format: date-time }
+      required: [identityVerified, receivedMinor, pendingReservedMinor, effectiveLimitMinor, limitReached, message, periodStart, periodEnd]
     CustomerProfile:
       type: object
       properties:
@@ -6253,7 +6312,12 @@ components:
           type: boolean
         simulationAvailable:
           type: boolean
-      required: [state, merchantName, description, currency, currencyDecimals, amountMinor, expiresAt, remainingUses, imagePath, countries, paymentAvailable, simulationAvailable]
+        monthlyLimitReached:
+          type: boolean
+        monthlyLimitMessage:
+          type: ["string", "null"]
+          maxLength: 300
+      required: [state, merchantName, description, currency, currencyDecimals, amountMinor, expiresAt, remainingUses, imagePath, countries, paymentAvailable, simulationAvailable, monthlyLimitReached, monthlyLimitMessage]
     PublicPaymentLinkAttemptInput:
       type: object
       properties:
@@ -8626,6 +8690,8 @@ components:
         amountMinor: { type: integer }
         currency: { type: string, enum: [XOF] }
         expiresAt: { type: string, format: date-time }
+        monthlyLimitReached: { type: boolean }
+        monthlyLimitMessage: { type: ["string", "null"], maxLength: 300 }
         countries:
           type: array
           items:
@@ -8651,7 +8717,7 @@ components:
                     otpCommand: { type: ["string", "null"] }
                   required: [id, name, initials, logoUrl, requiresOtp, otpMethod, otpCommand]
             required: [code, name, flag, phonePrefix, minPhoneDigits, maxPhoneDigits, operators]
-      required: [id, merchantName, description, mode, state, amountMinor, currency, expiresAt, countries]
+      required: [id, merchantName, description, mode, state, amountMinor, currency, expiresAt, monthlyLimitReached, monthlyLimitMessage, countries]
     DeveloperDirectPaymentInput:
       type: object
       properties:

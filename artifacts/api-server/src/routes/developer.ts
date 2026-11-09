@@ -50,6 +50,10 @@ import {
 import { consumeDeveloperApiQuota } from "../data/developer-api-quota";
 import { consumePaymentLinkCreationQuota, consumePublicPaymentLinkQuota } from "../data/payment-link-quota";
 import { loadPaymentLimits } from "../data/payment-limits";
+import {
+  getMonthlyIncomingPolicy,
+  merchantMonthlyLimitReachedMessage,
+} from "../data/unverified-incoming-policy";
 import { requireCustomerSession } from "../lib/customer-session";
 import {
   decryptSensitiveData,
@@ -639,12 +643,6 @@ router.get("/me/developer/webhooks/:endpointId/deliveries", async (req, res): Pr
 router.post("/v1/payment-sessions", async (req, res): Promise<void> => {
   const key = await requireSecretApiKey(req, res);
   if (!key) return;
-  if (!isLinkFlowPaymentExecutionEnabled()) {
-    res.status(503).json({
-      error: "La création des paiements API reste désactivée jusqu’à l’activation de la confirmation serveur du prestataire.",
-    });
-    return;
-  }
   const parsedHeader = CreateDeveloperPaymentSessionHeader.safeParse({
     "Idempotency-Key": req.get("Idempotency-Key"),
   });
@@ -738,6 +736,20 @@ router.post("/v1/payment-sessions", async (req, res): Promise<void> => {
         publicKey: key.publicKey,
         expiresAt: existing.expiresAt,
       }));
+      return;
+    }
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(key.userId);
+    if (monthlyIncomingPolicy.limitReached) {
+      res.status(409).json({
+        code: "merchant_monthly_limit_reached",
+        error: merchantMonthlyLimitReachedMessage(),
+      });
+      return;
+    }
+    if (!isLinkFlowPaymentExecutionEnabled()) {
+      res.status(503).json({
+        error: "La création des paiements API reste désactivée jusqu’à l’activation de la confirmation serveur du prestataire.",
+      });
       return;
     }
     const [merchant] = await db.select({
@@ -926,7 +938,14 @@ router.get("/v1/public/payment-sessions/:sessionId", async (req, res): Promise<v
     }
     const latest = await latestLinkFlowAttempt(session.paymentLinkId);
     const state = sessionStateFromAttempt(latest);
-    const countries = state === "succeeded" ? [] : await getPublicPaymentLinkChoices(session.publicToken);
+    const monthlyIncomingPolicy = state === "succeeded"
+      ? null
+      : await getMonthlyIncomingPolicy(session.userId);
+    const inFlightAttempt = state === "waiting" || state === "uncertain";
+    const monthlyLimitReached = Boolean(monthlyIncomingPolicy?.limitReached && !inFlightAttempt);
+    const countries = state === "succeeded" || monthlyLimitReached
+      ? []
+      : await getPublicPaymentLinkChoices(session.publicToken);
     if (!countries) {
       res.status(404).json({ error: "Cette session de paiement n’est pas disponible." });
       return;
@@ -940,6 +959,8 @@ router.get("/v1/public/payment-sessions/:sessionId", async (req, res): Promise<v
       amountMinor: session.amountMinor,
       currency: session.currency,
       expiresAt: session.expiresAt,
+      monthlyLimitReached,
+      monthlyLimitMessage: monthlyLimitReached ? merchantMonthlyLimitReachedMessage() : null,
       countries,
     }));
   } catch {
@@ -976,10 +997,30 @@ router.post("/v1/public/payment-sessions/:sessionId/attempts", async (req, res):
       res.status(429).json({ error: "Trop de demandes de paiement. Réessayez dans une minute." });
       return;
     }
+    const attemptIdempotencyKey = deriveDeveloperAttemptIdempotencyKey(
+      params.data.sessionId,
+      headers.data["Idempotency-Key"],
+    );
+    const [existingAttempt] = await db.select({
+      id: customerPaymentLinkAttemptsTable.id,
+    }).from(customerPaymentLinkAttemptsTable).where(and(
+      eq(customerPaymentLinkAttemptsTable.paymentLinkId, session.paymentLinkId),
+      eq(customerPaymentLinkAttemptsTable.idempotencyKey, attemptIdempotencyKey),
+    )).limit(1);
+    if (!existingAttempt) {
+      const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(session.userId);
+      if (monthlyIncomingPolicy.limitReached) {
+        res.status(409).json({
+          code: "merchant_monthly_limit_reached",
+          error: merchantMonthlyLimitReachedMessage(),
+        });
+        return;
+      }
+    }
     const result = await startLinkFlowPaymentAttempt(session.publicToken, {
       ...body.data,
       amount: String(session.amountMinor),
-      idempotencyKey: deriveDeveloperAttemptIdempotencyKey(params.data.sessionId, headers.data["Idempotency-Key"]),
+      idempotencyKey: attemptIdempotencyKey,
     });
     res.status(201).json(StartDeveloperDirectPaymentResponse.parse({
       id: params.data.sessionId,

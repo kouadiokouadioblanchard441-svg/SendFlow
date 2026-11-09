@@ -1,5 +1,6 @@
 import {
   and,
+  customerPaymentLinkAttemptsTable,
   isNull,
   countriesTable,
   customerPaymentLinksTable,
@@ -51,6 +52,11 @@ import {
   LinkFlowPaymentError,
   startLinkFlowPaymentAttempt,
 } from "../services/linkflow-payment-execution";
+import {
+  getMonthlyIncomingPolicy,
+  merchantMonthlyLimitReachedMessage,
+} from "../data/unverified-incoming-policy";
+import { isMonthlyIncomingAmountAllowed } from "../services/payment-limits-policy";
 
 const router: IRouter = Router();
 const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
@@ -123,6 +129,8 @@ function expiredPublicPaymentLinkResponse(link: PublicLinkRow) {
     countries: [],
     paymentAvailable: false,
     simulationAvailable: false,
+      monthlyLimitReached: false,
+      monthlyLimitMessage: null,
   });
 }
 
@@ -329,6 +337,8 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
     const countries = simulationAvailable
       ? await loadPreviewCatalogChoices(link)
       : await loadAvailableChoices(link);
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(link.userId);
+    const monthlyLimitReached = monthlyIncomingPolicy.limitReached;
     const response = {
       state: "active" as const,
       merchantName: link.linkName?.trim() || "SendFlow",
@@ -346,6 +356,8 @@ router.get("/public/payment-links/:token", async (req, res): Promise<void> => {
       // runtime. Replit's shared-database viewer stays simulation-only.
       paymentAvailable: isLinkFlowPaymentExecutionEnabled(),
       simulationAvailable,
+      monthlyLimitReached,
+      monthlyLimitMessage: monthlyLimitReached ? merchantMonthlyLimitReachedMessage() : null,
     };
     res.json(GetPublicPaymentLinkResponse.parse(response));
   } catch (error) {
@@ -367,6 +379,27 @@ router.post("/public/payment-links/:token/attempts", async (req, res): Promise<v
       res.setHeader("Retry-After", "60");
       res.status(429).json({ error: "Trop de demandes de paiement. Réessayez dans une minute." });
       return;
+    }
+    const link = await findUsablePublicLink(parsedParams.data.token);
+    if (!link) {
+      res.status(404).json(errorUnavailable);
+      return;
+    }
+    const [existingAttempt] = await db.select({
+      id: customerPaymentLinkAttemptsTable.id,
+    }).from(customerPaymentLinkAttemptsTable).where(and(
+      eq(customerPaymentLinkAttemptsTable.paymentLinkId, link.id),
+      eq(customerPaymentLinkAttemptsTable.idempotencyKey, parsedBody.data.idempotencyKey),
+    )).limit(1);
+    if (!existingAttempt) {
+      const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(link.userId);
+      if (monthlyIncomingPolicy.limitReached) {
+        res.status(409).json({
+          code: "merchant_monthly_limit_reached",
+          error: merchantMonthlyLimitReachedMessage(),
+        });
+        return;
+      }
     }
     const result = await startLinkFlowPaymentAttempt(parsedParams.data.token, parsedBody.data);
     res.json(StartPublicPaymentLinkAttemptResponse.parse(result));
@@ -507,6 +540,18 @@ const handlePublicPaymentLinkQuote: RequestHandler = async (req, res): Promise<v
     const amounts = calculateTransferQuoteAmounts(amountMinor, rate.feePercent, false);
     if (!amounts) {
       res.status(400).json({ error: "Le tarif de ce réseau n’est pas disponible." });
+      return;
+    }
+    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(link.userId);
+    if (!isMonthlyIncomingAmountAllowed(
+      monthlyIncomingPolicy.committedMinor,
+      amounts.recipientAmountMinor,
+      monthlyIncomingPolicy.effectiveLimitMinor,
+    )) {
+      res.status(409).json({
+        code: "merchant_monthly_limit_reached",
+        error: merchantMonthlyLimitReachedMessage(),
+      });
       return;
     }
     res.json(QuotePublicPaymentLinkResponse.parse({

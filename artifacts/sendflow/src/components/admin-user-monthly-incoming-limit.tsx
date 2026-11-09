@@ -89,7 +89,7 @@ export function AdminUserMonthlyIncomingLimitSection({
       <CardHeader>
         <CardTitle>Plafond mensuel d’encaissements</CardTitle>
         <CardDescription>
-          Cumul des crédits de paiement confirmés depuis le début du mois (UTC). Atteindre le plafond bloque les sorties, pas les nouveaux encaissements.
+          Cumul reçu depuis le début du mois (UTC). Au plafond, aucun nouveau paiement ni sortie ne peut être lancé.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -103,6 +103,10 @@ export function AdminUserMonthlyIncomingLimitSection({
           <div className="rounded-xl border bg-muted/20 p-4">
             <span className="text-sm text-muted-foreground">Reçu ce mois-ci</span>
             <strong className="mt-2 block tabular-nums">{formatFcfa(policy.receivedMinor)}</strong>
+          </div>
+          <div className="rounded-xl border bg-muted/20 p-4">
+            <span className="text-sm text-muted-foreground">Paiements en cours réservés</span>
+            <strong className="mt-2 block tabular-nums">{formatFcfa(policy.pendingReservedMinor)}</strong>
           </div>
           <div className="rounded-xl border bg-muted/20 p-4">
             <span className="text-sm text-muted-foreground">Plafond actif</span>

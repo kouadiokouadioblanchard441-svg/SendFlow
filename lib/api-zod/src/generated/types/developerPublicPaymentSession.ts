@@ -19,5 +19,11 @@ export interface DeveloperPublicPaymentSession {
   amountMinor: number;
   currency: DeveloperPublicPaymentSessionCurrency;
   expiresAt: Date;
+  monthlyLimitReached: boolean;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  monthlyLimitMessage: string | null;
   countries: DeveloperPublicPaymentSessionCountriesItem[];
 }
