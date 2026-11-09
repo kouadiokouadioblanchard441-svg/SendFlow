@@ -108,10 +108,6 @@ export interface ErrorEnvelope {
   code?: string;
 }
 
-export interface CustomerPortalEligibilityResult {
-  isAuthorized: boolean;
-}
-
 export type EmailOtpSendInput = {
   /**
      * Email associated with the active SendFlow account.
@@ -153,7 +149,7 @@ export type EmailOtpSendInput = {
      * @pattern ^\+[1-9][0-9]{7,14}$
      */
   phone: string;
-  purpose: 'pin_reset' | 'admin_login';
+  purpose: 'pin_reset';
 };
 
 export interface EmailOtpSendResult {
@@ -170,7 +166,6 @@ export const EmailOtpVerifyInputPurpose = {
   signup: 'signup',
   password_reset: 'password_reset',
   pin_reset: 'pin_reset',
-  admin_login: 'admin_login',
 } as const;
 
 export interface EmailOtpVerifyInput {
@@ -3227,33 +3222,54 @@ export interface AdminActionResult {
 }
 
 export interface AdminSignInInput {
+  /** @maxLength 254 */
+  email: string;
   /**
-     * @minLength 9
-     * @maxLength 16
-     * @pattern ^\+[1-9][0-9]{7,14}$
+     * @minLength 1
+     * @maxLength 1024
      */
-  phone: string;
-  challengeId: string;
+  password: string;
+  /** @pattern ^[0-9]{6}$ */
+  totpCode: string;
 }
 
 export interface AdminAccessStatus {
   isAdmin: boolean;
-  pinUnlocked: boolean;
-  canMutate?: boolean;
+  sessionAuthenticated: boolean;
+  canMutate: boolean;
 }
 
-export interface AdminPinInput {
+export type AdminStepUpInputQuery = { [key: string]: unknown };
+
+export interface AdminStepUpInput {
+  /** @pattern ^[0-9]{6}$ */
+  totpCode: string;
+  /** @maxLength 128 */
+  action: string;
+  query?: AdminStepUpInputQuery;
+  payload?: unknown;
+}
+
+export interface AdminStepUpResponse {
   /**
-     * @minLength 8
-     * @maxLength 8
-     * @pattern ^[0-9]{8}$
+     * @minLength 43
+     * @maxLength 43
+     * @pattern ^[A-Za-z0-9_-]{43}$
      */
-  pin: string;
+  stepUpToken: string;
+  /** @maximum 60 */
+  expiresInSeconds: number;
 }
 
-export interface AdminPinUnlockResponse {
-  pinUnlocked: boolean;
-  expiresAt: string;
+export interface AdminSession {
+  id: string;
+  createdAt: string;
+  lastActivityAt: string;
+  idleExpiresAt: string;
+  absoluteExpiresAt: string;
+  /** @nullable */
+  revokedAt: string | null;
+  isCurrent: boolean;
 }
 
 export interface DeveloperApiKeyInput {

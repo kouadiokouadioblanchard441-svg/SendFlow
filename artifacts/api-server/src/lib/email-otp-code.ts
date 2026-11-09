@@ -1,7 +1,7 @@
 import { randomInt, timingSafeEqual } from "node:crypto";
 import { fingerprint } from "./request-security.ts";
 
-export type EmailOtpPurpose = "signup" | "password_reset" | "pin_reset" | "admin_login";
+export type EmailOtpPurpose = "signup" | "password_reset" | "pin_reset";
 
 export const EMAIL_OTP_LIFETIME_SECONDS = 5 * 60;
 

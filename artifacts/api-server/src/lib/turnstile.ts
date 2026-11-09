@@ -10,8 +10,7 @@ export type TurnstileAction =
   | "login"
   | "signup"
   | "password_reset"
-  | "pin_reset"
-  | "admin_login";
+  | "pin_reset";
 export type TurnstileFailureCategory =
   | "missing_token"
   | "invalid_token"

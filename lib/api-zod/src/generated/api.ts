@@ -293,7 +293,7 @@ export const SendEmailOtpBody = zod.union([zod.object({
   "purpose": zod.enum(['signup'])
 }),zod.object({
   "phone": zod.stringFormat('phone', sendEmailOtpBodyThreePhoneRegExp).min(sendEmailOtpBodyThreePhoneMin).max(sendEmailOtpBodyThreePhoneMax).describe('Account phone identifier.'),
-  "purpose": zod.enum(['pin_reset', 'admin_login'])
+  "purpose": zod.enum(['pin_reset'])
 })])
 
 export const sendEmailOtpResponseResendAfterSecondsMin = 0;
@@ -322,7 +322,7 @@ export const verifyEmailOtpBodyTurnstileTokenMax = 2048;
 
 export const VerifyEmailOtpBody = zod.object({
   "challengeId": zod.uuid(),
-  "purpose": zod.enum(['signup', 'password_reset', 'pin_reset', 'admin_login']),
+  "purpose": zod.enum(['signup', 'password_reset', 'pin_reset']),
   "code": zod.string().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp),
   "turnstileToken": zod.string().min(1).max(verifyEmailOtpBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for OTP verification.')
 })
@@ -764,14 +764,6 @@ export const GetCurrentAccountResponse = zod.object({
   "balanceMinor": zod.int().max(getCurrentAccountResponseWalletBalanceMinorMax),
   "status": zod.enum(['active', 'locked', 'closed'])
 })
-})
-
-
-/**
- * @summary Check whether the authenticated account has an active administrator grant
- */
-export const GetCustomerPortalEligibilityResponse = zod.object({
-  "isAuthorized": zod.boolean()
 })
 
 
@@ -2555,24 +2547,25 @@ export const RequestIdentityVerificationUnavailableResponse = zod.void()
 
 
 /**
- * @summary Create a separate administrator session using a verified admin OTP and a database grant
+ * @summary Authenticate the single administrator with password and TOTP
  */
-export const signInAdminBodyPhoneMin = 9;
-export const signInAdminBodyPhoneMax = 16;
+export const signInAdminBodyEmailMax = 254;
 
+export const signInAdminBodyPasswordMax = 1024;
 
-export const signInAdminBodyPhoneRegExp = new RegExp('^\\+[1-9][0-9]{7,14}$');
+export const signInAdminBodyTotpCodeRegExp = new RegExp('^[0-9]{6}$');
 
 
 export const SignInAdminBody = zod.object({
-  "phone": zod.string().min(signInAdminBodyPhoneMin).max(signInAdminBodyPhoneMax).regex(signInAdminBodyPhoneRegExp),
-  "challengeId": zod.uuid()
+  "email": zod.email().max(signInAdminBodyEmailMax),
+  "password": zod.string().min(1).max(signInAdminBodyPasswordMax),
+  "totpCode": zod.string().regex(signInAdminBodyTotpCodeRegExp)
 })
 
 export const SignInAdminResponse = zod.object({
   "isAdmin": zod.boolean(),
-  "pinUnlocked": zod.boolean(),
-  "canMutate": zod.boolean().optional()
+  "sessionAuthenticated": zod.boolean(),
+  "canMutate": zod.boolean()
 })
 
 
@@ -2583,34 +2576,91 @@ export const SignOutAdminResponse = zod.void()
 
 
 /**
- * Returns whether the current SendFlow session is authorized and whether the administrator PIN session is active.
+ * Returns the status of the server-validated administrator session without exposing tokens.
  * @summary Check administrator access status
  */
 export const GetAdminAccessStatusResponse = zod.object({
   "isAdmin": zod.boolean(),
-  "pinUnlocked": zod.boolean(),
-  "canMutate": zod.boolean().optional()
+  "sessionAuthenticated": zod.boolean(),
+  "canMutate": zod.boolean()
 })
 
 
 /**
- * @summary Unlock the administrator panel with a PIN
+ * @summary Rotate the administrator refresh token
  */
-export const unlockAdminPinBodyPinMin = 8;
-export const unlockAdminPinBodyPinMax = 8;
-
-
-export const unlockAdminPinBodyPinRegExp = new RegExp('^[0-9]{8}$');
-
-
-export const UnlockAdminPinBody = zod.object({
-  "pin": zod.string().min(unlockAdminPinBodyPinMin).max(unlockAdminPinBodyPinMax).regex(unlockAdminPinBodyPinRegExp)
+export const RefreshAdminSessionResponse = zod.object({
+  "isAdmin": zod.boolean(),
+  "sessionAuthenticated": zod.boolean(),
+  "canMutate": zod.boolean()
 })
 
-export const UnlockAdminPinResponse = zod.object({
-  "pinUnlocked": zod.boolean(),
-  "expiresAt": zod.coerce.date()
+
+/**
+ * @summary Record verified administrator interaction
+ */
+export const RecordAdminActivityResponse = zod.void()
+
+
+/**
+ * @summary Confirm one exact administrative action with a fresh TOTP
+ */
+export const confirmAdminSensitiveActionBodyTotpCodeRegExp = new RegExp('^[0-9]{6}$');
+export const confirmAdminSensitiveActionBodyActionMax = 128;
+
+
+
+export const ConfirmAdminSensitiveActionBody = zod.object({
+  "totpCode": zod.string().regex(confirmAdminSensitiveActionBodyTotpCodeRegExp),
+  "action": zod.string().max(confirmAdminSensitiveActionBodyActionMax),
+  "query": zod.record(zod.string(), zod.unknown()).optional(),
+  "payload": zod.unknown().optional()
 })
+
+export const confirmAdminSensitiveActionResponseStepUpTokenMin = 43;
+export const confirmAdminSensitiveActionResponseStepUpTokenMax = 43;
+
+
+export const confirmAdminSensitiveActionResponseStepUpTokenRegExp = new RegExp('^[A-Za-z0-9_-]{43}$');
+export const confirmAdminSensitiveActionResponseExpiresInSecondsMax = 60;
+
+
+
+export const ConfirmAdminSensitiveActionResponse = zod.object({
+  "stepUpToken": zod.string().min(confirmAdminSensitiveActionResponseStepUpTokenMin).max(confirmAdminSensitiveActionResponseStepUpTokenMax).regex(confirmAdminSensitiveActionResponseStepUpTokenRegExp),
+  "expiresInSeconds": zod.int().max(confirmAdminSensitiveActionResponseExpiresInSecondsMax)
+})
+
+
+/**
+ * @summary List active administrator sessions
+ */
+export const ListAdminSessionsResponseItem = zod.object({
+  "id": zod.uuid(),
+  "createdAt": zod.coerce.date(),
+  "lastActivityAt": zod.coerce.date(),
+  "idleExpiresAt": zod.coerce.date(),
+  "absoluteExpiresAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "isCurrent": zod.boolean()
+})
+export const ListAdminSessionsResponse = zod.array(ListAdminSessionsResponseItem)
+
+
+/**
+ * @summary Revoke one active administrator session
+ */
+export const RevokeAdminSessionParams = zod.object({
+  "sessionId": zod.uuid()
+})
+
+export const RevokeAdminSessionResponse = zod.void()
+
+
+/**
+ * @summary Revoke all administrator sessions
+ */
+export const RevokeAllAdminSessionsResponse = zod.void()
 
 
 /**

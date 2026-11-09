@@ -7,6 +7,7 @@ import databaseRouter from "./database";
 import accountRouter from "./account";
 import accountLimitRouter from "./account-limit";
 import adminAccessRouter from "./admin-access";
+import adminSessionsRouter from "./admin-sessions";
 import adminRouter, {
   respondAdminAuthError,
   respondAdminTransactionReadAuthError,
@@ -40,15 +41,17 @@ import developerPayoutsRouter from "./developer-payouts";
 import adminPayoutsRouter from "./admin-payouts";
 import { ADMIN_ROUTE_PREFIX } from "../lib/admin-route-prefix";
 import { loadAdminSession } from "../lib/admin-session";
+import { requireAdminStepUp } from "../lib/admin-step-up";
+import { adminAuditContextMiddleware } from "../lib/admin-audit-context";
+import { adminNetworkGuard } from "../lib/admin-network-policy";
 
 const router: IRouter = Router();
 const adminHandlers: IRouter = Router();
 const adminSurface: IRouter = Router();
 
-// Defense in depth: administrative routes cannot accidentally omit the
-// server session, current grant, scope, mutation right and PIN checks. Sensitive
-// user-profile and transaction reads use exact-GET allowlists and still require the PIN.
-// The access/sign-in/PIN/sign-out router remains outside this protected group.
+// Defense in depth: administrative routes cannot omit server-session checks,
+// the existing narrow mutation scope, or action-bound TOTP confirmation.
+// Authentication endpoints are mounted before the mutation gate.
 adminHandlers.use((req, res, next) => {
   if (req.method === "GET" && /^\/(?:users(?:\/[^/]+)?|developer-webhooks)\/?$/.test(req.path)) {
     if (respondAdminUserReadAuthError(req, res)) next();
@@ -100,8 +103,12 @@ adminHandlers.use(emailCampaignRoutes);
 adminHandlers.use(adminIdentityVerificationRoutes);
 adminHandlers.use(adminPayoutsRouter);
 
+adminSurface.use(adminNetworkGuard);
 adminSurface.use(loadAdminSession);
+adminSurface.use(adminAuditContextMiddleware);
 adminSurface.use(adminAccessRouter);
+adminSurface.use(requireAdminStepUp);
+adminSurface.use(adminSessionsRouter);
 adminSurface.use(adminHandlers);
 
 router.use(ADMIN_ROUTE_PREFIX, adminSurface);

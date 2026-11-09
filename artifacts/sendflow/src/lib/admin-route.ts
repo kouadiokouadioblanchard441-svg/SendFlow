@@ -1,7 +1,20 @@
-import { PORTAL_ROUTE_PATH } from "../../server/portal-route-path";
+import { getSignInAdminUrl } from "@workspace/api-client-react";
 
-export const ADMIN_ROUTE_PATH = PORTAL_ROUTE_PATH;
+const generatedSignInUrl = getSignInAdminUrl();
+export const ADMIN_API_PATH_PREFIX = generatedSignInUrl.replace(/\/sign-in$/u, "");
+const generatedAdminApiPrefix = ADMIN_API_PATH_PREFIX
+  .replace(/^\/api/u, "")
+
+export const ADMIN_ROUTE_PATH = "";
 
 export function adminRoute<Suffix extends string = "">(suffix: Suffix = "" as Suffix) {
-  return `${ADMIN_ROUTE_PATH}${suffix}` as `${typeof ADMIN_ROUTE_PATH}${Suffix}`;
+  if (!suffix) return "/" as `${typeof ADMIN_ROUTE_PATH}${Suffix}`;
+  return (suffix.startsWith("/") ? suffix : `/${suffix}`) as `${typeof ADMIN_ROUTE_PATH}${Suffix}`;
+}
+
+export function adminApiRoute<Suffix extends string = "">(suffix: Suffix = "" as Suffix) {
+  const normalized = suffix
+    ? suffix.startsWith("/") ? suffix : `/${suffix}`
+    : "";
+  return `${generatedAdminApiPrefix}${normalized}`;
 }

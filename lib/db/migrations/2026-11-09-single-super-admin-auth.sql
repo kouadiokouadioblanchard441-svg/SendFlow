@@ -28,9 +28,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS sf_super_admin_email_uq
   ON sf_super_admin_credentials(email_normalized);
 
 CREATE TABLE IF NOT EXISTS sf_super_admin_recovery_codes (
+  credential_id smallint NOT NULL DEFAULT 1
+    REFERENCES sf_super_admin_credentials(id) ON DELETE CASCADE,
   code_hash varchar(64) PRIMARY KEY,
   created_at timestamptz NOT NULL DEFAULT now(),
   used_at timestamptz,
+  CONSTRAINT sf_super_admin_recovery_credential_check CHECK (credential_id = 1),
   CONSTRAINT sf_super_admin_recovery_hash_check CHECK (code_hash ~ '^[0-9a-f]{64}$')
 );
 
@@ -104,13 +107,31 @@ ALTER TABLE sf_admin_audit_logs
   ADD COLUMN IF NOT EXISTS ip_hash varchar(64),
   ADD COLUMN IF NOT EXISTS user_agent_hash varchar(64),
   ADD COLUMN IF NOT EXISTS outcome varchar(24) NOT NULL DEFAULT 'success';
-ALTER TABLE sf_admin_audit_logs
-  ADD CONSTRAINT sf_admin_audit_ip_hash_check
-    CHECK (ip_hash IS NULL OR ip_hash ~ '^[0-9a-f]{64}$') NOT VALID,
-  ADD CONSTRAINT sf_admin_audit_user_agent_hash_check
-    CHECK (user_agent_hash IS NULL OR user_agent_hash ~ '^[0-9a-f]{64}$') NOT VALID,
-  ADD CONSTRAINT sf_admin_audit_outcome_check
-    CHECK (outcome IN ('success', 'failure', 'denied', 'revoked')) NOT VALID;
+DO $migration$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint
+    WHERE conname = 'sf_admin_audit_ip_hash_check'
+      AND conrelid = 'sf_admin_audit_logs'::regclass) THEN
+    ALTER TABLE sf_admin_audit_logs
+      ADD CONSTRAINT sf_admin_audit_ip_hash_check
+      CHECK (ip_hash IS NULL OR ip_hash ~ '^[0-9a-f]{64}$') NOT VALID;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint
+    WHERE conname = 'sf_admin_audit_user_agent_hash_check'
+      AND conrelid = 'sf_admin_audit_logs'::regclass) THEN
+    ALTER TABLE sf_admin_audit_logs
+      ADD CONSTRAINT sf_admin_audit_user_agent_hash_check
+      CHECK (user_agent_hash IS NULL OR user_agent_hash ~ '^[0-9a-f]{64}$') NOT VALID;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint
+    WHERE conname = 'sf_admin_audit_outcome_check'
+      AND conrelid = 'sf_admin_audit_logs'::regclass) THEN
+    ALTER TABLE sf_admin_audit_logs
+      ADD CONSTRAINT sf_admin_audit_outcome_check
+      CHECK (outcome IN ('success', 'failure', 'denied', 'revoked')) NOT VALID;
+  END IF;
+END;
+$migration$;
 
 CREATE OR REPLACE FUNCTION sf_reject_admin_audit_mutation()
 RETURNS trigger

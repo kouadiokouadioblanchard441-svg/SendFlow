@@ -56,7 +56,7 @@ export function isViewerRouteCandidate(method: string, requestPath: string): boo
   if (method.toUpperCase() === "GET") {
     return ["/api/auth/session", "/api/auth/biometric", "/api/me", "/api/me/transactions",
       "/api/me/account-limit", "/api/me/payment-readiness",
-      "/api/me/portal-eligibility", "/api/me/payment-links",
+      "/api/me/payment-links",
       "/api/me/developer/api-keys"].includes(path)
       || /^\/api\/me\/transactions\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path)
       || /^\/api\/me\/payment-links\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path)

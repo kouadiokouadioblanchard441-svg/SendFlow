@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { Router, type IRouter, type Response } from "express";
 import {
   and,
-  adminGrantsTable,
   db,
   desc,
   eq,
@@ -78,7 +77,6 @@ function turnstileActionForOtpPurpose(purpose: unknown): TurnstileAction | null 
     case "signup":
     case "password_reset":
     case "pin_reset":
-    case "admin_login":
       return purpose;
     default:
       return null;
@@ -138,15 +136,6 @@ async function resolveOtpRecipient(
     .limit(1);
 
   if (!user || user.status !== "active" || !user.emailEncrypted) return null;
-  if (purpose === "admin_login") {
-    const [grant] = await db
-      .select({ userId: adminGrantsTable.userId })
-      .from(adminGrantsTable)
-      .where(and(eq(adminGrantsTable.userId, user.id), isNull(adminGrantsTable.revokedAt)))
-      .limit(1);
-    if (!grant) return null;
-  }
-
   const storedEmail = decryptSensitiveDataIfEncrypted(user.emailEncrypted, "user-email");
   if (!storedEmail) return null;
   const email = normalizeEmail(storedEmail);

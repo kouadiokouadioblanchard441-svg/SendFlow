@@ -11,18 +11,13 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import PageLoadingScreen from '@/components/page-loading-screen';
 import ServerNotFoundNavigation from '@/components/server-not-found-navigation';
 import {
-  getGetCurrentAccountQueryKey,
-  getGetCustomerPortalEligibilityQueryKey,
   getGetCustomerSessionQueryKey,
-  useGetCurrentAccount,
-  useGetCustomerPortalEligibility,
   useGetCustomerSession,
 } from '@workspace/api-client-react';
 import type { LegalPageProps } from '@/pages/legal';
 import { useSeo } from '@/lib/seo';
 import { clearPinUnlock, getPinUnlockExpiry } from '@/lib/pin-unlock';
 import { requiresCustomerPinUnlock, shouldRelockCustomerPinUnlock } from '@/lib/customer-route-guard';
-import { ADMIN_ROUTE_PATH } from '@/lib/admin-route';
 import { GlobalErrorDialog } from '@/components/global-error-dialog';
 import { reportGlobalApiError } from '@/lib/global-api-errors';
 import { shouldShowGlobalQueryError } from '@/lib/safe-api-error';
@@ -70,10 +65,6 @@ const SigninPage = lazy(() => import('@/pages/sign-in'));
 const SignupPage = lazy(() => import('@/pages/sign-up'));
 const OnboardingPage = lazy(() => import('@/pages/onboarding'));
 const AdminAccessPage = lazy(() => import('@/pages/admin-access'));
-const AdminSignInPage = lazy(() => import('@/pages/admin-access').then((module) => ({
-  default: module.AdminSignInPage,
-})));
-const AdminPinPage = lazy(() => import('@/pages/admin-pin'));
 const DocsPage = lazy(() => import('@/pages/docs'));
 
 function getHttpStatus(error: unknown) {
@@ -196,48 +187,6 @@ function NotFoundRoute() {
   return <ServerNotFoundNavigation />;
 }
 
-function PortalRouteGate({ children }: { children: ReactNode }) {
-  const accountQuery = useGetCurrentAccount({
-    query: {
-      queryKey: getGetCurrentAccountQueryKey(),
-      enabled: true,
-      retry: false,
-      staleTime: 0,
-      refetchOnMount: 'always',
-    },
-  });
-  const userId = accountQuery.data?.userId;
-  const eligibilityQuery = useGetCustomerPortalEligibility({
-    query: {
-      queryKey: [...getGetCustomerPortalEligibilityQueryKey(), userId ?? 'no-account'],
-      enabled: Boolean(userId),
-      retry: false,
-      staleTime: 0,
-      refetchOnMount: 'always',
-      refetchOnWindowFocus: true,
-      refetchInterval: 15_000,
-    },
-  });
-
-  if (
-    accountQuery.isFetching
-    || accountQuery.isLoading
-    || eligibilityQuery.isFetching
-    || eligibilityQuery.isLoading
-  ) return <PageLoadingScreen label="Vérification de l’accès administrateur" />;
-
-  if (
-    !accountQuery.isSuccess
-    || !eligibilityQuery.isSuccess
-    || !userId
-    || eligibilityQuery.data?.isAuthorized !== true
-  ) {
-    return <NotFoundRoute />;
-  }
-
-  return children;
-}
-
 function useProtectImages() {
   useEffect(() => {
     const isImageTarget = (target: EventTarget | null) =>
@@ -281,6 +230,25 @@ function useProtectImages() {
 
 function App() {
   useProtectImages();
+
+  if (
+    typeof document !== 'undefined'
+    && document.querySelector('meta[name="sendflow-app-surface"]')?.getAttribute('content') === 'admin'
+  ) {
+    return (
+      <WouterRouter base={basePath}>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Suspense fallback={<PageLoadingScreen label="Chargement de l’espace administrateur" />}>
+              <AdminAccessPage />
+            </Suspense>
+            <Toaster />
+            <GlobalErrorDialog />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </WouterRouter>
+    );
+  }
 
   if (
     typeof window !== 'undefined' &&
@@ -333,36 +301,6 @@ function App() {
           <CustomerPinGuard>
             <Suspense fallback={<PageLoadingScreen />}>
               <Switch>
-                <Route
-                  path={`${ADMIN_ROUTE_PATH}/sign-in/*?`}
-                  component={() => (
-                    <PortalRouteGate>
-                      <Suspense fallback={<PageLoadingScreen label="Chargement de la connexion administrateur" />}>
-                        <AdminSignInPage />
-                      </Suspense>
-                    </PortalRouteGate>
-                  )}
-                />
-                <Route
-                  path={`${ADMIN_ROUTE_PATH}/pin`}
-                  component={() => (
-                    <PortalRouteGate>
-                      <Suspense fallback={<PageLoadingScreen label="Chargement du PIN administrateur" />}>
-                        <AdminPinPage />
-                      </Suspense>
-                    </PortalRouteGate>
-                  )}
-                />
-                <Route
-                  path={`${ADMIN_ROUTE_PATH}/*?`}
-                  component={() => (
-                    <PortalRouteGate>
-                      <Suspense fallback={<PageLoadingScreen label="Chargement de l’espace administrateur" />}>
-                        <AdminAccessPage />
-                      </Suspense>
-                    </PortalRouteGate>
-                  )}
-                />
                 <Route path="/" component={OnboardingPage} />
                 <Route path="/sign-in/*?" component={SigninPage} />
                 <Route path="/sign-up/*?" component={SignupPage} />

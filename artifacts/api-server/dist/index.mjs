@@ -15635,8 +15635,8 @@ var require_read = __commonJS({
       }
       let length;
       let stream2;
-      const verify2 = options.verify;
-      if (verify2 && encoding !== null && !iconv.encodingExists(encoding)) {
+      const verify3 = options.verify;
+      if (verify3 && encoding !== null && !iconv.encodingExists(encoding)) {
         return next(createError(415, 'unsupported charset "' + encoding.toUpperCase() + '"', {
           charset: encoding.toLowerCase(),
           type: "charset.unsupported"
@@ -15663,7 +15663,7 @@ var require_read = __commonJS({
       }
       const rawBodyOptions = {
         length,
-        encoding: verify2 ? null : encoding,
+        encoding: verify3 ? null : encoding,
         limit: options.limit
       };
       debug("read body");
@@ -15694,10 +15694,10 @@ var require_read = __commonJS({
           stream2.destroy();
           req.resume();
         }
-        if (verify2) {
+        if (verify3) {
           try {
             debug("verify body");
-            verify2(req, res, body, encoding);
+            verify3(req, res, body, encoding);
           } catch (err) {
             next(createError(403, err, {
               body,
@@ -15781,19 +15781,19 @@ var require_utils = __commonJS({
       const inflate2 = options?.inflate !== false;
       const limit = typeof options?.limit === "undefined" || options?.limit === null ? 102400 : bytes.parse(options.limit);
       const type = options?.type || defaultType;
-      const verify2 = options?.verify || false;
+      const verify3 = options?.verify || false;
       const defaultCharset = options?.defaultCharset || "utf-8";
       if (limit === null) {
         throw new TypeError(`option limit "${String(options.limit)}" is invalid`);
       }
-      if (verify2 !== false && typeof verify2 !== "function") {
+      if (verify3 !== false && typeof verify3 !== "function") {
         throw new TypeError("option verify must be function");
       }
       const shouldParse = typeof type !== "function" ? typeChecker(type) : type;
       return {
         inflate: inflate2,
         limit,
-        verify: verify2,
+        verify: verify3,
         defaultCharset,
         shouldParse
       };
@@ -16702,7 +16702,7 @@ var require_sign = __commonJS({
   "../../node_modules/.pnpm/math-intrinsics@1.1.0/node_modules/math-intrinsics/sign.js"(exports, module) {
     "use strict";
     var $isNaN = require_isNaN();
-    module.exports = function sign2(number5) {
+    module.exports = function sign3(number5) {
       if ($isNaN(number5) || number5 === 0) {
         return number5;
       }
@@ -17066,7 +17066,7 @@ var require_get_intrinsic = __commonJS({
     var min = require_min();
     var pow = require_pow();
     var round = require_round();
-    var sign2 = require_sign();
+    var sign3 = require_sign();
     var $Function = Function;
     var getEvalledConstructor = function(expressionSyntax) {
       try {
@@ -17180,7 +17180,7 @@ var require_get_intrinsic = __commonJS({
       "%Math.min%": min,
       "%Math.pow%": pow,
       "%Math.round%": round,
-      "%Math.sign%": sign2,
+      "%Math.sign%": sign3,
       "%Reflect.getPrototypeOf%": $ReflectGPO
     };
     if (getProto) {
@@ -21090,27 +21090,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router35;
+    module.exports = Router36;
     module.exports.Route = Route;
-    function Router35(options) {
-      if (!(this instanceof Router35)) {
-        return new Router35(options);
+    function Router36(options) {
+      if (!(this instanceof Router36)) {
+        return new Router36(options);
       }
       const opts = options || {};
-      function router29(req, res, next) {
-        router29.handle(req, res, next);
+      function router30(req, res, next) {
+        router30.handle(req, res, next);
       }
-      Object.setPrototypeOf(router29, this);
-      router29.caseSensitive = opts.caseSensitive;
-      router29.mergeParams = opts.mergeParams;
-      router29.params = {};
-      router29.strict = opts.strict;
-      router29.stack = [];
-      return router29;
+      Object.setPrototypeOf(router30, this);
+      router30.caseSensitive = opts.caseSensitive;
+      router30.mergeParams = opts.mergeParams;
+      router30.params = {};
+      router30.strict = opts.strict;
+      router30.stack = [];
+      return router30;
     }
-    Router35.prototype = function() {
+    Router36.prototype = function() {
     };
-    Router35.prototype.param = function param(name, fn) {
+    Router36.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -21130,7 +21130,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router35.prototype.handle = function handle(req, res, callback) {
+    Router36.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -21257,7 +21257,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router35.prototype.use = function use(handler) {
+    Router36.prototype.use = function use(handler) {
       let offset = 0;
       let path = "/";
       if (typeof handler !== "function") {
@@ -21290,7 +21290,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router35.prototype.route = function route(path) {
+    Router36.prototype.route = function route(path) {
       const route2 = new Route(path);
       const layer = new Layer(path, {
         sensitive: this.caseSensitive,
@@ -21305,7 +21305,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router35.prototype[method] = function(path) {
+      Router36.prototype[method] = function(path) {
         const route = this.route(path);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -21488,13 +21488,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router35 = require_router();
+    var Router36 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router29 = null;
+      var router30 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -21503,13 +21503,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router29 === null) {
-            router29 = new Router35({
+          if (router30 === null) {
+            router30 = new Router36({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router29;
+          return router30;
         }
       });
     };
@@ -21580,15 +21580,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router29 = this.router;
+      var router30 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router29.use(path, fn2);
+          return router30.use(path, fn2);
         }
         debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router29.use(path, function mounted_app(req, res, next) {
+        router30.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -22499,7 +22499,7 @@ var require_request = __commonJS({
   "../../node_modules/.pnpm/express@5.2.1/node_modules/express/lib/request.js"(exports, module) {
     "use strict";
     var accepts = require_accepts();
-    var isIP4 = __require("node:net").isIP;
+    var isIP5 = __require("node:net").isIP;
     var typeis = require_type_is();
     var http = __require("node:http");
     var fresh = require_fresh();
@@ -22589,7 +22589,7 @@ var require_request = __commonJS({
       var hostname3 = this.hostname;
       if (!hostname3) return [];
       var offset = this.app.get("subdomain offset");
-      var subdomains2 = !isIP4(hostname3) ? hostname3.split(".").reverse() : [hostname3];
+      var subdomains2 = !isIP5(hostname3) ? hostname3.split(".").reverse() : [hostname3];
       return subdomains2.slice(offset);
     });
     defineGetter(req, "path", function path() {
@@ -23606,7 +23606,7 @@ var require_response = __commonJS({
     var path = __require("node:path");
     var pathIsAbsolute = __require("node:path").isAbsolute;
     var statuses = require_statuses();
-    var sign2 = require_cookie_signature().sign;
+    var sign3 = require_cookie_signature().sign;
     var normalizeType = require_utils3().normalizeType;
     var normalizeTypes = require_utils3().normalizeTypes;
     var setCharset = require_utils3().setCharset;
@@ -23897,7 +23897,7 @@ var require_response = __commonJS({
       }
       var val = typeof value === "object" ? "j:" + JSON.stringify(value) : String(value);
       if (signed) {
-        val = "s:" + sign2(val, secret);
+        val = "s:" + sign3(val, secret);
       }
       if (opts.maxAge != null) {
         var maxAge = opts.maxAge - 0;
@@ -24173,7 +24173,7 @@ var require_express = __commonJS({
     var EventEmitter2 = __require("node:events").EventEmitter;
     var mixin2 = require_merge_descriptors();
     var proto = require_application();
-    var Router35 = require_router();
+    var Router36 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -24195,8 +24195,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router35.Route;
-    exports.Router = Router35;
+    exports.Route = Router36.Route;
+    exports.Router = Router36;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -29238,9 +29238,9 @@ var require_postgres_date = __commonJS({
       if (type === "Z") {
         return 0;
       }
-      var sign2 = type === "-" ? -1 : 1;
+      var sign3 = type === "-" ? -1 : 1;
       var offset = parseInt(zone[2], 10) * 3600 + parseInt(zone[3] || 0, 10) * 60 + parseInt(zone[4] || 0, 10);
-      return offset * sign2 * 1e3;
+      return offset * sign3 * 1e3;
     }
     function bcYearToNegativeYear(year) {
       return -(year - 1);
@@ -29605,11 +29605,11 @@ var require_pg_int8 = __commonJS({
     function readInt8(buffer) {
       var high = buffer.readInt32BE(0);
       var low = buffer.readUInt32BE(4);
-      var sign2 = "";
+      var sign3 = "";
       if (high < 0) {
         high = ~high + (low === 0);
         low = ~low + 1 >>> 0;
-        sign2 = "-";
+        sign3 = "-";
       }
       var result = "";
       var carry;
@@ -29625,7 +29625,7 @@ var require_pg_int8 = __commonJS({
         low = t / BASE >>> 0;
         digits = "" + (t - BASE * low);
         if (low === 0 && high === 0) {
-          return sign2 + digits + result;
+          return sign3 + digits + result;
         }
         pad2 = "";
         l = 6 - digits.length;
@@ -29641,7 +29641,7 @@ var require_pg_int8 = __commonJS({
         low = t / BASE >>> 0;
         digits = "" + (t - BASE * low);
         if (low === 0 && high === 0) {
-          return sign2 + digits + result;
+          return sign3 + digits + result;
         }
         pad2 = "";
         l = 6 - digits.length;
@@ -29657,7 +29657,7 @@ var require_pg_int8 = __commonJS({
         low = t / BASE >>> 0;
         digits = "" + (t - BASE * low);
         if (low === 0 && high === 0) {
-          return sign2 + digits + result;
+          return sign3 + digits + result;
         }
         pad2 = "";
         l = 6 - digits.length;
@@ -29670,7 +29670,7 @@ var require_pg_int8 = __commonJS({
         carry = high % BASE;
         t = 4294967296 * carry + low;
         digits = "" + t % BASE;
-        return sign2 + digits + result;
+        return sign3 + digits + result;
       }
     }
     module.exports = readInt8;
@@ -29719,7 +29719,7 @@ var require_binaryParsers = __commonJS({
     };
     var parseFloatFromBits = function(data, precisionBits, exponentBits) {
       var bias = Math.pow(2, exponentBits - 1) - 1;
-      var sign2 = parseBits(data, 1);
+      var sign3 = parseBits(data, 1);
       var exponent = parseBits(data, exponentBits, 1);
       if (exponent === 0) {
         return 0;
@@ -29740,11 +29740,11 @@ var require_binaryParsers = __commonJS({
       var mantissa = parseBits(data, precisionBits, exponentBits + 1, false, parsePrecisionBits);
       if (exponent == Math.pow(2, exponentBits + 1) - 1) {
         if (mantissa === 0) {
-          return sign2 === 0 ? Infinity : -Infinity;
+          return sign3 === 0 ? Infinity : -Infinity;
         }
         return NaN;
       }
-      return (sign2 === 0 ? 1 : -1) * Math.pow(2, exponent - bias) * mantissa;
+      return (sign3 === 0 ? 1 : -1) * Math.pow(2, exponent - bias) * mantissa;
     };
     var parseInt16 = function(value) {
       if (parseBits(value, 1) == 1) {
@@ -29765,8 +29765,8 @@ var require_binaryParsers = __commonJS({
       return parseFloatFromBits(value, 52, 11);
     };
     var parseNumeric = function(value) {
-      var sign2 = parseBits(value, 16, 32);
-      if (sign2 == 49152) {
+      var sign3 = parseBits(value, 16, 32);
+      if (sign3 == 49152) {
         return NaN;
       }
       var weight = Math.pow(1e4, parseBits(value, 16, 16));
@@ -29778,12 +29778,12 @@ var require_binaryParsers = __commonJS({
         weight /= 1e4;
       }
       var scale = Math.pow(10, parseBits(value, 16, 48));
-      return (sign2 === 0 ? 1 : -1) * Math.round(result * scale) / scale;
+      return (sign3 === 0 ? 1 : -1) * Math.round(result * scale) / scale;
     };
     var parseDate = function(isUTC, value) {
-      var sign2 = parseBits(value, 1);
+      var sign3 = parseBits(value, 1);
       var rawValue = parseBits(value, 63, 1);
-      var result = new Date((sign2 === 0 ? 1 : -1) * rawValue / 1e3 + 9466848e5);
+      var result = new Date((sign3 === 0 ? 1 : -1) * rawValue / 1e3 + 9466848e5);
       if (!isUTC) {
         result.setTime(result.getTime() + result.getTimezoneOffset() * 6e4);
       }
@@ -30209,7 +30209,7 @@ var require_utils5 = __commonJS({
     var nodeCrypto = __require("crypto");
     module.exports = {
       postgresMd5PasswordHash,
-      randomBytes: randomBytes10,
+      randomBytes: randomBytes11,
       deriveKey: deriveKey2,
       sha256: sha2562,
       hashByName,
@@ -30219,7 +30219,7 @@ var require_utils5 = __commonJS({
     var webCrypto2 = nodeCrypto.webcrypto || globalThis.crypto;
     var subtleCrypto = webCrypto2.subtle;
     var textEncoder2 = new TextEncoder();
-    function randomBytes10(length) {
+    function randomBytes11(length) {
       return webCrypto2.getRandomValues(Buffer.alloc(length));
     }
     async function md52(string4) {
@@ -55200,13 +55200,13 @@ var require_timing_safe_equal = __commonJS({
   "../../node_modules/.pnpm/standardwebhooks@1.1.1/node_modules/standardwebhooks/dist/timing_safe_equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.timingSafeEqual = timingSafeEqual6;
+    exports.timingSafeEqual = timingSafeEqual7;
     function assert2(expr, msg = "") {
       if (!expr) {
         throw new Error(msg);
       }
     }
-    function timingSafeEqual6(a, b) {
+    function timingSafeEqual7(a, b) {
       if (a.byteLength !== b.byteLength) {
         return false;
       }
@@ -182291,7 +182291,7 @@ var require_b64 = __commonJS({
 });
 
 // src/app.ts
-var import_express35 = __toESM(require_express2(), 1);
+var import_express36 = __toESM(require_express2(), 1);
 var import_cors2 = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
@@ -182346,7 +182346,6 @@ function isViewerRouteCandidate(method, requestPath) {
       "/api/me/transactions",
       "/api/me/account-limit",
       "/api/me/payment-readiness",
-      "/api/me/portal-eligibility",
       "/api/me/payment-links",
       "/api/me/developer/api-keys"
     ].includes(path) || /^\/api\/me\/transactions\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path) || /^\/api\/me\/payment-links\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path) || /^\/api\/me\/payments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(path);
@@ -185080,8 +185079,8 @@ var PgTimestampString = class extends PgColumn {
     const shortened = value.toISOString().slice(0, -1).replace("T", " ");
     if (this.withTimezone) {
       const offset = value.getTimezoneOffset();
-      const sign2 = offset <= 0 ? "+" : "-";
-      return `${shortened}${sign2}${Math.floor(Math.abs(offset) / 60).toString().padStart(2, "0")}`;
+      const sign3 = offset <= 0 ? "+" : "-";
+      return `${shortened}${sign3}${Math.floor(Math.abs(offset) / 60).toString().padStart(2, "0")}`;
     }
     return shortened;
   }
@@ -189670,6 +189669,10 @@ var adminAuditLogsTable = pgTable(
     reason: varchar("reason", { length: 500 }),
     amountMinor: bigint("amount_minor", { mode: "number" }),
     currency: varchar("currency", { length: 3 }),
+    sessionId: uuid("session_id"),
+    ipHash: varchar("ip_hash", { length: 64 }),
+    userAgentHash: varchar("user_agent_hash", { length: 64 }),
+    outcome: varchar("outcome", { length: 24 }).notNull().default("success"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
@@ -209712,6 +209715,135 @@ var adminSessionsTable = pgTable("sf_admin_sessions", {
   expiryCheck: check("sf_admin_sessions_expiry_check", sql`${table.expiresAt} > ${table.createdAt}`)
 }));
 
+// ../../lib/db/src/schema/admin-auth.ts
+var superAdminCredentialsTable = pgTable(
+  "sf_super_admin_credentials",
+  {
+    id: smallint("id").primaryKey().default(1),
+    emailNormalized: varchar("email_normalized", { length: 254 }).notNull(),
+    passwordHash: text("password_hash").notNull(),
+    totpCiphertext: text("totp_ciphertext").notNull(),
+    totpNonce: varchar("totp_nonce", { length: 24 }).notNull(),
+    totpAuthTag: varchar("totp_auth_tag", { length: 32 }).notNull(),
+    lastTotpStep: bigint("last_totp_step", { mode: "number" }),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    passwordChangedAt: timestamp("password_changed_at", { withTimezone: true })
+  },
+  (table) => ({
+    singletonCheck: check("sf_super_admin_singleton_check", sql`${table.id} = 1`),
+    normalizedEmailCheck: check(
+      "sf_super_admin_email_normalized_check",
+      sql`${table.emailNormalized} = lower(btrim(${table.emailNormalized}))`
+    ),
+    emailUnique: uniqueIndex("sf_super_admin_email_uq").on(table.emailNormalized)
+  })
+);
+var superAdminRecoveryCodesTable = pgTable(
+  "sf_super_admin_recovery_codes",
+  {
+    credentialId: smallint("credential_id").notNull().default(1).references(() => superAdminCredentialsTable.id, { onDelete: "cascade" }),
+    codeHash: varchar("code_hash", { length: 64 }).primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    usedAt: timestamp("used_at", { withTimezone: true })
+  },
+  (table) => ({
+    singletonCheck: check("sf_super_admin_recovery_credential_check", sql`${table.credentialId} = 1`),
+    hashFormatCheck: check(
+      "sf_super_admin_recovery_hash_check",
+      sql`${table.codeHash} ~ '^[0-9a-f]{64}$'`
+    )
+  })
+);
+var superAdminSessionsTable = pgTable(
+  "sf_super_admin_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    refreshTokenHash: varchar("refresh_token_hash", { length: 64 }).notNull(),
+    refreshFamilyId: uuid("refresh_family_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
+    idleExpiresAt: timestamp("idle_expires_at", { withTimezone: true }).notNull(),
+    absoluteExpiresAt: timestamp("absolute_expires_at", { withTimezone: true }).notNull(),
+    ipHash: varchar("ip_hash", { length: 64 }),
+    userAgentHash: varchar("user_agent_hash", { length: 64 }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revocationReason: varchar("revocation_reason", { length: 80 })
+  },
+  (table) => ({
+    refreshTokenUnique: uniqueIndex("sf_super_admin_sessions_refresh_uq").on(table.refreshTokenHash),
+    familyIndex: index("sf_super_admin_sessions_family_idx").on(table.refreshFamilyId),
+    expiryIndex: index("sf_super_admin_sessions_expiry_idx").on(
+      table.idleExpiresAt,
+      table.absoluteExpiresAt
+    ),
+    expiryCheck: check(
+      "sf_super_admin_sessions_expiry_check",
+      sql`${table.createdAt} < ${table.idleExpiresAt}
+        and ${table.idleExpiresAt} <= ${table.absoluteExpiresAt}
+        and ${table.createdAt} < ${table.absoluteExpiresAt}`
+    ),
+    hashFormatCheck: check(
+      "sf_super_admin_sessions_refresh_hash_check",
+      sql`${table.refreshTokenHash} ~ '^[0-9a-f]{64}$'`
+    )
+  })
+);
+var superAdminRefreshTokensTable = pgTable(
+  "sf_super_admin_refresh_tokens",
+  {
+    tokenHash: varchar("token_hash", { length: 64 }).primaryKey(),
+    sessionId: uuid("session_id").notNull().references(() => superAdminSessionsTable.id, { onDelete: "cascade" }),
+    familyId: uuid("family_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    replacedByHash: varchar("replaced_by_hash", { length: 64 }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true })
+  },
+  (table) => ({
+    familyIndex: index("sf_super_admin_refresh_family_idx").on(table.familyId, table.createdAt),
+    sessionIndex: index("sf_super_admin_refresh_session_idx").on(table.sessionId, table.createdAt),
+    tokenHashCheck: check(
+      "sf_super_admin_refresh_hash_check",
+      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`
+    ),
+    replacementHashCheck: check(
+      "sf_super_admin_refresh_replacement_hash_check",
+      sql`${table.replacedByHash} IS NULL OR ${table.replacedByHash} ~ '^[0-9a-f]{64}$'`
+    )
+  })
+);
+var superAdminStepUpTokensTable = pgTable(
+  "sf_super_admin_step_up_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id").notNull().references(() => superAdminSessionsTable.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    actionKey: varchar("action_key", { length: 128 }).notNull(),
+    payloadHash: varchar("payload_hash", { length: 64 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true })
+  },
+  (table) => ({
+    tokenUnique: uniqueIndex("sf_super_admin_step_up_token_uq").on(table.tokenHash),
+    sessionExpiryIndex: index("sf_super_admin_step_up_session_expiry_idx").on(
+      table.sessionId,
+      table.expiresAt
+    ),
+    tokenHashCheck: check(
+      "sf_super_admin_step_up_token_hash_check",
+      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`
+    ),
+    payloadHashCheck: check(
+      "sf_super_admin_step_up_payload_hash_check",
+      sql`${table.payloadHash} ~ '^[0-9a-f]{64}$'`
+    ),
+    expiryCheck: check("sf_super_admin_step_up_expiry_check", sql`${table.expiresAt} > ${table.createdAt}`)
+  })
+);
+
 // ../../lib/db/src/schema/ip-blocklist.ts
 var ipBlocklistTable = pgTable("sf_ip_blocklist", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -212044,7 +212176,10 @@ function normalizeHttpOrigin(value) {
 function getAllowedOrigins(environment = process.env) {
   const developmentOrigin = environment.REPLIT_DEV_DOMAIN ? normalizeConfiguredOrigin(environment.REPLIT_DEV_DOMAIN) : null;
   if (environment.NODE_ENV === "production") {
-    const configuredValues2 = (environment.CORS_ALLOWED_ORIGINS ?? "").split(",").map((value) => value.trim()).filter(Boolean);
+    const configuredValues2 = [
+      environment.CORS_ALLOWED_ORIGINS,
+      environment.SENDFLOW_ADMIN_ALLOWED_ORIGINS
+    ].filter((value) => Boolean(value)).flatMap((value) => value.split(",")).map((value) => value.trim()).filter(Boolean);
     if (configuredValues2.length === 0) {
       throw new Error("CORS_ALLOWED_ORIGINS must be explicitly configured in production");
     }
@@ -212066,6 +212201,7 @@ function getAllowedOrigins(environment = process.env) {
   }
   const configuredValues = [
     environment.CORS_ALLOWED_ORIGINS,
+    environment.SENDFLOW_ADMIN_ALLOWED_ORIGINS,
     environment.REPLIT_DOMAINS,
     environment.REPLIT_DEV_DOMAIN
   ];
@@ -212110,7 +212246,7 @@ function parseTrustProxyHops(value, nodeEnvironment = "development") {
 }
 
 // src/routes/index.ts
-var import_express34 = __toESM(require_express2(), 1);
+var import_express35 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -212304,7 +212440,7 @@ var SendEmailOtpBody = union2([object({
   "purpose": _enum2(["signup"])
 }), object({
   "phone": stringFormat("phone", sendEmailOtpBodyThreePhoneRegExp).min(sendEmailOtpBodyThreePhoneMin).max(sendEmailOtpBodyThreePhoneMax).describe("Account phone identifier."),
-  "purpose": _enum2(["pin_reset", "admin_login"])
+  "purpose": _enum2(["pin_reset"])
 })]);
 var sendEmailOtpResponseResendAfterSecondsMin = 0;
 var SendEmailOtpResponse = object({
@@ -212318,7 +212454,7 @@ var verifyEmailOtpBodyCodeRegExp = new RegExp("^[0-9]{6}$");
 var verifyEmailOtpBodyTurnstileTokenMax = 2048;
 var VerifyEmailOtpBody = object({
   "challengeId": uuid3(),
-  "purpose": _enum2(["signup", "password_reset", "pin_reset", "admin_login"]),
+  "purpose": _enum2(["signup", "password_reset", "pin_reset"]),
   "code": string2().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp),
   "turnstileToken": string2().min(1).max(verifyEmailOtpBodyTurnstileTokenMax).describe("Single-use Cloudflare Turnstile token for OTP verification.")
 });
@@ -212568,9 +212704,6 @@ var GetCurrentAccountResponse = object({
     "balanceMinor": int().max(getCurrentAccountResponseWalletBalanceMinorMax),
     "status": _enum2(["active", "locked", "closed"])
   })
-});
-var GetCustomerPortalEligibilityResponse = object({
-  "isAuthorized": boolean3()
 });
 var getCustomerProfileResponseEmailMax = 254;
 var getCustomerProfileResponseFirstNameMax = 80;
@@ -213736,34 +213869,62 @@ var GetCustomerTransactionResponse = object({
   "createdAt": coerce_exports.date()
 });
 var RequestIdentityVerificationUnavailableResponse = _void2();
-var signInAdminBodyPhoneMin = 9;
-var signInAdminBodyPhoneMax = 16;
-var signInAdminBodyPhoneRegExp = new RegExp("^\\+[1-9][0-9]{7,14}$");
+var signInAdminBodyEmailMax = 254;
+var signInAdminBodyPasswordMax = 1024;
+var signInAdminBodyTotpCodeRegExp = new RegExp("^[0-9]{6}$");
 var SignInAdminBody = object({
-  "phone": string2().min(signInAdminBodyPhoneMin).max(signInAdminBodyPhoneMax).regex(signInAdminBodyPhoneRegExp),
-  "challengeId": uuid3()
+  "email": email2().max(signInAdminBodyEmailMax),
+  "password": string2().min(1).max(signInAdminBodyPasswordMax),
+  "totpCode": string2().regex(signInAdminBodyTotpCodeRegExp)
 });
 var SignInAdminResponse = object({
   "isAdmin": boolean3(),
-  "pinUnlocked": boolean3(),
-  "canMutate": boolean3().optional()
+  "sessionAuthenticated": boolean3(),
+  "canMutate": boolean3()
 });
 var SignOutAdminResponse = _void2();
 var GetAdminAccessStatusResponse = object({
   "isAdmin": boolean3(),
-  "pinUnlocked": boolean3(),
-  "canMutate": boolean3().optional()
+  "sessionAuthenticated": boolean3(),
+  "canMutate": boolean3()
 });
-var unlockAdminPinBodyPinMin = 8;
-var unlockAdminPinBodyPinMax = 8;
-var unlockAdminPinBodyPinRegExp = new RegExp("^[0-9]{8}$");
-var UnlockAdminPinBody = object({
-  "pin": string2().min(unlockAdminPinBodyPinMin).max(unlockAdminPinBodyPinMax).regex(unlockAdminPinBodyPinRegExp)
+var RefreshAdminSessionResponse = object({
+  "isAdmin": boolean3(),
+  "sessionAuthenticated": boolean3(),
+  "canMutate": boolean3()
 });
-var UnlockAdminPinResponse = object({
-  "pinUnlocked": boolean3(),
-  "expiresAt": coerce_exports.date()
+var RecordAdminActivityResponse = _void2();
+var confirmAdminSensitiveActionBodyTotpCodeRegExp = new RegExp("^[0-9]{6}$");
+var confirmAdminSensitiveActionBodyActionMax = 128;
+var ConfirmAdminSensitiveActionBody = object({
+  "totpCode": string2().regex(confirmAdminSensitiveActionBodyTotpCodeRegExp),
+  "action": string2().max(confirmAdminSensitiveActionBodyActionMax),
+  "query": record(string2(), unknown()).optional(),
+  "payload": unknown().optional()
 });
+var confirmAdminSensitiveActionResponseStepUpTokenMin = 43;
+var confirmAdminSensitiveActionResponseStepUpTokenMax = 43;
+var confirmAdminSensitiveActionResponseStepUpTokenRegExp = new RegExp("^[A-Za-z0-9_-]{43}$");
+var confirmAdminSensitiveActionResponseExpiresInSecondsMax = 60;
+var ConfirmAdminSensitiveActionResponse = object({
+  "stepUpToken": string2().min(confirmAdminSensitiveActionResponseStepUpTokenMin).max(confirmAdminSensitiveActionResponseStepUpTokenMax).regex(confirmAdminSensitiveActionResponseStepUpTokenRegExp),
+  "expiresInSeconds": int().max(confirmAdminSensitiveActionResponseExpiresInSecondsMax)
+});
+var ListAdminSessionsResponseItem = object({
+  "id": uuid3(),
+  "createdAt": coerce_exports.date(),
+  "lastActivityAt": coerce_exports.date(),
+  "idleExpiresAt": coerce_exports.date(),
+  "absoluteExpiresAt": coerce_exports.date(),
+  "revokedAt": coerce_exports.date().nullable(),
+  "isCurrent": boolean3()
+});
+var ListAdminSessionsResponse = array(ListAdminSessionsResponseItem);
+var RevokeAdminSessionParams = object({
+  "sessionId": uuid3()
+});
+var RevokeAdminSessionResponse = _void2();
+var RevokeAllAdminSessionsResponse = _void2();
 var GetAdminOverviewQueryParams = object({
   "from": date3().optional().describe("Inclusive UTC calendar date."),
   "to": date3().optional().describe("Inclusive UTC calendar date.")
@@ -215674,40 +215835,302 @@ function requestIp(req, hops) {
 // src/routes/admin.ts
 var import_express2 = __toESM(require_express2(), 1);
 
-// src/lib/admin-audit.ts
-async function recordAdminAudit(entry, database = db) {
-  const [created] = await database.insert(adminAuditLogsTable).values(entry).returning({ id: adminAuditLogsTable.id });
-  if (!created) {
-    throw new Error("Administrator audit entry was not created");
+// src/lib/admin-audit-context.ts
+import { AsyncLocalStorage } from "node:async_hooks";
+
+// src/lib/request-security.ts
+import { createHmac as createHmac2 } from "node:crypto";
+function fingerprintKey() {
+  const key = process.env.SESSION_SECRET?.trim();
+  if (!key) throw new Error("Session fingerprinting is not configured");
+  return key;
+}
+function fingerprint(value) {
+  return createHmac2("sha256", fingerprintKey()).update(value).digest("hex");
+}
+function requesterAddress(req) {
+  return req.ip || req.socket.remoteAddress || "unknown";
+}
+function isTrustedOrigin(req) {
+  const origin = normalizeHttpOrigin(req.get("origin"));
+  return origin !== null && getAllowedOrigins(process.env).has(origin);
+}
+
+// src/lib/admin-auth-crypto.ts
+import {
+  createCipheriv as createCipheriv2,
+  createDecipheriv as createDecipheriv2,
+  createHash as createHash2,
+  createHmac as createHmac3,
+  createPrivateKey,
+  createPublicKey,
+  randomBytes as randomBytes3,
+  sign,
+  timingSafeEqual as timingSafeEqual2,
+  verify
+} from "node:crypto";
+import argon2 from "argon2";
+var ARGON2_OPTIONS = {
+  type: argon2.argon2id,
+  memoryCost: 65536,
+  timeCost: 3,
+  parallelism: 1,
+  hashLength: 32
+};
+var ACCESS_TOKEN_TTL_SECONDS = 5 * 60;
+var TOTP_PERIOD_SECONDS = 30;
+var TOTP_DIGITS = 6;
+var BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+function decodeBase32(value) {
+  const normalized = value.toUpperCase().replace(/=+$/u, "");
+  if (!normalized || !/^[A-Z2-7]+$/u.test(normalized)) return null;
+  let bits = 0;
+  let accumulator = 0;
+  const output2 = [];
+  for (const character of normalized) {
+    const digit = BASE32_ALPHABET.indexOf(character);
+    if (digit < 0) return null;
+    accumulator = accumulator << 5 | digit;
+    bits += 5;
+    if (bits >= 8) {
+      bits -= 8;
+      output2.push(accumulator >> bits & 255);
+    }
+  }
+  return Buffer.from(output2);
+}
+function encodeBase32(bytes) {
+  let accumulator = 0;
+  let bits = 0;
+  let output2 = "";
+  for (const byte of bytes) {
+    accumulator = accumulator << 8 | byte;
+    bits += 8;
+    while (bits >= 5) {
+      bits -= 5;
+      output2 += BASE32_ALPHABET[accumulator >> bits & 31];
+    }
+  }
+  if (bits > 0) output2 += BASE32_ALPHABET[accumulator << 5 - bits & 31];
+  return output2;
+}
+function createTotpSecret() {
+  return encodeBase32(randomBytes3(20));
+}
+function totpAtStep(secret, step) {
+  const key = decodeBase32(secret);
+  if (!key || key.length < 16 || !Number.isSafeInteger(step) || step < 0) return null;
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(step));
+  const digest2 = createHmac3("sha1", key).update(counter).digest();
+  const offset = digest2[digest2.length - 1] & 15;
+  const binary = (digest2[offset] & 127) << 24 | (digest2[offset + 1] & 255) << 16 | (digest2[offset + 2] & 255) << 8 | digest2[offset + 3] & 255;
+  return String(binary % 10 ** TOTP_DIGITS).padStart(TOTP_DIGITS, "0");
+}
+function verifyTotpCode(secret, candidate, nowMs = Date.now(), lastAcceptedStep = null) {
+  if (!/^[0-9]{6}$/u.test(candidate) || !Number.isFinite(nowMs) || nowMs < 0) return null;
+  const currentStep = Math.floor(nowMs / 1e3 / TOTP_PERIOD_SECONDS);
+  let acceptedStep = null;
+  const candidateBytes = Buffer.from(candidate, "ascii");
+  for (const step of [currentStep - 1, currentStep, currentStep + 1]) {
+    if (step < 0 || lastAcceptedStep !== null && step <= lastAcceptedStep) continue;
+    const expected = totpAtStep(secret, step);
+    if (expected === null) continue;
+    const expectedBytes = Buffer.from(expected, "ascii");
+    if (timingSafeEqual2(candidateBytes, expectedBytes)) acceptedStep = step;
+  }
+  return acceptedStep;
+}
+function decodeEncryptionKey(value) {
+  if (!value) return null;
+  try {
+    const decoded = /^[0-9a-f]{64}$/iu.test(value) ? Buffer.from(value, "hex") : Buffer.from(value, "base64url");
+    return decoded.length === 32 ? decoded : null;
+  } catch {
+    return null;
+  }
+}
+function encryptTotpSecret(secret, environment = process.env) {
+  const key = decodeEncryptionKey(environment.SENDFLOW_ADMIN_TOTP_ENCRYPTION_KEY);
+  if (!key || !decodeBase32(secret)) return null;
+  const nonce = randomBytes3(12);
+  const cipher = createCipheriv2("aes-256-gcm", key, nonce);
+  const ciphertext = Buffer.concat([
+    cipher.update(secret, "utf8"),
+    cipher.final()
+  ]);
+  return {
+    ciphertext: ciphertext.toString("base64url"),
+    nonce: nonce.toString("base64url"),
+    authTag: cipher.getAuthTag().toString("base64url")
+  };
+}
+function decryptTotpSecret(encrypted, environment = process.env) {
+  const key = decodeEncryptionKey(environment.SENDFLOW_ADMIN_TOTP_ENCRYPTION_KEY);
+  if (!key) return null;
+  try {
+    const nonce = Buffer.from(encrypted.nonce, "base64url");
+    const tag = Buffer.from(encrypted.authTag, "base64url");
+    const ciphertext = Buffer.from(encrypted.ciphertext, "base64url");
+    if (nonce.length !== 12 || tag.length !== 16 || ciphertext.length < 16) return null;
+    const decipher = createDecipheriv2("aes-256-gcm", key, nonce);
+    decipher.setAuthTag(tag);
+    const secret = Buffer.concat([
+      decipher.update(ciphertext),
+      decipher.final()
+    ]).toString("utf8");
+    return decodeBase32(secret) ? secret : null;
+  } catch {
+    return null;
+  }
+}
+function normalizeAdminEmail(value) {
+  if (typeof value !== "string") return null;
+  if (/[\u0000-\u001f\u007f]/u.test(value)) return null;
+  const email3 = value.trim().normalize("NFKC").toLowerCase();
+  if (email3.length < 3 || email3.length > 254 || /[\s\u0000-\u001f\u007f]/u.test(email3)) return null;
+  const at = email3.lastIndexOf("@");
+  if (at < 1 || at === email3.length - 1 || email3.indexOf("@") !== at) return null;
+  if (email3.slice(0, at).length > 64 || !email3.slice(at + 1).includes(".")) return null;
+  return email3;
+}
+async function hashAdminPassword(password) {
+  return argon2.hash(password, ARGON2_OPTIONS);
+}
+async function verifyAdminPassword(password, hash2) {
+  if (typeof password !== "string" || password.length < 1 || Buffer.byteLength(password, "utf8") > 1024 || typeof hash2 !== "string" || !hash2.startsWith("$argon2id$") || hash2.length > 512) return false;
+  try {
+    return await argon2.verify(hash2, password);
+  } catch {
+    return false;
+  }
+}
+function createOpaqueToken() {
+  return randomBytes3(32).toString("base64url");
+}
+function hashOpaqueToken(token) {
+  return createHash2("sha256").update(token, "utf8").digest("hex");
+}
+function signingKeys(environment) {
+  const privatePem = environment.SENDFLOW_ADMIN_JWT_PRIVATE_KEY?.replace(/\\n/gu, "\n");
+  const publicPem = environment.SENDFLOW_ADMIN_JWT_PUBLIC_KEY?.replace(/\\n/gu, "\n");
+  if (!privatePem || !publicPem) return null;
+  try {
+    return {
+      privateKey: createPrivateKey(privatePem),
+      publicKey: createPublicKey(publicPem)
+    };
+  } catch {
+    return null;
+  }
+}
+function base64UrlJson(value) {
+  return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+}
+function createAdminAccessToken(sessionId, nowSeconds = Math.floor(Date.now() / 1e3), environment = process.env) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(sessionId)) {
+    return null;
+  }
+  const keys = signingKeys(environment);
+  if (!keys || !Number.isSafeInteger(nowSeconds) || nowSeconds < 0) return null;
+  const header = base64UrlJson({ alg: "RS256", typ: "JWT" });
+  const claims = {
+    iss: "sendflow-admin",
+    aud: "sendflow-admin-api",
+    sub: "super-admin",
+    sid: sessionId,
+    jti: randomBytes3(16).toString("hex"),
+    iat: nowSeconds,
+    nbf: nowSeconds,
+    exp: nowSeconds + ACCESS_TOKEN_TTL_SECONDS
+  };
+  const payload = base64UrlJson(claims);
+  const input2 = `${header}.${payload}`;
+  const signature = sign("RSA-SHA256", Buffer.from(input2), keys.privateKey).toString("base64url");
+  return `${input2}.${signature}`;
+}
+function verifyAdminAccessToken(token, nowSeconds = Math.floor(Date.now() / 1e3), environment = process.env) {
+  if (!token || token.length > 4096 || !Number.isSafeInteger(nowSeconds)) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3 || parts.some((part) => !part)) return null;
+  const keys = signingKeys(environment);
+  if (!keys) return null;
+  try {
+    const header = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8"));
+    if (header?.alg !== "RS256" || header?.typ !== "JWT") return null;
+    const validSignature = verify(
+      "RSA-SHA256",
+      Buffer.from(`${parts[0]}.${parts[1]}`),
+      keys.publicKey,
+      Buffer.from(parts[2], "base64url")
+    );
+    if (!validSignature) return null;
+    const claims = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+    if (claims.iss !== "sendflow-admin" || claims.aud !== "sendflow-admin-api" || claims.sub !== "super-admin" || typeof claims.sid !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(claims.sid) || typeof claims.jti !== "string" || !/^[0-9a-f]{32}$/u.test(claims.jti) || !Number.isSafeInteger(claims.iat) || !Number.isSafeInteger(claims.nbf) || !Number.isSafeInteger(claims.exp) || claims.iat > nowSeconds + 15 || claims.nbf > nowSeconds + 15 || claims.exp <= nowSeconds || claims.exp <= claims.iat || claims.exp - claims.iat > ACCESS_TOKEN_TTL_SECONDS) return null;
+    return claims;
+  } catch {
+    return null;
   }
 }
 
 // src/lib/admin-session.ts
-import { createHash as createHash2 } from "node:crypto";
-var ADMIN_SESSION_COOKIE = "__Host-sendflow_admin";
-var ADMIN_SESSION_TTL_MS = 60 * 60 * 1e3;
-var ADMIN_PIN_TTL_MS = 15 * 60 * 1e3;
+var ADMIN_ACCESS_COOKIE = "__Host-sendflow_admin_access";
+var ADMIN_REFRESH_COOKIE = "__Host-sendflow_admin_refresh";
+var ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1e3;
+var ADMIN_IDLE_TTL_MS = 15 * 60 * 1e3;
+var ADMIN_ACCESS_TTL_MS = 5 * 60 * 1e3;
+var ADMIN_STEP_UP_TTL_MS = 60 * 1e3;
 var contexts = /* @__PURE__ */ new WeakMap();
-function hashAdminSessionToken(token) {
-  return createHash2("sha256").update(`sendflow-admin:v1:${token}`).digest("hex");
+var accessTokenPattern = /^[A-Za-z0-9_.-]{80,4096}$/u;
+var opaqueTokenPattern = /^[A-Za-z0-9_-]{43}$/u;
+function readCookie(req, name) {
+  const values = req.headers.cookie?.split(";").map((part) => part.trim()).filter((part) => part.startsWith(`${name}=`)) ?? [];
+  if (values.length !== 1) return null;
+  const raw = values[0].slice(name.length + 1);
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return null;
+  }
+}
+function readAdminAccessToken(req) {
+  const value = readCookie(req, ADMIN_ACCESS_COOKIE);
+  return value && accessTokenPattern.test(value) ? value : null;
+}
+function readAdminRefreshToken(req) {
+  const value = readCookie(req, ADMIN_REFRESH_COOKIE);
+  return value && opaqueTokenPattern.test(value) ? value : null;
 }
 function adminSessionContext(req) {
   return contexts.get(req);
 }
-function adminPinUnlocked(session, now = /* @__PURE__ */ new Date()) {
-  return session.pinVerifiedUntil !== null && session.pinVerifiedUntil > now && session.expiresAt > now;
+function adminSessionAuthenticated(session, now = /* @__PURE__ */ new Date()) {
+  return session.mfaAuthenticatedUntil !== null && session.mfaAuthenticatedUntil > now && session.expiresAt > now;
 }
-function setAdminSessionCookie(res, token) {
-  res.cookie(ADMIN_SESSION_COOKIE, token, {
+function setAdminSessionCookies(res, accessToken, refreshToken, absoluteExpiresAt) {
+  const now = Date.now();
+  const maxAge = Math.max(0, absoluteExpiresAt.getTime() - now);
+  res.cookie(ADMIN_ACCESS_COOKIE, accessToken, {
     httpOnly: true,
     secure: true,
     sameSite: "strict",
     path: "/",
-    maxAge: ADMIN_SESSION_TTL_MS
+    maxAge: Math.min(ADMIN_ACCESS_TTL_MS, maxAge)
+  });
+  res.cookie(ADMIN_REFRESH_COOKIE, refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    path: "/",
+    maxAge
   });
 }
-function clearAdminSessionCookie(res) {
-  res.clearCookie(ADMIN_SESSION_COOKIE, { httpOnly: true, secure: true, sameSite: "strict", path: "/" });
+function clearAdminSessionCookies(res) {
+  const options = { httpOnly: true, secure: true, sameSite: "strict", path: "/" };
+  res.clearCookie(ADMIN_ACCESS_COOKIE, options);
+  res.clearCookie(ADMIN_REFRESH_COOKIE, options);
+  res.clearCookie("__Host-sendflow_admin", options);
+  res.clearCookie("__Host-sendflow-admin-pin", options);
 }
 async function loadAdminSession(req, res, next) {
   res.setHeader("Cache-Control", "no-store, private");
@@ -215715,35 +216138,132 @@ async function loadAdminSession(req, res, next) {
     res.status(503).json({ error: "L\u2019administration est d\xE9sactiv\xE9e dans cet environnement." });
     return;
   }
-  const cookie = req.headers.cookie?.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${ADMIN_SESSION_COOKIE}=`));
-  const token = cookie?.slice(ADMIN_SESSION_COOKIE.length + 1);
-  if (!token || !isCustomerSessionToken(token)) {
+  const isRefreshRequest = req.method === "POST" && req.path === "/refresh";
+  if (isRefreshRequest) {
+    const refreshToken = readAdminRefreshToken(req);
+    if (!refreshToken) {
+      next();
+      return;
+    }
+    const now2 = /* @__PURE__ */ new Date();
+    try {
+      const [session] = await db.select({
+        sessionId: superAdminSessionsTable.id,
+        refreshFamilyId: superAdminSessionsTable.refreshFamilyId,
+        lastActivityAt: superAdminSessionsTable.lastActivityAt,
+        idleExpiresAt: superAdminSessionsTable.idleExpiresAt,
+        absoluteExpiresAt: superAdminSessionsTable.absoluteExpiresAt
+      }).from(superAdminRefreshTokensTable).innerJoin(
+        superAdminSessionsTable,
+        eq(superAdminSessionsTable.id, superAdminRefreshTokensTable.sessionId)
+      ).innerJoin(superAdminCredentialsTable, and(
+        eq(superAdminCredentialsTable.id, 1),
+        eq(superAdminCredentialsTable.active, true)
+      )).where(and(
+        eq(superAdminRefreshTokensTable.tokenHash, hashOpaqueToken(refreshToken)),
+        isNull(superAdminRefreshTokensTable.revokedAt),
+        isNull(superAdminSessionsTable.revokedAt),
+        gt(superAdminSessionsTable.idleExpiresAt, now2),
+        gt(superAdminSessionsTable.absoluteExpiresAt, now2)
+      )).limit(1);
+      if (session) {
+        const shortExpiry = new Date(Math.min(
+          session.absoluteExpiresAt.getTime(),
+          now2.getTime() + ADMIN_ACCESS_TTL_MS
+        ));
+        contexts.set(req, {
+          sessionId: session.sessionId,
+          userId: "super-admin",
+          canMutate: true,
+          expiresAt: shortExpiry,
+          mfaAuthenticatedUntil: shortExpiry,
+          lastActivityAt: session.lastActivityAt,
+          idleExpiresAt: session.idleExpiresAt,
+          absoluteExpiresAt: session.absoluteExpiresAt,
+          refreshFamilyId: session.refreshFamilyId
+        });
+      }
+      next();
+    } catch {
+      req.log.error("Administrator refresh session storage unavailable");
+      res.status(503).json({ error: "Le renouvellement administrateur est indisponible." });
+    }
+    return;
+  }
+  const token = readAdminAccessToken(req);
+  const claims = token ? verifyAdminAccessToken(token) : null;
+  if (!claims) {
     next();
     return;
   }
+  const now = /* @__PURE__ */ new Date();
   try {
     const [session] = await db.select({
-      sessionId: adminSessionsTable.id,
-      userId: adminGrantsTable.userId,
-      canMutate: adminGrantsTable.canMutate,
-      pinHash: adminGrantsTable.pinHash,
-      expiresAt: adminSessionsTable.expiresAt,
-      pinVerifiedUntil: adminSessionsTable.pinVerifiedUntil
-    }).from(adminSessionsTable).innerJoin(adminGrantsTable, and(
-      eq(adminGrantsTable.userId, adminSessionsTable.userId),
-      eq(adminGrantsTable.authorizationVersion, adminSessionsTable.authorizationVersion)
-    )).innerJoin(usersTable, eq(usersTable.id, adminGrantsTable.userId)).where(and(
-      eq(adminSessionsTable.tokenHash, hashAdminSessionToken(token)),
-      isNull(adminSessionsTable.revokedAt),
-      isNull(adminGrantsTable.revokedAt),
-      gt(adminSessionsTable.expiresAt, /* @__PURE__ */ new Date()),
-      eq(usersTable.status, "active")
+      sessionId: superAdminSessionsTable.id,
+      refreshFamilyId: superAdminSessionsTable.refreshFamilyId,
+      lastActivityAt: superAdminSessionsTable.lastActivityAt,
+      idleExpiresAt: superAdminSessionsTable.idleExpiresAt,
+      absoluteExpiresAt: superAdminSessionsTable.absoluteExpiresAt
+    }).from(superAdminSessionsTable).innerJoin(superAdminCredentialsTable, and(
+      eq(superAdminCredentialsTable.id, 1),
+      eq(superAdminCredentialsTable.active, true)
+    )).where(and(
+      eq(superAdminSessionsTable.id, claims.sid),
+      isNull(superAdminSessionsTable.revokedAt),
+      gt(superAdminSessionsTable.idleExpiresAt, now),
+      gt(superAdminSessionsTable.absoluteExpiresAt, now)
     )).limit(1);
-    if (session) contexts.set(req, session);
+    if (session) {
+      const jwtExpiry = new Date(claims.exp * 1e3);
+      contexts.set(req, {
+        sessionId: session.sessionId,
+        userId: "super-admin",
+        canMutate: true,
+        expiresAt: jwtExpiry,
+        mfaAuthenticatedUntil: jwtExpiry,
+        lastActivityAt: session.lastActivityAt,
+        idleExpiresAt: session.idleExpiresAt,
+        absoluteExpiresAt: session.absoluteExpiresAt,
+        refreshFamilyId: session.refreshFamilyId
+      });
+    }
     next();
   } catch {
     req.log.error("Administrator session storage unavailable");
     res.status(503).json({ error: "La v\xE9rification administrateur est indisponible." });
+  }
+}
+
+// src/lib/admin-audit-context.ts
+var contextStorage = new AsyncLocalStorage();
+function currentAdminAuditContext() {
+  return contextStorage.getStore();
+}
+function adminAuditContextMiddleware(req, _res, next) {
+  const session = adminSessionContext(req);
+  const context2 = {
+    ...session ? { sessionId: session.sessionId } : {}
+  };
+  try {
+    context2.ipHash = fingerprint(`admin-ip:${requesterAddress(req)}`);
+    context2.userAgentHash = fingerprint(`admin-ua:${(req.get("user-agent") ?? "").slice(0, 512)}`);
+  } catch {
+    req.log.warn("Administrator audit request context is incomplete");
+  }
+  contextStorage.run(context2, next);
+}
+
+// src/lib/admin-audit.ts
+async function recordAdminAudit(entry, database = db) {
+  const context2 = currentAdminAuditContext();
+  const [created] = await database.insert(adminAuditLogsTable).values({
+    ...entry,
+    sessionId: entry.sessionId ?? context2?.sessionId,
+    ipHash: entry.ipHash ?? context2?.ipHash,
+    userAgentHash: entry.userAgentHash ?? context2?.userAgentHash
+  }).returning({ id: adminAuditLogsTable.id });
+  if (!created) {
+    throw new Error("Administrator audit entry was not created");
   }
 }
 
@@ -216024,8 +216544,8 @@ function respondAdminAuthError(req, res, permission = "read") {
   const userId = respondAdminIdentityError(req, res, permission);
   if (!userId) return null;
   const session = adminSessionContext(req);
-  if (!session || !adminPinUnlocked(session)) {
-    res.status(403).json({ error: "Administrator PIN verification required" });
+  if (!session || !adminSessionAuthenticated(session)) {
+    res.status(403).json({ error: "Administrator authentication required" });
     return null;
   }
   return userId;
@@ -216042,8 +216562,8 @@ function respondAdminUserReadAuthError(req, res) {
     res.status(403).json({ error: "Administrator user profile read access required" });
     return null;
   }
-  if (!adminPinUnlocked(session)) {
-    res.status(403).json({ error: "Administrator PIN verification required" });
+  if (!adminSessionAuthenticated(session)) {
+    res.status(403).json({ error: "Administrator authentication required" });
     return null;
   }
   return session.userId;
@@ -216058,8 +216578,8 @@ function respondAdminTransactionReadAuthError(req, res) {
     res.status(403).json({ error: "Administrator transaction read access required" });
     return null;
   }
-  if (!adminPinUnlocked(session)) {
-    res.status(403).json({ error: "Administrator PIN verification required" });
+  if (!adminSessionAuthenticated(session)) {
+    res.status(403).json({ error: "Administrator authentication required" });
     return null;
   }
   return session.userId;
@@ -216715,24 +217235,6 @@ router2.get("/transactions/:transactionId", async (req, res) => {
 });
 var admin_default = router2;
 
-// src/lib/request-security.ts
-import { createHmac as createHmac2 } from "node:crypto";
-function fingerprintKey() {
-  const key = process.env.SESSION_SECRET?.trim();
-  if (!key) throw new Error("Session fingerprinting is not configured");
-  return key;
-}
-function fingerprint(value) {
-  return createHmac2("sha256", fingerprintKey()).update(value).digest("hex");
-}
-function requesterAddress(req) {
-  return req.ip || req.socket.remoteAddress || "unknown";
-}
-function isTrustedOrigin(req) {
-  const origin = normalizeHttpOrigin(req.get("origin"));
-  return origin !== null && getAllowedOrigins(process.env).has(origin);
-}
-
 // src/services/ip-blocklist.ts
 var IpBlockError = class extends Error {
   constructor(message, status) {
@@ -216843,12 +217345,12 @@ function fail(req, res, error62) {
   res.status(503).json({ error: "La protection r\xE9seau est momentan\xE9ment indisponible." });
 }
 function createAdminIpBlocklistRouter(authorize = respondAdminIdentityError) {
-  const router29 = (0, import_express3.Router)();
-  router29.use((_req, res, next) => {
+  const router30 = (0, import_express3.Router)();
+  router30.use((_req, res, next) => {
     res.setHeader("Cache-Control", "no-store, private");
     next();
   });
-  router29.get("/ip-blocklist", async (req, res) => {
+  router30.get("/ip-blocklist", async (req, res) => {
     const actor = authorize(req, res, "read");
     if (!actor) return;
     const parsed = ListAdminIpBlocksQueryParams.safeParse(req.query);
@@ -216864,7 +217366,7 @@ function createAdminIpBlocklistRouter(authorize = respondAdminIdentityError) {
       fail(req, res, error62);
     }
   });
-  router29.post("/ip-blocklist", async (req, res) => {
+  router30.post("/ip-blocklist", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -216880,7 +217382,7 @@ function createAdminIpBlocklistRouter(authorize = respondAdminIdentityError) {
       fail(req, res, error62);
     }
   });
-  router29.post("/ip-blocklist/:id/revoke", async (req, res) => {
+  router30.post("/ip-blocklist/:id/revoke", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -216897,7 +217399,7 @@ function createAdminIpBlocklistRouter(authorize = respondAdminIdentityError) {
       fail(req, res, error62);
     }
   });
-  return router29;
+  return router30;
 }
 var admin_ip_blocklist_default = createAdminIpBlocklistRouter();
 
@@ -217140,12 +217642,12 @@ function fail2(req, res, error62) {
   res.status(503).json({ error: "La protection r\xE9seau est momentan\xE9ment indisponible." });
 }
 function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) {
-  const router29 = (0, import_express4.Router)();
-  router29.use((_req, res, next) => {
+  const router30 = (0, import_express4.Router)();
+  router30.use((_req, res, next) => {
     res.setHeader("Cache-Control", "no-store, private");
     next();
   });
-  router29.get("/network-defense", async (req, res) => {
+  router30.get("/network-defense", async (req, res) => {
     const actor = authorize(req, res, "read");
     if (!actor) return;
     try {
@@ -217156,7 +217658,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  router29.post("/network-defense/exceptions", async (req, res) => {
+  router30.post("/network-defense/exceptions", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -217171,7 +217673,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  router29.post("/network-defense/authorize-and-release", async (req, res) => {
+  router30.post("/network-defense/authorize-and-release", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -217188,7 +217690,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  router29.post("/network-defense/exceptions/:id/revoke", async (req, res) => {
+  router30.post("/network-defense/exceptions/:id/revoke", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -217203,7 +217705,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  router29.post("/network-defense/blocks/:id/release", async (req, res) => {
+  router30.post("/network-defense/blocks/:id/release", async (req, res) => {
     const actor = authorize(req, res, "mutate");
     if (!actor) return;
     try {
@@ -217218,7 +217720,7 @@ function createAdminNetworkDefenseRouter(authorize = respondAdminIdentityError) 
       fail2(req, res, error62);
     }
   });
-  return router29;
+  return router30;
 }
 var admin_network_defense_default = createAdminNetworkDefenseRouter();
 
@@ -217415,10 +217917,10 @@ function projectCustomerTransactionHistoryValues(transaction, linkFlow) {
 }
 
 // src/lib/email-marketing-unsubscribe.ts
-import { createHmac as createHmac3, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { createHmac as createHmac4, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var TOKEN_VERSION = "v1";
 function unsubscribeSignature(encodedUserId, secret) {
-  return createHmac3("sha256", secret).update(`sendflow:email-marketing-unsubscribe:${TOKEN_VERSION}:${encodedUserId}`).digest("base64url");
+  return createHmac4("sha256", secret).update(`sendflow:email-marketing-unsubscribe:${TOKEN_VERSION}:${encodedUserId}`).digest("base64url");
 }
 function createEmailUnsubscribeToken(userId, secret) {
   if (!userId || !secret || secret.length < 32) {
@@ -217438,7 +217940,7 @@ function verifyEmailUnsubscribeToken(token, secret) {
   try {
     const actual = Buffer.from(signature, "base64url");
     const expected = Buffer.from(unsubscribeSignature(encodedUserId, secret), "base64url");
-    if (actual.length !== expected.length || !timingSafeEqual2(actual, expected)) return null;
+    if (actual.length !== expected.length || !timingSafeEqual3(actual, expected)) return null;
     const userId = Buffer.from(encodedUserId, "base64url").toString("utf8");
     if (!userId || userId.length > 255 || /[\u0000-\u001f\u007f]/.test(userId)) return null;
     return userId;
@@ -217511,26 +218013,6 @@ router5.get("/me", async (req, res) => {
   } catch (error62) {
     req.log.error({ err: error62, userId: session.userId }, "Account lookup failed");
     res.status(503).json({ error: "Account storage unavailable" });
-  }
-});
-router5.get("/me/portal-eligibility", async (req, res) => {
-  const session = await requireCustomerSession(req, res, true);
-  if (!session) return;
-  try {
-    const [grant] = await db.select({ userId: adminGrantsTable.userId }).from(adminGrantsTable).innerJoin(usersTable, eq(usersTable.id, adminGrantsTable.userId)).where(and(
-      eq(adminGrantsTable.userId, session.userId),
-      isNull(adminGrantsTable.revokedAt),
-      eq(usersTable.status, "active")
-    )).limit(1);
-    res.setHeader("Cache-Control", "no-store, private");
-    if (!grant) {
-      res.status(404).end();
-      return;
-    }
-    res.json(GetCustomerPortalEligibilityResponse.parse({ isAuthorized: true }));
-  } catch {
-    req.log.error({ userId: session.userId }, "Administrator eligibility lookup failed");
-    res.status(503).json({ error: "Authorization state unavailable" });
   }
 });
 router5.get("/me/profile", async (req, res) => {
@@ -217929,6 +218411,7 @@ var account_limit_default = router6;
 
 // src/routes/admin-access.ts
 var import_express9 = __toESM(require_express2(), 1);
+import { randomUUID as randomUUID2 } from "node:crypto";
 
 // src/lib/customer-auth-rate-limit-policy.ts
 var GENERAL_AUTH_RATE_LIMIT_POLICY = {
@@ -218063,166 +218546,472 @@ async function clearAuthFailures(buckets, database = db) {
   await database.delete(customerAuthAttemptsTable).where(inArray(customerAuthAttemptsTable.bucketHash, buckets));
 }
 
+// src/lib/admin-step-up-policy.ts
+import { createHash as createHash3 } from "node:crypto";
+var ACTION_PATH_PATTERN = /^\/[A-Za-z0-9][A-Za-z0-9/_-]{0,120}$/u;
+function stableJson(value) {
+  if (value === null || typeof value === "string" || typeof value === "boolean") {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new Error("Invalid action payload");
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (typeof value === "object") {
+    const record2 = value;
+    const keys = Object.keys(record2).sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${stableJson(record2[key])}`).join(",")}}`;
+  }
+  throw new Error("Invalid action payload");
+}
+function adminActionKey(method, path) {
+  const normalizedMethod = method.toUpperCase();
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(normalizedMethod) || !ACTION_PATH_PATTERN.test(path) || path.startsWith("/sign-in") || path.startsWith("/sign-out") || path.startsWith("/refresh") || path.startsWith("/step-up")) return null;
+  return `${normalizedMethod}:${path}`;
+}
+function hashAdminActionPayload(query, body) {
+  return createHash3("sha256").update(stableJson({ query: query ?? {}, body: body ?? null }), "utf8").digest("hex");
+}
+function issueableAdminAction(action, query, body) {
+  if (typeof action !== "string" || action.length > 128) return null;
+  const separator = action.indexOf(":");
+  if (separator < 1 || action.indexOf(":", separator + 1) !== -1) return null;
+  const method = action.slice(0, separator);
+  const path = action.slice(separator + 1);
+  const actionKey = adminActionKey(method, path);
+  if (!actionKey || actionKey !== `${method.toUpperCase()}:${path}`) return null;
+  try {
+    return { actionKey, payloadHash: hashAdminActionPayload(query, body) };
+  } catch {
+    return null;
+  }
+}
+
 // src/routes/admin-access.ts
 var router7 = (0, import_express9.Router)();
+var loginInput = external_exports.object({
+  email: external_exports.string().max(254),
+  password: external_exports.string().min(1).max(1024),
+  totpCode: external_exports.string().regex(/^[0-9]{6}$/u)
+}).strict();
+var stepUpInput = external_exports.object({
+  totpCode: external_exports.string().regex(/^[0-9]{6}$/u),
+  action: external_exports.string().max(255),
+  query: external_exports.record(external_exports.string(), external_exports.unknown()).optional().default({}),
+  payload: external_exports.unknown().optional().default(null)
+}).strict();
+var dummyTotpSecret = createTotpSecret();
+var dummyPasswordHash = null;
+function getDummyPasswordHash() {
+  dummyPasswordHash ??= hashAdminPassword(randomUUID2() + randomUUID2());
+  return dummyPasswordHash;
+}
+function requestAuditContext(req) {
+  return {
+    ipHash: fingerprint(`admin-ip:${requesterAddress(req)}`),
+    userAgentHash: fingerprint(`admin-ua:${(req.get("user-agent") ?? "").slice(0, 512)}`)
+  };
+}
+function genericLoginFailure(res) {
+  res.status(401).json({ error: "Identifiants ou code d\u2019authentification invalides." });
+}
+function isJwtConfigured() {
+  return Boolean(createAdminAccessToken(
+    "7c6e3792-2fc8-4f9f-8dbf-871cfa5c3a12",
+    Math.floor(Date.now() / 1e3)
+  ));
+}
+function isTotpEncryptionConfigured() {
+  return Boolean(encryptTotpSecret(dummyTotpSecret));
+}
 router7.get("/access", (req, res) => {
   const session = adminSessionContext(req);
-  const response = GetAdminAccessStatusResponse.parse({
-    isAdmin: !!session,
-    pinUnlocked: session ? adminPinUnlocked(session) : false,
-    canMutate: session?.canMutate ?? false
+  res.setHeader("Cache-Control", "no-store, private");
+  res.json({
+    isAdmin: Boolean(session),
+    sessionAuthenticated: Boolean(session && session.expiresAt.getTime() > Date.now()),
+    canMutate: Boolean(session?.canMutate)
   });
-  res.json(response);
+});
+router7.post("/activity", async (req, res) => {
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine non autoris\xE9e." });
+    return;
+  }
+  const session = adminSessionContext(req);
+  if (!session) {
+    res.status(401).json({ error: "Connexion administrateur requise." });
+    return;
+  }
+  const now = /* @__PURE__ */ new Date();
+  const idleExpiresAt = new Date(Math.min(
+    session.absoluteExpiresAt.getTime(),
+    now.getTime() + 15 * 60 * 1e3
+  ));
+  try {
+    const [updated] = await db.update(superAdminSessionsTable).set({ lastActivityAt: now, idleExpiresAt }).where(and(
+      eq(superAdminSessionsTable.id, session.sessionId),
+      isNull(superAdminSessionsTable.revokedAt),
+      gt(superAdminSessionsTable.idleExpiresAt, now),
+      gt(superAdminSessionsTable.absoluteExpiresAt, now)
+    )).returning({ id: superAdminSessionsTable.id });
+    if (!updated) {
+      clearAdminSessionCookies(res);
+      res.status(401).json({ error: "Session administrateur expir\xE9e." });
+      return;
+    }
+    res.status(204).end();
+  } catch {
+    req.log.error("Administrator activity update failed");
+    res.status(503).json({ error: "La session administrateur est indisponible." });
+  }
 });
 router7.post("/sign-in", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine non autoris\xE9e." });
     return;
   }
-  const parsed = SignInAdminBody.safeParse(req.body);
+  const parsed = loginInput.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Donn\xE9es de connexion invalides." });
     return;
   }
-  const { phone, challengeId } = parsed.data;
-  const now = /* @__PURE__ */ new Date();
-  const token = createCustomerSessionToken();
+  if (!isJwtConfigured() || !isTotpEncryptionConfigured()) {
+    req.log.error("Administrator authentication configuration unavailable");
+    res.status(503).json({ error: "La connexion administrateur est indisponible." });
+    return;
+  }
+  const email3 = normalizeAdminEmail(parsed.data.email);
+  const address = requesterAddress(req);
+  let buckets;
   try {
-    const buckets = [
-      fingerprint(`admin-login-phone:${phone}`),
-      fingerprint(`admin-login-requester:${requesterAddress(req)}`)
+    buckets = [
+      fingerprint(`admin-login-email:${email3 ?? "invalid"}`),
+      fingerprint(`admin-login-requester:${address}`)
     ];
+  } catch {
+    res.status(503).json({ error: "La connexion administrateur est indisponible." });
+    return;
+  }
+  try {
     const result = await withAuthAttemptLock(buckets, async (tx) => {
+      const now = /* @__PURE__ */ new Date();
       const retry = await getAuthRateLimit(buckets, now, tx);
-      if (retry) return { status: 429, retry };
-      const [grant] = await tx.select({
-        userId: adminGrantsTable.userId,
-        version: adminGrantsTable.authorizationVersion
-      }).from(adminGrantsTable).innerJoin(usersTable, eq(usersTable.id, adminGrantsTable.userId)).where(and(
-        isNull(adminGrantsTable.revokedAt),
-        eq(usersTable.status, "active"),
-        or(
-          eq(usersTable.phoneLookupHash, createSensitiveDataLookupIndex(phone, "user-phone")),
-          eq(usersTable.phone, phone)
-        )
+      if (retry) return { kind: "limited", retry };
+      const [credentials] = await tx.select().from(superAdminCredentialsTable).where(eq(superAdminCredentialsTable.emailNormalized, email3 ?? "invalid")).for("update").limit(1);
+      const passwordHash = credentials?.passwordHash ?? await getDummyPasswordHash();
+      const passwordValid = await verifyAdminPassword(parsed.data.password, passwordHash);
+      const decryptedSecret = credentials?.active ? decryptTotpSecret({
+        ciphertext: credentials.totpCiphertext,
+        nonce: credentials.totpNonce,
+        authTag: credentials.totpAuthTag
+      }) : null;
+      const acceptedStep = verifyTotpCode(
+        decryptedSecret ?? dummyTotpSecret,
+        parsed.data.totpCode,
+        now.getTime(),
+        credentials?.lastTotpStep ?? null
+      );
+      if (!credentials || !credentials.active || !email3 || !passwordValid || acceptedStep === null || !decryptedSecret) {
+        await recordAuthFailure(buckets, now, tx);
+        const audit2 = requestAuditContext(req);
+        await recordAdminAudit({
+          adminUserId: "super-admin",
+          action: passwordValid && acceptedStep === null ? "admin_totp_failure" : "admin_login_failure",
+          resourceType: "admin_access",
+          resourceId: "super-admin",
+          ...audit2,
+          outcome: "failure"
+        }, tx);
+        return { kind: "denied" };
+      }
+      const sessionId = randomUUID2();
+      const familyId = randomUUID2();
+      const refreshToken = createOpaqueToken();
+      const refreshTokenHash = hashOpaqueToken(refreshToken);
+      const absoluteExpiresAt = new Date(now.getTime() + ADMIN_SESSION_TTL_MS);
+      const idleExpiresAt = new Date(Math.min(
+        absoluteExpiresAt.getTime(),
+        now.getTime() + 15 * 60 * 1e3
       ));
-      if (!grant) {
-        await recordAuthFailure(buckets, now, tx);
-        return { status: 403 };
-      }
-      const [challenge] = await tx.update(phoneOtpChallengesTable).set({ consumedAt: now }).where(and(
-        eq(phoneOtpChallengesTable.id, challengeId),
-        eq(phoneOtpChallengesTable.purpose, "admin_login"),
-        eq(phoneOtpChallengesTable.phoneHash, fingerprint(`phone:${phone}`)),
-        eq(phoneOtpChallengesTable.requesterHash, fingerprint(`requester:${requesterAddress(req)}`)),
-        eq(phoneOtpChallengesTable.deliveryChannel, "email"),
-        eq(phoneOtpChallengesTable.status, "verified"),
-        eq(phoneOtpChallengesTable.emailVerified, true),
-        isNull(phoneOtpChallengesTable.consumedAt),
-        gt(phoneOtpChallengesTable.expiresAt, now)
-      )).returning({ id: phoneOtpChallengesTable.id });
-      if (!challenge) {
-        await recordAuthFailure(buckets, now, tx);
-        return { status: 403 };
-      }
-      const previous = adminSessionContext(req);
-      if (previous) await tx.update(adminSessionsTable).set({ revokedAt: now, pinVerifiedUntil: null }).where(eq(adminSessionsTable.id, previous.sessionId));
-      const [session] = await tx.insert(adminSessionsTable).values({
-        userId: grant.userId,
-        authorizationVersion: grant.version,
-        tokenHash: hashAdminSessionToken(token),
-        expiresAt: new Date(now.getTime() + ADMIN_SESSION_TTL_MS)
-      }).returning({ id: adminSessionsTable.id });
-      if (!session) throw new Error("Administrator session creation failed");
+      const accessToken = createAdminAccessToken(
+        sessionId,
+        Math.floor(now.getTime() / 1e3)
+      );
+      if (!accessToken) throw new Error("Administrator signing key unavailable");
+      const audit = requestAuditContext(req);
+      await tx.update(superAdminCredentialsTable).set({ lastTotpStep: acceptedStep, updatedAt: now }).where(eq(superAdminCredentialsTable.id, credentials.id));
+      await tx.insert(superAdminSessionsTable).values({
+        id: sessionId,
+        refreshTokenHash,
+        refreshFamilyId: familyId,
+        createdAt: now,
+        lastActivityAt: now,
+        idleExpiresAt,
+        absoluteExpiresAt,
+        ipHash: audit.ipHash,
+        userAgentHash: audit.userAgentHash
+      });
+      await tx.insert(superAdminRefreshTokensTable).values({
+        tokenHash: refreshTokenHash,
+        sessionId,
+        familyId,
+        createdAt: now
+      });
       await recordAdminAudit({
-        adminUserId: grant.userId,
+        adminUserId: "super-admin",
         action: "admin_sign_in",
         resourceType: "admin_access",
-        resourceId: session.id
+        resourceId: sessionId,
+        sessionId,
+        ...audit,
+        outcome: "success"
       }, tx);
       await clearAuthFailures(buckets.slice(0, 1), tx);
-      return { status: 200 };
+      return {
+        kind: "created",
+        accessToken,
+        refreshToken,
+        absoluteExpiresAt
+      };
     });
-    if (result.status !== 200) {
-      res.status(result.status).json({
-        error: result.status === 429 ? "Trop de tentatives. R\xE9essayez plus tard." : "Connexion administrateur refus\xE9e.",
-        ...result.retry ? { retryAfterSeconds: result.retry } : {}
+    if (result.kind === "limited") {
+      res.status(429).json({
+        error: "Trop de tentatives. R\xE9essayez plus tard.",
+        retryAfterSeconds: result.retry
       });
       return;
     }
-    setAdminSessionCookie(res, token);
-    res.json({ isAdmin: true, pinUnlocked: false });
+    if (result.kind !== "created") {
+      genericLoginFailure(res);
+      return;
+    }
+    setAdminSessionCookies(res, result.accessToken, result.refreshToken, result.absoluteExpiresAt);
+    res.setHeader("X-Admin-Access-Expires-In", String(ADMIN_ACCESS_TTL_MS / 1e3));
+    res.status(200).json({ isAdmin: true, sessionAuthenticated: true, canMutate: true });
   } catch {
     req.log.error("Administrator sign-in failed");
     res.status(503).json({ error: "La connexion administrateur est indisponible." });
   }
 });
-router7.post("/pin/unlock", async (req, res) => {
+router7.post("/refresh", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine non autoris\xE9e." });
     return;
   }
-  const context2 = adminSessionContext(req);
-  if (!context2) {
-    res.status(401).json({ error: "Connexion administrateur requise." });
+  const refreshToken = readAdminRefreshToken(req);
+  if (!refreshToken) {
+    clearAdminSessionCookies(res);
+    res.status(401).json({ error: "Session administrateur expir\xE9e." });
     return;
   }
-  const parsed = UnlockAdminPinBody.safeParse(req.body);
+  const refreshTokenHash = hashOpaqueToken(refreshToken);
+  const address = requesterAddress(req);
+  let buckets;
   try {
-    const buckets = [
-      fingerprint(`admin-pin-user:${context2.userId}`),
-      fingerprint(`admin-pin-requester:${requesterAddress(req)}`)
+    buckets = [
+      fingerprint(`admin-refresh-token:${refreshTokenHash}`),
+      fingerprint(`admin-refresh-requester:${address}`)
     ];
+  } catch {
+    clearAdminSessionCookies(res);
+    res.status(503).json({ error: "Le renouvellement de session est indisponible." });
+    return;
+  }
+  try {
     const result = await withAuthAttemptLock(buckets, async (tx) => {
       const now = /* @__PURE__ */ new Date();
       const retry = await getAuthRateLimit(buckets, now, tx);
-      if (retry) return { status: 429, retry };
-      const [session] = await tx.select({
-        pinHash: adminGrantsTable.pinHash,
-        expiresAt: adminSessionsTable.expiresAt
-      }).from(adminSessionsTable).innerJoin(adminGrantsTable, and(
-        eq(adminGrantsTable.userId, adminSessionsTable.userId),
-        eq(adminGrantsTable.authorizationVersion, adminSessionsTable.authorizationVersion)
-      )).innerJoin(usersTable, eq(usersTable.id, adminGrantsTable.userId)).where(and(
-        eq(adminSessionsTable.id, context2.sessionId),
-        gt(adminSessionsTable.expiresAt, now),
-        isNull(adminGrantsTable.revokedAt),
-        isNull(adminSessionsTable.revokedAt),
-        eq(usersTable.status, "active")
-      )).for("update", { of: adminSessionsTable });
-      if (!session) return { status: 401 };
-      if (!parsed.success || !await verifyCustomerSecret(parsed.data.pin, session.pinHash)) {
+      if (retry) return { kind: "limited", retry };
+      const [refreshRecord] = await tx.select().from(superAdminRefreshTokensTable).where(eq(superAdminRefreshTokensTable.tokenHash, refreshTokenHash)).for("update").limit(1);
+      if (!refreshRecord) {
         await recordAuthFailure(buckets, now, tx);
-        await recordAdminAudit({
-          adminUserId: context2.userId,
-          action: "admin_pin_failure",
-          resourceType: "admin_access",
-          resourceId: context2.sessionId
-        }, tx);
-        return { status: 403 };
+        return { kind: "invalid" };
       }
-      const expiresAt = new Date(Math.min(session.expiresAt.getTime(), Date.now() + ADMIN_PIN_TTL_MS));
-      await tx.update(adminSessionsTable).set({ pinVerifiedUntil: expiresAt }).where(eq(adminSessionsTable.id, context2.sessionId));
+      if (refreshRecord.consumedAt || refreshRecord.revokedAt) {
+        await tx.update(superAdminSessionsTable).set({ revokedAt: now, revocationReason: "refresh_reuse" }).where(and(
+          eq(superAdminSessionsTable.refreshFamilyId, refreshRecord.familyId),
+          isNull(superAdminSessionsTable.revokedAt)
+        ));
+        await tx.update(superAdminRefreshTokensTable).set({ revokedAt: now }).where(and(
+          eq(superAdminRefreshTokensTable.familyId, refreshRecord.familyId),
+          isNull(superAdminRefreshTokensTable.revokedAt)
+        ));
+        await recordAdminAudit({
+          adminUserId: "super-admin",
+          action: "admin_refresh_reuse",
+          resourceType: "admin_access",
+          resourceId: refreshRecord.sessionId,
+          sessionId: refreshRecord.sessionId,
+          ...requestAuditContext(req),
+          outcome: "revoked"
+        }, tx);
+        return { kind: "reuse" };
+      }
+      const [session] = await tx.select().from(superAdminSessionsTable).where(and(
+        eq(superAdminSessionsTable.id, refreshRecord.sessionId),
+        eq(superAdminSessionsTable.refreshFamilyId, refreshRecord.familyId),
+        eq(superAdminSessionsTable.refreshTokenHash, refreshTokenHash),
+        isNull(superAdminSessionsTable.revokedAt),
+        gt(superAdminSessionsTable.idleExpiresAt, now),
+        gt(superAdminSessionsTable.absoluteExpiresAt, now)
+      )).for("update").limit(1);
+      if (!session) {
+        await recordAuthFailure(buckets, now, tx);
+        return { kind: "invalid" };
+      }
+      const nextRefreshToken = createOpaqueToken();
+      const nextRefreshHash = hashOpaqueToken(nextRefreshToken);
+      const accessToken = createAdminAccessToken(
+        session.id,
+        Math.floor(now.getTime() / 1e3)
+      );
+      if (!accessToken) throw new Error("Administrator signing key unavailable");
+      await tx.update(superAdminRefreshTokensTable).set({ consumedAt: now, replacedByHash: nextRefreshHash }).where(eq(superAdminRefreshTokensTable.tokenHash, refreshTokenHash));
+      await tx.update(superAdminSessionsTable).set({ refreshTokenHash: nextRefreshHash }).where(eq(superAdminSessionsTable.id, session.id));
+      await tx.insert(superAdminRefreshTokensTable).values({
+        tokenHash: nextRefreshHash,
+        sessionId: session.id,
+        familyId: session.refreshFamilyId,
+        createdAt: now
+      });
       await recordAdminAudit({
-        adminUserId: context2.userId,
-        action: "admin_pin_unlock",
+        adminUserId: "super-admin",
+        action: "admin_refresh",
         resourceType: "admin_access",
-        resourceId: context2.sessionId
+        resourceId: session.id,
+        sessionId: session.id,
+        ...requestAuditContext(req),
+        outcome: "success"
       }, tx);
-      await clearAuthFailures(buckets.slice(0, 1), tx);
-      return { status: 200, expiresAt };
+      return {
+        kind: "rotated",
+        accessToken,
+        refreshToken: nextRefreshToken,
+        absoluteExpiresAt: session.absoluteExpiresAt
+      };
     });
-    if (result.status !== 200 || !result.expiresAt) {
-      res.status(result.status).json({
-        error: result.status === 429 ? "Trop de tentatives. R\xE9essayez plus tard." : "PIN incorrect ou acc\xE8s r\xE9voqu\xE9.",
-        ...result.retry ? { retryAfterSeconds: result.retry } : {}
+    if (result.kind === "limited") {
+      clearAdminSessionCookies(res);
+      res.status(429).json({
+        error: "Trop de tentatives. R\xE9essayez plus tard.",
+        retryAfterSeconds: result.retry
       });
       return;
     }
-    res.json({ pinUnlocked: true, expiresAt: result.expiresAt.toISOString() });
+    if (result.kind !== "rotated") {
+      clearAdminSessionCookies(res);
+      res.status(401).json({ error: "Session administrateur expir\xE9e." });
+      return;
+    }
+    setAdminSessionCookies(res, result.accessToken, result.refreshToken, result.absoluteExpiresAt);
+    res.status(200).json({ isAdmin: true });
   } catch {
-    req.log.error("Administrator PIN verification failed");
-    res.status(503).json({ error: "La v\xE9rification du PIN est indisponible." });
+    req.log.error("Administrator session refresh failed");
+    clearAdminSessionCookies(res);
+    res.status(503).json({ error: "Le renouvellement de session est indisponible." });
+  }
+});
+router7.post("/step-up", async (req, res) => {
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine non autoris\xE9e." });
+    return;
+  }
+  const session = adminSessionContext(req);
+  if (!session) {
+    res.status(401).json({ error: "Connexion administrateur requise." });
+    return;
+  }
+  const parsed = stepUpInput.safeParse(req.body);
+  const action = parsed.success ? issueableAdminAction(parsed.data.action, parsed.data.query, parsed.data.payload) : null;
+  if (!parsed.success || !action) {
+    res.status(400).json({ error: "Action de s\xE9curit\xE9 invalide." });
+    return;
+  }
+  const now = /* @__PURE__ */ new Date();
+  const buckets = [
+    fingerprint(`admin-step-up-session:${session.sessionId}`),
+    fingerprint(`admin-step-up-requester:${requesterAddress(req)}`)
+  ];
+  try {
+    const result = await withAuthAttemptLock(buckets, async (tx) => {
+      const retry = await getAuthRateLimit(buckets, now, tx);
+      if (retry) return { kind: "limited", retry };
+      const [credentials] = await tx.select().from(superAdminCredentialsTable).where(and(
+        eq(superAdminCredentialsTable.id, 1),
+        eq(superAdminCredentialsTable.active, true)
+      )).for("update").limit(1);
+      const secret = credentials ? decryptTotpSecret({
+        ciphertext: credentials.totpCiphertext,
+        nonce: credentials.totpNonce,
+        authTag: credentials.totpAuthTag
+      }) : null;
+      const acceptedStep = secret ? verifyTotpCode(secret, parsed.data.totpCode, now.getTime(), credentials?.lastTotpStep ?? null) : null;
+      if (!credentials || acceptedStep === null) {
+        await recordAuthFailure(buckets, now, tx);
+        await recordAdminAudit({
+          adminUserId: "super-admin",
+          action: "admin_totp_failure",
+          resourceType: "admin_access",
+          resourceId: session.sessionId,
+          sessionId: session.sessionId,
+          ...requestAuditContext(req),
+          outcome: "failure"
+        }, tx);
+        return { kind: "denied" };
+      }
+      const token = createOpaqueToken();
+      await tx.update(superAdminCredentialsTable).set({ lastTotpStep: acceptedStep, updatedAt: now }).where(eq(superAdminCredentialsTable.id, credentials.id));
+      await tx.update(superAdminSessionsTable).set({
+        lastActivityAt: now,
+        idleExpiresAt: new Date(Math.min(
+          session.absoluteExpiresAt.getTime(),
+          now.getTime() + 15 * 60 * 1e3
+        ))
+      }).where(and(
+        eq(superAdminSessionsTable.id, session.sessionId),
+        isNull(superAdminSessionsTable.revokedAt),
+        gt(superAdminSessionsTable.idleExpiresAt, now),
+        gt(superAdminSessionsTable.absoluteExpiresAt, now)
+      ));
+      await tx.insert(superAdminStepUpTokensTable).values({
+        sessionId: session.sessionId,
+        tokenHash: hashOpaqueToken(token),
+        actionKey: action.actionKey,
+        payloadHash: action.payloadHash,
+        createdAt: now,
+        expiresAt: new Date(now.getTime() + ADMIN_STEP_UP_TTL_MS)
+      });
+      await recordAdminAudit({
+        adminUserId: "super-admin",
+        action: "admin_step_up",
+        resourceType: "admin_access",
+        resourceId: session.sessionId,
+        reason: action.actionKey,
+        sessionId: session.sessionId,
+        ...requestAuditContext(req),
+        outcome: "success"
+      }, tx);
+      await clearAuthFailures(buckets.slice(0, 1), tx);
+      return { kind: "created", token };
+    });
+    if (result.kind === "limited") {
+      res.status(429).json({
+        error: "Trop de tentatives. R\xE9essayez plus tard.",
+        retryAfterSeconds: result.retry
+      });
+      return;
+    }
+    if (result.kind !== "created") {
+      genericLoginFailure(res);
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store, private");
+    res.json({ stepUpToken: result.token, expiresInSeconds: ADMIN_STEP_UP_TTL_MS / 1e3 });
+  } catch {
+    req.log.error("Administrator step-up verification failed");
+    res.status(503).json({ error: "La confirmation de s\xE9curit\xE9 est indisponible." });
   }
 });
 router7.post("/sign-out", async (req, res) => {
@@ -218231,24 +219020,158 @@ router7.post("/sign-out", async (req, res) => {
     return;
   }
   const session = adminSessionContext(req);
-  if (session) {
+  const refreshToken = readAdminRefreshToken(req);
+  const now = /* @__PURE__ */ new Date();
+  try {
     await db.transaction(async (tx) => {
-      await tx.update(adminSessionsTable).set({ revokedAt: /* @__PURE__ */ new Date(), pinVerifiedUntil: null }).where(eq(adminSessionsTable.id, session.sessionId));
+      let target = session?.sessionId ?? null;
+      if (!target && refreshToken) {
+        const [refreshRecord] = await tx.select({
+          sessionId: superAdminRefreshTokensTable.sessionId
+        }).from(superAdminRefreshTokensTable).where(eq(superAdminRefreshTokensTable.tokenHash, hashOpaqueToken(refreshToken))).limit(1);
+        target = refreshRecord?.sessionId ?? null;
+      }
+      if (!target) return;
+      const [revoked] = await tx.update(superAdminSessionsTable).set({ revokedAt: now, revocationReason: "sign_out" }).where(and(
+        eq(superAdminSessionsTable.id, target),
+        isNull(superAdminSessionsTable.revokedAt)
+      )).returning({ id: superAdminSessionsTable.id, refreshFamilyId: superAdminSessionsTable.refreshFamilyId });
+      if (!revoked) return;
+      await tx.update(superAdminRefreshTokensTable).set({ revokedAt: now }).where(and(
+        eq(superAdminRefreshTokensTable.familyId, revoked.refreshFamilyId),
+        isNull(superAdminRefreshTokensTable.revokedAt)
+      ));
       await recordAdminAudit({
-        adminUserId: session.userId,
+        adminUserId: "super-admin",
         action: "admin_sign_out",
         resourceType: "admin_access",
-        resourceId: session.sessionId
+        resourceId: revoked.id,
+        sessionId: revoked.id,
+        ...requestAuditContext(req),
+        outcome: "revoked"
       }, tx);
     });
+    clearAdminSessionCookies(res);
+    res.status(204).end();
+  } catch {
+    req.log.error("Administrator sign-out failed");
+    clearAdminSessionCookies(res);
+    res.status(503).json({ error: "La d\xE9connexion administrateur est indisponible." });
   }
-  clearAdminSessionCookie(res);
-  res.status(204).end();
 });
 var admin_access_default = router7;
 
-// src/routes/admin-actions.ts
+// src/routes/admin-sessions.ts
 var import_express10 = __toESM(require_express2(), 1);
+var router8 = (0, import_express10.Router)();
+router8.get("/sessions", async (req, res) => {
+  const current = adminSessionContext(req);
+  if (!current) {
+    res.status(401).json({ error: "Connexion administrateur requise." });
+    return;
+  }
+  try {
+    const now = /* @__PURE__ */ new Date();
+    const sessions = await db.select({
+      id: superAdminSessionsTable.id,
+      createdAt: superAdminSessionsTable.createdAt,
+      lastActivityAt: superAdminSessionsTable.lastActivityAt,
+      idleExpiresAt: superAdminSessionsTable.idleExpiresAt,
+      absoluteExpiresAt: superAdminSessionsTable.absoluteExpiresAt,
+      revokedAt: superAdminSessionsTable.revokedAt
+    }).from(superAdminSessionsTable).where(and(
+      isNull(superAdminSessionsTable.revokedAt),
+      gt(superAdminSessionsTable.idleExpiresAt, now),
+      gt(superAdminSessionsTable.absoluteExpiresAt, now)
+    )).orderBy(desc(superAdminSessionsTable.lastActivityAt)).limit(50);
+    res.setHeader("Cache-Control", "no-store, private");
+    res.json(sessions.map((session) => ({
+      ...session,
+      isCurrent: session.id === current.sessionId
+    })));
+  } catch {
+    req.log.error("Administrator session list unavailable");
+    res.status(503).json({ error: "La liste des sessions est indisponible." });
+  }
+});
+router8.post("/sessions/:sessionId/revoke", async (req, res) => {
+  const current = adminSessionContext(req);
+  const parsedId = external_exports.string().uuid().safeParse(req.params.sessionId);
+  if (!current) {
+    res.status(401).json({ error: "Connexion administrateur requise." });
+    return;
+  }
+  if (!parsedId.success) {
+    res.status(400).json({ error: "Identifiant de session invalide." });
+    return;
+  }
+  const now = /* @__PURE__ */ new Date();
+  try {
+    const revoked = await db.transaction(async (tx) => {
+      const [session] = await tx.update(superAdminSessionsTable).set({ revokedAt: now, revocationReason: "manual_revoke" }).where(and(
+        eq(superAdminSessionsTable.id, parsedId.data),
+        isNull(superAdminSessionsTable.revokedAt)
+      )).returning({
+        id: superAdminSessionsTable.id,
+        refreshFamilyId: superAdminSessionsTable.refreshFamilyId
+      });
+      if (!session) return null;
+      await tx.update(superAdminRefreshTokensTable).set({ revokedAt: now }).where(and(
+        eq(superAdminRefreshTokensTable.familyId, session.refreshFamilyId),
+        isNull(superAdminRefreshTokensTable.revokedAt)
+      ));
+      await recordAdminAudit({
+        adminUserId: "super-admin",
+        action: "admin_session_revoked",
+        resourceType: "admin_access",
+        resourceId: session.id,
+        sessionId: current.sessionId,
+        outcome: "revoked"
+      }, tx);
+      return session.id;
+    });
+    if (!revoked) {
+      res.status(404).json({ error: "Session active introuvable." });
+      return;
+    }
+    if (revoked === current.sessionId) clearAdminSessionCookies(res);
+    res.status(204).end();
+  } catch {
+    req.log.error("Administrator session revocation failed");
+    res.status(503).json({ error: "La r\xE9vocation de session est indisponible." });
+  }
+});
+router8.post("/sessions/revoke-all", async (req, res) => {
+  const current = adminSessionContext(req);
+  if (!current) {
+    res.status(401).json({ error: "Connexion administrateur requise." });
+    return;
+  }
+  const now = /* @__PURE__ */ new Date();
+  try {
+    await db.transaction(async (tx) => {
+      await tx.update(superAdminSessionsTable).set({ revokedAt: now, revocationReason: "revoke_all" }).where(isNull(superAdminSessionsTable.revokedAt));
+      await tx.update(superAdminRefreshTokensTable).set({ revokedAt: now }).where(isNull(superAdminRefreshTokensTable.revokedAt));
+      await recordAdminAudit({
+        adminUserId: "super-admin",
+        action: "admin_session_revoked",
+        resourceType: "admin_access",
+        resourceId: "all",
+        sessionId: current.sessionId,
+        outcome: "revoked"
+      }, tx);
+    });
+    clearAdminSessionCookies(res);
+    res.status(204).end();
+  } catch {
+    req.log.error("Administrator global session revocation failed");
+    res.status(503).json({ error: "La r\xE9vocation des sessions est indisponible." });
+  }
+});
+var admin_sessions_default = router8;
+
+// src/routes/admin-actions.ts
+var import_express11 = __toESM(require_express2(), 1);
 
 // src/services/wallet-adjustment.ts
 var WalletAdjustmentError = class extends Error {
@@ -218318,7 +219241,7 @@ async function executeAdminWalletAdjustment(adminUserId, userId, request) {
 }
 
 // src/routes/admin-actions.ts
-var router8 = (0, import_express10.Router)();
+var router9 = (0, import_express11.Router)();
 var AdminActionError = class extends Error {
   constructor(statusCode, message) {
     super(message);
@@ -218333,7 +219256,7 @@ function actionErrorResponse(res, error62) {
   }
   res.status(503).json({ error: "Administrator action storage unavailable" });
 }
-router8.post("/users/:userId/wallet-adjustments", async (req, res) => {
+router9.post("/users/:userId/wallet-adjustments", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
   const parsedParams = GetAdminUserParams.safeParse(req.params);
@@ -218382,7 +219305,7 @@ router8.post("/users/:userId/wallet-adjustments", async (req, res) => {
     res.status(503).json({ error: "Administrator action storage unavailable" });
   }
 });
-router8.patch("/users/:userId/monthly-incoming-limit", async (req, res) => {
+router9.patch("/users/:userId/monthly-incoming-limit", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
   if (!isTrustedOrigin(req)) {
@@ -218520,16 +219443,16 @@ async function applyUserAction(req, res, action, body) {
     res.status(503).json({ error: "Administrator action storage unavailable" });
   }
 }
-router8.post("/users/:userId/suspend", (req, res) => {
+router9.post("/users/:userId/suspend", (req, res) => {
   void applyUserAction(req, res, "suspend_user", req.body);
 });
-router8.post("/users/:userId/restore", (req, res) => {
+router9.post("/users/:userId/restore", (req, res) => {
   void applyUserAction(req, res, "restore_user", req.body);
 });
-router8.post("/users/:userId/delete", (req, res) => {
+router9.post("/users/:userId/delete", (req, res) => {
   void applyUserAction(req, res, "delete_user", req.body);
 });
-router8.post("/transactions/:transactionId/archive", async (req, res) => {
+router9.post("/transactions/:transactionId/archive", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
   const parsedParams = GetAdminTransactionParams.safeParse(req.params);
@@ -218574,10 +219497,10 @@ router8.post("/transactions/:transactionId/archive", async (req, res) => {
     res.status(503).json({ error: "Administrator action storage unavailable" });
   }
 });
-var admin_actions_default = router8;
+var admin_actions_default = router9;
 
 // src/routes/admin-login-activity.ts
-var import_express11 = __toESM(require_express2(), 1);
+var import_express12 = __toESM(require_express2(), 1);
 
 // src/lib/login-activity.ts
 function firstHeader(req, names) {
@@ -218644,7 +219567,7 @@ async function recordLoginActivity(req, userId, sessionId, database = db) {
 var loginActivityAuditAction = "view_login_activity";
 
 // src/routes/admin-login-activity.ts
-var router9 = (0, import_express11.Router)();
+var router10 = (0, import_express12.Router)();
 function parseDateRange2(query) {
   const fromValue = typeof query.from === "string" ? query.from : void 0;
   const toValue = typeof query.to === "string" ? query.to : void 0;
@@ -218653,7 +219576,7 @@ function parseDateRange2(query) {
     to: toValue ? /* @__PURE__ */ new Date(`${toValue}T23:59:59.999Z`) : void 0
   };
 }
-router9.get("/login-activity", async (req, res) => {
+router10.get("/login-activity", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
   const range = parseDateRange2(req.query);
@@ -218741,11 +219664,11 @@ router9.get("/login-activity", async (req, res) => {
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });
-var admin_login_activity_default = router9;
+var admin_login_activity_default = router10;
 
 // src/routes/admin-otp-activity.ts
-var import_express12 = __toESM(require_express2(), 1);
-var router10 = (0, import_express12.Router)();
+var import_express13 = __toESM(require_express2(), 1);
+var router11 = (0, import_express13.Router)();
 function parseDateRange3(query) {
   const fromValue = typeof query.from === "string" ? query.from : void 0;
   const toValue = typeof query.to === "string" ? query.to : void 0;
@@ -218754,7 +219677,7 @@ function parseDateRange3(query) {
     to: toValue ? /* @__PURE__ */ new Date(`${toValue}T23:59:59.999Z`) : void 0
   };
 }
-router10.get("/otp-activity", async (req, res) => {
+router11.get("/otp-activity", async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
@@ -218822,11 +219745,11 @@ router10.get("/otp-activity", async (req, res) => {
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });
-var admin_otp_activity_default = router10;
+var admin_otp_activity_default = router11;
 
 // src/routes/admin-otp-policies.ts
-var import_express13 = __toESM(require_express2(), 1);
-var router11 = (0, import_express13.Router)();
+var import_express14 = __toESM(require_express2(), 1);
+var router12 = (0, import_express14.Router)();
 async function loadPolicyCatalog() {
   return db.select({
     countryCode: countriesTable.countryCode,
@@ -218853,7 +219776,7 @@ function toAdminOtpPolicy(catalogEntry, stored) {
     updatedAt: stored?.updatedAt?.toISOString() ?? null
   };
 }
-router11.get("/otp-policies", async (req, res) => {
+router12.get("/otp-policies", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
   try {
@@ -218878,7 +219801,7 @@ router11.get("/otp-policies", async (req, res) => {
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });
-router11.patch("/otp-policies/:countryCode/:operatorId", async (req, res) => {
+router12.patch("/otp-policies/:countryCode/:operatorId", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
   const params = UpdateAdminOtpPolicyParams.safeParse(req.params);
@@ -218939,10 +219862,10 @@ router11.patch("/otp-policies/:countryCode/:operatorId", async (req, res) => {
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });
-var admin_otp_policies_default = router11;
+var admin_otp_policies_default = router12;
 
 // src/routes/admin-aggregators.ts
-var import_express14 = __toESM(require_express2(), 1);
+var import_express15 = __toESM(require_express2(), 1);
 
 // src/routes/aggregator-catalog.ts
 var builtInAggregatorCatalog = [
@@ -219119,8 +220042,8 @@ async function findAggregator(code) {
   return stored;
 }
 function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
-  const router29 = (0, import_express14.Router)();
-  router29.get("/payment-routing", async (req, res) => {
+  const router30 = (0, import_express15.Router)();
+  router30.get("/payment-routing", async (req, res) => {
     const adminUserId = authorize(req, res);
     if (!adminUserId) return;
     try {
@@ -219183,7 +220106,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  router29.put("/ussd-instructions", async (req, res) => {
+  router30.put("/ussd-instructions", async (req, res) => {
     const adminUserId = authorize(req, res, "mutate");
     if (!adminUserId) return;
     const body = UpdateAdminUssdInstructionBody.safeParse(req.body);
@@ -219276,7 +220199,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  router29.post("/payment-aggregators", async (req, res) => {
+  router30.post("/payment-aggregators", async (req, res) => {
     const adminUserId = authorize(req, res, "mutate");
     if (!adminUserId) return;
     const body = CreateAdminAggregatorBody.safeParse(req.body);
@@ -219320,7 +220243,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  router29.patch("/payment-aggregators", async (req, res) => {
+  router30.patch("/payment-aggregators", async (req, res) => {
     const adminUserId = authorize(req, res, "mutate");
     if (!adminUserId) return;
     const body = UpdateAdminAggregatorBody.safeParse(req.body);
@@ -219379,7 +220302,7 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  router29.put("/payment-aggregator-routes", async (req, res) => {
+  router30.put("/payment-aggregator-routes", async (req, res) => {
     const adminUserId = authorize(req, res, "mutate");
     if (!adminUserId) return;
     const body = UpdateAdminAggregatorRouteBody.safeParse(req.body);
@@ -219470,15 +220393,15 @@ function createAdminAggregatorRoutes(authorize = respondAdminAuthError) {
       res.status(503).json({ error: "Administrator storage unavailable" });
     }
   });
-  return router29;
+  return router30;
 }
 var admin_aggregators_default = createAdminAggregatorRoutes();
 
 // src/routes/operator-pricing.ts
-var import_express15 = __toESM(require_express2(), 1);
+var import_express16 = __toESM(require_express2(), 1);
 
 // src/services/operator-logo.ts
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 var MAX_OPERATOR_LOGO_BYTES = 512 * 1024;
 var allowedContentTypes = /* @__PURE__ */ new Set(["image/png", "image/jpeg", "image/webp"]);
 var pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -219671,7 +220594,7 @@ async function readOperatorLogo(operatorId) {
   return {
     bytes,
     contentType: record2.logoContentType,
-    etag: `"${createHash3("sha256").update(bytes).digest("hex")}"`
+    etag: `"${createHash4("sha256").update(bytes).digest("hex")}"`
   };
 }
 
@@ -219686,8 +220609,8 @@ function getConfiguredOtpCommand(policy, amountMinor) {
 }
 
 // src/routes/operator-pricing.ts
-var router12 = (0, import_express15.Router)();
-var adminRoutes = (0, import_express15.Router)();
+var router13 = (0, import_express16.Router)();
+var adminRoutes = (0, import_express16.Router)();
 var operatorMetadataColumns = {
   operatorId: operatorCatalogTable.operatorId,
   countryCode: operatorCatalogTable.countryCode,
@@ -219731,7 +220654,7 @@ function toManagedOperator(operator, rates = []) {
     } : {}
   };
 }
-router12.get("/operators/:operatorId/logo", async (req, res) => {
+router13.get("/operators/:operatorId/logo", async (req, res) => {
   const operatorId = typeof req.params.operatorId === "string" ? req.params.operatorId : "";
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(operatorId)) {
     res.status(404).json({ error: "Logo not found" });
@@ -219758,7 +220681,7 @@ router12.get("/operators/:operatorId/logo", async (req, res) => {
     res.status(503).json({ error: "Operator logo unavailable" });
   }
 });
-router12.get("/pricing", async (req, res) => {
+router13.get("/pricing", async (req, res) => {
   try {
     const [operators, rates, otpPolicies, countries] = await Promise.all([
       db.select(operatorMetadataColumns).from(operatorCatalogTable),
@@ -220131,10 +221054,10 @@ adminRoutes.put("/operator-pricing-rates", async (req, res) => {
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });
-var operator_pricing_default = router12;
+var operator_pricing_default = router13;
 
 // src/routes/admin-operator-logos.ts
-var import_express16 = __toESM(require_express2(), 1);
+var import_express17 = __toESM(require_express2(), 1);
 var supportedImageTypes = ["image/png", "image/jpeg", "image/webp"];
 function operatorIdFromRequest(req) {
   const value = req.params.operatorId;
@@ -220164,12 +221087,12 @@ function respondLogoError(req, res, error62) {
   res.status(503).json({ error: "Le logo n\u2019a pas pu \xEAtre enregistr\xE9." });
 }
 function createAdminOperatorLogoRoutes(authorize = respondAdminAuthError) {
-  const router29 = (0, import_express16.Router)();
+  const router30 = (0, import_express17.Router)();
   const authorizeMutation = authorizeAndLimit(authorize);
-  router29.put(
+  router30.put(
     "/operators/:operatorId/logo/:expectedVersion",
     authorizeMutation,
-    import_express16.default.raw({ type: supportedImageTypes, limit: "512kb" }),
+    import_express17.default.raw({ type: supportedImageTypes, limit: "512kb" }),
     async (req, res) => {
       const actor = req.adminActorId;
       const expectedVersion = expectedVersionFromRequest(req);
@@ -220205,7 +221128,7 @@ function createAdminOperatorLogoRoutes(authorize = respondAdminAuthError) {
       }
     }
   );
-  router29.delete(
+  router30.delete(
     "/operators/:operatorId/logo/:expectedVersion",
     authorizeMutation,
     async (req, res) => {
@@ -220232,14 +221155,14 @@ function createAdminOperatorLogoRoutes(authorize = respondAdminAuthError) {
       }
     }
   );
-  return router29;
+  return router30;
 }
 var adminOperatorLogoRoutes = createAdminOperatorLogoRoutes();
 
 // src/routes/banners.ts
-var import_express17 = __toESM(require_express2(), 1);
-var router13 = (0, import_express17.Router)();
-var adminRoutes2 = (0, import_express17.Router)();
+var import_express18 = __toESM(require_express2(), 1);
+var router14 = (0, import_express18.Router)();
+var adminRoutes2 = (0, import_express18.Router)();
 function isSecureImageUrl(value) {
   if (value == null) return true;
   if (/^\/banners\/[a-z0-9][a-z0-9._-]*\.(?:png|jpe?g|webp)$/i.test(value)) return true;
@@ -220280,7 +221203,7 @@ function validateBannerFields(res, fields) {
   }
   return true;
 }
-router13.get("/banners", async (req, res) => {
+router14.get("/banners", async (req, res) => {
   const now = /* @__PURE__ */ new Date();
   try {
     const rows = await db.select({
@@ -220499,11 +221422,11 @@ adminRoutes2.delete("/banners/:bannerId", async (req, res) => {
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });
-var banners_default = router13;
+var banners_default = router14;
 
 // src/routes/auth-otp.ts
-var import_express18 = __toESM(require_express2(), 1);
-import { randomUUID as randomUUID2 } from "node:crypto";
+var import_express19 = __toESM(require_express2(), 1);
+import { randomUUID as randomUUID3 } from "node:crypto";
 
 // src/lib/provider-call-policy.ts
 var ExternalProviderCallUnavailableError = class extends Error {
@@ -220583,7 +221506,7 @@ async function sendResendEmail(message, options = {}) {
 }
 
 // src/lib/email-otp-code.ts
-import { randomInt, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { randomInt, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 var EMAIL_OTP_LIFETIME_SECONDS = 5 * 60;
 function createEmailOtpCode() {
   return randomInt(0, 1e6).toString().padStart(6, "0");
@@ -220596,7 +221519,7 @@ function matchesEmailOtpCode(challengeId, purpose, code, expectedHash) {
   const submittedHash = hashEmailOtpCode(challengeId, purpose, code);
   const submittedBytes = Buffer.from(submittedHash, "hex");
   const expectedBytes = Buffer.from(expectedHash, "hex");
-  return submittedBytes.length === expectedBytes.length && timingSafeEqual3(submittedBytes, expectedBytes);
+  return submittedBytes.length === expectedBytes.length && timingSafeEqual4(submittedBytes, expectedBytes);
 }
 
 // src/lib/email-otp-template.ts
@@ -220613,10 +221536,6 @@ var COPY = {
   pin_reset: {
     subject: "R\xE9initialisation de votre code PIN \u2014 SendFlow",
     intro: "Utilisez ce code pour continuer la r\xE9initialisation de votre code PIN SendFlow."
-  },
-  admin_login: {
-    subject: "Connexion administrateur \u2014 SendFlow",
-    intro: "Utilisez ce code pour continuer votre connexion administrateur SendFlow."
   }
 };
 function escapeHtml(value) {
@@ -220800,7 +221719,7 @@ function rejectTurnstileRequest(req, res, result) {
 }
 
 // src/routes/auth-otp.ts
-var router14 = (0, import_express18.Router)();
+var router15 = (0, import_express19.Router)();
 var RESEND_COOLDOWN_SECONDS = 60;
 var MAX_SENDS_PER_PHONE_PER_HOUR = 5;
 var MAX_SENDS_PER_EMAIL_PER_HOUR = 5;
@@ -220813,7 +221732,6 @@ function turnstileActionForOtpPurpose(purpose) {
     case "signup":
     case "password_reset":
     case "pin_reset":
-    case "admin_login":
       return purpose;
     default:
       return null;
@@ -220854,10 +221772,6 @@ async function resolveOtpRecipient(phone, purpose, signupEmail) {
     eq(usersTable.phone, phone)
   )).limit(1);
   if (!user || user.status !== "active" || !user.emailEncrypted) return null;
-  if (purpose === "admin_login") {
-    const [grant] = await db.select({ userId: adminGrantsTable.userId }).from(adminGrantsTable).where(and(eq(adminGrantsTable.userId, user.id), isNull(adminGrantsTable.revokedAt))).limit(1);
-    if (!grant) return null;
-  }
   const storedEmail = decryptSensitiveDataIfEncrypted(user.emailEncrypted, "user-email");
   if (!storedEmail) return null;
   const email3 = normalizeEmail(storedEmail);
@@ -220963,7 +221877,7 @@ async function completeOtpEvent(eventId, outcome, details = {}) {
   }).where(eq(phoneOtpEventsTable.id, eventId)).returning({ id: phoneOtpEventsTable.id });
   if (!event) throw new Error("OTP activity event was not found");
 }
-router14.post("/auth/send-otp", async (req, res) => {
+router15.post("/auth/send-otp", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -221064,7 +221978,7 @@ router14.post("/auth/send-otp", async (req, res) => {
   const hourAgo = new Date(now.getTime() - HOUR_MS);
   const expiresAt = new Date(now.getTime() + EMAIL_OTP_LIFETIME_SECONDS * 1e3);
   const resendAt = new Date(now.getTime() + RESEND_COOLDOWN_SECONDS * 1e3);
-  const challengeId = randomUUID2();
+  const challengeId = randomUUID3();
   const code = recipient ? createEmailOtpCode() : null;
   const codeHash = recipient && code ? hashEmailOtpCode(challengeId, purpose, code) : null;
   const rateEmailHash = recipient?.emailHash ?? emailLookupHash ?? fingerprint(`unknown-email:${phoneHash}`);
@@ -221262,7 +222176,7 @@ router14.post("/auth/send-otp", async (req, res) => {
     })
   );
 });
-router14.post("/auth/verify-otp", async (req, res) => {
+router15.post("/auth/verify-otp", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -221513,11 +222427,11 @@ router14.post("/auth/verify-otp", async (req, res) => {
     res.status(503).json({ error: "La v\xE9rification par e-mail n'a pas pu \xEAtre enregistr\xE9e." });
   }
 });
-var auth_otp_default = router14;
+var auth_otp_default = router15;
 
 // src/routes/customer-auth.ts
-var import_express19 = __toESM(require_express2(), 1);
-import { randomUUID as randomUUID3 } from "node:crypto";
+var import_express20 = __toESM(require_express2(), 1);
+import { randomUUID as randomUUID4 } from "node:crypto";
 
 // ../../node_modules/.pnpm/@simplewebauthn+server@14.0.3/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
 var isoBase64URL_exports = {};
@@ -222086,7 +223000,7 @@ var isoCrypto_exports = {};
 __export(isoCrypto_exports, {
   digest: () => digest,
   getRandomValues: () => getRandomValues,
-  verify: () => verify
+  verify: () => verify2
 });
 
 // ../../node_modules/.pnpm/@simplewebauthn+server@14.0.3/node_modules/@simplewebauthn/server/esm/helpers/cose.js
@@ -223247,7 +224161,7 @@ function toNormalizedBytes(bytes, componentLength) {
 }
 
 // ../../node_modules/.pnpm/@simplewebauthn+server@14.0.3/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verify.js
-function verify(opts) {
+function verify2(opts) {
   const { cosePublicKey, signature, data, shaHashOverride } = opts;
   if (isCOSEPublicKeyEC2(cosePublicKey)) {
     const crv = cosePublicKey.get(COSEKEYS.crv);
@@ -225316,15 +226230,15 @@ function createCustomerPinRotationSessionPolicy(userId, currentSessionId, now, u
 }
 
 // src/services/developer-api-security.ts
-import { createHash as createHash4, randomBytes as randomBytes3 } from "node:crypto";
+import { createHash as createHash5, randomBytes as randomBytes4 } from "node:crypto";
 import { lookup as lookup2 } from "node:dns/promises";
 import { isIP as isIP3 } from "node:net";
 function tokenHash(kind, token) {
-  return createHash4("sha256").update(`sendflow:developer:${kind}:v1\0`, "utf8").update(token, "utf8").digest("hex");
+  return createHash5("sha256").update(`sendflow:developer:${kind}:v1\0`, "utf8").update(token, "utf8").digest("hex");
 }
 function createDeveloperApiKeyMaterial(environment = "live") {
-  const publicKey = `sfpk_${environment}_${randomBytes3(32).toString("base64url")}`;
-  const secretKey = `sfsk_${environment}_${randomBytes3(32).toString("base64url")}`;
+  const publicKey = `sfpk_${environment}_${randomBytes4(32).toString("base64url")}`;
+  const secretKey = `sfsk_${environment}_${randomBytes4(32).toString("base64url")}`;
   return {
     publicKey,
     publicKeyPrefix: publicKey.slice(0, 19),
@@ -225341,7 +226255,7 @@ function hashDeveloperSecretKey(value) {
   return tokenHash("secret", value);
 }
 function createDeveloperClientToken() {
-  return randomBytes3(32).toString("base64url");
+  return randomBytes4(32).toString("base64url");
 }
 function hashDeveloperClientToken(value) {
   return tokenHash("client", value);
@@ -225356,10 +226270,10 @@ function canonicalize(value) {
   return value;
 }
 function hashDeveloperRequest(value) {
-  return createHash4("sha256").update(JSON.stringify(canonicalize(value)), "utf8").digest("hex");
+  return createHash5("sha256").update(JSON.stringify(canonicalize(value)), "utf8").digest("hex");
 }
 function deriveDeveloperAttemptIdempotencyKey(sessionId, idempotencyKey) {
-  const bytes = createHash4("sha256").update(`sendflow:developer-attempt:v1\0${sessionId}\0${idempotencyKey}`, "utf8").digest().subarray(0, 16);
+  const bytes = createHash5("sha256").update(`sendflow:developer-attempt:v1\0${sessionId}\0${idempotencyKey}`, "utf8").digest().subarray(0, 16);
   bytes[6] = bytes[6] & 15 | 80;
   bytes[8] = bytes[8] & 63 | 128;
   const hex3 = bytes.toString("hex");
@@ -225443,7 +226357,7 @@ function getCustomerBiometricOrigin(method, originHeader, hostHeader, environmen
 }
 
 // src/routes/customer-auth.ts
-var router15 = (0, import_express19.Router)();
+var router16 = (0, import_express20.Router)();
 var PRIVACY_POLICY_VERSION = "sendflow-privacy-v1";
 var DUMMY_PASSWORD_HASH = hashCustomerSecret("sendflow-invalid-account-password");
 var BIOMETRIC_CHALLENGE_TTL_MS = 5 * 60 * 1e3;
@@ -225537,7 +226451,7 @@ function getPinAttemptBuckets(userId, req) {
     fingerprint(`customer-pin-requester:${requesterAddress(req)}`)
   ];
 }
-router15.post("/auth/register", async (req, res) => {
+router16.post("/auth/register", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -225627,7 +226541,7 @@ router15.post("/auth/register", async (req, res) => {
       }
       if (existingUser || existingEmail) return registerFailure("exists");
       const passwordHash = await hashCustomerSecret(parsed.data.password);
-      const userId = randomUUID3();
+      const userId = randomUUID4();
       const [user] = await tx.insert(usersTable).values({
         id: userId,
         phone: encryptSensitiveData(parsed.data.phone, "user-phone"),
@@ -225730,7 +226644,7 @@ router15.post("/auth/register", async (req, res) => {
     res.status(503).json({ error: "La cr\xE9ation du compte est momentan\xE9ment indisponible." });
   }
 });
-router15.post("/auth/sign-in", async (req, res) => {
+router16.post("/auth/sign-in", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -225857,7 +226771,7 @@ router15.post("/auth/sign-in", async (req, res) => {
     res.status(503).json({ error: "La connexion est momentan\xE9ment indisponible." });
   }
 });
-router15.get("/auth/session", async (req, res) => {
+router16.get("/auth/session", async (req, res) => {
   try {
     const session = await getCustomerSession(req, { touchLastSeen: false });
     if (!session) {
@@ -225879,7 +226793,7 @@ router15.get("/auth/session", async (req, res) => {
     res.status(503).json({ error: "Session storage unavailable" });
   }
 });
-router15.post("/auth/sign-out", async (req, res) => {
+router16.post("/auth/sign-out", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -225901,7 +226815,7 @@ router15.post("/auth/sign-out", async (req, res) => {
     res.status(503).json({ error: "La d\xE9connexion est momentan\xE9ment indisponible." });
   }
 });
-router15.post("/auth/unlock", async (req, res) => {
+router16.post("/auth/unlock", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -225962,7 +226876,7 @@ router15.post("/auth/unlock", async (req, res) => {
     res.status(503).json({ error: "La v\xE9rification du PIN est momentan\xE9ment indisponible." });
   }
 });
-router15.get("/auth/biometric", async (req, res) => {
+router16.get("/auth/biometric", async (req, res) => {
   try {
     const session = await requireCustomerSession(req, res);
     if (!session) return;
@@ -225981,7 +226895,7 @@ router15.get("/auth/biometric", async (req, res) => {
     res.status(503).json({ error: "La biom\xE9trie est momentan\xE9ment indisponible." });
   }
 });
-router15.post("/auth/biometric/registration/options", async (req, res) => {
+router16.post("/auth/biometric/registration/options", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -226037,7 +226951,7 @@ router15.post("/auth/biometric/registration/options", async (req, res) => {
     res.status(503).json({ error: "L\u2019activation biom\xE9trique est momentan\xE9ment indisponible." });
   }
 });
-router15.post("/auth/biometric/registration/verify", async (req, res) => {
+router16.post("/auth/biometric/registration/verify", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -226129,7 +227043,7 @@ router15.post("/auth/biometric/registration/verify", async (req, res) => {
     res.status(503).json({ error: "L\u2019activation biom\xE9trique est momentan\xE9ment indisponible." });
   }
 });
-router15.post("/auth/biometric/authentication/options", async (req, res) => {
+router16.post("/auth/biometric/authentication/options", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -226180,7 +227094,7 @@ router15.post("/auth/biometric/authentication/options", async (req, res) => {
     res.status(503).json({ error: "Le d\xE9verrouillage biom\xE9trique est momentan\xE9ment indisponible." });
   }
 });
-router15.post("/auth/biometric/authentication/verify", async (req, res) => {
+router16.post("/auth/biometric/authentication/verify", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -226296,7 +227210,7 @@ router15.post("/auth/biometric/authentication/verify", async (req, res) => {
     res.status(503).json({ error: "Le d\xE9verrouillage biom\xE9trique est momentan\xE9ment indisponible." });
   }
 });
-router15.delete("/auth/biometric", async (req, res) => {
+router16.delete("/auth/biometric", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -226321,7 +227235,7 @@ router15.delete("/auth/biometric", async (req, res) => {
     res.status(503).json({ error: "La d\xE9sactivation biom\xE9trique est momentan\xE9ment indisponible." });
   }
 });
-router15.put("/me/pin", async (req, res) => {
+router16.put("/me/pin", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -226420,10 +227334,10 @@ router15.put("/me/pin", async (req, res) => {
     res.status(503).json({ error: "La mise \xE0 jour du PIN est momentan\xE9ment indisponible." });
   }
 });
-var customer_auth_default = router15;
+var customer_auth_default = router16;
 
 // src/routes/customer-recovery.ts
-var import_express20 = __toESM(require_express2(), 1);
+var import_express21 = __toESM(require_express2(), 1);
 
 // src/lib/customer-recovery-policy.ts
 async function hashSecretForClaimedOtpChallenge(challenge, deriveHash) {
@@ -226432,11 +227346,11 @@ async function hashSecretForClaimedOtpChallenge(challenge, deriveHash) {
 }
 
 // src/routes/customer-recovery.ts
-var router16 = (0, import_express20.Router)();
+var router17 = (0, import_express21.Router)();
 function safeErrorCode2(error62) {
   return typeof error62 === "object" && error62 !== null && "code" in error62 ? String(error62.code ?? "") : "";
 }
-router16.post("/auth/reset-password", async (req, res) => {
+router17.post("/auth/reset-password", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -226529,7 +227443,7 @@ router16.post("/auth/reset-password", async (req, res) => {
     res.status(503).json({ error: "La r\xE9cup\xE9ration du compte est momentan\xE9ment indisponible." });
   }
 });
-router16.post("/auth/reset-pin", async (req, res) => {
+router17.post("/auth/reset-pin", async (req, res) => {
   if (!isTrustedOrigin(req)) {
     res.status(403).json({ error: "Origine de requ\xEAte non autoris\xE9e." });
     return;
@@ -226605,12 +227519,12 @@ router16.post("/auth/reset-pin", async (req, res) => {
     res.status(503).json({ error: "La r\xE9cup\xE9ration du compte est momentan\xE9ment indisponible." });
   }
 });
-var customer_recovery_default = router16;
+var customer_recovery_default = router17;
 
 // src/routes/registration-settings.ts
-var import_express21 = __toESM(require_express2(), 1);
-var router17 = (0, import_express21.Router)();
-var adminRoutes3 = (0, import_express21.Router)();
+var import_express22 = __toESM(require_express2(), 1);
+var router18 = (0, import_express22.Router)();
+var adminRoutes3 = (0, import_express22.Router)();
 var SETTING_ID = "signup";
 function present(row) {
   return {
@@ -226619,7 +227533,7 @@ function present(row) {
     updatedAt: row.updatedAt.toISOString()
   };
 }
-router17.get("/auth/registration-settings", async (req, res) => {
+router18.get("/auth/registration-settings", async (req, res) => {
   try {
     const [setting] = await db.select().from(registrationSettingsTable).where(eq(registrationSettingsTable.id, SETTING_ID)).limit(1);
     if (!setting) throw new Error("Signup setting is missing");
@@ -226697,12 +227611,12 @@ adminRoutes3.patch("/registration-settings", async (req, res) => {
     res.status(503).json({ error: "Administrator storage unavailable" });
   }
 });
-var registration_settings_default = router17;
+var registration_settings_default = router18;
 
 // src/routes/customer-service-settings.ts
-var import_express22 = __toESM(require_express2(), 1);
-var router18 = (0, import_express22.Router)();
-var adminRoutes4 = (0, import_express22.Router)();
+var import_express23 = __toESM(require_express2(), 1);
+var router19 = (0, import_express23.Router)();
+var adminRoutes4 = (0, import_express23.Router)();
 var SETTINGS_ID = "global";
 function present2(row) {
   return {
@@ -226724,7 +227638,7 @@ async function readCurrentSettings() {
   if (!settings) throw new Error("Customer service settings are not initialized");
   return settings;
 }
-router18.get("/customer-service-settings", async (req, res) => {
+router19.get("/customer-service-settings", async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
     res.json(GetCustomerServiceSettingsResponse.parse(present2(await readCurrentSettings())));
@@ -226793,12 +227707,12 @@ adminRoutes4.patch("/customer-service-settings", async (req, res) => {
     res.status(503).json({ error: "Les coordonn\xE9es du service client n\u2019ont pas pu \xEAtre enregistr\xE9es." });
   }
 });
-var customer_service_settings_default = router18;
+var customer_service_settings_default = router19;
 
 // src/routes/payment-limits.ts
-var import_express23 = __toESM(require_express2(), 1);
-var router19 = (0, import_express23.Router)();
-var adminRoutes5 = (0, import_express23.Router)();
+var import_express24 = __toESM(require_express2(), 1);
+var router20 = (0, import_express24.Router)();
+var adminRoutes5 = (0, import_express24.Router)();
 function presentPublic(record2) {
   return {
     currency: "XOF",
@@ -226824,7 +227738,7 @@ async function readCurrentRecord() {
   if (!record2) throw new Error("Payment limits have not been initialized");
   return record2;
 }
-router19.get("/payment-limits", async (req, res) => {
+router20.get("/payment-limits", async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
     res.json(GetPublicPaymentLimitsResponse.parse(presentPublic(await readCurrentRecord())));
@@ -226906,11 +227820,11 @@ adminRoutes5.patch("/payment-limits", async (req, res) => {
     res.status(503).json({ error: "Les limites de paiement sont momentan\xE9ment indisponibles." });
   }
 });
-var payment_limits_default = router19;
+var payment_limits_default = router20;
 
 // src/routes/country-management.ts
-var import_express24 = __toESM(require_express2(), 1);
-var router20 = (0, import_express24.Router)();
+var import_express25 = __toESM(require_express2(), 1);
+var router21 = (0, import_express25.Router)();
 function flagFromCountryCode2(countryCode) {
   if (!/^[a-z]{2}$/.test(countryCode)) return "";
   return String.fromCodePoint(
@@ -226943,7 +227857,7 @@ function createOperatorId(name, countryCode) {
 }
 var CountryCatalogConflictError = class extends Error {
 };
-router20.get("/auth/countries", async (req, res) => {
+router21.get("/auth/countries", async (req, res) => {
   try {
     const rows = await db.select().from(countriesTable).orderBy(asc(countriesTable.countryName));
     res.setHeader("Cache-Control", "no-store");
@@ -226953,7 +227867,7 @@ router20.get("/auth/countries", async (req, res) => {
     res.status(503).json({ error: "Country catalog unavailable" });
   }
 });
-router20.get("/auth/registration-countries", async (req, res) => {
+router21.get("/auth/registration-countries", async (req, res) => {
   try {
     const rows = await db.select().from(countriesTable).where(eq(countriesTable.signupEnabled, true)).orderBy(asc(countriesTable.countryName));
     res.setHeader("Cache-Control", "no-store");
@@ -226964,7 +227878,7 @@ router20.get("/auth/registration-countries", async (req, res) => {
   }
 });
 function createAdminCountryRoutes(authorize = respondAdminAuthError) {
-  const adminRoutes9 = (0, import_express24.Router)();
+  const adminRoutes9 = (0, import_express25.Router)();
   adminRoutes9.get("/countries", async (req, res) => {
     const adminUserId = authorize(req, res);
     if (!adminUserId) return;
@@ -227205,11 +228119,11 @@ function createAdminCountryRoutes(authorize = respondAdminAuthError) {
   return adminRoutes9;
 }
 var adminRoutes6 = createAdminCountryRoutes();
-var country_management_default = router20;
+var country_management_default = router21;
 
 // src/routes/email-campaigns.ts
-var import_express25 = __toESM(require_express2(), 1);
-import { randomUUID as randomUUID4 } from "node:crypto";
+var import_express26 = __toESM(require_express2(), 1);
+import { randomUUID as randomUUID5 } from "node:crypto";
 
 // src/lib/email-campaign-policy.ts
 function isCampaignDispatchEnabled(env) {
@@ -227332,7 +228246,7 @@ function campaignAdminActionWithinLimit(count2, limit) {
 }
 
 // src/routes/email-campaigns.ts
-var adminRoutes7 = (0, import_express25.Router)();
+var adminRoutes7 = (0, import_express26.Router)();
 var recipientPageSize = 50;
 async function hasCampaignActionCapacity(transaction, adminUserId, action) {
   const limit = action === "queue" ? 10 : 20;
@@ -227460,7 +228374,7 @@ async function replaceDraftRecipients(transaction, campaignId, recipients) {
   if (recipients.length > 0) {
     await transaction.insert(emailCampaignRecipientsTable).values(
       recipients.map((recipient) => ({
-        id: randomUUID4(),
+        id: randomUUID5(),
         campaignId,
         userId: recipient.id,
         status: "draft"
@@ -227761,7 +228675,7 @@ adminRoutes7.post("/email-campaigns", async (req, res) => {
     res.status(400).json({ error: "V\xE9rifiez l\u2019objet, le message et les destinataires s\xE9lectionn\xE9s." });
     return;
   }
-  const campaignId = randomUUID4();
+  const campaignId = randomUUID5();
   try {
     const result = await db.transaction(async (transaction) => {
       const recipients = await resolveAudience(transaction, parsed.data);
@@ -228177,7 +229091,7 @@ adminRoutes7.delete("/email-campaigns/:campaignId", async (req, res) => {
 var email_campaigns_default = adminRoutes7;
 
 // src/routes/email-campaign-webhook.ts
-var import_express26 = __toESM(require_express2(), 1);
+var import_express27 = __toESM(require_express2(), 1);
 
 // src/services/email-campaign-provider-events.ts
 async function applyStoredEvent(transaction, event, receivedAt) {
@@ -228340,8 +229254,8 @@ async function applyPendingCampaignProviderEvents(transaction, attemptId, provid
 }
 
 // src/routes/email-campaign-webhook.ts
-var router21 = (0, import_express26.Router)();
-router21.post("/webhooks/resend", async (req, res) => {
+var router22 = (0, import_express27.Router)();
+router22.post("/webhooks/resend", async (req, res) => {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret?.trim() || secret.trim().length < 32) {
     res.status(503).json({ error: "Webhook verification is not configured" });
@@ -228399,11 +229313,11 @@ router21.post("/webhooks/resend", async (req, res) => {
     res.status(503).json({ error: "Webhook processing is temporarily unavailable" });
   }
 });
-var email_campaign_webhook_default = router21;
+var email_campaign_webhook_default = router22;
 
 // src/routes/identity-verification.ts
-var import_express27 = __toESM(require_express2(), 1);
-import { randomUUID as randomUUID5 } from "node:crypto";
+var import_express28 = __toESM(require_express2(), 1);
+import { randomUUID as randomUUID6 } from "node:crypto";
 import { createRequire as createRequire2 } from "node:module";
 
 // src/lib/identity-verification-storage.ts
@@ -245299,7 +246213,7 @@ function rc4(data, key) {
   }
   return output2;
 }
-function randomBytes4(length) {
+function randomBytes5(length) {
   const bytes = new Uint8Array(length);
   globalThis.crypto.getRandomValues(bytes);
   return bytes;
@@ -245404,7 +246318,7 @@ var PDFSecurity = class _PDFSecurity {
     return md5Hash(infoStr);
   }
   static generateRandomWordArray(bytes) {
-    return randomBytes4(bytes);
+    return randomBytes5(bytes);
   }
   static create(document2, options = {}) {
     if (!options.ownerPassword && !options.userPassword) {
@@ -251275,14 +252189,14 @@ function isIdentityUniqueConstraintViolation(error62) {
 }
 
 // src/routes/identity-verification.ts
-var customerRouter = (0, import_express27.Router)();
-var adminRouter = (0, import_express27.Router)();
+var customerRouter = (0, import_express28.Router)();
+var adminRouter = (0, import_express28.Router)();
 var archiver = createRequire2(import.meta.url)("archiver");
 var MAX_IMAGE_BYTES = IDENTITY_IMAGE_MAX_BYTES;
 var MIN_IMAGE_BYTES = IDENTITY_IMAGE_MIN_BYTES;
 var UPLOAD_TICKET_TTL_MS = 15 * 60 * 1e3;
 var IDENTITY_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-var parseIdentityImageRequestBody = import_express27.default.raw({
+var parseIdentityImageRequestBody = import_express28.default.raw({
   type: IDENTITY_IMAGE_TYPES,
   limit: IDENTITY_IMAGE_MAX_BYTES,
   inflate: false
@@ -251457,7 +252371,7 @@ customerRouter.post("/me/identity-verification/uploads", async (req, res) => {
     res.status(400).json({ error: "Invalid identity photo upload request" });
     return;
   }
-  const id = randomUUID5();
+  const id = randomUUID6();
   const expiresAt = new Date(Date.now() + UPLOAD_TICKET_TTL_MS);
   try {
     await db.transaction(async (tx) => {
@@ -252194,7 +253108,7 @@ var adminRoutes8 = adminRouter;
 var identity_verification_default = customerRouter;
 
 // src/routes/transfer-quote.ts
-var import_express28 = __toESM(require_express2(), 1);
+var import_express29 = __toESM(require_express2(), 1);
 
 // src/lib/transfer-quote-policy.ts
 function calculateTransferQuoteAmounts(amountMinor, feePercent, senderPaysFees) {
@@ -252349,8 +253263,8 @@ async function consumeTransferQuoteQuota(userId) {
 }
 
 // src/routes/transfer-quote.ts
-var router22 = (0, import_express28.Router)();
-router22.post("/me/transfer-quote", async (req, res) => {
+var router23 = (0, import_express29.Router)();
+router23.post("/me/transfer-quote", async (req, res) => {
   const session = await requireCustomerSession(req, res, true);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
@@ -252383,10 +253297,10 @@ router22.post("/me/transfer-quote", async (req, res) => {
     res.status(503).json({ error: "Les tarifs sont momentan\xE9ment indisponibles." });
   }
 });
-var transfer_quote_default = router22;
+var transfer_quote_default = router23;
 
 // src/routes/payment-links.ts
-var import_express29 = __toESM(require_express2(), 1);
+var import_express30 = __toESM(require_express2(), 1);
 
 // src/data/payment-link-quota.ts
 var PAYMENT_LINK_CREATION_LIMIT_PER_MINUTE = 10;
@@ -252434,7 +253348,7 @@ async function consumePublicPaymentLinkQuota(clientAddress2, operation) {
 }
 
 // src/services/payment-links.ts
-import { createHash as createHash5, randomBytes as randomBytes5 } from "node:crypto";
+import { createHash as createHash6, randomBytes as randomBytes6 } from "node:crypto";
 import sharp2 from "sharp";
 var PAYMENT_LINK_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 var PAYMENT_LINK_IMAGE_MIME_TYPES = [
@@ -252654,11 +253568,11 @@ function normalizePaymentLinkInput(input2, limits = DEFAULT_PAYMENT_LIMITS, now 
     ...canonical,
     requestId: input2.requestId,
     expiresAt: validityDuration === null ? null : new Date(now.getTime() + validityDuration),
-    requestHash: createHash5("sha256").update(JSON.stringify(canonical)).digest("hex")
+    requestHash: createHash6("sha256").update(JSON.stringify(canonical)).digest("hex")
   };
 }
 function createPaymentLinkPublicToken() {
-  return randomBytes5(32).toString("base64url");
+  return randomBytes6(32).toString("base64url");
 }
 function isPaymentLinkCreationAllowed(session, environment = process.env) {
   return environment.SENDFLOW_DATABASE_TARGET !== "shared-external" || !session.paymentTestAccount;
@@ -252668,7 +253582,7 @@ function isPaymentLinkSimulationAllowed(session, environment = process.env) {
 }
 
 // src/routes/payment-links.ts
-var router23 = (0, import_express29.Router)();
+var router24 = (0, import_express30.Router)();
 async function requirePaymentLinkSession(req, res) {
   const session = await requireCustomerSession(req, res, false);
   if (!session) return null;
@@ -252701,7 +253615,7 @@ var paymentLinkIdempotencyColumns = {
   deletedAt: customerPaymentLinksTable.deletedAt
 };
 var supportedImageMimeTypes = [...PAYMENT_LINK_IMAGE_MIME_TYPES];
-var parsePaymentLinkImageBody = import_express29.default.raw({
+var parsePaymentLinkImageBody = import_express30.default.raw({
   type: supportedImageMimeTypes,
   limit: PAYMENT_LINK_IMAGE_MAX_BYTES,
   inflate: false
@@ -252734,7 +253648,7 @@ function toResponse(row) {
     createdAt: row.createdAt
   };
 }
-router23.get("/me/payment-links", async (req, res) => {
+router24.get("/me/payment-links", async (req, res) => {
   const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
@@ -252788,7 +253702,7 @@ router23.get("/me/payment-links", async (req, res) => {
     res.status(503).json({ error: "Les liens de paiement sont momentan\xE9ment indisponibles." });
   }
 });
-router23.get("/me/payment-links/:linkId", async (req, res) => {
+router24.get("/me/payment-links/:linkId", async (req, res) => {
   const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
@@ -252814,7 +253728,7 @@ router23.get("/me/payment-links/:linkId", async (req, res) => {
     res.status(503).json({ error: "Les informations du lien sont momentan\xE9ment indisponibles." });
   }
 });
-router23.patch("/me/payment-links/:linkId", async (req, res) => {
+router24.patch("/me/payment-links/:linkId", async (req, res) => {
   const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
@@ -252915,7 +253829,7 @@ router23.patch("/me/payment-links/:linkId", async (req, res) => {
     res.status(503).json({ error: "La modification du lien est momentan\xE9ment indisponible." });
   }
 });
-router23.delete("/me/payment-links/:linkId", async (req, res) => {
+router24.delete("/me/payment-links/:linkId", async (req, res) => {
   const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
@@ -252945,7 +253859,7 @@ router23.delete("/me/payment-links/:linkId", async (req, res) => {
     res.status(503).json({ error: "La suppression du lien est momentan\xE9ment indisponible." });
   }
 });
-router23.post("/me/payment-links", async (req, res) => {
+router24.post("/me/payment-links", async (req, res) => {
   const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
@@ -253045,7 +253959,7 @@ router23.post("/me/payment-links", async (req, res) => {
     res.status(503).json({ error: "La cr\xE9ation du lien est momentan\xE9ment indisponible." });
   }
 });
-router23.post("/me/payment-links/simulate/:token", async (req, res) => {
+router24.post("/me/payment-links/simulate/:token", async (req, res) => {
   const session = await requirePaymentLinkSession(req, res);
   if (!session) return;
   res.setHeader("Cache-Control", "no-store, private");
@@ -253198,7 +254112,7 @@ var parsePaymentLinkImage = (req, res, next) => {
     res.status(400).json({ error: "Le fichier image est invalide." });
   });
 };
-router23.post(
+router24.post(
   "/me/payment-links/:linkId/image",
   authorizePaymentLinkImageUpload,
   parsePaymentLinkImage,
@@ -253248,10 +254162,10 @@ router23.post(
     }
   }
 );
-var payment_links_default = router23;
+var payment_links_default = router24;
 
 // src/routes/public-payment-links.ts
-var import_express30 = __toESM(require_express2(), 1);
+var import_express31 = __toESM(require_express2(), 1);
 
 // src/providers/feexpay/live-runtime.ts
 function isFeexpayLiveExecutionAllowed(environment) {
@@ -253270,7 +254184,7 @@ function isFeexpayLiveExecutionAllowed(environment) {
 }
 
 // src/providers/paydunya/client.ts
-import { createHash as createHash6, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash7, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 
 // src/providers/paydunya/catalog.ts
 var operatorChannels = {
@@ -253365,9 +254279,9 @@ function isPaydunyaLiveExecutionAllowed(environment) {
 }
 function verifyMasterKeyHash(hash2, masterKey) {
   if (typeof hash2 !== "string" || !/^[a-f0-9]{128}$/i.test(hash2)) return false;
-  const expected = Buffer.from(createHash6("sha512").update(masterKey, "utf8").digest("hex"), "hex");
+  const expected = Buffer.from(createHash7("sha512").update(masterKey, "utf8").digest("hex"), "hex");
   const received = Buffer.from(hash2, "hex");
-  return received.length === expected.length && timingSafeEqual4(received, expected);
+  return received.length === expected.length && timingSafeEqual5(received, expected);
 }
 var PaydunyaClient = class {
   #environment;
@@ -253568,7 +254482,7 @@ function resolveVerifiedPaydunyaState(receipt, expected) {
 }
 
 // src/services/linkflow-payment-execution.ts
-import { createHash as createHash7, randomBytes as randomBytes6 } from "node:crypto";
+import { createHash as createHash8, randomBytes as randomBytes7 } from "node:crypto";
 
 // src/providers/feexpay/client.ts
 var FeexpayError = class extends Error {
@@ -253713,7 +254627,7 @@ var FeexpayClient = class {
 };
 
 // src/services/developer-webhook-outbox.ts
-import { randomUUID as randomUUID6 } from "node:crypto";
+import { randomUUID as randomUUID7 } from "node:crypto";
 
 // src/lib/developer-webhook-payload.ts
 var MAX_PLAINTEXT_BYTES = 8192;
@@ -253853,7 +254767,7 @@ async function enqueueDeveloperPaymentEvent(tx, input2) {
   if (!endpoints.length) return;
   for (const endpoint of endpoints) {
     if (!endpoint.events.includes(input2.eventType)) continue;
-    const eventId = randomUUID6();
+    const eventId = randomUUID7();
     const payload = {
       id: eventId,
       type: input2.eventType,
@@ -254457,7 +255371,7 @@ async function startLinkFlowPaymentAttempt(publicToken, input2) {
     if (!merchantPhone || !/^\+[1-9][0-9]{7,14}$/.test(merchantPhone)) {
       throw new LinkFlowPaymentError(503, "Le compte du marchand ne peut pas recevoir ce paiement.");
     }
-    const operationReference = randomBytes6(15).toString("hex").toUpperCase();
+    const operationReference = randomBytes7(15).toString("hex").toUpperCase();
     const transactionIdempotencyKey = `linkflow:${lockedLink.id}:${input2.idempotencyKey}`;
     const requestKey2 = input2.idempotencyKey;
     const merchantName = lockedLink.linkName?.trim() || "SendFlow";
@@ -254732,7 +255646,7 @@ async function finalizeVerifiedStatus(bundle, receipt) {
       return;
     }
     const providerStatus = outcome === "succeeded" ? "succeeded" : "failed";
-    const eventFingerprint = createHash7("sha256").update([
+    const eventFingerprint = createHash8("sha256").update([
       attempt.id,
       providerStatus,
       attempt.providerReferenceHash,
@@ -254862,7 +255776,7 @@ async function getLinkFlowPaymentAttemptStatusByMappingId(attemptId) {
 }
 
 // src/routes/public-payment-links.ts
-var router24 = (0, import_express30.Router)();
+var router25 = (0, import_express31.Router)();
 var tokenPattern2 = /^[A-Za-z0-9_-]{43}$/;
 var errorUnavailable = { error: "Ce lien de paiement est indisponible." };
 async function findPublicLink(token, options = {}) {
@@ -255042,7 +255956,7 @@ async function loadPreviewCatalogChoices(link) {
 function clientAddress(req) {
   return req.ip || req.socket.remoteAddress || "unknown";
 }
-router24.get("/public/payment-links/:token", async (req, res) => {
+router25.get("/public/payment-links/:token", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   const parsed = GetPublicPaymentLinkParams.safeParse(req.params);
   if (!parsed.success) {
@@ -255106,7 +256020,7 @@ router24.get("/public/payment-links/:token", async (req, res) => {
     res.status(503).json({ error: "Les informations du lien sont momentan\xE9ment indisponibles." });
   }
 });
-router24.post("/public/payment-links/:token/attempts", async (req, res) => {
+router25.post("/public/payment-links/:token/attempts", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   const parsedParams = StartPublicPaymentLinkAttemptParams.safeParse(req.params);
   const parsedBody = StartPublicPaymentLinkAttemptBody.safeParse(req.body);
@@ -255152,7 +256066,7 @@ router24.post("/public/payment-links/:token/attempts", async (req, res) => {
     res.status(503).json({ error: "Le paiement est momentan\xE9ment indisponible. Aucun r\xE9sultat d\xE9finitif n\u2019a \xE9t\xE9 confirm\xE9." });
   }
 });
-router24.get("/public/payment-link-attempts/:attemptId", async (req, res) => {
+router25.get("/public/payment-link-attempts/:attemptId", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   const parsedParams = GetPublicPaymentLinkAttemptStatusParams.safeParse(req.params);
   const parsedHeader = GetPublicPaymentLinkAttemptStatusHeader.safeParse({
@@ -255182,7 +256096,7 @@ router24.get("/public/payment-link-attempts/:attemptId", async (req, res) => {
     res.status(503).json({ error: "La v\xE9rification est momentan\xE9ment indisponible. R\xE9essayez sans relancer le paiement." });
   }
 });
-router24.post("/public/payment-link-attempts/:attemptId/otp", async (req, res) => {
+router25.post("/public/payment-link-attempts/:attemptId/otp", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   const parsedParams = ConfirmPublicPaymentLinkAttemptOtpParams.safeParse(req.params);
   const parsedHeader = ConfirmPublicPaymentLinkAttemptOtpHeader.safeParse({
@@ -255295,9 +256209,9 @@ var handlePublicPaymentLinkQuote = async (req, res) => {
     res.status(503).json({ error: "Le tarif est momentan\xE9ment indisponible." });
   }
 };
-router24.get("/public/payment-links/:token/quote/:countryCode/:operatorId", handlePublicPaymentLinkQuote);
-router24.post("/public/payment-links/:token/quote/:countryCode/:operatorId", handlePublicPaymentLinkQuote);
-router24.get("/public/payment-links/:token/image", async (req, res) => {
+router25.get("/public/payment-links/:token/quote/:countryCode/:operatorId", handlePublicPaymentLinkQuote);
+router25.post("/public/payment-links/:token/quote/:countryCode/:operatorId", handlePublicPaymentLinkQuote);
+router25.get("/public/payment-links/:token/image", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   res.setHeader("X-Content-Type-Options", "nosniff");
   if (!tokenPattern2.test(req.params.token)) {
@@ -255321,12 +256235,12 @@ router24.get("/public/payment-links/:token/image", async (req, res) => {
     res.status(503).end();
   }
 });
-var public_payment_links_default = router24;
+var public_payment_links_default = router25;
 
 // src/routes/developer.ts
 var import_cors = __toESM(require_lib3(), 1);
-var import_express31 = __toESM(require_express2(), 1);
-import { randomBytes as randomBytes7, randomUUID as randomUUID7 } from "node:crypto";
+var import_express32 = __toESM(require_express2(), 1);
+import { randomBytes as randomBytes8, randomUUID as randomUUID8 } from "node:crypto";
 
 // src/data/developer-api-quota.ts
 var LIMITS = {
@@ -255359,13 +256273,13 @@ async function consumeDeveloperApiQuota(identity, operation) {
 }
 
 // src/routes/developer.ts
-var router25 = (0, import_express31.Router)();
+var router26 = (0, import_express32.Router)();
 var uuidPattern3 = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 var publicKeyPattern = /^sfpk_live_[A-Za-z0-9_-]{43}$/;
 var secretKeyPattern = /^sfsk_live_[A-Za-z0-9_-]{43}$/;
 var clientTokenPattern = /^[A-Za-z0-9_-]{43}$/;
 var pollTokenPattern = /^[a-f0-9]{64}$/;
-router25.use("/v1/public", (0, import_cors.default)({
+router26.use("/v1/public", (0, import_cors.default)({
   origin: true,
   credentials: false,
   methods: ["GET", "POST", "OPTIONS"],
@@ -255568,7 +256482,7 @@ function sessionStateFromAttempt(attempt) {
   if (["created", "collecting"].includes(attempt.intentState) || ["prepared", "dispatching", "pending"].includes(attempt.attemptState)) return "waiting";
   return "created";
 }
-router25.get("/me/developer/api-keys", async (req, res) => {
+router26.get("/me/developer/api-keys", async (req, res) => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
   try {
@@ -255582,7 +256496,7 @@ router25.get("/me/developer/api-keys", async (req, res) => {
     res.status(503).json({ error: "Les cl\xE9s API sont momentan\xE9ment indisponibles." });
   }
 });
-router25.post("/me/developer/api-keys", async (req, res) => {
+router26.post("/me/developer/api-keys", async (req, res) => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
   const previewAccount = session.previewAccount;
@@ -255630,7 +256544,7 @@ router25.post("/me/developer/api-keys", async (req, res) => {
     res.status(503).json({ error: "La cr\xE9ation de la cl\xE9 API est momentan\xE9ment indisponible." });
   }
 });
-router25.post("/me/developer/api-keys/initialize", async (req, res) => {
+router26.post("/me/developer/api-keys/initialize", async (req, res) => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
   if (!session.previewAccount) {
@@ -255686,7 +256600,7 @@ router25.post("/me/developer/api-keys/initialize", async (req, res) => {
     res.status(503).json({ error: "La paire principale est momentan\xE9ment indisponible." });
   }
 });
-router25.delete("/me/developer/api-keys/:apiKeyId", async (req, res) => {
+router26.delete("/me/developer/api-keys/:apiKeyId", async (req, res) => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
   const params = RevokeDeveloperApiKeyParams.safeParse(req.params);
@@ -255715,7 +256629,7 @@ router25.delete("/me/developer/api-keys/:apiKeyId", async (req, res) => {
     res.status(503).json({ error: "La r\xE9vocation de la cl\xE9 API est momentan\xE9ment indisponible." });
   }
 });
-router25.get("/me/developer/webhooks", async (req, res) => {
+router26.get("/me/developer/webhooks", async (req, res) => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
   try {
@@ -255726,7 +256640,7 @@ router25.get("/me/developer/webhooks", async (req, res) => {
     res.status(503).json({ error: "Les webhooks sont momentan\xE9ment indisponibles." });
   }
 });
-router25.post("/me/developer/webhooks", async (req, res) => {
+router26.post("/me/developer/webhooks", async (req, res) => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
   const parsed = CreateDeveloperWebhookBody.safeParse(req.body);
@@ -255750,7 +256664,7 @@ router25.post("/me/developer/webhooks", async (req, res) => {
       res.status(400).json({ error: "La limite de cinq webhooks actifs est atteinte." });
       return;
     }
-    const signingSecret = `whsec_${randomBytes7(32).toString("base64url")}`;
+    const signingSecret = `whsec_${randomBytes8(32).toString("base64url")}`;
     const [created] = await db.insert(developerWebhookEndpointsTable).values({
       userId: session.userId,
       label: parsed.data.label.trim(),
@@ -255768,7 +256682,7 @@ router25.post("/me/developer/webhooks", async (req, res) => {
     res.status(503).json({ error: "La cr\xE9ation du webhook est momentan\xE9ment indisponible." });
   }
 });
-router25.delete("/me/developer/webhooks/:endpointId", async (req, res) => {
+router26.delete("/me/developer/webhooks/:endpointId", async (req, res) => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
   const params = RevokeDeveloperWebhookParams.safeParse(req.params);
@@ -255797,7 +256711,7 @@ router25.delete("/me/developer/webhooks/:endpointId", async (req, res) => {
     res.status(503).json({ error: "La d\xE9sactivation du webhook est momentan\xE9ment indisponible." });
   }
 });
-router25.get("/me/developer/webhooks/:endpointId/deliveries", async (req, res) => {
+router26.get("/me/developer/webhooks/:endpointId/deliveries", async (req, res) => {
   const session = await requireDeveloperPanelSession(req, res);
   if (!session) return;
   const params = ListDeveloperWebhookDeliveriesParams.safeParse(req.params);
@@ -255834,7 +256748,7 @@ router25.get("/me/developer/webhooks/:endpointId/deliveries", async (req, res) =
     res.status(503).json({ error: "L\u2019historique webhook est momentan\xE9ment indisponible." });
   }
 });
-router25.post("/v1/payment-sessions", async (req, res) => {
+router26.post("/v1/payment-sessions", async (req, res) => {
   const key = await requireSecretApiKey(req, res);
   if (!key) return;
   const parsedHeader = CreateDeveloperPaymentSessionHeader.safeParse({
@@ -255864,7 +256778,7 @@ router25.post("/v1/payment-sessions", async (req, res) => {
   try {
     metadata = normalizeMetadata(parsedBody.data.metadata);
     normalized = normalizePaymentLinkInput({
-      requestId: randomUUID7(),
+      requestId: randomUUID8(),
       currency: "XOF",
       amount: String(parsedBody.data.amountMinor),
       linkName: "Paiement en ligne",
@@ -256052,7 +256966,7 @@ router25.post("/v1/payment-sessions", async (req, res) => {
     res.status(503).json({ error: "La session de paiement est momentan\xE9ment indisponible." });
   }
 });
-router25.get("/v1/payment-sessions/:sessionId", async (req, res) => {
+router26.get("/v1/payment-sessions/:sessionId", async (req, res) => {
   const key = await requireSecretApiKey(req, res);
   if (!key) return;
   const params = GetDeveloperPaymentSessionParams.safeParse(req.params);
@@ -256093,7 +257007,7 @@ router25.get("/v1/payment-sessions/:sessionId", async (req, res) => {
     res.status(503).json({ error: "Le statut de paiement est momentan\xE9ment indisponible." });
   }
 });
-router25.get("/v1/public/payment-sessions/:sessionId", async (req, res) => {
+router26.get("/v1/public/payment-sessions/:sessionId", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   const params = GetDeveloperPublicPaymentSessionParams.safeParse(req.params);
   if (!params.success || !uuidPattern3.test(params.data.sessionId)) {
@@ -256138,7 +257052,7 @@ router25.get("/v1/public/payment-sessions/:sessionId", async (req, res) => {
     res.status(503).json({ error: "Les informations du paiement sont momentan\xE9ment indisponibles." });
   }
 });
-router25.post("/v1/public/payment-sessions/:sessionId/attempts", async (req, res) => {
+router26.post("/v1/public/payment-sessions/:sessionId/attempts", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   const params = StartDeveloperDirectPaymentParams.safeParse(req.params);
   const headers = StartDeveloperDirectPaymentHeader.safeParse({
@@ -256211,7 +257125,7 @@ router25.post("/v1/public/payment-sessions/:sessionId/attempts", async (req, res
     res.status(503).json({ error: "Le paiement est momentan\xE9ment indisponible. Aucun r\xE9sultat d\xE9finitif n\u2019a \xE9t\xE9 confirm\xE9." });
   }
 });
-router25.get("/v1/public/payment-sessions/:sessionId/attempts/:attemptId", async (req, res) => {
+router26.get("/v1/public/payment-sessions/:sessionId/attempts/:attemptId", async (req, res) => {
   res.setHeader("Cache-Control", "no-store, private");
   const params = GetDeveloperDirectPaymentStatusParams.safeParse(req.params);
   const headers = GetDeveloperDirectPaymentStatusHeader.safeParse({
@@ -256262,10 +257176,10 @@ router25.get("/v1/public/payment-sessions/:sessionId/attempts/:attemptId", async
     res.status(503).json({ error: "La v\xE9rification du paiement est momentan\xE9ment indisponible." });
   }
 });
-var developer_default = router25;
+var developer_default = router26;
 
 // src/routes/developer-payouts.ts
-var import_express32 = __toESM(require_express2(), 1);
+var import_express33 = __toESM(require_express2(), 1);
 
 // src/data/payout-configuration.ts
 async function loadPayoutQuoteConfiguration(countryCode, operatorId) {
@@ -256450,7 +257364,7 @@ async function loadMerchantPayoutWallet(userId) {
 }
 
 // src/services/payout-execution.ts
-import { createHash as createHash9, randomBytes as randomBytes8, randomUUID as randomUUID9 } from "node:crypto";
+import { createHash as createHash10, randomBytes as randomBytes9, randomUUID as randomUUID10 } from "node:crypto";
 
 // src/services/payout-settlement-verification.ts
 function resolveVerifiedFinalStatus(payout2, attempt, receipt) {
@@ -256496,7 +257410,7 @@ function resolveVerifiedFinalStatus(payout2, attempt, receipt) {
 }
 
 // src/services/payout-webhook-outbox.ts
-import { randomUUID as randomUUID8 } from "node:crypto";
+import { randomUUID as randomUUID9 } from "node:crypto";
 
 // src/lib/payout-webhook-payload.ts
 var EVENT_TYPES = /* @__PURE__ */ new Set([
@@ -256662,7 +257576,7 @@ async function enqueuePayoutWebhookEvent(tx, input2) {
   ));
   for (const endpoint of endpoints) {
     if (!endpoint.events.includes(eventType)) continue;
-    const deliveryId = randomUUID8();
+    const deliveryId = randomUUID9();
     const payload = {
       id: deliveryId,
       type: eventType,
@@ -256696,10 +257610,10 @@ async function enqueuePayoutWebhookEvent(tx, input2) {
 
 // src/services/payout-execution.ts
 function makeReference() {
-  return `SFPO${randomBytes8(8).toString("hex").toUpperCase()}`;
+  return `SFPO${randomBytes9(8).toString("hex").toUpperCase()}`;
 }
 function makeRequestHash(input2, phoneHash) {
-  return createHash9("sha256").update(JSON.stringify({
+  return createHash10("sha256").update(JSON.stringify({
     amountMinor: input2.amountMinor,
     countryCode: input2.countryCode,
     currency: input2.currency,
@@ -256733,7 +257647,7 @@ async function preparePayout(input2) {
   );
   const requestHash = makeRequestHash(input2, phoneHash);
   const reference = makeReference();
-  const payoutId = randomUUID9();
+  const payoutId = randomUUID10();
   const operationReference = reference;
   const shopId = process.env.FEEXPAY_SHOP_ID;
   const accountHash = createSensitiveDataLookupIndex(shopId, "payout-execution-account");
@@ -257075,7 +257989,7 @@ async function createAndDispatchPayout(input2) {
 }
 
 // src/routes/developer-payouts.ts
-var router26 = (0, import_express32.Router)();
+var router27 = (0, import_express33.Router)();
 function presentPayout(row) {
   const phone = decryptSensitiveData(row.beneficiaryPhoneEncrypted, "payout-beneficiary-phone", {
     authenticatedContext: row.id
@@ -257121,7 +258035,7 @@ async function assertMonthlyOutgoingLimit(userId, amountMinor) {
     );
   }
 }
-router26.post("/v1/payout-quote", async (req, res) => {
+router27.post("/v1/payout-quote", async (req, res) => {
   const key = await requireSecretApiKey(req, res, "payout_read");
   if (!key) return;
   const parsed = CreateDeveloperPayoutQuoteBody.safeParse(req.body);
@@ -257148,7 +258062,7 @@ router26.post("/v1/payout-quote", async (req, res) => {
     sendPayoutError(req, res, error62);
   }
 });
-router26.post("/v1/payouts", async (req, res) => {
+router27.post("/v1/payouts", async (req, res) => {
   const key = await requireSecretApiKey(req, res, "payout_create");
   if (!key) return;
   const validHeader = CreateDeveloperPayoutHeader.safeParse({
@@ -257216,7 +258130,7 @@ router26.post("/v1/payouts", async (req, res) => {
     sendPayoutError(req, res, error62);
   }
 });
-router26.get("/v1/payouts", async (req, res) => {
+router27.get("/v1/payouts", async (req, res) => {
   const key = await requireSecretApiKey(req, res, "payout_read");
   if (!key) return;
   const parsed = ListDeveloperPayoutsQueryParams.safeParse(req.query);
@@ -257260,7 +258174,7 @@ router26.get("/v1/payouts", async (req, res) => {
     sendPayoutError(req, res, error62);
   }
 });
-router26.get("/v1/payouts/:payoutId", async (req, res) => {
+router27.get("/v1/payouts/:payoutId", async (req, res) => {
   const key = await requireSecretApiKey(req, res, "payout_read");
   if (!key) return;
   const params = GetDeveloperPayoutParams.safeParse(req.params);
@@ -257292,7 +258206,7 @@ router26.get("/v1/payouts/:payoutId", async (req, res) => {
     sendPayoutError(req, res, error62);
   }
 });
-router26.post("/v1/payouts/:payoutId/cancel", async (req, res) => {
+router27.post("/v1/payouts/:payoutId/cancel", async (req, res) => {
   const key = await requireSecretApiKey(req, res, "payout_create");
   if (!key) return;
   const params = CancelDeveloperPayoutParams.safeParse(req.params);
@@ -257357,11 +258271,11 @@ router26.post("/v1/payouts/:payoutId/cancel", async (req, res) => {
     sendPayoutError(req, res, error62);
   }
 });
-var developer_payouts_default = router26;
+var developer_payouts_default = router27;
 
 // src/routes/admin-payouts.ts
-var import_express33 = __toESM(require_express2(), 1);
-var router27 = (0, import_express33.Router)();
+var import_express34 = __toESM(require_express2(), 1);
+var router28 = (0, import_express34.Router)();
 function presentAdminPayout(row, timeline) {
   const phone = decryptSensitiveData(row.beneficiaryPhoneEncrypted, "payout-beneficiary-phone", {
     authenticatedContext: row.id
@@ -257407,7 +258321,7 @@ async function readTimeline(ids) {
   }
   return grouped;
 }
-router27.get("/payouts", async (req, res) => {
+router28.get("/payouts", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
   const parsed = ListAdminPayoutsQueryParams.safeParse(req.query);
@@ -257455,7 +258369,7 @@ router27.get("/payouts", async (req, res) => {
     res.status(503).json({ error: "La file payout est momentan\xE9ment indisponible." });
   }
 });
-router27.get("/payouts/:payoutId", async (req, res) => {
+router28.get("/payouts/:payoutId", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res);
   if (!adminUserId) return;
   const params = GetAdminPayoutParams.safeParse(req.params);
@@ -257483,7 +258397,7 @@ router27.get("/payouts/:payoutId", async (req, res) => {
     res.status(503).json({ error: "Le payout est momentan\xE9ment indisponible." });
   }
 });
-router27.post("/payouts/:payoutId/reject", async (req, res) => {
+router28.post("/payouts/:payoutId/reject", async (req, res) => {
   const adminUserId = respondAdminAuthError(req, res, "mutate");
   if (!adminUserId) return;
   if (!isTrustedOrigin(req)) {
@@ -257561,15 +258475,206 @@ router27.post("/payouts/:payoutId/reject", async (req, res) => {
     res.status(503).json({ error: "Le payout n\u2019a pas pu \xEAtre mis \xE0 jour." });
   }
 });
-var admin_payouts_default = router27;
+var admin_payouts_default = router28;
 
 // src/lib/admin-route-prefix.ts
 var ADMIN_ROUTE_PREFIX = "/DMgrgmt-1np5g23g12bGFtMwh";
 
+// src/lib/admin-step-up.ts
+import { createHash as createHash11 } from "node:crypto";
+var SAFE_METHODS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
+var STEP_UP_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
+async function recordDeniedStepUp(sessionId, actionKey, req) {
+  try {
+    await recordAdminAudit({
+      adminUserId: "super-admin",
+      action: "admin_step_up",
+      resourceType: "admin_access",
+      resourceId: sessionId,
+      reason: actionKey.slice(0, 500),
+      sessionId,
+      ipHash: fingerprint(`admin-ip:${requesterAddress(req)}`),
+      userAgentHash: fingerprint(`admin-ua:${(req.get("user-agent") ?? "").slice(0, 512)}`),
+      outcome: "denied"
+    });
+  } catch {
+    req.log.error("Administrator step-up denial audit unavailable");
+  }
+}
+var requireAdminStepUp = (req, res, next) => {
+  if (SAFE_METHODS.has(req.method)) {
+    next();
+    return;
+  }
+  const session = adminSessionContext(req);
+  if (!session) {
+    res.status(401).json({ error: "Connexion administrateur requise." });
+    return;
+  }
+  const actionKey = adminActionKey(req.method, req.path);
+  const rawToken = req.get("x-admin-step-up");
+  if (!actionKey || !rawToken || !STEP_UP_TOKEN_PATTERN.test(rawToken)) {
+    void recordDeniedStepUp(session.sessionId, actionKey ?? "invalid-action", req);
+    res.status(403).json({
+      error: "Confirmez cette action avec un nouveau code d\u2019authentification.",
+      code: "admin_step_up_required"
+    });
+    return;
+  }
+  let payloadHash;
+  try {
+    payloadHash = hashAdminActionPayload(req.query, req.body);
+  } catch {
+    res.status(400).json({ error: "Param\xE8tres d\u2019action invalides." });
+    return;
+  }
+  const now = /* @__PURE__ */ new Date();
+  void db.update(superAdminStepUpTokensTable).set({ consumedAt: now }).where(and(
+    eq(superAdminStepUpTokensTable.sessionId, session.sessionId),
+    eq(superAdminStepUpTokensTable.tokenHash, createHash11("sha256").update(rawToken).digest("hex")),
+    eq(superAdminStepUpTokensTable.actionKey, actionKey),
+    eq(superAdminStepUpTokensTable.payloadHash, payloadHash),
+    isNull(superAdminStepUpTokensTable.consumedAt),
+    gt(superAdminStepUpTokensTable.expiresAt, now)
+  )).returning({ id: superAdminStepUpTokensTable.id }).then(async ([consumed]) => {
+    if (!consumed) {
+      await recordDeniedStepUp(session.sessionId, actionKey, req);
+      res.status(403).json({
+        error: "Confirmez cette action avec un nouveau code d\u2019authentification.",
+        code: "admin_step_up_required"
+      });
+      return;
+    }
+    next();
+  }).catch((error62) => {
+    req.log.error({ err: error62 }, "Administrator step-up token storage unavailable");
+    if (!res.headersSent) res.status(503).json({ error: "La confirmation de s\xE9curit\xE9 est indisponible." });
+  });
+};
+
+// src/lib/admin-network-policy.ts
+import { createPublicKey as createPublicKey2, verify as verifySignature2 } from "node:crypto";
+import { isIP as isIP4 } from "node:net";
+var jwksCache = null;
+function normalizedIp(value) {
+  const candidate = value.trim().replace(/^\[|\]$/gu, "");
+  const ipv4Mapped = candidate.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/iu)?.[1];
+  const normalized = ipv4Mapped ?? candidate;
+  return isIP4(normalized) ? normalized.toLowerCase() : null;
+}
+function isAdminClientIpAllowed(address, environment = process.env) {
+  const configured = environment.SENDFLOW_ADMIN_ALLOWED_IPS?.trim();
+  if (!configured) return true;
+  const entries = configured.split(",").map(normalizedIp);
+  const requested = normalizedIp(address);
+  return Boolean(requested && entries.length && entries.every(Boolean) && entries.includes(requested));
+}
+function cloudflareIssuer(environment) {
+  const value = environment.SENDFLOW_CLOUDFLARE_ACCESS_TEAM_DOMAIN?.trim();
+  if (!value) return null;
+  try {
+    const url2 = new URL(value.includes("://") ? value : `https://${value}`);
+    if (url2.protocol !== "https:" || url2.username || url2.password || url2.port || url2.pathname !== "/" || url2.search || url2.hash || !url2.hostname.endsWith(".cloudflareaccess.com")) return null;
+    return url2.origin;
+  } catch {
+    return null;
+  }
+}
+async function loadCloudflareJwks(issuer) {
+  if (jwksCache && jwksCache.issuer === issuer && jwksCache.expiresAt > Date.now()) {
+    return jwksCache.keys;
+  }
+  const response = await fetch(`${issuer}/cdn-cgi/access/certs`, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(3e3)
+  });
+  if (!response.ok) throw new Error("Cloudflare Access key service unavailable");
+  const body = await response.json();
+  if (!Array.isArray(body.keys)) throw new Error("Cloudflare Access key response invalid");
+  const keys = body.keys.filter(
+    (key) => Boolean(key && typeof key === "object" && key.kty === "RSA" && typeof key.kid === "string")
+  );
+  if (keys.length === 0) throw new Error("Cloudflare Access keys unavailable");
+  jwksCache = { issuer, expiresAt: Date.now() + 5 * 6e4, keys };
+  return keys;
+}
+function decodeSegment(segment) {
+  if (!/^[A-Za-z0-9_-]+$/u.test(segment) || segment.length > 16384) {
+    throw new Error("Malformed Cloudflare Access assertion");
+  }
+  return JSON.parse(Buffer.from(segment, "base64url").toString("utf8"));
+}
+async function verifyCloudflareAssertion(req) {
+  const issuer = cloudflareIssuer(process.env);
+  const audience = process.env.SENDFLOW_CLOUDFLARE_ACCESS_AUD?.trim();
+  const token = req.get("cf-access-jwt-assertion");
+  if (!issuer || !audience || !token || token.length > 24e3) return false;
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+  try {
+    const header = decodeSegment(parts[0]);
+    const claims = decodeSegment(parts[1]);
+    if (header.alg !== "RS256" || typeof header.kid !== "string") return false;
+    const keys = await loadCloudflareJwks(issuer);
+    const jwk = keys.find((key2) => key2.kid === header.kid && (!key2.alg || key2.alg === "RS256"));
+    if (!jwk) return false;
+    const key = createPublicKey2({ key: jwk, format: "jwk" });
+    const validSignature = verifySignature2(
+      "RSA-SHA256",
+      Buffer.from(`${parts[0]}.${parts[1]}`),
+      key,
+      Buffer.from(parts[2], "base64url")
+    );
+    const now = Math.floor(Date.now() / 1e3);
+    const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+    return validSignature && claims.iss === issuer && audiences.includes(audience) && typeof claims.sub === "string" && claims.sub.length > 0 && typeof claims.exp === "number" && claims.exp > now && (claims.nbf === void 0 || typeof claims.nbf === "number" && claims.nbf <= now + 30);
+  } catch {
+    return false;
+  }
+}
+var adminNetworkGuard = (req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Content-Security-Policy", "default-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+  if (process.env.NODE_ENV === "production" && req.secure) {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  const origin = req.get("origin");
+  const sameOriginFetch = req.get("sec-fetch-site") === "same-origin";
+  if (origin ? !isTrustedOrigin(req) : !sameOriginFetch) {
+    res.status(403).json({ error: "Origine non autoris\xE9e." });
+    return;
+  }
+  if (!isAdminClientIpAllowed(requesterAddress(req))) {
+    res.status(403).json({ error: "Acc\xE8s r\xE9seau non autoris\xE9." });
+    return;
+  }
+  if (process.env.SENDFLOW_ADMIN_REQUIRE_CLOUDFLARE_ACCESS === "true") {
+    if (!cloudflareIssuer(process.env) || !process.env.SENDFLOW_CLOUDFLARE_ACCESS_AUD?.trim()) {
+      req.log.error("Cloudflare Access assertion verification is not configured");
+      res.status(503).json({ error: "La v\xE9rification r\xE9seau est indisponible." });
+      return;
+    }
+    void verifyCloudflareAssertion(req).then((valid) => {
+      if (!valid) {
+        res.status(403).json({ error: "Acc\xE8s r\xE9seau non autoris\xE9." });
+        return;
+      }
+      next();
+    }).catch((error62) => {
+      req.log.error({ err: error62 }, "Cloudflare Access assertion verification failed");
+      if (!res.headersSent) res.status(503).json({ error: "La v\xE9rification r\xE9seau est indisponible." });
+    });
+    return;
+  }
+  next();
+};
+
 // src/routes/index.ts
-var router28 = (0, import_express34.Router)();
-var adminHandlers = (0, import_express34.Router)();
-var adminSurface = (0, import_express34.Router)();
+var router29 = (0, import_express35.Router)();
+var adminHandlers = (0, import_express35.Router)();
+var adminSurface = (0, import_express35.Router)();
 adminHandlers.use((req, res, next) => {
   if (req.method === "GET" && /^\/(?:users(?:\/[^/]+)?|developer-webhooks)\/?$/.test(req.path)) {
     if (respondAdminUserReadAuthError(req, res)) next();
@@ -257582,24 +258687,24 @@ adminHandlers.use((req, res, next) => {
   const permission = ["GET", "HEAD", "OPTIONS"].includes(req.method) ? "read" : "mutate";
   if (respondAdminAuthError(req, res, permission)) next();
 });
-router28.use(health_default);
-router28.use(storage_default);
-router28.use(database_default);
-router28.use(account_default);
-router28.use(transfer_quote_default);
-router28.use(payment_links_default);
-router28.use(public_payment_links_default);
-router28.use(developer_default);
-router28.use(developer_payouts_default);
-router28.use(email_campaign_webhook_default);
-router28.use(account_limit_default);
-router28.use(identity_verification_default);
-router28.use(operator_pricing_default);
-router28.use(banners_default);
-router28.use(registration_settings_default);
-router28.use(customer_service_settings_default);
-router28.use(payment_limits_default);
-router28.use(country_management_default);
+router29.use(health_default);
+router29.use(storage_default);
+router29.use(database_default);
+router29.use(account_default);
+router29.use(transfer_quote_default);
+router29.use(payment_links_default);
+router29.use(public_payment_links_default);
+router29.use(developer_default);
+router29.use(developer_payouts_default);
+router29.use(email_campaign_webhook_default);
+router29.use(account_limit_default);
+router29.use(identity_verification_default);
+router29.use(operator_pricing_default);
+router29.use(banners_default);
+router29.use(registration_settings_default);
+router29.use(customer_service_settings_default);
+router29.use(payment_limits_default);
+router29.use(country_management_default);
 adminHandlers.use(admin_default);
 adminHandlers.use(admin_ip_blocklist_default);
 adminHandlers.use(admin_network_defense_default);
@@ -257618,14 +258723,18 @@ adminHandlers.use(adminRoutes6);
 adminHandlers.use(email_campaigns_default);
 adminHandlers.use(adminRoutes8);
 adminHandlers.use(admin_payouts_default);
+adminSurface.use(adminNetworkGuard);
 adminSurface.use(loadAdminSession);
+adminSurface.use(adminAuditContextMiddleware);
 adminSurface.use(admin_access_default);
+adminSurface.use(requireAdminStepUp);
+adminSurface.use(admin_sessions_default);
 adminSurface.use(adminHandlers);
-router28.use(ADMIN_ROUTE_PREFIX, adminSurface);
-router28.use(customer_auth_default);
-router28.use(customer_recovery_default);
-router28.use(auth_otp_default);
-var routes_default = router28;
+router29.use(ADMIN_ROUTE_PREFIX, adminSurface);
+router29.use(customer_auth_default);
+router29.use(customer_recovery_default);
+router29.use(auth_otp_default);
+var routes_default = router29;
 
 // src/lib/logger.ts
 var import_pino = __toESM(require_pino(), 1);
@@ -257795,17 +258904,19 @@ async function enforceIpAccess(req, res, lookup3 = isIpBlocked, hops = trustedPr
 
 // src/lib/csrf-protection.ts
 import {
-  createHash as createHash10,
-  createHmac as createHmac4,
-  randomBytes as randomBytes9,
-  timingSafeEqual as timingSafeEqual5
+  createHash as createHash12,
+  createHmac as createHmac5,
+  randomBytes as randomBytes10,
+  timingSafeEqual as timingSafeEqual6
 } from "node:crypto";
 var CSRF_HEADER_NAME = "X-CSRF-Token";
 var CSRF_TOKEN_TTL_MS = 10 * 60 * 1e3;
 var ANONYMOUS_CSRF_COOKIE_TTL_MS = 24 * 60 * 60 * 1e3;
 var ANONYMOUS_CSRF_COOKIE = "__Host-sendflow_csrf";
 var CUSTOMER_SESSION_COOKIE2 = "__Host-sendflow_session";
-var ADMIN_SESSION_COOKIE2 = "__Host-sendflow_admin";
+var ADMIN_SESSION_COOKIE = "__Host-sendflow_admin";
+var ADMIN_ACCESS_COOKIE2 = "__Host-sendflow_admin_access";
+var ADMIN_REFRESH_COOKIE2 = "__Host-sendflow_admin_refresh";
 var OPAQUE_COOKIE_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
 var SIGNATURE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 var ANONYMOUS_COOKIE_NONCE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
@@ -257821,17 +258932,19 @@ function readOpaqueCookie(cookieHeader, name) {
 }
 function authenticatedBinding(req) {
   const customerSession = readOpaqueCookie(req.headers.cookie, CUSTOMER_SESSION_COOKIE2);
-  const adminSession = readOpaqueCookie(req.headers.cookie, ADMIN_SESSION_COOKIE2);
-  if (customerSession || adminSession) {
-    return `authenticated:v1:${customerSession ?? ""}:${adminSession ?? ""}`;
+  const legacyAdminSession = readOpaqueCookie(req.headers.cookie, ADMIN_SESSION_COOKIE);
+  const adminAccess = readOpaqueCookie(req.headers.cookie, ADMIN_ACCESS_COOKIE2);
+  const adminRefresh = readOpaqueCookie(req.headers.cookie, ADMIN_REFRESH_COOKIE2);
+  if (customerSession || legacyAdminSession || adminAccess || adminRefresh) {
+    return `authenticated:v2:${customerSession ?? ""}:${legacyAdminSession ?? ""}:${adminAccess ?? ""}:${adminRefresh ?? ""}`;
   }
   return null;
 }
 function anonymousCookieSignature(payload) {
-  return createHmac4("sha256", signingKey()).update(`sendflow:csrf-anonymous-cookie:v1:${payload}`).digest("base64url");
+  return createHmac5("sha256", signingKey()).update(`sendflow:csrf-anonymous-cookie:v1:${payload}`).digest("base64url");
 }
 function createAnonymousCsrfCookie(now = Date.now()) {
-  const nonce = randomBytes9(32).toString("base64url");
+  const nonce = randomBytes10(32).toString("base64url");
   const expiresAt = now + ANONYMOUS_CSRF_COOKIE_TTL_MS;
   const payload = `v1.${expiresAt}.${nonce}`;
   const signature = anonymousCookieSignature(payload);
@@ -257858,7 +258971,7 @@ function readAnonymousCsrfCookie(cookieHeader, now = Date.now()) {
   }
   const expectedBytes = Buffer.from(expectedSignature, "base64url");
   const providedBytes = Buffer.from(providedSignature, "base64url");
-  if (expectedBytes.length !== providedBytes.length || !timingSafeEqual5(expectedBytes, providedBytes)) {
+  if (expectedBytes.length !== providedBytes.length || !timingSafeEqual6(expectedBytes, providedBytes)) {
     return null;
   }
   return {
@@ -257878,23 +258991,23 @@ function signingKey() {
   if (!secret || Buffer.byteLength(secret, "utf8") < 32) {
     throw new Error("CSRF signing is not configured");
   }
-  return createHmac4("sha256", secret).update("sendflow:csrf-signing-key:v1").digest();
+  return createHmac5("sha256", secret).update("sendflow:csrf-signing-key:v1").digest();
 }
 function bindingDigest(binding) {
-  return createHash10("sha256").update(binding).digest("base64url");
+  return createHash12("sha256").update(binding).digest("base64url");
 }
-function sign(encodedPayload) {
-  return createHmac4("sha256", signingKey()).update(`sendflow:csrf-token:v1:${encodedPayload}`).digest("base64url");
+function sign2(encodedPayload) {
+  return createHmac5("sha256", signingKey()).update(`sendflow:csrf-token:v1:${encodedPayload}`).digest("base64url");
 }
 function createCsrfToken(binding, now = Date.now(), expiresAtLimit = Number.POSITIVE_INFINITY) {
   const payload = {
     version: 1,
     expiresAt: Math.min(now + CSRF_TOKEN_TTL_MS, expiresAtLimit),
     binding: bindingDigest(binding),
-    nonce: randomBytes9(16).toString("base64url")
+    nonce: randomBytes10(16).toString("base64url")
   };
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  return `${encodedPayload}.${sign(encodedPayload)}`;
+  return `${encodedPayload}.${sign2(encodedPayload)}`;
 }
 function verifyCsrfToken(token, binding, now = Date.now(), expiresAtLimit = Number.POSITIVE_INFINITY) {
   if (!token || token.length > 2048 || !binding) return false;
@@ -257904,13 +259017,13 @@ function verifyCsrfToken(token, binding, now = Date.now(), expiresAtLimit = Numb
   }
   let expectedSignature;
   try {
-    expectedSignature = sign(encodedPayload);
+    expectedSignature = sign2(encodedPayload);
   } catch {
     return false;
   }
   const expectedSignatureBytes = Buffer.from(expectedSignature, "base64url");
   const providedSignatureBytes = Buffer.from(providedSignature, "base64url");
-  if (providedSignatureBytes.length !== expectedSignatureBytes.length || !timingSafeEqual5(providedSignatureBytes, expectedSignatureBytes)) {
+  if (providedSignatureBytes.length !== expectedSignatureBytes.length || !timingSafeEqual6(providedSignatureBytes, expectedSignatureBytes)) {
     return false;
   }
   try {
@@ -257920,7 +259033,7 @@ function verifyCsrfToken(token, binding, now = Date.now(), expiresAtLimit = Numb
     const expectedBinding = bindingDigest(binding);
     const payloadBindingBytes = Buffer.from(payload.binding ?? "", "base64url");
     const expectedBindingBytes = Buffer.from(expectedBinding, "base64url");
-    return payload.version === 1 && Number.isSafeInteger(payload.expiresAt) && payload.expiresAt > now && payload.expiresAt <= now + CSRF_TOKEN_TTL_MS + 3e4 && payload.expiresAt <= expiresAtLimit && typeof payload.nonce === "string" && /^[A-Za-z0-9_-]{22}$/.test(payload.nonce) && payloadBindingBytes.length === expectedBindingBytes.length && timingSafeEqual5(payloadBindingBytes, expectedBindingBytes);
+    return payload.version === 1 && Number.isSafeInteger(payload.expiresAt) && payload.expiresAt > now && payload.expiresAt <= now + CSRF_TOKEN_TTL_MS + 3e4 && payload.expiresAt <= expiresAtLimit && typeof payload.nonce === "string" && /^[A-Za-z0-9_-]{22}$/.test(payload.nonce) && payloadBindingBytes.length === expectedBindingBytes.length && timingSafeEqual6(payloadBindingBytes, expectedBindingBytes);
   } catch {
     return false;
   }
@@ -257959,7 +259072,7 @@ function isValidCsrfRequest(req, token, now = Date.now()) {
 }
 
 // src/lib/api-request-security.ts
-var SAFE_METHODS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
+var SAFE_METHODS2 = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
 function apiRequestSecurity(allowedOrigins2) {
   return (req, res, next) => {
     res.setHeader("Cache-Control", "no-store, private");
@@ -257967,7 +259080,7 @@ function apiRequestSecurity(allowedOrigins2) {
       next();
       return;
     }
-    if (SAFE_METHODS.has(req.method)) {
+    if (SAFE_METHODS2.has(req.method)) {
       if (req.method === "GET") {
         try {
           issueCsrfToken(req, res);
@@ -258010,7 +259123,7 @@ function captureRawResendWebhookBody(request, body) {
 }
 
 // src/app.ts
-var app = (0, import_express35.default)();
+var app = (0, import_express36.default)();
 app.disable("x-powered-by");
 app.set(
   "trust proxy",
@@ -258083,14 +259196,14 @@ app.use("/api", (req, res, next) => {
     error: "Les op\xE9rations sur les comptes ne sont pas disponibles dans cet aper\xE7u."
   });
 });
-app.use(import_express35.default.json({
+app.use(import_express36.default.json({
   limit: "100kb",
   strict: true,
   verify: (request, _response, buffer) => {
     captureRawResendWebhookBody(request, buffer);
   }
 }));
-app.use(import_express35.default.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
+app.use(import_express36.default.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
 app.use("/api", enforcePreviewAccountAccess);
 app.use("/api/me", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store, private");
@@ -258109,7 +259222,7 @@ app.use(httpErrorHandler);
 var app_default = app;
 
 // src/services/developer-webhook-worker.ts
-import { createHmac as createHmac5 } from "node:crypto";
+import { createHmac as createHmac6 } from "node:crypto";
 import { request as httpsRequest } from "node:https";
 var MAX_ATTEMPTS = 8;
 var BATCH_SIZE = 10;
@@ -258144,7 +259257,7 @@ async function postWebhook(url2, secret, payload, runtime = {}) {
   }
   const body = JSON.stringify(payload);
   const timestamp2 = Math.floor(Date.now() / 1e3).toString();
-  const signature = createHmac5("sha256", secret).update(`${timestamp2}.${body}`, "utf8").digest("hex");
+  const signature = createHmac6("sha256", secret).update(`${timestamp2}.${body}`, "utf8").digest("hex");
   return new Promise((resolve) => {
     let settled = false;
     const finish = (result) => {
@@ -258333,7 +259446,7 @@ function startDeveloperWebhookWorker(logger2) {
 }
 
 // src/services/email-campaign-worker.ts
-import { randomUUID as randomUUID10 } from "node:crypto";
+import { randomUUID as randomUUID11 } from "node:crypto";
 
 // src/lib/email-campaign-template.ts
 var FONT_STACK2 = "'DM Sans',Roboto,'Helvetica Neue',Arial,sans-serif";
@@ -258542,7 +259655,7 @@ async function claimNextRecipient() {
         }
         const [attemptCount] = await transaction.select({ value: count() }).from(emailCampaignAttemptsTable).where(eq(emailCampaignAttemptsTable.recipientId, recipient.id));
         const attemptNumber = Number(attemptCount?.value ?? 0) + 1;
-        const attemptId2 = randomUUID10();
+        const attemptId2 = randomUUID11();
         const idempotencyKey2 = campaignProviderIdempotencyKey(recipient.id, recipient.manualRetries);
         await transaction.insert(emailCampaignAttemptsTable).values({
           id: attemptId2,
@@ -258657,7 +259770,7 @@ async function claimNextRecipient() {
     let idempotencyKey = latestAttempt?.idempotencyKey;
     if (!latestAttempt) {
       const [attemptCount] = await transaction.select({ value: count() }).from(emailCampaignAttemptsTable).where(eq(emailCampaignAttemptsTable.recipientId, stale.id));
-      attemptId = randomUUID10();
+      attemptId = randomUUID11();
       idempotencyKey = campaignProviderIdempotencyKey(stale.id, stale.manualRetries);
       await transaction.insert(emailCampaignAttemptsTable).values({
         id: attemptId,

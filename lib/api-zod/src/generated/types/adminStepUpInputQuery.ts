@@ -6,7 +6,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface AdminPinUnlockResponse {
-  pinUnlocked: boolean;
-  expiresAt: Date;
-}
+export type AdminStepUpInputQuery = { [key: string]: unknown };

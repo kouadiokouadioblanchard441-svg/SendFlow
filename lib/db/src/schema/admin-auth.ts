@@ -41,11 +41,16 @@ export const superAdminCredentialsTable = pgTable(
 export const superAdminRecoveryCodesTable = pgTable(
   "sf_super_admin_recovery_codes",
   {
+    credentialId: smallint("credential_id")
+      .notNull()
+      .default(1)
+      .references(() => superAdminCredentialsTable.id, { onDelete: "cascade" }),
     codeHash: varchar("code_hash", { length: 64 }).primaryKey(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     usedAt: timestamp("used_at", { withTimezone: true }),
   },
   (table) => ({
+    singletonCheck: check("sf_super_admin_recovery_credential_check", sql`${table.credentialId} = 1`),
     hashFormatCheck: check(
       "sf_super_admin_recovery_hash_check",
       sql`${table.codeHash} ~ '^[0-9a-f]{64}$'`,

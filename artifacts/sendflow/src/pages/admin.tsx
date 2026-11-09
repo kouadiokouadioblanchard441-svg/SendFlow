@@ -53,6 +53,7 @@ import { EmailCampaignsSection } from '@/components/email-campaigns-section';
 import AdminIpBlocklist from '@/components/admin-ip-blocklist';
 import AdminNetworkDefense from '@/components/admin-network-defense';
 import { AdminIdentityVerificationsPage, AdminUserIdentitySummary } from '@/pages/admin-identity-verifications';
+import { AdminSecurityPage } from '@/pages/admin-security';
 import { CatalogOperatorIcon } from '@/components/catalog-operator-icon';
 import sendflowMark from '@/assets/sendflow-mark-original.png';
 import {
@@ -171,7 +172,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'payouts' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'countries' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings' | 'identity-verifications';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'payouts' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'countries' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings' | 'identity-verifications' | 'security';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -197,6 +198,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   'email-campaigns': { title: 'Campagnes e-mail', eyebrow: 'Communication' },
   'customer-service-settings': { title: 'Service client', eyebrow: 'Coordonnées publiques' },
   'identity-verifications': { title: 'Vérifications d’identité', eyebrow: 'Contrôle sécurisé' },
+  security: { title: 'Sécurité administrateur', eyebrow: 'Sessions et accès' },
 };
 
 const navGroups: Array<{
@@ -215,6 +217,7 @@ const navGroups: Array<{
       { href: adminRoute('/payouts'), label: 'Versements marchands', section: 'payouts', icon: Banknote },
       { href: adminRoute('/login-activity'), label: 'Connexions utilisateurs', section: 'login-activity', icon: LogIn },
       { href: adminRoute('/otp-activity'), label: 'Activité OTP', section: 'otp-activity', icon: Smartphone },
+      { href: adminRoute('/security'), label: 'Sessions administrateur', section: 'security', icon: ShieldCheck },
       { href: adminRoute('/identity-verifications'), label: 'Vérification d’identité', section: 'identity-verifications', icon: FileSearch },
       { href: adminRoute('/ip-blocklist'), label: 'Blocage IP', section: 'ip-blocklist', icon: ShieldCheck },
       { href: adminRoute('/network-defense'), label: 'Autodéfense', section: 'network-defense', icon: ShieldCheck },
@@ -3222,6 +3225,7 @@ export function AdminRouter() {
   const [isIdentityVerifications] = useRoute(adminRoute('/identity-verifications'));
   const [isIpBlocklist] = useRoute(adminRoute('/ip-blocklist'));
   const [isNetworkDefense] = useRoute(adminRoute('/network-defense'));
+  const [isAdminSecurity] = useRoute(adminRoute('/security'));
   if (isUserDetail && userRoute?.userId) return <UserDetailPage userId={userRoute.userId} />;
   if (isTransactionDetail && transactionRoute?.transactionId) return <TransactionDetailPage transactionId={transactionRoute.transactionId} />;
   if (isOverview) return <OverviewPage />;
@@ -3244,6 +3248,7 @@ export function AdminRouter() {
   if (isCustomerServiceSettings) return <AdminShell section="customer-service-settings"><AdminCustomerServiceSettingsSection /></AdminShell>;
   if (isIdentityVerifications) return <AdminShell section="identity-verifications"><AdminIdentityVerificationsPage /></AdminShell>;
   if (isNetworkDefense) return <AdminShell section="network-defense"><AdminNetworkDefense /></AdminShell>;
+  if (isAdminSecurity) return <AdminShell section="security"><AdminSecurityPage /></AdminShell>;
   if (isIpBlocklist) return <AdminShell section="ip-blocklist"><AdminIpBlocklist /></AdminShell>;
   return <OverviewPage />;
 }

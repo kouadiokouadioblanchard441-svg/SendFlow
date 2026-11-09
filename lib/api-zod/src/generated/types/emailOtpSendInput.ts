@@ -47,5 +47,5 @@ export type EmailOtpSendInput = {
      * @pattern ^\+[1-9][0-9]{7,14}$
      */
   phone: string;
-  purpose: 'pin_reset' | 'admin_login';
+  purpose: 'pin_reset';
 };

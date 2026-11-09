@@ -1,11 +1,10 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { createReadStream } from "node:fs";
-import { realpath, stat } from "node:fs/promises";
+import { readFile, realpath, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { enforceIpAccess, trustedProxyHops } from "@workspace/db/ip-blocklist";
-import { checkPortalRouteAccess, type PortalRouteDecision } from "./portal-route-access.ts";
-import { isPortalRouteRequest } from "./portal-route-path.ts";
+import { isAdminHostAllowed } from "./admin-host-policy.ts";
 import { isKnownSitePage } from "./site-route-matcher.ts";
 
 const mime: Record<string, string> = {
@@ -30,7 +29,6 @@ function sendNotFound(req: IncomingMessage, res: ServerResponse) {
 export function createSiteServer(
   rootDirectory: string,
   gate: (req: IncomingMessage, res: ServerResponse) => Promise<boolean> = enforceIpAccess,
-  portalAccess: typeof checkPortalRouteAccess = checkPortalRouteAccess,
 ) {
   const root = resolve(rootDirectory);
   const server = createServer(async (req, res) => {
@@ -42,6 +40,17 @@ export function createSiteServer(
       if (process.env.NODE_ENV === "production") {
         res.setHeader("Strict-Transport-Security", "max-age=31536000");
       }
+      const adminHost = isAdminHostAllowed(req.headers.host ?? "");
+      if (adminHost) {
+        const connectSources = (process.env.SENDFLOW_ADMIN_CSP_CONNECT_SRC ?? "")
+          .split(/\s+/u)
+          .filter((source) => /^https:\/\/[A-Za-z0-9.-]+(?::\d{1,5})?$/u.test(source))
+          .join(" ");
+        res.setHeader(
+          "Content-Security-Policy",
+          `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ${connectSources}`.trim(),
+        );
+      }
       let pathname: string;
       try {
         pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);
@@ -51,14 +60,6 @@ export function createSiteServer(
       }
       if (pathname.includes("\0") || pathname.includes("\\") || pathname.split("/").some((p) => p.startsWith("."))) {
         sendNotFound(req, res); return;
-      }
-      if (isPortalRouteRequest(req.url, process.env.BASE_PATH ?? "/")) {
-        const access: PortalRouteDecision = await portalAccess(req);
-        if (access !== "allowed") {
-          if (access === "not-found") sendNotFound(req, res);
-          else { res.setHeader("Cache-Control", "no-store, private"); res.writeHead(503).end(); }
-          return;
-        }
       }
       if (req.method !== "GET" && req.method !== "HEAD") {
         res.setHeader("Allow", "GET, HEAD"); res.writeHead(405).end(); return;
@@ -81,9 +82,19 @@ export function createSiteServer(
       const actual = await realpath(file);
       if (!actual.startsWith(root + sep) || file.endsWith(".map")) { sendNotFound(req, res); return; }
       res.setHeader("Content-Type", mime[extname(file)] ?? "application/octet-stream");
-      res.setHeader("Content-Length", info.size);
       res.statusCode = 200;
       if (req.method === "HEAD") { res.end(); return; }
+      if (adminHost && file.endsWith("index.html")) {
+        const html = await readFile(actual, "utf8");
+        const protectedHtml = html.replace(
+          /<\/head>/iu,
+          '<meta name="sendflow-app-surface" content="admin"></head>',
+        );
+        res.setHeader("Content-Length", String(Buffer.byteLength(protectedHtml)));
+        res.end(protectedHtml);
+        return;
+      }
+      res.setHeader("Content-Length", info.size);
       const stream = createReadStream(actual);
       stream.on("error", () => res.destroy());
       stream.pipe(res);

@@ -53,11 +53,12 @@ import type {
   AdminPayoutListResponse,
   AdminPayoutRejectInput,
   AdminPayoutRequest,
-  AdminPinInput,
-  AdminPinUnlockResponse,
   AdminPricingRatesUpdateResult,
   AdminRegistrationSettings,
+  AdminSession,
   AdminSignInInput,
+  AdminStepUpInput,
+  AdminStepUpResponse,
   AdminTransactionDetail,
   AdminTransactionPage,
   AdminUserActionRequest,
@@ -94,7 +95,6 @@ import type {
   CustomerPinSetInput,
   CustomerPinStateResult,
   CustomerPinUnlockInput,
-  CustomerPortalEligibilityResult,
   CustomerProfile,
   CustomerProfileUpdate,
   CustomerRegistrationInput,
@@ -2844,83 +2844,6 @@ export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurren
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetCurrentAccountQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
-export const getGetCustomerPortalEligibilityUrl = () => {
-
-
-
-
-  return `/api/me/portal-eligibility`
-}
-
-/**
- * @summary Check whether the authenticated account has an active administrator grant
- */
-export const getCustomerPortalEligibility = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomerPortalEligibilityResult> => {
-
-  return customFetch<CustomerPortalEligibilityResult>(getGetCustomerPortalEligibilityUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetCustomerPortalEligibilityQueryKey = () => {
-    return [
-    `/api/me/portal-eligibility`
-    ] as const;
-    }
-
-
-export const getGetCustomerPortalEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError = ErrorType<ErrorEnvelope | void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetCustomerPortalEligibilityQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerPortalEligibility>>> = ({ signal }) => getCustomerPortalEligibility({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetCustomerPortalEligibilityQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerPortalEligibility>>>
-export type GetCustomerPortalEligibilityQueryError = ErrorType<ErrorEnvelope | void>
-
-
-/**
- * @summary Check whether the authenticated account has an active administrator grant
- */
-
-export function useGetCustomerPortalEligibility<TData = Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError = ErrorType<ErrorEnvelope | void>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerPortalEligibility>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetCustomerPortalEligibilityQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -6670,7 +6593,7 @@ export const getSignInAdminUrl = () => {
 }
 
 /**
- * @summary Create a separate administrator session using a verified admin OTP and a database grant
+ * @summary Authenticate the single administrator with password and TOTP
  */
 export const signInAdmin = async (adminSignInInput: AdminSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminAccessStatus> => {
 
@@ -6736,7 +6659,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SignInAdminMutationVariables = {data: BodyType<AdminSignInInput>}
 
     /**
- * @summary Create a separate administrator session using a verified admin OTP and a database grant
+ * @summary Authenticate the single administrator with password and TOTP
  */
 export const useSignInAdmin = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInAdmin>>, TError,SignInAdminMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -6832,7 +6755,7 @@ export const getGetAdminAccessStatusUrl = () => {
 }
 
 /**
- * Returns whether the current SendFlow session is authorized and whether the administrator PIN session is active.
+ * Returns the status of the server-validated administrator session without exposing tokens.
  * @summary Check administrator access status
  */
 export const getAdminAccessStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminAccessStatus> => {
@@ -6901,18 +6824,166 @@ export function useGetAdminAccessStatus<TData = Awaited<ReturnType<typeof getAdm
 
 
 
-export const getUnlockAdminPinUrl = () => {
+export const getRefreshAdminSessionUrl = () => {
 
 
 
 
-  return `/api/DMgrgmt-1np5g23g12bGFtMwh/pin/unlock`
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/refresh`
 }
 
 /**
- * @summary Unlock the administrator panel with a PIN
+ * @summary Rotate the administrator refresh token
  */
-export const unlockAdminPin = async (adminPinInput: AdminPinInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminPinUnlockResponse> => {
+export const refreshAdminSession = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminAccessStatus> => {
+
+  return customFetch<AdminAccessStatus>(getRefreshAdminSessionUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRefreshAdminSessionMutationKey = () => ['refreshAdminSession'] as const;
+
+export const getRefreshAdminSessionMutationOptions = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshAdminSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshAdminSession>>, TError,void, TContext> => {
+
+const mutationKey = getRefreshAdminSessionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshAdminSession>>, void> = () => {
+
+
+          return  refreshAdminSession(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefreshAdminSessionMutationResult = NonNullable<Awaited<ReturnType<typeof refreshAdminSession>>>
+
+    export type RefreshAdminSessionMutationError = ErrorType<ErrorEnvelope>
+
+
+    /**
+ * @summary Rotate the administrator refresh token
+ */
+export const useRefreshAdminSession = <TError = ErrorType<ErrorEnvelope>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshAdminSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof refreshAdminSession>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRefreshAdminSessionMutationOptions(options));
+    }
+
+export const getRecordAdminActivityUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/activity`
+}
+
+/**
+ * @summary Record verified administrator interaction
+ */
+export const recordAdminActivity = async ( options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRecordAdminActivityUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRecordAdminActivityMutationKey = () => ['recordAdminActivity'] as const;
+
+export const getRecordAdminActivityMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminActivity>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordAdminActivity>>, TError,void, TContext> => {
+
+const mutationKey = getRecordAdminActivityMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordAdminActivity>>, void> = () => {
+
+
+          return  recordAdminActivity(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordAdminActivityMutationResult = NonNullable<Awaited<ReturnType<typeof recordAdminActivity>>>
+
+    export type RecordAdminActivityMutationError = ErrorType<void>
+
+
+    /**
+ * @summary Record verified administrator interaction
+ */
+export const useRecordAdminActivity = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminActivity>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof recordAdminActivity>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRecordAdminActivityMutationOptions(options));
+    }
+
+export const getConfirmAdminSensitiveActionUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/step-up`
+}
+
+/**
+ * @summary Confirm one exact administrative action with a fresh TOTP
+ */
+export const confirmAdminSensitiveAction = async (adminStepUpInput: AdminStepUpInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminStepUpResponse> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -6928,12 +6999,12 @@ export const unlockAdminPin = async (adminPinInput: AdminPinInput, options?: Par
     }
     return headers;
   };
-return customFetch<AdminPinUnlockResponse>(getUnlockAdminPinUrl(),
+return customFetch<AdminStepUpResponse>(getConfirmAdminSensitiveActionUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(adminPinInput)
+    body: JSON.stringify(adminStepUpInput)
   }
 );}
 
@@ -6941,13 +7012,13 @@ return customFetch<AdminPinUnlockResponse>(getUnlockAdminPinUrl(),
 
 
 
-export const getUnlockAdminPinMutationKey = () => ['unlockAdminPin'] as const;
+export const getConfirmAdminSensitiveActionMutationKey = () => ['confirmAdminSensitiveAction'] as const;
 
-export const getUnlockAdminPinMutationOptions = <TError = ErrorType<ErrorEnvelope>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlockAdminPin>>, TError,UnlockAdminPinMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof unlockAdminPin>>, TError,UnlockAdminPinMutationVariables, TContext> => {
+export const getConfirmAdminSensitiveActionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmAdminSensitiveAction>>, TError,ConfirmAdminSensitiveActionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmAdminSensitiveAction>>, TError,ConfirmAdminSensitiveActionMutationVariables, TContext> => {
 
-const mutationKey = getUnlockAdminPinMutationKey();
+const mutationKey = getConfirmAdminSensitiveActionMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -6957,10 +7028,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unlockAdminPin>>, UnlockAdminPinMutationVariables> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmAdminSensitiveAction>>, ConfirmAdminSensitiveActionMutationVariables> = (props) => {
           const {data} = props ?? {};
 
-          return  unlockAdminPin(data,requestOptions)
+          return  confirmAdminSensitiveAction(data,requestOptions)
         }
 
 
@@ -6970,23 +7041,248 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UnlockAdminPinMutationResult = NonNullable<Awaited<ReturnType<typeof unlockAdminPin>>>
-    export type UnlockAdminPinMutationBody = BodyType<AdminPinInput>
-    export type UnlockAdminPinMutationError = ErrorType<ErrorEnvelope>
-    export type UnlockAdminPinMutationVariables = {data: BodyType<AdminPinInput>}
+    export type ConfirmAdminSensitiveActionMutationResult = NonNullable<Awaited<ReturnType<typeof confirmAdminSensitiveAction>>>
+    export type ConfirmAdminSensitiveActionMutationBody = BodyType<AdminStepUpInput>
+    export type ConfirmAdminSensitiveActionMutationError = ErrorType<void>
+    export type ConfirmAdminSensitiveActionMutationVariables = {data: BodyType<AdminStepUpInput>}
 
     /**
- * @summary Unlock the administrator panel with a PIN
+ * @summary Confirm one exact administrative action with a fresh TOTP
  */
-export const useUnlockAdminPin = <TError = ErrorType<ErrorEnvelope>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlockAdminPin>>, TError,UnlockAdminPinMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useConfirmAdminSensitiveAction = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmAdminSensitiveAction>>, TError,ConfirmAdminSensitiveActionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof unlockAdminPin>>,
+        Awaited<ReturnType<typeof confirmAdminSensitiveAction>>,
         TError,
-        UnlockAdminPinMutationVariables,
+        ConfirmAdminSensitiveActionMutationVariables,
         TContext
       > => {
-      return useMutation(getUnlockAdminPinMutationOptions(options));
+      return useMutation(getConfirmAdminSensitiveActionMutationOptions(options));
+    }
+
+export const getListAdminSessionsUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sessions`
+}
+
+/**
+ * @summary List active administrator sessions
+ */
+export const listAdminSessions = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminSession[]> => {
+
+  return customFetch<AdminSession[]>(getListAdminSessionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminSessionsQueryKey = () => {
+    return [
+    `/api/DMgrgmt-1np5g23g12bGFtMwh/sessions`
+    ] as const;
+    }
+
+
+export const getListAdminSessionsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminSessions>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminSessions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminSessionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminSessions>>> = ({ signal }) => listAdminSessions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminSessions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminSessions>>>
+export type ListAdminSessionsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List active administrator sessions
+ */
+
+export function useListAdminSessions<TData = Awaited<ReturnType<typeof listAdminSessions>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminSessions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminSessionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRevokeAdminSessionUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sessions/${sessionId}/revoke`
+}
+
+/**
+ * @summary Revoke one active administrator session
+ */
+export const revokeAdminSession = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRevokeAdminSessionUrl(sessionId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRevokeAdminSessionMutationKey = () => ['revokeAdminSession'] as const;
+
+export const getRevokeAdminSessionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeAdminSession>>, TError,RevokeAdminSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeAdminSession>>, TError,RevokeAdminSessionMutationVariables, TContext> => {
+
+const mutationKey = getRevokeAdminSessionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeAdminSession>>, RevokeAdminSessionMutationVariables> = (props) => {
+          const {sessionId} = props ?? {};
+
+          return  revokeAdminSession(sessionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeAdminSessionMutationResult = NonNullable<Awaited<ReturnType<typeof revokeAdminSession>>>
+
+    export type RevokeAdminSessionMutationError = ErrorType<void>
+    export type RevokeAdminSessionMutationVariables = {sessionId: string}
+
+    /**
+ * @summary Revoke one active administrator session
+ */
+export const useRevokeAdminSession = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeAdminSession>>, TError,RevokeAdminSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof revokeAdminSession>>,
+        TError,
+        RevokeAdminSessionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeAdminSessionMutationOptions(options));
+    }
+
+export const getRevokeAllAdminSessionsUrl = () => {
+
+
+
+
+  return `/api/DMgrgmt-1np5g23g12bGFtMwh/sessions/revoke-all`
+}
+
+/**
+ * @summary Revoke all administrator sessions
+ */
+export const revokeAllAdminSessions = async ( options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRevokeAllAdminSessionsUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRevokeAllAdminSessionsMutationKey = () => ['revokeAllAdminSessions'] as const;
+
+export const getRevokeAllAdminSessionsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeAllAdminSessions>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeAllAdminSessions>>, TError,void, TContext> => {
+
+const mutationKey = getRevokeAllAdminSessionsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeAllAdminSessions>>, void> = () => {
+
+
+          return  revokeAllAdminSessions(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeAllAdminSessionsMutationResult = NonNullable<Awaited<ReturnType<typeof revokeAllAdminSessions>>>
+
+    export type RevokeAllAdminSessionsMutationError = ErrorType<void>
+
+
+    /**
+ * @summary Revoke all administrator sessions
+ */
+export const useRevokeAllAdminSessions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeAllAdminSessions>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof revokeAllAdminSessions>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRevokeAllAdminSessionsMutationOptions(options));
     }
 
 export const getGetAdminOverviewUrl = (params?: GetAdminOverviewParams,) => {

@@ -3,21 +3,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetCurrentAccountQueryKey,
   getGetCustomerEmailMarketingPreferenceQueryKey,
-  getGetCustomerPortalEligibilityQueryKey,
   getGetCustomerProfileQueryKey,
   useGetCurrentAccount,
   useGetCustomerEmailMarketingPreference,
-  useGetCustomerPortalEligibility,
   useGetCustomerProfile,
   useUpdateCustomerEmailMarketingPreference,
   useUpdateCustomerProfile,
 } from '@workspace/api-client-react';
-import { ArrowLeft, CalendarDays, Check, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Check } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
 import { useAccountCountry } from '@/hooks/use-account-country';
 import { clearLegacyAccountProfile, type AccountProfile } from '@/lib/account-profile';
-import { adminRoute } from '@/lib/admin-route';
 import { useSeo } from '@/lib/seo';
 import accountInfoIllustration from '@assets/generated_images/sendflow-account-info-profile-3d-transparent.png';
 
@@ -121,20 +118,6 @@ export default function AccountInfoPage() {
       retry: false,
       staleTime: 0,
       refetchOnMount: 'always',
-    },
-  });
-  const portalEligibilityQuery = useGetCustomerPortalEligibility({
-    query: {
-      queryKey: [
-        ...getGetCustomerPortalEligibilityQueryKey(),
-        accountQuery.data?.userId ?? 'no-account',
-      ],
-      enabled: Boolean(accountQuery.data?.userId),
-      retry: false,
-      refetchOnMount: 'always',
-      refetchOnWindowFocus: true,
-      refetchInterval: 15_000,
-      staleTime: 0,
     },
   });
   const profileQuery = useGetCustomerProfile({
@@ -256,22 +239,6 @@ export default function AccountInfoPage() {
             <ArrowLeft size={23} strokeWidth={2} aria-hidden="true" />
           </button>
           <h1 id="account-info-title">Information de compte</h1>
-          {accountQuery.isSuccess
-            && portalEligibilityQuery.isSuccess
-            && !accountQuery.isFetching
-            && !portalEligibilityQuery.isFetching
-            && portalEligibilityQuery.data?.isAuthorized === true && (
-            <button
-              type="button"
-              className="sendflow-account-info-admin"
-              onClick={() => setLocation(adminRoute('/pin'))}
-              aria-label="Ouvrir la connexion administrateur"
-              data-testid="button-open-admin"
-            >
-              <ShieldCheck size={16} aria-hidden="true" />
-              <span>Admin</span>
-            </button>
-          )}
         </header>
 
         <div className="sendflow-account-info-content">

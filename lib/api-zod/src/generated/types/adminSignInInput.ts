@@ -7,11 +7,13 @@
  */
 
 export interface AdminSignInInput {
+  /** @maxLength 254 */
+  email: string;
   /**
-     * @minLength 9
-     * @maxLength 16
-     * @pattern ^\+[1-9][0-9]{7,14}$
+     * @minLength 1
+     * @maxLength 1024
      */
-  phone: string;
-  challengeId: string;
+  password: string;
+  /** @pattern ^[0-9]{6}$ */
+  totpCode: string;
 }

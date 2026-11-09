@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { recordAdminAudit } from "../lib/admin-audit";
-import { adminPinUnlocked, adminSessionContext } from "../lib/admin-session";
+import { adminSessionAuthenticated, adminSessionContext } from "../lib/admin-session";
 import {
   createSensitiveDataLookupIndex,
   decryptSensitiveData,
@@ -96,8 +96,8 @@ export function respondAdminAuthError(
   const userId = respondAdminIdentityError(req, res, permission);
   if (!userId) return null;
   const session = adminSessionContext(req);
-  if (!session || !adminPinUnlocked(session)) {
-    res.status(403).json({ error: "Administrator PIN verification required" });
+  if (!session || !adminSessionAuthenticated(session)) {
+    res.status(403).json({ error: "Administrator authentication required" });
     return null;
   }
   return userId;
@@ -116,8 +116,8 @@ export function respondAdminUserReadAuthError(req: Request, res: Response) {
     res.status(403).json({ error: "Administrator user profile read access required" });
     return null;
   }
-  if (!adminPinUnlocked(session)) {
-    res.status(403).json({ error: "Administrator PIN verification required" });
+  if (!adminSessionAuthenticated(session)) {
+    res.status(403).json({ error: "Administrator authentication required" });
     return null;
   }
   return session.userId;
@@ -133,8 +133,8 @@ export function respondAdminTransactionReadAuthError(req: Request, res: Response
     res.status(403).json({ error: "Administrator transaction read access required" });
     return null;
   }
-  if (!adminPinUnlocked(session)) {
-    res.status(403).json({ error: "Administrator PIN verification required" });
+  if (!adminSessionAuthenticated(session)) {
+    res.status(403).json({ error: "Administrator authentication required" });
     return null;
   }
   return session.userId;

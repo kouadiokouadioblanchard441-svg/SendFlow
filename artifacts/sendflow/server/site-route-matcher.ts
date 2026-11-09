@@ -4,7 +4,7 @@ import {
   isSendFlowDocumentationPreviewRoute,
 } from "../src/lib/documentation-host.ts";
 import { isSendFlowPaymentHost } from "../src/lib/payment-host.ts";
-import { isPortalRouteRequest } from "./portal-route-path.ts";
+import { isAdminHostAllowed } from "./admin-host-policy.ts";
 
 const exactApplicationPaths = new Set([
   "/",
@@ -78,7 +78,7 @@ export function isKnownSitePage(
     return /^\/pay\/[^/]+$/.test(routePath);
   }
 
-  if (isPortalRouteRequest(pathname, basePath)) return true;
+  if (isAdminHostAllowed(hostname)) return !routePath.startsWith("/api/");
   return exactApplicationPaths.has(routePath)
     || applicationPathPatterns.some((pattern) => pattern.test(routePath));
 }

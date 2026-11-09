@@ -15,10 +15,6 @@ const COPY: Record<EmailOtpPurpose, { subject: string; intro: string }> = {
     subject: "Réinitialisation de votre code PIN — SendFlow",
     intro: "Utilisez ce code pour continuer la réinitialisation de votre code PIN SendFlow.",
   },
-  admin_login: {
-    subject: "Connexion administrateur — SendFlow",
-    intro: "Utilisez ce code pour continuer votre connexion administrateur SendFlow.",
-  },
 };
 
 function escapeHtml(value: string) {

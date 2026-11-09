@@ -8,6 +8,6 @@
 
 export interface AdminAccessStatus {
   isAdmin: boolean;
-  pinUnlocked: boolean;
-  canMutate?: boolean;
+  sessionAuthenticated: boolean;
+  canMutate: boolean;
 }

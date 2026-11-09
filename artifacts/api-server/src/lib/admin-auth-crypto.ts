@@ -18,7 +18,7 @@ const ARGON2_OPTIONS = {
   timeCost: 3,
   parallelism: 1,
   hashLength: 32,
-};
+} as const;
 const ACCESS_TOKEN_TTL_SECONDS = 5 * 60;
 const TOTP_PERIOD_SECONDS = 30;
 const TOTP_DIGITS = 6;
@@ -207,7 +207,7 @@ export async function verifyAdminPassword(password: string, hash: string) {
     || hash.length > 512
   ) return false;
   try {
-    return await argon2.verify(hash, password, { type: argon2.argon2id });
+    return await argon2.verify(hash, password);
   } catch {
     return false;
   }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, Download, FileSearch, RefreshCw, Search, ShieldCheck, X } from 'lucide-react';
 import { useGetAdminAccessStatus, getGetAdminAccessStatusQueryKey } from '@workspace/api-client-react';
 import { fetchWithCsrf, resolveApiUrl } from '@workspace/api-client-react';
-import { adminRoute } from '@/lib/admin-route';
+import { adminApiRoute, adminRoute } from '@/lib/admin-route';
 import { ErrorDialog } from '@/components/error-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -117,7 +117,7 @@ export function AdminIdentityVerificationsPage() {
     if (status !== 'all') query.set('status', status);
     if (profileUserId) query.set('userId', profileUserId);
     else if (search) query.set('search', search);
-    void fetch(resolveApiUrl(`${adminRoute('/identity-verifications')}?${query.toString()}`), {
+    void fetch(resolveApiUrl(`${adminApiRoute('/identity-verifications')}?${query.toString()}`), {
       credentials: 'include',
       cache: 'no-store',
     }).then(readJson<ListResult>).then((result) => {
@@ -141,7 +141,7 @@ export function AdminIdentityVerificationsPage() {
     }
     let active = true;
     setDetailLoading(true);
-    void fetch(resolveApiUrl(adminRoute(`/identity-verifications/${encodeURIComponent(selectedId)}`)), {
+    void fetch(resolveApiUrl(adminApiRoute(`/identity-verifications/${encodeURIComponent(selectedId)}`)), {
       credentials: 'include',
       cache: 'no-store',
     }).then(readJson<IdentityDetail>).then((result) => {
@@ -172,7 +172,7 @@ export function AdminIdentityVerificationsPage() {
     if (!selectedId || downloading) return;
     setDownloading(true);
     try {
-      const response = await fetch(resolveApiUrl(adminRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/export`)), {
+      const response = await fetch(resolveApiUrl(adminApiRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/export`)), {
         credentials: 'include',
         cache: 'no-store',
       });
@@ -195,7 +195,7 @@ export function AdminIdentityVerificationsPage() {
     if (!selectedId || downloadingPdf) return;
     setDownloadingPdf(true);
     try {
-      const response = await fetch(resolveApiUrl(adminRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/pdf`)), {
+      const response = await fetch(resolveApiUrl(adminApiRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/pdf`)), {
         credentials: 'include',
         cache: 'no-store',
       });
@@ -219,7 +219,7 @@ export function AdminIdentityVerificationsPage() {
     setDownloadingPhoto(kind);
     try {
       const response = await fetch(
-        resolveApiUrl(adminRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/documents/${kind}?download=1`)),
+        resolveApiUrl(adminApiRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/documents/${kind}?download=1`)),
         { credentials: 'include', cache: 'no-store' },
       );
       if (!response.ok) throw new Error('photo-download-failed');
@@ -247,7 +247,7 @@ export function AdminIdentityVerificationsPage() {
     setSaving(true);
     try {
       await readJson(await fetchWithCsrf(
-        resolveApiUrl(adminRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/decision`)),
+        resolveApiUrl(adminApiRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/decision`)),
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -272,7 +272,7 @@ export function AdminIdentityVerificationsPage() {
   };
 
   const getDocumentUrl = (kind: string) =>
-    resolveApiUrl(adminRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/documents/${kind}`));
+    resolveApiUrl(adminApiRoute(`/identity-verifications/${encodeURIComponent(selectedId)}/documents/${kind}`));
 
   return (
     <div className="space-y-5" data-testid="admin-identity-verifications">
@@ -526,7 +526,7 @@ export function AdminUserIdentitySummary({ userId }: { userId: string }) {
   useEffect(() => {
     let active = true;
     const query = new URLSearchParams({ userId, page: '1', pageSize: '1' });
-    void fetch(resolveApiUrl(`${adminRoute(`/identity-verifications`)}?${query.toString()}`), {
+    void fetch(resolveApiUrl(`${adminApiRoute(`/identity-verifications`)}?${query.toString()}`), {
       credentials: 'include',
       cache: 'no-store',
     }).then(readJson<ListResult>).then((result) => {

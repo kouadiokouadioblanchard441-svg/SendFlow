@@ -901,34 +901,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
-  /me/portal-eligibility:
-    get:
-      operationId: getCustomerPortalEligibility
-      tags: [account]
-      summary: Check whether the authenticated account has an active administrator grant
-      security:
-        - sendFlowSession: []
-      responses:
-        "200":
-          description: The authenticated account has an active grant and may enter the protected sign-in flow.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CustomerPortalEligibilityResult"
-        "404":
-          description: The authenticated account has no active grant; the protected route is not available.
-        "401":
-          description: Authentication is required.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
-        "503":
-          description: Authorization state is unavailable.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
   /me/profile:
     get:
       operationId: getCustomerProfile
@@ -2749,7 +2721,7 @@ paths:
     post:
       operationId: signInAdmin
       tags: [admin]
-      summary: Create a separate administrator session using a verified admin OTP and a database grant
+      summary: Authenticate the single administrator with password and TOTP
       requestBody:
         required: true
         content:
@@ -2758,7 +2730,7 @@ paths:
               $ref: "#/components/schemas/AdminSignInInput"
       responses:
         "200":
-          description: Administrator session created; separate PIN verification is still required.
+          description: Administrator access and refresh cookies are set after all factors succeed.
           content:
             application/json:
               schema:
@@ -2766,7 +2738,7 @@ paths:
         "400":
           description: Invalid input
         "403":
-          description: Invalid challenge, origin or administrator grant
+          description: Credentials, TOTP, origin or account state were rejected.
         "429":
           description: Too many attempts
         "503":
@@ -2788,9 +2760,7 @@ paths:
       operationId: getAdminAccessStatus
       tags: [admin]
       summary: Check administrator access status
-      description: Returns whether the current SendFlow session is authorized and whether the administrator PIN session is active.
-      security:
-        - sendFlowSession: []
+      description: Returns the status of the server-validated administrator session without exposing tokens.
       responses:
         "200":
           description: Administrator access status.
@@ -2798,56 +2768,133 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminAccessStatus"
-  /DMgrgmt-1np5g23g12bGFtMwh/pin/unlock:
+  /DMgrgmt-1np5g23g12bGFtMwh/refresh:
     post:
-      operationId: unlockAdminPin
+      operationId: refreshAdminSession
       tags: [admin]
-      summary: Unlock the administrator panel with a PIN
-      security:
-        - sendFlowSession: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AdminPinInput"
+      summary: Rotate the administrator refresh token
       responses:
         "200":
-          description: Administrator PIN accepted.
+          description: New access and refresh cookies are set.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AdminPinUnlockResponse"
-        "400":
-          description: The PIN format is invalid.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorEnvelope"
+                $ref: "#/components/schemas/AdminAccessStatus"
         "401":
-          description: Authentication is required.
+          description: Refresh token or server-side session is invalid or expired.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "403":
-          description: The authenticated user is not an administrator or the PIN is incorrect.
+          description: Origin or CSRF verification failed.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "429":
-          description: Too many incorrect PIN attempts.
+          description: Too many refresh attempts.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "503":
-          description: Administrator PIN access is not configured or rate-limit storage is unavailable.
+          description: Session storage is unavailable.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /DMgrgmt-1np5g23g12bGFtMwh/activity:
+    post:
+      operationId: recordAdminActivity
+      tags: [admin]
+      summary: Record verified administrator interaction
+      responses:
+        "204":
+          description: Inactivity deadline renewed within the absolute session limit.
+        "401":
+          description: Administrator session expired or revoked.
+        "403":
+          description: Origin or CSRF verification failed.
+  /DMgrgmt-1np5g23g12bGFtMwh/step-up:
+    post:
+      operationId: confirmAdminSensitiveAction
+      tags: [admin]
+      summary: Confirm one exact administrative action with a fresh TOTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminStepUpInput"
+      responses:
+        "200":
+          description: Short-lived one-use authorization bound to the action and its parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStepUpResponse"
+        "400":
+          description: Invalid action or TOTP format.
+        "401":
+          description: Administrator session expired or revoked.
+        "403":
+          description: TOTP, origin or CSRF verification failed.
+        "429":
+          description: Too many TOTP attempts.
+        "503":
+          description: Session storage is unavailable.
+  /DMgrgmt-1np5g23g12bGFtMwh/sessions:
+    get:
+      operationId: listAdminSessions
+      tags: [admin]
+      summary: List active administrator sessions
+      responses:
+        "200":
+          description: Active sessions without raw IP addresses or tokens.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Administrator session expired or revoked.
+        "503":
+          description: Session storage is unavailable.
+  /DMgrgmt-1np5g23g12bGFtMwh/sessions/{sessionId}/revoke:
+    post:
+      operationId: revokeAdminSession
+      tags: [admin]
+      summary: Revoke one active administrator session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Session revoked.
+        "401":
+          description: Administrator session expired or revoked.
+        "403":
+          description: Fresh action-bound TOTP or CSRF verification is required.
+        "404":
+          description: Active session not found.
+  /DMgrgmt-1np5g23g12bGFtMwh/sessions/revoke-all:
+    post:
+      operationId: revokeAllAdminSessions
+      tags: [admin]
+      summary: Revoke all administrator sessions
+      responses:
+        "204":
+          description: All sessions and refresh token families revoked.
+        "401":
+          description: Administrator session expired or revoked.
+        "403":
+          description: Fresh action-bound TOTP or CSRF verification is required.
   /DMgrgmt-1np5g23g12bGFtMwh/overview:
     get:
       operationId: getAdminOverview
@@ -5519,13 +5566,6 @@ components:
           description: Stable machine-readable error code when a client needs to distinguish a specific action.
       required:
         - error
-    CustomerPortalEligibilityResult:
-      type: object
-      properties:
-        isAuthorized:
-          type: boolean
-      required:
-        - isAuthorized
     EmailOtpSendInput:
       oneOf:
         - type: object
@@ -5578,7 +5618,7 @@ components:
               description: Account phone identifier.
             purpose:
               type: string
-              enum: [pin_reset, admin_login]
+              enum: [pin_reset]
           required: [phone, purpose]
     EmailOtpSendResult:
       type: object
@@ -5601,7 +5641,7 @@ components:
           format: uuid
         purpose:
           type: string
-          enum: [signup, password_reset, pin_reset, admin_login]
+          enum: [signup, password_reset, pin_reset]
         code:
           type: string
           minLength: 6
@@ -8497,43 +8537,78 @@ components:
     AdminSignInInput:
       type: object
       properties:
-        phone:
+        email:
           type: string
-          minLength: 9
-          maxLength: 16
-          pattern: "^\\+[1-9][0-9]{7,14}$"
-        challengeId:
+          format: email
+          maxLength: 254
+        password:
           type: string
-          format: uuid
-      required: [phone, challengeId]
+          minLength: 1
+          maxLength: 1024
+        totpCode:
+          type: string
+          pattern: "^[0-9]{6}$"
+      required: [email, password, totpCode]
     AdminAccessStatus:
       type: object
       properties:
         isAdmin:
           type: boolean
-        pinUnlocked:
+        sessionAuthenticated:
           type: boolean
         canMutate:
           type: boolean
-      required: [isAdmin, pinUnlocked]
-    AdminPinInput:
+      required: [isAdmin, sessionAuthenticated, canMutate]
+    AdminStepUpInput:
       type: object
       properties:
-        pin:
+        totpCode:
           type: string
-          minLength: 8
-          maxLength: 8
-          pattern: "^[0-9]{8}$"
-      required: [pin]
-    AdminPinUnlockResponse:
+          pattern: "^[0-9]{6}$"
+        action:
+          type: string
+          maxLength: 128
+        query:
+          type: object
+          additionalProperties: true
+        payload: {}
+      required: [totpCode, action]
+    AdminStepUpResponse:
       type: object
       properties:
-        pinUnlocked:
-          type: boolean
-        expiresAt:
+        stepUpToken:
+          type: string
+          minLength: 43
+          maxLength: 43
+          pattern: "^[A-Za-z0-9_-]{43}$"
+        expiresInSeconds:
+          type: integer
+          maximum: 60
+      required: [stepUpToken, expiresInSeconds]
+    AdminSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
           type: string
           format: date-time
-      required: [pinUnlocked, expiresAt]
+        lastActivityAt:
+          type: string
+          format: date-time
+        idleExpiresAt:
+          type: string
+          format: date-time
+        absoluteExpiresAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: ["string", "null"]
+          format: date-time
+        isCurrent:
+          type: boolean
+      required: [id, createdAt, lastActivityAt, idleExpiresAt, absoluteExpiresAt, revokedAt, isCurrent]
     DeveloperApiKeyInput:
       type: object
       properties:

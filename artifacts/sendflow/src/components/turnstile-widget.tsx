@@ -36,7 +36,7 @@ export type TurnstileWidgetHandle = {
 };
 
 type TurnstileWidgetProps = {
-  action: 'login' | 'signup' | 'password_reset' | 'pin_reset' | 'admin_login';
+  action: 'login' | 'signup' | 'password_reset' | 'pin_reset';
   onTokenChange: (token: string | null) => void;
 };
 
