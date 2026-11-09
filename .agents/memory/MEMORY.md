@@ -40,7 +40,7 @@
 - [LinkFlow image storage](linkflow-image-storage.md) — LinkFlow images remain database-backed; the new database has no historical image rows until data migration is approved.
 - [LinkFlow payment integrity](linkflow-pending-state-integrity.md) — Keep the payer total fixed; soft-delete links while retaining history, and show payment stats only after real payments.
 - [LinkFlow fee availability](linkflow-fee-availability.md) — Configure rates independently per operator; new operators start unconfigured, and disabled countries stay out of customer pricing.
-- [Payout business rules](payout-business-rules.md) — Keep payouts closed until settlement evidence and atomic wallet reservation safeguards are verified.
+- [Payout business rules](payout-business-rules.md) — Require verified settlement and atomic reservations; activate payouts through runtime configuration, not source edits.
 - [Payment minimum](payment-minimum.md) — Keep the 200 FCFA floor server-side for CFA links and XOF deposits; initialize configurable XOF payout minimum at 200.
 - [Monthly wallet payment limits](unverified-wallet-receipts.md) — Apply the same identity-tier cap to incoming and outgoing totals separately; receipts do not consume outgoing allowance.
 - [LinkFlow USSD configuration](linkflow-ussd-configuration.md) — Administrators configure USSD codes by country and operator; the provider does not supply them.
