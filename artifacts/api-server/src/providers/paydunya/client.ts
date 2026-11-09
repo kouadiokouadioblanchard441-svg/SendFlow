@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { isPaydunyaChannel } from "./catalog.ts";
 
 type Environment = Readonly<Record<string, string | undefined>>;
 type Transport = typeof fetch;
@@ -167,13 +168,17 @@ export class PaydunyaClient {
     channel: string;
     phoneNumber: string;
     customerName?: string;
+    returnUrl?: string | null;
   }): Promise<PaydunyaInvoice> {
     this.configuration();
     if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor < 100 ||
       input.amountMinor > 2_000_000 || !referencePattern.test(input.operationReference) ||
-      !channelPattern.test(input.channel) || !/^[0-9]{8,15}$/.test(input.phoneNumber) ||
+      !channelPattern.test(input.channel) || !isPaydunyaChannel(input.channel) ||
+      !/^[0-9]{6,15}$/.test(input.phoneNumber) ||
       (input.customerName !== undefined &&
-        (!input.customerName.trim() || input.customerName.trim().length > 120))) {
+        (!input.customerName.trim() || input.customerName.trim().length > 120)) ||
+      (input.returnUrl !== undefined && input.returnUrl !== null &&
+        !isSafeHttpsUrl(input.returnUrl))) {
       return fail("INVALID_INPUT");
     }
 
@@ -189,6 +194,7 @@ export class PaydunyaClient {
       },
       store: { name: "SendFlow" },
       custom_data: { sendflow_reference: input.operationReference },
+      ...(input.returnUrl ? { actions: { return_url: input.returnUrl } } : {}),
     });
     const result = readJsonObject(raw);
     if (result.response_code !== "00" || typeof result.token !== "string" ||
@@ -201,9 +207,10 @@ export class PaydunyaClient {
     } catch {
       return fail("INVALID_RESPONSE");
     }
+    const checkoutPath = redirect.pathname.match(/^\/checkout\/invoice\/([A-Za-z0-9_-]{6,120})$/);
     if (redirect.protocol !== "https:" || redirect.hostname !== "app.paydunya.com" ||
-      redirect.username || redirect.password ||
-      !/^\/checkout\/invoice\/[A-Za-z0-9_-]{6,120}$/.test(redirect.pathname)) {
+      redirect.port || redirect.username || redirect.password ||
+      checkoutPath?.[1] !== result.token) {
       return fail("INVALID_RESPONSE");
     }
     return { token: result.token, redirectUrl: redirect.toString() };
@@ -219,7 +226,7 @@ export class PaydunyaClient {
     if (!tokenPattern.test(input.token) ||
       !Number.isSafeInteger(input.expectedAmountMinor) || input.expectedAmountMinor <= 0 ||
       !referencePattern.test(input.expectedReference) ||
-      !/^[0-9]{8,15}$/.test(input.expectedPhoneNumber)) {
+      !/^[0-9]{6,15}$/.test(input.expectedPhoneNumber)) {
       return fail("INVALID_INPUT");
     }
     const raw = await this.request(
@@ -257,5 +264,14 @@ export class PaydunyaClient {
       sendflowReference: input.expectedReference,
       phoneNumber,
     };
+  }
+}
+
+function isSafeHttpsUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && !parsed.username && !parsed.password;
+  } catch {
+    return false;
   }
 }

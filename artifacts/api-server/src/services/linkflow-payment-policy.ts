@@ -4,6 +4,7 @@ import { isFeexpayLiveExecutionAllowed } from "../providers/feexpay/live-runtime
 import type { FeexpayReceipt } from "../providers/feexpay/client.ts";
 import { feexpayChannels, feexpayCountries } from "../providers/feexpay/catalog.ts";
 import { isPaydunyaLiveExecutionAllowed } from "../providers/paydunya/client.ts";
+import type { PaydunyaVerifiedStatus } from "../providers/paydunya/client.ts";
 
 export type LinkFlowPublicState = "waiting" | "uncertain" | "succeeded" | "failed";
 
@@ -118,5 +119,28 @@ export function resolveVerifiedProviderState(
   }
   if (receipt.status === "SUCCESSFUL") return "succeeded";
   if (receipt.status === "FAILED") return "failed";
+  return "uncertain";
+}
+
+export function resolveVerifiedPaydunyaState(
+  receipt: PaydunyaVerifiedStatus,
+  expected: {
+    token: string;
+    operationReference: string;
+    amountMinor: number;
+    currency: "XOF";
+    phoneNumber: string;
+  },
+): LinkFlowPublicState {
+  if (receipt.token !== expected.token ||
+    receipt.sendflowReference !== expected.operationReference ||
+    receipt.amountMinor !== expected.amountMinor ||
+    receipt.currency !== expected.currency ||
+    receipt.phoneNumber !== expected.phoneNumber.replace(/\D/g, "")) {
+    return "uncertain";
+  }
+  if (receipt.status === "pending") return "waiting";
+  if (receipt.status === "completed") return "succeeded";
+  if (receipt.status === "failed") return "failed";
   return "uncertain";
 }

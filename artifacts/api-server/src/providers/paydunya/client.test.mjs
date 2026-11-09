@@ -63,6 +63,7 @@ test("invoice creation sends the selected channel and returns only the approved 
     channel: "orange-money-ci",
     phoneNumber,
     customerName: "Test User",
+    returnUrl: "https://merchant.example/return",
   });
   assert.equal(seen.url, "https://app.paydunya.com/api/v1/checkout-invoice/create");
   assert.equal(seen.init.method, "POST");
@@ -70,6 +71,7 @@ test("invoice creation sends the selected channel and returns only the approved 
   assert.deepEqual(seen.body.invoice.channels, ["orange-money-ci"]);
   assert.equal(seen.body.invoice.total_amount, 1200);
   assert.equal(seen.body.custom_data.sendflow_reference, reference);
+  assert.equal(seen.body.actions.return_url, "https://merchant.example/return");
   assert.deepEqual(invoice, {
     token: "invoice_123456",
     redirectUrl: "https://app.paydunya.com/checkout/invoice/invoice_123456",
@@ -89,6 +91,23 @@ test("invoice creation rejects a redirect URL outside the official HTTPS checkou
       channel: "orange-money-ci",
       phoneNumber,
       customerName: "Test User",
+    }),
+    (error) => error instanceof PaydunyaError && error.code === "INVALID_RESPONSE",
+  );
+});
+
+test("invoice creation rejects a provider URL whose token differs from the status token", async () => {
+  const client = new PaydunyaClient(live, async () => jsonResponse({
+    response_code: "00",
+    response_text: "https://app.paydunya.com/checkout/invoice/invoice_other",
+    token: "invoice_123456",
+  }));
+  await assert.rejects(
+    client.createInvoice({
+      amountMinor: 1200,
+      operationReference: reference,
+      channel: "orange-money-ci",
+      phoneNumber,
     }),
     (error) => error instanceof PaydunyaError && error.code === "INVALID_RESPONSE",
   );

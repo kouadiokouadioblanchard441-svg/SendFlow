@@ -25,7 +25,7 @@
     "test:transfer-quote": "node --experimental-strip-types --test src/lib/transfer-quote-policy.test.mjs",
     "test:payout-policy": "node scripts/test-payout-policy.mjs",
     "test:feexpay": "node --experimental-strip-types --test src/providers/feexpay/client.test.mjs",
-    "test:paydunya": "node --experimental-strip-types --test src/providers/paydunya/client.test.mjs",
+    "test:paydunya": "node --experimental-strip-types --test src/providers/paydunya/client.test.mjs src/providers/paydunya/catalog.test.mjs",
     "test:feexpay-configuration": "node tests/security/run-isolated-finance.mjs --feexpay-configuration-only",
     "test:payment-structures": "node tests/security/run-isolated-finance.mjs --payment-structures-only",
     "test:payment-links:isolated": "node tests/security/run-isolated-finance.mjs --payment-links-only",

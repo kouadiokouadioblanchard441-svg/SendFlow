@@ -47,6 +47,7 @@ import {
   isLinkFlowPaymentExecutionEnabled,
   isLinkFlowProviderExecutionEnabled,
   resolveInitialProviderState,
+  resolveVerifiedPaydunyaState,
   resolveVerifiedProviderState,
   toProviderPhoneNumber,
   type LinkFlowPublicState,
@@ -124,6 +125,8 @@ type AttemptBundle = {
   transaction: typeof transactionsTable.$inferSelect;
   returnUrl: string | null;
 };
+
+type ProviderFinalReceipt = FeexpayReceipt | PaydunyaVerifiedStatus;
 
 const activeAttemptStates = ["prepared", "dispatching", "pending", "uncertain", "succeeded"] as const;
 const activeIntentStates = ["created", "collecting", "uncertain"] as const;
@@ -471,37 +474,70 @@ async function dispatchPreparedAttempt(attemptId: string, otp?: string) {
     const [transaction] = await tx.select().from(transactionsTable)
       .where(eq(transactionsTable.id, intent.transactionId)).limit(1);
     if (!transaction) throw new Error("Payment transaction is missing");
+    const [mapping] = await tx.select().from(customerPaymentLinkAttemptsTable)
+      .where(eq(customerPaymentLinkAttemptsTable.intentId, intent.id)).for("update").limit(1);
+    if (!mapping) throw new Error("Payment link mapping is missing");
+    const [paymentLink] = await tx.select({ returnUrl: customerPaymentLinksTable.returnUrl })
+      .from(customerPaymentLinksTable)
+      .where(eq(customerPaymentLinksTable.id, mapping.paymentLinkId))
+      .limit(1);
+    const [country] = await tx.select({ phonePrefix: countriesTable.phonePrefix })
+      .from(countriesTable).where(eq(countriesTable.countryCode, attempt.countryCode)).limit(1);
+    if (!country) throw new Error("Payment country is missing");
     return {
       kind: "claimed" as const,
       attempt: claimed,
       intent,
       transaction,
+      mapping,
+      phonePrefix: country.phonePrefix.replace(/\D/g, ""),
+      returnUrl: paymentLink?.returnUrl ?? null,
     };
   });
   if (!prepared || prepared.kind !== "claimed") return;
 
-  let receipt: FeexpayReceipt | null = null;
+  let providerReference: string | null = null;
+  let providerRedirectUrl: string | null = null;
+  let feexpayReceipt: FeexpayReceipt | null = null;
   try {
     const phone = decryptSensitiveData(prepared.transaction.senderPhone, "transaction-sender-phone");
-    receipt = await new FeexpayClient().initiate("payin", {
-      channelId: prepared.attempt.channelId,
-      amountMinor: prepared.attempt.amountMinor,
-      currency: "XOF",
-      phoneNumber: toProviderPhoneNumber(phone),
-      operationReference: prepared.attempt.operationReference,
-      ...(otp !== undefined ? { otp } : {}),
-    });
+    const phoneDigits = toProviderPhoneNumber(phone);
+    if (prepared.intent.providerCode === "feexpay") {
+      feexpayReceipt = await new FeexpayClient().initiate("payin", {
+        channelId: prepared.attempt.channelId,
+        amountMinor: prepared.attempt.amountMinor,
+        currency: "XOF",
+        phoneNumber: phoneDigits,
+        operationReference: prepared.attempt.operationReference,
+        ...(otp !== undefined ? { otp } : {}),
+      });
+      providerReference = feexpayReceipt.reference;
+    } else if (prepared.intent.providerCode === "paydunya") {
+      if (!phoneDigits.startsWith(prepared.phonePrefix)) throw new Error("Invalid payer country prefix");
+      const nationalPhone = phoneDigits.slice(prepared.phonePrefix.length);
+      const invoice = await new PaydunyaClient().createInvoice({
+        amountMinor: prepared.attempt.amountMinor,
+        operationReference: prepared.attempt.operationReference,
+        channel: prepared.attempt.channelId.replace(/^paydunya:/, ""),
+        phoneNumber: nationalPhone,
+        returnUrl: prepared.returnUrl,
+      });
+      providerReference = invoice.token;
+      providerRedirectUrl = invoice.redirectUrl;
+    } else {
+      throw new Error("Unsupported payment provider");
+    }
   } catch {
     await setDispatchUncertain(prepared.attempt.id, prepared.intent.id);
     return;
   }
 
-  if (!receipt.reference || !referencePattern.test(prepared.attempt.operationReference)) {
+  if (!providerReference || !referencePattern.test(prepared.attempt.operationReference)) {
     await setDispatchUncertain(prepared.attempt.id, prepared.intent.id);
     return;
   }
-  const providerReferenceHash = createSensitiveDataLookupIndex(receipt.reference, "provider-reference");
-  const encryptedProviderReference = encryptSensitiveData(receipt.reference, "provider-reference");
+  const providerReferenceHash = createSensitiveDataLookupIndex(providerReference, "provider-reference");
+  const encryptedProviderReference = encryptSensitiveData(providerReference, "provider-reference");
   await db.transaction(async (tx) => {
     const [attempt] = await tx.select().from(paymentAttemptsTable)
       .where(eq(paymentAttemptsTable.id, prepared.attempt.id)).for("update").limit(1);
@@ -509,6 +545,9 @@ async function dispatchPreparedAttempt(attemptId: string, otp?: string) {
     const [transaction] = await tx.select().from(transactionsTable)
       .where(eq(transactionsTable.id, prepared.intent.transactionId)).for("update").limit(1);
     if (!transaction) throw new Error("Payment transaction is missing");
+    const [mapping] = await tx.select().from(customerPaymentLinkAttemptsTable)
+      .where(eq(customerPaymentLinkAttemptsTable.id, prepared.mapping.id)).for("update").limit(1);
+    if (!mapping) throw new Error("Payment link mapping is missing");
     await tx.update(transactionsTable).set({
       providerReference: encryptedProviderReference,
       providerReferenceLookupHash: providerReferenceHash,
@@ -521,9 +560,14 @@ async function dispatchPreparedAttempt(attemptId: string, otp?: string) {
       status: "pending",
       updatedAt: new Date(),
     }).where(eq(paymentAttemptsTable.id, attempt.id));
+    await tx.update(customerPaymentLinkAttemptsTable).set({
+      providerRedirectUrlEncrypted: providerRedirectUrl
+        ? encryptSensitiveData(providerRedirectUrl, "provider-redirect-url")
+        : null,
+    }).where(eq(customerPaymentLinkAttemptsTable.id, mapping.id));
   });
   // The POST acknowledgement itself is never used to mark success or failure.
-  resolveInitialProviderState(receipt);
+  if (feexpayReceipt) resolveInitialProviderState(feexpayReceipt);
 }
 
 async function confirmLinkFlowPaymentOtp(
@@ -788,7 +832,7 @@ export async function startLinkFlowPaymentAttempt(
 
     const [intent] = await tx.insert(paymentIntentsTable).values({
       transactionId: transaction.id,
-      providerCode: "feexpay",
+      providerCode: channelContext.providerCode,
       requestHash,
       kind: "deposit",
       currency: "XOF",
@@ -819,7 +863,9 @@ export async function startLinkFlowPaymentAttempt(
       intentId: intent.id,
       direction: "payin",
       countryCode: input.countryCode.toLowerCase(),
-      channelId: channelContext.channel.id,
+      channelId: channelContext.providerCode === "paydunya"
+        ? `paydunya:${channelContext.providerChannelId}`
+        : channelContext.providerChannelId,
       operationReference,
       amountMinor: channelContext.amountMinor,
       currency: "XOF",
@@ -997,19 +1043,51 @@ async function retryWalletSettlement(bundle: AttemptBundle) {
   });
 }
 
-async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayReceipt) {
-  const expectedPhone = toProviderPhoneNumber(
+async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: ProviderFinalReceipt) {
+  const isPaydunyaReceipt = "token" in receipt;
+  if (isPaydunyaReceipt !== (bundle.intent.providerCode === "paydunya")) {
+    await updateNonFinalAttempt(bundle, "uncertain");
+    return;
+  }
+  const expectedPhoneFull = toProviderPhoneNumber(
     decryptSensitiveData(bundle.transaction.senderPhone, "transaction-sender-phone"),
   );
-  const outcome = resolveVerifiedProviderState(receipt, {
-    reference: bundle.attempt.providerReference
-      ? decryptSensitiveData(bundle.attempt.providerReference, "provider-reference")
-      : "",
-    amountMinor: bundle.attempt.amountMinor,
-    currency: "XOF",
-    channelId: bundle.attempt.channelId,
-    phoneNumber: expectedPhone,
-  });
+  const [country] = await db.select({ phonePrefix: countriesTable.phonePrefix })
+    .from(countriesTable)
+    .where(eq(countriesTable.countryCode, bundle.attempt.countryCode))
+    .limit(1);
+  const countryPrefix = country?.phonePrefix.replace(/\D/g, "") ?? "";
+  const expectedProviderPhone = isPaydunyaReceipt
+    ? expectedPhoneFull.startsWith(countryPrefix) && countryPrefix
+      ? expectedPhoneFull.slice(countryPrefix.length)
+      : ""
+    : expectedPhoneFull;
+  const expectedReference = bundle.attempt.providerReference
+    ? decryptSensitiveData(bundle.attempt.providerReference, "provider-reference")
+    : "";
+  const receiptReference = isPaydunyaReceipt ? receipt.token : receipt.reference;
+  const receiptStatus = isPaydunyaReceipt
+    ? receipt.status === "completed" ? "SUCCESSFUL"
+      : receipt.status === "failed" ? "FAILED" : "PENDING"
+    : receipt.status;
+  const receiptAmount = receipt.amountMinor;
+  const receiptCurrency = receipt.currency;
+  const receiptPhone = receipt.phoneNumber;
+  const outcome = isPaydunyaReceipt
+    ? resolveVerifiedPaydunyaState(receipt, {
+      token: expectedReference,
+      operationReference: bundle.attempt.operationReference,
+      amountMinor: bundle.attempt.amountMinor,
+      currency: "XOF",
+      phoneNumber: expectedProviderPhone,
+    })
+    : resolveVerifiedProviderState(receipt, {
+      reference: expectedReference,
+      amountMinor: bundle.attempt.amountMinor,
+      currency: "XOF",
+      channelId: bundle.attempt.channelId,
+      phoneNumber: expectedPhoneFull,
+    });
   if (outcome === "waiting" || outcome === "uncertain") {
     await updateNonFinalAttempt(bundle, outcome);
     return;
@@ -1031,10 +1109,10 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
     if (!attempt || !transaction || !attempt.providerReferenceHash ||
       !attempt.providerReference || attempt.status === "succeeded" || attempt.status === "failed") return;
     const providerReference = decryptSensitiveData(attempt.providerReference, "provider-reference");
-    if (providerReference !== receipt.reference ||
-      receipt.amountMinor !== attempt.amountMinor ||
-      receipt.phoneNumber !== expectedPhone ||
-      (receipt.currency !== undefined && receipt.currency !== attempt.currency)) {
+    if (providerReference !== receiptReference ||
+      receiptAmount !== attempt.amountMinor ||
+      receiptPhone !== expectedProviderPhone ||
+      (receiptCurrency !== undefined && receiptCurrency !== attempt.currency)) {
       if (attempt.status !== "uncertain") {
         await tx.update(paymentAttemptsTable).set({ status: "uncertain", updatedAt: new Date() })
           .where(eq(paymentAttemptsTable.id, attempt.id));
@@ -1049,18 +1127,18 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
     const providerStatus = outcome === "succeeded" ? "succeeded" : "failed";
     const eventFingerprint = createHash("sha256").update([
       attempt.id, providerStatus, attempt.providerReferenceHash,
-      String(receipt.amountMinor), receipt.currency ?? attempt.currency,
+      String(receiptAmount), receiptCurrency ?? attempt.currency,
     ].join(":")).digest("hex");
     const now = new Date();
     const encryptedPayload = encryptSensitiveData(JSON.stringify({
-      provider: "feexpay",
+      provider: bundle.intent.providerCode,
       direction: "payin",
-      reference: receipt.reference,
-      status: receipt.status,
-      amountMinor: receipt.amountMinor,
-      providerCurrency: receipt.currency ?? null,
+      reference: receiptReference,
+      status: receiptStatus,
+      amountMinor: receiptAmount,
+      providerCurrency: receiptCurrency ?? null,
       currency: attempt.currency,
-      currencySource: receipt.currency ? "provider_status" : "verified_attempt_channel",
+      currencySource: receiptCurrency ? "provider_status" : "verified_attempt_channel",
       observedAt: now.toISOString(),
     }), "payment-confirmation-payload");
     const [confirmation] = await tx.insert(paymentConfirmationsTable).values({
@@ -1069,7 +1147,7 @@ async function finalizeVerifiedStatus(bundle: AttemptBundle, receipt: FeexpayRec
       source: "provider_status",
       providerStatus,
       providerReferenceHash: attempt.providerReferenceHash,
-      amountMinor: receipt.amountMinor!,
+      amountMinor: receiptAmount!,
       currency: attempt.currency,
       encryptedPayload,
       verifiedAt: now,
@@ -1143,10 +1221,30 @@ async function refreshLinkFlowPaymentAttemptStatus(
     !bundle.attempt.dispatchedAt) {
     return asPublicStatus(bundle);
   }
-  let receipt: FeexpayReceipt;
+  let receipt: ProviderFinalReceipt;
   try {
     const reference = decryptSensitiveData(bundle.attempt.providerReference, "provider-reference");
-    receipt = await new FeexpayClient().getStatus("payin", reference);
+    if (bundle.intent.providerCode === "feexpay") {
+      receipt = await new FeexpayClient().getStatus("payin", reference);
+    } else if (bundle.intent.providerCode === "paydunya") {
+      const [country] = await db.select({ phonePrefix: countriesTable.phonePrefix })
+        .from(countriesTable)
+        .where(eq(countriesTable.countryCode, bundle.attempt.countryCode))
+        .limit(1);
+      const prefix = country?.phonePrefix.replace(/\D/g, "") ?? "";
+      const fullPhone = toProviderPhoneNumber(
+        decryptSensitiveData(bundle.transaction.senderPhone, "transaction-sender-phone"),
+      );
+      if (!prefix || !fullPhone.startsWith(prefix)) return asPublicStatus(bundle);
+      receipt = await new PaydunyaClient().getVerifiedInvoiceStatus({
+        token: reference,
+        expectedAmountMinor: bundle.attempt.amountMinor,
+        expectedReference: bundle.attempt.operationReference,
+        expectedPhoneNumber: fullPhone.slice(prefix.length),
+      });
+    } else {
+      return asPublicStatus(bundle);
+    }
   } catch {
     // A status timeout or provider error is not a final failure.
     return asPublicStatus(bundle);

@@ -78,6 +78,13 @@ test("tampering with ciphertext or authentication tag fails closed", () => {
   assert.throws(() => decryptSensitiveData(parts.join("."), "provider-reference"));
 });
 
+test("provider checkout URLs are encrypted with a purpose distinct from provider references", () => {
+  const url = "https://app.paydunya.com/checkout/invoice/invoice_123456";
+  const ciphertext = encryptSensitiveData(url, "provider-redirect-url");
+  assert.equal(decryptSensitiveData(ciphertext, "provider-redirect-url"), url);
+  assert.throws(() => decryptSensitiveData(ciphertext, "provider-reference"));
+});
+
 test("lookup indexes are stable and purpose-separated", () => {
   const index = createSensitiveDataLookupIndex("+2250701020304", "user-phone");
   assert.equal(index, createSensitiveDataLookupIndex("+2250701020304", "user-phone"));

@@ -216,7 +216,9 @@ test("documented v2 status response may omit currency; missing currency is never
     assert.equal(receipt.status, "SUCCESSFUL");
     assert.equal(receipt.amountMinor, 1000);
     assert.equal(receipt.currency, undefined);
-    assert.deepEqual(Object.keys(receipt).sort(), ["amountMinor", "reference", "status"]);
+    assert.deepEqual(Object.keys(receipt).sort(), [
+      "amountMinor", "reference", "status", "verifiedStatusOperation",
+    ]);
   }
 });
 

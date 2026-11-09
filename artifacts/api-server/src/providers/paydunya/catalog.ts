@@ -25,7 +25,6 @@ const operatorChannels: Readonly<Record<string, string>> = {
   "TG:moov-tg": "moov-togo",
   "ML:orange-ml": "orange-money-mali",
   "ML:moov-ml": "moov-ml",
-  "CM:mtn-cm": "mtn-cameroun",
 };
 
 export function paydunyaChannelForOperator(countryCode: string, operatorId: string): string | null {

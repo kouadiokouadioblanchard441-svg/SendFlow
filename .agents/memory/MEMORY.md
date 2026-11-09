@@ -36,6 +36,7 @@
 - [Network defense boundaries](network-defense-boundaries.md) — Target hostile behavior, not all cloud IPs; origin checks do not prove hosting-wide protection.
 - [Workflow process ownership](workflow-process-ownership.md) — Environment updates can leave old children serving ports despite a failed managed workflow; verify ownership before cleanup.
 - [FeexPay documentation](feexpay-documentation.md) — Payout pages may return only a loading shell; inspect the official public asset rather than infer the contract.
+- [Provider status evidence](provider-payment-status-evidence.md) — Use authenticated provider status checks and exact transaction matching; initial acknowledgements and callbacks alone are not settlement proof.
 - [LinkFlow image storage](linkflow-image-storage.md) — LinkFlow images remain database-backed; the new database has no historical image rows until data migration is approved.
 - [LinkFlow payment integrity](linkflow-pending-state-integrity.md) — Keep the payer total fixed; soft-delete links while retaining history, and show payment stats only after real payments.
 - [LinkFlow fee availability](linkflow-fee-availability.md) — Configure rates independently per operator; new operators start unconfigured, and disabled countries stay out of customer pricing.

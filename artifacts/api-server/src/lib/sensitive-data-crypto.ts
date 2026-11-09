@@ -30,6 +30,7 @@ export type SensitiveDataPurpose =
   | "linkflow-poll-token-seed"
   | "linkflow-poll-token-hash"
   | "linkflow-payer-name"
+  | "provider-redirect-url"
   | "linkflow-request-fingerprint"
   | "linkflow-request-otp"
   | "identity-webhook-payload"

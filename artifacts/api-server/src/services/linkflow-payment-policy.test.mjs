@@ -7,6 +7,7 @@ import {
   isLinkFlowPaymentExecutionEnabled,
   isLinkFlowProviderExecutionEnabled,
   resolveInitialProviderState,
+  resolveVerifiedPaydunyaState,
   resolveVerifiedProviderState,
 } from "./linkflow-payment-policy.ts";
 
@@ -71,7 +72,7 @@ test("final status requires authenticated provider status, exact reference, amou
   }, expected), "waiting");
   assert.equal(resolveVerifiedProviderState({
     reference: expected.reference, status: "SUCCESSFUL", amountMinor: 2000, currency: "XOF",
-    phoneNumber: expected.phoneNumber, verifiedStatusOperation: "payin",
+    phoneNumber: expected.phoneNumber,
   }, expected), "uncertain");
   const verified = { phoneNumber: expected.phoneNumber, verifiedStatusOperation: "payin" };
   assert.equal(resolveVerifiedProviderState({
@@ -92,6 +93,35 @@ test("final status requires authenticated provider status, exact reference, amou
     reference: expected.reference, status: "SUCCESSFUL", amountMinor: 2000,
     phoneNumber: "22501020305", verifiedStatusOperation: "payin",
   }, expected), "uncertain");
+});
+
+test("PayDunya final status requires its verified invoice token, SendFlow reference, amount, phone, and XOF", () => {
+  const expected = {
+    token: "invoice_123456",
+    operationReference: "0123456789ABCDEF0123456789ABCD",
+    amountMinor: 2500,
+    currency: "XOF",
+    phoneNumber: "771234567",
+  };
+  const verified = {
+    token: expected.token,
+    sendflowReference: expected.operationReference,
+    amountMinor: expected.amountMinor,
+    currency: "XOF",
+    phoneNumber: expected.phoneNumber,
+  };
+  assert.equal(resolveVerifiedPaydunyaState({ ...verified, status: "pending" }, expected), "waiting");
+  assert.equal(resolveVerifiedPaydunyaState({ ...verified, status: "completed" }, expected), "succeeded");
+  assert.equal(resolveVerifiedPaydunyaState({ ...verified, status: "failed" }, expected), "failed");
+  for (const mismatch of [
+    { ...verified, token: "invoice_other" },
+    { ...verified, sendflowReference: "111111111111111111111111111111" },
+    { ...verified, amountMinor: 2499 },
+    { ...verified, currency: "XAF" },
+    { ...verified, phoneNumber: "771234568" },
+  ]) {
+    assert.equal(resolveVerifiedPaydunyaState({ ...mismatch, status: "completed" }, expected), "uncertain");
+  }
 });
 
 test("request fingerprints and poll tokens are stable without storing raw payer phone", () => {
