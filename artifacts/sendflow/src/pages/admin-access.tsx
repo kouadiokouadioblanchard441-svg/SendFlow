@@ -2,8 +2,6 @@ import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "rea
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetAdminAccessStatusQueryKey,
-  setAdminApiPathPrefix,
-  setAdminStepUpHandler,
   useGetAdminAccessStatus,
 } from "@workspace/api-client-react";
 import { ShieldCheck } from "lucide-react";
@@ -12,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import PageLoadingScreen from "@/components/page-loading-screen";
 import { ADMIN_API_PATH_PREFIX, adminApiRoute } from "@/lib/admin-route";
+import { setAdminApiPathPrefix, setAdminStepUpHandler } from "@/lib/admin-step-up";
 import { resolveApiUrl, fetchWithCsrf } from "@workspace/api-client-react";
 import { useSeo } from "@/lib/seo";
 import {

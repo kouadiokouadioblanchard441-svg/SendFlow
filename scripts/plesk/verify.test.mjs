@@ -13,12 +13,16 @@ async function fixture(t) {
   const root = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(path.join(root, "public/assets"), { recursive: true });
+  await mkdir(path.join(root, "admin/assets"), { recursive: true });
   await mkdir(path.join(root, "server"));
   await writeFile(path.join(root, "index.cjs"), commonJsLauncher("./server/index.mjs"));
   await writeFile(path.join(root, "server/index.mjs"), 'console.log("synthetic-entry-started");');
   await writeFile(path.join(root, "public/index.html"), '<script src="/assets/app.js"></script><link rel="stylesheet" href="/assets/app.css">');
   await writeFile(path.join(root, "public/assets/app.js"), "void 0;");
   await writeFile(path.join(root, "public/assets/app.css"), "body{}");
+  await writeFile(path.join(root, "admin/index.html"), '<script src="/assets/private.js"></script>');
+  await writeFile(path.join(root, "admin/assets/private.js"), "void 0;");
+  await writeFile(path.join(root, "admin/assets/private.css"), "body{}");
   return root;
 }
 
@@ -40,6 +44,7 @@ async function deploymentFixture(t) {
     "dist/index.cjs",
     "dist/server/index.mjs",
     "dist/public/index.html",
+    "dist/admin/index.html",
     "dist/plesk-manifest.json",
     "artifacts/api-server/dist/index.cjs",
     "artifacts/api-server/dist/index.mjs",
@@ -67,8 +72,17 @@ test("verifies a root-mounted web release and hashes its files", async (t) => {
   const root = await fixture(t);
   const result = await verifyDistribution(root, "web");
   assert.equal(result.startupFile, "index.cjs");
-  assert.equal(result.files.length, 5);
+  assert.equal(result.files.length, 8);
   assert.ok(result.files.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
+});
+
+test("rejects private interface code in the public bundle", async (t) => {
+  const root = await fixture(t);
+  await writeFile(path.join(root, "public/assets/app.js"), "function AdminAccessPage() {}");
+  await assert.rejects(
+    verifyDistribution(root, "web"),
+    /Private interface marker found in public output/,
+  );
 });
 
 test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", async (t) => {
@@ -78,6 +92,8 @@ test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", a
   assert.equal(result.startupFile, "index.cjs");
   assert.equal(await readFile(path.join(target, "public/index.html"), "utf8"),
     '<script src="/assets/app.js"></script><link rel="stylesheet" href="/assets/app.css">');
+  assert.equal(await readFile(path.join(target, "admin/index.html"), "utf8"),
+    '<script src="/assets/private.js"></script>');
   assert.equal(await readFile(path.join(target, "server/index.mjs"), "utf8"),
     'console.log("synthetic-entry-started");');
 });

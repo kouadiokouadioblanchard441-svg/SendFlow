@@ -1,4 +1,5 @@
 import path from 'path';
+import postcss from 'postcss';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv, type Connect, type Plugin } from 'vite';
@@ -19,6 +20,51 @@ if (Number.isNaN(port) || port <= 0) {
 const basePath = process.env.BASE_PATH ?? '/';
 
 const envDir = path.resolve(import.meta.dirname, '../..');
+
+function stripPrivateSurfaceFromPublicCss(): Plugin {
+  return {
+    name: 'sendflow-public-surface-boundary',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const privateMarker = /admin|administration|administrateur|administratrice|administrator|sendflow-app-surface/i;
+      for (const output of Object.values(bundle)) {
+        if (output.type !== 'asset' || !output.fileName.endsWith('.css')) continue;
+        const css = String(output.source);
+        const root = postcss.parse(css);
+        root.walkComments((comment) => {
+          if (privateMarker.test(comment.text)) comment.remove();
+        });
+        root.walkAtRules((rule) => {
+          if (/keyframes/i.test(rule.name) && privateMarker.test(rule.params)) rule.remove();
+        });
+        root.walkRules((rule) => {
+          if (rule.selectors) {
+            const publicSelectors = rule.selectors.filter((selector) => !privateMarker.test(selector));
+            if (!publicSelectors.length) {
+              rule.remove();
+              return;
+            }
+            rule.selectors = publicSelectors;
+          }
+          rule.walkDecls((declaration) => {
+            if (privateMarker.test(declaration.prop) || /--admin-|var\(--admin-/i.test(declaration.value)) {
+              declaration.remove();
+            }
+          });
+          if (!rule.nodes?.some((node) => node.type === 'decl' || node.type === 'rule')) rule.remove();
+        });
+        output.source = root.toString();
+      }
+
+      for (const output of Object.values(bundle)) {
+        if (output.type !== 'asset' || !/\.(?:html|js|css)$/i.test(output.fileName)) continue;
+        if (privateMarker.test(String(output.source))) {
+          throw new Error('The public SendFlow bundle contains private interface code.');
+        }
+      }
+    },
+  };
+}
 
 const serverNotFoundMiddleware: Connect.NextHandleFunction = (req, res, next) => {
   if ((req.method !== 'GET' && req.method !== 'HEAD') || !req.headers.accept?.includes('text/html')) {
@@ -68,7 +114,9 @@ const serverNotFoundPlugin: Plugin = {
   },
 };
 
-export default defineConfig(async ({ mode }) => ({
+export default defineConfig(async ({ mode }) => {
+  const adminBuild = mode === 'admin';
+  return {
   base: basePath,
   // Keep environment files at the workspace root; capacitor mode has its own public API origin.
   envDir,
@@ -79,6 +127,7 @@ export default defineConfig(async ({ mode }) => ({
   plugins: [
     ipGatePlugin(),
     serverNotFoundPlugin,
+    ...(!adminBuild ? [stripPrivateSurfaceFromPublicCss()] : []),
     react(),
     tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),
@@ -110,9 +159,12 @@ export default defineConfig(async ({ mode }) => ({
   },
   root: path.resolve(import.meta.dirname),
   build: {
-    outDir: path.resolve(import.meta.dirname, 'dist/public'),
+    outDir: path.resolve(import.meta.dirname, adminBuild ? 'dist/admin' : 'dist/public'),
     emptyOutDir: true,
     rollupOptions: {
+      ...(adminBuild
+        ? { input: { index: path.resolve(import.meta.dirname, 'admin.html') } }
+        : {}),
       output: {
         chunkFileNames: 'assets/chunk-[hash].js',
       },
@@ -132,4 +184,5 @@ export default defineConfig(async ({ mode }) => ({
     host: '0.0.0.0',
     allowedHosts: true,
   },
-}));
+  };
+});

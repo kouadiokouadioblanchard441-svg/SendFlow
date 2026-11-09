@@ -430,7 +430,7 @@ function PrivacyFrenchContent({ contactEmail }: { contactEmail: string }) {
           <li>prestataires techniques d’hébergement, de stockage, de sécurité, de messagerie, de support et de supervision ;</li>
           <li>prestataires de vérification d’identité, de lutte contre la fraude et de conformité ;</li>
           <li>conseils professionnels, auditeurs et assureurs soumis à une obligation de confidentialité ;</li>
-          <li>autorités administratives, judiciaires ou réglementaires lorsqu’une demande légale l’exige.</li>
+          <li>autorités compétentes lorsqu’une demande légale l’exige.</li>
         </LegalBulletList>
         <p>Les prestataires techniques doivent recevoir des instructions et des accès limités à leurs besoins. Une liste nominative des prestataires utilisés pour la version commercialisée devra être ajoutée avant le lancement, avec leurs rôles, pays de traitement et liens de confidentialité.</p>
       </LegalSection>
@@ -578,7 +578,7 @@ function PrivacyEnglishContent({ contactEmail }: { contactEmail: string }) {
           <li>technical providers for hosting, storage, security, messaging, support and monitoring;</li>
           <li>identity verification, fraud prevention and compliance providers;</li>
           <li>professional advisers, auditors and insurers bound by confidentiality;</li>
-          <li>administrative, judicial or regulatory authorities when legally required.</li>
+          <li>competent authorities when required by law.</li>
         </LegalBulletList>
         <p>Technical providers must receive instructions and access limited to their needs. A named list of providers used for the commercial version must be added before launch, with their roles, processing countries and privacy links.</p>
       </LegalSection>

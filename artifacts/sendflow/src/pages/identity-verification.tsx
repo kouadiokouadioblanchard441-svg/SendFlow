@@ -931,8 +931,8 @@ export default function IdentityVerificationPage() {
             <LockKeyhole size={14} aria-hidden="true" />
             <span>
               {requestStatus === 'pending' || requestStatus === 'approved'
-                ? 'Vos données restent accessibles uniquement aux administrateurs autorisés.'
-                : 'Vos données seront protégées et consultables uniquement par les administrateurs autorisés.'}
+                ? 'Vos données restent accessibles uniquement aux personnes habilitées au traitement des dossiers.'
+                : 'Vos données seront protégées et consultables uniquement par les personnes habilitées au traitement des dossiers.'}
             </span>
           </p>
         </div>

@@ -9,11 +9,11 @@ SendFlow has exactly one Super Admin, authenticated by administrator email, pass
 
 **How to apply:** Bootstrap the singleton account through the controlled, non-public server procedure. Verify identity, password, TOTP, session, and step-up on the backend. Never trust roles or permissions sent by the client.
 
-The admin interface is selected by a server-only allowlist of configured hostnames. Keep the private host value out of source, documentation, tests, logs, and frontend assets; read it only from deployment environment configuration. A visible API path is not an access control.
+Build the private browser interface separately from the public customer site. The public bundle must not contain private interface components, routes, labels, or styles; serve the separate bundle only through the server-side exact-host allowlist. The private browser UI is still needed to render the sign-in and operations, but authorization and financial rules stay in the backend. Keep the private host value out of source, documentation, tests, logs, and frontend assets; read it only from deployment environment configuration. A visible API path is not an access control.
 
-**Why:** The user requires the admin address to remain confidential and explicitly rejects obscurity as a replacement for authentication.
+**Why:** The user chose separation from the public site and requires the admin address to remain confidential, while rejecting obscurity as a replacement for authentication.
 
-**How to apply:** Resolve allowed hosts from server environment configuration only. Treat Cloudflare Access, origin restrictions, and Plesk settings as unverified until configured and tested outside the repository.
+**How to apply:** Build and package distinct public and private browser entry points, scan the public bundle for private-surface markers, and route the private output only from server environment configuration. Treat Cloudflare Access, origin restrictions, and Plesk settings as unverified until configured and tested outside the repository.
 
 The old browser paths `/admin` and `/admin/sign-in` are retired. The API may use a conventional `/api/admin` prefix because route obscurity is not part of the security boundary.
 

@@ -6,16 +6,22 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { createSiteServer } from "./site-server.ts";
 
-async function fixture(t) {
+async function fixture(t, adminHost = "") {
   const root = await mkdtemp(join(tmpdir(), "sendflow-site-server-"));
-  await mkdir(join(root, "assets"), { recursive: true });
-  await writeFile(join(root, "index.html"), "<!doctype html><title>SendFlow</title>");
-  await writeFile(join(root, "assets", "app.js"), "window.sendflowLoaded = true;");
+  await mkdir(join(root, "public", "assets"), { recursive: true });
+  await mkdir(join(root, "admin", "assets"), { recursive: true });
+  await writeFile(join(root, "public", "index.html"), "<!doctype html><title>SendFlow</title>");
+  await writeFile(join(root, "public", "assets", "app.js"), "window.sendflowLoaded = true;");
+  await writeFile(join(root, "admin", "index.html"), "<!doctype html><title>Private access surface</title>");
+  await writeFile(join(root, "admin", "assets", "private.js"), "window.privateAccessLoaded = true;");
+
+  const previousAdminHosts = process.env.SENDFLOW_ADMIN_ALLOWED_HOSTS;
+  if (adminHost) process.env.SENDFLOW_ADMIN_ALLOWED_HOSTS = adminHost;
+  else delete process.env.SENDFLOW_ADMIN_ALLOWED_HOSTS;
 
   const server = createSiteServer(
     root,
     async () => true,
-    async () => "allowed",
   );
   await new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -23,6 +29,8 @@ async function fixture(t) {
   });
 
   t.after(async () => {
+    if (previousAdminHosts === undefined) delete process.env.SENDFLOW_ADMIN_ALLOWED_HOSTS;
+    else process.env.SENDFLOW_ADMIN_ALLOWED_HOSTS = previousAdminHosts;
     await new Promise((resolve, reject) => {
       server.close((error) => error ? reject(error) : resolve());
     });
@@ -97,4 +105,35 @@ test("missing assets and API paths never fall through to the SPA", async (t) => 
     assert.equal(response.status, 404, path);
     assert.equal(response.body, "404 Not Found", path);
   }
+});
+
+test("serves the private interface only from the explicitly allowlisted host", async (t) => {
+  const server = await fixture(t, "admin.example.test");
+
+  const publicHome = await get(server, "/");
+  assert.equal(publicHome.status, 200);
+  assert.match(publicHome.body, /<title>SendFlow<\/title>/);
+  assert.doesNotMatch(publicHome.body, /Private access surface/i);
+
+  const publicPrivateAsset = await get(server, "/assets/private.js");
+  assert.equal(publicPrivateAsset.status, 404);
+  const publicLegacyRoute = await get(server, "/admin");
+  assert.equal(publicLegacyRoute.status, 404);
+
+  const privateHome = await get(server, "/", "admin.example.test");
+  assert.equal(privateHome.status, 200);
+  assert.match(privateHome.body, /Private access surface/);
+  assert.doesNotMatch(privateHome.body, /sendflow-app-surface/);
+
+  const privateRoute = await get(server, "/security", "admin.example.test");
+  assert.equal(privateRoute.status, 200);
+  assert.match(privateRoute.body, /Private access surface/);
+  const privateAsset = await get(server, "/assets/private.js", "admin.example.test");
+  assert.equal(privateAsset.status, 200);
+  assert.match(privateAsset.body, /privateAccessLoaded/);
+
+  const forgedOrUnlistedHost = await get(server, "/", "other.example.test");
+  assert.equal(forgedOrUnlistedHost.status, 200);
+  assert.match(forgedOrUnlistedHost.body, /<title>SendFlow<\/title>/);
+  assert.doesNotMatch(forgedOrUnlistedHost.body, /Private access surface/i);
 });

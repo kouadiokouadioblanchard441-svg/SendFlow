@@ -1,8 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import {
-  MutationCache,
-  QueryCache,
-  QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query';
 import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
@@ -19,8 +16,7 @@ import { useSeo } from '@/lib/seo';
 import { clearPinUnlock, getPinUnlockExpiry } from '@/lib/pin-unlock';
 import { requiresCustomerPinUnlock, shouldRelockCustomerPinUnlock } from '@/lib/customer-route-guard';
 import { GlobalErrorDialog } from '@/components/global-error-dialog';
-import { reportGlobalApiError } from '@/lib/global-api-errors';
-import { shouldShowGlobalQueryError } from '@/lib/safe-api-error';
+import { getHttpStatus, queryClient } from '@/lib/query-client';
 import {
   isSendFlowDocumentationHost,
   isSendFlowDocumentationPreviewRoute,
@@ -64,41 +60,7 @@ const ResetPage = lazy(() => import('@/pages/reset'));
 const SigninPage = lazy(() => import('@/pages/sign-in'));
 const SignupPage = lazy(() => import('@/pages/sign-up'));
 const OnboardingPage = lazy(() => import('@/pages/onboarding'));
-const AdminAccessPage = lazy(() => import('@/pages/admin-access'));
 const DocsPage = lazy(() => import('@/pages/docs'));
-
-function getHttpStatus(error: unknown) {
-  if (!error || typeof error !== 'object') return undefined;
-  const candidate = error as { status?: number; response?: { status?: number } };
-  return candidate.status ?? candidate.response?.status;
-}
-
-const reportedQueryErrors = new WeakSet<object>();
-
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: (error, query) => {
-      if (query.state.data !== undefined || reportedQueryErrors.has(query)) return;
-      reportedQueryErrors.add(query);
-      if (shouldShowGlobalQueryError(error)) reportGlobalApiError(error);
-    },
-    onSuccess: (_data, query) => {
-      reportedQueryErrors.delete(query);
-    },
-  }),
-  mutationCache: new MutationCache({
-    onError: (error) => reportGlobalApiError(error),
-  }),
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error) => {
-        const status = getHttpStatus(error);
-        if (status !== undefined && status >= 400 && status < 500) return false;
-        return failureCount < 2;
-      },
-    },
-  },
-});
 
 function CustomerPinGuard({ children }: { children: ReactNode }) {
   const [path, setLocation] = useLocation();
@@ -230,25 +192,6 @@ function useProtectImages() {
 
 function App() {
   useProtectImages();
-
-  if (
-    typeof document !== 'undefined'
-    && document.querySelector('meta[name="sendflow-app-surface"]')?.getAttribute('content') === 'admin'
-  ) {
-    return (
-      <WouterRouter base={basePath}>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Suspense fallback={<PageLoadingScreen label="Chargement de l’espace administrateur" />}>
-              <AdminAccessPage />
-            </Suspense>
-            <Toaster />
-            <GlobalErrorDialog />
-          </TooltipProvider>
-        </QueryClientProvider>
-      </WouterRouter>
-    );
-  }
 
   if (
     typeof window !== 'undefined' &&

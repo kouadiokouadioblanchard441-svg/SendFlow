@@ -106,7 +106,7 @@ try {
     `${JSON.stringify(stagedManifest, null, 2)}\n`,
     { mode: 0o644 },
   );
-  console.log(`Plesk website package: ${path.relative(root, pleskWebDistribution)}/index.cjs and public/ ready.`);
+  console.log(`Plesk website package: ${path.relative(root, pleskWebDistribution)}/index.cjs with public and private bundles ready.`);
   console.log("Plesk project-root startup file: index.cjs ready.");
   console.log(`Plesk API runtime dependencies: ${runtimePackage.sizeBytes} bytes; Linux x64 package ready.`);
   console.log("SUCCESS: Plesk distributions generated. Read docs/plesk-build.md before deploying.");

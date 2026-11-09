@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
-    "build": "vite build --config vite.config.ts && node scripts/build-site-server.mjs",
+    "build": "vite build --config vite.config.ts && vite build --config vite.config.ts --mode admin && node scripts/normalize-private-entry.mjs && node scripts/build-site-server.mjs",
     "build:capacitor": "vite build --config vite.config.ts --mode capacitor --base=./ && node ../../scripts/security/check-public-artifacts.mjs",
     "android:sync": "pnpm run build:capacitor && cap sync android && node ../../scripts/security/check-public-artifacts.mjs",
     "android:open": "pnpm run android:sync && bash scripts/with-android-sdk.sh --cap-open",
@@ -72,6 +72,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "catalog:",
     "next-themes": "^0.4.6",
+    "postcss": "8.5.25",
     "react": "catalog:",
     "react-day-picker": "^9.11.1",
     "react-dom": "catalog:",

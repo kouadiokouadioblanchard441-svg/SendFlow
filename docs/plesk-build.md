@@ -120,11 +120,10 @@ Configurer les racines et fichiers de démarrage des applications Node Plesk :
 | Site    | `.`                                   | `index.cjs`                                 |
 | API     | `artifacts/api-server`                | `dist/index.cjs`                            |
 
-Pour le site, choisir `dist/public` comme Document Root (relatif au checkout), ce qui
-correspond à `/merchent.business.sendflow.africa/dist/public` quand le checkout est à
-la racine du domaine. L'application doit tout de même router les requêtes vers Node :
-le serveur applique le contrôle IP avant de servir chaque fichier. Il ne faut pas
-laisser Apache/Nginx servir directement des fichiers de `dist/public` avant ce contrôle.
+Pour le site, choisir `dist/public` comme Document Root relatif au checkout.
+L'application doit tout de même router les requêtes vers Node : le serveur applique le
+contrôle IP avant de servir chaque fichier. Il ne faut pas laisser Apache/Nginx servir
+directement les fichiers statiques avant le passage par Node.
 Pour l'API, choisir le Document Root privé vide
 `artifacts/plesk-empty-document-root`. Ne jamais choisir `dist` au complet,
 `artifacts` ou `artifacts/api-server` : ils contiennent également des bundles serveur
@@ -137,18 +136,22 @@ aux routes publiques de paiement. Pour chacun de ces domaines, router les pages 
 service site et `/api` vers le service API, en conservant les chemins. Le sélecteur
 d'hôte ne décide d'aucune autorisation ou règle financière.
 
-Le dossier `dist/public` contient uniquement le site public. Le `index.cjs` racine est
-un adaptateur généré qui importe `dist/server/index.mjs`, lequel sert ce contenu après
-le contrôle IP. Le serveur Plesk doit démarrer les deux processus Node nécessaires
-(site et API), chacun avec ses variables privées. Vérifier dans Plesk que les fichiers
-statiques ne sont pas servis directement avant le passage par Node.
+Le dossier `dist/public` contient uniquement l'application publique. L'interface privée
+est construite séparément dans `dist/admin`, hors du Document Root. Le serveur Node choisit
+le répertoire à servir selon l'hôte reçu et la liste exacte `SENDFLOW_ADMIN_ALLOWED_HOSTS`.
+Cette sélection ne constitue pas une authentification : les API restent protégées côté
+serveur. Le `index.cjs` racine importe `dist/server/index.mjs`, qui sert le bon bundle
+après le contrôle IP. Le serveur Plesk démarre les deux processus Node nécessaires
+(site et API), chacun avec ses variables privées. Vérifier que les fichiers ne sont pas
+servis directement par Apache avant le passage par Node.
 
 ## Correspondance avec le Document Root Plesk
 
-Le build crée le dossier racine `dist/public` demandé pour le Document Root,
-un `index.cjs` à la racine pour démarrer le serveur site, ainsi que la distribution API
-séparée. Les chemins absolus, les ports et les comptes système Plesk restent à vérifier
-sur le serveur ; le chemin relatif `dist/public` est celui à utiliser depuis le checkout.
+Le build crée `dist/public`, `dist/admin`, un `index.cjs` à la racine pour démarrer le
+serveur site, ainsi que la distribution API séparée. Les chemins absolus, les ports et
+les comptes système Plesk restent à vérifier sur le serveur ; `dist/public` est le
+Document Root, tandis que l'interface privée est servie par Node et ne doit pas être
+exposée comme un répertoire statique Apache.
 
 ## Runtime et routage à confirmer sur Plesk
 
@@ -164,11 +167,13 @@ sur le serveur ; le chemin relatif `dist/public` est celui à utiliser depuis le
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
 - Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
   le reste doit atteindre le serveur Node du site. Chaque service écoute son propre `PORT`.
-- Définir `SENDFLOW_INTERNAL_API_ORIGIN` dans l'environnement privé du service site,
-  vers l'origine HTTP(S) interne de l'API, par exemple `http://127.0.0.1:<API_PORT>`.
-  Le serveur du site l'utilise pour vérifier la session avant de servir la route protégée.
-  Ne pas l'exposer en `VITE_*` ni le déduire de l'en-tête Host. Si l'origine manque ou
-  si l'API est indisponible, cette route échoue fermée avec HTTP 503.
+- Définir `SENDFLOW_ADMIN_ALLOWED_HOSTS` dans l'environnement privé du service site avec
+  le nom d'hôte exact prévu pour l'interface privée. Ne pas inscrire cette valeur dans
+  Git, la documentation publique, le bundle client ou les messages d'erreur. Cette liste
+  sélectionne uniquement les fichiers de l'interface ; elle ne remplace pas le MFA ni
+  l'autorisation backend.
+- Si l'API utilise une origine distincte, définir `SENDFLOW_ADMIN_CSP_CONNECT_SRC` avec
+  ses origines HTTPS exactes afin que la politique CSP autorise les requêtes du navigateur.
 - Les API inconnues doivent rester des erreurs API, pas du HTML de la SPA. Un fichier
   JS/CSS absent doit rester un 404 ; les routes SPA valides doivent accepter un refresh.
 - Définir `NODE_ENV=production`, `SENDFLOW_DATABASE_TARGET=production`,
@@ -184,9 +189,11 @@ sur le serveur ; le chemin relatif `dist/public` est celui à utiliser depuis le
   `https://payin.merchant.command.sendflow.africa` si ces interfaces utilisent l'API.
 - Préserver la vérification TLS de PostgreSQL, les sessions sécurisées, les contrôles OTP/PIN,
   les rôles et les protections financières. Ce build n'autorise aucun paiement.
-- Le Document Root du site est `dist/public` ; il ne doit pas exposer le bundle serveur,
-  les `.map`, le manifeste ou des fichiers de configuration. Les requêtes vers ces
-  fichiers doivent toujours passer par le serveur Node afin que le contrôle IP s'exécute.
+- Le Document Root du site est `dist/public` ; `dist/admin`, le bundle serveur, les
+  `.map`, le manifeste et les fichiers de configuration ne doivent pas être exposés par
+  Apache. Les requêtes doivent passer par Node afin que le contrôle IP et la sélection
+  de bundle s'appliquent. Cloudflare Access, TLS et le pare-feu doivent être configurés
+  et testés sur l'hébergement ; ce build ne les active pas.
 - L'API n'a aucun fichier public à exposer ; utiliser le répertoire vide privé si Plesk
   exige un Document Root pour cette application.
 

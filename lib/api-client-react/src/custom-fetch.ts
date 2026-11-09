@@ -8,6 +8,16 @@ export type BodyType<T> = T;
 
 export type AuthTokenGetter = () => Promise<string | null> | string | null;
 
+export type UnsafeRequestPreparation = {
+  input: RequestInfo | URL;
+  init: RequestInit;
+  method: string;
+  headers: Headers;
+};
+
+export type UnsafeRequestPreparationHandler =
+  (request: UnsafeRequestPreparation) => void | Promise<void>;
+
 const NO_BODY_STATUS = new Set([204, 205, 304]);
 const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -19,25 +29,12 @@ const CSRF_HEADER = "X-CSRF-Token";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
-let _adminApiPathPrefix: string | null = null;
-let _adminStepUpHandler: ((request: {
-  action: string;
-  query: Record<string, unknown>;
-  payload: unknown;
-}) => Promise<string>) | null = null;
+let _unsafeRequestPreparationHandler: UnsafeRequestPreparationHandler | null = null;
 
-export function setAdminApiPathPrefix(prefix: string | null): void {
-  _adminApiPathPrefix = prefix ? new URL(prefix, "http://sendflow.internal").pathname.replace(/\/+$/u, "") : null;
-}
-
-export function setAdminStepUpHandler(
-  handler: ((request: {
-    action: string;
-    query: Record<string, unknown>;
-    payload: unknown;
-  }) => Promise<string>) | null,
+export function setUnsafeRequestPreparationHandler(
+  handler: UnsafeRequestPreparationHandler | null,
 ): void {
-  _adminStepUpHandler = handler;
+  _unsafeRequestPreparationHandler = handler;
 }
 
 /**
@@ -104,14 +101,7 @@ export async function fetchWithCsrf(
 ): Promise<Response> {
   const method = resolveMethod(input, init.method);
   const headers = mergeHeaders(isRequest(input) ? input.headers : undefined, init.headers);
-  const stepUp = await getAdminStepUpRequest(input, init, method, headers);
-  if (stepUp) {
-    if (!_adminStepUpHandler) {
-      throw new Error("Administrator action confirmation is unavailable.");
-    }
-    const token = await _adminStepUpHandler(stepUp);
-    headers.set("x-admin-step-up", token);
-  }
+  await _unsafeRequestPreparationHandler?.({ input, init, method, headers });
   if (UNSAFE_METHODS.has(method)) {
     headers.set(CSRF_HEADER, await getCsrfToken());
   }
@@ -122,54 +112,6 @@ export async function fetchWithCsrf(
     headers,
     credentials: init.credentials ?? "include",
   });
-}
-
-async function getAdminStepUpRequest(
-  input: RequestInfo | URL,
-  init: RequestInit,
-  method: string,
-  headers: Headers,
-) {
-  if (!_adminApiPathPrefix || !UNSAFE_METHODS.has(method)) return null;
-  const url = new URL(resolveUrl(applyBaseUrl(input)), "http://sendflow.internal");
-  const prefix = _adminApiPathPrefix;
-  if (url.pathname !== prefix && !url.pathname.startsWith(`${prefix}/`)) return null;
-  const actionPath = url.pathname.slice(prefix.length) || "/";
-  if (new Set(["/sign-in", "/sign-out", "/refresh", "/activity", "/step-up"]).has(actionPath)) {
-    return null;
-  }
-
-  const query: Record<string, unknown> = {};
-  for (const [key, value] of url.searchParams) {
-    const existing = query[key];
-    query[key] = existing === undefined
-      ? value
-      : Array.isArray(existing)
-        ? [...existing, value]
-        : [existing, value];
-  }
-
-  let payload: unknown = null;
-  const contentType = headers.get("content-type")?.toLowerCase() ?? "";
-  if (contentType.includes("application/json")) {
-    let rawBody: string | null = typeof init.body === "string" ? init.body : null;
-    if (rawBody === null && isRequest(input)) {
-      rawBody = await input.clone().text();
-    }
-    if (rawBody?.trim()) {
-      try {
-        payload = JSON.parse(rawBody);
-      } catch {
-        throw new Error("Administrator action parameters are invalid.");
-      }
-    }
-  }
-
-  return {
-    action: `${method}:${actionPath}`,
-    query,
-    payload,
-  };
 }
 
 // Use loose check for URL — some runtimes (e.g. React Native) polyfill URL

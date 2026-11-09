@@ -36,6 +36,7 @@ required_files=(
   "dist/index.cjs"
   "dist/server/index.mjs"
   "dist/public/index.html"
+  "dist/admin/index.html"
   "dist/plesk-manifest.json"
   "artifacts/api-server/dist/index.cjs"
   "artifacts/api-server/dist/index.mjs"

@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { createReadStream } from "node:fs";
-import { readFile, realpath, stat } from "node:fs/promises";
+import { realpath, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { enforceIpAccess, trustedProxyHops } from "@workspace/db/ip-blocklist";
@@ -27,10 +27,12 @@ function sendNotFound(req: IncomingMessage, res: ServerResponse) {
 
 /** Shared by the production entry and isolated tests; every file passes the gate. */
 export function createSiteServer(
-  rootDirectory: string,
+  distributionDirectory: string,
   gate: (req: IncomingMessage, res: ServerResponse) => Promise<boolean> = enforceIpAccess,
 ) {
-  const root = resolve(rootDirectory);
+  const distributionRoot = resolve(distributionDirectory);
+  const publicRoot = resolve(distributionRoot, "public");
+  const privateRoot = resolve(distributionRoot, "admin");
   const server = createServer(async (req, res) => {
     try {
       if (!await gate(req, res)) return;
@@ -41,6 +43,18 @@ export function createSiteServer(
         res.setHeader("Strict-Transport-Security", "max-age=31536000");
       }
       const adminHost = isAdminHostAllowed(req.headers.host ?? "");
+      const root = adminHost ? privateRoot : publicRoot;
+      let rootInfo;
+      try {
+        rootInfo = await stat(root);
+      } catch {
+        sendNotFound(req, res);
+        return;
+      }
+      if (!rootInfo.isDirectory()) {
+        sendNotFound(req, res);
+        return;
+      }
       if (adminHost) {
         const connectSources = (process.env.SENDFLOW_ADMIN_CSP_CONNECT_SRC ?? "")
           .split(/\s+/u)
@@ -48,7 +62,7 @@ export function createSiteServer(
           .join(" ");
         res.setHeader(
           "Content-Security-Policy",
-          `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ${connectSources}`.trim(),
+          `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ${connectSources}`.trim(),
         );
       }
       let pathname: string;
@@ -84,16 +98,6 @@ export function createSiteServer(
       res.setHeader("Content-Type", mime[extname(file)] ?? "application/octet-stream");
       res.statusCode = 200;
       if (req.method === "HEAD") { res.end(); return; }
-      if (adminHost && file.endsWith("index.html")) {
-        const html = await readFile(actual, "utf8");
-        const protectedHtml = html.replace(
-          /<\/head>/iu,
-          '<meta name="sendflow-app-surface" content="admin"></head>',
-        );
-        res.setHeader("Content-Length", String(Buffer.byteLength(protectedHtml)));
-        res.end(protectedHtml);
-        return;
-      }
       res.setHeader("Content-Length", info.size);
       const stream = createReadStream(actual);
       stream.on("error", () => res.destroy());
@@ -114,8 +118,8 @@ export function startSiteServer() {
   trustedProxyHops(process.env.TRUST_PROXY_HOPS, process.env.NODE_ENV);
   const port = Number(process.env.PORT);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Valid PORT is required");
-  const root = fileURLToPath(new URL("../public/", import.meta.url));
-  const server = createSiteServer(root);
+  const distributionRoot = fileURLToPath(new URL("../", import.meta.url));
+  const server = createSiteServer(distributionRoot);
   server.listen(port, "0.0.0.0");
   return server;
 }

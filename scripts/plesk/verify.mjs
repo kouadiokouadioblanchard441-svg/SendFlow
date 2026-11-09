@@ -54,27 +54,37 @@ export async function verifyDistribution(root, service) {
   const files = await inventory(root);
   const names = new Set(files.map((file) => file.path));
   const entry = service === "web" ? "server/index.mjs" : "index.mjs";
-  for (const required of ["index.cjs", entry, ...(service === "web" ? ["public/index.html"] : [])]) {
+  for (const required of [
+    "index.cjs",
+    entry,
+    ...(service === "web" ? ["public/index.html", "admin/index.html"] : []),
+  ]) {
     if (!names.has(required)) throw new Error(`Missing release entry: ${required}`);
   }
   if (files.some((file) => file.path.endsWith(".map"))) {
     throw new Error("Release source maps are not included in the Plesk package");
   }
   if (service === "web") {
-    for (const file of files.filter((file) => file.path.startsWith("public/"))) {
+    for (const file of files.filter((file) => /^(?:public|admin)\//.test(file.path))) {
       if (/\.(?:html|js|css|json|svg|webmanifest)$/.test(file.path)) {
         const text = await readFile(path.join(root, file.path), "utf8");
         if (/\b(?:SUPABASE_DATABASE_URL|DATABASE_URL|FEEXPAY_(?:API_KEY|SHOP_ID|SANDBOX_API_KEY|SANDBOX_SHOP_ID)|DIDIT_(?:API_KEY|WEBHOOK_SECRET)|ESMS_API_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY|SENDFLOW_(?:VIEWER_PASSWORD|VIEWER_PHONE|PAYMENT_TEST_PHONE))\b/.test(text)) {
-          throw new Error(`Server-secret variable name found in public output: ${file.path}`);
+          throw new Error(`Server-secret variable name found in browser output: ${file.path}`);
+        }
+        if (file.path.startsWith("public/") &&
+          /admin|administration|administrateur|administratrice|administrator|sendflow-app-surface/i.test(text)) {
+          throw new Error(`Private interface marker found in public output: ${file.path}`);
         }
       }
     }
-    const html = await readFile(path.join(root, "public/index.html"), "utf8");
-    for (const match of html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)=["']([^"']+)["']/gi)) {
-      const url = new URL(match[1], "https://release.invalid/");
-      if (url.origin !== "https://release.invalid") continue;
-      const relative = `public${decodeURIComponent(url.pathname)}`;
-      if (!names.has(relative)) throw new Error(`Missing HTML asset: ${relative}`);
+    for (const surface of ["public", "admin"]) {
+      const html = await readFile(path.join(root, surface, "index.html"), "utf8");
+      for (const match of html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)=["']([^"']+)["']/gi)) {
+        const url = new URL(match[1], "https://release.invalid/");
+        if (url.origin !== "https://release.invalid") continue;
+        const relative = `${surface}${decodeURIComponent(url.pathname)}`;
+        if (!names.has(relative)) throw new Error(`Missing HTML asset: ${relative}`);
+      }
     }
   }
   return { service, startupFile: "index.cjs", esmEntry: entry, files };

@@ -3,9 +3,12 @@ export * from "./generated/api.schemas";
 export {
   fetchWithCsrf,
   resolveApiUrl,
-  setAdminApiPathPrefix,
-  setAdminStepUpHandler,
   setBaseUrl,
   setAuthTokenGetter,
+  setUnsafeRequestPreparationHandler,
 } from "./custom-fetch";
-export type { AuthTokenGetter } from "./custom-fetch";
+export type {
+  AuthTokenGetter,
+  UnsafeRequestPreparation,
+  UnsafeRequestPreparationHandler,
+} from "./custom-fetch";
