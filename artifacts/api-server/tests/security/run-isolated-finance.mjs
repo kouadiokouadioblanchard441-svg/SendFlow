@@ -41,6 +41,86 @@ try {
     "--dialect", "postgresql", "--schema", "./src/schema/index.ts"],
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
+  await owner.query(`ALTER TABLE sf_payment_limits
+      DROP CONSTRAINT IF EXISTS sf_payment_limits_unverified_incoming_max_check,
+      DROP COLUMN IF EXISTS maximum_unverified_incoming_minor;
+    ALTER TABLE sf_wallets
+      DROP CONSTRAINT IF EXISTS sf_wallets_unverified_received_minor_nonnegative_check,
+      DROP CONSTRAINT IF EXISTS sf_wallets_unverified_received_minor_safe_integer_check,
+      DROP COLUMN IF EXISTS unverified_received_minor`);
+  const migrationProvider = "fixture-receipt-migration";
+  await owner.query(`INSERT INTO sf_payment_aggregators
+    (code,name,enabled,created_by,updated_by)
+    VALUES($1,'Receipt migration fixture',false,'fixture','fixture')`, [migrationProvider]);
+  const receiptFixtureUsers = [
+    { id: "unverified-receipt-migration", amount: 25_000, approved: false },
+    { id: "approved-receipt-migration", amount: 50_000, approved: true },
+  ];
+  for (const fixture of receiptFixtureUsers) {
+    await owner.query("INSERT INTO sf_users(id,status,display_name) VALUES($1,'active',$2)", [fixture.id, fixture.id]);
+    const wallet = (await owner.query(`INSERT INTO sf_wallets(user_id,balance_minor)
+      VALUES($1,$2) RETURNING id`, [fixture.id, fixture.amount])).rows[0];
+    const ledgerEntry = (await owner.query(`INSERT INTO sf_wallet_ledger
+      (wallet_id,user_id,direction,amount_minor,balance_before_minor,balance_after_minor,
+       currency,reason,admin_user_id,idempotency_key)
+      VALUES($1,$2,'credit',$3,0,$3,'XOF','Confirmed payment fixture','fixture',$4)
+      RETURNING id`,
+    [wallet.id, fixture.id, fixture.amount, `receipt-migration-${fixture.id}`])).rows[0];
+    const transaction = (await owner.query(`INSERT INTO sf_transactions
+      (user_id,kind,status,sender_phone,recipient_phone,amount_minor,reference,idempotency_key)
+      VALUES($1,'deposit','succeeded','fixture-sender','fixture-recipient',$2,$3,$4)
+      RETURNING id`,
+    [fixture.id, fixture.amount, `receipt-migration-${fixture.id}`, `receipt-migration-${fixture.id}`])).rows[0];
+    await owner.query(`INSERT INTO sf_payment_intents
+      (transaction_id,provider_code,request_hash,kind,currency,amount_minor,fee_minor,fee_payer,
+       sender_total_minor,recipient_total_minor,state,ledger_entry_id)
+      VALUES($1,$2,$3,'deposit','XOF',$4,0,'sender',$4,$4,'succeeded',$5)`,
+    [transaction.id, migrationProvider, "a".repeat(64), fixture.amount, ledgerEntry.id]);
+    if (fixture.approved) {
+      await owner.query(`INSERT INTO sf_customer_identity_requests
+        (user_id,idempotency_key,personal_data_encrypted,status)
+        VALUES($1,$2,'encrypted fixture','approved')`,
+      [fixture.id, `receipt-migration-${fixture.id}`]);
+    }
+  }
+  const unverifiedReceiptMigration = readFileSync(join(root,
+    "lib/db/migrations/2026-11-09-unverified-wallet-receipt-limit.sql"), "utf8");
+  await owner.query(unverifiedReceiptMigration);
+  await owner.query(unverifiedReceiptMigration);
+  const seededLimits = (await owner.query(`SELECT minimum_deposit_minor, minimum_payout_minor,
+      maximum_payout_daily_minor, minimum_inter_network_minor, maximum_transfer_minor,
+      maximum_payin_minor, maximum_unverified_incoming_minor, version
+    FROM sf_payment_limits WHERE id='global'`)).rows[0];
+  assert.deepEqual(seededLimits, {
+    minimum_deposit_minor: 200,
+    minimum_payout_minor: 200,
+    maximum_payout_daily_minor: null,
+    minimum_inter_network_minor: 1,
+    maximum_transfer_minor: 10_000_000,
+    maximum_payin_minor: 2_000_000,
+    maximum_unverified_incoming_minor: 20_000,
+    version: 1,
+  });
+  const migratedWalletTotals = await owner.query(`SELECT user_id, unverified_received_minor
+    FROM sf_wallets
+    WHERE user_id IN ('unverified-receipt-migration','approved-receipt-migration')
+    ORDER BY user_id`);
+  assert.deepEqual(migratedWalletTotals.rows.map((row) => ({
+    user_id: row.user_id,
+    unverified_received_minor: Number(row.unverified_received_minor),
+  })), [
+    { user_id: "approved-receipt-migration", unverified_received_minor: 0 },
+    { user_id: "unverified-receipt-migration", unverified_received_minor: 25_000 },
+  ]);
+  const receiptFixtureIds = receiptFixtureUsers.map((fixture) => fixture.id);
+  await owner.query("DELETE FROM sf_customer_identity_requests WHERE user_id = ANY($1::text[])", [receiptFixtureIds]);
+  await owner.query(`DELETE FROM sf_payment_intents
+    WHERE transaction_id IN (SELECT id FROM sf_transactions WHERE user_id = ANY($1::text[]))`, [receiptFixtureIds]);
+  await owner.query("DELETE FROM sf_wallet_ledger WHERE user_id = ANY($1::text[])", [receiptFixtureIds]);
+  await owner.query("DELETE FROM sf_transactions WHERE user_id = ANY($1::text[])", [receiptFixtureIds]);
+  await owner.query("DELETE FROM sf_wallets WHERE user_id = ANY($1::text[])", [receiptFixtureIds]);
+  await owner.query("DELETE FROM sf_users WHERE id = ANY($1::text[])", [receiptFixtureIds]);
+  await owner.query("DELETE FROM sf_payment_aggregators WHERE code=$1", [migrationProvider]);
   await owner.query("DROP TABLE IF EXISTS sf_wallet_reservation_totals");
   await owner.query(`ALTER TABLE sf_countries DROP COLUMN payout_enabled;
     ALTER TABLE sf_operator_catalog DROP COLUMN payout_enabled;

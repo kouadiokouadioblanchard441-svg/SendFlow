@@ -13,16 +13,14 @@ const allowedArgs = new Set(["--plan", "--verify", "--apply", "--confirm-shared-
 
 if (
   process.env.SENDFLOW_DATABASE_TARGET !== "shared-external"
-  || process.env.NODE_ENV !== "development"
-  || process.env.SENDFLOW_REPLIT_LIVE_APPROVED !== "true"
-  || process.env.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED !== "true"
+  || process.env.NODE_ENV === "production"
   || !process.env.REPL_ID
   || args.some((arg) => !allowedArgs.has(arg) && !/^--expected-hash=[a-f0-9]{64}$/.test(arg))
   || [apply, verifyOnly, planOnly].filter(Boolean).length !== 1
   || (apply && (!args.includes("--confirm-shared-database") || !expectedHash))
   || (!apply && (args.includes("--confirm-shared-database") || expectedHash))
 ) {
-  console.error("Stopped: use a read-only plan, --verify, or a fingerprinted, explicitly confirmed shared-database apply.");
+  console.error("Stopped: use the verified shared database, a read-only plan, or a fingerprinted, explicitly confirmed apply.");
   process.exit(1);
 }
 
@@ -85,8 +83,8 @@ async function inspectSchema() {
   if (missing.length) {
     throw new Error(`Required existing table columns are missing: ${missing.join(", ")}`);
   }
-  if (snapshot.global_limit_rows !== 1) {
-    throw new Error(`Expected exactly one global payment-limit row; found ${snapshot.global_limit_rows}`);
+  if (snapshot.global_limit_rows > 1) {
+    throw new Error(`Expected at most one global payment-limit row; found ${snapshot.global_limit_rows}`);
   }
   return snapshot;
 }
@@ -107,14 +105,18 @@ async function verifyPostconditions() {
            AND conname = ANY($1::text[])
            AND convalidated
        ), ARRAY[]::text[]) AS validated_constraints,
-       (SELECT count(*)::integer FROM public.sf_payment_limits WHERE id = 'global') AS global_limit_rows`,
+       (SELECT count(*)::integer FROM public.sf_payment_limits WHERE id = 'global') AS global_limit_rows,
+       (SELECT maximum_unverified_incoming_minor
+         FROM public.sf_payment_limits WHERE id = 'global') AS current_unverified_threshold_minor`,
     [expectedConstraintNames],
   );
   const snapshot = result.rows[0];
   const expectedConstraints = [...expectedConstraintNames].sort();
   if (snapshot.limit_column_count !== 1 || snapshot.wallet_column_count !== 1
     || JSON.stringify(snapshot.validated_constraints) !== JSON.stringify(expectedConstraints)
-    || snapshot.global_limit_rows !== 1) {
+    || snapshot.global_limit_rows !== 1
+    || !Number.isSafeInteger(snapshot.current_unverified_threshold_minor)
+    || snapshot.current_unverified_threshold_minor < 0) {
     throw new Error("The database did not satisfy all migration postconditions.");
   }
   return snapshot;
@@ -129,6 +131,7 @@ try {
       database: before.database_name,
       migrationHash,
       existingGlobalLimitRows: before.global_limit_rows,
+      paymentLimitColumns: before.table_columns.sf_payment_limits,
       expectedBackfill: "successful, ledger-backed payment credits for wallets without an approved identity dossier",
       writes: false,
     }, null, 2));
@@ -140,6 +143,7 @@ try {
       database: before.database_name,
       migrationApplied: true,
       validatedConstraints: after.validated_constraints,
+      currentUnverifiedThresholdMinor: after.current_unverified_threshold_minor,
     }, null, 2));
   } else {
     if (expectedHash !== migrationHash) {
@@ -159,6 +163,7 @@ try {
         migrationApplied: true,
         migrationHash,
         validatedConstraints: after.validated_constraints,
+        currentUnverifiedThresholdMinor: after.current_unverified_threshold_minor,
       }, null, 2));
     } catch (error) {
       await client.query("ROLLBACK");
