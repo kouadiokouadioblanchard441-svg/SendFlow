@@ -69,7 +69,7 @@ function stripPrivateSurfaceFromPublicCss(): Plugin {
 }
 
 const serverNotFoundMiddleware: Connect.NextHandleFunction = (req, res, next) => {
-  if ((req.method !== 'GET' && req.method !== 'HEAD') || !req.headers.accept?.includes('text/html')) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
     next();
     return;
   }
@@ -81,6 +81,11 @@ const serverNotFoundMiddleware: Connect.NextHandleFunction = (req, res, next) =>
     pathname = '';
   }
 
+  const basePrefix = basePath === '/' ? '' : `/${basePath.split('/').filter(Boolean).join('/')}`;
+  const routePath = basePrefix && (pathname === basePrefix || pathname.startsWith(`${basePrefix}/`))
+    ? pathname.slice(basePrefix.length) || '/'
+    : pathname;
+
   if (
     !pathname
     || pathname.startsWith('/@')
@@ -88,6 +93,8 @@ const serverNotFoundMiddleware: Connect.NextHandleFunction = (req, res, next) =>
     || pathname.startsWith('/node_modules/')
     || pathname.startsWith('/__open-in-editor')
     || path.extname(pathname)
+    || routePath === '/api'
+    || routePath.startsWith('/api/')
   ) {
     next();
     return;

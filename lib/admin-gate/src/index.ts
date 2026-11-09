@@ -30,7 +30,6 @@ export function getAdminGateConfiguration(
     || path.startsWith("/api/")
     || path.startsWith("/assets/")
     || path.startsWith("/__sendflow_private_bundle__/")
-    || path.toLowerCase() === "/admin"
     || !token
     || !tokenPattern.test(token)
   ) return null;

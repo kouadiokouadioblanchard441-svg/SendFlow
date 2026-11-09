@@ -15,11 +15,11 @@ Build the private browser interface separately from the public customer site. Th
 
 **How to apply:** Keep the two values in Replit Secrets and inject them separately into Plesk's site and API runtimes when deploying. Scan both built bundles for configured values. The route necessarily appears in the request target; Plesk/Apache access logs need separate redaction or omission before production use. Treat external network controls as unverified until configured and tested.
 
-The old public browser routes `/admin` and `/admin/sign-in` remain retired. The server-configured access route is a gate, not authentication. The `/api/admin` prefix is a backend API contract and must require both the gate cookie and the existing Super Admin session.
+The legacy public browser URLs remain retired. Unknown browser paths must return 404 rather than fall through to the public application. The server-configured access route is a gate, not authentication. The `/api/admin` prefix is a backend API contract and must require both the gate cookie and the existing Super Admin session.
 
 **Why:** The user previously retired the public browser routes, then explicitly approved the separate server-configured path/token gate without removing mandatory MFA.
 
-**How to apply:** Keep the previous browser routes returning 404. Test alternate entry URLs, private asset URLs, and direct API calls without the gate cookie, then verify that a valid gate cookie alone still cannot access admin data.
+**How to apply:** Keep undeclared browser paths returning 404. Test alternate entry URLs, private asset URLs, and direct API calls without the gate cookie, then verify that a valid gate cookie alone still cannot access admin data.
 
 Historical grant/session tables and migrations are retained for data and migration history; they are not active administrator authorization and must not be dropped as part of route cleanup.
 

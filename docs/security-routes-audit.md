@@ -48,11 +48,10 @@ node --input-type=module -e \
 
 L'authentification administrateur passe par les endpoints API sous `/api/admin`
 (`/access`, `/sign-in`, `/sign-out`, `refresh` et `step-up`). Les routes métier
-restent protégées par la session Super Admin côté serveur. L'ancien endpoint
-PIN et les anciennes pages navigateur `/admin` et `/admin/sign-in` ne sont plus
-des chemins d'accès; les tests isolés confirment qu'ils sont refusés sur l'hôte
-public. Le préfixe API n'est pas considéré comme un secret ou une protection
-d'accès.
+restent protégées par la session Super Admin côté serveur. Les pages navigateur
+non déclarées ne sont pas routées vers l'interface publique; le serveur les
+refuse sans disposer de routes d'administration publiques. Le préfixe API n'est
+pas considéré comme un secret ou une protection d'accès.
 
 ## Constats et corrections
 

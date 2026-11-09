@@ -188,7 +188,7 @@ test("secret path shows only a token challenge until the server validates the to
   assert.match(privateAsset.body, /privateAccessLoaded/);
   assert.equal((await get(server, "/__sendflow_private_bundle__/assets/private.js")).status, 404);
 
-  for (const path of ["/admin", "/admin/sign-in", "/__sendflow_private_bundle__/assets/private.js"]) {
+  for (const path of ["/unregistered-page", "/__sendflow_private_bundle__/assets/private.js"]) {
     const response = await get(server, path);
     assert.equal(response.status, 404, path);
     assert.doesNotMatch(response.body, /Private access surface/i, path);

@@ -150,11 +150,6 @@ function protectAdminDevRoutes(basePath: string): Connect.NextHandleFunction {
       return;
     }
 
-    if (/^\/admin(?:\/|$)/iu.test(normalizedPath) && !exactGatePath) {
-      sendNotFound(req, res);
-      return;
-    }
-
     if (!exactGatePath || !configuration) {
       next();
       return;

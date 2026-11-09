@@ -451,14 +451,14 @@ for (const path of frontendPaths()) {
   });
 }
 
-test("frontend origin refuses hidden files, old panel paths, source maps, API fallbacks and mutations", async () => {
+test("frontend origin refuses hidden files, unknown pages, source maps, API fallbacks and mutations", async () => {
   for (const path of [
     "/.env",
     "/assets/private.js.map",
     "/api/not-a-page",
     "/%2eenv",
-    "/admin",
-    "/admin/sign-in",
+    "/unregistered-page",
+    "/unregistered-page/sign-in",
   ]) {
     const response = await request(path, { target: site });
     assert.ok([403, 404].includes(response.status), `${path}: ${response.status}`);
