@@ -8,4 +8,6 @@
 
 export interface PublicRegistrationSettings {
   emailVerificationEnabled: boolean;
+  /** @pattern ^[a-z]{2}$ */
+  defaultCountryCode: string;
 }

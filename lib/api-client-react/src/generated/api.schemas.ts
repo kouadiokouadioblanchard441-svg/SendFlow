@@ -201,6 +201,8 @@ export interface OtpRateLimitError {
 
 export interface PublicRegistrationSettings {
   emailVerificationEnabled: boolean;
+  /** @pattern ^[a-z]{2}$ */
+  defaultCountryCode: string;
 }
 
 export interface AdminRegistrationSettings {

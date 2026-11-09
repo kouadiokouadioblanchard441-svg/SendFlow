@@ -70,7 +70,11 @@ globalThis.fetch = async (input, init) => {
 };
 
 before(async () => {
-  await owner.query("INSERT INTO sf_registration_settings(id) VALUES('signup')");
+  await owner.query(`INSERT INTO sf_countries
+    (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,created_by,updated_by)
+    VALUES('ci','Côte d’Ivoire','+225',8,10,'audit-admin','audit-admin')
+    ON CONFLICT (country_code) DO NOTHING`);
+  await owner.query("INSERT INTO sf_registration_settings(id,default_country_code) VALUES('signup','ci')");
   await owner.query(
     "INSERT INTO sf_customer_service_settings(id) VALUES('global') ON CONFLICT (id) DO NOTHING",
   );

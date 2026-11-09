@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, db, eq, registrationSettingsTable } from "@workspace/db";
+import { and, countriesTable, db, eq, registrationSettingsTable } from "@workspace/db";
 import {
   GetAdminRegistrationSettingsResponse,
   GetRegistrationSettingsResponse,
@@ -27,8 +27,18 @@ router.get("/auth/registration-settings", async (req, res): Promise<void> => {
     const [setting] = await db.select().from(registrationSettingsTable)
       .where(eq(registrationSettingsTable.id, SETTING_ID)).limit(1);
     if (!setting) throw new Error("Signup setting is missing");
+    const [defaultCountry] = await db.select({ countryCode: countriesTable.countryCode })
+      .from(countriesTable)
+      .where(and(
+        eq(countriesTable.countryCode, setting.defaultCountryCode),
+        eq(countriesTable.enabled, true),
+      )).limit(1);
+    if (!defaultCountry) throw new Error("Configured signup country is unavailable");
     res.setHeader("Cache-Control", "no-store");
-    res.json(GetRegistrationSettingsResponse.parse({ emailVerificationEnabled: setting.emailVerificationEnabled }));
+    res.json(GetRegistrationSettingsResponse.parse({
+      emailVerificationEnabled: setting.emailVerificationEnabled,
+      defaultCountryCode: setting.defaultCountryCode,
+    }));
   } catch (error) {
     req.log.error({ err: error }, "Registration settings lookup failed");
     res.status(503).json({ error: "Le réglage d'inscription est indisponible." });

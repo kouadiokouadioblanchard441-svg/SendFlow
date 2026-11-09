@@ -95,7 +95,10 @@ try {
   const operatorLogoMigration = readFileSync(join(root, "lib/db/migrations/2026-10-22-operator-logos.sql"), "utf8");
   await owner.query(operatorLogoMigration);
   await owner.query(operatorLogoMigration);
-  await owner.query(`DROP TABLE sf_countries, sf_operation_aggregator_routes;
+  await owner.query(`ALTER TABLE sf_registration_settings
+      DROP CONSTRAINT IF EXISTS sf_registration_settings_default_country_code_sf_countries_coun,
+      DROP CONSTRAINT IF EXISTS sf_registration_settings_default_country_code_fk;
+    DROP TABLE sf_countries, sf_operation_aggregator_routes;
     ALTER TABLE sf_operator_catalog DROP COLUMN deposit_enabled,
       DROP COLUMN inter_network_enabled, DROP COLUMN international_enabled;
     INSERT INTO sf_payment_aggregator_routes

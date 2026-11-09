@@ -47,6 +47,7 @@
     "payments:test-account-plan": "node --experimental-strip-types scripts/authorize-replit-payment-test-account.mjs",
     "feexpay:configuration-plan": "node --experimental-strip-types scripts/configure-feexpay.mjs",
     "payment-providers:activation-plan": "node --experimental-strip-types scripts/activate-payment-providers.mjs",
+    "signup-default-country:schema-plan": "node --experimental-strip-types scripts/signup-default-country-migration.mjs",
     "pii:backfill": "node --experimental-strip-types scripts/backfill-sensitive-data.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

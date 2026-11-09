@@ -20,3 +20,9 @@ The user wants country and country-specific operator catalogs managed through th
 **Why:** the user asked for the initial West/Central African country set and future additions to be configurable from the existing panel rather than coded into the application.
 
 **How to apply:** Keep the database-backed admin catalog as the source of truth. New countries and operators must start with payment operations disabled; refuse deletion when existing data or routing depends on an entry.
+
+The signup and account country default is a Supabase registration setting, not a frontend country-code constant or frontend-editable control. The frontend may read it from the API to display the initial selection, but only server/database configuration changes it.
+
+**Why:** the user requested Côte d’Ivoire as the initial choice and explicitly said not to hardcode the country in the application.
+
+**How to apply:** Read the default code from the registration-settings API, preserve a customer’s saved country choice, and fail closed if the configured default is missing or disabled. Keep country-default mutation out of frontend pages and client contracts.

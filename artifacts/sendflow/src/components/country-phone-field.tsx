@@ -1,8 +1,13 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X } from 'lucide-react';
-import { getGetAuthCountriesQueryKey, useGetAuthCountries } from '@workspace/api-client-react';
-import { DEFAULT_ACCOUNT_COUNTRY, readSavedAccountCountry } from '@/lib/account-country';
+import {
+  getGetAuthCountriesQueryKey,
+  getGetRegistrationSettingsQueryKey,
+  useGetAuthCountries,
+  useGetRegistrationSettings,
+} from '@workspace/api-client-react';
+import { readSavedAccountCountry } from '@/lib/account-country';
 import { orderCountriesWithDefaultFirst } from '@/lib/country-picker-order';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
 
@@ -34,6 +39,14 @@ export function CountryPhoneField({
       staleTime: 0, refetchInterval: 30_000, refetchOnWindowFocus: true,
     },
   });
+  const registrationSettings = useGetRegistrationSettings({
+    query: {
+      queryKey: getGetRegistrationSettingsQueryKey(),
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+    },
+  });
+  const defaultCountryCode = registrationSettings.data?.defaultCountryCode ?? '';
   const countries = useMemo<CountryOption[]>(() => orderCountriesWithDefaultFirst(
     (catalog.data?.countries ?? [])
       .filter((country) => !registrationOnly || country.enabled)
@@ -42,10 +55,10 @@ export function CountryPhoneField({
         dialCode: country.phonePrefix, flag: country.flag,
         minPhoneDigits: country.minPhoneDigits, maxPhoneDigits: country.maxPhoneDigits,
       })),
-    DEFAULT_ACCOUNT_COUNTRY.countryCode ?? 'ci',
-  ), [catalog.data, registrationOnly]);
+    defaultCountryCode,
+  ), [catalog.data, defaultCountryCode, registrationOnly]);
   const [selectedCode, setSelectedCode] = useState<string | null>(
-    () => readSavedAccountCountry()?.countryCode ?? DEFAULT_ACCOUNT_COUNTRY.countryCode ?? null,
+    () => readSavedAccountCountry()?.countryCode ?? null,
   );
   const selectedCountry = countries.find((country) => country.countryCode === selectedCode);
   const [isOpen, setIsOpen] = useState(false);
@@ -57,12 +70,11 @@ export function CountryPhoneField({
   const inputId = useId();
   const selectedIdentity = selectedCountry ? `${selectedCountry.countryCode}:${selectedCountry.dialCode}` : '';
   useEffect(() => {
-    if (!catalog.data || selectedCountry) return;
-    const defaultCountry = countries.find(
-      (country) => country.countryCode === DEFAULT_ACCOUNT_COUNTRY.countryCode,
-    );
+    if (!catalog.data || !registrationSettings.data || selectedCountry) return;
+    const defaultCountry = countries.find((country) =>
+      country.countryCode === registrationSettings.data.defaultCountryCode);
     if (defaultCountry) setSelectedCode(defaultCountry.countryCode);
-  }, [catalog.data, countries, selectedCountry]);
+  }, [catalog.data, countries, registrationSettings.data, selectedCountry]);
   useEffect(() => {
     if (selectedCountry) callbackRef.current?.(selectedCountry);
   }, [selectedIdentity]);
@@ -142,8 +154,16 @@ export function CountryPhoneField({
     requestAnimationFrame(() => pickerTriggerRef.current?.focus());
   };
   const maxPhoneDigits = selectedCountry?.maxPhoneDigits ?? 15;
+  const defaultCountryUnavailable = Boolean(
+    catalog.data && registrationSettings.data &&
+    !countries.some((country) => country.countryCode === registrationSettings.data.defaultCountryCode),
+  );
   const displayedError = error || (catalog.isError
     ? 'La liste des pays est temporairement indisponible.'
+    : registrationSettings.isError
+      ? 'Le pays par défaut est temporairement indisponible.'
+      : defaultCountryUnavailable
+        ? 'Le pays par défaut est indisponible dans le catalogue.'
     : !catalog.isLoading && countries.length === 0 ? 'Aucun pays n’est disponible pour le moment.' : undefined);
 
   return (
@@ -153,7 +173,8 @@ export function CountryPhoneField({
           <label className="sr-only" htmlFor={inputId}>Numéro de téléphone</label>
           <button type="button" className="sendflow-signup-country" ref={pickerTriggerRef}
             onClick={() => { setQuery(''); setIsOpen(true); }}
-            disabled={catalog.isLoading || catalog.isError || countries.length === 0}
+            disabled={catalog.isLoading || catalog.isError || registrationSettings.isLoading ||
+              registrationSettings.isError || defaultCountryUnavailable || countries.length === 0}
             aria-haspopup="dialog" aria-expanded={isOpen}
             aria-label={selectedCountry
               ? `Pays sélectionné : ${selectedCountry.name}, ${selectedCountry.dialCode}. Ouvrir la liste`

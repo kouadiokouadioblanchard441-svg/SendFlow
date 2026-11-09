@@ -367,8 +367,12 @@ export const GetAuthCountriesResponse = zod.object({
 /**
  * @summary Read whether email verification is required for signup
  */
+export const getRegistrationSettingsResponseDefaultCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+
+
 export const GetRegistrationSettingsResponse = zod.object({
-  "emailVerificationEnabled": zod.boolean()
+  "emailVerificationEnabled": zod.boolean(),
+  "defaultCountryCode": zod.string().regex(getRegistrationSettingsResponseDefaultCountryCodeRegExp)
 })
 
 

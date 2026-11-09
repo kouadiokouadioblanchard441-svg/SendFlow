@@ -5501,7 +5501,10 @@ components:
       properties:
         emailVerificationEnabled:
           type: boolean
-      required: [emailVerificationEnabled]
+        defaultCountryCode:
+          type: string
+          pattern: "^[a-z]{2}$"
+      required: [emailVerificationEnabled, defaultCountryCode]
     AdminRegistrationSettings:
       type: object
       properties:

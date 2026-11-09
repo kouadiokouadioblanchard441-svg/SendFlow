@@ -5,14 +5,30 @@ export type AccountCountry = {
   flag: string;
 };
 
+export type AccountCountryCatalogEntry = {
+  countryCode: string;
+  countryName: string;
+  phonePrefix: string;
+  flag: string;
+};
+
 export const ACCOUNT_COUNTRY_KEY = 'sendflow.account.country';
 
-export const DEFAULT_ACCOUNT_COUNTRY: AccountCountry = {
-  countryCode: 'ci',
-  name: 'Côte d’Ivoire',
-  dialCode: '+225',
-  flag: '🇨🇮',
-};
+export function getConfiguredDefaultAccountCountry(
+  countries: readonly AccountCountryCatalogEntry[],
+  defaultCountryCode: string,
+): AccountCountry | undefined {
+  const configured = countries.find(
+    (country) => country.countryCode.toLowerCase() === defaultCountryCode.toLowerCase(),
+  );
+  if (!configured) return undefined;
+  return {
+    countryCode: configured.countryCode,
+    name: configured.countryName,
+    dialCode: configured.phonePrefix,
+    flag: configured.flag,
+  };
+}
 
 export function saveAccountCountry(country: AccountCountry) {
   window.sessionStorage.setItem(ACCOUNT_COUNTRY_KEY, JSON.stringify(country));
@@ -44,8 +60,4 @@ export function readSavedAccountCountry(): AccountCountry | undefined {
   }
 
   return undefined;
-}
-
-export function readAccountCountry(): AccountCountry {
-  return readSavedAccountCountry() ?? DEFAULT_ACCOUNT_COUNTRY;
 }

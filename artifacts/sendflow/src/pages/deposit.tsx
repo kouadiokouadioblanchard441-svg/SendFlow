@@ -12,7 +12,7 @@ import { TransferRequestDialog, type TransferRequestState } from '@/components/t
 import { OperatorMark } from '@/components/operator-mark';
 import { getGetPublicPricingQueryKey, useGetPublicPricing } from '@workspace/api-client-react';
 import { transactionSubmissionAvailable, transactionUnavailableReason } from '@/lib/transaction-readiness';
-import { readAccountCountry } from '@/lib/account-country';
+import { useAccountCountry } from '@/hooks/use-account-country';
 import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import { useServerTransferQuote } from '@/hooks/use-server-transfer-quote';
 import { isValidPhoneForCountry } from '@/lib/phone-rules';
@@ -41,7 +41,7 @@ type DepositOperator = {
 export default function DepositPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const accountCountry = readAccountCountry();
+  const { country: accountCountry } = useAccountCountry();
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
   const paymentLimitsQuery = usePaymentLimits();
   const paymentLimits = paymentLimitsQuery.data;

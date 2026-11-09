@@ -15,7 +15,7 @@ import {
 import { ArrowLeft, CalendarDays, Check, ShieldCheck } from 'lucide-react';
 import { Redirect, useLocation } from 'wouter';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE } from '@/lib/auth-validation';
-import { readAccountCountry } from '@/lib/account-country';
+import { useAccountCountry } from '@/hooks/use-account-country';
 import { clearLegacyAccountProfile, type AccountProfile } from '@/lib/account-profile';
 import { adminRoute } from '@/lib/admin-route';
 import { useSeo } from '@/lib/seo';
@@ -155,7 +155,7 @@ export default function AccountInfoPage() {
   });
   const updateEmailMarketingPreference = useUpdateCustomerEmailMarketingPreference();
   const updateProfileMutation = useUpdateCustomerProfile();
-  const accountCountry = readAccountCountry();
+  const { country: accountCountry, isReady: accountCountryReady } = useAccountCountry();
   const [form, setForm] = useState<AccountProfile>({
     lastName: '',
     firstName: '',
@@ -308,9 +308,9 @@ export default function AccountInfoPage() {
 
             <div className="sendflow-account-info-control">
               <span className="sendflow-account-info-field-label">Pays</span>
-              <div className="sendflow-account-info-field sendflow-account-info-country" aria-label={`Pays : ${accountCountry.name}`}>
+              <div className="sendflow-account-info-field sendflow-account-info-country" aria-label={`Pays : ${accountCountry.name || 'indisponible'}`}>
                 <span className="sendflow-account-info-country-flag" aria-hidden="true">{accountCountry.flag}</span>
-                <span>{accountCountry.name}</span>
+                <span>{accountCountryReady ? accountCountry.name : 'Pays indisponible'}</span>
               </div>
               <p className="sendflow-account-info-hint">Pays associé à votre compte</p>
             </div>

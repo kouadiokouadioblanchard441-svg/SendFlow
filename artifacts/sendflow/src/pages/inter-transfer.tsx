@@ -14,7 +14,7 @@ import { TransferRequestDialog, type TransferRequestState } from '@/components/t
 import { OperatorMark } from '@/components/operator-mark';
 import { usePaymentLimits } from '@/hooks/use-payment-limits';
 import PageLoadingScreen from '@/components/page-loading-screen';
-import { readAccountCountry } from '@/lib/account-country';
+import { useAccountCountry } from '@/hooks/use-account-country';
 import { isValidPhoneForCountry } from '@/lib/phone-rules';
 import {
   getGetPublicPricingQueryKey,
@@ -84,7 +84,7 @@ const savedContacts: SavedContact[] = [];
 export default function InterNetworkTransferPage() {
   const [, setLocation] = useLocation();
   const isUnlocked = window.sessionStorage.getItem('sendflow.pin.unlocked') === 'true';
-  const accountCountry = readAccountCountry();
+  const { country: accountCountry } = useAccountCountry();
   const pricingQuery = useGetPublicPricing({ query: { enabled: isUnlocked, queryKey: getGetPublicPricingQueryKey(), staleTime: 0, refetchInterval: 30_000 } });
   const paymentLimitsQuery = usePaymentLimits();
   const paymentLimits = paymentLimitsQuery.data;
