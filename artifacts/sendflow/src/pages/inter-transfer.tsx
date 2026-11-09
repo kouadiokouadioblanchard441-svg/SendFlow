@@ -28,6 +28,7 @@ import {
   formatPricingVersion,
   formatServerFeePercent as formatPricingFeeRate,
   formatQuoteAmount,
+  isIdentityVerificationRequired,
   serverQuoteAmounts,
   serverQuoteErrorMessage,
 } from '@/lib/server-transfer-quote';
@@ -362,12 +363,15 @@ export default function InterNetworkTransferPage() {
               const status = typeof error === 'object' && error !== null && 'status' in error
                 ? (error as { status?: number }).status
                 : undefined;
-              if (status === 409) {
+              if (isIdentityVerificationRequired(error)) {
+                setDialogFailureTitle('Vérification d’identité requise');
+                setDialogFailureCopy(serverQuoteErrorMessage(error));
+              } else if (status === 409) {
                 setDialogFailureTitle('Plafond mensuel dépassé');
-                setDialogFailureCopy(`${serverQuoteErrorMessage(error)} Aucun transfert n’a été initié et aucun montant n’a été débité.`);
+                setDialogFailureCopy(serverQuoteErrorMessage(error));
               } else if (status === 403) {
-                setDialogFailureTitle('Vérification requise');
-                setDialogFailureCopy(`${serverQuoteErrorMessage(error)} Aucun transfert n’a été initié et aucun montant n’a été débité.`);
+                setDialogFailureTitle('Action non autorisée');
+                setDialogFailureCopy(serverQuoteErrorMessage(error));
               } else {
                 setDialogFailureTitle('Vérification indisponible');
                 setDialogFailureCopy(serverQuoteErrorMessage(error));

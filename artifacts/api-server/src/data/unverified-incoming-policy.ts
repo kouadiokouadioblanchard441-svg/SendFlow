@@ -43,6 +43,10 @@ export async function getUnverifiedIncomingPolicy(userId: string) {
   };
 }
 
-export function unverifiedOutgoingBlockedMessage(limitMinor: number): string {
-  return `Vous avez atteint le plafond de ${limitMinor.toLocaleString("fr-FR")} FCFA d’encaissements sans vérification d’identité. Faites vérifier votre identité pour effectuer un retrait ou un transfert. Les encaissements restent autorisés.`;
+export function unverifiedOutgoingBlockedMessage(
+  operation: "international" | "inter-network" = "international",
+): string {
+  return operation === "international"
+    ? "Vérifiez votre identité avant d’envoyer de l’argent de votre compte SendFlow vers Mobile Money. Les encaissements restent possibles. Aucun transfert n’a été lancé."
+    : "Vérifiez votre identité avant d’effectuer ce transfert avec SendFlow. Les encaissements restent possibles. Aucun transfert n’a été lancé.";
 }

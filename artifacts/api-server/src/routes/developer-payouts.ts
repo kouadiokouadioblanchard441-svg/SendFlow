@@ -90,7 +90,7 @@ router.post("/v1/payout-quote", async (req, res): Promise<void> => {
   try {
     const identityLimit = await getUnverifiedIncomingPolicy(key.userId);
     if (identityLimit.outgoingBlocked) {
-      throw new PayoutPolicyError(403, unverifiedOutgoingBlockedMessage(identityLimit.limitMinor));
+      throw new PayoutPolicyError(403, unverifiedOutgoingBlockedMessage());
     }
     const wallet = await loadMerchantPayoutWallet(key.userId);
     if (wallet.availableMinor <= 0) {
@@ -125,7 +125,7 @@ router.post("/v1/payouts", async (req, res): Promise<void> => {
   try {
     const identityLimit = await getUnverifiedIncomingPolicy(key.userId);
     if (identityLimit.outgoingBlocked) {
-      throw new PayoutPolicyError(403, unverifiedOutgoingBlockedMessage(identityLimit.limitMinor));
+      throw new PayoutPolicyError(403, unverifiedOutgoingBlockedMessage());
     }
     const wallet = await loadMerchantPayoutWallet(key.userId);
     if (wallet.availableMinor <= 0) {

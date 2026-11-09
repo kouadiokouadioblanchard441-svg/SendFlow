@@ -4,7 +4,7 @@ import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import {
   transferQuoteKey, isQuoteForInput, serverQuoteAmounts,
   formatQuoteAmount, formatServerFeePercent, formatPricingVersion,
-  didPricingVersionChange, serverQuoteErrorMessage,
+  didPricingVersionChange, isIdentityVerificationRequired, serverQuoteErrorMessage,
   serverQuoteQueryOptions, visibleServerQuote,
 } from './server-transfer-quote.ts';
 
@@ -41,6 +41,15 @@ test('pricing version changes are detectable and quote errors are mapped without
   assert.equal(didPricingVersionChange(1, 2), true);
   assert.match(serverQuoteErrorMessage({ status: 400 }), /opérateur et les numéros/);
   assert.match(serverQuoteErrorMessage({ status: 401 }), /Reconnectez-vous/);
+  const identityError = { status: 403, data: { code: 'identity_verification_required' } };
+  assert.equal(isIdentityVerificationRequired(identityError), true);
+  assert.equal(isIdentityVerificationRequired({ status: 403, data: { code: 'pin_required' } }), false);
+  assert.equal(serverQuoteErrorMessage(identityError),
+    'Vérifiez votre identité avant d’envoyer de l’argent de votre compte SendFlow vers Mobile Money. Les encaissements restent possibles. Aucun transfert n’a été lancé.');
+  const interNetworkIdentityError = { status: 403, data: { code: 'identity_verification_required_for_transfer' } };
+  assert.equal(isIdentityVerificationRequired(interNetworkIdentityError), true);
+  assert.equal(serverQuoteErrorMessage(interNetworkIdentityError),
+    'Vérifiez votre identité avant d’effectuer ce transfert avec SendFlow. Les encaissements restent possibles. Aucun transfert n’a été lancé.');
   assert.match(serverQuoteErrorMessage({ status: 409 }), /limite disponible/);
   assert.match(serverQuoteErrorMessage({ status: 429 }), /Patientez un instant/);
   assert.match(serverQuoteErrorMessage({ status: 503, message: 'sensitive internal detail' }), /Aucun transfert n’a été lancé/i);

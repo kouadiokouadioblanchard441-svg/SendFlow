@@ -23,7 +23,26 @@ export function didPricingVersionChange(previous: number | null, current: number
   return previous !== null && previous !== current;
 }
 
+export function isIdentityVerificationRequired(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('data' in error)) return false;
+  const data = (error as { data?: unknown }).data;
+  return typeof data === 'object' && data !== null
+    && 'code' in data
+    && (data.code === 'identity_verification_required'
+      || data.code === 'identity_verification_required_for_transfer');
+}
+
 export function serverQuoteErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'data' in error) {
+    const data = (error as { data?: unknown }).data;
+    if (typeof data === 'object' && data !== null && 'code' in data
+      && data.code === 'identity_verification_required_for_transfer') {
+      return 'Vérifiez votre identité avant d’effectuer ce transfert avec SendFlow. Les encaissements restent possibles. Aucun transfert n’a été lancé.';
+    }
+  }
+  if (isIdentityVerificationRequired(error)) {
+    return 'Vérifiez votre identité avant d’envoyer de l’argent de votre compte SendFlow vers Mobile Money. Les encaissements restent possibles. Aucun transfert n’a été lancé.';
+  }
   const status = typeof error === 'object' && error !== null && 'status' in error
     ? (error as { status?: unknown }).status
     : undefined;

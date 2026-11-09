@@ -33,7 +33,15 @@ router.post("/me/transfer-quote", async (req, res): Promise<void> => {
     if (parsed.data.kind !== "deposit") {
       const identityLimit = await getUnverifiedIncomingPolicy(session.userId);
       if (identityLimit.outgoingBlocked) {
-        res.status(403).json({ error: unverifiedOutgoingBlockedMessage(identityLimit.limitMinor) });
+        const isWalletToMobileMoney = parsed.data.kind === "international";
+        res.status(403).json({
+          code: isWalletToMobileMoney
+            ? "identity_verification_required"
+            : "identity_verification_required_for_transfer",
+          error: unverifiedOutgoingBlockedMessage(
+            isWalletToMobileMoney ? "international" : "inter-network",
+          ),
+        });
         return;
       }
     }

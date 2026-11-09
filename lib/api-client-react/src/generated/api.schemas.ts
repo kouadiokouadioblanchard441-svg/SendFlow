@@ -104,6 +104,8 @@ export interface HealthStatus {
 
 export interface ErrorEnvelope {
   error: string;
+  /** Stable machine-readable error code when a client needs to distinguish a specific action. */
+  code?: string;
 }
 
 export interface CustomerPortalEligibilityResult {
