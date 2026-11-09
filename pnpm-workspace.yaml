@@ -37,12 +37,14 @@ minimumReleaseAgeExclude:
 
 allowBuilds:
   '@swc/core': true
+  argon2: true
   esbuild: true
   msw: true
   unrs-resolver: true
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - argon2
   - esbuild
   - msw
   - unrs-resolver

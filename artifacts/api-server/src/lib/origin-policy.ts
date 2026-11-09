@@ -1,6 +1,7 @@
 export type OriginEnvironment = {
   NODE_ENV?: string;
   CORS_ALLOWED_ORIGINS?: string;
+  SENDFLOW_ADMIN_ALLOWED_ORIGINS?: string;
   REPLIT_DOMAINS?: string;
   REPLIT_DEV_DOMAIN?: string;
 };
@@ -42,8 +43,12 @@ export function getAllowedOrigins(
     ? normalizeConfiguredOrigin(environment.REPLIT_DEV_DOMAIN)
     : null;
   if (environment.NODE_ENV === "production") {
-    const configuredValues = (environment.CORS_ALLOWED_ORIGINS ?? "")
-      .split(",")
+    const configuredValues = [
+      environment.CORS_ALLOWED_ORIGINS,
+      environment.SENDFLOW_ADMIN_ALLOWED_ORIGINS,
+    ]
+      .filter((value): value is string => Boolean(value))
+      .flatMap((value) => value.split(","))
       .map((value) => value.trim())
       .filter(Boolean);
     if (configuredValues.length === 0) {
@@ -77,6 +82,7 @@ export function getAllowedOrigins(
 
   const configuredValues = [
     environment.CORS_ALLOWED_ORIGINS,
+    environment.SENDFLOW_ADMIN_ALLOWED_ORIGINS,
     environment.REPLIT_DOMAINS,
     environment.REPLIT_DEV_DOMAIN,
   ];

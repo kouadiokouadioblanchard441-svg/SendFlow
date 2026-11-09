@@ -13,6 +13,8 @@ export const ANONYMOUS_CSRF_COOKIE = "__Host-sendflow_csrf";
 
 const CUSTOMER_SESSION_COOKIE = "__Host-sendflow_session";
 const ADMIN_SESSION_COOKIE = "__Host-sendflow_admin";
+const ADMIN_ACCESS_COOKIE = "__Host-sendflow_admin_access";
+const ADMIN_REFRESH_COOKIE = "__Host-sendflow_admin_refresh";
 const OPAQUE_COOKIE_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
 const SIGNATURE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const ANONYMOUS_COOKIE_NONCE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
@@ -52,9 +54,11 @@ function readOpaqueCookie(cookieHeader: string | undefined, name: string): strin
 
 function authenticatedBinding(req: Request): string | null {
   const customerSession = readOpaqueCookie(req.headers.cookie, CUSTOMER_SESSION_COOKIE);
-  const adminSession = readOpaqueCookie(req.headers.cookie, ADMIN_SESSION_COOKIE);
-  if (customerSession || adminSession) {
-    return `authenticated:v1:${customerSession ?? ""}:${adminSession ?? ""}`;
+  const legacyAdminSession = readOpaqueCookie(req.headers.cookie, ADMIN_SESSION_COOKIE);
+  const adminAccess = readOpaqueCookie(req.headers.cookie, ADMIN_ACCESS_COOKIE);
+  const adminRefresh = readOpaqueCookie(req.headers.cookie, ADMIN_REFRESH_COOKIE);
+  if (customerSession || legacyAdminSession || adminAccess || adminRefresh) {
+    return `authenticated:v2:${customerSession ?? ""}:${legacyAdminSession ?? ""}:${adminAccess ?? ""}:${adminRefresh ?? ""}`;
   }
   return null;
 }

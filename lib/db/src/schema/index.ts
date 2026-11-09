@@ -1,5 +1,6 @@
 export * from "./admin-audit";
 export * from "./admin-access";
+export * from "./admin-auth";
 export * from "./ip-blocklist";
 export * from "./network-defense";
 export * from "./api-request-limits";

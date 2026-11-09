@@ -11,6 +11,10 @@ export const adminAuditLogsTable = pgTable(
     reason: varchar("reason", { length: 500 }),
     amountMinor: bigint("amount_minor", { mode: "number" }),
     currency: varchar("currency", { length: 3 }),
+    sessionId: uuid("session_id"),
+    ipHash: varchar("ip_hash", { length: 64 }),
+    userAgentHash: varchar("user_agent_hash", { length: 64 }),
+    outcome: varchar("outcome", { length: 24 }).notNull().default("success"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -26,6 +30,14 @@ export const adminAuditLogsTable = pgTable(
 export type AdminAuditAction =
   | "admin_sign_in"
   | "admin_sign_out"
+  | "admin_login_failure"
+  | "admin_totp_failure"
+  | "admin_refresh"
+  | "admin_refresh_reuse"
+  | "admin_step_up"
+  | "admin_session_revoked"
+  | "admin_password_changed"
+  | "admin_recovery"
   | "admin_pin_unlock"
   | "admin_pin_failure"
   | "provision_admin"
