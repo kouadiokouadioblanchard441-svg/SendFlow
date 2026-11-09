@@ -389,6 +389,8 @@ test('Direct API OTP section includes country commands, OTP example, and Wave ha
   assert.match(docsCopy, /Senegal · Wave/);
   assert.match(docsCopy, /flow\.redirectUrl/);
   assert.match(docsCopy, /directOtpRequiredResponse/);
+  assert.match(docsCopy, /const directOtpChallengeResponse =/);
+  assert.match(docsCopy, /"action": "enter_otp",\s+"reference": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642"/);
 
   const otpSection = docsCopy.indexOf('<h3 id="direct-otp-guide">{t.mobileMoneyOtpTitle}</h3>');
   const countrySection = docsCopy.indexOf('<h3>{t.mobileMoneyCountryTitle}</h3>', otpSection);
@@ -399,6 +401,7 @@ test('Direct API OTP section includes country commands, OTP example, and Wave ha
   assert.match(otpSectionMarkup, /example="start-attempt"/);
   assert.match(otpSectionMarkup, /example="submit-otp"/);
   assert.match(otpSectionMarkup, /example="confirm-otp"/);
+  assert.match(otpSectionMarkup, /201 · flow\.action = enter_otp/);
   assert.match(otpSectionMarkup, /example="handle-flow-action"/);
 });
 

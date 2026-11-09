@@ -1004,11 +1004,29 @@ const directAttemptResponse = `{
 
 const directOtpRequiredResponse = `{
   "error": "otp_required",
-  "message": "Obtenez le code demandé par l’opérateur, puis relancez la même requête avec le champ otp.",
+  "message": "Un code OTP est requis. Obtenez-le selon l’instruction de l’opérateur, puis relancez la tentative avec le champ otp.",
   "reference": null,
   "flow": {
     "action": "enter_otp",
     "reference": null,
+    "otpMethod": "ussd",
+    "otpCommand": "#144*82#",
+    "redirectUrl": null
+  }
+}`;
+
+const directOtpChallengeResponse = `{
+  "id": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28641",
+  "attemptId": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
+  "state": "waiting",
+  "amountMinor": 12500,
+  "currency": "XOF",
+  "ussdCode": "#144*82#",
+  "pollToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "merchantReference": "ORDER-2026-0043",
+  "flow": {
+    "action": "enter_otp",
+    "reference": "9d8e1e40-bb2a-4d83-8e50-a5c1b8d28642",
     "otpMethod": "ussd",
     "otpCommand": "#144*82#",
     "redirectUrl": null
@@ -1539,10 +1557,12 @@ export default function DocsPage() {
               <h4>{t.mobileMoneyOtpExampleTitle}</h4>
               <CodePanel language={language} label={t.codeLabel} example="start-attempt" />
               <h4>{language === 'fr' ? 'Envoyer un OTP déjà obtenu' : 'Submit an OTP obtained beforehand'}</h4>
-              <CodePanel language={language} label={t.codeLabel} example="submit-otp" />
               <ResponsePanel language={language} label="400 · otp_required" response={directOtpRequiredResponse} />
+              <CodePanel language={language} label={t.codeLabel} example="submit-otp" />
               <div className="sf-docs-callout">{t.mobileMoneyOtpExampleNote}</div>
-              <h4>{language === 'fr' ? 'Confirmer un défi OTP' : 'Confirm an OTP challenge'}</h4>
+              <h4>{language === 'fr' ? 'Réponse d’un défi OTP démarré par l’opérateur' : 'Response to an operator-started OTP challenge'}</h4>
+              <ResponsePanel language={language} label="201 · flow.action = enter_otp" response={directOtpChallengeResponse} />
+              <h4>{language === 'fr' ? 'Confirmer le défi avec le code reçu' : 'Confirm the challenge with the received code'}</h4>
               <CodePanel language={language} label={t.codeLabel} example="confirm-otp" />
             </section>
             <h3>{t.mobileMoneyFlowsTitle}</h3>
