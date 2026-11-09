@@ -65,11 +65,12 @@ remediate are:
     level phone-number encryption, or automated anomaly detection was observed
     in the inspected API configuration. The frontend's final production
     response headers were not available for this review.
-12. The API now selects the database target explicitly: Replit development uses
-     its own `DATABASE_URL`, while production requires `NODE_ENV=production`
-     and rejects the Replit runtime. The shared database URL is stored as a
-     server-side secret and read by the server database connection layer. Keep
-     the value out of client bundles and public responses.
+12. SendFlow uses the owner-designated Supabase database as its only application
+    database. Replit Preview connects to it through server-side secrets with
+    verified TLS; the Plesk process must use that same Supabase database. The
+    effective Plesk environment was not inspected for this assessment. Replit's
+    managed PostgreSQL is not part of SendFlow's data path. Keep connection
+    values out of client bundles and public responses.
 13. The dependency scan found one high and one moderate advisory. The high
     advisory is in a production transitive dependency; exploitability through
     the current static proxy configuration has not been established.
@@ -698,17 +699,17 @@ or target user.
 
 ## Deployment boundary and dependency scan
 
-### Database/environment separation
+### Single database: Supabase
 
-The database target is now explicit. Replit development selects its managed
-`DATABASE_URL`; the production target requires `NODE_ENV=production` and rejects
-the Replit runtime. Drizzle also separates Replit development from Plesk
-production. The shared database URL is stored in Replit Secrets and is available
-to the server process through its environment, even though
-the current database client does not select it. The user must remove the shared
-production secret to complete credential isolation. The development database
-was checked read-only; no production database query, write, or migration was
-run.
+The project owner designates Supabase as SendFlow's only application database
+for both Replit Preview and Plesk production. Replit connects using the
+server-side `SUPABASE_DATABASE_URL` and trusted CA configuration with
+certificate and hostname verification. Plesk must point its server-side
+database configuration to that same Supabase instance; the effective Plesk
+process environment is not verifiable from this repository. Do not use
+Replit-managed PostgreSQL for SendFlow data, and do not assume Replit Publish
+applies schema changes to Supabase. Apply only reviewed migrations to the
+confirmed external database.
 
 Didit API configuration does enforce `sandbox` outside `NODE_ENV=production`
 and `live` in production for outbound session creation. The webhook now checks
@@ -746,11 +747,11 @@ findings remain open.
 
 ## Consolidated security release gates
 
-1. **Environment separation:** remove the shared production database credential
-   from Replit and prove each deployment receives only its intended database,
-   secrets, Didit environment, and provider credentials. Build tests against a
-   genuinely isolated database before running any route-level
-   mutation/concurrency test.
+1. **Database and environment:** keep Supabase as the sole SendFlow database;
+   verify Replit and Plesk point to that same instance, use verified TLS, and
+   keep connection values server-side. Use isolated fixtures for route-level
+   mutation/concurrency tests without redirecting the application to a second
+   persistent database.
 2. **Authentication and ownership:** preserve OTP purpose binding, server-side
    session identity, serialized attempt limits, account status checks, and full
    session revocation. Test every protected route over HTTP.
@@ -784,7 +785,14 @@ It is a source-based assessment, not a penetration test or security sign-off.
 Server-side hardening now binds the admin PIN cookie to the active Clerk session
 and filters Didit status events by event type and deployment environment; no
 user-facing page was modified. The transfer feature does not exist in the API
-and remains disabled in the UI. No live SMS, Didit API request, database write,
-or migration was performed. Shared production database credentials in Replit,
-production configuration, and actual production frontend headers remain
-unresolved verification items.
+and remains disabled in the UI. The statements above about no live SMS, Didit
+request, or database migration describe the original 2026-10-08 assessment.
+
+### Current database note — 2026-11-09
+
+Supabase remains the sole SendFlow database. The additive Super Admin schema
+migration was applied to the configured Supabase database and its tables,
+columns, constraints, function, and audit triggers were verified afterward.
+The administrator credential table is still empty and must be initialized
+through the controlled bootstrap procedure. Plesk's effective database
+configuration and production frontend headers remain unverified.

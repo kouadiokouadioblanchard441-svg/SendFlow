@@ -8,12 +8,18 @@ payout columns to countries, operators, payment limits, and webhook deliveries.
 It does not enable payout execution and has not been approved for a shared
 database.
 
-The Plesk target was **not confirmed** from this workspace. Project evidence says
-there is no authenticated Plesk access here. The Replit shared-database secret
-and connection path do not prove that Plesk uses the same host, database, or
-role. Do not infer or print those values. Before any migration, an authorized
-operator must independently verify the Plesk runtime connection and explicitly
-name the target database, schema, and PostgreSQL version.
+The project owner confirms Supabase is SendFlow's only application database for
+both Replit Preview and Plesk. Replit's connection secret contains the Supabase
+connection; it is not a Replit-managed database. This workspace cannot inspect
+the effective Plesk process environment, so it cannot prove that Plesk actually
+loads the same Supabase endpoint, schema, and suitably restricted role. Verify
+that server-side configuration before any Plesk migration; do not print
+connection values.
+
+**Later schema check (2026-11-09):** a read-only comparison against the
+Supabase database configured in Replit found the four payout tables and their
+modeled columns present. This does not prove which migration created them or
+verify Plesk's runtime configuration.
 
 ## Kept out of the additive draft
 

@@ -39,7 +39,7 @@ Fiche de changement à compléter et signer par l’exploitant et un second lect
 | Champ | Valeur à renseigner avant exécution |
 |---|---|
 | Cible | Infrastructure, projet/branche, hôte, base, schéma `public`, version PostgreSQL |
-| Clients de cette base | Plesk, preview Replit, anciennes API, workers, traitements planifiés, outils DBA |
+| Clients de l’unique base Supabase de SendFlow | Plesk, Replit Preview, anciennes API, workers, traitements planifiés, outils DBA |
 | Rôles | Login API réellement utilisé par chaque client ; propriétaire/migrateur distinct |
 | Versions | Révision serveur actuelle, révision candidate, empreinte SHA-256 des SQL approuvés |
 | Récupération | Identifiant de sauvegarde, emplacement chiffré hors dépôt, clé accessible séparément |

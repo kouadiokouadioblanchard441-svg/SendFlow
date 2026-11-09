@@ -14,7 +14,7 @@ SendFlow est une application de transfert et de gestion de flux destinée aux ut
 - `pnpm run check:secrets` — scan versioned and non-ignored text files for credential literals and client/server boundary violations; never prints matched values
 - `pnpm run test:secret-boundaries` — isolated checks for client environment allowlisting, secret detection, and safe application/HTTP logging
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- Replit's shared external database requires `SUPABASE_DATABASE_URL` and the matching trusted CA certificate in `DATABASE_CA_CERT`; do not disable TLS verification or run schema migrations during preview setup.
+- Supabase is SendFlow's only application database for Replit Preview and Plesk production; Replit-managed PostgreSQL is not used for application data. Replit connects with `SUPABASE_DATABASE_URL` and `DATABASE_CA_CERT`, using verified TLS. Plesk must point to the same Supabase instance. Replit Publish does not migrate Supabase; apply only reviewed migrations after confirming the target.
 
 ## Stack
 
