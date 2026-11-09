@@ -291,12 +291,12 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       if (!parsed.success) return registerFailure("invalid-body");
       if (!profileIsValid) return registerFailure("invalid-profile");
 
-      // Lock configuration through account creation: a simultaneous country
-      // suspension cannot race a new registration. Legacy clients may omit a
+      // Lock signup availability through account creation: an administrator
+      // changing signup eligibility cannot race a new registration. Legacy clients may omit a
       // country only when the longest matching phone prefix is unambiguous.
       const requestedCountry = parsed.data.countryCode?.toLowerCase();
       const countries = await tx.select().from(countriesTable).where(and(
-        eq(countriesTable.enabled, true),
+        eq(countriesTable.signupEnabled, true),
         requestedCountry ? eq(countriesTable.countryCode, requestedCountry) : undefined,
       )).for("share");
       const candidates = countries.filter((country) => {

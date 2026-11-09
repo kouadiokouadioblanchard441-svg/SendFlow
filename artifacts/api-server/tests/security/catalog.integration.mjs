@@ -64,19 +64,75 @@ test("countries: validated creation, public visibility, version conflict and ato
   assert.equal((await call("/secure-catalog/countries", "POST", countryInput("yy"))).status, 201);
   const changes = {
     countryName: "Fixture ZZ updated", phonePrefix: "+991", minPhoneDigits: 8, maxPhoneDigits: 8,
-    enabled: true, operations: { deposit: true, interNetwork: false, international: true, payout: false },
+    enabled: true, signupEnabled: true,
+    operations: { deposit: true, interNetwork: false, international: true, payout: false },
     expectedVersion: created.data.version, reason: "Enable selected isolated operations",
   };
-  assert.equal((await call("/secure-catalog/countries/zz", "PATCH", changes)).status, 200);
+  const updated = await call("/secure-catalog/countries/zz", "PATCH", changes);
+  assert.equal(updated.status, 200);
+  assert.equal(updated.data.signupEnabled, true);
   assert.equal((await call("/secure-catalog/countries/zz", "PATCH", changes)).status, 409);
   const countries = (await call("/public/auth/countries")).data.countries;
   assert.equal(countries.find((country) => country.countryCode === "zz").countryName, changes.countryName);
+  assert.equal(countries.find((country) => country.countryCode === "zz").signupEnabled, true);
   assert.deepEqual(countries.find((country) => country.countryCode === "yy").operations,
     { deposit: false, interNetwork: false, international: false, payout: false });
   const audits = await pool.query(`SELECT action FROM sf_admin_audit_logs
     WHERE resource_type='country' AND resource_id='zz'`);
   assert.ok(audits.rows.some((row) => row.action === "create_country"));
   assert.ok(audits.rows.some((row) => row.action === "update_country"));
+});
+
+test("signup country toggle is independent from global country status and preserves one eligible country", async () => {
+  const country = (await call("/secure-catalog/countries")).data.countries
+    .find((row) => row.countryCode === "zz");
+  assert.ok(country);
+
+  const disable = {
+    countryName: country.countryName,
+    phonePrefix: country.phonePrefix,
+    minPhoneDigits: country.minPhoneDigits,
+    maxPhoneDigits: country.maxPhoneDigits,
+    enabled: country.enabled,
+    signupEnabled: false,
+    operations: country.operations,
+    expectedVersion: country.version,
+    reason: "Hide isolated country from signup",
+  };
+  const disabled = await call("/secure-catalog/countries/zz", "PATCH", disable);
+  assert.equal(disabled.status, 200);
+  assert.equal(disabled.data.enabled, true);
+  assert.equal(disabled.data.signupEnabled, false);
+
+  const before = await pool.query("SELECT country_code, signup_enabled FROM sf_countries");
+  try {
+    await pool.query("UPDATE sf_countries SET signup_enabled = false");
+    await pool.query("UPDATE sf_countries SET signup_enabled = true WHERE country_code = 'zz'");
+    const onlyCountry = (await call("/secure-catalog/countries")).data.countries
+      .find((row) => row.countryCode === "zz");
+    const lastCountryDisable = await call("/secure-catalog/countries/zz", "PATCH", {
+      countryName: onlyCountry.countryName,
+      phonePrefix: onlyCountry.phonePrefix,
+      minPhoneDigits: onlyCountry.minPhoneDigits,
+      maxPhoneDigits: onlyCountry.maxPhoneDigits,
+      enabled: onlyCountry.enabled,
+      signupEnabled: false,
+      operations: onlyCountry.operations,
+      expectedVersion: onlyCountry.version,
+      reason: "Try to remove the final signup country",
+    });
+    assert.equal(lastCountryDisable.status, 409);
+    const stillEnabled = (await call("/secure-catalog/countries")).data.countries
+      .find((row) => row.countryCode === "zz");
+    assert.equal(stillEnabled.signupEnabled, true);
+  } finally {
+    for (const saved of before.rows) {
+      await pool.query(
+        "UPDATE sf_countries SET signup_enabled = $1 WHERE country_code = $2",
+        [saved.signup_enabled, saved.country_code],
+      );
+    }
+  }
 });
 
 test("routing: operation/country isolation, override, switching, stale writes and concurrent uniqueness", async () => {

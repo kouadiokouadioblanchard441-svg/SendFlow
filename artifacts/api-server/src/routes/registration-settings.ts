@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, countriesTable, db, eq, registrationSettingsTable } from "@workspace/db";
+import { and, asc, countriesTable, db, eq, registrationSettingsTable, sql } from "@workspace/db";
 import {
   GetAdminRegistrationSettingsResponse,
   GetRegistrationSettingsResponse,
@@ -29,15 +29,17 @@ router.get("/auth/registration-settings", async (req, res): Promise<void> => {
     if (!setting) throw new Error("Signup setting is missing");
     const [defaultCountry] = await db.select({ countryCode: countriesTable.countryCode })
       .from(countriesTable)
-      .where(and(
-        eq(countriesTable.countryCode, setting.defaultCountryCode),
-        eq(countriesTable.enabled, true),
-      )).limit(1);
+      .where(eq(countriesTable.signupEnabled, true))
+      .orderBy(
+        sql`CASE WHEN ${countriesTable.countryCode} = ${setting.defaultCountryCode} THEN 0 ELSE 1 END`,
+        asc(countriesTable.countryName),
+      )
+      .limit(1);
     if (!defaultCountry) throw new Error("Configured signup country is unavailable");
     res.setHeader("Cache-Control", "no-store");
     res.json(GetRegistrationSettingsResponse.parse({
       emailVerificationEnabled: setting.emailVerificationEnabled,
-      defaultCountryCode: setting.defaultCountryCode,
+      defaultCountryCode: defaultCountry.countryCode,
     }));
   } catch (error) {
     req.log.error({ err: error }, "Registration settings lookup failed");

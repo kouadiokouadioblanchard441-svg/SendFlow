@@ -280,6 +280,7 @@ try {
   databaseUrl.searchParams.set("port", "15432");
   databaseUrl.searchParams.set("user", "sf_fixture_app");
   const turnstileOnly = process.argv.includes("--turnstile-only");
+  const catalogOnly = process.argv.includes("--catalog-only");
   const testFiles = turnstileOnly
     ? [join(apiDir, "tests/security/finance.integration.mjs")]
     : process.argv.includes("--routes-security-only")
@@ -290,6 +291,8 @@ try {
     ? [join(apiDir, "tests/security/feexpay-configuration.integration.mjs")]
     : process.argv.includes("--payment-links-only")
     ? [join(apiDir, "tests/security/payment-links.integration.mjs")]
+    : catalogOnly
+    ? [join(apiDir, "tests/security/catalog.integration.mjs")]
     : [join(apiDir, "tests/security/finance.integration.mjs"),
        join(apiDir, "tests/security/catalog.integration.mjs")];
   const testArgs = ["--experimental-strip-types", "--test"];

@@ -23,6 +23,7 @@ export interface CountryCatalogItem {
      */
   maxPhoneDigits: number;
   enabled: boolean;
+  signupEnabled: boolean;
   flag: string;
   operations: CountryOperationFlags;
 }

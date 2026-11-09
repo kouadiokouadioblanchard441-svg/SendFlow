@@ -155,8 +155,8 @@ before(async () => {
     if (id !== "customer") await owner.query(
       "INSERT INTO sf_admin_grants(user_id,can_mutate,pin_hash) VALUES($1,$2,$3)", [id, id === "writer", pinHash]);
   }
-  await owner.query(`INSERT INTO sf_countries(country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,created_by,updated_by)
-    VALUES('ci','Côte d’Ivoire','+225',10,10,'fixture','fixture')`);
+  await owner.query(`INSERT INTO sf_countries(country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,signup_enabled,created_by,updated_by)
+    VALUES('ci','Côte d’Ivoire','+225',10,10,true,'fixture','fixture')`);
   await owner.query(`INSERT INTO sf_operator_catalog(operator_id,country_code,name,short_name,initials,brand,enabled,created_by,updated_by)
     VALUES('fixture-operator','ci','Fixture','Fixture','FX','generic',true,'fixture','fixture')`);
   for (const category of ["deposit", "inter-network", "international"]) {

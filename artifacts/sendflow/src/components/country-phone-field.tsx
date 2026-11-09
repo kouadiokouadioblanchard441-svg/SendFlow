@@ -49,7 +49,7 @@ export function CountryPhoneField({
   const defaultCountryCode = registrationSettings.data?.defaultCountryCode ?? '';
   const countries = useMemo<CountryOption[]>(() => orderCountriesWithDefaultFirst(
     (catalog.data?.countries ?? [])
-      .filter((country) => !registrationOnly || country.enabled)
+      .filter((country) => !registrationOnly || country.signupEnabled)
       .map((country) => ({
         countryCode: country.countryCode, name: country.countryName,
         dialCode: country.phonePrefix, flag: country.flag,

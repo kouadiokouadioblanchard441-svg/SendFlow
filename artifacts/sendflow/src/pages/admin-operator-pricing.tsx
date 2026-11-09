@@ -92,7 +92,7 @@ export default function AdminOperatorPricingPage() {
   const logoDeleteMutation = useDeleteAdminOperatorLogo();
   const countries = query.data?.countries ?? [];
   const categories = query.data?.categories ?? [];
-  const [countryCode, setCountryCode] = useState('ci');
+  const [countryCode, setCountryCode] = useState('');
   const [categoryId, setCategoryId] = useState<CategoryId>('deposit');
   const [rateDrafts, setRateDrafts] = useState<Record<string, string>>({});
   const [rateReason, setRateReason] = useState('');
@@ -162,7 +162,7 @@ export default function AdminOperatorPricingPage() {
 
   useEffect(() => {
     if (countries.length > 0 && !countries.some((item) => item.countryCode === countryCode)) {
-      setCountryCode(countries[0].countryCode);
+      setCountryCode((countries.find((item) => item.enabled) ?? countries[0]).countryCode);
     }
   }, [countries, countryCode]);
 

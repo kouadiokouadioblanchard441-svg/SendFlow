@@ -170,7 +170,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'payouts' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings' | 'identity-verifications';
+type AdminSection = 'overview' | 'transactions' | 'users' | 'deposits' | 'international' | 'transfers' | 'payouts' | 'login-activity' | 'otp-activity' | 'banners' | 'otp-policies' | 'aggregators' | 'countries' | 'operator-pricing' | 'registration-settings' | 'payment-limits' | 'ip-blocklist' | 'network-defense' | 'email-campaigns' | 'customer-service-settings' | 'identity-verifications';
 type Status = 'pending' | 'succeeded' | 'failed';
 type TransactionKind = 'inter-network' | 'deposit' | 'international';
 
@@ -187,6 +187,7 @@ const sectionMeta: Record<AdminSection, { title: string; eyebrow: string }> = {
   banners: { title: 'Bannières', eyebrow: 'Contenu client' },
   'otp-policies': { title: 'Politiques OTP', eyebrow: 'Par pays et opérateur' },
   aggregators: { title: 'Partenaires de paiement', eyebrow: 'Routage multi-agrégateurs' },
+  countries: { title: 'Pays à l’inscription', eyebrow: 'Disponibilité des comptes' },
   'operator-pricing': { title: 'Opérateurs et tarifs', eyebrow: 'Catalogue client' },
   'registration-settings': { title: 'Inscription', eyebrow: 'Sécurité des comptes' },
   'payment-limits': { title: 'Limites de paiement', eyebrow: 'Configuration financière' },
@@ -230,6 +231,7 @@ const navGroups: Array<{
       { href: adminRoute('/banners'), label: 'Bannières client', section: 'banners', icon: Radio },
       { href: adminRoute('/otp-policies'), label: 'Politiques OTP', section: 'otp-policies', icon: ShieldCheck },
       { href: adminRoute('/aggregators'), label: 'Agrégateurs', section: 'aggregators', icon: Network },
+      { href: adminRoute('/countries'), label: 'Pays à l’inscription', section: 'countries', icon: Globe2 },
       { href: adminRoute('/operator-pricing'), label: 'Opérateurs et tarifs', section: 'operator-pricing', icon: Banknote },
       { href: adminRoute('/registration-settings'), label: 'Vérification à l’inscription', section: 'registration-settings', icon: ShieldCheck },
       { href: adminRoute('/payment-limits'), label: 'Limites de paiement', section: 'payment-limits', icon: Banknote },
@@ -2389,7 +2391,6 @@ function AggregatorsPage() {
             </div>
           </section>
 
-          <AdminCountriesSection />
           <section className="space-y-3" aria-labelledby="admin-ussd-settings-title" data-testid="section-ussd-instructions">
             <div>
               <h3 id="admin-ussd-settings-title" className="text-lg font-semibold">Codes USSD de confirmation</h3>
@@ -3199,6 +3200,7 @@ export function AdminRouter() {
   const [isBanners] = useRoute(adminRoute('/banners'));
   const [isOtpPolicies] = useRoute(adminRoute('/otp-policies'));
   const [isAggregators] = useRoute(adminRoute('/aggregators'));
+  const [isCountries] = useRoute(adminRoute('/countries'));
   const [isOperatorPricing] = useRoute(adminRoute('/operator-pricing'));
   const [isRegistrationSettings] = useRoute(adminRoute('/registration-settings'));
   const [isPaymentLimits] = useRoute(adminRoute('/payment-limits'));
@@ -3221,6 +3223,7 @@ export function AdminRouter() {
   if (isBanners) return <BannersPage />;
   if (isOtpPolicies) return <OtpPoliciesPage />;
   if (isAggregators) return <AggregatorsPage />;
+  if (isCountries) return <AdminShell section="countries"><AdminCountriesSection /></AdminShell>;
   if (isOperatorPricing) return <AdminShell section="operator-pricing"><AdminOperatorPricingPage /></AdminShell>;
   if (isRegistrationSettings) return <RegistrationSettingsPage />;
   if (isPaymentLimits) return <AdminShell section="payment-limits"><AdminPaymentLimitsSection /></AdminShell>;

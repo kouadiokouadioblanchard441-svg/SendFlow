@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetAdminCountriesQueryKey, getGetAdminOperatorPricingQueryKey,
   getGetAdminPaymentRoutingQueryKey, getGetAuthCountriesQueryKey, getGetPublicPricingQueryKey,
+  getGetRegistrationSettingsQueryKey,
   useCreateAdminCountry, useDeleteAdminCountry, useGetAdminAccessStatus, useGetAdminCountries,
   useUpdateAdminCountry, type AdminCountry, type CountryOperationFlags, type ManagedOperatorBrand,
 } from '@workspace/api-client-react';
@@ -19,7 +20,8 @@ const operationLabels = [
 type InitialOperatorDraft = { name: string; brand: ManagedOperatorBrand };
 const emptyForm = {
   countryCode: '', countryName: '', phonePrefix: '+', minPhoneDigits: '', maxPhoneDigits: '',
-  enabled: false, operations: { deposit: false, interNetwork: false, international: false } as CountryOperationFlags,
+  enabled: false, signupEnabled: false,
+  operations: { deposit: false, interNetwork: false, international: false } as CountryOperationFlags,
   initialOperators: [] as InitialOperatorDraft[], reason: '',
 };
 
@@ -34,6 +36,10 @@ export function AdminCountriesSection() {
   const [open, setOpen] = useState(false);
   const [countryToDelete, setCountryToDelete] = useState<AdminCountry | null>(null);
   const [deleteReason, setDeleteReason] = useState('');
+  const [countryToToggleSignup, setCountryToToggleSignup] = useState<AdminCountry | null>(null);
+  const [signupReason, setSignupReason] = useState('');
+  const [signupError, setSignupError] = useState('');
+  const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<AdminCountry | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
@@ -46,7 +52,8 @@ export function AdminCountriesSection() {
     setForm(country ? {
       countryCode: country.countryCode, countryName: country.countryName, phonePrefix: country.phonePrefix,
       minPhoneDigits: String(country.minPhoneDigits), maxPhoneDigits: String(country.maxPhoneDigits),
-      enabled: country.enabled, operations: { ...country.operations }, initialOperators: [], reason: '',
+      enabled: country.enabled, signupEnabled: country.signupEnabled,
+      operations: { ...country.operations }, initialOperators: [], reason: '',
     } : { ...emptyForm, operations: { ...emptyForm.operations } });
     setOpen(true);
   };
@@ -77,7 +84,7 @@ export function AdminCountriesSection() {
     try {
       if (selected) {
         await update.mutateAsync({ countryCode: selected.countryCode, data: {
-          ...common, operations: form.operations, expectedVersion: selected.version,
+          ...common, signupEnabled: form.signupEnabled, operations: form.operations, expectedVersion: selected.version,
         } });
       } else {
         await create.mutateAsync({ data: {
@@ -98,6 +105,44 @@ export function AdminCountriesSection() {
           : 'Ce code pays ou un identifiant d’opérateur existe déjà. Vérifiez les valeurs puis réessayez.'
         : status === 403 ? 'Votre compte n’a pas le droit de modifier les pays.'
           : 'Le pays n’a pas été enregistré. Vérifiez les données et réessayez.');
+    }
+  };
+
+  const toggleSignupAvailability = async () => {
+    if (!countryToToggleSignup || signupReason.trim().length < 3) return;
+    setSignupError('');
+    try {
+      const updated = await update.mutateAsync({
+        countryCode: countryToToggleSignup.countryCode,
+        data: {
+          countryName: countryToToggleSignup.countryName,
+          phonePrefix: countryToToggleSignup.phonePrefix,
+          minPhoneDigits: countryToToggleSignup.minPhoneDigits,
+          maxPhoneDigits: countryToToggleSignup.maxPhoneDigits,
+          enabled: countryToToggleSignup.enabled,
+          signupEnabled: !countryToToggleSignup.signupEnabled,
+          operations: countryToToggleSignup.operations,
+          expectedVersion: countryToToggleSignup.version,
+          reason: signupReason.trim(),
+        },
+      });
+      await Promise.all([
+        getGetAdminCountriesQueryKey(), getGetAuthCountriesQueryKey(),
+        getGetRegistrationSettingsQueryKey(),
+      ].map((queryKey) => cache.invalidateQueries({ queryKey })));
+      setFeedback(
+        `${updated.countryName} ${updated.signupEnabled ? 'est maintenant disponible' : 'n’est plus disponible'} à l’inscription.`,
+      );
+      setCountryToToggleSignup(null);
+      setSignupReason('');
+    } catch (failure) {
+      const status = (failure as { status?: number }).status;
+      setSignupError(status === 409
+        ? 'Le catalogue a changé ou ce serait le dernier pays disponible. Rechargez la liste et réessayez.'
+        : status === 403
+          ? 'Votre compte n’a pas le droit de modifier la disponibilité à l’inscription.'
+          : 'La disponibilité n’a pas été modifiée.');
+      await query.refetch();
     }
   };
 
@@ -126,30 +171,63 @@ export function AdminCountriesSection() {
     }
   };
 
+  const countries = query.data?.countries ?? [];
+  const visibleCountries = countries.filter((country) => {
+    const term = search.trim().toLocaleLowerCase('fr-FR');
+    return !term || [country.countryName, country.countryCode, country.phonePrefix]
+      .some((value) => value.toLocaleLowerCase('fr-FR').includes(term));
+  });
+
   return (
     <section className="space-y-3" aria-labelledby="admin-countries-title">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 id="admin-countries-title" className="text-lg font-semibold">Pays et disponibilités</h3>
-          <p className="text-sm text-muted-foreground">Catalogue partagé par l’inscription, la connexion et les opérations.</p>
+          <p className="text-sm text-muted-foreground">
+            Tous les pays sont listés ici. La disponibilité à l’inscription est réglée séparément de l’état global et des paiements.
+          </p>
         </div>
          <Button type="button" disabled={!canMutate} onClick={() => openForm(null)}>Ajouter un pays</Button>
       </div>
       {feedback && <p role="status" className="text-sm">{feedback}</p>}
+      <Input
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Rechercher un pays, un code ou un indicatif"
+        aria-label="Rechercher un pays"
+        data-testid="input-country-search"
+      />
       {query.isLoading ? <p role="status">Chargement des pays…</p>
         : query.isError ? <p role="alert">Impossible de charger les pays. <Button variant="outline" onClick={() => void query.refetch()}>Réessayer</Button></p>
+          : visibleCountries.length === 0 ? <p role="status">Aucun pays ne correspond à cette recherche.</p>
           : <div className="grid gap-3 md:grid-cols-2">
-            {query.data?.countries.map((country) => (
+            {visibleCountries.map((country) => (
               <Card key={country.countryCode}>
                 <CardHeader>
                   <CardTitle className="text-base">{country.flag} {country.countryName}</CardTitle>
                   <CardDescription>{country.countryCode.toUpperCase()} · {country.phonePrefix} · {country.minPhoneDigits}–{country.maxPhoneDigits} chiffres nationaux</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <p className="text-sm">{country.enabled ? 'Nouvelles inscriptions autorisées' : 'Nouvelles inscriptions désactivées'}</p>
+                  <p className="text-sm">
+                    Inscription : {country.signupEnabled ? 'active' : 'désactivée'}
+                    {' · '}Catalogue global : {country.enabled ? 'actif' : 'désactivé'}
+                  </p>
                   <p className="text-sm text-muted-foreground">{operationLabels.map(([key, label]) =>
                     `${label} : ${country.enabled && country.operations[key] ? 'autorisé' : 'désactivé'}`).join(' · ')}</p>
                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant={country.signupEnabled ? 'outline' : 'default'}
+                        type="button"
+                        disabled={!canMutate || busy}
+                        onClick={() => {
+                          setSignupError('');
+                          setSignupReason('');
+                          setCountryToToggleSignup(country);
+                        }}
+                        data-testid={`button-toggle-country-signup-${country.countryCode}`}
+                      >
+                        {country.signupEnabled ? 'Désactiver à l’inscription' : 'Activer à l’inscription'}
+                      </Button>
                      <Button variant="outline" type="button" disabled={!canMutate} onClick={() => openForm(country)}>Configurer le pays</Button>
                      <Button variant="destructive" type="button" disabled={!canMutate}
                        onClick={() => { setError(''); setDeleteReason(''); setCountryToDelete(country); }}>
@@ -186,9 +264,9 @@ export function AdminCountriesSection() {
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.enabled} disabled={busy}
                 onChange={(event) => setForm({ ...form, enabled: event.target.checked })} />
-              Autoriser les nouvelles inscriptions et les opérations configurées
+               Activer le pays dans le catalogue global et ses opérations configurées
             </label>
-            <p className="text-xs text-muted-foreground">Désactiver un pays ne retire pas la connexion aux comptes existants. Vérifiez les opérateurs et les moyens de paiement configurés avant de le réactiver.</p>
+            <p className="text-xs text-muted-foreground">Ce réglage global est indépendant de la disponibilité à l’inscription. Il ne configure pas les fournisseurs ni les frais.</p>
              {selected ? <fieldset className="space-y-2"><legend className="mb-2 text-sm font-medium">Opérations autorisées dans ce pays</legend>
               {operationLabels.map(([key, label]) => (
                 <label key={key} className="flex items-center gap-2 text-sm">
@@ -239,6 +317,49 @@ export function AdminCountriesSection() {
                <Button type="submit" disabled={busy || !canMutate}>{busy ? 'Enregistrement…' : 'Enregistrer'}</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={countryToToggleSignup !== null} onOpenChange={(value) => {
+        if (!value && !update.isPending) {
+          setCountryToToggleSignup(null);
+          setSignupReason('');
+          setSignupError('');
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {countryToToggleSignup?.signupEnabled
+                ? 'Désactiver ce pays à l’inscription ?'
+                : 'Activer ce pays à l’inscription ?'}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {countryToToggleSignup?.signupEnabled
+              ? `${countryToToggleSignup.countryName} sera masqué aux nouveaux inscrits. Les comptes existants et les paiements ne changeront pas.`
+              : `${countryToToggleSignup?.countryName ?? 'Ce pays'} apparaîtra sur le formulaire des nouveaux comptes. Les paiements restent soumis à leurs réglages séparés.`}
+          </p>
+          <div className="space-y-1">
+            <Label htmlFor="country-signup-reason">Motif obligatoire</Label>
+            <Textarea
+              id="country-signup-reason"
+              value={signupReason}
+              maxLength={500}
+              disabled={update.isPending}
+              onChange={(event) => setSignupReason(event.target.value)}
+            />
+          </div>
+          {signupError && <p role="alert" className="text-sm text-destructive">{signupError}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={update.isPending}
+              onClick={() => setCountryToToggleSignup(null)}>Annuler</Button>
+            <Button type="button"
+              variant={countryToToggleSignup?.signupEnabled ? 'destructive' : 'default'}
+              disabled={!canMutate || signupReason.trim().length < 3 || update.isPending}
+              onClick={() => void toggleSignupAvailability()}>
+              {update.isPending ? 'Enregistrement…' : countryToToggleSignup?.signupEnabled ? 'Confirmer la désactivation' : 'Confirmer l’activation'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={countryToDelete !== null} onOpenChange={(value) => { if (!value && !remove.isPending) setCountryToDelete(null); }}>

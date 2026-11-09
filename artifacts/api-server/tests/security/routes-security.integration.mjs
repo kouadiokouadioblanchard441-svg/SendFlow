@@ -71,8 +71,8 @@ globalThis.fetch = async (input, init) => {
 
 before(async () => {
   await owner.query(`INSERT INTO sf_countries
-    (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,created_by,updated_by)
-    VALUES('ci','Côte d’Ivoire','+225',8,10,'audit-admin','audit-admin')
+    (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,signup_enabled,created_by,updated_by)
+    VALUES('ci','Côte d’Ivoire','+225',8,10,true,'audit-admin','audit-admin')
     ON CONFLICT (country_code) DO NOTHING`);
   await owner.query("INSERT INTO sf_registration_settings(id,default_country_code) VALUES('signup','ci')");
   await owner.query(
@@ -123,8 +123,8 @@ before(async () => {
     VALUES('trace-fixture','Trace fixture',false,'audit-admin','audit-admin')
     ON CONFLICT (code) DO NOTHING`);
   await owner.query(`INSERT INTO sf_countries
-    (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,created_by,updated_by)
-    VALUES('ci','Côte d’Ivoire','+225',8,10,'audit-admin','audit-admin')
+    (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,signup_enabled,created_by,updated_by)
+    VALUES('ci','Côte d’Ivoire','+225',8,10,true,'audit-admin','audit-admin')
     ON CONFLICT (country_code) DO NOTHING`);
   const intent = await owner.query(`INSERT INTO sf_payment_intents
     (transaction_id,provider_code,request_hash,kind,currency,amount_minor,fee_minor,fee_payer,

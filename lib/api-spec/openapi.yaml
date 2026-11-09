@@ -7129,11 +7129,13 @@ components:
           maximum: 15
         enabled:
           type: boolean
+        signupEnabled:
+          type: boolean
         flag:
           type: string
         operations:
           $ref: "#/components/schemas/CountryOperationFlags"
-      required: [countryCode, countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, flag, operations]
+      required: [countryCode, countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, signupEnabled, flag, operations]
     CountryCatalog:
       type: object
       properties:
@@ -7237,6 +7239,8 @@ components:
           maximum: 15
         enabled:
           type: boolean
+        signupEnabled:
+          type: boolean
         operations:
           $ref: "#/components/schemas/CountryOperationFlags"
         expectedVersion:
@@ -7246,7 +7250,7 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, operations, expectedVersion, reason]
+      required: [countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, signupEnabled, operations, expectedVersion, reason]
     AdminOperatorPaymentRoute:
       type: object
       properties:

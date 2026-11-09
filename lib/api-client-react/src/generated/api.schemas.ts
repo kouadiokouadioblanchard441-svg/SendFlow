@@ -1898,6 +1898,7 @@ export interface CountryCatalogItem {
      */
   maxPhoneDigits: number;
   enabled: boolean;
+  signupEnabled: boolean;
   flag: string;
   operations: CountryOperationFlags;
 }
@@ -1996,6 +1997,7 @@ export interface UpdateAdminCountryRequest {
      */
   maxPhoneDigits: number;
   enabled: boolean;
+  signupEnabled: boolean;
   operations: CountryOperationFlags;
   /** @minimum 1 */
   expectedVersion: number;

@@ -353,6 +353,7 @@ export const GetAuthCountriesResponse = zod.object({
   "minPhoneDigits": zod.int().min(getAuthCountriesResponseCountriesItemMinPhoneDigitsMin).max(getAuthCountriesResponseCountriesItemMinPhoneDigitsMax),
   "maxPhoneDigits": zod.int().min(getAuthCountriesResponseCountriesItemMaxPhoneDigitsMin).max(getAuthCountriesResponseCountriesItemMaxPhoneDigitsMax),
   "enabled": zod.boolean(),
+  "signupEnabled": zod.boolean(),
   "flag": zod.string(),
   "operations": zod.object({
   "deposit": zod.boolean(),
@@ -2802,6 +2803,7 @@ export const GetAdminCountriesResponse = zod.object({
   "minPhoneDigits": zod.int().min(getAdminCountriesResponseCountriesItemOneMinPhoneDigitsMin).max(getAdminCountriesResponseCountriesItemOneMinPhoneDigitsMax),
   "maxPhoneDigits": zod.int().min(getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMin).max(getAdminCountriesResponseCountriesItemOneMaxPhoneDigitsMax),
   "enabled": zod.boolean(),
+  "signupEnabled": zod.boolean(),
   "flag": zod.string(),
   "operations": zod.object({
   "deposit": zod.boolean(),
@@ -2871,6 +2873,7 @@ export const CreateAdminCountryResponse = zod.object({
   "minPhoneDigits": zod.int().min(createAdminCountryResponseOneMinPhoneDigitsMin).max(createAdminCountryResponseOneMinPhoneDigitsMax),
   "maxPhoneDigits": zod.int().min(createAdminCountryResponseOneMaxPhoneDigitsMin).max(createAdminCountryResponseOneMaxPhoneDigitsMax),
   "enabled": zod.boolean(),
+  "signupEnabled": zod.boolean(),
   "flag": zod.string(),
   "operations": zod.object({
   "deposit": zod.boolean(),
@@ -2916,6 +2919,7 @@ export const UpdateAdminCountryBody = zod.object({
   "minPhoneDigits": zod.int().min(updateAdminCountryBodyMinPhoneDigitsMin).max(updateAdminCountryBodyMinPhoneDigitsMax),
   "maxPhoneDigits": zod.int().min(updateAdminCountryBodyMaxPhoneDigitsMin).max(updateAdminCountryBodyMaxPhoneDigitsMax),
   "enabled": zod.boolean(),
+  "signupEnabled": zod.boolean(),
   "operations": zod.object({
   "deposit": zod.boolean(),
   "interNetwork": zod.boolean(),
@@ -2943,6 +2947,7 @@ export const UpdateAdminCountryResponse = zod.object({
   "minPhoneDigits": zod.int().min(updateAdminCountryResponseOneMinPhoneDigitsMin).max(updateAdminCountryResponseOneMinPhoneDigitsMax),
   "maxPhoneDigits": zod.int().min(updateAdminCountryResponseOneMaxPhoneDigitsMin).max(updateAdminCountryResponseOneMaxPhoneDigitsMax),
   "enabled": zod.boolean(),
+  "signupEnabled": zod.boolean(),
   "flag": zod.string(),
   "operations": zod.object({
   "deposit": zod.boolean(),

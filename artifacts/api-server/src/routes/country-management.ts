@@ -4,6 +4,7 @@ import {
   asc,
   db,
   eq,
+  sql,
   countriesTable,
   contactsTable,
   legacyPaymentAggregatorRoutesTable,
@@ -47,6 +48,7 @@ function toCountry(country: typeof countriesTable.$inferSelect) {
     minPhoneDigits: country.minPhoneDigits,
     maxPhoneDigits: country.maxPhoneDigits,
     enabled: country.enabled,
+    signupEnabled: country.signupEnabled,
     flag: flagFromCountryCode(country.countryCode),
     operations: {
       deposit: country.depositEnabled,
@@ -213,6 +215,7 @@ adminRoutes.post("/countries", async (req, res): Promise<void> => {
 
     res.status(201).json(CreateAdminCountryResponse.parse(toCountry(created)));
   } catch (error) {
+    if (process.env.SENDFLOW_ISOLATED_RUNTIME) console.error("Isolated country creation error", error);
     if (error instanceof CountryCatalogConflictError) {
       res.status(409).json({ error: "An initial operator already exists in this country" });
       return;
@@ -237,6 +240,26 @@ adminRoutes.patch("/countries/:countryCode", async (req, res): Promise<void> => 
 
   try {
     const updated = await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('sendflow:signup-country-availability'))`);
+      const [current] = await tx
+        .select()
+        .from(countriesTable)
+        .where(eq(countriesTable.countryCode, params.data.countryCode))
+        .for("update")
+        .limit(1);
+      if (!current || current.version !== body.data.expectedVersion) {
+        return { kind: "changed" as const };
+      }
+
+      if (current.signupEnabled && !body.data.signupEnabled) {
+        const availableCountries = await tx.select({ countryCode: countriesTable.countryCode })
+          .from(countriesTable)
+          .where(eq(countriesTable.signupEnabled, true));
+        if (availableCountries.length <= 1) {
+          return { kind: "last-signup-country" as const };
+        }
+      }
+
       const [country] = await tx
         .update(countriesTable)
         .set({
@@ -245,6 +268,7 @@ adminRoutes.patch("/countries/:countryCode", async (req, res): Promise<void> => 
           minPhoneDigits: body.data.minPhoneDigits,
           maxPhoneDigits: body.data.maxPhoneDigits,
           enabled: body.data.enabled,
+          signupEnabled: body.data.signupEnabled,
           depositEnabled: body.data.operations.deposit,
           interNetworkEnabled: body.data.operations.interNetwork,
           internationalEnabled: body.data.operations.international,
@@ -258,7 +282,7 @@ adminRoutes.patch("/countries/:countryCode", async (req, res): Promise<void> => 
           eq(countriesTable.version, body.data.expectedVersion),
         ))
         .returning();
-      if (!country) return undefined;
+      if (!country) return { kind: "changed" as const };
 
       await recordAdminAudit({
         adminUserId,
@@ -267,15 +291,19 @@ adminRoutes.patch("/countries/:countryCode", async (req, res): Promise<void> => 
         resourceId: country.countryCode,
         reason: body.data.reason.trim(),
       }, tx);
-      return country;
+      return { kind: "updated" as const, country };
     });
 
-    if (!updated) {
+    if (updated.kind === "last-signup-country") {
+      res.status(409).json({ error: "At least one country must remain available for signup." });
+      return;
+    }
+    if (updated.kind !== "updated") {
       res.status(409).json({ error: "Country changed since it was loaded" });
       return;
     }
 
-    res.json(UpdateAdminCountryResponse.parse(toCountry(updated)));
+    res.json(UpdateAdminCountryResponse.parse(toCountry(updated.country)));
   } catch (error) {
     req.log.error({ err: error }, "Admin country update failed");
     res.status(503).json({ error: "Administrator storage unavailable" });
@@ -304,6 +332,7 @@ adminRoutes.delete("/countries/:countryCode", async (req, res): Promise<void> =>
       if (!country) return "missing" as const;
       if (country.version !== body.data.expectedVersion) return "changed" as const;
       if (
+        country.signupEnabled ||
         country.enabled ||
         country.depositEnabled ||
         country.interNetworkEnabled ||
