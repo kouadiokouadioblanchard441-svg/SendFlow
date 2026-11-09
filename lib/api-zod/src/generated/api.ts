@@ -1696,7 +1696,7 @@ export const ListDeveloperWebhookDeliveriesResponse = zod.object({
 
 
 /**
- * Read-only. The server loads SendFlow pricing and limits, then checks the authenticated merchant's active XOF wallet after subtracting active reservations. No funds are reserved.
+ * Read-only. The server loads SendFlow pricing and limits, checks the authenticated merchant's active XOF wallet after subtracting active reservations, and blocks payouts after an unverified wallet reaches its configured cumulative incoming-payment threshold. No funds are reserved.
  * @summary Calculate a server-side payout quote
  */
 export const createDeveloperPayoutQuoteBodyAmountMinorMax = 9007199254740991;
@@ -2329,7 +2329,7 @@ export const GetCurrentAccountLimitResponse = zod.object({
 
 
 /**
- * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or when an unverified wallet has reached its configured cumulative incoming-payment threshold. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuoteBodySourceOperatorIdMin = 2;
@@ -5141,6 +5141,9 @@ export const getAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 10000000;
 export const getAdminPaymentLimitsResponseOneMaximumPayinMinorMin = 200;
 export const getAdminPaymentLimitsResponseOneMaximumPayinMinorMax = 2000000;
 
+export const getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin = 0;
+export const getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax = 2147483647;
+
 
 
 
@@ -5153,6 +5156,7 @@ export const GetAdminPaymentLimitsResponse = zod.object({
   "maximumTransferMinor": zod.int().min(1).max(getAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(getAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(getAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
 }).and(zod.object({
+  "maximumUnverifiedIncomingMinor": zod.int().min(getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin).max(getAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax).describe('Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments.'),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date()
 }))
@@ -5177,6 +5181,9 @@ export const updateAdminPaymentLimitsBodyMaximumTransferMinorMax = 10000000;
 export const updateAdminPaymentLimitsBodyMaximumPayinMinorMin = 200;
 export const updateAdminPaymentLimitsBodyMaximumPayinMinorMax = 2000000;
 
+export const updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMin = 0;
+export const updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMax = 2147483647;
+
 
 export const updateAdminPaymentLimitsBodyReasonMin = 3;
 export const updateAdminPaymentLimitsBodyReasonMax = 500;
@@ -5190,6 +5197,7 @@ export const UpdateAdminPaymentLimitsBody = zod.object({
   "minimumInterNetworkMinor": zod.int().min(1).max(updateAdminPaymentLimitsBodyMinimumInterNetworkMinorMax),
   "maximumTransferMinor": zod.int().min(1).max(updateAdminPaymentLimitsBodyMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(updateAdminPaymentLimitsBodyMaximumPayinMinorMin).max(updateAdminPaymentLimitsBodyMaximumPayinMinorMax),
+  "maximumUnverifiedIncomingMinor": zod.int().min(updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMin).max(updateAdminPaymentLimitsBodyMaximumUnverifiedIncomingMinorMax),
   "expectedVersion": zod.int().min(1),
   "reason": zod.string().min(updateAdminPaymentLimitsBodyReasonMin).max(updateAdminPaymentLimitsBodyReasonMax)
 })
@@ -5210,6 +5218,9 @@ export const updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax = 100000
 export const updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin = 200;
 export const updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax = 2000000;
 
+export const updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin = 0;
+export const updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax = 2147483647;
+
 
 
 
@@ -5222,6 +5233,7 @@ export const UpdateAdminPaymentLimitsResponse = zod.object({
   "maximumTransferMinor": zod.int().min(1).max(updateAdminPaymentLimitsResponseOneMaximumTransferMinorMax),
   "maximumPayinMinor": zod.int().min(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMin).max(updateAdminPaymentLimitsResponseOneMaximumPayinMinorMax)
 }).and(zod.object({
+  "maximumUnverifiedIncomingMinor": zod.int().min(updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMin).max(updateAdminPaymentLimitsResponseTwoMaximumUnverifiedIncomingMinorMax).describe('Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments.'),
   "version": zod.int().min(1),
   "updatedAt": zod.coerce.date()
 }))

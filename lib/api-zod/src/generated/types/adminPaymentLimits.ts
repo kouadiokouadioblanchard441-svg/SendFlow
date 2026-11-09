@@ -8,6 +8,12 @@
 import type { PublicPaymentLimits } from './publicPaymentLimits';
 
 export type AdminPaymentLimits = PublicPaymentLimits & {
+  /**
+     * Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments.
+     * @minimum 0
+     * @maximum 2147483647
+     */
+  maximumUnverifiedIncomingMinor: number;
   /** @minimum 1 */
   version: number;
   updatedAt: Date;

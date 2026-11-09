@@ -3,6 +3,7 @@ import {
   and,
   customerPaymentLinkAttemptsTable,
   customerPaymentLinksTable,
+  customerIdentityRequestsTable,
   countriesTable,
   db,
   eq,
@@ -40,6 +41,7 @@ import { paydunyaChannelForOperator } from "../providers/paydunya/catalog";
 import { getAggregatorRouteScopeKey } from "../routes/aggregator-catalog";
 import { parseLinkFlowPayerAmount } from "./payment-links";
 import { enqueueDeveloperPaymentEvent } from "./developer-webhook-outbox";
+import { addUnverifiedIncomingAmount } from "./payment-limits-policy";
 import {
   buildLinkFlowRequestHash,
   deriveLinkFlowPollToken,
@@ -998,6 +1000,18 @@ async function retryWalletSettlement(bundle: AttemptBundle) {
       }
       return false;
     }
+    const [approvedIdentity] = await tx.select({ id: customerIdentityRequestsTable.id })
+      .from(customerIdentityRequestsTable)
+      .where(and(
+        eq(customerIdentityRequestsTable.userId, transaction.userId),
+        eq(customerIdentityRequestsTable.status, "approved"),
+      ))
+      .limit(1);
+    const unverifiedReceivedAfterMinor = addUnverifiedIncomingAmount(
+      wallet.unverifiedReceivedMinor,
+      intent.recipientTotalMinor,
+      Boolean(approvedIdentity),
+    );
     const [ledgerEntry] = await tx.insert(walletLedgerTable).values({
       walletId: wallet.id,
       userId: transaction.userId,
@@ -1011,7 +1025,11 @@ async function retryWalletSettlement(bundle: AttemptBundle) {
       idempotencyKey: `payment:${intent.id}:credit`,
     }).returning();
     if (!ledgerEntry) throw new Error("LinkFlow wallet credit was not recorded");
-    await tx.update(walletsTable).set({ balanceMinor: balanceAfterMinor, updatedAt: new Date() })
+    await tx.update(walletsTable).set({
+      balanceMinor: balanceAfterMinor,
+      unverifiedReceivedMinor: unverifiedReceivedAfterMinor,
+      updatedAt: new Date(),
+    })
       .where(eq(walletsTable.id, wallet.id));
     await tx.update(paymentIntentsTable).set({
       state: "succeeded",

@@ -9,6 +9,7 @@ export const paymentLimitsTable = pgTable("sf_payment_limits", {
   minimumInterNetworkMinor: integer("minimum_inter_network_minor").notNull().default(1),
   maximumTransferMinor: integer("maximum_transfer_minor").notNull().default(10_000_000),
   maximumPayinMinor: integer("maximum_payin_minor").notNull().default(2_000_000),
+  maximumUnverifiedIncomingMinor: integer("maximum_unverified_incoming_minor").notNull().default(20_000),
   version: integer("version").notNull().default(1),
   updatedBy: text("updated_by"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -23,6 +24,10 @@ export const paymentLimitsTable = pgTable("sf_payment_limits", {
   interNetworkCheck: check("sf_payment_limits_inter_network_check", sql`${table.minimumInterNetworkMinor} BETWEEN 1 AND 10000000`),
   transferMaximumCheck: check("sf_payment_limits_transfer_max_check", sql`${table.maximumTransferMinor} BETWEEN 1 AND 10000000`),
   payinMaximumCheck: check("sf_payment_limits_payin_max_check", sql`${table.maximumPayinMinor} BETWEEN 200 AND 2000000`),
+  unverifiedIncomingMaximumCheck: check(
+    "sf_payment_limits_unverified_incoming_max_check",
+    sql`${table.maximumUnverifiedIncomingMinor} BETWEEN 0 AND 2147483647`,
+  ),
   depositTransferOrderCheck: check(
     "sf_payment_limits_deposit_transfer_order_check",
     sql`${table.minimumDepositMinor} <= ${table.maximumTransferMinor}`,

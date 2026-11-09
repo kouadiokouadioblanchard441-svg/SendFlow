@@ -265,6 +265,9 @@ export default function InternationalTransferPage() {
               if (status === 409) {
                 setDialogFailureTitle('Plafond mensuel dépassé');
                 setDialogFailureCopy(`${serverQuoteErrorMessage(error)} Aucun transfert n’a été initié et aucun montant n’a été débité.`);
+              } else if (status === 403) {
+                setDialogFailureTitle('Vérification requise');
+                setDialogFailureCopy(`${serverQuoteErrorMessage(error)} Aucun transfert n’a été initié et aucun montant n’a été débité.`);
               } else {
                 setDialogFailureTitle('Vérification indisponible');
                 setDialogFailureCopy(serverQuoteErrorMessage(error));

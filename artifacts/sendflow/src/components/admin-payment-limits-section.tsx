@@ -19,11 +19,13 @@ type LimitField =
   | "maximumPayoutDailyMinor"
   | "minimumInterNetworkMinor"
   | "maximumTransferMinor"
-  | "maximumPayinMinor";
+  | "maximumPayinMinor"
+  | "maximumUnverifiedIncomingMinor";
 
 type LimitDraft = Record<LimitField, string>;
 type LimitValues = Omit<Record<LimitField, number>, "maximumPayoutDailyMinor"> & {
   maximumPayoutDailyMinor: number | null;
+  maximumUnverifiedIncomingMinor: number;
 };
 
 const limitFields: Array<{ key: LimitField; label: string; help: string; nullable?: boolean }> = [
@@ -33,6 +35,7 @@ const limitFields: Array<{ key: LimitField; label: string; help: string; nullabl
   { key: "minimumInterNetworkMinor", label: "Transfert inter-réseaux minimum", help: "Seuil du transfert inter-réseaux, en FCFA entiers." },
   { key: "maximumTransferMinor", label: "Maximum transfert", help: "Plafond technique actuel : 10 000 000 FCFA." },
   { key: "maximumPayinMinor", label: "Maximum pay-in", help: "Plafond technique actuel : 2 000 000 FCFA." },
+  { key: "maximumUnverifiedIncomingMinor", label: "Encaissements cumulés sans vérification d’identité", help: "À partir de ce total crédité au wallet, les retraits et transferts sont bloqués jusqu’à l’approbation de l’identité. Les encaissements restent autorisés." },
 ];
 
 function toDraft(values: LimitValues): LimitDraft {
@@ -41,6 +44,7 @@ function toDraft(values: LimitValues): LimitDraft {
     minimumPayoutMinor: String(values.minimumPayoutMinor),
     minimumInterNetworkMinor: String(values.minimumInterNetworkMinor),
     maximumPayoutDailyMinor: values.maximumPayoutDailyMinor === null ? "" : String(values.maximumPayoutDailyMinor),
+    maximumUnverifiedIncomingMinor: String(values.maximumUnverifiedIncomingMinor),
     maximumTransferMinor: String(values.maximumTransferMinor),
     maximumPayinMinor: String(values.maximumPayinMinor),
   };
@@ -91,6 +95,8 @@ export function AdminPaymentLimitsSection() {
       && values.maximumTransferMinor <= 10_000_000
       && values.maximumPayinMinor >= 200
       && values.maximumPayinMinor <= 2_000_000
+      && values.maximumUnverifiedIncomingMinor >= 0
+      && values.maximumUnverifiedIncomingMinor <= 2_147_483_647
       && reason.trim().length >= 3,
   );
 
@@ -185,7 +191,7 @@ export function AdminPaymentLimitsSection() {
                     id={`payment-limit-${key}`}
                     type="number"
                     inputMode="numeric"
-                    min={key === "minimumInterNetworkMinor" ? 1 : 200}
+                    min={key === "maximumUnverifiedIncomingMinor" ? 0 : key === "minimumInterNetworkMinor" ? 1 : 200}
                     step={1}
                     value={draft[key]}
                     placeholder={key === "maximumPayoutDailyMinor" ? "Sans plafond" : undefined}

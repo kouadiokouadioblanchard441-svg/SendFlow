@@ -1989,7 +1989,7 @@ paths:
       operationId: createDeveloperPayoutQuote
       tags: [developer]
       summary: Calculate a server-side payout quote
-      description: Read-only. The server loads SendFlow pricing and limits, then checks the authenticated merchant's active XOF wallet after subtracting active reservations. No funds are reserved.
+      description: Read-only. The server loads SendFlow pricing and limits, checks the authenticated merchant's active XOF wallet after subtracting active reservations, and blocks payouts after an unverified wallet reaches its configured cumulative incoming-payment threshold. No funds are reserved.
       security:
         - sendFlowApiSecret: []
       requestBody:
@@ -2011,7 +2011,7 @@ paths:
         "401":
           description: Secret API key is invalid or revoked.
         "403":
-          description: Merchant account or payout access is not eligible.
+          description: Merchant payout access is unavailable or identity verification is required after reaching the unverified incoming-payment threshold.
         "429":
           description: Merchant API rate limit reached.
         "422":
@@ -2505,7 +2505,7 @@ paths:
       operationId: createCustomerTransferQuote
       tags: [account]
       summary: Validate a transfer and calculate its server-side quote
-      description: Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+      description: Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or when an unverified wallet has reached its configured cumulative incoming-payment threshold. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
       security:
         - sendFlowSession: []
       requestBody:
@@ -2534,7 +2534,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "403":
-          description: PIN verification is required.
+          description: PIN verification is required, or identity verification is required before an outgoing transfer.
           content:
             application/json:
               schema:
@@ -5576,9 +5576,10 @@ components:
         - $ref: "#/components/schemas/PublicPaymentLimits"
         - type: object
           properties:
+            maximumUnverifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647, description: "Cumulative amount credited to a wallet while identity is unverified; reaching this limit blocks outgoing transfers and withdrawals, but does not block incoming payments." }
             version: { type: integer, minimum: 1 }
             updatedAt: { type: string, format: date-time }
-          required: [version, updatedAt]
+          required: [maximumUnverifiedIncomingMinor, version, updatedAt]
     PaymentLimitsUpdate:
       type: object
       properties:
@@ -5588,9 +5589,10 @@ components:
         minimumInterNetworkMinor: { type: integer, minimum: 1, maximum: 10000000 }
         maximumTransferMinor: { type: integer, minimum: 1, maximum: 10000000 }
         maximumPayinMinor: { type: integer, minimum: 200, maximum: 2000000 }
+        maximumUnverifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647 }
         expectedVersion: { type: integer, minimum: 1 }
         reason: { type: string, minLength: 3, maxLength: 500 }
-      required: [minimumDepositMinor, minimumPayoutMinor, maximumPayoutDailyMinor, minimumInterNetworkMinor, maximumTransferMinor, maximumPayinMinor, expectedVersion, reason]
+      required: [minimumDepositMinor, minimumPayoutMinor, maximumPayoutDailyMinor, minimumInterNetworkMinor, maximumTransferMinor, maximumPayinMinor, maximumUnverifiedIncomingMinor, expectedVersion, reason]
     RegistrationSettingsUpdate:
       type: object
       properties:

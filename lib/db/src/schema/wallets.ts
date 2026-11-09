@@ -16,6 +16,7 @@ export const walletsTable = pgTable(
       .references(() => usersTable.id, { onDelete: "cascade" }),
     currency: text("currency").notNull().default("XOF"),
     balanceMinor: bigint("balance_minor", { mode: "number" }).notNull().default(0),
+    unverifiedReceivedMinor: bigint("unverified_received_minor", { mode: "number" }).notNull().default(0),
     status: walletStatusEnum("status").notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -28,6 +29,14 @@ export const walletsTable = pgTable(
     balanceSafeIntegerCheck: check(
       "sf_wallets_balance_minor_safe_integer_check",
       sql`${table.balanceMinor} <= 9007199254740991`,
+    ),
+    unverifiedReceivedNonnegativeCheck: check(
+      "sf_wallets_unverified_received_minor_nonnegative_check",
+      sql`${table.unverifiedReceivedMinor} >= 0`,
+    ),
+    unverifiedReceivedSafeIntegerCheck: check(
+      "sf_wallets_unverified_received_minor_safe_integer_check",
+      sql`${table.unverifiedReceivedMinor} <= 9007199254740991`,
     ),
   }),
 );

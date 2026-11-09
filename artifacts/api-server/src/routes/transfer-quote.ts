@@ -5,6 +5,10 @@ import {
 } from "@workspace/api-zod";
 import { calculateCustomerTransferQuote, TransferQuoteError } from "../services/transfer-quote";
 import { loadTransferQuoteDependencies } from "../data/transfer-quote";
+import {
+  getUnverifiedIncomingPolicy,
+  unverifiedOutgoingBlockedMessage,
+} from "../data/unverified-incoming-policy";
 import { consumeTransferQuoteQuota } from "../data/transfer-quote-quota";
 import { requireCustomerSession } from "../lib/customer-session";
 
@@ -25,6 +29,13 @@ router.post("/me/transfer-quote", async (req, res): Promise<void> => {
     if (!parsed.success) {
       res.status(400).json({ error: "Vérifiez les informations du transfert." });
       return;
+    }
+    if (parsed.data.kind !== "deposit") {
+      const identityLimit = await getUnverifiedIncomingPolicy(session.userId);
+      if (identityLimit.outgoingBlocked) {
+        res.status(403).json({ error: unverifiedOutgoingBlockedMessage(identityLimit.limitMinor) });
+        return;
+      }
     }
     const quote = await calculateCustomerTransferQuote(
       session.userId, parsed.data, await loadTransferQuoteDependencies(),

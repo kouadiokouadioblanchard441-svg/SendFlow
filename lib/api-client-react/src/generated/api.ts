@@ -5102,7 +5102,7 @@ export const getCreateDeveloperPayoutQuoteUrl = () => {
 }
 
 /**
- * Read-only. The server loads SendFlow pricing and limits, then checks the authenticated merchant's active XOF wallet after subtracting active reservations. No funds are reserved.
+ * Read-only. The server loads SendFlow pricing and limits, checks the authenticated merchant's active XOF wallet after subtracting active reservations, and blocks payouts after an unverified wallet reaches its configured cumulative incoming-payment threshold. No funds are reserved.
  * @summary Calculate a server-side payout quote
  */
 export const createDeveloperPayoutQuote = async (payoutQuoteInput: PayoutQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<PayoutQuoteResponse> => {
@@ -6261,7 +6261,7 @@ export const getCreateCustomerTransferQuoteUrl = () => {
 }
 
 /**
- * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. Rejects inter-network and international quotes that exceed the remaining monthly account limit or when an unverified wallet has reached its configured cumulative incoming-payment threshold. Deposits remain allowed. Reads active operator pricing only; does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuote = async (transferQuoteInput: TransferQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<TransferQuoteResult> => {
