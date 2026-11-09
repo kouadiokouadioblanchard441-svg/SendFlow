@@ -32,9 +32,11 @@ import { isWithinMonthlyAccountLimit } from "../lib/account-limit-policy";
 import {
   assertPayoutWalletCanCover,
   calculatePayoutQuote,
-  PAYOUT_EXECUTION_ENABLED,
+  isPayoutExecutionEnabled,
+  normalizePayoutPhone,
   PayoutPolicyError,
 } from "../services/payout-policy";
+import { createAndDispatchPayout, reconcilePayout } from "../services/payout-execution";
 import { decryptSensitiveData } from "../lib/sensitive-data-crypto";
 import { enqueuePayoutWebhookEvent } from "../services/payout-webhook-outbox";
 
@@ -108,7 +110,6 @@ router.post("/v1/payout-quote", async (req, res): Promise<void> => {
       parsed.data.operatorId,
     );
     const quote = calculatePayoutQuote(parsed.data, configuration);
-    await assertMonthlyOutgoingLimit(key.userId, quote.amountMinor);
     assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
     res.setHeader("Cache-Control", "no-store");
     res.json(CreateDeveloperPayoutQuoteResponse.parse(
@@ -132,9 +133,6 @@ router.post("/v1/payouts", async (req, res): Promise<void> => {
   }
   try {
     const wallet = await loadMerchantPayoutWallet(key.userId);
-    if (wallet.availableMinor <= 0) {
-      throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
-    }
     const configuration = await loadPayoutQuoteConfiguration(
       parsedBody.data.countryCode,
       parsedBody.data.operatorId,
@@ -142,16 +140,51 @@ router.post("/v1/payouts", async (req, res): Promise<void> => {
     const quote = calculatePayoutQuote(parsedBody.data, configuration);
     await assertMonthlyOutgoingLimit(key.userId, quote.amountMinor);
     assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
-    if (!PAYOUT_EXECUTION_ENABLED) {
+    const beneficiaryPhone = normalizePayoutPhone(
+      parsedBody.data.beneficiary.phoneNumber,
+      configuration.country,
+    );
+    if (configuration.routedAggregatorCode !== "feexpay" ||
+      !isPayoutExecutionEnabled()) {
       res.status(503).json({
         error: "Le service de versement SendFlow est momentanément indisponible.",
         code: "payout_unavailable",
       });
       return;
     }
-    // Execution remains fail-closed until a SendFlow-owned channel can prove
-    // the final result for the exact merchant request.
-    res.status(503).json({ error: "Le service de versement SendFlow est momentanément indisponible." });
+    const result = await createAndDispatchPayout({
+      merchantUserId: key.userId,
+      apiKeyId: key.id,
+      idempotencyKey: validHeader.data["Idempotency-Key"],
+      merchantReference: parsedBody.data.merchantReference ?? null,
+      amountMinor: quote.amountMinor,
+      countryCode: parsedBody.data.countryCode,
+      operatorId: parsedBody.data.operatorId,
+      currency: quote.currency,
+      feePayer: quote.feePayer,
+      beneficiaryPhone,
+      beneficiaryName: parsedBody.data.beneficiary.name ?? null,
+      configuration,
+      feePercent: configuration.feePercent!,
+      pricingVersion: quote.pricingVersion,
+      feeMinor: quote.feeMinor,
+      totalDebitMinor: quote.totalDebitMinor,
+      beneficiaryAmountMinor: quote.beneficiaryAmountMinor,
+    });
+    if (result.kind === "idempotency_conflict") {
+      res.status(409).json({ error: "Cette clé d’idempotence est déjà liée à une autre demande." });
+      return;
+    }
+    if (result.kind === "daily_limit") {
+      res.status(409).json({ error: "Le plafond journalier des versements est atteint." });
+      return;
+    }
+    if (result.kind === "monthly_limit") {
+      res.status(409).json({ error: "Le plafond mensuel des versements est atteint." });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    res.location(`/v1/payouts/${result.payout.id}`).status(202).end();
   } catch (error) {
     sendPayoutError(req, res, error);
   }
@@ -221,8 +254,17 @@ router.get("/v1/payouts/:payoutId", async (req, res): Promise<void> => {
       res.status(404).json({ error: "Payout introuvable." });
       return;
     }
+    await reconcilePayout(row.id);
+    const [current] = await db.select().from(payoutRequestsTable).where(and(
+      eq(payoutRequestsTable.id, params.data.payoutId),
+      eq(payoutRequestsTable.merchantUserId, key.userId),
+    )).limit(1);
+    if (!current) {
+      res.status(404).json({ error: "Payout introuvable." });
+      return;
+    }
     res.setHeader("Cache-Control", "no-store");
-    res.json(GetDeveloperPayoutResponse.parse(presentPayout(row)));
+    res.json(GetDeveloperPayoutResponse.parse(presentPayout(current)));
   } catch (error) {
     sendPayoutError(req, res, error);
   }

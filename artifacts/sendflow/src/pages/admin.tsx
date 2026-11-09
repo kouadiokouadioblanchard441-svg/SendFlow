@@ -2084,7 +2084,7 @@ function BannersPage() {
 }
 
 type PaymentCountryCode = string;
-type PaymentOperation = 'deposit' | 'inter-network' | 'international';
+type PaymentOperation = 'deposit' | 'inter-network' | 'international' | 'payout';
 
 type PaymentRouteEdit = {
   kind: 'route';
@@ -2308,11 +2308,11 @@ function AggregatorsPage() {
 
       <Alert data-testid="notice-aggregator-adapters-unavailable">
         <CircleAlert className="size-4" />
-        <AlertTitle>Configuration sans connexion opérateur</AlertTitle>
+          <AlertTitle>Configuration et connexion fournisseur</AlertTitle>
         <AlertDescription>
-          Les affectations et partenaires sont enregistrés et audités. Les API de paiement doivent être intégrées
-          côté serveur avant qu’un routage puisse traiter une opération. Les formulaires de dépôt et transfert
-          restent bloqués jusque-là; les clés API ne sont pas stockées dans ce panel.
+            Les affectations et partenaires sont enregistrés et audités, mais ne remplacent pas l’intégration
+            serveur. Seuls les opérateurs et parcours pris en charge par un adaptateur actif peuvent exécuter
+            des opérations. Les clés privées restent dans les Secrets du serveur et ne sont jamais saisies ici.
         </AlertDescription>
       </Alert>
 
@@ -2371,7 +2371,7 @@ function AggregatorsPage() {
                     </Badge>
                     <Badge variant="outline">
                       {aggregator.adapterStatus === 'prepared'
-                        ? 'Client serveur préparé — paiements désactivés'
+                        ? 'Adaptateur serveur présent — disponibilité selon le parcours'
                         : 'API à intégrer'}
                     </Badge>
                     {!!aggregator.coverage?.length && (
@@ -2484,6 +2484,7 @@ function AggregatorsPage() {
                 ['deposit', 'Dépôt'],
                 ['inter-network', 'Inter réseau'],
                 ['international', 'International / retrait'],
+                ['payout', 'Versement marchand'],
               ] as const).map(([operation, label]) => (
                 <Button key={operation} type="button"
                   variant={routingOperation === operation ? 'default' : 'outline'}
@@ -2491,9 +2492,15 @@ function AggregatorsPage() {
                   onClick={() => setRoutingOperation(operation)}>{label}</Button>
               ))}
             </div>
+            {routingOperation === 'payout' && (
+              <p className="text-sm text-muted-foreground">
+                Cette affectation ne connecte pas le fournisseur. L’API n’accepte que les canaux de versement
+                dont l’adaptateur serveur est réellement disponible.
+              </p>
+            )}
             <div className="grid gap-4 xl:grid-cols-2" data-testid="list-admin-aggregator-routes">
               {data.countries.filter((country): country is typeof country & { operation: PaymentOperation } =>
-                country.operation !== 'payout' && country.operation === routingOperation,
+                country.operation === routingOperation,
               ).map((country) => {
                 const countryAggregatorName = country.defaultAggregatorCode
                   ? aggregatorByCode.get(country.defaultAggregatorCode)?.name ?? country.defaultAggregatorCode

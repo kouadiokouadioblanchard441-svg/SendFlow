@@ -3268,7 +3268,7 @@ export const updateAdminAggregatorRouteBodyReasonMax = 500;
 export const UpdateAdminAggregatorRouteBody = zod.object({
   "scopeType": zod.enum(['country', 'operator']),
   "countryCode": zod.string().regex(updateAdminAggregatorRouteBodyCountryCodeRegExp),
-  "operation": zod.enum(['deposit', 'inter-network', 'international']),
+  "operation": zod.enum(['deposit', 'inter-network', 'international', 'payout']),
   "operatorId": zod.string().nullable(),
   "aggregatorCode": zod.string().nullable(),
   "expectedVersion": zod.int().min(updateAdminAggregatorRouteBodyExpectedVersionMin),

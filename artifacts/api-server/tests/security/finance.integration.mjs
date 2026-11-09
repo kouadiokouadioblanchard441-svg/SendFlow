@@ -519,11 +519,11 @@ test("SQL constraints and append-only triggers prevent alteration of financial h
   const legacy = (await owner.query("SELECT payload_digest FROM sf_identity_webhook_events WHERE event_id='legacy-fixture'")).rows[0];
   assert.equal(legacy.payload_digest, null);
 });
-test("legacy identity records remain stored but never grant the elevated monthly limit", async () => {
+test("legacy identity records remain stored and keep the current unverified monthly limit", async () => {
   await owner.query(`INSERT INTO sf_identity_verifications(user_id,provider_session_id,vendor_data,verification_url,status,created_at)
     VALUES('fixture-b','fixture-old-approved','fixture-b','https://historical.invalid/session','Approved',now()-interval '2 days')`);
   assert.equal((await owner.query("SELECT status FROM sf_identity_verifications WHERE provider_session_id='fixture-old-approved'")).rows[0].status, "Approved");
-  assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 150_000);
+  assert.equal((await runtime.getAccountLimitSnapshot("fixture-b")).monthlyLimit, 20_000);
 });
 test("Turnstile failures stop login, signup OTP, account creation, and password reset before auth state changes", async () => {
   const before = {

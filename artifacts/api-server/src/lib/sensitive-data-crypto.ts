@@ -42,6 +42,7 @@ export type SensitiveDataPurpose =
   | "developer-payment-metadata"
   | "payout-beneficiary-phone"
   | "payout-beneficiary-name"
+  | "payout-execution-account"
   | "payout-execution-reference"
   | "payout-confirmation-evidence";
 

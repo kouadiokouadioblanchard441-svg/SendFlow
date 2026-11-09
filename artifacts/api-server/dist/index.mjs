@@ -30209,7 +30209,7 @@ var require_utils5 = __commonJS({
     var nodeCrypto = __require("crypto");
     module.exports = {
       postgresMd5PasswordHash,
-      randomBytes: randomBytes9,
+      randomBytes: randomBytes10,
       deriveKey: deriveKey2,
       sha256: sha2562,
       hashByName,
@@ -30219,7 +30219,7 @@ var require_utils5 = __commonJS({
     var webCrypto2 = nodeCrypto.webcrypto || globalThis.crypto;
     var subtleCrypto = webCrypto2.subtle;
     var textEncoder2 = new TextEncoder();
-    function randomBytes9(length) {
+    function randomBytes10(length) {
       return webCrypto2.getRandomValues(Buffer.alloc(length));
     }
     async function md52(string4) {
@@ -214223,7 +214223,7 @@ var updateAdminAggregatorRouteBodyReasonMax = 500;
 var UpdateAdminAggregatorRouteBody = object({
   "scopeType": _enum2(["country", "operator"]),
   "countryCode": string2().regex(updateAdminAggregatorRouteBodyCountryCodeRegExp),
-  "operation": _enum2(["deposit", "inter-network", "international"]),
+  "operation": _enum2(["deposit", "inter-network", "international", "payout"]),
   "operatorId": string2().nullable(),
   "aggregatorCode": string2().nullable(),
   "expectedVersion": int().min(updateAdminAggregatorRouteBodyExpectedVersionMin),
@@ -253255,17 +253255,18 @@ var import_express30 = __toESM(require_express2(), 1);
 
 // src/providers/feexpay/live-runtime.ts
 function isFeexpayLiveExecutionAllowed(environment) {
-  if (environment.FEEXPAY_LIVE_ENABLED !== "true") return false;
-  if (environment.FEEXPAY_EXECUTION_HOST === "plesk") {
-    return environment.NODE_ENV === "production" && environment.SENDFLOW_DATABASE_TARGET === "production" && !environment.REPL_ID && !environment.REPLIT_DEV_DOMAIN;
+  const host = environment.FEEXPAY_EXECUTION_HOST;
+  if (host === "replit") {
+    if (environment.FEEXPAY_LIVE_ENABLED !== "true" || environment.SENDFLOW_DATABASE_TARGET !== "shared-external") return false;
+    try {
+      resolveReplitLiveDatabaseUrl(environment);
+      return true;
+    } catch {
+      return false;
+    }
   }
-  if (environment.FEEXPAY_EXECUTION_HOST !== "replit" || environment.SENDFLOW_DATABASE_TARGET !== "shared-external") return false;
-  try {
-    resolveReplitLiveDatabaseUrl(environment);
-    return true;
-  } catch {
-    return false;
-  }
+  if (host !== void 0 && host !== "plesk") return false;
+  return environment.NODE_ENV === "production" && environment.SENDFLOW_DATABASE_TARGET === "production" && !environment.REPL_ID && !environment.REPLIT_DEV_DOMAIN;
 }
 
 // src/providers/paydunya/client.ts
@@ -253355,11 +253356,12 @@ async function boundedJson(response) {
   }
 }
 function isPaydunyaLiveExecutionAllowed(environment) {
-  if (environment.PAYDUNYA_LIVE_ENABLED !== "true") return false;
-  if (environment.PAYDUNYA_EXECUTION_HOST === "plesk") {
-    return environment.NODE_ENV === "production" && environment.SENDFLOW_DATABASE_TARGET === "production" && !environment.REPL_ID && !environment.REPLIT_DEV_DOMAIN;
+  const host = environment.PAYDUNYA_EXECUTION_HOST;
+  if (host === "replit") {
+    return environment.PAYDUNYA_LIVE_ENABLED === "true" && environment.SENDFLOW_DATABASE_TARGET === "shared-external" && environment.SENDFLOW_REPLIT_LIVE_APPROVED === "true" && environment.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED === "true";
   }
-  return environment.PAYDUNYA_EXECUTION_HOST === "replit" && environment.SENDFLOW_DATABASE_TARGET === "shared-external" && environment.SENDFLOW_REPLIT_LIVE_APPROVED === "true" && environment.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED === "true";
+  if (host !== void 0 && host !== "plesk") return false;
+  return environment.NODE_ENV === "production" && environment.SENDFLOW_DATABASE_TARGET === "production" && !environment.REPL_ID && !environment.REPLIT_DEV_DOMAIN;
 }
 function verifyMasterKeyHash(hash2, masterKey) {
   if (typeof hash2 !== "string" || !/^[a-f0-9]{128}$/i.test(hash2)) return false;
@@ -253500,10 +253502,10 @@ function isSafeHttpsUrl(value) {
 // src/services/linkflow-payment-policy.ts
 function isLinkFlowProviderExecutionEnabled(providerCode, environment = process.env) {
   if (providerCode === "feexpay") {
-    return environment.FEEXPAY_LINKFLOW_ENABLED === "true" && environment.FEEXPAY_MODE === "live" && environment.FEEXPAY_EXECUTION_HOST === "plesk" && environment.SENDFLOW_DATABASE_TARGET === "production" && Boolean(environment.FEEXPAY_API_KEY) && Boolean(environment.FEEXPAY_SHOP_ID) && isFeexpayLiveExecutionAllowed(environment);
+    return (environment.FEEXPAY_MODE === void 0 || environment.FEEXPAY_MODE === "live") && environment.NODE_ENV === "production" && environment.SENDFLOW_DATABASE_TARGET === "production" && !environment.REPL_ID && !environment.REPLIT_DEV_DOMAIN && Boolean(environment.FEEXPAY_API_KEY) && Boolean(environment.FEEXPAY_SHOP_ID) && isFeexpayLiveExecutionAllowed(environment);
   }
   if (providerCode === "paydunya") {
-    return environment.PAYDUNYA_LINKFLOW_ENABLED === "true" && environment.PAYDUNYA_MODE === "live" && environment.PAYDUNYA_EXECUTION_HOST === "plesk" && environment.SENDFLOW_DATABASE_TARGET === "production" && Boolean(environment.PAYDUNYA_MASTER_KEY) && Boolean(environment.PAYDUNYA_PRIVATE_KEY) && Boolean(environment.PAYDUNYA_TOKEN) && isPaydunyaLiveExecutionAllowed(environment);
+    return environment.NODE_ENV === "production" && environment.SENDFLOW_DATABASE_TARGET === "production" && !environment.REPL_ID && !environment.REPLIT_DEV_DOMAIN && Boolean(environment.PAYDUNYA_MASTER_KEY) && Boolean(environment.PAYDUNYA_PRIVATE_KEY) && Boolean(environment.PAYDUNYA_TOKEN) && isPaydunyaLiveExecutionAllowed(environment);
   }
   return false;
 }
@@ -253639,7 +253641,7 @@ var FeexpayClient = class {
   }
   configuration() {
     const env = this.#environment;
-    const mode = env.FEEXPAY_MODE;
+    const mode = env.FEEXPAY_MODE ?? (isFeexpayLiveExecutionAllowed(env) ? "live" : void 0);
     if (mode !== "live" && mode !== "sandbox") return fail4("CONFIGURATION_REQUIRED");
     if (mode === "live" && !isFeexpayLiveExecutionAllowed(env)) return fail4("LIVE_DISABLED");
     const key = mode === "sandbox" ? env.FEEXPAY_SANDBOX_API_KEY : env.FEEXPAY_API_KEY;
@@ -256312,12 +256314,15 @@ async function loadPayoutQuoteConfiguration(countryCode, operatorId) {
     minimumPayoutMinor: limits?.minimumPayoutMinor ?? 200,
     maximumTransferMinor: limits?.maximumTransferMinor ?? 0,
     maximumPayoutDailyMinor: limits?.maximumPayoutDailyMinor ?? null,
-    executionRouteEnabled: Boolean(routedAggregatorCode && aggregator?.enabled)
+    executionRouteEnabled: routedAggregatorCode === "feexpay" && Boolean(aggregator?.enabled) && Boolean(feexpayChannelForOperator(normalizedCountry, operatorId)),
+    routedAggregatorCode
   };
 }
 
 // src/services/payout-policy.ts
-var PAYOUT_EXECUTION_ENABLED = false;
+function isPayoutExecutionEnabled(environment = process.env) {
+  return isFeexpayLiveExecutionAllowed(environment) && (environment.FEEXPAY_MODE === void 0 || environment.FEEXPAY_MODE === "live") && Boolean(environment.FEEXPAY_API_KEY) && Boolean(environment.FEEXPAY_SHOP_ID);
+}
 var PayoutPolicyError = class extends Error {
   statusCode;
   constructor(statusCode, message) {
@@ -256333,6 +256338,17 @@ function assertPayoutWalletCanCover(availableBalanceMinor, totalDebitMinor) {
   if (!Number.isSafeInteger(availableBalanceMinor) || availableBalanceMinor < totalDebitMinor) {
     throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
   }
+}
+function normalizePayoutPhone(phoneNumber, country) {
+  const normalized = phoneNumber.trim();
+  if (!country || !/^\+[1-9][0-9]{7,14}$/.test(normalized) || !normalized.startsWith(country.phonePrefix)) {
+    throw new PayoutPolicyError(400, "Le num\xE9ro du b\xE9n\xE9ficiaire ne correspond pas au pays choisi.");
+  }
+  const national = normalized.slice(country.phonePrefix.length);
+  if (!/^[0-9]+$/.test(national) || national.length < country.minPhoneDigits || national.length > country.maxPhoneDigits) {
+    throw new PayoutPolicyError(400, "La longueur du num\xE9ro du b\xE9n\xE9ficiaire est invalide.");
+  }
+  return normalized;
 }
 function calculatePayoutQuote(input2, configuration) {
   if (!Number.isSafeInteger(input2.amountMinor) || input2.amountMinor <= 0 || input2.currency !== "XOF") {
@@ -256377,6 +256393,9 @@ function calculatePayoutQuote(input2, configuration) {
     pricingVersion: configuration.pricingVersion,
     quoteExpiresAt: new Date(Date.now() + 12e4).toISOString()
   };
+}
+function isMatchingPayoutSettlementEvidence(payout2, evidence, expectedStatus) {
+  return evidence.verificationPassed && evidence.executionStatus === expectedStatus && evidence.executionReferenceHash === payout2.executionReferenceHash && evidence.amountMinor === payout2.beneficiaryAmountMinor && evidence.currency === payout2.currency && evidence.countryCode === payout2.countryCode && evidence.operatorId === payout2.operatorId && evidence.beneficiaryPhoneHash === payout2.beneficiaryPhoneHash && evidence.executionAccountHash === payout2.expectedExecutionAccountHash && evidence.executionChannelId === payout2.expectedExecutionChannelId && evidence.operation === "payout";
 }
 
 // src/data/payout-wallet-balance.ts
@@ -256428,6 +256447,52 @@ async function loadMerchantPayoutWallet(userId) {
     reservedMinor,
     availableMinor: balanceMinor - reservedMinor
   };
+}
+
+// src/services/payout-execution.ts
+import { createHash as createHash9, randomBytes as randomBytes8, randomUUID as randomUUID9 } from "node:crypto";
+
+// src/services/payout-settlement-verification.ts
+function resolveVerifiedFinalStatus(payout2, attempt, receipt) {
+  if (receipt.status === "PENDING" || !attempt.executionReferenceHash || !payout2.executionReferenceEncrypted || receipt.verifiedStatusOperation !== "payout" || receipt.amountMinor !== payout2.beneficiaryAmountMinor || receipt.currency !== void 0 && receipt.currency !== payout2.currency || feexpayChannelForOperator(payout2.countryCode, payout2.operatorId)?.id !== attempt.expectedExecutionChannelId) return false;
+  const expectedReference = decryptSensitiveData(
+    payout2.executionReferenceEncrypted,
+    "provider-reference",
+    { authenticatedContext: payout2.id }
+  );
+  if (receipt.reference !== expectedReference || createSensitiveDataLookupIndex(expectedReference, "provider-reference") !== attempt.executionReferenceHash) return false;
+  const phone = decryptSensitiveData(payout2.beneficiaryPhoneEncrypted, "payout-beneficiary-phone", {
+    authenticatedContext: payout2.id
+  }).replace(/\D/g, "");
+  if (receipt.phoneNumber !== void 0 && receipt.phoneNumber !== phone) return false;
+  const expected = {
+    executionReferenceHash: attempt.executionReferenceHash,
+    beneficiaryAmountMinor: payout2.beneficiaryAmountMinor,
+    currency: payout2.currency,
+    countryCode: payout2.countryCode,
+    operatorId: payout2.operatorId,
+    beneficiaryPhoneHash: payout2.beneficiaryPhoneHash,
+    expectedExecutionAccountHash: attempt.expectedExecutionAccountHash,
+    expectedExecutionChannelId: attempt.expectedExecutionChannelId
+  };
+  const evidence = {
+    executionReferenceHash: attempt.executionReferenceHash,
+    executionStatus: receipt.status === "SUCCESSFUL" ? "SUCCEEDED" : "FAILED",
+    amountMinor: receipt.amountMinor,
+    currency: payout2.currency,
+    countryCode: payout2.countryCode,
+    operatorId: payout2.operatorId,
+    beneficiaryPhoneHash: payout2.beneficiaryPhoneHash,
+    executionAccountHash: attempt.expectedExecutionAccountHash,
+    executionChannelId: attempt.expectedExecutionChannelId,
+    operation: "payout",
+    verificationPassed: true
+  };
+  return isMatchingPayoutSettlementEvidence(
+    expected,
+    evidence,
+    evidence.executionStatus
+  );
 }
 
 // src/services/payout-webhook-outbox.ts
@@ -256629,6 +256694,386 @@ async function enqueuePayoutWebhookEvent(tx, input2) {
   }
 }
 
+// src/services/payout-execution.ts
+function makeReference() {
+  return `SFPO${randomBytes8(8).toString("hex").toUpperCase()}`;
+}
+function makeRequestHash(input2, phoneHash) {
+  return createHash9("sha256").update(JSON.stringify({
+    amountMinor: input2.amountMinor,
+    countryCode: input2.countryCode,
+    currency: input2.currency,
+    feePayer: input2.feePayer,
+    merchantReference: input2.merchantReference,
+    operatorId: input2.operatorId,
+    phoneHash,
+    beneficiaryName: input2.beneficiaryName?.trim().normalize("NFKC") ?? null
+  })).digest("hex");
+}
+async function insertStateEvent(tx, payout2, fromStatus, toStatus, reasonCode) {
+  const [event] = await tx.insert(payoutStateEventsTable).values({
+    payoutRequestId: payout2.id,
+    fromStatus,
+    toStatus,
+    actorType: "system",
+    actorId: "system:payout",
+    reasonCode
+  }).returning({ id: payoutStateEventsTable.id });
+  if (!event) throw new Error("Payout state event was not recorded");
+  await enqueuePayoutWebhookEvent(tx, {
+    payout: { ...payout2, status: toStatus },
+    stateEventId: event.id,
+    occurredAt: /* @__PURE__ */ new Date()
+  });
+}
+async function preparePayout(input2) {
+  const phoneHash = createSensitiveDataLookupIndex(
+    input2.beneficiaryPhone,
+    "payout-beneficiary-phone"
+  );
+  const requestHash = makeRequestHash(input2, phoneHash);
+  const reference = makeReference();
+  const payoutId = randomUUID9();
+  const operationReference = reference;
+  const shopId = process.env.FEEXPAY_SHOP_ID;
+  const accountHash = createSensitiveDataLookupIndex(shopId, "payout-execution-account");
+  const channelId = feexpayChannelForOperator(input2.countryCode, input2.operatorId)?.id;
+  if (!channelId) throw new Error("Payout provider channel is unavailable");
+  return db.transaction(async (tx) => {
+    await tx.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, input2.merchantUserId)).for("update");
+    const monthlyLimit = await getAccountLimitSnapshot(input2.merchantUserId);
+    if (!isWithinMonthlyAccountLimit(input2.amountMinor, monthlyLimit.remainingAmount)) {
+      return { kind: "monthly_limit" };
+    }
+    const [wallet] = await tx.select().from(walletsTable).where(eq(walletsTable.userId, input2.merchantUserId)).for("update").limit(1);
+    if (!wallet) throw new Error("Payout wallet is missing");
+    const [existing] = await tx.select().from(payoutRequestsTable).where(and(
+      eq(payoutRequestsTable.merchantUserId, input2.merchantUserId),
+      eq(payoutRequestsTable.idempotencyKey, input2.idempotencyKey)
+    )).for("update").limit(1);
+    if (existing) {
+      if (existing.requestHash !== requestHash) {
+        return { kind: "idempotency_conflict" };
+      }
+      return { kind: "existing", payout: existing };
+    }
+    const dayStart = /* @__PURE__ */ new Date();
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const [daily] = await tx.select({
+      amount: sql`coalesce(sum(${payoutRequestsTable.totalDebitMinor}), 0)::text`
+    }).from(payoutRequestsTable).where(and(
+      eq(payoutRequestsTable.merchantUserId, input2.merchantUserId),
+      eq(payoutRequestsTable.currency, "XOF"),
+      sql`${payoutRequestsTable.createdAt} >= ${dayStart}`,
+      sql`(${payoutRequestsTable.status} = 'succeeded' OR ${payoutRequestsTable.reservationState} = 'active')`
+    ));
+    const usedToday = Number(daily?.amount ?? 0);
+    const dailyMaximum = input2.configuration.maximumPayoutDailyMinor;
+    if (!Number.isSafeInteger(usedToday) || usedToday < 0 || !Number.isSafeInteger(dailyMaximum) || dailyMaximum === null || usedToday + input2.totalDebitMinor < usedToday) {
+      throw new Error("Payout daily limit could not be verified");
+    }
+    if (usedToday + input2.totalDebitMinor > dailyMaximum) {
+      return { kind: "daily_limit" };
+    }
+    const encryptedPhone = encryptSensitiveData(input2.beneficiaryPhone, "payout-beneficiary-phone", {
+      authenticatedContext: payoutId
+    });
+    const encryptedName = input2.beneficiaryName ? encryptSensitiveData(input2.beneficiaryName.trim().normalize("NFKC"), "payout-beneficiary-name", {
+      authenticatedContext: payoutId
+    }) : null;
+    const feeRateUnits = Math.round(input2.feePercent * 1e4);
+    const [created] = await tx.insert(payoutRequestsTable).values({
+      id: payoutId,
+      reference,
+      merchantUserId: input2.merchantUserId,
+      apiKeyId: input2.apiKeyId,
+      walletId: wallet.id,
+      idempotencyKey: input2.idempotencyKey,
+      requestHash,
+      merchantReference: input2.merchantReference,
+      countryCode: input2.countryCode,
+      operatorId: input2.operatorId,
+      beneficiaryPhoneEncrypted: encryptedPhone,
+      beneficiaryPhoneHash: phoneHash,
+      beneficiaryNameEncrypted: encryptedName,
+      amountMinor: input2.amountMinor,
+      currency: input2.currency,
+      feeRateUnits,
+      feePayer: input2.feePayer,
+      feeMinor: input2.feeMinor,
+      totalDebitMinor: input2.totalDebitMinor,
+      beneficiaryAmountMinor: input2.beneficiaryAmountMinor,
+      pricingVersion: input2.pricingVersion,
+      status: "created",
+      reservationState: "none"
+    }).returning();
+    if (!created) throw new Error("Payout request was not created");
+    const [validated] = await tx.update(payoutRequestsTable).set({
+      status: "validated",
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(payoutRequestsTable.id, created.id)).returning();
+    if (!validated) throw new Error("Payout request was not validated");
+    await insertStateEvent(tx, validated, "created", "validated", "request_validated");
+    const [attempt] = await tx.insert(payoutAttemptsTable).values({
+      payoutRequestId: payoutId,
+      operationReference,
+      status: "prepared",
+      expectedExecutionAccountHash: accountHash,
+      expectedExecutionChannelId: channelId
+    }).returning({ id: payoutAttemptsTable.id });
+    if (!attempt) throw new Error("Payout attempt was not prepared");
+    const [reserved] = await tx.update(payoutRequestsTable).set({
+      status: "funds_reserved",
+      reservationState: "active",
+      reservedAt: /* @__PURE__ */ new Date(),
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(payoutRequestsTable.id, payoutId)).returning();
+    if (!reserved) throw new Error("Payout funds could not be reserved");
+    await insertStateEvent(tx, reserved, "validated", "funds_reserved", "funds_reserved");
+    return { kind: "created", payout: reserved };
+  });
+}
+async function markUncertain(payoutId) {
+  await db.transaction(async (tx) => {
+    const [payout2] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, payoutId)).for("update").limit(1);
+    const [attempt] = await tx.select().from(payoutAttemptsTable).where(eq(payoutAttemptsTable.payoutRequestId, payoutId)).for("update").limit(1);
+    if (!payout2 || !attempt || ["succeeded", "failed", "cancelled", "rejected"].includes(payout2.status)) return;
+    const now = /* @__PURE__ */ new Date();
+    if (attempt.status === "dispatching" || attempt.status === "pending") {
+      await tx.update(payoutAttemptsTable).set({ status: "uncertain", updatedAt: now }).where(eq(payoutAttemptsTable.id, attempt.id));
+    }
+    if (payout2.status !== "uncertain") {
+      const [updated] = await tx.update(payoutRequestsTable).set({
+        status: "uncertain",
+        failureCode: "execution_unavailable",
+        updatedAt: now
+      }).where(eq(payoutRequestsTable.id, payout2.id)).returning();
+      if (updated) await insertStateEvent(tx, updated, payout2.status, "uncertain", "execution_uncertain");
+    }
+  });
+}
+async function claimPayoutDispatch(payoutId) {
+  return db.transaction(async (tx) => {
+    const [payout2] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, payoutId)).for("update").limit(1);
+    const [attempt] = await tx.select().from(payoutAttemptsTable).where(eq(payoutAttemptsTable.payoutRequestId, payoutId)).for("update").limit(1);
+    if (!payout2 || !attempt || payout2.status !== "funds_reserved" || payout2.reservationState !== "active" || attempt.status !== "prepared" || attempt.dispatchedAt !== null) return null;
+    const now = /* @__PURE__ */ new Date();
+    const [claimedAttempt] = await tx.update(payoutAttemptsTable).set({
+      status: "dispatching",
+      dispatchedAt: now,
+      updatedAt: now
+    }).where(eq(payoutAttemptsTable.id, attempt.id)).returning();
+    if (!claimedAttempt) return null;
+    const [submitted] = await tx.update(payoutRequestsTable).set({
+      status: "submitted",
+      submittedAt: now,
+      updatedAt: now
+    }).where(eq(payoutRequestsTable.id, payout2.id)).returning();
+    if (!submitted) throw new Error("Payout dispatch state was not recorded");
+    await insertStateEvent(tx, submitted, "funds_reserved", "submitted", "provider_dispatch_started");
+    return { payout: submitted, attempt: claimedAttempt };
+  });
+}
+async function persistProviderReference(payoutId, attemptId, receipt) {
+  const providerReferenceHash = createSensitiveDataLookupIndex(receipt.reference, "provider-reference");
+  const now = /* @__PURE__ */ new Date();
+  return db.transaction(async (tx) => {
+    const [payout2] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, payoutId)).for("update").limit(1);
+    const [attempt] = await tx.select().from(payoutAttemptsTable).where(eq(payoutAttemptsTable.id, attemptId)).for("update").limit(1);
+    if (!payout2 || !attempt || attempt.status !== "dispatching" || payout2.status !== "submitted" || attempt.executionReferenceHash) return false;
+    const encryptedReference = encryptSensitiveData(receipt.reference, "provider-reference", {
+      authenticatedContext: payout2.id
+    });
+    await tx.update(payoutAttemptsTable).set({
+      status: "pending",
+      executionReferenceEncrypted: encryptedReference,
+      executionReferenceHash: providerReferenceHash,
+      updatedAt: now
+    }).where(eq(payoutAttemptsTable.id, attempt.id));
+    const [updated] = await tx.update(payoutRequestsTable).set({
+      status: "processing",
+      executionReferenceEncrypted: encryptedReference,
+      executionReferenceHash: providerReferenceHash,
+      failureCode: null,
+      updatedAt: now
+    }).where(eq(payoutRequestsTable.id, payout2.id)).returning();
+    if (!updated) throw new Error("Payout provider reference was not recorded");
+    await insertStateEvent(tx, updated, "submitted", "processing", "provider_reference_recorded");
+    return true;
+  });
+}
+async function settlePayout(payoutId, attemptId, receipt) {
+  if (receipt.status === "PENDING") return;
+  await db.transaction(async (tx) => {
+    const [snapshot] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, payoutId)).limit(1);
+    if (!snapshot) return;
+    await tx.select({ id: walletsTable.id }).from(walletsTable).where(eq(walletsTable.id, snapshot.walletId)).for("update");
+    const [payout2] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, payoutId)).for("update").limit(1);
+    const [attempt] = await tx.select().from(payoutAttemptsTable).where(eq(payoutAttemptsTable.id, attemptId)).for("update").limit(1);
+    if (!payout2 || !attempt || !["processing", "uncertain"].includes(payout2.status) || !["pending", "uncertain"].includes(attempt.status) || !resolveVerifiedFinalStatus(payout2, attempt, receipt)) return;
+    const [wallet] = await tx.select().from(walletsTable).where(eq(walletsTable.id, payout2.walletId)).for("update").limit(1);
+    if (!wallet || receipt.status === "SUCCESSFUL" && wallet.balanceMinor < payout2.totalDebitMinor) return;
+    const now = /* @__PURE__ */ new Date();
+    const finalStatus = receipt.status === "SUCCESSFUL" ? "succeeded" : "failed";
+    const proofEvidence = JSON.stringify({
+      source: "authenticated_provider_status",
+      operation: "payout",
+      reference: receipt.reference,
+      status: receipt.status,
+      amountMinor: receipt.amountMinor,
+      currency: receipt.currency ?? payout2.currency,
+      phoneNumber: receipt.phoneNumber ?? null,
+      payoutId: payout2.id,
+      providerChannelId: attempt.expectedExecutionChannelId,
+      executionAccountHash: attempt.expectedExecutionAccountHash
+    });
+    const [proof] = await tx.insert(payoutConfirmationsTable).values({
+      payoutRequestId: payout2.id,
+      attemptId: attempt.id,
+      verificationSource: "status_check",
+      executionStatus: finalStatus === "succeeded" ? "SUCCEEDED" : "FAILED",
+      executionReferenceHash: attempt.executionReferenceHash,
+      amountMinor: payout2.beneficiaryAmountMinor,
+      currency: payout2.currency,
+      executionAccountHash: attempt.expectedExecutionAccountHash,
+      executionChannelId: attempt.expectedExecutionChannelId,
+      operation: "payout",
+      countryCode: payout2.countryCode,
+      operatorId: payout2.operatorId,
+      beneficiaryPhoneHash: payout2.beneficiaryPhoneHash,
+      verificationPassed: true,
+      evidenceEncrypted: encryptSensitiveData(proofEvidence, "payout-confirmation-evidence", {
+        authenticatedContext: payout2.id
+      }),
+      verifiedAt: now
+    }).returning({ id: payoutConfirmationsTable.id });
+    if (!proof) throw new Error("Payout settlement evidence was not recorded");
+    let ledgerEntryId = null;
+    if (finalStatus === "succeeded") {
+      const balanceAfterMinor = wallet.balanceMinor - payout2.totalDebitMinor;
+      const [entry] = await tx.insert(walletLedgerTable).values({
+        walletId: wallet.id,
+        userId: payout2.merchantUserId,
+        direction: "debit",
+        amountMinor: payout2.totalDebitMinor,
+        balanceBeforeMinor: wallet.balanceMinor,
+        balanceAfterMinor,
+        currency: payout2.currency,
+        reason: `Versement marchand confirm\xE9 ${payout2.reference}`,
+        adminUserId: "system:payout",
+        idempotencyKey: `payout:${payout2.id}:debit`
+      }).returning({ id: walletLedgerTable.id });
+      if (!entry) throw new Error("Payout debit was not recorded");
+      ledgerEntryId = entry.id;
+    }
+    await tx.update(payoutAttemptsTable).set({
+      status: finalStatus === "succeeded" ? "succeeded" : "failed",
+      finalConfirmationId: proof.id,
+      updatedAt: now
+    }).where(eq(payoutAttemptsTable.id, attempt.id));
+    const [updated] = await tx.update(payoutRequestsTable).set({
+      status: finalStatus,
+      reservationState: finalStatus === "succeeded" ? "consumed" : "released",
+      failureCode: finalStatus === "failed" ? "execution_failed" : null,
+      finalConfirmationId: proof.id,
+      ledgerEntryId,
+      completedAt: now,
+      updatedAt: now
+    }).where(eq(payoutRequestsTable.id, payout2.id)).returning();
+    if (!updated) throw new Error("Payout final state was not recorded");
+    if (ledgerEntryId !== null) {
+      await tx.update(walletsTable).set({
+        balanceMinor: wallet.balanceMinor - payout2.totalDebitMinor,
+        updatedAt: now
+      }).where(eq(walletsTable.id, wallet.id));
+    }
+    await insertStateEvent(tx, updated, payout2.status, finalStatus, `provider_${finalStatus}`);
+  });
+}
+async function dispatchPayout(payoutId) {
+  const claimed = await claimPayoutDispatch(payoutId);
+  if (!claimed) return;
+  const { payout: payout2, attempt } = claimed;
+  try {
+    const phone = decryptSensitiveData(payout2.beneficiaryPhoneEncrypted, "payout-beneficiary-phone", {
+      authenticatedContext: payout2.id
+    }).replace(/\D/g, "");
+    const receipt = await new FeexpayClient().initiate("payout", {
+      channelId: attempt.expectedExecutionChannelId,
+      amountMinor: payout2.beneficiaryAmountMinor,
+      currency: "XOF",
+      phoneNumber: phone,
+      operationReference: attempt.operationReference
+    });
+    if (!receipt.reference || !await persistProviderReference(payout2.id, attempt.id, receipt)) {
+      await markUncertain(payout2.id);
+      return;
+    }
+    await reconcilePayout(payout2.id, true);
+  } catch (error62) {
+    if (error62 instanceof FeexpayError && ["CONFIGURATION_REQUIRED", "LIVE_DISABLED", "INVALID_INPUT", "CHANNEL_UNAVAILABLE", "CURRENCY_UNAVAILABLE"].includes(error62.code)) {
+      await markUncertain(payout2.id);
+      return;
+    }
+    await markUncertain(payout2.id);
+  }
+}
+async function reconcilePayout(payoutId, force = false) {
+  const [payout2] = await db.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, payoutId)).limit(1);
+  if (!payout2 || !["processing", "uncertain"].includes(payout2.status) || !payout2.executionReferenceEncrypted || !payout2.executionReferenceHash) return;
+  if (!force && Date.now() - payout2.updatedAt.getTime() < 5e3) return;
+  const [attempt] = await db.select().from(payoutAttemptsTable).where(eq(payoutAttemptsTable.payoutRequestId, payoutId)).limit(1);
+  if (!attempt || !attempt.executionReferenceEncrypted || !attempt.executionReferenceHash) return;
+  const shopId = process.env.FEEXPAY_SHOP_ID;
+  if (!isPayoutExecutionEnabled() || !shopId || createSensitiveDataLookupIndex(shopId, "payout-execution-account") !== attempt.expectedExecutionAccountHash) {
+    await markUncertain(payout2.id);
+    return;
+  }
+  const providerReference = decryptSensitiveData(
+    payout2.executionReferenceEncrypted,
+    "provider-reference",
+    { authenticatedContext: payout2.id }
+  );
+  try {
+    const receipt = await new FeexpayClient().getStatus("payout", providerReference);
+    if (receipt.status === "PENDING") {
+      await db.transaction(async (tx) => {
+        const [current] = await tx.select().from(payoutRequestsTable).where(eq(payoutRequestsTable.id, payout2.id)).for("update").limit(1);
+        const [currentAttempt] = await tx.select().from(payoutAttemptsTable).where(eq(payoutAttemptsTable.id, attempt.id)).for("update").limit(1);
+        if (!current || !currentAttempt || ["succeeded", "failed"].includes(current.status)) return;
+        const previousStatus = current.status;
+        const now = /* @__PURE__ */ new Date();
+        const [updated] = await tx.update(payoutRequestsTable).set({
+          status: "processing",
+          failureCode: null,
+          updatedAt: now
+        }).where(eq(payoutRequestsTable.id, current.id)).returning();
+        await tx.update(payoutAttemptsTable).set({
+          status: "pending",
+          updatedAt: now
+        }).where(eq(payoutAttemptsTable.id, currentAttempt.id));
+        if (updated && previousStatus !== "processing") {
+          await insertStateEvent(tx, updated, previousStatus, "processing", "provider_still_processing");
+        }
+      });
+      return;
+    }
+    if (!resolveVerifiedFinalStatus(payout2, attempt, receipt)) {
+      await markUncertain(payout2.id);
+      return;
+    }
+    await settlePayout(payout2.id, attempt.id, receipt);
+  } catch {
+    await markUncertain(payout2.id);
+  }
+}
+async function createAndDispatchPayout(input2) {
+  const result = await preparePayout(input2);
+  if (result.kind !== "created" && result.kind !== "existing") return result;
+  if (result.payout.status === "funds_reserved") await dispatchPayout(result.payout.id);
+  return { kind: result.kind, payout: result.payout };
+}
+
 // src/routes/developer-payouts.ts
 var router26 = (0, import_express32.Router)();
 function presentPayout(row) {
@@ -256694,7 +257139,6 @@ router26.post("/v1/payout-quote", async (req, res) => {
       parsed.data.operatorId
     );
     const quote = calculatePayoutQuote(parsed.data, configuration);
-    await assertMonthlyOutgoingLimit(key.userId, quote.amountMinor);
     assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
     res.setHeader("Cache-Control", "no-store");
     res.json(CreateDeveloperPayoutQuoteResponse.parse(
@@ -256717,9 +257161,6 @@ router26.post("/v1/payouts", async (req, res) => {
   }
   try {
     const wallet = await loadMerchantPayoutWallet(key.userId);
-    if (wallet.availableMinor <= 0) {
-      throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
-    }
     const configuration = await loadPayoutQuoteConfiguration(
       parsedBody.data.countryCode,
       parsedBody.data.operatorId
@@ -256727,14 +257168,50 @@ router26.post("/v1/payouts", async (req, res) => {
     const quote = calculatePayoutQuote(parsedBody.data, configuration);
     await assertMonthlyOutgoingLimit(key.userId, quote.amountMinor);
     assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
-    if (!PAYOUT_EXECUTION_ENABLED) {
+    const beneficiaryPhone = normalizePayoutPhone(
+      parsedBody.data.beneficiary.phoneNumber,
+      configuration.country
+    );
+    if (configuration.routedAggregatorCode !== "feexpay" || !isPayoutExecutionEnabled()) {
       res.status(503).json({
         error: "Le service de versement SendFlow est momentan\xE9ment indisponible.",
         code: "payout_unavailable"
       });
       return;
     }
-    res.status(503).json({ error: "Le service de versement SendFlow est momentan\xE9ment indisponible." });
+    const result = await createAndDispatchPayout({
+      merchantUserId: key.userId,
+      apiKeyId: key.id,
+      idempotencyKey: validHeader.data["Idempotency-Key"],
+      merchantReference: parsedBody.data.merchantReference ?? null,
+      amountMinor: quote.amountMinor,
+      countryCode: parsedBody.data.countryCode,
+      operatorId: parsedBody.data.operatorId,
+      currency: quote.currency,
+      feePayer: quote.feePayer,
+      beneficiaryPhone,
+      beneficiaryName: parsedBody.data.beneficiary.name ?? null,
+      configuration,
+      feePercent: configuration.feePercent,
+      pricingVersion: quote.pricingVersion,
+      feeMinor: quote.feeMinor,
+      totalDebitMinor: quote.totalDebitMinor,
+      beneficiaryAmountMinor: quote.beneficiaryAmountMinor
+    });
+    if (result.kind === "idempotency_conflict") {
+      res.status(409).json({ error: "Cette cl\xE9 d\u2019idempotence est d\xE9j\xE0 li\xE9e \xE0 une autre demande." });
+      return;
+    }
+    if (result.kind === "daily_limit") {
+      res.status(409).json({ error: "Le plafond journalier des versements est atteint." });
+      return;
+    }
+    if (result.kind === "monthly_limit") {
+      res.status(409).json({ error: "Le plafond mensuel des versements est atteint." });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    res.location(`/v1/payouts/${result.payout.id}`).status(202).end();
   } catch (error62) {
     sendPayoutError(req, res, error62);
   }
@@ -256800,8 +257277,17 @@ router26.get("/v1/payouts/:payoutId", async (req, res) => {
       res.status(404).json({ error: "Payout introuvable." });
       return;
     }
+    await reconcilePayout(row.id);
+    const [current] = await db.select().from(payoutRequestsTable).where(and(
+      eq(payoutRequestsTable.id, params.data.payoutId),
+      eq(payoutRequestsTable.merchantUserId, key.userId)
+    )).limit(1);
+    if (!current) {
+      res.status(404).json({ error: "Payout introuvable." });
+      return;
+    }
     res.setHeader("Cache-Control", "no-store");
-    res.json(GetDeveloperPayoutResponse.parse(presentPayout(row)));
+    res.json(GetDeveloperPayoutResponse.parse(presentPayout(current)));
   } catch (error62) {
     sendPayoutError(req, res, error62);
   }
@@ -257309,9 +257795,9 @@ async function enforceIpAccess(req, res, lookup3 = isIpBlocked, hops = trustedPr
 
 // src/lib/csrf-protection.ts
 import {
-  createHash as createHash9,
+  createHash as createHash10,
   createHmac as createHmac4,
-  randomBytes as randomBytes8,
+  randomBytes as randomBytes9,
   timingSafeEqual as timingSafeEqual5
 } from "node:crypto";
 var CSRF_HEADER_NAME = "X-CSRF-Token";
@@ -257345,7 +257831,7 @@ function anonymousCookieSignature(payload) {
   return createHmac4("sha256", signingKey()).update(`sendflow:csrf-anonymous-cookie:v1:${payload}`).digest("base64url");
 }
 function createAnonymousCsrfCookie(now = Date.now()) {
-  const nonce = randomBytes8(32).toString("base64url");
+  const nonce = randomBytes9(32).toString("base64url");
   const expiresAt = now + ANONYMOUS_CSRF_COOKIE_TTL_MS;
   const payload = `v1.${expiresAt}.${nonce}`;
   const signature = anonymousCookieSignature(payload);
@@ -257395,7 +257881,7 @@ function signingKey() {
   return createHmac4("sha256", secret).update("sendflow:csrf-signing-key:v1").digest();
 }
 function bindingDigest(binding) {
-  return createHash9("sha256").update(binding).digest("base64url");
+  return createHash10("sha256").update(binding).digest("base64url");
 }
 function sign(encodedPayload) {
   return createHmac4("sha256", signingKey()).update(`sendflow:csrf-token:v1:${encodedPayload}`).digest("base64url");
@@ -257405,7 +257891,7 @@ function createCsrfToken(binding, now = Date.now(), expiresAtLimit = Number.POSI
     version: 1,
     expiresAt: Math.min(now + CSRF_TOKEN_TTL_MS, expiresAtLimit),
     binding: bindingDigest(binding),
-    nonce: randomBytes8(16).toString("base64url")
+    nonce: randomBytes9(16).toString("base64url")
   };
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
   return `${encodedPayload}.${sign(encodedPayload)}`;
@@ -257847,7 +258333,7 @@ function startDeveloperWebhookWorker(logger2) {
 }
 
 // src/services/email-campaign-worker.ts
-import { randomUUID as randomUUID9 } from "node:crypto";
+import { randomUUID as randomUUID10 } from "node:crypto";
 
 // src/lib/email-campaign-template.ts
 var FONT_STACK2 = "'DM Sans',Roboto,'Helvetica Neue',Arial,sans-serif";
@@ -258056,7 +258542,7 @@ async function claimNextRecipient() {
         }
         const [attemptCount] = await transaction.select({ value: count() }).from(emailCampaignAttemptsTable).where(eq(emailCampaignAttemptsTable.recipientId, recipient.id));
         const attemptNumber = Number(attemptCount?.value ?? 0) + 1;
-        const attemptId2 = randomUUID9();
+        const attemptId2 = randomUUID10();
         const idempotencyKey2 = campaignProviderIdempotencyKey(recipient.id, recipient.manualRetries);
         await transaction.insert(emailCampaignAttemptsTable).values({
           id: attemptId2,
@@ -258171,7 +258657,7 @@ async function claimNextRecipient() {
     let idempotencyKey = latestAttempt?.idempotencyKey;
     if (!latestAttempt) {
       const [attemptCount] = await transaction.select({ value: count() }).from(emailCampaignAttemptsTable).where(eq(emailCampaignAttemptsTable.recipientId, stale.id));
-      attemptId = randomUUID9();
+      attemptId = randomUUID10();
       idempotencyKey = campaignProviderIdempotencyKey(stale.id, stale.manualRetries);
       await transaction.insert(emailCampaignAttemptsTable).values({
         id: attemptId,

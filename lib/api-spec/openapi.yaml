@@ -7892,7 +7892,7 @@ components:
           pattern: "^[a-z]{2}$"
         operation:
           type: string
-          enum: [deposit, inter-network, international]
+          enum: [deposit, inter-network, international, payout]
         operatorId:
           type: ["string", "null"]
         aggregatorCode:

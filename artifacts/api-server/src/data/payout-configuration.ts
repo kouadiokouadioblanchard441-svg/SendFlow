@@ -10,6 +10,7 @@ import {
   paymentLimitsTable,
 } from "@workspace/db";
 import { getAggregatorRouteScopeKey } from "../routes/aggregator-catalog";
+import { feexpayChannelForOperator } from "../providers/feexpay/catalog";
 
 export async function loadPayoutQuoteConfiguration(countryCode: string, operatorId: string) {
   const normalizedCountry = countryCode.toLowerCase();
@@ -66,6 +67,9 @@ export async function loadPayoutQuoteConfiguration(countryCode: string, operator
     minimumPayoutMinor: limits?.minimumPayoutMinor ?? 200,
     maximumTransferMinor: limits?.maximumTransferMinor ?? 0,
     maximumPayoutDailyMinor: limits?.maximumPayoutDailyMinor ?? null,
-    executionRouteEnabled: Boolean(routedAggregatorCode && aggregator?.enabled),
+    executionRouteEnabled: routedAggregatorCode === "feexpay"
+      && Boolean(aggregator?.enabled)
+      && Boolean(feexpayChannelForOperator(normalizedCountry, operatorId)),
+    routedAggregatorCode,
   };
 }

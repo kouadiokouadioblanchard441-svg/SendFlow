@@ -2607,6 +2607,7 @@ export const UpdatePaymentAggregatorRouteRequestOperation = {
   deposit: 'deposit',
   'inter-network': 'inter-network',
   international: 'international',
+  payout: 'payout',
 } as const;
 
 export interface UpdatePaymentAggregatorRouteRequest {

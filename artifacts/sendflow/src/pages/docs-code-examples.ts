@@ -1350,16 +1350,23 @@ const response = await fetch(apiBaseUrl.replace(/\\/$/, "") + "/v1/payouts", {
     beneficiary: { phoneNumber: beneficiaryPhone },
   }),
 });
-const result = await response.json().catch(() => ({}));
-if (response.status === 503) {
-  console.log("Payout unavailable; verify server status before retrying.");
-} else if (!response.ok) {
-  throw new Error(result.error ?? \`Payout request returned HTTP \${response.status}\`);
+const location = response.headers.get("location");
+if (response.status === 202) {
+  if (!location) throw new Error("Accepted payout has no tracking URL");
+  console.log("Payout accepted; track it at " + new URL(location, apiBaseUrl));
 } else {
-  console.log(result);
+  const result = await response.json().catch(() => ({}));
+  if (response.status === 503) {
+    console.log("Payout route or production configuration is unavailable.");
+  } else if (!response.ok) {
+    throw new Error(result.error ?? \`Payout request returned HTTP \${response.status}\`);
+  } else {
+    console.log(result);
+  }
 }`,
     Python: `import os
 import requests
+from urllib.parse import urljoin
 
 api_base_url = os.environ["SENDFLOW_API_BASE_URL"].rstrip("/")
 secret_key = os.environ["SENDFLOW_SECRET_KEY"]
@@ -1383,13 +1390,22 @@ response = requests.post(
     },
     timeout=15,
 )
-result = response.json()
-if response.status_code == 503:
-    print("Payout unavailable; verify server status before retrying.")
+location = response.headers.get("Location")
+if response.status_code == 202:
+    if not location:
+        raise RuntimeError("Accepted payout has no tracking URL")
+    print("Payout accepted; track it at " + urljoin(api_base_url + "/", location))
 else:
-    response.raise_for_status()
-    print(result)`,
-    cURL: `curl --request POST "$SENDFLOW_API_BASE_URL/v1/payouts" \\
+    try:
+        result = response.json()
+    except ValueError:
+        result = {}
+    if response.status_code == 503:
+        print("Payout route or production configuration is unavailable.")
+    else:
+        response.raise_for_status()
+        print(result)`,
+    cURL: `curl --include --request POST "$SENDFLOW_API_BASE_URL/v1/payouts" \\
   --header "Authorization: Bearer $SENDFLOW_SECRET_KEY" \\
   --header "Idempotency-Key: $PAYOUT_IDEMPOTENCY_KEY" \\
   --header "Content-Type: application/json" \\
@@ -1411,6 +1427,7 @@ $secretKey = getenv("SENDFLOW_SECRET_KEY");
 $operatorId = getenv("PAYOUT_OPERATOR_ID");
 $beneficiaryPhone = getenv("PAYOUT_BENEFICIARY_PHONE_E164");
 $idempotencyKey = getenv("PAYOUT_IDEMPOTENCY_KEY");
+$location = null;
 if (!$apiBaseUrl || !$secretKey || !$operatorId || !$beneficiaryPhone || !$idempotencyKey) {
     throw new RuntimeException("Configure payout request values in your server environment");
 }
@@ -1423,6 +1440,12 @@ curl_setopt_array($ch, [
         "Idempotency-Key: " . $idempotencyKey,
         "Content-Type: application/json",
     ],
+    CURLOPT_HEADERFUNCTION => function ($ch, $header) use (&$location) {
+        if (stripos($header, "Location:") === 0) {
+            $location = trim(substr($header, 9));
+        }
+        return strlen($header);
+    },
     CURLOPT_POSTFIELDS => json_encode([
         "amountMinor" => 12500,
         "currency" => "XOF",
@@ -1437,8 +1460,10 @@ $body = curl_exec($ch);
 $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 $result = json_decode($body ?: "{}", true);
-if ($status === 503) {
-    echo "Payout unavailable; verify server status before retrying.";
+if ($status === 202 && $location) {
+    echo "Payout accepted; track it at " . $apiBaseUrl . $location;
+} elseif ($status === 503) {
+    echo "Payout route or production configuration is unavailable.";
 } elseif ($body === false || $status < 200 || $status >= 300) {
     throw new RuntimeException("Payout request returned HTTP " . $status);
 } else {

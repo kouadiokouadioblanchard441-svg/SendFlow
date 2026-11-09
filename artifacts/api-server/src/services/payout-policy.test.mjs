@@ -3,9 +3,9 @@ import { test } from "node:test";
 import {
   assertPayoutWalletCanCover,
   calculatePayoutQuote,
+  isPayoutExecutionEnabled,
   isMatchingPayoutSettlementEvidence,
   normalizePayoutPhone,
-  PAYOUT_EXECUTION_ENABLED,
   PayoutPolicyError,
 } from "./payout-policy.ts";
 
@@ -30,6 +30,7 @@ const configuration = {
   maximumTransferMinor: 2_000_000,
   maximumPayoutDailyMinor: 1_000_000,
   executionRouteEnabled: true,
+  routedAggregatorCode: "feexpay",
 };
 const input = (feePayer) => ({
   amountMinor: 10_000,
@@ -123,8 +124,18 @@ test("payout phone normalization requires the selected country's prefix and leng
   assert.throws(() => normalizePayoutPhone("+22501020304", configuration.country), PayoutPolicyError);
 });
 
-test("payout settlement remains unavailable in this build", () => {
-  assert.equal(PAYOUT_EXECUTION_ENABLED, false);
+test("Plesk payout execution needs production database identity and FeexPay credentials", () => {
+  const production = {
+    NODE_ENV: "production",
+    SENDFLOW_DATABASE_TARGET: "production",
+    FEEXPAY_API_KEY: "synthetic",
+    FEEXPAY_SHOP_ID: "synthetic_shop",
+  };
+  assert.equal(isPayoutExecutionEnabled(production), true);
+  assert.equal(isPayoutExecutionEnabled({ ...production, NODE_ENV: "development" }), false);
+  assert.equal(isPayoutExecutionEnabled({ ...production, SENDFLOW_DATABASE_TARGET: "shared-external" }), false);
+  assert.equal(isPayoutExecutionEnabled({ ...production, FEEXPAY_MODE: "sandbox" }), false);
+  assert.equal(isPayoutExecutionEnabled({ ...production, FEEXPAY_API_KEY: undefined }), false);
 });
 
 test("payout quote cannot exceed the authenticated SendFlow wallet balance", () => {

@@ -1,6 +1,12 @@
 import { calculateTransferQuoteAmounts } from "../lib/transfer-quote-policy.ts";
+import { isFeexpayLiveExecutionAllowed } from "../providers/feexpay/live-runtime.ts";
 
-export const PAYOUT_EXECUTION_ENABLED = false;
+export function isPayoutExecutionEnabled(environment: Record<string, string | undefined> = process.env) {
+  return isFeexpayLiveExecutionAllowed(environment)
+    && (environment.FEEXPAY_MODE === undefined || environment.FEEXPAY_MODE === "live")
+    && Boolean(environment.FEEXPAY_API_KEY)
+    && Boolean(environment.FEEXPAY_SHOP_ID);
+}
 
 export type PayoutFeePayer = "merchant" | "beneficiary";
 
@@ -33,6 +39,7 @@ export type PayoutQuoteConfiguration = {
   maximumTransferMinor: number;
   maximumPayoutDailyMinor: number | null;
   executionRouteEnabled: boolean;
+  routedAggregatorCode: string | null;
 };
 
 export class PayoutPolicyError extends Error {

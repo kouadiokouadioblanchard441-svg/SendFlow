@@ -32,7 +32,7 @@ type LimitValues = Omit<Record<LimitField, number>, "maximumPayoutDailyMinor"> &
 
 const limitFields: Array<{ key: LimitField; label: string; help: string; nullable?: boolean }> = [
   { key: "minimumDepositMinor", label: "Dépôt minimum", help: "Pay-in et dépôts client, en FCFA entiers." },
-  { key: "minimumPayoutMinor", label: "Payout minimum", help: "Retrait international du produit SendFlow ; ce réglage ne crée pas d’API payout marchand." },
+  { key: "minimumPayoutMinor", label: "Payout minimum", help: "Seuil minimal des versements configurés ; ce réglage ne connecte pas un fournisseur." },
   { key: "maximumPayoutDailyMinor", label: "Maximum payout quotidien", help: "Plafond quotidien du compte, en FCFA. Vide signifie sans plafond configuré.", nullable: true },
   { key: "minimumInterNetworkMinor", label: "Transfert inter-réseaux minimum", help: "Seuil du transfert inter-réseaux, en FCFA entiers." },
   { key: "maximumTransferMinor", label: "Maximum transfert", help: "Plafond technique actuel : 10 000 000 FCFA." },
