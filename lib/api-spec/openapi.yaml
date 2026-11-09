@@ -321,13 +321,31 @@ paths:
       summary: List configured countries and server-defined phone rules
       responses:
         "200":
-          description: Public country catalog. Registration availability is informational only; the server validates it again when creating an account.
+          description: Full public country catalog. Account creation still validates signup eligibility on the server.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CountryCatalog"
         "503":
           description: Country catalog is temporarily unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/registration-countries:
+    get:
+      operationId: getAuthRegistrationCountries
+      tags: [auth]
+      summary: List only countries currently available for new registrations
+      responses:
+        "200":
+          description: Server-filtered signup country list. Account creation validates eligibility again.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountryCatalog"
+        "503":
+          description: Signup country catalog is temporarily unavailable.
           content:
             application/json:
               schema:

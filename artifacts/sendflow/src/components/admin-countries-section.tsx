@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetAdminCountriesQueryKey, getGetAdminOperatorPricingQueryKey,
-  getGetAdminPaymentRoutingQueryKey, getGetAuthCountriesQueryKey, getGetPublicPricingQueryKey,
+  getGetAdminPaymentRoutingQueryKey, getGetAuthCountriesQueryKey,
+  getGetAuthRegistrationCountriesQueryKey, getGetPublicPricingQueryKey,
   getGetRegistrationSettingsQueryKey,
   useCreateAdminCountry, useDeleteAdminCountry, useGetAdminAccessStatus, useGetAdminCountries,
   useUpdateAdminCountry, type AdminCountry, type CountryOperationFlags, type ManagedOperatorBrand,
@@ -128,6 +129,7 @@ export function AdminCountriesSection() {
       });
       await Promise.all([
         getGetAdminCountriesQueryKey(), getGetAuthCountriesQueryKey(),
+        getGetAuthRegistrationCountriesQueryKey(),
         getGetRegistrationSettingsQueryKey(),
       ].map((queryKey) => cache.invalidateQueries({ queryKey })));
       setFeedback(

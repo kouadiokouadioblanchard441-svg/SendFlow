@@ -3,8 +3,10 @@ import { createPortal } from 'react-dom';
 import { Search, X } from 'lucide-react';
 import {
   getGetAuthCountriesQueryKey,
+  getGetAuthRegistrationCountriesQueryKey,
   getGetRegistrationSettingsQueryKey,
   useGetAuthCountries,
+  useGetAuthRegistrationCountries,
   useGetRegistrationSettings,
 } from '@workspace/api-client-react';
 import { readSavedAccountCountry } from '@/lib/account-country';
@@ -36,6 +38,14 @@ export function CountryPhoneField({
   const catalog = useGetAuthCountries({
     query: {
       queryKey: getGetAuthCountriesQueryKey(),
+      enabled: !registrationOnly,
+      staleTime: 0, refetchInterval: 30_000, refetchOnWindowFocus: true,
+    },
+  });
+  const registrationCatalog = useGetAuthRegistrationCountries({
+    query: {
+      queryKey: getGetAuthRegistrationCountriesQueryKey(),
+      enabled: registrationOnly,
       staleTime: 0, refetchInterval: 30_000, refetchOnWindowFocus: true,
     },
   });
@@ -47,16 +57,15 @@ export function CountryPhoneField({
     },
   });
   const defaultCountryCode = registrationSettings.data?.defaultCountryCode ?? '';
+  const catalogData = registrationOnly ? registrationCatalog.data : catalog.data;
   const countries = useMemo<CountryOption[]>(() => orderCountriesWithDefaultFirst(
-    (catalog.data?.countries ?? [])
-      .filter((country) => !registrationOnly || country.signupEnabled)
-      .map((country) => ({
+    (catalogData?.countries ?? []).map((country) => ({
         countryCode: country.countryCode, name: country.countryName,
         dialCode: country.phonePrefix, flag: country.flag,
         minPhoneDigits: country.minPhoneDigits, maxPhoneDigits: country.maxPhoneDigits,
       })),
     defaultCountryCode,
-  ), [catalog.data, defaultCountryCode, registrationOnly]);
+  ), [catalogData, defaultCountryCode]);
   const [selectedCode, setSelectedCode] = useState<string | null>(
     () => readSavedAccountCountry()?.countryCode ?? null,
   );
@@ -70,11 +79,11 @@ export function CountryPhoneField({
   const inputId = useId();
   const selectedIdentity = selectedCountry ? `${selectedCountry.countryCode}:${selectedCountry.dialCode}` : '';
   useEffect(() => {
-    if (!catalog.data || !registrationSettings.data || selectedCountry) return;
+    if (!catalogData || !registrationSettings.data || selectedCountry) return;
     const defaultCountry = countries.find((country) =>
       country.countryCode === registrationSettings.data.defaultCountryCode);
     if (defaultCountry) setSelectedCode(defaultCountry.countryCode);
-  }, [catalog.data, countries, registrationSettings.data, selectedCountry]);
+  }, [catalogData, countries, registrationSettings.data, selectedCountry]);
   useEffect(() => {
     if (selectedCountry) callbackRef.current?.(selectedCountry);
   }, [selectedIdentity]);

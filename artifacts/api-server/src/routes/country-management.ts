@@ -86,6 +86,20 @@ router.get("/auth/countries", async (req, res): Promise<void> => {
   }
 });
 
+router.get("/auth/registration-countries", async (req, res): Promise<void> => {
+  try {
+    const rows = await db.select()
+      .from(countriesTable)
+      .where(eq(countriesTable.signupEnabled, true))
+      .orderBy(asc(countriesTable.countryName));
+    res.setHeader("Cache-Control", "no-store");
+    res.json(GetAuthCountriesResponse.parse({ countries: rows.map(toCountry) }));
+  } catch (error) {
+    req.log.error({ err: error }, "Signup country catalog lookup failed");
+    res.status(503).json({ error: "Signup country catalog unavailable" });
+  }
+});
+
 export function createAdminCountryRoutes(authorize = respondAdminAuthError): IRouter {
 const adminRoutes: IRouter = Router();
 
@@ -215,7 +229,6 @@ adminRoutes.post("/countries", async (req, res): Promise<void> => {
 
     res.status(201).json(CreateAdminCountryResponse.parse(toCountry(created)));
   } catch (error) {
-    if (process.env.SENDFLOW_ISOLATED_RUNTIME) console.error("Isolated country creation error", error);
     if (error instanceof CountryCatalogConflictError) {
       res.status(409).json({ error: "An initial operator already exists in this country" });
       return;

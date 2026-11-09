@@ -1231,6 +1231,83 @@ export function useGetAuthCountries<TData = Awaited<ReturnType<typeof getAuthCou
 
 
 
+export const getGetAuthRegistrationCountriesUrl = () => {
+
+
+
+
+  return `/api/auth/registration-countries`
+}
+
+/**
+ * @summary List only countries currently available for new registrations
+ */
+export const getAuthRegistrationCountries = async ( options?: Parameters<typeof customFetch>[1]): Promise<CountryCatalog> => {
+
+  return customFetch<CountryCatalog>(getGetAuthRegistrationCountriesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAuthRegistrationCountriesQueryKey = () => {
+    return [
+    `/api/auth/registration-countries`
+    ] as const;
+    }
+
+
+export const getGetAuthRegistrationCountriesQueryOptions = <TData = Awaited<ReturnType<typeof getAuthRegistrationCountries>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuthRegistrationCountries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAuthRegistrationCountriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuthRegistrationCountries>>> = ({ signal }) => getAuthRegistrationCountries({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAuthRegistrationCountries>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAuthRegistrationCountriesQueryResult = NonNullable<Awaited<ReturnType<typeof getAuthRegistrationCountries>>>
+export type GetAuthRegistrationCountriesQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary List only countries currently available for new registrations
+ */
+
+export function useGetAuthRegistrationCountries<TData = Awaited<ReturnType<typeof getAuthRegistrationCountries>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuthRegistrationCountries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAuthRegistrationCountriesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetRegistrationSettingsUrl = () => {
 
 

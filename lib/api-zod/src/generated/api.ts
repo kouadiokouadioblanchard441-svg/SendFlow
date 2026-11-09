@@ -366,6 +366,38 @@ export const GetAuthCountriesResponse = zod.object({
 
 
 /**
+ * @summary List only countries currently available for new registrations
+ */
+export const getAuthRegistrationCountriesResponseCountriesItemCountryCodeRegExp = new RegExp('^[a-z]{2}$');
+export const getAuthRegistrationCountriesResponseCountriesItemMinPhoneDigitsMin = 4;
+export const getAuthRegistrationCountriesResponseCountriesItemMinPhoneDigitsMax = 15;
+
+export const getAuthRegistrationCountriesResponseCountriesItemMaxPhoneDigitsMin = 4;
+export const getAuthRegistrationCountriesResponseCountriesItemMaxPhoneDigitsMax = 15;
+
+
+
+export const GetAuthRegistrationCountriesResponse = zod.object({
+  "countries": zod.array(zod.object({
+  "countryCode": zod.string().regex(getAuthRegistrationCountriesResponseCountriesItemCountryCodeRegExp),
+  "countryName": zod.string(),
+  "phonePrefix": zod.string(),
+  "minPhoneDigits": zod.int().min(getAuthRegistrationCountriesResponseCountriesItemMinPhoneDigitsMin).max(getAuthRegistrationCountriesResponseCountriesItemMinPhoneDigitsMax),
+  "maxPhoneDigits": zod.int().min(getAuthRegistrationCountriesResponseCountriesItemMaxPhoneDigitsMin).max(getAuthRegistrationCountriesResponseCountriesItemMaxPhoneDigitsMax),
+  "enabled": zod.boolean(),
+  "signupEnabled": zod.boolean(),
+  "flag": zod.string(),
+  "operations": zod.object({
+  "deposit": zod.boolean(),
+  "interNetwork": zod.boolean(),
+  "international": zod.boolean(),
+  "payout": zod.boolean()
+})
+}))
+})
+
+
+/**
  * @summary Read whether email verification is required for signup
  */
 export const getRegistrationSettingsResponseDefaultCountryCodeRegExp = new RegExp('^[a-z]{2}$');

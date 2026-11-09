@@ -33,6 +33,18 @@ test("only known public GET routes are allowed in the shared preview", () => {
   ]) {
     assert.equal(shouldBlockSharedDatabaseApiRequest("GET", path, sharedDatabase), true, path);
   }
+  assert.equal(
+    shouldBlockSharedDatabaseApiRequest("GET", "/api/auth/registration-countries", sharedDatabase),
+    false,
+  );
+  assert.equal(
+    shouldBlockSharedDatabaseApiRequest("GET", "/api/auth/registration-countries/unexpected", sharedDatabase),
+    true,
+  );
+  assert.equal(
+    shouldBlockSharedDatabaseApiRequest("POST", "/api/auth/registration-countries", sharedDatabase),
+    true,
+  );
   for (const method of ["POST", "PUT", "PATCH", "DELETE"]) {
     assert.equal(shouldBlockSharedDatabaseApiRequest(method, "/api/pricing", sharedDatabase), true);
   }

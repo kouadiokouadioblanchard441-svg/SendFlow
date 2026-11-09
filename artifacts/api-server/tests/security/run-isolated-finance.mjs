@@ -218,6 +218,11 @@ try {
   await owner.query(`CREATE ROLE sf_fixture_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
     GRANT USAGE ON SCHEMA public TO sf_fixture_app;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sf_fixture_app`);
+  await owner.query("ALTER TABLE public.sf_countries DROP COLUMN IF EXISTS signup_enabled");
+  await owner.query(readFileSync(
+    join(root, "lib/db/migrations/2026-11-09-country-signup-visibility.sql"),
+    "utf8",
+  ));
   await owner.query("REVOKE ALL ON sf_payment_schema_versions FROM sf_fixture_app");
   // Exercise the real activation ACL script, not a hand-written approximation.
   execFileSync("psql", ["-X", "-h", socket, "-p", "15432", "-U", "sf_fixture_owner",
@@ -231,6 +236,7 @@ try {
     stdin: { contents: `
       export { default as app } from "./src/app";
       export { default as operatorPricingRouter } from "./src/routes/operator-pricing";
+      export { default as registrationSettingsRouter } from "./src/routes/registration-settings";
       export { default as countryManagementRouter, createAdminCountryRoutes } from "./src/routes/country-management";
       export { createAdminAggregatorRoutes } from "./src/routes/admin-aggregators";
       export { createAdminOperatorLogoRoutes } from "./src/routes/admin-operator-logos";

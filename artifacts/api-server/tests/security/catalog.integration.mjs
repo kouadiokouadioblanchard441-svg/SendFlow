@@ -11,9 +11,20 @@ const { pool } = runtime;
 let server, base;
 
 before(async () => {
+  const configuredCountry = await pool.query(
+    "SELECT country_code FROM sf_countries WHERE signup_enabled = true ORDER BY country_name LIMIT 1",
+  );
+  assert.ok(configuredCountry.rows[0], "fixture needs a signup-enabled country");
+  await pool.query(
+    `INSERT INTO sf_registration_settings(id, default_country_code)
+     VALUES('signup', $1)
+     ON CONFLICT (id) DO UPDATE SET default_country_code = EXCLUDED.default_country_code`,
+    [configuredCountry.rows[0].country_code],
+  );
   const app = runtime.express();
   app.use(runtime.express.json());
   app.use((req, _res, next) => { req.log = { error() {} }; next(); });
+  app.use("/public", runtime.registrationSettingsRouter);
   app.use("/public", runtime.countryManagementRouter);
   app.use("/public", runtime.operatorPricingRouter);
   app.use("/secure-catalog", runtime.createAdminCountryRoutes(() => "fixture-catalog-admin"));
@@ -75,6 +86,8 @@ test("countries: validated creation, public visibility, version conflict and ato
   const countries = (await call("/public/auth/countries")).data.countries;
   assert.equal(countries.find((country) => country.countryCode === "zz").countryName, changes.countryName);
   assert.equal(countries.find((country) => country.countryCode === "zz").signupEnabled, true);
+  assert.ok((await call("/public/auth/registration-countries")).data.countries
+    .some((country) => country.countryCode === "zz"));
   assert.deepEqual(countries.find((country) => country.countryCode === "yy").operations,
     { deposit: false, interNetwork: false, international: false, payout: false });
   const audits = await pool.query(`SELECT action FROM sf_admin_audit_logs
@@ -103,6 +116,10 @@ test("signup country toggle is independent from global country status and preser
   assert.equal(disabled.status, 200);
   assert.equal(disabled.data.enabled, true);
   assert.equal(disabled.data.signupEnabled, false);
+  const signupCatalog = (await call("/public/auth/registration-countries")).data.countries;
+  assert.ok(!signupCatalog.some((row) => row.countryCode === "zz"));
+  const fullCatalog = (await call("/public/auth/countries")).data.countries;
+  assert.equal(fullCatalog.find((row) => row.countryCode === "zz").enabled, true);
 
   const before = await pool.query("SELECT country_code, signup_enabled FROM sf_countries");
   try {
@@ -132,6 +149,28 @@ test("signup country toggle is independent from global country status and preser
         [saved.signup_enabled, saved.country_code],
       );
     }
+  }
+});
+
+test("registration settings fall back to an available database country when the configured default is disabled", async () => {
+  const settings = await call("/public/auth/registration-settings");
+  assert.equal(settings.status, 200);
+  const configuredCode = settings.data.defaultCountryCode;
+  const fallback = await pool.query(
+    `SELECT country_code FROM sf_countries
+     WHERE signup_enabled = true AND country_code <> $1
+     ORDER BY country_name LIMIT 1`,
+    [configuredCode],
+  );
+  assert.ok(fallback.rows[0], "fixture needs another signup-enabled country");
+
+  try {
+    await pool.query("UPDATE sf_countries SET signup_enabled = false WHERE country_code = $1", [configuredCode]);
+    const resolved = await call("/public/auth/registration-settings");
+    assert.equal(resolved.status, 200);
+    assert.equal(resolved.data.defaultCountryCode, fallback.rows[0].country_code);
+  } finally {
+    await pool.query("UPDATE sf_countries SET signup_enabled = true WHERE country_code = $1", [configuredCode]);
   }
 });
 

@@ -10,6 +10,9 @@ const publicReadPathPrefixes = [
   "/api/public/payment-link-attempts",
   "/api/storage/public-objects",
 ];
+const publicReadExactPaths = [
+  "/api/auth/registration-countries",
+];
 
 export function normalizeRequestPath(requestPath: string): string | null {
   let pathname = requestPath.split(/[?#]/, 1)[0] || "/";
@@ -102,5 +105,6 @@ export function shouldBlockSharedDatabaseApiRequest(
   if (normalizedMethod !== "GET") return true;
 
   // Allow only known public reads; private and future API routes fail closed.
-  return !publicReadPathPrefixes.some((prefix) => isPathOrChild(pathname, prefix));
+  return !publicReadExactPaths.includes(pathname)
+    && !publicReadPathPrefixes.some((prefix) => isPathOrChild(pathname, prefix));
 }

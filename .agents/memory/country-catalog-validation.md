@@ -25,4 +25,10 @@ The signup and account country default is a Supabase registration setting, not a
 
 **Why:** the user requested Côte d’Ivoire as the initial choice and explicitly said not to hardcode the country in the application.
 
-**How to apply:** Read the default code from the registration-settings API, preserve a customer’s saved country choice, and fail closed if the configured default is missing or disabled. Keep country-default mutation out of frontend pages and client contracts.
+**How to apply:** Read the configured code from the registration-settings API and preserve a customer’s saved country choice. If the configured country is unavailable for signup, let the server select the first signup-enabled country by name; fail closed only when none remain. Keep country-default mutation out of frontend pages and client contracts.
+
+Country signup availability uses its own database flag, separate from global catalog and payment-operation availability. Existing countries inherit their current signup eligibility during migration; newly added countries start unavailable to signup, and administrators cannot disable the last signup-enabled country.
+
+**Why:** The user wants every registration country controlled from the admin panel without changing provider, routing, or payment readiness.
+
+**How to apply:** Serve only signup-enabled countries from a dedicated backend read route and validate account creation against the same flag. The signup form should render that server-filtered list without deciding eligibility; other phone pickers should use the full catalog. Keep admin mutations audited and versioned, and do not treat global country activation as signup authorization or payment-provider activation.
