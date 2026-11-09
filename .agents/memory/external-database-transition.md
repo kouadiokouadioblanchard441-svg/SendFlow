@@ -5,13 +5,17 @@ description: Current external PostgreSQL schema state and the guardrails require
 
 The Replit preview uses a shared external PostgreSQL target. Keep the connection URL private; the public provider CA certificate is a trust anchor used with certificate and hostname verification. Some live tables or required singleton rows may still lag behind the Drizzle schema.
 
-The user confirms Supabase is the database to use throughout SendFlow development. Before database-backed work, inspect the project's data model and compare it with the live schema. The code still separates Replit's `SUPABASE_DATABASE_URL` shared-external target from Plesk's `DATABASE_URL` production target; verify that Plesk points to the same database before claiming production data is live.
+The user confirms the Supabase database connection stored in Replit Secrets is the single database for SendFlow work in Replit and Plesk production. Treat it as canonical; if runtime variable names differ, both must resolve to that same Supabase database. Before database-backed work, inspect the project's data model and compare it with the live schema.
+
+**Why:** the user explicitly confirmed that the Replit-secret Supabase database is the only database used for both development work and production.
+
+**How to apply:** Do not assume Plesk uses a separate database. Keep the Plesk runtime pointed at the same Supabase endpoint while preserving verified TLS and the environment-specific variable contract.
 
 With node-postgres, a connection URL containing `sslmode` can override an explicit `ssl.ca` option. Validate the URL first, remove SSL query parameters before creating the pool, and pass the trusted CA with `rejectUnauthorized: true` and `servername` set to the database hostname.
 
 **Why:** A live registration-settings request returned 503 because its table lacked a column required by the current schema and the expected singleton row was absent. A successful database health check or another working table does not prove every runtime query is schema-ready.
 
-**How to apply:** Keep database access server-side and preserve TLS verification. Before fixing a database-backed 5xx, inspect exact columns and required singleton/configuration rows, then apply only an explicitly reviewed additive migration. Never use a broad Drizzle push to repair external production drift. Verify the Plesk target separately; never expose connection strings.
+**How to apply:** Keep database access server-side and preserve TLS verification. Before fixing a database-backed 5xx, inspect exact columns and required singleton/configuration rows, then apply only an explicitly reviewed additive migration. Never use a broad Drizzle push to repair external production drift. Confirm Plesk resolves the canonical Supabase connection; never expose connection strings.
 
 A full schema-readiness check must also compare migration-defined indexes, constraints, functions, and triggers. Matching table and column names, or a successful `SELECT 1`, does not prove the financial safeguards were installed.
 
