@@ -32,7 +32,10 @@ router.post("/me/transfer-quote", async (req, res): Promise<void> => {
     res.json(CreateCustomerTransferQuoteResponse.parse(quote));
   } catch (error) {
     if (error instanceof TransferQuoteError) {
-      res.status(error.statusCode).json({ error: error.message });
+      res.status(error.statusCode).json({
+        error: error.message,
+        ...(error.code ? { code: error.code } : {}),
+      });
       return;
     }
     req.log.error({ err: error, userId: session.userId }, "Customer transfer quote failed");

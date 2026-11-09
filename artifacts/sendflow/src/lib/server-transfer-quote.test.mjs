@@ -48,7 +48,11 @@ test('pricing version changes are detectable and quote errors are mapped without
   assert.match(serverQuoteErrorMessage(identityError), /plafond mensuel d’encaissement sans vérification d’identité/);
   const monthlyLimitError = { status: 403, data: { code: 'monthly_incoming_limit_reached' } };
   assert.equal(isMonthlyIncomingLimitReachedError(monthlyLimitError), true);
-  assert.match(serverQuoteErrorMessage(monthlyLimitError), /Les fonds disponibles restent retirables/);
+  assert.match(serverQuoteErrorMessage(monthlyLimitError), /plafond mensuel distinct/);
+  assert.match(
+    serverQuoteErrorMessage({ status: 409, data: { code: 'monthly_outgoing_limit_reached' } }),
+    /plafond mensuel/,
+  );
   assert.match(serverQuoteErrorMessage({ status: 409 }), /limite disponible/);
   assert.match(serverQuoteErrorMessage({ status: 429 }), /Patientez un instant/);
   assert.match(serverQuoteErrorMessage({ status: 503, message: 'sensitive internal detail' }), /Aucun transfert n’a été lancé/i);

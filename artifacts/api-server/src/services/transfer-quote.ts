@@ -40,10 +40,12 @@ export type QuoteDependencies = {
 
 export class TransferQuoteError extends Error {
   readonly statusCode: 400 | 409;
-  constructor(statusCode: 400 | 409, message: string) {
+  readonly code?: string;
+  constructor(statusCode: 400 | 409, message: string, code?: string) {
     super(message);
     this.name = "TransferQuoteError";
     this.statusCode = statusCode;
+    this.code = code;
   }
 }
 
@@ -132,7 +134,11 @@ export async function calculateCustomerTransferQuote(
     const remaining = await dependencies.remainingMonthlyAmount(authenticatedUserId);
     if (!Number.isSafeInteger(remaining) || remaining < 0) throw new Error("Invalid server account limit");
     if (input.amountMinor > remaining) {
-      throw new TransferQuoteError(409, `Ce transfert dépasse votre plafond mensuel restant de ${remaining} FCFA.`);
+      throw new TransferQuoteError(
+        409,
+        `Ce transfert dépasse votre plafond mensuel restant de ${remaining} FCFA.`,
+        "monthly_outgoing_limit_reached",
+      );
     }
   }
   return {

@@ -40,6 +40,21 @@ export interface AdminUserMonthlyIncomingPolicy {
      */
   effectiveLimitMinor: number;
   limitReached: boolean;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  outgoingSentMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  outgoingPendingMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  outgoingRemainingMinor: number;
   periodStart: Date;
   periodEnd: Date;
 }

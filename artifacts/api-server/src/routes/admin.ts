@@ -9,6 +9,7 @@ import {
 } from "../lib/sensitive-data-crypto";
 import { formatCustomerDisplayName } from "../lib/customer-profile-policy";
 import { getMonthlyIncomingPolicy } from "../data/unverified-incoming-policy";
+import { getMonthlyOutgoingUsage } from "../lib/account-limit";
 import {
   GetAdminTransactionParams,
   GetAdminTransactionResponse,
@@ -453,7 +454,10 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
       })),
     ]);
 
-    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(userId);
+    const [monthlyIncomingPolicy, monthlyOutgoingUsage] = await Promise.all([
+      getMonthlyIncomingPolicy(userId),
+      getMonthlyOutgoingUsage(userId),
+    ]);
 
     await recordAdminAudit({
       adminUserId,
@@ -484,6 +488,14 @@ router.get("/users/:userId", async (req, res): Promise<void> => {
           overrideMinor: monthlyIncomingPolicy.overrideMinor,
           effectiveLimitMinor: monthlyIncomingPolicy.effectiveLimitMinor,
           limitReached: monthlyIncomingPolicy.limitReached,
+          outgoingSentMinor: monthlyOutgoingUsage.sentAmount,
+          outgoingPendingMinor: monthlyOutgoingUsage.pendingAmount,
+          outgoingRemainingMinor: Math.max(
+            0,
+            monthlyIncomingPolicy.effectiveLimitMinor
+              - monthlyOutgoingUsage.sentAmount
+              - monthlyOutgoingUsage.pendingAmount,
+          ),
           periodStart: monthlyIncomingPolicy.periodStart.toISOString(),
           periodEnd: monthlyIncomingPolicy.periodEnd.toISOString(),
         },

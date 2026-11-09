@@ -121,7 +121,7 @@ export function monthlyIncomingLimitReachedMessage(
     return "Votre plafond mensuel d’encaissement sans vérification d’identité est atteint. Les nouveaux encaissements sont suspendus. Vous pouvez retirer les fonds disponibles, sous réserve des contrôles habituels du compte. Une identité approuvée permet d’accéder au plafond supérieur.";
   }
 
-  return `Votre plafond mensuel d’encaissement de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements sont suspendus jusqu’au renouvellement du mois ou à une modification autorisée. Les fonds disponibles restent retirables, sous réserve des contrôles habituels du compte.`;
+  return `Votre plafond mensuel d’encaissement de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements sont suspendus jusqu’au renouvellement du mois ou à une modification autorisée. Les sorties restent soumises à leur plafond mensuel distinct, au solde disponible et aux contrôles habituels.`;
 }
 
 export function merchantMonthlyLimitReachedMessage() {

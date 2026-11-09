@@ -37,8 +37,8 @@ const limitFields: Array<{ key: LimitField; label: string; help: string; nullabl
   { key: "minimumInterNetworkMinor", label: "Transfert inter-réseaux minimum", help: "Seuil du transfert inter-réseaux, en FCFA entiers." },
   { key: "maximumTransferMinor", label: "Maximum transfert", help: "Plafond technique actuel : 10 000 000 FCFA." },
   { key: "maximumPayinMinor", label: "Maximum pay-in", help: "Plafond technique actuel : 2 000 000 FCFA." },
-  { key: "maximumUnverifiedIncomingMinor", label: "Plafond mensuel sans identité approuvée", help: "Total encaissé depuis le début du mois. Au plafond, les nouveaux encaissements sont bloqués ; les fonds disponibles restent retirables." },
-  { key: "maximumVerifiedIncomingMinor", label: "Plafond mensuel après vérification", help: "Total encaissé depuis le début du mois après approbation de l’identité. Au plafond, les nouveaux encaissements sont bloqués ; les fonds disponibles restent retirables." },
+  { key: "maximumUnverifiedIncomingMinor", label: "Plafond mensuel sans identité approuvée", help: "Même montant maximal appliqué séparément aux encaissements et aux sorties, depuis le début du mois." },
+  { key: "maximumVerifiedIncomingMinor", label: "Plafond mensuel après vérification", help: "Même montant maximal appliqué séparément aux encaissements et aux sorties, après approbation de l’identité." },
 ];
 
 function toDraft(values: LimitValues): LimitDraft {

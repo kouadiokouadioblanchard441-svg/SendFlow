@@ -41,12 +41,16 @@ export function serverQuoteErrorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'data' in error) {
     const data = (error as { data?: unknown }).data;
     if (typeof data === 'object' && data !== null && 'code' in data
+      && data.code === 'monthly_outgoing_limit_reached') {
+      return 'Cette sortie dépasserait votre plafond mensuel. Consultez votre plafond et le montant restant dans votre compte.';
+    }
+    if (typeof data === 'object' && data !== null && 'code' in data
       && data.code === 'monthly_incoming_limit_reached') {
-      return 'Votre plafond mensuel d’encaissement est atteint. Aucun nouvel encaissement ne peut être lancé avant le prochain mois ou une modification autorisée. Les fonds disponibles restent retirables ; aucun transfert n’a été lancé.';
+      return 'Votre plafond mensuel d’encaissement est atteint. Aucun nouvel encaissement ne peut être lancé avant le prochain mois ou une modification autorisée. Les sorties restent possibles dans la limite de leur plafond mensuel distinct et du solde disponible ; aucun transfert n’a été lancé.';
     }
   }
   if (isIdentityVerificationRequired(error)) {
-    return 'Votre plafond mensuel d’encaissement sans vérification d’identité est atteint. Les nouveaux encaissements sont suspendus. Les fonds disponibles restent retirables ; une identité approuvée permet d’accéder au plafond supérieur. Aucun transfert n’a été lancé.';
+    return 'Votre plafond mensuel d’encaissement sans vérification d’identité est atteint. Les nouveaux encaissements sont suspendus. Les sorties restent possibles dans la limite de leur plafond mensuel distinct et du solde disponible ; une identité approuvée permet d’accéder au plafond supérieur. Aucun transfert n’a été lancé.';
   }
   const status = typeof error === 'object' && error !== null && 'status' in error
     ? (error as { status?: unknown }).status

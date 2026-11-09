@@ -87,9 +87,9 @@ export function AdminUserMonthlyIncomingLimitSection({
   return (
     <Card className="sendflow-admin-detail-card" data-testid="card-admin-user-monthly-incoming-limit">
       <CardHeader>
-        <CardTitle>Plafond mensuel d’encaissements</CardTitle>
+        <CardTitle>Plafond mensuel des encaissements et des sorties</CardTitle>
         <CardDescription>
-          Cumul encaissé depuis le début du mois (UTC). Au plafond, les nouveaux encaissements sont bloqués ; le solde disponible reste retirable.
+          Ce même plafond s’applique séparément aux encaissements et aux sorties depuis le début du mois (UTC).
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -105,8 +105,20 @@ export function AdminUserMonthlyIncomingLimitSection({
             <strong className="mt-2 block tabular-nums">{formatFcfa(policy.receivedMinor)}</strong>
           </div>
           <div className="rounded-xl border bg-muted/20 p-4">
-            <span className="text-sm text-muted-foreground">Paiements en cours réservés</span>
+            <span className="text-sm text-muted-foreground">Encaissements en cours réservés</span>
             <strong className="mt-2 block tabular-nums">{formatFcfa(policy.pendingReservedMinor)}</strong>
+          </div>
+          <div className="rounded-xl border bg-muted/20 p-4">
+            <span className="text-sm text-muted-foreground">Sorties confirmées</span>
+            <strong className="mt-2 block tabular-nums">{formatFcfa(policy.outgoingSentMinor)}</strong>
+          </div>
+          <div className="rounded-xl border bg-muted/20 p-4">
+            <span className="text-sm text-muted-foreground">Sorties en cours réservées</span>
+            <strong className="mt-2 block tabular-nums">{formatFcfa(policy.outgoingPendingMinor)}</strong>
+          </div>
+          <div className="rounded-xl border bg-muted/20 p-4">
+            <span className="text-sm text-muted-foreground">Sorties restantes ce mois-ci</span>
+            <strong className="mt-2 block tabular-nums">{formatFcfa(policy.outgoingRemainingMinor)}</strong>
           </div>
           <div className="rounded-xl border bg-muted/20 p-4">
             <span className="text-sm text-muted-foreground">Plafond actif</span>
@@ -135,7 +147,7 @@ export function AdminUserMonthlyIncomingLimitSection({
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor={`user-monthly-incoming-limit-${userId}`}>Plafond personnalisé (FCFA)</Label>
+            <Label htmlFor={`user-monthly-incoming-limit-${userId}`}>Plafond personnalisé des deux flux (FCFA)</Label>
             <Input
               id={`user-monthly-incoming-limit-${userId}`}
               type="number"

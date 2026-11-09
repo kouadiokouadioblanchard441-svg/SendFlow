@@ -2001,7 +2001,7 @@ paths:
       operationId: createDeveloperPayoutQuote
       tags: [developer]
       summary: Calculate a server-side payout quote
-      description: Read-only. The server loads SendFlow pricing and limits, checks the authenticated merchant's active XOF wallet after subtracting active reservations, and blocks payouts after an unverified wallet reaches its configured cumulative incoming-payment threshold. No funds are reserved.
+      description: Read-only. The server loads SendFlow pricing and limits, checks the authenticated merchant's active XOF wallet after subtracting active reservations, and applies the identity-tier monthly cap to a separate outgoing-payment total. Incoming receipts do not consume this outgoing allowance. No funds are reserved.
       security:
         - sendFlowApiSecret: []
       requestBody:
@@ -2023,7 +2023,12 @@ paths:
         "401":
           description: Secret API key is invalid or revoked.
         "403":
-          description: Merchant payout access is unavailable or identity verification is required after reaching the unverified incoming-payment threshold.
+          description: Merchant payout access is unavailable.
+        "409":
+          description: The requested payout exceeds the remaining monthly outgoing allowance.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "429":
           description: Merchant API rate limit reached.
         "422":
@@ -2066,7 +2071,7 @@ paths:
       operationId: createDeveloperPayout
       tags: [developer]
       summary: Create and reserve a merchant payout
-      description: Requires an active account, an enabled SendFlow payout route, configured SendFlow fee and daily limit, an active XOF wallet with sufficient available balance, and Idempotency-Key. The server calculates amounts and subtracts active wallet reservations. The current SendFlow payout service is disabled and returns HTTP 503 without creating or reserving a request.
+      description: Requires an active account, an enabled SendFlow payout route, configured SendFlow fee and daily limit, an active XOF wallet with sufficient available balance, and Idempotency-Key. The server applies the same identity-tier monthly cap using an independent outgoing total. The current SendFlow payout service is disabled and returns HTTP 503 without creating or reserving a request.
       security:
         - sendFlowApiSecret: []
       parameters:
@@ -2089,6 +2094,11 @@ paths:
           description: Secret API key is invalid or revoked.
         "403":
           description: Account, wallet, country or operator is not eligible.
+        "409":
+          description: The requested payout exceeds the remaining monthly outgoing allowance.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
         "422":
           description: The authenticated merchant's available SendFlow wallet balance is insufficient.
         "429":
@@ -2490,7 +2500,7 @@ paths:
       operationId: getCurrentAccountLimit
       tags: [account]
       summary: Get the authenticated account's monthly transfer limit
-      description: Returns the server-calculated monthly limit and the user's successful outgoing transfer usage for the current calendar month.
+      description: Returns the identity-tier monthly cap applied separately to incoming receipts and outgoing transfers, plus successful and pending outgoing usage for the current calendar month.
       security:
         - sendFlowSession: []
       responses:
@@ -2517,7 +2527,7 @@ paths:
       operationId: getCurrentMonthlyIncomingPolicy
       tags: [account]
       summary: Read the authenticated account's monthly payment cap status
-      description: Returns server-calculated credited receipts, pending payment reservations, the applicable incoming-payment cap, and whether new incoming payments are blocked. Withdrawals remain governed by their own balance, risk, and provider checks.
+      description: Returns server-calculated credited receipts, pending incoming reservations, the shared identity-tier cap, and whether new incoming payments are blocked. The same cap applies to outgoing transfers with an independent monthly counter.
       security:
         - sendFlowSession: []
       responses:
@@ -2550,7 +2560,7 @@ paths:
       operationId: createCustomerTransferQuote
       tags: [account]
       summary: Validate a transfer and calculate its server-side quote
-      description: Requires an authenticated session with a recently verified PIN. The monthly incoming-payment cap does not block outgoing quotes or withdrawals; those remain subject to separate balance, risk, and provider checks. A quote does not create a transaction, debit a wallet, or contact an operator.
+      description: Requires an authenticated session with a recently verified PIN. The identity-tier cap applies separately to incoming receipts and outgoing transfers, so receiving up to the cap does not consume the separate outgoing allowance. Outgoing quotes are rejected if they exceed the remaining outgoing cap. A quote does not create a transaction, debit a wallet, or contact an operator.
       security:
         - sendFlowSession: []
       requestBody:
@@ -2579,13 +2589,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "403":
-          description: PIN verification is required or the account is not eligible for this operation. Monthly incoming-payment caps do not block withdrawals.
+          description: PIN verification is required or the account is not eligible for this operation.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "409":
-          description: The requested amount exceeds the customer's remaining monthly limit.
+          description: The requested outgoing amount exceeds the customer's remaining outgoing monthly limit.
           content:
             application/json:
               schema:
@@ -4868,7 +4878,7 @@ paths:
       operationId: updateAdminUserMonthlyIncomingLimit
       tags: [admin]
       summary: Set or clear a user's monthly incoming limit override
-      description: Sets an audited user-specific XOF incoming-payment cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payment attempts before provider dispatch; withdrawals remain subject to their separate balance, risk, and provider checks. Pending provider attempts already started can still reach their verified final result.
+      description: Sets an audited user-specific XOF monthly cap that overrides the global identity-tier limits for incoming and outgoing activity, counted separately, or clears it to restore automatic limits. A new incoming or outgoing request that would exceed its own monthly total is rejected before provider dispatch. Pending provider attempts already started can still reach their verified final result.
       security:
         - sendFlowSession: []
       parameters:
@@ -5713,9 +5723,12 @@ components:
         overrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
         effectiveLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
         limitReached: { type: boolean }
+        outgoingSentMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        outgoingPendingMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        outgoingRemainingMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
         periodStart: { type: string, format: date-time }
         periodEnd: { type: string, format: date-time }
-      required: [identityVerified, receivedMinor, pendingReservedMinor, unverifiedLimitMinor, verifiedLimitMinor, overrideMinor, effectiveLimitMinor, limitReached, periodStart, periodEnd]
+      required: [identityVerified, receivedMinor, pendingReservedMinor, unverifiedLimitMinor, verifiedLimitMinor, overrideMinor, effectiveLimitMinor, limitReached, outgoingSentMinor, outgoingPendingMinor, outgoingRemainingMinor, periodStart, periodEnd]
     AdminUserMonthlyIncomingLimitUpdate:
       type: object
       properties:
@@ -6670,6 +6683,9 @@ components:
         sentAmount:
           type: integer
           minimum: 0
+        pendingAmount:
+          type: integer
+          minimum: 0
         remainingAmount:
           type: integer
           minimum: 0
@@ -6679,7 +6695,7 @@ components:
         periodEnd:
           type: string
           format: date-time
-      required: [status, currency, monthlyLimit, sentAmount, remainingAmount, periodStart, periodEnd]
+      required: [status, currency, monthlyLimit, sentAmount, pendingAmount, remainingAmount, periodStart, periodEnd]
     AdminPeriod:
       type: object
       properties:

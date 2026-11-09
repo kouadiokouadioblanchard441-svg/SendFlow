@@ -1700,7 +1700,7 @@ export const ListDeveloperWebhookDeliveriesResponse = zod.object({
 
 
 /**
- * Read-only. The server loads SendFlow pricing and limits, checks the authenticated merchant's active XOF wallet after subtracting active reservations, and blocks payouts after an unverified wallet reaches its configured cumulative incoming-payment threshold. No funds are reserved.
+ * Read-only. The server loads SendFlow pricing and limits, checks the authenticated merchant's active XOF wallet after subtracting active reservations, and applies the identity-tier monthly cap to a separate outgoing-payment total. Incoming receipts do not consume this outgoing allowance. No funds are reserved.
  * @summary Calculate a server-side payout quote
  */
 export const createDeveloperPayoutQuoteBodyAmountMinorMax = 9007199254740991;
@@ -1797,7 +1797,7 @@ export const ListDeveloperPayoutsResponse = zod.object({
 
 
 /**
- * Requires an active account, an enabled SendFlow payout route, configured SendFlow fee and daily limit, an active XOF wallet with sufficient available balance, and Idempotency-Key. The server calculates amounts and subtracts active wallet reservations. The current SendFlow payout service is disabled and returns HTTP 503 without creating or reserving a request.
+ * Requires an active account, an enabled SendFlow payout route, configured SendFlow fee and daily limit, an active XOF wallet with sufficient available balance, and Idempotency-Key. The server applies the same identity-tier monthly cap using an independent outgoing total. The current SendFlow payout service is disabled and returns HTTP 503 without creating or reserving a request.
  * @summary Create and reserve a merchant payout
  */
 export const createDeveloperPayoutHeaderIdempotencyKeyMin = 8;
@@ -2317,11 +2317,13 @@ export const GetDeveloperDirectPaymentStatusResponse = zod.object({
 
 
 /**
- * Returns the server-calculated monthly limit and the user's successful outgoing transfer usage for the current calendar month.
+ * Returns the identity-tier monthly cap applied separately to incoming receipts and outgoing transfers, plus successful and pending outgoing usage for the current calendar month.
  * @summary Get the authenticated account's monthly transfer limit
  */
 
 export const getCurrentAccountLimitResponseSentAmountMin = 0;
+
+export const getCurrentAccountLimitResponsePendingAmountMin = 0;
 
 export const getCurrentAccountLimitResponseRemainingAmountMin = 0;
 
@@ -2332,6 +2334,7 @@ export const GetCurrentAccountLimitResponse = zod.object({
   "currency": zod.enum(['XOF']),
   "monthlyLimit": zod.int().min(1),
   "sentAmount": zod.int().min(getCurrentAccountLimitResponseSentAmountMin),
+  "pendingAmount": zod.int().min(getCurrentAccountLimitResponsePendingAmountMin),
   "remainingAmount": zod.int().min(getCurrentAccountLimitResponseRemainingAmountMin),
   "periodStart": zod.coerce.date(),
   "periodEnd": zod.coerce.date()
@@ -2339,7 +2342,7 @@ export const GetCurrentAccountLimitResponse = zod.object({
 
 
 /**
- * Returns server-calculated credited receipts, pending payment reservations, the applicable incoming-payment cap, and whether new incoming payments are blocked. Withdrawals remain governed by their own balance, risk, and provider checks.
+ * Returns server-calculated credited receipts, pending incoming reservations, the shared identity-tier cap, and whether new incoming payments are blocked. The same cap applies to outgoing transfers with an independent monthly counter.
  * @summary Read the authenticated account's monthly payment cap status
  */
 export const getCurrentMonthlyIncomingPolicyResponseReceivedMinorMin = 0;
@@ -2368,7 +2371,7 @@ export const GetCurrentMonthlyIncomingPolicyResponse = zod.object({
 
 
 /**
- * Requires an authenticated session with a recently verified PIN. The monthly incoming-payment cap does not block outgoing quotes or withdrawals; those remain subject to separate balance, risk, and provider checks. A quote does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. The identity-tier cap applies separately to incoming receipts and outgoing transfers, so receiving up to the cap does not consume the separate outgoing allowance. Outgoing quotes are rejected if they exceed the remaining outgoing cap. A quote does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuoteBodySourceOperatorIdMin = 2;
@@ -4723,6 +4726,15 @@ export const getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax = 2147483
 export const getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin = 0;
 export const getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax = 2147483647;
 
+export const getAdminUserResponseMonthlyIncomingPolicyOutgoingSentMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyOutgoingSentMinorMax = 9007199254740991;
+
+export const getAdminUserResponseMonthlyIncomingPolicyOutgoingPendingMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyOutgoingPendingMinorMax = 9007199254740991;
+
+export const getAdminUserResponseMonthlyIncomingPolicyOutgoingRemainingMinorMin = 0;
+export const getAdminUserResponseMonthlyIncomingPolicyOutgoingRemainingMinorMax = 9007199254740991;
+
 
 
 export const GetAdminUserResponse = zod.object({
@@ -4774,6 +4786,9 @@ export const GetAdminUserResponse = zod.object({
   "overrideMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax).nullable(),
   "effectiveLimitMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax),
   "limitReached": zod.boolean(),
+  "outgoingSentMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyOutgoingSentMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOutgoingSentMinorMax),
+  "outgoingPendingMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyOutgoingPendingMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOutgoingPendingMinorMax),
+  "outgoingRemainingMinor": zod.int().min(getAdminUserResponseMonthlyIncomingPolicyOutgoingRemainingMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOutgoingRemainingMinorMax),
   "periodStart": zod.coerce.date(),
   "periodEnd": zod.coerce.date()
 })
@@ -4989,7 +5004,7 @@ export const GetAdminTransactionResponse = zod.object({
 
 
 /**
- * Sets an audited user-specific XOF incoming-payment cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payment attempts before provider dispatch; withdrawals remain subject to their separate balance, risk, and provider checks. Pending provider attempts already started can still reach their verified final result.
+ * Sets an audited user-specific XOF monthly cap that overrides the global identity-tier limits for incoming and outgoing activity, counted separately, or clears it to restore automatic limits. A new incoming or outgoing request that would exceed its own monthly total is rejected before provider dispatch. Pending provider attempts already started can still reach their verified final result.
  * @summary Set or clear a user's monthly incoming limit override
  */
 

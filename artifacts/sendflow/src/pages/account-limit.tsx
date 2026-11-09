@@ -26,7 +26,9 @@ export default function AccountLimitPage() {
         .format(new Date(accountLimit.periodStart))
     : null;
   const progress = accountLimit
-    ? Math.min(100, Math.max(0, (accountLimit.sentAmount / accountLimit.monthlyLimit) * 100))
+    ? accountLimit.monthlyLimit === 0
+      ? 100
+      : Math.min(100, Math.max(0, ((accountLimit.monthlyLimit - accountLimit.remainingAmount) / accountLimit.monthlyLimit) * 100))
     : 0;
 
   useSeo({
@@ -113,15 +115,20 @@ export default function AccountLimitPage() {
                   aria-label="Montant comptabilisé sur le plafond mensuel"
                   aria-valuemin={0}
                   aria-valuemax={accountLimit.monthlyLimit}
-                  aria-valuenow={accountLimit.sentAmount}
+                  aria-valuenow={accountLimit.monthlyLimit - accountLimit.remainingAmount}
                   data-testid="progress-account-monthly-limit"
                 >
                   <span style={{ width: `${progress}%` }} />
                 </div>
               <p className="sendflow-account-limit-values" data-testid="text-account-limit-values">
-                  <span>{formatAccountLimitAmount(accountLimit.sentAmount)} FCFA pris en compte</span>
+                  <span>{formatAccountLimitAmount(accountLimit.sentAmount)} FCFA envoyés</span>
                   <strong>/ {formatAccountLimitAmount(accountLimit.monthlyLimit)} FCFA total</strong>
               </p>
+              {accountLimit.pendingAmount > 0 && (
+                <p className="sendflow-account-limit-period" data-testid="text-account-limit-pending">
+                  {formatAccountLimitAmount(accountLimit.pendingAmount)} FCFA réservés par des sorties en cours
+                </p>
+              )}
               <p className="sendflow-account-limit-remaining" data-testid="text-account-limit-remaining">
                 <span>Restant ce mois-ci</span>
                 <strong>{formatAccountLimitAmount(accountLimit.remainingAmount)} FCFA</strong>
@@ -129,6 +136,9 @@ export default function AccountLimitPage() {
               </>
             )}
           </section>
+          <p className="sendflow-account-limit-explanation" data-testid="text-account-limit-separate-directions">
+            Les encaissements et les sorties sont comptés séparément. Un encaissement ne réduit pas votre plafond mensuel de sortie.
+          </p>
 
            {isLoading && (
              <p className="sendflow-account-limit-status is-loading" role="status" aria-live="polite" data-testid="status-account-limit-loading">

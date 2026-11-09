@@ -213595,12 +213595,14 @@ var GetDeveloperDirectPaymentStatusResponse = object({
   })
 });
 var getCurrentAccountLimitResponseSentAmountMin = 0;
+var getCurrentAccountLimitResponsePendingAmountMin = 0;
 var getCurrentAccountLimitResponseRemainingAmountMin = 0;
 var GetCurrentAccountLimitResponse = object({
   "status": _enum2(["unverified", "pending", "review", "verified", "failed"]),
   "currency": _enum2(["XOF"]),
   "monthlyLimit": int().min(1),
   "sentAmount": int().min(getCurrentAccountLimitResponseSentAmountMin),
+  "pendingAmount": int().min(getCurrentAccountLimitResponsePendingAmountMin),
   "remainingAmount": int().min(getCurrentAccountLimitResponseRemainingAmountMin),
   "periodStart": coerce_exports.date(),
   "periodEnd": coerce_exports.date()
@@ -215159,6 +215161,12 @@ var getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin = 0;
 var getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax = 2147483647;
 var getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin = 0;
 var getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax = 2147483647;
+var getAdminUserResponseMonthlyIncomingPolicyOutgoingSentMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyOutgoingSentMinorMax = 9007199254740991;
+var getAdminUserResponseMonthlyIncomingPolicyOutgoingPendingMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyOutgoingPendingMinorMax = 9007199254740991;
+var getAdminUserResponseMonthlyIncomingPolicyOutgoingRemainingMinorMin = 0;
+var getAdminUserResponseMonthlyIncomingPolicyOutgoingRemainingMinorMax = 9007199254740991;
 var GetAdminUserResponse = object({
   "user": object({
     "id": string2(),
@@ -215208,6 +215216,9 @@ var GetAdminUserResponse = object({
     "overrideMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOverrideMinorMax).nullable(),
     "effectiveLimitMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyEffectiveLimitMinorMax),
     "limitReached": boolean3(),
+    "outgoingSentMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyOutgoingSentMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOutgoingSentMinorMax),
+    "outgoingPendingMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyOutgoingPendingMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOutgoingPendingMinorMax),
+    "outgoingRemainingMinor": int().min(getAdminUserResponseMonthlyIncomingPolicyOutgoingRemainingMinorMin).max(getAdminUserResponseMonthlyIncomingPolicyOutgoingRemainingMinorMax),
     "periodStart": coerce_exports.date(),
     "periodEnd": coerce_exports.date()
   })
@@ -215797,14 +215808,20 @@ function getMinimumForTransfer(kind, limits) {
 }
 
 // src/lib/account-limit-policy.ts
-function getMonthlyAccountLimit() {
-  return 15e4;
-}
 function getUtcMonthRange(now) {
   return {
     periodStart: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
     periodEnd: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
   };
+}
+function getRemainingMonthlyAccountLimit(monthlyLimitMinor, sentAmountMinor, pendingAmountMinor) {
+  if (!Number.isSafeInteger(monthlyLimitMinor) || monthlyLimitMinor < 0 || !Number.isSafeInteger(sentAmountMinor) || sentAmountMinor < 0 || !Number.isSafeInteger(pendingAmountMinor) || pendingAmountMinor < 0 || !Number.isSafeInteger(sentAmountMinor + pendingAmountMinor)) {
+    throw new Error("Monthly outgoing limit values are invalid");
+  }
+  return Math.max(0, monthlyLimitMinor - sentAmountMinor - pendingAmountMinor);
+}
+function isWithinMonthlyAccountLimit(requestedAmountMinor, remainingAmountMinor) {
+  return Number.isSafeInteger(requestedAmountMinor) && requestedAmountMinor > 0 && Number.isSafeInteger(remainingAmountMinor) && remainingAmountMinor >= 0 && requestedAmountMinor <= remainingAmountMinor;
 }
 
 // src/data/payment-limits.ts
@@ -215900,10 +215917,88 @@ function monthlyIncomingLimitReachedMessage(policy) {
   if (policy.blockCode === "identity_verification_required") {
     return "Votre plafond mensuel d\u2019encaissement sans v\xE9rification d\u2019identit\xE9 est atteint. Les nouveaux encaissements sont suspendus. Vous pouvez retirer les fonds disponibles, sous r\xE9serve des contr\xF4les habituels du compte. Une identit\xE9 approuv\xE9e permet d\u2019acc\xE9der au plafond sup\xE9rieur.";
   }
-  return `Votre plafond mensuel d\u2019encaissement de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements sont suspendus jusqu\u2019au renouvellement du mois ou \xE0 une modification autoris\xE9e. Les fonds disponibles restent retirables, sous r\xE9serve des contr\xF4les habituels du compte.`;
+  return `Votre plafond mensuel d\u2019encaissement de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements sont suspendus jusqu\u2019au renouvellement du mois ou \xE0 une modification autoris\xE9e. Les sorties restent soumises \xE0 leur plafond mensuel distinct, au solde disponible et aux contr\xF4les habituels.`;
 }
 function merchantMonthlyLimitReachedMessage() {
   return "Ce marchand a atteint sa limite mensuelle d\u2019encaissement. Veuillez le contacter pour en savoir plus.";
+}
+
+// src/lib/account-limit.ts
+var outgoingTransferKinds = ["inter-network", "international"];
+async function getMonthlyOutgoingUsage(userId, now = /* @__PURE__ */ new Date(), reader = db) {
+  if (!userId) throw new Error("Authenticated user is required");
+  const { periodStart, periodEnd } = getUtcMonthRange(now);
+  const [successfulTransfers, pendingTransfers, successfulPayouts, pendingPayouts] = await Promise.all([
+    reader.select({
+      total: sql`coalesce(sum(${transactionsTable.amountMinor}), 0)`
+    }).from(transactionsTable).where(and(
+      eq(transactionsTable.userId, userId),
+      eq(transactionsTable.currency, "XOF"),
+      inArray(transactionsTable.kind, outgoingTransferKinds),
+      eq(transactionsTable.status, "succeeded"),
+      gte(transactionsTable.createdAt, periodStart),
+      lt(transactionsTable.createdAt, periodEnd)
+    )),
+    reader.select({
+      total: sql`coalesce(sum(${transactionsTable.amountMinor}), 0)`
+    }).from(transactionsTable).where(and(
+      eq(transactionsTable.userId, userId),
+      eq(transactionsTable.currency, "XOF"),
+      inArray(transactionsTable.kind, outgoingTransferKinds),
+      eq(transactionsTable.status, "pending"),
+      gte(transactionsTable.createdAt, periodStart),
+      lt(transactionsTable.createdAt, periodEnd)
+    )),
+    reader.select({
+      total: sql`coalesce(sum(${payoutRequestsTable.amountMinor}), 0)`
+    }).from(payoutRequestsTable).where(and(
+      eq(payoutRequestsTable.merchantUserId, userId),
+      eq(payoutRequestsTable.currency, "XOF"),
+      eq(payoutRequestsTable.status, "succeeded"),
+      gte(payoutRequestsTable.createdAt, periodStart),
+      lt(payoutRequestsTable.createdAt, periodEnd)
+    )),
+    reader.select({
+      total: sql`coalesce(sum(${payoutRequestsTable.amountMinor}), 0)`
+    }).from(payoutRequestsTable).where(and(
+      eq(payoutRequestsTable.merchantUserId, userId),
+      eq(payoutRequestsTable.currency, "XOF"),
+      eq(payoutRequestsTable.reservationState, "active"),
+      gte(payoutRequestsTable.createdAt, periodStart),
+      lt(payoutRequestsTable.createdAt, periodEnd)
+    ))
+  ]);
+  const sentAmount = Number(successfulTransfers[0]?.total ?? 0) + Number(successfulPayouts[0]?.total ?? 0);
+  const pendingAmount = Number(pendingTransfers[0]?.total ?? 0) + Number(pendingPayouts[0]?.total ?? 0);
+  if (!Number.isSafeInteger(sentAmount) || sentAmount < 0 || !Number.isSafeInteger(pendingAmount) || pendingAmount < 0 || !Number.isSafeInteger(sentAmount + pendingAmount)) {
+    throw new Error("Monthly outgoing usage is outside the safe integer range");
+  }
+  return { sentAmount, pendingAmount };
+}
+async function getAccountLimitSnapshot(userId, now = /* @__PURE__ */ new Date()) {
+  const [latestVerification, monthlyIncomingPolicy, monthlyOutgoingUsage] = await Promise.all([
+    db.select({ status: customerIdentityRequestsTable.status }).from(customerIdentityRequestsTable).where(eq(customerIdentityRequestsTable.userId, userId)).orderBy(sql`${customerIdentityRequestsTable.submittedAt} desc`).limit(1),
+    getMonthlyIncomingPolicy(userId, now),
+    getMonthlyOutgoingUsage(userId, now)
+  ]);
+  const [latest] = latestVerification;
+  const status = latest?.status === "approved" ? "verified" : latest?.status === "pending" ? "pending" : latest?.status === "rejected" ? "failed" : "unverified";
+  const monthlyLimit = monthlyIncomingPolicy.effectiveLimitMinor;
+  const { periodStart, periodEnd } = getUtcMonthRange(now);
+  return {
+    status,
+    currency: "XOF",
+    monthlyLimit,
+    sentAmount: monthlyOutgoingUsage.sentAmount,
+    pendingAmount: monthlyOutgoingUsage.pendingAmount,
+    remainingAmount: getRemainingMonthlyAccountLimit(
+      monthlyLimit,
+      monthlyOutgoingUsage.sentAmount,
+      monthlyOutgoingUsage.pendingAmount
+    ),
+    periodStart,
+    periodEnd
+  };
 }
 
 // src/routes/admin.ts
@@ -216216,7 +216311,10 @@ router2.get("/users/:userId", async (req, res) => {
         }
       }))
     ]);
-    const monthlyIncomingPolicy = await getMonthlyIncomingPolicy(userId);
+    const [monthlyIncomingPolicy, monthlyOutgoingUsage] = await Promise.all([
+      getMonthlyIncomingPolicy(userId),
+      getMonthlyOutgoingUsage(userId)
+    ]);
     await recordAdminAudit({
       adminUserId,
       action: "view_user_detail",
@@ -216245,6 +216343,12 @@ router2.get("/users/:userId", async (req, res) => {
           overrideMinor: monthlyIncomingPolicy.overrideMinor,
           effectiveLimitMinor: monthlyIncomingPolicy.effectiveLimitMinor,
           limitReached: monthlyIncomingPolicy.limitReached,
+          outgoingSentMinor: monthlyOutgoingUsage.sentAmount,
+          outgoingPendingMinor: monthlyOutgoingUsage.pendingAmount,
+          outgoingRemainingMinor: Math.max(
+            0,
+            monthlyIncomingPolicy.effectiveLimitMinor - monthlyOutgoingUsage.sentAmount - monthlyOutgoingUsage.pendingAmount
+          ),
           periodStart: monthlyIncomingPolicy.periodStart.toISOString(),
           periodEnd: monthlyIncomingPolicy.periodEnd.toISOString()
         }
@@ -217775,41 +217879,6 @@ var account_default = router5;
 
 // src/routes/account-limit.ts
 var import_express8 = __toESM(require_express2(), 1);
-
-// src/lib/account-limit.ts
-async function getAccountLimitSnapshot(userId, now = /* @__PURE__ */ new Date()) {
-  const [latestVerification] = await db.select({ status: customerIdentityRequestsTable.status }).from(customerIdentityRequestsTable).where(eq(customerIdentityRequestsTable.userId, userId)).orderBy(sql`${customerIdentityRequestsTable.submittedAt} desc`).limit(1);
-  const status = latestVerification?.status === "approved" ? "verified" : latestVerification?.status === "pending" ? "pending" : latestVerification?.status === "rejected" ? "failed" : "unverified";
-  const monthlyLimit = getMonthlyAccountLimit();
-  const { periodStart, periodEnd } = getUtcMonthRange(now);
-  const [usage] = await db.select({
-    sentAmount: sql`coalesce(sum(${transactionsTable.amountMinor}), 0)`
-  }).from(transactionsTable).where(
-    and(
-      eq(transactionsTable.userId, userId),
-      eq(transactionsTable.currency, "XOF"),
-      inArray(transactionsTable.kind, ["inter-network", "international"]),
-      eq(transactionsTable.status, "succeeded"),
-      gte(transactionsTable.createdAt, periodStart),
-      lt(transactionsTable.createdAt, periodEnd)
-    )
-  );
-  const sentAmount = Number(usage?.sentAmount ?? 0);
-  if (!Number.isSafeInteger(sentAmount) || sentAmount < 0) {
-    throw new Error("Account limit usage is outside the safe integer range");
-  }
-  return {
-    status,
-    currency: "XOF",
-    monthlyLimit,
-    sentAmount,
-    remainingAmount: Math.max(0, monthlyLimit - sentAmount),
-    periodStart,
-    periodEnd
-  };
-}
-
-// src/routes/account-limit.ts
 var router6 = (0, import_express8.Router)();
 function inactiveAccountMessage(status) {
   if (status === "suspended") return "Account suspended";
@@ -252149,10 +252218,12 @@ function calculateTransferQuoteAmounts(amountMinor, feePercent, senderPaysFees) 
 // src/services/transfer-quote.ts
 var TransferQuoteError = class extends Error {
   statusCode;
-  constructor(statusCode, message) {
+  code;
+  constructor(statusCode, message, code) {
     super(message);
     this.name = "TransferQuoteError";
     this.statusCode = statusCode;
+    this.code = code;
   }
 };
 async function calculateCustomerTransferQuote(authenticatedUserId, input2, dependencies) {
@@ -252212,7 +252283,11 @@ async function calculateCustomerTransferQuote(authenticatedUserId, input2, depen
     const remaining = await dependencies.remainingMonthlyAmount(authenticatedUserId);
     if (!Number.isSafeInteger(remaining) || remaining < 0) throw new Error("Invalid server account limit");
     if (input2.amountMinor > remaining) {
-      throw new TransferQuoteError(409, `Ce transfert d\xE9passe votre plafond mensuel restant de ${remaining} FCFA.`);
+      throw new TransferQuoteError(
+        409,
+        `Ce transfert d\xE9passe votre plafond mensuel restant de ${remaining} FCFA.`,
+        "monthly_outgoing_limit_reached"
+      );
     }
   }
   return {
@@ -252298,7 +252373,10 @@ router22.post("/me/transfer-quote", async (req, res) => {
     res.json(CreateCustomerTransferQuoteResponse.parse(quote));
   } catch (error62) {
     if (error62 instanceof TransferQuoteError) {
-      res.status(error62.statusCode).json({ error: error62.message });
+      res.status(error62.statusCode).json({
+        error: error62.message,
+        ...error62.code ? { code: error62.code } : {}
+      });
       return;
     }
     req.log.error({ err: error62, userId: session.userId }, "Customer transfer quote failed");
@@ -256589,6 +256667,15 @@ function sendPayoutError(req, res, error62) {
   req.log.error({ err: error62 }, "Payout API request failed");
   res.status(503).json({ error: "Le service payout est momentan\xE9ment indisponible." });
 }
+async function assertMonthlyOutgoingLimit(userId, amountMinor) {
+  const limit = await getAccountLimitSnapshot(userId);
+  if (!isWithinMonthlyAccountLimit(amountMinor, limit.remainingAmount)) {
+    throw new PayoutPolicyError(
+      409,
+      `Cette sortie d\xE9passerait votre plafond mensuel. Il vous reste ${limit.remainingAmount.toLocaleString("fr-FR")} FCFA pour ce mois.`
+    );
+  }
+}
 router26.post("/v1/payout-quote", async (req, res) => {
   const key = await requireSecretApiKey(req, res, "payout_read");
   if (!key) return;
@@ -256607,6 +256694,7 @@ router26.post("/v1/payout-quote", async (req, res) => {
       parsed.data.operatorId
     );
     const quote = calculatePayoutQuote(parsed.data, configuration);
+    await assertMonthlyOutgoingLimit(key.userId, quote.amountMinor);
     assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
     res.setHeader("Cache-Control", "no-store");
     res.json(CreateDeveloperPayoutQuoteResponse.parse(
@@ -256637,6 +256725,7 @@ router26.post("/v1/payouts", async (req, res) => {
       parsedBody.data.operatorId
     );
     const quote = calculatePayoutQuote(parsedBody.data, configuration);
+    await assertMonthlyOutgoingLimit(key.userId, quote.amountMinor);
     assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
     if (!PAYOUT_EXECUTION_ENABLED) {
       res.status(503).json({

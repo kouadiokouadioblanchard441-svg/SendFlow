@@ -27,6 +27,8 @@ import {
 import { requireSecretApiKey } from "./developer";
 import { loadPayoutQuoteConfiguration } from "../data/payout-configuration";
 import { loadMerchantPayoutWallet } from "../data/payout-wallet-balance";
+import { getAccountLimitSnapshot } from "../lib/account-limit";
+import { isWithinMonthlyAccountLimit } from "../lib/account-limit-policy";
 import {
   assertPayoutWalletCanCover,
   calculatePayoutQuote,
@@ -78,6 +80,16 @@ function sendPayoutError(req: Request, res: Response, error: unknown) {
   res.status(503).json({ error: "Le service payout est momentanément indisponible." });
 }
 
+async function assertMonthlyOutgoingLimit(userId: string, amountMinor: number): Promise<void> {
+  const limit = await getAccountLimitSnapshot(userId);
+  if (!isWithinMonthlyAccountLimit(amountMinor, limit.remainingAmount)) {
+    throw new PayoutPolicyError(
+      409,
+      `Cette sortie dépasserait votre plafond mensuel. Il vous reste ${limit.remainingAmount.toLocaleString("fr-FR")} FCFA pour ce mois.`,
+    );
+  }
+}
+
 router.post("/v1/payout-quote", async (req, res): Promise<void> => {
   const key = await requireSecretApiKey(req, res, "payout_read");
   if (!key) return;
@@ -96,6 +108,7 @@ router.post("/v1/payout-quote", async (req, res): Promise<void> => {
       parsed.data.operatorId,
     );
     const quote = calculatePayoutQuote(parsed.data, configuration);
+    await assertMonthlyOutgoingLimit(key.userId, quote.amountMinor);
     assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
     res.setHeader("Cache-Control", "no-store");
     res.json(CreateDeveloperPayoutQuoteResponse.parse(
@@ -127,6 +140,7 @@ router.post("/v1/payouts", async (req, res): Promise<void> => {
       parsedBody.data.operatorId,
     );
     const quote = calculatePayoutQuote(parsedBody.data, configuration);
+    await assertMonthlyOutgoingLimit(key.userId, quote.amountMinor);
     assertPayoutWalletCanCover(wallet.availableMinor, quote.totalDebitMinor);
     if (!PAYOUT_EXECUTION_ENABLED) {
       res.status(503).json({

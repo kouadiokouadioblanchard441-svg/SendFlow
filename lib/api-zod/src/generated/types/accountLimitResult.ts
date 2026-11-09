@@ -16,6 +16,8 @@ export interface AccountLimitResult {
   /** @minimum 0 */
   sentAmount: number;
   /** @minimum 0 */
+  pendingAmount: number;
+  /** @minimum 0 */
   remainingAmount: number;
   periodStart: Date;
   periodEnd: Date;
