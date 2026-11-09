@@ -107,7 +107,8 @@ export class FeexpayClient {
 
   private configuration() {
     const env = this.#environment;
-    const mode = env.FEEXPAY_MODE;
+    const mode = env.FEEXPAY_MODE ??
+      (isFeexpayLiveExecutionAllowed(env) ? "live" : undefined);
     if (mode !== "live" && mode !== "sandbox") return fail("CONFIGURATION_REQUIRED");
     if (mode === "live" && !isFeexpayLiveExecutionAllowed(env)) return fail("LIVE_DISABLED");
     // Never reuse a live key or shop implicitly in sandbox.

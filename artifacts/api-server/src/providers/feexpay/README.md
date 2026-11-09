@@ -151,10 +151,12 @@ No environment variable is provisioned automatically by this implementation.
 - The client has separate explicit `live` and `sandbox` configuration paths.
   The intended integration is direct REST, not a hosted checkout. Selecting a
   mode in configuration does not prove merchant access or enable money movement.
-- Plesk live execution: `FEEXPAY_MODE=live`, `FEEXPAY_API_KEY`,
-  `FEEXPAY_SHOP_ID`, `FEEXPAY_EXECUTION_HOST=plesk`,
-  `SENDFLOW_DATABASE_TARGET=production`, `FEEXPAY_LIVE_ENABLED=true` and
-  production runtime, after explicit approval.
+- Plesk production infers live mode automatically when `NODE_ENV=production`,
+  `SENDFLOW_DATABASE_TARGET=production`, and the server-only
+  `FEEXPAY_API_KEY` and `FEEXPAY_SHOP_ID` are present. No
+  `FEEXPAY_MODE`, `FEEXPAY_EXECUTION_HOST`, `FEEXPAY_LIVE_ENABLED` or
+  `FEEXPAY_LINKFLOW_ENABLED` switch is required there. An explicit
+  `FEEXPAY_MODE=sandbox` still selects sandbox credentials and endpoints.
 - Replit real-payment testing has been explicitly authorized by the user.
   The user explicitly requires the configured shared database, not a
   separate preview database. It requires `FEEXPAY_EXECUTION_HOST=replit`,
@@ -168,13 +170,11 @@ No environment variable is provisioned automatically by this implementation.
   `sslmode=verify-full`. This configuration never grants access to private routes,
   makes a viewer financially eligible, migrates schemas, or moves funds.
 The existing shared-database access middleware remains in force.
-  Keep `FEEXPAY_LIVE_ENABLED=false` until the complete server payment lifecycle,
-  account entitlements and environment readiness have been verified.
 - Do not pass return/cancel URLs: the direct REST client rejects these options.
   A browser return never confirms a payment.
 
 Live calls remain blocked on unapproved shared-database previews, managed development
-databases, unapproved runtimes and whenever the live switch is off. Environment authorization
+databases, unapproved runtimes and incomplete production database configuration. Environment authorization
 is not payment readiness: the existing customer submission lock must remain until
 the transfer service is operational. No call is made just by configuring a host.
 Before activation, verify FeexPay's authorization of the executing server's actual

@@ -17,6 +17,12 @@ const live = () => ({
   FEEXPAY_EXECUTION_HOST: "plesk", FEEXPAY_API_KEY: randomBytes(24).toString("hex"),
   FEEXPAY_SHOP_ID: randomUUID(),
 });
+const automaticPleskLive = () => ({
+  NODE_ENV: "production",
+  SENDFLOW_DATABASE_TARGET: "production",
+  FEEXPAY_API_KEY: randomBytes(24).toString("hex"),
+  FEEXPAY_SHOP_ID: randomUUID(),
+});
 const payment = (extra = {}) => ({
   channelId: "mtn-ci", amountMinor: 1000, currency: "XOF",
   phoneNumber: `225${"0".repeat(10)}`, operationReference, ...extra,
@@ -77,9 +83,21 @@ test("Replit live never dispatches without both approvals, the connected databas
   }
 });
 
-test("Plesk live requires an explicit production database target", async () => {
+test("Plesk live needs no provider activation switches but requires the production database target", async () => {
   let calls = 0;
-  const client = new FeexpayClient({ ...live(), SENDFLOW_DATABASE_TARGET: undefined }, async () => {
+  const automaticallyConfigured = new FeexpayClient(automaticPleskLive(), async () => {
+    calls++;
+    return response();
+  });
+  assert.equal((await automaticallyConfigured.initiate("payin", payment())).status, "PENDING");
+  assert.equal(calls, 1);
+
+  calls = 0;
+  const client = new FeexpayClient({
+    ...automaticPleskLive(),
+    FEEXPAY_MODE: "live",
+    SENDFLOW_DATABASE_TARGET: undefined,
+  }, async () => {
     calls++;
     return response();
   });
@@ -222,11 +240,12 @@ test("documented v2 status response may omit currency; missing currency is never
   }
 });
 
-test("Plesk configuration fails closed on Replit, preview, development or missing explicit gates", async () => {
+test("Plesk configuration fails closed on Replit, preview, development or unknown hosts", async () => {
   const variants = [
-    { NODE_ENV: "development" }, { FEEXPAY_LIVE_ENABLED: "false" },
+    { NODE_ENV: "development" },
     { FEEXPAY_EXECUTION_HOST: "replit" }, { SENDFLOW_DATABASE_TARGET: "shared-external" },
     { REPL_ID: randomUUID() }, { REPLIT_DEV_DOMAIN: "preview.invalid" },
+    { FEEXPAY_EXECUTION_HOST: "unknown" },
   ];
   for (const variant of variants) {
     let calls = 0;

@@ -110,11 +110,14 @@ planifiées, reverse proxy, HTTPS, cookies, origines autorisées, accès sortant
 et restrictions IP du prestataire, rôle PostgreSQL, secrets, sauvegardes et
 journaux. Les variables de l'aperçu ne prouvent aucun de ces réglages.
 
-Le mode réel Plesk attend notamment `NODE_ENV=production`,
-`SENDFLOW_DATABASE_TARGET=production`, `FEEXPAY_EXECUTION_HOST=plesk` et
-`FEEXPAY_MODE=live`. **Conserver `FEEXPAY_LIVE_ENABLED=false` tant que le
-cycle complet n'a pas été raccordé et validé.** Ne pas copier ces réglages
-dans l'aperçu comme substitut à une vérification de Plesk.
+À Plesk, le code déduit automatiquement le mode réel de
+`NODE_ENV=production` et `SENDFLOW_DATABASE_TARGET=production`; il n'est pas
+nécessaire d'ajouter `FEEXPAY_EXECUTION_HOST`, `FEEXPAY_MODE`,
+`FEEXPAY_LIVE_ENABLED` ou `FEEXPAY_LINKFLOW_ENABLED`. Les identifiants
+FeexPay doivent toutefois être enregistrés côté serveur sur Plesk. Cette
+détection ne remplace ni l'activation du fournisseur et de sa route dans la
+base de production, ni la validation du cycle de paiement et des clés. Ne
+copiez pas la cible de base de production dans l'aperçu Replit.
 
 ## Ordre de travail avant ouverture
 

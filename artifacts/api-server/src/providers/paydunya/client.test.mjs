@@ -6,8 +6,6 @@ import { PaydunyaClient, PaydunyaError } from "./client.ts";
 const masterKey = "synthetic-master-key-for-tests";
 const live = {
   NODE_ENV: "production",
-  PAYDUNYA_LIVE_ENABLED: "true",
-  PAYDUNYA_EXECUTION_HOST: "plesk",
   SENDFLOW_DATABASE_TARGET: "production",
   PAYDUNYA_MASTER_KEY: masterKey,
   PAYDUNYA_PRIVATE_KEY: "synthetic-private-key",
@@ -24,12 +22,28 @@ function jsonResponse(value) {
   });
 }
 
-test("live PayDunya is fail-closed unless the approved production host and keys exist", async () => {
-  const missingFlags = new PaydunyaClient({ ...live, PAYDUNYA_LIVE_ENABLED: "false" }, async () => {
+test("Plesk PayDunya infers live mode without provider activation switches", async () => {
+  const client = new PaydunyaClient(live, async () => jsonResponse({
+    response_code: "00",
+    response_text: "https://app.paydunya.com/checkout/invoice/invoice_123456",
+    token: "invoice_123456",
+  }));
+  const invoice = await client.createInvoice({
+    amountMinor: 1000,
+    operationReference: reference,
+    channel: "orange-money-ci",
+    phoneNumber,
+    customerName: "Test User",
+  });
+  assert.equal(invoice.token, "invoice_123456");
+});
+
+test("PayDunya live remains fail-closed outside the production database runtime", async () => {
+  const wrongRuntime = new PaydunyaClient({ ...live, NODE_ENV: "development" }, async () => {
     throw new Error("transport must not be called");
   });
   await assert.rejects(
-    missingFlags.createInvoice({
+    wrongRuntime.createInvoice({
       amountMinor: 1000, operationReference: reference, channel: "orange-money-ci",
       phoneNumber, customerName: "Test User",
     }),

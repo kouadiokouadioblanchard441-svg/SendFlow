@@ -89,17 +89,18 @@ async function boundedJson(response: Response): Promise<unknown> {
 }
 
 export function isPaydunyaLiveExecutionAllowed(environment: Environment): boolean {
-  if (environment.PAYDUNYA_LIVE_ENABLED !== "true") return false;
-  if (environment.PAYDUNYA_EXECUTION_HOST === "plesk") {
-    return environment.NODE_ENV === "production"
-      && environment.SENDFLOW_DATABASE_TARGET === "production"
-      && !environment.REPL_ID
-      && !environment.REPLIT_DEV_DOMAIN;
+  const host = environment.PAYDUNYA_EXECUTION_HOST;
+  if (host === "replit") {
+    return environment.PAYDUNYA_LIVE_ENABLED === "true"
+      && environment.SENDFLOW_DATABASE_TARGET === "shared-external"
+      && environment.SENDFLOW_REPLIT_LIVE_APPROVED === "true"
+      && environment.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED === "true";
   }
-  return environment.PAYDUNYA_EXECUTION_HOST === "replit"
-    && environment.SENDFLOW_DATABASE_TARGET === "shared-external"
-    && environment.SENDFLOW_REPLIT_LIVE_APPROVED === "true"
-    && environment.SENDFLOW_SHARED_DATABASE_LIVE_APPROVED === "true";
+  if (host !== undefined && host !== "plesk") return false;
+  return environment.NODE_ENV === "production"
+    && environment.SENDFLOW_DATABASE_TARGET === "production"
+    && !environment.REPL_ID
+    && !environment.REPLIT_DEV_DOMAIN;
 }
 
 function verifyMasterKeyHash(hash: unknown, masterKey: string): boolean {

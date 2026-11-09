@@ -15,19 +15,20 @@ export function isLinkFlowProviderExecutionEnabled(
   environment: Environment = process.env,
 ) {
   if (providerCode === "feexpay") {
-    return environment.FEEXPAY_LINKFLOW_ENABLED === "true"
-      && environment.FEEXPAY_MODE === "live"
-      && environment.FEEXPAY_EXECUTION_HOST === "plesk"
+    return (environment.FEEXPAY_MODE === undefined || environment.FEEXPAY_MODE === "live")
+      && environment.NODE_ENV === "production"
       && environment.SENDFLOW_DATABASE_TARGET === "production"
+      && !environment.REPL_ID
+      && !environment.REPLIT_DEV_DOMAIN
       && Boolean(environment.FEEXPAY_API_KEY)
       && Boolean(environment.FEEXPAY_SHOP_ID)
       && isFeexpayLiveExecutionAllowed(environment);
   }
   if (providerCode === "paydunya") {
-    return environment.PAYDUNYA_LINKFLOW_ENABLED === "true"
-      && environment.PAYDUNYA_MODE === "live"
-      && environment.PAYDUNYA_EXECUTION_HOST === "plesk"
+    return environment.NODE_ENV === "production"
       && environment.SENDFLOW_DATABASE_TARGET === "production"
+      && !environment.REPL_ID
+      && !environment.REPLIT_DEV_DOMAIN
       && Boolean(environment.PAYDUNYA_MASTER_KEY)
       && Boolean(environment.PAYDUNYA_PRIVATE_KEY)
       && Boolean(environment.PAYDUNYA_TOKEN)

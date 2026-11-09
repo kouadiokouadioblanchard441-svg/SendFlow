@@ -14,14 +14,10 @@ import {
 const originalKey = process.env.CUSTOMER_PII_ENCRYPTION_KEY;
 process.env.CUSTOMER_PII_ENCRYPTION_KEY = "a".repeat(64);
 
-test("live LinkFlow is disabled unless the explicitly approved production Plesk configuration is complete", () => {
+test("live LinkFlow infers production Plesk readiness from runtime, DB target and provider credentials", () => {
   assert.equal(isLinkFlowPaymentExecutionEnabled({}), false);
   const feexpayEnvironment = {
-    FEEXPAY_LINKFLOW_ENABLED: "true",
-    FEEXPAY_MODE: "live",
-    FEEXPAY_EXECUTION_HOST: "plesk",
     SENDFLOW_DATABASE_TARGET: "production",
-    FEEXPAY_LIVE_ENABLED: "true",
     NODE_ENV: "production",
     FEEXPAY_API_KEY: "synthetic",
     FEEXPAY_SHOP_ID: "synthetic_shop",
@@ -30,25 +26,25 @@ test("live LinkFlow is disabled unless the explicitly approved production Plesk 
   assert.equal(isLinkFlowProviderExecutionEnabled("feexpay", feexpayEnvironment), true);
   assert.equal(isLinkFlowPaymentExecutionEnabled(feexpayEnvironment), true);
   assert.equal(isLinkFlowProviderExecutionEnabled("paydunya", {
-    PAYDUNYA_LINKFLOW_ENABLED: "true",
-    PAYDUNYA_MODE: "live",
-    PAYDUNYA_EXECUTION_HOST: "plesk",
     SENDFLOW_DATABASE_TARGET: "production",
-    PAYDUNYA_LIVE_ENABLED: "true",
     NODE_ENV: "production",
     PAYDUNYA_MASTER_KEY: "synthetic-master-key",
     PAYDUNYA_PRIVATE_KEY: "synthetic-private-key",
     PAYDUNYA_TOKEN: "synthetic-token",
   }), true);
   assert.equal(isLinkFlowProviderExecutionEnabled("paydunya", {
-    PAYDUNYA_LINKFLOW_ENABLED: "true",
-    PAYDUNYA_MODE: "live",
-    PAYDUNYA_EXECUTION_HOST: "plesk",
     SENDFLOW_DATABASE_TARGET: "production",
-    PAYDUNYA_LIVE_ENABLED: "true",
     NODE_ENV: "production",
     PAYDUNYA_MASTER_KEY: "synthetic-master-key",
     PAYDUNYA_PRIVATE_KEY: "synthetic-private-key",
+  }), false);
+  assert.equal(isLinkFlowProviderExecutionEnabled("feexpay", {
+    ...feexpayEnvironment,
+    REPLIT_DEV_DOMAIN: "preview.invalid",
+  }), false);
+  assert.equal(isLinkFlowProviderExecutionEnabled("feexpay", {
+    ...feexpayEnvironment,
+    FEEXPAY_MODE: "sandbox",
   }), false);
 });
 
