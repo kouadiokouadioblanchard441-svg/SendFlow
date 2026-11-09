@@ -20,3 +20,14 @@ native runtime boundary.
 **How to apply:** For a native-loaded server entry, verify its transitive imports
 with Node as well as the application build. Preserve explicit `.ts` imports and
 the matching declaration-only TypeScript compiler setting where needed.
+
+Direct native imports of the shared Drizzle schema index can also fail when its
+relative TypeScript re-exports omit file extensions.
+
+**Why:** Node 24's strip-only loader could not resolve extensionless schema
+re-exports during a read-only catalog audit, even though the schema package itself
+declares Drizzle correctly.
+
+**How to apply:** Use the repository's supported TypeScript runner or a bundled
+schema reader for runtime introspection; do not add dependencies just for an
+one-off read-only audit.

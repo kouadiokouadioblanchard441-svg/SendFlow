@@ -14,3 +14,9 @@ Immutable payment-schema fingerprints must explicitly account for separately ver
 **Why:** An additive nullable payment-attempt field changed the live catalog and made the original baseline planner report drift, even though the new field had its own reviewed migration.
 
 **How to apply:** When extending a payment table, make the baseline projection preserve its original fingerprint while retaining checks for every unrelated column, constraint, and trigger.
+
+When reconciling named constraints, compare their definitions and validation state, not names alone. PostgreSQL may generate or truncate foreign-key, unique, and check-constraint names; do not add a duplicate constraint merely to match a migration label when an equivalent validated constraint already exists.
+
+**Why:** The shared database contained equivalent validated payment and payout constraints under PostgreSQL-generated names rather than the migration's explicit names.
+
+**How to apply:** Query `pg_constraint` and verify the constrained columns, referenced table, actions, check expression, and `convalidated` before treating a name mismatch as schema drift.
