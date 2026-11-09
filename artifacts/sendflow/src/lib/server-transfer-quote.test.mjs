@@ -45,10 +45,10 @@ test('pricing version changes are detectable and quote errors are mapped without
   const identityError = { status: 403, data: { code: 'identity_verification_required' } };
   assert.equal(isIdentityVerificationRequired(identityError), true);
   assert.equal(isIdentityVerificationRequired({ status: 403, data: { code: 'pin_required' } }), false);
-  assert.match(serverQuoteErrorMessage(identityError), /plafond mensuel sans identité approuvée/);
+  assert.match(serverQuoteErrorMessage(identityError), /plafond mensuel d’encaissement sans vérification d’identité/);
   const monthlyLimitError = { status: 403, data: { code: 'monthly_incoming_limit_reached' } };
   assert.equal(isMonthlyIncomingLimitReachedError(monthlyLimitError), true);
-  assert.match(serverQuoteErrorMessage(monthlyLimitError), /Les nouveaux encaissements et les sorties sont suspendus/);
+  assert.match(serverQuoteErrorMessage(monthlyLimitError), /Les fonds disponibles restent retirables/);
   assert.match(serverQuoteErrorMessage({ status: 409 }), /limite disponible/);
   assert.match(serverQuoteErrorMessage({ status: 429 }), /Patientez un instant/);
   assert.match(serverQuoteErrorMessage({ status: 503, message: 'sensitive internal detail' }), /Aucun transfert n’a été lancé/i);

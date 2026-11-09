@@ -2517,7 +2517,7 @@ paths:
       operationId: getCurrentMonthlyIncomingPolicy
       tags: [account]
       summary: Read the authenticated account's monthly payment cap status
-      description: Returns server-calculated credited receipts, pending payment reservations, the applicable cap, and whether new payments and outgoing operations are blocked. The client does not calculate cap eligibility.
+      description: Returns server-calculated credited receipts, pending payment reservations, the applicable incoming-payment cap, and whether new incoming payments are blocked. Withdrawals remain governed by their own balance, risk, and provider checks.
       security:
         - sendFlowSession: []
       responses:
@@ -2550,7 +2550,7 @@ paths:
       operationId: createCustomerTransferQuote
       tags: [account]
       summary: Validate a transfer and calculate its server-side quote
-      description: Requires an authenticated session with a recently verified PIN. Rejects outgoing quotes when the account's monthly payment cap is reached. The cap depends on identity status and any administrator-set user override; reaching it blocks new incoming payments and outgoing operations. A quote does not create a transaction, debit a wallet, or contact an operator.
+      description: Requires an authenticated session with a recently verified PIN. The monthly incoming-payment cap does not block outgoing quotes or withdrawals; those remain subject to separate balance, risk, and provider checks. A quote does not create a transaction, debit a wallet, or contact an operator.
       security:
         - sendFlowSession: []
       requestBody:
@@ -2579,7 +2579,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "403":
-          description: PIN verification is required, or the applicable monthly incoming-payment cap blocks outgoing operations. Incoming payments remain allowed.
+          description: PIN verification is required or the account is not eligible for this operation. Monthly incoming-payment caps do not block withdrawals.
           content:
             application/json:
               schema:
@@ -4868,7 +4868,7 @@ paths:
       operationId: updateAdminUserMonthlyIncomingLimit
       tags: [admin]
       summary: Set or clear a user's monthly incoming limit override
-      description: Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payments and outgoing operations; pending provider attempts already started can still reach their verified final result.
+      description: Sets an audited user-specific XOF incoming-payment cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payment attempts before provider dispatch; withdrawals remain subject to their separate balance, risk, and provider checks. Pending provider attempts already started can still reach their verified final result.
       security:
         - sendFlowSession: []
       parameters:

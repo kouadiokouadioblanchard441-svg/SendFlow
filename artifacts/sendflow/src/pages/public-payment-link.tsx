@@ -62,7 +62,7 @@ function monthlyLimitPopupCopy(error: unknown): string | null {
   const data = (error as { data?: unknown }).data;
   if (typeof data !== 'object' || data === null || !('code' in data)
     || data.code !== 'merchant_monthly_limit_reached') return null;
-  return 'Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.';
+  return 'Ce marchand a atteint sa limite mensuelle d’encaissement. Veuillez le contacter pour en savoir plus.';
 }
 
 function parseAmountInputMinor(value: string, decimals: number): number | null {
@@ -766,7 +766,7 @@ export default function PublicPaymentLinkPage() {
       >
         <AlertDialogContent data-testid="dialog-merchant-monthly-limit">
           <AlertDialogHeader>
-            <AlertDialogTitle>Limite mensuelle du marchand atteinte</AlertDialogTitle>
+            <AlertDialogTitle>Limite mensuelle d’encaissement atteinte</AlertDialogTitle>
             <AlertDialogDescription>{monthlyLimitPopup}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1000,7 +1000,7 @@ export default function PublicPaymentLinkPage() {
             <>
               <div className="sendflow-pay-unavailable-note" role="alert" data-testid="status-merchant-monthly-limit-reached">
                 <span><ShieldCheck size={18} /></span>
-                <p><strong>{link.monthlyLimitMessage ?? 'Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.'}</strong></p>
+                <p><strong>{link.monthlyLimitMessage ?? 'Ce marchand a atteint sa limite mensuelle d’encaissement. Veuillez le contacter pour en savoir plus.'}</strong></p>
               </div>
               <button type="button" className="sendflow-pay-submit" disabled aria-disabled="true" data-testid="button-pay-monthly-limit-reached">
                 Paiement indisponible
@@ -1054,7 +1054,7 @@ export default function PublicPaymentLinkPage() {
                 <span><ShieldCheck size={18} /></span>
                 <p>
                   <strong>{link.monthlyLimitReached
-                    ? link.monthlyLimitMessage ?? 'Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.'
+                    ? link.monthlyLimitMessage ?? 'Ce marchand a atteint sa limite mensuelle d’encaissement. Veuillez le contacter pour en savoir plus.'
                     : link.paymentAvailable
                       ? 'La confirmation de paiement n’est pas encore activée.'
                       : 'Le paiement en ligne est momentanément indisponible.'}</strong>

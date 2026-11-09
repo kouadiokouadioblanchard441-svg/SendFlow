@@ -89,7 +89,7 @@ export function AdminUserMonthlyIncomingLimitSection({
       <CardHeader>
         <CardTitle>Plafond mensuel d’encaissements</CardTitle>
         <CardDescription>
-          Cumul reçu depuis le début du mois (UTC). Au plafond, aucun nouveau paiement ni sortie ne peut être lancé.
+          Cumul encaissé depuis le début du mois (UTC). Au plafond, les nouveaux encaissements sont bloqués ; le solde disponible reste retirable.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">

@@ -215890,21 +215890,20 @@ async function getMonthlyIncomingPolicy(userId, now = /* @__PURE__ */ new Date()
     overrideMinor,
     effectiveLimitMinor,
     incomingBlocked,
-    outgoingBlocked: incomingBlocked,
     limitReached: incomingBlocked,
     blockCode,
     periodStart,
     periodEnd
   };
 }
-function monthlyIncomingOutgoingBlockedMessage(policy) {
+function monthlyIncomingLimitReachedMessage(policy) {
   if (policy.blockCode === "identity_verification_required") {
-    return "Votre plafond mensuel sans identit\xE9 approuv\xE9e est atteint. Les nouveaux encaissements et les sorties sont suspendus. Faites v\xE9rifier votre identit\xE9 pour acc\xE9der au plafond sup\xE9rieur.";
+    return "Votre plafond mensuel d\u2019encaissement sans v\xE9rification d\u2019identit\xE9 est atteint. Les nouveaux encaissements sont suspendus. Vous pouvez retirer les fonds disponibles, sous r\xE9serve des contr\xF4les habituels du compte. Une identit\xE9 approuv\xE9e permet d\u2019acc\xE9der au plafond sup\xE9rieur.";
   }
-  return `Votre plafond mensuel de paiements de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements et les sorties sont suspendus jusqu\u2019au renouvellement du mois ou \xE0 une modification autoris\xE9e.`;
+  return `Votre plafond mensuel d\u2019encaissement de ${policy.effectiveLimitMinor.toLocaleString("fr-FR")} FCFA est atteint. Les nouveaux encaissements sont suspendus jusqu\u2019au renouvellement du mois ou \xE0 une modification autoris\xE9e. Les fonds disponibles restent retirables, sous r\xE9serve des contr\xF4les habituels du compte.`;
 }
 function merchantMonthlyLimitReachedMessage() {
-  return "Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.";
+  return "Ce marchand a atteint sa limite mensuelle d\u2019encaissement. Veuillez le contacter pour en savoir plus.";
 }
 
 // src/routes/admin.ts
@@ -217848,7 +217847,7 @@ router6.get("/me/monthly-incoming-policy", async (req, res) => {
       pendingReservedMinor: policy.pendingReservedMinor,
       effectiveLimitMinor: policy.effectiveLimitMinor,
       limitReached: policy.limitReached,
-      message: policy.limitReached ? monthlyIncomingOutgoingBlockedMessage(policy) : null,
+      message: policy.limitReached ? monthlyIncomingLimitReachedMessage(policy) : null,
       periodStart: policy.periodStart.toISOString(),
       periodEnd: policy.periodEnd.toISOString()
     }));
@@ -252291,16 +252290,6 @@ router22.post("/me/transfer-quote", async (req, res) => {
       res.status(400).json({ error: "V\xE9rifiez les informations du transfert." });
       return;
     }
-    if (parsed.data.kind !== "deposit") {
-      const incomingPolicy = await getMonthlyIncomingPolicy(session.userId);
-      if (incomingPolicy.outgoingBlocked) {
-        res.status(403).json({
-          code: incomingPolicy.blockCode,
-          error: monthlyIncomingOutgoingBlockedMessage(incomingPolicy)
-        });
-        return;
-      }
-    }
     const quote = await calculateCustomerTransferQuote(
       session.userId,
       parsed.data,
@@ -256609,10 +256598,6 @@ router26.post("/v1/payout-quote", async (req, res) => {
     return;
   }
   try {
-    const incomingPolicy = await getMonthlyIncomingPolicy(key.userId);
-    if (incomingPolicy.outgoingBlocked) {
-      throw new PayoutPolicyError(403, monthlyIncomingOutgoingBlockedMessage(incomingPolicy));
-    }
     const wallet = await loadMerchantPayoutWallet(key.userId);
     if (wallet.availableMinor <= 0) {
       throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");
@@ -256643,10 +256628,6 @@ router26.post("/v1/payouts", async (req, res) => {
     return;
   }
   try {
-    const incomingPolicy = await getMonthlyIncomingPolicy(key.userId);
-    if (incomingPolicy.outgoingBlocked) {
-      throw new PayoutPolicyError(403, monthlyIncomingOutgoingBlockedMessage(incomingPolicy));
-    }
     const wallet = await loadMerchantPayoutWallet(key.userId);
     if (wallet.availableMinor <= 0) {
       throw new PayoutPolicyError(422, "Le solde disponible SendFlow est insuffisant.");

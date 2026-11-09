@@ -6264,7 +6264,7 @@ export const getGetCurrentMonthlyIncomingPolicyUrl = () => {
 }
 
 /**
- * Returns server-calculated credited receipts, pending payment reservations, the applicable cap, and whether new payments and outgoing operations are blocked. The client does not calculate cap eligibility.
+ * Returns server-calculated credited receipts, pending payment reservations, the applicable incoming-payment cap, and whether new incoming payments are blocked. Withdrawals remain governed by their own balance, risk, and provider checks.
  * @summary Read the authenticated account's monthly payment cap status
  */
 export const getCurrentMonthlyIncomingPolicy = async ( options?: Parameters<typeof customFetch>[1]): Promise<CurrentMonthlyIncomingPolicy> => {
@@ -6342,7 +6342,7 @@ export const getCreateCustomerTransferQuoteUrl = () => {
 }
 
 /**
- * Requires an authenticated session with a recently verified PIN. Rejects outgoing quotes when the account's monthly payment cap is reached. The cap depends on identity status and any administrator-set user override; reaching it blocks new incoming payments and outgoing operations. A quote does not create a transaction, debit a wallet, or contact an operator.
+ * Requires an authenticated session with a recently verified PIN. The monthly incoming-payment cap does not block outgoing quotes or withdrawals; those remain subject to separate balance, risk, and provider checks. A quote does not create a transaction, debit a wallet, or contact an operator.
  * @summary Validate a transfer and calculate its server-side quote
  */
 export const createCustomerTransferQuote = async (transferQuoteInput: TransferQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<TransferQuoteResult> => {
@@ -11056,7 +11056,7 @@ export const getUpdateAdminUserMonthlyIncomingLimitUrl = (userId: string,) => {
 }
 
 /**
- * Sets an audited user-specific XOF cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payments and outgoing operations; pending provider attempts already started can still reach their verified final result.
+ * Sets an audited user-specific XOF incoming-payment cap that overrides the global identity-tier limits, or clears it to restore automatic limits. Reaching the cap blocks new incoming payment attempts before provider dispatch; withdrawals remain subject to their separate balance, risk, and provider checks. Pending provider attempts already started can still reach their verified final result.
  * @summary Set or clear a user's monthly incoming limit override
  */
 export const updateAdminUserMonthlyIncomingLimit = async (userId: string,

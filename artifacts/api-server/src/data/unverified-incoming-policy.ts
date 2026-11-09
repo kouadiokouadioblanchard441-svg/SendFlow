@@ -125,5 +125,5 @@ export function monthlyIncomingLimitReachedMessage(
 }
 
 export function merchantMonthlyLimitReachedMessage() {
-  return "Ce marchand a atteint sa limite mensuelle de paiements. Veuillez le contacter pour en savoir plus.";
+  return "Ce marchand a atteint sa limite mensuelle d’encaissement. Veuillez le contacter pour en savoir plus.";
 }

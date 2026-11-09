@@ -42,7 +42,7 @@
 - [LinkFlow fee availability](linkflow-fee-availability.md) — Configure rates independently per operator; new operators start unconfigured, and disabled countries stay out of customer pricing.
 - [Payout business rules](payout-business-rules.md) — Keep payouts closed until settlement evidence and atomic wallet reservation safeguards are verified.
 - [Payment minimum](payment-minimum.md) — Keep the 200 FCFA floor server-side for CFA links and XOF deposits; initialize configurable XOF payout minimum at 200.
-- [Monthly wallet receipt limits](unverified-wallet-receipts.md) — Count pending reservations; reject payments above the remaining monthly cap and block new incoming and outgoing operations at the cap.
+- [Monthly wallet receipt limits](unverified-wallet-receipts.md) — Count pending reservations and block only new incoming payments at the cap; available funds remain withdrawable under separate checks.
 - [LinkFlow USSD configuration](linkflow-ussd-configuration.md) — Administrators configure USSD codes by country and operator; the provider does not supply them.
 - [SendFlow visual contrast](sendflow-visual-contrast.md) — Match provided LinkFlow mockups; keep artwork fixed, white surfaces, violet accents, and solid red deletes.
 - [SendFlow documentation rules](docs-portal-visual-identity.md) — Keep examples aligned with SendFlow routes and place centralized production URLs in copyable blocks and applicable snippets.
