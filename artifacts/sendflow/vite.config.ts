@@ -7,6 +7,7 @@ import { publicClientDefinitions } from '../../scripts/security/public-client-en
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 import { ipGatePlugin } from './server/ip-gate-plugin';
+import { adminDevGatePlugin } from './server/admin-dev-gate-plugin';
 import { isKnownSitePage } from './server/site-route-matcher';
 
 const rawPort = process.env.PORT ?? '5173';
@@ -18,6 +19,7 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 const basePath = process.env.BASE_PATH ?? '/';
+const privateBundleBase = '/__sendflow_private_bundle__/';
 
 const envDir = path.resolve(import.meta.dirname, '../..');
 
@@ -117,7 +119,7 @@ const serverNotFoundPlugin: Plugin = {
 export default defineConfig(async ({ mode }) => {
   const adminBuild = mode === 'admin';
   return {
-  base: basePath,
+  base: adminBuild ? privateBundleBase : basePath,
   // Keep environment files at the workspace root; capacitor mode has its own public API origin.
   envDir,
   // No automatic VITE_* exposure: only explicit public routing values and the
@@ -126,6 +128,7 @@ export default defineConfig(async ({ mode }) => {
   define: publicClientDefinitions(loadEnv(mode, envDir, 'VITE_')),
   plugins: [
     ipGatePlugin(),
+    adminDevGatePlugin(basePath),
     serverNotFoundPlugin,
     ...(!adminBuild ? [stripPrivateSurfaceFromPublicCss()] : []),
     react(),

@@ -10,7 +10,7 @@ This document describes the server-side setup for the single administrator accou
 - Refresh tokens are opaque, stored hashed, rotated on use, and the session family is revoked on detected reuse.
 - Sessions have a 15-minute inactivity limit and an eight-hour absolute limit.
 - Sensitive admin mutations use a fresh TOTP confirmation bound to the method, path, query, and request body; the authorization token is one-use.
-- A host allowlist controls whether the static site presents the administrator surface. It is not authentication.
+- A server-side access gate checks the configured path and token before presenting the administrator sign-in form. The gate cookie is also required by the administrative API.
 - Cloudflare Access, firewall rules, allowed hosts/origins/IPs, database migrations, and secret values are not considered active until configured and verified in the target deployment.
 
 ## Required environment variables
@@ -19,10 +19,10 @@ Configure values only in Replit Secrets or the deployment's protected environmen
 
 | Variable | Purpose |
 | --- | --- |
-| `SENDFLOW_ADMIN_ALLOWED_HOSTS` | Exact administrator hostnames accepted by the web server, comma-separated. Hostnames only; no scheme, path, wildcard, or guessed value. |
+| `ADMIN_SECRET_PATH` | Private path checked by the web server before it serves the administrator sign-in form. Minimum 25 characters; restricted path characters. |
+| `ADMIN_SECRET_TOKEN` | Server-only access token checked in constant time; 32–256 URL-safe characters. |
 | `SENDFLOW_ADMIN_ALLOWED_ORIGINS` | Exact HTTPS origins allowed to call the administrative API. |
 | `SENDFLOW_ADMIN_ALLOWED_IPS` | Optional exact IP allowlist. Include only a verified fixed business VPN/office egress address. |
-| `SENDFLOW_ADMIN_CSP_CONNECT_SRC` | Exact HTTPS API origins required by the admin interface's CSP. |
 | `SENDFLOW_ADMIN_JWT_PRIVATE_KEY` | Server-only RS256 private signing key in PEM form. |
 | `SENDFLOW_ADMIN_JWT_PUBLIC_KEY` | Matching public verification key in PEM form. |
 | `SENDFLOW_ADMIN_JWT_ISSUER` | Expected JWT issuer. |
@@ -34,7 +34,9 @@ Configure values only in Replit Secrets or the deployment's protected environmen
 | `SENDFLOW_ADMIN_MAINTENANCE_DATABASE_URL` | A restricted-use connection to the same Supabase database for controlled schema/account maintenance; never use it as the web runtime connection. |
 | `DATABASE_CA_CERT` | Trusted database CA certificate for verified TLS. |
 
-Do not place the administrator hostname in the frontend or in `VITE_*` variables. Set host/origin values only in protected server/deployment configuration.
+Enter the two access values only through Replit Secrets for Replit runtime. Plesk does not inherit Replit Secrets; set the same two keys in the protected environment of both Plesk Node processes (site and API). Never add their values to source, `VITE_*`, documentation, logs, or build artifacts. The token is sent only in an HTTPS POST body, not in a query string.
+
+The configured access path necessarily appears in the browser address bar and in the HTTP request target. The application does not log request paths for this gate, but Plesk/Apache access logs may still record them. Configure and verify log redaction/omission before using the path on production hosting.
 
 ## Database rollout
 

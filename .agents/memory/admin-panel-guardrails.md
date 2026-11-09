@@ -9,17 +9,17 @@ SendFlow has exactly one Super Admin, authenticated by administrator email, pass
 
 **How to apply:** Bootstrap the singleton account through the controlled, non-public server procedure. Verify identity, password, TOTP, session, and step-up on the backend. Never trust roles or permissions sent by the client.
 
-Build the private browser interface separately from the public customer site. The public bundle must not contain private interface components, routes, labels, or styles; serve the separate bundle only through the server-side exact-host allowlist. The private browser UI is still needed to render the sign-in and operations, but authorization and financial rules stay in the backend. Keep the private host value out of source, documentation, tests, logs, and frontend assets; read it only from deployment environment configuration. A visible API path is not an access control.
+Build the private browser interface separately from the public customer site. The public bundle must not contain private interface components, routes, labels, or styles. The configured access route and token are server-only values supplied through `ADMIN_SECRET_PATH` and `ADMIN_SECRET_TOKEN`; validate the path and token on the backend, then use a Secure, HttpOnly gate cookie before serving the sign-in interface or allowing administrative API requests. The existing email/password/TOTP and server-session checks remain mandatory. Never embed either value in source, docs, tests, logs, frontend assets, or responses.
 
-**Why:** The user chose separation from the public site and requires the admin address to remain confidential, while rejecting obscurity as a replacement for authentication.
+**Why:** The user explicitly requested a secret route and token as an additional barrier while preserving the existing administrator authentication.
 
-**How to apply:** Build and package distinct public and private browser entry points, scan the public bundle for private-surface markers, and route the private output only from server environment configuration. Treat Cloudflare Access, origin restrictions, and Plesk settings as unverified until configured and tested outside the repository.
+**How to apply:** Keep the two values in Replit Secrets and inject them separately into Plesk's site and API runtimes when deploying. Scan both built bundles for configured values. The route necessarily appears in the request target; Plesk/Apache access logs need separate redaction or omission before production use. Treat external network controls as unverified until configured and tested.
 
-The old browser paths `/admin` and `/admin/sign-in` are retired. The API may use a conventional `/api/admin` prefix because route obscurity is not part of the security boundary.
+The old public browser routes `/admin` and `/admin/sign-in` remain retired. The server-configured access route is a gate, not authentication. The `/api/admin` prefix is a backend API contract and must require both the gate cookie and the existing Super Admin session.
 
-**Why:** The user asked to remove the previous panel route and move access to a separately configured domain, while requiring real backend authentication.
+**Why:** The user previously retired the public browser routes, then explicitly approved the separate server-configured path/token gate without removing mandatory MFA.
 
-**How to apply:** Do not restore a browser path gate or opaque API prefix as authentication. Test that retired public browser paths return 404 and that every API handler still rejects unauthenticated requests.
+**How to apply:** Keep the previous browser routes returning 404. Test alternate entry URLs, private asset URLs, and direct API calls without the gate cookie, then verify that a valid gate cookie alone still cannot access admin data.
 
 Historical grant/session tables and migrations are retained for data and migration history; they are not active administrator authorization and must not be dropped as part of route cleanup.
 

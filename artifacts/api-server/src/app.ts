@@ -12,6 +12,7 @@ import { httpErrorHandler } from "./lib/http-error-handler";
 import { enforceIpAccess } from "@workspace/db/ip-blocklist";
 import { apiRequestSecurity } from "./lib/api-request-security";
 import { captureRawResendWebhookBody } from "./lib/raw-resend-webhook-body";
+import { requireAdminSecretGate } from "./lib/admin-secret-gate";
 
 const app: Express = express();
 
@@ -20,6 +21,9 @@ app.set(
   "trust proxy",
   parseTrustProxyHops(process.env.TRUST_PROXY_HOPS, process.env.NODE_ENV),
 );
+// This must precede access logging and all API middleware so direct/legacy
+// administrative requests fail closed without exposing route behavior.
+app.use(requireAdminSecretGate);
 // Before CORS/preflight, body parsing, auth and every API route.
 app.use(async (req, res, next) => {
   if (await enforceIpAccess(req, res)) next();

@@ -186,6 +186,9 @@ importers:
       '@swc/helpers':
         specifier: 0.5.23
         version: 0.5.23
+      '@workspace/admin-gate':
+        specifier: workspace:*
+        version: link:../../lib/admin-gate
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod
@@ -451,6 +454,9 @@ importers:
 
   artifacts/sendflow:
     dependencies:
+      '@workspace/admin-gate':
+        specifier: workspace:*
+        version: link:../../lib/admin-gate
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
@@ -659,6 +665,12 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.6.6
+
+  lib/admin-gate:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.5
 
   lib/api-client-react:
     dependencies:

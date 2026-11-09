@@ -137,13 +137,13 @@ service site et `/api` vers le service API, en conservant les chemins. Le sélec
 d'hôte ne décide d'aucune autorisation ou règle financière.
 
 Le dossier `dist/public` contient uniquement l'application publique. L'interface privée
-est construite séparément dans `dist/admin`, hors du Document Root. Le serveur Node choisit
-le répertoire à servir selon l'hôte reçu et la liste exacte `SENDFLOW_ADMIN_ALLOWED_HOSTS`.
-Cette sélection ne constitue pas une authentification : les API restent protégées côté
-serveur. Le `index.cjs` racine importe `dist/server/index.mjs`, qui sert le bon bundle
-après le contrôle IP. Le serveur Plesk démarre les deux processus Node nécessaires
-(site et API), chacun avec ses variables privées. Vérifier que les fichiers ne sont pas
-servis directement par Apache avant le passage par Node.
+est construite séparément dans `dist/admin`, hors du Document Root. Le serveur Node ne
+sert cette interface qu'après validation serveur du chemin et du jeton d'accès, puis pose
+un cookie de garde sécurisé. Le même cookie est exigé par l'API avant la vérification de
+la session Super Admin. L'authentification e-mail, mot de passe et TOTP reste obligatoire.
+Le `index.cjs` racine importe `dist/server/index.mjs`; le serveur Plesk démarre les deux
+processus Node nécessaires (site et API), chacun avec ses variables privées. Vérifier que
+les fichiers ne sont pas servis directement par Apache avant le passage par Node.
 
 ## Correspondance avec le Document Root Plesk
 
@@ -167,13 +167,15 @@ exposée comme un répertoire statique Apache.
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
 - Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
   le reste doit atteindre le serveur Node du site. Chaque service écoute son propre `PORT`.
-- Définir `SENDFLOW_ADMIN_ALLOWED_HOSTS` dans l'environnement privé du service site avec
-  le nom d'hôte exact prévu pour l'interface privée. Ne pas inscrire cette valeur dans
-  Git, la documentation publique, le bundle client ou les messages d'erreur. Cette liste
-  sélectionne uniquement les fichiers de l'interface ; elle ne remplace pas le MFA ni
-  l'autorisation backend.
-- Si l'API utilise une origine distincte, définir `SENDFLOW_ADMIN_CSP_CONNECT_SRC` avec
-  ses origines HTTPS exactes afin que la politique CSP autorise les requêtes du navigateur.
+- Injecter `ADMIN_SECRET_PATH` et `ADMIN_SECRET_TOKEN` dans les paramètres secrets des
+  deux processus Node (site et API). Les Secrets Replit ne sont pas transférés par le
+  paquet Plesk. Le jeton n'est jamais inclus dans l'URL; le formulaire le transmet par
+  HTTPS dans le corps d'une requête et l'application ne le journalise pas.
+- Les cookies de garde et de session sont sécurisés et limités au même hôte. L'API doit
+  rester accessible sous la même origine HTTPS que l'interface, via le préfixe `/api`.
+- Les journaux d'accès du proxy ou d'Apache peuvent enregistrer les chemins demandés.
+  Avant d'utiliser un chemin confidentiel en production, vérifier que la configuration
+  Plesk/Apache n'en conserve pas la valeur en clair; ce dépôt ne configure pas ces journaux.
 - Les API inconnues doivent rester des erreurs API, pas du HTML de la SPA. Un fichier
   JS/CSS absent doit rester un 404 ; les routes SPA valides doivent accepter un refresh.
 - Définir `NODE_ENV=production`, `SENDFLOW_DATABASE_TARGET=production`,

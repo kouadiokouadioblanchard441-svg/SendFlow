@@ -30209,7 +30209,7 @@ var require_utils5 = __commonJS({
     var nodeCrypto = __require("crypto");
     module.exports = {
       postgresMd5PasswordHash,
-      randomBytes: randomBytes11,
+      randomBytes: randomBytes12,
       deriveKey: deriveKey2,
       sha256: sha2562,
       hashByName,
@@ -30219,7 +30219,7 @@ var require_utils5 = __commonJS({
     var webCrypto2 = nodeCrypto.webcrypto || globalThis.crypto;
     var subtleCrypto = webCrypto2.subtle;
     var textEncoder2 = new TextEncoder();
-    function randomBytes11(length) {
+    function randomBytes12(length) {
       return webCrypto2.getRandomValues(Buffer.alloc(length));
     }
     async function md52(string4) {
@@ -55200,13 +55200,13 @@ var require_timing_safe_equal = __commonJS({
   "../../node_modules/.pnpm/standardwebhooks@1.1.1/node_modules/standardwebhooks/dist/timing_safe_equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.timingSafeEqual = timingSafeEqual7;
+    exports.timingSafeEqual = timingSafeEqual8;
     function assert2(expr, msg = "") {
       if (!expr) {
         throw new Error(msg);
       }
     }
-    function timingSafeEqual7(a, b) {
+    function timingSafeEqual8(a, b) {
       if (a.byteLength !== b.byteLength) {
         return false;
       }
@@ -259098,6 +259098,90 @@ function captureRawResendWebhookBody(request, body) {
   request.rawBody = Buffer.from(body);
 }
 
+// ../../lib/admin-gate/src/index.ts
+import { createHash as createHash13, createHmac as createHmac6, randomBytes as randomBytes11, timingSafeEqual as timingSafeEqual7 } from "node:crypto";
+var ADMIN_GATE_COOKIE = "__Host-sendflow_access_gate";
+var ADMIN_GATE_COOKIE_TTL_MS = 8 * 60 * 60 * 1e3;
+var routePattern = /^\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/u;
+var tokenPattern3 = /^[A-Za-z0-9_-]{32,256}$/u;
+function getAdminGateConfiguration(environment = process.env) {
+  const path = environment.ADMIN_SECRET_PATH;
+  const token = environment.ADMIN_SECRET_TOKEN;
+  if (!path || path.length < 25 || path.length > 512 || !routePattern.test(path) || path.startsWith("/api/") || path.startsWith("/assets/") || path.startsWith("/__sendflow_private_bundle__/") || path.toLowerCase() === "/admin" || !token || !tokenPattern3.test(token)) return null;
+  return { path, token };
+}
+function verifyAdminGateCookieValue(cookieValue, configuration, nowMs = Date.now()) {
+  if (!cookieValue || !configuration || cookieValue.length > 512) return false;
+  const parts = cookieValue.split(".");
+  if (parts.length !== 2) return false;
+  const [payload, signature] = parts;
+  if (!payload || !signature || !/^[A-Za-z0-9_-]+$/u.test(payload)) return false;
+  const expectedSignature = createHmac6("sha256", configuration.token).update(payload).digest();
+  let suppliedSignature;
+  try {
+    suppliedSignature = Buffer.from(signature, "base64url");
+  } catch {
+    return false;
+  }
+  if (suppliedSignature.length !== expectedSignature.length || !timingSafeEqual7(suppliedSignature, expectedSignature)) return false;
+  let decoded;
+  try {
+    decoded = Buffer.from(payload, "base64url").toString("utf8");
+  } catch {
+    return false;
+  }
+  const separator = decoded.indexOf(".");
+  if (separator < 1) return false;
+  const expiresAt = Number(decoded.slice(0, separator));
+  const nonce = decoded.slice(separator + 1);
+  return Number.isSafeInteger(expiresAt) && expiresAt > nowMs && expiresAt <= nowMs + ADMIN_GATE_COOKIE_TTL_MS && /^[A-Za-z0-9_-]{32}$/u.test(nonce);
+}
+function readAdminGateCookie(cookieHeader) {
+  const matches = cookieHeader?.split(";").map((part) => part.trim()).filter((part) => part.startsWith(`${ADMIN_GATE_COOKIE}=`)) ?? [];
+  if (matches.length !== 1) return null;
+  const value = matches[0].slice(ADMIN_GATE_COOKIE.length + 1);
+  if (!value || value.length > 512 || !/^[A-Za-z0-9_.-]+$/u.test(value)) return null;
+  return value;
+}
+function hasValidAdminGateCookie(cookieHeader, environment = process.env, nowMs = Date.now()) {
+  return verifyAdminGateCookieValue(
+    readAdminGateCookie(cookieHeader),
+    getAdminGateConfiguration(environment),
+    nowMs
+  );
+}
+function isAdminApiRequestPath(rawUrl) {
+  let pathname = rawUrl.split("?", 1)[0] ?? "";
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const decoded = decodeURIComponent(pathname);
+      if (decoded === pathname) break;
+      pathname = decoded;
+    } catch {
+      return pathname.toLowerCase().startsWith("/api");
+    }
+  }
+  pathname = pathname.replaceAll("\\", "/").replace(/\/{2,}/gu, "/");
+  if (!/^\/api(?:\/|$)/iu.test(pathname)) return false;
+  return pathname.split("/").some((segment) => segment.toLowerCase() === "admin");
+}
+
+// src/lib/admin-secret-gate.ts
+var NOT_FOUND_BODY = "404 Not Found";
+var requireAdminSecretGate = (req, res, next) => {
+  if (!isAdminApiRequestPath(req.originalUrl)) {
+    next();
+    return;
+  }
+  res.setHeader("Cache-Control", "no-store, private");
+  res.setHeader("Vary", "Cookie");
+  if (!hasValidAdminGateCookie(req.headers.cookie, process.env)) {
+    res.status(404).type("text/plain").send(NOT_FOUND_BODY);
+    return;
+  }
+  next();
+};
+
 // src/app.ts
 var app = (0, import_express36.default)();
 app.disable("x-powered-by");
@@ -259105,6 +259189,7 @@ app.set(
   "trust proxy",
   parseTrustProxyHops(process.env.TRUST_PROXY_HOPS, process.env.NODE_ENV)
 );
+app.use(requireAdminSecretGate);
 app.use(async (req, res, next) => {
   if (await enforceIpAccess(req, res)) next();
 });
@@ -259198,7 +259283,7 @@ app.use(httpErrorHandler);
 var app_default = app;
 
 // src/services/developer-webhook-worker.ts
-import { createHmac as createHmac6 } from "node:crypto";
+import { createHmac as createHmac7 } from "node:crypto";
 import { request as httpsRequest } from "node:https";
 var MAX_ATTEMPTS = 8;
 var BATCH_SIZE = 10;
@@ -259233,7 +259318,7 @@ async function postWebhook(url2, secret, payload, runtime = {}) {
   }
   const body = JSON.stringify(payload);
   const timestamp2 = Math.floor(Date.now() / 1e3).toString();
-  const signature = createHmac6("sha256", secret).update(`${timestamp2}.${body}`, "utf8").digest("hex");
+  const signature = createHmac7("sha256", secret).update(`${timestamp2}.${body}`, "utf8").digest("hex");
   return new Promise((resolve) => {
     let settled = false;
     const finish = (result) => {

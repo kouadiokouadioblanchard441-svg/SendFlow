@@ -15,6 +15,9 @@
     },
     {
       "path": "../../lib/db"
+    },
+    {
+      "path": "../../lib/admin-gate"
     }
   ]
 }
