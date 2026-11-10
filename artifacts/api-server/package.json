@@ -22,7 +22,6 @@
     "test:finance:isolated": "node tests/security/run-isolated-finance.mjs",
     "test:customer-auth-email:isolated": "node tests/security/run-isolated-finance.mjs --customer-auth-email-only",
     "test:admin-auth-schema:isolated": "node tests/security/test-admin-auth-schema.mjs",
-    "admin:bootstrap-super-admin": "node --experimental-strip-types scripts/bootstrap-super-admin.mjs",
     "admin:recover-super-admin-mfa": "node --experimental-strip-types scripts/reset-super-admin-mfa.mjs",
     "test:sensitive-data-crypto": "node --experimental-strip-types --test src/lib/sensitive-data-crypto.test.mjs src/lib/developer-webhook-payload.test.mjs",
     "test:transfer-quote": "node --experimental-strip-types --test src/lib/transfer-quote-policy.test.mjs",

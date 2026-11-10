@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
+import qrcode from "qrcode";
 import {
   and,
   db,
@@ -8,6 +9,7 @@ import {
   gt,
   isNull,
   superAdminCredentialsTable,
+  superAdminRecoveryCodesTable,
   superAdminRefreshTokensTable,
   superAdminSessionsTable,
   superAdminStepUpTokensTable,
@@ -15,12 +17,16 @@ import {
 import {
   createAdminAccessToken,
   createOpaqueToken,
+  createRecoveryCodes,
+  createTotpEnrollmentUri,
   createTotpSecret,
   decryptTotpSecret,
   encryptTotpSecret,
+  hashRecoveryCode,
   hashAdminPassword,
   hashOpaqueToken,
   normalizeAdminEmail,
+  verifyAdminAccessToken,
   verifyAdminPassword,
   verifyTotpCode,
 } from "../lib/admin-auth-crypto";
@@ -55,8 +61,24 @@ const stepUpInput = z.object({
   query: z.record(z.string(), z.unknown()).optional().default({}),
   payload: z.unknown().optional().default(null),
 }).strict();
+const setupStartInput = z.object({}).strict();
+const setupCompleteInput = z.object({
+  challengeId: z.string().uuid(),
+  email: z.string().max(254),
+  password: z.string().min(12).max(1024),
+  totpCode: z.string().regex(/^[0-9]{6}$/u),
+}).strict();
 const dummyTotpSecret = createTotpSecret();
 let dummyPasswordHash: Promise<string> | null = null;
+const setupChallengeTtlMs = 10 * 60 * 1000;
+const setupChallengeMaxAttempts = 5;
+const setupChallenges = new Map<string, {
+  secret: string;
+  requester: string;
+  expiresAt: number;
+  attempts: number;
+}>();
+const setupStartLimits = new Map<string, { count: number; expiresAt: number }>();
 
 function getDummyPasswordHash() {
   dummyPasswordHash ??= hashAdminPassword(randomUUID() + randomUUID());
@@ -84,6 +106,200 @@ function isJwtConfigured() {
 function isTotpEncryptionConfigured() {
   return Boolean(encryptTotpSecret(dummyTotpSecret));
 }
+
+function pruneSetupState(now: number) {
+  for (const [id, challenge] of setupChallenges) {
+    if (challenge.expiresAt <= now || challenge.attempts >= setupChallengeMaxAttempts) {
+      setupChallenges.delete(id);
+    }
+  }
+  for (const [requester, limit] of setupStartLimits) {
+    if (limit.expiresAt <= now) setupStartLimits.delete(requester);
+  }
+}
+
+router.get("/setup-status", async (req, res): Promise<void> => {
+  res.setHeader("Cache-Control", "no-store, private");
+  try {
+    const [credentials] = await db.select({ id: superAdminCredentialsTable.id })
+      .from(superAdminCredentialsTable)
+      .where(eq(superAdminCredentialsTable.id, 1))
+      .limit(1);
+    res.json({ setupAvailable: !credentials });
+  } catch {
+    req.log.error("Administrator setup status lookup failed");
+    res.status(503).json({ error: "Le service de connexion est momentanément indisponible." });
+  }
+});
+
+router.post("/setup/start", async (req, res): Promise<void> => {
+  res.setHeader("Cache-Control", "no-store, private");
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine non autorisée." });
+    return;
+  }
+  if (!setupStartInput.safeParse(req.body).success) {
+    res.status(400).json({ error: "Demande d’initialisation invalide." });
+    return;
+  }
+  if (!isJwtConfigured() || !isTotpEncryptionConfigured()) {
+    res.status(503).json({ error: "Le service de connexion est momentanément indisponible." });
+    return;
+  }
+
+  const now = Date.now();
+  pruneSetupState(now);
+  const requester = fingerprint(`admin-setup:${requesterAddress(req)}`);
+  const currentLimit = setupStartLimits.get(requester);
+  if (currentLimit && currentLimit.count >= 3) {
+    res.status(429).json({ error: "Trop de demandes. Réessayez plus tard." });
+    return;
+  }
+  try {
+    const [credentials] = await db.select({ id: superAdminCredentialsTable.id })
+      .from(superAdminCredentialsTable)
+      .where(eq(superAdminCredentialsTable.id, 1))
+      .limit(1);
+    if (credentials) {
+      res.status(409).json({ error: "L’initialisation n’est plus disponible." });
+      return;
+    }
+
+    const existing = [...setupChallenges.entries()]
+      .find(([, challenge]) => challenge.requester === requester);
+    if (existing) {
+      const [challengeId, challenge] = existing;
+      const uri = createTotpEnrollmentUri(challenge.secret, "admin");
+      const qrSvg = await qrcode.toString(uri, { type: "svg", margin: 1, width: 220 });
+      res.json({ challengeId, qrSvg, expiresInSeconds: Math.floor((challenge.expiresAt - now) / 1000) });
+      return;
+    }
+
+    const limit = currentLimit ?? { count: 0, expiresAt: now + 15 * 60 * 1000 };
+    limit.count += 1;
+    setupStartLimits.set(requester, limit);
+    const challengeId = randomUUID();
+    const challenge = {
+      secret: createTotpSecret(),
+      requester,
+      expiresAt: now + setupChallengeTtlMs,
+      attempts: 0,
+    };
+    setupChallenges.set(challengeId, challenge);
+    const uri = createTotpEnrollmentUri(challenge.secret, "admin");
+    const qrSvg = await qrcode.toString(uri, { type: "svg", margin: 1, width: 220 });
+    res.json({ challengeId, qrSvg, expiresInSeconds: setupChallengeTtlMs / 1000 });
+  } catch {
+    req.log.error("Administrator enrollment start failed");
+    res.status(503).json({ error: "L’initialisation est momentanément indisponible." });
+  }
+});
+
+router.post("/setup/complete", async (req, res): Promise<void> => {
+  res.setHeader("Cache-Control", "no-store, private");
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine non autorisée." });
+    return;
+  }
+  const parsed = setupCompleteInput.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Les informations saisies sont invalides." });
+    return;
+  }
+  const email = normalizeAdminEmail(parsed.data.email);
+  if (!email) {
+    res.status(400).json({ error: "Les informations saisies sont invalides." });
+    return;
+  }
+  const nowMs = Date.now();
+  pruneSetupState(nowMs);
+  const challenge = setupChallenges.get(parsed.data.challengeId);
+  const requester = fingerprint(`admin-setup:${requesterAddress(req)}`);
+  if (!challenge || challenge.requester !== requester || challenge.expiresAt <= nowMs) {
+    res.status(400).json({ error: "L’enrôlement a expiré. Recommencez l’initialisation." });
+    return;
+  }
+  const acceptedStep = verifyTotpCode(challenge.secret, parsed.data.totpCode, nowMs, null);
+  if (acceptedStep === null) {
+    challenge.attempts += 1;
+    if (challenge.attempts >= setupChallengeMaxAttempts) setupChallenges.delete(parsed.data.challengeId);
+    await recordAdminAudit({
+      adminUserId: "super-admin",
+      action: "admin_totp_failure",
+      resourceType: "admin_access",
+      resourceId: "super-admin",
+      ...requestAuditContext(req),
+      outcome: "failure",
+    }).catch(() => undefined);
+    res.status(400).json({ error: "Code invalide. Vérifiez Google Authenticator puis réessayez." });
+    return;
+  }
+
+  try {
+    const encryptedTotp = encryptTotpSecret(challenge.secret);
+    const accessTokenProbe = createAdminAccessToken(randomUUID(), Math.floor(nowMs / 1000));
+    if (!encryptedTotp || !decryptTotpSecret(encryptedTotp) || !accessTokenProbe || !verifyAdminAccessToken(accessTokenProbe)) {
+      req.log.error("Administrator enrollment cryptographic configuration unavailable");
+      res.status(503).json({ error: "L’initialisation est momentanément indisponible." });
+      return;
+    }
+
+    const passwordHash = await hashAdminPassword(parsed.data.password);
+    const recoveryCodes = createRecoveryCodes();
+    const recoveryHashes = recoveryCodes.map(({ code }) => hashRecoveryCode(code));
+    if (recoveryHashes.some((hash) => !hash)) {
+      res.status(503).json({ error: "L’initialisation est momentanément indisponible." });
+      return;
+    }
+
+    await db.transaction(async (tx) => {
+      const [existing] = await tx.select({ id: superAdminCredentialsTable.id })
+        .from(superAdminCredentialsTable)
+        .where(eq(superAdminCredentialsTable.id, 1))
+        .for("update")
+        .limit(1);
+      if (existing) throw new Error("ADMIN_ALREADY_INITIALIZED");
+
+      await tx.insert(superAdminCredentialsTable).values({
+        id: 1,
+        emailNormalized: email,
+        passwordHash,
+        totpCiphertext: encryptedTotp.ciphertext,
+        totpNonce: encryptedTotp.nonce,
+        totpAuthTag: encryptedTotp.authTag,
+        lastTotpStep: acceptedStep,
+        active: true,
+        createdAt: new Date(nowMs),
+        updatedAt: new Date(nowMs),
+        passwordChangedAt: new Date(nowMs),
+      });
+      for (const codeHash of recoveryHashes) {
+        await tx.insert(superAdminRecoveryCodesTable).values({
+          credentialId: 1,
+          codeHash: codeHash!,
+        });
+      }
+      await recordAdminAudit({
+        adminUserId: "super-admin",
+        action: "provision_admin",
+        resourceType: "admin_access",
+        resourceId: "super-admin",
+        ...requestAuditContext(req),
+        outcome: "success",
+      }, tx);
+    });
+    setupChallenges.delete(parsed.data.challengeId);
+    res.status(201).json({ initialized: true, recoveryCodes: recoveryCodes.map(({ code }) => code) });
+  } catch (error) {
+    if (error instanceof Error && error.message === "ADMIN_ALREADY_INITIALIZED") {
+      setupChallenges.delete(parsed.data.challengeId);
+      res.status(409).json({ error: "L’initialisation n’est plus disponible." });
+      return;
+    }
+    req.log.error("Administrator enrollment completion failed");
+    res.status(503).json({ error: "L’initialisation est momentanément indisponible." });
+  }
+});
 
 router.get("/access", (req, res): void => {
   const session = adminSessionContext(req);

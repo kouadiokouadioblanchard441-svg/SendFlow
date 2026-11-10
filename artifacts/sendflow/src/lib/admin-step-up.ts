@@ -19,6 +19,8 @@ const unauthenticatedPaths = new Set([
   "/refresh",
   "/activity",
   "/step-up",
+  "/setup/start",
+  "/setup/complete",
 ]);
 
 let apiPathPrefix: string | null = null;

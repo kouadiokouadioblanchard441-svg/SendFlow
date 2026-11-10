@@ -50,16 +50,9 @@ The migration and permission script have not been applied automatically by this 
 
 ## One-time account initialization
 
-Run only from a trusted interactive terminal after the database migration and server secrets are configured:
+Open the privately configured administrator entry only after the migration and server secrets are ready. If Supabase has no administrator credential, the login screen offers a one-time setup flow. Enter the administrator email and password in that page, scan the temporary QR code with Google Authenticator, then confirm the first six-digit code. The server verifies the code and atomically creates the single credential row, encrypted TOTP secret, hashed recovery codes, and audit event directly in the configured Supabase database.
 
-```sh
-SENDFLOW_ADMIN_BOOTSTRAP_CONFIRM=I_UNDERSTAND \
-  pnpm --filter @workspace/api-server run admin:bootstrap-super-admin
-```
-
-The command prompts without echoing the password, creates exactly one credential row, asks for a first valid authenticator code before activation, and prints recovery codes once. Keep the maintenance database URL and signing/encryption keys out of the command line and shell history; inject them through the protected environment. Do not run this command in a public workflow or preview.
-
-If the row already exists, initialization fails instead of replacing it.
+The setup screen is disabled as soon as the singleton credential exists. The QR is temporary, the password is never stored in plaintext, and recovery codes are shown once only. Do not send credentials or recovery codes through chat or logs.
 
 ## Recovery
 

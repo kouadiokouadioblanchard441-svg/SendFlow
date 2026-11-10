@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetAdminAccessStatusQueryKey,
@@ -36,6 +36,186 @@ async function postAdminAuthAction(path: string, body?: unknown) {
   });
 }
 
+function AdministratorSetup({ onComplete }: { onComplete: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [challengeId, setChallengeId] = useState("");
+  const [qrSvg, setQrSvg] = useState("");
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const qrImageUrl = useMemo(
+    () => qrSvg ? URL.createObjectURL(new Blob([qrSvg], { type: "image/svg+xml" })) : "",
+    [qrSvg],
+  );
+
+  useEffect(() => () => {
+    if (qrImageUrl) URL.revokeObjectURL(qrImageUrl);
+  }, [qrImageUrl]);
+
+  const startEnrollment = async () => {
+    setMessage("");
+    setSubmitting(true);
+    try {
+      const response = await postAdminAuthAction("/setup/start", {});
+      const result = await response.json() as {
+        challengeId?: unknown;
+        qrSvg?: unknown;
+      };
+      if (!response.ok || typeof result.challengeId !== "string" || typeof result.qrSvg !== "string") {
+        setMessage(response.status === 409
+          ? "Le compte administrateur a déjà été initialisé."
+          : response.status === 429
+            ? "Trop de demandes. Réessayez plus tard."
+            : "Impossible de démarrer l’enrôlement sécurisé.");
+        return;
+      }
+      setChallengeId(result.challengeId);
+      setQrSvg(result.qrSvg);
+    } catch {
+      setMessage("Le service d’initialisation est momentanément indisponible.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const completeEnrollment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setMessage("");
+    if (password.length < 12 || password !== repeatPassword) {
+      setMessage("Utilisez un mot de passe d’au moins 12 caractères et confirmez-le correctement.");
+      return;
+    }
+    if (!challengeId || !/^[0-9]{6}$/u.test(totpCode)) {
+      setMessage("Scannez le QR code puis saisissez le code à six chiffres affiché.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const response = await postAdminAuthAction("/setup/complete", {
+        challengeId,
+        email,
+        password,
+        totpCode,
+      });
+      const result = await response.json() as { recoveryCodes?: unknown };
+      if (!response.ok || !Array.isArray(result.recoveryCodes)
+        || !result.recoveryCodes.every((code) => typeof code === "string")) {
+        setTotpCode("");
+        setMessage(response.status === 409
+          ? "L’initialisation n’est plus disponible."
+          : response.status === 429
+            ? "Trop de tentatives. Recommencez l’enrôlement plus tard."
+            : "Le code n’a pas été accepté. Vérifiez l’heure de votre téléphone puis réessayez.");
+        return;
+      }
+      setPassword("");
+      setRepeatPassword("");
+      setTotpCode("");
+      setRecoveryCodes(result.recoveryCodes as string[]);
+      setChallengeId("");
+      setQrSvg("");
+    } catch {
+      setMessage("Le service d’initialisation est momentanément indisponible.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (recoveryCodes.length > 0) {
+    return (
+      <main className="min-h-screen bg-[#f7f7fb] px-4 py-10 sm:grid sm:place-items-center">
+        <section className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <h1 className="text-xl font-semibold text-slate-950">Compte administrateur créé</h1>
+          <p className="my-4 text-sm leading-6 text-slate-700">
+            Enregistrez ces codes de récupération hors ligne. Ils ne seront affichés qu’une seule fois.
+          </p>
+          <ul className="grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-4 font-mono text-sm">
+            {recoveryCodes.map((code) => <li key={code}>{code}</li>)}
+          </ul>
+          <Button className="mt-6 w-full bg-violet-700 hover:bg-violet-800" onClick={onComplete}>
+            J’ai enregistré les codes
+          </Button>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#f7f7fb] px-4 py-10 sm:grid sm:place-items-center">
+      <section className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="grid size-12 place-items-center rounded-xl bg-violet-100 text-violet-700">
+            <ShieldCheck size={24} aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-violet-700">SendFlow</p>
+            <h1 className="text-xl font-semibold text-slate-950">Initialiser le compte unique</h1>
+          </div>
+        </div>
+        <p className="mb-5 text-sm leading-6 text-slate-600">
+          Cette étape n’est disponible que tant qu’aucun compte administrateur n’existe.
+          Le mot de passe et le premier code Google Authenticator sont envoyés directement au serveur.
+        </p>
+        <form onSubmit={completeEnrollment} className="space-y-4" noValidate>
+          <div className="space-y-2">
+            <Label htmlFor="setup-admin-email">Adresse e-mail</Label>
+            <Input id="setup-admin-email" type="email" autoComplete="email" maxLength={254}
+              value={email} onChange={(event) => setEmail(event.target.value)} required disabled={submitting} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="setup-admin-password">Mot de passe (12 caractères minimum)</Label>
+            <Input id="setup-admin-password" type="password" autoComplete="new-password" minLength={12}
+              maxLength={1024} value={password} onChange={(event) => setPassword(event.target.value)}
+              required disabled={submitting} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="setup-admin-password-repeat">Confirmer le mot de passe</Label>
+            <Input id="setup-admin-password-repeat" type="password" autoComplete="new-password"
+              maxLength={1024} value={repeatPassword}
+              onChange={(event) => setRepeatPassword(event.target.value)} required disabled={submitting} />
+          </div>
+          {!challengeId ? (
+            <Button type="button" className="w-full bg-violet-700 hover:bg-violet-800"
+              disabled={submitting || !email || password.length < 12 || password !== repeatPassword}
+              onClick={() => void startEnrollment()}>
+              {submitting ? "Préparation…" : "Configurer Google Authenticator"}
+            </Button>
+          ) : (
+            <>
+              <div className="rounded-lg border border-slate-200 p-4 text-center">
+                <p className="mb-3 text-sm text-slate-700">
+                  Scannez ce QR temporaire avec Google Authenticator.
+                </p>
+                {qrImageUrl && <img className="mx-auto size-56" src={qrImageUrl} alt="QR code temporaire d’enrôlement" />}
+                <p className="mt-3 text-xs text-slate-500">L’enrôlement expire après 10 minutes.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="setup-admin-totp">Code à six chiffres</Label>
+                <Input id="setup-admin-totp" inputMode="numeric" autoComplete="one-time-code"
+                  pattern="[0-9]{6}" maxLength={6} value={totpCode}
+                  onChange={(event) => setTotpCode(event.target.value.replace(/\D/gu, "").slice(0, 6))}
+                  required disabled={submitting} />
+              </div>
+              <Button type="submit" className="w-full bg-violet-700 hover:bg-violet-800"
+                disabled={submitting || totpCode.length !== 6}>
+                {submitting ? "Vérification…" : "Créer le compte"}
+              </Button>
+            </>
+          )}
+          {message && (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+              {message}
+            </p>
+          )}
+        </form>
+      </section>
+    </main>
+  );
+}
+
 function AdministratorLogin() {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
@@ -51,6 +231,8 @@ function AdministratorLogin() {
   const [stepUpCode, setStepUpCode] = useState("");
   const [stepUpMessage, setStepUpMessage] = useState("");
   const [stepUpSubmitting, setStepUpSubmitting] = useState(false);
+  const [setupAvailable, setSetupAvailable] = useState<boolean | null>(null);
+  const [setupStatusError, setSetupStatusError] = useState(false);
   const stepUpResolver = useRef<{
     resolve: (token: string) => void;
     reject: (error: Error) => void;
@@ -76,6 +258,28 @@ function AdministratorLogin() {
   });
   const authenticated = accessQuery.data?.isAdmin === true
     && accessQuery.data?.sessionAuthenticated === true;
+
+  useEffect(() => {
+    let stopped = false;
+    void (async () => {
+      try {
+        const response = await fetch(resolveApiUrl(adminApiRoute("/setup-status")), {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("Setup status unavailable");
+        const result = await response.json() as { setupAvailable?: unknown };
+        if (!stopped && typeof result.setupAvailable === "boolean") {
+          setSetupAvailable(result.setupAvailable);
+        } else if (!stopped) {
+          setSetupStatusError(true);
+        }
+      } catch {
+        if (!stopped) setSetupStatusError(true);
+      }
+    })();
+    return () => { stopped = true; };
+  }, []);
 
   useEffect(() => {
     setAdminApiPathPrefix(ADMIN_API_PATH_PREFIX);
@@ -230,8 +434,22 @@ function AdministratorLogin() {
     resolver?.reject(new Error("Administrator confirmation was cancelled."));
   };
 
-  if (accessQuery.isLoading || (authenticated && accessQuery.isFetching)) {
+  if (accessQuery.isLoading || (authenticated && accessQuery.isFetching)
+    || (!authenticated && setupAvailable === null && !setupStatusError)) {
     return <PageLoadingScreen label="Vérification de la session administrateur" />;
+  }
+
+  if (!authenticated && setupStatusError) {
+    return (
+      <main className="min-h-screen bg-[#f7f7fb] px-4 py-10 sm:grid sm:place-items-center">
+        <section className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <h1 className="text-xl font-semibold text-slate-950">Service indisponible</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Impossible de vérifier l’état du compte administrateur. Réessayez plus tard.
+          </p>
+        </section>
+      </main>
+    );
   }
 
   return (
@@ -240,6 +458,8 @@ function AdministratorLogin() {
       <Suspense fallback={<PageLoadingScreen label="Chargement du panel administrateur" />}>
         <AdminRouter />
       </Suspense>
+    ) : setupAvailable ? (
+      <AdministratorSetup onComplete={() => setSetupAvailable(false)} />
     ) : (
     <main className="min-h-screen bg-[#f7f7fb] px-4 py-10 sm:grid sm:place-items-center">
       <section className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
