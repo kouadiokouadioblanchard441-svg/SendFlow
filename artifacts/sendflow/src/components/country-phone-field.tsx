@@ -71,6 +71,7 @@ export function CountryPhoneField({
     () => readSavedAccountCountry()?.countryCode ?? null,
   );
   const selectedCountry = countries.find((country) => country.countryCode === selectedCode);
+  const hasSingleRegistrationCountry = registrationOnly && countries.length === 1;
   const defaultCountryUnavailable = Boolean(
     activeCatalog.data && registrationSettings.data &&
     !countries.some((country) => country.countryCode === registrationSettings.data.defaultCountryCode),
@@ -100,6 +101,9 @@ export function CountryPhoneField({
   useEffect(() => {
     if (selectedCountry) callbackRef.current?.(selectedCountry);
   }, [selectedIdentity]);
+  useEffect(() => {
+    if (hasSingleRegistrationCountry) setIsOpen(false);
+  }, [hasSingleRegistrationCountry]);
 
   const filteredCountries = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('fr-FR');
@@ -184,15 +188,27 @@ export function CountryPhoneField({
       <div className="sendflow-signup-control">
         <div className={`sendflow-signup-phone${displayedError ? ' has-error' : ''}`}>
           <label className="sr-only" htmlFor={inputId}>Numéro de téléphone</label>
-          <button type="button" className="sendflow-signup-country" ref={pickerTriggerRef}
-            onClick={() => { setQuery(''); setIsOpen(true); }}
-            disabled={pickerStatus.isDisabled}
-            aria-haspopup="dialog" aria-expanded={isOpen}
+          <button type="button"
+            className={`sendflow-signup-country${registrationOnly ? ' is-registration' : ''}`}
+            ref={pickerTriggerRef}
+            onClick={() => {
+              if (hasSingleRegistrationCountry || pickerStatus.isDisabled) return;
+              setQuery('');
+              setIsOpen(true);
+            }}
+            disabled={pickerStatus.isDisabled || hasSingleRegistrationCountry}
+            aria-haspopup={hasSingleRegistrationCountry ? undefined : 'dialog'}
+            aria-expanded={hasSingleRegistrationCountry ? false : isOpen}
             aria-label={selectedCountry
-              ? `Pays sélectionné : ${selectedCountry.name}, ${selectedCountry.dialCode}. Ouvrir la liste`
-              : 'Sélectionner un pays'}>
+              ? `${selectedCountry.name}, indicatif ${selectedCountry.dialCode}${hasSingleRegistrationCountry ? '' : '. Modifier le pays'}`
+              : 'Choisir l’indicatif téléphonique'}>
             {selectedCountry?.flag && <span aria-hidden="true">{selectedCountry.flag}</span>}
-            <span>{selectedCountry?.dialCode ?? countryPlaceholder}</span>
+            {registrationOnly && selectedCountry && (
+              <span className="sendflow-signup-country-name">{selectedCountry.name}</span>
+            )}
+            <span className={registrationOnly && selectedCountry ? 'sendflow-signup-country-code' : undefined}>
+              {selectedCountry?.dialCode ?? countryPlaceholder}
+            </span>
           </button>
           <input id={inputId} type="tel" value={value}
             onChange={(event) => onChange(normalizePhoneDigits(event.target.value).slice(0, maxPhoneDigits))}

@@ -332,6 +332,31 @@
   transition: background-color .18s ease;
 }
 
+.sendflow-signup-country.is-registration {
+  flex: 0 1 auto;
+  max-width: calc(100% - 132px);
+  min-width: 0;
+  gap: 6px;
+  padding-inline: 10px;
+}
+
+.sendflow-signup-country-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sendflow-signup-country-code {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.sendflow-signup-country:disabled {
+  cursor: default;
+}
+
 .sendflow-signup-country:hover,
 .sendflow-signup-country:focus-visible {
   background: #f4efff;
