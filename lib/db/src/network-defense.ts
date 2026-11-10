@@ -1,5 +1,6 @@
 // Server only. The database serializes counters across API and website workers.
 import type { IncomingMessage } from "node:http";
+import type { QueryConfig } from "pg";
 import { pool } from "./client.ts";
 import { isBlockableIp } from "./ip-access-policy.ts";
 import { classifyNetworkRequest, NETWORK_DEFENSE_POLICY as policy } from "./network-defense-policy.ts";
@@ -10,12 +11,17 @@ export type DefenseDecision = { allowed: boolean; status: number };
 export async function evaluateNetworkDefense(req: IncomingMessage, ip: string): Promise<DefenseDecision> {
   const kind = classifyNetworkRequest(req.url);
   // Manual block is checked separately FIRST. Exceptions never bypass it or auth.
-  const previous = await pool.query({
+  const previousQuery: QueryConfig & { query_timeout: number } = {
     text: `SELECT EXISTS(SELECT 1 FROM public.sf_network_defense_allowlist WHERE ip_address=$1 AND revoked_at IS NULL) AS trusted,
       EXISTS(SELECT 1 FROM public.sf_network_defense
         WHERE ip_address=$1 AND (blocked_at IS NOT NULL OR blocked_until IS NOT NULL)) AS blocked`,
     values: [ip],
-  });
+    // This runs before the request reaches either the public site or API.
+    // Keep the fail-closed database check bounded so an overloaded DB cannot
+    // leave the reverse proxy waiting indefinitely for response headers.
+    query_timeout: 2_000,
+  };
+  const previous = await pool.query(previousQuery);
   if (previous.rows[0].blocked) return { allowed: false, status: 403 };
   if (previous.rows[0].trusted) return { allowed: true, status: 200 };
   // Infrastructure/health are still subject to manual/active automatic blocks,
