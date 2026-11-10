@@ -11,7 +11,10 @@ import {
 } from '@workspace/api-client-react';
 import { readSavedAccountCountry } from '@/lib/account-country';
 import { orderCountriesWithDefaultFirst } from '@/lib/country-picker-order';
-import { resolveCountryPickerStatus } from '@/lib/country-picker-state';
+import {
+  resolveCountryPickerStatus,
+  shouldLockSingleRegistrationCountry,
+} from '@/lib/country-picker-state';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
 
 export type CountryOption = {
@@ -71,7 +74,10 @@ export function CountryPhoneField({
     () => readSavedAccountCountry()?.countryCode ?? null,
   );
   const selectedCountry = countries.find((country) => country.countryCode === selectedCode);
-  const hasSingleRegistrationCountry = registrationOnly && countries.length === 1;
+  const hasSingleRegistrationCountry = shouldLockSingleRegistrationCountry(
+    registrationOnly,
+    countries.length,
+  );
   const defaultCountryUnavailable = Boolean(
     activeCatalog.data && registrationSettings.data &&
     !countries.some((country) => country.countryCode === registrationSettings.data.defaultCountryCode),
@@ -186,7 +192,7 @@ export function CountryPhoneField({
   return (
     <>
       <div className="sendflow-signup-control">
-        <div className={`sendflow-signup-phone${displayedError ? ' has-error' : ''}`}>
+        <div className={`sendflow-signup-phone${displayedError ? ' has-error' : ''}${registrationOnly ? ' has-registration-country' : ''}`}>
           <label className="sr-only" htmlFor={inputId}>Numéro de téléphone</label>
           <button type="button"
             className={`sendflow-signup-country${registrationOnly ? ' is-registration' : ''}`}

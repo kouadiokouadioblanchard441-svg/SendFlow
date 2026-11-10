@@ -12,6 +12,13 @@ export type CountryPickerStatus = {
   isDisabled: boolean;
 };
 
+export function shouldLockSingleRegistrationCountry(
+  registrationOnly: boolean,
+  countryCount: number,
+): boolean {
+  return registrationOnly && countryCount === 1;
+}
+
 export function resolveCountryPickerStatus(
   input: CountryPickerStatusInput,
 ): CountryPickerStatus {

@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { resolveCountryPickerStatus } from './country-picker-state.ts';
+import {
+  resolveCountryPickerStatus,
+  shouldLockSingleRegistrationCountry,
+} from './country-picker-state.ts';
 
 const ready = {
   catalogIsLoading: false,
@@ -10,6 +13,12 @@ const ready = {
   defaultCountryUnavailable: false,
   countryCount: 2,
 };
+
+test('locks registration country selection only when one server-enabled country remains', () => {
+  assert.equal(shouldLockSingleRegistrationCountry(true, 1), true);
+  assert.equal(shouldLockSingleRegistrationCountry(true, 2), false);
+  assert.equal(shouldLockSingleRegistrationCountry(false, 1), false);
+});
 
 test('keeps the picker disabled without showing an empty-catalog error while requests load', () => {
   assert.deepEqual(resolveCountryPickerStatus({
