@@ -82,7 +82,11 @@ export async function verifyDistribution(root, service) {
       for (const match of html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)=["']([^"']+)["']/gi)) {
         const url = new URL(match[1], "https://release.invalid/");
         if (url.origin !== "https://release.invalid") continue;
-        const relative = `${surface}${decodeURIComponent(url.pathname)}`;
+        const pathname = decodeURIComponent(url.pathname);
+        const privateAssetPrefix = "/__sendflow_private_bundle__/";
+        const relative = surface === "admin" && pathname.startsWith(privateAssetPrefix)
+          ? `admin/${pathname.slice(privateAssetPrefix.length)}`
+          : `${surface}${pathname}`;
         if (!names.has(relative)) throw new Error(`Missing HTML asset: ${relative}`);
       }
     }

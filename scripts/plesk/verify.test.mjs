@@ -76,6 +76,16 @@ test("verifies a root-mounted web release and hashes its files", async (t) => {
   assert.ok(result.files.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
 });
 
+test("maps private bundle URLs to files kept outside the public root", async (t) => {
+  const root = await fixture(t);
+  await writeFile(
+    path.join(root, "admin/index.html"),
+    '<script src="/__sendflow_private_bundle__/assets/private.js"></script><link rel="stylesheet" href="/__sendflow_private_bundle__/assets/private.css">',
+  );
+  const result = await verifyDistribution(root, "web");
+  assert.equal(result.startupFile, "index.cjs");
+});
+
 test("rejects private interface code in the public bundle", async (t) => {
   const root = await fixture(t);
   await writeFile(path.join(root, "public/assets/app.js"), "function AdminAccessPage() {}");
