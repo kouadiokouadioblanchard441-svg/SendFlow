@@ -26,6 +26,12 @@ The server is the only authority for SendFlow. The frontend is untrusted and mus
 
 **How to apply:** Treat client claims, browser state, and persisted values as untrusted inputs. Keep credentials in Replit Secrets and access them only from server code; do not expose their values to the frontend. The server must check SendFlow sessions, database roles, PIN sessions, resource ownership, schemas, and financial invariants before returning or changing data. Fail closed on validation or storage errors, prevent duplicate or partial operations, and test without modifying real accounts or the shared database.
 
+Treat every SendFlow change as production-bound: preserve financial behavior, use the canonical Supabase database, and verify production configuration rather than relying on preview-only assumptions. Keep tests non-destructive and never trigger real payments.
+
+**Why:** The user reiterated that SendFlow is a large financial application, its Supabase database is the sole database, and work must account for production.
+
+**How to apply:** Follow the shared-database transition rules for schema checks and migrations, verify the relevant production deployment settings, and separate read-only checks from explicitly authorized data changes.
+
 Do not hardcode SendFlow's public application URL or deployment domain in application source or client bundles; keep deployment origins in the appropriate environment or hosting configuration.
 
 **Why:** The user explicitly said the known application URL must not be put in code.
