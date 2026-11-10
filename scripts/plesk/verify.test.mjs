@@ -49,6 +49,7 @@ async function deploymentFixture(t) {
     "artifacts/api-server/dist/index.cjs",
     "artifacts/api-server/dist/index.mjs",
     "artifacts/api-server/dist/plesk-manifest.json",
+    "artifacts/api-server/plesk-empty-document-root/.keep",
   ]) {
     const target = path.join(root, file);
     await mkdir(path.dirname(target), { recursive: true });
@@ -137,6 +138,18 @@ test("Plesk post-pull validation rejects an incomplete API package", async (t) =
   });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /artifacts\/api-server\/dist\/index\.cjs/);
+});
+
+test("Plesk post-pull requires the API document root inside its application root", async (t) => {
+  const { root, scriptDir } = await deploymentFixture(t);
+  await rm(path.join(root, "artifacts/api-server/plesk-empty-document-root/.keep"));
+  const result = spawnSync("/bin/bash", [path.join(scriptDir, "build-after-pull.sh")], {
+    cwd: root,
+    env: { PATH: "" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /artifacts\/api-server\/plesk-empty-document-root\/\.keep/);
 });
 
 test("legacy Plesk action name works without dirname", async (t) => {

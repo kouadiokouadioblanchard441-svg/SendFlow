@@ -45,6 +45,7 @@ try {
   console.log("Build only: no production startup, migration, provider call or deployment.");
   run("pnpm", ["run", "check:secrets"]);
   run("pnpm", ["run", "typecheck"]);
+  run("pnpm", ["run", "test:db-connection"]);
   run("pnpm", ["run", "test:plesk-build"]);
   run("pnpm", ["--filter", "@workspace/sendflow", "run", "test:auth-routing"]);
 

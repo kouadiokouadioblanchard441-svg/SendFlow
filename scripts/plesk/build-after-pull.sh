@@ -42,6 +42,7 @@ required_files=(
   "artifacts/api-server/dist/index.mjs"
   "artifacts/api-server/dist/plesk-manifest.json"
   "artifacts/api-server/plesk-runtime-dependencies.tar.gz"
+  "artifacts/api-server/plesk-empty-document-root/.keep"
 )
 
 missing=()

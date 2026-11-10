@@ -125,7 +125,8 @@ L'application doit tout de même router les requêtes vers Node : le serveur app
 contrôle IP avant de servir chaque fichier. Il ne faut pas laisser Apache/Nginx servir
 directement les fichiers statiques avant le passage par Node.
 Pour l'API, choisir le Document Root privé vide
-`artifacts/plesk-empty-document-root`. Ne jamais choisir `dist` au complet,
+`artifacts/api-server/plesk-empty-document-root`, qui doit rester à l’intérieur de sa
+racine d’application. Ne jamais choisir `dist` au complet,
 `artifacts` ou `artifacts/api-server` : ils contiennent également des bundles serveur
 et des manifestes.
 Le domaine `apis.docs.sendflow.africa` sert la page documentaire dans le processus
@@ -179,8 +180,11 @@ exposée comme un répertoire statique Apache.
 - Les API inconnues doivent rester des erreurs API, pas du HTML de la SPA. Un fichier
   JS/CSS absent doit rester un 404 ; les routes SPA valides doivent accepter un refresh.
 - Définir `NODE_ENV=production`, `SENDFLOW_DATABASE_TARGET=production`,
-  les secrets serveur nécessaires et `DATABASE_URL` dans l'environnement
-  privé Plesk. Les secrets Replit ne sont pas transférés par ce build.
+  `SUPABASE_DATABASE_URL` et `DATABASE_CA_CERT` dans l'environnement privé Plesk.
+  `DATABASE_URL` reste accepté comme nom de compatibilité uniquement s’il pointe vers
+  la même base Supabase; si les deux sont définis, `SUPABASE_DATABASE_URL` est prioritaire.
+  La connexion vérifie le certificat TLS et le nom d’hôte. Les secrets Replit ne sont
+  pas transférés par ce build.
 - Configurer `TRUST_PROXY_HOPS` selon la chaîne réellement observée, et
   `CORS_ALLOWED_ORIGINS` avec les origines HTTPS exactes. Ne pas reprendre les
   variables de prévisualisation Replit.
@@ -196,8 +200,9 @@ exposée comme un répertoire statique Apache.
   Apache. Les requêtes doivent passer par Node afin que le contrôle IP et la sélection
   de bundle s'appliquent. Cloudflare Access, TLS et le pare-feu doivent être configurés
   et testés sur l'hébergement ; ce build ne les active pas.
-- L'API n'a aucun fichier public à exposer ; utiliser le répertoire vide privé si Plesk
-  exige un Document Root pour cette application.
+- L'API n'a aucun fichier public à exposer ; utiliser
+  `artifacts/api-server/plesk-empty-document-root`, répertoire vide privé placé sous la
+  racine Node de l'API, si Plesk exige un Document Root pour cette application.
 
 ## Livraison, vérification et retour arrière
 

@@ -3,8 +3,8 @@ name: Plesk application-root containment
 description: Plesk requires distinct Node application roots and a document root nested inside each application root.
 ---
 
-In the user's Plesk panel, a second Node.js app was rejected because another app already used that application root; Plesk also requires the document root to be inside the selected application root. The repository's documented API app root (`artifacts/api-server`) and private empty document root (`artifacts/plesk-empty-document-root`) are siblings, so that pair does not satisfy the observed panel constraint.
+Plesk requires each Node.js app to use a distinct application root and its document root to be nested inside that root. For the API, keep the private empty document root under `artifacts/api-server`; the old sibling directory was not a valid Plesk layout.
 
-**Why:** A successful package build does not verify Plesk's application-root validation, and the rejected layout prevents creating the separate API process needed for `/api`.
+**Why:** Plesk rejected the sibling document-root layout during setup, so a successful package build alone did not prove the API app could be configured.
 
 **How to apply:** Give the API its own application root and package its private empty document root beneath that root; never expose the API bundle as the document root. Keep documentation and payment subdomains as aliases routed to the shared site/API processes, not duplicate Node apps.

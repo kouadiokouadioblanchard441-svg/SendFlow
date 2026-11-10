@@ -37,7 +37,7 @@ function requireVerifiedDatabaseUrl(value: string): string {
     (sslMode !== null && !["require", "verify-ca", "verify-full"].includes(sslMode)) ||
     ["false", "0"].includes(url.searchParams.get("ssl") ?? "")
   ) {
-    throw new Error("Replit live database requires verified TLS.");
+    throw new Error("Database connection requires verified TLS.");
   }
   // Enforce certificate and hostname verification, independently of pg defaults.
   url.searchParams.delete("ssl");
@@ -99,11 +99,10 @@ export function resolveRuntimeDatabaseUrl(environment: Environment): string {
 
   if (target === "production") {
     requirePleskProduction(environment, "SENDFLOW_DATABASE_TARGET=production");
-    return requireDatabaseUrl(
-      environment,
-      "DATABASE_URL",
-      "Plesk production",
-    );
+    const connectionString = environment.SUPABASE_DATABASE_URL?.trim()
+      ? requireDatabaseUrl(environment, "SUPABASE_DATABASE_URL", "Plesk production")
+      : requireDatabaseUrl(environment, "DATABASE_URL", "Plesk production");
+    return requireVerifiedDatabaseUrl(connectionString);
   }
 
   throw new Error(
@@ -113,13 +112,16 @@ export function resolveRuntimeDatabaseUrl(environment: Environment): string {
 
 export function resolveRuntimeDatabaseConnectionOptions(environment: Environment) {
   const connectionString = resolveRuntimeDatabaseUrl(environment);
-  if (environment.SENDFLOW_DATABASE_TARGET !== "shared-external") {
+  const target = environment.SENDFLOW_DATABASE_TARGET;
+  if (target !== "shared-external" && target !== "production") {
     return { connectionString };
   }
 
   const ca = environment.DATABASE_CA_CERT?.trim();
   if (!ca) {
-    throw new Error("DATABASE_CA_CERT is required for the shared external database.");
+    throw new Error(target === "production"
+      ? "DATABASE_CA_CERT is required for the Plesk production database."
+      : "DATABASE_CA_CERT is required for the shared external database.");
   }
 
   const url = new URL(connectionString);

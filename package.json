@@ -7,6 +7,7 @@
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm --filter @workspace/mockup-sandbox run build && pnpm run build:plesk",
     "build:plesk": "node scripts/plesk/build.mjs",
+    "test:db-connection": "node --experimental-strip-types --test lib/db/src/connection-config.test.mjs",
     "test:plesk-build": "node --test scripts/plesk/verify.test.mjs",
     "check:secrets": "node scripts/security/check-secrets.mjs",
     "check:public-artifacts": "node scripts/security/check-public-artifacts.mjs",

@@ -15,7 +15,7 @@
     "android:debug": "pnpm run build:android",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:auth-routing": "NODE_ENV=test SENDFLOW_DATABASE_TARGET=development DATABASE_URL=postgresql://127.0.0.1:1/sendflow_test node --experimental-strip-types --test src/lib/customer-route-guard.test.mjs src/lib/customer-password-validation.test.mjs src/lib/account-profile.test.mjs src/lib/country-picker-order.test.mjs src/lib/documentation-host.test.mjs src/lib/payment-host.test.mjs src/lib/linkflow-share.test.mjs server/site-server.test.mjs",
+    "test:auth-routing": "NODE_ENV=test SENDFLOW_DATABASE_TARGET=development DATABASE_URL=postgresql://127.0.0.1:1/sendflow_test node --experimental-strip-types --test src/lib/customer-route-guard.test.mjs src/lib/customer-password-validation.test.mjs src/lib/account-profile.test.mjs src/lib/country-picker-order.test.mjs src/lib/country-picker-state.test.mjs src/lib/documentation-host.test.mjs src/lib/payment-host.test.mjs src/lib/linkflow-share.test.mjs server/site-server.test.mjs",
     "test:docs": "node --experimental-strip-types --test src/pages/docs-code-examples.test.mjs src/pages/otp-instruction.test.mjs",
     "test:server-routing": "node --experimental-strip-types --test server/site-server.test.mjs server/admin-dev-gate-plugin.test.mjs ../../scripts/security/check-admin-gate-artifacts.test.mjs"
   },
