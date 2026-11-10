@@ -50,9 +50,9 @@ The migration and permission script have not been applied automatically by this 
 
 ## One-time account initialization
 
-Open the privately configured administrator entry only after the migration and server secrets are ready. If Supabase has no administrator credential, the login screen offers a one-time setup flow. Enter the administrator email and password in that page, scan the temporary QR code with Google Authenticator, then confirm the first six-digit code. The server verifies the code and atomically creates the single credential row, encrypted TOTP secret, hashed recovery codes, and audit event directly in the configured Supabase database.
+Open the privately configured administrator entry only after the migration and server secrets are ready. If Supabase has no administrator credential, the login screen offers a one-time setup flow. Enter the administrator email and password in that page, copy the temporary TOTP setup key into Google Authenticator using its manual-key option, then confirm the first six-digit code. The server verifies the code and atomically creates the single credential row, encrypted TOTP secret, hashed recovery codes, and audit event directly in the configured Supabase database.
 
-The setup screen is disabled as soon as the singleton credential exists. The QR is temporary, the password is never stored in plaintext, and recovery codes are shown once only. Do not send credentials or recovery codes through chat or logs.
+The setup screen is disabled as soon as the singleton credential exists. The setup key is shown only during enrollment, the password is never stored in plaintext, and recovery codes are shown once only. Do not send credentials or recovery codes through chat or logs.
 
 ## Recovery
 

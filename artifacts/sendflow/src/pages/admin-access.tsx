@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetAdminAccessStatusQueryKey,
@@ -42,18 +42,11 @@ function AdministratorSetup({ onComplete }: { onComplete: () => void }) {
   const [repeatPassword, setRepeatPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
   const [challengeId, setChallengeId] = useState("");
-  const [qrSvg, setQrSvg] = useState("");
+  const [totpSecret, setTotpSecret] = useState("");
+  const [copied, setCopied] = useState(false);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const qrImageUrl = useMemo(
-    () => qrSvg ? URL.createObjectURL(new Blob([qrSvg], { type: "image/svg+xml" })) : "",
-    [qrSvg],
-  );
-
-  useEffect(() => () => {
-    if (qrImageUrl) URL.revokeObjectURL(qrImageUrl);
-  }, [qrImageUrl]);
 
   const startEnrollment = async () => {
     setMessage("");
@@ -62,9 +55,10 @@ function AdministratorSetup({ onComplete }: { onComplete: () => void }) {
       const response = await postAdminAuthAction("/setup/start", {});
       const result = await response.json() as {
         challengeId?: unknown;
-        qrSvg?: unknown;
+        totpSecret?: unknown;
       };
-      if (!response.ok || typeof result.challengeId !== "string" || typeof result.qrSvg !== "string") {
+      if (!response.ok || typeof result.challengeId !== "string"
+        || typeof result.totpSecret !== "string" || !/^[A-Z2-7]{32}$/u.test(result.totpSecret)) {
         setMessage(response.status === 409
           ? "Le compte administrateur a déjà été initialisé."
           : response.status === 429
@@ -73,7 +67,8 @@ function AdministratorSetup({ onComplete }: { onComplete: () => void }) {
         return;
       }
       setChallengeId(result.challengeId);
-      setQrSvg(result.qrSvg);
+      setTotpSecret(result.totpSecret);
+      setCopied(false);
     } catch {
       setMessage("Le service d’initialisation est momentanément indisponible.");
     } finally {
@@ -116,11 +111,21 @@ function AdministratorSetup({ onComplete }: { onComplete: () => void }) {
       setTotpCode("");
       setRecoveryCodes(result.recoveryCodes as string[]);
       setChallengeId("");
-      setQrSvg("");
+      setTotpSecret("");
+      setCopied(false);
     } catch {
       setMessage("Le service d’initialisation est momentanément indisponible.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const copyTotpSecret = async () => {
+    try {
+      await navigator.clipboard.writeText(totpSecret);
+      setCopied(true);
+    } catch {
+      setMessage("La copie automatique est indisponible. Sélectionnez et copiez la clé affichée.");
     }
   };
 
@@ -187,10 +192,18 @@ function AdministratorSetup({ onComplete }: { onComplete: () => void }) {
             <>
               <div className="rounded-lg border border-slate-200 p-4 text-center">
                 <p className="mb-3 text-sm text-slate-700">
-                  Scannez ce QR temporaire avec Google Authenticator.
+                  Dans Google Authenticator, choisissez l’ajout par clé de configuration, puis copiez cette clé.
                 </p>
-                {qrImageUrl && <img className="mx-auto size-56" src={qrImageUrl} alt="QR code temporaire d’enrôlement" />}
-                <p className="mt-3 text-xs text-slate-500">L’enrôlement expire après 10 minutes.</p>
+                <code className="block select-all break-all rounded-md bg-slate-100 p-3 text-left font-mono text-sm text-slate-900">
+                  {totpSecret}
+                </code>
+                <Button type="button" variant="outline" className="mt-3"
+                  onClick={() => void copyTotpSecret()}>
+                  {copied ? "Clé copiée" : "Copier la clé"}
+                </Button>
+                <p className="mt-3 text-xs text-slate-500">
+                  Cette clé temporaire disparaît après validation ou expiration de l’enrôlement.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="setup-admin-totp">Code à six chiffres</Label>

@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
-import qrcode from "qrcode";
 import {
   and,
   db,
@@ -18,7 +17,6 @@ import {
   createAdminAccessToken,
   createOpaqueToken,
   createRecoveryCodes,
-  createTotpEnrollmentUri,
   createTotpSecret,
   decryptTotpSecret,
   encryptTotpSecret,
@@ -169,9 +167,11 @@ router.post("/setup/start", async (req, res): Promise<void> => {
       .find(([, challenge]) => challenge.requester === requester);
     if (existing) {
       const [challengeId, challenge] = existing;
-      const uri = createTotpEnrollmentUri(challenge.secret, "admin");
-      const qrSvg = await qrcode.toString(uri, { type: "svg", margin: 1, width: 220 });
-      res.json({ challengeId, qrSvg, expiresInSeconds: Math.floor((challenge.expiresAt - now) / 1000) });
+      res.json({
+        challengeId,
+        totpSecret: challenge.secret,
+        expiresInSeconds: Math.floor((challenge.expiresAt - now) / 1000),
+      });
       return;
     }
 
@@ -186,9 +186,11 @@ router.post("/setup/start", async (req, res): Promise<void> => {
       attempts: 0,
     };
     setupChallenges.set(challengeId, challenge);
-    const uri = createTotpEnrollmentUri(challenge.secret, "admin");
-    const qrSvg = await qrcode.toString(uri, { type: "svg", margin: 1, width: 220 });
-    res.json({ challengeId, qrSvg, expiresInSeconds: setupChallengeTtlMs / 1000 });
+    res.json({
+      challengeId,
+      totpSecret: challenge.secret,
+      expiresInSeconds: setupChallengeTtlMs / 1000,
+    });
   } catch {
     req.log.error("Administrator enrollment start failed");
     res.status(503).json({ error: "L’initialisation est momentanément indisponible." });
