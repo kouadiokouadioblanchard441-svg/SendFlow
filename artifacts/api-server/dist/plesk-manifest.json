@@ -1,0 +1,59 @@
+{
+  "builtAt": "2026-11-10T10:04:06.710Z",
+  "sourceCommit": "f67e9eb44903cc22027894335388731fc330d075",
+  "trackedWorktreeModified": true,
+  "builderNode": "v24.22.2",
+  "builderPnpm": "10.26.1",
+  "lockfileSha256": "00bb4904baff839c3c41a2427941796ff1d4b9cd9b55b53d0a3fd615a807d60d",
+  "productionHostVerified": false,
+  "buildMode": "production",
+  "basePath": "/",
+  "service": "api",
+  "startupFile": "index.cjs",
+  "esmEntry": "index.mjs",
+  "files": [
+    {
+      "path": "index.cjs",
+      "bytes": 492,
+      "sha256": "81f26a709292caebe65e738ff6c2e167a174898b3277c4b0563ca997ea9f28cf"
+    },
+    {
+      "path": "index.mjs",
+      "bytes": 6922635,
+      "sha256": "1159f3ee6aaa16448eaee98141cea0fe57631c27ec663bf9526554c8a3a11850"
+    },
+    {
+      "path": "pino-file.mjs",
+      "bytes": 145490,
+      "sha256": "c765a2d8be72601c8c22b7bc5c5380db53d248465b3245ede729df9bbcd56695"
+    },
+    {
+      "path": "pino-pretty.mjs",
+      "bytes": 122756,
+      "sha256": "6ba05b9342f7ea8649a27069e490ea484b4fc59e9dc2f2fcd64bb1c3a8a57180"
+    },
+    {
+      "path": "pino-worker.mjs",
+      "bytes": 157126,
+      "sha256": "a4bdacee4573a235c50fc1f17a4963ff9f4bf56a6ef0dfe8bf07dac350d9e12a"
+    },
+    {
+      "path": "thread-stream-worker.mjs",
+      "bytes": 7503,
+      "sha256": "592c869fbb0d56ca26b58892b44c72a29f45bfd0dfccd7771dce71700b267d8c"
+    }
+  ],
+  "runtimeDependencies": {
+    "archive": "artifacts/api-server/plesk-runtime-dependencies.tar.gz",
+    "bytes": 23962733,
+    "sizeBytes": 23962733,
+    "sha256": "12b3060d0d5765fb8d83b584cc8b08e80939621b7269c80d327a1fec5f8532f1",
+    "platform": "linux-x64",
+    "node": "v24.22.2",
+    "entries": 12515,
+    "externalRuntimePackages": [
+      "sharp",
+      "@swc/helpers"
+    ]
+  }
+}

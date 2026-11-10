@@ -1190,7 +1190,7 @@ var require_utils2 = __commonJS({
     var nodeCrypto = __require("crypto");
     module.exports = {
       postgresMd5PasswordHash,
-      randomBytes,
+      randomBytes: randomBytes2,
       deriveKey,
       sha256,
       hashByName,
@@ -1200,7 +1200,7 @@ var require_utils2 = __commonJS({
     var webCrypto = nodeCrypto.webcrypto || globalThis.crypto;
     var subtleCrypto = webCrypto.subtle;
     var textEncoder = new TextEncoder();
-    function randomBytes(length) {
+    function randomBytes2(length) {
       return webCrypto.getRandomValues(Buffer.alloc(length));
     }
     async function md5(string) {
@@ -11532,24 +11532,80 @@ async function enforceIpAccess(req, res, lookup = isIpBlocked, hops = trustedPro
   }
 }
 
-// server/admin-host-policy.ts
-function normalizeHost(value) {
-  const candidate = value.trim();
-  if (!candidate || candidate.includes("*") || candidate.includes("/") || candidate.includes("@")) return null;
-  try {
-    const parsed = new URL(`https://${candidate}`);
-    if (parsed.username || parsed.password || parsed.pathname !== "/" || parsed.search || parsed.hash) return null;
-    return parsed.host.toLowerCase();
-  } catch {
-    return null;
-  }
+// ../../lib/admin-gate/src/index.ts
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+var ADMIN_GATE_COOKIE = "__Host-sendflow_access_gate";
+var ADMIN_GATE_COOKIE_TTL_MS = 8 * 60 * 60 * 1e3;
+var routePattern = /^\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/u;
+var tokenPattern = /^[A-Za-z0-9_-]{32,256}$/u;
+function getAdminGateConfiguration(environment = process.env) {
+  const path = environment.ADMIN_SECRET_PATH;
+  const token = environment.ADMIN_SECRET_TOKEN;
+  if (!path || path.length < 25 || path.length > 512 || !routePattern.test(path) || path.startsWith("/api/") || path.startsWith("/assets/") || path.startsWith("/__sendflow_private_bundle__/") || !token || !tokenPattern.test(token)) return null;
+  return { path, token };
 }
-function isAdminHostAllowed(hostHeader, environment = process.env) {
-  const configured = environment.SENDFLOW_ADMIN_ALLOWED_HOSTS;
-  if (!configured) return false;
-  const entries = configured.split(",").map(normalizeHost);
-  const requested = normalizeHost(hostHeader);
-  return Boolean(requested && entries.length && entries.every(Boolean) && entries.includes(requested));
+function constantTimeSecretMatch(candidate, expected) {
+  const candidateDigest = createHash("sha256").update(candidate).digest();
+  const expectedDigest = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(candidateDigest, expectedDigest);
+}
+function createAdminGateCookieValue(token, expiresAtMs = Date.now() + ADMIN_GATE_COOKIE_TTL_MS, nonce = randomBytes(24).toString("base64url")) {
+  const payload = Buffer.from(`${expiresAtMs}.${nonce}`).toString("base64url");
+  const signature = createHmac("sha256", token).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+function verifyAdminGateCookieValue(cookieValue, configuration, nowMs = Date.now()) {
+  if (!cookieValue || !configuration || cookieValue.length > 512) return false;
+  const parts = cookieValue.split(".");
+  if (parts.length !== 2) return false;
+  const [payload, signature] = parts;
+  if (!payload || !signature || !/^[A-Za-z0-9_-]+$/u.test(payload)) return false;
+  const expectedSignature = createHmac("sha256", configuration.token).update(payload).digest();
+  let suppliedSignature;
+  try {
+    suppliedSignature = Buffer.from(signature, "base64url");
+  } catch {
+    return false;
+  }
+  if (suppliedSignature.length !== expectedSignature.length || !timingSafeEqual(suppliedSignature, expectedSignature)) return false;
+  let decoded;
+  try {
+    decoded = Buffer.from(payload, "base64url").toString("utf8");
+  } catch {
+    return false;
+  }
+  const separator = decoded.indexOf(".");
+  if (separator < 1) return false;
+  const expiresAt = Number(decoded.slice(0, separator));
+  const nonce = decoded.slice(separator + 1);
+  return Number.isSafeInteger(expiresAt) && expiresAt > nowMs && expiresAt <= nowMs + ADMIN_GATE_COOKIE_TTL_MS && /^[A-Za-z0-9_-]{32}$/u.test(nonce);
+}
+function readAdminGateCookie(cookieHeader) {
+  const matches = cookieHeader?.split(";").map((part) => part.trim()).filter((part) => part.startsWith(`${ADMIN_GATE_COOKIE}=`)) ?? [];
+  if (matches.length !== 1) return null;
+  const value = matches[0].slice(ADMIN_GATE_COOKIE.length + 1);
+  if (!value || value.length > 512 || !/^[A-Za-z0-9_.-]+$/u.test(value)) return null;
+  return value;
+}
+function hasValidAdminGateCookie(cookieHeader, environment = process.env, nowMs = Date.now()) {
+  return verifyAdminGateCookieValue(
+    readAdminGateCookie(cookieHeader),
+    getAdminGateConfiguration(environment),
+    nowMs
+  );
+}
+function isSameOriginAdminGatePost(hostHeader, originHeader, fetchSiteHeader, environment = process.env) {
+  if (!hostHeader || !originHeader) return false;
+  if (fetchSiteHeader && fetchSiteHeader.toLowerCase() !== "same-origin") return false;
+  try {
+    const expectedHostUrl = new URL(`https://${hostHeader}`);
+    const originUrl = new URL(originHeader);
+    if (expectedHostUrl.username || expectedHostUrl.password || expectedHostUrl.pathname !== "/" || expectedHostUrl.search || expectedHostUrl.hash || originUrl.username || originUrl.password || originUrl.pathname !== "/" || originUrl.search || originUrl.hash || originUrl.host.toLowerCase() !== expectedHostUrl.host.toLowerCase()) return false;
+    if (environment.NODE_ENV === "production" && originUrl.protocol !== "https:") return false;
+    return originUrl.protocol === "http:" || originUrl.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 // src/lib/documentation-host.ts
@@ -11646,11 +11702,15 @@ function isKnownSitePage(hostname, pathname, basePath = "/") {
   if (isSendFlowPaymentHost(host)) {
     return /^\/pay\/[^/]+$/.test(routePath);
   }
-  if (isAdminHostAllowed(hostname)) return !routePath.startsWith("/api/");
   return exactApplicationPaths.has(routePath) || applicationPathPatterns.some((pattern) => pattern.test(routePath));
 }
 
 // server/site-server.ts
+var PRIVATE_ASSET_PREFIX = "/__sendflow_private_bundle__/";
+var MAX_GATE_FORM_BYTES = 2048;
+var GATE_FAILURE_WINDOW_MS = 10 * 60 * 1e3;
+var GATE_FAILURE_LIMIT = 5;
+var gateFailures = /* @__PURE__ */ new Map();
 var mime = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -11668,6 +11728,18 @@ var mime = {
   ".mp4": "video/mp4",
   ".pdf": "application/pdf"
 };
+var gateForm = `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Acc\xE8s s\xE9curis\xE9</title></head>
+<body style="font:16px system-ui,sans-serif;background:#f7f7fb;margin:0;min-height:100vh;display:grid;place-items:center">
+<main style="background:white;padding:2rem;border:1px solid #e2e8f0;border-radius:1rem;width:min(22rem,calc(100% - 4rem))">
+<h1 style="font-size:1.25rem;margin:0 0 .5rem">Acc\xE8s s\xE9curis\xE9</h1>
+<p style="color:#475569;line-height:1.5">Saisissez le jeton d\u2019acc\xE8s pour continuer.</p>
+<form method="post" autocomplete="off"><label for="gate-token">Jeton d\u2019acc\xE8s</label>
+<input id="gate-token" name="token" type="password" minlength="32" maxlength="256" required autocomplete="off"
+style="box-sizing:border-box;width:100%;margin:.5rem 0 1rem;padding:.7rem;border:1px solid #cbd5e1;border-radius:.5rem">
+<button type="submit" style="width:100%;padding:.75rem;border:0;border-radius:.5rem;background:#6d28d9;color:white;font-weight:600">Continuer</button>
+</form></main></body></html>`;
 function sendNotFound(req, res) {
   const body = "404 Not Found";
   res.statusCode = 404;
@@ -11676,6 +11748,105 @@ function sendNotFound(req, res) {
   res.setHeader("Content-Length", String(Buffer.byteLength(body)));
   res.end(req.method === "HEAD" ? void 0 : body);
 }
+function setPrivateResponseHeaders(res) {
+  res.setHeader("Cache-Control", "no-store, private");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self'"
+  );
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000");
+  }
+}
+function requestPath(req) {
+  const rawUrl = req.url ?? "/";
+  const queryIndex = rawUrl.indexOf("?");
+  return {
+    pathname: queryIndex < 0 ? rawUrl : rawUrl.slice(0, queryIndex),
+    hasQuery: queryIndex >= 0
+  };
+}
+function getGateFailureKey(req) {
+  return requestIp(req, trustedProxyHops(process.env.TRUST_PROXY_HOPS, process.env.NODE_ENV)) ?? req.socket.remoteAddress ?? "unknown";
+}
+function isGateRateLimited(req, now = Date.now()) {
+  for (const [key, bucket2] of gateFailures) {
+    if (bucket2.expiresAt <= now) gateFailures.delete(key);
+  }
+  const bucket = gateFailures.get(getGateFailureKey(req));
+  return Boolean(bucket && bucket.count >= GATE_FAILURE_LIMIT && bucket.expiresAt > now);
+}
+function recordGateFailure(req, now = Date.now()) {
+  const key = getGateFailureKey(req);
+  const bucket = gateFailures.get(key);
+  if (!bucket || bucket.expiresAt <= now) {
+    if (gateFailures.size >= 1e4) {
+      const oldestKey = gateFailures.keys().next().value;
+      if (oldestKey) gateFailures.delete(oldestKey);
+    }
+    gateFailures.set(key, { count: 1, expiresAt: now + GATE_FAILURE_WINDOW_MS });
+    return;
+  }
+  bucket.count += 1;
+}
+async function readGateToken(req) {
+  if ((req.headers["content-type"] ?? "").split(";", 1)[0]?.trim().toLowerCase() !== "application/x-www-form-urlencoded") return null;
+  const contentLength = Number(req.headers["content-length"] ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_GATE_FORM_BYTES) return null;
+  const chunks = [];
+  let size = 0;
+  try {
+    for await (const chunk of req) {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      size += buffer.length;
+      if (size > MAX_GATE_FORM_BYTES) return null;
+      chunks.push(buffer);
+    }
+  } catch {
+    return null;
+  }
+  const params = new URLSearchParams(Buffer.concat(chunks).toString("utf8"));
+  const values = params.getAll("token");
+  if (params.size !== 1 || values.length !== 1) return null;
+  const token = values[0] ?? "";
+  return token.length >= 32 && token.length <= 256 ? token : null;
+}
+function serveInlineHtml(req, res, html) {
+  setPrivateResponseHeaders(res);
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Content-Length", String(Buffer.byteLength(html)));
+  res.statusCode = 200;
+  res.end(req.method === "HEAD" ? void 0 : html);
+}
+async function servePrivateEntry(req, res, privateRoot) {
+  const entry = resolve(privateRoot, "index.html");
+  try {
+    const info = await stat(entry);
+    if (!info.isFile()) {
+      sendNotFound(req, res);
+      return;
+    }
+    const actual = await realpath(entry);
+    if (!actual.startsWith(privateRoot + sep)) {
+      sendNotFound(req, res);
+      return;
+    }
+    setPrivateResponseHeaders(res);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Content-Length", info.size);
+    res.statusCode = 200;
+    if (req.method === "HEAD") {
+      res.end();
+      return;
+    }
+    createReadStream(actual).pipe(res);
+  } catch {
+    sendNotFound(req, res);
+  }
+}
 function createSiteServer(distributionDirectory, gate = enforceIpAccess) {
   const distributionRoot = resolve(distributionDirectory);
   const publicRoot = resolve(distributionRoot, "public");
@@ -11683,14 +11854,99 @@ function createSiteServer(distributionDirectory, gate = enforceIpAccess) {
   const server = createServer(async (req, res) => {
     try {
       if (!await gate(req, res)) return;
+      const { pathname, hasQuery } = requestPath(req);
+      const configuration = getAdminGateConfiguration(process.env);
+      const cookieValid = hasValidAdminGateCookie(req.headers.cookie, process.env);
+      const adminPathMatches = Boolean(
+        configuration && !hasQuery && !isKnownSitePage(req.headers.host ?? "", configuration.path, process.env.BASE_PATH ?? "/") && constantTimeSecretMatch(pathname, configuration.path)
+      );
+      if (pathname.startsWith(PRIVATE_ASSET_PREFIX)) {
+        if (!configuration || !cookieValid || req.method !== "GET" && req.method !== "HEAD") {
+          sendNotFound(req, res);
+          return;
+        }
+        setPrivateResponseHeaders(res);
+        const assetPath = pathname.slice(PRIVATE_ASSET_PREFIX.length);
+        if (!assetPath || assetPath.split("/").some((part) => !part || part.startsWith("."))) {
+          sendNotFound(req, res);
+          return;
+        }
+        const privateAsset = resolve(privateRoot, assetPath);
+        if (!privateAsset.startsWith(privateRoot + sep)) {
+          sendNotFound(req, res);
+          return;
+        }
+        let assetInfo;
+        try {
+          assetInfo = await stat(privateAsset);
+        } catch {
+          sendNotFound(req, res);
+          return;
+        }
+        if (!assetInfo.isFile() || privateAsset.endsWith(".map")) {
+          sendNotFound(req, res);
+          return;
+        }
+        const actual2 = await realpath(privateAsset);
+        if (!actual2.startsWith(privateRoot + sep)) {
+          sendNotFound(req, res);
+          return;
+        }
+        res.setHeader("Content-Type", mime[extname(privateAsset)] ?? "application/octet-stream");
+        res.setHeader("Content-Length", assetInfo.size);
+        res.statusCode = 200;
+        if (req.method === "HEAD") {
+          res.end();
+          return;
+        }
+        createReadStream(actual2).pipe(res);
+        return;
+      }
+      if (adminPathMatches && configuration) {
+        if (req.method === "GET" || req.method === "HEAD") {
+          if (cookieValid) {
+            await servePrivateEntry(req, res, privateRoot);
+          } else {
+            serveInlineHtml(req, res, gateForm);
+          }
+          return;
+        }
+        if (req.method === "POST") {
+          if (!isSameOriginAdminGatePost(
+            req.headers.host,
+            req.headers.origin,
+            req.headers["sec-fetch-site"],
+            process.env
+          ) || isGateRateLimited(req)) {
+            sendNotFound(req, res);
+            return;
+          }
+          const candidate = await readGateToken(req);
+          if (!candidate || !constantTimeSecretMatch(candidate, configuration.token)) {
+            recordGateFailure(req);
+            sendNotFound(req, res);
+            return;
+          }
+          gateFailures.delete(getGateFailureKey(req));
+          const expiresAt = Date.now() + ADMIN_GATE_COOKIE_TTL_MS;
+          const value = createAdminGateCookieValue(configuration.token, expiresAt);
+          res.setHeader(
+            "Set-Cookie",
+            `${ADMIN_GATE_COOKIE}=${value}; Path=/; Max-Age=${Math.floor(ADMIN_GATE_COOKIE_TTL_MS / 1e3)}; HttpOnly; Secure; SameSite=Strict`
+          );
+          await servePrivateEntry(req, res, privateRoot);
+          return;
+        }
+        sendNotFound(req, res);
+        return;
+      }
       res.setHeader("Cache-Control", "no-store, private");
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Referrer-Policy", "no-referrer");
       if (process.env.NODE_ENV === "production") {
         res.setHeader("Strict-Transport-Security", "max-age=31536000");
       }
-      const adminHost = isAdminHostAllowed(req.headers.host ?? "");
-      const root = adminHost ? privateRoot : publicRoot;
+      const root = publicRoot;
       let rootInfo;
       try {
         rootInfo = await stat(root);
@@ -11702,30 +11958,22 @@ function createSiteServer(distributionDirectory, gate = enforceIpAccess) {
         sendNotFound(req, res);
         return;
       }
-      if (adminHost) {
-        const connectSources = (process.env.SENDFLOW_ADMIN_CSP_CONNECT_SRC ?? "").split(/\s+/u).filter((source) => /^https:\/\/[A-Za-z0-9.-]+(?::\d{1,5})?$/u.test(source)).join(" ");
-        res.setHeader(
-          "Content-Security-Policy",
-          `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ${connectSources}`.trim()
-        );
-      }
-      let pathname;
+      let decodedPathname;
       try {
-        pathname = decodeURIComponent(new URL(req.url ?? "/", "http://internal.invalid").pathname);
+        decodedPathname = decodeURIComponent(pathname);
       } catch {
         sendNotFound(req, res);
         return;
       }
-      if (pathname.includes("\0") || pathname.includes("\\") || pathname.split("/").some((p) => p.startsWith("."))) {
+      if (decodedPathname.includes("\0") || decodedPathname.includes("\\") || decodedPathname.split("/").some((p) => p.startsWith("."))) {
         sendNotFound(req, res);
         return;
       }
       if (req.method !== "GET" && req.method !== "HEAD") {
-        res.setHeader("Allow", "GET, HEAD");
-        res.writeHead(405).end();
+        sendNotFound(req, res);
         return;
       }
-      let file = resolve(root, `.${pathname}`);
+      let file = resolve(root, `.${decodedPathname}`);
       if (!file.startsWith(root + sep) && file !== root) {
         sendNotFound(req, res);
         return;
@@ -11736,10 +11984,10 @@ function createSiteServer(distributionDirectory, gate = enforceIpAccess) {
       } catch {
       }
       if (!info?.isFile()) {
-        const isApiPath = pathname === "/api" || pathname.startsWith("/api/");
+        const isApiPath = decodedPathname === "/api" || decodedPathname.startsWith("/api/");
         const isKnownPage = isKnownSitePage(
           req.headers.host ?? "",
-          pathname,
+          decodedPathname,
           process.env.BASE_PATH ?? "/"
         );
         if (extname(pathname) || isApiPath || !isKnownPage) {
