@@ -11,6 +11,12 @@ The user confirms the Supabase database connection stored in Replit Secrets is t
 
 **How to apply:** Do not assume Plesk uses a separate database. Keep the Plesk runtime pointed at the same Supabase endpoint while preserving verified TLS and the environment-specific variable contract.
 
+The currently configured Replit Supabase runtime login is not a PostgreSQL superuser, but it has `CREATEROLE`, `CREATEDB`, and `BYPASSRLS`, plus SELECT/INSERT/UPDATE/DELETE/TRUNCATE privileges on all application tables. Row-level security is enabled on those tables, but this login bypasses it. Plesk's effective database login remains unverified.
+
+**Why:** A read-only catalog audit found the application runtime connection had broad database and table privileges, so enabled RLS alone does not establish least-privilege isolation.
+
+**How to apply:** Until a restricted runtime role is configured and verified, treat the application connection as highly privileged. Keep schema maintenance separate from the runtime login; verify role flags, memberships, and effective table/function grants before claiming RLS protects application queries.
+
 With node-postgres, a connection URL containing `sslmode` can override an explicit `ssl.ca` option. Validate the URL first, remove SSL query parameters before creating the pool, and pass the trusted CA with `rejectUnauthorized: true` and `servername` set to the database hostname.
 
 **Why:** A live registration-settings request returned 503 because its table lacked a column required by the current schema and the expected singleton row was absent. A successful database health check or another working table does not prove every runtime query is schema-ready.
