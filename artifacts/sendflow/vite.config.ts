@@ -8,7 +8,7 @@ import { publicClientDefinitions } from '../../scripts/security/public-client-en
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 import { ipGatePlugin } from './server/ip-gate-plugin';
 import { adminDevGatePlugin } from './server/admin-dev-gate-plugin';
-import { isKnownSitePage } from './server/site-route-matcher';
+import { getRetiredAdminSignupRedirect, isKnownSitePage } from './server/site-route-matcher';
 
 const rawPort = process.env.PORT ?? '5173';
 
@@ -85,6 +85,22 @@ const serverNotFoundMiddleware: Connect.NextHandleFunction = (req, res, next) =>
   const routePath = basePrefix && (pathname === basePrefix || pathname.startsWith(`${basePrefix}/`))
     ? pathname.slice(basePrefix.length) || '/'
     : pathname;
+
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    const redirect = getRetiredAdminSignupRedirect(
+      req.headers.host ?? '',
+      pathname,
+      basePath,
+    );
+    if (redirect) {
+      res.statusCode = 302;
+      res.setHeader('Location', redirect);
+      res.setHeader('Cache-Control', 'no-store, private');
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      res.end();
+      return;
+    }
+  }
 
   if (
     !pathname

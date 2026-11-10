@@ -117,6 +117,40 @@ test("returns a plain server HTTP 404 for unknown application routes", async (t)
   assert.equal(response.body, "404 Not Found");
 });
 
+test("redirects retired administrator browser URLs to signup", async (t) => {
+  const server = await fixture(t);
+  for (const path of [
+    "/admin",
+    "/admin/",
+    "/admin/sign-in",
+    "/admin/sign-in/",
+    "/%61dmin",
+    "/admin?from=legacy",
+  ]) {
+    const response = await get(server, path);
+    assert.equal(response.status, 302, path);
+    assert.equal(response.headers.location, "/sign-up", path);
+    assert.equal(response.body, "");
+  }
+
+  const documentationHost = await get(server, "/admin", "apis.docs.sendflow.africa");
+  assert.equal(documentationHost.status, 404);
+});
+
+test("retired administrator browser URLs respect the application base path", async (t) => {
+  const previousBasePath = process.env.BASE_PATH;
+  process.env.BASE_PATH = "/sendflow";
+  t.after(() => {
+    if (previousBasePath === undefined) delete process.env.BASE_PATH;
+    else process.env.BASE_PATH = previousBasePath;
+  });
+
+  const server = await fixture(t);
+  const response = await get(server, "/sendflow/admin/sign-in");
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.location, "/sendflow/sign-up");
+});
+
 test("validates documentation and payment routes against their own domains", async (t) => {
   const server = await fixture(t);
 

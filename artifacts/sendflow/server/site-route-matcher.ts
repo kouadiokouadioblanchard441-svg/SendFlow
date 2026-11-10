@@ -80,3 +80,34 @@ export function isKnownSitePage(
   return exactApplicationPaths.has(routePath)
     || applicationPathPatterns.some((pattern) => pattern.test(routePath));
 }
+
+const retiredAdminBrowserPaths = new Set(["/admin", "/admin/sign-in"]);
+
+export function getRetiredAdminSignupRedirect(
+  hostname: string,
+  pathname: string,
+  basePath = "/",
+): string | null {
+  let normalizedPath = pathname;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const decoded = decodeURIComponent(normalizedPath);
+      if (decoded === normalizedPath) break;
+      normalizedPath = decoded;
+    } catch {
+      return null;
+    }
+  }
+
+  normalizedPath = normalizedPath
+    .replaceAll("\\", "/")
+    .replace(/\/{2,}/gu, "/");
+  const routePath = stripBasePath(normalizedPath, basePath)
+    .replace(/\/+$/u, "")
+    .toLowerCase() || "/";
+  if (!retiredAdminBrowserPaths.has(routePath)) return null;
+
+  const base = normalizedBasePath(basePath);
+  const signUpPath = `${base}/sign-up` || "/sign-up";
+  return isKnownSitePage(hostname, signUpPath, basePath) ? signUpPath : null;
+}

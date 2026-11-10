@@ -13,7 +13,7 @@ import {
   hasValidAdminGateCookie,
   isSameOriginAdminGatePost,
 } from "@workspace/admin-gate";
-import { isKnownSitePage } from "./site-route-matcher.ts";
+import { getRetiredAdminSignupRedirect, isKnownSitePage } from "./site-route-matcher.ts";
 
 const PRIVATE_ASSET_PREFIX = "/__sendflow_private_bundle__/";
 const MAX_GATE_FORM_BYTES = 2048;
@@ -309,6 +309,21 @@ export function createSiteServer(
       }
       if (decodedPathname.includes("\0") || decodedPathname.includes("\\") || decodedPathname.split("/").some((p) => p.startsWith("."))) {
         sendNotFound(req, res); return;
+      }
+      if (req.method === "GET" || req.method === "HEAD") {
+        const redirect = getRetiredAdminSignupRedirect(
+          req.headers.host ?? "",
+          decodedPathname,
+          process.env.BASE_PATH ?? "/",
+        );
+        if (redirect) {
+          res.statusCode = 302;
+          res.setHeader("Location", redirect);
+          res.setHeader("Cache-Control", "no-store, private");
+          res.setHeader("Referrer-Policy", "no-referrer");
+          res.end();
+          return;
+        }
       }
       if (req.method !== "GET" && req.method !== "HEAD") {
         sendNotFound(req, res);
