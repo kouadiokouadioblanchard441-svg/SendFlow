@@ -512,9 +512,12 @@ test('merchant payout examples cover every implemented API route and keep creati
   assert.match(payoutRoutes, /router\.get\("\/v1\/payouts"/);
   assert.match(payoutRoutes, /router\.get\("\/v1\/payouts\/:payoutId"/);
   assert.match(payoutRoutes, /router\.post\("\/v1\/payouts\/:payoutId\/cancel"/);
-  assert.match(payoutRoutes, /if \(!PAYOUT_EXECUTION_ENABLED\)/);
-  assert.match(docsCopy, /En cas de 503 ou de délai d’attente, vérifiez l’état de la demande/);
-  assert.match(docsCopy, /If a request returns 503 or times out, check its server-side status/);
+  assert.match(payoutRoutes, /!isPayoutExecutionEnabled\(\)/);
+  assert.match(payoutRoutes, /configuration\.routedAggregatorCode !== "feexpay"/);
+  assert.match(docsCopy, /Un timeout ne prouve pas que la demande a échoué : reprenez avec la même clé ou vérifiez son état/);
+  assert.match(docsCopy, /A timeout does not prove failure: retry with the same key or check the request status/);
+  assert.match(docsCopy, /Un 503 indique que la route ou sa configuration de production n’est pas disponible/);
+  assert.match(docsCopy, /A 503 means the route or its production configuration is unavailable/);
   assert.doesNotMatch(docsCopy, /currently returns 503 with payout_unavailable|currently closed: HTTP 503 payout_unavailable/i);
 });
 

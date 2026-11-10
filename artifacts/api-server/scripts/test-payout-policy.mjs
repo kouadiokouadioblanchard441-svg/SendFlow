@@ -1,11 +1,10 @@
 import { build } from "esbuild";
 import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const apiDir = process.cwd();
-const outputDir = mkdtempSync(join(tmpdir(), "sendflow-payout-tests-"));
+const outputDir = mkdtempSync(join(apiDir, ".test-payout-tests-"));
 const inputs = [
   ["payout-policy", "src/services/payout-policy.test.mjs"],
   ["payout-webhook-payload", "src/lib/payout-webhook-payload.test.mjs"],
