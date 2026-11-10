@@ -215987,6 +215987,18 @@ function createOpaqueToken() {
 function hashOpaqueToken(token) {
   return createHash2("sha256").update(token, "utf8").digest("hex");
 }
+function createRecoveryCodes(count2 = 10) {
+  return Array.from({ length: count2 }, () => {
+    const raw = randomBytes3(16).toString("hex").toUpperCase();
+    const code = raw.match(/.{1,4}/gu).join("-");
+    return { code, hash: hashRecoveryCode(code) };
+  });
+}
+function hashRecoveryCode(code) {
+  const normalized = code.replace(/-/gu, "").toUpperCase();
+  if (!/^[0-9A-F]{32}$/u.test(normalized)) return null;
+  return createHash2("sha256").update(normalized, "ascii").digest("hex");
+}
 function signingKeys(environment) {
   const privatePem = environment.SENDFLOW_ADMIN_JWT_PRIVATE_KEY?.replace(/\\n/gu, "\n");
   const publicPem = environment.SENDFLOW_ADMIN_JWT_PUBLIC_KEY?.replace(/\\n/gu, "\n");
@@ -218577,8 +218589,19 @@ var stepUpInput = external_exports.object({
   query: external_exports.record(external_exports.string(), external_exports.unknown()).optional().default({}),
   payload: external_exports.unknown().optional().default(null)
 }).strict();
+var setupStartInput = external_exports.object({}).strict();
+var setupCompleteInput = external_exports.object({
+  challengeId: external_exports.string().uuid(),
+  email: external_exports.string().max(254),
+  password: external_exports.string().min(12).max(1024),
+  totpCode: external_exports.string().regex(/^[0-9]{6}$/u)
+}).strict();
 var dummyTotpSecret = createTotpSecret();
 var dummyPasswordHash = null;
+var setupChallengeTtlMs = 10 * 60 * 1e3;
+var setupChallengeMaxAttempts = 5;
+var setupChallenges = /* @__PURE__ */ new Map();
+var setupStartLimits = /* @__PURE__ */ new Map();
 function getDummyPasswordHash() {
   dummyPasswordHash ??= hashAdminPassword(randomUUID2() + randomUUID2());
   return dummyPasswordHash;
@@ -218601,6 +218624,182 @@ function isJwtConfigured() {
 function isTotpEncryptionConfigured() {
   return Boolean(encryptTotpSecret(dummyTotpSecret));
 }
+function pruneSetupState(now) {
+  for (const [id, challenge] of setupChallenges) {
+    if (challenge.expiresAt <= now || challenge.attempts >= setupChallengeMaxAttempts) {
+      setupChallenges.delete(id);
+    }
+  }
+  for (const [requester, limit] of setupStartLimits) {
+    if (limit.expiresAt <= now) setupStartLimits.delete(requester);
+  }
+}
+router7.get("/setup-status", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  try {
+    const [credentials] = await db.select({ id: superAdminCredentialsTable.id }).from(superAdminCredentialsTable).where(eq(superAdminCredentialsTable.id, 1)).limit(1);
+    res.json({ setupAvailable: !credentials });
+  } catch {
+    req.log.error("Administrator setup status lookup failed");
+    res.status(503).json({ error: "Le service de connexion est momentan\xE9ment indisponible." });
+  }
+});
+router7.post("/setup/start", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine non autoris\xE9e." });
+    return;
+  }
+  if (!setupStartInput.safeParse(req.body).success) {
+    res.status(400).json({ error: "Demande d\u2019initialisation invalide." });
+    return;
+  }
+  if (!isJwtConfigured() || !isTotpEncryptionConfigured()) {
+    res.status(503).json({ error: "Le service de connexion est momentan\xE9ment indisponible." });
+    return;
+  }
+  const now = Date.now();
+  pruneSetupState(now);
+  const requester = fingerprint(`admin-setup:${requesterAddress(req)}`);
+  const currentLimit = setupStartLimits.get(requester);
+  if (currentLimit && currentLimit.count >= 3) {
+    res.status(429).json({ error: "Trop de demandes. R\xE9essayez plus tard." });
+    return;
+  }
+  try {
+    const [credentials] = await db.select({ id: superAdminCredentialsTable.id }).from(superAdminCredentialsTable).where(eq(superAdminCredentialsTable.id, 1)).limit(1);
+    if (credentials) {
+      res.status(409).json({ error: "L\u2019initialisation n\u2019est plus disponible." });
+      return;
+    }
+    const existing = [...setupChallenges.entries()].find(([, challenge2]) => challenge2.requester === requester);
+    if (existing) {
+      const [challengeId2, challenge2] = existing;
+      res.json({
+        challengeId: challengeId2,
+        totpSecret: challenge2.secret,
+        expiresInSeconds: Math.floor((challenge2.expiresAt - now) / 1e3)
+      });
+      return;
+    }
+    const limit = currentLimit ?? { count: 0, expiresAt: now + 15 * 60 * 1e3 };
+    limit.count += 1;
+    setupStartLimits.set(requester, limit);
+    const challengeId = randomUUID2();
+    const challenge = {
+      secret: createTotpSecret(),
+      requester,
+      expiresAt: now + setupChallengeTtlMs,
+      attempts: 0
+    };
+    setupChallenges.set(challengeId, challenge);
+    res.json({
+      challengeId,
+      totpSecret: challenge.secret,
+      expiresInSeconds: setupChallengeTtlMs / 1e3
+    });
+  } catch {
+    req.log.error("Administrator enrollment start failed");
+    res.status(503).json({ error: "L\u2019initialisation est momentan\xE9ment indisponible." });
+  }
+});
+router7.post("/setup/complete", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  if (!isTrustedOrigin(req)) {
+    res.status(403).json({ error: "Origine non autoris\xE9e." });
+    return;
+  }
+  const parsed = setupCompleteInput.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Les informations saisies sont invalides." });
+    return;
+  }
+  const email3 = normalizeAdminEmail(parsed.data.email);
+  if (!email3) {
+    res.status(400).json({ error: "Les informations saisies sont invalides." });
+    return;
+  }
+  const nowMs = Date.now();
+  pruneSetupState(nowMs);
+  const challenge = setupChallenges.get(parsed.data.challengeId);
+  const requester = fingerprint(`admin-setup:${requesterAddress(req)}`);
+  if (!challenge || challenge.requester !== requester || challenge.expiresAt <= nowMs) {
+    res.status(400).json({ error: "L\u2019enr\xF4lement a expir\xE9. Recommencez l\u2019initialisation." });
+    return;
+  }
+  const acceptedStep = verifyTotpCode(challenge.secret, parsed.data.totpCode, nowMs, null);
+  if (acceptedStep === null) {
+    challenge.attempts += 1;
+    if (challenge.attempts >= setupChallengeMaxAttempts) setupChallenges.delete(parsed.data.challengeId);
+    await recordAdminAudit({
+      adminUserId: "super-admin",
+      action: "admin_totp_failure",
+      resourceType: "admin_access",
+      resourceId: "super-admin",
+      ...requestAuditContext(req),
+      outcome: "failure"
+    }).catch(() => void 0);
+    res.status(400).json({ error: "Code invalide. V\xE9rifiez Google Authenticator puis r\xE9essayez." });
+    return;
+  }
+  try {
+    const encryptedTotp = encryptTotpSecret(challenge.secret);
+    const accessTokenProbe = createAdminAccessToken(randomUUID2(), Math.floor(nowMs / 1e3));
+    if (!encryptedTotp || !decryptTotpSecret(encryptedTotp) || !accessTokenProbe || !verifyAdminAccessToken(accessTokenProbe)) {
+      req.log.error("Administrator enrollment cryptographic configuration unavailable");
+      res.status(503).json({ error: "L\u2019initialisation est momentan\xE9ment indisponible." });
+      return;
+    }
+    const passwordHash = await hashAdminPassword(parsed.data.password);
+    const recoveryCodes = createRecoveryCodes();
+    const recoveryHashes = recoveryCodes.map(({ code }) => hashRecoveryCode(code));
+    if (recoveryHashes.some((hash2) => !hash2)) {
+      res.status(503).json({ error: "L\u2019initialisation est momentan\xE9ment indisponible." });
+      return;
+    }
+    await db.transaction(async (tx) => {
+      const [existing] = await tx.select({ id: superAdminCredentialsTable.id }).from(superAdminCredentialsTable).where(eq(superAdminCredentialsTable.id, 1)).for("update").limit(1);
+      if (existing) throw new Error("ADMIN_ALREADY_INITIALIZED");
+      await tx.insert(superAdminCredentialsTable).values({
+        id: 1,
+        emailNormalized: email3,
+        passwordHash,
+        totpCiphertext: encryptedTotp.ciphertext,
+        totpNonce: encryptedTotp.nonce,
+        totpAuthTag: encryptedTotp.authTag,
+        lastTotpStep: acceptedStep,
+        active: true,
+        createdAt: new Date(nowMs),
+        updatedAt: new Date(nowMs),
+        passwordChangedAt: new Date(nowMs)
+      });
+      for (const codeHash of recoveryHashes) {
+        await tx.insert(superAdminRecoveryCodesTable).values({
+          credentialId: 1,
+          codeHash
+        });
+      }
+      await recordAdminAudit({
+        adminUserId: "super-admin",
+        action: "provision_admin",
+        resourceType: "admin_access",
+        resourceId: "super-admin",
+        ...requestAuditContext(req),
+        outcome: "success"
+      }, tx);
+    });
+    setupChallenges.delete(parsed.data.challengeId);
+    res.status(201).json({ initialized: true, recoveryCodes: recoveryCodes.map(({ code }) => code) });
+  } catch (error62) {
+    if (error62 instanceof Error && error62.message === "ADMIN_ALREADY_INITIALIZED") {
+      setupChallenges.delete(parsed.data.challengeId);
+      res.status(409).json({ error: "L\u2019initialisation n\u2019est plus disponible." });
+      return;
+    }
+    req.log.error("Administrator enrollment completion failed");
+    res.status(503).json({ error: "L\u2019initialisation est momentan\xE9ment indisponible." });
+  }
+});
 router7.get("/access", (req, res) => {
   const session = adminSessionContext(req);
   res.setHeader("Cache-Control", "no-store, private");
@@ -259107,7 +259306,7 @@ var tokenPattern3 = /^[A-Za-z0-9_-]{32,256}$/u;
 function getAdminGateConfiguration(environment = process.env) {
   const path = environment.ADMIN_SECRET_PATH;
   const token = environment.ADMIN_SECRET_TOKEN;
-  if (!path || path.length < 25 || path.length > 512 || !routePattern.test(path) || path.startsWith("/api/") || path.startsWith("/assets/") || path.startsWith("/__sendflow_private_bundle__/") || path.toLowerCase() === "/admin" || !token || !tokenPattern3.test(token)) return null;
+  if (!path || path.length < 25 || path.length > 512 || !routePattern.test(path) || path.startsWith("/api/") || path.startsWith("/assets/") || path.startsWith("/__sendflow_private_bundle__/") || !token || !tokenPattern3.test(token)) return null;
   return { path, token };
 }
 function verifyAdminGateCookieValue(cookieValue, configuration, nowMs = Date.now()) {

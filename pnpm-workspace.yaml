@@ -118,6 +118,7 @@ overrides:
   http-proxy>follow-redirects: 1.16.2
   rimraf>glob: 14.0.3
   glob>minimatch: 11.0.3
+  minimatch@10.2.6: 11.0.3
   rollup>@rollup/rollup-android-arm-eabi: '-'
   rollup>@rollup/rollup-android-arm64: '-'
   rollup>@rollup/rollup-darwin-arm64: '-'
