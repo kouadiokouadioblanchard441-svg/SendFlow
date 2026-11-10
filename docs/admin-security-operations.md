@@ -25,14 +25,14 @@ Configure values only in Replit Secrets or the deployment's protected environmen
 | `SENDFLOW_ADMIN_ALLOWED_IPS` | Optional exact IP allowlist. Include only a verified fixed business VPN/office egress address. |
 | `SENDFLOW_ADMIN_JWT_PRIVATE_KEY` | Server-only RS256 private signing key in PEM form. |
 | `SENDFLOW_ADMIN_JWT_PUBLIC_KEY` | Matching public verification key in PEM form. |
-| `SENDFLOW_ADMIN_JWT_ISSUER` | Expected JWT issuer. |
-| `SENDFLOW_ADMIN_JWT_AUDIENCE` | Expected JWT audience. |
 | `SENDFLOW_ADMIN_TOTP_ENCRYPTION_KEY` | Separate 32-byte key, base64url encoded, for authenticated encryption of the TOTP secret. |
 | `SENDFLOW_ADMIN_REQUIRE_CLOUDFLARE_ACCESS` | Set to `true` only after the Access application and origin validation are configured and tested. |
 | `SENDFLOW_CLOUDFLARE_ACCESS_TEAM_DOMAIN` | Cloudflare Access team-domain identifier used for JWKS validation. |
 | `SENDFLOW_CLOUDFLARE_ACCESS_AUD` | Exact audience tag from the Access application. |
 | `SENDFLOW_ADMIN_MAINTENANCE_DATABASE_URL` | A restricted-use connection to the same Supabase database for controlled schema/account maintenance; never use it as the web runtime connection. |
 | `DATABASE_CA_CERT` | Trusted database CA certificate for verified TLS. |
+
+The administrator access JWT currently uses the fixed, non-secret claims `iss=sendflow-admin` and `aud=sendflow-admin-api`. They are not environment variables or keys to obtain.
 
 Enter the two access values only through Replit Secrets for Replit runtime. Plesk does not inherit Replit Secrets; set the same two keys in the protected environment of both Plesk Node processes (site and API). Never add their values to source, `VITE_*`, documentation, logs, or build artifacts. The token is sent only in an HTTPS POST body, not in a query string.
 
