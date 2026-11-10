@@ -11270,7 +11270,7 @@ function requireVerifiedDatabaseUrl(value) {
   }
   const sslMode = url.searchParams.get("sslmode");
   if (sslMode !== null && !["require", "verify-ca", "verify-full"].includes(sslMode) || ["false", "0"].includes(url.searchParams.get("ssl") ?? "")) {
-    throw new Error("Replit live database requires verified TLS.");
+    throw new Error("Database connection requires verified TLS.");
   }
   url.searchParams.delete("ssl");
   url.searchParams.delete("uselibpqcompat");
@@ -11307,11 +11307,8 @@ function resolveRuntimeDatabaseUrl(environment) {
   }
   if (target === "production") {
     requirePleskProduction(environment, "SENDFLOW_DATABASE_TARGET=production");
-    return requireDatabaseUrl(
-      environment,
-      "DATABASE_URL",
-      "Plesk production"
-    );
+    const connectionString = environment.SUPABASE_DATABASE_URL?.trim() ? requireDatabaseUrl(environment, "SUPABASE_DATABASE_URL", "Plesk production") : requireDatabaseUrl(environment, "DATABASE_URL", "Plesk production");
+    return requireVerifiedDatabaseUrl(connectionString);
   }
   throw new Error(
     "SENDFLOW_DATABASE_TARGET must explicitly be 'development', 'shared-external', or 'production'."
@@ -11319,12 +11316,13 @@ function resolveRuntimeDatabaseUrl(environment) {
 }
 function resolveRuntimeDatabaseConnectionOptions(environment) {
   const connectionString = resolveRuntimeDatabaseUrl(environment);
-  if (environment.SENDFLOW_DATABASE_TARGET !== "shared-external") {
+  const target = environment.SENDFLOW_DATABASE_TARGET;
+  if (target !== "shared-external" && target !== "production") {
     return { connectionString };
   }
   const ca = environment.DATABASE_CA_CERT?.trim();
   if (!ca) {
-    throw new Error("DATABASE_CA_CERT is required for the shared external database.");
+    throw new Error(target === "production" ? "DATABASE_CA_CERT is required for the Plesk production database." : "DATABASE_CA_CERT is required for the shared external database.");
   }
   const url = new URL(connectionString);
   if (url.searchParams.get("sslmode") !== "verify-full") {
@@ -11433,12 +11431,17 @@ function classifyNetworkRequest(rawUrl) {
 // ../../lib/db/src/network-defense.ts
 async function evaluateNetworkDefense(req, ip) {
   const kind = classifyNetworkRequest(req.url);
-  const previous = await pool.query({
+  const previousQuery = {
     text: `SELECT EXISTS(SELECT 1 FROM public.sf_network_defense_allowlist WHERE ip_address=$1 AND revoked_at IS NULL) AS trusted,
       EXISTS(SELECT 1 FROM public.sf_network_defense
         WHERE ip_address=$1 AND (blocked_at IS NOT NULL OR blocked_until IS NOT NULL)) AS blocked`,
-    values: [ip]
-  });
+    values: [ip],
+    // This runs before the request reaches either the public site or API.
+    // Keep the fail-closed database check bounded so an overloaded DB cannot
+    // leave the reverse proxy waiting indefinitely for response headers.
+    query_timeout: 2e3
+  };
+  const previous = await pool.query(previousQuery);
   if (previous.rows[0].blocked) return { allowed: false, status: 403 };
   if (previous.rows[0].trusted) return { allowed: true, status: 200 };
   if (!isBlockableIp(ip) || req.url?.split("?")[0] === "/api/healthz") {
@@ -11704,6 +11707,25 @@ function isKnownSitePage(hostname, pathname, basePath = "/") {
   }
   return exactApplicationPaths.has(routePath) || applicationPathPatterns.some((pattern) => pattern.test(routePath));
 }
+var retiredAdminBrowserPaths = /* @__PURE__ */ new Set(["/admin", "/admin/sign-in"]);
+function getRetiredAdminSignupRedirect(hostname, pathname, basePath = "/") {
+  let normalizedPath = pathname;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const decoded = decodeURIComponent(normalizedPath);
+      if (decoded === normalizedPath) break;
+      normalizedPath = decoded;
+    } catch {
+      return null;
+    }
+  }
+  normalizedPath = normalizedPath.replaceAll("\\", "/").replace(/\/{2,}/gu, "/");
+  const routePath = stripBasePath(normalizedPath, basePath).replace(/\/+$/u, "").toLowerCase() || "/";
+  if (!retiredAdminBrowserPaths.has(routePath)) return null;
+  const base = normalizedBasePath(basePath);
+  const signUpPath = `${base}/sign-up` || "/sign-up";
+  return isKnownSitePage(hostname, signUpPath, basePath) ? signUpPath : null;
+}
 
 // server/site-server.ts
 var PRIVATE_ASSET_PREFIX = "/__sendflow_private_bundle__/";
@@ -11968,6 +11990,21 @@ function createSiteServer(distributionDirectory, gate = enforceIpAccess) {
       if (decodedPathname.includes("\0") || decodedPathname.includes("\\") || decodedPathname.split("/").some((p) => p.startsWith("."))) {
         sendNotFound(req, res);
         return;
+      }
+      if (req.method === "GET" || req.method === "HEAD") {
+        const redirect = getRetiredAdminSignupRedirect(
+          req.headers.host ?? "",
+          decodedPathname,
+          process.env.BASE_PATH ?? "/"
+        );
+        if (redirect) {
+          res.statusCode = 302;
+          res.setHeader("Location", redirect);
+          res.setHeader("Cache-Control", "no-store, private");
+          res.setHeader("Referrer-Policy", "no-referrer");
+          res.end();
+          return;
+        }
       }
       if (req.method !== "GET" && req.method !== "HEAD") {
         sendNotFound(req, res);
