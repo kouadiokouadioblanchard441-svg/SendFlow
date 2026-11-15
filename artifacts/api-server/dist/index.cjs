@@ -1,12 +1,44 @@
 "use strict";
 // Plesk CommonJS adapter: keep application logic in the existing ESM bundle.
+function safeConfigurationHint(error) {
+  let message = "";
+  try {
+    message = error instanceof Error ? error.message : "";
+  } catch {
+    return "";
+  }
+  if (message.startsWith("TRUST_PROXY_HOPS")) {
+    return "Check the TRUST_PROXY_HOPS environment variable.";
+  }
+  if (message.startsWith("CORS_ALLOWED_ORIGINS")) {
+    return "Check the CORS_ALLOWED_ORIGINS environment variable.";
+  }
+  if (message.startsWith("SENDFLOW_DATABASE_TARGET")) {
+    return "Check SENDFLOW_DATABASE_TARGET and NODE_ENV.";
+  }
+  if (message.startsWith("SUPABASE_DATABASE_URL is required")) {
+    return "The production database URL environment variable is missing.";
+  }
+  if (message.startsWith("DATABASE_URL is required for the Plesk production database")) {
+    return "The production database URL environment variable is missing.";
+  }
+  if (message.startsWith("DATABASE_CA_CERT is required for the Plesk production database")) {
+    return "The DATABASE_CA_CERT environment variable is missing.";
+  }
+  if (message.startsWith("PORT")) {
+    return "Check that Plesk provides a valid PORT to this Node.js application.";
+  }
+  return "";
+}
 if (process.env.NODE_ENV !== "production") {
   console.error("Plesk startup requires NODE_ENV=production.");
   process.exitCode = 1;
 } else {
-  import("./index.mjs").catch(() => {
+  import("./index.mjs").catch((error) => {
     // Never print an exception that might contain credentials or private data.
     console.error("Plesk application startup failed. Check private configuration and application logs.");
+    const hint = safeConfigurationHint(error);
+    if (hint) console.error("Plesk configuration check: " + hint);
     process.exitCode = 1;
   });
 }
