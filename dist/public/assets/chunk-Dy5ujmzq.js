@@ -1,1 +1,0 @@
-import{j as n}from"./index-JuVT1raT.js";const a="/assets/native-wallet-icon-CBbTim5T.png";function r({className:e=""}){return n.jsx("span",{className:`sendflow-native-wallet-icon${e?` ${e}`:""}`,"aria-hidden":"true",style:{backgroundImage:`url("${a}")`},onContextMenu:t=>t.preventDefault(),onDragStart:t=>t.preventDefault()})}export{r as N};
