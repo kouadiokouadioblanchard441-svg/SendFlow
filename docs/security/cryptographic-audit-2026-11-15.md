@@ -68,11 +68,13 @@ isolée avant une configuration Plesk.
 
 ## Configuration externe à compléter
 
-- `CUSTOMER_PII_ENCRYPTION_KEY` et le keyring historique ne sont pas présents
-  dans les Secrets Replit consultés. La valeur de `CUSTOMER_PII_ENCRYPTION_KEY`
-  doit être créée ou retrouvée et configurée dans Replit et Plesk avec la même
-  valeur. Sans elle, le chiffrement et le déchiffrement des données personnelles
-  échouent de manière fermée. Les paramètres Plesk n’ont pas été vérifiés.
+- Au moment de la lecture initiale, `CUSTOMER_PII_ENCRYPTION_KEY` et le keyring
+  historique étaient absents des Secrets Replit. Le propriétaire a ensuite
+  ajouté `CUSTOMER_PII_ENCRYPTION_KEY` via le formulaire sécurisé. La valeur
+  n’a pas été consultée. Il reste à confirmer que Plesk utilise la même clé.
+  Sans clé correspondante sur chaque hôte, le chiffrement et le déchiffrement
+  des données personnelles échouent de manière fermée. Les paramètres Plesk
+  n’ont pas été vérifiés.
 - Le code envoie HSTS en production, mais TLS se termine sur le proxy. TLS 1.3
   doit être vérifié côté Plesk/Nginx ; le code seul ne peut pas confirmer la
   version négociée.
