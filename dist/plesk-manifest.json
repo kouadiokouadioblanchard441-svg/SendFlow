@@ -1,6 +1,6 @@
 {
-  "builtAt": "2026-11-15T10:23:52.228Z",
-  "sourceCommit": "b2d9ba7e0080f5b81680f0bb5e4e34818afd3763",
+  "builtAt": "2026-11-15T11:25:37.985Z",
+  "sourceCommit": "6495d7f2b80ad7f5135658474cd3c06d55b15e15",
   "trackedWorktreeModified": true,
   "builderNode": "v24.22.2",
   "builderPnpm": "10.26.1",
@@ -64,8 +64,8 @@
     },
     {
       "path": "admin/favicon.svg",
-      "bytes": 163,
-      "sha256": "8ffbde9092b1fa4de97c9481b76f518b131268c82e7c555041925225b1dab6e0"
+      "bytes": 358,
+      "sha256": "c4b7f2210eb59362da172fae2ced5505fb7a3eaa0ffbad347b32cab0a19b6d41"
     },
     {
       "path": "admin/index.html",
@@ -809,8 +809,8 @@
     },
     {
       "path": "public/favicon.svg",
-      "bytes": 163,
-      "sha256": "8ffbde9092b1fa4de97c9481b76f518b131268c82e7c555041925225b1dab6e0"
+      "bytes": 358,
+      "sha256": "c4b7f2210eb59362da172fae2ced5505fb7a3eaa0ffbad347b32cab0a19b6d41"
     },
     {
       "path": "public/index.html",
