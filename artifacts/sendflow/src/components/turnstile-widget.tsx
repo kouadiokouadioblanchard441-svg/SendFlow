@@ -38,6 +38,7 @@ export type TurnstileWidgetHandle = {
 type TurnstileWidgetProps = {
   action: 'login' | 'signup' | 'password_reset' | 'pin_reset';
   onTokenChange: (token: string | null) => void;
+  onErrorMessage?: (message: string) => void;
 };
 
 let turnstileScriptPromise: Promise<void> | null = null;
@@ -70,10 +71,11 @@ function loadTurnstileScript() {
 const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() ?? '';
 
 const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
-  function TurnstileWidget({ action, onTokenChange }, ref) {
+  function TurnstileWidget({ action, onTokenChange, onErrorMessage }, ref) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const widgetIdRef = useRef<string | null>(null);
     const onTokenChangeRef = useRef(onTokenChange);
+    const onErrorMessageRef = useRef(onErrorMessage);
     const [state, setState] = useState<'loading' | 'ready' | 'verified' | 'expired' | 'error'>(
       siteKey ? 'loading' : 'error',
     );
@@ -82,6 +84,10 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
     useEffect(() => {
       onTokenChangeRef.current = onTokenChange;
     }, [onTokenChange]);
+
+    useEffect(() => {
+      onErrorMessageRef.current = onErrorMessage;
+    }, [onErrorMessage]);
 
     const reset = useCallback(() => {
       onTokenChangeRef.current(null);
@@ -157,6 +163,11 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
           : state === 'error'
             ? 'La vérification ne peut pas être chargée. Réessayez.'
             : null;
+    const errorMessage = state === 'expired' || state === 'error' ? message : null;
+
+    useEffect(() => {
+      if (errorMessage) onErrorMessageRef.current?.(errorMessage);
+    }, [errorMessage]);
 
     return (
       <div className="sendflow-turnstile" data-state={state}>
@@ -165,7 +176,7 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
           className="sendflow-turnstile-widget"
           aria-label="Vérification de sécurité"
         />
-        {message && (
+        {message && (!onErrorMessage || !errorMessage) && (
           <p className="sendflow-turnstile-status" role={state === 'error' ? 'alert' : 'status'} aria-live="polite">
             {message}
           </p>

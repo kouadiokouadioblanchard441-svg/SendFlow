@@ -8,6 +8,7 @@ import { useSignInCustomer } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearPinUnlock } from '@/lib/pin-unlock';
 import { clearLegacyAccountProfile } from '@/lib/account-profile';
+import { ErrorDialog } from '@/components/error-dialog';
 import sendflowMark from '@/assets/sendflow-mark-original.png';
 import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import signinIllustration from '@assets/generated_images/sendflow-signin-security-3d-clean.png';
@@ -33,6 +34,7 @@ export default function SigninPage() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<SignInField, boolean>>>({});
+  const [formError, setFormError] = useState('');
   const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
   const submissionLock = useRef(false);
   const signInCustomer = useSignInCustomer();
@@ -50,6 +52,7 @@ export default function SigninPage() {
 
   const update = <K extends keyof SignInForm>(key: K, value: SignInForm[K]) => {
     setSubmitted(false);
+    setFormError('');
     setForm((current) => ({ ...current, [key]: value }));
   };
 
@@ -63,7 +66,15 @@ export default function SigninPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!canSubmit || isSubmitting || submissionLock.current || !turnstileToken) return;
+    if (!canSubmit) {
+      setFormError(Object.values(errors).filter(Boolean).join(' '));
+      return;
+    }
+    if (!turnstileToken) {
+      setFormError('Validez le contrôle de sécurité avant de continuer.');
+      return;
+    }
+    if (isSubmitting || submissionLock.current) return;
     const oneTimeToken = turnstileToken;
     submissionLock.current = true;
     setTurnstileToken(null);
@@ -130,15 +141,9 @@ export default function SigninPage() {
                   autoCorrect="off"
                   maxLength={254}
                   aria-invalid={Boolean(visibleError('email'))}
-                  aria-describedby={visibleError('email') ? 'signin-email-error' : undefined}
                   required
                 />
               </label>
-              {visibleError('email') && (
-                <p id="signin-email-error" className="sendflow-signup-error" role="alert">
-                  {visibleError('email')}
-                </p>
-              )}
             </div>
 
             <div className="sendflow-signup-control">
@@ -154,7 +159,6 @@ export default function SigninPage() {
                   autoComplete="current-password"
                   maxLength={64}
                   aria-invalid={Boolean(visibleError('password'))}
-                  aria-describedby={visibleError('password') ? 'signin-password-error' : undefined}
                   required
                 />
                 <button
@@ -166,11 +170,6 @@ export default function SigninPage() {
                   {showPassword ? <Eye size={22} strokeWidth={1.65} /> : <EyeOff size={22} strokeWidth={1.65} />}
                 </button>
               </label>
-              {visibleError('password') && (
-                <p id="signin-password-error" className="sendflow-signup-error" role="alert">
-                  {visibleError('password')}
-                </p>
-              )}
             </div>
 
             <Link href="/forgot-password" className="sendflow-signup-forgot">
@@ -181,9 +180,10 @@ export default function SigninPage() {
               ref={turnstileRef}
               action="login"
               onTokenChange={setTurnstileToken}
+              onErrorMessage={setFormError}
             />
 
-            <button type="submit" className="sendflow-signup-submit" disabled={!canSubmit || !turnstileToken || isSubmitting}>
+            <button type="submit" className="sendflow-signup-submit" disabled={isSubmitting}>
               {isSubmitting ? 'Connexion…' : 'Se connecter'}
             </button>
 
@@ -198,6 +198,12 @@ export default function SigninPage() {
           </p>
         </div>
       </section>
+      <ErrorDialog
+        open={Boolean(formError)}
+        title="Connexion impossible"
+        message={formError}
+        onClose={() => setFormError('')}
+      />
     </main>
   );
 }

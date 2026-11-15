@@ -11,8 +11,10 @@ export interface CustomerPasswordResetInput {
   /** @maxLength 254 */
   email: string;
   /**
+     * Must contain at least one letter and one digit.
      * @minLength 8
      * @maxLength 64
+     * @pattern (?=.*[A-Za-z])(?=.*[0-9])
      */
   newPassword: string;
   /**

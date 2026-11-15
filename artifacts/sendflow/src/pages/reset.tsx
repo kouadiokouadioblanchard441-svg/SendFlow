@@ -6,7 +6,10 @@ import { useSeo } from '@/lib/seo';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { useResetCustomerPassword, useResetCustomerPin, useSendEmailOtp, useVerifyEmailOtp } from '@workspace/api-client-react';
 import { clearPinUnlock } from '@/lib/pin-unlock';
-import { NEW_CUSTOMER_PASSWORD_MIN_LENGTH } from '@/lib/customer-password-validation';
+import {
+  NEW_CUSTOMER_PASSWORD_MIN_LENGTH,
+  validateCustomerPassword,
+} from '@/lib/customer-password-validation';
 import { getPhoneLengthMessage, isValidPhoneForCountry } from '@/lib/phone-rules';
 import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
 import sendflowMark from '@/assets/sendflow-mark-original.png';
@@ -218,8 +221,13 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
   const handleSecretSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submissionLock.current) return;
+    const passwordError = isPassword ? validateCustomerPassword(newSecret) : undefined;
     const minimumLength = isPassword ? NEW_CUSTOMER_PASSWORD_MIN_LENGTH : 4;
-    if (newSecret.length < minimumLength) {
+    if (passwordError) {
+      setSecretError(passwordError);
+      return;
+    }
+    if (!isPassword && newSecret.length < minimumLength) {
       setSecretError(`${secretLabel} doit contenir au moins ${minimumLength} caractères.`);
       return;
     }

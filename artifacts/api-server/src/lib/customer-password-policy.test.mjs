@@ -12,9 +12,11 @@ const phone = "+2250700000000";
 const email = "aminata@example.invalid";
 const turnstileToken = "fixture-turnstile-token";
 
-test("new and reset customer passwords require eight characters while legacy sign-in remains compatible", () => {
+test("new and reset passwords require eight characters, a letter, and a digit", () => {
   const shortPassword = "Ab12";
   const strongPassword = "Ab12cd34";
+  const lettersOnly = "abcdefgh";
+  const digitsOnly = "12345678";
 
   assert.equal(
     RegisterCustomerBody.safeParse({
@@ -46,11 +48,53 @@ test("new and reset customer passwords require eight characters while legacy sig
       email,
       fullName: "Aminata Koné",
       birthDate: "1990-01-01",
+      password: lettersOnly,
+      acceptedPrivacy: true,
+      turnstileToken,
+    }).success,
+    false,
+  );
+  assert.equal(
+    RegisterCustomerBody.safeParse({
+      phone,
+      email,
+      fullName: "Aminata Koné",
+      birthDate: "1990-01-01",
+      password: digitsOnly,
+      acceptedPrivacy: true,
+      turnstileToken,
+    }).success,
+    false,
+  );
+  assert.equal(
+    RegisterCustomerBody.safeParse({
+      phone,
+      email,
+      fullName: "Aminata Koné",
+      birthDate: "1990-01-01",
       password: strongPassword,
       acceptedPrivacy: true,
       turnstileToken,
     }).success,
     true,
+  );
+  assert.equal(
+    ResetCustomerPasswordBody.safeParse({
+      challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
+      email,
+      newPassword: lettersOnly,
+      turnstileToken,
+    }).success,
+    false,
+  );
+  assert.equal(
+    ResetCustomerPasswordBody.safeParse({
+      challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
+      email,
+      newPassword: digitsOnly,
+      turnstileToken,
+    }).success,
+    false,
   );
   assert.equal(
     RegisterCustomerBody.safeParse({
@@ -112,7 +156,7 @@ test("new and reset customer passwords require eight characters while legacy sig
   assert.equal(
     SignInCustomerBody.safeParse({
       email: "customer@example.com",
-      password: shortPassword,
+      password: "1234",
       turnstileToken,
     }).success,
     true,

@@ -16,6 +16,7 @@ import {
   shouldLockSingleRegistrationCountry,
 } from '@/lib/country-picker-state';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
+import { getApiErrorStatus } from '@/lib/safe-api-error';
 
 export type CountryOption = {
   countryCode: string;
@@ -33,11 +34,13 @@ type CountryPhoneFieldProps = {
   error?: string;
   onBlur?: () => void;
   registrationOnly?: boolean;
+  showErrorMessage?: boolean;
+  onErrorMessage?: (message: string) => void;
 };
 
 export function CountryPhoneField({
   value, onChange, onCountryChange, error, onBlur,
-  registrationOnly = false,
+  registrationOnly = false, showErrorMessage = true, onErrorMessage,
 }: CountryPhoneFieldProps) {
   const catalog = useGetAuthCountries({
     query: {
@@ -96,6 +99,8 @@ export function CountryPhoneField({
   const pickerTriggerRef = useRef<HTMLButtonElement>(null);
   const callbackRef = useRef(onCountryChange);
   callbackRef.current = onCountryChange;
+  const errorCallbackRef = useRef(onErrorMessage);
+  errorCallbackRef.current = onErrorMessage;
   const inputId = useId();
   const selectedIdentity = selectedCountry ? `${selectedCountry.countryCode}:${selectedCountry.dialCode}` : '';
   useEffect(() => {
@@ -110,6 +115,16 @@ export function CountryPhoneField({
   useEffect(() => {
     if (hasSingleRegistrationCountry) setIsOpen(false);
   }, [hasSingleRegistrationCountry]);
+  useEffect(() => {
+    if (!pickerStatus.errorMessage) return;
+    const globallyReported = [activeCatalog.error, registrationSettings.error].some((error) => {
+      if (!error) return false;
+      const status = getApiErrorStatus(error);
+      return status === undefined || status === 429 || status >= 500;
+    });
+    if (globallyReported) return;
+    errorCallbackRef.current?.(pickerStatus.errorMessage);
+  }, [activeCatalog.error, pickerStatus.errorMessage, registrationSettings.error]);
 
   const filteredCountries = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('fr-FR');
@@ -221,9 +236,9 @@ export function CountryPhoneField({
             onBlur={onBlur} placeholder="Numéro de téléphone" autoComplete="tel" inputMode="tel"
             maxLength={maxPhoneDigits} minLength={selectedCountry?.minPhoneDigits}
             disabled={!selectedCountry} aria-invalid={Boolean(displayedError)}
-            aria-describedby={displayedError ? `${inputId}-error` : undefined} required />
+            aria-describedby={displayedError && showErrorMessage ? `${inputId}-error` : undefined} required />
         </div>
-        {displayedError && <p id={`${inputId}-error`} className="sendflow-signup-error" role="alert">{displayedError}</p>}
+        {displayedError && showErrorMessage && <p id={`${inputId}-error`} className="sendflow-signup-error" role="alert">{displayedError}</p>}
       </div>
       {isOpen && createPortal(
         <div className="sendflow-country-picker" role="presentation">

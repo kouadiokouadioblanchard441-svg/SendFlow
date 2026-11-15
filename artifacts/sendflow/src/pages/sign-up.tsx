@@ -9,7 +9,8 @@ import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpFiel
 import { saveAccountCountry, type AccountCountry } from '@/lib/account-country';
 import { clearLegacyAccountProfile } from '@/lib/account-profile';
 import { normalizePhoneDigits } from '@/lib/phone-rules';
-import { getSafeApiErrorCopy } from '@/lib/safe-api-error';
+import { getApiErrorStatus } from '@/lib/safe-api-error';
+import { ErrorDialog } from '@/components/error-dialog';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import sendflowMark from '@/assets/sendflow-mark-original.png';
 import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
@@ -37,10 +38,6 @@ const initialForm: SignUpForm = {
 };
 
 type SignupStep = 'form' | 'verification' | 'credentials' | 'success';
-
-function getRequestErrorMessage(error: unknown, fallback: string) {
-  return error ? getSafeApiErrorCopy(error).message : fallback;
-}
 
 function getRetryAfterSeconds(error: unknown) {
   if (typeof error !== 'object' || error === null) return undefined;
@@ -87,7 +84,6 @@ function PasswordField({
           autoComplete="new-password"
           maxLength={64}
           aria-invalid={Boolean(error)}
-          aria-describedby={error ? `${id}-error` : undefined}
           required
         />
         <button
@@ -99,7 +95,6 @@ function PasswordField({
           {show ? <Eye size={22} strokeWidth={1.65} /> : <EyeOff size={22} strokeWidth={1.65} />}
         </button>
       </label>
-      {error && <p id={`${id}-error`} className="sendflow-signup-error" role="alert">{error}</p>}
     </div>
   );
 }
@@ -152,6 +147,7 @@ export default function SignupPage() {
 
   const update = <K extends keyof SignUpForm>(key: K, value: SignUpForm[K]) => {
     setSubmitted(false);
+    setVerificationError('');
     if (key === 'phone' && value !== form.phone && challengeId) {
       setStep('form');
       setChallengeId('');
@@ -185,6 +181,14 @@ export default function SignupPage() {
     const timer = window.setInterval(updateTiming, 1000);
     return () => window.clearInterval(timer);
   }, [challengeExpiresAt, resendAvailableAt, step]);
+
+  useEffect(() => {
+    if (step !== 'verification' || !challengeExpiresAt) return;
+    const expiration = new Date(challengeExpiresAt).getTime();
+    if (Number.isFinite(expiration) && Date.now() >= expiration) {
+      setVerificationError('Ce code a expiré. Demandez un nouveau code pour continuer.');
+    }
+  }, [challengeExpiresAt, expiresInSeconds, step]);
 
   useEffect(() => {
     if (step !== 'success') return;
@@ -247,7 +251,11 @@ export default function SignupPage() {
   const sendCode = async (turnstileTokenForRequest?: string) => {
     setVerificationError('');
     const token = turnstileTokenForRequest ?? consumeTurnstileToken();
-    if (!token || submissionLock.current) return;
+    if (!token) {
+      setVerificationError('Validez le contrôle de sécurité avant de continuer.');
+      return;
+    }
+    if (submissionLock.current) return;
     submissionLock.current = true;
     try {
       const response = await sendEmailOtp.mutateAsync({
@@ -269,7 +277,7 @@ export default function SignupPage() {
       if (retryAfterSeconds !== undefined) {
         setResendAvailableAt(Date.now() + retryAfterSeconds * 1000);
       }
-      setVerificationError(getRequestErrorMessage(error, 'Impossible d’envoyer le code. Vérifiez votre adresse e-mail puis réessayez.'));
+      // Mutation errors are displayed by the shared, sanitized error popup.
     } finally {
       submissionLock.current = false;
     }
@@ -278,12 +286,26 @@ export default function SignupPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
-    if (!canSubmit || !signupCountry?.countryCode || isSending || submissionLock.current || !turnstileToken) return;
+    if (isSending || submissionLock.current) return;
+    if (!canSubmit || !signupCountry?.countryCode) {
+      setVerificationError(Object.values(errors).filter(Boolean).join(' ') || 'Vérifiez les informations saisies.');
+      return;
+    }
+    if (!turnstileToken) {
+      setVerificationError('Validez le contrôle de sécurité avant de continuer.');
+      return;
+    }
     setVerificationError('');
     submissionLock.current = true;
     try {
       const refreshed = await registrationSettings.refetch();
-      if (refreshed.error || !refreshed.data) throw new Error('Le réglage de vérification est indisponible. Réessayez.');
+      if (refreshed.error || !refreshed.data) {
+        const status = getApiErrorStatus(refreshed.error);
+        if (!refreshed.error || (status !== undefined && status >= 400 && status < 500 && status !== 429)) {
+          setVerificationError('Impossible de charger les paramètres d’inscription. Réessayez dans quelques instants.');
+        }
+        return;
+      }
       if (refreshed.data.emailVerificationEnabled) {
         const token = consumeTurnstileToken();
         if (!token) return;
@@ -312,9 +334,8 @@ export default function SignupPage() {
         setSignupApiKeyPair(createdApiKeyPair);
         setStep(createdApiKeyPair ? 'credentials' : 'success');
       }
-    } catch (error) {
-      setVerificationError(getRequestErrorMessage(error, 'La création du compte a échoué. Réessayez.'));
-      void registrationSettings.refetch();
+    } catch {
+      // API mutation errors are displayed by the shared, sanitized error popup.
     } finally {
       submissionLock.current = false;
     }
@@ -331,7 +352,11 @@ export default function SignupPage() {
       setVerificationError('Saisissez les 6 chiffres reçus par e-mail.');
       return;
     }
-    if (submissionLock.current || !turnstileToken) return;
+    if (submissionLock.current) return;
+    if (!turnstileToken) {
+      setVerificationError('Validez le contrôle de sécurité avant de continuer.');
+      return;
+    }
     const token = consumeTurnstileToken();
     if (!token) return;
     submissionLock.current = true;
@@ -350,14 +375,9 @@ export default function SignupPage() {
       }
       setEmailOtpVerified(true);
       setOtpCode('');
-    } catch (error) {
+    } catch {
       if (!emailOtpVerified) setOtpCode('');
-      setVerificationError(getRequestErrorMessage(
-        error,
-        emailOtpVerified
-          ? 'La création du compte a échoué. Validez à nouveau la vérification puis réessayez.'
-          : 'Code incorrect ou expiré. Vérifiez les chiffres puis réessayez.',
-      ));
+      // API mutation errors are displayed by the shared, sanitized error popup.
     } finally {
       submissionLock.current = false;
     }
@@ -405,15 +425,9 @@ export default function SignupPage() {
                   autoComplete="name"
                   maxLength={80}
                   aria-invalid={Boolean(visibleError('fullName'))}
-                  aria-describedby={visibleError('fullName') ? 'signup-full-name-error' : undefined}
                   required
                 />
               </label>
-              {visibleError('fullName') && (
-                <p id="signup-full-name-error" className="sendflow-signup-error" role="alert">
-                  {visibleError('fullName')}
-                </p>
-              )}
             </div>
 
             <div className="sendflow-signup-control">
@@ -431,15 +445,9 @@ export default function SignupPage() {
                   autoComplete="bday"
                   title="Sélectionnez votre date de naissance"
                   aria-invalid={Boolean(visibleError('birthDate'))}
-                  aria-describedby={visibleError('birthDate') ? 'signup-birth-date-error' : undefined}
                   required
                 />
               </label>
-              {visibleError('birthDate') && (
-                <p id="signup-birth-date-error" className="sendflow-signup-error" role="alert">
-                  {visibleError('birthDate')}
-                </p>
-              )}
             </div>
 
             <CountryPhoneField
@@ -451,6 +459,8 @@ export default function SignupPage() {
                 setSignupCountry(country);
               }}
               error={visibleError('phone')}
+              showErrorMessage={false}
+              onErrorMessage={(message) => setVerificationError(message)}
               onBlur={() => markTouched('phone')}
             />
 
@@ -467,15 +477,9 @@ export default function SignupPage() {
                   autoComplete="email"
                   maxLength={254}
                   aria-invalid={Boolean(visibleError('email'))}
-                  aria-describedby={visibleError('email') ? 'signup-email-error' : undefined}
                   required
                 />
               </label>
-              {visibleError('email') && (
-                <p id="signup-email-error" className="sendflow-signup-error" role="alert">
-                  {visibleError('email')}
-                </p>
-              )}
             </div>
 
             <PasswordField
@@ -508,44 +512,28 @@ export default function SignupPage() {
                   onChange={(event) => update('acceptedPrivacy', event.target.checked)}
                   onBlur={() => markTouched('acceptedPrivacy')}
                   aria-invalid={Boolean(visibleError('acceptedPrivacy'))}
-                  aria-describedby={visibleError('acceptedPrivacy') ? 'signup-privacy-error' : undefined}
                   required
                 />
                 <span>
                   J’accepte la <Link href="/confidentialite">politique de confidentialité</Link>
                 </span>
               </label>
-              {visibleError('acceptedPrivacy') && (
-                <p id="signup-privacy-error" className="sendflow-signup-error" role="alert">
-                  {visibleError('acceptedPrivacy')}
-                </p>
-              )}
             </div>
 
             <TurnstileWidget
               ref={turnstileRef}
               action="signup"
               onTokenChange={setTurnstileToken}
+              onErrorMessage={setVerificationError}
             />
 
             <button
               type="submit"
               className="sendflow-signup-submit"
-              disabled={!canSubmit || !turnstileToken || isSending || !registrationSettings.data || registrationSettings.isError}
+              disabled={isSending}
             >
               {isSending ? 'Patientez…' : registrationSettings.data?.emailVerificationEnabled ? 'Continuer' : 'Créer mon compte'}
             </button>
-            {registrationSettings.isError && (
-              <p className="sendflow-signup-verification-error" role="alert">
-                Impossible de vérifier les paramètres d’inscription. Réessayez dans quelques instants.
-              </p>
-            )}
-
-            {verificationError && (
-              <p className="sendflow-signup-verification-error" role="alert" data-testid="error-send-email-otp">
-                {verificationError}
-              </p>
-            )}
 
             {submitted && <p className="sendflow-signup-feedback" role="status" aria-live="polite">Création de votre compte…</p>}
           </form>
@@ -602,28 +590,23 @@ export default function SignupPage() {
                   >
                     {expiresInSeconds > 0
                       ? `Le code expire dans ${expiresInSeconds}s.`
-                      : 'Ce code a expiré. Demandez-en un nouveau.'}
+                      : 'Vous pouvez demander un nouveau code pour continuer.'}
                   </p>
                 </>
-              )}
-
-              {verificationError && (
-                <p className="sendflow-signup-verification-error" role="alert" data-testid="error-email-otp">
-                  {verificationError}
-                </p>
               )}
 
               <TurnstileWidget
                 ref={turnstileRef}
                 action="signup"
                 onTokenChange={setTurnstileToken}
+                onErrorMessage={setVerificationError}
               />
 
               <div className="sendflow-signup-verification-actions">
                 <button
                   type="submit"
                   className="sendflow-signup-submit sendflow-signup-check"
-                  disabled={(!emailOtpVerified && otpCode.length !== 6) || !turnstileToken || isChecking || expiresInSeconds === 0}
+                  disabled={isChecking}
                   data-testid="button-check-email-otp"
                 >
                   {isChecking ? 'Vérification…' : emailOtpVerified ? 'Créer mon compte' : 'Vérifier le code'}
@@ -632,7 +615,7 @@ export default function SignupPage() {
                   type="button"
                   className="sendflow-signup-secondary-action"
                   onClick={() => void sendCode()}
-                  disabled={emailOtpVerified || !turnstileToken || isSending || resendInSeconds > 0}
+                  disabled={emailOtpVerified || isSending || resendInSeconds > 0}
                   data-testid="button-resend-email-otp"
                 >
                   {isSending
@@ -716,6 +699,12 @@ export default function SignupPage() {
           </p>
         </div>
       </section>
+      <ErrorDialog
+        open={Boolean(verificationError)}
+        title="Impossible de continuer"
+        message={verificationError}
+        onClose={() => setVerificationError('')}
+      />
     </main>
   );
 }

@@ -13,5 +13,9 @@ export function validateCustomerPassword(
   if (password.length > CUSTOMER_PASSWORD_MAX_LENGTH) {
     return `Le code secret ne peut pas dépasser ${CUSTOMER_PASSWORD_MAX_LENGTH} caractères.`;
   }
+  if (minimumLength === NEW_CUSTOMER_PASSWORD_MIN_LENGTH
+    && (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password))) {
+    return 'Le code secret doit contenir au moins une lettre et un chiffre.';
+  }
   return undefined;
 }

@@ -5829,6 +5829,8 @@ components:
           type: string
           minLength: 8
           maxLength: 64
+          pattern: "(?=.*[A-Za-z])(?=.*[0-9])"
+          description: Must contain at least one letter and one digit.
         turnstileToken:
           type: string
           minLength: 1
@@ -5869,6 +5871,8 @@ components:
           type: string
           minLength: 8
           maxLength: 64
+          pattern: "(?=.*[A-Za-z])(?=.*[0-9])"
+          description: Must contain at least one letter and one digit.
         turnstileToken:
           type: string
           minLength: 1

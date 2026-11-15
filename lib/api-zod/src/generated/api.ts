@@ -455,6 +455,8 @@ export const registerCustomerBodyCountryCodeRegExp = new RegExp('^[A-Za-z]{2}$')
 export const registerCustomerBodyPasswordMin = 8;
 export const registerCustomerBodyPasswordMax = 64;
 
+
+export const registerCustomerBodyPasswordRegExp = new RegExp('(?=.*[A-Za-z])(?=.*[0-9])');
 export const registerCustomerBodyTurnstileTokenMax = 2048;
 
 
@@ -466,7 +468,7 @@ export const RegisterCustomerBody = zod.object({
   "fullName": zod.string().min(registerCustomerBodyFullNameMin).max(registerCustomerBodyFullNameMax),
   "birthDate": zod.coerce.date(),
   "countryCode": zod.string().regex(registerCustomerBodyCountryCodeRegExp).optional(),
-  "password": zod.string().min(registerCustomerBodyPasswordMin).max(registerCustomerBodyPasswordMax),
+  "password": zod.string().min(registerCustomerBodyPasswordMin).max(registerCustomerBodyPasswordMax).regex(registerCustomerBodyPasswordRegExp).describe('Must contain at least one letter and one digit.'),
   "turnstileToken": zod.string().min(1).max(registerCustomerBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for signup.'),
   "acceptedPrivacy": zod.boolean()
 })
@@ -561,6 +563,8 @@ export const resetCustomerPasswordBodyEmailMax = 254;
 export const resetCustomerPasswordBodyNewPasswordMin = 8;
 export const resetCustomerPasswordBodyNewPasswordMax = 64;
 
+
+export const resetCustomerPasswordBodyNewPasswordRegExp = new RegExp('(?=.*[A-Za-z])(?=.*[0-9])');
 export const resetCustomerPasswordBodyTurnstileTokenMax = 2048;
 
 
@@ -568,7 +572,7 @@ export const resetCustomerPasswordBodyTurnstileTokenMax = 2048;
 export const ResetCustomerPasswordBody = zod.object({
   "challengeId": zod.uuid(),
   "email": zod.email().max(resetCustomerPasswordBodyEmailMax),
-  "newPassword": zod.string().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax),
+  "newPassword": zod.string().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax).regex(resetCustomerPasswordBodyNewPasswordRegExp).describe('Must contain at least one letter and one digit.'),
   "turnstileToken": zod.string().min(1).max(resetCustomerPasswordBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for password reset.')
 })
 
