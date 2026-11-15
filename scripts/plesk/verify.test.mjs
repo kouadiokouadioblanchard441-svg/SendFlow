@@ -250,3 +250,17 @@ test("CommonJS adapter never prints sensitive import errors", async (t) => {
   assert.equal(result.status, 1);
   assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker/);
 });
+
+test("CommonJS adapter identifies missing production configuration without exposing values", async (t) => {
+  const root = await fixture(t);
+  await writeFile(
+    path.join(root, "server/index.mjs"),
+    'throw new Error("TRUST_PROXY_HOPS must be explicitly configured in production");',
+  );
+  const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
+    env: { NODE_ENV: "production" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /TRUST_PROXY_HOPS/);
+  assert.doesNotMatch(result.stderr, /explicitly configured in production/);
+});

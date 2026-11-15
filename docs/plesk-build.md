@@ -179,8 +179,13 @@ exposée comme un répertoire statique Apache.
   Plesk/Apache n'en conserve pas la valeur en clair; ce dépôt ne configure pas ces journaux.
 - Les API inconnues doivent rester des erreurs API, pas du HTML de la SPA. Un fichier
   JS/CSS absent doit rester un 404 ; les routes SPA valides doivent accepter un refresh.
-- Définir `NODE_ENV=production`, `SENDFLOW_DATABASE_TARGET=production`,
-  `SUPABASE_DATABASE_URL` et `DATABASE_CA_CERT` dans l'environnement privé Plesk.
+- Définir séparément dans l'environnement privé de **chacune des deux applications
+  Node (site et API)** : `NODE_ENV=production`,
+  `SENDFLOW_DATABASE_TARGET=production`, `SUPABASE_DATABASE_URL`,
+  `DATABASE_CA_CERT` et `TRUST_PROXY_HOPS`. Le serveur du site utilise lui aussi
+  Supabase pour son contrôle IP avant de servir les pages et les fichiers ; ces variables
+  ne sont donc pas réservées à l'API. Les variables Plesk ne sont pas partagées
+  automatiquement entre les deux applications.
   `DATABASE_URL` reste accepté comme nom de compatibilité uniquement s’il pointe vers
   la même base Supabase; si les deux sont définis, `SUPABASE_DATABASE_URL` est prioritaire.
   La connexion vérifie le certificat TLS et le nom d’hôte. Les secrets Replit ne sont
@@ -191,9 +196,10 @@ exposée comme un répertoire statique Apache.
   intégrée au paquet de build. La seconde est la clé privée Siteverify et ne doit jamais
   être renvoyée par une API, utilisée dans une variable `VITE_*`, ou copiée dans le site,
   le dépôt Git ou un bundle client.
-- Configurer `TRUST_PROXY_HOPS` selon la chaîne réellement observée, et
-  `CORS_ALLOWED_ORIGINS` avec les origines HTTPS exactes. Ne pas reprendre les
-  variables de prévisualisation Replit.
+- Configurer `CORS_ALLOWED_ORIGINS` dans l'environnement privé de l'API avec les
+  origines HTTPS exactes. `TRUST_PROXY_HOPS` doit être configuré dans les deux
+  applications selon la chaîne de proxys réellement observée ; ne pas deviner sa valeur.
+  Ne pas reprendre les variables de prévisualisation Replit.
   Autoriser les origines exactes qui appellent l'API depuis le navigateur, notamment
   `https://sendflow.africa`,
   `https://merchent.business.sendflow.africa`,
