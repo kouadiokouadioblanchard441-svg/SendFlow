@@ -295,7 +295,7 @@ export default function AdminIpBlocklist() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={createBlock.isPending} data-testid="button-cancel-ip-block">Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmBlock(); }} disabled={createBlock.isPending} data-testid="button-confirm-ip-block">
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive" onClick={(e) => { e.preventDefault(); confirmBlock(); }} disabled={createBlock.isPending} data-testid="button-confirm-ip-block">
               {createBlock.isPending ? 'Blocage…' : 'Confirmer le blocage'}
             </AlertDialogAction>
           </AlertDialogFooter>

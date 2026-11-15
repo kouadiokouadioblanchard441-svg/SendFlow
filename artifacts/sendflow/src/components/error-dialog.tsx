@@ -82,7 +82,10 @@ export function ErrorDialog({ open, title, message, onClose }: ErrorDialogProps)
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-0">
-          <AlertDialogAction className="h-11 w-full rounded-full text-[15px] font-semibold">
+          <AlertDialogAction
+            className="h-11 w-full rounded-full text-[15px] font-semibold"
+            data-testid="button-error-dialog-ok"
+          >
             OK
           </AlertDialogAction>
         </AlertDialogFooter>

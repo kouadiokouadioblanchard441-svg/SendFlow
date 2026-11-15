@@ -212,6 +212,7 @@ export function CountryPhoneField({
           <button type="button"
             className={`sendflow-signup-country${registrationOnly ? ' is-registration' : ''}`}
             ref={pickerTriggerRef}
+            data-testid="button-phone-country"
             onClick={() => {
               if (hasSingleRegistrationCountry || pickerStatus.isDisabled) return;
               setQuery('');
@@ -224,14 +225,10 @@ export function CountryPhoneField({
               ? `${selectedCountry.name}, indicatif ${selectedCountry.dialCode}${hasSingleRegistrationCountry ? '' : '. Modifier le pays'}`
               : 'Choisir l’indicatif téléphonique'}>
             {selectedCountry?.flag && <span aria-hidden="true">{selectedCountry.flag}</span>}
-            {registrationOnly && selectedCountry && (
-              <span className="sendflow-signup-country-name">{selectedCountry.name}</span>
-            )}
-            <span className={registrationOnly && selectedCountry ? 'sendflow-signup-country-code' : undefined}>
-              {selectedCountry?.dialCode ?? countryPlaceholder}
-            </span>
+            <span>{selectedCountry?.dialCode ?? countryPlaceholder}</span>
           </button>
           <input id={inputId} type="tel" value={value}
+            data-testid="input-phone-number"
             onChange={(event) => onChange(normalizePhoneDigits(event.target.value).slice(0, maxPhoneDigits))}
             onBlur={onBlur} placeholder="Numéro de téléphone" autoComplete="tel" inputMode="tel"
             maxLength={maxPhoneDigits} minLength={selectedCountry?.minPhoneDigits}

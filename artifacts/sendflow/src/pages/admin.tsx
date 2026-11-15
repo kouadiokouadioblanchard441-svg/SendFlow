@@ -2079,7 +2079,17 @@ function BannersPage() {
       <AlertDialog open={Boolean(deletingBanner)} onOpenChange={(open) => { if (!open) setDeletingBanner(undefined); }}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Supprimer cette bannière&nbsp;?</AlertDialogTitle><AlertDialogDescription>Cette action retire définitivement « {deletingBanner?.title} » des contenus administrés.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel data-testid="button-cancel-delete-banner">Annuler</AlertDialogCancel><AlertDialogAction onClick={() => deletingBanner && remove.mutate({ bannerId: deletingBanner.id })} disabled={remove.isPending} data-testid="button-confirm-delete-banner">Supprimer</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-banner">Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive"
+              onClick={() => deletingBanner && remove.mutate({ bannerId: deletingBanner.id })}
+              disabled={remove.isPending}
+              data-testid="button-confirm-delete-banner"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </AdminShell>

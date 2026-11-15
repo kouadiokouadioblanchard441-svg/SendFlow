@@ -333,11 +333,10 @@
 }
 
 .sendflow-signup-country.is-registration {
-  flex: 0 1 180px;
-  max-width: calc(100% - 100px);
-  min-width: 0;
-  gap: 4px;
-  padding-inline: 7px;
+  flex: 0 0 88px;
+  max-width: 88px;
+  gap: 5px;
+  padding-inline: 8px;
 }
 
 .sendflow-signup-phone.has-registration-country input {
@@ -345,15 +344,7 @@
   width: 0;
 }
 
-.sendflow-signup-country-name {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 14px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sendflow-signup-country-code {
+.sendflow-signup-country > span:last-child {
   flex: 0 0 auto;
   white-space: nowrap;
 }

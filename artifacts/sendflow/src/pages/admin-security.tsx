@@ -149,6 +149,7 @@ export function AdminSecurityPage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={revokeAll.isPending}>Annuler</AlertDialogCancel>
             <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive"
               onClick={(event) => {
                 event.preventDefault();
                 setConfirmRevokeAll(false);
