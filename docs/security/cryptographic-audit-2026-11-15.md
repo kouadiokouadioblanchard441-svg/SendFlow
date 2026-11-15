@@ -87,7 +87,14 @@ isolée avant une configuration Plesk.
 | Vérification | Résultat |
 | --- | --- |
 | `test:auth` | 48 réussis |
-| Intégration financière isolée | 32 réussis, 9 échecs existants/non liés au changement PIN |
+| `test:security` | 49 réussis |
+| Chiffrement, journaux, parsing, identité, OTP, Turnstile, devis et fournisseurs | 112 tests réussis |
+| Wallet, politique de versement et liens de paiement isolés | 25 tests réussis |
+| Configuration FeexPay isolée | 9 réussis |
+| Intégration financière isolée | 32 réussis, 9 échecs |
+| Routage/API isolé | 106 réussis sur 271, 165 échecs |
+| Structures de paiement isolées | 13 réussis, 10 échecs |
+| Intégration e-mail d’inscription isolée | Bloquée au démarrage : le banc d’essai ne fournit pas `DATABASE_CA_CERT` |
 | Vérification de migration PIN en base PostgreSQL jetable | Réussie : nouveau hash Argon2id et mise à niveau du scrypt après PIN correct |
 | Tests de connexion DB | 21 réussis |
 | Tests de préparation Plesk | 19 réussis |
@@ -96,10 +103,24 @@ isolée avant une configuration Plesk.
 | Build API | Réussi |
 | Build complet de production Plesk | Bloqué par Node.js 24.22.1 au lieu de 24.22.2 |
 
-Les neuf échecs de la suite financière concernent des attentes de routes qui
-reçoivent 404/503, une assertion de quota et le parcours d’accès à la base de
-prévisualisation. Ils ne proviennent pas du nouveau chemin Argon2id PIN. Aucun
-appel fournisseur ni paiement réel n’est déclenché par cette suite.
+Les neuf échecs de la suite financière concernent des réponses 404/503, une
+assertion de quota et l’accès DB de prévisualisation. Ils ne proviennent pas du
+nouveau chemin Argon2id PIN. Dans la suite de routes, le banc d’essai n’injecte
+pas les secrets factices de la barrière administrateur et attend encore que le
+serveur API fournisse certaines pages frontend, alors que le site est un
+artefact séparé ; beaucoup de tests reçoivent donc 404 au lieu de leur statut
+attendu.
+
+Les tests de structures de paiement révèlent un point plus sérieux : avec le
+rôle applicatif restreint du banc d’essai, le déclencheur de réservation ne peut
+pas exécuter `sf_wallet_reservation_total_apply`. Plusieurs tests de réservation
+et de règlement échouent aussi en conséquence. Il faut résoudre et retester ce
+point avant de basculer vers un rôle runtime aux privilèges réduits.
+
+Les tests isolés de liens de paiement, de configuration FeexPay, Turnstile,
+clients FeexPay/PayDunya, politique de versement et intégrité du wallet passent.
+Les appels fournisseurs sont simulés ; aucun paiement ni appel réel n’a été
+envoyé.
 
 Le scanner de dépendances n’a relevé aucune vulnérabilité. Les alertes
 statiques examinées portent sur du SQL de migration fixe/paramétré, le SHA-1
@@ -112,5 +133,6 @@ journalisation. Aucun test d’exploitation Strix n’a été exécuté.
 2. Créer et tester un rôle PostgreSQL runtime à privilèges minimaux, sans
    modifier le compte actuel avant validation complète.
 3. Vérifier TLS 1.3 côté Plesk/Nginx et refaire le paquet avec Node.js 24.22.2.
-4. Traiter les neuf échecs de la suite d’intégration isolée, puis refaire les
-   vérifications avant tout déploiement.
+4. Corriger les tests d’intégration bloqués et le droit d’exécution du
+   déclencheur de réservation, puis refaire les vérifications avant tout
+   déploiement.
