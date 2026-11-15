@@ -27,7 +27,6 @@ packages = ["jdk21"]
 [userenv]
 
 [userenv.shared]
-VITE_TURNSTILE_SITE_KEY = "0x4AAAAAAFwM4y2TRTrwsOyP"
 SENDFLOW_DATABASE_TARGET = "shared-external"
 DATABASE_CA_CERT = """
 -----BEGIN CERTIFICATE-----

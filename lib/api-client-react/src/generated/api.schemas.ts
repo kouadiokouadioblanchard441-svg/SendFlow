@@ -202,6 +202,14 @@ export interface PublicRegistrationSettings {
   defaultCountryCode: string;
 }
 
+export interface PublicTurnstileConfig {
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  siteKey: string;
+}
+
 export interface AdminRegistrationSettings {
   emailVerificationEnabled: boolean;
   version: number;

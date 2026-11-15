@@ -172,6 +172,7 @@ import type {
   PublicPaymentLinkQuoteInput,
   PublicPricingCatalog,
   PublicRegistrationSettings,
+  PublicTurnstileConfig,
   RegistrationSettingsUpdate,
   SimulatedPaymentLinkSuccess,
   TransferQuoteInput,
@@ -1376,6 +1377,84 @@ export function useGetRegistrationSettings<TData = Awaited<ReturnType<typeof get
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetRegistrationSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetTurnstileConfigUrl = () => {
+
+
+
+
+  return `/api/auth/turnstile-config`
+}
+
+/**
+ * Returns the public site key from the API deployment environment. The verification secret is never returned.
+ * @summary Read public Turnstile widget configuration
+ */
+export const getTurnstileConfig = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicTurnstileConfig> => {
+
+  return customFetch<PublicTurnstileConfig>(getGetTurnstileConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTurnstileConfigQueryKey = () => {
+    return [
+    `/api/auth/turnstile-config`
+    ] as const;
+    }
+
+
+export const getGetTurnstileConfigQueryOptions = <TData = Awaited<ReturnType<typeof getTurnstileConfig>>, TError = ErrorType<ErrorEnvelope>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTurnstileConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTurnstileConfigQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTurnstileConfig>>> = ({ signal }) => getTurnstileConfig({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTurnstileConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTurnstileConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getTurnstileConfig>>>
+export type GetTurnstileConfigQueryError = ErrorType<ErrorEnvelope>
+
+
+/**
+ * @summary Read public Turnstile widget configuration
+ */
+
+export function useGetTurnstileConfig<TData = Awaited<ReturnType<typeof getTurnstileConfig>>, TError = ErrorType<ErrorEnvelope>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTurnstileConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTurnstileConfigQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

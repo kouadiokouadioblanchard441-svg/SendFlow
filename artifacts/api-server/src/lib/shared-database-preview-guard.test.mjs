@@ -38,11 +38,19 @@ test("only known public GET routes are allowed in the shared preview", () => {
     false,
   );
   assert.equal(
+    shouldBlockSharedDatabaseApiRequest("GET", "/api/auth/turnstile-config", sharedDatabase),
+    false,
+  );
+  assert.equal(
     shouldBlockSharedDatabaseApiRequest("GET", "/api/auth/registration-countries/unexpected", sharedDatabase),
     true,
   );
   assert.equal(
     shouldBlockSharedDatabaseApiRequest("POST", "/api/auth/registration-countries", sharedDatabase),
+    true,
+  );
+  assert.equal(
+    shouldBlockSharedDatabaseApiRequest("POST", "/api/auth/turnstile-config", sharedDatabase),
     true,
   );
   for (const method of ["POST", "PUT", "PATCH", "DELETE"]) {

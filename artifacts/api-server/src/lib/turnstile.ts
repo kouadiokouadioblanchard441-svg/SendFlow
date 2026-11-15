@@ -7,10 +7,7 @@ export const TURNSTILE_SITEVERIFY_URL =
 export const TURNSTILE_VERIFY_TIMEOUT_MS = 5_000;
 
 export type TurnstileAction =
-  | "login"
-  | "signup"
-  | "password_reset"
-  | "pin_reset";
+  "login" | "signup" | "password_reset" | "pin_reset";
 export type TurnstileFailureCategory =
   | "missing_token"
   | "invalid_token"
@@ -22,15 +19,35 @@ export type TurnstileFailureCategory =
 
 export type TurnstileVerification =
   | { success: true }
-  | { success: false; category: TurnstileFailureCategory; unavailable: boolean };
+  | {
+      success: false;
+      category: TurnstileFailureCategory;
+      unavailable: boolean;
+    };
 
 type TurnstileEnvironment = {
+  TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
   NODE_ENV?: string;
   CORS_ALLOWED_ORIGINS?: string;
   REPLIT_DOMAINS?: string;
   REPLIT_DEV_DOMAIN?: string;
 };
+
+const TURNSTILE_SITE_KEY_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+
+export function getTurnstilePublicSiteKey(
+  environment: Pick<
+    TurnstileEnvironment,
+    "TURNSTILE_SITE_KEY" | "TURNSTILE_SECRET_KEY"
+  > = process.env,
+): string | null {
+  const siteKey = environment.TURNSTILE_SITE_KEY?.trim() ?? "";
+  const secretKey = environment.TURNSTILE_SECRET_KEY?.trim() ?? "";
+  if (!siteKey || !secretKey || !TURNSTILE_SITE_KEY_PATTERN.test(siteKey))
+    return null;
+  return siteKey;
+}
 
 type TurnstileSiteverifyResponse = {
   success?: unknown;
@@ -97,18 +114,23 @@ export async function verifyTurnstileToken(
 
   let result: TurnstileSiteverifyResponse;
   try {
-    const response = await (options.fetcher ?? fetch)(TURNSTILE_SITEVERIFY_URL, {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
-      signal: controller.signal,
-    });
+    const response = await (options.fetcher ?? fetch)(
+      TURNSTILE_SITEVERIFY_URL,
+      {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+        signal: controller.signal,
+      },
+    );
     if (!response.ok) return failure("siteverify_unavailable", true);
     try {
-      result = await response.json() as TurnstileSiteverifyResponse;
+      result = (await response.json()) as TurnstileSiteverifyResponse;
     } catch {
       return failure(
-        controller.signal.aborted ? "siteverify_unavailable" : "invalid_siteverify_response",
+        controller.signal.aborted
+          ? "siteverify_unavailable"
+          : "invalid_siteverify_response",
         true,
       );
     }
@@ -117,18 +139,22 @@ export async function verifyTurnstileToken(
   } finally {
     clearTimeout(timeout);
   }
-  if (typeof result !== "object" || result === null || result.success !== true) {
+  if (
+    typeof result !== "object" ||
+    result === null ||
+    result.success !== true
+  ) {
     return failure("invalid_token");
   }
   if (
-    typeof result.hostname !== "string"
-    || result.hostname.trim().toLowerCase() !== expectedHostname
+    typeof result.hostname !== "string" ||
+    result.hostname.trim().toLowerCase() !== expectedHostname
   ) {
     return failure("hostname_mismatch");
   }
   if (
-    typeof result.action !== "string"
-    || result.action.trim() !== expectedAction
+    typeof result.action !== "string" ||
+    result.action.trim() !== expectedAction
   ) {
     return failure("action_mismatch");
   }
@@ -143,7 +169,8 @@ export async function verifyTurnstileRequest(
 ): Promise<TurnstileVerification> {
   const origin = normalizeHttpOrigin(req.get("origin"));
   const expectedHostname = origin ? new URL(origin).hostname : undefined;
-  const remoteIp = typeof req.ip === "string" && isIP(req.ip) ? req.ip : undefined;
+  const remoteIp =
+    typeof req.ip === "string" && isIP(req.ip) ? req.ip : undefined;
   return verifyTurnstileToken(token, expectedAction, {
     expectedHostname,
     remoteIp,
@@ -166,4 +193,3 @@ export function rejectTurnstileRequest(
       : "La vérification de sécurité a échoué. Recommencez puis réessayez.",
   });
 }
-

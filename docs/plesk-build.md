@@ -185,15 +185,12 @@ exposée comme un répertoire statique Apache.
   la même base Supabase; si les deux sont définis, `SUPABASE_DATABASE_URL` est prioritaire.
   La connexion vérifie le certificat TLS et le nom d’hôte. Les secrets Replit ne sont
   pas transférés par ce build.
-- Pour les builds Plesk générés par GitHub Actions, créer la variable de dépôt
-  `VITE_TURNSTILE_SITE_KEY` dans **Settings → Secrets and variables → Actions → Variables**.
-  C'est uniquement la clé publique Turnstile, intégrée au bundle du navigateur; elle doit
-  être autorisée pour les domaines de production dans le tableau de bord Cloudflare.
-  Le build échoue volontairement si cette variable est absente ou mal formée. La définir
-  seulement dans l'environnement Plesk après compilation ne modifie pas le bundle.
-- Ajouter `TURNSTILE_SECRET_KEY` comme secret de l'application Node API Plesk. Cette clé
-  privée provient du tableau de bord Cloudflare et ne doit jamais être utilisée dans une
-  variable `VITE_*`, le site Node, le dépôt Git ou un bundle client.
+- Configurer `TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` dans l'environnement privé
+  du service Node API Plesk. La première est la clé publique du widget; l'API la fournit
+  à l'interface au runtime par `GET /api/auth/turnstile-config`. Elle n'est donc pas
+  intégrée au paquet de build. La seconde est la clé privée Siteverify et ne doit jamais
+  être renvoyée par une API, utilisée dans une variable `VITE_*`, ou copiée dans le site,
+  le dépôt Git ou un bundle client.
 - Configurer `TRUST_PROXY_HOPS` selon la chaîne réellement observée, et
   `CORS_ALLOWED_ORIGINS` avec les origines HTTPS exactes. Ne pas reprendre les
   variables de prévisualisation Replit.

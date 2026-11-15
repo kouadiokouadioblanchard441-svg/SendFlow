@@ -410,6 +410,19 @@ export const GetRegistrationSettingsResponse = zod.object({
 
 
 /**
+ * Returns the public site key from the API deployment environment. The verification secret is never returned.
+ * @summary Read public Turnstile widget configuration
+ */
+export const getTurnstileConfigResponseSiteKeyMax = 128;
+
+
+
+export const GetTurnstileConfigResponse = zod.object({
+  "siteKey": zod.string().min(1).max(getTurnstileConfigResponseSiteKeyMax)
+})
+
+
+/**
  * @summary Read the currently active SendFlow customer-service contacts
  */
 export const getCustomerServiceSettingsResponsePhoneNumberMax = 16;

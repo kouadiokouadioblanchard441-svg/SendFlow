@@ -7,21 +7,22 @@ environment, configured through Replit Secrets or the protected production
 environment. Do not put secret values in frontend variables, HTML, JavaScript
 bundles, Android/Capacitor assets, API responses, logs, examples, or Git.
 
-| Configuration | Classification | Use |
-| --- | --- | --- |
-| `VITE_TURNSTILE_SITE_KEY` | Public | Cloudflare widget site key; intentionally embedded in web and Android client bundles |
-| `VITE_API_URL`, `VITE_API_BASE_URL`, `VITE_PUBLIC_SITE_URL` | Public | Approved client routing metadata |
-| `TURNSTILE_SECRET_KEY` | Server secret | Server-side Turnstile Siteverify only |
-| `CUSTOMER_PII_ENCRYPTION_KEY` | Server secret | Active application encryption key |
-| `CUSTOMER_PII_ENCRYPTION_KEYRING` | Server secret | JSON map of retained historical key IDs to key material |
-| `CUSTOMER_PII_ENCRYPTION_KEY_ID` | Non-secret identifier | ID attached to new context-bound ciphertext |
-| `CUSTOMER_PII_LOOKUP_KEY_ID` | Non-secret identifier | Stable key ID used for deterministic lookup hashes |
-| Database URLs, payment API keys, webhook HMAC secrets, email credentials, session secrets, and Android signing credentials | Server/build secrets | Used only by their authorized backend or private signing job |
+| Configuration                                                                                                              | Classification        | Use                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------ |
+| `TURNSTILE_SITE_KEY`                                                                                                       | Public                | Cloudflare widget site key; stored in the API environment and served to clients at runtime |
+| `VITE_API_URL`, `VITE_API_BASE_URL`, `VITE_PUBLIC_SITE_URL`                                                                | Public                | Approved client routing metadata                                                           |
+| `TURNSTILE_SECRET_KEY`                                                                                                     | Server secret         | Server-side Turnstile Siteverify only                                                      |
+| `CUSTOMER_PII_ENCRYPTION_KEY`                                                                                              | Server secret         | Active application encryption key                                                          |
+| `CUSTOMER_PII_ENCRYPTION_KEYRING`                                                                                          | Server secret         | JSON map of retained historical key IDs to key material                                    |
+| `CUSTOMER_PII_ENCRYPTION_KEY_ID`                                                                                           | Non-secret identifier | ID attached to new context-bound ciphertext                                                |
+| `CUSTOMER_PII_LOOKUP_KEY_ID`                                                                                               | Non-secret identifier | Stable key ID used for deterministic lookup hashes                                         |
+| Database URLs, payment API keys, webhook HMAC secrets, email credentials, session secrets, and Android signing credentials | Server/build secrets  | Used only by their authorized backend or private signing job                               |
 
 `VITE_*` is not a secrecy boundary. Vite has `envPrefix` disabled and receives
-only the explicit public allowlist in `scripts/security/public-client-env.mjs`.
-Adding a value to that allowlist makes it public by design. Never add a server
-secret there.
+only the explicit public routing allowlist in
+`scripts/security/public-client-env.mjs`. Turnstile values are not part of the
+build-time allowlist; the API returns only the public site key at runtime.
+Never add a server secret there.
 
 ## Encryption formats and compatibility
 

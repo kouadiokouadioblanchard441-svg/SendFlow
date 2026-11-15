@@ -368,6 +368,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/turnstile-config:
+    get:
+      operationId: getTurnstileConfig
+      tags: [auth]
+      summary: Read public Turnstile widget configuration
+      description: Returns the public site key from the API deployment environment. The verification secret is never returned.
+      responses:
+        "200":
+          description: Public Turnstile site key for the configured deployment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicTurnstileConfig"
+        "503":
+          description: Turnstile is not configured on the API server.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /customer-service-settings:
     get:
       operationId: getCustomerServiceSettings
@@ -946,7 +965,10 @@ paths:
           description: Current opt-in state. Existing accounts remain opted out unless they explicitly opt in.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/CustomerEmailMarketingPreference" }
+              schema:
+                {
+                  $ref: "#/components/schemas/CustomerEmailMarketingPreference",
+                }
         "401":
           description: Authentication is required.
         "403":
@@ -963,13 +985,19 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/CustomerEmailMarketingPreferenceUpdate" }
+            schema:
+              {
+                $ref: "#/components/schemas/CustomerEmailMarketingPreferenceUpdate",
+              }
       responses:
         "200":
           description: Updated preference.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/CustomerEmailMarketingPreference" }
+              schema:
+                {
+                  $ref: "#/components/schemas/CustomerEmailMarketingPreference",
+                }
         "400":
           description: Preference value is invalid.
         "401":
@@ -989,13 +1017,17 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/EmailMarketingUnsubscribeInput" }
+            schema:
+              { $ref: "#/components/schemas/EmailMarketingUnsubscribeInput" }
       responses:
         "200":
           description: The address is opted out, or the valid request was already applied.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/EmailMarketingUnsubscribeResponse" }
+              schema:
+                {
+                  $ref: "#/components/schemas/EmailMarketingUnsubscribeResponse",
+                }
         "400":
           description: The signed unsubscribe token is invalid.
         "503":
@@ -1742,7 +1774,8 @@ paths:
           description: Raw key pair shown once; rotation revokes the previous active pair.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperApiKeyCreatedResponse" }
+              schema:
+                { $ref: "#/components/schemas/DeveloperApiKeyCreatedResponse" }
         "400":
           description: Invalid key label.
           content:
@@ -1810,12 +1843,18 @@ paths:
           description: An active pair already exists; no secret is returned.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperApiKeyInitializationResponse" }
+              schema:
+                {
+                  $ref: "#/components/schemas/DeveloperApiKeyInitializationResponse",
+                }
         "201":
           description: A pair was initialized; its secret is returned once.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperApiKeyInitializationResponse" }
+              schema:
+                {
+                  $ref: "#/components/schemas/DeveloperApiKeyInitializationResponse",
+                }
         "401":
           description: Authentication is required.
           content:
@@ -1875,7 +1914,8 @@ paths:
           description: Endpoint created; signing secret shown once.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperWebhookCreatedResponse" }
+              schema:
+                { $ref: "#/components/schemas/DeveloperWebhookCreatedResponse" }
         "400":
           description: URL, event selection or label is invalid.
           content:
@@ -1947,7 +1987,10 @@ paths:
           description: Recent event delivery results.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperWebhookDeliveriesResponse" }
+              schema:
+                {
+                  $ref: "#/components/schemas/DeveloperWebhookDeliveriesResponse",
+                }
         "401":
           description: Authentication is required.
           content:
@@ -2243,13 +2286,17 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/DeveloperPaymentSessionInput" }
+            schema:
+              { $ref: "#/components/schemas/DeveloperPaymentSessionInput" }
       responses:
         "201":
           description: Payment session created or matching idempotent session returned.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperPaymentSessionCreatedResponse" }
+              schema:
+                {
+                  $ref: "#/components/schemas/DeveloperPaymentSessionCreatedResponse",
+                }
         "400":
           description: Invalid amount, currency or reference.
           content:
@@ -2297,7 +2344,8 @@ paths:
           description: Current server-owned payment state.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperPaymentSessionStatus" }
+              schema:
+                { $ref: "#/components/schemas/DeveloperPaymentSessionStatus" }
         "401":
           description: Secret API key is invalid or revoked.
           content:
@@ -2342,7 +2390,8 @@ paths:
           description: Public payment details, available countries/operators, and the merchant's monthly payment availability.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperPublicPaymentSession" }
+              schema:
+                { $ref: "#/components/schemas/DeveloperPublicPaymentSession" }
         "404":
           description: Public key, session or client token not found.
           content:
@@ -2391,7 +2440,8 @@ paths:
           description: Payment attempt started or existing attempt returned.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperDirectPaymentResponse" }
+              schema:
+                { $ref: "#/components/schemas/DeveloperDirectPaymentResponse" }
         "400":
           description: Payer/operator data is invalid, or an OTP is required.
           content:
@@ -2451,7 +2501,8 @@ paths:
           description: Verified status from the payment provider and settlement service.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DeveloperDirectPaymentResponse" }
+              schema:
+                { $ref: "#/components/schemas/DeveloperDirectPaymentResponse" }
         "404":
           description: Session, attempt or token not found.
           content:
@@ -3381,7 +3432,7 @@ paths:
         content:
           application/json:
             schema:
-                $ref: "#/components/schemas/CreatePaymentAggregatorRequest"
+              $ref: "#/components/schemas/CreatePaymentAggregatorRequest"
       responses:
         "201":
           description: Aggregator partner created. API readiness is determined by server implementation.
@@ -3430,7 +3481,7 @@ paths:
         content:
           application/json:
             schema:
-                $ref: "#/components/schemas/UpdatePaymentAggregatorRequest"
+              $ref: "#/components/schemas/UpdatePaymentAggregatorRequest"
       responses:
         "200":
           description: Aggregator partner updated.
@@ -3486,7 +3537,7 @@ paths:
         content:
           application/json:
             schema:
-                $ref: "#/components/schemas/UpdatePaymentAggregatorRouteRequest"
+              $ref: "#/components/schemas/UpdatePaymentAggregatorRouteRequest"
       responses:
         "200":
           description: Country or operator route updated.
@@ -4100,7 +4151,21 @@ paths:
         - name: status
           in: query
           required: false
-          schema: { type: string, enum: [queued, sending, accepted, delivered, bounced, complained, failed, cancelled] }
+          schema:
+            {
+              type: string,
+              enum:
+                [
+                  queued,
+                  sending,
+                  accepted,
+                  delivered,
+                  bounced,
+                  complained,
+                  failed,
+                  cancelled,
+                ],
+            }
         - name: campaignId
           in: query
           required: false
@@ -4118,7 +4183,10 @@ paths:
           description: Recipient-level history with bounded attempt details and aggregate status counts.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/AdminEmailCampaignHistoryResponse" }
+              schema:
+                {
+                  $ref: "#/components/schemas/AdminEmailCampaignHistoryResponse",
+                }
         "401":
           description: Administrator authentication is required.
         "403":
@@ -4314,7 +4382,8 @@ paths:
           description: Retry queued or a prior request with the same idempotency key replayed.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/AdminEmailCampaignRetryResponse" }
+              schema:
+                { $ref: "#/components/schemas/AdminEmailCampaignRetryResponse" }
         "400":
           description: Idempotency key is invalid.
         "401":
@@ -4619,7 +4688,25 @@ paths:
           required: false
           schema:
             type: string
-            enum: [requested, rate_limited, configuration_error, reservation_error, provider_accepted, provider_rejected, provider_error, provider_rate_limited, challenge_inactive, challenge_expired, challenge_locked, already_verified, not_approved, verified, state_conflict, storage_error]
+            enum:
+              [
+                requested,
+                rate_limited,
+                configuration_error,
+                reservation_error,
+                provider_accepted,
+                provider_rejected,
+                provider_error,
+                provider_rate_limited,
+                challenge_inactive,
+                challenge_expired,
+                challenge_locked,
+                already_verified,
+                not_approved,
+                verified,
+                state_conflict,
+                storage_error,
+              ]
         - $ref: "#/components/parameters/AdminFrom"
         - $ref: "#/components/parameters/AdminTo"
         - $ref: "#/components/parameters/AdminPage"
@@ -5461,7 +5548,8 @@ components:
   schemas:
     AutomaticIpBlock:
       type: object
-      required: [id, ipAddress, blockedAt, banCount, rule, version, active, trusted]
+      required:
+        [id, ipAddress, blockedAt, banCount, rule, version, active, trusted]
       properties:
         id: { type: string, format: uuid }
         ipAddress: { type: string }
@@ -5473,7 +5561,8 @@ components:
         version: { type: integer }
     NetworkException:
       type: object
-      required: [id, ipAddress, reason, createdBy, createdAt, revokedAt, version]
+      required:
+        [id, ipAddress, reason, createdBy, createdAt, revokedAt, version]
       properties:
         id: { type: string, format: uuid }
         ipAddress: { type: string }
@@ -5484,7 +5573,8 @@ components:
         version: { type: integer }
     NetworkDefensePolicy:
       type: object
-      required: [requestsPerMinute, probesPerTenMinutes, automaticBlocksPermanent]
+      required:
+        [requestsPerMinute, probesPerTenMinutes, automaticBlocksPermanent]
       properties:
         requestsPerMinute: { type: integer }
         probesPerTenMinutes: { type: integer }
@@ -5504,7 +5594,8 @@ components:
         requesterIp: { type: [string, "null"] }
     AdminIpAuthorizationResult:
       type: object
-      required: [ipAddress, manualBlocksReleased, automaticBlockReleased, exception]
+      required:
+        [ipAddress, manualBlocksReleased, automaticBlockReleased, exception]
       properties:
         ipAddress: { type: string }
         manualBlocksReleased: { type: integer }
@@ -5527,7 +5618,17 @@ components:
         reason: { type: string, minLength: 3, maxLength: 500 }
     IpBlock:
       type: object
-      required: [id, ipAddress, reason, blockedBy, blockedAt, revokedBy, revokedAt, version]
+      required:
+        [
+          id,
+          ipAddress,
+          reason,
+          blockedBy,
+          blockedAt,
+          revokedBy,
+          revokedAt,
+          version,
+        ]
       properties:
         id: { type: string, format: uuid }
         ipAddress: { type: string }
@@ -5680,6 +5781,14 @@ components:
           type: string
           pattern: "^[a-z]{2}$"
       required: [emailVerificationEnabled, defaultCountryCode]
+    PublicTurnstileConfig:
+      type: object
+      properties:
+        siteKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required: [siteKey]
     AdminRegistrationSettings:
       type: object
       properties:
@@ -5694,10 +5803,26 @@ components:
     PublicCustomerServiceSettings:
       type: object
       properties:
-        phoneNumber: { type: ["string", "null"], maxLength: 16, pattern: '^[+][1-9][0-9]{7,14}$' }
-        whatsappNumber: { type: ["string", "null"], maxLength: 16, pattern: '^[+][1-9][0-9]{7,14}$' }
+        phoneNumber:
+          {
+            type: ["string", "null"],
+            maxLength: 16,
+            pattern: "^[+][1-9][0-9]{7,14}$",
+          }
+        whatsappNumber:
+          {
+            type: ["string", "null"],
+            maxLength: 16,
+            pattern: "^[+][1-9][0-9]{7,14}$",
+          }
         facebookLabel: { type: ["string", "null"], maxLength: 100 }
-        facebookUrl: { type: ["string", "null"], format: uri, maxLength: 500, pattern: '^https://(www[.])?facebook[.]com/' }
+        facebookUrl:
+          {
+            type: ["string", "null"],
+            format: uri,
+            maxLength: 500,
+            pattern: "^https://(www[.])?facebook[.]com/",
+          }
       required: [phoneNumber, whatsappNumber, facebookLabel, facebookUrl]
     AdminCustomerServiceSettings:
       allOf:
@@ -5710,78 +5835,182 @@ components:
     CustomerServiceSettingsUpdate:
       type: object
       properties:
-        phoneNumber: { type: ["string", "null"], maxLength: 16, pattern: '^[+][1-9][0-9]{7,14}$' }
-        whatsappNumber: { type: ["string", "null"], maxLength: 16, pattern: '^[+][1-9][0-9]{7,14}$' }
+        phoneNumber:
+          {
+            type: ["string", "null"],
+            maxLength: 16,
+            pattern: "^[+][1-9][0-9]{7,14}$",
+          }
+        whatsappNumber:
+          {
+            type: ["string", "null"],
+            maxLength: 16,
+            pattern: "^[+][1-9][0-9]{7,14}$",
+          }
         facebookLabel: { type: ["string", "null"], maxLength: 100 }
-        facebookUrl: { type: ["string", "null"], format: uri, maxLength: 500, pattern: '^https://(www[.])?facebook[.]com/' }
+        facebookUrl:
+          {
+            type: ["string", "null"],
+            format: uri,
+            maxLength: 500,
+            pattern: "^https://(www[.])?facebook[.]com/",
+          }
         expectedVersion: { type: integer, minimum: 1 }
         reason: { type: string, minLength: 3, maxLength: 500 }
-      required: [phoneNumber, whatsappNumber, facebookLabel, facebookUrl, expectedVersion, reason]
+      required:
+        [
+          phoneNumber,
+          whatsappNumber,
+          facebookLabel,
+          facebookUrl,
+          expectedVersion,
+          reason,
+        ]
     PublicPaymentLimits:
       type: object
       properties:
         currency: { type: string, enum: [XOF] }
         minimumDepositMinor: { type: integer, minimum: 200, maximum: 2000000 }
         minimumPayoutMinor: { type: integer, minimum: 200, maximum: 2000000 }
-        maximumPayoutDailyMinor: { type: ["integer", "null"], minimum: 200, maximum: 9007199254740991 }
-        minimumInterNetworkMinor: { type: integer, minimum: 1, maximum: 10000000 }
+        maximumPayoutDailyMinor:
+          { type: ["integer", "null"], minimum: 200, maximum: 9007199254740991 }
+        minimumInterNetworkMinor:
+          { type: integer, minimum: 1, maximum: 10000000 }
         maximumTransferMinor: { type: integer, minimum: 1, maximum: 10000000 }
         maximumPayinMinor: { type: integer, minimum: 200, maximum: 2000000 }
-      required: [currency, minimumDepositMinor, minimumPayoutMinor, maximumPayoutDailyMinor, minimumInterNetworkMinor, maximumTransferMinor, maximumPayinMinor]
+      required:
+        [
+          currency,
+          minimumDepositMinor,
+          minimumPayoutMinor,
+          maximumPayoutDailyMinor,
+          minimumInterNetworkMinor,
+          maximumTransferMinor,
+          maximumPayinMinor,
+        ]
     AdminPaymentLimits:
       allOf:
         - $ref: "#/components/schemas/PublicPaymentLimits"
         - type: object
           properties:
-            maximumUnverifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647, description: "Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only." }
-            maximumVerifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647, description: "Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only." }
+            maximumUnverifiedIncomingMinor:
+              {
+                type: integer,
+                minimum: 0,
+                maximum: 2147483647,
+                description: "Monthly XOF receipts cap while identity is not approved; reaching it blocks outgoing operations only.",
+              }
+            maximumVerifiedIncomingMinor:
+              {
+                type: integer,
+                minimum: 0,
+                maximum: 2147483647,
+                description: "Monthly XOF receipts cap after identity approval; reaching it blocks outgoing operations only.",
+              }
             version: { type: integer, minimum: 1 }
             updatedAt: { type: string, format: date-time }
-          required: [maximumUnverifiedIncomingMinor, maximumVerifiedIncomingMinor, version, updatedAt]
+          required:
+            [
+              maximumUnverifiedIncomingMinor,
+              maximumVerifiedIncomingMinor,
+              version,
+              updatedAt,
+            ]
     PaymentLimitsUpdate:
       type: object
       properties:
         minimumDepositMinor: { type: integer, minimum: 200, maximum: 2000000 }
         minimumPayoutMinor: { type: integer, minimum: 200, maximum: 2000000 }
-        maximumPayoutDailyMinor: { type: ["integer", "null"], minimum: 200, maximum: 9007199254740991 }
-        minimumInterNetworkMinor: { type: integer, minimum: 1, maximum: 10000000 }
+        maximumPayoutDailyMinor:
+          { type: ["integer", "null"], minimum: 200, maximum: 9007199254740991 }
+        minimumInterNetworkMinor:
+          { type: integer, minimum: 1, maximum: 10000000 }
         maximumTransferMinor: { type: integer, minimum: 1, maximum: 10000000 }
         maximumPayinMinor: { type: integer, minimum: 200, maximum: 2000000 }
-        maximumUnverifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647 }
-        maximumVerifiedIncomingMinor: { type: integer, minimum: 0, maximum: 2147483647 }
+        maximumUnverifiedIncomingMinor:
+          { type: integer, minimum: 0, maximum: 2147483647 }
+        maximumVerifiedIncomingMinor:
+          { type: integer, minimum: 0, maximum: 2147483647 }
         expectedVersion: { type: integer, minimum: 1 }
         reason: { type: string, minLength: 3, maxLength: 500 }
-      required: [minimumDepositMinor, minimumPayoutMinor, maximumPayoutDailyMinor, minimumInterNetworkMinor, maximumTransferMinor, maximumPayinMinor, maximumUnverifiedIncomingMinor, maximumVerifiedIncomingMinor, expectedVersion, reason]
+      required:
+        [
+          minimumDepositMinor,
+          minimumPayoutMinor,
+          maximumPayoutDailyMinor,
+          minimumInterNetworkMinor,
+          maximumTransferMinor,
+          maximumPayinMinor,
+          maximumUnverifiedIncomingMinor,
+          maximumVerifiedIncomingMinor,
+          expectedVersion,
+          reason,
+        ]
     AdminUserMonthlyIncomingPolicy:
       type: object
       properties:
         identityVerified: { type: boolean }
         receivedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
-        pendingReservedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        pendingReservedMinor:
+          { type: integer, minimum: 0, maximum: 9007199254740991 }
         unverifiedLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
         verifiedLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
-        overrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
+        overrideMinor:
+          { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
         effectiveLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
         limitReached: { type: boolean }
-        outgoingSentMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
-        outgoingPendingMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
-        outgoingRemainingMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        outgoingSentMinor:
+          { type: integer, minimum: 0, maximum: 9007199254740991 }
+        outgoingPendingMinor:
+          { type: integer, minimum: 0, maximum: 9007199254740991 }
+        outgoingRemainingMinor:
+          { type: integer, minimum: 0, maximum: 9007199254740991 }
         periodStart: { type: string, format: date-time }
         periodEnd: { type: string, format: date-time }
-      required: [identityVerified, receivedMinor, pendingReservedMinor, unverifiedLimitMinor, verifiedLimitMinor, overrideMinor, effectiveLimitMinor, limitReached, outgoingSentMinor, outgoingPendingMinor, outgoingRemainingMinor, periodStart, periodEnd]
+      required:
+        [
+          identityVerified,
+          receivedMinor,
+          pendingReservedMinor,
+          unverifiedLimitMinor,
+          verifiedLimitMinor,
+          overrideMinor,
+          effectiveLimitMinor,
+          limitReached,
+          outgoingSentMinor,
+          outgoingPendingMinor,
+          outgoingRemainingMinor,
+          periodStart,
+          periodEnd,
+        ]
     AdminUserMonthlyIncomingLimitUpdate:
       type: object
       properties:
-        monthlyIncomingLimitOverrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
-        expectedMonthlyIncomingLimitOverrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
+        monthlyIncomingLimitOverrideMinor:
+          { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
+        expectedMonthlyIncomingLimitOverrideMinor:
+          { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
         confirmation: { type: string, enum: [CONFIRMER] }
-        reason: { type: string, minLength: 10, maxLength: 500, pattern: '^(\s*\S){10,}\s*$' }
-      required: [monthlyIncomingLimitOverrideMinor, expectedMonthlyIncomingLimitOverrideMinor, confirmation, reason]
+        reason:
+          {
+            type: string,
+            minLength: 10,
+            maxLength: 500,
+            pattern: '^(\s*\S){10,}\s*$',
+          }
+      required:
+        [
+          monthlyIncomingLimitOverrideMinor,
+          expectedMonthlyIncomingLimitOverrideMinor,
+          confirmation,
+          reason,
+        ]
     AdminUserMonthlyIncomingLimitUpdateResponse:
       type: object
       properties:
         userId: { type: string }
-        monthlyIncomingLimitOverrideMinor: { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
+        monthlyIncomingLimitOverrideMinor:
+          { type: ["integer", "null"], minimum: 0, maximum: 2147483647 }
         updatedAt: { type: string, format: date-time }
       required: [userId, monthlyIncomingLimitOverrideMinor, updatedAt]
     RegistrationSettingsUpdate:
@@ -5838,7 +6067,16 @@ components:
           description: Single-use Cloudflare Turnstile token for signup.
         acceptedPrivacy:
           type: boolean
-      required: [phone, email, fullName, birthDate, password, acceptedPrivacy, turnstileToken]
+      required:
+        [
+          phone,
+          email,
+          fullName,
+          birthDate,
+          password,
+          acceptedPrivacy,
+          turnstileToken,
+        ]
     CustomerSignInInput:
       type: object
       properties:
@@ -5964,7 +6202,8 @@ components:
           type: boolean
         pinUnlocked:
           type: boolean
-      required: [userId, phone, displayName, countryCode, pinConfigured, pinUnlocked]
+      required:
+        [userId, phone, displayName, countryCode, pinConfigured, pinUnlocked]
     CustomerPinStateResult:
       type: object
       properties:
@@ -6057,13 +6296,24 @@ components:
       properties:
         identityVerified: { type: boolean }
         receivedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
-        pendingReservedMinor: { type: integer, minimum: 0, maximum: 9007199254740991 }
+        pendingReservedMinor:
+          { type: integer, minimum: 0, maximum: 9007199254740991 }
         effectiveLimitMinor: { type: integer, minimum: 0, maximum: 2147483647 }
         limitReached: { type: boolean }
         message: { type: ["string", "null"], maxLength: 300 }
         periodStart: { type: string, format: date-time }
         periodEnd: { type: string, format: date-time }
-      required: [identityVerified, receivedMinor, pendingReservedMinor, effectiveLimitMinor, limitReached, message, periodStart, periodEnd]
+      required:
+        [
+          identityVerified,
+          receivedMinor,
+          pendingReservedMinor,
+          effectiveLimitMinor,
+          limitReached,
+          message,
+          periodStart,
+          periodEnd,
+        ]
     CustomerProfile:
       type: object
       properties:
@@ -6328,7 +6578,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PublicPaymentLinkOperator"
-      required: [code, name, flag, phonePrefix, minPhoneDigits, maxPhoneDigits, operators]
+      required:
+        [
+          code,
+          name,
+          flag,
+          phonePrefix,
+          minPhoneDigits,
+          maxPhoneDigits,
+          operators,
+        ]
     PublicPaymentLink:
       type: object
       properties:
@@ -6374,7 +6633,23 @@ components:
         monthlyLimitMessage:
           type: ["string", "null"]
           maxLength: 300
-      required: [state, merchantName, description, currency, currencyDecimals, amountMinor, expiresAt, remainingUses, imagePath, countries, paymentAvailable, simulationAvailable, monthlyLimitReached, monthlyLimitMessage]
+      required:
+        [
+          state,
+          merchantName,
+          description,
+          currency,
+          currencyDecimals,
+          amountMinor,
+          expiresAt,
+          remainingUses,
+          imagePath,
+          countries,
+          paymentAvailable,
+          simulationAvailable,
+          monthlyLimitReached,
+          monthlyLimitMessage,
+        ]
     PublicPaymentLinkAttemptInput:
       type: object
       properties:
@@ -6409,7 +6684,15 @@ components:
           minLength: 4
           maxLength: 12
           pattern: "^[0-9]{4,12}$"
-      required: [countryCode, operatorId, phoneNumber, firstName, lastName, idempotencyKey]
+      required:
+        [
+          countryCode,
+          operatorId,
+          phoneNumber,
+          firstName,
+          lastName,
+          idempotencyKey,
+        ]
       additionalProperties: false
     PublicPaymentLinkOtpConfirmationInput:
       type: object
@@ -6466,7 +6749,18 @@ components:
           maxLength: 2048
         flow:
           $ref: "#/components/schemas/DeveloperDirectPaymentFlow"
-      required: [attemptId, state, merchantName, amountMinor, currency, currencyDecimals, ussdCode, returnUrl, flow]
+      required:
+        [
+          attemptId,
+          state,
+          merchantName,
+          amountMinor,
+          currency,
+          currencyDecimals,
+          ussdCode,
+          returnUrl,
+          flow,
+        ]
     PublicPaymentLinkAttemptCreated:
       allOf:
         - $ref: "#/components/schemas/PublicPaymentLinkAttemptStatus"
@@ -6502,7 +6796,16 @@ components:
         currencyDecimals:
           type: integer
           enum: [0, 2]
-      required: [mode, status, chargeOccurred, merchantName, amountMinor, currency, currencyDecimals]
+      required:
+        [
+          mode,
+          status,
+          chargeOccurred,
+          merchantName,
+          amountMinor,
+          currency,
+          currencyDecimals,
+        ]
     PublicPaymentLinkQuoteInput:
       type: object
       additionalProperties: false
@@ -6553,7 +6856,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CustomerPaymentLinkChoice"
-      required: [items, nextCursor, currencyOptions, paymentMethods, validityOptions]
+      required:
+        [items, nextCursor, currencyOptions, paymentMethods, validityOptions]
     TransferQuoteInput:
       type: object
       properties:
@@ -6739,7 +7043,17 @@ components:
         periodEnd:
           type: string
           format: date-time
-      required: [status, currency, monthlyLimit, sentAmount, pendingAmount, remainingAmount, periodStart, periodEnd]
+      required:
+        [
+          status,
+          currency,
+          monthlyLimit,
+          sentAmount,
+          pendingAmount,
+          remainingAmount,
+          periodStart,
+          periodEnd,
+        ]
     AdminPeriod:
       type: object
       properties:
@@ -6778,7 +7092,19 @@ components:
           format: date-time
         wallet:
           $ref: "#/components/schemas/AdminWalletSummary"
-      required: [id, displayName, phone, countryCode, status, suspendedAt, deletedAt, createdAt, lastSeenAt, wallet]
+      required:
+        [
+          id,
+          displayName,
+          phone,
+          countryCode,
+          status,
+          suspendedAt,
+          deletedAt,
+          createdAt,
+          lastSeenAt,
+          wallet,
+        ]
     AdminUserProfile:
       type: object
       properties:
@@ -6811,7 +7137,20 @@ components:
         lastSeenAt:
           type: ["string", "null"]
           format: date-time
-      required: [id, email, displayName, phone, countryCode, status, suspendedAt, deletedAt, createdAt, updatedAt, lastSeenAt]
+      required:
+        [
+          id,
+          email,
+          displayName,
+          phone,
+          countryCode,
+          status,
+          suspendedAt,
+          deletedAt,
+          createdAt,
+          updatedAt,
+          lastSeenAt,
+        ]
     AdminWalletDetail:
       type: object
       properties:
@@ -7008,8 +7347,8 @@ components:
         - currency
         - reference
         - providerReference
-         - createdAt
-         - archivedAt
+          - createdAt
+          - archivedAt
     AdminOverview:
       type: object
       properties:
@@ -7148,7 +7487,25 @@ components:
           enum: [send, verify]
         outcome:
           type: string
-          enum: [requested, rate_limited, configuration_error, reservation_error, provider_accepted, provider_rejected, provider_error, provider_rate_limited, challenge_inactive, challenge_expired, challenge_locked, already_verified, not_approved, verified, state_conflict, storage_error]
+          enum:
+            [
+              requested,
+              rate_limited,
+              configuration_error,
+              reservation_error,
+              provider_accepted,
+              provider_rejected,
+              provider_error,
+              provider_rate_limited,
+              challenge_inactive,
+              challenge_expired,
+              challenge_locked,
+              already_verified,
+              not_approved,
+              verified,
+              state_conflict,
+              storage_error,
+            ]
         challengeStatus:
           type: ["string", "null"]
         providerHttpStatus:
@@ -7252,7 +7609,18 @@ components:
           type: ["string", "null"]
         sortOrder:
           type: integer
-      required: [id, title, description, imageUrl, mobileImageUrl, imageAlt, ctaLabel, targetUrl, sortOrder]
+      required:
+        [
+          id,
+          title,
+          description,
+          imageUrl,
+          mobileImageUrl,
+          imageAlt,
+          ctaLabel,
+          targetUrl,
+          sortOrder,
+        ]
     AdminOtpPolicy:
       type: object
       properties:
@@ -7285,7 +7653,19 @@ components:
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [countryCode, countryName, operatorId, operatorName, phonePrefix, requiresOtp, otpCommand, providerStatus, version, updatedAt]
+      required:
+        [
+          countryCode,
+          countryName,
+          operatorId,
+          operatorName,
+          phonePrefix,
+          requiresOtp,
+          otpCommand,
+          providerStatus,
+          version,
+          updatedAt,
+        ]
     AdminPaymentAggregator:
       type: object
       properties:
@@ -7331,7 +7711,15 @@ components:
           type: array
           items:
             type: string
-      required: [countryCode, countryName, currency, applicationSupported, payinOperators, payoutOperators]
+      required:
+        [
+          countryCode,
+          countryName,
+          currency,
+          applicationSupported,
+          payinOperators,
+          payoutOperators,
+        ]
     CountryOperationFlags:
       type: object
       properties:
@@ -7370,7 +7758,18 @@ components:
           type: string
         operations:
           $ref: "#/components/schemas/CountryOperationFlags"
-      required: [countryCode, countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, signupEnabled, flag, operations]
+      required:
+        [
+          countryCode,
+          countryName,
+          phonePrefix,
+          minPhoneDigits,
+          maxPhoneDigits,
+          enabled,
+          signupEnabled,
+          flag,
+          operations,
+        ]
     CountryCatalog:
       type: object
       properties:
@@ -7431,7 +7830,16 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [countryCode, countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, reason]
+      required:
+        [
+          countryCode,
+          countryName,
+          phonePrefix,
+          minPhoneDigits,
+          maxPhoneDigits,
+          enabled,
+          reason,
+        ]
     InitialCountryOperatorInput:
       type: object
       properties:
@@ -7485,7 +7893,18 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [countryName, phonePrefix, minPhoneDigits, maxPhoneDigits, enabled, signupEnabled, operations, expectedVersion, reason]
+      required:
+        [
+          countryName,
+          phonePrefix,
+          minPhoneDigits,
+          maxPhoneDigits,
+          enabled,
+          signupEnabled,
+          operations,
+          expectedVersion,
+          reason,
+        ]
     AdminOperatorPaymentRoute:
       type: object
       properties:
@@ -7515,7 +7934,20 @@ components:
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [operatorId, operatorName, operatorEnabled, payoutEnabled, aggregatorCode, effectiveAggregatorCode, inheritsCountryDefault, ussdCodeOverride, ussdVersion, version, updatedAt]
+      required:
+        [
+          operatorId,
+          operatorName,
+          operatorEnabled,
+          payoutEnabled,
+          aggregatorCode,
+          effectiveAggregatorCode,
+          inheritsCountryDefault,
+          ussdCodeOverride,
+          ussdVersion,
+          version,
+          updatedAt,
+        ]
     AdminCountryPaymentRoutes:
       type: object
       properties:
@@ -7547,7 +7979,19 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminOperatorPaymentRoute"
-      required: [countryCode, operation, countryName, phonePrefix, ussdCode, ussdVersion, defaultAggregatorCode, defaultVersion, defaultUpdatedAt, operators]
+      required:
+        [
+          countryCode,
+          operation,
+          countryName,
+          phonePrefix,
+          ussdCode,
+          ussdVersion,
+          defaultAggregatorCode,
+          defaultVersion,
+          defaultUpdatedAt,
+          operators,
+        ]
     AdminPaymentRouting:
       type: object
       properties:
@@ -7599,7 +8043,18 @@ components:
           maximum: 15
         operations:
           $ref: "#/components/schemas/CountryOperationFlags"
-      required: [id, name, dialCode, initials, flag, enabled, minPhoneDigits, maxPhoneDigits, operations]
+      required:
+        [
+          id,
+          name,
+          dialCode,
+          initials,
+          flag,
+          enabled,
+          minPhoneDigits,
+          maxPhoneDigits,
+          operations,
+        ]
     PublicPricingOperator:
       type: object
       properties:
@@ -7652,7 +8107,20 @@ components:
               minimum: 0
               maximum: 1
           additionalProperties: false
-      required: [id, countryId, name, shortName, initials, brand, logoUrl, requiresOtp, otpCommand, operations, fees]
+      required:
+        [
+          id,
+          countryId,
+          name,
+          shortName,
+          initials,
+          brand,
+          logoUrl,
+          requiresOtp,
+          otpCommand,
+          operations,
+          fees,
+        ]
     PublicPricingCatalog:
       type: object
       properties:
@@ -7724,7 +8192,23 @@ components:
         updatedAt:
           type: ["string", "null"]
           format: date-time
-      required: [operatorId, countryCode, name, shortName, initials, brand, logoUrl, enabled, depositEnabled, interNetworkEnabled, internationalEnabled, payoutEnabled, version, updatedAt]
+      required:
+        [
+          operatorId,
+          countryCode,
+          name,
+          shortName,
+          initials,
+          brand,
+          logoUrl,
+          enabled,
+          depositEnabled,
+          interNetworkEnabled,
+          internationalEnabled,
+          payoutEnabled,
+          version,
+          updatedAt,
+        ]
     AdminOperatorWithPricing:
       allOf:
         - $ref: "#/components/schemas/ManagedOperator"
@@ -7757,7 +8241,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminOperatorWithPricing"
-      required: [countryCode, countryName, phonePrefix, initials, flag, enabled, operations, operators]
+      required:
+        [
+          countryCode,
+          countryName,
+          phonePrefix,
+          initials,
+          flag,
+          enabled,
+          operations,
+          operators,
+        ]
     AdminOperatorPricingCatalog:
       type: object
       properties:
@@ -7815,7 +8309,18 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [name, brand, enabled, depositEnabled, interNetworkEnabled, internationalEnabled, payoutEnabled, expectedVersion, reason]
+      required:
+        [
+          name,
+          brand,
+          enabled,
+          depositEnabled,
+          interNetworkEnabled,
+          internationalEnabled,
+          payoutEnabled,
+          expectedVersion,
+          reason,
+        ]
     DeleteAdminOperatorRequest:
       type: object
       properties:
@@ -7948,7 +8453,16 @@ components:
           type: string
           minLength: 3
           maxLength: 500
-      required: [scopeType, countryCode, operation, operatorId, aggregatorCode, expectedVersion, reason]
+      required:
+        [
+          scopeType,
+          countryCode,
+          operation,
+          operatorId,
+          aggregatorCode,
+          expectedVersion,
+          reason,
+        ]
     UpdateAdminUssdInstructionRequest:
       type: object
       properties:
@@ -8011,7 +8525,16 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [scopeType, countryCode, operation, operatorId, aggregatorCode, version, updatedAt]
+      required:
+        [
+          scopeType,
+          countryCode,
+          operation,
+          operatorId,
+          aggregatorCode,
+          version,
+          updatedAt,
+        ]
     AdminOtpPolicyList:
       type: object
       properties:
@@ -8076,7 +8599,23 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, title, description, imageUrl, mobileImageUrl, imageAlt, ctaLabel, targetUrl, sortOrder, isActive, startsAt, endsAt, createdAt, updatedAt]
+      required:
+        [
+          id,
+          title,
+          description,
+          imageUrl,
+          mobileImageUrl,
+          imageAlt,
+          ctaLabel,
+          targetUrl,
+          sortOrder,
+          isActive,
+          startsAt,
+          endsAt,
+          createdAt,
+          updatedAt,
+        ]
     PublicBannerList:
       type: object
       properties:
@@ -8238,7 +8777,23 @@ components:
           description: Safe confirmation metadata ordered by verification and persistence time. Encrypted payloads, hashes, and signatures are never returned.
           items:
             $ref: "#/components/schemas/AdminTransactionPaymentConfirmation"
-      required: [id, direction, countryCode, countryName, channelId, operationReference, amountMinor, currency, status, dispatchedAt, finalConfirmationId, createdAt, updatedAt, confirmations]
+      required:
+        [
+          id,
+          direction,
+          countryCode,
+          countryName,
+          channelId,
+          operationReference,
+          amountMinor,
+          currency,
+          status,
+          dispatchedAt,
+          finalConfirmationId,
+          createdAt,
+          updatedAt,
+          confirmations,
+        ]
     AdminTransactionPaymentConfirmation:
       type: object
       properties:
@@ -8264,7 +8819,16 @@ components:
         createdAt:
           type: string
           format: date-time
-      required: [id, source, providerStatus, amountMinor, currency, verifiedAt, createdAt]
+      required:
+        [
+          id,
+          source,
+          providerStatus,
+          amountMinor,
+          currency,
+          verifiedAt,
+          createdAt,
+        ]
     AdminTransactionPaymentIntent:
       type: object
       properties:
@@ -8276,7 +8840,17 @@ components:
           enum: [deposit, inter-network, international]
         state:
           type: string
-          enum: [created, collecting, funded, paying, succeeded, failed, uncertain, refund_due]
+          enum:
+            [
+              created,
+              collecting,
+              funded,
+              paying,
+              succeeded,
+              failed,
+              uncertain,
+              refund_due,
+            ]
         currency:
           type: string
           enum: [XOF, XAF]
@@ -8308,7 +8882,21 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, kind, state, currency, amountMinor, feeMinor, feePayer, senderTotalMinor, recipientTotalMinor, ledgerEntryId, createdAt, updatedAt]
+      required:
+        [
+          id,
+          kind,
+          state,
+          currency,
+          amountMinor,
+          feeMinor,
+          feePayer,
+          senderTotalMinor,
+          recipientTotalMinor,
+          ledgerEntryId,
+          createdAt,
+          updatedAt,
+        ]
     AdminTransactionPaymentLink:
       type: object
       properties:
@@ -8435,8 +9023,8 @@ components:
         - reference
         - providerReference
         - createdAt
-         - updatedAt
-         - archivedAt
+          - updatedAt
+          - archivedAt
         - paymentTrace
     AdminUserDetail:
       type: object
@@ -8453,7 +9041,14 @@ components:
           $ref: "#/components/schemas/AdminUserFinancialTotals"
         monthlyIncomingPolicy:
           $ref: "#/components/schemas/AdminUserMonthlyIncomingPolicy"
-      required: [user, wallet, transactionSummary, financialTotals, monthlyIncomingPolicy]
+      required:
+        [
+          user,
+          wallet,
+          transactionSummary,
+          financialTotals,
+          monthlyIncomingPolicy,
+        ]
     AdminWalletAdjustmentRequest:
       type: object
       properties:
@@ -8482,7 +9077,15 @@ components:
           format: int64
           minimum: 0
           maximum: 9007199254740991
-      required: [direction, amountMinor, reason, confirmation, idempotencyKey, expectedBalanceMinor]
+      required:
+        [
+          direction,
+          amountMinor,
+          reason,
+          confirmation,
+          idempotencyKey,
+          expectedBalanceMinor,
+        ]
     AdminUserActionRequest:
       type: object
       properties:
@@ -8525,7 +9128,18 @@ components:
           type: string
         duplicate:
           type: boolean
-      required: [ledgerEntryId, userId, walletId, direction, amountMinor, balanceBeforeMinor, balanceAfterMinor, currency, duplicate]
+      required:
+        [
+          ledgerEntryId,
+          userId,
+          walletId,
+          direction,
+          amountMinor,
+          balanceBeforeMinor,
+          balanceAfterMinor,
+          currency,
+          duplicate,
+        ]
     AdminActionResult:
       type: object
       properties:
@@ -8612,7 +9226,16 @@ components:
           format: date-time
         isCurrent:
           type: boolean
-      required: [id, createdAt, lastActivityAt, idleExpiresAt, absoluteExpiresAt, revokedAt, isCurrent]
+      required:
+        [
+          id,
+          createdAt,
+          lastActivityAt,
+          idleExpiresAt,
+          absoluteExpiresAt,
+          revokedAt,
+          isCurrent,
+        ]
     DeveloperApiKeyInput:
       type: object
       properties:
@@ -8632,7 +9255,18 @@ components:
         lastUsedAt: { type: ["string", "null"], format: date-time }
         createdAt: { type: string, format: date-time }
         revokedAt: { type: ["string", "null"], format: date-time }
-      required: [id, label, publicKey, publicKeyPrefix, secretKeyPrefix, status, lastUsedAt, createdAt, revokedAt]
+      required:
+        [
+          id,
+          label,
+          publicKey,
+          publicKeyPrefix,
+          secretKeyPrefix,
+          status,
+          lastUsedAt,
+          createdAt,
+          revokedAt,
+        ]
     DeveloperApiKeysResponse:
       type: object
       properties:
@@ -8682,7 +9316,20 @@ components:
           minItems: 1
           maxItems: 7
           uniqueItems: true
-          items: { type: string, enum: [payment.succeeded, payment.failed, payout.created, payout.processing, payout.succeeded, payout.failed, payout.uncertain] }
+          items:
+            {
+              type: string,
+              enum:
+                [
+                  payment.succeeded,
+                  payment.failed,
+                  payout.created,
+                  payout.processing,
+                  payout.succeeded,
+                  payout.failed,
+                  payout.uncertain,
+                ],
+            }
       required: [label, url, events]
     DeveloperWebhookEndpoint:
       type: object
@@ -8692,7 +9339,20 @@ components:
         url: { type: string, format: uri }
         events:
           type: array
-          items: { type: string, enum: [payment.succeeded, payment.failed, payout.created, payout.processing, payout.succeeded, payout.failed, payout.uncertain] }
+          items:
+            {
+              type: string,
+              enum:
+                [
+                  payment.succeeded,
+                  payment.failed,
+                  payout.created,
+                  payout.processing,
+                  payout.succeeded,
+                  payout.failed,
+                  payout.uncertain,
+                ],
+            }
         status: { type: string, enum: [active, revoked] }
         createdAt: { type: string, format: date-time }
         revokedAt: { type: ["string", "null"], format: date-time }
@@ -8722,7 +9382,18 @@ components:
         createdAt: { type: string, format: date-time }
         lastAttemptAt: { type: ["string", "null"], format: date-time }
         deliveredAt: { type: ["string", "null"], format: date-time }
-      required: [id, eventType, status, attempts, lastHttpStatus, lastErrorClass, createdAt, lastAttemptAt, deliveredAt]
+      required:
+        [
+          id,
+          eventType,
+          status,
+          attempts,
+          lastHttpStatus,
+          lastErrorClass,
+          createdAt,
+          lastAttemptAt,
+          deliveredAt,
+        ]
     DeveloperWebhookDeliveriesResponse:
       type: object
       properties:
@@ -8753,27 +9424,58 @@ components:
         id: { type: string, format: uuid }
         merchantReference: { type: string }
         mode: { type: string, enum: [hosted, direct] }
-        state: { type: string, enum: [created, waiting, uncertain, succeeded, failed] }
+        state:
+          {
+            type: string,
+            enum: [created, waiting, uncertain, succeeded, failed],
+          }
         amountMinor: { type: integer }
         currency: { type: string, enum: [XOF] }
         checkoutPath: { type: ["string", "null"] }
         clientToken: { type: string }
         publicKey: { type: string }
         expiresAt: { type: string, format: date-time }
-      required: [id, merchantReference, mode, state, amountMinor, currency, checkoutPath, clientToken, publicKey, expiresAt]
+      required:
+        [
+          id,
+          merchantReference,
+          mode,
+          state,
+          amountMinor,
+          currency,
+          checkoutPath,
+          clientToken,
+          publicKey,
+          expiresAt,
+        ]
     DeveloperPaymentSessionStatus:
       type: object
       properties:
         id: { type: string, format: uuid }
         merchantReference: { type: string }
         mode: { type: string, enum: [hosted, direct] }
-        state: { type: string, enum: [created, waiting, uncertain, succeeded, failed] }
+        state:
+          {
+            type: string,
+            enum: [created, waiting, uncertain, succeeded, failed],
+          }
         amountMinor: { type: integer }
         currency: { type: string, enum: [XOF] }
         attemptId: { type: ["string", "null"], format: uuid }
         createdAt: { type: string, format: date-time }
         expiresAt: { type: string, format: date-time }
-      required: [id, merchantReference, mode, state, amountMinor, currency, attemptId, createdAt, expiresAt]
+      required:
+        [
+          id,
+          merchantReference,
+          mode,
+          state,
+          amountMinor,
+          currency,
+          attemptId,
+          createdAt,
+          expiresAt,
+        ]
     DeveloperPublicPaymentSession:
       type: object
       properties:
@@ -8781,7 +9483,11 @@ components:
         merchantName: { type: string }
         description: { type: string }
         mode: { type: string, enum: [hosted, direct] }
-        state: { type: string, enum: [created, waiting, uncertain, succeeded, failed] }
+        state:
+          {
+            type: string,
+            enum: [created, waiting, uncertain, succeeded, failed],
+          }
         amountMinor: { type: integer }
         currency: { type: string, enum: [XOF] }
         expiresAt: { type: string, format: date-time }
@@ -8808,11 +9514,43 @@ components:
                     initials: { type: string }
                     logoUrl: { type: ["string", "null"] }
                     requiresOtp: { type: boolean }
-                    otpMethod: { type: ["string", "null"], enum: [sms, ussd, app, null] }
+                    otpMethod:
+                      { type: ["string", "null"], enum: [sms, ussd, app, null] }
                     otpCommand: { type: ["string", "null"] }
-                  required: [id, name, initials, logoUrl, requiresOtp, otpMethod, otpCommand]
-            required: [code, name, flag, phonePrefix, minPhoneDigits, maxPhoneDigits, operators]
-      required: [id, merchantName, description, mode, state, amountMinor, currency, expiresAt, monthlyLimitReached, monthlyLimitMessage, countries]
+                  required:
+                    [
+                      id,
+                      name,
+                      initials,
+                      logoUrl,
+                      requiresOtp,
+                      otpMethod,
+                      otpCommand,
+                    ]
+            required:
+              [
+                code,
+                name,
+                flag,
+                phonePrefix,
+                minPhoneDigits,
+                maxPhoneDigits,
+                operators,
+              ]
+      required:
+        [
+          id,
+          merchantName,
+          description,
+          mode,
+          state,
+          amountMinor,
+          currency,
+          expiresAt,
+          monthlyLimitReached,
+          monthlyLimitMessage,
+          countries,
+        ]
     DeveloperDirectPaymentInput:
       type: object
       properties:
@@ -8821,17 +9559,48 @@ components:
         countryCode: { type: string, pattern: "^[A-Z]{2}$" }
         operatorId: { type: string, minLength: 1, maxLength: 80 }
         phoneNumber: { type: string, minLength: 6, maxLength: 20 }
-        otp: { type: string, pattern: "^[0-9]{4,12}$", description: "Payer-provided OTP. The API never stores it." }
-        reference: { type: string, format: uuid, description: "Attempt reference returned when the provider requires a second OTP step." }
+        otp:
+          {
+            type: string,
+            pattern: "^[0-9]{4,12}$",
+            description: "Payer-provided OTP. The API never stores it.",
+          }
+        reference:
+          {
+            type: string,
+            format: uuid,
+            description: "Attempt reference returned when the provider requires a second OTP step.",
+          }
       required: [firstName, lastName, countryCode, operatorId, phoneNumber]
     DeveloperDirectPaymentFlow:
       type: object
       properties:
-        action: { type: string, enum: [approve_on_phone, dial_ussd, enter_otp, open_redirect, wait, none] }
+        action:
+          {
+            type: string,
+            enum:
+              [
+                approve_on_phone,
+                dial_ussd,
+                enter_otp,
+                open_redirect,
+                wait,
+                none,
+              ],
+          }
         reference: { type: ["string", "null"], format: uuid }
         otpMethod: { type: ["string", "null"], enum: [sms, ussd, app, null] }
-        otpCommand: { type: ["string", "null"], description: "Server-configured instruction to dial; never the payer's OTP." }
-        redirectUrl: { type: ["string", "null"], format: uri, description: "Provider-generated redirect URL when the selected flow requires one." }
+        otpCommand:
+          {
+            type: ["string", "null"],
+            description: "Server-configured instruction to dial; never the payer's OTP.",
+          }
+        redirectUrl:
+          {
+            type: ["string", "null"],
+            format: uri,
+            description: "Provider-generated redirect URL when the selected flow requires one.",
+          }
       required: [action, reference, otpMethod, otpCommand, redirectUrl]
     DeveloperOtpRequiredError:
       type: object
@@ -8853,7 +9622,18 @@ components:
         pollToken: { type: string }
         merchantReference: { type: string }
         flow: { $ref: "#/components/schemas/DeveloperDirectPaymentFlow" }
-      required: [id, attemptId, state, amountMinor, currency, ussdCode, pollToken, merchantReference, flow]
+      required:
+        [
+          id,
+          attemptId,
+          state,
+          amountMinor,
+          currency,
+          ussdCode,
+          pollToken,
+          merchantReference,
+          flow,
+        ]
     AdminEmailCampaignRecipient:
       type: object
       required: [userId, displayName, email, accountStatus, emailVerifiedAt]
@@ -8865,7 +9645,18 @@ components:
         emailVerifiedAt: { type: [string, "null"], format: date-time }
     AdminEmailCampaignRecipientCounts:
       type: object
-      required: [draft, queued, sending, accepted, delivered, bounced, complained, failed, cancelled]
+      required:
+        [
+          draft,
+          queued,
+          sending,
+          accepted,
+          delivered,
+          bounced,
+          complained,
+          failed,
+          cancelled,
+        ]
       properties:
         draft: { type: integer, minimum: 0 }
         queued: { type: integer, minimum: 0 }
@@ -8878,16 +9669,43 @@ components:
         cancelled: { type: integer, minimum: 0 }
     AdminEmailCampaignSummary:
       type: object
-      required: [id, subject, bodyText, audienceMode, status, recipientCount, unverifiedRecipientCount, counts, createdAt, updatedAt, queuedAt, completedAt]
+      required:
+        [
+          id,
+          subject,
+          bodyText,
+          audienceMode,
+          status,
+          recipientCount,
+          unverifiedRecipientCount,
+          counts,
+          createdAt,
+          updatedAt,
+          queuedAt,
+          completedAt,
+        ]
       properties:
         id: { type: string, minLength: 1 }
         subject: { type: string }
         bodyText: { type: string }
         audienceMode: { type: string, enum: [all, selected] }
-        status: { type: string, enum: [draft, queued, sending, completed, completed_with_errors, cancelled] }
+        status:
+          {
+            type: string,
+            enum:
+              [
+                draft,
+                queued,
+                sending,
+                completed,
+                completed_with_errors,
+                cancelled,
+              ],
+          }
         recipientCount: { type: integer, minimum: 0 }
         unverifiedRecipientCount: { type: integer, minimum: 0 }
-        counts: { $ref: "#/components/schemas/AdminEmailCampaignRecipientCounts" }
+        counts:
+          { $ref: "#/components/schemas/AdminEmailCampaignRecipientCounts" }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
         queuedAt: { type: [string, "null"], format: date-time }
@@ -8902,7 +9720,18 @@ components:
         sendingEnabled: { type: boolean }
     AdminEmailCampaignSettings:
       type: object
-      required: [sendingEnabled, webhookConfigured, providerEventsReady, unsubscribeConfigured, attachmentsEnabled, automaticAttemptLimit, manualRetryLimitPerRecipient, queueLimitPerAdminPerHour, retryLimitPerAdminPer15Minutes]
+      required:
+        [
+          sendingEnabled,
+          webhookConfigured,
+          providerEventsReady,
+          unsubscribeConfigured,
+          attachmentsEnabled,
+          automaticAttemptLimit,
+          manualRetryLimitPerRecipient,
+          queueLimitPerAdminPerHour,
+          retryLimitPerAdminPer15Minutes,
+        ]
       properties:
         sendingEnabled: { type: boolean }
         webhookConfigured: { type: boolean }
@@ -8915,7 +9744,15 @@ components:
         retryLimitPerAdminPer15Minutes: { type: integer, enum: [20] }
     AdminEmailCampaignRecipientsResponse:
       type: object
-      required: [items, page, pageSize, total, allRecipientCount, allIneligibleRecipientCount]
+      required:
+        [
+          items,
+          page,
+          pageSize,
+          total,
+          allRecipientCount,
+          allIneligibleRecipientCount,
+        ]
       properties:
         items:
           type: array
@@ -8958,10 +9795,25 @@ components:
         deleted: { type: boolean, enum: [true] }
     AdminEmailCampaignAttempt:
       type: object
-      required: [attemptNumber, status, email, addressSource, startedAt, finishedAt, errorClass, httpStatus, providerMessageId]
+      required:
+        [
+          attemptNumber,
+          status,
+          email,
+          addressSource,
+          startedAt,
+          finishedAt,
+          errorClass,
+          httpStatus,
+          providerMessageId,
+        ]
       properties:
         attemptNumber: { type: integer, minimum: 1 }
-        status: { type: string, enum: [sending, accepted, delivered, bounced, complained, failed] }
+        status:
+          {
+            type: string,
+            enum: [sending, accepted, delivered, bounced, complained, failed],
+          }
         email: { type: [string, "null"], format: email }
         addressSource: { type: string, enum: [send_snapshot, unavailable] }
         startedAt: { type: string, format: date-time }
@@ -8972,14 +9824,46 @@ components:
         providerUpdatedAt: { type: [string, "null"], format: date-time }
     AdminEmailCampaignDelivery:
       type: object
-      required: [recipientId, campaignId, subject, email, addressSource, status, createdAt, acceptedAt, attemptCount, manualRetries, lastErrorClass, lastErrorStatus, providerMessageId, attempts]
+      required:
+        [
+          recipientId,
+          campaignId,
+          subject,
+          email,
+          addressSource,
+          status,
+          createdAt,
+          acceptedAt,
+          attemptCount,
+          manualRetries,
+          lastErrorClass,
+          lastErrorStatus,
+          providerMessageId,
+          attempts,
+        ]
       properties:
         recipientId: { type: string }
         campaignId: { type: string }
         subject: { type: string }
         email: { type: [string, "null"], format: email }
-        addressSource: { type: string, enum: [send_snapshot, current_account, unavailable] }
-        status: { type: string, enum: [draft, queued, sending, accepted, delivered, bounced, complained, failed, cancelled] }
+        addressSource:
+          { type: string, enum: [send_snapshot, current_account, unavailable] }
+        status:
+          {
+            type: string,
+            enum:
+              [
+                draft,
+                queued,
+                sending,
+                accepted,
+                delivered,
+                bounced,
+                complained,
+                failed,
+                cancelled,
+              ],
+          }
         createdAt: { type: string, format: date-time }
         acceptedAt: { type: [string, "null"], format: date-time }
         attemptCount: { type: integer, minimum: 0 }
@@ -8993,7 +9877,17 @@ components:
           items: { $ref: "#/components/schemas/AdminEmailCampaignAttempt" }
     AdminEmailCampaignHistoryCounts:
       type: object
-      required: [queued, sending, accepted, delivered, bounced, complained, failed, cancelled]
+      required:
+        [
+          queued,
+          sending,
+          accepted,
+          delivered,
+          bounced,
+          complained,
+          failed,
+          cancelled,
+        ]
       properties:
         queued: { type: integer, minimum: 0 }
         sending: { type: integer, minimum: 0 }
@@ -9019,11 +9913,37 @@ components:
       required: [recipientId, status, replayed]
       properties:
         recipientId: { type: string }
-        status: { type: string, enum: [queued, sending, accepted, delivered, bounced, complained, failed, cancelled] }
+        status:
+          {
+            type: string,
+            enum:
+              [
+                queued,
+                sending,
+                accepted,
+                delivered,
+                bounced,
+                complained,
+                failed,
+                cancelled,
+              ],
+          }
         replayed: { type: boolean }
     PayoutStatus:
       type: string
-      enum: [created, validated, funds_reserved, submitted, processing, succeeded, rejected, failed, uncertain, cancelled]
+      enum:
+        [
+          created,
+          validated,
+          funds_reserved,
+          submitted,
+          processing,
+          succeeded,
+          rejected,
+          failed,
+          uncertain,
+          cancelled,
+        ]
     PayoutFeePayer:
       type: string
       enum: [merchant, beneficiary]
@@ -9034,7 +9954,13 @@ components:
         amountMinor: { type: integer, minimum: 1, maximum: 9007199254740991 }
         currency: { type: string, enum: [XOF] }
         countryCode: { type: string, pattern: "^[a-z]{2}$" }
-        operatorId: { type: string, minLength: 2, maxLength: 60, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        operatorId:
+          {
+            type: string,
+            minLength: 2,
+            maxLength: 60,
+            pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          }
         feePayer: { $ref: "#/components/schemas/PayoutFeePayer" }
       required: [amountMinor, currency, countryCode, operatorId, feePayer]
     PayoutQuoteResponse:
@@ -9051,12 +9977,31 @@ components:
         maximumPayoutDailyMinor: { type: ["integer", "null"], minimum: 200 }
         pricingVersion: { type: integer, minimum: 1 }
         quoteExpiresAt: { type: string, format: date-time }
-      required: [currency, amountMinor, feeMinor, totalDebitMinor, beneficiaryAmountMinor, availableBalanceMinor, feePayer, minimumPayoutMinor, maximumPayoutDailyMinor, pricingVersion, quoteExpiresAt]
+      required:
+        [
+          currency,
+          amountMinor,
+          feeMinor,
+          totalDebitMinor,
+          beneficiaryAmountMinor,
+          availableBalanceMinor,
+          feePayer,
+          minimumPayoutMinor,
+          maximumPayoutDailyMinor,
+          pricingVersion,
+          quoteExpiresAt,
+        ]
     PayoutBeneficiaryInput:
       type: object
       additionalProperties: false
       properties:
-        phoneNumber: { type: string, minLength: 9, maxLength: 16, pattern: "^\\+[1-9][0-9]{7,14}$" }
+        phoneNumber:
+          {
+            type: string,
+            minLength: 9,
+            maxLength: 16,
+            pattern: "^\\+[1-9][0-9]{7,14}$",
+          }
         name: { type: ["string", "null"], minLength: 2, maxLength: 120 }
       required: [phoneNumber]
     PayoutCreateInput:
@@ -9066,11 +10011,19 @@ components:
         amountMinor: { type: integer, minimum: 1, maximum: 9007199254740991 }
         currency: { type: string, enum: [XOF] }
         countryCode: { type: string, pattern: "^[a-z]{2}$" }
-        operatorId: { type: string, minLength: 2, maxLength: 60, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        operatorId:
+          {
+            type: string,
+            minLength: 2,
+            maxLength: 60,
+            pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          }
         feePayer: { $ref: "#/components/schemas/PayoutFeePayer" }
-        merchantReference: { type: ["string", "null"], minLength: 1, maxLength: 128 }
+        merchantReference:
+          { type: ["string", "null"], minLength: 1, maxLength: 128 }
         beneficiary: { $ref: "#/components/schemas/PayoutBeneficiaryInput" }
-      required: [amountMinor, currency, countryCode, operatorId, feePayer, beneficiary]
+      required:
+        [amountMinor, currency, countryCode, operatorId, feePayer, beneficiary]
     PayoutBeneficiarySummary:
       type: object
       properties:
@@ -9098,7 +10051,27 @@ components:
         submittedAt: { type: ["string", "null"], format: date-time }
         completedAt: { type: ["string", "null"], format: date-time }
         failureCode: { type: ["string", "null"] }
-      required: [id, reference, merchantReference, countryCode, operatorId, beneficiary, amountMinor, currency, feeMinor, totalDebitMinor, beneficiaryAmountMinor, feePayer, status, createdAt, updatedAt, submittedAt, completedAt, failureCode]
+      required:
+        [
+          id,
+          reference,
+          merchantReference,
+          countryCode,
+          operatorId,
+          beneficiary,
+          amountMinor,
+          currency,
+          feeMinor,
+          totalDebitMinor,
+          beneficiaryAmountMinor,
+          feePayer,
+          status,
+          createdAt,
+          updatedAt,
+          submittedAt,
+          completedAt,
+          failureCode,
+        ]
     PayoutListResponse:
       type: object
       properties:
@@ -9113,7 +10086,8 @@ components:
         - type: object
           properties:
             merchantUserId: { type: string }
-            reservationState: { type: string, enum: [none, active, consumed, released] }
+            reservationState:
+              { type: string, enum: [none, active, consumed, released] }
             timeline:
               type: array
               items:
@@ -9124,7 +10098,8 @@ components:
                   actorType: { type: string, enum: [merchant, admin, system] }
                   reasonCode: { type: string }
                   createdAt: { type: string, format: date-time }
-                required: [fromStatus, toStatus, actorType, reasonCode, createdAt]
+                required:
+                  [fromStatus, toStatus, actorType, reasonCode, createdAt]
           required: [merchantUserId, reservationState, timeline]
     AdminPayoutListResponse:
       type: object

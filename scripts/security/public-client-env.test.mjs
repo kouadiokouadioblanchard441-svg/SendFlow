@@ -1,15 +1,14 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
-import { randomUUID } from 'node:crypto';
-import { publicClientDefinitions, requireTurnstileSiteKey } from './public-client-env.mjs';
+import assert from "node:assert/strict";
+import test from "node:test";
+import { randomUUID } from "node:crypto";
+import { publicClientDefinitions } from "./public-client-env.mjs";
 
-test('only allowlisted public values, including the Turnstile site key, are embedded', () => {
+test("only allowlisted public routing values are embedded", () => {
   const sensitive = randomUUID();
-  const siteKey = '1x00000000000000000000AA';
   const result = publicClientDefinitions({
-    VITE_API_URL: '/api',
-    VITE_PUBLIC_SITE_URL: 'https://example.invalid',
-    VITE_TURNSTILE_SITE_KEY: siteKey,
+    VITE_API_URL: "/api",
+    VITE_PUBLIC_SITE_URL: "https://example.invalid",
+    VITE_TURNSTILE_SITE_KEY: sensitive,
     TURNSTILE_SECRET_KEY: sensitive,
     DIDIT_API_KEY: sensitive,
     VITE_ESMS_API_KEY: sensitive,
@@ -17,59 +16,59 @@ test('only allowlisted public values, including the Turnstile site key, are embe
     VITE_UNKNOWN: sensitive,
   });
   assert.deepEqual(Object.keys(result).sort(), [
-    'import.meta.env.VITE_API_BASE_URL',
-    'import.meta.env.VITE_API_URL',
-    'import.meta.env.VITE_PUBLIC_SITE_URL',
-    'import.meta.env.VITE_TURNSTILE_SITE_KEY',
+    "import.meta.env.VITE_API_BASE_URL",
+    "import.meta.env.VITE_API_URL",
+    "import.meta.env.VITE_PUBLIC_SITE_URL",
   ]);
   assert.equal(JSON.stringify(result).includes(sensitive), false);
-  assert.equal(result['import.meta.env.VITE_API_URL'], '"/api"');
-  assert.equal(result['import.meta.env.VITE_TURNSTILE_SITE_KEY'], JSON.stringify(siteKey));
+  assert.equal(result["import.meta.env.VITE_API_URL"], '"/api"');
 });
 
-test('empty public values preserve same-origin defaults', () => {
-  assert.equal(publicClientDefinitions({})['import.meta.env.VITE_API_URL'], '""');
-  assert.equal(publicClientDefinitions({})['import.meta.env.VITE_TURNSTILE_SITE_KEY'], '""');
+test("empty public values preserve same-origin defaults", () => {
+  assert.equal(
+    publicClientDefinitions({})["import.meta.env.VITE_API_URL"],
+    '""',
+  );
 });
 
-test('URLs cannot smuggle credentials or query tokens; errors never echo input', () => {
+test("URLs cannot smuggle credentials or query tokens; errors never echo input", () => {
   const sensitive = randomUUID();
-  const authenticated = new URL('https://example.invalid');
-  authenticated.username = 'user';
+  const authenticated = new URL("https://example.invalid");
+  authenticated.username = "user";
   authenticated.password = sensitive;
   for (const value of [
     authenticated.toString(),
     `https://example.invalid?token=${sensitive}`,
     `https://example.invalid#${sensitive}`,
-    '//example.invalid', 'javascript:alert(1)', 'not-a-url', '/\\example.invalid',
+    "//example.invalid",
+    "javascript:alert(1)",
+    "not-a-url",
+    "/\\example.invalid",
   ]) {
     assert.throws(
       () => publicClientDefinitions({ VITE_API_URL: value }),
-      error => !error.message.includes(sensitive) && error.message.includes('VITE_API_URL'),
+      (error) =>
+        !error.message.includes(sensitive) &&
+        error.message.includes("VITE_API_URL"),
     );
   }
-  assert.throws(() => publicClientDefinitions({ VITE_PUBLIC_SITE_URL: '/relative' }));
-});
-
-test('Turnstile configuration accepts a public site key only, without echoing invalid input', () => {
-  const sensitive = randomUUID();
-  assert.throws(
-    () => publicClientDefinitions({ VITE_TURNSTILE_SITE_KEY: `https://example.invalid/${sensitive}` }),
-    (error) => error.message.includes('VITE_TURNSTILE_SITE_KEY') && !error.message.includes(sensitive),
+  assert.throws(() =>
+    publicClientDefinitions({ VITE_PUBLIC_SITE_URL: "/relative" }),
   );
 });
 
-test('Plesk production builds require a non-empty public Turnstile site key', () => {
+test("Turnstile keys are not included in client build definitions", () => {
+  const siteKey = randomUUID();
+  const secretKey = randomUUID();
+  const result = publicClientDefinitions({
+    TURNSTILE_SITE_KEY: siteKey,
+    TURNSTILE_SECRET_KEY: secretKey,
+    VITE_TURNSTILE_SITE_KEY: siteKey,
+  });
+  assert.equal(JSON.stringify(result).includes(siteKey), false);
+  assert.equal(JSON.stringify(result).includes(secretKey), false);
   assert.equal(
-    requireTurnstileSiteKey({ VITE_TURNSTILE_SITE_KEY: 'public-site-key' }),
-    'public-site-key',
-  );
-  assert.throws(
-    () => requireTurnstileSiteKey({}),
-    /VITE_TURNSTILE_SITE_KEY is required/,
-  );
-  assert.throws(
-    () => requireTurnstileSiteKey({ VITE_TURNSTILE_SITE_KEY: 'not a valid key' }),
-    /public site-key characters/,
+    Object.keys(result).some((name) => name.includes("TURNSTILE")),
+    false,
   );
 });

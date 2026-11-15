@@ -1,50 +1,36 @@
-// Only explicitly public routing metadata and the Cloudflare site key belong
-// in a browser or Android JavaScript bundle. Verification secrets are excluded.
+// Only explicitly public routing metadata belongs in browser or Android bundles.
+// Turnstile keys are loaded from the API at runtime, not embedded during build.
 const publicNames = [
-  'VITE_API_URL',
-  'VITE_API_BASE_URL',
-  'VITE_PUBLIC_SITE_URL',
-  'VITE_TURNSTILE_SITE_KEY',
+  "VITE_API_URL",
+  "VITE_API_BASE_URL",
+  "VITE_PUBLIC_SITE_URL",
 ];
-const turnstileSiteKeyPattern = /^[A-Za-z0-9_-]{1,128}$/;
-
-export function requireTurnstileSiteKey(environment) {
-  const value = environment.VITE_TURNSTILE_SITE_KEY?.trim() ?? '';
-  if (!value) {
-    throw new Error('VITE_TURNSTILE_SITE_KEY is required for Plesk production builds');
-  }
-  if (!turnstileSiteKeyPattern.test(value)) {
-    throw new Error('VITE_TURNSTILE_SITE_KEY must contain only public site-key characters');
-  }
-  return value;
-}
 
 export function publicClientDefinitions(environment) {
   const definitions = {};
   for (const name of publicNames) {
-    const value = environment[name]?.trim() ?? '';
-    if (name === 'VITE_TURNSTILE_SITE_KEY') {
-      if (value && !turnstileSiteKeyPattern.test(value)) {
-        throw new Error(`${name} must contain only public site-key characters`);
-      }
-      definitions[`import.meta.env.${name}`] = JSON.stringify(value);
-      continue;
-    }
+    const value = environment[name]?.trim() ?? "";
     if (value) {
       let url;
       try {
         // Relative API prefixes are supported; protocol-relative URLs are not.
-        if (value.startsWith('//') || value.includes('\\')) throw new Error();
-        url = new URL(value, 'https://public-url-validation.invalid');
+        if (value.startsWith("//") || value.includes("\\")) throw new Error();
+        url = new URL(value, "https://public-url-validation.invalid");
         if (
-          !['http:', 'https:'].includes(url.protocol) ||
-          url.username || url.password || url.search || url.hash ||
-          (!value.startsWith('/') && !/^https?:\/\//i.test(value)) ||
-          (name === 'VITE_PUBLIC_SITE_URL' && value.startsWith('/'))
-        ) throw new Error();
+          !["http:", "https:"].includes(url.protocol) ||
+          url.username ||
+          url.password ||
+          url.search ||
+          url.hash ||
+          (!value.startsWith("/") && !/^https?:\/\//i.test(value)) ||
+          (name === "VITE_PUBLIC_SITE_URL" && value.startsWith("/"))
+        )
+          throw new Error();
       } catch {
         // Never include the supplied URL: it may contain an accidentally pasted secret.
-        throw new Error(`${name} must be a public HTTP(S) URL or API path without credentials, query or fragment`);
+        throw new Error(
+          `${name} must be a public HTTP(S) URL or API path without credentials, query or fragment`,
+        );
       }
     }
     definitions[`import.meta.env.${name}`] = JSON.stringify(value);

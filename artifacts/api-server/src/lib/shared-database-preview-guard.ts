@@ -12,6 +12,7 @@ const publicReadPathPrefixes = [
 ];
 const publicReadExactPaths = [
   "/api/auth/registration-countries",
+  "/api/auth/turnstile-config",
 ];
 
 export function normalizeRequestPath(requestPath: string): string | null {

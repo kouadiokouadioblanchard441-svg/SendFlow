@@ -20,8 +20,6 @@ jobs:
   build-and-publish:
     name: Build production packages for Plesk
     runs-on: ubuntu-latest
-    env:
-      VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

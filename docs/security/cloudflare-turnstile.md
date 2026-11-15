@@ -6,13 +6,13 @@ never authorizes sign-in, account creation, or password recovery.
 
 ## Protected actions
 
-| Flow | API operation | Expected Turnstile action |
-| --- | --- | --- |
-| Sign in | `POST /api/auth/sign-in` | `login` |
-| Start signup email verification | `POST /api/auth/send-otp` with `purpose: "signup"` | `signup` |
-| Create an account | `POST /api/auth/register` | `signup` |
-| Start password recovery | `POST /api/auth/send-otp` with `purpose: "password_reset"` | `password_reset` |
-| Save a new password | `POST /api/auth/reset-password` | `password_reset` |
+| Flow                            | API operation                                              | Expected Turnstile action |
+| ------------------------------- | ---------------------------------------------------------- | ------------------------- |
+| Sign in                         | `POST /api/auth/sign-in`                                   | `login`                   |
+| Start signup email verification | `POST /api/auth/send-otp` with `purpose: "signup"`         | `signup`                  |
+| Create an account               | `POST /api/auth/register`                                  | `signup`                  |
+| Start password recovery         | `POST /api/auth/send-otp` with `purpose: "password_reset"` | `password_reset`          |
+| Save a new password             | `POST /api/auth/reset-password`                            | `password_reset`          |
 
 The password-recovery widget must be completed again before requesting a
 replacement email code and before saving the new password. Signup uses a fresh
@@ -48,32 +48,27 @@ is available, SendFlow omits `remoteip` rather than trusting a request header.
    SendFlow hostname that will render the widget. Production and development
    preview hostnames are separate allow-list entries. Do not use a wildcard
    unless Cloudflare's site configuration explicitly supports and requires it.
-2. For Replit builds, add `VITE_TURNSTILE_SITE_KEY` as a Replit environment
-   variable. For the Plesk package built by GitHub Actions, add it as a GitHub
-   repository Actions variable with the same name. The workflow passes it to the
-   production build and fails closed if it is absent. The Vite build injects only
-   this exact public value through its explicit allowlist.
-   It may be shared when one site key allows all required hostnames; use
-   environment-specific values if development and production use separate site
-   keys. This site key is designed to be public and may appear in web/Android
-   bundles. It is not the verification secret.
-3. Add `TURNSTILE_SECRET_KEY` through Replit Secrets for the API server, and as
-   a protected environment variable on the Plesk API application.
-   Never add the secret to a `VITE_` variable, a frontend file, Android
-   configuration, an API response, a log, or a committed environment file.
+2. On the Plesk API Node application, configure `TURNSTILE_SITE_KEY` and
+   `TURNSTILE_SECRET_KEY` as environment variables. The public site key is served
+   to the browser only at runtime by `GET /api/auth/turnstile-config`; it is not
+   compiled into the web or Android bundles. The API returns the site key only
+   when both values are configured. The key remains public by design, while the
+   secret is used only for Siteverify.
+3. Never add `TURNSTILE_SECRET_KEY` to a `VITE_` variable, frontend file,
+   Android configuration, API response, log, or committed environment file.
 4. Confirm `CORS_ALLOWED_ORIGINS` contains the exact production web origins.
    In development, SendFlow also uses `REPLIT_DOMAINS` and
    `REPLIT_DEV_DOMAIN` for trusted origins. Production rejects Replit preview
    domains and requires explicit HTTPS origins. The Cloudflare site key must
    separately allow each hostname where the widget is rendered.
-5. Restart the API and web workflows after changing environment values. Build
-   the web client again after changing the public site key.
+5. Restart the API and web applications after changing environment values. No
+   rebuild is needed when only the Plesk site key changes.
 
-The browser build does not expose arbitrary `VITE_*` values: only the three
-approved public routing values and `VITE_TURNSTILE_SITE_KEY` are injected.
-If the site key is absent, the widget remains in its configuration-error state
-and protected submit buttons stay disabled. A missing server secret continues
-to fail closed; no public configuration endpoint or frontend bypass is used.
+The browser build does not contain either Turnstile key. The public API endpoint
+returns only the site key and never returns the verification secret. If either
+Plesk value is absent, the endpoint returns a generic unavailable response and
+the widget remains disabled. Direct API requests still fail closed when the
+verification secret is missing.
 
 If the public site key is absent, the widget displays a configuration error and
 keeps the affected submit buttons disabled. If the server secret is absent,
@@ -85,9 +80,8 @@ Automated tests use an isolated API database and mocked Siteverify responses.
 They cover accepted tokens, missing and rejected tokens, a consumed token,
 hostname/action mismatch, server configuration failure, and Siteverify
 unavailability. No Cloudflare account key or live verification request is used
-by the test suite. The configured site key and hostname allow-list still need to
-be supplied and confirmed in Replit/Cloudflare before a real browser challenge
-can be exercised.
+by the test suite. The Plesk site key, secret, and hostname allow-list must be
+configured and confirmed before a real browser challenge can be exercised.
 
 For the other server-only keys and the safe key-rotation procedure, see
 [SendFlow key management](./key-management.md).

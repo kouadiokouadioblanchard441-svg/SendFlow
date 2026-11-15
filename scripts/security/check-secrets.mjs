@@ -1,61 +1,100 @@
-import { execFileSync } from 'node:child_process';
-import { lstatSync, readFileSync, readdirSync } from 'node:fs';
-import { relative, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { execFileSync } from "node:child_process";
+import { lstatSync, readFileSync, readdirSync } from "node:fs";
+import { relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const patterns = [
-  ['private-key', /-----BEGIN (?:RSA |EC |OPENSSH |DSA |ENCRYPTED )?PRIVATE KEY-----/],
-  ['provider-key', /\b(?:sk_(?:live|test)_[A-Za-z0-9]{16,}|whsec_[A-Za-z0-9]{16,}|esms_(?:test|live)_[A-Za-z0-9._~-]{16,}|AKIA[A-Z0-9]{16}|AIza[\w-]{30,}|gh[pousr]_[A-Za-z0-9]{30,})\b/],
-  ['credential-url', /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|https?):\/\/[^\s/:]+:[^\s@]+@/],
-  ['jwt-literal', /\beyJ[\w-]{10,}\.eyJ[\w-]{10,}\.[\w-]{16,}\b/],
-  ['public-secret-variable', /(?:VITE_|NEXT_PUBLIC_|EXPO_PUBLIC_)[A-Z_]*(?:SECRET|PASSWORD|PRIVATE_KEY|DATABASE_URL|API_KEY|ACCESS_TOKEN)/],
-  ['server-secret-client-access', /(?:import\.meta\.env|window|globalThis)\s*(?:\.\s*|\[\s*["'])(?:TURNSTILE_SECRET_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY(?:RING)?|SUPABASE_DATABASE_URL|SENDFLOW_PII_BACKFILL_DATABASE_URL|DATABASE_URL|FEEXPAY_(?:API_KEY|SANDBOX_API_KEY|SHOP_ID)|RESEND_API_KEY|RESEND_WEBHOOK_SECRET|EMAIL_UNSUBSCRIBE_SECRET|SENDFLOW_SECRET_KEY|SENDFLOW_VIEWER_PASSWORD|DATABASE_CA_CERT|AWS_SECRET_ACCESS_KEY|WEBHOOK_SECRET|HMAC_SECRET|ANDROID_KEYSTORE_(?:BASE64|PASSWORD|ALIAS)|ANDROID_KEY_PASSWORD|ANDROID_KEY_ALIAS)\b/],
+  [
+    "private-key",
+    /-----BEGIN (?:RSA |EC |OPENSSH |DSA |ENCRYPTED )?PRIVATE KEY-----/,
+  ],
+  [
+    "provider-key",
+    /\b(?:sk_(?:live|test)_[A-Za-z0-9]{16,}|whsec_[A-Za-z0-9]{16,}|esms_(?:test|live)_[A-Za-z0-9._~-]{16,}|AKIA[A-Z0-9]{16}|AIza[\w-]{30,}|gh[pousr]_[A-Za-z0-9]{30,})\b/,
+  ],
+  [
+    "credential-url",
+    /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|https?):\/\/[^\s/:]+:[^\s@]+@/,
+  ],
+  ["jwt-literal", /\beyJ[\w-]{10,}\.eyJ[\w-]{10,}\.[\w-]{16,}\b/],
+  [
+    "public-secret-variable",
+    /(?:VITE_|NEXT_PUBLIC_|EXPO_PUBLIC_)[A-Z_]*(?:SECRET|PASSWORD|PRIVATE_KEY|DATABASE_URL|API_KEY|ACCESS_TOKEN)/,
+  ],
+  [
+    "server-secret-client-access",
+    /(?:import\.meta\.env|window|globalThis)\s*(?:\.\s*|\[\s*["'])(?:TURNSTILE_SECRET_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY(?:RING)?|SUPABASE_DATABASE_URL|SENDFLOW_PII_BACKFILL_DATABASE_URL|DATABASE_URL|FEEXPAY_(?:API_KEY|SANDBOX_API_KEY|SHOP_ID)|RESEND_API_KEY|RESEND_WEBHOOK_SECRET|EMAIL_UNSUBSCRIBE_SECRET|SENDFLOW_SECRET_KEY|SENDFLOW_VIEWER_PASSWORD|DATABASE_CA_CERT|AWS_SECRET_ACCESS_KEY|WEBHOOK_SECRET|HMAC_SECRET|ANDROID_KEYSTORE_(?:BASE64|PASSWORD|ALIAS)|ANDROID_KEY_PASSWORD|ANDROID_KEY_ALIAS)\b/,
+  ],
 ];
 
-const literalCredential = /(?:^|[\s{;,])["']?(?:DIDIT_API_KEY|DIDIT_WEBHOOK_SECRET|ESMS_API_KEY|TURNSTILE_SECRET_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY(?:RING)?|SUPABASE_DATABASE_URL|SENDFLOW_PII_BACKFILL_DATABASE_URL|DATABASE_URL|FEEXPAY_(?:API_KEY|SANDBOX_API_KEY|SHOP_ID)|RESEND_API_KEY|RESEND_WEBHOOK_SECRET|EMAIL_UNSUBSCRIBE_SECRET|SENDFLOW_SECRET_KEY|SENDFLOW_VIEWER_PASSWORD|AWS_SECRET_ACCESS_KEY|ANDROID_KEYSTORE_BASE64|ANDROID_KEYSTORE_PASSWORD|ANDROID_KEY_PASSWORD|ANDROID_KEY_ALIAS|SENDFLOW_ADMIN_PIN|apiKey|clientSecret|sessionSecret|privateKey|password|passwd)["']?\s*[:=]\s*["']([^"'\n]{4,})["']/;
+const literalCredential =
+  /(?:^|[\s{;,])["']?(?:DIDIT_API_KEY|DIDIT_WEBHOOK_SECRET|ESMS_API_KEY|TURNSTILE_SECRET_KEY|SESSION_SECRET|CUSTOMER_PII_ENCRYPTION_KEY(?:RING)?|SUPABASE_DATABASE_URL|SENDFLOW_PII_BACKFILL_DATABASE_URL|DATABASE_URL|FEEXPAY_(?:API_KEY|SANDBOX_API_KEY|SHOP_ID)|RESEND_API_KEY|RESEND_WEBHOOK_SECRET|EMAIL_UNSUBSCRIBE_SECRET|SENDFLOW_SECRET_KEY|SENDFLOW_VIEWER_PASSWORD|AWS_SECRET_ACCESS_KEY|ANDROID_KEYSTORE_BASE64|ANDROID_KEYSTORE_PASSWORD|ANDROID_KEY_PASSWORD|ANDROID_KEY_ALIAS|SENDFLOW_ADMIN_PIN|apiKey|clientSecret|sessionSecret|privateKey|password|passwd)["']?\s*[:=]\s*["']([^"'\n]{4,})["']/;
 const publicEnvAllowlist = new Set([
-  'VITE_API_URL',
-  'VITE_API_BASE_URL',
-  'VITE_PUBLIC_SITE_URL',
-  'VITE_TURNSTILE_SITE_KEY',
+  "VITE_API_URL",
+  "VITE_API_BASE_URL",
+  "VITE_PUBLIC_SITE_URL",
 ]);
 
 const fallbackIgnoredDirectories = new Set([
-  '.cache',
-  '.expo',
-  '.expo-shared',
-  '.git',
-  '.local',
-  'coverage',
-  'dist',
-  'node_modules',
-  'out-tsc',
-  'tmp',
+  ".cache",
+  ".expo",
+  ".expo-shared",
+  ".git",
+  ".local",
+  "coverage",
+  "dist",
+  "node_modules",
+  "out-tsc",
+  "tmp",
 ]);
 
 function isIgnoredByFallback(file, isDirectory) {
-  const normalized = file.split(sep).join('/');
-  const segments = normalized.split('/');
-  const basename = segments.at(-1) ?? '';
+  const normalized = file.split(sep).join("/");
+  const segments = normalized.split("/");
+  const basename = segments.at(-1) ?? "";
 
-  if (segments.some((segment) => fallbackIgnoredDirectories.has(segment))) return true;
+  if (segments.some((segment) => fallbackIgnoredDirectories.has(segment)))
+    return true;
 
   // Match the root .gitignore environment-file rules without reading local secrets.
-  if (basename === '.env' || basename.startsWith('.env.')) {
-    if (basename === '.env.example') return false;
-    if (normalized === '.env.capacitor') return false;
+  if (basename === ".env" || basename.startsWith(".env.")) {
+    if (basename === ".env.example") return false;
+    if (normalized === ".env.capacitor") return false;
     return true;
   }
 
   if (/\.(?:jks|keystore|p12|pfx|pem|key)$/i.test(basename)) return true;
-  if (basename === '.DS_Store' || basename === 'Thumbs.db' || basename.endsWith('.tsbuildinfo')) return true;
-  if (/^(?:npm-debug\.log|yarn-error\.log|testem\.log)$/.test(basename) || basename.endsWith('.log')) return true;
+  if (
+    basename === ".DS_Store" ||
+    basename === "Thumbs.db" ||
+    basename.endsWith(".tsbuildinfo")
+  )
+    return true;
+  if (
+    /^(?:npm-debug\.log|yarn-error\.log|testem\.log)$/.test(basename) ||
+    basename.endsWith(".log")
+  )
+    return true;
 
-  const isAndroid = normalized.startsWith('artifacts/sendflow/android/');
+  const isAndroid = normalized.startsWith("artifacts/sendflow/android/");
   if (isAndroid) {
-    if (isDirectory && ['.gradle', '.cxx', '.externalNativeBuild', 'build', 'bin', 'gen', 'out', 'captures'].includes(basename)) return true;
-    if (/\.(?:apk|aar|ap_|aab|dex|class|hprof|iml)$/i.test(basename)) return true;
-    if (basename === 'local.properties') return true;
+    if (
+      isDirectory &&
+      [
+        ".gradle",
+        ".cxx",
+        ".externalNativeBuild",
+        "build",
+        "bin",
+        "gen",
+        "out",
+        "captures",
+      ].includes(basename)
+    )
+      return true;
+    if (/\.(?:apk|aar|ap_|aab|dex|class|hprof|iml)$/i.test(basename))
+      return true;
+    if (basename === "local.properties") return true;
   }
 
   return false;
@@ -64,16 +103,20 @@ function isIgnoredByFallback(file, isDirectory) {
 function collectFilesystemFiles(root) {
   const files = [];
   const visit = (directory) => {
-    for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    for (const entry of readdirSync(directory, { withFileTypes: true }).sort(
+      (a, b) => a.name.localeCompare(b.name),
+    )) {
       const absolute = resolve(directory, entry.name);
       const file = relative(root, absolute);
       if (entry.isDirectory()) {
         if (!isIgnoredByFallback(file, true)) visit(absolute);
       } else if (entry.isSymbolicLink()) {
         // Do not follow links outside the checked-out source tree.
-        throw new Error('Symbolic links cannot be inspected without Git metadata.');
+        throw new Error(
+          "Symbolic links cannot be inspected without Git metadata.",
+        );
       } else if (entry.isFile() && !isIgnoredByFallback(file, false)) {
-        files.push(file.split(sep).join('/'));
+        files.push(file.split(sep).join("/"));
       }
     }
   };
@@ -86,29 +129,52 @@ export function scanText(file, text) {
   const isTest = /(?:\.test\.|\/tests\/)/.test(file);
   // This module is a static catalog of merchant-side server examples shown as text.
   // It intentionally contains process.env references but never evaluates them.
-  const isStaticServerExampleCatalog = file === 'artifacts/sendflow/src/pages/docs-code-examples.ts';
+  const isStaticServerExampleCatalog =
+    file === "artifacts/sendflow/src/pages/docs-code-examples.ts";
   // Synthetic credential fixtures belong only in isolated test files.
   for (const [index, line] of text.split(/\r?\n/).entries()) {
     for (const [rule, pattern] of patterns) {
       // The regression suite constructs malicious inputs in memory.
-      if (isTest && ['public-secret-variable', 'server-secret-client-access'].includes(rule)) continue;
+      if (
+        isTest &&
+        ["public-secret-variable", "server-secret-client-access"].includes(rule)
+      )
+        continue;
       if (pattern.test(line)) findings.push({ file, line: index + 1, rule });
     }
     const literal = line.match(literalCredential);
-    const isEnvironmentPlaceholder = literal && /^\$(?:\{[A-Z][A-Z0-9_]*\}|[A-Z][A-Z0-9_]*)$/.test(literal[1]);
+    const isEnvironmentPlaceholder =
+      literal && /^\$(?:\{[A-Z][A-Z0-9_]*\}|[A-Z][A-Z0-9_]*)$/.test(literal[1]);
     if (!isTest && literal && !isEnvironmentPlaceholder) {
-      findings.push({ file, line: index + 1, rule: 'literal-credential' });
+      findings.push({ file, line: index + 1, rule: "literal-credential" });
     }
     if (/(?:^|\/)\.env[^/]*$/.test(file)) {
-      const assignment = line.match(/^\s*(?:export\s+)?([A-Z][A-Z0-9_]*)\s*=\s*(.*)$/);
-      if (assignment && !publicEnvAllowlist.has(assignment[1]) && !file.endsWith('.env.example')) {
-        findings.push({ file, line: index + 1, rule: 'tracked-private-environment' });
+      const assignment = line.match(
+        /^\s*(?:export\s+)?([A-Z][A-Z0-9_]*)\s*=\s*(.*)$/,
+      );
+      if (
+        assignment &&
+        !publicEnvAllowlist.has(assignment[1]) &&
+        !file.endsWith(".env.example")
+      ) {
+        findings.push({
+          file,
+          line: index + 1,
+          rule: "tracked-private-environment",
+        });
       }
     }
-    if (!isStaticServerExampleCatalog &&
-        /^(?:artifacts\/(?:sendflow|mockup-sandbox)\/src|lib\/api-client-react\/src)\//.test(file) &&
-        !isTest && /\bprocess\.env\b|from\s+["'][^"']*(?:api-server|@workspace\/db|\/db\/src)/.test(line)) {
-      findings.push({ file, line: index + 1, rule: 'client-server-boundary' });
+    if (
+      !isStaticServerExampleCatalog &&
+      /^(?:artifacts\/(?:sendflow|mockup-sandbox)\/src|lib\/api-client-react\/src)\//.test(
+        file,
+      ) &&
+      !isTest &&
+      /\bprocess\.env\b|from\s+["'][^"']*(?:api-server|@workspace\/db|\/db\/src)/.test(
+        line,
+      )
+    ) {
+      findings.push({ file, line: index + 1, rule: "client-server-boundary" });
     }
   }
   return findings;
@@ -120,48 +186,66 @@ export function checkRepository(repositoryRoot = process.cwd()) {
   let source;
   try {
     // Git supplies paths, never environment values. Ignored local secrets are not read.
-    files = [...new Set(execFileSync('git', [
-      'ls-files', '--cached', '--others', '--exclude-standard', '-z',
-    ], {
-      cwd: root,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).split('\0').filter(Boolean))];
-    source = 'git';
+    files = [
+      ...new Set(
+        execFileSync(
+          "git",
+          ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+          {
+            cwd: root,
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "ignore"],
+          },
+        )
+          .split("\0")
+          .filter(Boolean),
+      ),
+    ];
+    source = "git";
   } catch {
     // Plesk deployment checkouts may contain the source without the .git directory.
     files = collectFilesystemFiles(root);
-    source = 'filesystem';
+    source = "filesystem";
   }
   const findings = [];
   let inspected = 0;
   for (const file of files) {
-    if (file.endsWith('pnpm-lock.yaml') || /\.(?:svg|map)$/.test(file)) continue;
+    if (file.endsWith("pnpm-lock.yaml") || /\.(?:svg|map)$/.test(file))
+      continue;
     let raw;
-    try { raw = readFileSync(resolve(root, file)); } catch (error) {
-      if (error.code === 'ENOENT') continue; // Locally deleted tracked file.
+    try {
+      raw = readFileSync(resolve(root, file));
+    } catch (error) {
+      if (error.code === "ENOENT") continue; // Locally deleted tracked file.
       throw error;
     }
     if (raw.includes(0)) continue;
-    const text = new TextDecoder('utf-8', { fatal: false }).decode(raw);
-    if (text.includes('\uFFFD')) continue;
+    const text = new TextDecoder("utf-8", { fatal: false }).decode(raw);
+    if (text.includes("\uFFFD")) continue;
     inspected++;
     findings.push(...scanText(file, text));
   }
   return { inspected, findings, source };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   try {
     const { inspected, findings, source } = checkRepository();
     for (const finding of findings) {
       // Never echo matches, source lines, URLs, tokens, or credential values.
-      console.error(`${finding.file}:${finding.line} [${finding.rule}] (value hidden)`);
+      console.error(
+        `${finding.file}:${finding.line} [${finding.rule}] (value hidden)`,
+      );
     }
-    console.log(`Secret-boundary check: ${inspected} text files, ${findings.length} finding(s) (${source} scan).`);
+    console.log(
+      `Secret-boundary check: ${inspected} text files, ${findings.length} finding(s) (${source} scan).`,
+    );
     process.exitCode = findings.length ? 1 : 0;
   } catch {
-    console.error('Secret-boundary check could not inspect the repository.');
+    console.error("Secret-boundary check could not inspect the repository.");
     process.exitCode = 2;
   }
 }

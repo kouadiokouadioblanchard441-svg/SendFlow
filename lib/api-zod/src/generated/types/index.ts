@@ -354,6 +354,7 @@ export * from './publicPricingOperator';
 export * from './publicPricingOperatorBrand';
 export * from './publicPricingOperatorFees';
 export * from './publicRegistrationSettings';
+export * from './publicTurnstileConfig';
 export * from './registrationSettingsUpdate';
 export * from './simulatedPaymentLinkSuccess';
 export * from './simulatedPaymentLinkSuccessCurrency';
