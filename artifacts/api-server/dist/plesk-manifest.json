@@ -1,6 +1,6 @@
 {
-  "builtAt": "2026-11-15T11:25:37.985Z",
-  "sourceCommit": "6495d7f2b80ad7f5135658474cd3c06d55b15e15",
+  "builtAt": "2026-11-15T11:37:00.287Z",
+  "sourceCommit": "f734008bae1fee6c7d49baeae252e975f7d9915f",
   "trackedWorktreeModified": true,
   "builderNode": "v24.22.2",
   "builderPnpm": "10.26.1",
@@ -45,9 +45,9 @@
   ],
   "runtimeDependencies": {
     "archive": "artifacts/api-server/plesk-runtime-dependencies.tar.gz",
-    "bytes": 23789415,
-    "sizeBytes": 23789415,
-    "sha256": "d00da1ec304ce89b359d5cff434a2df5544f4d64df205cd15029a3f802e3640f",
+    "bytes": 23777942,
+    "sizeBytes": 23777942,
+    "sha256": "edd000044c8029e79d1143e16a41fa238932482730a241cb7d37d684c81216c8",
     "platform": "linux-x64",
     "node": "v24.22.2",
     "entries": 12523,
