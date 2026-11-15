@@ -3,22 +3,31 @@ import test from "node:test";
 import {
   createCustomerSessionToken,
   hashCustomerPassword,
+  hashCustomerPin,
   hashCustomerSecret,
   hashCustomerSessionToken,
   isCustomerPasswordArgon2idHash,
+  isCustomerPinArgon2idHash,
   isCustomerSessionToken,
   verifyCustomerPassword,
+  verifyCustomerPin,
   verifyCustomerSecret,
 } from "./customer-auth-crypto.ts";
 
-test("customer PINs remain salted scrypt hashes", async () => {
-  const secret = "sample-customer-pin-123";
-  const encodedHash = await hashCustomerSecret(secret);
+test("new customer PINs use salted Argon2id while legacy scrypt PINs remain verifiable", async () => {
+  const pin = "4821";
+  const encodedHash = await hashCustomerPin(pin);
 
-  assert.match(encodedHash, /^scrypt\$v1\$32768\$8\$1\$/);
-  assert.notEqual(encodedHash, secret);
-  assert.equal(await verifyCustomerSecret(secret, encodedHash), true);
-  assert.equal(await verifyCustomerSecret("different-secret", encodedHash), false);
+  assert.match(encodedHash, /^\$argon2id\$v=19\$/);
+  assert.notEqual(encodedHash, pin);
+  assert.equal(isCustomerPinArgon2idHash(encodedHash), true);
+  assert.equal(await verifyCustomerPin(pin, encodedHash), true);
+  assert.equal(await verifyCustomerPin("4822", encodedHash), false);
+
+  const legacyHash = await hashCustomerSecret(pin);
+  assert.equal(isCustomerPinArgon2idHash(legacyHash), false);
+  assert.equal(await verifyCustomerPin(pin, legacyHash), true);
+  assert.equal(await verifyCustomerPin("4822", legacyHash), false);
 });
 
 test("customer passwords use salted Argon2id and legacy scrypt remains verifiable for sign-in upgrades", async () => {
@@ -42,6 +51,11 @@ test("customer passwords use salted Argon2id and legacy scrypt remains verifiabl
 test("malformed customer secret hashes fail closed", async () => {
   assert.equal(await verifyCustomerSecret("secret", ""), false);
   assert.equal(await verifyCustomerSecret("secret", "scrypt$v1$1$1$1$bad$hash"), false);
+  assert.equal(await verifyCustomerPin("4821", ""), false);
+  assert.equal(await verifyCustomerPin("4821", "$argon2id$malformed"), false);
+  const oversizedCostHash = `$argon2id$v=19$m=999999999,t=3,p=1$${"A".repeat(22)}$${"A".repeat(43)}`;
+  assert.equal(isCustomerPinArgon2idHash(oversizedCostHash), false);
+  assert.equal(isCustomerPasswordArgon2idHash(oversizedCostHash), false);
 });
 
 test("customer session tokens are random bearer values stored as one-way hashes", () => {

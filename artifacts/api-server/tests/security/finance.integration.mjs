@@ -869,6 +869,10 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     assert.equal(JSON.parse((await request("/api/auth/session", { headers })).text).pinConfigured, false);
     assert.equal((await request("/api/me", { headers })).status, 403);
     assert.equal((await request("/api/me/pin", { method: "PUT", headers, body: { newPin: pin } })).status, 200);
+    const configuredPin = (await owner.query(
+      "SELECT pin_hash FROM sf_customer_credentials WHERE user_id=$1", [viewerId],
+    )).rows[0].pin_hash;
+    assert.match(configuredPin, /^\$argon2id\$v=19\$/);
     assert.equal(JSON.parse((await request("/api/auth/session", { headers })).text).pinUnlocked, true);
     const fresh = await signin(fixtureEmail, fixturePassword);
     assert.equal(fresh.status, 200);
@@ -876,6 +880,18 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     assert.equal((await request("/api/me", { headers: freshHeaders })).status, 403);
     assert.equal((await request("/api/auth/unlock", { method: "POST", headers: freshHeaders, body: { pin } })).status, 200);
     assert.equal((await request("/api/me", { headers: freshHeaders })).status, 200);
+    const legacyPin = String(randomInt(1000, 10000));
+    const legacyPinHash = await runtime.hashCustomerSecret(legacyPin);
+    await owner.query("UPDATE sf_customer_credentials SET pin_hash=$1 WHERE user_id=$2", [legacyPinHash, viewerId]);
+    await owner.query("UPDATE sf_customer_sessions SET pin_verified_until=NULL WHERE user_id=$1", [viewerId]);
+    assert.equal((await request("/api/auth/unlock", {
+      method: "POST", headers: freshHeaders, body: { pin: legacyPin },
+    })).status, 200);
+    const upgradedPin = (await owner.query(
+      "SELECT pin_hash FROM sf_customer_credentials WHERE user_id=$1", [viewerId],
+    )).rows[0].pin_hash;
+    assert.match(upgradedPin, /^\$argon2id\$v=19\$/);
+    assert.notEqual(upgradedPin, legacyPinHash);
     const viewerPortalEligibility = await request("/api/me/portal-eligibility", { headers: freshHeaders });
     assert.equal(viewerPortalEligibility.status, 404);
     assert.equal(viewerPortalEligibility.text, "");
@@ -927,4 +943,56 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     assert.equal((await owner.query("SELECT count(*) FROM sf_admin_audit_logs WHERE action='provision_preview_account'")).rows[0].count, "1");
     assert.equal(externalCalls, 0);
   } finally { process.env.SENDFLOW_DATABASE_TARGET = originalTarget; }
+});
+
+test("new customer PINs use Argon2id and successful legacy PIN unlock upgrades the stored hash", async () => {
+  const originalTarget = process.env.SENDFLOW_DATABASE_TARGET;
+  const userId = `pin-upgrade-${randomUUID()}`;
+  const pin = String(randomInt(1000, 10000));
+  const legacyPin = String(randomInt(1000, 10000));
+  const token = randomBytes(32).toString("base64url");
+  const headers = {
+    Origin: "https://sendflow-test.invalid",
+    Cookie: `__Host-sendflow_session=${token}`,
+  };
+  process.env.SENDFLOW_DATABASE_TARGET = "production";
+  try {
+    await owner.query("INSERT INTO sf_users(id,status) VALUES($1,'active')", [userId]);
+    await owner.query(`INSERT INTO sf_customer_credentials
+      (user_id,password_hash,privacy_accepted_at,privacy_policy_version)
+      VALUES($1,'fixture-unused-password',now(),'pin-argon2-fixture')`, [userId]);
+    await owner.query(`INSERT INTO sf_customer_sessions(user_id,token_hash,expires_at)
+      VALUES($1,$2,now()+interval '1 hour')`,
+    [userId, runtime.hashCustomerSessionToken(token)]);
+
+    const configured = await request("/api/me/pin", {
+      method: "PUT",
+      headers,
+      body: { newPin: pin },
+    });
+    assert.equal(configured.status, 200);
+    const configuredHash = (await owner.query(
+      "SELECT pin_hash FROM sf_customer_credentials WHERE user_id=$1", [userId],
+    )).rows[0].pin_hash;
+    assert.match(configuredHash, /^\$argon2id\$v=19\$/);
+
+    const legacyHash = await runtime.hashCustomerSecret(legacyPin);
+    await owner.query("UPDATE sf_customer_credentials SET pin_hash=$1 WHERE user_id=$2", [legacyHash, userId]);
+    await owner.query("UPDATE sf_customer_sessions SET pin_verified_until=NULL WHERE user_id=$1", [userId]);
+    const unlocked = await request("/api/auth/unlock", {
+      method: "POST",
+      headers,
+      body: { pin: legacyPin },
+    });
+    assert.equal(unlocked.status, 200);
+    const upgradedHash = (await owner.query(
+      "SELECT pin_hash FROM sf_customer_credentials WHERE user_id=$1", [userId],
+    )).rows[0].pin_hash;
+    assert.match(upgradedHash, /^\$argon2id\$v=19\$/);
+    assert.notEqual(upgradedHash, legacyHash);
+  } finally {
+    await owner.query("DELETE FROM sf_users WHERE id=$1", [userId]);
+    if (originalTarget === undefined) delete process.env.SENDFLOW_DATABASE_TARGET;
+    else process.env.SENDFLOW_DATABASE_TARGET = originalTarget;
+  }
 });

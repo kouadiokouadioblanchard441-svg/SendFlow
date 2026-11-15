@@ -42,6 +42,53 @@ The keyring accepts at most 32 key entries and 16 KiB of JSON configuration.
 Each key value must contain at least 32 UTF-8 bytes. Keep historical keys only
 for as long as encrypted records or supported recovery paths require them.
 
+## Passwords and PINs
+
+New customer passwords and transaction PINs are one-way Argon2id hashes, not
+encrypted values. New hashes use 65,536 KiB of memory, three iterations, one
+lane, a random 16-byte salt, and a 32-byte output. Hash verification rejects
+malformed values and Argon2 parameters outside the application's accepted
+bounds before invoking the Argon2 implementation.
+
+Legacy customer password and PIN hashes use the former scrypt format. They
+remain verifiable so existing customers are not locked out; a correct password
+or PIN upgrades its stored hash to Argon2id in the same successful
+authentication flow. Do not attempt to convert hashes offline: that requires
+the original password or PIN. PINs remain four-digit credentials, so their
+online attempt limits, account/requester buckets, and cross-instance database
+locks are mandatory and must not be loosened to compensate for their small
+search space.
+
+## Session and transport boundaries
+
+Customer session tokens are stored in PostgreSQL as one-way hashes and sent in
+`Secure`, `HttpOnly`, `__Host-` cookies. Customer cookies currently use
+`SameSite=None` to support the configured web/API origin arrangement; mutating
+requests still require the server's origin/CSRF checks. The customer session
+expires after 30 days, while transaction PIN unlock expires after 15 minutes.
+Administrator access JWTs last five minutes; the server also checks the
+administrator session on each request, with a 15-minute inactivity limit and
+an eight-hour absolute lifetime.
+
+Express sends HSTS in production, but it does not terminate the browser's TLS
+connection. The Plesk/Nginx edge must serve HTTPS and enable TLS 1.3. Verify
+that edge configuration from outside the host after deployment; a successful
+local build or an HSTS response does not prove the negotiated TLS version.
+
+## Initial PII key provisioning
+
+Generate at least 32 random bytes on a trusted machine, for example with
+`openssl rand -base64 32`. Store the result only in protected server settings
+as `CUSTOMER_PII_ENCRYPTION_KEY`; use the exact same value for Replit and Plesk
+when both environments access the same Supabase data. Do not generate separate
+keys per host, paste the value into chat, or place it in the repository.
+
+The active key ID defaults to `primary`, and the lookup key ID defaults to the
+active key ID. No historical keyring is needed for a new empty database. If
+this application already has encrypted records, preserve its existing key
+instead of replacing it. Confirm key existence in each environment before
+allowing registration or any operation that encrypts/decrypts customer data.
+
 ## Safe encryption-key rotation
 
 Do not change `CUSTOMER_PII_ENCRYPTION_KEY` by itself. Existing `sfenc-v1`
@@ -71,6 +118,14 @@ longer match. Re-indexing requires a separately reviewed, idempotent,
 batch-based operation covering every hashed column, uniqueness constraint,
 suppression list, idempotency fingerprint, and token lookup. This project change
 does not execute or provide a production re-index/backfill.
+
+The connected application role must not be used for schema migrations. Before
+production activation, use separate database identities: a tightly controlled
+migration owner and a runtime role without `SUPERUSER`, `CREATEROLE`,
+`CREATEDB`, or `BYPASSRLS`, and without `TRUNCATE` or schema ownership. Derive
+the runtime grants from an isolated test of every feature and route; do not
+revoke privileges from the active production identity until the replacement
+has been tested and configured on the target host.
 
 Never delete or overwrite an old key until backups and restores have been
 verified with the corresponding keyring. If a key is lost, ciphertext recovery

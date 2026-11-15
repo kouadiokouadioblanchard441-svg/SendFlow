@@ -448,3 +448,17 @@ mtime_ms = 1794069525978
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ce1ba3e1-da2f-4bef-9a02-67ba5b199f98/7b2cada6-dbc6-4727-862a-07b31728be41/d67736fe-ec2e-4327-96b8-d7c1d32e63e4"
 storage_version_token = "1794069526526669"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "ZA7Yjmscbp6mv7YeSrJXJ"
+uri = "file://docs/security/cryptographic-audit-2026-11-15.md"
+type = "text"
+title = "Rapport d’audit cryptographique SendFlow"
+description = "Résultats de l’audit, contrôles réalisés et éléments à terminer avant la production."
+logical_id = "dda48d0c-cbda-4e7d-a34d-f0802a2a1a6b"
+content_hash = "sha256:870305dd2dc191a32f1c3cf81ad9b6f71818aa4998dc508147336c9ac7b0ba9c"
+size = 6340
+mtime_ms = 1794728500754
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:79f2c88e-600a-4606-9d66-d1acd793ff8d/dda48d0c-cbda-4e7d-a34d-f0802a2a1a6b/18a63112-b586-4199-8530-9a3298aaa3c5"
+storage_version_token = "1794728616783965"
+content_type = "text/markdown"

@@ -26,7 +26,7 @@ import {
   withAuthAttemptLock,
   withPinAttemptLock,
 } from "../lib/customer-auth-rate-limit";
-import { hashCustomerPassword, hashCustomerSecret } from "../lib/customer-auth-crypto";
+import { hashCustomerPassword, hashCustomerPin } from "../lib/customer-auth-crypto";
 import { createSensitiveDataLookupIndex } from "../lib/sensitive-data-crypto";
 import {
   verifiedCustomerEmailOtpCondition,
@@ -237,7 +237,7 @@ router.post("/auth/reset-pin", async (req, res): Promise<void> => {
         .for("update");
       const pinHash = await hashSecretForClaimedOtpChallenge(
         challenge,
-        () => hashCustomerSecret(parsed.data.newPin),
+        () => hashCustomerPin(parsed.data.newPin),
       );
       if (pinHash === null) return { kind: "invalid" } as const;
 

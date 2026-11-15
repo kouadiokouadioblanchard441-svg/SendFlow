@@ -64,12 +64,13 @@ import {
   withPinAttemptLock,
 } from "../lib/customer-auth-rate-limit";
 import {
+  hashCustomerPin,
   hashCustomerPassword,
-  hashCustomerSecret,
   hashCustomerSessionToken,
   isCustomerPasswordArgon2idHash,
+  isCustomerPinArgon2idHash,
   verifyCustomerPassword,
-  verifyCustomerSecret,
+  verifyCustomerPin,
 } from "../lib/customer-auth-crypto";
 import {
   createSensitiveDataLookupIndex,
@@ -732,8 +733,9 @@ router.post("/auth/unlock", async (req, res): Promise<void> => {
         .select({ pinHash: customerCredentialsTable.pinHash })
         .from(customerCredentialsTable)
         .where(eq(customerCredentialsTable.userId, session.userId))
+        .for("update")
         .limit(1);
-      if (!credential?.pinHash || !await verifyCustomerSecret(parsed.data.pin, credential.pinHash)) {
+      if (!credential?.pinHash || !await verifyCustomerPin(parsed.data.pin, credential.pinHash)) {
         await recordAuthFailure(buckets, new Date(), tx);
         const retryAfterFailure = await getAuthRateLimit(buckets, new Date(), tx);
         return retryAfterFailure !== null
@@ -742,6 +744,16 @@ router.post("/auth/unlock", async (req, res): Promise<void> => {
       }
 
       const now = new Date();
+      if (!isCustomerPinArgon2idHash(credential.pinHash)) {
+        const upgradedHash = await hashCustomerPin(parsed.data.pin);
+        await tx
+          .update(customerCredentialsTable)
+          .set({ pinHash: upgradedHash, pinUpdatedAt: now, updatedAt: now })
+          .where(and(
+            eq(customerCredentialsTable.userId, session.userId),
+            eq(customerCredentialsTable.pinHash, credential.pinHash),
+          ));
+      }
       const [updatedSession] = await tx
         .update(customerSessionsTable)
         .set({
@@ -1192,22 +1204,36 @@ router.put("/me/pin", async (req, res): Promise<void> => {
         .select({ pinHash: customerCredentialsTable.pinHash })
         .from(customerCredentialsTable)
         .where(eq(customerCredentialsTable.userId, session.userId))
+        .for("update")
         .limit(1);
       if (!credential) return { kind: "unavailable" } as const;
 
       if (credential.pinHash) {
         if (!parsed.data.currentPin) return { kind: "missing" } as const;
-        if (!await verifyCustomerSecret(parsed.data.currentPin, credential.pinHash)) {
+        if (!await verifyCustomerPin(parsed.data.currentPin, credential.pinHash)) {
           await recordAuthFailure(buckets, new Date(), tx);
           const retryAfterFailure = await getAuthRateLimit(buckets, new Date(), tx);
           return retryAfterFailure !== null
             ? { kind: "rate", retry: retryAfterFailure } as const
             : { kind: "invalid" } as const;
         }
-        if (parsed.data.currentPin === parsed.data.newPin) return { kind: "unchanged" } as const;
+        if (parsed.data.currentPin === parsed.data.newPin) {
+          if (!isCustomerPinArgon2idHash(credential.pinHash)) {
+            const upgradedHash = await hashCustomerPin(parsed.data.currentPin);
+            const now = new Date();
+            await tx
+              .update(customerCredentialsTable)
+              .set({ pinHash: upgradedHash, pinUpdatedAt: now, updatedAt: now })
+              .where(and(
+                eq(customerCredentialsTable.userId, session.userId),
+                eq(customerCredentialsTable.pinHash, credential.pinHash),
+              ));
+          }
+          return { kind: "unchanged" } as const;
+        }
       }
 
-      const newPinHash = await hashCustomerSecret(parsed.data.newPin);
+      const newPinHash = await hashCustomerPin(parsed.data.newPin);
       const now = new Date();
       const pinCondition = credential.pinHash
         ? eq(customerCredentialsTable.pinHash, credential.pinHash)

@@ -16,8 +16,19 @@ const CUSTOMER_PASSWORD_ARGON2_OPTIONS = {
   memoryCost: 65_536,
   timeCost: 3,
   parallelism: 1,
+  saltLength: 16,
   hashLength: 32,
 } as const;
+const CUSTOMER_PIN_ARGON2_OPTIONS = {
+  type: argon2.argon2id,
+  memoryCost: 65_536,
+  timeCost: 3,
+  parallelism: 1,
+  saltLength: 16,
+  hashLength: 32,
+} as const;
+const ARGON2ID_HASH_PATTERN =
+  /^\$argon2id\$v=19\$m=(\d+),t=(\d+),p=(\d+)\$[A-Za-z0-9+/]{22}\$[A-Za-z0-9+/]{43}$/u;
 
 function deriveSecret(secret: string, salt: Buffer) {
   return new Promise<Buffer>((resolve, reject) => {
@@ -40,6 +51,18 @@ function deriveSecret(secret: string, salt: Buffer) {
       },
     );
   });
+}
+
+function isBoundedCustomerArgon2idHash(encodedHash: string) {
+  if (typeof encodedHash !== "string" || encodedHash.length > 512) return false;
+  const match = ARGON2ID_HASH_PATTERN.exec(encodedHash);
+  if (!match) return false;
+  const memoryCost = Number(match[1]);
+  const timeCost = Number(match[2]);
+  const parallelism = Number(match[3]);
+  return Number.isSafeInteger(memoryCost) && memoryCost >= 19_456 && memoryCost <= 65_536
+    && Number.isSafeInteger(timeCost) && timeCost >= 2 && timeCost <= 5
+    && Number.isSafeInteger(parallelism) && parallelism >= 1 && parallelism <= 4;
 }
 
 export async function hashCustomerSecret(secret: string) {
@@ -84,10 +107,16 @@ export async function hashCustomerPassword(password: string) {
   return argon2.hash(password, CUSTOMER_PASSWORD_ARGON2_OPTIONS);
 }
 
+export async function hashCustomerPin(pin: string) {
+  return argon2.hash(pin, CUSTOMER_PIN_ARGON2_OPTIONS);
+}
+
 export function isCustomerPasswordArgon2idHash(encodedHash: string) {
-  return typeof encodedHash === "string"
-    && encodedHash.startsWith("$argon2id$")
-    && encodedHash.length <= 512;
+  return isBoundedCustomerArgon2idHash(encodedHash);
+}
+
+export function isCustomerPinArgon2idHash(encodedHash: string) {
+  return isBoundedCustomerArgon2idHash(encodedHash);
 }
 
 export async function verifyCustomerPassword(password: string, encodedHash: string) {
@@ -102,6 +131,20 @@ export async function verifyCustomerPassword(password: string, encodedHash: stri
   // Existing customer passwords use this format until their next successful
   // sign-in; that sign-in upgrades the stored value to Argon2id.
   return verifyCustomerSecret(password, encodedHash);
+}
+
+export async function verifyCustomerPin(pin: string, encodedHash: string) {
+  if (typeof pin !== "string" || typeof encodedHash !== "string") return false;
+  if (isCustomerPinArgon2idHash(encodedHash)) {
+    try {
+      return await argon2.verify(encodedHash, pin);
+    } catch {
+      return false;
+    }
+  }
+  // Legacy PINs remain usable until the first successful verification,
+  // which upgrades the stored hash in the same database transaction.
+  return verifyCustomerSecret(pin, encodedHash);
 }
 
 export function createCustomerSessionToken() {
