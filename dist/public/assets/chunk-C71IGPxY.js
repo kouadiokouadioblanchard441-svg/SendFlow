@@ -1,0 +1,1 @@
+const _=8,r=4;function S(e,t=8){if(!e)return"Le code secret est requis.";if(e.length<t)return`Le code secret doit contenir au moins ${t} caractères.`;if(e.length>64)return"Le code secret ne peut pas dépasser 64 caractères.";if(t===8&&(!/[A-Za-z]/.test(e)||!/[0-9]/.test(e)))return"Le code secret doit contenir au moins une lettre et un chiffre."}export{r as L,_ as N,S as v};
