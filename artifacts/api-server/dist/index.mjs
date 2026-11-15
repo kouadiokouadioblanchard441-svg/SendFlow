@@ -28592,7 +28592,7 @@ var require_pino = __commonJS({
     function pinoBundlerAbsolutePath(p) {
       try {
         const path = __require("path");
-        const outputDir = "/home/runner/work/SendFlow/SendFlow/artifacts/api-server/dist";
+        const outputDir = "/home/runner/workspace/artifacts/api-server/dist";
         return path.resolve(outputDir, p.replace(/^\.\//, ""));
       } catch (e) {
         const f = new Function("p", "return new URL(p, import.meta.url).pathname");
@@ -211650,11 +211650,29 @@ import {
   scrypt as scryptCallback,
   timingSafeEqual
 } from "node:crypto";
+import argon2 from "argon2";
 var SCRYPT_N = 1 << 15;
 var SCRYPT_R = 8;
 var SCRYPT_P = 1;
 var SCRYPT_KEY_LENGTH = 64;
 var SCRYPT_MAX_MEMORY = 64 * 1024 * 1024;
+var CUSTOMER_PASSWORD_ARGON2_OPTIONS = {
+  type: argon2.argon2id,
+  memoryCost: 65536,
+  timeCost: 3,
+  parallelism: 1,
+  saltLength: 16,
+  hashLength: 32
+};
+var CUSTOMER_PIN_ARGON2_OPTIONS = {
+  type: argon2.argon2id,
+  memoryCost: 65536,
+  timeCost: 3,
+  parallelism: 1,
+  saltLength: 16,
+  hashLength: 32
+};
+var ARGON2ID_HASH_PATTERN = /^\$argon2id\$v=19\$m=(\d+),t=(\d+),p=(\d+)\$[A-Za-z0-9+/]{22}\$[A-Za-z0-9+/]{43}$/u;
 function deriveSecret(secret, salt) {
   return new Promise((resolve, reject) => {
     scryptCallback(
@@ -211677,18 +211695,14 @@ function deriveSecret(secret, salt) {
     );
   });
 }
-async function hashCustomerSecret(secret) {
-  const salt = randomBytes(16);
-  const derivedKey = await deriveSecret(secret, salt);
-  return [
-    "scrypt",
-    "v1",
-    String(SCRYPT_N),
-    String(SCRYPT_R),
-    String(SCRYPT_P),
-    salt.toString("base64url"),
-    derivedKey.toString("base64url")
-  ].join("$");
+function isBoundedCustomerArgon2idHash(encodedHash) {
+  if (typeof encodedHash !== "string" || encodedHash.length > 512) return false;
+  const match = ARGON2ID_HASH_PATTERN.exec(encodedHash);
+  if (!match) return false;
+  const memoryCost = Number(match[1]);
+  const timeCost = Number(match[2]);
+  const parallelism = Number(match[3]);
+  return Number.isSafeInteger(memoryCost) && memoryCost >= 19456 && memoryCost <= 65536 && Number.isSafeInteger(timeCost) && timeCost >= 2 && timeCost <= 5 && Number.isSafeInteger(parallelism) && parallelism >= 1 && parallelism <= 4;
 }
 async function verifyCustomerSecret(secret, encodedHash) {
   const parts = encodedHash.split("$");
@@ -211705,6 +211719,40 @@ async function verifyCustomerSecret(secret, encodedHash) {
   } catch {
     return false;
   }
+}
+async function hashCustomerPassword(password) {
+  return argon2.hash(password, CUSTOMER_PASSWORD_ARGON2_OPTIONS);
+}
+async function hashCustomerPin(pin) {
+  return argon2.hash(pin, CUSTOMER_PIN_ARGON2_OPTIONS);
+}
+function isCustomerPasswordArgon2idHash(encodedHash) {
+  return isBoundedCustomerArgon2idHash(encodedHash);
+}
+function isCustomerPinArgon2idHash(encodedHash) {
+  return isBoundedCustomerArgon2idHash(encodedHash);
+}
+async function verifyCustomerPassword(password, encodedHash) {
+  if (typeof password !== "string" || typeof encodedHash !== "string") return false;
+  if (isCustomerPasswordArgon2idHash(encodedHash)) {
+    try {
+      return await argon2.verify(encodedHash, password);
+    } catch {
+      return false;
+    }
+  }
+  return verifyCustomerSecret(password, encodedHash);
+}
+async function verifyCustomerPin(pin, encodedHash) {
+  if (typeof pin !== "string" || typeof encodedHash !== "string") return false;
+  if (isCustomerPinArgon2idHash(encodedHash)) {
+    try {
+      return await argon2.verify(encodedHash, pin);
+    } catch {
+      return false;
+    }
+  }
+  return verifyCustomerSecret(pin, encodedHash);
 }
 function createCustomerSessionToken() {
   return randomBytes(32).toString("base64url");
@@ -211927,9 +211975,16 @@ function sharedDatabaseCustomerCondition(environment = process.env) {
 }
 
 // src/lib/preview-credential-policy.ts
-var PREFIX = "scrypt$preview-v1$";
+var SCRYPT_PREFIX = "scrypt$preview-v1$";
+var ARGON2ID_PREFIX = "argon2id$preview-v1$";
 function previewPasswordForVerification(hash2) {
-  return hash2.startsWith(PREFIX) ? hash2.replace(PREFIX, "scrypt$v1$") : "";
+  if (hash2.startsWith(ARGON2ID_PREFIX)) {
+    return hash2.replace(ARGON2ID_PREFIX, "$argon2id$");
+  }
+  if (hash2.startsWith(SCRYPT_PREFIX)) {
+    return hash2.replace(SCRYPT_PREFIX, "scrypt$v1$");
+  }
+  return "";
 }
 
 // src/lib/customer-profile-policy.ts
@@ -212510,6 +212565,7 @@ var registerCustomerBodyFullNameMax = 120;
 var registerCustomerBodyCountryCodeRegExp = new RegExp("^[A-Za-z]{2}$");
 var registerCustomerBodyPasswordMin = 8;
 var registerCustomerBodyPasswordMax = 64;
+var registerCustomerBodyPasswordRegExp = new RegExp("(?=.*[A-Za-z])(?=.*[0-9])");
 var registerCustomerBodyTurnstileTokenMax = 2048;
 var RegisterCustomerBody = object({
   "challengeId": uuid3().optional(),
@@ -212518,7 +212574,7 @@ var RegisterCustomerBody = object({
   "fullName": string2().min(registerCustomerBodyFullNameMin).max(registerCustomerBodyFullNameMax),
   "birthDate": coerce_exports.date(),
   "countryCode": string2().regex(registerCustomerBodyCountryCodeRegExp).optional(),
-  "password": string2().min(registerCustomerBodyPasswordMin).max(registerCustomerBodyPasswordMax),
+  "password": string2().min(registerCustomerBodyPasswordMin).max(registerCustomerBodyPasswordMax).regex(registerCustomerBodyPasswordRegExp).describe("Must contain at least one letter and one digit."),
   "turnstileToken": string2().min(1).max(registerCustomerBodyTurnstileTokenMax).describe("Single-use Cloudflare Turnstile token for signup."),
   "acceptedPrivacy": boolean3()
 });
@@ -212576,11 +212632,12 @@ var SignOutCustomerResponse = object({
 var resetCustomerPasswordBodyEmailMax = 254;
 var resetCustomerPasswordBodyNewPasswordMin = 8;
 var resetCustomerPasswordBodyNewPasswordMax = 64;
+var resetCustomerPasswordBodyNewPasswordRegExp = new RegExp("(?=.*[A-Za-z])(?=.*[0-9])");
 var resetCustomerPasswordBodyTurnstileTokenMax = 2048;
 var ResetCustomerPasswordBody = object({
   "challengeId": uuid3(),
   "email": email2().max(resetCustomerPasswordBodyEmailMax),
-  "newPassword": string2().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax),
+  "newPassword": string2().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax).regex(resetCustomerPasswordBodyNewPasswordRegExp).describe("Must contain at least one letter and one digit."),
   "turnstileToken": string2().min(1).max(resetCustomerPasswordBodyTurnstileTokenMax).describe("Single-use Cloudflare Turnstile token for password reset.")
 });
 var ResetCustomerPasswordResponse = object({
@@ -215843,9 +215900,9 @@ import {
   timingSafeEqual as timingSafeEqual2,
   verify
 } from "node:crypto";
-import argon2 from "argon2";
+import argon22 from "argon2";
 var ARGON2_OPTIONS = {
-  type: argon2.argon2id,
+  type: argon22.argon2id,
   memoryCost: 65536,
   timeCost: 3,
   parallelism: 1,
@@ -215969,12 +216026,12 @@ function normalizeAdminEmail(value) {
   return email3;
 }
 async function hashAdminPassword(password) {
-  return argon2.hash(password, ARGON2_OPTIONS);
+  return argon22.hash(password, ARGON2_OPTIONS);
 }
 async function verifyAdminPassword(password, hash2) {
   if (typeof password !== "string" || password.length < 1 || Buffer.byteLength(password, "utf8") > 1024 || typeof hash2 !== "string" || !hash2.startsWith("$argon2id$") || hash2.length > 512) return false;
   try {
-    return await argon2.verify(hash2, password);
+    return await argon22.verify(hash2, password);
   } catch {
     return false;
   }
@@ -226537,7 +226594,7 @@ function getCustomerBiometricOrigin(method, originHeader, hostHeader, environmen
 // src/routes/customer-auth.ts
 var router16 = (0, import_express20.Router)();
 var PRIVACY_POLICY_VERSION = "sendflow-privacy-v1";
-var DUMMY_PASSWORD_HASH = hashCustomerSecret("sendflow-invalid-account-password");
+var DUMMY_PASSWORD_HASH = hashCustomerPassword("sendflow-invalid-account-password");
 var BIOMETRIC_CHALLENGE_TTL_MS = 5 * 60 * 1e3;
 function getWebAuthnOrigin(req) {
   return getCustomerBiometricOrigin(req.method, req.get("origin"), req.get("host"));
@@ -226718,7 +226775,7 @@ router16.post("/auth/register", async (req, res) => {
         await tx.update(phoneOtpChallengesTable).set({ consumedAt: now }).where(eq(phoneOtpChallengesTable.id, challenge.id));
       }
       if (existingUser || existingEmail) return registerFailure("exists");
-      const passwordHash = await hashCustomerSecret(parsed.data.password);
+      const passwordHash = await hashCustomerPassword(parsed.data.password);
       const userId = randomUUID4();
       const [user] = await tx.insert(usersTable).values({
         id: userId,
@@ -226895,9 +226952,10 @@ router16.post("/auth/sign-in", async (req, res) => {
         eq(usersTable.emailLookupHash, emailLookupHash),
         sharedDatabaseCustomerCondition()
       )).for("update");
-      const scopedHash = isSharedDatabasePreview() && !record2?.paymentTestAccount ? previewPasswordForVerification(record2?.passwordHash ?? "") : record2?.passwordHash;
+      const isScopedPreviewAccount = isSharedDatabasePreview() && !record2?.paymentTestAccount;
+      const scopedHash = isScopedPreviewAccount ? previewPasswordForVerification(record2?.passwordHash ?? "") : record2?.passwordHash;
       const encodedHash = scopedHash || await DUMMY_PASSWORD_HASH;
-      const validPassword = await verifyCustomerSecret(parsed.data.password, encodedHash);
+      const validPassword = await verifyCustomerPassword(parsed.data.password, encodedHash);
       if (!record2 || !scopedHash || !validPassword || record2.accountStatus !== "active" && record2.accountStatus !== "suspended") {
         const retryAfterFailure = await recordAuthFailureAndGetRetryAfter(
           buckets,
@@ -226909,6 +226967,13 @@ router16.post("/auth/sign-in", async (req, res) => {
       }
       if (record2.accountStatus === "suspended") {
         return { kind: "blocked" };
+      }
+      if (!isScopedPreviewAccount && !isCustomerPasswordArgon2idHash(scopedHash)) {
+        const upgradedHash = await hashCustomerPassword(parsed.data.password);
+        await tx.update(customerCredentialsTable).set({ passwordHash: upgradedHash }).where(and(
+          eq(customerCredentialsTable.userId, record2.userId),
+          eq(customerCredentialsTable.passwordHash, record2.passwordHash)
+        ));
       }
       await tx.update(usersTable).set({ lastSeenAt: now }).where(eq(usersTable.id, record2.userId));
       const session = await insertCustomerSession(tx, record2.userId, now);
@@ -227014,13 +227079,20 @@ router16.post("/auth/unlock", async (req, res) => {
     const result = await withPinAttemptLock(buckets, async (tx) => {
       const retry = await getAuthRateLimit(buckets, /* @__PURE__ */ new Date(), tx);
       if (retry !== null) return { kind: "rate", retry };
-      const [credential] = await tx.select({ pinHash: customerCredentialsTable.pinHash }).from(customerCredentialsTable).where(eq(customerCredentialsTable.userId, session.userId)).limit(1);
-      if (!credential?.pinHash || !await verifyCustomerSecret(parsed.data.pin, credential.pinHash)) {
+      const [credential] = await tx.select({ pinHash: customerCredentialsTable.pinHash }).from(customerCredentialsTable).where(eq(customerCredentialsTable.userId, session.userId)).for("update").limit(1);
+      if (!credential?.pinHash || !await verifyCustomerPin(parsed.data.pin, credential.pinHash)) {
         await recordAuthFailure(buckets, /* @__PURE__ */ new Date(), tx);
         const retryAfterFailure = await getAuthRateLimit(buckets, /* @__PURE__ */ new Date(), tx);
         return retryAfterFailure !== null ? { kind: "rate", retry: retryAfterFailure } : { kind: "invalid" };
       }
       const now = /* @__PURE__ */ new Date();
+      if (!isCustomerPinArgon2idHash(credential.pinHash)) {
+        const upgradedHash = await hashCustomerPin(parsed.data.pin);
+        await tx.update(customerCredentialsTable).set({ pinHash: upgradedHash, pinUpdatedAt: now, updatedAt: now }).where(and(
+          eq(customerCredentialsTable.userId, session.userId),
+          eq(customerCredentialsTable.pinHash, credential.pinHash)
+        ));
+      }
       const [updatedSession] = await tx.update(customerSessionsTable).set({
         pinVerifiedUntil: new Date(now.getTime() + CUSTOMER_PIN_UNLOCK_TTL_MS),
         lastSeenAt: now
@@ -227430,18 +227502,28 @@ router16.put("/me/pin", async (req, res) => {
     const result = await withPinAttemptLock(buckets, async (tx) => {
       const retry = await getAuthRateLimit(buckets, /* @__PURE__ */ new Date(), tx);
       if (retry !== null) return { kind: "rate", retry };
-      const [credential] = await tx.select({ pinHash: customerCredentialsTable.pinHash }).from(customerCredentialsTable).where(eq(customerCredentialsTable.userId, session.userId)).limit(1);
+      const [credential] = await tx.select({ pinHash: customerCredentialsTable.pinHash }).from(customerCredentialsTable).where(eq(customerCredentialsTable.userId, session.userId)).for("update").limit(1);
       if (!credential) return { kind: "unavailable" };
       if (credential.pinHash) {
         if (!parsed.data.currentPin) return { kind: "missing" };
-        if (!await verifyCustomerSecret(parsed.data.currentPin, credential.pinHash)) {
+        if (!await verifyCustomerPin(parsed.data.currentPin, credential.pinHash)) {
           await recordAuthFailure(buckets, /* @__PURE__ */ new Date(), tx);
           const retryAfterFailure = await getAuthRateLimit(buckets, /* @__PURE__ */ new Date(), tx);
           return retryAfterFailure !== null ? { kind: "rate", retry: retryAfterFailure } : { kind: "invalid" };
         }
-        if (parsed.data.currentPin === parsed.data.newPin) return { kind: "unchanged" };
+        if (parsed.data.currentPin === parsed.data.newPin) {
+          if (!isCustomerPinArgon2idHash(credential.pinHash)) {
+            const upgradedHash = await hashCustomerPin(parsed.data.currentPin);
+            const now2 = /* @__PURE__ */ new Date();
+            await tx.update(customerCredentialsTable).set({ pinHash: upgradedHash, pinUpdatedAt: now2, updatedAt: now2 }).where(and(
+              eq(customerCredentialsTable.userId, session.userId),
+              eq(customerCredentialsTable.pinHash, credential.pinHash)
+            ));
+          }
+          return { kind: "unchanged" };
+        }
       }
-      const newPinHash = await hashCustomerSecret(parsed.data.newPin);
+      const newPinHash = await hashCustomerPin(parsed.data.newPin);
       const now = /* @__PURE__ */ new Date();
       const pinCondition = credential.pinHash ? eq(customerCredentialsTable.pinHash, credential.pinHash) : isNull(customerCredentialsTable.pinHash);
       const [updatedCredential] = await tx.update(customerCredentialsTable).set({
@@ -227586,7 +227668,7 @@ router17.post("/auth/reset-password", async (req, res) => {
       ).for("update");
       const passwordHash = await hashSecretForClaimedOtpChallenge(
         challenge,
-        () => hashCustomerSecret(parsed.data.newPassword)
+        () => hashCustomerPassword(parsed.data.newPassword)
       );
       if (passwordHash === null) return { kind: "invalid" };
       const [user] = await tx.select({
@@ -227661,7 +227743,7 @@ router17.post("/auth/reset-pin", async (req, res) => {
       ).for("update");
       const pinHash = await hashSecretForClaimedOtpChallenge(
         challenge,
-        () => hashCustomerSecret(parsed.data.newPin)
+        () => hashCustomerPin(parsed.data.newPin)
       );
       if (pinHash === null) return { kind: "invalid" };
       const [user] = await tx.select({ id: usersTable.id, status: usersTable.status }).from(usersTable).where(or(
