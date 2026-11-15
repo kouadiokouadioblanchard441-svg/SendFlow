@@ -63,7 +63,14 @@ import {
   withAuthAttemptLock,
   withPinAttemptLock,
 } from "../lib/customer-auth-rate-limit";
-import { hashCustomerSecret, hashCustomerSessionToken, verifyCustomerSecret } from "../lib/customer-auth-crypto";
+import {
+  hashCustomerPassword,
+  hashCustomerSecret,
+  hashCustomerSessionToken,
+  isCustomerPasswordArgon2idHash,
+  verifyCustomerPassword,
+  verifyCustomerSecret,
+} from "../lib/customer-auth-crypto";
 import {
   createSensitiveDataLookupIndex,
   decryptSensitiveDataIfEncrypted,
@@ -100,7 +107,7 @@ import { getCustomerBiometricOrigin } from "../lib/customer-biometric-origin";
 
 const router: IRouter = Router();
 const PRIVACY_POLICY_VERSION = "sendflow-privacy-v1";
-const DUMMY_PASSWORD_HASH = hashCustomerSecret("sendflow-invalid-account-password");
+const DUMMY_PASSWORD_HASH = hashCustomerPassword("sendflow-invalid-account-password");
 const BIOMETRIC_CHALLENGE_TTL_MS = 5 * 60 * 1000;
 
 function getWebAuthnOrigin(req: Parameters<typeof requesterAddress>[0]) {
@@ -357,7 +364,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
       if (existingUser || existingEmail) return registerFailure("exists");
 
-      const passwordHash = await hashCustomerSecret(parsed.data.password);
+      const passwordHash = await hashCustomerPassword(parsed.data.password);
       const userId = randomUUID();
       const [user] = await tx
         .insert(usersTable)
@@ -562,11 +569,12 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         ))
         .for("update");
 
-      const scopedHash = isSharedDatabasePreview() && !record?.paymentTestAccount
+      const isScopedPreviewAccount = isSharedDatabasePreview() && !record?.paymentTestAccount;
+      const scopedHash = isScopedPreviewAccount
         ? previewPasswordForVerification(record?.passwordHash ?? "")
         : record?.passwordHash;
       const encodedHash = scopedHash || await DUMMY_PASSWORD_HASH;
-      const validPassword = await verifyCustomerSecret(parsed.data.password, encodedHash);
+      const validPassword = await verifyCustomerPassword(parsed.data.password, encodedHash);
       if (
         !record
         || !scopedHash
@@ -586,6 +594,17 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
 
       if (record.accountStatus === "suspended") {
         return { kind: "blocked" } as const;
+      }
+
+      if (!isScopedPreviewAccount && !isCustomerPasswordArgon2idHash(scopedHash)) {
+        const upgradedHash = await hashCustomerPassword(parsed.data.password);
+        await tx
+          .update(customerCredentialsTable)
+          .set({ passwordHash: upgradedHash })
+          .where(and(
+            eq(customerCredentialsTable.userId, record.userId),
+            eq(customerCredentialsTable.passwordHash, record.passwordHash),
+          ));
       }
 
       await tx

@@ -551,7 +551,7 @@ test("Turnstile failures stop login, signup OTP, account creation, and password 
       email: "turnstile.signup@example.invalid",
       fullName: "Turnstile Test",
       birthDate: "1990-01-01",
-      password: "isolated-password-only",
+      password: "isolated-password-only-123",
       acceptedPrivacy: true,
     }],
     ["/api/auth/send-otp", "signup", {
@@ -566,7 +566,7 @@ test("Turnstile failures stop login, signup OTP, account creation, and password 
     ["/api/auth/reset-password", "password_reset", {
       challengeId: randomUUID(),
       email: "turnstile.recovery@example.invalid",
-      newPassword: "isolated-password-only",
+      newPassword: "isolated-password-only-123",
     }],
   ];
   for (const [path, action, body] of cases) {
@@ -585,6 +585,33 @@ test("Turnstile failures stop login, signup OTP, account creation, and password 
   assert.equal((await owner.query("SELECT count(*) FROM sf_customer_sessions")).rows[0].count, before.sessions);
   assert.equal((await owner.query("SELECT count(*) FROM sf_customer_auth_attempts")).rows[0].count, before.attempts);
   assert.equal(externalCalls, 0);
+});
+
+test("successful legacy customer sign-in upgrades the stored password hash to Argon2id", async () => {
+  const userId = randomUUID();
+  const email = `legacy-password-${userId}@example.invalid`;
+  const password = randomBytes(24).toString("base64url");
+  const legacyHash = await runtime.hashCustomerSecret(password);
+  await owner.query(`INSERT INTO sf_users(id,status,email_encrypted,email_lookup_hash)
+    VALUES($1,'active',$2,$3)`,
+  [userId, runtime.encryptSensitiveData(email, "user-email"),
+    runtime.createSensitiveDataLookupIndex(email, "user-email")]);
+  await owner.query(`INSERT INTO sf_customer_credentials
+    (user_id,password_hash,privacy_accepted_at,privacy_policy_version)
+    VALUES($1,$2,now(),'argon2-upgrade-fixture')`, [userId, legacyHash]);
+
+  const response = await request("/api/auth/sign-in", {
+    method: "POST",
+    body: { email, password },
+  });
+  assert.equal(response.status, 200);
+  const credential = (await owner.query(
+    "SELECT password_hash FROM sf_customer_credentials WHERE user_id=$1",
+    [userId],
+  )).rows[0];
+  assert.match(credential.password_hash, /^\$argon2id\$v=19\$/);
+  assert.notEqual(credential.password_hash, password);
+  assert.notEqual(credential.password_hash, legacyHash);
 });
 
 test("Turnstile token replay and Siteverify outage fail closed on authentication routes", async () => {
@@ -651,7 +678,7 @@ test("Turnstile context mismatches are denied and a valid recovery token reaches
     body: {
       challengeId: randomUUID(),
       email: "turnstile.recovery@example.invalid",
-      newPassword: "isolated-password-only",
+      newPassword: "isolated-password-only-123",
       turnstileToken: validRecoveryToken,
     },
   });
@@ -747,7 +774,7 @@ test("registration rejects unknown, mismatched, disabled countries and invalid n
   const before = (await owner.query("SELECT count(*) FROM sf_users")).rows[0].count;
   const body = { fullName: "Country Fixture", birthDate: "1990-01-01",
     phone: "+2250000000777", email: "country.fixture@example.invalid",
-    password: "isolated-password-only", acceptedPrivacy: true };
+    password: "isolated-password-only-123", acceptedPrivacy: true };
   for (const [index, change] of [
     { countryCode: "xx" }, { countryCode: "sn" },
     { countryCode: "ci", phone: "+225000000777" },
@@ -780,7 +807,7 @@ test("shared-database access is confined to one provisioned viewer, with real pa
       [runtime.encryptSensitiveData(otherEmail, "user-email"),
         runtime.createSensitiveDataLookupIndex(otherEmail, "user-email")]);
     await owner.query("UPDATE sf_customer_credentials SET password_hash=$1 WHERE user_id='fixture-a'",
-      [await runtime.hashCustomerSecret(normalPassword)]);
+      [await runtime.hashCustomerPassword(normalPassword)]);
     await assert.rejects(
       runtime.provisionPreviewAccount("collision@example.invalid", otherPhone, fixturePassword),
       /already in use/,
@@ -794,7 +821,7 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     );
     assert.equal((await owner.query("SELECT balance_minor FROM sf_wallets WHERE user_id=$1", [viewerId])).rows[0].balance_minor, "0");
     const credential = (await owner.query("SELECT password_hash,privacy_policy_version FROM sf_customer_credentials WHERE user_id=$1", [viewerId])).rows[0];
-    assert.ok(credential.password_hash.startsWith("scrypt$preview-v1$"));
+    assert.ok(credential.password_hash.startsWith("argon2id$preview-v1$"));
     assert.equal(credential.privacy_policy_version, "internal-preview-authorization-v1");
     const storedUser = (await owner.query(
       "SELECT phone,email_encrypted,email_lookup_hash,phone_verified_at FROM sf_users WHERE id=$1",
@@ -810,7 +837,7 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     // An older production API cannot promote this account via recovery or
     // mint a legacy session, even if it does not know the preview grant table.
     await assert.rejects(owner.query("UPDATE sf_customer_credentials SET password_hash=$1 WHERE user_id=$2",
-      [await runtime.hashCustomerSecret(normalPassword), viewerId]), { code: "42501" });
+      [await runtime.hashCustomerPassword(normalPassword), viewerId]), { code: "42501" });
     await assert.rejects(owner.query(`INSERT INTO sf_customer_sessions(user_id,token_hash,expires_at)
       VALUES($1,$2,now()+interval '1 hour')`,
     [viewerId, runtime.hashCustomerSessionToken(randomBytes(32).toString("base64url"))

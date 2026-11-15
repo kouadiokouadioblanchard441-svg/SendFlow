@@ -345,6 +345,7 @@ try {
       export { getAccountLimitSnapshot } from "./src/lib/account-limit";
       export { hashCustomerSessionToken } from "./src/lib/customer-auth-crypto";
       export { hashCustomerSecret } from "./src/lib/customer-auth-crypto";
+       export { hashCustomerPassword } from "./src/lib/customer-auth-crypto";
       export { provisionPreviewAccount } from "./src/services/provision-preview-account";
       export { createSensitiveDataLookupIndex } from "./src/lib/sensitive-data-crypto";
       export { decryptSensitiveData } from "./src/lib/sensitive-data-crypto";

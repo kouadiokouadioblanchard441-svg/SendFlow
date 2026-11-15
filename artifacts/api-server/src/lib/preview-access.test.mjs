@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { isViewerRouteCandidate } from "./shared-database-preview-guard.ts";
-import { hashCustomerSecret, hashCustomerSessionToken, verifyCustomerSecret } from "./customer-auth-crypto.ts";
+import {
+  hashCustomerPassword,
+  hashCustomerSecret,
+  hashCustomerSessionToken,
+  verifyCustomerPassword,
+} from "./customer-auth-crypto.ts";
 import { toPreviewPasswordHash, previewPasswordForVerification } from "./preview-credential-policy.ts";
 import { randomBytes } from "node:crypto";
 
@@ -37,11 +42,12 @@ test("viewer candidate list admits exact owner-scoped account, LinkFlow, and bio
 });
 test("viewer passwords cannot be verified by the production verifier", async () => {
   const secret = randomBytes(16).toString("hex");
-  const hash = await hashCustomerSecret(secret);
-  const viewerHash = toPreviewPasswordHash(hash);
-  assert.equal(await verifyCustomerSecret(secret, viewerHash), false);
-  assert.equal(await verifyCustomerSecret(secret, previewPasswordForVerification(viewerHash)), true);
-  assert.equal(previewPasswordForVerification(hash), "");
+  for (const hash of [await hashCustomerPassword(secret), await hashCustomerSecret(secret)]) {
+    const viewerHash = toPreviewPasswordHash(hash);
+    assert.equal(await verifyCustomerPassword(secret, viewerHash), false);
+    assert.equal(await verifyCustomerPassword(secret, previewPasswordForVerification(viewerHash)), true);
+    assert.equal(previewPasswordForVerification(hash), "");
+  }
   assert.throws(() => toPreviewPasswordHash("unsupported"));
 });
 test("a cookie from one realm cannot authenticate in the other; production hashing stays SHA-256", async () => {

@@ -21,7 +21,7 @@ const {
   pool,
   createSiteServer,
   hashCustomerSessionToken,
-  hashCustomerSecret,
+  hashCustomerPassword,
   createSensitiveDataLookupIndex,
   encryptSensitiveData,
 } =
@@ -93,7 +93,7 @@ before(async () => {
   await owner.query(`INSERT INTO sf_customer_credentials
     (user_id,password_hash,privacy_accepted_at,privacy_policy_version)
     VALUES($1,$2,now(),'isolated-account-block-test')`,
-  [blockedAccountId, await hashCustomerSecret(blockedAccountPassword)]);
+  [blockedAccountId, await hashCustomerPassword(blockedAccountPassword)]);
   const blockedAccountSessionToken = randomBytes(32).toString("base64url");
   await owner.query(`INSERT INTO sf_customer_sessions(user_id,token_hash,expires_at,pin_verified_until)
     VALUES($1,$2,now()+interval '1 hour',now()+interval '10 minutes')`,

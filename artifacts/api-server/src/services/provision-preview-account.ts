@@ -3,7 +3,7 @@ import {
   db, eq, or, sql, usersTable, walletsTable, customerCredentialsTable,
   previewAccessTable, adminAuditLogsTable, developerApiKeysTable,
 } from "@workspace/db";
-import { hashCustomerSecret } from "../lib/customer-auth-crypto";
+import { hashCustomerPassword } from "../lib/customer-auth-crypto";
 import { toPreviewPasswordHash } from "../lib/preview-credential-policy";
 import {
   createSensitiveDataLookupIndex,
@@ -24,7 +24,7 @@ export async function provisionPreviewAccount(email: string, phone: string, pass
   ) {
     throw new Error("Invalid preview credentials");
   }
-  const passwordHash = toPreviewPasswordHash(await hashCustomerSecret(password));
+  const passwordHash = toPreviewPasswordHash(await hashCustomerPassword(password));
   const phoneHash = createSensitiveDataLookupIndex(phone, "user-phone");
   const emailHash = createSensitiveDataLookupIndex(normalizedEmail, "user-email");
   return db.transaction(async (tx) => {
