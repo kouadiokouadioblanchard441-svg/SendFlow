@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { commonJsLauncher, stagePleskWebDistribution, verifyDistribution } from "./verify.mjs";
 import { packageApiRuntimeDependencies } from "./package-runtime.mjs";
+import { requireTurnstileSiteKey } from "../security/public-client-env.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 process.chdir(root);
@@ -31,6 +32,7 @@ try {
   if (process.version !== "v24.22.2") {
     throw new Error(`Plesk production builds require Node.js 24.22.2; found ${process.version}`);
   }
+  requireTurnstileSiteKey(process.env);
   if (process.platform !== "linux" || process.arch !== "x64") {
     throw new Error(`Plesk runtime dependencies must be packaged on Linux x64; found ${process.platform}-${process.arch}`);
   }

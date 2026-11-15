@@ -8,6 +8,17 @@ const publicNames = [
 ];
 const turnstileSiteKeyPattern = /^[A-Za-z0-9_-]{1,128}$/;
 
+export function requireTurnstileSiteKey(environment) {
+  const value = environment.VITE_TURNSTILE_SITE_KEY?.trim() ?? '';
+  if (!value) {
+    throw new Error('VITE_TURNSTILE_SITE_KEY is required for Plesk production builds');
+  }
+  if (!turnstileSiteKeyPattern.test(value)) {
+    throw new Error('VITE_TURNSTILE_SITE_KEY must contain only public site-key characters');
+  }
+  return value;
+}
+
 export function publicClientDefinitions(environment) {
   const definitions = {};
   for (const name of publicNames) {

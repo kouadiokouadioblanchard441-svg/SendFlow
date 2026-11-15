@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { publicClientDefinitions } from './public-client-env.mjs';
+import { publicClientDefinitions, requireTurnstileSiteKey } from './public-client-env.mjs';
 
 test('only allowlisted public values, including the Turnstile site key, are embedded', () => {
   const sensitive = randomUUID();
@@ -56,5 +56,20 @@ test('Turnstile configuration accepts a public site key only, without echoing in
   assert.throws(
     () => publicClientDefinitions({ VITE_TURNSTILE_SITE_KEY: `https://example.invalid/${sensitive}` }),
     (error) => error.message.includes('VITE_TURNSTILE_SITE_KEY') && !error.message.includes(sensitive),
+  );
+});
+
+test('Plesk production builds require a non-empty public Turnstile site key', () => {
+  assert.equal(
+    requireTurnstileSiteKey({ VITE_TURNSTILE_SITE_KEY: 'public-site-key' }),
+    'public-site-key',
+  );
+  assert.throws(
+    () => requireTurnstileSiteKey({}),
+    /VITE_TURNSTILE_SITE_KEY is required/,
+  );
+  assert.throws(
+    () => requireTurnstileSiteKey({ VITE_TURNSTILE_SITE_KEY: 'not a valid key' }),
+    /public site-key characters/,
   );
 });

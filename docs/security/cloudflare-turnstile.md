@@ -42,19 +42,23 @@ The API derives `remoteip` from Express `req.ip`; the application must keep
 `TRUST_PROXY_HOPS` aligned with the actual trusted proxy chain. If no valid IP
 is available, SendFlow omits `remoteip` rather than trusting a request header.
 
-## Replit configuration
+## Build and server configuration
 
 1. In Cloudflare Turnstile, create a **Managed** site key and add every exact
    SendFlow hostname that will render the widget. Production and development
    preview hostnames are separate allow-list entries. Do not use a wildcard
    unless Cloudflare's site configuration explicitly supports and requires it.
-2. Add `VITE_TURNSTILE_SITE_KEY` as a Replit environment variable. The Vite
-   build injects only this exact public value through its explicit allowlist.
+2. For Replit builds, add `VITE_TURNSTILE_SITE_KEY` as a Replit environment
+   variable. For the Plesk package built by GitHub Actions, add it as a GitHub
+   repository Actions variable with the same name. The workflow passes it to the
+   production build and fails closed if it is absent. The Vite build injects only
+   this exact public value through its explicit allowlist.
    It may be shared when one site key allows all required hostnames; use
    environment-specific values if development and production use separate site
    keys. This site key is designed to be public and may appear in web/Android
    bundles. It is not the verification secret.
-3. Add `TURNSTILE_SECRET_KEY` through Replit Secrets for the API server only.
+3. Add `TURNSTILE_SECRET_KEY` through Replit Secrets for the API server, and as
+   a protected environment variable on the Plesk API application.
    Never add the secret to a `VITE_` variable, a frontend file, Android
    configuration, an API response, a log, or a committed environment file.
 4. Confirm `CORS_ALLOWED_ORIGINS` contains the exact production web origins.
