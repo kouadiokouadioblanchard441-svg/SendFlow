@@ -56,3 +56,4 @@
 - [Plesk pnpm build approvals](plesk-pnpm-build-approvals.md) — Keep only reviewed lifecycle scripts allowed in both pnpm build-approval formats for Plesk compatibility.
 - [Frontend asset tracking](ci-asset-tracking.md) — Move imported production assets out of globally ignored uploads into tracked artifact source directories.
 - [Replit Node patch versions](replit-node-patch-version.md) — The managed Node 24 module offers 24.22.1, not the Plesk-required 24.22.2; custom PATH setup can affect the Run command.
+- [Plesk production incident handling](plesk-production-debugging.md) — Separate proven symptoms from causes; never claim a Plesk incident fixed before checking the live service.
