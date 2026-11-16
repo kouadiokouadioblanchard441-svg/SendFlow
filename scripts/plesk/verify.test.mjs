@@ -255,6 +255,17 @@ test("CommonJS adapter never prints sensitive import errors", async (t) => {
   assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker/);
 });
 
+test("CommonJS adapter reports a safe error name when no system code exists", async (t) => {
+  const root = await fixture(t);
+  await writeFile(path.join(root, "server/index.mjs"), 'throw new TypeError("synthetic-private-marker");');
+  const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
+    env: { NODE_ENV: "production" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Plesk startup failure details: TypeError/);
+  assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker/);
+});
+
 test("CommonJS adapter identifies missing production configuration without exposing values", async (t) => {
   const root = await fixture(t);
   await writeFile(

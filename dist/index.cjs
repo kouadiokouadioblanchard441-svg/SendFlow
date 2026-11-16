@@ -31,20 +31,30 @@ function safeConfigurationHint(error) {
   return "";
 }
 function safeFailureLabel(error) {
+  let fallbackName = "";
   try {
     let current = error;
-    for (let depth = 0; depth < 3 && current && typeof current === "object"; depth += 1) {
+    for (
+      let depth = 0;
+      depth < 3 && current && (typeof current === "object" || typeof current === "function");
+      depth += 1
+    ) {
       const name = typeof current.name === "string" && /^[A-Za-z][A-Za-z0-9_]{0,39}$/.test(current.name)
         ? current.name
-        : "Error";
+        : "";
+      if (!fallbackName && name) fallbackName = name;
       const code = typeof current.code === "string" && /^[A-Z][A-Z0-9_]{0,63}$/.test(current.code)
         ? current.code
         : "";
-      if (code) return name + "/" + code;
+      if (code) return (name || fallbackName || "Error") + "/" + code;
       current = current.cause;
     }
   } catch {}
-  return "Unknown";
+  if (fallbackName) return fallbackName;
+  if (error === null) return "NullRejection";
+  if (typeof error === "string") return "NonErrorString";
+  if (typeof error === "object") return "NonErrorObject";
+  return "NonErrorValue";
 }
 if (process.env.NODE_ENV !== "production") {
   console.error("Plesk startup requires NODE_ENV=production.");

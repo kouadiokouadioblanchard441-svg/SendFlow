@@ -1,6 +1,6 @@
 {
-  "builtAt": "2026-11-16T14:39:51.129Z",
-  "sourceCommit": "360aae81a7f9f0969c56e13e3a7b43e6b2dd4aa0",
+  "builtAt": "2026-11-16T15:17:44.003Z",
+  "sourceCommit": "e034f37cfd2950ddebd8b640bb8f3c7b644f2e74",
   "trackedWorktreeModified": true,
   "builderNode": "v24.22.2",
   "builderPnpm": "10.26.1",
@@ -89,8 +89,8 @@
     },
     {
       "path": "index.cjs",
-      "bytes": 2385,
-      "sha256": "40e9ec5fbb2519cf673fa96d672710464a0686e0df26f203425a94fbb04fbafb"
+      "bytes": 2756,
+      "sha256": "a694b13c97210ccdfa37189aed172baf664dcf0607ab24c17ed5827738fe51d9"
     },
     {
       "path": "public/assets/chunk-1U225g5m.js",
