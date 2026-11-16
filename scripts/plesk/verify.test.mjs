@@ -263,7 +263,40 @@ test("CommonJS adapter reports a safe error name when no system code exists", as
   });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Plesk startup failure details: TypeError/);
+  assert.match(result.stderr, /Plesk startup failure category: UNCLASSIFIED/);
   assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker/);
+});
+
+test("CommonJS adapter classifies database configuration errors without logging values", async (t) => {
+  const root = await fixture(t);
+  await writeFile(
+    path.join(root, "server/index.mjs"),
+    'throw new Error("External database configuration is invalid. synthetic-private-marker");',
+  );
+  const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
+    env: { NODE_ENV: "production" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Plesk startup failure category: INVALID_DATABASE_URL/);
+  assert.match(result.stderr, /Check the production database URL format/);
+  assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker/);
+});
+
+test("API startup diagnostics list unset names without exposing environment values", async (t) => {
+  const root = await fixture(t);
+  await writeFile(path.join(root, "index.cjs"), commonJsLauncher("./index.mjs"));
+  await writeFile(path.join(root, "index.mjs"), 'throw new Error("synthetic-private-marker");');
+  const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
+    env: {
+      NODE_ENV: "production",
+      SUPABASE_DATABASE_URL: "not-a-real-database-url",
+      DATABASE_CA_CERT: "synthetic-private-marker",
+    },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Plesk runtime variables unset: PORT, SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS/);
+  assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker|not-a-real-database-url/);
 });
 
 test("CommonJS adapter identifies missing production configuration without exposing values", async (t) => {

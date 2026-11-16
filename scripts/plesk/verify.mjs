@@ -8,32 +8,75 @@ export function commonJsLauncher(target) {
   }
   return `"use strict";
 // Plesk CommonJS adapter: keep application logic in the existing ESM bundle.
-function safeConfigurationHint(error) {
-  let message = "";
+const PLESK_SERVICE = ${JSON.stringify(target === "./index.mjs" ? "API" : "site")};
+function safeFailureCategory(error) {
   try {
-    message = error instanceof Error ? error.message : "";
-  } catch {
-    return "";
+    let current = error;
+    for (
+      let depth = 0;
+      depth < 3 && current && (typeof current === "object" || typeof current === "function");
+      depth += 1
+    ) {
+      const message = typeof current.message === "string" ? current.message : "";
+      if (message.startsWith("TRUST_PROXY_HOPS")) return "INVALID_TRUST_PROXY_HOPS";
+      if (message.startsWith("CORS_ALLOWED_ORIGINS")) return "INVALID_CORS_ALLOWED_ORIGINS";
+      if (message.startsWith("SENDFLOW_DATABASE_TARGET")) return "INVALID_DATABASE_TARGET";
+      if (
+        message.startsWith("SUPABASE_DATABASE_URL is required")
+        || message.startsWith("DATABASE_URL is required for the Plesk production database")
+      ) return "MISSING_DATABASE_URL";
+      if (message.startsWith("DATABASE_CA_CERT is required")) return "MISSING_DATABASE_CA_CERT";
+      if (message.startsWith("External database configuration is invalid.")) return "INVALID_DATABASE_URL";
+      if (
+        message.startsWith("Database connection requires verified TLS.")
+        || message.startsWith("The shared external database requires verified TLS.")
+      ) return "DATABASE_TLS_CONFIGURATION";
+      if (
+        message.startsWith("PORT")
+        || message.startsWith("Valid PORT is required")
+        || message.startsWith("Invalid PORT value")
+      ) return "INVALID_PORT";
+      current = current.cause;
+    }
+  } catch {}
+  return "UNCLASSIFIED";
+}
+function safeMissingEnvironmentNames() {
+  const required = ["NODE_ENV", "PORT", "SENDFLOW_DATABASE_TARGET", "TRUST_PROXY_HOPS"];
+  if (PLESK_SERVICE === "API") required.push("CORS_ALLOWED_ORIGINS");
+  const missing = required.filter((name) => !process.env[name]?.trim());
+  if (process.env.NODE_ENV === "production") {
+    if (!process.env.SUPABASE_DATABASE_URL?.trim() && !process.env.DATABASE_URL?.trim()) {
+      missing.push("SUPABASE_DATABASE_URL or DATABASE_URL");
+    }
+    if (!process.env.DATABASE_CA_CERT?.trim()) missing.push("DATABASE_CA_CERT");
   }
-  if (message.startsWith("TRUST_PROXY_HOPS")) {
+  return missing;
+}
+function safeConfigurationHint(error) {
+  const category = safeFailureCategory(error);
+  if (category === "INVALID_TRUST_PROXY_HOPS") {
     return "Check the TRUST_PROXY_HOPS environment variable.";
   }
-  if (message.startsWith("CORS_ALLOWED_ORIGINS")) {
+  if (category === "INVALID_CORS_ALLOWED_ORIGINS") {
     return "Check the CORS_ALLOWED_ORIGINS environment variable.";
   }
-  if (message.startsWith("SENDFLOW_DATABASE_TARGET")) {
+  if (category === "INVALID_DATABASE_TARGET") {
     return "Check SENDFLOW_DATABASE_TARGET and NODE_ENV.";
   }
-  if (message.startsWith("SUPABASE_DATABASE_URL is required")) {
+  if (category === "MISSING_DATABASE_URL") {
     return "The production database URL environment variable is missing.";
   }
-  if (message.startsWith("DATABASE_URL is required for the Plesk production database")) {
-    return "The production database URL environment variable is missing.";
-  }
-  if (message.startsWith("DATABASE_CA_CERT is required for the Plesk production database")) {
+  if (category === "MISSING_DATABASE_CA_CERT") {
     return "The DATABASE_CA_CERT environment variable is missing.";
   }
-  if (message.startsWith("PORT")) {
+  if (category === "INVALID_DATABASE_URL") {
+    return "Check the production database URL format; its value is never logged.";
+  }
+  if (category === "DATABASE_TLS_CONFIGURATION") {
+    return "Check that the production database connection uses verified TLS.";
+  }
+  if (category === "INVALID_PORT") {
     return "Check that Plesk provides a valid PORT to this Node.js application.";
   }
   return "";
@@ -72,6 +115,11 @@ if (process.env.NODE_ENV !== "production") {
     // Never print an exception that might contain credentials or private data.
     console.error("Plesk application startup failed. Check private configuration and application logs.");
     console.error("Plesk startup failure details: " + safeFailureLabel(error));
+    console.error("Plesk startup failure category: " + safeFailureCategory(error));
+    const missingEnvironmentNames = safeMissingEnvironmentNames();
+    if (missingEnvironmentNames.length) {
+      console.error("Plesk runtime variables unset: " + missingEnvironmentNames.join(", "));
+    }
     const hint = safeConfigurationHint(error);
     if (hint) console.error("Plesk configuration check: " + hint);
     process.exitCode = 1;

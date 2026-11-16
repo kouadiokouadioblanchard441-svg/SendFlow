@@ -190,6 +190,10 @@ exposée comme un répertoire statique Apache.
   la même base Supabase; si les deux sont définis, `SUPABASE_DATABASE_URL` est prioritaire.
   La connexion vérifie le certificat TLS et le nom d’hôte. Les secrets Replit ne sont
   pas transférés par ce build.
+- Si un démarrage échoue, le lanceur consigne une catégorie d'erreur et uniquement les
+  noms des variables obligatoires absentes pour le service concerné ; il ne consigne
+  aucune valeur de variable. Les erreurs HTTP 500/504 sur `/api` sont à diagnostiquer
+  dans les journaux Node de l'application API, distincts de ceux du site.
 - Configurer `TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` dans l'environnement privé
   du service Node API Plesk. La première est la clé publique du widget; l'API la fournit
   à l'interface au runtime par `GET /api/auth/turnstile-config`. Elle n'est donc pas
