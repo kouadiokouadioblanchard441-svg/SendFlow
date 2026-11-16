@@ -243,11 +243,15 @@ test("CommonJS adapter refuses non-production startup", async (t) => {
 
 test("CommonJS adapter never prints sensitive import errors", async (t) => {
   const root = await fixture(t);
-  await writeFile(path.join(root, "server/index.mjs"), 'throw new Error("synthetic-private-marker");');
+  await writeFile(
+    path.join(root, "server/index.mjs"),
+    'throw Object.assign(new Error("synthetic-private-marker"), { code: "ERR_MODULE_NOT_FOUND" });',
+  );
   const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
     env: { NODE_ENV: "production" }, encoding: "utf8",
   });
   assert.equal(result.status, 1);
+  assert.match(result.stderr, /Plesk startup failure details: Error\/ERR_MODULE_NOT_FOUND/);
   assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker/);
 });
 

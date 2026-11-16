@@ -1,6 +1,6 @@
 {
-  "builtAt": "2026-11-15T15:14:45.938Z",
-  "sourceCommit": "99a17a208f639e60f83ab7032c11de4a376380fd",
+  "builtAt": "2026-11-16T14:39:51.129Z",
+  "sourceCommit": "360aae81a7f9f0969c56e13e3a7b43e6b2dd4aa0",
   "trackedWorktreeModified": true,
   "builderNode": "v24.22.2",
   "builderPnpm": "10.26.1",
@@ -14,18 +14,18 @@
   "files": [
     {
       "path": "index.cjs",
-      "bytes": 1742,
-      "sha256": "21dd804d4366ab67cccbe2c4e200301a516c2320baccc003ecb4a4db8cc34ce5"
+      "bytes": 2378,
+      "sha256": "07e05aabab2f9b482f96a53e5ed2ee6d7c982303207a1b7a85ca1c3e0daf507d"
     },
     {
       "path": "index.mjs",
-      "bytes": 6930622,
-      "sha256": "587f412411fca3d8deffb3c44fd7a4cb20858c60cf82093b2f6278cdda54af46"
+      "bytes": 6930609,
+      "sha256": "fa49ca50d5ee58145d7fb050e49adc9e1a38fd3cbe08ad9a16bc3e6e44885417"
     },
     {
       "path": "pino-file.mjs",
-      "bytes": 145490,
-      "sha256": "c765a2d8be72601c8c22b7bc5c5380db53d248465b3245ede729df9bbcd56695"
+      "bytes": 145477,
+      "sha256": "ce3e321991962e882d8d00fb0849ca21b12fe19c97a9e7dc325f18a1a304da65"
     },
     {
       "path": "pino-pretty.mjs",
@@ -34,8 +34,8 @@
     },
     {
       "path": "pino-worker.mjs",
-      "bytes": 157126,
-      "sha256": "a4bdacee4573a235c50fc1f17a4963ff9f4bf56a6ef0dfe8bf07dac350d9e12a"
+      "bytes": 157113,
+      "sha256": "cc43a689a93e7107eabcb942fcaa231d044675e1f5388dc1ec6e3017ca989985"
     },
     {
       "path": "thread-stream-worker.mjs",
@@ -45,12 +45,12 @@
   ],
   "runtimeDependencies": {
     "archive": "artifacts/api-server/plesk-runtime-dependencies.tar.gz",
-    "bytes": 23961946,
-    "sizeBytes": 23961946,
-    "sha256": "239f08277f21893329355d0c68c0c1e792e2633a0687a44c0907914dd8270c78",
+    "bytes": 23772462,
+    "sizeBytes": 23772462,
+    "sha256": "dd912a4111e8da39eaca90be3b9d0129ccd50d95a4559ad5d914ec40eb6c25e9",
     "platform": "linux-x64",
     "node": "v24.22.2",
-    "entries": 12518,
+    "entries": 12526,
     "externalRuntimePackages": [
       "sharp",
       "@swc/helpers"

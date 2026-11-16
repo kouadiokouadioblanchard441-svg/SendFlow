@@ -38,6 +38,22 @@ function safeConfigurationHint(error) {
   }
   return "";
 }
+function safeFailureLabel(error) {
+  try {
+    let current = error;
+    for (let depth = 0; depth < 3 && current && typeof current === "object"; depth += 1) {
+      const name = typeof current.name === "string" && /^[A-Za-z][A-Za-z0-9_]{0,39}$/.test(current.name)
+        ? current.name
+        : "Error";
+      const code = typeof current.code === "string" && /^[A-Z][A-Z0-9_]{0,63}$/.test(current.code)
+        ? current.code
+        : "";
+      if (code) return name + "/" + code;
+      current = current.cause;
+    }
+  } catch {}
+  return "Unknown";
+}
 if (process.env.NODE_ENV !== "production") {
   console.error("Plesk startup requires NODE_ENV=production.");
   process.exitCode = 1;
@@ -45,6 +61,7 @@ if (process.env.NODE_ENV !== "production") {
   import(${JSON.stringify(target)}).catch((error) => {
     // Never print an exception that might contain credentials or private data.
     console.error("Plesk application startup failed. Check private configuration and application logs.");
+    console.error("Plesk startup failure details: " + safeFailureLabel(error));
     const hint = safeConfigurationHint(error);
     if (hint) console.error("Plesk configuration check: " + hint);
     process.exitCode = 1;
