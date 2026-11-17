@@ -1,11 +1,11 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { listenOnPleskPort, requirePleskPort } from "./lib/plesk-listener";
+import { getPleskPort, listenOnPleskPort } from "./lib/plesk-listener";
 import { startDeveloperWebhookWorker } from "./services/developer-webhook-worker";
 import { startEmailCampaignWorker } from "./services/email-campaign-worker";
 import { startIdentityVerificationUploadCleanup } from "./services/identity-verification-upload-cleanup";
 
-const port = requirePleskPort(process.env["PORT"]);
+const port = getPleskPort(process.env["PORT"]);
 
 async function startServer(): Promise<void> {
   const server = listenOnPleskPort(app, port);

@@ -31,18 +31,13 @@ function safeFailureCategory(error) {
         message.startsWith("Database connection requires verified TLS.")
         || message.startsWith("The shared external database requires verified TLS.")
       ) return "DATABASE_TLS_CONFIGURATION";
-      if (
-        message.startsWith("PORT")
-        || message.startsWith("Valid PORT is required")
-        || message.startsWith("Invalid PORT value")
-      ) return "INVALID_PORT";
       current = current.cause;
     }
   } catch {}
   return "UNCLASSIFIED";
 }
 function safeMissingEnvironmentNames() {
-  const required = ["NODE_ENV", "PORT", "SENDFLOW_DATABASE_TARGET", "TRUST_PROXY_HOPS"];
+  const required = ["NODE_ENV", "SENDFLOW_DATABASE_TARGET", "TRUST_PROXY_HOPS"];
   if (PLESK_SERVICE === "API") required.push("CORS_ALLOWED_ORIGINS");
   const missing = required.filter((name) => !process.env[name]?.trim());
   if (process.env.NODE_ENV === "production") {
@@ -75,9 +70,6 @@ function safeConfigurationHint(error) {
   }
   if (category === "DATABASE_TLS_CONFIGURATION") {
     return "Check that the production database connection uses verified TLS.";
-  }
-  if (category === "INVALID_PORT") {
-    return "Check that Plesk provides a valid PORT to this Node.js application.";
   }
   return "";
 }

@@ -307,25 +307,24 @@ test("API startup diagnostics list unset names without exposing environment valu
     encoding: "utf8",
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /Plesk API runtime variables unset: PORT, SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS/);
+  assert.match(result.stderr, /Plesk API runtime variables unset: SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS/);
+  assert.doesNotMatch(result.stderr, /runtime variables unset: PORT/);
   assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker|not-a-real-database-url/);
 });
 
-test("API startup identifies a missing Plesk PORT without exposing its value", async (t) => {
+test("CommonJS adapter no longer classifies PORT as a required configuration variable", async (t) => {
   const root = await fixture(t);
   await writeFile(
     path.join(root, "server/index.mjs"),
-    'throw new Error("PORT environment variable is required but was not provided.");',
+    'throw new Error("Invalid PORT value");',
   );
   const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
     env: { NODE_ENV: "production" },
     encoding: "utf8",
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /Plesk site application startup failed/);
-  assert.match(result.stderr, /Plesk site startup failure category: INVALID_PORT/);
-  assert.match(result.stderr, /Plesk site configuration check: Check that Plesk provides a valid PORT/);
-  assert.match(result.stderr, /Plesk site runtime variables unset: PORT,/);
+  assert.match(result.stderr, /Plesk site startup failure category: UNCLASSIFIED/);
+  assert.doesNotMatch(result.stderr, /INVALID_PORT|PORT environment variable|runtime variables unset: PORT/);
   assert.doesNotMatch(result.stdout + result.stderr, /undefined|synthetic-private-marker/);
 });
 

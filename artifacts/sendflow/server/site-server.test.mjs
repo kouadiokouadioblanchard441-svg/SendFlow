@@ -4,10 +4,17 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { createSiteServer } from "./site-server.ts";
+import { createSiteServer, getSiteListenPort } from "./site-server.ts";
 
 const gatePath = "/secure-entry-for-sendflow-test-only-947362";
 const gateToken = "fixture-only-token-not-a-production-secret-298471";
+
+test("site startup tolerates a missing or invalid Passenger PORT", () => {
+  assert.equal(getSiteListenPort("8080"), 8080);
+  for (const value of [undefined, "", "not-a-port", "0", "-1", "65536", "1.5"]) {
+    assert.equal(getSiteListenPort(value), 3000);
+  }
+});
 
 async function fixture(t, configureGate = true) {
   const root = await mkdtemp(join(tmpdir(), "sendflow-site-server-"));

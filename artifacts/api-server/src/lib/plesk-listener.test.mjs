@@ -2,16 +2,13 @@ import assert from "node:assert/strict";
 import express from "express";
 import { once } from "node:events";
 import test from "node:test";
-import { listenOnPleskPort, PLESK_LISTEN_HOST, requirePleskPort } from "./plesk-listener.ts";
+import { getPleskPort, listenOnPleskPort, PLESK_LISTEN_HOST } from "./plesk-listener.ts";
 
-test("requires the exact Plesk-provided port and rejects unsafe values", () => {
-  assert.equal(requirePleskPort(" 8080 "), 8080);
-  assert.equal(requirePleskPort("65535"), 65535);
+test("uses Passenger's supplied port when valid and a compatibility port otherwise", () => {
+  assert.equal(getPleskPort(" 8080 "), 8080);
+  assert.equal(getPleskPort("65535"), 65535);
   for (const value of [undefined, "", "   ", "0", "65536", "-1", "1.5", "8080;exit"]) {
-    assert.throws(
-      () => requirePleskPort(value),
-      { message: /^(PORT environment variable is required|PORT must be an integer)/ },
-    );
+    assert.equal(getPleskPort(value), 3000);
   }
 });
 

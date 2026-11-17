@@ -259828,19 +259828,10 @@ var app_default = app;
 
 // src/lib/plesk-listener.ts
 var PLESK_LISTEN_HOST = "0.0.0.0";
-function requirePleskPort(value) {
+function getPleskPort(value) {
   const normalized = value?.trim() ?? "";
-  if (!normalized) {
-    throw new Error("PORT environment variable is required but was not provided.");
-  }
-  if (!/^\d+$/.test(normalized)) {
-    throw new Error("PORT must be an integer between 1 and 65535.");
-  }
   const port2 = Number(normalized);
-  if (!Number.isSafeInteger(port2) || port2 < 1 || port2 > 65535) {
-    throw new Error("PORT must be an integer between 1 and 65535.");
-  }
-  return port2;
+  return Number.isSafeInteger(port2) && port2 >= 1 && port2 <= 65535 ? port2 : 3e3;
 }
 function listenOnPleskPort(app2, port2) {
   return app2.listen(port2, PLESK_LISTEN_HOST);
@@ -260670,7 +260661,7 @@ function startIdentityVerificationUploadCleanup(logger2) {
 }
 
 // src/index.ts
-var port = requirePleskPort(process.env["PORT"]);
+var port = getPleskPort(process.env["PORT"]);
 async function startServer() {
   const server = listenOnPleskPort(app_default, port);
   server.on("error", (err) => {

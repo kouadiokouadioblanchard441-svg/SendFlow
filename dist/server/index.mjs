@@ -12064,12 +12064,15 @@ function createSiteServer(distributionDirectory, gate = enforceIpAccess) {
 }
 function startSiteServer() {
   trustedProxyHops(process.env.TRUST_PROXY_HOPS, process.env.NODE_ENV);
-  const port = Number(process.env.PORT);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Valid PORT is required");
+  const port = getSiteListenPort(process.env.PORT);
   const distributionRoot = fileURLToPath(new URL("../", import.meta.url));
   const server = createSiteServer(distributionRoot);
   server.listen(port, "0.0.0.0");
   return server;
+}
+function getSiteListenPort(value) {
+  const port = Number(value);
+  return Number.isInteger(port) && port >= 1 && port <= 65535 ? port : 3e3;
 }
 
 // server/start.ts

@@ -1,8 +1,8 @@
 {
-  "builtAt": "2026-11-17T14:06:57.105Z",
-  "sourceCommit": "e9b8e2681af5c3c5c03dd9e79d9ffba3bab7ccb1",
+  "builtAt": "2026-11-17T15:37:19.167Z",
+  "sourceCommit": "f316f4ee59283f507447f81810420f0428b5d3fb",
   "trackedWorktreeModified": true,
-  "builderNode": "v24.22.3",
+  "builderNode": "v22.23.4",
   "builderPnpm": "10.26.1",
   "lockfileSha256": "00bb4904baff839c3c41a2427941796ff1d4b9cd9b55b53d0a3fd615a807d60d",
   "productionHostVerified": false,
@@ -89,8 +89,8 @@
     },
     {
       "path": "index.cjs",
-      "bytes": 5209,
-      "sha256": "5fd5ac3a541dd3403752249a02db30924477050878d645ff2f8618e7b72dc0ad"
+      "bytes": 4893,
+      "sha256": "7174aae4c9b124dc7843e73a0acbe577461d2d60f7c09e098bf79555ddea2724"
     },
     {
       "path": "public/assets/chunk-1U225g5m.js",
@@ -834,8 +834,8 @@
     },
     {
       "path": "server/index.mjs",
-      "bytes": 409555,
-      "sha256": "e46a52d0034a4f711bb033fd11931a41aad8b084166804be7e428dde0a719a1b"
+      "bytes": 409608,
+      "sha256": "229fb481b4d50f129892e4834a9b3f4ce1c9906cfa96da48b0d0f84816062c20"
     }
   ]
 }

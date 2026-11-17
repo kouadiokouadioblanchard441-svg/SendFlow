@@ -28,7 +28,7 @@ doivent être vérifiés séparément sur le serveur.
 ## Construction reproductible
 
 Le workflow GitHub Actions `.github/workflows/plesk-build.yml` construit et publie les
-artefacts lorsqu'un push accepté arrive sur `main`. Il utilise Node.js `24.22.3` et
+artefacts lorsqu'un push accepté arrive sur `main`. Il utilise Node.js `22.23.4` et
 pnpm `10.26.1`, installe le lockfile sans le modifier, exécute `pnpm run build:plesk`,
 puis ajoute uniquement les packages Plesk au dépôt. Le commit d'artefacts est ensuite
 disponible au Pull Git Plesk. Le workflow vérifie que `main` n'a pas avancé pendant le
@@ -112,7 +112,7 @@ l'environnement restreint de déploiement Plesk. Il exige `tar`, `gzip` et les u
 de fichiers usuels, puis extrait l'archive runtime vers `artifacts/api-server/node_modules`
 (répertoire ignoré par Git) avant le démarrage. Il n'exécute ni compilation ni installation
 depuis un registre. Il échoue clairement si un fichier ou un outil manque. Le build GitHub
-Actions est exécuté sous Node.js `24.22.3` avant le commit d'artefacts.
+Actions est exécuté sous Node.js `22.23.4` avant le commit d'artefacts.
 
 Configurer les racines et fichiers de démarrage des applications Node Plesk :
 
@@ -127,21 +127,18 @@ Cette disposition correspond à la capture Plesk : dans `dist`, le fichier
 racine du checkout reste également généré pour compatibilité, mais ne doit pas être
 mélangé avec la racine `dist`.
 
-Dans les paramètres Node.js Plesk de **chaque application** (site et API),
-vérifier que le processus reçoit `PORT`. Le code écoute exclusivement sur cette
-valeur et ne choisit aucun port de secours. Si Plesk affiche un port d'application
-attribué, l'entrée `PORT` des variables d'environnement doit reprendre exactement
-cette valeur pour cette application ; ne pas inventer un numéro ni partager le port
-entre les deux applications. Si Plesk/Passenger est censé injecter `PORT` mais que
-les journaux indiquent qu'il est absent, corriger l'environnement de l'application
-dans Plesk ou demander à l'hébergeur le port interne attribué avant le redémarrage.
+Les deux applications utilisent Phusion Passenger sur Plesk. Passenger intercepte
+l'écoute Node et gère le port interne ; `PORT` n'est donc pas une variable obligatoire
+et ne doit pas être ajoutée artificiellement. Le code transmet le port Passenger s'il
+est défini et valide, sinon utilise `3000` comme argument de compatibilité à
+`listen()`. Avec Passenger, ce port de compatibilité n'est pas le port public du site.
 Les variables Plesk ne sont pas versionnées dans ce dépôt.
 
 Le paquet est déjà construit avant le Pull. Ne lancez pas `npm install`, `npm ci` ou
 `npm update` dans la racine Plesk : le dépôt impose pnpm pour les builds et le hook
 `scripts/plesk/build-after-pull.sh` active les dépendances API déjà empaquetées.
-Une installation npm échouée n'est pas une réparation du paquet et ne fournit pas
-le `PORT` manquant. Si le panneau propose pnpm, le sélectionner pour éviter les
+Une installation npm échouée ne répare pas le paquet et ne corrige pas un échec de
+démarrage. Si le panneau propose pnpm, le sélectionner pour éviter les
 commandes npm accidentelles ; dans tous les cas, ne pas installer depuis Plesk.
 
 Pour le site, choisir `dist/public` comme Document Root relatif au checkout.
@@ -181,10 +178,10 @@ exposée comme un répertoire statique Apache.
 
 ## Runtime et routage à confirmer sur Plesk
 
-- La version Node du constructeur figure dans les manifestes. Le workflow de build
-  et le runtime Plesk visibles sur la dernière capture utilisent Node.js 24.22.3 ;
-  le workflow utilise pnpm 10.26.1. La compatibilité de l'archive native doit tout de
-  même être confirmée après redémarrage sur Plesk.
+- La version Node du constructeur figure dans les manifestes. Le build est épinglé sur
+  Node.js 22.23.4 et pnpm 10.26.1, conformément au runtime Node.js 22 indiqué pour Plesk.
+  Confirmer la version mineure sélectionnée dans le panneau et la compatibilité de
+  l'archive native après redémarrage.
 - L'archive des dépendances API est construite pour Linux x64/glibc (runner GitHub
   `ubuntu-latest`). La compatibilité exacte doit être confirmée avec l'architecture et
   la distribution système de l'hébergement Plesk ; aucun accès serveur ne permet de
@@ -192,7 +189,7 @@ exposée comme un répertoire statique Apache.
 - Vérifier la prise en charge du démarrage `index.cjs`/import ESM par le gestionnaire
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
 - Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
-  le reste doit atteindre le serveur Node du site. Chaque service écoute son propre `PORT`.
+  le reste doit atteindre le serveur Node du site. Passenger gère chaque écoute Node.
 - Injecter `ADMIN_SECRET_PATH` et `ADMIN_SECRET_TOKEN` dans les paramètres secrets des
   deux processus Node (site et API). Les Secrets Replit ne sont pas transférés par le
   paquet Plesk. Le jeton n'est jamais inclus dans l'URL; le formulaire le transmet par
