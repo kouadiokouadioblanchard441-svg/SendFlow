@@ -97,7 +97,7 @@ import {
 } from "../lib/request-security";
 import {
   rejectTurnstileRequest,
-  getTurnstilePublicSiteKey,
+  getTurnstileConfigurationStatus,
   verifyTurnstileRequest,
 } from "../lib/turnstile";
 import { recordLoginActivity } from "../lib/login-activity";
@@ -119,17 +119,44 @@ const DUMMY_PASSWORD_HASH = hashCustomerPassword(
 );
 const BIOMETRIC_CHALLENGE_TTL_MS = 5 * 60 * 1000;
 
-router.get("/auth/turnstile-config", (_req, res): void => {
-  const siteKey = getTurnstilePublicSiteKey();
-  if (!siteKey) {
-    res
-      .status(503)
-      .json({
+router.get("/auth/turnstile-config", (req, res): void => {
+  res.setHeader("Cache-Control", "no-store, private");
+  try {
+    const configuration = getTurnstileConfigurationStatus();
+    if (!configuration.siteKey) {
+      const category = configuration.missingEnvironmentNames.length
+        ? "turnstile_configuration_missing"
+        : "turnstile_configuration_invalid";
+      req.log.warn(
+        {
+          endpoint: "turnstile-config",
+          dependency: "turnstile",
+          failureCategory: category,
+          missingEnvironmentNames: configuration.missingEnvironmentNames,
+        },
+        "Turnstile configuration is unavailable",
+      );
+      res.status(503).json({
+        code: "TURNSTILE_CONFIG_UNAVAILABLE",
         error: "La vérification de sécurité est momentanément indisponible.",
       });
-    return;
+      return;
+    }
+    res.json(GetTurnstileConfigResponse.parse({ siteKey: configuration.siteKey }));
+  } catch {
+    req.log.error(
+      {
+        endpoint: "turnstile-config",
+        dependency: "turnstile",
+        failureCategory: "turnstile_configuration_error",
+      },
+      "Turnstile configuration request failed",
+    );
+    res.status(503).json({
+      code: "TURNSTILE_CONFIG_UNAVAILABLE",
+      error: "La vérification de sécurité est momentanément indisponible.",
+    });
   }
-  res.json(GetTurnstileConfigResponse.parse({ siteKey }));
 });
 
 function getWebAuthnOrigin(req: Parameters<typeof requesterAddress>[0]) {

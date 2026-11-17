@@ -9,6 +9,7 @@ import {
 import { recordAdminAudit } from "../lib/admin-audit";
 import { respondAdminAuthError } from "./admin";
 import { isTrustedOrigin } from "../lib/request-security";
+import { classifyDatabaseFailure } from "../lib/database-failure";
 
 const router: IRouter = Router();
 const adminRoutes: IRouter = Router();
@@ -23,11 +24,14 @@ function present(row: typeof registrationSettingsTable.$inferSelect) {
 }
 
 router.get("/auth/registration-settings", async (req, res): Promise<void> => {
+  res.setHeader("Cache-Control", "no-store, private");
+  let setting: typeof registrationSettingsTable.$inferSelect | undefined;
+  let defaultCountry: { countryCode: string } | undefined;
   try {
-    const [setting] = await db.select().from(registrationSettingsTable)
+    [setting] = await db.select().from(registrationSettingsTable)
       .where(eq(registrationSettingsTable.id, SETTING_ID)).limit(1);
-    if (!setting) throw new Error("Signup setting is missing");
-    const [defaultCountry] = await db.select({ countryCode: countriesTable.countryCode })
+    if (setting) {
+      [defaultCountry] = await db.select({ countryCode: countriesTable.countryCode })
       .from(countriesTable)
       .where(eq(countriesTable.signupEnabled, true))
       .orderBy(
@@ -35,15 +39,70 @@ router.get("/auth/registration-settings", async (req, res): Promise<void> => {
         asc(countriesTable.countryName),
       )
       .limit(1);
-    if (!defaultCountry) throw new Error("Configured signup country is unavailable");
-    res.setHeader("Cache-Control", "no-store");
+    }
+  } catch (error) {
+    req.log.error(
+      {
+        endpoint: "registration-settings",
+        dependency: "database",
+        failureCategory: classifyDatabaseFailure(error),
+      },
+      "Registration settings lookup failed",
+    );
+    res.status(503).json({
+      code: "REGISTRATION_SETTINGS_UNAVAILABLE",
+      error: "Le réglage d’inscription est temporairement indisponible.",
+    });
+    return;
+  }
+  if (!setting) {
+    req.log.error(
+      {
+        endpoint: "registration-settings",
+        dependency: "database",
+        failureCategory: "signup_settings_missing",
+      },
+      "Signup settings row is missing",
+    );
+    res.status(503).json({
+      code: "SIGNUP_SETTINGS_MISSING",
+      error: "Les paramètres d’inscription ne sont pas configurés.",
+    });
+    return;
+  }
+  if (!defaultCountry) {
+    req.log.error(
+      {
+        endpoint: "registration-settings",
+        dependency: "database",
+        failureCategory: "no_signup_countries_configured",
+      },
+      "No default signup country is available",
+    );
+    res.status(503).json({
+      code: "NO_SIGNUP_COUNTRY_CONFIGURED",
+      error: "Aucun pays par défaut n’est configuré pour l’inscription.",
+    });
+    return;
+  }
+  try {
     res.json(GetRegistrationSettingsResponse.parse({
       emailVerificationEnabled: setting.emailVerificationEnabled,
       defaultCountryCode: defaultCountry.countryCode,
     }));
-  } catch (error) {
-    req.log.error({ err: error }, "Registration settings lookup failed");
-    res.status(503).json({ error: "Le réglage d'inscription est indisponible." });
+  } catch {
+    req.log.error(
+      {
+        endpoint: "registration-settings",
+        dependency: "response",
+        failureCategory: "response_contract_invalid",
+      },
+      "Registration settings response could not be validated",
+    );
+    res.status(500).json({
+      code: "REGISTRATION_SETTINGS_RESPONSE_INVALID",
+      error: "La réponse des paramètres d’inscription est momentanément indisponible.",
+    });
   }
 });
 

@@ -432,6 +432,10 @@ test("public Turnstile config exposes only its site key at runtime", async () =>
     delete process.env.TURNSTILE_SITE_KEY;
     const unconfigured = await request("/api/auth/turnstile-config");
     assert.equal(unconfigured.status, 503, unconfigured.text);
+    assert.deepEqual(JSON.parse(unconfigured.text), {
+      code: "TURNSTILE_CONFIG_UNAVAILABLE",
+      error: "La vérification de sécurité est momentanément indisponible.",
+    });
     assert.equal(unconfigured.text.includes("siteKey"), false);
   } finally {
     if (original === undefined) delete process.env.TURNSTILE_SITE_KEY;
@@ -462,6 +466,32 @@ test("signup country and registration settings endpoints serve the isolated conf
   assert.deepEqual(Object.keys(settingsPayload).sort(), ["defaultCountryCode", "emailVerificationEnabled"].sort());
   assert.equal(settingsPayload.defaultCountryCode, "ci");
   assert.equal(typeof settingsPayload.emailVerificationEnabled, "boolean");
+});
+
+test("signup country and settings endpoints return explicit JSON on database permission failures", async () => {
+  await owner.query("REVOKE SELECT ON sf_countries FROM sf_fixture_app");
+  try {
+    const countries = await request("/api/auth/registration-countries");
+    assert.equal(countries.status, 503, countries.text);
+    assert.deepEqual(JSON.parse(countries.text), {
+      code: "SIGNUP_COUNTRY_CATALOG_UNAVAILABLE",
+      error: "La liste des pays d’inscription est temporairement indisponible.",
+    });
+  } finally {
+    await owner.query("GRANT SELECT ON sf_countries TO sf_fixture_app");
+  }
+
+  await owner.query("REVOKE SELECT ON sf_registration_settings FROM sf_fixture_app");
+  try {
+    const settings = await request("/api/auth/registration-settings");
+    assert.equal(settings.status, 503, settings.text);
+    assert.deepEqual(JSON.parse(settings.text), {
+      code: "REGISTRATION_SETTINGS_UNAVAILABLE",
+      error: "Le réglage d’inscription est temporairement indisponible.",
+    });
+  } finally {
+    await owner.query("GRANT SELECT ON sf_registration_settings TO sf_fixture_app");
+  }
 });
 
 test("built Plesk API distribution listens on its supplied port and stays alive", async (t) => {

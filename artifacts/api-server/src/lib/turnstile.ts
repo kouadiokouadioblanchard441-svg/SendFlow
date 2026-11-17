@@ -36,17 +36,44 @@ type TurnstileEnvironment = {
 
 const TURNSTILE_SITE_KEY_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
+export type TurnstileConfigurationStatus = {
+  siteKey: string | null;
+  missingEnvironmentNames: string[];
+  invalidSiteKey: boolean;
+};
+
+export function getTurnstileConfigurationStatus(
+  environment: Pick<
+    TurnstileEnvironment,
+    "TURNSTILE_SITE_KEY" | "TURNSTILE_SECRET_KEY"
+  > = process.env,
+): TurnstileConfigurationStatus {
+  const siteKey = environment.TURNSTILE_SITE_KEY?.trim() ?? "";
+  const secretKey = environment.TURNSTILE_SECRET_KEY?.trim() ?? "";
+  const missingEnvironmentNames = [
+    ...(!siteKey ? ["TURNSTILE_SITE_KEY"] : []),
+    ...(!secretKey ? ["TURNSTILE_SECRET_KEY"] : []),
+  ];
+  const invalidSiteKey = Boolean(siteKey) && !TURNSTILE_SITE_KEY_PATTERN.test(siteKey);
+  return {
+    siteKey:
+      siteKey &&
+      secretKey &&
+      !invalidSiteKey
+        ? siteKey
+        : null,
+    missingEnvironmentNames,
+    invalidSiteKey,
+  };
+}
+
 export function getTurnstilePublicSiteKey(
   environment: Pick<
     TurnstileEnvironment,
     "TURNSTILE_SITE_KEY" | "TURNSTILE_SECRET_KEY"
   > = process.env,
 ): string | null {
-  const siteKey = environment.TURNSTILE_SITE_KEY?.trim() ?? "";
-  const secretKey = environment.TURNSTILE_SECRET_KEY?.trim() ?? "";
-  if (!siteKey || !secretKey || !TURNSTILE_SITE_KEY_PATTERN.test(siteKey))
-    return null;
-  return siteKey;
+  return getTurnstileConfigurationStatus(environment).siteKey;
 }
 
 type TurnstileSiteverifyResponse = {

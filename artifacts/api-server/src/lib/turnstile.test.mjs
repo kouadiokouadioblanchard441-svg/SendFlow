@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   TURNSTILE_SITEVERIFY_URL,
+  getTurnstileConfigurationStatus,
   getTurnstilePublicSiteKey,
   verifyTurnstileToken,
 } from "./turnstile.ts";
@@ -30,6 +31,24 @@ test("public Turnstile configuration is returned only when both keys are valid",
     null,
   );
   assert.equal(getTurnstilePublicSiteKey({}), null);
+});
+
+test("Turnstile configuration diagnostics expose only missing variable names", () => {
+  assert.deepEqual(getTurnstileConfigurationStatus({
+    TURNSTILE_SITE_KEY: "invalid site key",
+    TURNSTILE_SECRET_KEY: "private-test-secret",
+  }), {
+    siteKey: null,
+    missingEnvironmentNames: [],
+    invalidSiteKey: true,
+  });
+  assert.deepEqual(getTurnstileConfigurationStatus({
+    TURNSTILE_SITE_KEY: "public-test-site-key",
+  }), {
+    siteKey: null,
+    missingEnvironmentNames: ["TURNSTILE_SECRET_KEY"],
+    invalidSiteKey: false,
+  });
 });
 
 function response(body, status = 200) {

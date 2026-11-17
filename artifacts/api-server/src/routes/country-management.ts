@@ -30,6 +30,7 @@ import {
 import { recordAdminAudit } from "../lib/admin-audit";
 import { createOperatorDisplayFields, pricingCategories } from "../lib/operator-pricing-catalog";
 import { respondAdminAuthError } from "./admin";
+import { classifyDatabaseFailure } from "../lib/database-failure";
 
 const router: IRouter = Router();
 
@@ -87,16 +88,58 @@ router.get("/auth/countries", async (req, res): Promise<void> => {
 });
 
 router.get("/auth/registration-countries", async (req, res): Promise<void> => {
+  res.setHeader("Cache-Control", "no-store, private");
+  let rows: (typeof countriesTable.$inferSelect)[];
   try {
-    const rows = await db.select()
+    rows = await db.select()
       .from(countriesTable)
       .where(eq(countriesTable.signupEnabled, true))
       .orderBy(asc(countriesTable.countryName));
-    res.setHeader("Cache-Control", "no-store");
-    res.json(GetAuthCountriesResponse.parse({ countries: rows.map(toCountry) }));
   } catch (error) {
-    req.log.error({ err: error }, "Signup country catalog lookup failed");
-    res.status(503).json({ error: "Signup country catalog unavailable" });
+    req.log.error(
+      {
+        endpoint: "registration-countries",
+        dependency: "database",
+        failureCategory: classifyDatabaseFailure(error),
+      },
+      "Signup country catalog lookup failed",
+    );
+    res.status(503).json({
+      code: "SIGNUP_COUNTRY_CATALOG_UNAVAILABLE",
+      error: "La liste des pays d’inscription est temporairement indisponible.",
+    });
+    return;
+  }
+  if (rows.length === 0) {
+    req.log.error(
+      {
+        endpoint: "registration-countries",
+        dependency: "database",
+        failureCategory: "no_signup_countries_configured",
+      },
+      "No countries are enabled for signup",
+    );
+    res.status(503).json({
+      code: "NO_SIGNUP_COUNTRIES_CONFIGURED",
+      error: "Aucun pays n’est actuellement configuré pour l’inscription.",
+    });
+    return;
+  }
+  try {
+    res.json(GetAuthCountriesResponse.parse({ countries: rows.map(toCountry) }));
+  } catch {
+    req.log.error(
+      {
+        endpoint: "registration-countries",
+        dependency: "response",
+        failureCategory: "response_contract_invalid",
+      },
+      "Signup country response could not be validated",
+    );
+    res.status(500).json({
+      code: "SIGNUP_COUNTRY_RESPONSE_INVALID",
+      error: "La réponse de la liste des pays est momentanément indisponible.",
+    });
   }
 });
 

@@ -407,7 +407,7 @@ try {
   const testArgs = ["--experimental-strip-types", "--test"];
   if (turnstileOnly) testArgs.push("--test-name-pattern=Turnstile");
   if (signupEndpointsOnly) {
-    testArgs.push("--test-name-pattern=public Turnstile config|signup country and registration settings|built Plesk API distribution");
+    testArgs.push("--test-name-pattern=public Turnstile config|signup country and registration settings|signup country and settings endpoints|built Plesk API distribution");
   }
   // Link-flow tests temporarily switch the isolated app to its Replit preview
   // policy; keep those process-environment changes from racing sibling tests.

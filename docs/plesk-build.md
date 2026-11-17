@@ -91,6 +91,19 @@ serveur n'a pas à compiler les sources ni installer les paquets depuis le regis
 le Pull. Aucun workflow GitHub ne se connecte en SSH au serveur et aucun secret SSH
 n'est requis.
 
+Le site et l'API sont deux applications Passenger distinctes. `dist/server/index.mjs`
+sert le site et ses fichiers mais refuse explicitement `/api` et `/api/*` ; ces requêtes
+ne peuvent donc pas être servies par le seul démarrage du site. L'application Express
+qui contient les routes `/api/auth/*` est `artifacts/api-server`, démarrée par
+`dist/index.cjs` depuis cette racine. Plesk doit router le préfixe `/api` (en conservant
+le chemin complet, y compris `/api`) vers cette seconde application. Le dépôt ne contient
+pas de règle `.htaccess` ou de configuration nginx qui crée ce routage : il doit être
+configuré dans Plesk avec le mécanisme Passenger/reverse-proxy supporté par l'hébergement.
+Ne pas inventer un port upstream ni exposer directement le port interne Passenger.
+Si l'installation Plesk ne permet pas de monter une deuxième application sur `/api`,
+il faut utiliser un montage d'application ou un sous-domaine API pris en charge par
+l'hébergeur, puis vérifier que le proxy conserve l'origine cliente et les cookies.
+
 Le workflow possède uniquement la permission `contents: write` nécessaire à ce commit.
 Il ne lit aucun secret applicatif. Les événements Pull Request construisent et vérifient
 le package sans le publier. Tous les pushes sur `main`, y compris la suppression d'un
@@ -190,6 +203,9 @@ exposée comme un répertoire statique Apache.
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
 - Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
   le reste doit atteindre le serveur Node du site. Passenger gère chaque écoute Node.
+  Une réponse 503 seule dans le journal d'accès Apache ne dit pas si elle vient du
+  handler Express, du proxy ou de Passenger. Comparer le corps/Content-Type de la réponse,
+  le journal d'erreur Apache et le journal Node de l'application API.
 - Injecter `ADMIN_SECRET_PATH` et `ADMIN_SECRET_TOKEN` dans les paramètres secrets des
   deux processus Node (site et API). Les Secrets Replit ne sont pas transférés par le
   paquet Plesk. Le jeton n'est jamais inclus dans l'URL; le formulaire le transmet par
