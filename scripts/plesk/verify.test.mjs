@@ -104,6 +104,9 @@ test("Plesk GitHub build and local preflight require the same Node version", asy
   assert.ok(workflowVersion, "GitHub Actions must pin the Plesk build Node version");
   assert.ok(preflightVersion, "The Plesk build must validate its Node version");
   assert.equal(workflowVersion, preflightVersion);
+  assert.match(workflow, /Install PostgreSQL binaries for isolated API tests/);
+  assert.match(workflow, /apt-get install --no-install-recommends -y postgresql/);
+  assert.match(workflow, /name initdb/);
 });
 
 test("maps private bundle URLs to files kept outside the public root", async (t) => {

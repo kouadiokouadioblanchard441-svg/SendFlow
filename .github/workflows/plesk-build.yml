@@ -42,6 +42,18 @@ jobs:
       - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install PostgreSQL binaries for isolated API tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y postgresql
+          pg_bin_dir="$(find /usr/lib/postgresql -type f -name initdb -printf '%h\n' | sort -V | tail -n 1)"
+          if [[ -z "$pg_bin_dir" ]]; then
+            echo "PostgreSQL initdb was not installed for isolated API tests." >&2
+            exit 1
+          fi
+          echo "$pg_bin_dir" >> "$GITHUB_PATH"
+          "$pg_bin_dir/initdb" --version
+
       - name: Run production checks and build
         run: pnpm run build:plesk
 
