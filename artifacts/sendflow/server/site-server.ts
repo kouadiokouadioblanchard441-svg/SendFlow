@@ -385,6 +385,7 @@ export function startSiteServer() {
   const port = getSiteListenPort(process.env.PORT);
   const distributionRoot = fileURLToPath(new URL("../", import.meta.url));
   return (async () => {
+    process.chdir(distributionRoot);
     const apiModulePath = resolve(distributionRoot, "server/api/embedded.mjs");
     const apiRuntime = await import(pathToFileURL(apiModulePath).href) as {
       handleEmbeddedApiRequest: (

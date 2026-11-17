@@ -7,9 +7,10 @@ présence dans l'action post-Pull Plesk. Elle ne connecte pas GitHub à Plesk, n
 pas les applications de production et n'exécute aucune migration, aucun SMS ni paiement.
 Les pages et le code métier restent inchangés.
 
-Le projet utilise pnpm et deux services Node : site React/Vite et API Express.
-Le serveur du site applique la défense IP avant les fichiers publics : un dépôt de
-fichiers statiques seul ne remplace pas ce service.
+Le projet utilise pnpm et un seul processus Node sur le domaine marchand. Il sert le site
+React/Vite et monte l'API Express sous `/api` dans le même serveur HTTP. Le serveur du site
+applique la défense IP aux pages et fichiers publics ; l'API conserve ses propres
+middlewares de sécurité, d'authentification et de contrôle IP.
 
 ## Domaines publics de production
 
@@ -59,28 +60,25 @@ de routage Vite doivent viser les bonnes origines avant compilation. Aucune clé
 ne doit être placée dans `VITE_*`. Aucun domaine Plesk n'est supposé par la commande.
 
 Le build contrôle les secrets du source, le typage, les tests du conditionnement,
-puis compile uniquement API et SendFlow (pas le mockup-sandbox). Il construit aussi
-une archive Linux x64 des dépendances de production encore externes au bundle API
-(notamment le module natif `sharp`). Il génère :
+puis compile l'API et SendFlow (pas le mockup-sandbox). Le bundle API est intégré au
+package du site sous `dist/server/api/`. Une archive Linux x64 de ses dépendances de
+production externes au bundle (dont les modules natifs utilisés par l'API) est livrée
+dans `dist/plesk-runtime-dependencies.tar.gz`. Les workers Pino requis sont livrés dans
+`dist/dist/` sous la racine de l'application Plesk, emplacement attendu par son résolveur
+runtime. Le seul package Plesk est :
 
-| Service | Racine de distribution relative au dépôt | Startup Plesk |
-| ------- | ---------------------------------------- | ------------- |
-| Site    | `dist`                                   | `index.cjs`   |
-| API     | `artifacts/api-server/dist`              | `index.cjs`   |
+| Application | Racine Plesk | Document Root | Startup Plesk |
+| ----------- | ------------ | ------------- | ------------- |
+| Site + API  | `dist`       | `dist/public` | `index.cjs`   |
 
-Les adaptateurs CommonJS importent les bundles ESM existants et exigent
-`NODE_ENV=production`. La logique n'est pas dupliquée. Chaque distribution contient
-un manifeste privé `plesk-manifest.json` avec version du constructeur, empreinte du
-lockfile, révision source, état des fichiers suivis et empreintes SHA-256 des fichiers.
-Le manifeste ne contient aucune variable secrète. Les packages Plesk
-`dist` et `artifacts/api-server/dist` sont explicitement suivis par Git afin que le Pull
-les récupère avec le code. Le build place le lanceur utilisé par le panneau dans
-`dist/index.cjs` et conserve aussi un `index.cjs` à la racine du dépôt pour
-compatibilité. La sortie native Vite
-`artifacts/sendflow/dist` reste ignorée et n'est pas nécessaire à l'exécution Plesk.
-Le build versionne également `artifacts/api-server/plesk-runtime-dependencies.tar.gz`.
-Cette archive contient les dépendances de production nécessaires à l'API dans un
-format compressé ; aucun répertoire `node_modules` n'est ajouté à Git.
+Le lanceur CommonJS `dist/index.cjs` importe le serveur ESM `dist/server/index.mjs`,
+qui charge le bundle Express intégré. Le processus exige `NODE_ENV=production`.
+`dist/plesk-manifest.json` contient la version du constructeur, l'empreinte du lockfile,
+la révision source et les empreintes SHA-256 des fichiers ; il ne contient aucun secret.
+Le package `dist` et le lanceur racine de compatibilité sont suivis par Git.
+Le répertoire extrait `dist/node_modules` est ignoré par Git ; il est recréé après le Pull
+à partir de l'archive fournie. La sortie native Vite `artifacts/sendflow/dist` reste
+ignorée et n'est pas nécessaire à l'exécution Plesk.
 
 ## Pull et validation Plesk
 
@@ -91,18 +89,11 @@ serveur n'a pas à compiler les sources ni installer les paquets depuis le regis
 le Pull. Aucun workflow GitHub ne se connecte en SSH au serveur et aucun secret SSH
 n'est requis.
 
-Le site et l'API sont deux applications Passenger distinctes. `dist/server/index.mjs`
-sert le site et ses fichiers mais refuse explicitement `/api` et `/api/*` ; ces requêtes
-ne peuvent donc pas être servies par le seul démarrage du site. L'application Express
-qui contient les routes `/api/auth/*` est `artifacts/api-server`, démarrée par
-`dist/index.cjs` depuis cette racine. Plesk doit router le préfixe `/api` (en conservant
-le chemin complet, y compris `/api`) vers cette seconde application. Le dépôt ne contient
-pas de règle `.htaccess` ou de configuration nginx qui crée ce routage : il doit être
-configuré dans Plesk avec le mécanisme Passenger/reverse-proxy supporté par l'hébergement.
-Ne pas inventer un port upstream ni exposer directement le port interne Passenger.
-Si l'installation Plesk ne permet pas de monter une deuxième application sur `/api`,
-il faut utiliser un montage d'application ou un sous-domaine API pris en charge par
-l'hébergeur, puis vérifier que le proxy conserve l'origine cliente et les cookies.
+Le serveur Node unique reçoit les pages, les assets et toutes les requêtes `/api/*`.
+Il délègue `/api` à Express dans le même processus et sur la même écoute Passenger ; le
+front-end continue à appeler des chemins relatifs `/api` sur son origine habituelle.
+Aucune règle de proxy Plesk supplémentaire ni aucun port upstream fixe ne doit être ajouté.
+Les fichiers statiques doivent toujours passer par Node pour conserver les contrôles IP.
 
 Le workflow possède uniquement la permission `contents: write` nécessaire à ce commit.
 Il ne lit aucun secret applicatif. Les événements Pull Request construisent et vérifient
@@ -122,30 +113,29 @@ bash scripts/plesk/build-after-pull.sh
 Le script retrouve le checkout avec Bash et vérifie les fichiers compilés livrés par
 Git. Il n'appelle ni Git, ni `dirname`, ni Node, ni pnpm : le hook reste utilisable dans
 l'environnement restreint de déploiement Plesk. Il exige `tar`, `gzip` et les utilitaires
-de fichiers usuels, puis extrait l'archive runtime vers `artifacts/api-server/node_modules`
-(répertoire ignoré par Git) avant le démarrage. Il n'exécute ni compilation ni installation
-depuis un registre. Il échoue clairement si un fichier ou un outil manque. Le build GitHub
+de fichiers usuels, puis extrait l'archive runtime vers `dist/node_modules` (répertoire
+ignoré par Git) avant le démarrage. Il n'exécute ni compilation ni installation depuis
+un registre. Il échoue clairement si un fichier ou un outil manque. Le build GitHub
 Actions est exécuté sous Node.js `24.22.3` avant le commit d'artefacts.
 
 Configurer les racines et fichiers de démarrage des applications Node Plesk :
 
-| Service | Application root relative au checkout | Fichier de démarrage relatif à cette racine |
-| ------- | ------------------------------------- | ------------------------------------------- |
-| Site    | `dist`                                | `index.cjs`                                 |
-| API     | `artifacts/api-server`                | `dist/index.cjs`                            |
+| Réglage Plesk | Valeur/chemin attendu |
+| ------------- | -------------------- |
+| Application Root | `dist` |
+| Document Root | `dist/public` |
+| Application Startup File | `index.cjs` |
 
-Cette disposition correspond à la capture Plesk : dans `dist`, le fichier
-`index.cjs` charge `server/index.mjs` et le Document Root reste `dist/public`
-(soit `public` sous la racine d'application `dist`). Le lanceur `index.cjs` à la
-racine du checkout reste également généré pour compatibilité, mais ne doit pas être
-mélangé avec la racine `dist`.
+Cette disposition correspond à la capture Plesk. Dans `dist`, `index.cjs` charge
+`server/index.mjs`; le Document Root `dist/public` reste sous la racine de l'application.
+Le lanceur `index.cjs` à la racine du checkout est conservé pour compatibilité, mais
+n'est pas le Startup File indiqué par le panneau.
 
-Les deux applications utilisent Phusion Passenger sur Plesk. Passenger intercepte
-l'écoute Node et gère le port interne ; `PORT` n'est donc pas une variable obligatoire
-et ne doit pas être ajoutée artificiellement. Le code transmet le port Passenger s'il
-est défini et valide, sinon utilise `3000` comme argument de compatibilité à
-`listen()`. Avec Passenger, ce port de compatibilité n'est pas le port public du site.
-Les variables Plesk ne sont pas versionnées dans ce dépôt.
+Passenger doit fournir `PORT` au processus Node. Le code valide cette valeur et écoute
+exactement dessus sur `0.0.0.0`; il échoue explicitement et sans fallback si `PORT` est
+absent ou invalide. Ne saisissez pas un port interne arbitraire dans le panneau. Les ports
+publics HTTPS 443/HTTP 80 appartiennent au proxy web et sont distincts du port interne
+fourni au processus Node par Passenger.
 
 Le paquet est déjà construit avant le Pull. Ne lancez pas `npm install`, `npm ci` ou
 `npm update` dans la racine Plesk : le dépôt impose pnpm pour les builds et le hook
@@ -157,34 +147,29 @@ commandes npm accidentelles ; dans tous les cas, ne pas installer depuis Plesk.
 Pour le site, choisir `dist/public` comme Document Root relatif au checkout.
 L'application doit tout de même router les requêtes vers Node : le serveur applique le
 contrôle IP avant de servir chaque fichier. Il ne faut pas laisser Apache/Nginx servir
-directement les fichiers statiques avant le passage par Node.
-Pour l'API, choisir le Document Root privé vide
-`artifacts/api-server/plesk-empty-document-root`, qui doit rester à l’intérieur de sa
-racine d’application. Ne jamais choisir `dist` au complet,
-`artifacts` ou `artifacts/api-server` : ils contiennent également des bundles serveur
-et des manifestes.
-Le domaine `apis.docs.sendflow.africa` sert la page documentaire dans le processus
-site (`index.cjs`). Le domaine `payin.merchant.command.sendflow.africa` sert les routes
-de paiement `/pay/:token` du même site ; les liens LinkFlow et les intégrations Hosted
-Checkout doivent utiliser cette origine en production. L'application limite ce domaine
-aux routes publiques de paiement. Pour chacun de ces domaines, router les pages vers le
-service site et `/api` vers le service API, en conservant les chemins. Le sélecteur
-d'hôte ne décide d'aucune autorisation ou règle financière.
+directement les fichiers statiques avant le passage par Node. Aucun second Node app, proxy
+`/api` ni Document Root API séparé n'est nécessaire pour le domaine marchand.
+Le domaine `apis.docs.sendflow.africa` sert la page documentaire et
+`payin.merchant.command.sendflow.africa` sert les routes publiques `/pay/:token` lorsque
+ces hôtes sont attachés à ce site. Le sélecteur d'hôte ne décide d'aucune autorisation ou
+règle financière. Pour le domaine marchand, les pages et `/api` sont servis par le même
+processus Passenger.
 
 Le dossier `dist/public` contient uniquement l'application publique. L'interface privée
 est construite séparément dans `dist/admin`, hors du Document Root. Le serveur Node ne
 sert cette interface qu'après validation serveur du chemin et du jeton d'accès, puis pose
 un cookie de garde sécurisé. Le même cookie est exigé par l'API avant la vérification de
 la session Super Admin. L'authentification e-mail, mot de passe et TOTP reste obligatoire.
-Le `index.cjs` racine importe `dist/server/index.mjs`; le serveur Plesk démarre les deux
-processus Node nécessaires (site et API), chacun avec ses variables privées. Vérifier que
-les fichiers ne sont pas servis directement par Apache avant le passage par Node.
+Le `index.cjs` racine importe `dist/server/index.mjs` pour compatibilité ; Plesk démarre
+`dist/index.cjs`. Vérifier que les fichiers ne sont pas servis directement par Apache
+avant le passage par Node.
 
 ## Correspondance avec le Document Root Plesk
 
-Le build crée `dist/public`, `dist/admin` et `dist/index.cjs` pour démarrer le
-serveur site sous la racine d'application Plesk `dist`, ainsi que la distribution API
-séparée. Le lanceur racine reste un point d'entrée de compatibilité. Les chemins absolus, les ports et
+Le build crée `dist/public`, `dist/admin`, `dist/server/api/embedded.mjs`, les workers
+dans `dist/dist/`, les dépendances runtime et `dist/index.cjs` pour démarrer le serveur unique sous la racine
+d'application Plesk `dist`. Le lanceur racine reste un point d'entrée de compatibilité.
+Les chemins absolus, les ports et
 les comptes système Plesk restent à vérifier sur le serveur ; `dist/public` est le
 Document Root, tandis que l'interface privée est servie par Node et ne doit pas être
 exposée comme un répertoire statique Apache.
@@ -201,15 +186,12 @@ exposée comme un répertoire statique Apache.
   la certifier depuis ce dépôt.
 - Vérifier la prise en charge du démarrage `index.cjs`/import ESM par le gestionnaire
   de processus Plesk. Un test local d'adaptateur ne certifie pas Passenger.
-- Le proxy HTTPS doit router `/api` et `/api/...` vers l'API, en conservant le chemin ;
-  le reste doit atteindre le serveur Node du site. Passenger gère chaque écoute Node.
-  Une réponse 503 seule dans le journal d'accès Apache ne dit pas si elle vient du
-  handler Express, du proxy ou de Passenger. Comparer le corps/Content-Type de la réponse,
-  le journal d'erreur Apache et le journal Node de l'application API.
-- Injecter `ADMIN_SECRET_PATH` et `ADMIN_SECRET_TOKEN` dans les paramètres secrets des
-  deux processus Node (site et API). Les Secrets Replit ne sont pas transférés par le
-  paquet Plesk. Le jeton n'est jamais inclus dans l'URL; le formulaire le transmet par
-  HTTPS dans le corps d'une requête et l'application ne le journalise pas.
+- Plesk doit démarrer un seul processus Node pour le domaine marchand. Les chemins
+  `/api` et `/api/...` sont délégués à Express dans ce processus, sans `proxy_pass` vers
+  un second port ni deuxième application.
+- Injecter les variables de sécurité dans l'environnement de cette seule application.
+  Les Secrets Replit ne sont pas transférés par le paquet Plesk. Le jeton d'accès admin
+  n'est jamais placé dans l'URL et n'est pas journalisé.
 - Les cookies de garde et de session sont sécurisés et limités au même hôte. L'API doit
   rester accessible sous la même origine HTTPS que l'interface, via le préfixe `/api`.
 - Les journaux d'accès du proxy ou d'Apache peuvent enregistrer les chemins demandés.
@@ -217,36 +199,28 @@ exposée comme un répertoire statique Apache.
   Plesk/Apache n'en conserve pas la valeur en clair; ce dépôt ne configure pas ces journaux.
 - Les API inconnues doivent rester des erreurs API, pas du HTML de la SPA. Un fichier
   JS/CSS absent doit rester un 404 ; les routes SPA valides doivent accepter un refresh.
-- Définir séparément dans l'environnement privé de **chacune des deux applications
-  Node (site et API)** : `NODE_ENV=production`,
-  `SENDFLOW_DATABASE_TARGET=production`, `SUPABASE_DATABASE_URL`,
-  `DATABASE_CA_CERT` et `TRUST_PROXY_HOPS`. Le serveur du site utilise lui aussi
-  Supabase pour son contrôle IP avant de servir les pages et les fichiers ; ces variables
-  ne sont donc pas réservées à l'API. Les variables Plesk ne sont pas partagées
-  automatiquement entre les deux applications.
-  `DATABASE_URL` reste accepté comme nom de compatibilité uniquement s’il pointe vers
-  la même base Supabase; si les deux sont définis, `SUPABASE_DATABASE_URL` est prioritaire.
-  La connexion vérifie le certificat TLS et le nom d’hôte. Les secrets Replit ne sont
-  pas transférés par ce build.
+- Saisir dans l'environnement de la seule application Plesk les noms requis :
+  `NODE_ENV`, `SENDFLOW_DATABASE_TARGET`, `TRUST_PROXY_HOPS`,
+  `SUPABASE_DATABASE_URL` (ou `DATABASE_URL` pour compatibilité),
+  `DATABASE_CA_CERT`, `CORS_ALLOWED_ORIGINS`, `TURNSTILE_SITE_KEY`,
+  `TURNSTILE_SECRET_KEY`, `SESSION_SECRET`, `CUSTOMER_PII_ENCRYPTION_KEY`,
+  `ADMIN_SECRET_PATH`, `ADMIN_SECRET_TOKEN`,
+  `SENDFLOW_ADMIN_JWT_PRIVATE_KEY`, `SENDFLOW_ADMIN_JWT_PUBLIC_KEY` et
+  `SENDFLOW_ADMIN_TOTP_ENCRYPTION_KEY`. Les fonctions FeexPay requièrent aussi
+  `FEEXPAY_API_KEY` et `FEEXPAY_SHOP_ID`. Utiliser la même base Supabase existante ;
+  ne pas créer ni sélectionner une autre base. La connexion vérifie TLS et le certificat.
+  `PORT` doit être fourni par Passenger : ne pas lui donner une valeur fixe à la main.
 - Si un démarrage échoue, le lanceur consigne une catégorie d'erreur et uniquement les
-  noms des variables obligatoires absentes pour le service concerné ; il ne consigne
-  aucune valeur de variable. Les erreurs HTTP 500/504 sur `/api` sont à diagnostiquer
-  dans les journaux Node de l'application API, distincts de ceux du site.
-- Configurer `TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` dans l'environnement privé
-  du service Node API Plesk. La première est la clé publique du widget; l'API la fournit
-  à l'interface au runtime par `GET /api/auth/turnstile-config`. Elle n'est donc pas
-  intégrée au paquet de build. La seconde est la clé privée Siteverify et ne doit jamais
-  être renvoyée par une API, utilisée dans une variable `VITE_*`, ou copiée dans le site,
-  le dépôt Git ou un bundle client.
-- Configurer `CORS_ALLOWED_ORIGINS` dans l'environnement privé de l'API avec les
-  origines HTTPS exactes. `TRUST_PROXY_HOPS` doit être configuré dans les deux
-  applications selon la chaîne de proxys réellement observée ; ne pas deviner sa valeur.
-  Ne pas reprendre les variables de prévisualisation Replit.
-  Autoriser les origines exactes qui appellent l'API depuis le navigateur, notamment
-  `https://sendflow.africa`,
-  `https://merchent.business.sendflow.africa`,
-  `https://apis.docs.sendflow.africa` et
-  `https://payin.merchant.command.sendflow.africa` si ces interfaces utilisent l'API.
+  noms des variables absentes ; il ne consigne aucune valeur. Le runtime écrit aussi le
+  résultat de la vérification DB sous forme de catégorie sûre, jamais l'URL ni le certificat.
+- `TURNSTILE_SITE_KEY` est fournie à l'interface au runtime par
+  `GET /api/auth/turnstile-config`. `TURNSTILE_SECRET_KEY` sert à la validation serveur
+  Cloudflare Siteverify : elle ne doit jamais être renvoyée, utilisée dans `VITE_*`, ni
+  copiée dans le dépôt ou un bundle client. Le contrôle Turnstile reste côté serveur.
+- `CORS_ALLOWED_ORIGINS` contient les origines HTTPS exactes autorisées ; le navigateur
+  marchand continue d'appeler l'API en same-origin via `/api`. `TRUST_PROXY_HOPS` doit
+  correspondre à la chaîne de proxys réellement observée. Ne pas reprendre les variables
+  de prévisualisation Replit.
 - Préserver la vérification TLS de PostgreSQL, les sessions sécurisées, les contrôles OTP/PIN,
   les rôles et les protections financières. Ce build n'autorise aucun paiement.
 - Le Document Root du site est `dist/public` ; `dist/admin`, le bundle serveur, les
@@ -254,9 +228,6 @@ exposée comme un répertoire statique Apache.
   Apache. Les requêtes doivent passer par Node afin que le contrôle IP et la sélection
   de bundle s'appliquent. Cloudflare Access, TLS et le pare-feu doivent être configurés
   et testés sur l'hébergement ; ce build ne les active pas.
-- L'API n'a aucun fichier public à exposer ; utiliser
-  `artifacts/api-server/plesk-empty-document-root`, répertoire vide privé placé sous la
-  racine Node de l'API, si Plesk exige un Document Root pour cette application.
 
 ## Livraison, vérification et retour arrière
 
@@ -265,11 +236,11 @@ exposée comme un répertoire statique Apache.
 2. Construire dans une nouvelle release et vérifier les manifestes et droits de lecture.
    Ne pas employer `chmod 777` ni remplacer les propriétaires sans vérifier les comptes.
 3. Vérifier DNS, certificat et chaîne proxy avant redirection HTTPS et bascule.
-4. Après autorisation de déploiement : démarrer les deux services et vérifier les logs,
-   les pages publiques, les assets, les routes imbriquées, les erreurs API et la santé.
-   Vérifier séparément les sessions avec un compte autorisé, sans paiement réel.
-5. En cas d'échec, rétablir la release et la configuration précédentes, redémarrer les
-   deux services et recontrôler les mêmes chemins. Ne pas restaurer ou modifier la base
+4. Après autorisation de déploiement : redémarrer l'application unique et vérifier les logs,
+   les pages publiques, les assets, les routes imbriquées, les trois endpoints d'inscription
+   et la santé. Vérifier les sessions avec un compte autorisé, sans paiement réel.
+5. En cas d'échec, rétablir la release et la configuration précédentes, redémarrer
+   l'application unique et recontrôler les mêmes chemins. Ne pas restaurer ou modifier la base
    automatiquement pour un retour de code ; la compatibilité des schémas est distincte.
 
 Sans accès authentifié à Plesk, DNS/proxy/SSL/runtime/production restent à vérifier.

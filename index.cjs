@@ -10,6 +10,7 @@ function safeFailureCategory(error) {
       depth += 1
     ) {
       const message = typeof current.message === "string" ? current.message : "";
+      if (message.startsWith("INVALID_PORT")) return "INVALID_PORT";
       if (message.startsWith("TRUST_PROXY_HOPS")) return "INVALID_TRUST_PROXY_HOPS";
       if (message.startsWith("CORS_ALLOWED_ORIGINS")) return "INVALID_CORS_ALLOWED_ORIGINS";
       if (message.startsWith("SENDFLOW_DATABASE_TARGET")) return "INVALID_DATABASE_TARGET";
@@ -30,7 +31,11 @@ function safeFailureCategory(error) {
 }
 function safeMissingEnvironmentNames() {
   const required = ["NODE_ENV", "SENDFLOW_DATABASE_TARGET", "TRUST_PROXY_HOPS"];
-  if (PLESK_SERVICE === "API") required.push("CORS_ALLOWED_ORIGINS");
+  if (PLESK_SERVICE === "API" || PLESK_SERVICE === "site") {
+    required.push("CORS_ALLOWED_ORIGINS");
+    required.push("TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY");
+  }
+  required.push("PORT");
   const missing = required.filter((name) => !process.env[name]?.trim());
   if (process.env.NODE_ENV === "production") {
     if (!process.env.SUPABASE_DATABASE_URL?.trim() && !process.env.DATABASE_URL?.trim()) {
@@ -42,6 +47,9 @@ function safeMissingEnvironmentNames() {
 }
 function safeConfigurationHint(error) {
   const category = safeFailureCategory(error);
+  if (category === "INVALID_PORT") {
+    return "Check that Passenger provides a valid PORT environment variable.";
+  }
   if (category === "INVALID_TRUST_PROXY_HOPS") {
     return "Check the TRUST_PROXY_HOPS environment variable.";
   }

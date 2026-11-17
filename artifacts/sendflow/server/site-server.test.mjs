@@ -9,14 +9,18 @@ import { createSiteServer, getSiteListenPort } from "./site-server.ts";
 const gatePath = "/secure-entry-for-sendflow-test-only-947362";
 const gateToken = "fixture-only-token-not-a-production-secret-298471";
 
-test("site startup tolerates a missing or invalid Passenger PORT", () => {
+test("site startup requires Passenger's dynamic PORT without using a fixed fallback", () => {
   assert.equal(getSiteListenPort("8080"), 8080);
+  assert.equal(getSiteListenPort(" 54321 "), 54321);
   for (const value of [undefined, "", "not-a-port", "0", "-1", "65536", "1.5"]) {
-    assert.equal(getSiteListenPort(value), 3000);
+    assert.throws(() => getSiteListenPort(value), /INVALID_PORT/);
   }
 });
 
-async function fixture(t, configureGate = true) {
+async function fixture(t, configureGate = true, {
+  gate = async () => true,
+  apiHandler,
+} = {}) {
   const root = await mkdtemp(join(tmpdir(), "sendflow-site-server-"));
   await mkdir(join(root, "public", "assets"), { recursive: true });
   await mkdir(join(root, "admin", "assets"), { recursive: true });
@@ -37,7 +41,8 @@ async function fixture(t, configureGate = true) {
 
   const server = createSiteServer(
     root,
-    async () => true,
+    gate,
+    apiHandler,
   );
   await new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -174,13 +179,46 @@ test("validates documentation and payment routes against their own domains", asy
   assert.equal(missingPaymentPage.status, 404);
 });
 
-test("missing assets and API paths never fall through to the SPA", async (t) => {
+test("missing assets 404 and an unmounted API fails explicitly instead of falling through to the SPA", async (t) => {
   const server = await fixture(t);
-  for (const path of ["/assets/missing.js", "/api", "/api/missing-route"]) {
+  const missingAsset = await get(server, "/assets/missing.js");
+  assert.equal(missingAsset.status, 404);
+  assert.equal(missingAsset.body, "404 Not Found");
+
+  for (const path of ["/api", "/api/missing-route"]) {
     const response = await get(server, path);
-    assert.equal(response.status, 404, path);
-    assert.equal(response.body, "404 Not Found", path);
+    assert.equal(response.status, 503, path);
+    assert.deepEqual(JSON.parse(response.body), {
+      code: "API_NOT_MOUNTED",
+      error: "Le service est momentanément indisponible.",
+    });
   }
+});
+
+test("mounted API requests reach the API handler on the same server without running the site gate", async (t) => {
+  let siteGateCalls = 0;
+  const server = await fixture(t, true, {
+    gate: async (_req, res) => {
+      siteGateCalls += 1;
+      res.statusCode = 403;
+      res.end();
+      return false;
+    },
+    apiHandler: (_req, res) => {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ mounted: true }));
+    },
+  });
+
+  const api = await get(server, "/api/auth/registration-countries");
+  assert.equal(api.status, 200);
+  assert.deepEqual(JSON.parse(api.body), { mounted: true });
+  assert.equal(siteGateCalls, 0);
+
+  const page = await get(server, "/");
+  assert.equal(page.status, 403);
+  assert.equal(siteGateCalls, 1);
 });
 
 test("secret path shows only a token challenge until the server validates the token", async (t) => {

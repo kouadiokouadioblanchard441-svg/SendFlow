@@ -15,8 +15,20 @@ async function fixture(t) {
   await mkdir(path.join(root, "public/assets"), { recursive: true });
   await mkdir(path.join(root, "admin/assets"), { recursive: true });
   await mkdir(path.join(root, "server"));
+  await mkdir(path.join(root, "server/api"), { recursive: true });
+  await mkdir(path.join(root, "dist"), { recursive: true });
   await writeFile(path.join(root, "index.cjs"), commonJsLauncher("./server/index.mjs"));
   await writeFile(path.join(root, "server/index.mjs"), 'console.log("synthetic-entry-started");');
+  await writeFile(path.join(root, "server/api/embedded.mjs"), 'export const mounted = true;');
+  for (const file of [
+    "pino-file.mjs",
+    "pino-pretty.mjs",
+    "pino-worker.mjs",
+    "thread-stream-worker.mjs",
+  ]) {
+    await writeFile(path.join(root, "dist", file), "export {};");
+  }
+  await writeFile(path.join(root, "plesk-runtime-dependencies.tar.gz"), "fixture archive");
   await writeFile(path.join(root, "public/index.html"), '<script src="/assets/app.js"></script><link rel="stylesheet" href="/assets/app.css">');
   await writeFile(path.join(root, "public/assets/app.js"), "void 0;");
   await writeFile(path.join(root, "public/assets/app.css"), "body{}");
@@ -43,13 +55,14 @@ async function deploymentFixture(t) {
     "index.cjs",
     "dist/index.cjs",
     "dist/server/index.mjs",
+    "dist/server/api/embedded.mjs",
+    "dist/dist/pino-file.mjs",
+    "dist/dist/pino-pretty.mjs",
+    "dist/dist/pino-worker.mjs",
+    "dist/dist/thread-stream-worker.mjs",
     "dist/public/index.html",
     "dist/admin/index.html",
     "dist/plesk-manifest.json",
-    "artifacts/api-server/dist/index.cjs",
-    "artifacts/api-server/dist/index.mjs",
-    "artifacts/api-server/dist/plesk-manifest.json",
-    "artifacts/api-server/plesk-empty-document-root/.keep",
   ]) {
     const target = path.join(root, file);
     await mkdir(path.dirname(target), { recursive: true });
@@ -60,7 +73,7 @@ async function deploymentFixture(t) {
   await mkdir(path.join(runtimeSource, "@swc/helpers"), { recursive: true });
   await writeFile(path.join(runtimeSource, "sharp/package.json"), '{"name":"sharp"}');
   await writeFile(path.join(runtimeSource, "@swc/helpers/package.json"), '{"name":"@swc/helpers"}');
-  const archive = path.join(root, "artifacts/api-server/plesk-runtime-dependencies.tar.gz");
+  const archive = path.join(root, "dist/plesk-runtime-dependencies.tar.gz");
   const archiveResult = spawnSync("tar", [
     "-czf", archive, "-C", path.join(root, ".runtime-fixture"), "node_modules",
   ], { encoding: "utf8" });
@@ -73,7 +86,7 @@ test("verifies a root-mounted web release and hashes its files", async (t) => {
   const root = await fixture(t);
   const result = await verifyDistribution(root, "web");
   assert.equal(result.startupFile, "index.cjs");
-  assert.equal(result.files.length, 8);
+  assert.equal(result.files.length, 14);
   assert.ok(result.files.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
 });
 
@@ -125,7 +138,7 @@ test("stages the Plesk screenshot layout with dist/index.cjs and dist/public", a
     'console.log("synthetic-entry-started");');
 });
 
-test("Plesk post-pull activates packaged API dependencies without Node, pnpm, git, or dirname", async (t) => {
+test("Plesk post-pull activates the single application's dependencies without Node, pnpm, git, or dirname", async (t) => {
   const { root, scriptDir } = await deploymentFixture(t);
   const emptyPath = await mkdtemp(path.join(tmpdir(), "sendflow-plesk-empty-path-"));
   t.after(() => rm(emptyPath, { recursive: true, force: true }));
@@ -135,37 +148,36 @@ test("Plesk post-pull activates packaged API dependencies without Node, pnpm, gi
     encoding: "utf8",
   });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /Verified prebuilt SendFlow Plesk packages/);
-  assert.match(result.stdout, /Activated committed Linux x64 API runtime dependencies/);
+  assert.match(result.stdout, /single SendFlow Plesk package/);
+  assert.match(result.stdout, /Activated committed Linux x64 runtime dependencies under dist/);
   assert.equal(
-    await readFile(path.join(root, "artifacts/api-server/node_modules/sharp/package.json"), "utf8"),
+    await readFile(path.join(root, "dist/node_modules/sharp/package.json"), "utf8"),
     '{"name":"sharp"}',
   );
   assert.doesNotMatch(result.stdout, /pnpm install|pnpm run build:plesk|node_modules.*build/i);
 });
 
-test("Plesk post-pull validation rejects an incomplete API package", async (t) => {
+test("Plesk post-pull validation rejects an incomplete integrated API package", async (t) => {
   const { root, scriptDir } = await deploymentFixture(t);
-  await rm(path.join(root, "artifacts/api-server/dist/index.cjs"));
+  await rm(path.join(root, "dist/server/api/embedded.mjs"));
   const result = spawnSync("/bin/bash", [path.join(scriptDir, "build-after-pull.sh")], {
     cwd: root,
     env: { PATH: "" },
     encoding: "utf8",
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /artifacts\/api-server\/dist\/index\.cjs/);
+  assert.match(result.stderr, /dist\/server\/api\/embedded\.mjs/);
 });
 
-test("Plesk post-pull requires the API document root inside its application root", async (t) => {
+test("Plesk post-pull does not require a separate API application", async (t) => {
   const { root, scriptDir } = await deploymentFixture(t);
-  await rm(path.join(root, "artifacts/api-server/plesk-empty-document-root/.keep"));
   const result = spawnSync("/bin/bash", [path.join(scriptDir, "build-after-pull.sh")], {
     cwd: root,
     env: { PATH: "" },
     encoding: "utf8",
   });
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /artifacts\/api-server\/plesk-empty-document-root\/\.keep/);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /website and \/api in one application/);
 });
 
 test("legacy Plesk action name works without dirname", async (t) => {
@@ -176,7 +188,7 @@ test("legacy Plesk action name works without dirname", async (t) => {
     encoding: "utf8",
   });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /Verified prebuilt SendFlow Plesk packages/);
+  assert.match(result.stdout, /Verified the single SendFlow Plesk package/);
 });
 
 test("missing JS or CSS is an error, not an accepted SPA fallback", async (t) => {
@@ -228,6 +240,13 @@ test("rejects environment files even outside the public directory", async (t) =>
   const root = await fixture(t);
   await writeFile(path.join(root, ".env.production"), "SYNTHETIC=fixture");
   await assert.rejects(verifyDistribution(root, "web"), /forbidden configuration/);
+});
+
+test("rejects Git metadata from the Plesk package", async (t) => {
+  const root = await fixture(t);
+  await mkdir(path.join(root, ".git"));
+  await writeFile(path.join(root, ".git/config"), "[core]");
+  await assert.rejects(verifyDistribution(root, "web"), /Git metadata/);
 });
 
 test("rejects symlinks that could escape the release", async (t) => {
@@ -310,7 +329,7 @@ test("CommonJS adapter classifies database configuration errors without logging 
   assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker/);
 });
 
-test("API startup diagnostics list unset names without exposing environment values", async (t) => {
+test("Plesk startup diagnostics list required names without exposing environment values", async (t) => {
   const root = await fixture(t);
   await writeFile(path.join(root, "index.cjs"), commonJsLauncher("./index.mjs"));
   await writeFile(path.join(root, "index.mjs"), 'throw new Error("synthetic-private-marker");');
@@ -323,24 +342,24 @@ test("API startup diagnostics list unset names without exposing environment valu
     encoding: "utf8",
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /Plesk API runtime variables unset: SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS/);
-  assert.doesNotMatch(result.stderr, /runtime variables unset: PORT/);
+  assert.match(result.stderr, /Plesk API runtime variables unset: SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY, PORT/);
   assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker|not-a-real-database-url/);
 });
 
-test("CommonJS adapter no longer classifies PORT as a required configuration variable", async (t) => {
+test("CommonJS adapter reports a missing Passenger PORT without printing values", async (t) => {
   const root = await fixture(t);
   await writeFile(
     path.join(root, "server/index.mjs"),
-    'throw new Error("Invalid PORT value");',
+    'throw new Error("INVALID_PORT: Passenger did not provide PORT.");',
   );
   const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
     env: { NODE_ENV: "production" },
     encoding: "utf8",
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /Plesk site startup failure category: UNCLASSIFIED/);
-  assert.doesNotMatch(result.stderr, /INVALID_PORT|PORT environment variable|runtime variables unset: PORT/);
+  assert.match(result.stderr, /Plesk site startup failure category: INVALID_PORT/);
+  assert.match(result.stderr, /Plesk site runtime variables unset: .*PORT/);
+  assert.match(result.stderr, /Passenger provides a valid PORT environment variable/);
   assert.doesNotMatch(result.stdout + result.stderr, /undefined|synthetic-private-marker/);
 });
 

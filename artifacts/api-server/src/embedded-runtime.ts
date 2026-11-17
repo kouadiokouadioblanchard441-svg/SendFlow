@@ -28,6 +28,21 @@ export function getMissingApiEnvironmentNames(): string[] {
     ...(!process.env.TURNSTILE_SECRET_KEY?.trim()
       ? ["TURNSTILE_SECRET_KEY"]
       : []),
+    ...(!process.env.SESSION_SECRET?.trim() ? ["SESSION_SECRET"] : []),
+    ...(!process.env.CUSTOMER_PII_ENCRYPTION_KEY?.trim()
+      ? ["CUSTOMER_PII_ENCRYPTION_KEY"]
+      : []),
+    ...(!process.env.ADMIN_SECRET_PATH?.trim() ? ["ADMIN_SECRET_PATH"] : []),
+    ...(!process.env.ADMIN_SECRET_TOKEN?.trim() ? ["ADMIN_SECRET_TOKEN"] : []),
+    ...(!process.env.SENDFLOW_ADMIN_JWT_PRIVATE_KEY?.trim()
+      ? ["SENDFLOW_ADMIN_JWT_PRIVATE_KEY"]
+      : []),
+    ...(!process.env.SENDFLOW_ADMIN_JWT_PUBLIC_KEY?.trim()
+      ? ["SENDFLOW_ADMIN_JWT_PUBLIC_KEY"]
+      : []),
+    ...(!process.env.SENDFLOW_ADMIN_TOTP_ENCRYPTION_KEY?.trim()
+      ? ["SENDFLOW_ADMIN_TOTP_ENCRYPTION_KEY"]
+      : []),
   ];
 }
 
@@ -64,9 +79,20 @@ export function startEmbeddedApiRuntime(): void {
     });
 
   if (process.env.NODE_ENV === "production") {
-    startDeveloperWebhookWorker(logger);
-    startEmailCampaignWorker(logger);
-    startIdentityVerificationUploadCleanup(logger);
+    for (const [name, start] of [
+      ["developer_webhook", startDeveloperWebhookWorker],
+      ["email_campaign", startEmailCampaignWorker],
+      ["identity_upload_cleanup", startIdentityVerificationUploadCleanup],
+    ] as const) {
+      try {
+        start(logger);
+      } catch {
+        logger.error(
+          { component: name, failureCategory: "worker_start_failed" },
+          "Background worker could not start",
+        );
+      }
+    }
   }
 }
 
@@ -87,7 +113,7 @@ export function handleEmbeddedApiRequest(
   request: IncomingMessage,
   response: ServerResponse,
 ): void {
-  app.handle(request as never, response as never, (error?: unknown) => {
+  const failSafely = (error?: unknown) => {
     if (error) {
       logger.error(
         {
@@ -97,17 +123,29 @@ export function handleEmbeddedApiRequest(
         "API request dispatch failed",
       );
     }
-    if (!response.headersSent) {
-      response.statusCode = 503;
-      response.setHeader("Cache-Control", "no-store, private");
-      response.setHeader("Content-Type", "application/json; charset=utf-8");
-      response.end(JSON.stringify({
-        code: "API_DISPATCH_UNAVAILABLE",
-        error: "Le service est momentanément indisponible.",
-      }));
+    if (response.headersSent) {
+      response.end();
       return;
     }
-    response.end();
-  });
+    response.statusCode = 503;
+    response.setHeader("Cache-Control", "no-store, private");
+    response.setHeader("Content-Type", "application/json; charset=utf-8");
+    response.end(JSON.stringify({
+      code: "API_DISPATCH_UNAVAILABLE",
+      error: "Le service est momentanément indisponible.",
+    }));
+  };
+  try {
+    const expressApp = app as unknown as {
+      handle: (
+        request: IncomingMessage,
+        response: ServerResponse,
+        callback?: (error?: unknown) => void,
+      ) => void;
+    };
+    expressApp.handle(request, response, failSafely);
+  } catch {
+    failSafely(new Error("API dispatch failed"));
+  }
 }
 

@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import http from "node:http";
 import { createServer as createNetServer } from "node:net";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
-import { fileURLToPath } from "node:url";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  rmSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { before, after } from "node:test";
@@ -319,7 +325,7 @@ before(async () => {
   site = createSiteServer(
     siteRoot,
     async () => true,
-    async () => "allowed",
+    (req, res) => app.handle(req, res),
   );
   site.listen(0, "127.0.0.1");
   await once(site, "listening");
@@ -468,6 +474,29 @@ test("signup country and registration settings endpoints serve the isolated conf
   assert.equal(typeof settingsPayload.emailVerificationEnabled, "boolean");
 });
 
+test("the site listener serves all registration endpoints through its embedded API handler", async () => {
+  const countries = await request("/api/auth/registration-countries", {
+    target: site,
+    origin: null,
+  });
+  assert.equal(countries.status, 200, countries.text);
+  assert.ok(JSON.parse(countries.text).countries.length > 0);
+
+  const settings = await request("/api/auth/registration-settings", {
+    target: site,
+    origin: null,
+  });
+  assert.equal(settings.status, 200, settings.text);
+  assert.equal(typeof JSON.parse(settings.text).emailVerificationEnabled, "boolean");
+
+  const turnstile = await request("/api/auth/turnstile-config", {
+    target: site,
+    origin: null,
+  });
+  assert.equal(turnstile.status, 200, turnstile.text);
+  assert.ok(JSON.parse(turnstile.text).siteKey);
+});
+
 test("signup country and settings endpoints return explicit JSON on database permission failures", async () => {
   await owner.query("REVOKE SELECT ON sf_countries FROM sf_fixture_app");
   try {
@@ -494,7 +523,33 @@ test("signup country and settings endpoints return explicit JSON on database per
   }
 });
 
-test("built Plesk API distribution listens on its supplied port and stays alive", async (t) => {
+test("built single Plesk site distribution serves all registration APIs on its supplied port", async (t) => {
+  const sourceDistribution = process.env.SENDFLOW_PLESK_SITE_DIST;
+  if (!sourceDistribution || !existsSync(sourceDistribution)) {
+    t.skip("The integrated Plesk distribution is tested when the Plesk build provides it.");
+    return;
+  }
+
+  const deploymentRoot = mkdtempSync(join(tmpdir(), "sendflow-plesk-site-runtime-"));
+  t.after(() => rmSync(deploymentRoot, { recursive: true, force: true }));
+  cpSync(sourceDistribution, deploymentRoot, { recursive: true });
+  execFileSync(
+    "tar",
+    ["-xzf", join(deploymentRoot, "plesk-runtime-dependencies.tar.gz"), "-C", deploymentRoot],
+    { stdio: "pipe" },
+  );
+  assert.ok(existsSync(join(deploymentRoot, "node_modules/argon2/package.json")));
+  assert.ok(existsSync(join(deploymentRoot, "node_modules/sharp/package.json")));
+  execFileSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      'import argon2 from "argon2"; import sharp from "sharp"; const digest = await argon2.hash("isolated-runtime-check"); if (!(await argon2.verify(digest, "isolated-runtime-check"))) process.exit(1); await sharp({ create: { width: 1, height: 1, channels: 3, background: "#ffffff" } }).png().toBuffer();',
+    ],
+    { cwd: deploymentRoot, env: process.env, stdio: "pipe" },
+  );
+
   const reservation = createNetServer();
   reservation.listen(0, "127.0.0.1");
   await once(reservation, "listening");
@@ -505,20 +560,33 @@ test("built Plesk API distribution listens on its supplied port and stays alive"
     reservation.close((error) => error ? reject(error) : resolve());
   });
 
-  const bundle = fileURLToPath(new URL(
-    process.env.SENDFLOW_API_TEST_BUNDLE ?? "../../dist/index.mjs",
-    import.meta.url,
-  ));
+  const bundle = join(deploymentRoot, "server/index.mjs");
+  const childEnvironment = { ...process.env };
+  delete childEnvironment.NODE_PATH;
+  Object.assign(childEnvironment, {
+    NODE_ENV: "development",
+    PORT: String(port),
+    SENDFLOW_DATABASE_TARGET: "development",
+    TRUST_PROXY_HOPS: "1",
+    CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid",
+    LOG_LEVEL: "info",
+    TURNSTILE_SITE_KEY: turnstilePublicSiteKey,
+    TURNSTILE_SECRET_KEY:
+      process.env.TURNSTILE_SECRET_KEY ?? "isolated-built-package-secret",
+  });
   const child = spawn(process.execPath, [bundle], {
-    cwd: fileURLToPath(new URL("../../", import.meta.url)),
-    env: {
-      ...process.env,
-      NODE_ENV: "development",
-      PORT: String(port),
-      LOG_LEVEL: "silent",
-      TURNSTILE_SITE_KEY: turnstilePublicSiteKey,
-    },
-    stdio: "ignore",
+    cwd: deploymentRoot,
+    env: childEnvironment,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let childOutput = "";
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk) => { childOutput += chunk; });
+  child.stderr.on("data", (chunk) => { childOutput += chunk; });
+  child.on("error", (error) => { childOutput += `\nprocess error: ${error.name}`; });
+  child.on("exit", (code, signal) => {
+    childOutput += `\nprocess exit: ${String(code)} ${signal ?? ""}`;
   });
   t.after(async () => {
     if (child.exitCode === null && child.signalCode === null) {
@@ -538,8 +606,11 @@ test("built Plesk API distribution listens on its supplied port and stays alive"
         port,
         path,
         method: "GET",
-        headers: { Origin: "https://sendflow-test.invalid" },
-        timeout: 1_500,
+        headers: {
+          Origin: "https://sendflow-test.invalid",
+          Host: "merchent.business.sendflow.africa",
+        },
+        timeout: 5_000,
       }, (res) => {
         let text = "";
         res.setEncoding("utf8");
@@ -556,7 +627,9 @@ test("built Plesk API distribution listens on its supplied port and stays alive"
     const deadline = Date.now() + 10_000;
     while (Date.now() < deadline) {
       if (child.exitCode !== null || child.signalCode !== null) {
-        assert.fail("Built API process exited before serving the endpoint.");
+        assert.fail(
+          `Built integrated process exited before serving the endpoint. Safe startup output: ${childOutput.slice(-4_000)}`,
+        );
       }
       try {
         return await readEndpoint(path);
@@ -564,20 +637,43 @@ test("built Plesk API distribution listens on its supplied port and stays alive"
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
-    assert.fail("Built API process did not serve the endpoint on the supplied port.");
+    assert.fail(
+      `Built integrated process did not serve the endpoint on the supplied port. Safe startup output: ${childOutput.slice(-4_000)}`,
+    );
   }
 
   const countries = await waitForEndpoint("/api/auth/registration-countries");
   assert.equal(countries.status, 200, countries.text);
   assert.ok(JSON.parse(countries.text).countries.some((country) => country.countryCode === "ci"));
 
-  const settings = await readEndpoint("/api/auth/registration-settings");
+  const safeReadEndpoint = async (path) => {
+    try {
+      return await readEndpoint(path);
+    } catch (error) {
+      throw new Error(
+        `Built route ${path} did not respond. Safe startup output: ${childOutput.slice(-4_000)}`,
+        { cause: error },
+      );
+    }
+  };
+  const settings = await safeReadEndpoint("/api/auth/registration-settings");
   assert.equal(settings.status, 200, settings.text);
   assert.equal(JSON.parse(settings.text).defaultCountryCode, "ci");
 
-  const turnstile = await readEndpoint("/api/auth/turnstile-config");
+  const turnstile = await safeReadEndpoint("/api/auth/turnstile-config");
   assert.equal(turnstile.status, 200, turnstile.text);
   assert.ok(JSON.parse(turnstile.text).siteKey);
+  const home = await safeReadEndpoint("/");
+  assert.equal(home.status, 200, home.text);
+  assert.match(home.text, /SendFlow/i);
+  assert.match(childOutput, /Plesk application started with integrated API/);
+  assert.match(childOutput, /apiMount/);
+  assert.match(childOutput, /"path": "\/api"/);
+  assert.match(childOutput, /"status": "active"/);
+  assert.doesNotMatch(
+    childOutput,
+    /isolated-built-package-secret|isolated-test-turnstile-secret/,
+  );
   assert.equal(child.exitCode, null);
   assert.equal(child.signalCode, null);
 });

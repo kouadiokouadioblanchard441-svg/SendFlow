@@ -35,14 +35,15 @@ required_files=(
   "index.cjs"
   "dist/index.cjs"
   "dist/server/index.mjs"
+  "dist/server/api/embedded.mjs"
+  "dist/dist/pino-file.mjs"
+  "dist/dist/pino-pretty.mjs"
+  "dist/dist/pino-worker.mjs"
+  "dist/dist/thread-stream-worker.mjs"
   "dist/public/index.html"
   "dist/admin/index.html"
   "dist/plesk-manifest.json"
-  "artifacts/api-server/dist/index.cjs"
-  "artifacts/api-server/dist/index.mjs"
-  "artifacts/api-server/dist/plesk-manifest.json"
-  "artifacts/api-server/plesk-runtime-dependencies.tar.gz"
-  "artifacts/api-server/plesk-empty-document-root/.keep"
+  "dist/plesk-runtime-dependencies.tar.gz"
 )
 
 missing=()
@@ -63,7 +64,7 @@ TAR_BIN="$(find_tool tar)" || {
   exit 1
 }
 GZIP_BIN="$(find_tool gzip)" || {
-  echo "Plesk package activation requires gzip to unpack the committed API runtime archive." >&2
+  echo "Plesk package activation requires gzip to unpack the committed application runtime archive." >&2
   exit 1
 }
 MKDIR_BIN="$(find_tool mkdir)" || { echo "Plesk package activation requires mkdir." >&2; exit 1; }
@@ -79,17 +80,17 @@ for tool_path in "$TAR_BIN" "$GZIP_BIN" "$MKDIR_BIN" "$RM_BIN" "$MV_BIN"; do
 done
 export PATH
 
-api_root="$repo_root/artifacts/api-server"
-runtime_archive="$api_root/plesk-runtime-dependencies.tar.gz"
-runtime_stage="$api_root/.plesk-runtime-stage-$$"
-runtime_previous="$api_root/.plesk-runtime-previous-$$"
+application_root="$repo_root/dist"
+runtime_archive="$application_root/plesk-runtime-dependencies.tar.gz"
+runtime_stage="$application_root/.plesk-runtime-stage-$$"
+runtime_previous="$application_root/.plesk-runtime-previous-$$"
 cleanup_runtime_stage() {
   "$RM_BIN" -rf "$runtime_stage" "$runtime_previous"
 }
 trap cleanup_runtime_stage EXIT
 
 archive_listing="$("$TAR_BIN" -tzf "$runtime_archive")" || {
-  echo "Plesk API runtime archive is invalid or incomplete." >&2
+  echo "Plesk application runtime archive is invalid or incomplete." >&2
   exit 1
 }
 while IFS= read -r archive_entry; do
@@ -100,7 +101,7 @@ while IFS= read -r archive_entry; do
         "$archive_entry" == */../* ||
         "$archive_entry" == */.. ||
         ( "$archive_entry" != "node_modules" && "$archive_entry" != node_modules/* ) ]]; then
-    echo "Plesk API runtime archive contains an unsafe path." >&2
+    echo "Plesk application runtime archive contains an unsafe path." >&2
     exit 1
   fi
 done <<< "$archive_listing"
@@ -111,21 +112,21 @@ done <<< "$archive_listing"
 if [[ ! -d "$runtime_stage/node_modules" ||
       ! -e "$runtime_stage/node_modules/sharp" ||
       ! -e "$runtime_stage/node_modules/@swc/helpers" ]]; then
-  echo "Plesk API runtime archive is missing required external packages." >&2
+  echo "Plesk application runtime archive is missing required external packages." >&2
   exit 1
 fi
 
-if [[ -e "$api_root/node_modules" || -L "$api_root/node_modules" ]]; then
-  "$MV_BIN" "$api_root/node_modules" "$runtime_previous"
+if [[ -e "$application_root/node_modules" || -L "$application_root/node_modules" ]]; then
+  "$MV_BIN" "$application_root/node_modules" "$runtime_previous"
 fi
-if ! "$MV_BIN" "$runtime_stage/node_modules" "$api_root/node_modules"; then
+if ! "$MV_BIN" "$runtime_stage/node_modules" "$application_root/node_modules"; then
   if [[ -e "$runtime_previous" || -L "$runtime_previous" ]]; then
-    "$MV_BIN" "$runtime_previous" "$api_root/node_modules"
+    "$MV_BIN" "$runtime_previous" "$application_root/node_modules"
   fi
-  echo "Could not activate the packaged API runtime dependencies." >&2
+  echo "Could not activate the packaged application runtime dependencies." >&2
   exit 1
 fi
 "$RM_BIN" -rf "$runtime_previous"
 
-printf 'Verified prebuilt SendFlow Plesk packages: site, API, and project-root startup file.\n'
-printf 'Activated committed Linux x64 API runtime dependencies; no Node.js, pnpm, or build is run in the Plesk Git action.\n'
+printf 'Verified the single SendFlow Plesk package: website and /api in one application.\n'
+printf 'Activated committed Linux x64 runtime dependencies under dist; no Node.js, pnpm, or build is run in the Plesk Git action.\n'

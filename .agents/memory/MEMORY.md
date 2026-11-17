@@ -50,7 +50,7 @@
 - [SendFlow page loader](sendflow-page-loader.md) — Keep the shared LinkFlow-style four-dot violet animation for full-page waits and route transitions.
 - [Merchant developer API](developer-integrations.md) — Keep checkout on LinkFlow’s settlement path; use provider-neutral OTP and server-generated instruction/redirect fields.
 - [Campaign contact details](campaign-contact-settings.md) — Campaign email contact details must come from the active admin settings; never bake support numbers into templates.
-- [Plesk Node runtime](plesk-node-runtime.md) — The user’s current Plesk runtime is Node.js 24.22.2; use this instead of the older screenshot value.
+- [Plesk Node runtime](plesk-node-runtime.md) — Use Node 24.22.3 and keep the merchant site plus `/api` in one Passenger app per domain.
 - [Plesk app-root containment](plesk-app-root-containment.md) — Plesk requires a unique Node app root that contains its document root; keep domain aliases on the shared site app.
 - [Plesk auto-deployment](plesk-auto-deployment.md) — GitHub Actions builds and tracks only Plesk production packages; keep Plesk's restricted post-Pull check shell-only.
 - [Plesk pnpm build approvals](plesk-pnpm-build-approvals.md) — Keep only reviewed lifecycle scripts allowed in both pnpm build-approval formats for Plesk compatibility.

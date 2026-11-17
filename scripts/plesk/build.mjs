@@ -1,6 +1,13 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { readFile, rm, statfs, writeFile } from "node:fs/promises";
+import {
+  copyFile,
+  mkdir,
+  readFile,
+  rm,
+  statfs,
+  writeFile,
+} from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import {
@@ -71,7 +78,8 @@ try {
   run("pnpm", ["run", "test:plesk-build"]);
   run("pnpm", ["--filter", "@workspace/sendflow", "run", "test:auth-routing"]);
 
-  // Root-mounted, same-origin Plesk release. Do not change stored environments.
+  // One Passenger process serves the root-mounted site and same-origin /api.
+  // Do not change stored environments.
   const buildEnvironment = {
     ...process.env,
     NODE_ENV: "production",
@@ -84,12 +92,34 @@ try {
   run("pnpm", ["--filter", "@workspace/sendflow", "run", "build"], {
     env: buildEnvironment,
   });
+  const apiBuildDirectory = path.join(root, "artifacts/api-server/dist");
+  const webBuildDirectory = path.join(root, "artifacts/sendflow/dist");
+  const embeddedApiDirectory = path.join(webBuildDirectory, "server/api");
+  const embeddedApiFiles = ["embedded.mjs"];
+  const pinoWorkerFiles = [
+    "pino-file.mjs",
+    "pino-pretty.mjs",
+    "pino-worker.mjs",
+    "thread-stream-worker.mjs",
+  ];
+  await mkdir(embeddedApiDirectory, { recursive: true });
+  const pinoWorkerDirectory = path.join(webBuildDirectory, "dist");
+  await mkdir(pinoWorkerDirectory, { recursive: true });
+  for (const filename of embeddedApiFiles) {
+    await copyFile(
+      path.join(apiBuildDirectory, filename),
+      path.join(embeddedApiDirectory, filename),
+    );
+  }
+  for (const filename of pinoWorkerFiles) {
+    await copyFile(
+      path.join(apiBuildDirectory, filename),
+      path.join(pinoWorkerDirectory, filename),
+    );
+  }
   const runtimePackage = await packageApiRuntimeDependencies({
     root,
-    output: path.join(
-      root,
-      "artifacts/api-server/plesk-runtime-dependencies.tar.gz",
-    ),
+    output: path.join(webBuildDirectory, "plesk-runtime-dependencies.tar.gz"),
   });
 
   const lockfile = await readFile(path.join(root, "pnpm-lock.yaml"));
@@ -104,31 +134,33 @@ try {
     buildMode: "production",
     basePath: "/",
   };
-  for (const [service, directory, target] of [
-    ["api", "artifacts/api-server/dist", "./index.mjs"],
-    ["web", "artifacts/sendflow/dist", "./server/index.mjs"],
-  ]) {
-    const distribution = path.join(root, directory);
-    const launcher = path.join(distribution, "index.cjs");
-    await writeFile(launcher, commonJsLauncher(target), { mode: 0o644 });
-    run(process.execPath, ["--check", launcher]);
-    run(process.execPath, ["--check", path.join(distribution, target)]);
-    const manifest = {
-      ...metadata,
-      ...(await verifyDistribution(distribution, service)),
-      ...(service === "api" ? { runtimeDependencies: runtimePackage } : {}),
-    };
-    await writeFile(
-      path.join(distribution, "plesk-manifest.json"),
-      `${JSON.stringify(manifest, null, 2)}\n`,
-      { mode: 0o644 },
-    );
-    console.log(
-      `Plesk ${service}: ${manifest.files.length} files verified; ${directory}/index.cjs ready.`,
-    );
-  }
+  const siteLauncher = path.join(webBuildDirectory, "index.cjs");
+  await writeFile(siteLauncher, commonJsLauncher("./server/index.mjs"), {
+    mode: 0o644,
+  });
+  run(process.execPath, ["--check", siteLauncher]);
+  run(process.execPath, ["--check", path.join(webBuildDirectory, "server/index.mjs")]);
+  run(process.execPath, ["--check", path.join(embeddedApiDirectory, "embedded.mjs")]);
+  const webManifest = {
+    ...metadata,
+    ...(await verifyDistribution(webBuildDirectory, "web")),
+    runtimeDependencies: runtimePackage,
+    integratedApi: {
+      mountPath: "/api",
+      entry: "server/api/embedded.mjs",
+      supportFiles: pinoWorkerFiles.map((filename) => `dist/${filename}`),
+    },
+  };
+  await writeFile(
+    path.join(webBuildDirectory, "plesk-manifest.json"),
+    `${JSON.stringify(webManifest, null, 2)}\n`,
+    { mode: 0o644 },
+  );
+  console.log(
+    `Plesk single-application package: ${webManifest.files.length} files verified; ${webBuildDirectory}/index.cjs ready.`,
+  );
   const stagedWeb = await stagePleskWebDistribution(
-    path.join(root, "artifacts/sendflow/dist"),
+    webBuildDirectory,
     pleskWebDistribution,
   );
   const rootWebLauncher = path.join(root, "index.cjs");
@@ -140,18 +172,33 @@ try {
   run(process.execPath, ["--check", rootWebLauncher]);
   await rm(path.join(root, "artifacts/dist"), { recursive: true, force: true });
   run("pnpm", ["run", "check:public-artifacts"]);
-  const stagedManifest = { ...metadata, ...stagedWeb };
+  const stagedManifest = {
+    ...metadata,
+    ...stagedWeb,
+    runtimeDependencies: runtimePackage,
+    integratedApi: webManifest.integratedApi,
+  };
   await writeFile(
     path.join(pleskWebDistribution, "plesk-manifest.json"),
     `${JSON.stringify(stagedManifest, null, 2)}\n`,
     { mode: 0o644 },
   );
+  run(
+    "pnpm",
+    ["--filter", "@workspace/api-server", "run", "test:signup-endpoints:isolated"],
+    {
+      env: {
+        ...buildEnvironment,
+        SENDFLOW_PLESK_SITE_DIST: pleskWebDistribution,
+      },
+    },
+  );
   console.log(
-    `Plesk website package: ${path.relative(root, pleskWebDistribution)}/index.cjs with public and private bundles ready.`,
+    `Plesk application package: ${path.relative(root, pleskWebDistribution)}/index.cjs serves the website and /api on one listener.`,
   );
   console.log("Plesk project-root startup file: index.cjs ready.");
   console.log(
-    `Plesk API runtime dependencies: ${runtimePackage.sizeBytes} bytes; Linux x64 package ready.`,
+    `Plesk integrated API runtime dependencies: ${runtimePackage.sizeBytes} bytes; Linux x64 package ready.`,
   );
   console.log(
     "SUCCESS: Plesk distributions generated. Read docs/plesk-build.md before deploying.",

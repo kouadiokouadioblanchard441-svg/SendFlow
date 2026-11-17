@@ -18,6 +18,7 @@ function safeFailureCategory(error) {
       depth += 1
     ) {
       const message = typeof current.message === "string" ? current.message : "";
+      if (message.startsWith("INVALID_PORT")) return "INVALID_PORT";
       if (message.startsWith("TRUST_PROXY_HOPS")) return "INVALID_TRUST_PROXY_HOPS";
       if (message.startsWith("CORS_ALLOWED_ORIGINS")) return "INVALID_CORS_ALLOWED_ORIGINS";
       if (message.startsWith("SENDFLOW_DATABASE_TARGET")) return "INVALID_DATABASE_TARGET";
@@ -38,7 +39,11 @@ function safeFailureCategory(error) {
 }
 function safeMissingEnvironmentNames() {
   const required = ["NODE_ENV", "SENDFLOW_DATABASE_TARGET", "TRUST_PROXY_HOPS"];
-  if (PLESK_SERVICE === "API") required.push("CORS_ALLOWED_ORIGINS");
+  if (PLESK_SERVICE === "API" || PLESK_SERVICE === "site") {
+    required.push("CORS_ALLOWED_ORIGINS");
+    required.push("TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY");
+  }
+  required.push("PORT");
   const missing = required.filter((name) => !process.env[name]?.trim());
   if (process.env.NODE_ENV === "production") {
     if (!process.env.SUPABASE_DATABASE_URL?.trim() && !process.env.DATABASE_URL?.trim()) {
@@ -50,6 +55,9 @@ function safeMissingEnvironmentNames() {
 }
 function safeConfigurationHint(error) {
   const category = safeFailureCategory(error);
+  if (category === "INVALID_PORT") {
+    return "Check that Passenger provides a valid PORT environment variable.";
+  }
   if (category === "INVALID_TRUST_PROXY_HOPS") {
     return "Check the TRUST_PROXY_HOPS environment variable.";
   }
@@ -127,6 +135,7 @@ async function inventory(root, current = root) {
     const info = await lstat(filename);
     if (info.isSymbolicLink()) throw new Error("Release must not contain symlinks");
     if ((info.mode & 0o002) !== 0) throw new Error("Release contains world-writable files");
+    if (name === ".git") throw new Error("Release must not contain Git metadata");
     if (name.startsWith(".env") || /\.(?:pem|key|p12|pfx|jks|keystore)$/i.test(name)) {
       throw new Error("Release contains a forbidden configuration or key file");
     }
@@ -156,7 +165,18 @@ export async function verifyDistribution(root, service) {
   for (const required of [
     "index.cjs",
     entry,
-    ...(service === "web" ? ["public/index.html", "admin/index.html"] : []),
+    ...(service === "web"
+      ? [
+          "public/index.html",
+          "admin/index.html",
+          "server/api/embedded.mjs",
+          "dist/pino-file.mjs",
+          "dist/pino-pretty.mjs",
+          "dist/pino-worker.mjs",
+          "dist/thread-stream-worker.mjs",
+          "plesk-runtime-dependencies.tar.gz",
+        ]
+      : []),
   ]) {
     if (!names.has(required)) throw new Error(`Missing release entry: ${required}`);
   }
@@ -170,6 +190,13 @@ export async function verifyDistribution(root, service) {
     }
   }
   if (service === "web") {
+    const embeddedApi = await readFile(
+      path.join(root, "server/api/embedded.mjs"),
+      "utf8",
+    );
+    if (/const outputDir\s*=\s*["'](?:\/|[A-Za-z]:[\\/])/.test(embeddedApi)) {
+      throw new Error("Integrated API bundle contains a machine-specific absolute Pino worker path");
+    }
     for (const file of files.filter((file) => /^(?:public|admin)\//.test(file.path))) {
       if (/\.(?:html|js|css|json|svg|webmanifest)$/.test(file.path)) {
         const text = await readFile(path.join(root, file.path), "utf8");
