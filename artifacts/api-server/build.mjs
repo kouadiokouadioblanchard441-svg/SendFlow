@@ -19,6 +19,7 @@ async function buildAll() {
   await esbuild({
     entryPoints: {
       index: path.resolve(artifactDir, "src/index.ts"),
+      embedded: path.resolve(artifactDir, "src/embedded-runtime.ts"),
     },
     platform: "node",
     bundle: true,

@@ -4,11 +4,11 @@ import { once } from "node:events";
 import test from "node:test";
 import { getPleskPort, listenOnPleskPort, PLESK_LISTEN_HOST } from "./plesk-listener.ts";
 
-test("uses Passenger's supplied port when valid and a compatibility port otherwise", () => {
+test("requires Passenger's supplied port and rejects invalid values", () => {
   assert.equal(getPleskPort(" 8080 "), 8080);
   assert.equal(getPleskPort("65535"), 65535);
   for (const value of [undefined, "", "   ", "0", "65536", "-1", "1.5", "8080;exit"]) {
-    assert.equal(getPleskPort(value), 3000);
+    assert.throws(() => getPleskPort(value), /INVALID_PORT/);
   }
 });
 

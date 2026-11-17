@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { createReadStream } from "node:fs";
 import { realpath, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { enforceIpAccess, requestIp, trustedProxyHops } from "@workspace/db/ip-blocklist";
 import {
   ADMIN_GATE_COOKIE,
@@ -176,14 +176,29 @@ async function servePrivateEntry(
 export function createSiteServer(
   distributionDirectory: string,
   gate: (req: IncomingMessage, res: ServerResponse) => Promise<boolean> = enforceIpAccess,
+  apiHandler?: (req: IncomingMessage, res: ServerResponse) => void,
 ) {
   const distributionRoot = resolve(distributionDirectory);
   const publicRoot = resolve(distributionRoot, "public");
   const privateRoot = resolve(distributionRoot, "admin");
   const server = createServer(async (req, res) => {
     try {
-      if (!await gate(req, res)) return;
       const { pathname, hasQuery } = requestPath(req);
+      if (pathname === "/api" || pathname.startsWith("/api/")) {
+        if (apiHandler) {
+          apiHandler(req, res);
+        } else {
+          res.statusCode = 503;
+          res.setHeader("Cache-Control", "no-store, private");
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.end(JSON.stringify({
+            code: "API_NOT_MOUNTED",
+            error: "Le service est momentanément indisponible.",
+          }));
+        }
+        return;
+      }
+      if (!await gate(req, res)) return;
       const configuration = getAdminGateConfiguration(process.env);
       const cookieValid = hasValidAdminGateCookie(req.headers.cookie, process.env);
       const adminPathMatches = Boolean(
@@ -369,12 +384,42 @@ export function startSiteServer() {
   trustedProxyHops(process.env.TRUST_PROXY_HOPS, process.env.NODE_ENV);
   const port = getSiteListenPort(process.env.PORT);
   const distributionRoot = fileURLToPath(new URL("../", import.meta.url));
-  const server = createSiteServer(distributionRoot);
-  server.listen(port, "0.0.0.0");
-  return server;
+  return (async () => {
+    const apiModulePath = resolve(distributionRoot, "server/api/embedded.mjs");
+    const apiRuntime = await import(pathToFileURL(apiModulePath).href) as {
+      handleEmbeddedApiRequest: (
+        req: IncomingMessage,
+        res: ServerResponse,
+      ) => void;
+      startEmbeddedApiRuntime: () => void;
+      logPleskApplicationStarted: (port: number) => void;
+    };
+    const server = createSiteServer(
+      distributionRoot,
+      enforceIpAccess,
+      apiRuntime.handleEmbeddedApiRequest,
+    );
+    await new Promise<void>((resolveListening, reject) => {
+      server.once("error", reject);
+      server.listen(port, "0.0.0.0", () => {
+        server.removeListener("error", reject);
+        resolveListening();
+      });
+    });
+    apiRuntime.startEmbeddedApiRuntime();
+    apiRuntime.logPleskApplicationStarted(port);
+    return server;
+  })();
 }
 
 export function getSiteListenPort(value: string | undefined): number {
-  const port = Number(value);
-  return Number.isInteger(port) && port >= 1 && port <= 65535 ? port : 3000;
+  const normalized = value?.trim() ?? "";
+  if (!normalized) {
+    throw new Error("INVALID_PORT: Passenger did not provide PORT.");
+  }
+  const port = Number(normalized);
+  if (!Number.isSafeInteger(port) || port < 1 || port > 65535) {
+    throw new Error("INVALID_PORT: Passenger provided an invalid PORT.");
+  }
+  return port;
 }

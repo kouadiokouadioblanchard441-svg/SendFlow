@@ -1,2 +1,2 @@
 import { startSiteServer } from "./site-server";
-startSiteServer();
+await startSiteServer();
