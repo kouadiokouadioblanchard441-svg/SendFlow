@@ -1,7 +1,7 @@
 {
-  "builtAt": "2026-11-17T17:15:27.257Z",
-  "sourceCommit": "2bb9f140bdc31460fa17fe0e7e2eba53d0289b21",
-  "trackedWorktreeModified": true,
+  "builtAt": "2026-11-17T18:31:44.243Z",
+  "sourceCommit": "ac0c2ebb2f3a284dde715860ac14882250a3d4d9",
+  "trackedWorktreeModified": false,
   "builderNode": "v24.22.3",
   "builderPnpm": "10.26.1",
   "lockfileSha256": "00bb4904baff839c3c41a2427941796ff1d4b9cd9b55b53d0a3fd615a807d60d",
@@ -88,9 +88,34 @@
       "sha256": "a8f9ad93d53d22bc2897c9c8f6fce83ead3e67593feff6c7e67e36c4d1b8856a"
     },
     {
+      "path": "dist/pino-file.mjs",
+      "bytes": 145501,
+      "sha256": "a16b26aae667c4a9b8ed3ce17f97017ca51c56ad08b208cba6c19c81db567459"
+    },
+    {
+      "path": "dist/pino-pretty.mjs",
+      "bytes": 122756,
+      "sha256": "6ba05b9342f7ea8649a27069e490ea484b4fc59e9dc2f2fcd64bb1c3a8a57180"
+    },
+    {
+      "path": "dist/pino-worker.mjs",
+      "bytes": 157137,
+      "sha256": "59591ae6bf5ea65d1684d031234912173bf823a188392e1be8b09622d1397470"
+    },
+    {
+      "path": "dist/thread-stream-worker.mjs",
+      "bytes": 7503,
+      "sha256": "592c869fbb0d56ca26b58892b44c72a29f45bfd0dfccd7771dce71700b267d8c"
+    },
+    {
       "path": "index.cjs",
-      "bytes": 4893,
-      "sha256": "7174aae4c9b124dc7843e73a0acbe577461d2d60f7c09e098bf79555ddea2724"
+      "bytes": 5210,
+      "sha256": "af5c027c0a3bdefc31174c2c4f4ca3c3fde110fdfb1ef6ce466516cfdcff667c"
+    },
+    {
+      "path": "plesk-runtime-dependencies.tar.gz",
+      "bytes": 23962220,
+      "sha256": "7179bb425d508afda21168944e9b3cb1612cb635e7b151f865dfa9856f76d228"
     },
     {
       "path": "public/assets/chunk-1U225g5m.js",
@@ -833,9 +858,37 @@
       "sha256": "a8f9ad93d53d22bc2897c9c8f6fce83ead3e67593feff6c7e67e36c4d1b8856a"
     },
     {
+      "path": "server/api/embedded.mjs",
+      "bytes": 6939422,
+      "sha256": "246b409a55a81fe9f2ad7708c173dccf79b823c00a5d87fead577dd07ed8096a"
+    },
+    {
       "path": "server/index.mjs",
-      "bytes": 409608,
-      "sha256": "229fb481b4d50f129892e4834a9b3f4ce1c9906cfa96da48b0d0f84816062c20"
+      "bytes": 410953,
+      "sha256": "291c8aa247deb67e8a0757a952b3ec075fbe2751c6b6834a59f1d1dd9c7e4906"
     }
-  ]
+  ],
+  "runtimeDependencies": {
+    "archive": "artifacts/sendflow/dist/plesk-runtime-dependencies.tar.gz",
+    "bytes": 23962220,
+    "sizeBytes": 23962220,
+    "sha256": "7179bb425d508afda21168944e9b3cb1612cb635e7b151f865dfa9856f76d228",
+    "platform": "linux-x64",
+    "node": "v24.22.3",
+    "entries": 12518,
+    "externalRuntimePackages": [
+      "sharp",
+      "@swc/helpers"
+    ]
+  },
+  "integratedApi": {
+    "mountPath": "/api",
+    "entry": "server/api/embedded.mjs",
+    "supportFiles": [
+      "dist/pino-file.mjs",
+      "dist/pino-pretty.mjs",
+      "dist/pino-worker.mjs",
+      "dist/thread-stream-worker.mjs"
+    ]
+  }
 }

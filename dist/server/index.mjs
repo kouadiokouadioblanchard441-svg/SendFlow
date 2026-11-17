@@ -5315,7 +5315,7 @@ import { createServer } from "node:http";
 import { createReadStream } from "node:fs";
 import { realpath, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 // ../../node_modules/.pnpm/pg@8.23.0/node_modules/pg/esm/index.mjs
 var import_lib = __toESM(require_lib2(), 1);
@@ -11869,14 +11869,28 @@ async function servePrivateEntry(req, res, privateRoot) {
     sendNotFound(req, res);
   }
 }
-function createSiteServer(distributionDirectory, gate = enforceIpAccess) {
+function createSiteServer(distributionDirectory, gate = enforceIpAccess, apiHandler) {
   const distributionRoot = resolve(distributionDirectory);
   const publicRoot = resolve(distributionRoot, "public");
   const privateRoot = resolve(distributionRoot, "admin");
   const server = createServer(async (req, res) => {
     try {
-      if (!await gate(req, res)) return;
       const { pathname, hasQuery } = requestPath(req);
+      if (pathname === "/api" || pathname.startsWith("/api/")) {
+        if (apiHandler) {
+          apiHandler(req, res);
+        } else {
+          res.statusCode = 503;
+          res.setHeader("Cache-Control", "no-store, private");
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.end(JSON.stringify({
+            code: "API_NOT_MOUNTED",
+            error: "Le service est momentan\xE9ment indisponible."
+          }));
+        }
+        return;
+      }
+      if (!await gate(req, res)) return;
       const configuration = getAdminGateConfiguration(process.env);
       const cookieValid = hasValidAdminGateCookie(req.headers.cookie, process.env);
       const adminPathMatches = Boolean(
@@ -12066,14 +12080,38 @@ function startSiteServer() {
   trustedProxyHops(process.env.TRUST_PROXY_HOPS, process.env.NODE_ENV);
   const port = getSiteListenPort(process.env.PORT);
   const distributionRoot = fileURLToPath(new URL("../", import.meta.url));
-  const server = createSiteServer(distributionRoot);
-  server.listen(port, "0.0.0.0");
-  return server;
+  return (async () => {
+    process.chdir(distributionRoot);
+    const apiModulePath = resolve(distributionRoot, "server/api/embedded.mjs");
+    const apiRuntime = await import(pathToFileURL(apiModulePath).href);
+    const server = createSiteServer(
+      distributionRoot,
+      enforceIpAccess,
+      apiRuntime.handleEmbeddedApiRequest
+    );
+    await new Promise((resolveListening, reject) => {
+      server.once("error", reject);
+      server.listen(port, "0.0.0.0", () => {
+        server.removeListener("error", reject);
+        resolveListening();
+      });
+    });
+    apiRuntime.startEmbeddedApiRuntime();
+    apiRuntime.logPleskApplicationStarted(port);
+    return server;
+  })();
 }
 function getSiteListenPort(value) {
-  const port = Number(value);
-  return Number.isInteger(port) && port >= 1 && port <= 65535 ? port : 3e3;
+  const normalized = value?.trim() ?? "";
+  if (!normalized) {
+    throw new Error("INVALID_PORT: Passenger did not provide PORT.");
+  }
+  const port = Number(normalized);
+  if (!Number.isSafeInteger(port) || port < 1 || port > 65535) {
+    throw new Error("INVALID_PORT: Passenger provided an invalid PORT.");
+  }
+  return port;
 }
 
 // server/start.ts
-startSiteServer();
+await startSiteServer();
