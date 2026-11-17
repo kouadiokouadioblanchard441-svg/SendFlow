@@ -4122,7 +4122,8 @@ var require_pino = __commonJS({
     function pinoBundlerAbsolutePath(p) {
       try {
         const path = __require("path");
-        const outputDir = "/home/runner/work/SendFlow/SendFlow/artifacts/api-server/dist";
+        const workingDir = process.cwd();
+        const outputDir = path.resolve(workingDir, "dist");
         return path.resolve(outputDir, p.replace(/^\.\//, ""));
       } catch (e) {
         const f = new Function("p", "return new URL(p, import.meta.url).pathname");
