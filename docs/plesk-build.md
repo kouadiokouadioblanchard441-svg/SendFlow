@@ -28,7 +28,7 @@ doivent être vérifiés séparément sur le serveur.
 ## Construction reproductible
 
 Le workflow GitHub Actions `.github/workflows/plesk-build.yml` construit et publie les
-artefacts lorsqu'un push accepté arrive sur `main`. Il utilise Node.js `24.22.2` et
+artefacts lorsqu'un push accepté arrive sur `main`. Il utilise Node.js `24.22.3` et
 pnpm `10.26.1`, installe le lockfile sans le modifier, exécute `pnpm run build:plesk`,
 puis ajoute uniquement les packages Plesk au dépôt. Le commit d'artefacts est ensuite
 disponible au Pull Git Plesk. Le workflow vérifie que `main` n'a pas avancé pendant le
@@ -74,8 +74,9 @@ un manifeste privé `plesk-manifest.json` avec version du constructeur, empreint
 lockfile, révision source, état des fichiers suivis et empreintes SHA-256 des fichiers.
 Le manifeste ne contient aucune variable secrète. Les packages Plesk
 `dist` et `artifacts/api-server/dist` sont explicitement suivis par Git afin que le Pull
-les récupère avec le code. Le build génère aussi un `index.cjs` à la racine du dépôt
-pour le réglage de démarrage Plesk. La sortie native Vite
+les récupère avec le code. Le build place le lanceur utilisé par le panneau dans
+`dist/index.cjs` et conserve aussi un `index.cjs` à la racine du dépôt pour
+compatibilité. La sortie native Vite
 `artifacts/sendflow/dist` reste ignorée et n'est pas nécessaire à l'exécution Plesk.
 Le build versionne également `artifacts/api-server/plesk-runtime-dependencies.tar.gz`.
 Cette archive contient les dépendances de production nécessaires à l'API dans un
@@ -111,14 +112,20 @@ l'environnement restreint de déploiement Plesk. Il exige `tar`, `gzip` et les u
 de fichiers usuels, puis extrait l'archive runtime vers `artifacts/api-server/node_modules`
 (répertoire ignoré par Git) avant le démarrage. Il n'exécute ni compilation ni installation
 depuis un registre. Il échoue clairement si un fichier ou un outil manque. Le build GitHub
-Actions est exécuté sous Node.js `24.22.2` avant le commit d'artefacts.
+Actions est exécuté sous Node.js `24.22.3` avant le commit d'artefacts.
 
 Configurer les racines et fichiers de démarrage des applications Node Plesk :
 
 | Service | Application root relative au checkout | Fichier de démarrage relatif à cette racine |
 | ------- | ------------------------------------- | ------------------------------------------- |
-| Site    | `.`                                   | `index.cjs`                                 |
+| Site    | `dist`                                | `index.cjs`                                 |
 | API     | `artifacts/api-server`                | `dist/index.cjs`                            |
+
+Cette disposition correspond à la capture Plesk : dans `dist`, le fichier
+`index.cjs` charge `server/index.mjs` et le Document Root reste `dist/public`
+(soit `public` sous la racine d'application `dist`). Le lanceur `index.cjs` à la
+racine du checkout reste également généré pour compatibilité, mais ne doit pas être
+mélangé avec la racine `dist`.
 
 Dans les paramètres Node.js Plesk de **chaque application** (site et API),
 vérifier que le processus reçoit `PORT`. Le code écoute exclusivement sur cette
@@ -134,7 +141,8 @@ Le paquet est déjà construit avant le Pull. Ne lancez pas `npm install`, `npm 
 `npm update` dans la racine Plesk : le dépôt impose pnpm pour les builds et le hook
 `scripts/plesk/build-after-pull.sh` active les dépendances API déjà empaquetées.
 Une installation npm échouée n'est pas une réparation du paquet et ne fournit pas
-le `PORT` manquant.
+le `PORT` manquant. Si le panneau propose pnpm, le sélectionner pour éviter les
+commandes npm accidentelles ; dans tous les cas, ne pas installer depuis Plesk.
 
 Pour le site, choisir `dist/public` comme Document Root relatif au checkout.
 L'application doit tout de même router les requêtes vers Node : le serveur applique le
@@ -164,8 +172,9 @@ les fichiers ne sont pas servis directement par Apache avant le passage par Node
 
 ## Correspondance avec le Document Root Plesk
 
-Le build crée `dist/public`, `dist/admin`, un `index.cjs` à la racine pour démarrer le
-serveur site, ainsi que la distribution API séparée. Les chemins absolus, les ports et
+Le build crée `dist/public`, `dist/admin` et `dist/index.cjs` pour démarrer le
+serveur site sous la racine d'application Plesk `dist`, ainsi que la distribution API
+séparée. Le lanceur racine reste un point d'entrée de compatibilité. Les chemins absolus, les ports et
 les comptes système Plesk restent à vérifier sur le serveur ; `dist/public` est le
 Document Root, tandis que l'interface privée est servie par Node et ne doit pas être
 exposée comme un répertoire statique Apache.
@@ -173,9 +182,9 @@ exposée comme un répertoire statique Apache.
 ## Runtime et routage à confirmer sur Plesk
 
 - La version Node du constructeur figure dans les manifestes. Le workflow de build
-  exige Node.js 24.22.2 et pnpm 10.26.1. Le dernier runtime Plesk communiqué est
-  Node.js 24.22.3 ; cet écart de correctif n'explique pas `INVALID_PORT`, mais la
-  compatibilité de l'archive native doit être confirmée après redémarrage sur Plesk.
+  et le runtime Plesk visibles sur la dernière capture utilisent Node.js 24.22.3 ;
+  le workflow utilise pnpm 10.26.1. La compatibilité de l'archive native doit tout de
+  même être confirmée après redémarrage sur Plesk.
 - L'archive des dépendances API est construite pour Linux x64/glibc (runner GitHub
   `ubuntu-latest`). La compatibilité exacte doit être confirmée avec l'architecture et
   la distribution système de l'hébergement Plesk ; aucun accès serveur ne permet de
