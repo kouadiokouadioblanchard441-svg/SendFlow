@@ -28,7 +28,7 @@ doivent être vérifiés séparément sur le serveur.
 ## Construction reproductible
 
 Le workflow GitHub Actions `.github/workflows/plesk-build.yml` construit et publie les
-artefacts lorsqu'un push accepté arrive sur `main`. Il utilise Node.js `22.23.4` et
+artefacts lorsqu'un push accepté arrive sur `main`. Il utilise Node.js `24.22.3` et
 pnpm `10.26.1`, installe le lockfile sans le modifier, exécute `pnpm run build:plesk`,
 puis ajoute uniquement les packages Plesk au dépôt. Le commit d'artefacts est ensuite
 disponible au Pull Git Plesk. Le workflow vérifie que `main` n'a pas avancé pendant le
@@ -125,7 +125,7 @@ l'environnement restreint de déploiement Plesk. Il exige `tar`, `gzip` et les u
 de fichiers usuels, puis extrait l'archive runtime vers `artifacts/api-server/node_modules`
 (répertoire ignoré par Git) avant le démarrage. Il n'exécute ni compilation ni installation
 depuis un registre. Il échoue clairement si un fichier ou un outil manque. Le build GitHub
-Actions est exécuté sous Node.js `22.23.4` avant le commit d'artefacts.
+Actions est exécuté sous Node.js `24.22.3` avant le commit d'artefacts.
 
 Configurer les racines et fichiers de démarrage des applications Node Plesk :
 
@@ -191,10 +191,10 @@ exposée comme un répertoire statique Apache.
 
 ## Runtime et routage à confirmer sur Plesk
 
-- La version Node du constructeur figure dans les manifestes. Le build est épinglé sur
-  Node.js 22.23.4 et pnpm 10.26.1, conformément au runtime Node.js 22 indiqué pour Plesk.
-  Confirmer la version mineure sélectionnée dans le panneau et la compatibilité de
-  l'archive native après redémarrage.
+- La version Node du constructeur figure dans les manifestes. Le build et le workflow
+  GitHub Actions sont épinglés sur Node.js 24.22.3 et pnpm 10.26.1, pour correspondre à
+  la version affichée dans le panneau Plesk. Reconfirmer cette version si le panneau la
+  modifie et vérifier l'archive native après redémarrage.
 - L'archive des dépendances API est construite pour Linux x64/glibc (runner GitHub
   `ubuntu-latest`). La compatibilité exacte doit être confirmée avec l'architecture et
   la distribution système de l'hébergement Plesk ; aucun accès serveur ne permet de

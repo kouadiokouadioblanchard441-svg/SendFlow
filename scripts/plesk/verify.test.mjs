@@ -77,6 +77,22 @@ test("verifies a root-mounted web release and hashes its files", async (t) => {
   assert.ok(result.files.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
 });
 
+test("Plesk GitHub build and local preflight require the same Node version", async () => {
+  const workflow = await readFile(
+    path.join(projectRoot, ".github/workflows/plesk-build.yml"),
+    "utf8",
+  );
+  const buildScript = await readFile(
+    path.join(projectRoot, "scripts/plesk/build.mjs"),
+    "utf8",
+  );
+  const workflowVersion = workflow.match(/node-version:\s*([0-9.]+)/)?.[1];
+  const preflightVersion = buildScript.match(/process\.version !== "v([0-9.]+)"/)?.[1];
+  assert.ok(workflowVersion, "GitHub Actions must pin the Plesk build Node version");
+  assert.ok(preflightVersion, "The Plesk build must validate its Node version");
+  assert.equal(workflowVersion, preflightVersion);
+});
+
 test("maps private bundle URLs to files kept outside the public root", async (t) => {
   const root = await fixture(t);
   await writeFile(

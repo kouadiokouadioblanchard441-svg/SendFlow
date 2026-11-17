@@ -38,9 +38,9 @@ function git(args) {
 }
 
 try {
-  if (process.version !== "v22.23.4") {
+  if (process.version !== "v24.22.3") {
     throw new Error(
-      `Plesk production builds require Node.js 22.23.4; found ${process.version}`,
+      `Plesk production builds require Node.js 24.22.3; found ${process.version}`,
     );
   }
   if (process.platform !== "linux" || process.arch !== "x64") {
