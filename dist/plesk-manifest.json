@@ -1,6 +1,6 @@
 {
-  "builtAt": "2026-11-17T09:29:37.425Z",
-  "sourceCommit": "c55ddc0e8f986bf9d2d285010bc3096550b0cabc",
+  "builtAt": "2026-11-17T10:01:48.503Z",
+  "sourceCommit": "a0e19d448bceb77915d525a5790b486b0c520de1",
   "trackedWorktreeModified": true,
   "builderNode": "v24.22.2",
   "builderPnpm": "10.26.1",
