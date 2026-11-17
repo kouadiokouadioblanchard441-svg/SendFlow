@@ -221871,12 +221871,19 @@ import { isIP as isIP2 } from "node:net";
 var TURNSTILE_SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 var TURNSTILE_VERIFY_TIMEOUT_MS = 5e3;
 var TURNSTILE_SITE_KEY_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
-function getTurnstilePublicSiteKey(environment = process.env) {
+function getTurnstileConfigurationStatus(environment = process.env) {
   const siteKey = environment.TURNSTILE_SITE_KEY?.trim() ?? "";
   const secretKey = environment.TURNSTILE_SECRET_KEY?.trim() ?? "";
-  if (!siteKey || !secretKey || !TURNSTILE_SITE_KEY_PATTERN.test(siteKey))
-    return null;
-  return siteKey;
+  const missingEnvironmentNames = [
+    ...!siteKey ? ["TURNSTILE_SITE_KEY"] : [],
+    ...!secretKey ? ["TURNSTILE_SECRET_KEY"] : []
+  ];
+  const invalidSiteKey = Boolean(siteKey) && !TURNSTILE_SITE_KEY_PATTERN.test(siteKey);
+  return {
+    siteKey: siteKey && secretKey && !invalidSiteKey ? siteKey : null,
+    missingEnvironmentNames,
+    invalidSiteKey
+  };
 }
 function failure2(category, unavailable = false) {
   return { success: false, category, unavailable };
@@ -226615,15 +226622,42 @@ var DUMMY_PASSWORD_HASH = hashCustomerPassword(
   "sendflow-invalid-account-password"
 );
 var BIOMETRIC_CHALLENGE_TTL_MS = 5 * 60 * 1e3;
-router16.get("/auth/turnstile-config", (_req, res) => {
-  const siteKey = getTurnstilePublicSiteKey();
-  if (!siteKey) {
+router16.get("/auth/turnstile-config", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  try {
+    const configuration = getTurnstileConfigurationStatus();
+    if (!configuration.siteKey) {
+      const category = configuration.missingEnvironmentNames.length ? "turnstile_configuration_missing" : "turnstile_configuration_invalid";
+      req.log.warn(
+        {
+          endpoint: "turnstile-config",
+          dependency: "turnstile",
+          failureCategory: category,
+          missingEnvironmentNames: configuration.missingEnvironmentNames
+        },
+        "Turnstile configuration is unavailable"
+      );
+      res.status(503).json({
+        code: "TURNSTILE_CONFIG_UNAVAILABLE",
+        error: "La v\xE9rification de s\xE9curit\xE9 est momentan\xE9ment indisponible."
+      });
+      return;
+    }
+    res.json(GetTurnstileConfigResponse.parse({ siteKey: configuration.siteKey }));
+  } catch {
+    req.log.error(
+      {
+        endpoint: "turnstile-config",
+        dependency: "turnstile",
+        failureCategory: "turnstile_configuration_error"
+      },
+      "Turnstile configuration request failed"
+    );
     res.status(503).json({
+      code: "TURNSTILE_CONFIG_UNAVAILABLE",
       error: "La v\xE9rification de s\xE9curit\xE9 est momentan\xE9ment indisponible."
     });
-    return;
   }
-  res.json(GetTurnstileConfigResponse.parse({ siteKey }));
 });
 function getWebAuthnOrigin(req) {
   return getCustomerBiometricOrigin(
@@ -228043,6 +228077,72 @@ var customer_recovery_default = router17;
 
 // src/routes/registration-settings.ts
 var import_express22 = __toESM(require_express2(), 1);
+
+// src/lib/database-failure.ts
+var DATABASE_FAILURE_CATEGORIES = {
+  schema: /* @__PURE__ */ new Set(["3F000", "42P01", "42703"]),
+  access: /* @__PURE__ */ new Set(["42501"]),
+  authentication: /* @__PURE__ */ new Set(["28000", "28P01"]),
+  unavailable: /* @__PURE__ */ new Set([
+    "ECONNREFUSED",
+    "ECONNRESET",
+    "EHOSTUNREACH",
+    "ENETUNREACH",
+    "ENOTFOUND",
+    "ETIMEDOUT",
+    "57P01",
+    "57P02",
+    "57P03"
+  ]),
+  tls: /* @__PURE__ */ new Set([
+    "CERT_HAS_EXPIRED",
+    "CERT_NOT_YET_VALID",
+    "ERR_TLS_CERT_ALTNAME_INVALID",
+    "SELF_SIGNED_CERT_IN_CHAIN",
+    "UNABLE_TO_GET_ISSUER_CERT",
+    "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+  ])
+};
+function readDataProperty(value, key) {
+  try {
+    return Object.getOwnPropertyDescriptor(value, key)?.value;
+  } catch {
+    return void 0;
+  }
+}
+function hasCode(codes, code) {
+  return codes.has(code);
+}
+function classifyDatabaseFailure(error62) {
+  let current = error62;
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (!current || typeof current !== "object" && typeof current !== "function") {
+      break;
+    }
+    const code = readDataProperty(current, "code");
+    if (typeof code === "string") {
+      if (hasCode(DATABASE_FAILURE_CATEGORIES.tls, code)) {
+        return "database_tls_failure";
+      }
+      if (hasCode(DATABASE_FAILURE_CATEGORIES.schema, code)) {
+        return "database_schema_mismatch";
+      }
+      if (hasCode(DATABASE_FAILURE_CATEGORIES.access, code)) {
+        return "database_access_denied";
+      }
+      if (hasCode(DATABASE_FAILURE_CATEGORIES.authentication, code)) {
+        return "database_authentication_failed";
+      }
+      if (hasCode(DATABASE_FAILURE_CATEGORIES.unavailable, code)) {
+        return "database_unavailable";
+      }
+    }
+    current = readDataProperty(current, "cause");
+  }
+  return "database_query_failed";
+}
+
+// src/routes/registration-settings.ts
 var router18 = (0, import_express22.Router)();
 var adminRoutes3 = (0, import_express22.Router)();
 var SETTING_ID = "signup";
@@ -228054,22 +228154,80 @@ function present(row) {
   };
 }
 router18.get("/auth/registration-settings", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  let setting;
+  let defaultCountry;
   try {
-    const [setting] = await db.select().from(registrationSettingsTable).where(eq(registrationSettingsTable.id, SETTING_ID)).limit(1);
-    if (!setting) throw new Error("Signup setting is missing");
-    const [defaultCountry] = await db.select({ countryCode: countriesTable.countryCode }).from(countriesTable).where(eq(countriesTable.signupEnabled, true)).orderBy(
-      sql`CASE WHEN ${countriesTable.countryCode} = ${setting.defaultCountryCode} THEN 0 ELSE 1 END`,
-      asc(countriesTable.countryName)
-    ).limit(1);
-    if (!defaultCountry) throw new Error("Configured signup country is unavailable");
-    res.setHeader("Cache-Control", "no-store");
+    [setting] = await db.select().from(registrationSettingsTable).where(eq(registrationSettingsTable.id, SETTING_ID)).limit(1);
+    if (setting) {
+      [defaultCountry] = await db.select({ countryCode: countriesTable.countryCode }).from(countriesTable).where(eq(countriesTable.signupEnabled, true)).orderBy(
+        sql`CASE WHEN ${countriesTable.countryCode} = ${setting.defaultCountryCode} THEN 0 ELSE 1 END`,
+        asc(countriesTable.countryName)
+      ).limit(1);
+    }
+  } catch (error62) {
+    req.log.error(
+      {
+        endpoint: "registration-settings",
+        dependency: "database",
+        failureCategory: classifyDatabaseFailure(error62)
+      },
+      "Registration settings lookup failed"
+    );
+    res.status(503).json({
+      code: "REGISTRATION_SETTINGS_UNAVAILABLE",
+      error: "Le r\xE9glage d\u2019inscription est temporairement indisponible."
+    });
+    return;
+  }
+  if (!setting) {
+    req.log.error(
+      {
+        endpoint: "registration-settings",
+        dependency: "database",
+        failureCategory: "signup_settings_missing"
+      },
+      "Signup settings row is missing"
+    );
+    res.status(503).json({
+      code: "SIGNUP_SETTINGS_MISSING",
+      error: "Les param\xE8tres d\u2019inscription ne sont pas configur\xE9s."
+    });
+    return;
+  }
+  if (!defaultCountry) {
+    req.log.error(
+      {
+        endpoint: "registration-settings",
+        dependency: "database",
+        failureCategory: "no_signup_countries_configured"
+      },
+      "No default signup country is available"
+    );
+    res.status(503).json({
+      code: "NO_SIGNUP_COUNTRY_CONFIGURED",
+      error: "Aucun pays par d\xE9faut n\u2019est configur\xE9 pour l\u2019inscription."
+    });
+    return;
+  }
+  try {
     res.json(GetRegistrationSettingsResponse.parse({
       emailVerificationEnabled: setting.emailVerificationEnabled,
       defaultCountryCode: defaultCountry.countryCode
     }));
-  } catch (error62) {
-    req.log.error({ err: error62 }, "Registration settings lookup failed");
-    res.status(503).json({ error: "Le r\xE9glage d'inscription est indisponible." });
+  } catch {
+    req.log.error(
+      {
+        endpoint: "registration-settings",
+        dependency: "response",
+        failureCategory: "response_contract_invalid"
+      },
+      "Registration settings response could not be validated"
+    );
+    res.status(500).json({
+      code: "REGISTRATION_SETTINGS_RESPONSE_INVALID",
+      error: "La r\xE9ponse des param\xE8tres d\u2019inscription est momentan\xE9ment indisponible."
+    });
   }
 });
 adminRoutes3.get("/registration-settings", async (req, res) => {
@@ -228388,13 +228546,55 @@ router21.get("/auth/countries", async (req, res) => {
   }
 });
 router21.get("/auth/registration-countries", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  let rows;
   try {
-    const rows = await db.select().from(countriesTable).where(eq(countriesTable.signupEnabled, true)).orderBy(asc(countriesTable.countryName));
-    res.setHeader("Cache-Control", "no-store");
-    res.json(GetAuthCountriesResponse.parse({ countries: rows.map(toCountry) }));
+    rows = await db.select().from(countriesTable).where(eq(countriesTable.signupEnabled, true)).orderBy(asc(countriesTable.countryName));
   } catch (error62) {
-    req.log.error({ err: error62 }, "Signup country catalog lookup failed");
-    res.status(503).json({ error: "Signup country catalog unavailable" });
+    req.log.error(
+      {
+        endpoint: "registration-countries",
+        dependency: "database",
+        failureCategory: classifyDatabaseFailure(error62)
+      },
+      "Signup country catalog lookup failed"
+    );
+    res.status(503).json({
+      code: "SIGNUP_COUNTRY_CATALOG_UNAVAILABLE",
+      error: "La liste des pays d\u2019inscription est temporairement indisponible."
+    });
+    return;
+  }
+  if (rows.length === 0) {
+    req.log.error(
+      {
+        endpoint: "registration-countries",
+        dependency: "database",
+        failureCategory: "no_signup_countries_configured"
+      },
+      "No countries are enabled for signup"
+    );
+    res.status(503).json({
+      code: "NO_SIGNUP_COUNTRIES_CONFIGURED",
+      error: "Aucun pays n\u2019est actuellement configur\xE9 pour l\u2019inscription."
+    });
+    return;
+  }
+  try {
+    res.json(GetAuthCountriesResponse.parse({ countries: rows.map(toCountry) }));
+  } catch {
+    req.log.error(
+      {
+        endpoint: "registration-countries",
+        dependency: "response",
+        failureCategory: "response_contract_invalid"
+      },
+      "Signup country response could not be validated"
+    );
+    res.status(500).json({
+      code: "SIGNUP_COUNTRY_RESPONSE_INVALID",
+      error: "La r\xE9ponse de la liste des pays est momentan\xE9ment indisponible."
+    });
   }
 });
 function createAdminCountryRoutes(authorize = respondAdminAuthError) {
@@ -260662,6 +260862,24 @@ function startIdentityVerificationUploadCleanup(logger2) {
 
 // src/index.ts
 var port = getPleskPort(process.env["PORT"]);
+var missingRuntimeEnvironmentNames = [
+  ...!process.env.SENDFLOW_DATABASE_TARGET?.trim() ? ["SENDFLOW_DATABASE_TARGET"] : [],
+  ...!process.env.TRUST_PROXY_HOPS?.trim() ? ["TRUST_PROXY_HOPS"] : [],
+  ...!process.env.CORS_ALLOWED_ORIGINS?.trim() ? ["CORS_ALLOWED_ORIGINS"] : [],
+  ...!process.env.SUPABASE_DATABASE_URL?.trim() && !process.env.DATABASE_URL?.trim() ? ["SUPABASE_DATABASE_URL or DATABASE_URL"] : [],
+  ...!process.env.DATABASE_CA_CERT?.trim() ? ["DATABASE_CA_CERT"] : [],
+  ...!process.env.TURNSTILE_SITE_KEY?.trim() ? ["TURNSTILE_SITE_KEY"] : [],
+  ...!process.env.TURNSTILE_SECRET_KEY?.trim() ? ["TURNSTILE_SECRET_KEY"] : []
+];
+pool.on("error", (error62) => {
+  logger.error(
+    {
+      dependency: "database",
+      failureCategory: classifyDatabaseFailure(error62)
+    },
+    "Database idle connection failed"
+  );
+});
 async function startServer() {
   const server = listenOnPleskPort(app_default, port);
   server.on("error", (err) => {
@@ -260669,7 +260887,15 @@ async function startServer() {
     process.exit(1);
   });
   server.once("listening", () => {
-    logger.info({ host: "0.0.0.0", port }, "Plesk API server listening");
+    logger.info(
+      {
+        host: "0.0.0.0",
+        port,
+        portSource: process.env.PORT?.trim() ? "environment" : "compatibility-fallback",
+        missingRuntimeEnvironmentNames
+      },
+      "Plesk API server listening"
+    );
     if (process.env.NODE_ENV === "production") {
       startDeveloperWebhookWorker(logger);
       startEmailCampaignWorker(logger);
