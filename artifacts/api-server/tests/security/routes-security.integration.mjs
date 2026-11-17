@@ -6,7 +6,7 @@ import { spawn } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { fileURLToPath } from "node:url";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { before, after } from "node:test";
@@ -38,6 +38,11 @@ const {
   createSensitiveDataLookupIndex,
   encryptSensitiveData,
 } = require(process.env.SENDFLOW_ISOLATED_RUNTIME);
+const {
+  ADMIN_GATE_COOKIE,
+  createAdminGateCookieValue,
+  isAdminApiRequestPath,
+} = require("@workspace/admin-gate");
 const pg = require("pg");
 const owner = new pg.Pool({
   host: process.env.SENDFLOW_FIXTURE_SOCKET,
@@ -52,11 +57,17 @@ const blockedAccountId = randomUUID();
 const blockedAccountEmail = `blocked-${randomUUID()}@example.invalid`;
 const blockedAccountPassword = randomBytes(24).toString("base64url");
 const previousTurnstileSiteKey = process.env.TURNSTILE_SITE_KEY;
+const previousAdminSecretPath = process.env.ADMIN_SECRET_PATH;
+const previousAdminSecretToken = process.env.ADMIN_SECRET_TOKEN;
+const isolatedAdminSecretPath = "/secure-entry-for-sendflow-route-audit-test";
+const isolatedAdminSecretToken = randomBytes(32).toString("base64url");
 const turnstilePublicSiteKey = `isolated-${randomBytes(18).toString("base64url")}`;
 const turnstileTokens = new Map();
 const usedTurnstileTokens = new Set();
 let server, site, traceTransactionId;
 const siteRoot = mkdtempSync(join(tmpdir(), "sendflow-route-static-"));
+const sitePublicRoot = join(siteRoot, "public");
+mkdirSync(sitePublicRoot, { recursive: true });
 
 function createTurnstileTestToken(action) {
   const token = `isolated-route-${randomUUID()}`;
@@ -103,6 +114,8 @@ globalThis.fetch = async (input, init) => {
 
 before(async () => {
   process.env.TURNSTILE_SITE_KEY = turnstilePublicSiteKey;
+  process.env.ADMIN_SECRET_PATH = isolatedAdminSecretPath;
+  process.env.ADMIN_SECRET_TOKEN = isolatedAdminSecretToken;
   await owner.query(`INSERT INTO sf_countries
     (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,signup_enabled,created_by,updated_by)
     VALUES('ci','Côte d’Ivoire','+225',8,10,true,'audit-admin','audit-admin')
@@ -300,7 +313,7 @@ before(async () => {
   server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
   writeFileSync(
-    join(siteRoot, "index.html"),
+    join(sitePublicRoot, "index.html"),
     "<!doctype html><html><body>SPA fixture</body></html>",
   );
   site = createSiteServer(
@@ -317,6 +330,12 @@ after(async () => {
   if (previousTurnstileSiteKey === undefined)
     delete process.env.TURNSTILE_SITE_KEY;
   else process.env.TURNSTILE_SITE_KEY = previousTurnstileSiteKey;
+  if (previousAdminSecretPath === undefined)
+    delete process.env.ADMIN_SECRET_PATH;
+  else process.env.ADMIN_SECRET_PATH = previousAdminSecretPath;
+  if (previousAdminSecretToken === undefined)
+    delete process.env.ADMIN_SECRET_TOKEN;
+  else process.env.ADMIN_SECRET_TOKEN = previousAdminSecretToken;
   await pool.end();
   await owner.end();
   rmSync(siteRoot, { recursive: true, force: true });
@@ -335,12 +354,27 @@ function request(
     origin = "https://sendflow-test.invalid",
     rawBody,
     headers = {},
+    adminGate = true,
     target = server,
   } = {},
 ) {
   return new Promise((resolve, reject) => {
     const data =
       rawBody ?? (["GET", "HEAD"].includes(method) ? undefined : "{}");
+    const requestHeaders = { ...headers };
+    const suppliedCookie = requestHeaders.Cookie ?? requestHeaders.cookie;
+    if (adminGate && isAdminApiRequestPath(path)) {
+      const gateCookieValue = createAdminGateCookieValue(
+        isolatedAdminSecretToken,
+      );
+      requestHeaders.Cookie = [
+        suppliedCookie,
+        `${ADMIN_GATE_COOKIE}=${gateCookieValue}`,
+      ]
+        .filter(Boolean)
+        .join("; ");
+      delete requestHeaders.cookie;
+    }
     const req = http.request(
       {
         host: "127.0.0.1",
@@ -348,6 +382,10 @@ function request(
         path: concretePath(path),
         method,
         headers: {
+          Host:
+            target === site
+              ? "merchent.business.sendflow.africa"
+              : "sendflow-api-test.invalid",
           ...(origin === null ? {} : { Origin: origin }),
           ...(data === undefined
             ? {}
@@ -355,7 +393,7 @@ function request(
                 "Content-Type": "application/json",
                 "Content-Length": Buffer.byteLength(data),
               }),
-          ...headers,
+          ...requestHeaders,
         },
       },
       (res) => {
@@ -535,17 +573,17 @@ test("inventory covers mounted customer, administrative, auth, webhook and publi
 for (const route of routes.filter((r) =>
   ["admin", "customer"].includes(r.category),
 )) {
-  const isAccessEndpoint =
+  const isPublicAdminBootstrap =
     route.category === "admin" &&
-    ["/access", "/sign-in", "/sign-out"].some(
+    ["/access", "/sign-in", "/sign-out", "/setup-status"].some(
       (p) => route.path === `/api${adminPrefix}${p}`,
     );
   test(`${route.method} ${route.path} refuses anonymous sensitive access`, async () => {
     const response = await request(route.path, { method: route.method });
-    if (isAccessEndpoint) {
-      // The access bootstrap is deliberately public; an empty sign-in never authenticates.
+    if (isPublicAdminBootstrap) {
+      // These bootstrap routes are deliberately public; they do not grant admin access.
       assert.ok([200, 400, 401, 403, 204].includes(response.status));
-      if (response.status === 200) {
+      if (response.status === 200 && route.path.endsWith("/access")) {
         const body = JSON.parse(response.text);
         assert.equal(body.isAdmin, false);
         assert.equal(body.sessionAuthenticated, false);
@@ -856,7 +894,7 @@ test("frontend origin refuses hidden files, unknown pages, source maps, API fall
     );
   }
   const response = await request("/", { target: site, method: "POST" });
-  assert.equal(response.status, 405);
+  assert.equal(response.status, 404);
 });
 
 test("untrusted requests are rejected before parsing malformed bodies or consuming quotas", async () => {
@@ -892,8 +930,11 @@ test("legacy admin cookies and client role claims cannot access protected profil
     `/api${adminPrefix}/users/audit-webhook-owner`,
     `/api${adminPrefix}/developer-webhooks?userId=audit-webhook-owner`,
   ]) {
-    const response = await request(path, { headers: legacyAdminHeaders() });
-    assert.equal(response.status, 401, response.text);
+    const response = await request(path, {
+      headers: legacyAdminHeaders(),
+      adminGate: false,
+    });
+    assert.equal(response.status, 404, response.text);
     assert.doesNotMatch(
       response.text,
       /financialTotals|signingSecret|fixture-signing-secret/i,

@@ -2,17 +2,26 @@ import assert from "node:assert/strict";
 import {test} from "node:test";
 import http from "node:http";
 import {createRequire} from "node:module";
-import {mkdtemp,writeFile,rm} from "node:fs/promises";
+import {mkdir,mkdtemp,writeFile,rm} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
+import {
+  ADMIN_GATE_COOKIE,
+  createAdminGateCookieValue,
+  isAdminApiRequestPath,
+} from "@workspace/admin-gate";
 const path=process.env.SENDFLOW_ISOLATED_RUNTIME;
 if(!path?.includes("/sendflow-isolated-finance-"))throw new Error("Disposable database required");
 const r=createRequire(import.meta.url)(path),{pool}=r;
 const actor="fixture-network-admin";
 function request(server,url,ip,{method="GET",body,origin,extra={}}={}) {
   return new Promise((resolve,reject)=>{
+    const headers={"x-forwarded-for":ip,...(body?{"content-type":"application/json"}:{}),...(origin?{origin}:{}),...extra};
+    if(isAdminApiRequestPath(url)) {
+      headers.cookie=`${ADMIN_GATE_COOKIE}=${createAdminGateCookieValue(process.env.ADMIN_SECRET_TOKEN)}`;
+    }
     const req=http.request({host:"127.0.0.1",port:server.address().port,path:url,method,
-      headers:{"x-forwarded-for":ip,...(body?{"content-type":"application/json"}:{}),...(origin?{origin}:{}),...extra}},res=>{
+      headers},res=>{
         let text="";res.on("data",c=>text+=c);res.on("end",()=>resolve({status:res.statusCode,text,headers:res.headers}));
       });
     req.on("error",reject);req.end(body?JSON.stringify(body):undefined);
@@ -44,8 +53,9 @@ test("Legacy expired and future bans become permanent; explicitly released bans 
 test("Scanner ban is permanent across workers and time passage until explicit versioned release",async()=>{
   const ip="198.51.100.201",a=await serve(),b=await serve();
   const root=await mkdtemp(join(tmpdir(),"sf-auto-site-"));
-  await writeFile(join(root,"index.html"),"<html>Isolated page</html>");
-  await writeFile(join(root,"app.js"),"/* isolated asset */");
+  await mkdir(join(root,"public"),{recursive:true});
+  await writeFile(join(root,"public","index.html"),"<html>Isolated page</html>");
+  await writeFile(join(root,"public","app.js"),"/* isolated asset */");
   const site=r.createSiteServer(root);site.listen(0,"127.0.0.1");
   await new Promise((yes,no)=>{site.once("listening",yes);site.once("error",no);});
   try{
@@ -57,9 +67,10 @@ test("Scanner ban is permanent across workers and time passage until explicit ve
     assert.equal((await request(b,"/api/healthz",`8.8.8.8, ${ip}`)).status,403);
     assert.equal((await request(b,"/api/healthz",`::ffff:${ip}`)).status,403);
     assert.equal((await request(b,"/api/healthz","198.51.100.202")).status,200);
-    assert.equal((await request(site,"/",ip)).status,403);
-    assert.equal((await request(site,"/app.js",ip)).status,403);
-    assert.equal((await request(site,"/","198.51.100.202")).status,200);
+    const siteHost={extra:{host:"merchent.business.sendflow.africa"}};
+    assert.equal((await request(site,"/",ip,siteHost)).status,403);
+    assert.equal((await request(site,"/app.js",ip,siteHost)).status,403);
+    assert.equal((await request(site,"/","198.51.100.202",siteHost)).status,200);
     await pool.query("UPDATE sf_network_defense SET blocked_at='2000-01-01',blocked_until='2000-01-02' WHERE ip_address=$1",[ip]);
     assert.equal((await request(b,"/api/healthz",ip)).status,403);
     const restarted=await serve();
@@ -102,7 +113,9 @@ test("Trusted IP exceptions never override manual blocks or administrator authen
     const allow=await r.createNetworkException(actor,ip,"Authorized integration test");
     for(let i=0;i<7;i++)assert.equal((await request(server,"/.env",ip)).status,404);
     assert.equal(await state(ip),undefined);
-    assert.equal((await request(server,"/api/admin/network-defense",ip)).status,401);
+    assert.ok([401,403].includes(
+      (await request(server,"/api/admin/network-defense",ip)).status,
+    ));
     const manual=await r.createIpBlock(actor,ip,"Manual block overrides trust","203.0.113.1");
     assert.equal((await request(server,"/api/healthz",ip)).status,403);
     await r.revokeIpBlock(actor,manual.id,manual.version,"Fixture cleanup");

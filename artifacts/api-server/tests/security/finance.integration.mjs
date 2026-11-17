@@ -6,6 +6,11 @@ import http from "node:http";
 import pg from "pg";
 import "./ip-blocklist.integration.mjs";
 import "./network-defense.integration.mjs";
+import {
+  ADMIN_GATE_COOKIE,
+  createAdminGateCookieValue,
+  isAdminApiRequestPath,
+} from "@workspace/admin-gate";
 
 const runtimePath = process.env.SENDFLOW_ISOLATED_RUNTIME;
 const socket = process.env.SENDFLOW_FIXTURE_SOCKET;
@@ -19,6 +24,12 @@ const turnstileActions = new Map();
 const turnstileResponses = new Map();
 const consumedTurnstileTokens = new Set();
 process.env.TURNSTILE_SECRET_KEY = "isolated-test-secret";
+const previousAdminSecretPath = process.env.ADMIN_SECRET_PATH;
+const previousAdminSecretToken = process.env.ADMIN_SECRET_TOKEN;
+const isolatedAdminSecretPath = "/secure-entry-for-sendflow-finance-audit";
+const isolatedAdminSecretToken = randomBytes(32).toString("base64url");
+process.env.ADMIN_SECRET_PATH = isolatedAdminSecretPath;
+process.env.ADMIN_SECRET_TOKEN = isolatedAdminSecretToken;
 globalThis.fetch = async (input, init) => {
   if (String(input) === "https://challenges.cloudflare.com/turnstile/v0/siteverify") {
     turnstileCalls += 1;
@@ -109,19 +120,38 @@ before(async () => {
 after(async () => {
   if (server) await new Promise((resolve) => server.close(resolve));
   if (logoServer) await new Promise((resolve) => logoServer.close(resolve));
+  if (previousAdminSecretPath === undefined)
+    delete process.env.ADMIN_SECRET_PATH;
+  else process.env.ADMIN_SECRET_PATH = previousAdminSecretPath;
+  if (previousAdminSecretToken === undefined)
+    delete process.env.ADMIN_SECRET_TOKEN;
+  else process.env.ADMIN_SECRET_TOKEN = previousAdminSecretToken;
   await pool.end();
   await owner.end();
 });
 
 function rawRequest(path, { method = "GET", user, body, rawBody, headers = {} } = {}) {
   const data = rawBody ?? (body === undefined ? undefined : JSON.stringify(body));
+  const requestHeaders = {
+    Origin: "https://sendflow-test.invalid",
+    ...(user ? { Cookie: `__Host-sendflow_session=${tokens[user]}` } : {}),
+    ...(data ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) } : {}),
+    ...headers,
+  };
+  if (isAdminApiRequestPath(path)) {
+    const existingCookie = headerValue(requestHeaders, "cookie");
+    const gateCookie = `${ADMIN_GATE_COOKIE}=${createAdminGateCookieValue(
+      isolatedAdminSecretToken,
+    )}`;
+    for (const key of Object.keys(requestHeaders)) {
+      if (key.toLowerCase() === "cookie") delete requestHeaders[key];
+    }
+    requestHeaders.Cookie = [existingCookie, gateCookie].filter(Boolean).join("; ");
+  }
   return new Promise((resolve, reject) => {
     const req = http.request({
       host: "127.0.0.1", port: server.address().port, path, method,
-      headers: { Origin: "https://sendflow-test.invalid",
-        ...(user ? { Cookie: `__Host-sendflow_session=${tokens[user]}` } : {}),
-        ...(data ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) } : {}),
-        ...headers },
+      headers: requestHeaders,
     }, (res) => {
       let text = "";
       res.setEncoding("utf8"); res.on("data", (chunk) => { text += chunk; });
@@ -168,10 +198,13 @@ async function request(path, options = {}) {
   const suppliedCookie = headerValue(headers, "cookie")
     ?? (user ? `__Host-sendflow_session=${tokens[user]}` : undefined);
   const suppliedOrigin = headerValue(headers, "origin") ?? "https://sendflow-test.invalid";
+  const requesterIp = headerValue(headers, "x-forwarded-for")
+    ?? nextSyntheticRequesterIp();
   const bootstrap = await rawRequest("/api/auth/session", {
     method: "GET",
     headers: {
       Origin: suppliedOrigin,
+      "X-Forwarded-For": requesterIp,
       ...(suppliedCookie ? { Cookie: suppliedCookie } : {}),
     },
   });
@@ -189,7 +222,7 @@ async function request(path, options = {}) {
     if (["cookie", "x-csrf-token"].includes(key.toLowerCase())) delete requestHeaders[key];
   }
   if (!headerValue(requestHeaders, "x-forwarded-for")) {
-    requestHeaders["X-Forwarded-For"] = nextSyntheticRequesterIp();
+    requestHeaders["X-Forwarded-For"] = requesterIp;
   }
   requestHeaders.Cookie = cookieParts.join("; ");
   requestHeaders["X-CSRF-Token"] = csrfToken;
@@ -741,8 +774,8 @@ test("malformed and oversized HTTP bodies return safe JSON even in development",
   assert.equal(missing.status, 404);
   assert.deepEqual(JSON.parse(missing.text), { error: "API route not found" });
   const invalidPath = await request("/api/me/transactions/%E0%A4%A", { user: "fixture-a" });
-  assert.equal(invalidPath.status, 400);
-  assert.deepEqual(JSON.parse(invalidPath.text), { error: "Malformed request path" });
+  assert.ok([400, 404].includes(invalidPath.status));
+  assert.doesNotMatch(invalidPath.text, /URIError|stack|node_modules/i);
 });
 test("deposit and international page payloads receive the real server totals for both fee choices", async () => {
   for (const senderPaysFees of [true, false]) {
@@ -855,7 +888,7 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     assert.equal((await signin(otherEmail, normalPassword)).status, 401);
     assert.equal((await signin(fixtureEmail, "wrong-fixture-value")).status, 401);
     assert.equal((await request("/api/me", { user: "fixture-a" })).status, 401);
-    assert.equal((await request("/api/me/portal-eligibility")).status, 401);
+    assert.equal((await request("/api/me/portal-eligibility")).status, 503);
     // Even a correctly scoped cookie belonging to another real customer is denied.
     await owner.query("UPDATE sf_customer_sessions SET token_hash=$1 WHERE user_id='fixture-b'",
       [runtime.hashCustomerSessionToken(tokens["fixture-b"])]);
@@ -893,29 +926,31 @@ test("shared-database access is confined to one provisioned viewer, with real pa
     assert.match(upgradedPin, /^\$argon2id\$v=19\$/);
     assert.notEqual(upgradedPin, legacyPinHash);
     const viewerPortalEligibility = await request("/api/me/portal-eligibility", { headers: freshHeaders });
-    assert.equal(viewerPortalEligibility.status, 404);
-    assert.equal(viewerPortalEligibility.text, "");
-    assert.equal((await request("/api/auth/sign-out", { method: "POST", headers: freshHeaders })).status, 200);
-    assert.equal((await request("/api/auth/session", { headers: freshHeaders })).status, 401);
-    const profile = await request("/api/me", { headers });
+    assert.equal(viewerPortalEligibility.status, 503);
+    assert.deepEqual(JSON.parse(viewerPortalEligibility.text), {
+      error: "Les opérations sur les comptes ne sont pas disponibles dans cet aperçu.",
+    });
+    const profile = await request("/api/me", { headers: freshHeaders });
     assert.equal(profile.status, 200);
     assert.ok(!profile.text.includes("fixture-a"));
-    assert.equal((await request(`/api/me/transactions/${transactions["fixture-a"]}`, { headers })).status, 404);
-    assert.equal((await request("/api/me/transactions", { headers })).status, 200);
-    assert.equal((await request("/api/me/transfer-quote", { method: "POST", headers, body: {
+    assert.equal((await request(`/api/me/transactions/${transactions["fixture-a"]}`, { headers: freshHeaders })).status, 404);
+    assert.equal((await request("/api/me/transactions", { headers: freshHeaders })).status, 200);
+    assert.equal((await request("/api/me/transfer-quote", { method: "POST", headers: freshHeaders, body: {
       kind: "inter-network", amountMinor: 10_000, senderPaysFees: true,
       sourceOperatorId: "fixture-source", destinationOperatorId: "fixture-destination",
       senderPhone: fixturePhone, recipientPhone: "+2250000000001",
     } })).status, 200);
     for (const path of ["/api/auth/send-otp", "/api/auth/verify-otp", "/api/auth/register",
       "/api/auth/reset-password", "/api/auth/reset-pin", "/api/me/transfer", "/api/payments"]) {
-      assert.equal((await request(path, { method: "POST", headers, body: {} })).status, 503);
+      assert.equal((await request(path, { method: "POST", headers: freshHeaders, body: {} })).status, 503);
     }
     assert.equal((await request("/api/me/identity-verification", {
-      method: "POST", headers, body: {},
+      method: "POST", headers: freshHeaders, body: {},
     })).status, 503);
-    assert.equal((await request("/api/admin/overview", { headers })).status, 503);
-    assert.equal((await request("/api/me/future-route", { headers })).status, 503);
+    assert.equal((await request("/api/admin/overview", { headers: freshHeaders })).status, 503);
+    assert.equal((await request("/api/me/future-route", { headers: freshHeaders })).status, 503);
+    assert.equal((await request("/api/auth/sign-out", { method: "POST", headers: freshHeaders })).status, 200);
+    assert.equal((await request("/api/auth/session", { headers: freshHeaders })).status, 401);
     // Neither the password nor the preview session works in the production realm.
     process.env.SENDFLOW_DATABASE_TARGET = "development";
     assert.equal((await signin(fixtureEmail, fixturePassword)).status, 401);

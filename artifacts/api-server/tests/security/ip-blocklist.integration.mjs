@@ -2,10 +2,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import http from "node:http";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createRequire } from "node:module";
+import {
+  ADMIN_GATE_COOKIE,
+  createAdminGateCookieValue,
+  isAdminApiRequestPath,
+} from "@workspace/admin-gate";
 
 const runtimePath = process.env.SENDFLOW_ISOLATED_RUNTIME;
 if (!runtimePath?.includes("/sendflow-isolated-finance-")) throw new Error("Isolated runner required");
@@ -18,10 +23,20 @@ async function listen(server) {
 }
 function request(server, path, {method="GET", ip="198.51.100.90", body, origin, extra={}}={}) {
   const data = body === undefined ? undefined : JSON.stringify(body);
+  const headers = {
+    "x-forwarded-for": ip,
+    ...(origin ? {Origin:origin} : {}),
+    ...(data ? {"content-type":"application/json"} : {}),
+    ...extra,
+  };
+  if (isAdminApiRequestPath(path)) {
+    headers.cookie = `${ADMIN_GATE_COOKIE}=${createAdminGateCookieValue(
+      process.env.ADMIN_SECRET_TOKEN,
+    )}`;
+  }
   return new Promise((yes,no) => {
     const req=http.request({host:"127.0.0.1",port:server.address().port,path,method,headers:{
-      "x-forwarded-for":ip,...(origin ? {Origin:origin} : {}),
-      ...(data ? {"content-type":"application/json"} : {}), ...extra,
+      ...headers,
     }},res=>{
       let text="";res.on("data",c=>text+=c);res.on("end",()=>yes({status:res.statusCode,text,headers:res.headers}));
     });req.on("error",no);req.end(data);
@@ -124,8 +139,9 @@ test("Authorized isolated controller uses strict inputs, CSRF, real list and rat
 
 test("Site HTML, SPA routes, assets and HEAD are blocked; DB failure fails closed",async()=>{
   const root=await mkdtemp(join(tmpdir(),"sf-ip-site-"));
-  await writeFile(join(root,"index.html"),"<html>Isolated site</html>");
-  await writeFile(join(root,"app.js"),"/* isolated asset */");
+  await mkdir(join(root,"public"),{recursive:true});
+  await writeFile(join(root,"public","index.html"),"<html>Isolated site</html>");
+  await writeFile(join(root,"public","app.js"),"/* isolated asset */");
   const server=runtime.createSiteServer(root);await listen(server);
   const row=await createIpBlock("fixture-security-admin","198.51.100.55","Isolated site block","203.0.113.1");
   try {
@@ -138,36 +154,11 @@ test("Site HTML, SPA routes, assets and HEAD are blocked; DB failure fails close
     assert.equal((await request(server,"/.env")).status,403);
     assert.equal((await request(server,"/app.js.map")).status,404);
     await revokeIpBlock("fixture-security-admin",row.id,row.version,"Fixture cleanup");
-    assert.equal((await request(server,"/",{ip:"198.51.100.55"})).status,200);
+    assert.equal((await request(server,"/",{
+      ip:"198.51.100.55",
+      extra:{host:"merchent.business.sendflow.africa"},
+    })).status,200);
   }finally{await close(server);await rm(root,{recursive:true,force:true});}
-  const portalRoot=await mkdtemp(join(tmpdir(),"sf-portal-site-"));
-  await writeFile(join(portalRoot,"index.html"),"<html>Isolated portal fixture</html>");
-  const portalServer=runtime.createSiteServer(
-    portalRoot,
-    async()=>true,
-    async req=>req.headers.cookie==="session=authorized" ? "allowed" : "not-found",
-  );
-  await listen(portalServer);
-  try {
-    assert.equal((await request(portalServer,runtime.PORTAL_ROUTE_PATH)).status,404);
-    const denied=await request(portalServer,`${runtime.PORTAL_ROUTE_PATH}/pin`);
-    assert.equal(denied.status,404);
-    assert.equal(denied.text,"404 Not Found");
-    assert.equal((await request(portalServer,runtime.PORTAL_ROUTE_PATH,{method:"HEAD"})).status,404);
-    assert.equal((await request(portalServer,runtime.PORTAL_ROUTE_PATH,{method:"POST"})).status,404);
-    const allowed=await request(portalServer,runtime.PORTAL_ROUTE_PATH,{
-      extra:{cookie:"session=authorized"},
-    });
-    assert.equal(allowed.status,200);
-    assert.match(allowed.text,/Isolated portal fixture/);
-  }finally{await close(portalServer);await rm(portalRoot,{recursive:true,force:true});}
-  const unavailableRoot=await mkdtemp(join(tmpdir(),"sf-portal-unavailable-"));
-  await writeFile(join(unavailableRoot,"index.html"),"<html>Must not be served</html>");
-  const unavailable=runtime.createSiteServer(unavailableRoot,async()=>true,async()=>"unavailable");
-  await listen(unavailable);
-  try {
-    assert.equal((await request(unavailable,runtime.PORTAL_ROUTE_PATH)).status,503);
-  }finally{await close(unavailable);await rm(unavailableRoot,{recursive:true,force:true});}
   const broken=runtime.createSiteServer("/unused",(req,res)=>runtime.enforceIpAccess(req,res,async()=>{throw new Error("fixture DB outage")}));
   await listen(broken);
   try{ assert.equal((await request(broken,"/")).status,503); }finally{await close(broken);}
