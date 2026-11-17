@@ -424,6 +424,7 @@ try {
       SENDFLOW_FIXTURE_SOCKET: socket, SESSION_SECRET: randomBytes(32).toString("hex"),
       CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
       TURNSTILE_SECRET_KEY: "isolated-test-turnstile-secret",
+      SENDFLOW_API_TEST_BUNDLE: process.env.SENDFLOW_API_TEST_BUNDLE,
       RESEND_API_KEY: customerAuthEmailOnly ? "isolated-test-resend-key" : undefined,
       RESEND_FROM_EMAIL: customerAuthEmailOnly ? "SendFlow Test <test@sendflow.invalid>" : undefined,
        CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid", TRUST_PROXY_HOPS: "1",

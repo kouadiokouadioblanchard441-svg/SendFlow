@@ -475,9 +475,19 @@ test("built Plesk API distribution listens on its supplied port and stays alive"
     reservation.close((error) => error ? reject(error) : resolve());
   });
 
-  const bundle = fileURLToPath(new URL("../../dist/index.mjs", import.meta.url));
+  const bundle = fileURLToPath(new URL(
+    process.env.SENDFLOW_API_TEST_BUNDLE ?? "../../dist/index.mjs",
+    import.meta.url,
+  ));
   const child = spawn(process.execPath, [bundle], {
-    env: { ...process.env, NODE_ENV: "development", PORT: String(port), LOG_LEVEL: "silent" },
+    cwd: fileURLToPath(new URL("../../", import.meta.url)),
+    env: {
+      ...process.env,
+      NODE_ENV: "development",
+      PORT: String(port),
+      LOG_LEVEL: "silent",
+      TURNSTILE_SITE_KEY: turnstilePublicSiteKey,
+    },
     stdio: "ignore",
   });
   t.after(async () => {

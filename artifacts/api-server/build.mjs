@@ -23,7 +23,9 @@ async function buildAll() {
     platform: "node",
     bundle: true,
     format: "esm",
-    outdir: distDir,
+    // Keep the Pino worker paths relative to the Node application's working
+    // directory. Absolute build-machine paths are not valid after a Plesk Pull.
+    outdir: outputDirectory,
     outExtension: { ".js": ".mjs" },
     logLevel: "info",
     // Some packages may not be bundleable, so we externalize them, we can add more here as needed.

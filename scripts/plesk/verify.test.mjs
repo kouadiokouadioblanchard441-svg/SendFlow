@@ -190,6 +190,18 @@ test("rejects source maps in API release packages", async (t) => {
   await assert.rejects(verifyDistribution(root, "api"), /source maps are not included/);
 });
 
+test("rejects API bundles with machine-specific absolute Pino worker paths", async (t) => {
+  const root = await fixture(t);
+  await writeFile(
+    path.join(root, "index.mjs"),
+    'function pinoBundlerAbsolutePath() { const outputDir = "/home/build/artifacts/api-server/dist"; }',
+  );
+  await assert.rejects(
+    verifyDistribution(root, "api"),
+    /machine-specific absolute Pino worker path/,
+  );
+});
+
 test("rejects server-secret variable names in the public bundle without printing values", async (t) => {
   const root = await fixture(t);
   await writeFile(path.join(root, "public/assets/app.js"), 'const name="CUSTOMER_PII_ENCRYPTION_KEY";');

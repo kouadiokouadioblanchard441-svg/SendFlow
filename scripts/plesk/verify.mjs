@@ -171,6 +171,12 @@ export async function verifyDistribution(root, service) {
   if (files.some((file) => file.path.endsWith(".map"))) {
     throw new Error("Release source maps are not included in the Plesk package");
   }
+  if (service === "api") {
+    const apiBundle = await readFile(path.join(root, entry), "utf8");
+    if (/const outputDir\s*=\s*["'](?:\/|[A-Za-z]:[\\/])/.test(apiBundle)) {
+      throw new Error("API release contains a machine-specific absolute Pino worker path");
+    }
+  }
   if (service === "web") {
     for (const file of files.filter((file) => /^(?:public|admin)\//.test(file.path))) {
       if (/\.(?:html|js|css|json|svg|webmanifest)$/.test(file.path)) {
