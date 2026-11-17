@@ -1,8 +1,8 @@
 {
-  "builtAt": "2026-11-17T10:01:48.503Z",
-  "sourceCommit": "a0e19d448bceb77915d525a5790b486b0c520de1",
+  "builtAt": "2026-11-17T11:47:18.264Z",
+  "sourceCommit": "11e796933343fc01bf6dea2b78ad466bf8e94533",
   "trackedWorktreeModified": true,
-  "builderNode": "v24.22.2",
+  "builderNode": "v24.22.3",
   "builderPnpm": "10.26.1",
   "lockfileSha256": "00bb4904baff839c3c41a2427941796ff1d4b9cd9b55b53d0a3fd615a807d60d",
   "productionHostVerified": false,
