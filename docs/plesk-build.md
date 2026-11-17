@@ -120,6 +120,22 @@ Configurer les racines et fichiers de démarrage des applications Node Plesk :
 | Site    | `.`                                   | `index.cjs`                                 |
 | API     | `artifacts/api-server`                | `dist/index.cjs`                            |
 
+Dans les paramètres Node.js Plesk de **chaque application** (site et API),
+vérifier que le processus reçoit `PORT`. Le code écoute exclusivement sur cette
+valeur et ne choisit aucun port de secours. Si Plesk affiche un port d'application
+attribué, l'entrée `PORT` des variables d'environnement doit reprendre exactement
+cette valeur pour cette application ; ne pas inventer un numéro ni partager le port
+entre les deux applications. Si Plesk/Passenger est censé injecter `PORT` mais que
+les journaux indiquent qu'il est absent, corriger l'environnement de l'application
+dans Plesk ou demander à l'hébergeur le port interne attribué avant le redémarrage.
+Les variables Plesk ne sont pas versionnées dans ce dépôt.
+
+Le paquet est déjà construit avant le Pull. Ne lancez pas `npm install`, `npm ci` ou
+`npm update` dans la racine Plesk : le dépôt impose pnpm pour les builds et le hook
+`scripts/plesk/build-after-pull.sh` active les dépendances API déjà empaquetées.
+Une installation npm échouée n'est pas une réparation du paquet et ne fournit pas
+le `PORT` manquant.
+
 Pour le site, choisir `dist/public` comme Document Root relatif au checkout.
 L'application doit tout de même router les requêtes vers Node : le serveur applique le
 contrôle IP avant de servir chaque fichier. Il ne faut pas laisser Apache/Nginx servir
@@ -157,9 +173,9 @@ exposée comme un répertoire statique Apache.
 ## Runtime et routage à confirmer sur Plesk
 
 - La version Node du constructeur figure dans les manifestes. Le workflow de build
-  exige Node.js 24.22.2 et pnpm 10.26.1. Le runtime Plesk doit aussi utiliser Node.js
-  24.22.2 ; le runtime réel reste à confirmer sur le serveur. Le fonctionnement sous
-  une autre version, dont Node 22.23.3, n’est pas démontré.
+  exige Node.js 24.22.2 et pnpm 10.26.1. Le dernier runtime Plesk communiqué est
+  Node.js 24.22.3 ; cet écart de correctif n'explique pas `INVALID_PORT`, mais la
+  compatibilité de l'archive native doit être confirmée après redémarrage sur Plesk.
 - L'archive des dépendances API est construite pour Linux x64/glibc (runner GitHub
   `ubuntu-latest`). La compatibilité exacte doit être confirmée avec l'architecture et
   la distribution système de l'hébergement Plesk ; aucun accès serveur ne permet de

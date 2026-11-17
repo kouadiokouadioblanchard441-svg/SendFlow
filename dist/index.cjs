@@ -100,20 +100,20 @@ function safeFailureLabel(error) {
   return "NonErrorValue";
 }
 if (process.env.NODE_ENV !== "production") {
-  console.error("Plesk startup requires NODE_ENV=production.");
+  console.error("Plesk " + PLESK_SERVICE + " startup requires NODE_ENV=production.");
   process.exitCode = 1;
 } else {
   import("./server/index.mjs").catch((error) => {
     // Never print an exception that might contain credentials or private data.
-    console.error("Plesk application startup failed. Check private configuration and application logs.");
-    console.error("Plesk startup failure details: " + safeFailureLabel(error));
-    console.error("Plesk startup failure category: " + safeFailureCategory(error));
+    console.error("Plesk " + PLESK_SERVICE + " application startup failed. Check private configuration and application logs.");
+    console.error("Plesk " + PLESK_SERVICE + " startup failure details: " + safeFailureLabel(error));
+    console.error("Plesk " + PLESK_SERVICE + " startup failure category: " + safeFailureCategory(error));
     const missingEnvironmentNames = safeMissingEnvironmentNames();
     if (missingEnvironmentNames.length) {
-      console.error("Plesk runtime variables unset: " + missingEnvironmentNames.join(", "));
+      console.error("Plesk " + PLESK_SERVICE + " runtime variables unset: " + missingEnvironmentNames.join(", "));
     }
     const hint = safeConfigurationHint(error);
-    if (hint) console.error("Plesk configuration check: " + hint);
+    if (hint) console.error("Plesk " + PLESK_SERVICE + " configuration check: " + hint);
     process.exitCode = 1;
   });
 }

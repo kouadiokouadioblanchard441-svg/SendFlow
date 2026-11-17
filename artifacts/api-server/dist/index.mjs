@@ -28592,7 +28592,7 @@ var require_pino = __commonJS({
     function pinoBundlerAbsolutePath(p) {
       try {
         const path = __require("path");
-        const outputDir = "/home/runner/work/SendFlow/SendFlow/artifacts/api-server/dist";
+        const outputDir = "/home/runner/workspace/artifacts/api-server/dist";
         return path.resolve(outputDir, p.replace(/^\.\//, ""));
       } catch (e) {
         const f = new Function("p", "return new URL(p, import.meta.url).pathname");
@@ -259825,6 +259825,26 @@ app.use("/api", (_req, res) => {
 app.use(httpErrorHandler);
 var app_default = app;
 
+// src/lib/plesk-listener.ts
+var PLESK_LISTEN_HOST = "0.0.0.0";
+function requirePleskPort(value) {
+  const normalized = value?.trim() ?? "";
+  if (!normalized) {
+    throw new Error("PORT environment variable is required but was not provided.");
+  }
+  if (!/^\d+$/.test(normalized)) {
+    throw new Error("PORT must be an integer between 1 and 65535.");
+  }
+  const port2 = Number(normalized);
+  if (!Number.isSafeInteger(port2) || port2 < 1 || port2 > 65535) {
+    throw new Error("PORT must be an integer between 1 and 65535.");
+  }
+  return port2;
+}
+function listenOnPleskPort(app2, port2) {
+  return app2.listen(port2, PLESK_LISTEN_HOST);
+}
+
 // src/services/developer-webhook-worker.ts
 import { createHmac as createHmac7 } from "node:crypto";
 import { request as httpsRequest } from "node:https";
@@ -260649,23 +260669,15 @@ function startIdentityVerificationUploadCleanup(logger2) {
 }
 
 // src/index.ts
-var rawPort = process.env["PORT"];
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided."
-  );
-}
-var port = Number(rawPort);
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
+var port = requirePleskPort(process.env["PORT"]);
 async function startServer() {
-  app_default.listen(port, (err) => {
-    if (err) {
-      logger.error({ err }, "Error listening on port");
-      process.exit(1);
-    }
-    logger.info({ port }, "Server listening");
+  const server = listenOnPleskPort(app_default, port);
+  server.on("error", (err) => {
+    logger.fatal({ err }, "Plesk API listener failed");
+    process.exit(1);
+  });
+  server.once("listening", () => {
+    logger.info({ host: "0.0.0.0", port }, "Plesk API server listening");
     if (process.env.NODE_ENV === "production") {
       startDeveloperWebhookWorker(logger);
       startEmailCampaignWorker(logger);
@@ -260674,7 +260686,7 @@ async function startServer() {
   });
 }
 startServer().catch((err) => {
-  logger.error({ err }, "API server startup failed");
+  logger.fatal({ err }, "Plesk API startup failed");
   process.exit(1);
 });
 /*! Bundled license information:

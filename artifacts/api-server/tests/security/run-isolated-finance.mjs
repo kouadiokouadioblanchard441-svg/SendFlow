@@ -28,6 +28,7 @@ const data = join(temp, "data"), socket = join(temp, "socket");
 mkdirSync(socket, { mode: 0o700 });
 const baseEnv = { PATH: process.env.PATH, HOME: temp, LANG: "C.UTF-8" };
 const customerAuthEmailOnly = process.argv.includes("--customer-auth-email-only");
+const signupEndpointsOnly = process.argv.includes("--signup-endpoints-only");
 let started = false, owner;
 let exitCode = 1;
 try {
@@ -387,6 +388,8 @@ try {
   const catalogOnly = process.argv.includes("--catalog-only");
   const testFiles = customerAuthEmailOnly
     ? [join(apiDir, "tests/security/customer-auth-email.integration.mjs")]
+    : signupEndpointsOnly
+    ? [join(apiDir, "tests/security/routes-security.integration.mjs")]
     : turnstileOnly
     ? [join(apiDir, "tests/security/finance.integration.mjs")]
     : process.argv.includes("--routes-security-only")
@@ -403,6 +406,9 @@ try {
        join(apiDir, "tests/security/catalog.integration.mjs")];
   const testArgs = ["--experimental-strip-types", "--test"];
   if (turnstileOnly) testArgs.push("--test-name-pattern=Turnstile");
+  if (signupEndpointsOnly) {
+    testArgs.push("--test-name-pattern=public Turnstile config|signup country and registration settings|built Plesk API distribution");
+  }
   // Link-flow tests temporarily switch the isolated app to its Replit preview
   // policy; keep those process-environment changes from racing sibling tests.
   if (process.argv.includes("--payment-links-only") || customerAuthEmailOnly) {

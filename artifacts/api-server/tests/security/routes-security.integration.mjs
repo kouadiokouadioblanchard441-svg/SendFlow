@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import http from "node:http";
+import { createServer as createNetServer } from "node:net";
+import { spawn } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
+import { fileURLToPath } from "node:url";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -396,6 +399,97 @@ test("public Turnstile config exposes only its site key at runtime", async () =>
     if (original === undefined) delete process.env.TURNSTILE_SITE_KEY;
     else process.env.TURNSTILE_SITE_KEY = original;
   }
+});
+
+test("signup country and registration settings endpoints serve the isolated configured catalog", async () => {
+  const countriesResponse = await request("/api/auth/registration-countries");
+  assert.equal(countriesResponse.status, 200, countriesResponse.text);
+  const countries = JSON.parse(countriesResponse.text).countries;
+  assert.ok(countries.some((country) =>
+    country.countryCode === "ci" && country.signupEnabled === true,
+  ));
+
+  const settingsResponse = await request("/api/auth/registration-settings");
+  assert.equal(settingsResponse.status, 200, settingsResponse.text);
+  assert.equal(JSON.parse(settingsResponse.text).defaultCountryCode, "ci");
+});
+
+test("built Plesk API distribution listens on its supplied port and stays alive", async (t) => {
+  const reservation = createNetServer();
+  reservation.listen(0, "127.0.0.1");
+  await once(reservation, "listening");
+  const address = reservation.address();
+  assert.ok(address && typeof address !== "string");
+  const port = address.port;
+  await new Promise((resolve, reject) => {
+    reservation.close((error) => error ? reject(error) : resolve());
+  });
+
+  const bundle = fileURLToPath(new URL("../../dist/index.mjs", import.meta.url));
+  const child = spawn(process.execPath, [bundle], {
+    env: { ...process.env, NODE_ENV: "development", PORT: String(port), LOG_LEVEL: "silent" },
+    stdio: "ignore",
+  });
+  t.after(async () => {
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill("SIGTERM");
+      await Promise.race([
+        once(child, "exit"),
+        new Promise((resolve) => setTimeout(resolve, 3_000)),
+      ]);
+    }
+    if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+  });
+
+  async function readEndpoint(path) {
+    return new Promise((resolve, reject) => {
+      const req = http.request({
+        hostname: "127.0.0.1",
+        port,
+        path,
+        method: "GET",
+        headers: { Origin: "https://sendflow-test.invalid" },
+        timeout: 1_500,
+      }, (res) => {
+        let text = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => { text += chunk; });
+        res.on("end", () => resolve({ status: res.statusCode, text }));
+      });
+      req.on("timeout", () => req.destroy(new Error("startup probe timed out")));
+      req.on("error", reject);
+      req.end();
+    });
+  }
+
+  async function waitForEndpoint(path) {
+    const deadline = Date.now() + 10_000;
+    while (Date.now() < deadline) {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        assert.fail("Built API process exited before serving the endpoint.");
+      }
+      try {
+        return await readEndpoint(path);
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+    assert.fail("Built API process did not serve the endpoint on the supplied port.");
+  }
+
+  const countries = await waitForEndpoint("/api/auth/registration-countries");
+  assert.equal(countries.status, 200, countries.text);
+  assert.ok(JSON.parse(countries.text).countries.some((country) => country.countryCode === "ci"));
+
+  const settings = await readEndpoint("/api/auth/registration-settings");
+  assert.equal(settings.status, 200, settings.text);
+  assert.equal(JSON.parse(settings.text).defaultCountryCode, "ci");
+
+  const turnstile = await readEndpoint("/api/auth/turnstile-config");
+  assert.equal(turnstile.status, 200, turnstile.text);
+  assert.ok(JSON.parse(turnstile.text).siteKey);
+  assert.equal(child.exitCode, null);
+  assert.equal(child.signalCode, null);
 });
 
 test("inventory covers mounted customer, administrative, auth, webhook and public declarations", () => {
