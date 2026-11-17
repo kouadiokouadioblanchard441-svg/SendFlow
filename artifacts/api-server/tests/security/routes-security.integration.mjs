@@ -404,14 +404,26 @@ test("public Turnstile config exposes only its site key at runtime", async () =>
 test("signup country and registration settings endpoints serve the isolated configured catalog", async () => {
   const countriesResponse = await request("/api/auth/registration-countries");
   assert.equal(countriesResponse.status, 200, countriesResponse.text);
-  const countries = JSON.parse(countriesResponse.text).countries;
-  assert.ok(countries.some((country) =>
-    country.countryCode === "ci" && country.signupEnabled === true,
-  ));
+  const countryPayload = JSON.parse(countriesResponse.text);
+  assert.ok(Array.isArray(countryPayload.countries));
+  assert.ok(countryPayload.countries.length > 0);
+  const country = countryPayload.countries.find((entry) => entry.countryCode === "ci");
+  assert.ok(country);
+  assert.equal(country.countryName, "Côte d’Ivoire");
+  assert.equal(country.phonePrefix, "+225");
+  assert.equal(country.signupEnabled, true);
+  assert.match(country.phonePrefix, /^\+[1-9]\d{0,3}$/);
+  assert.ok(Number.isInteger(country.minPhoneDigits) && country.minPhoneDigits > 0);
+  assert.ok(Number.isInteger(country.maxPhoneDigits) && country.maxPhoneDigits >= country.minPhoneDigits);
+  assert.ok(country.maxPhoneDigits + country.phonePrefix.length - 1 <= 15);
+  assert.match(country.flag, /^\p{Regional_Indicator}{2}$/u);
 
   const settingsResponse = await request("/api/auth/registration-settings");
   assert.equal(settingsResponse.status, 200, settingsResponse.text);
-  assert.equal(JSON.parse(settingsResponse.text).defaultCountryCode, "ci");
+  const settingsPayload = JSON.parse(settingsResponse.text);
+  assert.deepEqual(Object.keys(settingsPayload).sort(), ["defaultCountryCode", "emailVerificationEnabled"].sort());
+  assert.equal(settingsPayload.defaultCountryCode, "ci");
+  assert.equal(typeof settingsPayload.emailVerificationEnabled, "boolean");
 });
 
 test("built Plesk API distribution listens on its supplied port and stays alive", async (t) => {
