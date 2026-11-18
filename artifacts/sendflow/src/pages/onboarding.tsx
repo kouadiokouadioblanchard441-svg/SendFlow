@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'wouter';
 import { useSeo } from '@/lib/seo';
+import { customerAuthRoutes } from '@/lib/customer-auth-routes';
 import sendflowMark from '@/assets/sendflow-mark-original.png';
 import sendflowWordmark from '@/assets/sendflow-wordmark-original.png';
 import networkIllustration from '@assets/generated_images/sendflow-network-person-3d-transparent.png';
@@ -248,10 +249,10 @@ export default function OnboardingPage() {
         </div>
 
         <footer className="sendflow-onboarding-actions">
-          <Link href="/sign-in" className="sendflow-onboarding-action is-secondary">
+          <Link href={customerAuthRoutes.signIn} className="sendflow-onboarding-action is-secondary">
             Se connecter
           </Link>
-          <Link href="/sign-up" className="sendflow-onboarding-action is-primary">
+          <Link href={customerAuthRoutes.signUp} className="sendflow-onboarding-action is-primary">
             Créer un compte
           </Link>
         </footer>

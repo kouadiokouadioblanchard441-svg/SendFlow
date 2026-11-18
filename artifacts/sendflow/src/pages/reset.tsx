@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/turnstile-widget';
 import { useSeo } from '@/lib/seo';
+import { customerAuthRoutes } from '@/lib/customer-auth-routes';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { useResetCustomerPassword, useResetCustomerPin, useSendEmailOtp, useVerifyEmailOtp } from '@workspace/api-client-react';
 import { clearPinUnlock } from '@/lib/pin-unlock';
@@ -263,7 +264,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
         await resetPin.mutateAsync({ data: { challengeId, phone: fullPhone, newPin: newSecret } });
       }
       clearPinUnlock();
-      setLocation('/sign-in');
+      setLocation(customerAuthRoutes.signIn);
     } catch (error) {
       setSecretError(getSafeApiErrorCopy(error).message);
     } finally {
@@ -347,7 +348,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
             </form>
 
             <p className="sendflow-reset-login">
-              Vous vous en souvenez ? <Link href="/sign-in">Connectez-vous</Link>
+              Vous vous en souvenez ? <Link href={customerAuthRoutes.signIn}>Connectez-vous</Link>
             </p>
           </>
         )}
@@ -428,7 +429,7 @@ export default function ResetPage({ mode }: { mode: ResetMode }) {
               </p>
             )}
             <p className="sendflow-reset-login">
-              Vous vous en souvenez ? <Link href="/sign-in">Connectez-vous</Link>
+              Vous vous en souvenez ? <Link href={customerAuthRoutes.signIn}>Connectez-vous</Link>
             </p>
           </>
         )}

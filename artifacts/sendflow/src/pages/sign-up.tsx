@@ -4,6 +4,7 @@ import { Link, useLocation } from 'wouter';
 import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/turnstile-widget';
 import { getGetRegistrationSettingsQueryKey, useGetRegistrationSettings, useRegisterCustomer, useSendEmailOtp, useVerifyEmailOtp } from '@workspace/api-client-react';
 import { useSeo } from '@/lib/seo';
+import { customerAuthRoutes } from '@/lib/customer-auth-routes';
 import { CountryPhoneField } from '@/components/country-phone-field';
 import { getAdultBirthDateLimit, MIN_BIRTH_DATE, validateSignUp, type SignUpField } from '@/lib/auth-validation';
 import { saveAccountCountry, type AccountCountry } from '@/lib/account-country';
@@ -396,7 +397,7 @@ export default function SignupPage() {
         </div>
 
         <div className="sendflow-signup-content">
-          <Link href="/sign-up" className="sendflow-signup-brand" aria-label="SendFlow">
+          <Link href={customerAuthRoutes.signUp} className="sendflow-signup-brand" aria-label="SendFlow">
             <img src={sendflowMark} alt="" className="sendflow-signup-mark" />
             <img src={sendflowWordmark} alt="SendFlow" className="sendflow-signup-wordmark" />
           </Link>
@@ -695,7 +696,7 @@ export default function SignupPage() {
           )}
 
           <p className="sendflow-signup-login">
-            Vous avez déjà un compte ? <Link href="/sign-in">Connectez-vous</Link>
+            Vous avez déjà un compte ? <Link href={customerAuthRoutes.signIn}>Connectez-vous</Link>
           </p>
         </div>
       </section>

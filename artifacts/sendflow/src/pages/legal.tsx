@@ -15,6 +15,7 @@ import privacyArtCoverage from '@assets/generated_images/sendflow-coverage-perso
 import privacyArtDownload from '@assets/generated_images/sendflow-download-person-3d-transparent.png';
 import privacyArtCheck from '@assets/generated_images/sendflow-step-check-3d-transparent.png';
 import { avatarBank } from '@/lib/avatar-bank';
+import { customerAuthRoutes } from '@/lib/customer-auth-routes';
 
 const legalCompanyDetails = {
   name: 'Flow Digital SARL',
@@ -131,14 +132,14 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
     <div className="min-h-screen bg-[#f7f3e9] text-[#17131f]">
       <header className="sticky top-0 z-40 border-b border-[#2d2535]/10 bg-[#f7f3e9]/90 px-5 py-4 backdrop-blur-md sm:px-8">
         <div className="mx-auto flex max-w-[1060px] items-center justify-between gap-4">
-          <Link href="/sign-in" className="flex items-center gap-2" aria-label="Retour à SendFlow">
+          <Link href={customerAuthRoutes.signIn} className="flex items-center gap-2" aria-label="Retour à SendFlow">
             <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-[#6d35d8]/20">
               <img src={sendflowMark} alt="" className="h-8 w-7 object-contain" />
             </span>
             <img src={sendflowWordmark} alt="SendFlow" className="h-6 w-auto object-contain" />
           </Link>
           <Link
-            href="/sign-in"
+            href={customerAuthRoutes.signIn}
             className="inline-flex min-w-[164px] items-center justify-center rounded-full border border-[#6d35d8] bg-[#6d35d8] px-5 py-2.5 text-center text-[12px] font-extrabold text-white shadow-[0_8px_18px_rgba(109,53,216,.2)] transition-all hover:border-[#5421b8] hover:bg-[#5421b8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6d35d8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f3e9]"
           >
             Retour à la connexion
@@ -166,7 +167,7 @@ function LegalLayout({ title, eyebrow, intro, supportEmail, children }: { title:
         <div className="mx-auto flex max-w-[900px] flex-col gap-6 text-[12px] sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-[470px] leading-5 text-[#c9c0d6]">Flow Digital SARL · Côte d’Ivoire · Abidjan, Cocody Riviera Palmeraie</p>
           <div className="flex flex-wrap gap-4 font-bold">
-            <Link href="/sign-in" className="text-[#e8cd4d] hover:underline">Connexion</Link>
+            <Link href={customerAuthRoutes.signIn} className="text-[#e8cd4d] hover:underline">Connexion</Link>
             <Link href="/confidentialite" className="hover:text-[#e8cd4d]">Confidentialité</Link>
             <Link href="/mentions-legales" className="hover:text-[#e8cd4d]">Mentions légales</Link>
             <a href={`mailto:${contactEmail}`} className="hover:text-[#e8cd4d]">Contact</a>
@@ -193,7 +194,7 @@ function PrivacyLayout({
       window.history.back();
       return;
     }
-    setLocation('/sign-in');
+    setLocation(customerAuthRoutes.signIn);
   };
 
   return (
@@ -211,7 +212,7 @@ function PrivacyLayout({
         </div>
 
         <div className="sendflow-privacy-brandbar">
-          <Link href="/sign-in" className="sendflow-privacy-brand" aria-label="Retour à SendFlow">
+          <Link href={customerAuthRoutes.signIn} className="sendflow-privacy-brand" aria-label="Retour à SendFlow">
             <img src={sendflowMark} alt="" />
             <img src={sendflowWordmark} alt="SendFlow" />
           </Link>
@@ -224,7 +225,7 @@ function PrivacyLayout({
           >
             <span aria-hidden="true">{language === 'fr' ? '🇫🇷' : '🇬🇧'}</span>
           </button>
-          <Link href="/sign-up" className="sendflow-privacy-download">{language === 'fr' ? "Télécharger l'app" : 'Download the app'}</Link>
+          <Link href={customerAuthRoutes.signUp} className="sendflow-privacy-download">{language === 'fr' ? "Télécharger l'app" : 'Download the app'}</Link>
         </div>
       </header>
 

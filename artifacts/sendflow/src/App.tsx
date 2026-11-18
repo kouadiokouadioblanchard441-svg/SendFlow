@@ -17,6 +17,7 @@ import { clearPinUnlock, getPinUnlockExpiry } from '@/lib/pin-unlock';
 import { requiresCustomerPinUnlock, shouldRelockCustomerPinUnlock } from '@/lib/customer-route-guard';
 import { GlobalErrorDialog } from '@/components/global-error-dialog';
 import { getHttpStatus, queryClient } from '@/lib/query-client';
+import { customerAuthRoutes } from '@/lib/customer-auth-routes';
 import {
   isSendFlowDocumentationHost,
   isSendFlowDocumentationPreviewRoute,
@@ -247,10 +248,10 @@ function App() {
                 <Route path="/" component={OnboardingPage} />
                 <Route path="/sign-in/*?" component={SigninPage} />
                 <Route path="/sign-up/*?" component={SignupPage} />
-                <Route path="/marchand/connexio/sendflow" component={SigninPage} />
-                <Route path="/marchand/création/sendflow" component={SignupPage} />
+                <Route path={customerAuthRoutes.signIn} component={SigninPage} />
+                <Route path={customerAuthRoutes.signUp} component={SignupPage} />
                 <Route
-                  path="/marchand/reinitialisation-mot-de-passe/sendflow"
+                  path={customerAuthRoutes.passwordReset}
                   component={() => <ResetPage mode="password" />}
                 />
                 <Route path="/create-pin" component={() => <PinPage mode="create" />} />

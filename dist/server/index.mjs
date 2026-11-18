@@ -11645,12 +11645,19 @@ function isSendFlowPaymentHost(hostname) {
   return hostname.toLowerCase() === SENDFLOW_PAYMENT_HOST;
 }
 
+// src/lib/customer-auth-routes.ts
+var customerAuthRoutes = {
+  signIn: "/marchand/connexio/sendflow",
+  signUp: "/marchand/cr\xE9ation/sendflow",
+  passwordReset: "/marchand/reinitialisation-mot-de-passe/sendflow"
+};
+
 // server/site-route-matcher.ts
 var exactApplicationPaths = /* @__PURE__ */ new Set([
   "/",
-  "/marchand/connexio/sendflow",
-  "/marchand/cr\xE9ation/sendflow",
-  "/marchand/reinitialisation-mot-de-passe/sendflow",
+  customerAuthRoutes.signIn,
+  customerAuthRoutes.signUp,
+  customerAuthRoutes.passwordReset,
   "/create-pin",
   "/pin",
   "/biometric",

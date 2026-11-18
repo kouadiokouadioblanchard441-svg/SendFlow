@@ -4,12 +4,13 @@ import {
   isSendFlowDocumentationPreviewRoute,
 } from "../src/lib/documentation-host.ts";
 import { isSendFlowPaymentHost } from "../src/lib/payment-host.ts";
+import { customerAuthRoutes } from "../src/lib/customer-auth-routes.ts";
 
 const exactApplicationPaths = new Set([
   "/",
-  "/marchand/connexio/sendflow",
-  "/marchand/création/sendflow",
-  "/marchand/reinitialisation-mot-de-passe/sendflow",
+  customerAuthRoutes.signIn,
+  customerAuthRoutes.signUp,
+  customerAuthRoutes.passwordReset,
   "/create-pin",
   "/pin",
   "/biometric",

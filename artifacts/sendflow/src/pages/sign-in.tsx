@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/turnstile-widget';
 import { useSeo } from '@/lib/seo';
+import { customerAuthRoutes } from '@/lib/customer-auth-routes';
 import { validateSignIn, type SignInField } from '@/lib/auth-validation';
 import { useSignInCustomer } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -115,7 +116,7 @@ export default function SigninPage() {
         </div>
 
         <div className="sendflow-signup-content">
-          <Link href="/sign-in" className="sendflow-signup-brand" aria-label="SendFlow">
+          <Link href={customerAuthRoutes.signIn} className="sendflow-signup-brand" aria-label="SendFlow">
             <img src={sendflowMark} alt="" className="sendflow-signup-mark" />
             <img src={sendflowWordmark} alt="SendFlow" className="sendflow-signup-wordmark" />
           </Link>
@@ -172,7 +173,7 @@ export default function SigninPage() {
               </label>
             </div>
 
-            <Link href="/forgot-password" className="sendflow-signup-forgot">
+            <Link href={customerAuthRoutes.passwordReset} className="sendflow-signup-forgot">
               Mot de passe oublié ?
             </Link>
 
@@ -191,7 +192,7 @@ export default function SigninPage() {
           </form>
 
           <p className="sendflow-signup-login">
-            Vous n’avez pas encore de compte ? <Link href="/sign-up">Créez-en un</Link>
+            Vous n’avez pas encore de compte ? <Link href={customerAuthRoutes.signUp}>Créez-en un</Link>
           </p>
           <p className="sendflow-auth-legal">
             <Link href="/confidentialite">Confidentialité</Link>
