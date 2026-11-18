@@ -166,6 +166,7 @@ export const EmailOtpVerifyInputPurpose = {
   signup: 'signup',
   password_reset: 'password_reset',
   pin_reset: 'pin_reset',
+  customer_login: 'customer_login',
 } as const;
 
 export interface EmailOtpVerifyInput {
@@ -188,6 +189,14 @@ export interface EmailOtpVerifyInput {
 export interface EmailOtpVerifyResult {
   emailVerified: boolean;
   verifiedAt: string;
+}
+
+export interface CustomerLoginOtpChallenge {
+  otpRequired: true;
+  challengeId: string;
+  expiresAt: string;
+  /** @minimum 0 */
+  resendAfterSeconds: number;
 }
 
 export interface OtpRateLimitError {

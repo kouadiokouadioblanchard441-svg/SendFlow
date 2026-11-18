@@ -31,6 +31,7 @@ export const usersTable = pgTable("sf_users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+  lastLoginCompletedAt: timestamp("last_login_completed_at", { withTimezone: true }),
 }, (table) => ({
   emailLookupHashUniqueIndex: uniqueIndex("sf_users_email_lookup_hash_uq").on(table.emailLookupHash),
   displayNameLookupHashIndex: index("sf_users_display_name_lookup_hash_idx").on(table.displayNameLookupHash),

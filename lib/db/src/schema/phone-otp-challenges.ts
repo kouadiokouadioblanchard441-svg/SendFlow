@@ -4,17 +4,20 @@ import {
   index,
   integer,
   pgTable,
+  text,
   timestamp,
   uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { usersTable } from "./users";
 
 export const phoneOtpChallengesTable = pgTable(
   "sf_phone_otp_challenges",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").references(() => usersTable.id, { onDelete: "cascade" }),
     phoneHash: varchar("phone_hash", { length: 64 }).notNull(),
     emailHash: varchar("email_hash", { length: 64 }),
     codeHash: varchar("code_hash", { length: 64 }),
@@ -48,6 +51,12 @@ export const phoneOtpChallengesTable = pgTable(
       table.status,
       table.expiresAt,
     ),
+    userPurposeIndex: index("sf_phone_otp_user_purpose_idx").on(
+      table.userId,
+      table.purpose,
+      table.status,
+      table.expiresAt,
+    ),
     requesterCreatedIndex: index("sf_phone_otp_requester_created_idx").on(table.requesterHash, table.createdAt),
     providerVerificationUniqueIndex: uniqueIndex("sf_phone_otp_provider_verification_uq").on(
       table.providerVerificationId,
@@ -70,7 +79,7 @@ export const phoneOtpChallengesTable = pgTable(
     ),
     purposeConstraint: check(
       "sf_phone_otp_purpose_check",
-      sql`${table.purpose} in ('signup', 'password_reset', 'pin_reset')`,
+      sql`${table.purpose} in ('signup', 'password_reset', 'pin_reset', 'customer_login')`,
     ),
     attemptsConstraint: check(
       "sf_phone_otp_attempts_check",

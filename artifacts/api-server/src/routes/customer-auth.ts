@@ -102,6 +102,8 @@ import {
 } from "../lib/turnstile";
 import { recordLoginActivity } from "../lib/login-activity";
 import { createCustomerPinRotationSessionPolicy } from "../lib/customer-pin-session-policy";
+import { requiresCustomerLoginOtp } from "../lib/customer-login-otp-policy";
+import { sendCustomerLoginOtp } from "../lib/customer-login-otp";
 import { createDeveloperApiKeyMaterial } from "../services/developer-api-security";
 import {
   activeReplitPaymentTestAccountCondition,
@@ -722,6 +724,9 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
           displayName: usersTable.displayName,
           countryCode: usersTable.countryCode,
           accountStatus: usersTable.status,
+          emailEncrypted: usersTable.emailEncrypted,
+          emailLookupHash: usersTable.emailLookupHash,
+          lastLoginCompletedAt: usersTable.lastLoginCompletedAt,
           passwordHash: customerCredentialsTable.passwordHash,
           pinHash: customerCredentialsTable.pinHash,
           paymentTestAccount: sql<boolean>`exists (
@@ -790,13 +795,30 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
           );
       }
 
+      if (
+        !isScopedPreviewAccount
+        && requiresCustomerLoginOtp(record.lastLoginCompletedAt, now)
+      ) {
+        const email = record.emailEncrypted
+          ? decryptSensitiveDataIfEncrypted(record.emailEncrypted, "user-email")
+          : null;
+        if (!email || !record.emailLookupHash) {
+          return { kind: "otp_unavailable" } as const;
+        }
+        return {
+          kind: "otp_required",
+          userId: record.userId,
+          email,
+          emailHash: record.emailLookupHash,
+        } as const;
+      }
+
       await tx
         .update(usersTable)
         .set({ lastSeenAt: now })
         .where(eq(usersTable.id, record.userId));
       const session = await insertCustomerSession(tx, record.userId, now);
       await recordLoginActivity(req, record.userId, session.sessionId, tx);
-      await clearAuthFailures(buckets, tx);
 
       return {
         kind: "signed-in",
@@ -823,6 +845,43 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         error:
           "Votre compte est bloqué. Veuillez contacter le support SendFlow pour obtenir de l’aide.",
       });
+      return;
+    }
+    if (result.kind === "otp_unavailable") {
+      res.status(503).json({
+        error: "La vérification par e-mail est momentanément indisponible.",
+      });
+      return;
+    }
+    if (result.kind === "otp_required") {
+      const otp = await sendCustomerLoginOtp({
+        userId: result.userId,
+        email: result.email,
+        emailHash: result.emailHash,
+        req,
+      });
+      if (otp.kind === "rate_limited") {
+        sendRateLimit(res, otp.retryAfterSeconds);
+        return;
+      }
+      if (otp.kind !== "sent") {
+        req.log.warn(
+          { failureCategory: "customer_login_email_otp_unavailable" },
+          "Customer login email verification is unavailable",
+        );
+        res.status(503).json({
+          error: "La vérification par e-mail est momentanément indisponible.",
+        });
+        return;
+      }
+      res.json(
+        SignInCustomerResponse.parse({
+          otpRequired: true,
+          challengeId: otp.challengeId,
+          expiresAt: otp.expiresAt,
+          resendAfterSeconds: otp.resendAfterSeconds,
+        }),
+      );
       return;
     }
     if (result.kind !== "signed-in") {
@@ -984,7 +1043,24 @@ router.post("/auth/unlock", async (req, res): Promise<void> => {
         .returning({ id: customerSessionsTable.id });
       if (!updatedSession) return { kind: "expired" } as const;
 
+      await tx
+        .update(usersTable)
+        .set({ lastLoginCompletedAt: now })
+        .where(eq(usersTable.id, session.userId));
       await clearAuthFailures(buckets, tx);
+      await clearAuthFailures(
+        getLoginAttemptBuckets(
+          (
+            await tx
+              .select({ emailLookupHash: usersTable.emailLookupHash })
+              .from(usersTable)
+              .where(eq(usersTable.id, session.userId))
+              .limit(1)
+          )[0]?.emailLookupHash ?? null,
+          req,
+        ),
+        tx,
+      );
       return { kind: "success" } as const;
     });
     if (result.kind === "rate") {
@@ -1506,7 +1582,24 @@ router.post(
           .returning({ id: customerSessionsTable.id });
         if (!updatedCredential || !updatedSession)
           return { kind: "expired" } as const;
+        await tx
+          .update(usersTable)
+          .set({ lastLoginCompletedAt: now })
+          .where(eq(usersTable.id, session.userId));
         await clearAuthFailures(buckets, tx);
+        await clearAuthFailures(
+          getLoginAttemptBuckets(
+            (
+              await tx
+                .select({ emailLookupHash: usersTable.emailLookupHash })
+                .from(usersTable)
+                .where(eq(usersTable.id, session.userId))
+                .limit(1)
+            )[0]?.emailLookupHash ?? null,
+            req,
+          ),
+          tx,
+        );
         return { kind: "success" } as const;
       });
       if (result.kind === "rate") {
@@ -1719,7 +1812,24 @@ router.put("/me/pin", async (req, res): Promise<void> => {
         .returning({ id: customerSessionsTable.id });
       if (!updatedSession)
         throw new Error("Customer session expired during PIN update");
+      await tx
+        .update(usersTable)
+        .set({ lastLoginCompletedAt: now })
+        .where(eq(usersTable.id, session.userId));
       await clearAuthFailures(buckets, tx);
+      await clearAuthFailures(
+        getLoginAttemptBuckets(
+          (
+            await tx
+              .select({ emailLookupHash: usersTable.emailLookupHash })
+              .from(usersTable)
+              .where(eq(usersTable.id, session.userId))
+              .limit(1)
+          )[0]?.emailLookupHash ?? null,
+          req,
+        ),
+        tx,
+      );
       return { kind: "success" } as const;
     });
 

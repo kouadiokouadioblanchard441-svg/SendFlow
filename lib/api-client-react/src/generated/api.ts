@@ -84,6 +84,7 @@ import type {
   CustomerBiometricVerificationInput,
   CustomerEmailMarketingPreference,
   CustomerEmailMarketingPreferenceUpdate,
+  CustomerLoginOtpChallenge,
   CustomerMutationResult,
   CustomerPasswordResetInput,
   CustomerPaymentLink,
@@ -1642,10 +1643,10 @@ export const getSignInCustomerUrl = () => {
 }
 
 /**
- * Validates the email address and password and issues a secure customer session cookie. Phone numbers remain available for other account and payment flows but are not accepted as the sign-in identifier.
+ * Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. The PIN is still required after the session is issued.
  * @summary Sign in to a SendFlow customer account
  */
-export const signInCustomer = async (customerSignInInput: CustomerSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult> => {
+export const signInCustomer = async (customerSignInInput: CustomerSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult | CustomerLoginOtpChallenge> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -1661,7 +1662,7 @@ export const signInCustomer = async (customerSignInInput: CustomerSignInInput, o
     }
     return headers;
   };
-return customFetch<CustomerAuthResult>(getSignInCustomerUrl(),
+return customFetch<CustomerAuthResult | CustomerLoginOtpChallenge>(getSignInCustomerUrl(),
   {
     ...options,
     method: 'POST',

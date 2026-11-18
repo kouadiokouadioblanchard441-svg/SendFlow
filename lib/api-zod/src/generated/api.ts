@@ -322,7 +322,7 @@ export const verifyEmailOtpBodyTurnstileTokenMax = 2048;
 
 export const VerifyEmailOtpBody = zod.object({
   "challengeId": zod.uuid(),
-  "purpose": zod.enum(['signup', 'password_reset', 'pin_reset']),
+  "purpose": zod.enum(['signup', 'password_reset', 'pin_reset', 'customer_login']),
   "code": zod.string().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp),
   "turnstileToken": zod.string().min(1).max(verifyEmailOtpBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for OTP verification.')
 })
@@ -507,7 +507,7 @@ export const RegisterCustomerResponse = zod.object({
 
 
 /**
- * Validates the email address and password and issues a secure customer session cookie. Phone numbers remain available for other account and payment flows but are not accepted as the sign-in identifier.
+ * Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. The PIN is still required after the session is issued.
  * @summary Sign in to a SendFlow customer account
  */
 export const signInCustomerBodyEmailMin = 5;
@@ -526,24 +526,31 @@ export const SignInCustomerBody = zod.object({
   "turnstileToken": zod.string().min(1).max(signInCustomerBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for sign-in.')
 })
 
-export const signInCustomerResponseDeveloperApiKeyPairLabelMax = 80;
+export const signInCustomerResponseOneDeveloperApiKeyPairLabelMax = 80;
 
-export const signInCustomerResponseDeveloperApiKeyPairPublicKeyRegExp = new RegExp('^sfpk_live_[A-Za-z0-9_-]{43}$');
-export const signInCustomerResponseDeveloperApiKeyPairSecretKeyRegExp = new RegExp('^sfsk_live_[A-Za-z0-9_-]{43}$');
+export const signInCustomerResponseOneDeveloperApiKeyPairPublicKeyRegExp = new RegExp('^sfpk_live_[A-Za-z0-9_-]{43}$');
+export const signInCustomerResponseOneDeveloperApiKeyPairSecretKeyRegExp = new RegExp('^sfsk_live_[A-Za-z0-9_-]{43}$');
+export const signInCustomerResponseTwoResendAfterSecondsMin = 0;
 
 
-export const SignInCustomerResponse = zod.object({
+
+export const SignInCustomerResponse = zod.union([zod.object({
   "userId": zod.string(),
   "phone": zod.string(),
   "displayName": zod.string().nullable(),
   "countryCode": zod.string().nullable(),
   "pinConfigured": zod.boolean(),
   "developerApiKeyPair": zod.object({
-  "label": zod.string().min(1).max(signInCustomerResponseDeveloperApiKeyPairLabelMax),
-  "publicKey": zod.string().regex(signInCustomerResponseDeveloperApiKeyPairPublicKeyRegExp),
-  "secretKey": zod.string().regex(signInCustomerResponseDeveloperApiKeyPairSecretKeyRegExp)
+  "label": zod.string().min(1).max(signInCustomerResponseOneDeveloperApiKeyPairLabelMax),
+  "publicKey": zod.string().regex(signInCustomerResponseOneDeveloperApiKeyPairPublicKeyRegExp),
+  "secretKey": zod.string().regex(signInCustomerResponseOneDeveloperApiKeyPairSecretKeyRegExp)
 }).optional().describe('Present only in a successful account-creation response; the secret must be saved immediately.')
-})
+}),zod.object({
+  "otpRequired": zod.literal(true),
+  "challengeId": zod.uuid(),
+  "expiresAt": zod.coerce.date(),
+  "resendAfterSeconds": zod.int().min(signInCustomerResponseTwoResendAfterSecondsMin)
+})])
 
 
 /**

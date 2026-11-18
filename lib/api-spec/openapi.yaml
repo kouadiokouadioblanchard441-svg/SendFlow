@@ -453,7 +453,7 @@ paths:
       operationId: signInCustomer
       tags: [account]
       summary: Sign in to a SendFlow customer account
-      description: Validates the email address and password and issues a secure customer session cookie. Phone numbers remain available for other account and payment flows but are not accepted as the sign-in identifier.
+      description: Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. The PIN is still required after the session is issued.
       requestBody:
         required: true
         content:
@@ -462,11 +462,13 @@ paths:
               $ref: "#/components/schemas/CustomerSignInInput"
       responses:
         "200":
-          description: Credentials accepted and session cookie issued.
+          description: Credentials accepted. Either a session cookie is issued, or an email OTP challenge is returned without creating a session.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CustomerAuthResult"
+                oneOf:
+                  - $ref: "#/components/schemas/CustomerAuthResult"
+                  - $ref: "#/components/schemas/CustomerLoginOtpChallenge"
         "400":
           description: Invalid request.
           content:
@@ -5742,7 +5744,7 @@ components:
           format: uuid
         purpose:
           type: string
-          enum: [signup, password_reset, pin_reset]
+          enum: [signup, password_reset, pin_reset, customer_login]
         code:
           type: string
           minLength: 6
@@ -5763,6 +5765,22 @@ components:
           type: string
           format: date-time
       required: [emailVerified, verifiedAt]
+    CustomerLoginOtpChallenge:
+      type: object
+      properties:
+        otpRequired:
+          type: boolean
+          enum: [true]
+        challengeId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+        resendAfterSeconds:
+          type: integer
+          minimum: 0
+      required: [otpRequired, challengeId, expiresAt, resendAfterSeconds]
     OtpRateLimitError:
       type: object
       properties:

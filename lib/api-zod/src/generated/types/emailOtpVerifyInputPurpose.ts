@@ -13,4 +13,5 @@ export const EmailOtpVerifyInputPurpose = {
   signup: 'signup',
   password_reset: 'password_reset',
   pin_reset: 'pin_reset',
+  customer_login: 'customer_login',
 } as const;

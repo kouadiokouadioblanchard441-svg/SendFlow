@@ -109,7 +109,9 @@ async function request(path, { method = "GET", body, cookie } = {}) {
     else if (path === "/api/auth/reset-password") action = "password_reset";
     else if (path === "/api/auth/send-otp" && ["signup", "password_reset"].includes(body.purpose)) {
       action = body.purpose;
-    } else if (path === "/api/auth/verify-otp") action = body.purpose;
+    } else if (path === "/api/auth/verify-otp") {
+      action = body.purpose === "customer_login" ? "login" : body.purpose;
+    }
 
     if (action && !Object.hasOwn(requestBody, "turnstileToken")) {
       const token = `isolated-${randomUUID()}`;
@@ -208,16 +210,87 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
   assert.equal(registeredState.email_verified, true);
   assert.equal(registeredState.phone_verified, false);
 
+  const registrationSession = sessionCookie(registration);
+  const pinSetup = await request("/api/me/pin", {
+    method: "PUT",
+    body: { newPin: "1357" },
+    cookie: registrationSession,
+  });
+  assert.equal(pinSetup.status, 200, pinSetup.text);
+
   const signIn = await request("/api/auth/sign-in", {
     method: "POST",
     body: { email, password: initialPassword },
   });
   assert.equal(signIn.status, 200, signIn.text);
+  assert.equal(responseBody(signIn).otpRequired, undefined);
   const userSession = sessionCookie(signIn);
   assert.equal(responseBody(signIn).userId, registeredAccount.userId);
   const sessionLookup = await request("/api/auth/session", { cookie: userSession });
   assert.equal(sessionLookup.status, 200, sessionLookup.text);
   assert.equal(responseBody(sessionLookup).userId, registeredAccount.userId);
+
+  await pool.query(
+    "UPDATE sf_users SET last_login_completed_at=now()-interval '25 hours' WHERE id=$1",
+    [registeredAccount.userId],
+  );
+  const stepUpSignIn = await request("/api/auth/sign-in", {
+    method: "POST",
+    body: { email, password: initialPassword },
+  });
+  assert.equal(stepUpSignIn.status, 200, stepUpSignIn.text);
+  const stepUpBody = responseBody(stepUpSignIn);
+  assert.equal(stepUpBody.otpRequired, true);
+  assert.equal(typeof stepUpBody.challengeId, "string");
+  assert.equal(
+    (headerValue(stepUpSignIn.headers, "set-cookie") ?? [])
+      .some((entry) => entry.startsWith("__Host-sendflow_session=")),
+    false,
+    "password acceptance alone must not issue a customer session after the 24-hour threshold",
+  );
+
+  const verifiedLogin = await request("/api/auth/verify-otp", {
+    method: "POST",
+    body: {
+      challengeId: stepUpBody.challengeId,
+      purpose: "customer_login",
+      code: getDeliveredCode(email),
+    },
+  });
+  assert.equal(verifiedLogin.status, 200, verifiedLogin.text);
+  const verifiedLoginSession = sessionCookie(verifiedLogin);
+  const beforePinUnlock = await request("/api/auth/session", { cookie: verifiedLoginSession });
+  assert.equal(beforePinUnlock.status, 200, beforePinUnlock.text);
+  assert.equal(responseBody(beforePinUnlock).pinUnlocked, false);
+
+  const pinUnlock = await request("/api/auth/unlock", {
+    method: "POST",
+    body: { pin: "1357" },
+    cookie: verifiedLoginSession,
+  });
+  assert.equal(pinUnlock.status, 200, pinUnlock.text);
+  const completedLogin = (await pool.query(
+    "SELECT last_login_completed_at FROM sf_users WHERE id=$1",
+    [registeredAccount.userId],
+  )).rows[0];
+  assert.ok(completedLogin.last_login_completed_at);
+
+  const reusedLoginOtp = await request("/api/auth/verify-otp", {
+    method: "POST",
+    body: {
+      challengeId: stepUpBody.challengeId,
+      purpose: "customer_login",
+      code: getDeliveredCode(email),
+    },
+  });
+  assert.equal(reusedLoginOtp.status, 409, reusedLoginOtp.text);
+  const recentLogin = await request("/api/auth/sign-in", {
+    method: "POST",
+    body: { email, password: initialPassword },
+  });
+  assert.equal(recentLogin.status, 200, recentLogin.text);
+  assert.equal(responseBody(recentLogin).otpRequired, undefined);
+  sessionCookie(recentLogin);
 
   // The real per-phone resend cooldown is 60 seconds; expire only this fixture
   // challenge so the phone-addressed recovery path can run in the same test.
@@ -312,5 +385,5 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
   assert.equal(recoveredSignIn.status, 200, recoveredSignIn.text);
   assert.equal(responseBody(recoveredSignIn).userId, registeredAccount.userId);
 
-  assert.equal(providerCalls, 15, "only the expected Turnstile and mocked email requests are made");
+  assert.equal(providerCalls, 18, "only the expected Turnstile and mocked email requests are made");
 });

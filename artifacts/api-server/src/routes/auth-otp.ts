@@ -32,6 +32,11 @@ import {
   ExternalProviderCallUnavailableError,
 } from "../lib/provider-call-policy";
 import {
+  insertCustomerSession,
+  setCustomerSessionCookie,
+} from "../lib/customer-session";
+import { recordLoginActivity } from "../lib/login-activity";
+import {
   EMAIL_OTP_LIFETIME_SECONDS,
   createEmailOtpCode,
   hashEmailOtpCode,
@@ -54,7 +59,9 @@ import {
   formatAuthRateLimitMessage,
   getCustomerAccessAttemptBuckets,
   getCustomerAccessAttemptBucketsForRequest,
+  getCustomerLoginEmailAttemptBucket,
   getAuthRateLimit,
+  recordAuthFailure,
   recordAuthFailureAndGetRetryAfter,
   withAuthAttemptLock,
   type AuthRateLimitDatabase,
@@ -78,6 +85,8 @@ function turnstileActionForOtpPurpose(purpose: unknown): TurnstileAction | null 
     case "password_reset":
     case "pin_reset":
       return purpose;
+    case "customer_login":
+      return "login";
     default:
       return null;
   }
@@ -731,6 +740,37 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
     }
     if (await isSignupRateLimited(req, res, signupBuckets)) return;
   }
+  let loginBuckets: string[] | null = null;
+  if (purpose === "customer_login") {
+    try {
+      const [identity] = await db
+        .select({
+          userId: phoneOtpChallengesTable.userId,
+          emailHash: phoneOtpChallengesTable.emailHash,
+        })
+        .from(phoneOtpChallengesTable)
+        .where(eq(phoneOtpChallengesTable.id, parsed.data.challengeId))
+        .limit(1);
+      if (identity?.userId && identity.emailHash) {
+        loginBuckets = [
+          getCustomerLoginEmailAttemptBucket(identity.emailHash),
+          fingerprint(`customer-login-requester:${requesterAddress(req)}`),
+        ];
+        const retry = await withAuthAttemptLock(
+          loginBuckets,
+          (tx) => getAuthRateLimit(loginBuckets!, new Date(), tx),
+        );
+        if (retry !== null) {
+          sendRateLimitResponse(res, formatAuthRateLimitMessage(retry), retry);
+          return;
+        }
+      }
+    } catch (error) {
+      req.log.error({ err: error }, "Customer login OTP rate-limit lookup failed");
+      res.status(503).json({ error: "La vérification par e-mail est indisponible." });
+      return;
+    }
+  }
 
   const turnstile = await verifyTurnstileRequest(
     req,
@@ -829,6 +869,13 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         if (retry !== null) return { kind: "rate", retry };
         return reserveVerification(tx);
       });
+    } else if (loginBuckets) {
+      const buckets = loginBuckets;
+      reservation = await withAuthAttemptLock(buckets, async (tx) => {
+        const retry = await getAuthRateLimit(buckets, new Date(), tx);
+        if (retry !== null) return { kind: "rate", retry } as const;
+        return reserveVerification(tx);
+      });
     } else {
       reservation = await db.transaction(reserveVerification);
     }
@@ -871,7 +918,15 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
 
   if (!matchesEmailOtpCode(parsed.data.challengeId, purpose, parsed.data.code, reservation.codeHash)) {
     try {
-      await db.transaction(async (tx) => {
+      const recordRejectedCode = async (tx: AuthRateLimitDatabase) => {
+        if (loginBuckets) {
+          await recordAuthFailure(
+            loginBuckets,
+            new Date(),
+            tx,
+            CUSTOMER_ACCESS_RATE_LIMIT_POLICY,
+          );
+        }
         if (reservation.attemptNumber >= maxCodeChecks) {
           await tx.update(phoneOtpChallengesTable)
             .set({ status: "locked", codeHash: null })
@@ -888,7 +943,12 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
             completedAt: new Date(),
           })
           .where(eq(phoneOtpEventsTable.id, reservation.eventId));
-      });
+      };
+      if (loginBuckets) {
+        await withAuthAttemptLock(loginBuckets, recordRejectedCode);
+      } else {
+        await db.transaction(recordRejectedCode);
+      }
     } catch (error) {
       req.log.error({ err: error, challengeId: parsed.data.challengeId }, "OTP rejection could not be recorded");
       res.status(503).json({ error: "La vérification par e-mail est indisponible." });
@@ -934,6 +994,35 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       return { kind: "inactive" } as const;
     }
 
+    let loginUserId: string | null = null;
+    if (purpose === "customer_login") {
+      const [loginUser] = await tx
+        .select({
+          id: usersTable.id,
+          status: usersTable.status,
+          emailLookupHash: usersTable.emailLookupHash,
+        })
+        .from(usersTable)
+        .where(and(
+          eq(usersTable.id, challenge.userId ?? ""),
+          eq(usersTable.status, "active"),
+          eq(usersTable.emailLookupHash, challenge.emailHash),
+        ))
+        .for("update")
+        .limit(1);
+      if (!loginUser) {
+        await tx.update(phoneOtpEventsTable)
+          .set({
+            outcome: "challenge_inactive",
+            diagnosticMessage: null,
+            completedAt: new Date(),
+          })
+          .where(eq(phoneOtpEventsTable.id, reservation.eventId));
+        return { kind: "inactive" } as const;
+      }
+      loginUserId = loginUser.id;
+    }
+
     const [updated] = await tx.update(phoneOtpChallengesTable)
       .set({
         status: "verified",
@@ -941,6 +1030,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         emailVerified: true,
         codeHash: null,
         verifiedAt,
+        ...(purpose === "customer_login" ? { consumedAt: verifiedAt } : {}),
       })
       .where(eq(phoneOtpChallengesTable.id, challenge.id))
       .returning({ verifiedAt: phoneOtpChallengesTable.verifiedAt, emailHash: phoneOtpChallengesTable.emailHash });
@@ -950,6 +1040,12 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       .set({ emailVerifiedAt: verifiedAt })
       .where(eq(usersTable.emailLookupHash, updated.emailHash));
 
+    let loginSession: Awaited<ReturnType<typeof insertCustomerSession>> | null = null;
+    if (purpose === "customer_login" && loginUserId) {
+      loginSession = await insertCustomerSession(tx, loginUserId, verifiedAt);
+      await recordLoginActivity(req, loginUserId, loginSession.sessionId, tx);
+    }
+
     await tx.update(phoneOtpEventsTable)
       .set({
         outcome: "verified",
@@ -957,13 +1053,16 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         completedAt: new Date(),
       })
       .where(eq(phoneOtpEventsTable.id, reservation.eventId));
-    return { kind: "verified", verifiedAt: updated.verifiedAt } as const;
+    return loginSession
+      ? { kind: "login_verified", verifiedAt: updated.verifiedAt, session: loginSession } as const
+      : { kind: "verified", verifiedAt: updated.verifiedAt } as const;
   };
 
   try {
     let outcome:
       | { kind: "inactive" }
       | { kind: "verified"; verifiedAt: Date }
+      | { kind: "login_verified"; verifiedAt: Date; session: Awaited<ReturnType<typeof insertCustomerSession>> }
       | { kind: "rate"; retry: number };
     if (signupBuckets) {
       outcome = await withAuthAttemptLock(signupBuckets, async (tx) => {
@@ -986,6 +1085,12 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         }
         return finalizeVerification(tx);
       });
+    } else if (loginBuckets) {
+      outcome = await withAuthAttemptLock(loginBuckets, async (tx) => {
+        const retry = await getAuthRateLimit(loginBuckets!, new Date(), tx);
+        if (retry !== null) return { kind: "rate", retry } as const;
+        return finalizeVerification(tx);
+      });
     } else {
       outcome = await db.transaction(finalizeVerification);
     }
@@ -995,6 +1100,14 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       return;
     }
     if (outcome.kind !== "verified") {
+      if (outcome.kind === "login_verified") {
+        setCustomerSessionCookie(res, outcome.session.token);
+        res.json(VerifyEmailOtpResponse.parse({
+          emailVerified: true,
+          verifiedAt: outcome.verifiedAt,
+        }));
+        return;
+      }
       res.status(409).json({ error: "Cette vérification n'est plus active. Demandez un nouveau code." });
       return;
     }

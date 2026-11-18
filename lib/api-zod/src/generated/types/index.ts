@@ -177,6 +177,7 @@ export * from './customerBiometricVerificationInput';
 export * from './customerBiometricVerificationInputCredential';
 export * from './customerEmailMarketingPreference';
 export * from './customerEmailMarketingPreferenceUpdate';
+export * from './customerLoginOtpChallenge';
 export * from './customerMutationResult';
 export * from './customerPasswordResetInput';
 export * from './customerPaymentLink';
