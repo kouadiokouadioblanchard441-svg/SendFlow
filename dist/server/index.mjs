@@ -11648,6 +11648,8 @@ function isSendFlowPaymentHost(hostname) {
 // server/site-route-matcher.ts
 var exactApplicationPaths = /* @__PURE__ */ new Set([
   "/",
+  "/marchand/connexio/sendflow",
+  "/marchand/cr\xE9ation/sendflow",
   "/create-pin",
   "/pin",
   "/biometric",

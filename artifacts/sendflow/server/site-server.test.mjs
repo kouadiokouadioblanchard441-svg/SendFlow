@@ -114,7 +114,15 @@ function postGate(server, path, token) {
 
 test("serves index.html for registered application routes", async (t) => {
   const server = await fixture(t);
-  for (const path of ["/", "/sign-in", "/linkflow/new", "/transaction/example-id"]) {
+  for (const path of [
+    "/",
+    "/sign-in",
+    "/sign-up",
+    "/marchand/connexio/sendflow",
+    "/marchand/cr%C3%A9ation/sendflow",
+    "/linkflow/new",
+    "/transaction/example-id",
+  ]) {
     const response = await get(server, path);
     assert.equal(response.status, 200, path);
     assert.match(response.body, /SendFlow/, path);

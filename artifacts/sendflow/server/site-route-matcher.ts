@@ -7,6 +7,8 @@ import { isSendFlowPaymentHost } from "../src/lib/payment-host.ts";
 
 const exactApplicationPaths = new Set([
   "/",
+  "/marchand/connexio/sendflow",
+  "/marchand/création/sendflow",
   "/create-pin",
   "/pin",
   "/biometric",
