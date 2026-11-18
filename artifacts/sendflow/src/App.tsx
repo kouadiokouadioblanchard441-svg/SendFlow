@@ -247,6 +247,8 @@ function App() {
                 <Route path="/" component={OnboardingPage} />
                 <Route path="/sign-in/*?" component={SigninPage} />
                 <Route path="/sign-up/*?" component={SignupPage} />
+                <Route path="/marchand/connexio/sendflow" component={SigninPage} />
+                <Route path="/marchand/création/sendflow" component={SignupPage} />
                 <Route path="/create-pin" component={() => <PinPage mode="create" />} />
                 <Route path="/pin" component={() => <PinPage mode="enter" />} />
                 <Route path="/biometric" component={BiometricSettingsPage} />
