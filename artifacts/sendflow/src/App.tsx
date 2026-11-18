@@ -14,7 +14,11 @@ import {
 import type { LegalPageProps } from '@/pages/legal';
 import { useSeo } from '@/lib/seo';
 import { clearPinUnlock, getPinUnlockExpiry } from '@/lib/pin-unlock';
-import { requiresCustomerPinUnlock, shouldRelockCustomerPinUnlock } from '@/lib/customer-route-guard';
+import {
+  requiresCustomerPinUnlock,
+  requiresCustomerSessionVerification,
+  shouldRelockCustomerPinUnlock,
+} from '@/lib/customer-route-guard';
 import { GlobalErrorDialog } from '@/components/global-error-dialog';
 import { getHttpStatus, queryClient } from '@/lib/query-client';
 import { customerAuthRoutes } from '@/lib/customer-auth-routes';
@@ -66,22 +70,51 @@ const DocsPage = lazy(() => import('@/pages/docs'));
 function CustomerPinGuard({ children }: { children: ReactNode }) {
   const [path, setLocation] = useLocation();
   const [, forceRefresh] = useState(0);
+  const [verifiedPinRoute, setVerifiedPinRoute] = useState<string | null>(null);
   const expiry = getPinUnlockExpiry();
   const isPublicPaymentRoute = path.startsWith('/pay/');
+  const isPinEntryRoute = path === '/pin' || path === '/create-pin';
+  const requiresSessionVerification = requiresCustomerSessionVerification(path, expiry);
   const sessionQuery = useGetCustomerSession({
     query: {
       queryKey: getGetCustomerSessionQueryKey(),
-      enabled: expiry !== null && !isPublicPaymentRoute,
+      enabled: requiresSessionVerification && !isPublicPaymentRoute,
       retry: false,
-      refetchInterval: expiry !== null ? 30_000 : false,
+      refetchInterval: requiresSessionVerification ? 30_000 : false,
       refetchOnWindowFocus: true,
+      refetchOnMount: isPinEntryRoute ? 'always' : true,
       staleTime: 0,
     },
   });
 
   useEffect(() => {
+    if (!isPinEntryRoute) {
+      setVerifiedPinRoute(null);
+      return;
+    }
+    if (sessionQuery.isSuccess && !sessionQuery.isFetching) {
+      setVerifiedPinRoute(path);
+    }
+  }, [
+    isPinEntryRoute,
+    path,
+    sessionQuery.dataUpdatedAt,
+    sessionQuery.isFetching,
+    sessionQuery.isSuccess,
+  ]);
+
+  useEffect(() => {
     if (isPublicPaymentRoute) return;
     const sessionStatus = getHttpStatus(sessionQuery.error);
+    if (requiresSessionVerification && sessionQuery.isError) {
+      setVerifiedPinRoute(null);
+      clearPinUnlock();
+      queryClient.clear();
+      forceRefresh((value) => value + 1);
+      setLocation(customerAuthRoutes.signIn);
+      return;
+    }
+    if (expiry === null) return;
     if (!shouldRelockCustomerPinUnlock(sessionQuery.data?.pinUnlocked, sessionStatus)) return;
 
     clearPinUnlock();
@@ -89,7 +122,7 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
     forceRefresh((value) => value + 1);
 
     if (sessionStatus === 401) {
-      setLocation('/sign-in');
+      setLocation(customerAuthRoutes.signIn);
     } else if (sessionQuery.data?.pinConfigured === false) {
       setLocation('/create-pin');
     }
@@ -97,7 +130,11 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
     sessionQuery.data?.pinConfigured,
     sessionQuery.data?.pinUnlocked,
     sessionQuery.error,
+    sessionQuery.isError,
     isPublicPaymentRoute,
+    expiry,
+    path,
+    requiresSessionVerification,
     setLocation,
   ]);
 
@@ -119,7 +156,19 @@ function CustomerPinGuard({ children }: { children: ReactNode }) {
   }, [expiry, isPublicPaymentRoute]);
 
   const isProtected = requiresCustomerPinUnlock(path);
-  if (isProtected && expiry === null) return <Redirect to="/pin" />;
+  if (isPinEntryRoute && (verifiedPinRoute !== path || !sessionQuery.data)) {
+    return <PageLoadingScreen />;
+  }
+  if (isPinEntryRoute && path === '/pin' && !sessionQuery.data?.pinConfigured) {
+    return <Redirect to="/create-pin" />;
+  }
+  if (isPinEntryRoute && path === '/create-pin' && sessionQuery.data?.pinConfigured) {
+    return <Redirect to="/pin" />;
+  }
+  if (isProtected && expiry === null) {
+    if (!sessionQuery.data) return <PageLoadingScreen />;
+    return <Redirect to={sessionQuery.data.pinConfigured ? '/pin' : '/create-pin'} />;
+  }
   return <>{children}</>;
 }
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');

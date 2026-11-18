@@ -212041,9 +212041,28 @@ function parseCustomerProfileName(value) {
   }
 }
 
+// src/lib/customer-session-policy.ts
+var CUSTOMER_SESSION_TTL_MS = 10 * 60 * 1e3;
+function customerSessionExpiresAt(createdAt) {
+  return new Date(createdAt.getTime() + CUSTOMER_SESSION_TTL_MS);
+}
+function isCustomerSessionPastMaximumAge(createdAt, now = /* @__PURE__ */ new Date()) {
+  const createdAtMs = createdAt.getTime();
+  const nowMs = now.getTime();
+  return !Number.isFinite(createdAtMs) || !Number.isFinite(nowMs) || createdAtMs > nowMs || nowMs - createdAtMs >= CUSTOMER_SESSION_TTL_MS;
+}
+function customerSessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+    maxAge: CUSTOMER_SESSION_TTL_MS
+  };
+}
+
 // src/lib/customer-session.ts
 var CUSTOMER_SESSION_COOKIE = "__Host-sendflow_session";
-var CUSTOMER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1e3;
 var CUSTOMER_PIN_UNLOCK_TTL_MS = 15 * 60 * 1e3;
 function readSessionCookie(req) {
   const cookieHeader = req.headers.cookie;
@@ -212059,7 +212078,7 @@ function readSessionCookie(req) {
 }
 async function insertCustomerSession(database, userId, now = /* @__PURE__ */ new Date()) {
   const token = createCustomerSessionToken();
-  const expiresAt = new Date(now.getTime() + CUSTOMER_SESSION_TTL_MS);
+  const expiresAt = customerSessionExpiresAt(now);
   const [session] = await database.insert(customerSessionsTable).values({
     userId,
     tokenHash: hashCustomerSessionToken(token),
@@ -212069,13 +212088,7 @@ async function insertCustomerSession(database, userId, now = /* @__PURE__ */ new
   return { sessionId: session.id, token, expiresAt };
 }
 function setCustomerSessionCookie(res, token) {
-  res.cookie(CUSTOMER_SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",
-    maxAge: CUSTOMER_SESSION_TTL_MS
-  });
+  res.cookie(CUSTOMER_SESSION_COOKIE, token, customerSessionCookieOptions());
 }
 function clearCustomerSessionCookie(res) {
   res.clearCookie(CUSTOMER_SESSION_COOKIE, {
@@ -212092,6 +212105,7 @@ async function getCustomerSession(req, { touchLastSeen = true } = {}) {
   const tokenHash2 = hashCustomerSessionToken(token);
   const [row] = await db.select({
     sessionId: customerSessionsTable.id,
+    createdAt: customerSessionsTable.createdAt,
     userId: usersTable.id,
     phone: usersTable.phone,
     displayName: usersTable.displayName,
@@ -212110,11 +212124,18 @@ async function getCustomerSession(req, { touchLastSeen = true } = {}) {
     and(
       eq(customerSessionsTable.tokenHash, tokenHash2),
       isNull(customerSessionsTable.revokedAt),
-      gte(customerSessionsTable.expiresAt, now),
+      gt(customerSessionsTable.expiresAt, now),
       sharedDatabaseCustomerCondition()
     )
   ).limit(1);
   if (!row) return null;
+  if (isCustomerSessionPastMaximumAge(row.createdAt, now)) {
+    await db.update(customerSessionsTable).set({ revokedAt: now, pinVerifiedUntil: null }).where(and(
+      eq(customerSessionsTable.id, row.sessionId),
+      isNull(customerSessionsTable.revokedAt)
+    ));
+    return null;
+  }
   const paymentTestAccount = isSharedDatabasePreview() && row.paymentTestAccount;
   if (isSharedDatabasePreview() && !paymentTestAccount && !previewPasswordForVerification(row.credentialPasswordHash ?? "")) return null;
   if (row.accountStatus !== "active") {

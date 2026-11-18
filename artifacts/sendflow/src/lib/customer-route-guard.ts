@@ -24,6 +24,13 @@ export function requiresCustomerPinUnlock(path: string) {
     || path.startsWith('/notifications/');
 }
 
+export function requiresCustomerSessionVerification(path: string, pinUnlockExpiry: number | null) {
+  return pinUnlockExpiry !== null
+    || path === '/pin'
+    || path === '/create-pin'
+    || requiresCustomerPinUnlock(path);
+}
+
 export function shouldRelockCustomerPinUnlock(
   pinUnlocked: boolean | undefined,
   sessionStatusCode: number | undefined,

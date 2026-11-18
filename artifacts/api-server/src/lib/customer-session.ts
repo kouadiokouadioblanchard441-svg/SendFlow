@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { and, db, eq, gte, isNull, sql, customerCredentialsTable, customerSessionsTable, usersTable } from "@workspace/db";
+import { and, db, eq, gt, isNull, sql, customerCredentialsTable, customerSessionsTable, usersTable } from "@workspace/db";
 import { createCustomerSessionToken, hashCustomerSessionToken, isCustomerSessionToken } from "./customer-auth-crypto";
 import { decryptSensitiveDataIfEncrypted } from "./sensitive-data-crypto";
 import { isSharedDatabasePreview } from "./shared-database-preview-guard";
@@ -7,9 +7,15 @@ import { sharedDatabaseCustomerCondition } from "./replit-payment-test-access";
 import { previewPasswordForVerification } from "./preview-credential-policy";
 import { formatCustomerDisplayName } from "./customer-profile-policy";
 import { activePreviewAccountCondition } from "./preview-account-condition";
+import {
+  customerSessionCookieOptions,
+  customerSessionExpiresAt,
+  isCustomerSessionPastMaximumAge,
+} from "./customer-session-policy";
+
+export { CUSTOMER_SESSION_TTL_MS } from "./customer-session-policy";
 
 export const CUSTOMER_SESSION_COOKIE = "__Host-sendflow_session";
-export const CUSTOMER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const CUSTOMER_PIN_UNLOCK_TTL_MS = 15 * 60 * 1000;
 
 type InsertDatabase = Pick<typeof db, "insert">;
@@ -42,7 +48,7 @@ function readSessionCookie(req: Request) {
 
 export async function insertCustomerSession(database: InsertDatabase, userId: string, now = new Date()) {
   const token = createCustomerSessionToken();
-  const expiresAt = new Date(now.getTime() + CUSTOMER_SESSION_TTL_MS);
+  const expiresAt = customerSessionExpiresAt(now);
   const [session] = await database
     .insert(customerSessionsTable)
     .values({
@@ -57,13 +63,7 @@ export async function insertCustomerSession(database: InsertDatabase, userId: st
 }
 
 export function setCustomerSessionCookie(res: Response, token: string) {
-  res.cookie(CUSTOMER_SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",
-    maxAge: CUSTOMER_SESSION_TTL_MS,
-  });
+  res.cookie(CUSTOMER_SESSION_COOKIE, token, customerSessionCookieOptions());
 }
 
 export function clearCustomerSessionCookie(res: Response) {
@@ -87,6 +87,7 @@ export async function getCustomerSession(
   const [row] = await db
     .select({
       sessionId: customerSessionsTable.id,
+      createdAt: customerSessionsTable.createdAt,
       userId: usersTable.id,
       phone: usersTable.phone,
       displayName: usersTable.displayName,
@@ -111,13 +112,23 @@ export async function getCustomerSession(
       and(
         eq(customerSessionsTable.tokenHash, tokenHash),
         isNull(customerSessionsTable.revokedAt),
-        gte(customerSessionsTable.expiresAt, now),
+        gt(customerSessionsTable.expiresAt, now),
         sharedDatabaseCustomerCondition(),
       ),
     )
     .limit(1);
 
   if (!row) return null;
+  if (isCustomerSessionPastMaximumAge(row.createdAt, now)) {
+    await db
+      .update(customerSessionsTable)
+      .set({ revokedAt: now, pinVerifiedUntil: null })
+      .where(and(
+        eq(customerSessionsTable.id, row.sessionId),
+        isNull(customerSessionsTable.revokedAt),
+      ));
+    return null;
+  }
   const paymentTestAccount = isSharedDatabasePreview() && row.paymentTestAccount;
   if (
     isSharedDatabasePreview() &&
