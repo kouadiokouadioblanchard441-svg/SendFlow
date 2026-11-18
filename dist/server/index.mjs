@@ -11650,6 +11650,7 @@ var exactApplicationPaths = /* @__PURE__ */ new Set([
   "/",
   "/marchand/connexio/sendflow",
   "/marchand/cr\xE9ation/sendflow",
+  "/marchand/reinitialisation-mot-de-passe/sendflow",
   "/create-pin",
   "/pin",
   "/biometric",

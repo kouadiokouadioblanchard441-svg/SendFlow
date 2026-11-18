@@ -9,6 +9,7 @@ const exactApplicationPaths = new Set([
   "/",
   "/marchand/connexio/sendflow",
   "/marchand/création/sendflow",
+  "/marchand/reinitialisation-mot-de-passe/sendflow",
   "/create-pin",
   "/pin",
   "/biometric",

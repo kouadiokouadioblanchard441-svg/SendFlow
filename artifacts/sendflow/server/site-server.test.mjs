@@ -120,6 +120,7 @@ test("serves index.html for registered application routes", async (t) => {
     "/sign-up",
     "/marchand/connexio/sendflow",
     "/marchand/cr%C3%A9ation/sendflow",
+    "/marchand/reinitialisation-mot-de-passe/sendflow",
     "/linkflow/new",
     "/transaction/example-id",
   ]) {
