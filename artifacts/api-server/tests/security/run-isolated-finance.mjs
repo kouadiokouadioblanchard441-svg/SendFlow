@@ -25,6 +25,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const apiDir = join(root, "artifacts/api-server");
 const temp = mkdtempSync(join(tmpdir(), "sendflow-isolated-finance-"));
 const data = join(temp, "data"), socket = join(temp, "socket");
+const postgresTlsCertificate = join(temp, "postgres-test-cert.pem");
+const postgresTlsPrivateKey = join(temp, "postgres-test-key.pem");
 mkdirSync(socket, { mode: 0o700 });
 const baseEnv = { PATH: process.env.PATH, HOME: temp, LANG: "C.UTF-8" };
 const customerAuthEmailOnly = process.argv.includes("--customer-auth-email-only");
@@ -34,8 +36,16 @@ let exitCode = 1;
 try {
   execFileSync("initdb", ["-D", data, "--username=sf_fixture_owner", "--auth=trust", "--no-locale", "--encoding=UTF8"],
     { env: baseEnv, stdio: "pipe" });
+  execFileSync("openssl", [
+    "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+    "-keyout", postgresTlsPrivateKey,
+    "-out", postgresTlsCertificate,
+    "-days", "1",
+    "-subj", "/CN=localhost",
+    "-addext", "subjectAltName=DNS:localhost",
+  ], { env: baseEnv, stdio: "pipe" });
   execFileSync("pg_ctl", ["-D", data, "-l", join(temp, "postgres.log"), "-o",
-    `-F -k ${socket} -p 15432 -c listen_addresses='' -c max_connections=30`, "-w", "start"],
+    `-F -h localhost -k ${socket} -p 15432 -c ssl=on -c ssl_cert_file=${postgresTlsCertificate} -c ssl_key_file=${postgresTlsPrivateKey} -c max_connections=30`, "-w", "start"],
     { env: baseEnv, stdio: "pipe" });
   started = true;
   owner = new pg.Pool({ host: socket, port: 15432, database: "postgres", user: "sf_fixture_owner" });
@@ -44,6 +54,31 @@ try {
   { cwd: root, env: baseEnv, encoding: "utf8", maxBuffer: 8_000_000 });
   await owner.query(schema);
   if (customerAuthEmailOnly) {
+    await owner.query(`ALTER TABLE sf_users DROP COLUMN last_login_completed_at;
+      ALTER TABLE sf_phone_otp_challenges
+        DROP COLUMN user_id,
+        DROP CONSTRAINT sf_phone_otp_purpose_check,
+        ADD CONSTRAINT sf_phone_otp_purpose_check
+          CHECK (purpose IN ('signup', 'password_reset', 'pin_reset')) NOT VALID`);
+    const customerLoginOtpMigration = readFileSync(join(root,
+      "lib/db/migrations/2026-11-18-customer-login-email-otp.sql"), "utf8");
+    await owner.query(customerLoginOtpMigration);
+    await owner.query(customerLoginOtpMigration);
+    const loginOtpSchema = await owner.query(`SELECT
+      (SELECT count(*)::int FROM information_schema.columns
+       WHERE table_schema='public' AND table_name='sf_users'
+         AND column_name='last_login_completed_at') AS login_timestamp_column,
+      (SELECT count(*)::int FROM information_schema.columns
+       WHERE table_schema='public' AND table_name='sf_phone_otp_challenges'
+         AND column_name='user_id') AS challenge_user_column,
+      (SELECT count(*)::int FROM pg_constraint
+       WHERE conname='sf_phone_otp_user_id_fk'
+         AND conrelid='public.sf_phone_otp_challenges'::regclass) AS user_foreign_key`);
+    assert.deepEqual(loginOtpSchema.rows[0], {
+      login_timestamp_column: 1,
+      challenge_user_column: 1,
+      user_foreign_key: 1,
+    });
     await owner.query(`INSERT INTO sf_countries
       (country_code,country_name,phone_prefix,min_phone_digits,max_phone_digits,enabled,signup_enabled,created_by,updated_by)
       VALUES ('ci','Fixture Country','+225',8,10,true,true,'fixture','fixture')`);
@@ -380,9 +415,13 @@ try {
       } },
     ],
   });
-  const databaseUrl = new URL("postgresql://localhost/postgres");
-  databaseUrl.searchParams.set("host", socket);
-  databaseUrl.searchParams.set("port", "15432");
+  const databaseUrl = customerAuthEmailOnly
+    ? new URL("postgresql://localhost:15432/postgres?sslmode=verify-full")
+    : new URL("postgresql://localhost/postgres");
+  if (!customerAuthEmailOnly) {
+    databaseUrl.searchParams.set("host", socket);
+    databaseUrl.searchParams.set("port", "15432");
+  }
   databaseUrl.searchParams.set("user", "sf_fixture_app");
   const turnstileOnly = process.argv.includes("--turnstile-only");
   const catalogOnly = process.argv.includes("--catalog-only");
@@ -421,6 +460,7 @@ try {
       NODE_ENV: customerAuthEmailOnly ? "production" : "development",
       SENDFLOW_DATABASE_TARGET: customerAuthEmailOnly ? "production" : "development",
       DATABASE_URL: databaseUrl.toString(), SENDFLOW_ISOLATED_RUNTIME: runtime,
+      DATABASE_CA_CERT: customerAuthEmailOnly ? readFileSync(postgresTlsCertificate, "utf8") : undefined,
       SENDFLOW_FIXTURE_SOCKET: socket, SESSION_SECRET: randomBytes(32).toString("hex"),
       CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
       TURNSTILE_SECRET_KEY: "isolated-test-turnstile-secret",

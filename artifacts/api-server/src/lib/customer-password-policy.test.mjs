@@ -5,6 +5,7 @@ import {
   ResetCustomerPasswordBody,
   SendEmailOtpBody,
   SignInCustomerBody,
+  SignInCustomerResponse,
   VerifyEmailOtpBody,
 } from "../../../../lib/api-zod/src/generated/api.ts";
 
@@ -152,6 +153,33 @@ test("new and reset passwords require eight characters, a letter, and a digit", 
     SendEmailOtpBody.safeParse({ phone, email, purpose: "signup", turnstileToken }).success,
     true,
   );
+  assert.equal(
+    SendEmailOtpBody.safeParse({ email, purpose: "customer_login", turnstileToken }).success,
+    false,
+    "login OTPs must only be issued internally after password verification",
+  );
+
+  assert.equal(
+    SignInCustomerResponse.safeParse({
+      otpRequired: true,
+      challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
+      expiresAt: "2026-11-18T12:00:00.000Z",
+      resendAfterSeconds: 60,
+    }).success,
+    true,
+  );
+  const parsedOtpRequiredResponse = SignInCustomerResponse.parse({
+    otpRequired: true,
+    challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
+    expiresAt: "2026-11-18T12:00:00.000Z",
+    resendAfterSeconds: 60,
+    sessionToken: "forged-client-session",
+  });
+  assert.equal(
+    "sessionToken" in parsedOtpRequiredResponse,
+    false,
+    "the OTP-required response strips any unknown session token field",
+  );
 
   assert.equal(
     SignInCustomerBody.safeParse({
@@ -206,6 +234,15 @@ test("Turnstile is mandatory on sign-in, signup, password-recovery, and OTP-veri
     VerifyEmailOtpBody.safeParse({
       challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
       purpose: "signup",
+      code: "123456",
+      turnstileToken,
+    }).success,
+    true,
+  );
+  assert.equal(
+    VerifyEmailOtpBody.safeParse({
+      challengeId: "a2f13f3c-bab6-41a9-a467-34b330e9f06b",
+      purpose: "customer_login",
       code: "123456",
       turnstileToken,
     }).success,

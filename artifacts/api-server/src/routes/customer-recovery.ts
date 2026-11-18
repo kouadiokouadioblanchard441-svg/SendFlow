@@ -124,6 +124,25 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
       );
       if (passwordHash === null) return { kind: "invalid" } as const;
 
+      const [accountIdentity] = await tx
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(eq(usersTable.emailLookupHash, emailLookupHash))
+        .limit(1);
+      if (accountIdentity) {
+        await tx
+          .update(phoneOtpChallengesTable)
+          .set({ status: "superseded", codeHash: null })
+          .where(and(
+            eq(phoneOtpChallengesTable.userId, accountIdentity.id),
+            eq(phoneOtpChallengesTable.purpose, "customer_login"),
+            or(
+              eq(phoneOtpChallengesTable.status, "starting"),
+              eq(phoneOtpChallengesTable.status, "pending"),
+            ),
+          ));
+      }
+
       const [user] = await tx
         .select({
           id: usersTable.id,

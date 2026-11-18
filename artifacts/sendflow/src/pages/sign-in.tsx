@@ -198,14 +198,14 @@ export default function SigninPage() {
 
   const handleResendOtp = async () => {
     if (!otpChallenge || resendSecondsLeft > 0 || !canSubmit) return;
-    if (!turnstileToken) {
+    if (!otpTurnstileToken) {
       setFormError('Validez le contrôle de sécurité pour renvoyer le code.');
       return;
     }
     if (isSubmitting || submissionLock.current) return;
-    const oneTimeToken = turnstileToken;
+    const oneTimeToken = otpTurnstileToken;
     submissionLock.current = true;
-    setTurnstileToken(null);
+    setOtpTurnstileToken(null);
     turnstileRef.current?.reset();
     setIsSubmitting(true);
     try {
@@ -351,7 +351,7 @@ export default function SigninPage() {
                 <button type="submit" className="sendflow-signup-submit sendflow-signup-check" disabled={isSubmitting || otpSecondsLeft <= 0} data-testid="button-verify-login-otp">
                   {isSubmitting ? 'Vérification…' : 'Vérifier le code'}
                 </button>
-                <button type="button" className="sendflow-signup-secondary-action" onClick={() => void handleResendOtp()} disabled={isSubmitting || resendSecondsLeft > 0}>
+                <button type="button" className="sendflow-signup-secondary-action" onClick={() => void handleResendOtp()} disabled={isSubmitting || resendSecondsLeft > 0 || !otpTurnstileToken}>
                   {isSubmitting ? 'Envoi…' : resendSecondsLeft > 0 ? `Renvoyer dans ${resendSecondsLeft}s` : 'Renvoyer le code'}
                 </button>
                 <button type="button" className="sendflow-signup-secondary-action" onClick={resetOtpStep} disabled={isSubmitting}>

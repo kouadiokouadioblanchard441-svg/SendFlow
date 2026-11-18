@@ -209815,7 +209815,8 @@ var usersTable = pgTable("sf_users", {
   deletionReason: varchar("deletion_reason", { length: 500 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+  lastLoginCompletedAt: timestamp("last_login_completed_at", { withTimezone: true })
 }, (table) => ({
   emailLookupHashUniqueIndex: uniqueIndex("sf_users_email_lookup_hash_uq").on(table.emailLookupHash),
   displayNameLookupHashIndex: index("sf_users_display_name_lookup_hash_idx").on(table.displayNameLookupHash),
@@ -210291,6 +210292,7 @@ var phoneOtpChallengesTable = pgTable(
   "sf_phone_otp_challenges",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").references(() => usersTable.id, { onDelete: "cascade" }),
     phoneHash: varchar("phone_hash", { length: 64 }).notNull(),
     emailHash: varchar("email_hash", { length: 64 }),
     codeHash: varchar("code_hash", { length: 64 }),
@@ -210324,6 +210326,12 @@ var phoneOtpChallengesTable = pgTable(
       table.status,
       table.expiresAt
     ),
+    userPurposeIndex: index("sf_phone_otp_user_purpose_idx").on(
+      table.userId,
+      table.purpose,
+      table.status,
+      table.expiresAt
+    ),
     requesterCreatedIndex: index("sf_phone_otp_requester_created_idx").on(table.requesterHash, table.createdAt),
     providerVerificationUniqueIndex: uniqueIndex("sf_phone_otp_provider_verification_uq").on(
       table.providerVerificationId
@@ -210346,7 +210354,7 @@ var phoneOtpChallengesTable = pgTable(
     ),
     purposeConstraint: check(
       "sf_phone_otp_purpose_check",
-      sql`${table.purpose} in ('signup', 'password_reset', 'pin_reset')`
+      sql`${table.purpose} in ('signup', 'password_reset', 'pin_reset', 'customer_login')`
     ),
     attemptsConstraint: check(
       "sf_phone_otp_attempts_check",
@@ -212506,7 +212514,7 @@ var verifyEmailOtpBodyCodeRegExp = new RegExp("^[0-9]{6}$");
 var verifyEmailOtpBodyTurnstileTokenMax = 2048;
 var VerifyEmailOtpBody = object({
   "challengeId": uuid3(),
-  "purpose": _enum2(["signup", "password_reset", "pin_reset"]),
+  "purpose": _enum2(["signup", "password_reset", "pin_reset", "customer_login"]),
   "code": string2().min(verifyEmailOtpBodyCodeMin).max(verifyEmailOtpBodyCodeMax).regex(verifyEmailOtpBodyCodeRegExp),
   "turnstileToken": string2().min(1).max(verifyEmailOtpBodyTurnstileTokenMax).describe("Single-use Cloudflare Turnstile token for OTP verification.")
 });
@@ -212630,21 +212638,27 @@ var SignInCustomerBody = object({
   "password": string2().min(signInCustomerBodyPasswordMin).max(signInCustomerBodyPasswordMax),
   "turnstileToken": string2().min(1).max(signInCustomerBodyTurnstileTokenMax).describe("Single-use Cloudflare Turnstile token for sign-in.")
 });
-var signInCustomerResponseDeveloperApiKeyPairLabelMax = 80;
-var signInCustomerResponseDeveloperApiKeyPairPublicKeyRegExp = new RegExp("^sfpk_live_[A-Za-z0-9_-]{43}$");
-var signInCustomerResponseDeveloperApiKeyPairSecretKeyRegExp = new RegExp("^sfsk_live_[A-Za-z0-9_-]{43}$");
-var SignInCustomerResponse = object({
+var signInCustomerResponseOneDeveloperApiKeyPairLabelMax = 80;
+var signInCustomerResponseOneDeveloperApiKeyPairPublicKeyRegExp = new RegExp("^sfpk_live_[A-Za-z0-9_-]{43}$");
+var signInCustomerResponseOneDeveloperApiKeyPairSecretKeyRegExp = new RegExp("^sfsk_live_[A-Za-z0-9_-]{43}$");
+var signInCustomerResponseTwoResendAfterSecondsMin = 0;
+var SignInCustomerResponse = union2([object({
   "userId": string2(),
   "phone": string2(),
   "displayName": string2().nullable(),
   "countryCode": string2().nullable(),
   "pinConfigured": boolean3(),
   "developerApiKeyPair": object({
-    "label": string2().min(1).max(signInCustomerResponseDeveloperApiKeyPairLabelMax),
-    "publicKey": string2().regex(signInCustomerResponseDeveloperApiKeyPairPublicKeyRegExp),
-    "secretKey": string2().regex(signInCustomerResponseDeveloperApiKeyPairSecretKeyRegExp)
+    "label": string2().min(1).max(signInCustomerResponseOneDeveloperApiKeyPairLabelMax),
+    "publicKey": string2().regex(signInCustomerResponseOneDeveloperApiKeyPairPublicKeyRegExp),
+    "secretKey": string2().regex(signInCustomerResponseOneDeveloperApiKeyPairSecretKeyRegExp)
   }).optional().describe("Present only in a successful account-creation response; the secret must be saved immediately.")
-});
+}), object({
+  "otpRequired": literal(true),
+  "challengeId": uuid3(),
+  "expiresAt": coerce_exports.date(),
+  "resendAfterSeconds": int().min(signInCustomerResponseTwoResendAfterSecondsMin)
+})]);
 var GetCustomerSessionResponse = object({
   "userId": string2(),
   "phone": string2(),
@@ -221722,6 +221736,9 @@ var ResendDeliveryError = class extends Error {
     this.statusCode = statusCode;
   }
 };
+function isResendEmailConfigured(env = process.env) {
+  return Boolean(env.RESEND_API_KEY?.trim() && env.RESEND_FROM_EMAIL?.trim());
+}
 async function sendResendEmail(message, options = {}) {
   assertExternalProviderCallsAllowed("Resend");
   const apiKey = options.apiKey ?? process.env.RESEND_API_KEY;
@@ -221798,6 +221815,10 @@ var COPY = {
   pin_reset: {
     subject: "R\xE9initialisation de votre code PIN \u2014 SendFlow",
     intro: "Utilisez ce code pour continuer la r\xE9initialisation de votre code PIN SendFlow."
+  },
+  customer_login: {
+    subject: "V\xE9rifiez votre connexion \u2014 SendFlow",
+    intro: "Utilisez ce code pour v\xE9rifier votre connexion SendFlow. Si vous n\u2019\xEAtes pas \xE0 l\u2019origine de cette demande, ignorez ce message."
   }
 };
 function escapeHtml(value) {
@@ -222013,6 +222034,8 @@ function turnstileActionForOtpPurpose(purpose) {
     case "password_reset":
     case "pin_reset":
       return purpose;
+    case "customer_login":
+      return "login";
     default:
       return null;
   }
@@ -222499,6 +222522,33 @@ router15.post("/auth/verify-otp", async (req, res) => {
     }
     if (await isSignupRateLimited(req, res, signupBuckets)) return;
   }
+  let loginBuckets = null;
+  if (purpose === "customer_login") {
+    try {
+      const [identity] = await db.select({
+        userId: phoneOtpChallengesTable.userId,
+        emailHash: phoneOtpChallengesTable.emailHash
+      }).from(phoneOtpChallengesTable).where(eq(phoneOtpChallengesTable.id, parsed.data.challengeId)).limit(1);
+      if (identity?.userId && identity.emailHash) {
+        loginBuckets = [
+          getCustomerLoginEmailAttemptBucket2(identity.emailHash),
+          fingerprint(`customer-login-requester:${requesterAddress(req)}`)
+        ];
+        const retry = await withAuthAttemptLock(
+          loginBuckets,
+          (tx) => getAuthRateLimit(loginBuckets, /* @__PURE__ */ new Date(), tx)
+        );
+        if (retry !== null) {
+          sendRateLimitResponse(res, formatAuthRateLimitMessage(retry), retry);
+          return;
+        }
+      }
+    } catch (error62) {
+      req.log.error({ err: error62 }, "Customer login OTP rate-limit lookup failed");
+      res.status(503).json({ error: "La v\xE9rification par e-mail est indisponible." });
+      return;
+    }
+  }
   const turnstile = await verifyTurnstileRequest(
     req,
     parsed.data.turnstileToken,
@@ -222564,6 +222614,13 @@ router15.post("/auth/verify-otp", async (req, res) => {
         if (retry !== null) return { kind: "rate", retry };
         return reserveVerification(tx);
       });
+    } else if (loginBuckets) {
+      const buckets = loginBuckets;
+      reservation = await withAuthAttemptLock(buckets, async (tx) => {
+        const retry = await getAuthRateLimit(buckets, /* @__PURE__ */ new Date(), tx);
+        if (retry !== null) return { kind: "rate", retry };
+        return reserveVerification(tx);
+      });
     } else {
       reservation = await db.transaction(reserveVerification);
     }
@@ -222604,7 +222661,15 @@ router15.post("/auth/verify-otp", async (req, res) => {
   }
   if (!matchesEmailOtpCode(parsed.data.challengeId, purpose, parsed.data.code, reservation.codeHash)) {
     try {
-      await db.transaction(async (tx) => {
+      const recordRejectedCode = async (tx) => {
+        if (loginBuckets) {
+          await recordAuthFailure(
+            loginBuckets,
+            /* @__PURE__ */ new Date(),
+            tx,
+            CUSTOMER_ACCESS_RATE_LIMIT_POLICY
+          );
+        }
         if (reservation.attemptNumber >= maxCodeChecks) {
           await tx.update(phoneOtpChallengesTable).set({ status: "locked", codeHash: null }).where(and(
             eq(phoneOtpChallengesTable.id, parsed.data.challengeId),
@@ -222617,7 +222682,12 @@ router15.post("/auth/verify-otp", async (req, res) => {
           diagnosticMessage: null,
           completedAt: /* @__PURE__ */ new Date()
         }).where(eq(phoneOtpEventsTable.id, reservation.eventId));
-      });
+      };
+      if (loginBuckets) {
+        await withAuthAttemptLock(loginBuckets, recordRejectedCode);
+      } else {
+        await db.transaction(recordRejectedCode);
+      }
     } catch (error62) {
       req.log.error({ err: error62, challengeId: parsed.data.challengeId }, "OTP rejection could not be recorded");
       res.status(503).json({ error: "La v\xE9rification par e-mail est indisponible." });
@@ -222645,21 +222715,48 @@ router15.post("/auth/verify-otp", async (req, res) => {
       }).where(eq(phoneOtpEventsTable.id, reservation.eventId));
       return { kind: "inactive" };
     }
+    let loginUserId = null;
+    if (purpose === "customer_login") {
+      const [loginUser] = await tx.select({
+        id: usersTable.id,
+        status: usersTable.status,
+        emailLookupHash: usersTable.emailLookupHash
+      }).from(usersTable).where(and(
+        eq(usersTable.id, challenge.userId ?? ""),
+        eq(usersTable.status, "active"),
+        eq(usersTable.emailLookupHash, challenge.emailHash)
+      )).for("update").limit(1);
+      if (!loginUser) {
+        await tx.update(phoneOtpEventsTable).set({
+          outcome: "challenge_inactive",
+          diagnosticMessage: null,
+          completedAt: /* @__PURE__ */ new Date()
+        }).where(eq(phoneOtpEventsTable.id, reservation.eventId));
+        return { kind: "inactive" };
+      }
+      loginUserId = loginUser.id;
+    }
     const [updated] = await tx.update(phoneOtpChallengesTable).set({
       status: "verified",
       phoneVerified: false,
       emailVerified: true,
       codeHash: null,
-      verifiedAt
+      verifiedAt,
+      ...purpose === "customer_login" ? { consumedAt: verifiedAt } : {}
     }).where(eq(phoneOtpChallengesTable.id, challenge.id)).returning({ verifiedAt: phoneOtpChallengesTable.verifiedAt, emailHash: phoneOtpChallengesTable.emailHash });
     if (!updated?.verifiedAt || !updated.emailHash) throw new Error("Verified email OTP state was not stored");
     await tx.update(usersTable).set({ emailVerifiedAt: verifiedAt }).where(eq(usersTable.emailLookupHash, updated.emailHash));
+    let loginSession = null;
+    if (purpose === "customer_login" && loginUserId) {
+      loginSession = await insertCustomerSession(tx, loginUserId, verifiedAt);
+      await recordLoginActivity(req, loginUserId, loginSession.sessionId, tx);
+    }
     await tx.update(phoneOtpEventsTable).set({
       outcome: "verified",
       diagnosticMessage: null,
       completedAt: /* @__PURE__ */ new Date()
     }).where(eq(phoneOtpEventsTable.id, reservation.eventId));
-    return { kind: "verified", verifiedAt: updated.verifiedAt };
+    return loginSession ? { kind: "login_verified", verifiedAt: updated.verifiedAt, session: loginSession } : { kind: "verified", verifiedAt: updated.verifiedAt };
   };
   try {
     let outcome;
@@ -222680,6 +222777,12 @@ router15.post("/auth/verify-otp", async (req, res) => {
         }
         return finalizeVerification(tx);
       });
+    } else if (loginBuckets) {
+      outcome = await withAuthAttemptLock(loginBuckets, async (tx) => {
+        const retry = await getAuthRateLimit(loginBuckets, /* @__PURE__ */ new Date(), tx);
+        if (retry !== null) return { kind: "rate", retry };
+        return finalizeVerification(tx);
+      });
     } else {
       outcome = await db.transaction(finalizeVerification);
     }
@@ -222688,6 +222791,14 @@ router15.post("/auth/verify-otp", async (req, res) => {
       return;
     }
     if (outcome.kind !== "verified") {
+      if (outcome.kind === "login_verified") {
+        setCustomerSessionCookie(res, outcome.session.token);
+        res.json(VerifyEmailOtpResponse.parse({
+          emailVerified: true,
+          verifiedAt: outcome.verifiedAt
+        }));
+        return;
+      }
       res.status(409).json({ error: "Cette v\xE9rification n'est plus active. Demandez un nouveau code." });
       return;
     }
@@ -222711,7 +222822,7 @@ var auth_otp_default = router15;
 
 // src/routes/customer-auth.ts
 var import_express20 = __toESM(require_express2(), 1);
-import { randomUUID as randomUUID4 } from "node:crypto";
+import { randomUUID as randomUUID5 } from "node:crypto";
 
 // ../../node_modules/.pnpm/@simplewebauthn+server@14.0.3/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
 var isoBase64URL_exports = {};
@@ -226509,6 +226620,213 @@ function createCustomerPinRotationSessionPolicy(userId, currentSessionId, now, u
   };
 }
 
+// src/lib/customer-login-otp-policy.ts
+var CUSTOMER_LOGIN_OTP_AFTER_MS = 24 * 60 * 60 * 1e3;
+function requiresCustomerLoginOtp(lastLoginCompletedAt, now = /* @__PURE__ */ new Date()) {
+  if (!(lastLoginCompletedAt instanceof Date)) return true;
+  const lastLogin = lastLoginCompletedAt.getTime();
+  const currentTime = now.getTime();
+  if (!Number.isFinite(lastLogin) || !Number.isFinite(currentTime) || lastLogin > currentTime) {
+    return true;
+  }
+  return currentTime - lastLogin >= CUSTOMER_LOGIN_OTP_AFTER_MS;
+}
+
+// src/lib/customer-login-otp.ts
+import { randomUUID as randomUUID4 } from "node:crypto";
+var OTP_PURPOSE = "customer_login";
+var OTP_RESEND_COOLDOWN_MS = 6e4;
+var OTP_SENDS_PER_ACCOUNT_PER_HOUR = 5;
+var OTP_SENDS_PER_EMAIL_PER_HOUR = 5;
+var OTP_SENDS_PER_REQUESTER_PER_HOUR = 60;
+var HOUR_MS2 = 60 * 60 * 1e3;
+function retryAfterSeconds3(until, now) {
+  return Math.max(1, Math.ceil((until.getTime() - now.getTime()) / 1e3));
+}
+function providerFailureOutcome(error62) {
+  if (error62 instanceof ResendConfigurationError) return "configuration_error";
+  if (error62 instanceof ResendDeliveryError) {
+    if (error62.statusCode === 429) return "provider_rate_limited";
+    if (error62.statusCode !== null) return "provider_rejected";
+  }
+  return "provider_error";
+}
+async function sendCustomerLoginOtp(input2) {
+  const { userId, email: email3, emailHash, req } = input2;
+  const now = input2.now ?? /* @__PURE__ */ new Date();
+  if (!isResendEmailConfigured()) return { kind: "unavailable" };
+  try {
+    assertExternalProviderCallsAllowed("Resend");
+  } catch (error62) {
+    if (error62 instanceof ExternalProviderCallUnavailableError) {
+      return { kind: "unavailable" };
+    }
+    throw error62;
+  }
+  const accountHash = fingerprint(`customer-login-account:${userId}`);
+  const requesterHash = fingerprint(`requester:${requesterAddress(req)}`);
+  const challengeId = randomUUID4();
+  const code = createEmailOtpCode();
+  const codeHash = hashEmailOtpCode(challengeId, OTP_PURPOSE, code);
+  const expiresAt = new Date(now.getTime() + EMAIL_OTP_LIFETIME_SECONDS * 1e3);
+  const resendAt = new Date(now.getTime() + OTP_RESEND_COOLDOWN_MS);
+  const hourAgo = new Date(now.getTime() - HOUR_MS2);
+  let reservation;
+  try {
+    reservation = await db.transaction(async (tx) => {
+      const lockKeys = [
+        `customer-login-otp-account:${userId}`,
+        `customer-login-otp-email:${emailHash}`,
+        `customer-login-otp-requester:${requesterHash}`
+      ].sort();
+      for (const lockKey of lockKeys) {
+        await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
+      }
+      const recentAccountChallenges = await tx.select({
+        createdAt: phoneOtpChallengesTable.createdAt,
+        resendAfter: phoneOtpChallengesTable.resendAfter
+      }).from(phoneOtpChallengesTable).where(and(
+        eq(phoneOtpChallengesTable.userId, userId),
+        eq(phoneOtpChallengesTable.purpose, OTP_PURPOSE),
+        eq(phoneOtpChallengesTable.deliveryChannel, "email"),
+        gte(phoneOtpChallengesTable.createdAt, hourAgo)
+      )).orderBy(desc(phoneOtpChallengesTable.createdAt)).limit(OTP_SENDS_PER_ACCOUNT_PER_HOUR);
+      const latestAccountChallenge = recentAccountChallenges[0];
+      if (latestAccountChallenge && latestAccountChallenge.resendAfter > now) {
+        return {
+          kind: "rate_limited",
+          retryAfterSeconds: retryAfterSeconds3(latestAccountChallenge.resendAfter, now)
+        };
+      }
+      if (recentAccountChallenges.length >= OTP_SENDS_PER_ACCOUNT_PER_HOUR) {
+        return {
+          kind: "rate_limited",
+          retryAfterSeconds: retryAfterSeconds3(
+            new Date(recentAccountChallenges.at(-1).createdAt.getTime() + HOUR_MS2),
+            now
+          )
+        };
+      }
+      const recentEmailChallenges = await tx.select({ createdAt: phoneOtpChallengesTable.createdAt }).from(phoneOtpChallengesTable).where(and(
+        eq(phoneOtpChallengesTable.emailHash, emailHash),
+        eq(phoneOtpChallengesTable.deliveryChannel, "email"),
+        gte(phoneOtpChallengesTable.createdAt, hourAgo)
+      )).orderBy(desc(phoneOtpChallengesTable.createdAt)).limit(OTP_SENDS_PER_EMAIL_PER_HOUR);
+      if (recentEmailChallenges.length >= OTP_SENDS_PER_EMAIL_PER_HOUR) {
+        return {
+          kind: "rate_limited",
+          retryAfterSeconds: retryAfterSeconds3(
+            new Date(recentEmailChallenges.at(-1).createdAt.getTime() + HOUR_MS2),
+            now
+          )
+        };
+      }
+      const recentRequesterChallenges = await tx.select({ createdAt: phoneOtpChallengesTable.createdAt }).from(phoneOtpChallengesTable).where(and(
+        eq(phoneOtpChallengesTable.requesterHash, requesterHash),
+        eq(phoneOtpChallengesTable.deliveryChannel, "email"),
+        gte(phoneOtpChallengesTable.createdAt, hourAgo)
+      )).orderBy(desc(phoneOtpChallengesTable.createdAt)).limit(OTP_SENDS_PER_REQUESTER_PER_HOUR);
+      if (recentRequesterChallenges.length >= OTP_SENDS_PER_REQUESTER_PER_HOUR) {
+        return {
+          kind: "rate_limited",
+          retryAfterSeconds: retryAfterSeconds3(
+            new Date(recentRequesterChallenges.at(-1).createdAt.getTime() + HOUR_MS2),
+            now
+          )
+        };
+      }
+      await tx.update(phoneOtpChallengesTable).set({ status: "superseded", codeHash: null }).where(and(
+        eq(phoneOtpChallengesTable.userId, userId),
+        eq(phoneOtpChallengesTable.purpose, OTP_PURPOSE),
+        eq(phoneOtpChallengesTable.status, "pending")
+      ));
+      const [challenge] = await tx.insert(phoneOtpChallengesTable).values({
+        id: challengeId,
+        userId,
+        phoneHash: accountHash,
+        emailHash,
+        codeHash,
+        requesterHash,
+        purpose: OTP_PURPOSE,
+        deliveryChannel: "email",
+        status: "starting",
+        phoneVerified: false,
+        emailVerified: false,
+        checkAttempts: 0,
+        createdAt: now,
+        expiresAt,
+        resendAfter: resendAt
+      }).returning({ id: phoneOtpChallengesTable.id });
+      if (!challenge) throw new Error("Customer login OTP challenge could not be reserved");
+      const [event] = await tx.insert(phoneOtpEventsTable).values({
+        challengeId: challenge.id,
+        eventType: "send",
+        outcome: "requested"
+      }).returning({ id: phoneOtpEventsTable.id });
+      if (!event) throw new Error("Customer login OTP event could not be reserved");
+      return { kind: "reserved", eventId: event.id };
+    });
+  } catch {
+    return { kind: "unavailable" };
+  }
+  if (reservation.kind === "rate_limited") return reservation;
+  try {
+    const content = renderEmailOtpContent(OTP_PURPOSE, code, {
+      publicSiteUrl: process.env.SENDFLOW_PUBLIC_SITE_URL,
+      now
+    });
+    const providerResult = await sendResendEmail(
+      {
+        to: email3,
+        subject: content.subject,
+        text: content.text,
+        html: content.html,
+        tags: [{ name: "flow", value: "customer-login" }]
+      },
+      { idempotencyKey: `customer-login-${challengeId}` }
+    );
+    await db.transaction(async (tx) => {
+      const [updated] = await tx.update(phoneOtpChallengesTable).set({
+        status: "pending",
+        providerMessageId: providerResult.messageId
+      }).where(and(
+        eq(phoneOtpChallengesTable.id, challengeId),
+        eq(phoneOtpChallengesTable.status, "starting")
+      )).returning({ id: phoneOtpChallengesTable.id });
+      if (!updated) throw new Error("Customer login OTP challenge state changed");
+      await tx.update(phoneOtpEventsTable).set({
+        outcome: "provider_accepted",
+        providerHttpStatus: providerResult.statusCode,
+        diagnosticMessage: null,
+        completedAt: /* @__PURE__ */ new Date()
+      }).where(eq(phoneOtpEventsTable.id, reservation.eventId));
+    });
+    return {
+      kind: "sent",
+      challengeId,
+      expiresAt,
+      resendAfterSeconds: Math.ceil(OTP_RESEND_COOLDOWN_MS / 1e3)
+    };
+  } catch (error62) {
+    try {
+      await db.transaction(async (tx) => {
+        await tx.update(phoneOtpChallengesTable).set({ status: "failed", codeHash: null }).where(and(
+          eq(phoneOtpChallengesTable.id, challengeId),
+          eq(phoneOtpChallengesTable.status, "starting")
+        ));
+        await tx.update(phoneOtpEventsTable).set({
+          outcome: providerFailureOutcome(error62),
+          providerHttpStatus: error62 instanceof ResendDeliveryError ? error62.statusCode : null,
+          diagnosticMessage: "Customer login OTP delivery was not confirmed.",
+          completedAt: /* @__PURE__ */ new Date()
+        }).where(eq(phoneOtpEventsTable.id, reservation.eventId));
+      });
+    } catch {
+    }
+    return { kind: "unavailable" };
+  }
+}
+
 // src/services/developer-api-security.ts
 import { createHash as createHash5, randomBytes as randomBytes4 } from "node:crypto";
 import { lookup as lookup2 } from "node:dns/promises";
@@ -226893,7 +227211,7 @@ router16.post("/auth/register", async (req, res) => {
       }
       if (existingUser || existingEmail) return registerFailure("exists");
       const passwordHash = await hashCustomerPassword(parsed.data.password);
-      const userId = randomUUID4();
+      const userId = randomUUID5();
       const [user] = await tx.insert(usersTable).values({
         id: userId,
         phone: encryptSensitiveData(parsed.data.phone, "user-phone"),
@@ -227083,6 +227401,9 @@ router16.post("/auth/sign-in", async (req, res) => {
         displayName: usersTable.displayName,
         countryCode: usersTable.countryCode,
         accountStatus: usersTable.status,
+        emailEncrypted: usersTable.emailEncrypted,
+        emailLookupHash: usersTable.emailLookupHash,
+        lastLoginCompletedAt: usersTable.lastLoginCompletedAt,
         passwordHash: customerCredentialsTable.passwordHash,
         pinHash: customerCredentialsTable.pinHash,
         paymentTestAccount: sql`exists (
@@ -227126,10 +227447,21 @@ router16.post("/auth/sign-in", async (req, res) => {
           )
         );
       }
+      if (!isScopedPreviewAccount && requiresCustomerLoginOtp(record2.lastLoginCompletedAt, now)) {
+        const email3 = record2.emailEncrypted ? decryptSensitiveDataIfEncrypted(record2.emailEncrypted, "user-email") : null;
+        if (!email3 || !record2.emailLookupHash) {
+          return { kind: "otp_unavailable" };
+        }
+        return {
+          kind: "otp_required",
+          userId: record2.userId,
+          email: email3,
+          emailHash: record2.emailLookupHash
+        };
+      }
       await tx.update(usersTable).set({ lastSeenAt: now }).where(eq(usersTable.id, record2.userId));
       const session = await insertCustomerSession(tx, record2.userId, now);
       await recordLoginActivity(req, record2.userId, session.sessionId, tx);
-      await clearAuthFailures(buckets, tx);
       return {
         kind: "signed-in",
         session,
@@ -227152,6 +227484,43 @@ router16.post("/auth/sign-in", async (req, res) => {
       res.status(423).json({
         error: "Votre compte est bloqu\xE9. Veuillez contacter le support SendFlow pour obtenir de l\u2019aide."
       });
+      return;
+    }
+    if (result.kind === "otp_unavailable") {
+      res.status(503).json({
+        error: "La v\xE9rification par e-mail est momentan\xE9ment indisponible."
+      });
+      return;
+    }
+    if (result.kind === "otp_required") {
+      const otp = await sendCustomerLoginOtp({
+        userId: result.userId,
+        email: result.email,
+        emailHash: result.emailHash,
+        req
+      });
+      if (otp.kind === "rate_limited") {
+        sendRateLimit(res, otp.retryAfterSeconds);
+        return;
+      }
+      if (otp.kind !== "sent") {
+        req.log.warn(
+          { failureCategory: "customer_login_email_otp_unavailable" },
+          "Customer login email verification is unavailable"
+        );
+        res.status(503).json({
+          error: "La v\xE9rification par e-mail est momentan\xE9ment indisponible."
+        });
+        return;
+      }
+      res.json(
+        SignInCustomerResponse.parse({
+          otpRequired: true,
+          challengeId: otp.challengeId,
+          expiresAt: otp.expiresAt,
+          resendAfterSeconds: otp.resendAfterSeconds
+        })
+      );
       return;
     }
     if (result.kind !== "signed-in") {
@@ -227276,7 +227645,15 @@ router16.post("/auth/unlock", async (req, res) => {
         )
       ).returning({ id: customerSessionsTable.id });
       if (!updatedSession) return { kind: "expired" };
+      await tx.update(usersTable).set({ lastLoginCompletedAt: now }).where(eq(usersTable.id, session.userId));
       await clearAuthFailures(buckets, tx);
+      await clearAuthFailures(
+        getLoginAttemptBuckets(
+          (await tx.select({ emailLookupHash: usersTable.emailLookupHash }).from(usersTable).where(eq(usersTable.id, session.userId)).limit(1))[0]?.emailLookupHash ?? null,
+          req
+        ),
+        tx
+      );
       return { kind: "success" };
     });
     if (result.kind === "rate") {
@@ -227709,7 +228086,15 @@ router16.post(
         ).returning({ id: customerSessionsTable.id });
         if (!updatedCredential || !updatedSession)
           return { kind: "expired" };
+        await tx.update(usersTable).set({ lastLoginCompletedAt: now }).where(eq(usersTable.id, session.userId));
         await clearAuthFailures(buckets, tx);
+        await clearAuthFailures(
+          getLoginAttemptBuckets(
+            (await tx.select({ emailLookupHash: usersTable.emailLookupHash }).from(usersTable).where(eq(usersTable.id, session.userId)).limit(1))[0]?.emailLookupHash ?? null,
+            req
+          ),
+          tx
+        );
         return { kind: "success" };
       });
       if (result.kind === "rate") {
@@ -227871,7 +228256,15 @@ router16.put("/me/pin", async (req, res) => {
       ).returning({ id: customerSessionsTable.id });
       if (!updatedSession)
         throw new Error("Customer session expired during PIN update");
+      await tx.update(usersTable).set({ lastLoginCompletedAt: now }).where(eq(usersTable.id, session.userId));
       await clearAuthFailures(buckets, tx);
+      await clearAuthFailures(
+        getLoginAttemptBuckets(
+          (await tx.select({ emailLookupHash: usersTable.emailLookupHash }).from(usersTable).where(eq(usersTable.id, session.userId)).limit(1))[0]?.emailLookupHash ?? null,
+          req
+        ),
+        tx
+      );
       return { kind: "success" };
     });
     if (result.kind === "rate") {
@@ -227986,6 +228379,17 @@ router17.post("/auth/reset-password", async (req, res) => {
         () => hashCustomerPassword(parsed.data.newPassword)
       );
       if (passwordHash === null) return { kind: "invalid" };
+      const [accountIdentity] = await tx.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.emailLookupHash, emailLookupHash)).limit(1);
+      if (accountIdentity) {
+        await tx.update(phoneOtpChallengesTable).set({ status: "superseded", codeHash: null }).where(and(
+          eq(phoneOtpChallengesTable.userId, accountIdentity.id),
+          eq(phoneOtpChallengesTable.purpose, "customer_login"),
+          or(
+            eq(phoneOtpChallengesTable.status, "starting"),
+            eq(phoneOtpChallengesTable.status, "pending")
+          )
+        ));
+      }
       const [user] = await tx.select({
         id: usersTable.id,
         status: usersTable.status,
@@ -228864,7 +229268,7 @@ var country_management_default = router21;
 
 // src/routes/email-campaigns.ts
 var import_express26 = __toESM(require_express2(), 1);
-import { randomUUID as randomUUID5 } from "node:crypto";
+import { randomUUID as randomUUID6 } from "node:crypto";
 
 // src/lib/email-campaign-policy.ts
 function isCampaignDispatchEnabled(env) {
@@ -229115,7 +229519,7 @@ async function replaceDraftRecipients(transaction, campaignId, recipients) {
   if (recipients.length > 0) {
     await transaction.insert(emailCampaignRecipientsTable).values(
       recipients.map((recipient) => ({
-        id: randomUUID5(),
+        id: randomUUID6(),
         campaignId,
         userId: recipient.id,
         status: "draft"
@@ -229416,7 +229820,7 @@ adminRoutes7.post("/email-campaigns", async (req, res) => {
     res.status(400).json({ error: "V\xE9rifiez l\u2019objet, le message et les destinataires s\xE9lectionn\xE9s." });
     return;
   }
-  const campaignId = randomUUID5();
+  const campaignId = randomUUID6();
   try {
     const result = await db.transaction(async (transaction) => {
       const recipients = await resolveAudience(transaction, parsed.data);
@@ -230058,7 +230462,7 @@ var email_campaign_webhook_default = router22;
 
 // src/routes/identity-verification.ts
 var import_express28 = __toESM(require_express2(), 1);
-import { randomUUID as randomUUID6 } from "node:crypto";
+import { randomUUID as randomUUID7 } from "node:crypto";
 import { createRequire as createRequire2 } from "node:module";
 
 // src/lib/identity-verification-storage.ts
@@ -253112,7 +253516,7 @@ customerRouter.post("/me/identity-verification/uploads", async (req, res) => {
     res.status(400).json({ error: "Invalid identity photo upload request" });
     return;
   }
-  const id = randomUUID6();
+  const id = randomUUID7();
   const expiresAt = new Date(Date.now() + UPLOAD_TICKET_TTL_MS);
   try {
     await db.transaction(async (tx) => {
@@ -255368,7 +255772,7 @@ var FeexpayClient = class {
 };
 
 // src/services/developer-webhook-outbox.ts
-import { randomUUID as randomUUID7 } from "node:crypto";
+import { randomUUID as randomUUID8 } from "node:crypto";
 
 // src/lib/developer-webhook-payload.ts
 var MAX_PLAINTEXT_BYTES = 8192;
@@ -255508,7 +255912,7 @@ async function enqueueDeveloperPaymentEvent(tx, input2) {
   if (!endpoints.length) return;
   for (const endpoint of endpoints) {
     if (!endpoint.events.includes(input2.eventType)) continue;
-    const eventId = randomUUID7();
+    const eventId = randomUUID8();
     const payload = {
       id: eventId,
       type: input2.eventType,
@@ -256981,7 +257385,7 @@ var public_payment_links_default = router25;
 // src/routes/developer.ts
 var import_cors = __toESM(require_lib5(), 1);
 var import_express32 = __toESM(require_express2(), 1);
-import { randomBytes as randomBytes8, randomUUID as randomUUID8 } from "node:crypto";
+import { randomBytes as randomBytes8, randomUUID as randomUUID9 } from "node:crypto";
 
 // src/data/developer-api-quota.ts
 var LIMITS = {
@@ -257519,7 +257923,7 @@ router26.post("/v1/payment-sessions", async (req, res) => {
   try {
     metadata = normalizeMetadata(parsedBody.data.metadata);
     normalized = normalizePaymentLinkInput({
-      requestId: randomUUID8(),
+      requestId: randomUUID9(),
       currency: "XOF",
       amount: String(parsedBody.data.amountMinor),
       linkName: "Paiement en ligne",
@@ -258105,7 +258509,7 @@ async function loadMerchantPayoutWallet(userId) {
 }
 
 // src/services/payout-execution.ts
-import { createHash as createHash10, randomBytes as randomBytes9, randomUUID as randomUUID10 } from "node:crypto";
+import { createHash as createHash10, randomBytes as randomBytes9, randomUUID as randomUUID11 } from "node:crypto";
 
 // src/services/payout-settlement-verification.ts
 function resolveVerifiedFinalStatus(payout2, attempt, receipt) {
@@ -258151,7 +258555,7 @@ function resolveVerifiedFinalStatus(payout2, attempt, receipt) {
 }
 
 // src/services/payout-webhook-outbox.ts
-import { randomUUID as randomUUID9 } from "node:crypto";
+import { randomUUID as randomUUID10 } from "node:crypto";
 
 // src/lib/payout-webhook-payload.ts
 var EVENT_TYPES = /* @__PURE__ */ new Set([
@@ -258317,7 +258721,7 @@ async function enqueuePayoutWebhookEvent(tx, input2) {
   ));
   for (const endpoint of endpoints) {
     if (!endpoint.events.includes(eventType)) continue;
-    const deliveryId = randomUUID9();
+    const deliveryId = randomUUID10();
     const payload = {
       id: deliveryId,
       type: eventType,
@@ -258388,7 +258792,7 @@ async function preparePayout(input2) {
   );
   const requestHash = makeRequestHash(input2, phoneHash);
   const reference = makeReference();
-  const payoutId = randomUUID10();
+  const payoutId = randomUUID11();
   const operationReference = reference;
   const shopId = process.env.FEEXPAY_SHOP_ID;
   const accountHash = createSensitiveDataLookupIndex(shopId, "payout-execution-account");
@@ -260272,7 +260676,7 @@ function startDeveloperWebhookWorker(logger2) {
 }
 
 // src/services/email-campaign-worker.ts
-import { randomUUID as randomUUID11 } from "node:crypto";
+import { randomUUID as randomUUID12 } from "node:crypto";
 
 // src/lib/email-campaign-template.ts
 var FONT_STACK2 = "'DM Sans',Roboto,'Helvetica Neue',Arial,sans-serif";
@@ -260481,7 +260885,7 @@ async function claimNextRecipient() {
         }
         const [attemptCount] = await transaction.select({ value: count() }).from(emailCampaignAttemptsTable).where(eq(emailCampaignAttemptsTable.recipientId, recipient.id));
         const attemptNumber = Number(attemptCount?.value ?? 0) + 1;
-        const attemptId2 = randomUUID11();
+        const attemptId2 = randomUUID12();
         const idempotencyKey2 = campaignProviderIdempotencyKey(recipient.id, recipient.manualRetries);
         await transaction.insert(emailCampaignAttemptsTable).values({
           id: attemptId2,
@@ -260596,7 +261000,7 @@ async function claimNextRecipient() {
     let idempotencyKey = latestAttempt?.idempotencyKey;
     if (!latestAttempt) {
       const [attemptCount] = await transaction.select({ value: count() }).from(emailCampaignAttemptsTable).where(eq(emailCampaignAttemptsTable.recipientId, stale.id));
-      attemptId = randomUUID11();
+      attemptId = randomUUID12();
       idempotencyKey = campaignProviderIdempotencyKey(stale.id, stale.manualRetries);
       await transaction.insert(emailCampaignAttemptsTable).values({
         id: attemptId,

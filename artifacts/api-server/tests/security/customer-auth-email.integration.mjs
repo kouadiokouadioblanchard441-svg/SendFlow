@@ -59,6 +59,9 @@ const { app, pool } = runtime;
 let server;
 
 before(async () => {
+  await pool.query("SELECT 1 FROM public.sf_ip_blocklist LIMIT 0");
+  await pool.query("SELECT 1 FROM public.sf_network_defense LIMIT 0");
+  await pool.query("SELECT 1 FROM public.sf_network_defense_allowlist LIMIT 0");
   server = app.listen(0, "127.0.0.1");
   await new Promise((resolve, reject) => {
     server.once("listening", resolve);
@@ -126,11 +129,15 @@ async function request(path, { method = "GET", body, cookie } = {}) {
     headers: cookie ? { Cookie: cookie } : {},
   });
   const csrfToken = headerValue(bootstrap.headers, "x-csrf-token");
-  assert.equal(typeof csrfToken, "string", "the isolated API issues a CSRF token");
+  assert.equal(
+    typeof csrfToken,
+    "string",
+    `the isolated API issues a CSRF token (status ${bootstrap.status}: ${bootstrap.text})`,
+  );
   const csrfCookie = (headerValue(bootstrap.headers, "set-cookie") ?? [])
     .find((entry) => entry.startsWith("__Host-sendflow_csrf="))
     ?.split(";")[0];
-  assert.ok(csrfCookie, "the isolated API sets its CSRF cookie");
+  if (!cookie) assert.ok(csrfCookie, "the isolated API sets its anonymous CSRF cookie");
   return rawRequest(path, {
     method,
     body: requestBody,
@@ -161,8 +168,8 @@ function getDeliveredCode(email) {
 test("email signup, password recovery, and phone-addressed PIN recovery work on the repaired schema", async () => {
   const email = "signup.e2e@example.invalid";
   const phone = "+2250102030405";
-  const initialPassword = "Fixture-Initial-Password";
-  const recoveredPassword = "Fixture-Recovered-Password";
+  const initialPassword = "Fixture-Initial-Password9";
+  const recoveredPassword = "Fixture-Recovered-Password9";
 
   const signupOtp = await request("/api/auth/send-otp", {
     method: "POST",
@@ -217,6 +224,24 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
     cookie: registrationSession,
   });
   assert.equal(pinSetup.status, 200, pinSetup.text);
+
+  const providerCallsBeforeInvalidPassword = providerCalls;
+  const invalidPasswordSignIn = await request("/api/auth/sign-in", {
+    method: "POST",
+    body: { email, password: "Wrong-Fixture-Password-9" },
+  });
+  assert.equal(invalidPasswordSignIn.status, 401, invalidPasswordSignIn.text);
+  assert.equal(
+    providerCalls,
+    providerCallsBeforeInvalidPassword + 1,
+    "an invalid password may verify Turnstile but must not send a login OTP",
+  );
+  assert.equal(
+    (headerValue(invalidPasswordSignIn.headers, "set-cookie") ?? [])
+      .some((entry) => entry.startsWith("__Host-sendflow_session=")),
+    false,
+    "an invalid password must never create a customer session",
+  );
 
   const signIn = await request("/api/auth/sign-in", {
     method: "POST",
@@ -331,6 +356,25 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
   assert.equal(recoverySignIn.status, 200, recoverySignIn.text);
   const recoverySession = sessionCookie(recoverySignIn);
 
+  await pool.query(
+    "UPDATE sf_users SET last_login_completed_at=now()-interval '25 hours' WHERE id=$1",
+    [registeredAccount.userId],
+  );
+  // Keep the recovery/password-reset assertions independent of earlier auth
+  // quota history; this suite has separate coverage for the quota policy.
+  await pool.query("DELETE FROM sf_api_request_limits");
+  // Preserve the real cross-purpose email/requester send caps while keeping
+  // this later 24-hour-login scenario outside the earlier test sends' window.
+  await pool.query(`UPDATE sf_phone_otp_challenges
+    SET created_at=now()-interval '2 hours', resend_after=now()-interval '2 hours'`);
+  const pendingLoginVerification = await request("/api/auth/sign-in", {
+    method: "POST",
+    body: { email, password: initialPassword },
+  });
+  assert.equal(pendingLoginVerification.status, 200, pendingLoginVerification.text);
+  const pendingLoginChallengeId = responseBody(pendingLoginVerification).challengeId;
+  assert.ok(pendingLoginChallengeId);
+
   const recoveryOtp = await request("/api/auth/send-otp", {
     method: "POST",
     body: { email, purpose: "password_reset" },
@@ -353,6 +397,21 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
   });
   assert.equal(passwordReset.status, 200, passwordReset.text);
   assert.equal(responseBody(passwordReset).success, true);
+  const invalidatedLoginChallenge = (await pool.query(
+    "SELECT status, code_hash FROM sf_phone_otp_challenges WHERE id=$1",
+    [pendingLoginChallengeId],
+  )).rows[0];
+  assert.equal(invalidatedLoginChallenge.status, "superseded");
+  assert.equal(invalidatedLoginChallenge.code_hash, null);
+  const staleLoginOtp = await request("/api/auth/verify-otp", {
+    method: "POST",
+    body: {
+      challengeId: pendingLoginChallengeId,
+      purpose: "customer_login",
+      code: getDeliveredCode(email),
+    },
+  });
+  assert.equal(staleLoginOtp.status, 409, staleLoginOtp.text);
   const recoveredState = (await pool.query(`SELECT c.consumed_at,
       (SELECT count(*)::int FROM sf_customer_sessions s
        WHERE s.user_id=u.id AND s.revoked_at IS NULL) AS active_sessions
@@ -368,7 +427,7 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
     body: {
       challengeId: recoveryChallengeId,
       email,
-      newPassword: "Fixture-Replay-Password",
+      newPassword: "Fixture-Replay-Password9",
     },
   });
   assert.equal(reusedChallenge.status, 409, reusedChallenge.text);
@@ -378,12 +437,36 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
     body: { email, password: initialPassword },
   });
   assert.equal(oldPasswordSignIn.status, 401, oldPasswordSignIn.text);
+  await pool.query(`UPDATE sf_phone_otp_challenges
+    SET resend_after=now()-interval '1 minute'
+    WHERE user_id=$1 AND purpose='customer_login'`, [registeredAccount.userId]);
   const recoveredSignIn = await request("/api/auth/sign-in", {
     method: "POST",
     body: { email, password: recoveredPassword },
   });
   assert.equal(recoveredSignIn.status, 200, recoveredSignIn.text);
-  assert.equal(responseBody(recoveredSignIn).userId, registeredAccount.userId);
+  const recoveredSignInBody = responseBody(recoveredSignIn);
+  assert.equal(recoveredSignInBody.otpRequired, true);
+  const recoveredLogin = await request("/api/auth/verify-otp", {
+    method: "POST",
+    body: {
+      challengeId: recoveredSignInBody.challengeId,
+      purpose: "customer_login",
+      code: getDeliveredCode(email),
+    },
+  });
+  assert.equal(recoveredLogin.status, 200, recoveredLogin.text);
+  const recoveredLoginSession = sessionCookie(recoveredLogin);
+  const recoveredLoginState = await request("/api/auth/session", {
+    cookie: recoveredLoginSession,
+  });
+  assert.equal(responseBody(recoveredLoginState).pinUnlocked, false);
+  const recoveredPinUnlock = await request("/api/auth/unlock", {
+    method: "POST",
+    body: { pin: "2468" },
+    cookie: recoveredLoginSession,
+  });
+  assert.equal(recoveredPinUnlock.status, 200, recoveredPinUnlock.text);
 
-  assert.equal(providerCalls, 18, "only the expected Turnstile and mocked email requests are made");
+  assert.equal(providerCalls, 26, "only the expected Turnstile and mocked email requests are made");
 });

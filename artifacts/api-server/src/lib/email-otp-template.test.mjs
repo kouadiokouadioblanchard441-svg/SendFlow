@@ -7,20 +7,26 @@ const testDate = new Date("2026-11-01T12:00:00.000Z");
 
 test("renders the branded French OTP email for each supported purpose", () => {
   assert.equal(EMAIL_OTP_LIFETIME_SECONDS, 5 * 60);
-  for (const purpose of ["signup", "password_reset", "pin_reset"]) {
+  for (const purpose of ["signup", "password_reset", "pin_reset", "customer_login"]) {
     const email = renderEmailOtpContent(purpose, "123456", {
       publicSiteUrl: "https://merchant.business.sendflow.africa",
       now: testDate,
     });
 
     assert.match(email.subject, /SendFlow/);
-    assert.match(email.html, /Vérifiez votre adresse|Réinitialisation/);
+    assert.match(email.html, /Vérifiez votre adresse|Réinitialisation|Vérifiez votre connexion/);
     assert.match(email.html, /Votre code de vérification/);
     assert.match(email.html, /Ce code est valable pendant 5 minutes/);
     assert.match(email.html, /src="https:\/\/merchant\.business\.sendflow\.africa\/sendflow-favicon\.png"/);
     assert.match(email.html, /© 2026 SendFlow/);
     assert.match(email.text, /123456/);
   }
+
+  const loginEmail = renderEmailOtpContent("customer_login", "654321", {
+    now: testDate,
+  });
+  assert.match(loginEmail.subject, /Vérifiez votre connexion/);
+  assert.match(loginEmail.text, /Si vous n’êtes pas à l’origine de cette demande/);
 });
 
 test("uses the SendFlow wordmark when no safe public logo origin is configured", () => {
