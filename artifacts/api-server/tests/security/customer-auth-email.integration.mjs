@@ -165,6 +165,44 @@ function getDeliveredCode(email) {
   return code;
 }
 
+function assertMinimalSessionState(response, pinUnlocked) {
+  const body = responseBody(response);
+  assert.deepEqual(
+    Object.keys(body).sort(),
+    ["pinConfigured", "pinUnlocked"],
+    "session status must not expose profile fields",
+  );
+  assert.equal(body.pinConfigured, true);
+  assert.equal(body.pinUnlocked, pinUnlocked);
+}
+
+async function assertPrePinAccessDenied(cookie) {
+  const protectedRequests = [
+    { method: "GET", path: "/api/me" },
+    { method: "GET", path: "/api/me/profile" },
+    { method: "GET", path: "/api/me/transactions" },
+    {
+      method: "GET",
+      path: "/api/me/transactions/00000000-0000-4000-8000-000000000000",
+    },
+    { method: "GET", path: "/api/me/identity-verification" },
+    { method: "POST", path: "/api/me/transfer-quote", body: {} },
+  ];
+  for (const { method, path, body } of protectedRequests) {
+    const response = await request(path, {
+      method,
+      ...(body === undefined ? {} : { body }),
+      cookie,
+    });
+    assert.equal(response.status, 403, `${method} ${path}: ${response.text}`);
+    assert.equal(
+      responseBody(response).error,
+      "PIN verification required",
+      `${method} ${path} must be denied by the server PIN gate`,
+    );
+  }
+}
+
 test("email signup, password recovery, and phone-addressed PIN recovery work on the repaired schema", async () => {
   const email = "signup.e2e@example.invalid";
   const phone = "+2250102030405";
@@ -248,12 +286,16 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
     body: { email, password: initialPassword },
   });
   assert.equal(signIn.status, 200, signIn.text);
-  assert.equal(responseBody(signIn).otpRequired, undefined);
+  assert.deepEqual(
+    responseBody(signIn),
+    { pinConfigured: true },
+    "password-only sign-in returns only the PIN setup state",
+  );
   const userSession = sessionCookie(signIn);
-  assert.equal(responseBody(signIn).userId, registeredAccount.userId);
   const sessionLookup = await request("/api/auth/session", { cookie: userSession });
   assert.equal(sessionLookup.status, 200, sessionLookup.text);
-  assert.equal(responseBody(sessionLookup).userId, registeredAccount.userId);
+  assertMinimalSessionState(sessionLookup, false);
+  await assertPrePinAccessDenied(userSession);
 
   await pool.query(
     "UPDATE sf_users SET last_login_completed_at=now()-interval '25 hours' WHERE id=$1",
@@ -286,7 +328,8 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
   const verifiedLoginSession = sessionCookie(verifiedLogin);
   const beforePinUnlock = await request("/api/auth/session", { cookie: verifiedLoginSession });
   assert.equal(beforePinUnlock.status, 200, beforePinUnlock.text);
-  assert.equal(responseBody(beforePinUnlock).pinUnlocked, false);
+  assertMinimalSessionState(beforePinUnlock, false);
+  await assertPrePinAccessDenied(verifiedLoginSession);
 
   const pinUnlock = await request("/api/auth/unlock", {
     method: "POST",
@@ -294,6 +337,10 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
     cookie: verifiedLoginSession,
   });
   assert.equal(pinUnlock.status, 200, pinUnlock.text);
+  const afterPinUnlock = await request("/api/auth/session", { cookie: verifiedLoginSession });
+  assert.equal(afterPinUnlock.status, 200, afterPinUnlock.text);
+  assertMinimalSessionState(afterPinUnlock, true);
+  assert.equal((await request("/api/me", { cookie: verifiedLoginSession })).status, 200);
   const completedLogin = (await pool.query(
     "SELECT last_login_completed_at FROM sf_users WHERE id=$1",
     [registeredAccount.userId],
@@ -314,8 +361,12 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
     body: { email, password: initialPassword },
   });
   assert.equal(recentLogin.status, 200, recentLogin.text);
-  assert.equal(responseBody(recentLogin).otpRequired, undefined);
-  sessionCookie(recentLogin);
+  assert.deepEqual(responseBody(recentLogin), { pinConfigured: true });
+  const recentLoginSession = sessionCookie(recentLogin);
+  const recentSessionState = await request("/api/auth/session", { cookie: recentLoginSession });
+  assert.equal(recentSessionState.status, 200, recentSessionState.text);
+  assertMinimalSessionState(recentSessionState, false);
+  await assertPrePinAccessDenied(recentLoginSession);
 
   // The real per-phone resend cooldown is 60 seconds; expire only this fixture
   // challenge so the phone-addressed recovery path can run in the same test.
@@ -460,7 +511,8 @@ test("email signup, password recovery, and phone-addressed PIN recovery work on 
   const recoveredLoginState = await request("/api/auth/session", {
     cookie: recoveredLoginSession,
   });
-  assert.equal(responseBody(recoveredLoginState).pinUnlocked, false);
+  assertMinimalSessionState(recoveredLoginState, false);
+  await assertPrePinAccessDenied(recoveredLoginSession);
   const recoveredPinUnlock = await request("/api/auth/unlock", {
     method: "POST",
     body: { pin: "2468" },

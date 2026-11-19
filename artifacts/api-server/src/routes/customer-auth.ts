@@ -824,13 +824,6 @@ router.post("/auth/sign-in", async (req, res): Promise<void> => {
         kind: "signed-in",
         session,
         account: {
-          userId: record.userId,
-          phone:
-            decryptSensitiveDataIfEncrypted(record.phone, "user-phone") ?? "",
-          displayName: formatCustomerDisplayName(
-            decryptSensitiveDataIfEncrypted(record.displayName, "user-name"),
-          ),
-          countryCode: record.countryCode,
           pinConfigured: record.pinHash !== null,
         },
       } as const;
@@ -913,10 +906,6 @@ router.get("/auth/session", async (req, res): Promise<void> => {
     }
     res.json(
       GetCustomerSessionResponse.parse({
-        userId: session.userId,
-        phone: session.phone,
-        displayName: session.displayName,
-        countryCode: session.countryCode,
         pinConfigured: session.pinConfigured,
         pinUnlocked: session.pinUnlocked,
       }),

@@ -507,7 +507,7 @@ export const RegisterCustomerResponse = zod.object({
 
 
 /**
- * Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. The PIN is still required after the session is issued.
+ * Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. Before PIN unlock, the response contains only whether a PIN is configured.
  * @summary Sign in to a SendFlow customer account
  */
 export const signInCustomerBodyEmailMin = 5;
@@ -526,25 +526,12 @@ export const SignInCustomerBody = zod.object({
   "turnstileToken": zod.string().min(1).max(signInCustomerBodyTurnstileTokenMax).describe('Single-use Cloudflare Turnstile token for sign-in.')
 })
 
-export const signInCustomerResponseOneDeveloperApiKeyPairLabelMax = 80;
-
-export const signInCustomerResponseOneDeveloperApiKeyPairPublicKeyRegExp = new RegExp('^sfpk_live_[A-Za-z0-9_-]{43}$');
-export const signInCustomerResponseOneDeveloperApiKeyPairSecretKeyRegExp = new RegExp('^sfsk_live_[A-Za-z0-9_-]{43}$');
 export const signInCustomerResponseTwoResendAfterSecondsMin = 0;
 
 
 
 export const SignInCustomerResponse = zod.union([zod.object({
-  "userId": zod.string(),
-  "phone": zod.string(),
-  "displayName": zod.string().nullable(),
-  "countryCode": zod.string().nullable(),
-  "pinConfigured": zod.boolean(),
-  "developerApiKeyPair": zod.object({
-  "label": zod.string().min(1).max(signInCustomerResponseOneDeveloperApiKeyPairLabelMax),
-  "publicKey": zod.string().regex(signInCustomerResponseOneDeveloperApiKeyPairPublicKeyRegExp),
-  "secretKey": zod.string().regex(signInCustomerResponseOneDeveloperApiKeyPairSecretKeyRegExp)
-}).optional().describe('Present only in a successful account-creation response; the secret must be saved immediately.')
+  "pinConfigured": zod.boolean()
 }),zod.object({
   "otpRequired": zod.literal(true),
   "challengeId": zod.uuid(),
@@ -557,10 +544,6 @@ export const SignInCustomerResponse = zod.union([zod.object({
  * @summary Get the current SendFlow customer session
  */
 export const GetCustomerSessionResponse = zod.object({
-  "userId": zod.string(),
-  "phone": zod.string(),
-  "displayName": zod.string().nullable(),
-  "countryCode": zod.string().nullable(),
   "pinConfigured": zod.boolean(),
   "pinUnlocked": zod.boolean()
 })
@@ -771,6 +754,7 @@ export const DatabaseHealthCheckResponse = zod.object({
 
 
 /**
+ * Returns account and wallet information only after the server confirms the current session's PIN unlock.
  * @summary Get the authenticated SendFlow account
  */
 export const getCurrentAccountResponseWalletBalanceMinorMax = 9007199254740991;
@@ -2456,7 +2440,7 @@ export const CreateCustomerTransferQuoteResponse = zod.object({
 
 
 /**
- * Returns one page of the current customer's transactions, newest first. Search matches phone numbers and references across all records. Use nextCursor to load older records.
+ * Returns one page of the current customer's transactions, newest first, only after the server confirms PIN unlock. Search matches phone numbers and references across all records. Use nextCursor to load older records.
  * @summary List the authenticated customer's transactions
  */
 export const getCustomerTransactionsQueryCursorMax = 64;

@@ -102,6 +102,7 @@ import type {
   CustomerServiceSettingsUpdate,
   CustomerSessionResult,
   CustomerSignInInput,
+  CustomerSignInResult,
   CustomerTransaction,
   CustomerTransactionPage,
   DatabaseStatus,
@@ -1643,10 +1644,10 @@ export const getSignInCustomerUrl = () => {
 }
 
 /**
- * Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. The PIN is still required after the session is issued.
+ * Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. Before PIN unlock, the response contains only whether a PIN is configured.
  * @summary Sign in to a SendFlow customer account
  */
-export const signInCustomer = async (customerSignInInput: CustomerSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerAuthResult | CustomerLoginOtpChallenge> => {
+export const signInCustomer = async (customerSignInInput: CustomerSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerSignInResult | CustomerLoginOtpChallenge> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -1662,7 +1663,7 @@ export const signInCustomer = async (customerSignInInput: CustomerSignInInput, o
     }
     return headers;
   };
-return customFetch<CustomerAuthResult | CustomerLoginOtpChallenge>(getSignInCustomerUrl(),
+return customFetch<CustomerSignInResult | CustomerLoginOtpChallenge>(getSignInCustomerUrl(),
   {
     ...options,
     method: 'POST',
@@ -2868,6 +2869,7 @@ export const getGetCurrentAccountUrl = () => {
 }
 
 /**
+ * Returns account and wallet information only after the server confirms the current session's PIN unlock.
  * @summary Get the authenticated SendFlow account
  */
 export const getCurrentAccount = async ( options?: Parameters<typeof customFetch>[1]): Promise<CurrentAccount> => {
@@ -6441,7 +6443,7 @@ export const getGetCustomerTransactionsUrl = (params?: GetCustomerTransactionsPa
 }
 
 /**
- * Returns one page of the current customer's transactions, newest first. Search matches phone numbers and references across all records. Use nextCursor to load older records.
+ * Returns one page of the current customer's transactions, newest first, only after the server confirms PIN unlock. Search matches phone numbers and references across all records. Use nextCursor to load older records.
  * @summary List the authenticated customer's transactions
  */
 export const getCustomerTransactions = async (params?: GetCustomerTransactionsParams, options?: Parameters<typeof customFetch>[1]): Promise<CustomerTransactionPage> => {

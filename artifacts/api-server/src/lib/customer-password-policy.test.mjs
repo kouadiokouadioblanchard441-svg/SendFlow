@@ -6,6 +6,7 @@ import {
   SendEmailOtpBody,
   SignInCustomerBody,
   SignInCustomerResponse,
+  GetCustomerSessionResponse,
   VerifyEmailOtpBody,
 } from "../../../../lib/api-zod/src/generated/api.ts";
 
@@ -179,6 +180,35 @@ test("new and reset passwords require eight characters, a letter, and a digit", 
     "sessionToken" in parsedOtpRequiredResponse,
     false,
     "the OTP-required response strips any unknown session token field",
+  );
+  assert.deepEqual(
+    SignInCustomerResponse.parse({ pinConfigured: true }),
+    { pinConfigured: true },
+    "password-only sign-in exposes only the PIN setup state",
+  );
+  assert.deepEqual(
+    SignInCustomerResponse.parse({
+      pinConfigured: true,
+      userId: "profile-data-must-not-be-accepted",
+    }),
+    { pinConfigured: true },
+    "the sign-in response schema strips profile data before PIN unlock",
+  );
+  assert.deepEqual(
+    GetCustomerSessionResponse.parse({
+      pinConfigured: true,
+      pinUnlocked: false,
+    }),
+    { pinConfigured: true, pinUnlocked: false },
+  );
+  assert.deepEqual(
+    GetCustomerSessionResponse.parse({
+      pinConfigured: true,
+      pinUnlocked: false,
+      phone: "+2250000000000",
+    }),
+    { pinConfigured: true, pinUnlocked: false },
+    "the session response schema strips profile data before PIN unlock",
   );
 
   assert.equal(

@@ -206,6 +206,7 @@ export * from './customerRegistrationInput';
 export * from './customerServiceSettingsUpdate';
 export * from './customerSessionResult';
 export * from './customerSignInInput';
+export * from './customerSignInResult';
 export * from './customerTransaction';
 export * from './customerTransactionKind';
 export * from './customerTransactionPage';

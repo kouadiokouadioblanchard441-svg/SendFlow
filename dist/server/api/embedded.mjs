@@ -212638,21 +212638,9 @@ var SignInCustomerBody = object({
   "password": string2().min(signInCustomerBodyPasswordMin).max(signInCustomerBodyPasswordMax),
   "turnstileToken": string2().min(1).max(signInCustomerBodyTurnstileTokenMax).describe("Single-use Cloudflare Turnstile token for sign-in.")
 });
-var signInCustomerResponseOneDeveloperApiKeyPairLabelMax = 80;
-var signInCustomerResponseOneDeveloperApiKeyPairPublicKeyRegExp = new RegExp("^sfpk_live_[A-Za-z0-9_-]{43}$");
-var signInCustomerResponseOneDeveloperApiKeyPairSecretKeyRegExp = new RegExp("^sfsk_live_[A-Za-z0-9_-]{43}$");
 var signInCustomerResponseTwoResendAfterSecondsMin = 0;
 var SignInCustomerResponse = union2([object({
-  "userId": string2(),
-  "phone": string2(),
-  "displayName": string2().nullable(),
-  "countryCode": string2().nullable(),
-  "pinConfigured": boolean3(),
-  "developerApiKeyPair": object({
-    "label": string2().min(1).max(signInCustomerResponseOneDeveloperApiKeyPairLabelMax),
-    "publicKey": string2().regex(signInCustomerResponseOneDeveloperApiKeyPairPublicKeyRegExp),
-    "secretKey": string2().regex(signInCustomerResponseOneDeveloperApiKeyPairSecretKeyRegExp)
-  }).optional().describe("Present only in a successful account-creation response; the secret must be saved immediately.")
+  "pinConfigured": boolean3()
 }), object({
   "otpRequired": literal(true),
   "challengeId": uuid3(),
@@ -212660,10 +212648,6 @@ var SignInCustomerResponse = union2([object({
   "resendAfterSeconds": int().min(signInCustomerResponseTwoResendAfterSecondsMin)
 })]);
 var GetCustomerSessionResponse = object({
-  "userId": string2(),
-  "phone": string2(),
-  "displayName": string2().nullable(),
-  "countryCode": string2().nullable(),
   "pinConfigured": boolean3(),
   "pinUnlocked": boolean3()
 });
@@ -227466,12 +227450,6 @@ router16.post("/auth/sign-in", async (req, res) => {
         kind: "signed-in",
         session,
         account: {
-          userId: record2.userId,
-          phone: decryptSensitiveDataIfEncrypted(record2.phone, "user-phone") ?? "",
-          displayName: formatCustomerDisplayName(
-            decryptSensitiveDataIfEncrypted(record2.displayName, "user-name")
-          ),
-          countryCode: record2.countryCode,
           pinConfigured: record2.pinHash !== null
         }
       };
@@ -227546,10 +227524,6 @@ router16.get("/auth/session", async (req, res) => {
     }
     res.json(
       GetCustomerSessionResponse.parse({
-        userId: session.userId,
-        phone: session.phone,
-        displayName: session.displayName,
-        countryCode: session.countryCode,
         pinConfigured: session.pinConfigured,
         pinUnlocked: session.pinUnlocked
       })

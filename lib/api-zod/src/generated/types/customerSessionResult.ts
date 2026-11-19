@@ -7,12 +7,6 @@
  */
 
 export interface CustomerSessionResult {
-  userId: string;
-  phone: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  countryCode: string | null;
   pinConfigured: boolean;
   pinUnlocked: boolean;
 }

@@ -622,6 +622,10 @@ export interface CustomerPinSetInput {
   newPin: string;
 }
 
+export interface CustomerSignInResult {
+  pinConfigured: boolean;
+}
+
 /**
  * Present only in a successful account-creation response; the secret must be saved immediately.
  */
@@ -650,12 +654,6 @@ export interface CustomerAuthResult {
 }
 
 export interface CustomerSessionResult {
-  userId: string;
-  phone: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  countryCode: string | null;
   pinConfigured: boolean;
   pinUnlocked: boolean;
 }

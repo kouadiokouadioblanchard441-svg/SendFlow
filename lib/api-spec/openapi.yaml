@@ -453,7 +453,7 @@ paths:
       operationId: signInCustomer
       tags: [account]
       summary: Sign in to a SendFlow customer account
-      description: Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. The PIN is still required after the session is issued.
+      description: Validates the email address and password. If the customer has not completed a login in the previous 24 hours, sends an email OTP and does not issue a session until that OTP is verified. Before PIN unlock, the response contains only whether a PIN is configured.
       requestBody:
         required: true
         content:
@@ -467,7 +467,7 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: "#/components/schemas/CustomerAuthResult"
+                  - $ref: "#/components/schemas/CustomerSignInResult"
                   - $ref: "#/components/schemas/CustomerLoginOtpChallenge"
         "400":
           description: Invalid request.
@@ -508,7 +508,7 @@ paths:
         - sendFlowSession: []
       responses:
         "200":
-          description: Current customer session state.
+          description: Minimal current session state only. Profile and account data are available through their own routes after the server confirms PIN unlock.
           content:
             application/json:
               schema:
@@ -901,6 +901,7 @@ paths:
       operationId: getCurrentAccount
       tags: [account]
       summary: Get the authenticated SendFlow account
+      description: Returns account and wallet information only after the server confirms the current session's PIN unlock.
       security:
         - sendFlowSession: []
       responses:
@@ -912,6 +913,12 @@ paths:
                 $ref: "#/components/schemas/CurrentAccount"
         "401":
           description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
           content:
             application/json:
               schema:
@@ -2647,7 +2654,7 @@ paths:
       operationId: getCustomerTransactions
       tags: [account]
       summary: List the authenticated customer's transactions
-      description: Returns one page of the current customer's transactions, newest first. Search matches phone numbers and references across all records. Use nextCursor to load older records.
+      description: Returns one page of the current customer's transactions, newest first, only after the server confirms PIN unlock. Search matches phone numbers and references across all records. Use nextCursor to load older records.
       security:
         - sendFlowSession: []
       parameters:
@@ -2691,6 +2698,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
         "503":
           description: Transaction history is unavailable.
           content:
@@ -2726,6 +2739,12 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "401":
           description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: PIN verification is required.
           content:
             application/json:
               schema:
@@ -6176,6 +6195,13 @@ components:
           maxLength: 4
           pattern: "^[0-9]{4}$"
       required: [newPin]
+    CustomerSignInResult:
+      type: object
+      additionalProperties: false
+      properties:
+        pinConfigured:
+          type: boolean
+      required: [pinConfigured]
     CustomerAuthResult:
       type: object
       properties:
@@ -6207,21 +6233,13 @@ components:
       required: [userId, phone, displayName, countryCode, pinConfigured]
     CustomerSessionResult:
       type: object
+      additionalProperties: false
       properties:
-        userId:
-          type: string
-        phone:
-          type: string
-        displayName:
-          type: ["string", "null"]
-        countryCode:
-          type: ["string", "null"]
         pinConfigured:
           type: boolean
         pinUnlocked:
           type: boolean
-      required:
-        [userId, phone, displayName, countryCode, pinConfigured, pinUnlocked]
+      required: [pinConfigured, pinUnlocked]
     CustomerPinStateResult:
       type: object
       properties:
