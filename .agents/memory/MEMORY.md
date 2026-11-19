@@ -47,6 +47,7 @@
 - [LinkFlow USSD configuration](linkflow-ussd-configuration.md) — Administrators configure USSD codes by country and operator; the provider does not supply them.
 - [SendFlow visual contrast](sendflow-visual-contrast.md) — Match provided LinkFlow mockups; keep artwork fixed, white surfaces, violet accents, and solid red deletes.
 - [SendFlow documentation rules](docs-portal-visual-identity.md) — Keep examples aligned with SendFlow routes and place centralized production URLs in copyable blocks and applicable snippets.
+- [Merchant domain spelling](merchant-domain-spelling.md) — The canonical merchant host is `merchent.business.sendflow.africa`, as explicitly confirmed by the user.
 - [SendFlow page loader](sendflow-page-loader.md) — Keep the shared LinkFlow-style four-dot violet animation for full-page waits and route transitions.
 - [Merchant developer API](developer-integrations.md) — Keep checkout on LinkFlow’s settlement path; use provider-neutral OTP and server-generated instruction/redirect fields.
 - [Campaign contact details](campaign-contact-settings.md) — Campaign email contact details must come from the active admin settings; never bake support numbers into templates.
