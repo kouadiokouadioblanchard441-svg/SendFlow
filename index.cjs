@@ -1,6 +1,11 @@
 "use strict";
 // Plesk CommonJS adapter: keep application logic in the existing ESM bundle.
 const PLESK_SERVICE = "site";
+const path = require("node:path");
+const PLESK_APPLICATION_ROOT = path.resolve(
+  __dirname,
+  "./dist",
+);
 function safeFailureCategory(error) {
   try {
     let current = error;
@@ -9,6 +14,10 @@ function safeFailureCategory(error) {
       depth < 3 && current && (typeof current === "object" || typeof current === "function");
       depth += 1
     ) {
+      const code = typeof current.code === "string" ? current.code : "";
+      if (code === "ERR_MODULE_NOT_FOUND" || code === "ERR_REQUIRE_ESM") {
+        return "MISSING_MODULE";
+      }
       const message = typeof current.message === "string" ? current.message : "";
       if (message.startsWith("TRUST_PROXY_HOPS")) return "INVALID_TRUST_PROXY_HOPS";
       if (message.startsWith("CORS_ALLOWED_ORIGINS")) return "INVALID_CORS_ALLOWED_ORIGINS";
@@ -68,6 +77,55 @@ function safeConfigurationHint(error) {
   }
   return "";
 }
+function safeMissingModuleReference(error) {
+  try {
+    let current = error;
+    for (
+      let depth = 0;
+      depth < 3 && current && (typeof current === "object" || typeof current === "function");
+      depth += 1
+    ) {
+      const code = typeof current.code === "string" ? current.code : "";
+      if (code === "ERR_MODULE_NOT_FOUND" || code === "ERR_REQUIRE_ESM") {
+        const message = typeof current.message === "string" ? current.message : "";
+        const packageMatch = message.match(/Cannot find package ['"]([^'"]+)['"]/i);
+        if (
+          packageMatch
+          && /^(@[A-Za-z0-9._-]+\/)?[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/.test(packageMatch[1])
+        ) {
+          return "package " + packageMatch[1];
+        }
+        const referenceMatch = message.match(
+          /(?:Cannot find module |require\(\) of ES Module )['"]?([^\s'"]+)['"]?/i,
+        );
+        if (referenceMatch) {
+          const reference = referenceMatch[1].replace(/\\/g, "/");
+          if (path.isAbsolute(reference)) {
+            const relative = path.relative(PLESK_APPLICATION_ROOT, reference).replace(/\\/g, "/");
+            if (
+              relative
+              && relative !== ".."
+              && !relative.startsWith("../")
+              && !path.isAbsolute(relative)
+              && /^[A-Za-z0-9@._+/-]+$/.test(relative)
+            ) {
+              return "file " + relative;
+            }
+            return "external file";
+          }
+          if (/^(?:\.\.?\/)?[A-Za-z0-9@._+/-]+$/.test(reference)) {
+            return "module " + reference;
+          }
+        }
+        return "unknown";
+      }
+      current = current.cause;
+    }
+  } catch {}
+  return "unknown";
+}
+console.log("Plesk " + PLESK_SERVICE + " Node version: " + process.version);
+console.log("Plesk " + PLESK_SERVICE + " application root: " + PLESK_APPLICATION_ROOT);
 function safeFailureLabel(error) {
   let fallbackName = "";
   try {
@@ -103,6 +161,12 @@ if (process.env.NODE_ENV !== "production") {
     console.error("Plesk " + PLESK_SERVICE + " application startup failed. Check private configuration and application logs.");
     console.error("Plesk " + PLESK_SERVICE + " startup failure details: " + safeFailureLabel(error));
     console.error("Plesk " + PLESK_SERVICE + " startup failure category: " + safeFailureCategory(error));
+    if (safeFailureCategory(error) === "MISSING_MODULE") {
+      console.error(
+        "Plesk " + PLESK_SERVICE + " missing module reference: "
+          + safeMissingModuleReference(error),
+      );
+    }
     const missingEnvironmentNames = safeMissingEnvironmentNames();
     if (missingEnvironmentNames.length) {
       console.error("Plesk " + PLESK_SERVICE + " runtime variables unset: " + missingEnvironmentNames.join(", "));

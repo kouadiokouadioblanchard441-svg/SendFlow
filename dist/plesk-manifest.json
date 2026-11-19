@@ -1,6 +1,6 @@
 {
-  "builtAt": "2026-11-19T10:59:33.519Z",
-  "sourceCommit": "c8b110864db83603ce33f8e8c46a848dc26d2d5a",
+  "builtAt": "2026-11-19T15:35:12.838Z",
+  "sourceCommit": "bca9851cba7c758469bd89f4a2aff31881de6842",
   "trackedWorktreeModified": false,
   "builderNode": "v24.22.3",
   "builderPnpm": "10.26.1",
@@ -109,13 +109,13 @@
     },
     {
       "path": "index.cjs",
-      "bytes": 4996,
-      "sha256": "2867effc547e4d64167675067013d34408c0ee6fd9985f823d8fc39037a3b8a5"
+      "bytes": 7365,
+      "sha256": "47b878fcbe00086664c98b39541e9e50e0330f8984b5e160b5f06d935c3f2060"
     },
     {
       "path": "plesk-runtime-dependencies.tar.gz",
-      "bytes": 23963178,
-      "sha256": "61ccf016799a38944a4f02552efe4f58435abaa04e15ba1a0c845520e7cb58ea"
+      "bytes": 23964187,
+      "sha256": "a90a05284cd0051ab0bcba78a0bb8cda2d86cc3a872295edc4da2b8807c15176"
     },
     {
       "path": "public/assets/chunk--TICjDqB.js",
@@ -875,13 +875,14 @@
   ],
   "runtimeDependencies": {
     "archive": "artifacts/sendflow/dist/plesk-runtime-dependencies.tar.gz",
-    "bytes": 23963178,
-    "sizeBytes": 23963178,
-    "sha256": "61ccf016799a38944a4f02552efe4f58435abaa04e15ba1a0c845520e7cb58ea",
+    "bytes": 23964187,
+    "sizeBytes": 23964187,
+    "sha256": "a90a05284cd0051ab0bcba78a0bb8cda2d86cc3a872295edc4da2b8807c15176",
     "platform": "linux-x64",
     "node": "v24.22.3",
     "entries": 12525,
     "externalRuntimePackages": [
+      "argon2",
       "sharp",
       "@swc/helpers"
     ]
