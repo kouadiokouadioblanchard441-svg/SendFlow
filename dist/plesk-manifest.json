@@ -1,7 +1,7 @@
 {
-  "builtAt": "2026-11-19T16:19:34.670Z",
-  "sourceCommit": "98e033e436ce8da9855d7158ce9dd096d54c2a96",
-  "trackedWorktreeModified": true,
+  "builtAt": "2026-11-19T16:22:19.414Z",
+  "sourceCommit": "8bc0d675e535708157f15ef428d1000802815b80",
+  "trackedWorktreeModified": false,
   "builderNode": "v24.22.3",
   "builderPnpm": "10.26.1",
   "lockfileSha256": "00bb4904baff839c3c41a2427941796ff1d4b9cd9b55b53d0a3fd615a807d60d",
@@ -114,8 +114,8 @@
     },
     {
       "path": "plesk-runtime-dependencies.tar.gz",
-      "bytes": 23768255,
-      "sha256": "48ab979149b5407944fcb653145f883de27e43f760b9e20dece8d045a1c0a185"
+      "bytes": 23963312,
+      "sha256": "d69767b1732221cb6078b0ba11c4c11ee644280d0f320bb94615772d08bde15f"
     },
     {
       "path": "public/assets/chunk--TICjDqB.js",
@@ -868,26 +868,6 @@
       "sha256": "6e56797858a668da2f6e6a544e165c67ce953610432f0880ddbdc1410b8af6dd"
     },
     {
-      "path": "server/api/pino-file.mjs",
-      "bytes": 145501,
-      "sha256": "a16b26aae667c4a9b8ed3ce17f97017ca51c56ad08b208cba6c19c81db567459"
-    },
-    {
-      "path": "server/api/pino-pretty.mjs",
-      "bytes": 122756,
-      "sha256": "6ba05b9342f7ea8649a27069e490ea484b4fc59e9dc2f2fcd64bb1c3a8a57180"
-    },
-    {
-      "path": "server/api/pino-worker.mjs",
-      "bytes": 157137,
-      "sha256": "59591ae6bf5ea65d1684d031234912173bf823a188392e1be8b09622d1397470"
-    },
-    {
-      "path": "server/api/thread-stream-worker.mjs",
-      "bytes": 7503,
-      "sha256": "592c869fbb0d56ca26b58892b44c72a29f45bfd0dfccd7771dce71700b267d8c"
-    },
-    {
       "path": "server/index.mjs",
       "bytes": 411107,
       "sha256": "ebec0facb601ea79f64d89307d196eb42fce83d58b2bd097cfaa14b56060f894"
@@ -895,12 +875,12 @@
   ],
   "runtimeDependencies": {
     "archive": "artifacts/sendflow/dist/plesk-runtime-dependencies.tar.gz",
-    "bytes": 23768255,
-    "sizeBytes": 23768255,
-    "sha256": "48ab979149b5407944fcb653145f883de27e43f760b9e20dece8d045a1c0a185",
+    "bytes": 23963312,
+    "sizeBytes": 23963312,
+    "sha256": "d69767b1732221cb6078b0ba11c4c11ee644280d0f320bb94615772d08bde15f",
     "platform": "linux-x64",
     "node": "v24.22.3",
-    "entries": 12533,
+    "entries": 12525,
     "externalRuntimePackages": [
       "argon2",
       "sharp",
