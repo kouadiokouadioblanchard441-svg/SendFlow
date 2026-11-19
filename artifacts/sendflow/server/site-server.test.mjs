@@ -9,11 +9,11 @@ import { createSiteServer, getSiteListenPort } from "./site-server.ts";
 const gatePath = "/secure-entry-for-sendflow-test-only-947362";
 const gateToken = "fixture-only-token-not-a-production-secret-298471";
 
-test("site startup requires Passenger's dynamic PORT without using a fixed fallback", () => {
+test("site startup accepts Passenger's PORT and does not require a fixed fallback", () => {
   assert.equal(getSiteListenPort("8080"), 8080);
   assert.equal(getSiteListenPort(" 54321 "), 54321);
   for (const value of [undefined, "", "not-a-port", "0", "-1", "65536", "1.5"]) {
-    assert.throws(() => getSiteListenPort(value), /INVALID_PORT/);
+    assert.equal(getSiteListenPort(value), 0, String(value));
   }
 });
 

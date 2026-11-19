@@ -345,25 +345,23 @@ test("Plesk startup diagnostics list required names without exposing environment
     encoding: "utf8",
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /Plesk API runtime variables unset: SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY, PORT/);
+  assert.match(result.stderr, /Plesk API runtime variables unset: SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY/);
   assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker|not-a-real-database-url/);
 });
 
-test("CommonJS adapter reports a missing Passenger PORT without printing values", async (t) => {
+test("CommonJS adapter starts without requiring PORT", async (t) => {
   const root = await fixture(t);
   await writeFile(
     path.join(root, "server/index.mjs"),
-    'throw new Error("INVALID_PORT: Passenger did not provide PORT.");',
+    'console.log("synthetic-entry-started-without-port");',
   );
   const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
     env: { NODE_ENV: "production" },
     encoding: "utf8",
   });
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /Plesk site startup failure category: INVALID_PORT/);
-  assert.match(result.stderr, /Plesk site runtime variables unset: .*PORT/);
-  assert.match(result.stderr, /Passenger provides a valid PORT environment variable/);
-  assert.doesNotMatch(result.stdout + result.stderr, /undefined|synthetic-private-marker/);
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /synthetic-entry-started-without-port/);
+  assert.doesNotMatch(result.stdout + result.stderr, /INVALID_PORT|runtime variables unset: .*PORT/);
 });
 
 test("CommonJS adapter identifies missing production configuration without exposing values", async (t) => {

@@ -131,11 +131,13 @@ Cette disposition correspond à la capture Plesk. Dans `dist`, `index.cjs` charg
 Le lanceur `index.cjs` à la racine du checkout est conservé pour compatibilité, mais
 n'est pas le Startup File indiqué par le panneau.
 
-Passenger doit fournir `PORT` au processus Node. Le code valide cette valeur et écoute
-exactement dessus sur `0.0.0.0`; il échoue explicitement et sans fallback si `PORT` est
-absent ou invalide. Ne saisissez pas un port interne arbitraire dans le panneau. Les ports
-publics HTTPS 443/HTTP 80 appartiennent au proxy web et sont distincts du port interne
-fourni au processus Node par Passenger.
+Le serveur utilise `PORT` lorsqu'il est fourni. Si cette variable est absente ou invalide,
+il appelle `listen(0, "0.0.0.0")` : le système attribue alors un port éphémère, sans port
+fixe codé en dur. Cette voie suppose que Passenger intercepte l'appel à `listen()` comme
+dans l'installation visée ; le dépôt seul ne peut pas certifier ce comportement sur le
+serveur de production. Ne saisissez pas un port interne arbitraire dans le panneau. Les
+ports publics HTTPS 443/HTTP 80 appartiennent au proxy web et sont distincts de l'écoute
+interne Node.js.
 
 Le paquet est déjà construit avant le Pull. Ne lancez pas `npm install`, `npm ci` ou
 `npm update` dans la racine Plesk : le dépôt impose pnpm pour les builds et le hook
@@ -209,7 +211,7 @@ exposée comme un répertoire statique Apache.
   `SENDFLOW_ADMIN_TOTP_ENCRYPTION_KEY`. Les fonctions FeexPay requièrent aussi
   `FEEXPAY_API_KEY` et `FEEXPAY_SHOP_ID`. Utiliser la même base Supabase existante ;
   ne pas créer ni sélectionner une autre base. La connexion vérifie TLS et le certificat.
-  `PORT` doit être fourni par Passenger : ne pas lui donner une valeur fixe à la main.
+  `PORT` est facultatif pour ce serveur ; ne lui donnez pas une valeur fixe arbitraire.
 - Si un démarrage échoue, le lanceur consigne une catégorie d'erreur et uniquement les
   noms des variables absentes ; il ne consigne aucune valeur. Le runtime écrit aussi le
   résultat de la vérification DB sous forme de catégorie sûre, jamais l'URL ni le certificat.

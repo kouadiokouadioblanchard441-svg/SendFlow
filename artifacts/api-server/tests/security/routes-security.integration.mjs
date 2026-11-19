@@ -523,7 +523,7 @@ test("signup country and settings endpoints return explicit JSON on database per
   }
 });
 
-test("built single Plesk site distribution serves all registration APIs on its supplied port", async (t) => {
+test("built single Plesk site distribution starts without PORT and serves all registration APIs", async (t) => {
   const sourceDistribution = process.env.SENDFLOW_PLESK_SITE_DIST;
   if (!sourceDistribution || !existsSync(sourceDistribution)) {
     t.skip("The integrated Plesk distribution is tested when the Plesk build provides it.");
@@ -550,22 +550,12 @@ test("built single Plesk site distribution serves all registration APIs on its s
     { cwd: deploymentRoot, env: process.env, stdio: "pipe" },
   );
 
-  const reservation = createNetServer();
-  reservation.listen(0, "127.0.0.1");
-  await once(reservation, "listening");
-  const address = reservation.address();
-  assert.ok(address && typeof address !== "string");
-  const port = address.port;
-  await new Promise((resolve, reject) => {
-    reservation.close((error) => error ? reject(error) : resolve());
-  });
-
   const bundle = join(deploymentRoot, "server/index.mjs");
   const childEnvironment = { ...process.env };
   delete childEnvironment.NODE_PATH;
+  delete childEnvironment.PORT;
   Object.assign(childEnvironment, {
     NODE_ENV: "development",
-    PORT: String(port),
     SENDFLOW_DATABASE_TARGET: "development",
     TRUST_PROXY_HOPS: "1",
     CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid",
@@ -598,6 +588,28 @@ test("built single Plesk site distribution serves all registration APIs on its s
     }
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
   });
+
+  let port;
+  async function waitForPort() {
+    const deadline = Date.now() + 10_000;
+    while (Date.now() < deadline) {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        assert.fail(
+          `Built integrated process exited before listening without PORT. Safe startup output: ${childOutput.slice(-4_000)}`,
+        );
+      }
+      const match = childOutput.replace(/\u001b\[[0-9;]*m/g, "").match(/port:\s*(\d+)/i);
+      if (match) {
+        port = Number(match[1]);
+        assert.ok(port > 0, "the operating system must assign an ephemeral port");
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    assert.fail(
+      `Built integrated process did not log its ephemeral listen port. Safe startup output: ${childOutput.slice(-4_000)}`,
+    );
+  }
 
   async function readEndpoint(path) {
     return new Promise((resolve, reject) => {
@@ -642,6 +654,7 @@ test("built single Plesk site distribution serves all registration APIs on its s
     );
   }
 
+  await waitForPort();
   const countries = await waitForEndpoint("/api/auth/registration-countries");
   assert.equal(countries.status, 200, countries.text);
   assert.ok(JSON.parse(countries.text).countries.some((country) => country.countryCode === "ci"));
@@ -670,6 +683,7 @@ test("built single Plesk site distribution serves all registration APIs on its s
   assert.match(childOutput, /apiMount/);
   assert.match(childOutput, /"path": "\/api"/);
   assert.match(childOutput, /"status": "active"/);
+  assert.doesNotMatch(childOutput, /PORT.*unset|INVALID_PORT/);
   assert.doesNotMatch(
     childOutput,
     /isolated-built-package-secret|isolated-test-turnstile-secret/,

@@ -12107,20 +12107,17 @@ function startSiteServer() {
       });
     });
     apiRuntime.startEmbeddedApiRuntime();
-    apiRuntime.logPleskApplicationStarted(port);
+    const address = server.address();
+    apiRuntime.logPleskApplicationStarted(
+      address && typeof address === "object" ? address.port : port
+    );
     return server;
   })();
 }
 function getSiteListenPort(value) {
   const normalized = value?.trim() ?? "";
-  if (!normalized) {
-    throw new Error("INVALID_PORT: Passenger did not provide PORT.");
-  }
   const port = Number(normalized);
-  if (!Number.isSafeInteger(port) || port < 1 || port > 65535) {
-    throw new Error("INVALID_PORT: Passenger provided an invalid PORT.");
-  }
-  return port;
+  return Number.isSafeInteger(port) && port >= 1 && port <= 65535 ? port : 0;
 }
 
 // server/start.ts
