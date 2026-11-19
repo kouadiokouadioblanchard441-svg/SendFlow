@@ -22,8 +22,16 @@ function run(command, args, options = {}) {
 
 function assertSafeArchiveListing(listing) {
   const entries = listing.split(/\r?\n/).filter(Boolean);
-  if (!entries.includes("node_modules/sharp") || !entries.includes("node_modules/@swc/helpers")) {
+  if (
+    !entries.includes("node_modules/argon2")
+    || !entries.includes("node_modules/sharp")
+    || !entries.includes("node_modules/@swc/helpers")
+  ) {
     throw new Error("API runtime archive is missing an external production dependency.");
+  }
+  if (!entries.some((entry) =>
+    /^node_modules\/\.pnpm\/argon2@[^/]+\/node_modules\/argon2\/prebuilds\/linux-x64\/argon2\.glibc\.node$/.test(entry))) {
+    throw new Error("API runtime archive is missing the Linux x64 argon2 native runtime.");
   }
   if (!entries.some((entry) =>
     /^node_modules\/\.pnpm\/@img\+sharp-linux-x64@[^/]+\/node_modules\/@img\/sharp-linux-x64\/lib\/sharp-linux-x64-[^/]+\.node$/.test(entry))) {
@@ -79,6 +87,15 @@ async function smokeTestSharp(cwd) {
   run(process.execPath, ["--input-type=module", "-e", code], { cwd });
 }
 
+async function smokeTestArgon2(cwd) {
+  const code = [
+    "import argon2 from 'argon2';",
+    "const digest = await argon2.hash('isolated-runtime-check');",
+    "if (!(await argon2.verify(digest, 'isolated-runtime-check'))) process.exit(1);",
+  ].join("\n");
+  run(process.execPath, ["--input-type=module", "-e", code], { cwd });
+}
+
 export async function packageApiRuntimeDependencies({ root, output }) {
   if (process.platform !== "linux" || process.arch !== "x64") {
     throw new Error("API runtime dependencies must be packaged on Linux x64.");
@@ -120,6 +137,7 @@ export async function packageApiRuntimeDependencies({ root, output }) {
 
     await assertNoEscapingSymlinks(nodeModules);
     await smokeTestSharp(packageRoot);
+    await smokeTestArgon2(packageRoot);
 
     run("tar", [
       "--exclude=node_modules/.modules.yaml",
@@ -134,6 +152,7 @@ export async function packageApiRuntimeDependencies({ root, output }) {
     await mkdir(extractedRoot, { recursive: true });
     run("tar", ["-xzf", temporaryArchive, "-C", extractedRoot], { cwd: root });
     await smokeTestSharp(extractedRoot);
+    await smokeTestArgon2(extractedRoot);
 
     const archiveInfo = await stat(temporaryArchive);
     if (archiveInfo.size > MAX_ARCHIVE_BYTES) {
@@ -150,7 +169,7 @@ export async function packageApiRuntimeDependencies({ root, output }) {
       platform: `${process.platform}-${process.arch}`,
       node: process.version,
       entries: entryCount,
-      externalRuntimePackages: ["sharp", "@swc/helpers"],
+      externalRuntimePackages: ["argon2", "sharp", "@swc/helpers"],
     };
   } finally {
     await rm(temporaryRoot, { recursive: true, force: true });

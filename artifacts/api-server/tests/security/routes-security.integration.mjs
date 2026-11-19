@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import http from "node:http";
 import { createServer as createNetServer } from "node:net";
 import { execFileSync, spawn } from "node:child_process";
-import { randomBytes, randomUUID } from "node:crypto";
+import { generateKeyPairSync, randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import {
   cpSync,
@@ -550,21 +550,31 @@ test("built single Plesk site distribution starts without PORT and serves all re
     { cwd: deploymentRoot, env: process.env, stdio: "pipe" },
   );
 
-  const bundle = join(deploymentRoot, "server/index.mjs");
+  const launcher = join(deploymentRoot, "index.cjs");
   const childEnvironment = { ...process.env };
   delete childEnvironment.NODE_PATH;
   delete childEnvironment.PORT;
   Object.assign(childEnvironment, {
-    NODE_ENV: "development",
-    SENDFLOW_DATABASE_TARGET: "development",
-    TRUST_PROXY_HOPS: "1",
+    NODE_ENV: "production",
+    SENDFLOW_DATABASE_TARGET: "production",
+    DATABASE_URL: process.env.SENDFLOW_PLESK_FIXTURE_DATABASE_URL,
+    DATABASE_CA_CERT: process.env.SENDFLOW_PLESK_FIXTURE_DATABASE_CA_CERT,
+    TRUST_PROXY_HOPS: "2",
     CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid",
     LOG_LEVEL: "info",
     TURNSTILE_SITE_KEY: turnstilePublicSiteKey,
     TURNSTILE_SECRET_KEY:
       process.env.TURNSTILE_SECRET_KEY ?? "isolated-built-package-secret",
   });
-  const child = spawn(process.execPath, [bundle], {
+  const adminJwtKeys = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  childEnvironment.SENDFLOW_ADMIN_JWT_PRIVATE_KEY = adminJwtKeys.privateKey
+    .export({ format: "pem", type: "pkcs8" }).toString();
+  childEnvironment.SENDFLOW_ADMIN_JWT_PUBLIC_KEY = adminJwtKeys.publicKey
+    .export({ format: "pem", type: "spki" }).toString();
+  childEnvironment.SENDFLOW_ADMIN_TOTP_ENCRYPTION_KEY = randomBytes(32).toString("hex");
+  delete childEnvironment.REPL_ID;
+  delete childEnvironment.REPLIT_DEV_DOMAIN;
+  const child = spawn(process.execPath, [launcher], {
     cwd: deploymentRoot,
     env: childEnvironment,
     stdio: ["ignore", "pipe", "pipe"],
@@ -598,7 +608,9 @@ test("built single Plesk site distribution starts without PORT and serves all re
           `Built integrated process exited before listening without PORT. Safe startup output: ${childOutput.slice(-4_000)}`,
         );
       }
-      const match = childOutput.replace(/\u001b\[[0-9;]*m/g, "").match(/port:\s*(\d+)/i);
+      const match = childOutput
+        .replace(/\u001b\[[0-9;]*m/g, "")
+        .match(/port["']?\s*:\s*(\d+)/i);
       if (match) {
         port = Number(match[1]);
         assert.ok(port > 0, "the operating system must assign an ephemeral port");
@@ -680,9 +692,12 @@ test("built single Plesk site distribution starts without PORT and serves all re
   assert.equal(home.status, 200, home.text);
   assert.match(home.text, /SendFlow/i);
   assert.match(childOutput, /Plesk application started with integrated API/);
+  assert.match(childOutput, new RegExp(`Plesk site Node version: ${process.version}`));
+  assert.ok(childOutput.includes(`Plesk site application root: ${deploymentRoot}`));
   assert.match(childOutput, /apiMount/);
-  assert.match(childOutput, /"path": "\/api"/);
-  assert.match(childOutput, /"status": "active"/);
+  assert.match(childOutput, /"path"\s*:\s*"\/api"/);
+  assert.match(childOutput, /"status"\s*:\s*"active"/);
+  assert.match(childOutput, /missingRuntimeEnvironmentNames"\s*:\s*\[\]/);
   assert.doesNotMatch(childOutput, /PORT.*unset|INVALID_PORT/);
   assert.doesNotMatch(
     childOutput,

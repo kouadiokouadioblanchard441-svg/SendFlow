@@ -110,6 +110,7 @@ done <<< "$archive_listing"
 "$MKDIR_BIN" -p "$runtime_stage"
 "$TAR_BIN" -xzf "$runtime_archive" -C "$runtime_stage"
 if [[ ! -d "$runtime_stage/node_modules" ||
+      ! -e "$runtime_stage/node_modules/argon2" ||
       ! -e "$runtime_stage/node_modules/sharp" ||
       ! -e "$runtime_stage/node_modules/@swc/helpers" ]]; then
   echo "Plesk application runtime archive is missing required external packages." >&2

@@ -69,8 +69,10 @@ async function deploymentFixture(t) {
     await writeFile(target, "fixture");
   }
   const runtimeSource = path.join(root, ".runtime-fixture/node_modules");
+  await mkdir(path.join(runtimeSource, "argon2"), { recursive: true });
   await mkdir(path.join(runtimeSource, "sharp"), { recursive: true });
   await mkdir(path.join(runtimeSource, "@swc/helpers"), { recursive: true });
+  await writeFile(path.join(runtimeSource, "argon2/package.json"), '{"name":"argon2"}');
   await writeFile(path.join(runtimeSource, "sharp/package.json"), '{"name":"sharp"}');
   await writeFile(path.join(runtimeSource, "@swc/helpers/package.json"), '{"name":"@swc/helpers"}');
   const archive = path.join(root, "dist/plesk-runtime-dependencies.tar.gz");
@@ -153,6 +155,10 @@ test("Plesk post-pull activates the single application's dependencies without No
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /single SendFlow Plesk package/);
   assert.match(result.stdout, /Activated committed Linux x64 runtime dependencies under dist/);
+  assert.equal(
+    await readFile(path.join(root, "dist/node_modules/argon2/package.json"), "utf8"),
+    '{"name":"argon2"}',
+  );
   assert.equal(
     await readFile(path.join(root, "dist/node_modules/sharp/package.json"), "utf8"),
     '{"name":"sharp"}',
@@ -291,18 +297,39 @@ test("CommonJS adapter refuses non-production startup", async (t) => {
   assert.doesNotMatch(result.stdout, /synthetic-entry-started/);
 });
 
-test("CommonJS adapter never prints sensitive import errors", async (t) => {
+test("CommonJS adapter safely identifies a missing package without logging importer paths", async (t) => {
   const root = await fixture(t);
   await writeFile(
     path.join(root, "server/index.mjs"),
-    'throw Object.assign(new Error("synthetic-private-marker"), { code: "ERR_MODULE_NOT_FOUND" });',
+    'throw Object.assign(new Error("Cannot find package \'synthetic-runtime-package\' imported from /private/system/dist/server/index.mjs"), { code: "ERR_MODULE_NOT_FOUND" });',
   );
   const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
     env: { NODE_ENV: "production" }, encoding: "utf8",
   });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Plesk site startup failure details: Error\/ERR_MODULE_NOT_FOUND/);
-  assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker/);
+  assert.match(result.stderr, /Plesk site startup failure category: MISSING_MODULE/);
+  assert.match(result.stderr, /Plesk site missing module reference: package synthetic-runtime-package/);
+  assert.match(result.stdout, new RegExp(`Plesk site Node version: ${process.version}`));
+  assert.match(result.stdout, new RegExp(`Plesk site application root: ${root.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+  assert.doesNotMatch(result.stdout + result.stderr, /\/private\/system|synthetic-runtime-package.*private/);
+});
+
+test("CommonJS adapter logs a missing file relative to the application root only", async (t) => {
+  const root = await fixture(t);
+  const missingFile = path.join(root, "node_modules/synthetic-esm/index.mjs");
+  const message = `require() of ES Module ${missingFile} from /private/system/loader.cjs not supported.`;
+  await writeFile(
+    path.join(root, "server/index.mjs"),
+    `throw Object.assign(new Error(${JSON.stringify(message)}), { code: "ERR_REQUIRE_ESM" });`,
+  );
+  const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
+    env: { NODE_ENV: "production" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Plesk site startup failure category: MISSING_MODULE/);
+  assert.match(result.stderr, /Plesk site missing module reference: file node_modules\/synthetic-esm\/index\.mjs/);
+  assert.doesNotMatch(result.stdout + result.stderr, /\/private\/system|\/tmp\/sendflow-plesk-[^ ]+\/node_modules/);
 });
 
 test("CommonJS adapter reports a safe error name when no system code exists", async (t) => {

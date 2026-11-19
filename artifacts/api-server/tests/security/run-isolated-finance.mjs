@@ -418,6 +418,10 @@ try {
   const databaseUrl = customerAuthEmailOnly
     ? new URL("postgresql://localhost:15432/postgres?sslmode=verify-full")
     : new URL("postgresql://localhost/postgres");
+  const pleskRuntimeDatabaseUrl = new URL(
+    "postgresql://localhost:15432/postgres?sslmode=verify-full",
+  );
+  pleskRuntimeDatabaseUrl.searchParams.set("user", "sf_fixture_app");
   if (!customerAuthEmailOnly) {
     databaseUrl.searchParams.set("host", socket);
     databaseUrl.searchParams.set("port", "15432");
@@ -461,6 +465,8 @@ try {
       SENDFLOW_DATABASE_TARGET: customerAuthEmailOnly ? "production" : "development",
       DATABASE_URL: databaseUrl.toString(), SENDFLOW_ISOLATED_RUNTIME: runtime,
       DATABASE_CA_CERT: customerAuthEmailOnly ? readFileSync(postgresTlsCertificate, "utf8") : undefined,
+      SENDFLOW_PLESK_FIXTURE_DATABASE_URL: pleskRuntimeDatabaseUrl.toString(),
+      SENDFLOW_PLESK_FIXTURE_DATABASE_CA_CERT: readFileSync(postgresTlsCertificate, "utf8"),
       SENDFLOW_FIXTURE_SOCKET: socket, SESSION_SECRET: randomBytes(32).toString("hex"),
       CUSTOMER_PII_ENCRYPTION_KEY: randomBytes(32).toString("hex"),
       TURNSTILE_SECRET_KEY: "isolated-test-turnstile-secret",

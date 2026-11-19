@@ -110,6 +110,12 @@ commande configurée comme action après le Pull, depuis le checkout SendFlow :
 bash scripts/plesk/build-after-pull.sh
 ```
 
+Cette action doit être configurée une seule fois dans les réglages du dépôt Git Plesk.
+Après cette configuration, chaque Pull active automatiquement les dépendances avant
+Restart App : aucune commande npm/pnpm n'est requise à chaque livraison. Si l'action
+n'est pas configurée ou échoue, `dist/node_modules` reste absent et Node peut s'arrêter
+avec `ERR_MODULE_NOT_FOUND` (le premier module runtime attendu par ce build est `argon2`).
+
 Le script retrouve le checkout avec Bash et vérifie les fichiers compilés livrés par
 Git. Il n'appelle ni Git, ni `dirname`, ni Node, ni pnpm : le hook reste utilisable dans
 l'environnement restreint de déploiement Plesk. Il exige `tar`, `gzip` et les utilitaires
@@ -183,7 +189,9 @@ exposée comme un répertoire statique Apache.
   la version affichée dans le panneau Plesk. Reconfirmer cette version si le panneau la
   modifie et vérifier l'archive native après redémarrage.
 - L'archive des dépendances API est construite pour Linux x64/glibc (runner GitHub
-  `ubuntu-latest`). La compatibilité exacte doit être confirmée avec l'architecture et
+  `ubuntu-latest`). Elle contient notamment `argon2` et `sharp`; leurs modules natifs
+  sont testés pendant le build sous Node.js `24.22.3`. La compatibilité exacte doit être
+  confirmée avec l'architecture et
   la distribution système de l'hébergement Plesk ; aucun accès serveur ne permet de
   la certifier depuis ce dépôt.
 - Vérifier la prise en charge du démarrage `index.cjs`/import ESM par le gestionnaire
