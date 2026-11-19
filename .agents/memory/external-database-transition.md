@@ -53,6 +53,12 @@ Every direct `pg.Client` or `Pool` used by a one-off schema or migration script 
 
 **How to apply:** Strip SSL query parameters only after confirming `sslmode=verify-full`, then pass the trusted CA, `rejectUnauthorized: true`, and the database hostname as `servername`. Never disable certificate or hostname verification.
 
+Run transient PostgreSQL scripts from a workspace package that declares `pg`, and verify foreign keys through `pg_constraint` relation/column metadata rather than exact `pg_get_constraintdef()` text.
+
+**Why:** Root-level Node resolution did not find the package-local `pg`, and PostgreSQL rendered a valid foreign key differently from the verifier's text pattern; transaction rollback prevented the failed check from committing.
+
+**How to apply:** Set the working directory to the API package for one-off scripts, and compare `conrelid`, `confrelid`, `conkey`, `confkey`, and `confdeltype` when validating an expected foreign key.
+
 The payment schema-version registry rejects updates and deletes. A reviewed payout change can intentionally alter an object covered by the base schema fingerprint; never rewrite an immutable record to hide that drift. An isolated fixture that retains only the base record should expect a fail-closed drift conflict, while a shared final schema should be fingerprinted only after its complete approved catalog is verified.
 
 **Why:** The payout migration deliberately extends a payment guard, so its catalog no longer matches the earlier migration's fingerprint; tests must not bypass the immutable registry to force a green result.
