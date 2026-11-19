@@ -189522,7 +189522,11 @@ function resolveRuntimeDatabaseUrl(environment) {
   }
   if (target === "production") {
     requirePleskProduction(environment, "SENDFLOW_DATABASE_TARGET=production");
-    const connectionString = environment.SUPABASE_DATABASE_URL?.trim() ? requireDatabaseUrl(environment, "SUPABASE_DATABASE_URL", "Plesk production") : requireDatabaseUrl(environment, "DATABASE_URL", "Plesk production");
+    const connectionString = requireDatabaseUrl(
+      environment,
+      "SUPABASE_DATABASE_URL",
+      "Plesk production"
+    );
     return requireVerifiedDatabaseUrl(connectionString);
   }
   throw new Error(
@@ -261256,7 +261260,7 @@ function getMissingApiEnvironmentNames() {
     ...!process.env.SENDFLOW_DATABASE_TARGET?.trim() ? ["SENDFLOW_DATABASE_TARGET"] : [],
     ...!process.env.TRUST_PROXY_HOPS?.trim() ? ["TRUST_PROXY_HOPS"] : [],
     ...!process.env.CORS_ALLOWED_ORIGINS?.trim() ? ["CORS_ALLOWED_ORIGINS"] : [],
-    ...!process.env.SUPABASE_DATABASE_URL?.trim() && !process.env.DATABASE_URL?.trim() ? ["SUPABASE_DATABASE_URL or DATABASE_URL"] : [],
+    ...!process.env.SUPABASE_DATABASE_URL?.trim() ? ["SUPABASE_DATABASE_URL"] : [],
     ...!process.env.DATABASE_CA_CERT?.trim() ? ["DATABASE_CA_CERT"] : [],
     ...!process.env.TURNSTILE_SITE_KEY?.trim() ? ["TURNSTILE_SITE_KEY"] : [],
     ...!process.env.TURNSTILE_SECRET_KEY?.trim() ? ["TURNSTILE_SECRET_KEY"] : [],

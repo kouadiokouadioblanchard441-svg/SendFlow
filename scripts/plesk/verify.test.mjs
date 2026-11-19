@@ -366,14 +366,14 @@ test("Plesk startup diagnostics list required names without exposing environment
   const result = spawnSync(process.execPath, [path.join(root, "index.cjs")], {
     env: {
       NODE_ENV: "production",
-      SUPABASE_DATABASE_URL: "not-a-real-database-url",
+      DATABASE_URL: "legacy-url-must-not-be-used-in-production",
       DATABASE_CA_CERT: "synthetic-private-marker",
     },
     encoding: "utf8",
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /Plesk API runtime variables unset: SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY/);
-  assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker|not-a-real-database-url/);
+  assert.match(result.stderr, /Plesk API runtime variables unset: SENDFLOW_DATABASE_TARGET, TRUST_PROXY_HOPS, CORS_ALLOWED_ORIGINS, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY, SUPABASE_DATABASE_URL/);
+  assert.doesNotMatch(result.stdout + result.stderr, /synthetic-private-marker|legacy-url-must-not-be-used-in-production/);
 });
 
 test("CommonJS adapter starts without requiring PORT", async (t) => {

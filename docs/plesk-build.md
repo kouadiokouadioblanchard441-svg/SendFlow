@@ -211,7 +211,7 @@ exposée comme un répertoire statique Apache.
   JS/CSS absent doit rester un 404 ; les routes SPA valides doivent accepter un refresh.
 - Saisir dans l'environnement de la seule application Plesk les noms requis :
   `NODE_ENV`, `SENDFLOW_DATABASE_TARGET`, `TRUST_PROXY_HOPS`,
-  `SUPABASE_DATABASE_URL` (ou `DATABASE_URL` pour compatibilité),
+  `SUPABASE_DATABASE_URL`,
   `DATABASE_CA_CERT`, `CORS_ALLOWED_ORIGINS`, `TURNSTILE_SITE_KEY`,
   `TURNSTILE_SECRET_KEY`, `SESSION_SECRET`, `CUSTOMER_PII_ENCRYPTION_KEY`,
   `ADMIN_SECRET_PATH`, `ADMIN_SECRET_TOKEN`,

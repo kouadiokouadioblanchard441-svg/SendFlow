@@ -99,9 +99,11 @@ export function resolveRuntimeDatabaseUrl(environment: Environment): string {
 
   if (target === "production") {
     requirePleskProduction(environment, "SENDFLOW_DATABASE_TARGET=production");
-    const connectionString = environment.SUPABASE_DATABASE_URL?.trim()
-      ? requireDatabaseUrl(environment, "SUPABASE_DATABASE_URL", "Plesk production")
-      : requireDatabaseUrl(environment, "DATABASE_URL", "Plesk production");
+    const connectionString = requireDatabaseUrl(
+      environment,
+      "SUPABASE_DATABASE_URL",
+      "Plesk production",
+    );
     return requireVerifiedDatabaseUrl(connectionString);
   }
 
@@ -154,7 +156,7 @@ export function resolveDrizzleDatabaseUrl(environment: Environment): string {
 
   if (target === "production") {
     requirePleskProduction(environment, "DRIZZLE_DATABASE_TARGET=production");
-    return requireDatabaseUrl(environment, "DATABASE_URL", "Plesk production");
+    return requireDatabaseUrl(environment, "SUPABASE_DATABASE_URL", "Plesk production");
   }
 
   throw new Error(

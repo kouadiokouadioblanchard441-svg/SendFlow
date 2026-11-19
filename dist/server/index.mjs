@@ -11307,7 +11307,11 @@ function resolveRuntimeDatabaseUrl(environment) {
   }
   if (target === "production") {
     requirePleskProduction(environment, "SENDFLOW_DATABASE_TARGET=production");
-    const connectionString = environment.SUPABASE_DATABASE_URL?.trim() ? requireDatabaseUrl(environment, "SUPABASE_DATABASE_URL", "Plesk production") : requireDatabaseUrl(environment, "DATABASE_URL", "Plesk production");
+    const connectionString = requireDatabaseUrl(
+      environment,
+      "SUPABASE_DATABASE_URL",
+      "Plesk production"
+    );
     return requireVerifiedDatabaseUrl(connectionString);
   }
   throw new Error(

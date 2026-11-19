@@ -32,7 +32,6 @@ function safeFailureCategory(error) {
       if (message.startsWith("SENDFLOW_DATABASE_TARGET")) return "INVALID_DATABASE_TARGET";
       if (
         message.startsWith("SUPABASE_DATABASE_URL is required")
-        || message.startsWith("DATABASE_URL is required for the Plesk production database")
       ) return "MISSING_DATABASE_URL";
       if (message.startsWith("DATABASE_CA_CERT is required")) return "MISSING_DATABASE_CA_CERT";
       if (message.startsWith("External database configuration is invalid.")) return "INVALID_DATABASE_URL";
@@ -53,9 +52,7 @@ function safeMissingEnvironmentNames() {
   }
   const missing = required.filter((name) => !process.env[name]?.trim());
   if (process.env.NODE_ENV === "production") {
-    if (!process.env.SUPABASE_DATABASE_URL?.trim() && !process.env.DATABASE_URL?.trim()) {
-      missing.push("SUPABASE_DATABASE_URL or DATABASE_URL");
-    }
+    if (!process.env.SUPABASE_DATABASE_URL?.trim()) missing.push("SUPABASE_DATABASE_URL");
     if (!process.env.DATABASE_CA_CERT?.trim()) missing.push("DATABASE_CA_CERT");
   }
   return missing;

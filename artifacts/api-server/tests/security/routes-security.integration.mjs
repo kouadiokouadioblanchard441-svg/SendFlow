@@ -557,7 +557,7 @@ test("built single Plesk site distribution starts without PORT and serves all re
   Object.assign(childEnvironment, {
     NODE_ENV: "production",
     SENDFLOW_DATABASE_TARGET: "production",
-    DATABASE_URL: process.env.SENDFLOW_PLESK_FIXTURE_DATABASE_URL,
+    SUPABASE_DATABASE_URL: process.env.SENDFLOW_PLESK_FIXTURE_DATABASE_URL,
     DATABASE_CA_CERT: process.env.SENDFLOW_PLESK_FIXTURE_DATABASE_CA_CERT,
     TRUST_PROXY_HOPS: "2",
     CORS_ALLOWED_ORIGINS: "https://sendflow-test.invalid",

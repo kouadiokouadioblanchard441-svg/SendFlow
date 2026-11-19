@@ -19,9 +19,8 @@ export function getMissingApiEnvironmentNames(): string[] {
     ...(!process.env.CORS_ALLOWED_ORIGINS?.trim()
       ? ["CORS_ALLOWED_ORIGINS"]
       : []),
-    ...(!process.env.SUPABASE_DATABASE_URL?.trim() &&
-    !process.env.DATABASE_URL?.trim()
-      ? ["SUPABASE_DATABASE_URL or DATABASE_URL"]
+    ...(!process.env.SUPABASE_DATABASE_URL?.trim()
+      ? ["SUPABASE_DATABASE_URL"]
       : []),
     ...(!process.env.DATABASE_CA_CERT?.trim() ? ["DATABASE_CA_CERT"] : []),
     ...(!process.env.TURNSTILE_SITE_KEY?.trim() ? ["TURNSTILE_SITE_KEY"] : []),
